@@ -29,8 +29,8 @@ export interface DamageOutcome {
   /** Counters that lost points. Empty when the shield absorbed everything. */
   countersDecremented: readonly CounterDecrement[];
   /**
-   * Effects whose counter reached 0: deactivated and permanently lost (rules spec §5).
-   * A subset of the effects listed in `countersDecremented`.
+   * Effects whose counter reached 0: deactivated and permanently lost (rules spec §5). They
+   * are no longer on the player, so nothing can decrement them again.
    */
   deactivatedEffectIds: readonly string[];
 }
