@@ -53,10 +53,15 @@ games launched with the same seed produce an identical distribution** — so the
 passed in, never reached for globally, and never `Math.random()`.
 
 ```ts
-// [TEMPLATE — replace once L0-05 lands]
-const rng = createRng('a-fixed-seed');
-// ... build the game with rng injected, assert the exact distribution
+// apps/server/src/engine/rng.ts — createRng(seed) and createSeed()
+const first = drawStartingCards(createRng('a-fixed-seed'), 5);
+const second = drawStartingCards(createRng('a-fixed-seed'), 5);
+expect(second).toEqual(first);
 ```
+
+Assert **reproducibility and bounds, never specific numbers**: the generator's algorithm is an
+implementation detail, and a test pinning its output would have to be rewritten the day it
+changes. `apps/server/src/engine/rng.test.ts` is the reference.
 
 ## What the Definition of Done requires
 

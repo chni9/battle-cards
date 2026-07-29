@@ -245,3 +245,31 @@ through the context, since a handler reaching for its own generator breaks repro
 (golden rule 5). `targetPlayerId` is `string | null` rather than optional, matching the domain's
 existing use of `null` for absent values and avoiding `exactOptionalPropertyTypes` friction at
 every call site.
+
+## 2026-07-29 · [T] Seeded generator written in-repo, no dependency (L0-05)
+
+`apps/server/src/engine/rng.ts`: FNV-1a hashes the seed string into a 32-bit state, mulberry32
+advances it, and `nextInt` rejection-samples rather than taking a modulo — a modulo would favour
+low indices and quietly bias card distribution and Sentence. `pick` throws on an empty list, and
+`createRng` throws on an empty seed, which is almost always a missing seed and would make every
+game identical.
+
+No dependency was added for it: the generator is ~25 lines, and pinning a package for it would
+add a supply-chain surface to the one module whose behaviour must never drift silently. The
+algorithm is an implementation detail — the tests assert reproducibility and bounds only, so it
+can be swapped without touching them.
+
+`shuffle` was deliberately not written: no V1 task needs one yet (turn order arrives in L1-03),
+and the first task that does adds it here rather than shuffling by hand with `nextInt`.
+
+## 2026-07-29 · [P] `GameState.seed` added, and server-only (L0-05)
+
+Technical spec §4.1 lists no seed field. One is added because L0-05's acceptance criterion
+requires a game to be reproducible from its seed, and because replaying a reported game and
+recording what produced a distribution in the game log (L8-01) both need it kept.
+
+It carries a visibility category that technical spec §5.1 does not have: **server-only**. The
+seed is not private data about a player but the game's whole future — a client holding it can
+predict Sentence's victim, the special card purchase and Mirror's default target on expiry. It
+therefore reaches no client, spied or not, and `protocol.md` now lists the category so any later
+field with the same property gets classified rather than defaulted into a view.

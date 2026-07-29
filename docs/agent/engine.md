@@ -70,6 +70,34 @@ Three properties of the implementation, each decided rather than obvious:
 and clamping inline in each card would defeat it. It takes the cap as a parameter, always read
 from `GameState.lifeLimit`.
 
+## Seeded randomness
+
+`apps/server/src/engine/rng.ts`, technical spec §8, golden rule 5.
+
+```ts
+interface Rng {
+  nextInt(maxExclusive: number): number; // uniform, rejection-sampled
+  pick<T>(items: readonly T[]): T;       // throws on an empty list
+}
+
+function createRng(seed: string): Rng; // same seed, same sequence
+function createSeed(): string;         // one per game, stored in GameState.seed
+```
+
+Every draw goes through an **injected** instance: card distribution (L4-02), Sentence (L5-07),
+the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09). A module
+that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
+downstream of it.
+
+- The generator's algorithm is an implementation detail; tests assert reproducibility and
+  bounds, never specific numbers.
+- `nextInt` rejection-samples rather than taking a modulo, which would favour low indices and
+  quietly bias distribution and Sentence.
+- `shuffle` does not exist yet. The first task that needs one adds it here, rather than
+  shuffling by hand with `nextInt`.
+- **`GameState.seed` is server-only.** A client holding it can predict every remaining draw.
+  See `protocol.md`.
+
 ## Turn loop
 
 Technical spec §4.3. Steps 3 and 4 are where the invariant lives.

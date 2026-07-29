@@ -42,11 +42,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-4 of 63 tasks done.
+5 of 63 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 0 · Project foundation | 6 | 4 |
+| 0 · Project foundation | 6 | 5 |
 | 1 · Vertical slice | 13 | 0 |
 | 2 · Economy and attacks | 6 | 0 |
 | 3 · Action cards | 9 | 0 |
@@ -107,13 +107,14 @@ applyDamage: shield first, excess to lives, decrements active card counters. app
 - **Acceptance** A shield absorbs a hit and ignores a tax; only damage decrements counters
 - **Note** Ran before L0-03, so the registry could be written against real signatures. Scope widened by developer instruction to include `gainLives`, the single clamped source of life gain. Counter decrement ruled at one point per life lost, and the primitives return an outcome rather than `void` — all three recorded in `agent/decisions.md`.
 
-### L0-05 · Seeded randomness — `To do`
+### L0-05 · Seeded randomness — `Done`
 
 Seeded pseudo-random generator, injected everywhere a draw happens: card distribution, Sentence, special card purchase, Mirror's default target.
 
 - **Reference** Spec §8 · **Depends on** L0-02 · **Complexity** S · **Risk** Medium
 - **Watch point** Without a seed, no distribution or Sentence test is reproducible.
 - **Acceptance** Two games launched with the same seed produce an identical distribution
+- **Note** `createRng` / `createSeed` in `apps/server/src/engine/rng.ts`, written in-repo with no dependency. `GameState` gains a `seed` field, absent from spec §4.1 and classified **server-only**: a client holding it could predict every remaining draw. See `agent/decisions.md`.
 
 ### L0-06 · Colyseus server and client connection — `To do`
 

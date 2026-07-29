@@ -36,4 +36,13 @@ export interface GameState {
    * per player.
    */
   turnSequence: number;
+  /**
+   * Seed of the game's pseudo-random generator, so a reported game can be replayed and
+   * the game log (technical spec §3) can record what produced a distribution.
+   *
+   * **Server-only — never include it in a view sent to a client.** A client holding the
+   * seed can predict every remaining draw: Sentence's victim, the special card purchase,
+   * Mirror's default target. Not a field of technical spec §4.1's list; added in L0-05.
+   */
+  seed: string;
 }

@@ -24,7 +24,8 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
 3. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
    can be bypassed.
 4. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
-   it.** Public, private, or Spy-gated — decided in the same change, never defaulted.
+   it.** Public, private, Spy-gated, or server-only — decided in the same change, never
+   defaulted.
 
 ## Visibility model
 
@@ -36,6 +37,12 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
 | Card count in hand, lives, shield, status | **Public** |
+| `GameState.seed` | **Server-only.** Reaches no client, spied or not |
+
+The fourth category is not in technical spec §5.1: it exists because the seed is not private
+data about a player but the game's entire future. A client holding it predicts Sentence's
+victim, the special card purchase and Mirror's default target. Any field added later whose
+disclosure would let a client compute a future draw belongs in the same category.
 
 Consequence worth knowing: with fully public actions, a hand can be partly reconstructed by
 deduction, which costs Spy some value. That is accepted, not a bug.
@@ -121,12 +128,14 @@ console — absent player, automatic-turn counter before elimination, both timer
 - ❌ Trusting any client-supplied value beyond the event payload's identifiers.
 - ❌ One event covering both "played" and "resolved".
 - ❌ A single global `spiedOn` boolean, or storing visibility on the spied player.
+- ❌ Letting `GameState.seed` into any payload. It hands the client every future draw.
 - ❌ Persisting in-progress game state. The DB holds finished games only; a restart mid-game
   loses it, and that is accepted for V1.
 
 ## Checklist
 
-- [ ] Every new state field explicitly classified public / private / Spy-gated in the view builder
+- [ ] Every new state field explicitly classified public / private / Spy-gated / server-only in
+      the view builder
 - [ ] No code path builds a complete state for an unspecified recipient
 - [ ] `actionPlayed` broadcast on play, `actionResolved` on resolution, in that order
 - [ ] Action revalidated server side, forged payloads rejected
