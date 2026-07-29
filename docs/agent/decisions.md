@@ -273,3 +273,89 @@ seed is not private data about a player but the game's whole future — a client
 predict Sentence's victim, the special card purchase and Mirror's default target on expiry. It
 therefore reaches no client, spied or not, and `protocol.md` now lists the category so any later
 field with the same property gets classified rather than defaulted into a view.
+
+## 2026-07-29 · [P] [DISCREPANCY] Colyseus is transport only — no synchronised state (L0-06)
+
+Technical spec §3 lists Colyseus for "rooms, state sync, reconnection". **State sync is not
+used.** A Colyseus `Schema` synchronises one room-wide state to every client, which is precisely
+the "build a complete state and filter it on the way out" pattern that §5.1 and golden rule 4
+forbid — and §5.3 specifies `stateUpdate` as "personalised view per recipient".
+
+So: the authoritative state stays a plain object built from the `packages/shared` domain types,
+and each client receives its own `stateUpdate` message. Rooms, matchmaking and reconnection
+(`allowReconnection`, for L7-01) are still Colyseus's. The `state` generic of `Room` is left
+unused. Recorded as a discrepancy rather than reconciled: the spec sentence stays wrong until a
+human edits it, and re-deriving this decision every lot would be worse.
+
+## 2026-07-29 · [P] `clientReady` added to the protocol, beyond technical spec §5.2 (L0-06)
+
+The Colyseus SDK **drops** a message whose handler is not yet registered — it only logs
+`onMessage() not registered for type '...'` — and `onJoin` runs before the client's join promise
+resolves, so a client cannot have registered anything yet. Observed live: the first
+`stateUpdate` never reached a freshly joined client.
+
+Therefore a client sends `clientReady` once its handlers are in place, and the room answers that
+client alone; `onJoin` and `onLeave` send to everyone *else*. No message is ever sent into the
+void. This is a consequence of the transport-only decision above: with a synchronised schema the
+SDK would have buffered the state for us.
+
+## 2026-07-29 · [T] Two `@colyseus/core` instances break every join — run `pnpm dedupe` (L0-06)
+
+**Symptom:** every join fails immediately with `524 seat reservation expired.`, the server logs
+`creating room` and `reserving seat` and then the same error, and `onJoin` is never reached.
+
+**Cause:** `node_modules/.pnpm` held two directories for `@colyseus/core@0.17.45` with identical
+dependency graphs but different peer-hash suffixes. `@colyseus/ws-transport` was linked to one
+and the `colyseus` meta package to the other, so the transport consulted a room registry that
+the matchmaker had never filled. Installing `@colyseus/sdk` in the client is what introduced the
+second instance.
+
+**Fix:** `pnpm dedupe`, which rewrote the lockfile so a single instance remains. Verified by
+deleting every `node_modules` and reinstalling with `--frozen-lockfile`: one instance, and joins
+work. If this symptom ever returns after adding a Colyseus package, count the instances first:
+`ls node_modules/.pnpm | grep '@colyseus+core@'`.
+
+`msgpackr-extract`'s build script is left unapproved (pnpm warns about it on install). It is an
+optional native accelerator for msgpack; the pure-JS path works, and approving install scripts
+for a transitive dependency is not worth the surface.
+
+## 2026-07-29 · [T] Colyseus 0.17 API and package names (L0-06)
+
+Written down because training data and older tutorials disagree with all of it:
+
+- Server: `colyseus` 0.17.10, bootstrapped with `defineServer({ rooms: { game: defineRoom(GameRoom) } })`
+  then `server.listen(port)`. The meta package bundles `@colyseus/ws-transport`, so no transport
+  needs to be constructed for a single-process server.
+- Client: **`@colyseus/sdk`**, not the old `colyseus.js`. `new Client(url)`,
+  `client.joinOrCreate(name, options)`, `room.onMessage(type, cb)`, `room.onError(cb)`,
+  `room.onLeave(cb)`.
+- Message handlers on a room are a `messages = { name: (client, payload) => {} }` map, not
+  `onMessage(...)` calls in `onCreate`.
+- Rejecting a join: `throw new ServerError(ErrorCode.APPLICATION_ERROR, message)` from `onAuth`.
+- Typing the wire: `Room<{ client: Client<{ messages: ServerToClientMessages }> }>` makes a
+  wrong message name or payload a compile error on the server side.
+
+## 2026-07-29 · [T] Local addresses and client env vars (L0-06)
+
+Server port from `PORT`, default 2567. Client target from `VITE_SERVER_URL`, default
+`http://localhost:2567`. `apps/client/src/vite-env.d.ts` declares `ImportMetaEnv` so
+`import.meta.env` stays typed instead of `any` — without it, `strictTypeChecked` rejects every
+use of it as unsafe. Both defaults are in `README.md`; no `.env` file is committed.
+
+The client validates the shape of an incoming `stateUpdate` before using it
+(`use-room-connection.ts`). Not paranoia about our own server: it is the same rule as §5.4 in
+the other direction, and it keeps the payload out of `any`.
+
+## 2026-07-29 · [T] How L0-06 was verified (L0-06)
+
+Automated tests cover the pure view builder only; a Colyseus test harness would have been a
+dependency added for a task that touches no rule. The rest was verified by running it:
+
+- Two SDK clients joining one room from Node: each received its own view, with its own `you`
+  and the same connected set, and the remaining client was updated when the other left.
+- Two browser tabs on the Vite client: same result on screen, each tab marking a different
+  session as "(you)", and the count dropping when a tab closed.
+- Three rejected joins: wrong version, missing version, non-numeric version.
+
+Repeat that sequence when the protocol changes shape. From L1-09 on, the view's contents belong
+in unit tests instead.

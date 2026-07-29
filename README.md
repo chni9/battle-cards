@@ -39,6 +39,9 @@ pnpm install     # also downloads the pinned Node runtime into ./node_modules
 | `pnpm test:watch` | Vitest in watch mode |
 | `pnpm verify` | typecheck + lint + test — the formal Definition of Done gate (technical spec §8) |
 
+`pnpm dev` serves the client on <http://localhost:5173> and the game server on port 2567. Both
+are overridable: `PORT` for the server, `VITE_SERVER_URL` for the address the client dials.
+
 ## Layout
 
 ```
@@ -58,6 +61,8 @@ packages/shared   Domain types shared by both. Single definition, never duplicat
 | Vitest | 4.1.10 | Projects defined in `vitest.config.ts` at the root |
 | Vite | 8.1.5 | Client build, with React plugin 6.0.4 |
 | React | 19.2.8 | |
+| Colyseus | 0.17.10 | Server-side rooms and transport. Used as transport only — no synchronised `Schema` state, see `docs/agent/protocol.md` |
+| `@colyseus/sdk` | 0.17.43 | Client SDK. Replaces the older `colyseus.js` package |
 
 ### The Node runtime is project-local
 

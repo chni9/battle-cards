@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@card-battle/shared": "workspace:*"
+    "@card-battle/shared": "workspace:*",
+    "colyseus": "^0.17.10"
   },
   "devDependencies": {
     "@types/node": "24.13.3",

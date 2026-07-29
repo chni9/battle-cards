@@ -42,11 +42,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-5 of 63 tasks done.
+6 of 63 tasks done. **Lot 0 is complete** — next up is L1-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 0 · Project foundation | 6 | 5 |
+| 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 0 |
 | 2 · Economy and attacks | 6 | 0 |
 | 3 · Action cards | 9 | 0 |
@@ -116,12 +116,13 @@ Seeded pseudo-random generator, injected everywhere a draw happens: card distrib
 - **Acceptance** Two games launched with the same seed produce an identical distribution
 - **Note** `createRng` / `createSeed` in `apps/server/src/engine/rng.ts`, written in-repo with no dependency. `GameState` gains a `seed` field, absent from spec §4.1 and classified **server-only**: a client holding it could predict every remaining draw. See `agent/decisions.md`.
 
-### L0-06 · Colyseus server and client connection — `To do`
+### L0-06 · Colyseus server and client connection — `Done`
 
 Empty server-side room, React client connecting to it and displaying the received state.
 
 - **Reference** Spec §3 · **Depends on** L0-01 · **Complexity** M · **Risk** Low
 - **Acceptance** Two tabs connected to the same room see the same state
+- **Note** Verified in two browser tabs and with two SDK clients: same connected set, a different `you` per recipient. Colyseus is used as **transport only** — no `Schema` state, one `stateUpdate` per recipient — which contradicts spec §3's "state sync" wording and follows §5.1 instead. A `clientReady` event beyond spec §5.2 was necessary: the SDK drops a message whose handler is not yet registered. Both recorded in `agent/decisions.md`, along with the duplicate `@colyseus/core` install trap that makes every join fail.
 
 ## Lot 1 · Vertical slice
 

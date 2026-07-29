@@ -6,9 +6,12 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** unwritten — the room lands in L0-06, per-recipient views in L1-09, the
-> visibility matrix in L3-05. Code blocks are `[TEMPLATE]`.
-> Fetch current Colyseus APIs via Context7 before coding; do not write them from memory.
+> **Status:** the room, the connection and the per-recipient send path exist (L0-06) in
+> `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
+> `apps/client/src/net/`. The view itself is still a placeholder: the real one arrives with
+> L1-09, the visibility matrix with L3-05.
+> Fetch current Colyseus APIs via Context7 before coding; do not write them from memory —
+> 0.17 renamed the client package and changed the server bootstrap.
 
 ## Golden rules
 
@@ -70,18 +73,48 @@ Payloads are specified in §5.2/§5.3. **`playCard`, `sellCard` and `upgradeCard
 with a `cardId`, which cannot disambiguate two copies at different upgrade levels — see the
 open item in `decisions.md` before implementing them.**
 
+One event is **not** in §5.2: `clientReady`, sent by a client once its handlers are registered.
+See "Transport" below — without it the first view is dropped.
+
+Message names live in `packages/shared/src/protocol/messages.ts`, and only the ones actually in
+use are declared. A name added before anything sends it cannot be kept honest.
+
+## Transport
+
+Colyseus carries messages; it does **not** carry the state. There is no `Schema`, and the
+authoritative state stays a plain object on the server (`decisions.md`). Consequences worth
+knowing before touching `game-room.ts`:
+
+- **`client.send(...)` per recipient, never `broadcast` for state.** A broadcast is one payload
+  for everybody, which is the pattern §5.1 rules out. `broadcast` is fine for genuinely public
+  events (`actionPlayed`, `playerEliminated`).
+- **A client's first view must be asked for.** The SDK *drops* a message whose handler is not
+  registered yet — it only logs `onMessage() not registered for type '...'` — and `onJoin` runs
+  before the client's join promise resolves. So the client sends `clientReady` after
+  registering, and the room answers that client alone. `onJoin` and `onLeave` send to everyone
+  *else*.
+- **The room lifecycle in 0.17** is `onAuth` → `onJoin` → … → `onDrop` (unexpected loss, where
+  `allowReconnection` belongs, L7-01) → `onReconnect` → `onLeave`. A client is already out of
+  `this.clients` when `onLeave` runs.
+- **`onAuth` is the earliest hook with the join options**, and where the protocol version is
+  checked: a client on a different contract misreads everything it receives. Throwing
+  `ServerError` there rejects the join with a message the client shows.
+- Options arriving from a client are typed `unknown` and narrowed by hand. Nothing about a
+  payload is assumed, on either side of the wire (§5.4).
+
 ## View construction
 
 ```ts
-// [TEMPLATE — replace once L1-09 lands]
-// One function, one recipient. It receives the recipient's id and decides what to include.
-// There is no "full view" function anywhere for it to filter down from.
-function buildViewFor(recipientId: string, state: GameState, vis: VisibilityMatrix): StateView;
+// apps/server/src/protocol/build-view-for.ts — pure, so it needs no room to be tested.
+// L0-06 signature; L1-09 replaces it with the real state and the visibility matrix.
+function buildViewFor(recipientSessionId: string, connectedSessionIds: readonly string[]): PlaceholderStateView;
 ```
 
 The builder takes the recipient and decides what to include. There is deliberately no
 "full view" function anywhere for it to filter down from — if one exists, golden rule 4 above
-has nothing to attach to and new fields start leaking by default.
+has nothing to attach to and new fields start leaking by default. Keeping it pure is what makes
+the hidden-information tests of technical spec §8 level 2 cheap: no server, no socket, no
+timing. It refuses to build a view for a session that is not in the room.
 
 ## Timers and sub-choices
 
@@ -125,6 +158,8 @@ console — absent player, automatic-turn counter before elimination, both timer
 
 - ❌ `buildFullState()` followed by `omit(...)` or `delete view.hand`.
 - ❌ Sending a single broadcast state and letting each client hide what is not theirs.
+- ❌ Sending a client its first view from `onJoin` — the SDK drops it, silently.
+- ❌ Moving the state into a Colyseus `Schema` "so sync is automatic". That is the leak.
 - ❌ Trusting any client-supplied value beyond the event payload's identifiers.
 - ❌ One event covering both "played" and "resolved".
 - ❌ A single global `spiedOn` boolean, or storing visibility on the spied player.
@@ -137,6 +172,7 @@ console — absent player, automatic-turn counter before elimination, both timer
 - [ ] Every new state field explicitly classified public / private / Spy-gated / server-only in
       the view builder
 - [ ] No code path builds a complete state for an unspecified recipient
+- [ ] Every new message name declared in `packages/shared/src/protocol/messages.ts`
 - [ ] `actionPlayed` broadcast on play, `actionResolved` on resolution, in that order
 - [ ] Action revalidated server side, forged payloads rejected
 - [ ] Deadlines server-computed and sent
