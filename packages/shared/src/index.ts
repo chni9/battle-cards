@@ -1,1 +1,6 @@
+export * from './domain/card';
+export * from './domain/effect';
+export * from './domain/game-state';
+export * from './domain/kit';
+export * from './domain/player';
 export { PROTOCOL_VERSION } from './protocol-version';
