@@ -129,6 +129,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 | `docs/agent/engine.md` | Turn loop, delayed resolution, life loss, mutual attacks, ledger, elimination |
 | `docs/agent/card-handler.md` | Adding or changing any card |
 | `docs/agent/protocol.md` | Colyseus rooms, events, per-recipient views, Spy visibility |
+| `docs/agent/frontend.md` | Client screens and connection conventions (from L1-12) |
 | `docs/agent/testing.md` | Writing tests — which are mandatory and what they must prove |
 | `docs/agent/decisions.md` | Checking why something is the way it is, or logging a new decision |
 
@@ -173,6 +174,10 @@ Reference the backlog task in the subject: `feat(engine): add delayed resolution
 Body only when the *why* is not obvious — and always for a rule interpretation, a spec
 deviation, or a decision that a future reader would otherwise have to re-derive. No AI
 attribution. A project-local `caveman-commit` skill (`.agents/skills/`) enforces this style.
+
+**One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
+task alone. Do not bundle several task IDs into one commit unless the developer explicitly
+allows it for that pass (e.g. a catch-up commit after a multi-task session).
 
 ## 11. Agent output style
 

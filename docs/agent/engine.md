@@ -7,9 +7,9 @@
 > Sources: technical spec §4.2–§4.6, §6.2, §6.3 · rules spec §1, §6, §7 ·
 > types in `packages/shared/src/domain/{effect,player,game-state}.ts`.
 >
-> **Status:** the life primitives exist (L0-04) in `apps/server/src/engine/life/`. Still
-> unwritten: the turn loop (L1-04), the queue (L1-07), mutual attacks (L2-05), the ledger
-> (L3-07). Code blocks are marked `[TEMPLATE]` where no implementation exists yet.
+> **Status:** life primitives (L0-04), seeded RNG + shuffle (L0-05 / L1-03), turn loop + queue
+> (L1-04…L1-07) and basic-attack resolution (L1-08) live under `apps/server/src/engine/`.
+> Mutual attacks (L2-05) and the turn ledger (L3-07) are still unwritten.
 
 ## Golden rules
 

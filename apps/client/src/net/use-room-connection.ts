@@ -1,113 +1,288 @@
 /**
- * The client's single connection to the game room — technical spec §3, §5.3.
- *
- * The client holds no rule logic: it joins, receives the view the server built for it, and
- * renders it. Every `stateUpdate` replaces the previous view outright, because the server
- * decides what this recipient may see (technical spec §5.1).
+ * Client connection and intents — technical spec §3, §5.
  */
 
-import { CLIENT_READY, GAME_ROOM_NAME, PROTOCOL_VERSION, STATE_UPDATE } from '@card-battle/shared';
-import type { JoinRoomOptions, PlaceholderStateView } from '@card-battle/shared';
+import {
+  ACTION_PLAYED,
+  ACTION_RESOLVED,
+  CLIENT_READY,
+  DRAW_CARD,
+  ERROR_MESSAGE,
+  GAME_OVER,
+  GAME_ROOM_NAME,
+  PLAY_CARD,
+  PLAYER_ELIMINATED,
+  PROTOCOL_VERSION,
+  START_GAME,
+  STATE_UPDATE,
+  TURN_STARTED,
+  type ActionPlayedPayload,
+  type ActionResolvedPayload,
+  type CardId,
+  type GameOverPayload,
+  type RoomJoinOptions,
+  type StateView,
+  type TurnStartedPayload,
+} from '@card-battle/shared';
 import { Client, type Room } from '@colyseus/sdk';
-import { useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const DEFAULT_SERVER_URL = 'http://localhost:2567';
 
-export type RoomConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'failed';
+export type RoomConnectionStatus =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'disconnected'
+  | 'failed';
 
 export interface RoomConnection {
   status: RoomConnectionStatus;
-  /** The last view received. `null` until the first `stateUpdate` arrives. */
-  view: PlaceholderStateView | null;
-  /** Why the connection failed or ended, when the server said. */
+  view: StateView | null;
   error: string | null;
+  gameCode: string | null;
+  lastTurnStarted: TurnStartedPayload | null;
+  lastActionPlayed: ActionPlayedPayload | null;
+  lastActionResolved: ActionResolvedPayload | null;
 }
 
-const INITIAL: RoomConnection = { status: 'connecting', view: null, error: null };
+const INITIAL: RoomConnection = {
+  status: 'idle',
+  view: null,
+  error: null,
+  gameCode: null,
+  lastTurnStarted: null,
+  lastActionPlayed: null,
+  lastActionResolved: null,
+};
 
-export function useRoomConnection(): RoomConnection {
+export interface UseRoomConnectionResult extends RoomConnection {
+  createGame: (nickname: string) => Promise<void>;
+  joinGame: (gameCode: string, nickname: string) => Promise<void>;
+  leaveGame: () => Promise<void>;
+  startGame: () => void;
+  drawCard: () => void;
+  playCard: (cardId: CardId, targetPlayerId: string) => void;
+}
+
+export function useRoomConnection(): UseRoomConnectionResult {
   const [connection, setConnection] = useState<RoomConnection>(INITIAL);
+  const roomRef = useRef<Room | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    let joinedRoom: Room | null = null;
+  const attachRoom = useCallback((room: Room): void => {
+    roomRef.current = room;
 
-    async function connect(): Promise<void> {
-      const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
-      const options: JoinRoomOptions = { protocolVersion: PROTOCOL_VERSION };
-
-      try {
-        const room = await client.joinOrCreate(GAME_ROOM_NAME, options);
-
-        if (cancelled) {
-          // StrictMode mounts twice in development: the room joined by the discarded
-          // effect has to be left, or it lingers as a phantom player.
-          await room.leave();
-          return;
-        }
-
-        joinedRoom = room;
-
-        room.onMessage(STATE_UPDATE, (payload: unknown) => {
-          if (isStateView(payload)) {
-            setConnection({ status: 'connected', view: payload, error: null });
-          }
-        });
-
-        room.onError((_code, message) => {
-          setConnection((previous) => ({ ...previous, status: 'failed', error: message ?? null }));
-        });
-
-        room.onLeave((_code, reason) => {
-          setConnection((previous) => ({
-            ...previous,
-            status: 'disconnected',
-            error: reason ?? null,
-          }));
-        });
-
-        setConnection((previous) => ({ ...previous, status: 'connected' }));
-
-        // Only now: the SDK drops a message whose handler is not registered yet, so the first
-        // view has to be asked for after the handler above exists.
-        room.send(CLIENT_READY);
-      } catch (error) {
-        if (!cancelled) {
-          setConnection({ status: 'failed', view: null, error: describe(error) });
-        }
+    room.onMessage(STATE_UPDATE, (payload: unknown) => {
+      if (isStateView(payload)) {
+        setConnection((previous) => ({
+          ...previous,
+          status: 'connected',
+          view: payload,
+          error: null,
+          gameCode: payload.gameCode,
+        }));
       }
-    }
+    });
 
-    void connect();
+    room.onMessage(ERROR_MESSAGE, (payload: unknown) => {
+      if (isErrorPayload(payload)) {
+        setConnection((previous) => ({ ...previous, error: payload.message }));
+      }
+    });
 
-    return () => {
-      cancelled = true;
-      void joinedRoom?.leave();
-    };
+    room.onMessage(TURN_STARTED, (payload: unknown) => {
+      if (isTurnStarted(payload)) {
+        setConnection((previous) => ({ ...previous, lastTurnStarted: payload }));
+      }
+    });
+
+    room.onMessage(ACTION_PLAYED, (payload: unknown) => {
+      if (isActionPlayed(payload)) {
+        setConnection((previous) => ({ ...previous, lastActionPlayed: payload }));
+      }
+    });
+
+    room.onMessage(ACTION_RESOLVED, (payload: unknown) => {
+      if (isActionResolved(payload)) {
+        setConnection((previous) => ({ ...previous, lastActionResolved: payload }));
+      }
+    });
+
+    room.onMessage(PLAYER_ELIMINATED, () => {
+      // stateUpdate follows with isEliminated flags
+    });
+
+    room.onMessage(GAME_OVER, (payload: unknown) => {
+      if (isGameOver(payload)) {
+        setConnection((previous) => ({
+          ...previous,
+          // view will arrive via stateUpdate; keep winner visible if needed
+          error: null,
+        }));
+        void payload;
+      }
+    });
+
+    room.onError((_code, message) => {
+      setConnection((previous) => ({
+        ...previous,
+        status: 'failed',
+        error: message ?? null,
+      }));
+    });
+
+    room.onLeave((_code, reason) => {
+      roomRef.current = null;
+      setConnection({
+        ...INITIAL,
+        status: 'disconnected',
+        error: reason ?? null,
+      });
+    });
+
+    setConnection((previous) => ({
+      ...previous,
+      status: 'connected',
+      gameCode: room.roomId,
+    }));
+
+    room.send(CLIENT_READY);
   }, []);
 
-  return connection;
+  const createGame = useCallback(
+    async (nickname: string): Promise<void> => {
+      await leaveCurrent(roomRef);
+      setConnection({ ...INITIAL, status: 'connecting' });
+
+      const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+      const options: RoomJoinOptions = {
+        protocolVersion: PROTOCOL_VERSION,
+        nickname: nickname.trim(),
+      };
+
+      try {
+        const room = await client.create(GAME_ROOM_NAME, options);
+        attachRoom(room);
+      } catch (error) {
+        setConnection({ ...INITIAL, status: 'failed', error: describe(error) });
+      }
+    },
+    [attachRoom],
+  );
+
+  const joinGame = useCallback(
+    async (gameCode: string, nickname: string): Promise<void> => {
+      await leaveCurrent(roomRef);
+      setConnection({ ...INITIAL, status: 'connecting' });
+
+      const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+      const options: RoomJoinOptions = {
+        protocolVersion: PROTOCOL_VERSION,
+        nickname: nickname.trim(),
+      };
+
+      try {
+        const room = await client.joinById(gameCode.trim().toUpperCase(), options);
+        attachRoom(room);
+      } catch (error) {
+        setConnection({ ...INITIAL, status: 'failed', error: describe(error) });
+      }
+    },
+    [attachRoom],
+  );
+
+  const leaveGame = useCallback(async (): Promise<void> => {
+    await leaveCurrent(roomRef);
+    setConnection(INITIAL);
+  }, []);
+
+  const startGame = useCallback((): void => {
+    roomRef.current?.send(START_GAME);
+  }, []);
+
+  const drawCard = useCallback((): void => {
+    roomRef.current?.send(DRAW_CARD);
+  }, []);
+
+  const playCard = useCallback((cardId: CardId, targetPlayerId: string): void => {
+    roomRef.current?.send(PLAY_CARD, { cardId, targetPlayerId });
+  }, []);
+
+  return {
+    ...connection,
+    createGame,
+    joinGame,
+    leaveGame,
+    startGame,
+    drawCard,
+    playCard,
+  };
 }
 
-/**
- * Nothing arriving over the wire is trusted to have the shape it claims — the same reason
- * the server revalidates every action (technical spec §5.4).
- */
-function isStateView(payload: unknown): payload is PlaceholderStateView {
-  if (typeof payload !== 'object' || payload === null) {
+async function leaveCurrent(roomRef: { current: Room | null }): Promise<void> {
+  const room = roomRef.current;
+
+  if (room !== null) {
+    roomRef.current = null;
+    await room.leave();
+  }
+}
+
+function isStateView(payload: unknown): payload is StateView {
+  if (typeof payload !== 'object' || payload === null || !('phase' in payload)) {
     return false;
   }
 
-  if (!('you' in payload) || !('connected' in payload)) {
-    return false;
-  }
+  const { phase } = payload;
 
-  const { you, connected } = payload;
+  return phase === 'lobby' || phase === 'playing' || phase === 'finished';
+}
 
+function isErrorPayload(payload: unknown): payload is { message: string } {
   return (
-    typeof you === 'string' &&
-    Array.isArray(connected) &&
-    connected.every((session) => typeof session === 'string')
+    typeof payload === 'object' &&
+    payload !== null &&
+    'message' in payload &&
+    typeof payload.message === 'string'
+  );
+}
+
+function isTurnStarted(payload: unknown): payload is TurnStartedPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'activePlayerId' in payload &&
+    'deadlineMs' in payload &&
+    typeof payload.activePlayerId === 'string' &&
+    typeof payload.deadlineMs === 'number'
+  );
+}
+
+function isActionPlayed(payload: unknown): payload is ActionPlayedPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'actorPlayerId' in payload &&
+    'action' in payload &&
+    'turnSequence' in payload
+  );
+}
+
+function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'effectId' in payload &&
+    'livesLost' in payload
+  );
+}
+
+function isGameOver(payload: unknown): payload is GameOverPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'winnerPlayerId' in payload &&
+    typeof payload.winnerPlayerId === 'string'
   );
 }
 

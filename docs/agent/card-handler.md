@@ -7,8 +7,8 @@
 > §6.2 rulings · rules spec §1, §2, §3, §5 · types in `packages/shared/src/domain/card.ts`.
 >
 > **Status:** the registry (L0-03) lives in `apps/server/src/cards/`, the primitives (L0-04)
-> in `apps/server/src/engine/life/`. No card is implemented yet — the first is basic attack
-> in L1-08. The architecture below is a locked decision (Open decision #2, closed) — do not
+> in `apps/server/src/engine/life/`. Basic attack is implemented (L1-08); other cards remain
+> pending. The architecture below is a locked decision (Open decision #2, closed) — do not
 > re-derive it.
 
 ## Golden rules

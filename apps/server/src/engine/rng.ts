@@ -19,6 +19,11 @@ export interface Rng {
   nextInt(maxExclusive: number): number;
   /** A uniformly drawn element of `items`. Throws when `items` is empty. */
   pick<T>(items: readonly T[]): T;
+  /**
+   * Fisher–Yates shuffle of a copy of `items`. Same seed → same order.
+   * Used for turn order at game start (L1-03); later for kit distribution.
+   */
+  shuffle<T>(items: readonly T[]): T[];
 }
 
 /** FNV-1a, 32-bit: turns the seed string into the generator's starting state. */
@@ -83,6 +88,24 @@ export function createRng(seed: string): Rng {
       }
 
       return item;
+    },
+    shuffle<T>(items: readonly T[]): T[] {
+      const copy = [...items];
+
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = nextInt(index + 1);
+        const current = copy[index];
+        const swapped = copy[swapIndex];
+
+        if (current === undefined || swapped === undefined) {
+          throw new Error('shuffle indexing failed');
+        }
+
+        copy[index] = swapped;
+        copy[swapIndex] = current;
+      }
+
+      return copy;
     },
   };
 }

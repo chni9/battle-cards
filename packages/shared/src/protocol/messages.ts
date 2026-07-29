@@ -1,41 +1,82 @@
 /**
  * The client/server message contract — technical spec §5.2 and §5.3.
  *
- * Only the messages actually in use live here. The full event list of §5.2/§5.3 arrives one
- * lot at a time, with the feature that sends it: a name declared before anything sends it
- * cannot be kept honest.
+ * Spec §5.2 createRoom / joinRoom map to the matchmaker (decisions.md L1-01).
  */
 
-import type { PlaceholderStateView } from './state-view';
+import type { CardId } from '../domain/card';
+import type { StateView } from './state-view';
 
-/** The name the matchmaker knows the game room by. Joining by game code arrives with L1-01. */
 export const GAME_ROOM_NAME = 'game';
 
-/** The personalised state of one recipient (technical spec §5.3). One per client, never a broadcast. */
 export const STATE_UPDATE = 'stateUpdate';
-
-/**
- * Sent by a client once it has registered its message handlers, to ask for its first view.
- *
- * Not in technical spec §5.2's event list: it exists because the Colyseus SDK **drops** a
- * message that arrives before a handler for it is registered, and a server sending the first
- * view from `onJoin` is racing the client's own join promise. With the state carried by
- * messages rather than a synchronised schema, that first view has to be asked for.
- */
 export const CLIENT_READY = 'clientReady';
+export const START_GAME = 'startGame';
+export const DRAW_CARD = 'drawCard';
+export const PLAY_CARD = 'playCard';
+export const ERROR_MESSAGE = 'error';
+export const TURN_STARTED = 'turnStarted';
+export const ACTION_PLAYED = 'actionPlayed';
+export const ACTION_RESOLVED = 'actionResolved';
+export const PLAYER_ELIMINATED = 'playerEliminated';
+export const GAME_OVER = 'gameOver';
 
-/** Server → client payloads, keyed by message name. Used to type both ends of the wire. */
-export interface ServerToClientMessages {
-  [STATE_UPDATE]: PlaceholderStateView;
+export interface TurnStartedPayload {
+  activePlayerId: string;
+  deadlineMs: number;
 }
 
-/**
- * What a client sends when joining a room.
- *
- * `protocolVersion` lets the server refuse a client whose message contract is too old to
- * understand what it would receive (see `PROTOCOL_VERSION`). Like every client-supplied
- * value, the server revalidates it and trusts nothing else in the payload.
- */
-export interface JoinRoomOptions {
+export interface ActionPlayedPayload {
+  actorPlayerId: string;
+  action: 'draw' | 'playCard';
+  cardId?: CardId;
+  targetPlayerId?: string;
+  turnSequence: number;
+}
+
+export interface ActionResolvedPayload {
+  effectId: string;
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  cardId: CardId;
+  livesLost: number;
+  shieldAbsorbed: number;
+}
+
+export interface PlayerEliminatedPayload {
+  playerId: string;
+  eliminatorPlayerId: string | null;
+}
+
+export interface GameOverPayload {
+  winnerPlayerId: string;
+}
+
+export interface PlayCardPayload {
+  cardId: CardId;
+  targetPlayerId?: string;
+}
+
+export interface ServerToClientMessages {
+  [STATE_UPDATE]: StateView;
+  [ERROR_MESSAGE]: { message: string };
+  [TURN_STARTED]: TurnStartedPayload;
+  [ACTION_PLAYED]: ActionPlayedPayload;
+  [ACTION_RESOLVED]: ActionResolvedPayload;
+  [PLAYER_ELIMINATED]: PlayerEliminatedPayload;
+  [GAME_OVER]: GameOverPayload;
+}
+
+export interface RoomJoinOptions {
   protocolVersion: number;
+  nickname: string;
+}
+
+export type JoinRoomOptions = RoomJoinOptions;
+
+export interface ClientToServerMessages {
+  [CLIENT_READY]: undefined;
+  [START_GAME]: undefined;
+  [DRAW_CARD]: undefined;
+  [PLAY_CARD]: PlayCardPayload;
 }

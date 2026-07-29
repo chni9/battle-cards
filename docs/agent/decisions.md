@@ -129,9 +129,8 @@ Playbook code examples are marked `[TEMPLATE]` wherever the implementation does 
 at seeding time the repo held only the scaffold and the shared domain types. **Replace each
 template with the real pattern as its task lands.**
 
-`frontend.md` deliberately **not** created: the client is two files and has no established
-conventions, so any playbook would be invention. Create it during lot 1 (L1-12), derived from
-the real code. Postgres/game-log conventions likewise wait for lot 8 (L8-01).
+`frontend.md` created during L1-12 from the real client. Postgres/game-log conventions
+likewise wait for lot 8 (L8-01).
 
 ## 2026-07-29 · [T] Backlog moved from xlsx to markdown
 
@@ -359,3 +358,73 @@ dependency added for a task that touches no rule. The rest was verified by runni
 
 Repeat that sequence when the protocol changes shape. From L1-09 on, the view's contents belong
 in unit tests instead.
+
+## 2026-07-29 · [P] [DISCREPANCY] createRoom / joinRoom map to the matchmaker (L1-01)
+
+Technical spec §5.2 lists `createRoom` and `joinRoom` as client→server events. With Colyseus
+as transport only (no Schema), those intents are expressed via the **matchmaker**:
+
+- Create: `client.create('game', { nickname, protocolVersion })`
+- Join: `client.joinById(gameCode, { nickname, protocolVersion })`
+
+The room assigns a **6-letter A–Z** `roomId` (Colyseus custom-room-id recipe + Presence set
+`$card-battle-game-codes`) and that id *is* the game code. In-room messages stay for actions
+that happen after a seat is taken (`clientReady`, later `startGame`, `drawCard`, …).
+
+Reason: mapping create/join as in-room messages would require a gateway room and a second hop,
+with no benefit under the transport-only model. Recorded as a discrepancy rather than editing
+§5.2 (human-owned).
+
+## 2026-07-29 · [P] Lobby host is the room creator (L1-01)
+
+The first client to join a freshly created room is the host. Host leave before start promotes
+the earliest remaining seat (formalised in L1-02). Empty rooms dispose and free the game code.
+
+## 2026-07-29 · [P] Lobby launch rules (L1-02)
+
+`maxClients = 4`. Host-only `startGame` requires at least 2 seated players. A fifth join is
+refused by Colyseus capacity (and by `onAuth` once the game has started). Host leave before
+start promotes the earliest remaining seat. Successful start locks the room; GameState
+creation follows in L1-03.
+
+## 2026-07-29 · [P] Protocol version bumped to 2 (L1-01)
+
+`stateUpdate` is now a lobby view (`phase: 'lobby'`, seats with nicknames, game code, host).
+An L0-06 client cannot read it, so `PROTOCOL_VERSION` is 2.
+
+## 2026-07-29 · [P] L1 placeholder resources and hand (L1-03)
+
+Until L4-02 kit distribution:
+
+- Every player: `lives: 10`, `points: 0`, `upgradePoints: 0`, draw value `1`
+- Hand: 10 non-upgraded `basic-attack` copies (enough to eliminate at 1 dmg without buy)
+- `kitId: 'untouchable'` as an inert label — traits not applied
+- Turn order: seeded `Rng.shuffle` of seated players at `startGame`
+
+Draw value is a module constant (`L1_PLACEHOLDER_RESOURCES.draw`), not a `Player` field —
+§4.1 has no draw on the player; kits carry it later.
+
+## 2026-07-29 · [P] Wire event payloads for Lot 1 (L1-06 / L1-10)
+
+Typed in `packages/shared/src/protocol/messages.ts` (spec §5.3 was prose-only):
+
+- `turnStarted`: `{ activePlayerId, deadlineMs }`
+- `actionPlayed`: `{ actorPlayerId, action: 'draw'|'playCard', cardId?, targetPlayerId?, turnSequence }`
+- `actionResolved`: `{ effectId, sourcePlayerId, targetPlayerId, cardId, livesLost, shieldAbsorbed }`
+- `playerEliminated`: `{ playerId, eliminatorPlayerId: string | null }`
+- `gameOver`: `{ winnerPlayerId }`
+- `error`: `{ message }`
+
+`PROTOCOL_VERSION` bumped to 3 with the playing/finished views and these events.
+
+## 2026-07-29 · [P] playCard stays on `cardId` until L2-03
+
+Open discrepancy kept: §5.2 uses `cardId`. Server selects the first owned matching instance.
+Safe while L1 copies are identical and non-upgraded. Switch to `instanceId` when L2-03 lands;
+do not silently change the wire before that ruling is approved.
+
+## 2026-07-29 · [T] One commit per backlog task
+
+Default: each backlog ID gets its own Conventional Commit after it passes `pnpm verify` and is
+marked `Done`. Bundling a whole lot into one commit is allowed only when the developer says so
+for that session (as for Lot 1 catch-up). Recorded in `AGENTS.md` §10.

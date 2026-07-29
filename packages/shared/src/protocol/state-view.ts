@@ -1,21 +1,100 @@
 /**
  * What a client receives about the game — technical spec §5.1.
  *
- * The server builds one of these **per recipient**, and there is deliberately no type
- * describing a complete state that could be filtered on the way out: that pattern leaks
- * every field added later.
+ * The server builds one of these **per recipient**. No complete-state type exists to filter.
  */
 
-/**
- * Placeholder view, for the connection slice only (L0-06): the recipient's own session and
- * who else is in the room. It carries no game data because no game exists yet — the real
- * per-recipient view arrives with L1-09, which replaces this type.
- *
- * Nothing here is private: a player already sees who is connected (technical spec §5.1).
- */
-export interface PlaceholderStateView {
-  /** The recipient's own session id. */
-  you: string;
-  /** Everyone currently connected to the room, in join order. */
-  connected: readonly string[];
+import type { CardId, CardInstance } from '../domain/card';
+import type { KitId } from '../domain/kit';
+
+/** A seated player as seen in the lobby — nicknames are public once joined. */
+export interface LobbySeatView {
+  id: string;
+  nickname: string;
 }
+
+/**
+ * Lobby view (L1-01). No hands or resources: the game has not started.
+ */
+export interface LobbyStateView {
+  phase: 'lobby';
+  you: string;
+  gameCode: string;
+  hostPlayerId: string;
+  players: readonly LobbySeatView[];
+}
+
+/** Public slice of another player — technical spec §5.1. */
+export interface PublicPlayerView {
+  id: string;
+  nickname: string;
+  lives: number;
+  shield: number;
+  cardCount: number;
+  isEliminated: boolean;
+  /** True when this player is the recipient — private fields filled below. */
+  isYou: boolean;
+}
+
+/** Private resources — only on the recipient's own entry. */
+export interface PrivateSelfView {
+  points: number;
+  upgradePoints: number;
+  kitId: KitId;
+  hand: readonly CardInstance[];
+  specialCards: readonly CardInstance[];
+}
+
+export interface PendingEffectView {
+  id: string;
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  cardId: CardId;
+  isUpgraded: boolean;
+  queuedAt: number;
+}
+
+/**
+ * Playing view (L1-09). Built per recipient.
+ *
+ * Private: own kit, hand, exact resources.
+ * Public: lives, shield, card count, pending queue, turn order, actions history later.
+ * Server-only: never `seed`.
+ */
+export interface PlayingStateView {
+  phase: 'playing';
+  you: string;
+  gameCode: string;
+  currentTurnPlayerId: string | null;
+  turnSequence: number;
+  turnOrder: readonly string[];
+  /** Absolute deadline epoch ms for the current turn, or null if none. */
+  turnDeadlineMs: number | null;
+  players: readonly PublicPlayerView[];
+  /** Present only for the recipient. */
+  self: PrivateSelfView;
+  pendingEffects: readonly PendingEffectView[];
+  /** Public action log entries (card identity included — ruling §6.2 #7). */
+  actionLog: readonly ActionLogEntryView[];
+}
+
+export interface ActionLogEntryView {
+  actorPlayerId: string;
+  action: 'draw' | 'playCard';
+  cardId?: CardId;
+  targetPlayerId?: string;
+  turnSequence: number;
+}
+
+export interface FinishedStateView {
+  phase: 'finished';
+  you: string;
+  gameCode: string;
+  winnerPlayerId: string;
+  players: readonly PublicPlayerView[];
+}
+
+export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;
+
+/** @deprecated Use `StateView`. */
+export type PlaceholderStateView = StateView;

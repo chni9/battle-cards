@@ -1,37 +1,87 @@
 /**
- * The game room — technical spec §3, §5.1, §5.3.
+ * The game room — technical spec §3, §5.
  *
- * Colyseus is used as **transport only**: no `Schema` state, no automatic synchronisation.
- * The authoritative state stays a plain object on the server and every client receives its
- * own `stateUpdate` message, because §5.1 requires one view per recipient and golden rule 4
- * forbids building a complete state to filter on the way out — which is exactly what a
- * room-wide synchronised state is. See `docs/agent/decisions.md`.
- *
- * L0-06 scope: connect, count, disconnect. Game codes and nicknames arrive with L1-01, the
- * lobby and its 4-player limit with L1-02, the real state with L1-03, the real view with
- * L1-09, and the 60-second reconnection window with L7-01.
+ * Colyseus is transport only. Authoritative GameState is a plain object; each client gets
+ * its own stateUpdate. See docs/agent/decisions.md.
  */
 
 import {
+  ACTION_PLAYED,
+  ACTION_RESOLVED,
   CLIENT_READY,
+  DRAW_CARD,
+  ERROR_MESSAGE,
+  GAME_OVER,
+  PLAY_CARD,
+  PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  START_GAME,
   STATE_UPDATE,
+  TURN_STARTED,
+  type ActionLogEntryView,
+  type ActionPlayedPayload,
+  type CardId,
+  type GameState,
+  type LobbySeatView,
+  type PlayCardPayload,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
-import { buildViewFor } from '../protocol/build-view-for';
+import { createInitialState } from '../engine/create-initial-state';
+import { performTurnAction } from '../engine/turn/perform-action';
+import {
+  buildFinishedViewFor,
+  buildLobbyViewFor,
+  buildPlayingViewFor,
+} from '../protocol/build-view-for';
+import {
+  GAME_CODE_PRESENCE_CHANNEL,
+  generateGameCodeCandidate,
+} from './game-code';
+import {
+  canStartGame,
+  MAX_PLAYERS,
+  startGameRejectionMessage,
+} from './lobby-rules';
 
-/** A client typed with the messages the server may send it, so a wrong name fails to compile. */
 type GameClient = Client<{ messages: ServerToClientMessages }>;
 
+interface Seat {
+  sessionId: string;
+  nickname: string;
+}
+
+const TURN_DURATION_MS = 30_000;
+
 export class GameRoom extends Room<{ client: GameClient }> {
-  /**
-   * Runs before `onJoin`. Refuses a client whose message contract differs from the server's:
-   * it would misread everything it receives. `options` is `unknown` until checked — technical
-   * spec §5.4's "trust nothing the client sends" starts at the join.
-   */
+  override maxClients = MAX_PLAYERS;
+
+  private seats: Seat[] = [];
+  private hostSessionId: string | null = null;
+  private hasStarted = false;
+  private gameState: GameState | null = null;
+  private winnerPlayerId: string | null = null;
+  private actionTakenThisTurn = false;
+  private turnDeadlineMs: number | null = null;
+  private turnTimer: ReturnType<typeof setTimeout> | null = null;
+  private actionLog: ActionLogEntryView[] = [];
+
+  override async onCreate(): Promise<void> {
+    this.roomId = await this.allocateGameCode();
+    console.log(`[${this.roomId}] room created`);
+  }
+
+  override async onDispose(): Promise<void> {
+    this.clearTurnTimer();
+    await this.presence.srem(GAME_CODE_PRESENCE_CHANNEL, this.roomId);
+  }
+
   override onAuth(_client: GameClient, options: unknown): boolean {
+    if (this.hasStarted) {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This game has already started.');
+    }
+
     const clientVersion = readProtocolVersion(options);
 
     if (clientVersion !== PROTOCOL_VERSION) {
@@ -43,52 +93,329 @@ export class GameRoom extends Room<{ client: GameClient }> {
       );
     }
 
+    if (readNickname(options) === null) {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'A nickname is required to join.');
+    }
+
     return true;
   }
 
   override messages = {
-    /**
-     * A client reporting that its handlers are registered. Its first view is sent here rather
-     * than from `onJoin`, because the SDK silently drops a message that arrives before its
-     * handler exists — and `onJoin` runs before the client's join promise resolves.
-     */
     [CLIENT_READY]: (client: GameClient): void => {
-      this.sendStateTo(client, this.connectedSessionIds());
+      this.sendStateTo(client);
+    },
+
+    [START_GAME]: (client: GameClient): void => {
+      const hostSessionId = this.hostSessionId;
+
+      if (hostSessionId === null) {
+        client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+        return;
+      }
+
+      const rejection = canStartGame({
+        requesterSessionId: client.sessionId,
+        hostSessionId,
+        seatCount: this.seats.length,
+        hasStarted: this.hasStarted,
+      });
+
+      if (rejection !== null) {
+        client.send(ERROR_MESSAGE, { message: startGameRejectionMessage(rejection) });
+        return;
+      }
+
+      this.hasStarted = true;
+      this.gameState = createInitialState({
+        seats: this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname })),
+      });
+      this.actionTakenThisTurn = false;
+      this.actionLog = [];
+      void this.lock();
+      console.log(
+        `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
+      );
+      this.beginTurnTimer();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+    },
+
+    [DRAW_CARD]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'draw' });
+    },
+
+    [PLAY_CARD]: (client: GameClient, payload: unknown): void => {
+      const parsed = readPlayCardPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid playCard payload.' });
+        return;
+      }
+
+      if (parsed.targetPlayerId === undefined) {
+        client.send(ERROR_MESSAGE, { message: 'A target is required.' });
+        return;
+      }
+
+      this.handleAction(client, {
+        type: 'playCard',
+        cardId: parsed.cardId,
+        targetPlayerId: parsed.targetPlayerId,
+      });
     },
   };
 
-  override onJoin(client: GameClient): void {
-    console.log(`[${this.roomId}] ${client.sessionId} joined — ${this.clients.length} connected`);
-    // Everyone but the newcomer: theirs comes when it says it is ready.
+  override onJoin(client: GameClient, options: unknown): void {
+    const nickname = readNickname(options);
+
+    if (nickname === null) {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'A nickname is required to join.');
+    }
+
+    this.seats.push({ sessionId: client.sessionId, nickname });
+    this.hostSessionId ??= client.sessionId;
+
+    console.log(
+      `[${this.roomId}] ${nickname} (${client.sessionId}) joined — ${this.seats.length} seated`,
+    );
+
+    if (this.clients.length >= this.maxClients) {
+      void this.lock();
+    }
+
     this.sendStateToEveryoneExcept(client);
   }
 
   override onLeave(client: GameClient): void {
-    console.log(`[${this.roomId}] ${client.sessionId} left — ${this.clients.length} connected`);
-    // The leaving client is already out of `this.clients` here.
+    this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
+
+    if (this.hostSessionId === client.sessionId) {
+      this.hostSessionId = this.seats[0]?.sessionId ?? null;
+    }
+
+    console.log(`[${this.roomId}] ${client.sessionId} left — ${this.seats.length} seated`);
+
+    if (!this.hasStarted && this.clients.length < this.maxClients) {
+      void this.unlock();
+    }
+
     this.sendStateToEveryoneExcept(client);
   }
 
-  private connectedSessionIds(): string[] {
-    return this.clients.map((client) => client.sessionId);
+  private handleAction(
+    client: GameClient,
+    action: { type: 'draw' } | { type: 'playCard'; cardId: CardId; targetPlayerId: string },
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    if (this.actionTakenThisTurn) {
+      client.send(ERROR_MESSAGE, { message: 'You already acted this turn.' });
+      return;
+    }
+
+    const result = performTurnAction(state, client.sessionId, action);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.actionTakenThisTurn = true;
+    this.clearTurnTimer();
+
+    const played: ActionPlayedPayload = {
+      actorPlayerId: result.actionPlayed.actorPlayerId,
+      action: result.actionPlayed.action,
+      turnSequence: result.actionPlayed.turnSequence,
+      ...(result.actionPlayed.cardId !== undefined
+        ? { cardId: result.actionPlayed.cardId }
+        : {}),
+      ...(result.actionPlayed.targetPlayerId !== undefined
+        ? { targetPlayerId: result.actionPlayed.targetPlayerId }
+        : {}),
+    };
+
+    this.actionLog.push(played);
+    this.broadcast(ACTION_PLAYED, played);
+
+    for (const resolved of result.resolved) {
+      this.broadcast(ACTION_RESOLVED, resolved);
+    }
+
+    for (const playerId of result.eliminatedPlayerIds) {
+      this.broadcast(PLAYER_ELIMINATED, {
+        playerId,
+        eliminatorPlayerId: null,
+      });
+    }
+
+    if (result.winnerPlayerId !== null) {
+      this.winnerPlayerId = result.winnerPlayerId;
+      this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
+      this.sendStateToEveryone();
+      return;
+    }
+
+    this.actionTakenThisTurn = false;
+    this.beginTurnTimer();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
   }
 
-  /**
-   * One message per client, each built for that client alone. Never `broadcast`: a broadcast
-   * sends a single payload to everybody, which is the pattern §5.1 rules out.
-   */
-  private sendStateToEveryoneExcept(excluded: GameClient): void {
-    const connectedSessionIds = this.connectedSessionIds();
+  private beginTurnTimer(): void {
+    this.clearTurnTimer();
+    const state = this.gameState;
 
+    if (state?.currentTurnPlayerId === null || state === null) {
+      this.turnDeadlineMs = null;
+      return;
+    }
+
+    this.turnDeadlineMs = Date.now() + TURN_DURATION_MS;
+    const activePlayerId = state.currentTurnPlayerId;
+
+    this.turnTimer = setTimeout(() => {
+      this.onTurnTimeout(activePlayerId);
+    }, TURN_DURATION_MS);
+  }
+
+  private onTurnTimeout(expectedPlayerId: string): void {
+    const state = this.gameState;
+
+    if (
+      state === null ||
+      this.winnerPlayerId !== null ||
+      this.actionTakenThisTurn ||
+      state.currentTurnPlayerId !== expectedPlayerId
+    ) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] turn timeout — auto draw for ${expectedPlayerId}`);
+    const client = this.clients.find((entry) => entry.sessionId === expectedPlayerId);
+
+    if (client !== undefined) {
+      this.handleAction(client, { type: 'draw' });
+      return;
+    }
+
+    // Player missing from clients: still advance via engine.
+    const result = performTurnAction(state, expectedPlayerId, { type: 'draw' });
+
+    if (!result.ok) {
+      return;
+    }
+
+    this.actionLog.push(result.actionPlayed);
+    this.broadcast(ACTION_PLAYED, result.actionPlayed);
+
+    for (const resolved of result.resolved) {
+      this.broadcast(ACTION_RESOLVED, resolved);
+    }
+
+    this.actionTakenThisTurn = false;
+    this.beginTurnTimer();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private broadcastTurnStarted(): void {
+    const state = this.gameState;
+    const activePlayerId = state?.currentTurnPlayerId;
+    const deadlineMs = this.turnDeadlineMs;
+
+    if (activePlayerId === null || activePlayerId === undefined || deadlineMs === null) {
+      return;
+    }
+
+    this.broadcast(TURN_STARTED, { activePlayerId, deadlineMs });
+  }
+
+  private clearTurnTimer(): void {
+    if (this.turnTimer !== null) {
+      clearTimeout(this.turnTimer);
+      this.turnTimer = null;
+    }
+  }
+
+  private seatViews(): LobbySeatView[] {
+    return this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
+  }
+
+  private sendStateToEveryone(): void {
+    for (const client of this.clients) {
+      this.sendStateTo(client);
+    }
+  }
+
+  private sendStateToEveryoneExcept(excluded: GameClient): void {
     for (const client of this.clients) {
       if (client.sessionId !== excluded.sessionId) {
-        this.sendStateTo(client, connectedSessionIds);
+        this.sendStateTo(client);
       }
     }
   }
 
-  private sendStateTo(client: GameClient, connectedSessionIds: readonly string[]): void {
-    client.send(STATE_UPDATE, buildViewFor(client.sessionId, connectedSessionIds));
+  private sendStateTo(client: GameClient): void {
+    const hostPlayerId = this.hostSessionId;
+
+    if (!this.hasStarted || this.gameState === null) {
+      if (hostPlayerId === null) {
+        return;
+      }
+
+      client.send(
+        STATE_UPDATE,
+        buildLobbyViewFor({
+          recipientSessionId: client.sessionId,
+          gameCode: this.roomId,
+          hostPlayerId,
+          seats: this.seatViews(),
+        }),
+      );
+      return;
+    }
+
+    if (this.winnerPlayerId !== null) {
+      client.send(
+        STATE_UPDATE,
+        buildFinishedViewFor({
+          recipientSessionId: client.sessionId,
+          gameCode: this.roomId,
+          state: this.gameState,
+          winnerPlayerId: this.winnerPlayerId,
+        }),
+      );
+      return;
+    }
+
+    client.send(
+      STATE_UPDATE,
+      buildPlayingViewFor({
+        recipientSessionId: client.sessionId,
+        gameCode: this.roomId,
+        state: this.gameState,
+        turnDeadlineMs: this.turnDeadlineMs,
+        actionLog: this.actionLog,
+      }),
+    );
+  }
+
+  private async allocateGameCode(): Promise<string> {
+    const currentIds = await this.presence.smembers(GAME_CODE_PRESENCE_CHANNEL);
+    let code = generateGameCodeCandidate();
+
+    while (currentIds.includes(code)) {
+      code = generateGameCodeCandidate();
+    }
+
+    await this.presence.sadd(GAME_CODE_PRESENCE_CHANNEL, code);
+    return code;
   }
 }
 
@@ -100,4 +427,48 @@ function readProtocolVersion(options: unknown): number | null {
   const { protocolVersion } = options;
 
   return typeof protocolVersion === 'number' ? protocolVersion : null;
+}
+
+function readNickname(options: unknown): string | null {
+  if (typeof options !== 'object' || options === null || !('nickname' in options)) {
+    return null;
+  }
+
+  const { nickname } = options;
+
+  if (typeof nickname !== 'string') {
+    return null;
+  }
+
+  const trimmed = nickname.trim();
+
+  if (trimmed.length === 0 || trimmed.length > 24) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('cardId' in payload)) {
+    return null;
+  }
+
+  const { cardId } = payload;
+
+  if (typeof cardId !== 'string') {
+    return null;
+  }
+
+  if (!('targetPlayerId' in payload)) {
+    return { cardId: cardId as CardId };
+  }
+
+  const { targetPlayerId } = payload;
+
+  if (typeof targetPlayerId !== 'string') {
+    return null;
+  }
+
+  return { cardId: cardId as CardId, targetPlayerId };
 }

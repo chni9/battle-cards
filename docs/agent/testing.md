@@ -119,3 +119,4 @@ These are the spots where a plausible implementation is wrong and silent:
 - [ ] All randomness seeded and reproducible
 - [ ] `pnpm verify` green
 - [ ] The task's own "Acceptance criteria" column satisfied, not just the suite
+- [ ] One commit for this backlog task ID (unless the developer allowed a bundle)

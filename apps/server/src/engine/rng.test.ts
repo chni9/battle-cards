@@ -98,6 +98,32 @@ describe('createRng — pick', () => {
   });
 });
 
+describe('createRng — shuffle', () => {
+  it('produces the same order for the same seed', () => {
+    const items = ['a', 'b', 'c', 'd'] as const;
+
+    expect(createRng('shuffle-seed').shuffle(items)).toEqual(
+      createRng('shuffle-seed').shuffle(items),
+    );
+  });
+
+  it('does not mutate the input list', () => {
+    const items = ['a', 'b', 'c'];
+    const copy = [...items];
+
+    createRng('shuffle-mut').shuffle(items);
+
+    expect(items).toEqual(copy);
+  });
+
+  it('preserves every element', () => {
+    const items = ['a', 'b', 'c', 'd'];
+    const shuffled = createRng('shuffle-all').shuffle(items);
+
+    expect([...shuffled].sort()).toEqual([...items].sort());
+  });
+});
+
 describe('createSeed', () => {
   it('returns a fresh non-empty seed each time', () => {
     const first = createSeed();

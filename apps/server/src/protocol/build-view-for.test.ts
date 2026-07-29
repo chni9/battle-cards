@@ -1,34 +1,92 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildViewFor } from './build-view-for';
+import { createInitialState } from '../engine/create-initial-state';
+import { buildLobbyViewFor, buildPlayingViewFor } from './build-view-for';
 
-describe('buildViewFor (technical spec §5.1, golden rule 4)', () => {
+describe('buildLobbyViewFor (L1-01)', () => {
+  const seats = [
+    { id: 'session-a', nickname: 'Alice' },
+    { id: 'session-b', nickname: 'Bob' },
+  ] as const;
+
   it('tells the recipient which session is theirs', () => {
-    const view = buildViewFor('session-b', ['session-a', 'session-b']);
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'session-b',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+    });
 
     expect(view.you).toBe('session-b');
+    expect(view.phase).toBe('lobby');
   });
 
-  it('lists everyone connected, which is public information', () => {
-    const view = buildViewFor('session-a', ['session-a', 'session-b', 'session-c']);
+  it('refuses to build a view for someone who is not seated', () => {
+    expect(() =>
+      buildLobbyViewFor({
+        recipientSessionId: 'intruder',
+        gameCode: 'ABCDEF',
+        hostPlayerId: 'session-a',
+        seats,
+      }),
+    ).toThrow(/not in the room/);
+  });
+});
 
-    expect(view.connected).toEqual(['session-a', 'session-b', 'session-c']);
+describe('buildPlayingViewFor (L1-09) — hidden information', () => {
+  it('never puts an opponent hand in the recipient payload', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'view-seed',
+    });
+
+    const viewForA = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    const serialised = JSON.stringify(viewForA);
+    const opponent = state.players.find((player) => player.id === 'b');
+
+    expect(opponent).toBeDefined();
+
+    if (opponent === undefined) {
+      return;
+    }
+
+    const opponentInstanceId = opponent.hand[0]?.instanceId;
+
+    expect(viewForA.self.hand.length).toBeGreaterThan(0);
+    expect(opponentInstanceId).toBeDefined();
+    expect(serialised).not.toContain(opponentInstanceId);
+    expect(viewForA.players.find((player) => player.id === 'b')?.cardCount).toBe(
+      opponent.hand.length,
+    );
   });
 
-  it('builds a different view for each recipient of the same room', () => {
-    const connected = ['session-a', 'session-b'];
+  it('never includes the game seed', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'secret-seed-value',
+    });
 
-    expect(buildViewFor('session-a', connected)).not.toEqual(buildViewFor('session-b', connected));
-  });
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
 
-  it('never shares the room list with the view it returns', () => {
-    const connected = ['session-a'];
-    const view = buildViewFor('session-a', connected);
-
-    expect(view.connected).not.toBe(connected);
-  });
-
-  it('refuses to build a view for someone who is not in the room', () => {
-    expect(() => buildViewFor('intruder', ['session-a'])).toThrow(/not in the room/);
+    expect(JSON.stringify(view)).not.toContain('secret-seed-value');
   });
 });

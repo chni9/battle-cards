@@ -42,12 +42,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-6 of 63 tasks done. **Lot 0 is complete** — next up is L1-01.
+19 of 63 tasks done. **Lot 1 complete (M1)** — next up is L2-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
-| 1 · Vertical slice | 13 | 0 |
+| 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 0 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
@@ -96,7 +96,7 @@ One typed handler per card, registered in a registry, sharing common primitives.
 - **Watch point** Architecture decision not yet made. Without a ruling, the agent will produce a half-DSL that collapses on Cloning and Absorber.
 - **Acceptance** Adding a card modifies no existing file outside the registry
 - **Note** Open decision #2 is now closed — typed handler registry, no DSL. See `agent/decisions.md` and `agent/card-handler.md`. The watch point above is resolved.
-- **Note** Ran after L0-04, so the handler contract was written against real primitive signatures. The registry is keyed on `IMPLEMENTED_CARD_IDS` with a compiler-enforced `PENDING_CARD_IDS` beside it, since the 16 cards land across lots 1 to 5 — see `agent/decisions.md`. No card is implemented yet; the first is basic attack in L1-08.
+- **Note** Ran after L0-04, so the handler contract was written against real primitive signatures. The registry is keyed on `IMPLEMENTED_CARD_IDS` with a compiler-enforced `PENDING_CARD_IDS` beside it, since the 16 cards land across lots 1 to 5 — see `agent/decisions.md`. Basic attack landed in L1-08; others remain pending.
 
 ### L0-04 · Life-loss primitives — `Done`
 
@@ -126,52 +126,58 @@ Empty server-side room, React client connecting to it and displaying the receive
 
 ## Lot 1 · Vertical slice
 
-### L1-01 · Home screen and game creation — `To do`
+### L1-01 · Home screen and game creation — `Done`
 
 createRoom generates a game code, joinRoom joins by code, nickname entry.
 
 - **Reference** Spec §5.2 · §7 · **Depends on** L0-06 · **Complexity** M · **Risk** Low
 - **Acceptance** One player creates, a second joins by code, both see each other
+- **Note** Spec §5.2 createRoom/joinRoom map to Colyseus `create` / `joinById`; game code is a 6-letter `roomId`. See `agent/decisions.md`.
 
-### L1-02 · Lobby and launch — `To do`
+### L1-02 · Lobby and launch — `Done`
 
 List of connected players. Host launches from 2 players onward. Rejected beyond 4.
 
 - **Reference** Spec §5.2 · §7 · **Depends on** L1-01 · **Complexity** S · **Risk** Low
 - **Acceptance** Launch rejected at 1 player, entry rejected for a 5th
+- **Note** Host leave before start promotes earliest remaining seat. GameState creation is L1-03.
 
-### L1-03 · Initial state and turn order — `To do`
+### L1-03 · Initial state and turn order — `Done`
 
 GameState creation, stable turn order, starting resources as placeholder values (kits arrive in lot 4).
 
 - **Reference** Spec §4.1 · **Depends on** L1-02, L0-05 · **Complexity** M · **Risk** Low
 - **Watch point** Do not anticipate kits here. Hardcoded values assumed, replaced in lot 4.
 - **Acceptance** A 2-player game starts with a stable turn order
+- **Note** Placeholders: 10 lives, 0 points, 0 upgrade points, draw 1, 10× basic-attack, kitId untouchable inert. Seeded shuffle for turn order. See `agent/decisions.md`.
 
-### L1-04 · Turn loop — `To do`
+### L1-04 · Turn loop — `Done`
 
 One action per turn, pass to the next player, increment turnSequence.
 
 - **Reference** Spec §4.3 · rules spec §6 · **Depends on** L1-03 · **Complexity** M · **Risk** Medium
 - **Watch point** turnSequence serves as queuedAt for the effects queue: a global counter, never per player.
 - **Acceptance** A second action in the same turn is rejected
+- **Note** Room tracks `actionTakenThisTurn`; engine advances via `advanceTurn` after action + resolve.
 
-### L1-05 · Draw action — `To do`
+### L1-05 · Draw action — `Done`
 
 The player gains a number of points equal to their kit's Draw value. No card gained.
 
 - **Reference** Rules spec §6 · **Depends on** L1-04 · **Complexity** S · **Risk** Low
 - **Acceptance** The player gains the right number of points, their turn ends
+- **Note** Uses `L1_PLACEHOLDER_RESOURCES.draw` (= 1) until kits land.
 
-### L1-06 · Turn timer — `To do`
+### L1-06 · Turn timer — `Done`
 
 30 seconds. Deadline computed and sent by the server. Automatic draw on expiry.
 
 - **Reference** Spec §5.5 · **Depends on** L1-05 · **Complexity** M · **Risk** Medium
 - **Watch point** The deadline comes from the server. A client-only counter is bypassable and drifts.
 - **Acceptance** A turn with no action triggers a draw at 30s
+- **Note** `turnStarted` carries `deadlineMs`; room `setTimeout` auto-draws.
 
-### L1-07 · Delayed resolution queue — `To do`
+### L1-07 · Delayed resolution queue — `Done`
 
 pendingEffects per player. Resolution after the target has played their action, in ascending queuedAt order.
 
@@ -179,7 +185,7 @@ pendingEffects per player. Resolution after the target has played their action, 
 - **Watch point** The core of the game. An effect resolving before its target's action invalidates the entire bluffing mechanic.
 - **Acceptance** An effect queued on turn 1 only resolves on its target's turn, after their action
 
-### L1-08 · Basic attack only — `To do`
+### L1-08 · Basic attack only — `Done`
 
 A single card implemented: play, target, queue, resolve via applyDamage.
 
@@ -187,7 +193,7 @@ A single card implemented: play, target, queue, resolve via applyDamage.
 - **Watch point** Do not add the other two attacks here. They arrive in lot 2.
 - **Acceptance** The target loses 1 life at the right moment, never before their turn
 
-### L1-09 · Per-recipient view — `To do`
+### L1-09 · Per-recipient view — `Done`
 
 The server builds one state per player. Private: kit, hand, exact resource values. Public: actions played, effects queue, lives, shield, card count.
 
@@ -195,7 +201,7 @@ The server builds one state per player. Private: kit, hand, exact resource value
 - **Watch point** Do this now, not later. Filtering added after the fact leaks any field added afterward.
 - **Acceptance** The payload received by a client never contains an opponent's hand
 
-### L1-10 · actionPlayed and actionResolved — `To do`
+### L1-10 · actionPlayed and actionResolved — `Done`
 
 Two distinct events: the first broadcast as soon as the action is played, the second on its resolution.
 
@@ -203,30 +209,32 @@ Two distinct events: the first broadcast as soon as the action is played, the se
 - **Watch point** Conflating them breaks the public-actions visibility model.
 - **Acceptance** Both events arrive separately and in the right order
 
-### L1-11 · Server-side validation — `To do`
+### L1-11 · Server-side validation — `Done`
 
 Full revalidation of every action: card ownership, sufficient resources, whose turn it is, valid target.
 
 - **Reference** Spec §5.4 · **Depends on** L1-08 · **Complexity** M · **Risk** Medium
 - **Watch point** A greyed-out client button is not validation.
 - **Acceptance** An action forged from the browser console is rejected
+- **Note** `performTurnAction` rejects wrong turn, missing card, bad target, insufficient points; room rejects second action.
 
-### L1-12 · Minimal game table — `To do`
+### L1-12 · Minimal game table — `Done`
 
 Opponents, private zone, action log, pending effects queue, timer, draw and attack actions.
 
 - **Reference** Spec §7 · **Depends on** L1-10 · **Complexity** L · **Risk** Medium
 - **Watch point** The action log is the screen's main organ, not a secondary panel.
 - **Acceptance** A 2-player game is fully playable from the interface
+- **Note** `docs/agent/frontend.md` created from the real client.
 
-### L1-13 · Elimination and victory — `To do`
+### L1-13 · Elimination and victory — `Done`
 
 Elimination at 0 lives, last survivor wins, summary end screen.
 
 - **Reference** Rules spec §6 · §7 · **Depends on** L1-12 · **Complexity** M · **Risk** Low
 - **Watch point** Elimination rewards are out of scope here: lot 6.
 - **Acceptance** A 2-player game ends and displays the winner
-
+- **Note** No rewards; cards of the eliminated go to the pool.
 ## Lot 2 · Economy and attacks
 
 ### L2-01 · Buying and selling cards — `To do`

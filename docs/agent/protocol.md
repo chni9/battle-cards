@@ -6,10 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** the room, the connection and the per-recipient send path exist (L0-06) in
+> **Status:** lobby + playing + finished per-recipient views exist (L1-01…L1-13) in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
-> `apps/client/src/net/`. The view itself is still a placeholder: the real one arrives with
-> L1-09, the visibility matrix with L3-05.
+> `apps/client/src/net/`. The Spy visibility matrix arrives with L3-05.
 > Fetch current Colyseus APIs via Context7 before coding; do not write them from memory —
 > 0.17 renamed the client package and changed the server bootstrap.
 

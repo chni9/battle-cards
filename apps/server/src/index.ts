@@ -1,8 +1,8 @@
 /**
  * Server entry point — technical spec §3.
  *
- * One room type for now, reachable under the name `game`. Rooms are created on demand by the
- * matchmaker; joining by game code arrives with L1-01.
+ * One room type, reachable under the name `game`. Create via matchmaker `create`; join by
+ * the 6-letter game code via `joinById` (L1-01).
  */
 
 import { GAME_ROOM_NAME, PROTOCOL_VERSION } from '@card-battle/shared';

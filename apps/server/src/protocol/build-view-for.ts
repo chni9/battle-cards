@@ -1,32 +1,131 @@
 /**
  * Per-recipient view construction — technical spec §5.1, AGENTS golden rule 4.
  *
- * One function, one recipient. There is deliberately no "full view" builder anywhere for
- * this to filter down from: a filtering pipeline leaks every field added after it was
- * written, silently and without a test failing.
- *
- * A pure function on purpose — it needs no room, no socket and no server to be tested, which
- * is what makes the hidden-information tests of technical spec §8 level 2 cheap to write.
- *
- * L0-06 scope: the connection slice only. `GameState` does not exist yet (L1-03) and the real
- * view arrives with L1-09, which replaces this body and its return type. What must survive
- * that replacement is the shape of this module: recipient in, that recipient's view out.
+ * One function, one recipient. No "full view" builder to filter down from.
  */
 
-import type { PlaceholderStateView } from '@card-battle/shared';
+import type {
+  ActionLogEntryView,
+  FinishedStateView,
+  GameState,
+  LobbySeatView,
+  LobbyStateView,
+  PendingEffectView,
+  PlayingStateView,
+  PrivateSelfView,
+  PublicPlayerView,
+} from '@card-battle/shared';
 
-export function buildViewFor(
-  recipientSessionId: string,
-  connectedSessionIds: readonly string[],
-): PlaceholderStateView {
-  if (!connectedSessionIds.includes(recipientSessionId)) {
-    // A view is always built *for a participant*. Building one for anybody else means a
-    // caller is about to send someone a view that is not theirs.
+export interface LobbyViewInput {
+  recipientSessionId: string;
+  gameCode: string;
+  hostPlayerId: string;
+  seats: readonly LobbySeatView[];
+}
+
+export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
+  const { recipientSessionId, gameCode, hostPlayerId, seats } = input;
+
+  if (!seats.some((seat) => seat.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
 
   return {
+    phase: 'lobby',
     you: recipientSessionId,
-    connected: [...connectedSessionIds],
+    gameCode,
+    hostPlayerId,
+    players: seats.map((seat) => ({ id: seat.id, nickname: seat.nickname })),
+  };
+}
+
+export interface PlayingViewInput {
+  recipientSessionId: string;
+  gameCode: string;
+  state: GameState;
+  turnDeadlineMs: number | null;
+  actionLog: readonly ActionLogEntryView[];
+}
+
+export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
+  const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog } = input;
+  const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
+
+  if (selfPlayer === undefined) {
+    throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
+  }
+
+  const pendingEffects: PendingEffectView[] = state.players.flatMap((player) =>
+    player.pendingEffects.map((effect) => ({
+      id: effect.id,
+      sourcePlayerId: effect.sourcePlayerId,
+      targetPlayerId: effect.targetPlayerId,
+      cardId: effect.cardId,
+      isUpgraded: effect.isUpgraded,
+      queuedAt: effect.queuedAt,
+    })),
+  );
+
+  const players: PublicPlayerView[] = state.players.map((player) => ({
+    id: player.id,
+    nickname: player.nickname,
+    lives: player.lives,
+    shield: player.shield,
+    cardCount: player.hand.length + player.specialCards.length,
+    isEliminated: player.isEliminated,
+    isYou: player.id === recipientSessionId,
+  }));
+
+  const self: PrivateSelfView = {
+    points: selfPlayer.points,
+    upgradePoints: selfPlayer.upgradePoints,
+    kitId: selfPlayer.kitId,
+    hand: selfPlayer.hand.map((card) => ({ ...card })),
+    specialCards: selfPlayer.specialCards.map((card) => ({ ...card })),
+  };
+
+  return {
+    phase: 'playing',
+    you: recipientSessionId,
+    gameCode,
+    currentTurnPlayerId: state.currentTurnPlayerId,
+    turnSequence: state.turnSequence,
+    turnOrder: state.players.map((player) => player.id),
+    turnDeadlineMs,
+    players,
+    self,
+    pendingEffects,
+    actionLog: [...actionLog],
+  };
+}
+
+export interface FinishedViewInput {
+  recipientSessionId: string;
+  gameCode: string;
+  state: GameState;
+  winnerPlayerId: string;
+}
+
+export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateView {
+  const { recipientSessionId, gameCode, state, winnerPlayerId } = input;
+
+  if (!state.players.some((player) => player.id === recipientSessionId)) {
+    throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
+  }
+
+  return {
+    phase: 'finished',
+    you: recipientSessionId,
+    gameCode,
+    winnerPlayerId,
+    players: state.players.map((player) => ({
+      id: player.id,
+      nickname: player.nickname,
+      lives: player.lives,
+      shield: player.shield,
+      cardCount: player.hand.length + player.specialCards.length,
+      isEliminated: player.isEliminated,
+      isYou: player.id === recipientSessionId,
+    })),
   };
 }
