@@ -208,3 +208,40 @@ player ever gains lives. Deliberate widening of the task's scope, by developer i
   typechecked by `pnpm typecheck` even though Vitest itself runs without `--typecheck`.
 - The primitives reject a negative amount with a `RangeError`. Not a rule: no rule produces one,
   and a negative amount would silently heal through an attack card or make a gain into a loss.
+
+## 2026-07-29 · [T] The registry is keyed on implemented cards, with a pending list beside it (L0-03)
+
+`card-handler.md` wanted `Record<CardId, CardHandler>` so the compiler would refuse an incomplete
+registry. That guarantee is unavailable for most of the project: the 16 cards land across lots 1
+to 5, and a total record would need 15 placeholder handlers that a mistake could ship as
+playable.
+
+Adopted instead: `IMPLEMENTED_CARD_IDS` keys the handler map, and `PENDING_CARD_IDS` — typed
+`Exclude<CardId, ImplementedCardId>` — holds the rest. Three mechanisms keep the pair honest,
+and moving a card requires touching both halves:
+
+- the pending list stops compiling when it still holds an id that has become implemented;
+- the handler map's key type refuses a handler for an undeclared card, and a declared card
+  with no handler;
+- `registry.test.ts` proves the two lists account for all 16 ids and never overlap.
+
+A deliberately failing test asserting "all 16 implemented" was considered and rejected: technical
+spec §8 requires a green suite with nothing skipped, so a red run from lot 0 to lot 5 would have
+made the Definition of Done unreachable for every task in between. Verified by hand that a stale
+pending entry fails `pnpm typecheck` with two distinct errors.
+
+`findHandler` returns `undefined` for a pending card. Playing an unimplemented card is an action
+the server rejects, never an exception that takes a room down.
+
+## 2026-07-29 · [P] `EffectContext` starts minimal and grows per lot (L0-03)
+
+It carries `state`, `sourcePlayerId`, `targetPlayerId` and the played `CardInstance` — nothing
+else, because nothing else exists yet. Designing the full context now (queue, ledger, visibility,
+sub-choices) would mean inventing the signatures of four unbuilt subsystems.
+
+Two rules govern the growth: the life primitives are **imported** directly by the handler that
+needs them, keeping the context free of a service-locator bag; anything random is **injected**
+through the context, since a handler reaching for its own generator breaks reproducibility
+(golden rule 5). `targetPlayerId` is `string | null` rather than optional, matching the domain's
+existing use of `null` for absent values and avoiding `exactOptionalPropertyTypes` friction at
+every call site.

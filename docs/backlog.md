@@ -42,11 +42,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-3 of 63 tasks done.
+4 of 63 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 0 · Project foundation | 6 | 3 |
+| 0 · Project foundation | 6 | 4 |
 | 1 · Vertical slice | 13 | 0 |
 | 2 · Economy and attacks | 6 | 0 |
 | 3 · Action cards | 9 | 0 |
@@ -88,7 +88,7 @@ GameState, Player, Card, Kit, PendingEffect, PersistentEffect, TurnLedger, Conne
 - **Watch point** Any duplicated domain type between client and server is immediate debt.
 - **Acceptance** No domain type defined twice anywhere in the repo
 
-### L0-03 · Effect handler registry — `To do`
+### L0-03 · Effect handler registry — `Done`
 
 One typed handler per card, registered in a registry, sharing common primitives. No generic effect engine.
 
@@ -96,6 +96,7 @@ One typed handler per card, registered in a registry, sharing common primitives.
 - **Watch point** Architecture decision not yet made. Without a ruling, the agent will produce a half-DSL that collapses on Cloning and Absorber.
 - **Acceptance** Adding a card modifies no existing file outside the registry
 - **Note** Open decision #2 is now closed — typed handler registry, no DSL. See `agent/decisions.md` and `agent/card-handler.md`. The watch point above is resolved.
+- **Note** Ran after L0-04, so the handler contract was written against real primitive signatures. The registry is keyed on `IMPLEMENTED_CARD_IDS` with a compiler-enforced `PENDING_CARD_IDS` beside it, since the 16 cards land across lots 1 to 5 — see `agent/decisions.md`. No card is implemented yet; the first is basic attack in L1-08.
 
 ### L0-04 · Life-loss primitives — `Done`
 
