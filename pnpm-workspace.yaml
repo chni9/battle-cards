@@ -1,0 +1,7 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# esbuild's postinstall fetches its native binary; tsx and vitest are unusable without it.
+onlyBuiltDependencies:
+  - esbuild

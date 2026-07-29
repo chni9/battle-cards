@@ -1,0 +1,16 @@
+{
+  "name": "@card-battle/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Domain types shared by server and client. Single source of truth — never duplicated.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
