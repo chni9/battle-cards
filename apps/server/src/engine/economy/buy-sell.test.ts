@@ -54,12 +54,14 @@ describe('buyCard / sellCard (rules spec §1, L2-01)', () => {
     const state = started();
     const player = actor(state);
     player.lives = 1;
+    player.hand = [];
+    const before = player.hand.length;
 
     const result = buyCard(state, player.id, 'tax');
 
     expect(result.ok).toBe(false);
     expect(player.lives).toBe(1);
-    expect(player.hand.every((card) => card.cardId !== 'tax')).toBe(true);
+    expect(player.hand).toHaveLength(before);
   });
 
   it('buys Tax for 2 lives via applyLifeLoss path', () => {

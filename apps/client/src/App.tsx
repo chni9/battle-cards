@@ -66,7 +66,7 @@ export function App() {
         <ul>
           {view.players.map((player) => (
             <li key={player.id}>
-              {player.nickname}: {player.lives} lives
+              {player.nickname}
               {player.isEliminated ? ' (eliminated)' : ''}
             </li>
           ))}
@@ -341,8 +341,14 @@ function TableScreen(props: {
                     setTargetId(player.id);
                   }}
                 />
-                {player.nickname} — {player.lives} lives, shield {player.shield},{' '}
-                {player.cardCount} cards
+                {player.nickname} — {player.cardCount} cards
+                {player.spied !== undefined
+                  ? ` · spied: kit ${player.spied.kitId}${
+                      player.spied.lives !== undefined
+                        ? `, ${player.spied.lives} lives, shield ${String(player.spied.shield)}, ${String(player.spied.points)} pts`
+                        : ` (${player.spied.hand.length} hand cards visible)`
+                    }`
+                  : ''}
                 {player.isEliminated ? ' (eliminated)' : ''}
               </label>
             </li>
@@ -388,9 +394,9 @@ function TableScreen(props: {
       <section>
         <h2>Your zone</h2>
         <p>
-          Lives{' '}
-          {view.players.find((player) => player.isYou)?.lives ?? '—'} · Points {view.self.points} ·
-          Upgrade points {view.self.upgradePoints} · Kit {view.self.kitId}
+          Lives {view.self.lives} · Shield {view.self.shield}
+          {view.self.shieldIsUpgraded ? ' (upgraded)' : ''} · Points {view.self.points} · Upgrade
+          points {view.self.upgradePoints} · Kit {view.self.kitId}
         </p>
         <ul>
           {view.self.hand.map((card) => (

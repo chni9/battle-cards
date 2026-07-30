@@ -89,4 +89,41 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
 
     expect(JSON.stringify(view)).not.toContain('secret-seed-value');
   });
+
+  it('never puts opponent lives or shield in the public player slice', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'hidden-lives',
+    });
+    const opponent = state.players.find((player) => player.id === 'b');
+
+    expect(opponent).toBeDefined();
+
+    if (opponent === undefined) {
+      return;
+    }
+
+    opponent.lives = 19;
+    opponent.shield = 7;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    const opponentView = view.players.find((player) => player.id === 'b');
+    const serialised = JSON.stringify(opponentView);
+
+    expect(opponentView).not.toHaveProperty('lives');
+    expect(opponentView).not.toHaveProperty('shield');
+    expect(serialised).not.toContain('19');
+    expect(serialised).not.toContain('"shield"');
+    expect(view.self.lives).toBe(state.players.find((player) => player.id === 'a')?.lives);
+  });
 });

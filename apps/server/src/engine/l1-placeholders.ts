@@ -13,7 +13,7 @@ export const L1_PLACEHOLDER_RESOURCES = {
   draw: 1,
 } as const;
 
-/** Enough basic-attack copies to eliminate at 1 dmg without buy/sell (Lot 2). */
+/** Enough basic-attack copies for early Lot 1 elimination tests (legacy; start hand is now all shared cards until L4-02). */
 export const L1_BASIC_ATTACK_COPIES = 10;
 
 /**

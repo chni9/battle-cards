@@ -2,6 +2,9 @@
  * Per-recipient view construction — technical spec §5.1, AGENTS golden rule 4.
  *
  * One function, one recipient. No "full view" builder to filter down from.
+ *
+ * Lives/shield are private (2026-07-30 ruling): only on `self`, or on `spied` when the
+ * recipient has upgraded Spy (`full-resources`) on that subject.
  */
 
 import type {
@@ -72,6 +75,9 @@ function buildSpiedView(
   };
 
   if (relation.level === 'full-resources') {
+    spied.lives = subject.lives;
+    spied.shield = subject.shield;
+    spied.shieldIsUpgraded = subject.shieldIsUpgraded;
     spied.points = subject.points;
     spied.upgradePoints = subject.upgradePoints;
   }
@@ -104,9 +110,6 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     return {
       id: player.id,
       nickname: player.nickname,
-      lives: player.lives,
-      shield: player.shield,
-      shieldIsUpgraded: player.shieldIsUpgraded,
       cardCount: player.hand.length + player.specialCards.length,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
@@ -115,6 +118,9 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   });
 
   const self: PrivateSelfView = {
+    lives: selfPlayer.lives,
+    shield: selfPlayer.shield,
+    shieldIsUpgraded: selfPlayer.shieldIsUpgraded,
     points: selfPlayer.points,
     upgradePoints: selfPlayer.upgradePoints,
     kitId: selfPlayer.kitId,
@@ -159,9 +165,6 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     players: state.players.map((player) => ({
       id: player.id,
       nickname: player.nickname,
-      lives: player.lives,
-      shield: player.shield,
-      shieldIsUpgraded: player.shieldIsUpgraded,
       cardCount: player.hand.length + player.specialCards.length,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,

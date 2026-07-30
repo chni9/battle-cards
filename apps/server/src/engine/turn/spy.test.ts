@@ -82,10 +82,14 @@ describe('Spy (rules spec §3, L3-05)', () => {
     expect(spiedBySpy?.kitId).toBe('kamikaze');
     expect(spiedBySpy?.hand.length).toBe(target.hand.length);
     expect(spiedBySpy?.points).toBeUndefined();
+    expect(spiedBySpy?.lives).toBeUndefined();
+    expect(viewForSpy.players.find((player) => player.id === target.id)).not.toHaveProperty(
+      'lives',
+    );
     expect(spiedByOutsider).toBeUndefined();
   });
 
-  it('upgraded: also reveals points and upgrade points', () => {
+  it('upgraded: also reveals lives, shield, points and upgrade points', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -115,6 +119,8 @@ describe('Spy (rules spec §3, L3-05)', () => {
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: true }];
     target.points = 12;
     target.upgradePoints = 2;
+    target.lives = 17;
+    target.shield = 4;
 
     performTurnAction(state, spyId, {
       type: 'playCard',
@@ -137,6 +143,8 @@ describe('Spy (rules spec §3, L3-05)', () => {
 
     expect(spied?.points).toBe(target.points);
     expect(spied?.upgradePoints).toBe(2);
+    expect(spied?.lives).toBe(target.lives);
+    expect(spied?.shield).toBe(4);
   });
 
   it('fizzles against an active upgraded shield', () => {

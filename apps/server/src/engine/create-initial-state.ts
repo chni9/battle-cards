@@ -1,20 +1,22 @@
 /**
  * Build the authoritative GameState at launch — backlog L1-03.
  *
- * Placeholder resources and a fixed basic-attack hand until L4-02. Turn order is a
+ * Placeholder resources until L4-02. Temporary full shared-card hand for playtesting
+ * until kit distribution lands (developer instruction 2026-07-30). Turn order is a
  * seeded shuffle of the seated players (AGENTS golden rule 5).
  */
 
 import {
   CLASSIC_LIFE_LIMIT,
+  SHARED_CARD_IDS,
   type CardInstance,
   type GameState,
   type Player,
+  type SharedCardId,
 } from '@card-battle/shared';
 import { randomUUID } from 'node:crypto';
 
 import {
-  L1_BASIC_ATTACK_COPIES,
   L1_PLACEHOLDER_KIT_ID,
   L1_PLACEHOLDER_RESOURCES,
 } from './l1-placeholders';
@@ -73,7 +75,7 @@ function makePlaceholderPlayer(seat: SeatInput): Player {
     upgradePoints: L1_PLACEHOLDER_RESOURCES.upgradePoints,
     shield: 0,
     shieldIsUpgraded: false,
-    hand: makeBasicAttackHand(),
+    hand: makeFullSharedHand(),
     specialCards: [],
     pendingEffects: [],
     activePersistentEffects: [],
@@ -94,10 +96,14 @@ function makePlaceholderPlayer(seat: SeatInput): Player {
   };
 }
 
-function makeBasicAttackHand(): CardInstance[] {
-  return Array.from({ length: L1_BASIC_ATTACK_COPIES }, () => ({
+/**
+ * One copy of every V1 shared card (10 attacks + actions). Temporary until L4-02
+ * kit distribution. Specials stay kit-granted.
+ */
+function makeFullSharedHand(): CardInstance[] {
+  return SHARED_CARD_IDS.map((cardId: SharedCardId) => ({
     instanceId: randomUUID(),
-    cardId: 'basic-attack',
+    cardId,
     isUpgraded: false,
   }));
 }

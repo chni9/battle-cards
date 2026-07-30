@@ -24,14 +24,10 @@ export interface LobbyStateView {
   players: readonly LobbySeatView[];
 }
 
-/** Public slice of another player — technical spec §5.1. */
+/** Public slice of another player — card count and status only (2026-07-30 ruling). */
 export interface PublicPlayerView {
   id: string;
   nickname: string;
-  lives: number;
-  shield: number;
-  /** True while an upgraded Shield is active (blocks Thief/Spy at resolve). */
-  shieldIsUpgraded: boolean;
   cardCount: number;
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */
@@ -43,18 +39,28 @@ export interface PublicPlayerView {
 /**
  * Spy-gated slice of another player — only when the recipient has a Spy relation
  * on them (technical spec §5.1).
+ *
+ * Base Spy (`kit-and-cards`): kit + hand + specials.
+ * Upgraded Spy (`full-resources`): also lives, shield, points, upgrade points
+ * (developer ruling 2026-07-30 — lives/shield are not public).
  */
 export interface SpiedPlayerView {
   kitId: KitId;
   hand: readonly CardInstance[];
   specialCards: readonly CardInstance[];
   /** Present only at Spy level `full-resources`. */
+  lives?: number;
+  shield?: number;
+  shieldIsUpgraded?: boolean;
   points?: number;
   upgradePoints?: number;
 }
 
 /** Private resources — only on the recipient's own entry. */
 export interface PrivateSelfView {
+  lives: number;
+  shield: number;
+  shieldIsUpgraded: boolean;
   points: number;
   upgradePoints: number;
   kitId: KitId;
@@ -75,9 +81,13 @@ export interface PendingEffectView {
 /**
  * Playing view (L1-09). Built per recipient.
  *
- * Private: own kit, hand, exact resources.
- * Public: lives, shield, card count, pending queue, turn order, actions history later.
+ * Private: own kit, hand, lives, shield, exact resources.
+ * Public: card count, elimination status, pending queue, turn order, actions.
+ * Spy (base): kit + cards of the subject. Spy (upgraded): also lives/shield/resources.
  * Server-only: never `seed`.
+ *
+ * Developer ruling 2026-07-30: lives and shield are **not** public (overrides tech §5.1
+ * table for those two fields until kits / playtest revisits).
  */
 export interface PlayingStateView {
   phase: 'playing';

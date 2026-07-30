@@ -1,7 +1,8 @@
+import { SHARED_CARD_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from './create-initial-state';
-import { L1_BASIC_ATTACK_COPIES, L1_PLACEHOLDER_RESOURCES } from './l1-placeholders';
+import { L1_PLACEHOLDER_RESOURCES } from './l1-placeholders';
 import { createRng } from './rng';
 
 describe('createInitialState (L1-03)', () => {
@@ -10,15 +11,17 @@ describe('createInitialState (L1-03)', () => {
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('applies L1 placeholder resources to every player', () => {
+  it('applies L1 placeholder resources and a full shared-card hand', () => {
     const state = createInitialState({ seats, seed: 'fixed' });
 
     for (const player of state.players) {
       expect(player.lives).toBe(L1_PLACEHOLDER_RESOURCES.lives);
       expect(player.points).toBe(L1_PLACEHOLDER_RESOURCES.points);
       expect(player.upgradePoints).toBe(L1_PLACEHOLDER_RESOURCES.upgradePoints);
-      expect(player.hand).toHaveLength(L1_BASIC_ATTACK_COPIES);
-      expect(player.hand.every((card) => card.cardId === 'basic-attack')).toBe(true);
+      expect(player.hand).toHaveLength(SHARED_CARD_IDS.length);
+      expect(player.hand.map((card) => card.cardId).sort()).toEqual(
+        [...SHARED_CARD_IDS].sort(),
+      );
     }
   });
 

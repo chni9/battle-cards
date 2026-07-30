@@ -484,3 +484,14 @@ Developer session locked these before Lot 3 implementation:
 - **AGENTS.md golden rule 10** ("One backlog task at a time") removed. One commit per backlog
   task (§10) remains.
 
+## 2026-07-30 · [P] Temporary full shared hand + private lives/shield
+
+Developer playtest instructions before Lot 4 kits:
+
+- **Starting hand:** each player begins with one copy of every V1 shared card (10). Specials
+  remain kit-only. Replaced by L4-02 kit distribution when that lands.
+- **Visibility:** opponent lives and shield are **not** public (overrides technical spec §5.1
+  / former protocol table). Unspied opponents expose only nickname, card count, elimination.
+  Base Spy still reveals kit + cards only. **Upgraded** Spy (`full-resources`) also reveals
+  lives, shield, points, upgrade points. PROTOCOL_VERSION 9.
+
