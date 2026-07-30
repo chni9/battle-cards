@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-28 of 63 tasks done. **Lot 3 in progress** — next up is L3-04.
+29 of 63 tasks done. **Lot 3 in progress** — next up is L3-05.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 3 |
+| 3 · Action cards | 9 | 4 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -319,13 +319,14 @@ Up to 4 lives per use, 3 points per life, 2 points in the upgraded version. 25-l
 - **Acceptance** Recreation rejected while a shield is active
 - **Note** `shieldIsUpgraded` on Player; Thief/Spy fizzle at resolve in L3-04/L3-05.
 
-### L3-04 · Thief — `To do`
+### L3-04 · Thief — `Done`
 
 Steals 10 points, capped at the target's amount. Upgraded version: the target loses the same amount, the user gains double.
 
 - **Reference** Rules spec §3 · **Depends on** L3-03 · **Complexity** M · **Risk** Medium
 - **Watch point** The theft must be flagged as such in the TurnLedger: it's excluded from upgraded Absorber's capture.
 - **Acceptance** A target with 3 points loses 3, not 10
+- **Note** `stealPoints` primitive; upgraded-shield fizzle at resolve.
 
 ### L3-05 · Spy and visibility matrix — `To do`
 

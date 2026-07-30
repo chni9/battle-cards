@@ -2,6 +2,7 @@
  * Resolve pending effects on the active player after their action — technical spec §4.3, §4.6.
  *
  * Ascending `queuedAt`. Before each attack resolution, check mutual cancellation.
+ * Thief resolves here (L3-04); Spy/Counter land in later Lot 3 tasks.
  */
 
 import {
@@ -13,6 +14,7 @@ import {
   type Player,
 } from '@card-battle/shared';
 
+import { stealPoints } from '../economy/steal-points';
 import { applyDamage } from '../life/apply-damage';
 
 export interface ResolvedEffect {
@@ -72,6 +74,21 @@ function cancelEqualMutualAttack(
   return true;
 }
 
+function resolveThief(state: GameState, target: Player, effect: PendingEffect): void {
+  // Upgraded Shield blocks Thief at resolve, no shield-point cost (Lot 3 ruling).
+  if (target.shield > 0 && target.shieldIsUpgraded) {
+    return;
+  }
+
+  stealPoints({
+    state,
+    sourcePlayerId: effect.sourcePlayerId,
+    targetPlayerId: target.id,
+    amount: 10,
+    gainMultiplier: effect.isUpgraded ? 2 : 1,
+  });
+}
+
 export function resolvePendingEffects(
   state: GameState,
   playerId: string,
@@ -102,6 +119,8 @@ export function resolvePendingEffects(
       livesLost = outcome.livesLost;
       shieldAbsorbed = outcome.shieldAbsorbed;
       player.turnLedger.livesLost += outcome.livesLost;
+    } else if (effect.cardId === 'thief') {
+      resolveThief(state, player, effect);
     }
 
     resolved.push({
