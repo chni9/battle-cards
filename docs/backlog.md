@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01–04, L2-06 done).
+20 of 63 tasks done. **Lot 2 complete** — next up is L3-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 5 |
+| 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -272,13 +272,14 @@ Basic attack, Strong attack, Super attack, base and upgraded versions.
 - **Acceptance** All 6 combinations tested, values conforming to the spec
 - **Note** `ATTACK_DAMAGE` in shared; strong/super handlers registered.
 
-### L2-05 · Mutual attacks — `To do`
+### L2-05 · Mutual attacks — `Done`
 
 Equal damage: both attacks cancel out, on the retaliating player's turn. Different damage: no interaction, each resolves on its own normal turn.
 
 - **Reference** Spec §4.6 · **Depends on** L2-04 · **Complexity** L · **Risk** High
-- **Watch point** Rules spec §6 line 243 and note §2 line 55 still contradict this rule as of this upload. Fix the spec BEFORE implementing.
+- **Watch point** Rules spec §6 line 243 and note §2 line 55 were corrected to match §4.6 (Open decision #1 closed).
 - **Acceptance** Both cases tested, plus a 3-player case with no reciprocity
+- **Note** Cancel runs in `resolve-pending` before each attack resolution.
 
 ### L2-06 · Shared pool — `Done`
 

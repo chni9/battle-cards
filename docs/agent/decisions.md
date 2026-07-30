@@ -12,10 +12,8 @@ Two attacks aimed at each other, both pending: **equal damage cancels both** on 
 player's turn; **different damage means no interaction at all**, each resolving on its own
 target's turn. Technical spec §4.6 states this correctly.
 
-The rules spec still contradicts it in two places — §6 "Mutual Attacks" (line 243) and the Super
-attack note in §2 (line 55) — and did so in the French version as well before it was deleted.
-Build against the ruling above, **not** the rules spec text. Fixing the rules spec file is a
-human-owned task: do not edit it. Backlog Open decision #1 stays open until that edit happens.
+Superseded for the rules file itself by the 2026-07-30 entry that corrects §2/§6 — keep this
+entry as the original discrepancy record.
 
 ## 2026-07-29 · [P] English is the sole source of truth for the docs
 
@@ -161,7 +159,6 @@ Surface the question when work reaches these; do not pick an interpretation.
 
 | # | Question | Blocks |
 |---|---|---|
-| 1 | Rules spec §6/§2 not yet corrected for mutual attacks | The rules doc itself; the ruling above unblocks the code |
 | 4 | Which metrics the game log records | L8-01, and any serious playtest |
 | 5 | Simultaneous eliminators — is the italicised tie-break a validated rule or an untested hypothesis? | L6-05 |
 | 6 | Does Untouchable's immunity to "Thief and Spy" extend to Spy Thief? | L5-04 |
@@ -447,6 +444,12 @@ from L2-01 onward. Technical spec §5.2's `cardId` wording is superseded for tho
 - Regeneration shop: buy 6 points, sell 3 points (2× / 1× base one-life usage cost of 3).
 - Full V1 shared catalog (10 cards) is buyable from L2-01; play of unimplemented cards still
   rejected by the registry.
+
+## 2026-07-30 · [P] Rules spec mutual-attack text corrected (closes Open decision #1)
+
+Developer authorized editing `docs/spec_bataille_des_cartes_en.md`: §2 Super-attack note and
+§6 Mutual Attacks now match technical spec §4.6 (equal damage cancels both; different damage
+means no interaction). Code implements the same rule in `resolve-pending` (L2-05).
 
 ## 2026-07-30 · [P] `sellUpgradePoint` wire event (L2-02)
 

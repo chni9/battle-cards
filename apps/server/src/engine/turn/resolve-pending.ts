@@ -1,7 +1,7 @@
 /**
- * Resolve pending effects on the active player after their action — technical spec §4.3.
+ * Resolve pending effects on the active player after their action — technical spec §4.3, §4.6.
  *
- * Ascending `queuedAt`. Mutual-attack cancellation is L2-05 — not applied here.
+ * Ascending `queuedAt`. Before each attack resolution, check mutual cancellation.
  */
 
 import {
@@ -10,6 +10,7 @@ import {
   type AttackCardId,
   type GameState,
   type PendingEffect,
+  type Player,
 } from '@card-battle/shared';
 
 import { applyDamage } from '../life/apply-damage';
@@ -22,6 +23,53 @@ export interface ResolvedEffect {
 
 function isAttackCardId(cardId: string): cardId is AttackCardId {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
+
+/**
+ * Equal-damage mutual pair: cancel both without applyDamage (tech §4.6).
+ * Different damage: no interaction — return false and resolve normally.
+ */
+function cancelEqualMutualAttack(
+  state: GameState,
+  resolvingPlayer: Player,
+  incoming: PendingEffect,
+): boolean {
+  if (!isAttackCardId(incoming.cardId)) {
+    return false;
+  }
+
+  const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
+
+  if (source === undefined || source.isEliminated) {
+    return false;
+  }
+
+  const retaliationIndex = source.pendingEffects.findIndex(
+    (effect) =>
+      isAttackCardId(effect.cardId) &&
+      effect.sourcePlayerId === resolvingPlayer.id &&
+      effect.targetPlayerId === source.id,
+  );
+
+  if (retaliationIndex < 0) {
+    return false;
+  }
+
+  const retaliation = source.pendingEffects[retaliationIndex];
+
+  if (retaliation === undefined || !isAttackCardId(retaliation.cardId)) {
+    return false;
+  }
+
+  const incomingDamage = attackDamageFor(incoming.cardId, incoming.isUpgraded);
+  const retaliationDamage = attackDamageFor(retaliation.cardId, retaliation.isUpgraded);
+
+  if (incomingDamage !== retaliationDamage) {
+    return false;
+  }
+
+  source.pendingEffects.splice(retaliationIndex, 1);
+  return true;
 }
 
 export function resolvePendingEffects(
@@ -44,6 +92,11 @@ export function resolvePendingEffects(
     let shieldAbsorbed = 0;
 
     if (isAttackCardId(effect.cardId)) {
+      if (cancelEqualMutualAttack(state, player, effect)) {
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0 });
+        continue;
+      }
+
       const amount = attackDamageFor(effect.cardId, effect.isUpgraded);
       const outcome = applyDamage(player, amount, effect.cardId);
       livesLost = outcome.livesLost;
