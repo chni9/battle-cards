@@ -18,6 +18,7 @@ import { regenerationHandler } from './handlers/regeneration';
 import { shieldHandler } from './handlers/shield';
 import { spyHandler } from './handlers/spy';
 import { strongAttackHandler } from './handlers/strong-attack';
+import { suicideHandler } from './handlers/suicide';
 import { superAttackHandler } from './handlers/super-attack';
 import { taxHandler } from './handlers/tax';
 import { thiefHandler } from './handlers/thief';
@@ -36,6 +37,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'mirror',
   'imposition',
   'points-generator',
+  'suicide',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -43,7 +45,6 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'suicide',
   'spy-thief',
   'cloning',
   'sentence',
@@ -62,6 +63,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   mirror: mirrorHandler,
   imposition: impositionHandler,
   'points-generator': pointsGeneratorHandler,
+  suicide: suicideHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

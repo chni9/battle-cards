@@ -564,3 +564,14 @@ Developer session locked before Lot 5 implementation:
   `activePersistentEffects` and join the pool only on deactivation (L5-02).
 - `upgradeCard` searches `hand` and `specialCards`. Kit starting specials are not re-dealt.
 - `getCard` resolves shared or special catalog definitions for play payment.
+
+## 2026-07-30 · [P] Suicide timing and eliminator (L5-03)
+
+Overrides former tech §6.2 #3 / rules §5 Suicide reward wording:
+
+- One pending effect per alive opponent; resolve with `applyLifeLoss(5, 'suicide')` + points → 0
+  on the target's turn after they act.
+- Base also queues self-elim pending on the user; they act first on that turn, then die.
+- **Both** base and upgraded: user is eliminator of opponents killed by Suicide. Self-elim
+  still grants no reward. Attributions stored on `GameState.eliminationAttributions` for Lot 6.
+- Cloning (or any clear-pending) can cancel the self-pending before it resolves.

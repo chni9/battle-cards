@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-41 of 63 tasks done. **Lot 5 in progress** — next up is L5-03.
+42 of 63 tasks done. **Lot 5 in progress** — next up is L5-04.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -51,7 +51,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 5 |
-| 5 · Special cards | 9 | 2 |
+| 5 · Special cards | 9 | 3 |
 | 6 · Elimination | 5 | 0 |
 | 7 · Robustness | 5 | 0 |
 | 8 · Game log | 2 | 0 |
@@ -432,9 +432,9 @@ Points Generator 3, Imposition 2. Decrements by 1 each time the user loses a lif
 - **Watch point** The counter does not protect the user. Only applyDamage decrements it, never applyLifeLoss.
 - **Acceptance** A tax does not decrement the counter, an attack does
 
-### L5-03 · Suicide — `To do`
+### L5-03 · Suicide — `Done`
 
-Base: the user is eliminated on their next turn, all opponents lose 5 lives and all their points, no reward for anyone. Upgraded: the user survives and becomes the eliminator.
+Base: the user is eliminated on their next turn, all opponents lose 5 lives and all their points. Upgraded: the user survives. Both: user is eliminator of opponents killed (rewards Lot 6).
 
 - **Reference** Rules spec §5 · **Depends on** L5-01 · **Complexity** L · **Risk** High
 - **Watch point** Life loss outside of attack. Each opponent plays one turn before the user's next turn: every effect resolves before their elimination.

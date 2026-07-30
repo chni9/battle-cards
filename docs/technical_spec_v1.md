@@ -309,7 +309,7 @@ Accepted case: a player who disconnects during their own turn blocks the game fo
 |---|---|
 | 1 | **Scientific**: trait `alwaysUpgraded: ['spy']`. Permanent, all copies, regardless of the card's origin |
 | 2 | **Self-elimination**: no reward for anyone, cards to the pool |
-| 3 | **Suicide**: base version, no reward for anyone. Upgraded version, the user survives and gets the rewards for the opponents eliminated |
+| 3 | **Suicide**: both base and upgraded — user is eliminator of opponents killed by the effect (rewards Lot 6). Base also self-eliminates on the user's next turn (no reward for that self-elim). Opponent losses resolve per target turn after they act. |
 | 4 | **Multiple elimination**: 2 rewards per eliminated player, cumulative |
 | 5 | **Mirror**: the player chooses among the pending attacks. Rejected as an invalid action if there's nothing to redirect |
 | 6 | **Counter**: the countering card must target the source |

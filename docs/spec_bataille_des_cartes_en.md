@@ -145,8 +145,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: all stolen points are doubled; also allows you to see all resources of all opponents.
 
 **Suicide** — Price: 3 points
-- Action: the user is eliminated on their next turn. All opponents lose 5 lives and all their points. If this effect eliminates all opponents, the user is declared the winner. No reward is granted to anyone for these eliminations, including the user's own.
-- Upgrade: the user is no longer eliminated by their own card. They are considered the eliminator of every opponent killed by this effect, and receive the corresponding rewards normally.
+- Action: the user is eliminated on their next turn. All opponents lose 5 lives and all their points (each on that opponent's turn, after they act). The user is the eliminator of every opponent killed by this effect and receives the corresponding rewards (even though they may still be eliminated later by their own pending Suicide). No reward is granted for the user's own elimination.
+- Upgrade: the user is no longer eliminated by their own card. They remain the eliminator of every opponent killed by this effect, and receive the corresponding rewards normally.
 
 **Block** — Price: 5 points
 - Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards.

@@ -59,6 +59,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     seed,
     visibility: [],
     mirrorChoice: null,
+    eliminationAttributions: [],
   };
 }
 

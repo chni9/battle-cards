@@ -56,6 +56,18 @@ export interface GameState {
    * but has not yet resolved pending effects (technical spec §5.5–5.6).
    */
   mirrorChoice: MirrorChoiceState | null;
+  /**
+   * Who eliminated whom this game — for Lot 6 reward selection. `eliminatorPlayerId`
+   * is `null` when no third party earns rewards (Tax, self-Sentence, self-Suicide).
+   * Appended when a player reaches 0 lives for a known cause; Lot 6 consumes it.
+   */
+  eliminationAttributions: EliminationAttribution[];
+}
+
+/** One elimination event awaiting reward handling (Lot 6). */
+export interface EliminationAttribution {
+  eliminatedPlayerId: string;
+  eliminatorPlayerId: string | null;
 }
 
 /** In-flight Mirror redirect sub-choice — technical spec §5.5. */

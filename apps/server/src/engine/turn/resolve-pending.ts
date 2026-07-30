@@ -20,6 +20,7 @@ import { grantSpy } from '../../protocol/visibility-matrix';
 import { stealPoints } from '../economy/steal-points';
 import { isImmuneTo } from '../kits/is-immune-to';
 import { applyDamage } from '../life/apply-damage';
+import { applyLifeLoss } from '../life/apply-life-loss';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 
 export type ResolveOutcome = 'applied' | 'immune' | 'cancelled';
@@ -32,6 +33,7 @@ export interface ResolvedEffect {
 }
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
+const SUICIDE_OPPONENT_LIFE_LOSS = 5;
 
 function isAttackCardId(cardId: string): cardId is AttackCardId {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
@@ -39,6 +41,18 @@ function isAttackCardId(cardId: string): cardId is AttackCardId {
 
 function isCounterableCardId(cardId: CardId): boolean {
   return COUNTERABLE_CARD_IDS.has(cardId);
+}
+
+/**
+ * Base Suicide self-elim must wait until a *later* turn. Queued on the play turn with
+ * `queuedAt === turnSequence`, it would otherwise resolve in the same finishTurnPhases.
+ */
+function isDeferredSuicideSelf(effect: PendingEffect, turnSequence: number): boolean {
+  return (
+    effect.cardId === 'suicide' &&
+    effect.sourcePlayerId === effect.targetPlayerId &&
+    effect.queuedAt === turnSequence
+  );
 }
 
 /**
@@ -155,6 +169,41 @@ function resolveSpy(state: GameState, target: Player, effect: PendingEffect): Re
   return 'applied';
 }
 
+/**
+ * Suicide on an opponent: 5 lives + all points (applyLifeLoss). Suicide on self: eliminate.
+ * Opponent kills attribute the Suicide user as eliminator (Lot 5 ruling); self has none.
+ */
+function resolveSuicide(
+  state: GameState,
+  target: Player,
+  effect: PendingEffect,
+): { livesLost: number; outcome: ResolveOutcome } {
+  const isSelf = effect.sourcePlayerId === target.id;
+
+  if (isSelf) {
+    const livesLost = target.lives;
+    target.lives = 0;
+    state.eliminationAttributions.push({
+      eliminatedPlayerId: target.id,
+      eliminatorPlayerId: null,
+    });
+    return { livesLost, outcome: 'applied' };
+  }
+
+  const loss = applyLifeLoss(target, SUICIDE_OPPONENT_LIFE_LOSS, 'suicide');
+  target.points = 0;
+  target.turnLedger.livesLost += loss.livesLost;
+
+  if (target.lives <= 0) {
+    state.eliminationAttributions.push({
+      eliminatedPlayerId: target.id,
+      eliminatorPlayerId: effect.sourcePlayerId,
+    });
+  }
+
+  return { livesLost: loss.livesLost, outcome: 'applied' };
+}
+
 export function resolvePendingEffects(
   state: GameState,
   playerId: string,
@@ -165,12 +214,22 @@ export function resolvePendingEffects(
     throw new Error(`resolvePendingEffects: unknown player ${playerId}`);
   }
 
-  const ordered = [...player.pendingEffects].sort((left, right) => left.queuedAt - right.queuedAt);
-  player.pendingEffects = [];
+  const deferred: PendingEffect[] = [];
+  const ready = [...player.pendingEffects]
+    .sort((left, right) => left.queuedAt - right.queuedAt)
+    .filter((effect) => {
+      if (isDeferredSuicideSelf(effect, state.turnSequence)) {
+        deferred.push(effect);
+        return false;
+      }
+
+      return true;
+    });
+  player.pendingEffects = deferred;
 
   const resolved: ResolvedEffect[] = [];
 
-  for (const effect of ordered) {
+  for (const effect of ready) {
     let livesLost = 0;
     let shieldAbsorbed = 0;
     let outcome: ResolveOutcome = 'applied';
@@ -204,6 +263,10 @@ export function resolvePendingEffects(
         effect.cardId === 'thief'
           ? resolveThief(state, player, effect)
           : resolveSpy(state, player, effect);
+    } else if (effect.cardId === 'suicide') {
+      const suicide = resolveSuicide(state, player, effect);
+      livesLost = suicide.livesLost;
+      outcome = suicide.outcome;
     }
 
     resolved.push({
