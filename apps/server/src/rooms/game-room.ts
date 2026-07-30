@@ -9,6 +9,7 @@ import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
   BUY_CARD,
+  BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
@@ -242,6 +243,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [BUY_UPGRADE_POINT]: (client: GameClient): void => {
       this.handleAction(client, { type: 'buyUpgradePoint' });
+    },
+
+    [BUY_SPECIAL_CARD]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'buySpecialCard' });
     },
 
     [SELL_UPGRADE_POINT]: (client: GameClient): void => {

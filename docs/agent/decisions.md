@@ -575,3 +575,12 @@ Overrides former tech §6.2 #3 / rules §5 Suicide reward wording:
 - **Both** base and upgraded: user is eliminator of opponents killed by Suicide. Self-elim
   still grants no reward. Attributions stored on `GameState.eliminationAttributions` for Lot 6.
 - Cloning (or any clear-pending) can cancel the self-pending before it resolves.
+
+## 2026-07-30 · [P] Lot 5 remainder (L5-04…L5-09)
+
+- **Spy Thief:** per-opponent queue; uncapped steal; Spy visibility parity; not counterable;
+  not Shield-blocked; Untouchable not immune.
+- **Imposition / Points Generator:** step-4 applicator; PG ticks on owner turn including play turn.
+- **Cloning:** immediate; copies target persistents; clears user pending; visibility wipe both ways.
+- **Sentence:** injected `EffectContext.rng`; queue elim on drawn victim; self → no eliminator.
+- **buySpecialCard:** 20 pts, RNG among `SPECIAL_CARD_IDS` only. PROTOCOL_VERSION 15.

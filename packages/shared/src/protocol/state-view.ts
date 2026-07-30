@@ -124,7 +124,8 @@ export interface ActionLogEntryView {
     | 'sellCard'
     | 'upgradeCard'
     | 'buyUpgradePoint'
-    | 'sellUpgradePoint';
+    | 'sellUpgradePoint'
+    | 'buySpecialCard';
   cardId?: CardId;
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string }[];

@@ -21,6 +21,7 @@ export const SELL_CARD = 'sellCard';
 export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
+export const BUY_SPECIAL_CARD = 'buySpecialCard';
 export const CHOOSE_MIRROR_TARGET = 'chooseMirrorTarget';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
@@ -43,7 +44,8 @@ export type PublicActionKind =
   | 'sellCard'
   | 'upgradeCard'
   | 'buyUpgradePoint'
-  | 'sellUpgradePoint';
+  | 'sellUpgradePoint'
+  | 'buySpecialCard';
 
 export interface PublicAttackPlay {
   cardId: CardId;
@@ -147,5 +149,6 @@ export interface ClientToServerMessages {
   [UPGRADE_CARD]: UpgradeCardPayload;
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
+  [BUY_SPECIAL_CARD]: undefined;
   [CHOOSE_MIRROR_TARGET]: ChooseMirrorTargetPayload;
 }

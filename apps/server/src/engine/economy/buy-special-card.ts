@@ -1,0 +1,38 @@
+/**
+ * Buy a random V1 special for 20 points — rules spec §5, tech §6.2 #10, L5-09.
+ */
+
+import { SPECIAL_CARD_IDS, type CardInstance, type GameState } from '@card-battle/shared';
+
+import { acquireSpecialCard } from '../kits/acquire-card';
+import type { Rng } from '../rng';
+import { findPlayer } from '../turn/advance-turn';
+
+export const SPECIAL_CARD_PURCHASE_COST = 20;
+
+export type BuySpecialCardResult =
+  | { ok: true; instance: CardInstance }
+  | { ok: false; message: string };
+
+export function buySpecialCard(
+  state: GameState,
+  actorPlayerId: string,
+  rng: Rng,
+): BuySpecialCardResult {
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor === undefined) {
+    return { ok: false, message: 'Unknown player.' };
+  }
+
+  if (actor.points < SPECIAL_CARD_PURCHASE_COST) {
+    return { ok: false, message: 'Not enough points.' };
+  }
+
+  actor.points -= SPECIAL_CARD_PURCHASE_COST;
+  actor.turnLedger.pointsSpent += SPECIAL_CARD_PURCHASE_COST;
+
+  const cardId = rng.pick(SPECIAL_CARD_IDS);
+  const instance = acquireSpecialCard(actor, cardId);
+  return { ok: true, instance };
+}

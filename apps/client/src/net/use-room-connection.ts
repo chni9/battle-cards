@@ -6,6 +6,7 @@ import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
   BUY_CARD,
+  BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
@@ -90,6 +91,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   sellCard: (instanceId: string) => void;
   upgradeCard: (instanceId: string) => void;
   buyUpgradePoint: () => void;
+  buySpecialCard: () => void;
   sellUpgradePoint: () => void;
 }
 
@@ -289,6 +291,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(BUY_UPGRADE_POINT);
   }, []);
 
+  const buySpecialCard = useCallback((): void => {
+    roomRef.current?.send(BUY_SPECIAL_CARD);
+  }, []);
+
   const sellUpgradePoint = useCallback((): void => {
     roomRef.current?.send(SELL_UPGRADE_POINT);
   }, []);
@@ -307,6 +313,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     sellCard,
     upgradeCard,
     buyUpgradePoint,
+    buySpecialCard,
     sellUpgradePoint,
   };
 }
