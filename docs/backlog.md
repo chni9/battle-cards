@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01 done).
+19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01, L2-06 done).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 1 |
+| 2 · Economy and attacks | 6 | 2 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -277,13 +277,14 @@ Equal damage: both attacks cancel out, on the retaliating player's turn. Differe
 - **Watch point** Rules spec §6 line 243 and note §2 line 55 still contradict this rule as of this upload. Fix the spec BEFORE implementing.
 - **Acceptance** Both cases tested, plus a 3-player case with no reciprocity
 
-### L2-06 · Shared pool — `To do`
+### L2-06 · Shared pool — `Done`
 
 Fed by sales, used special cards, and eliminated players' cards. Write-only in V1.
 
 - **Reference** Rules spec §1 · Spec §6.3 · **Depends on** L2-01 · **Complexity** S · **Risk** Low
 - **Watch point** No V1 card reads from the pool. Do not invent a use for it.
 - **Acceptance** The pool fills correctly, nothing consumes it
+- **Note** Sales (L2-01) and elimination already append; L2-06 adds dedicated write-only tests.
 
 ## Lot 3 · Action cards
 
