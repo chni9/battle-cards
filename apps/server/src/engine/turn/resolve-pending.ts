@@ -169,6 +169,29 @@ function resolveSpy(state: GameState, target: Player, effect: PendingEffect): Re
   return 'applied';
 }
 
+function resolveSpyThief(
+  state: GameState,
+  target: Player,
+  effect: PendingEffect,
+): ResolveOutcome {
+  // Not blocked by upgraded Shield; not covered by Untouchable immuneTo (Lot 5 ruling).
+  const amount = target.points;
+  stealPoints({
+    state,
+    sourcePlayerId: effect.sourcePlayerId,
+    targetPlayerId: target.id,
+    amount,
+    gainMultiplier: effect.isUpgraded ? 2 : 1,
+  });
+  grantSpy(
+    state,
+    effect.sourcePlayerId,
+    target.id,
+    effect.isUpgraded ? 'full-resources' : 'kit-and-cards',
+  );
+  return 'applied';
+}
+
 /**
  * Suicide on an opponent: 5 lives + all points (applyLifeLoss). Suicide on self: eliminate.
  * Opponent kills attribute the Suicide user as eliminator (Lot 5 ruling); self has none.
@@ -267,6 +290,24 @@ export function resolvePendingEffects(
       const suicide = resolveSuicide(state, player, effect);
       livesLost = suicide.livesLost;
       outcome = suicide.outcome;
+    } else if (effect.cardId === 'spy-thief') {
+      outcome = resolveSpyThief(state, player, effect);
+    } else if (effect.cardId === 'sentence') {
+      const livesLost = player.lives;
+      player.lives = 0;
+      const isSelf = effect.sourcePlayerId === player.id;
+      state.eliminationAttributions.push({
+        eliminatedPlayerId: player.id,
+        eliminatorPlayerId: isSelf ? null : effect.sourcePlayerId,
+      });
+      outcome = 'applied';
+      resolved.push({
+        effect,
+        livesLost,
+        shieldAbsorbed: 0,
+        outcome,
+      });
+      continue;
     }
 
     resolved.push({

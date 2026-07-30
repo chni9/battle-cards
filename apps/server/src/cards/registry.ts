@@ -11,12 +11,15 @@ import type { CardId } from '@card-battle/shared';
 import type { CardHandler } from './handler';
 import { absorberHandler } from './handlers/absorber';
 import { basicAttackHandler } from './handlers/basic-attack';
+import { cloningHandler } from './handlers/cloning';
 import { impositionHandler } from './handlers/imposition';
 import { mirrorHandler } from './handlers/mirror';
 import { pointsGeneratorHandler } from './handlers/points-generator';
 import { regenerationHandler } from './handlers/regeneration';
+import { sentenceHandler } from './handlers/sentence';
 import { shieldHandler } from './handlers/shield';
 import { spyHandler } from './handlers/spy';
+import { spyThiefHandler } from './handlers/spy-thief';
 import { strongAttackHandler } from './handlers/strong-attack';
 import { suicideHandler } from './handlers/suicide';
 import { superAttackHandler } from './handlers/super-attack';
@@ -38,17 +41,16 @@ export const IMPLEMENTED_CARD_IDS = [
   'imposition',
   'points-generator',
   'suicide',
+  'spy-thief',
+  'cloning',
+  'sentence',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
-export const PENDING_CARD_IDS = [
-  'spy-thief',
-  'cloning',
-  'sentence',
-] as const satisfies readonly PendingCardId[];
+export const PENDING_CARD_IDS = [] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,
@@ -64,6 +66,9 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   imposition: impositionHandler,
   'points-generator': pointsGeneratorHandler,
   suicide: suicideHandler,
+  'spy-thief': spyThiefHandler,
+  cloning: cloningHandler,
+  sentence: sentenceHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

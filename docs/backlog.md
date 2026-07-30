@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-42 of 63 tasks done. **Lot 5 in progress** — next up is L5-04.
+48 of 63 tasks done. **Lot 5 complete** — next up is L6-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -51,7 +51,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 5 |
-| 5 · Special cards | 9 | 3 |
+| 5 · Special cards | 9 | 9 |
 | 6 · Elimination | 5 | 0 |
 | 7 · Robustness | 5 | 0 |
 | 8 · Game log | 2 | 0 |
@@ -440,15 +440,15 @@ Base: the user is eliminated on their next turn, all opponents lose 5 lives and 
 - **Watch point** Life loss outside of attack. Each opponent plays one turn before the user's next turn: every effect resolves before their elimination.
 - **Acceptance** Partial case tested: 2 of 3 opponents eliminated, the user dies afterward
 
-### L5-04 · Spy Thief — `To do`
+### L5-04 · Spy Thief — `Done`
 
 Steals all points from all opponents with no cap and spies on all of them. Upgraded: points doubled and all resources visible.
 
 - **Reference** Rules spec §5 · **Depends on** L3-05, L4-03 · **Complexity** M · **Risk** Medium
-- **Watch point** Interaction with Untouchable's immunity not yet ruled on — Untouchable holds this very card.
+- **Watch point** Untouchable is not immune to Spy Thief (decision #6 closed). Not counterable; not blocked by upgraded Shield.
 - **Acceptance** Theft and spying applied to all opponents simultaneously
 
-### L5-05 · Imposition — `To do`
+### L5-05 · Imposition — `Done`
 
 Each opponent cedes 2 points per turn, or 1 life if they don't have enough, which the user gains. Upgraded: 4 points or 2 lives.
 
@@ -456,15 +456,15 @@ Each opponent cedes 2 points per turn, or 1 life if they don't have enough, whic
 - **Watch point** Periodic effect triggered on the target's turn, after their action. The life gain is subject to the 25-life cap.
 - **Acceptance** Target with 1 point: they cede 1 life, the user gains it
 
-### L5-06 · Cloning — `To do`
+### L5-06 · Cloning — `Done`
 
 Full state replacement with an opponent's. Cancels pending effects against the user, inherits none from the target, resets visibility to zero both ways.
 
 - **Reference** Rules spec §5 · **Depends on** L3-05, L4-01 · **Complexity** L · **Risk** High
-- **Watch point** The clone inherits the kit, therefore its traits. Upgraded version: +10 points, +2 upgrade points, +4 lives, 25-cap applied.
+- **Watch point** The clone inherits the kit, therefore its traits. Upgraded version: +10 points, +2 upgrade points, +4 lives, 25-cap applied. Copies target `activePersistentEffects`.
 - **Acceptance** Visibility wiped both ways, incoming effects queue cleared
 
-### L5-07 · Sentence — `To do`
+### L5-07 · Sentence — `Done`
 
 Eliminates a randomly drawn player among everyone in the game, user included. Upgraded: the user is excluded from the draw.
 
@@ -472,14 +472,14 @@ Eliminates a randomly drawn player among everyone in the game, user included. Up
 - **Watch point** Self-elimination: no reward for anyone, cards to the pool.
 - **Acceptance** Reproducible draw with a fixed seed, self-targeting possible in the base version
 
-### L5-08 · Points Generator — `To do`
+### L5-08 · Points Generator — `Done`
 
 2 points per turn, 4 in the upgraded version, as long as the internal counter isn't depleted.
 
 - **Reference** Rules spec §5 · **Depends on** L5-02 · **Complexity** S · **Risk** Low
 - **Acceptance** Gain on the user's turn, stops at zero counter
 
-### L5-09 · Special card purchase — `To do`
+### L5-09 · Special card purchase — `Done`
 
 20 points, random draw restricted to the 6 special cards in the V1 lot.
 
