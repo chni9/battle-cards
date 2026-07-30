@@ -36,11 +36,11 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values | **Private.** Revealed only by Spy or Spy Thief |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief |
 | Lives, shield | **Private** (developer ruling 2026-07-30 — overrides tech §5.1). Revealed only by **upgraded** Spy (`full-resources`) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
-| Card count in hand, elimination status | **Public** |
+| Elimination status | **Public** |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private

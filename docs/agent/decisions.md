@@ -495,3 +495,9 @@ Developer playtest instructions before Lot 4 kits:
   Base Spy still reveals kit + cards only. **Upgraded** Spy (`full-resources`) also reveals
   lives, shield, points, upgrade points. PROTOCOL_VERSION 9.
 
+## 2026-07-30 · [P] Hand card count private unless Spy
+
+Developer playtest follow-up: opponent **card count** is no longer public (overrides tech §5.1
+and the earlier same-day visibility note). Unspied opponents expose only nickname + elimination.
+Any Spy level reveals hand (+ specials), so count is recoverable from `spied`. PROTOCOL_VERSION 10.
+

@@ -110,7 +110,6 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     return {
       id: player.id,
       nickname: player.nickname,
-      cardCount: player.hand.length + player.specialCards.length,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
       ...(spied !== undefined ? { spied } : {}),
@@ -165,7 +164,6 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     players: state.players.map((player) => ({
       id: player.id,
       nickname: player.nickname,
-      cardCount: player.hand.length + player.specialCards.length,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
     })),

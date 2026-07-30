@@ -24,11 +24,10 @@ export interface LobbyStateView {
   players: readonly LobbySeatView[];
 }
 
-/** Public slice of another player — card count and status only (2026-07-30 ruling). */
+/** Public slice of another player — status only (2026-07-30 rulings). */
 export interface PublicPlayerView {
   id: string;
   nickname: string;
-  cardCount: number;
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */
   isYou: boolean;
@@ -88,6 +87,8 @@ export interface PendingEffectView {
  *
  * Developer ruling 2026-07-30: lives and shield are **not** public (overrides tech §5.1
  * table for those two fields until kits / playtest revisits).
+ * Developer ruling 2026-07-30 (evening): hand **card count** is also private — revealed
+ * only via Spy (`spied.hand` / `spied.specialCards`).
  */
 export interface PlayingStateView {
   phase: 'playing';

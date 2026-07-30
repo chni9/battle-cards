@@ -65,9 +65,8 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(viewForA.self.hand.length).toBeGreaterThan(0);
     expect(opponentInstanceId).toBeDefined();
     expect(serialised).not.toContain(opponentInstanceId);
-    expect(viewForA.players.find((player) => player.id === 'b')?.cardCount).toBe(
-      opponent.hand.length,
-    );
+    expect(viewForA.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+    expect(serialised).not.toMatch(/"cardCount"/);
   });
 
   it('never includes the game seed', () => {
