@@ -30,6 +30,7 @@ export function App() {
     playCard,
     buyCard,
     sellCard,
+    upgradeCard,
     buyUpgradePoint,
     sellUpgradePoint,
     lastTurnStarted,
@@ -39,6 +40,7 @@ export function App() {
   const [targetId, setTargetId] = useState('');
   const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [sellInstanceId, setSellInstanceId] = useState('');
+  const [upgradeInstanceId, setUpgradeInstanceId] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -92,6 +94,8 @@ export function App() {
         setBuyCardId={setBuyCardId}
         sellInstanceId={sellInstanceId}
         setSellInstanceId={setSellInstanceId}
+        upgradeInstanceId={upgradeInstanceId}
+        setUpgradeInstanceId={setUpgradeInstanceId}
         onDraw={drawCard}
         onAttack={() => {
           if (targetId !== '' && attackCopy !== undefined) {
@@ -104,6 +108,11 @@ export function App() {
         onSell={() => {
           if (sellInstanceId !== '') {
             sellCard(sellInstanceId);
+          }
+        }}
+        onUpgrade={() => {
+          if (upgradeInstanceId !== '') {
+            upgradeCard(upgradeInstanceId);
           }
         }}
         onBuyUpgradePoint={buyUpgradePoint}
@@ -225,10 +234,13 @@ function TableScreen(props: {
   setBuyCardId: (id: string) => void;
   sellInstanceId: string;
   setSellInstanceId: (id: string) => void;
+  upgradeInstanceId: string;
+  setUpgradeInstanceId: (id: string) => void;
   onDraw: () => void;
   onAttack: () => void;
   onBuy: () => void;
   onSell: () => void;
+  onUpgrade: () => void;
   onBuyUpgradePoint: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
@@ -245,10 +257,13 @@ function TableScreen(props: {
     setBuyCardId,
     sellInstanceId,
     setSellInstanceId,
+    upgradeInstanceId,
+    setUpgradeInstanceId,
     onDraw,
     onAttack,
     onBuy,
     onSell,
+    onUpgrade,
     onBuyUpgradePoint,
     onSellUpgradePoint,
     onLeave,
@@ -276,6 +291,21 @@ function TableScreen(props: {
 
     setSellInstanceId(view.self.hand[0]?.instanceId ?? '');
   }, [sellInstanceId, setSellInstanceId, view.self.hand]);
+
+  const upgradable = view.self.hand.filter((card) => !card.isUpgraded);
+
+  useEffect(() => {
+    const stillValid = view.self.hand.some(
+      (card) => card.instanceId === upgradeInstanceId && !card.isUpgraded,
+    );
+
+    if (stillValid) {
+      return;
+    }
+
+    const next = view.self.hand.find((card) => !card.isUpgraded);
+    setUpgradeInstanceId(next?.instanceId ?? '');
+  }, [upgradeInstanceId, setUpgradeInstanceId, view.self.hand]);
 
   return (
     <main>
@@ -429,6 +459,33 @@ function TableScreen(props: {
             onClick={onSell}
           >
             Sell card
+          </button>
+        </div>
+        <div>
+          <label>
+            Upgrade{' '}
+            <select
+              value={upgradeInstanceId}
+              disabled={!isMyTurn || upgradable.length === 0}
+              onChange={(event) => {
+                setUpgradeInstanceId(event.target.value);
+              }}
+            >
+              {upgradable.map((card) => (
+                <option key={card.instanceId} value={card.instanceId}>
+                  {card.cardId}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            disabled={
+              !isMyTurn || upgradeInstanceId === '' || view.self.upgradePoints < 1
+            }
+            onClick={onUpgrade}
+          >
+            Upgrade card
           </button>
         </div>
         <button type="button" disabled={!isMyTurn} onClick={onBuyUpgradePoint}>

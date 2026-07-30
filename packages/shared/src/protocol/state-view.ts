@@ -85,6 +85,7 @@ export interface ActionLogEntryView {
     | 'playCard'
     | 'buyCard'
     | 'sellCard'
+    | 'upgradeCard'
     | 'buyUpgradePoint'
     | 'sellUpgradePoint';
   cardId?: CardId;

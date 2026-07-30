@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01, L2-02, L2-06 done).
+19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01–03, L2-06 done).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 3 |
+| 2 · Economy and attacks | 6 | 4 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -254,13 +254,14 @@ Purchase at 10 points, resale at 7 points.
 - **Acceptance** Purchase and resale correct
 - **Note** `UPGRADE_POINT_ECONOMY` in shared; `sellUpgradePoint` added to protocol (absent from §5.2). PROTOCOL_VERSION 5.
 
-### L2-03 · Card upgrade — `To do`
+### L2-03 · Card upgrade — `Done`
 
 1 upgrade point, permanent for the game, applied to one specific copy.
 
 - **Reference** Rules spec §1 · **Depends on** L2-02 · **Complexity** M · **Risk** Medium
 - **Watch point** The upgrade applies to one copy, unless a permanent kit trait overrides it (lot 4).
 - **Acceptance** Only one copy upgraded, other copies unchanged
+- **Note** `upgradeCard` by `instanceId`. `alwaysUpgraded` deferred to Lot 4. PROTOCOL_VERSION 6.
 
 ### L2-04 · The three attack cards — `To do`
 

@@ -19,6 +19,7 @@ import {
   PROTOCOL_VERSION,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  UPGRADE_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
@@ -30,6 +31,7 @@ import {
   type LobbySeatView,
   type PlayCardPayload,
   type SellCardPayload,
+  type UpgradeCardPayload,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
@@ -190,6 +192,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.handleAction(client, { type: 'sellCard', instanceId: parsed.instanceId });
+    },
+
+    [UPGRADE_CARD]: (client: GameClient, payload: unknown): void => {
+      const parsed = readUpgradeCardPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid upgradeCard payload.' });
+        return;
+      }
+
+      this.handleAction(client, { type: 'upgradeCard', instanceId: parsed.instanceId });
     },
 
     [BUY_UPGRADE_POINT]: (client: GameClient): void => {
@@ -532,4 +545,8 @@ function readSellCardPayload(payload: unknown): SellCardPayload | null {
   }
 
   return { instanceId };
+}
+
+function readUpgradeCardPayload(payload: unknown): UpgradeCardPayload | null {
+  return readSellCardPayload(payload);
 }

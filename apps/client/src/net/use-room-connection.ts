@@ -17,6 +17,7 @@ import {
   PROTOCOL_VERSION,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  UPGRADE_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
@@ -69,6 +70,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   playCard: (instanceId: string, targetPlayerId: string) => void;
   buyCard: (cardId: CardId) => void;
   sellCard: (instanceId: string) => void;
+  upgradeCard: (instanceId: string) => void;
   buyUpgradePoint: () => void;
   sellUpgradePoint: () => void;
 }
@@ -224,6 +226,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(SELL_CARD, { instanceId });
   }, []);
 
+  const upgradeCard = useCallback((instanceId: string): void => {
+    roomRef.current?.send(UPGRADE_CARD, { instanceId });
+  }, []);
+
   const buyUpgradePoint = useCallback((): void => {
     roomRef.current?.send(BUY_UPGRADE_POINT);
   }, []);
@@ -242,6 +248,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     playCard,
     buyCard,
     sellCard,
+    upgradeCard,
     buyUpgradePoint,
     sellUpgradePoint,
   };

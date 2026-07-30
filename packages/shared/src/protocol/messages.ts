@@ -17,6 +17,7 @@ export const DRAW_CARD = 'drawCard';
 export const PLAY_CARD = 'playCard';
 export const BUY_CARD = 'buyCard';
 export const SELL_CARD = 'sellCard';
+export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const ERROR_MESSAGE = 'error';
@@ -36,6 +37,7 @@ export type PublicActionKind =
   | 'playCard'
   | 'buyCard'
   | 'sellCard'
+  | 'upgradeCard'
   | 'buyUpgradePoint'
   | 'sellUpgradePoint';
 
@@ -78,6 +80,10 @@ export interface SellCardPayload {
   instanceId: string;
 }
 
+export interface UpgradeCardPayload {
+  instanceId: string;
+}
+
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
   [ERROR_MESSAGE]: { message: string };
@@ -102,6 +108,7 @@ export interface ClientToServerMessages {
   [PLAY_CARD]: PlayCardPayload;
   [BUY_CARD]: BuyCardPayload;
   [SELL_CARD]: SellCardPayload;
+  [UPGRADE_CARD]: UpgradeCardPayload;
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
 }
