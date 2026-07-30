@@ -1,22 +1,28 @@
 /**
- * Turn actions for Lot 1 — draw and play basic attack.
- * Technical spec §4.3, §5.2, §5.4 · rules spec §2, §6.
+ * Turn actions — draw, play, buy, sell.
+ * Technical spec §4.3, §5.2, §5.4 · rules spec §1, §2, §6 · backlog L2-01.
  */
 
-import type { CardId, GameState } from '@card-battle/shared';
+import { getSharedCard, type CardId, type GameState } from '@card-battle/shared';
 
 import { findHandler } from '../../cards/registry';
+import { buyCard } from '../economy/buy-card';
+import { sellCard } from '../economy/sell-card';
 import { L1_PLACEHOLDER_RESOURCES } from '../l1-placeholders';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
   | { type: 'draw' }
-  | { type: 'playCard'; cardId: CardId; targetPlayerId: string };
+  | { type: 'playCard'; instanceId: string; targetPlayerId: string }
+  | { type: 'buyCard'; cardId: CardId }
+  | { type: 'sellCard'; instanceId: string };
+
+export type PublicActionKind = 'draw' | 'playCard' | 'buyCard' | 'sellCard';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;
-  action: 'draw' | 'playCard';
+  action: PublicActionKind;
   cardId?: CardId;
   targetPlayerId?: string;
   turnSequence: number;
@@ -76,8 +82,39 @@ export function performTurnAction(
       action: 'draw',
       turnSequence: state.turnSequence,
     };
+  } else if (action.type === 'buyCard') {
+    const bought = buyCard(state, actorPlayerId, action.cardId);
+
+    if (!bought.ok) {
+      return bought;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'buyCard',
+      cardId: bought.cardId,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'sellCard') {
+    const sold = sellCard(state, actorPlayerId, action.instanceId);
+
+    if (!sold.ok) {
+      return sold;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'sellCard',
+      cardId: sold.cardId,
+      turnSequence: state.turnSequence,
+    };
   } else {
-    const playResult = playCardAction(state, actorPlayerId, action.cardId, action.targetPlayerId);
+    const playResult = playCardAction(
+      state,
+      actorPlayerId,
+      action.instanceId,
+      action.targetPlayerId,
+    );
 
     if (!playResult.ok) {
       return playResult;
@@ -108,7 +145,7 @@ export function performTurnAction(
 function playCardAction(
   state: GameState,
   actorPlayerId: string,
-  cardId: CardId,
+  instanceId: string,
   targetPlayerId: string,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
@@ -117,13 +154,7 @@ function playCardAction(
     return { ok: false, message: 'Unknown player.' };
   }
 
-  const handler = findHandler(cardId);
-
-  if (handler === undefined) {
-    return { ok: false, message: 'That card is not playable yet.' };
-  }
-
-  const instanceIndex = actor.hand.findIndex((card) => card.cardId === cardId);
+  const instanceIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
 
   if (instanceIndex < 0) {
     return { ok: false, message: 'You do not hold that card.' };
@@ -133,6 +164,13 @@ function playCardAction(
 
   if (instance === undefined) {
     return { ok: false, message: 'You do not hold that card.' };
+  }
+
+  const cardId = instance.cardId;
+  const handler = findHandler(cardId);
+
+  if (handler === undefined) {
+    return { ok: false, message: 'That card is not playable yet.' };
   }
 
   const target = findPlayer(state, targetPlayerId);
@@ -152,17 +190,21 @@ function playCardAction(
     return { ok: false, message: 'That play is not legal.' };
   }
 
-  // Cost for basic attack — rules spec §2. Paid before the handler queues the effect.
-  const costPoints = cardId === 'basic-attack' ? 1 : 0;
+  // Play payment: points from catalog. Life / pointsPerLife play costs land with
+  // their handlers (Tax, Regeneration) — shop life transfers use payCost instead.
+  const definition = getSharedCard(cardId);
+  const playPoints = definition?.cost.points ?? 0;
 
-  if (actor.points < costPoints) {
+  if (actor.points < playPoints) {
     return { ok: false, message: 'Not enough points.' };
   }
 
-  actor.points -= costPoints;
-  actor.turnLedger.pointsSpent += costPoints;
-  actor.hand.splice(instanceIndex, 1);
+  if (playPoints > 0) {
+    actor.points -= playPoints;
+    actor.turnLedger.pointsSpent += playPoints;
+  }
 
+  actor.hand.splice(instanceIndex, 1);
   handler.play(context);
 
   return {

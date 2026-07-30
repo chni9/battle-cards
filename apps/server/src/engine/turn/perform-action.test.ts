@@ -86,9 +86,18 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
     performTurnAction(state, secondId, { type: 'draw' });
     expect(state.currentTurnPlayerId).toBe(firstId);
 
+    const attackCopy = requirePlayer(state, firstId).hand.find(
+      (card) => card.cardId === 'basic-attack',
+    );
+    expect(attackCopy).toBeDefined();
+
+    if (attackCopy === undefined) {
+      return;
+    }
+
     const attack = performTurnAction(state, firstId, {
       type: 'playCard',
-      cardId: 'basic-attack',
+      instanceId: attackCopy.instanceId,
       targetPlayerId: secondId,
     });
 
@@ -164,13 +173,74 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
       return;
     }
 
+    const attackCopy = requirePlayer(state, actorId).hand.find(
+      (card) => card.cardId === 'basic-attack',
+    );
+    expect(attackCopy).toBeDefined();
+
+    if (attackCopy === undefined) {
+      return;
+    }
+
     const result = performTurnAction(state, actorId, {
       type: 'playCard',
-      cardId: 'basic-attack',
+      instanceId: attackCopy.instanceId,
       targetPlayerId: target.id,
     });
 
     expect(result.ok).toBe(false);
+  });
+
+  it('buys and sells a card as the turn action (L2-01)', () => {
+    const state = started();
+    const actorId = requireId(state.currentTurnPlayerId);
+    const player = requirePlayer(state, actorId);
+    player.points = 5;
+
+    const bought = performTurnAction(state, actorId, {
+      type: 'buyCard',
+      cardId: 'basic-attack',
+    });
+
+    expect(bought.ok).toBe(true);
+
+    if (!bought.ok) {
+      return;
+    }
+
+    expect(bought.actionPlayed.action).toBe('buyCard');
+    expect(player.points).toBe(3);
+    expect(state.currentTurnPlayerId).not.toBe(actorId);
+
+    // Other player draws so the buyer can act again.
+    const otherId = requireId(state.currentTurnPlayerId);
+    performTurnAction(state, otherId, { type: 'draw' });
+    expect(state.currentTurnPlayerId).toBe(actorId);
+
+    const boughtCopy = player.hand.find(
+      (card) => card.cardId === 'basic-attack' && card.instanceId !== player.hand[0]?.instanceId,
+    );
+    const toSell = player.hand.at(-1);
+    expect(toSell).toBeDefined();
+
+    if (toSell === undefined) {
+      return;
+    }
+
+    void boughtCopy;
+    const sold = performTurnAction(state, actorId, {
+      type: 'sellCard',
+      instanceId: toSell.instanceId,
+    });
+
+    expect(sold.ok).toBe(true);
+
+    if (!sold.ok) {
+      return;
+    }
+
+    expect(sold.actionPlayed.action).toBe('sellCard');
+    expect(state.pool.some((card) => card.instanceId === toSell.instanceId)).toBe(true);
   });
 
   it('eliminates at 0 lives and declares the last survivor the winner', () => {

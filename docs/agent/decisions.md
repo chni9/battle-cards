@@ -428,3 +428,23 @@ do not silently change the wire before that ruling is approved.
 Default: each backlog ID gets its own Conventional Commit after it passes `pnpm verify` and is
 marked `Done`. Bundling a whole lot into one commit is allowed only when the developer says so
 for that session (as for Lot 1 catch-up). Recorded in `AGENTS.md` §10.
+
+## 2026-07-30 · [P] `instanceId` on play/sell/upgrade (closes cardId discrepancy)
+
+Developer approved: `playCard`, `sellCard`, and `upgradeCard` payloads carry `instanceId`
+from L2-01 onward. Technical spec §5.2's `cardId` wording is superseded for those three.
+`buyCard` remains `cardId` (infinite stock creates a new copy). PROTOCOL_VERSION 4.
+
+## 2026-07-30 · [P] Economy turn actions and Tax/Regen shop (L2-01)
+
+- Any player action consumes the turn (including buy/sell card, upgrade, buy/sell upgrade
+  point).
+- Shared catalog (`buyCost` / `sellYield` as `CardCost`) replaces `sellValue` /
+  `buyMultiplier`. Shop prices always use the **base** usage transfer — upgraded play cost
+  never changes them.
+- Tax shop: buy 2 lives (reject if `lives < 2`), sell 1 life via `gainLives`. Life payment
+  uses `applyLifeLoss` with reason `card-buy`.
+- Regeneration shop: buy 6 points, sell 3 points (2× / 1× base one-life usage cost of 3).
+- Full V1 shared catalog (10 cards) is buyable from L2-01; play of unimplemented cards still
+  rejected by the registry.
+

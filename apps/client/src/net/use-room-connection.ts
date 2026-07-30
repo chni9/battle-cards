@@ -5,6 +5,7 @@
 import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
+  BUY_CARD,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
@@ -13,6 +14,7 @@ import {
   PLAY_CARD,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  SELL_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
@@ -62,7 +64,9 @@ export interface UseRoomConnectionResult extends RoomConnection {
   leaveGame: () => Promise<void>;
   startGame: () => void;
   drawCard: () => void;
-  playCard: (cardId: CardId, targetPlayerId: string) => void;
+  playCard: (instanceId: string, targetPlayerId: string) => void;
+  buyCard: (cardId: CardId) => void;
+  sellCard: (instanceId: string) => void;
 }
 
 export function useRoomConnection(): UseRoomConnectionResult {
@@ -204,8 +208,16 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(DRAW_CARD);
   }, []);
 
-  const playCard = useCallback((cardId: CardId, targetPlayerId: string): void => {
-    roomRef.current?.send(PLAY_CARD, { cardId, targetPlayerId });
+  const playCard = useCallback((instanceId: string, targetPlayerId: string): void => {
+    roomRef.current?.send(PLAY_CARD, { instanceId, targetPlayerId });
+  }, []);
+
+  const buyCard = useCallback((cardId: CardId): void => {
+    roomRef.current?.send(BUY_CARD, { cardId });
+  }, []);
+
+  const sellCard = useCallback((instanceId: string): void => {
+    roomRef.current?.send(SELL_CARD, { instanceId });
   }, []);
 
   return {
@@ -216,6 +228,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
     startGame,
     drawCard,
     playCard,
+    buyCard,
+    sellCard,
   };
 }
 

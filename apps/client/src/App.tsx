@@ -3,7 +3,7 @@
  * Functional only; no design system (see docs/agent/frontend.md).
  */
 
-import { PROTOCOL_VERSION, type PlayingStateView } from '@card-battle/shared';
+import { PROTOCOL_VERSION, SHARED_CARD_IDS, type PlayingStateView } from '@card-battle/shared';
 import { useEffect, useState } from 'react';
 
 import { useRoomConnection } from './net/use-room-connection';
@@ -28,11 +28,15 @@ export function App() {
     startGame,
     drawCard,
     playCard,
+    buyCard,
+    sellCard,
     lastTurnStarted,
   } = connection;
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [targetId, setTargetId] = useState('');
+  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
+  const [sellInstanceId, setSellInstanceId] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -71,6 +75,8 @@ export function App() {
   }
 
   if (view?.phase === 'playing') {
+    const attackCopy = view.self.hand.find((card) => card.cardId === 'basic-attack');
+
     return (
       <TableScreen
         view={view}
@@ -80,10 +86,22 @@ export function App() {
         deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
         targetId={targetId}
         setTargetId={setTargetId}
+        buyCardId={buyCardId}
+        setBuyCardId={setBuyCardId}
+        sellInstanceId={sellInstanceId}
+        setSellInstanceId={setSellInstanceId}
         onDraw={drawCard}
         onAttack={() => {
-          if (targetId !== '') {
-            playCard('basic-attack', targetId);
+          if (targetId !== '' && attackCopy !== undefined) {
+            playCard(attackCopy.instanceId, targetId);
+          }
+        }}
+        onBuy={() => {
+          buyCard(buyCardId as (typeof SHARED_CARD_IDS)[number]);
+        }}
+        onSell={() => {
+          if (sellInstanceId !== '') {
+            sellCard(sellInstanceId);
           }
         }}
         onLeave={() => {
@@ -199,8 +217,14 @@ function TableScreen(props: {
   deadlineMs: number | null;
   targetId: string;
   setTargetId: (id: string) => void;
+  buyCardId: string;
+  setBuyCardId: (id: string) => void;
+  sellInstanceId: string;
+  setSellInstanceId: (id: string) => void;
   onDraw: () => void;
   onAttack: () => void;
+  onBuy: () => void;
+  onSell: () => void;
   onLeave: () => void;
 }) {
   const {
@@ -211,8 +235,14 @@ function TableScreen(props: {
     deadlineMs,
     targetId,
     setTargetId,
+    buyCardId,
+    setBuyCardId,
+    sellInstanceId,
+    setSellInstanceId,
     onDraw,
     onAttack,
+    onBuy,
+    onSell,
     onLeave,
   } = props;
 
@@ -220,12 +250,24 @@ function TableScreen(props: {
   const secondsLeft =
     deadlineMs === null ? null : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
   const opponents = view.players.filter((player) => !player.isYou);
+  const hasAttack = view.self.hand.some((card) => card.cardId === 'basic-attack');
 
   useEffect(() => {
     if (targetId === '' && opponents[0] !== undefined) {
       setTargetId(opponents[0].id);
     }
   }, [opponents, setTargetId, targetId]);
+
+  useEffect(() => {
+    if (
+      sellInstanceId !== '' &&
+      view.self.hand.some((card) => card.instanceId === sellInstanceId)
+    ) {
+      return;
+    }
+
+    setSellInstanceId(view.self.hand[0]?.instanceId ?? '');
+  }, [sellInstanceId, setSellInstanceId, view.self.hand]);
 
   return (
     <main>
@@ -312,10 +354,14 @@ function TableScreen(props: {
           {view.players.find((player) => player.isYou)?.lives ?? '—'} · Points {view.self.points} ·
           Upgrade points {view.self.upgradePoints} · Kit {view.self.kitId}
         </p>
-        <p>
-          Hand: {view.self.hand.length}× basic-attack (and{' '}
-          {view.self.hand.filter((card) => card.cardId !== 'basic-attack').length} other)
-        </p>
+        <ul>
+          {view.self.hand.map((card) => (
+            <li key={card.instanceId}>
+              {card.cardId}
+              {card.isUpgraded ? ' (upgraded)' : ''}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>
@@ -323,9 +369,60 @@ function TableScreen(props: {
         <button type="button" disabled={!isMyTurn} onClick={onDraw}>
           Draw (+1 point)
         </button>
-        <button type="button" disabled={!isMyTurn || targetId === ''} onClick={onAttack}>
+        <button
+          type="button"
+          disabled={!isMyTurn || targetId === '' || !hasAttack}
+          onClick={onAttack}
+        >
           Basic attack
         </button>
+        <div>
+          <label>
+            Buy{' '}
+            <select
+              value={buyCardId}
+              disabled={!isMyTurn}
+              onChange={(event) => {
+                setBuyCardId(event.target.value);
+              }}
+            >
+              {SHARED_CARD_IDS.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" disabled={!isMyTurn} onClick={onBuy}>
+            Buy card
+          </button>
+        </div>
+        <div>
+          <label>
+            Sell{' '}
+            <select
+              value={sellInstanceId}
+              disabled={!isMyTurn || view.self.hand.length === 0}
+              onChange={(event) => {
+                setSellInstanceId(event.target.value);
+              }}
+            >
+              {view.self.hand.map((card) => (
+                <option key={card.instanceId} value={card.instanceId}>
+                  {card.cardId}
+                  {card.isUpgraded ? ' ↑' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            disabled={!isMyTurn || sellInstanceId === ''}
+            onClick={onSell}
+          >
+            Sell card
+          </button>
+        </div>
       </section>
 
       <button type="button" onClick={onLeave}>

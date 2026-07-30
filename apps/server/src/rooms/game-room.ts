@@ -8,6 +8,7 @@
 import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
+  BUY_CARD,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
@@ -15,21 +16,24 @@ import {
   PLAY_CARD,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  SELL_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
   type ActionLogEntryView,
   type ActionPlayedPayload,
+  type BuyCardPayload,
   type CardId,
   type GameState,
   type LobbySeatView,
   type PlayCardPayload,
+  type SellCardPayload,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { createInitialState } from '../engine/create-initial-state';
-import { performTurnAction } from '../engine/turn/perform-action';
+import { performTurnAction, type TurnAction } from '../engine/turn/perform-action';
 import {
   buildFinishedViewFor,
   buildLobbyViewFor,
@@ -159,9 +163,31 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       this.handleAction(client, {
         type: 'playCard',
-        cardId: parsed.cardId,
+        instanceId: parsed.instanceId,
         targetPlayerId: parsed.targetPlayerId,
       });
+    },
+
+    [BUY_CARD]: (client: GameClient, payload: unknown): void => {
+      const parsed = readBuyCardPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid buyCard payload.' });
+        return;
+      }
+
+      this.handleAction(client, { type: 'buyCard', cardId: parsed.cardId });
+    },
+
+    [SELL_CARD]: (client: GameClient, payload: unknown): void => {
+      const parsed = readSellCardPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid sellCard payload.' });
+        return;
+      }
+
+      this.handleAction(client, { type: 'sellCard', instanceId: parsed.instanceId });
     },
   };
 
@@ -202,10 +228,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.sendStateToEveryoneExcept(client);
   }
 
-  private handleAction(
-    client: GameClient,
-    action: { type: 'draw' } | { type: 'playCard'; cardId: CardId; targetPlayerId: string },
-  ): void {
+  private handleAction(client: GameClient, action: TurnAction): void {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
@@ -450,6 +473,30 @@ function readNickname(options: unknown): string | null {
 }
 
 function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('instanceId' in payload)) {
+    return null;
+  }
+
+  const { instanceId } = payload;
+
+  if (typeof instanceId !== 'string' || instanceId.length === 0) {
+    return null;
+  }
+
+  if (!('targetPlayerId' in payload)) {
+    return { instanceId };
+  }
+
+  const { targetPlayerId } = payload;
+
+  if (typeof targetPlayerId !== 'string') {
+    return null;
+  }
+
+  return { instanceId, targetPlayerId };
+}
+
+function readBuyCardPayload(payload: unknown): BuyCardPayload | null {
   if (typeof payload !== 'object' || payload === null || !('cardId' in payload)) {
     return null;
   }
@@ -460,15 +507,19 @@ function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
     return null;
   }
 
-  if (!('targetPlayerId' in payload)) {
-    return { cardId: cardId as CardId };
-  }
+  return { cardId: cardId as CardId };
+}
 
-  const { targetPlayerId } = payload;
-
-  if (typeof targetPlayerId !== 'string') {
+function readSellCardPayload(payload: unknown): SellCardPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('instanceId' in payload)) {
     return null;
   }
 
-  return { cardId: cardId as CardId, targetPlayerId };
+  const { instanceId } = payload;
+
+  if (typeof instanceId !== 'string' || instanceId.length === 0) {
+    return null;
+  }
+
+  return { instanceId };
 }

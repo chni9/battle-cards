@@ -58,20 +58,35 @@ export interface CardCost {
   pointsPerLife?: number;
 }
 
+/**
+ * Shared (non-special) V1 cards — buyable/sellable individually from infinite stock
+ * (rules spec §1). Specials use `buySpecialCard` instead.
+ */
+export const SHARED_CARD_IDS = [...ATTACK_CARD_IDS, ...ACTION_CARD_IDS] as const;
+
+export type SharedCardId = (typeof SHARED_CARD_IDS)[number];
+
 /** Static, immutable card definition. One entry per card id, never per copy. */
 export interface Card {
   id: CardId;
   name: string;
   type: CardType;
+  /** Cost to *play* the card (rules spec §2–§3). Independent of shop prices. */
   cost: CardCost;
   /** Player-facing description of the base effect. Behaviour lives in the card's handler. */
   effect: string;
   /** Player-facing description of the upgraded effect. */
   upgradeEffect: string;
-  /** Points returned on sale — the usage cost unless the card states otherwise (rules spec §1). */
-  sellValue: number;
-  /** Multiplier applied to the usage cost when buying — 2 unless stated otherwise (rules spec §1). */
-  buyMultiplier: number;
+  /**
+   * Shop purchase price from infinite stock — always the **base** usage transfer × 2
+   * (or the ruled exception for Tax/Regeneration). Never follows an upgraded play cost.
+   */
+  buyCost: CardCost;
+  /**
+   * Yield when selling a held copy — always the **base** usage transfer (rules spec §1),
+   * never an upgraded play cost.
+   */
+  sellYield: CardCost;
 }
 
 /**

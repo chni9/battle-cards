@@ -1,4 +1,5 @@
 export * from './domain/card';
+export * from './domain/card-catalog';
 export * from './domain/effect';
 export * from './domain/game-state';
 export * from './domain/kit';

@@ -8,11 +8,11 @@ import type { CardId } from './card';
  * Why a player lost lives outside of an attack — the `reason` argument of
  * `applyLifeLoss` (technical spec §4.2).
  *
- * Holds the V1 non-attack sources of life loss only: Tax's cost (rules spec §3),
- * Suicide and Imposition's ceded life (rules spec §5). It grows as those cards land;
- * damage never appears here, since damage goes through `applyDamage`.
+ * Holds the V1 non-attack sources of life loss only: Tax's play cost (rules spec §3),
+ * buying Tax from the shop (Lot 2 ruling: 2 lives), Suicide and Imposition's ceded life
+ * (rules spec §5). Damage never appears here — it goes through `applyDamage`.
  */
-export const LIFE_LOSS_REASONS = ['tax', 'suicide', 'imposition'] as const;
+export const LIFE_LOSS_REASONS = ['tax', 'card-buy', 'suicide', 'imposition'] as const;
 
 export type LifeLossReason = (typeof LIFE_LOSS_REASONS)[number];
 

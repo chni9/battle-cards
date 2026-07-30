@@ -85,7 +85,8 @@ that has become implemented; `registry.test.ts` proves the two lists together ac
 
 1. Add its id to the right `as const` array in `packages/shared/src/domain/card.ts`.
    This widens `CardId`, so the registry stops compiling until step 4 — by design.
-2. Add its static data (name, cost, `sellValue`, `buyMultiplier`, description strings).
+2. Add its static data (name, cost, `buyCost`, `sellYield`, description strings) to
+   `SHARED_CARD_CATALOG` when it is a shared card.
    `effect` and `upgradeEffect` are **player-facing text**, never executable data.
 3. Add its handler in its own file under `apps/server/src/cards/handlers/`.
 4. Register it in `cardHandlers` and move its id from `PENDING_CARD_IDS` to
@@ -100,14 +101,16 @@ so rather than working around it.
 
 ## Card economy
 
-Rules spec §1: sale returns the usage cost in points, purchase costs **double** the usage cost
-from an infinite stock, upgrading costs **1 upgrade point** whatever the card, and a player may
-own several copies of the same card. `sellValue` and `buyMultiplier` are per-card fields so a
-card can state otherwise.
+Rules spec §1: sale returns the usage cost (in the cost's currency), purchase costs **double**
+the usage cost from an infinite stock, upgrading costs **1 upgrade point** whatever the card,
+and a player may own several copies of the same card. `buyCost` and `sellYield` are per-card
+`CardCost` fields on the shared catalog — always the **base** shop transfer; upgraded play
+cost never changes them. Tax buys/sells in lives; Regeneration's shop uses 6 / 3 points
+(2× / 1× the base one-life play cost).
 
 Copies are individually addressable via `CardInstance.instanceId`, because `isUpgraded` is a
-property of the copy: upgrading one copy must leave the others untouched. **Note the open
-question about protocol payloads keyed on `cardId`** — see `decisions.md`.
+property of the copy: upgrading one copy must leave the others untouched. Protocol payloads
+for `playCard` / `sellCard` / `upgradeCard` key on `instanceId` (Lot 2 ruling).
 
 ## Special cards
 

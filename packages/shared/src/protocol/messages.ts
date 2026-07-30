@@ -2,6 +2,7 @@
  * The client/server message contract — technical spec §5.2 and §5.3.
  *
  * Spec §5.2 createRoom / joinRoom map to the matchmaker (decisions.md L1-01).
+ * `playCard` / `sellCard` / `upgradeCard` key on `instanceId` (Lot 2 ruling).
  */
 
 import type { CardId } from '../domain/card';
@@ -14,6 +15,8 @@ export const CLIENT_READY = 'clientReady';
 export const START_GAME = 'startGame';
 export const DRAW_CARD = 'drawCard';
 export const PLAY_CARD = 'playCard';
+export const BUY_CARD = 'buyCard';
+export const SELL_CARD = 'sellCard';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
@@ -26,9 +29,11 @@ export interface TurnStartedPayload {
   deadlineMs: number;
 }
 
+export type PublicActionKind = 'draw' | 'playCard' | 'buyCard' | 'sellCard';
+
 export interface ActionPlayedPayload {
   actorPlayerId: string;
-  action: 'draw' | 'playCard';
+  action: PublicActionKind;
   cardId?: CardId;
   targetPlayerId?: string;
   turnSequence: number;
@@ -53,8 +58,16 @@ export interface GameOverPayload {
 }
 
 export interface PlayCardPayload {
-  cardId: CardId;
+  instanceId: string;
   targetPlayerId?: string;
+}
+
+export interface BuyCardPayload {
+  cardId: CardId;
+}
+
+export interface SellCardPayload {
+  instanceId: string;
 }
 
 export interface ServerToClientMessages {
@@ -79,4 +92,6 @@ export interface ClientToServerMessages {
   [START_GAME]: undefined;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
+  [BUY_CARD]: BuyCardPayload;
+  [SELL_CARD]: SellCardPayload;
 }

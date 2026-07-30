@@ -68,9 +68,9 @@ Server → clients (§5.3):
 `mirrorChoiceRequired` (to one player, with deadline) · `rewardChoiceRequired` (to the
 eliminator, chainable) · `playerEliminated` · `gameOver` · `error`
 
-Payloads are specified in §5.2/§5.3. **`playCard`, `sellCard` and `upgradeCard` are specified
-with a `cardId`, which cannot disambiguate two copies at different upgrade levels — see the
-open item in `decisions.md` before implementing them.**
+Payloads are specified in §5.2/§5.3. **`playCard`, `sellCard` and `upgradeCard` key on
+`instanceId`** (Lot 2 ruling — closes the §5.2 `cardId` discrepancy). `buyCard` still takes
+`cardId` (infinite stock, new copy). Wired economy events: `buyCard`, `sellCard`.
 
 One event is **not** in §5.2: `clientReady`, sent by a client once its handlers are registered.
 See "Transport" below — without it the first view is dropped.

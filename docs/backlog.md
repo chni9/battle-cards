@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — next up is L2-01.
+19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01 done).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 0 |
+| 2 · Economy and attacks | 6 | 1 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -237,12 +237,13 @@ Elimination at 0 lives, last survivor wins, summary end screen.
 - **Note** No rewards; cards of the eliminated go to the pool.
 ## Lot 2 · Economy and attacks
 
-### L2-01 · Buying and selling cards — `To do`
+### L2-01 · Buying and selling cards — `Done`
 
 Purchase at double the usage cost from an infinite stock. Sale at usage cost. The sold card joins the pool.
 
 - **Reference** Rules spec §1 · **Depends on** L1-13 · **Complexity** M · **Risk** Low
 - **Acceptance** Points change correctly, the card enters or leaves the hand
+- **Note** Shared catalog uses `buyCost`/`sellYield` (`CardCost`). Tax shop: buy 2 lives (reject if lives < 2) / sell 1 life; Regen shop: buy 6 / sell 3 points. `playCard`/`sellCard` use `instanceId`. PROTOCOL_VERSION 4.
 
 ### L2-02 · Upgrade points — `To do`
 
