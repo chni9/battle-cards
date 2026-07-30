@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-31 of 63 tasks done. **Lot 3 in progress** — next up is L3-07.
+32 of 63 tasks done. **Lot 3 in progress** — next up is L3-08.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 6 |
+| 3 · Action cards | 9 | 7 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -346,13 +346,14 @@ Spy and Thief only. The countering card must target the source of the pending ef
 - **Acceptance** Same card played on a third party: no cancellation
 - **Note** Cancel at resolve-pending; Mirror excluded.
 
-### L3-07 · Turn ledger — `To do`
+### L3-07 · Turn ledger — `Done`
 
 Per player, for their most recent complete turn: lives lost from all causes, points and upgrade points actively spent, resources lost to theft.
 
 - **Reference** Spec §4.4 · **Depends on** L3-04 · **Complexity** L · **Risk** High
 - **Watch point** A state diff is not enough: it must distinguish what was spent from what was stolen.
 - **Acceptance** The ledger correctly distinguishes active spending from third-party theft
+- **Note** Explicit writers only; acceptance tests cover Tax+theft and Regen spend.
 
 ### L3-08 · Absorber — `To do`
 

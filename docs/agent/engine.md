@@ -8,8 +8,8 @@
 > types in `packages/shared/src/domain/{effect,player,game-state}.ts`.
 >
 > **Status:** life primitives (L0-04), seeded RNG + shuffle (L0-05 / L1-03), turn loop + queue
-> (L1-04…L1-07), attack resolution including mutual attacks (L2-05) live under
-> `apps/server/src/engine/`. Turn ledger completion is L3-07.
+> (L1-04…L1-07), attack resolution including mutual attacks (L2-05), and turn-ledger writers
+> (spend vs theft, L3-07) live under `apps/server/src/engine/`.
 
 ## Golden rules
 
