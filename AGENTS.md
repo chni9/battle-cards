@@ -163,6 +163,8 @@ than none: the next session trusts it and redoes finished work.
 - [ ] Every card or rule touched has its test created or updated
 - [ ] The task's own **Acceptance** line in `docs/backlog.md` is satisfied
 - [ ] That task's status set to `Done` in `docs/backlog.md`
+- [ ] **Committed** — Conventional Commit referencing the task ID (see §10). Never leave a
+      `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
 
 ## 10. Commits & PR
@@ -172,6 +174,9 @@ Reference the backlog task in the subject: `feat(engine): add delayed resolution
 Body only when the *why* is not obvious — and always for a rule interpretation, a spec
 deviation, or a decision that a future reader would otherwise have to re-derive. No AI
 attribution. A project-local `caveman-commit` skill (`.agents/skills/`) enforces this style.
+
+**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog.md`
+status flip — not a later cleanup. Leaving finished work uncommitted is a process failure.
 
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
 task alone. Do not bundle several task IDs into one commit unless the developer explicitly
