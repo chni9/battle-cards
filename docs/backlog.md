@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-32 of 63 tasks done. **Lot 3 in progress** — next up is L3-08.
+33 of 63 tasks done. **Lot 3 in progress** — next up is L3-09.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 7 |
+| 3 · Action cards | 9 | 8 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -355,13 +355,14 @@ Per player, for their most recent complete turn: lives lost from all causes, poi
 - **Acceptance** The ledger correctly distinguishes active spending from third-party theft
 - **Note** Explicit writers only; acceptance tests cover Tax+theft and Regen spend.
 
-### L3-08 · Absorber — `To do`
+### L3-08 · Absorber — `Done`
 
 Gains the lives lost by the target during their last complete turn, resolution included. Upgraded version: also captures active spending.
 
 - **Reference** Rules spec §3 · **Depends on** L3-07 · **Complexity** M · **Risk** Medium
 - **Watch point** Does not allow absorbing one's own lost lives. Gain subject to the 25-life cap.
 - **Acceptance** Correct absorption after a turn where the target suffered an attack and paid a tax
+- **Note** Immediate (not queued); ignores theft fields.
 
 ### L3-09 · Mirror — `To do`
 
