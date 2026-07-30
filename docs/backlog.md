@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-25 of 63 tasks done. **Lot 2 complete** — next up is L3-01.
+26 of 63 tasks done. **Lot 3 in progress** — next up is L3-02.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 0 |
+| 3 · Action cards | 9 | 1 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -292,13 +292,14 @@ Fed by sales, used special cards, and eliminated players' cards. Write-only in V
 
 ## Lot 3 · Action cards
 
-### L3-01 · Tax — `To do`
+### L3-01 · Tax — `Done`
 
 1-life cost via applyLifeLoss. Gain 4 points, 6 in the upgraded version. The life cost always applies.
 
 - **Reference** Rules spec §3 · **Depends on** L2-04 · **Complexity** S · **Risk** Medium
 - **Watch point** Never applyDamage. A 1-life player can kill themself: elimination without reward (lot 6).
 - **Acceptance** The shield does not intervene, no counter decrements
+- **Note** Null-target play path added; Tax registered.
 
 ### L3-02 · Regeneration — `To do`
 

@@ -16,7 +16,7 @@ import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
   | { type: 'draw' }
-  | { type: 'playCard'; instanceId: string; targetPlayerId: string }
+  | { type: 'playCard'; instanceId: string; targetPlayerId?: string }
   | { type: 'buyCard'; cardId: CardId }
   | { type: 'sellCard'; instanceId: string }
   | { type: 'upgradeCard'; instanceId: string }
@@ -158,12 +158,7 @@ export function performTurnAction(
       turnSequence: state.turnSequence,
     };
   } else {
-    const playResult = playCardAction(
-      state,
-      actorPlayerId,
-      action.instanceId,
-      action.targetPlayerId,
-    );
+    const playResult = playCardAction(state, actorPlayerId, action.instanceId, action.targetPlayerId);
 
     if (!playResult.ok) {
       return playResult;
@@ -195,7 +190,7 @@ function playCardAction(
   state: GameState,
   actorPlayerId: string,
   instanceId: string,
-  targetPlayerId: string,
+  targetPlayerId: string | undefined,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -222,16 +217,22 @@ function playCardAction(
     return { ok: false, message: 'That card is not playable yet.' };
   }
 
-  const target = findPlayer(state, targetPlayerId);
+  let resolvedTargetId: string | null = null;
 
-  if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
-    return { ok: false, message: 'Invalid target.' };
+  if (targetPlayerId !== undefined) {
+    const target = findPlayer(state, targetPlayerId);
+
+    if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
+      return { ok: false, message: 'Invalid target.' };
+    }
+
+    resolvedTargetId = targetPlayerId;
   }
 
   const context = {
     state,
     sourcePlayerId: actorPlayerId,
-    targetPlayerId,
+    targetPlayerId: resolvedTargetId,
     card: instance,
   };
 
@@ -263,7 +264,7 @@ function playCardAction(
       actorPlayerId,
       action: 'playCard',
       cardId,
-      targetPlayerId,
+      ...(resolvedTargetId !== null ? { targetPlayerId: resolvedTargetId } : {}),
       turnSequence: state.turnSequence,
     },
   };

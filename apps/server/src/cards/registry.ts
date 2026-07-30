@@ -12,12 +12,14 @@ import type { CardHandler } from './handler';
 import { basicAttackHandler } from './handlers/basic-attack';
 import { strongAttackHandler } from './handlers/strong-attack';
 import { superAttackHandler } from './handlers/super-attack';
+import { taxHandler } from './handlers/tax';
 
 /** Cards with a working handler. Grows by one entry per card task. */
 export const IMPLEMENTED_CARD_IDS = [
   'basic-attack',
   'strong-attack',
   'super-attack',
+  'tax',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -25,7 +27,6 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'tax',
   'regeneration',
   'shield',
   'thief',
@@ -44,6 +45,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,
   'strong-attack': strongAttackHandler,
   'super-attack': superAttackHandler,
+  tax: taxHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

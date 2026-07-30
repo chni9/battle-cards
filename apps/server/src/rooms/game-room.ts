@@ -160,15 +160,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
-      if (parsed.targetPlayerId === undefined) {
-        client.send(ERROR_MESSAGE, { message: 'A target is required.' });
-        return;
-      }
-
       this.handleAction(client, {
         type: 'playCard',
         instanceId: parsed.instanceId,
-        targetPlayerId: parsed.targetPlayerId,
+        ...(parsed.targetPlayerId !== undefined
+          ? { targetPlayerId: parsed.targetPlayerId }
+          : {}),
       });
     },
 
