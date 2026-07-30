@@ -8,8 +8,8 @@
 > types in `packages/shared/src/domain/{effect,player,game-state}.ts`.
 >
 > **Status:** life primitives (L0-04), seeded RNG + shuffle (L0-05 / L1-03), turn loop + queue
-> (L1-04…L1-07) and basic-attack resolution (L1-08) live under `apps/server/src/engine/`.
-> Mutual attacks (L2-05) and the turn ledger (L3-07) are still unwritten.
+> (L1-04…L1-07), attack resolution including mutual attacks (L2-05) live under
+> `apps/server/src/engine/`. Turn ledger completion is L3-07.
 
 ## Golden rules
 
@@ -133,9 +133,10 @@ Mechanics that rule does not cover:
 
 ## Counter rule — distinct from mutual attacks
 
-Applies to **Spy, Thief and Mirror only** (rules spec §1, technical spec §4.7). The countering
-card must target the **source** of the pending effect; played at a third party it counters
-nothing. Both effects cancel, both cards are consumed, both costs are paid. It never applies to
+Applies to **Spy and Thief only** (rules spec §1, technical spec §4.7). Mirror is redirection,
+not cancellation. The countering card must target the **source** of the pending effect; played
+at a third party it counters nothing. Both effects cancel, both costs are paid, copies remain
+in hand. Cancel runs during resolve-pending (both stay queued until then). It never applies to
 attack cards — those follow mutual attacks above.
 
 ## Turn ledger

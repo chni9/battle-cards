@@ -182,7 +182,10 @@ Consequence: the comparison always triggers on the turn of the player who attack
 
 ### 4.7 Counter rule
 
-Applies to Spy, Thief, and Mirror only (spec §1). The countering card **must target the source** of the pending effect. Both effects cancel out, both cards are consumed, both costs are paid.
+Applies to Spy and Thief only (rules spec §1). Mirror is not counterable — it uses chain
+redirection (rules spec §3), not cancellation. The countering card **must target the source**
+of the pending effect. Both effects cancel out, both costs are paid, and both card copies
+remain in hand (attack/action cards are reusable).
 
 Does not apply to attack cards: those fall under 4.6.
 

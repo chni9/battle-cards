@@ -18,7 +18,8 @@
 2. **Adding a card must not modify another card's handler**, nor the engine. If it does, the
    primitive it needs is missing — add the primitive, don't reach across.
 3. **Handlers compose shared primitives.** Those that exist: `applyDamage`, `applyLifeLoss`,
-   `gainLives` (L0-04). Those still to come: `steal`, `reveal`, `queueEffect`. A handler that
+   `gainLives` (L0-04), `queueEffect` (L1-07). Those still to come with Lot 3: `steal`, Spy
+   visibility grant. A handler that
    manipulates `player.lives` directly bypasses the shield rules, the counters and the life cap
    at once. If the primitive you need does not exist, add it — do not inline it.
 4. **An effect aimed at an opponent is queued, not applied.** The handler's job is to queue;

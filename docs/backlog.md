@@ -334,7 +334,7 @@ See the target's kit and cards until the end of the game. Upgraded version: also
 
 ### L3-06 · Counter rule — `To do`
 
-Spy, Thief, and Mirror only. The countering card must target the source of the pending effect. Both effects cancel, both costs are paid.
+Spy and Thief only. The countering card must target the source of the pending effect. Both effects cancel, both costs are paid (copies stay in hand).
 
 - **Reference** Rules spec §1 · Spec §4.7 · **Depends on** L3-05 · **Complexity** M · **Risk** Medium
 - **Watch point** Never applies to attack cards: those fall under L2-05.

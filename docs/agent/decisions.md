@@ -462,3 +462,25 @@ Rules spec §1 defines resale at 7 points; technical spec §5.2 listed only `buy
 Added `sellUpgradePoint` (empty payload). Prices live in `UPGRADE_POINT_ECONOMY` so Upgrader
 (out of V1) can change buy cost without hunting literals.
 
+## 2026-07-30 · [P] Lot 3 rulings (Counter, Regen, Shield, Mirror, AGENTS)
+
+Developer session locked these before Lot 3 implementation:
+
+- **Counter = Spy and Thief only.** Rules spec §1/§3 win over tech §4.7's former inclusion of
+  Mirror. Mirror is redirection, never cancelled by another Mirror. Tech §4.7, backlog L3-06,
+  and `engine.md` updated to match. Rules file not edited for this (already correct).
+- **Counter "consumed"** means effects cancel only: costs stay paid, Spy/Thief copies stay in
+  hand (aligns with attack/action reuse).
+- **Regeneration quantity** is chosen on the same turn via optional `playCard.quantity` (1–4),
+  not a timed sub-choice.
+- **Upgraded Shield** blocks Thief/Spy at **resolution** (pending still queues; cost paid;
+  effect fizzles; no shield-point spend). Counter remains possible while pending.
+- **`Player.shieldIsUpgraded`** boolean, public in views; set by upgraded Shield; cleared when
+  `shield` reaches 0. Base Shield clears the flag.
+- **Spy/Thief reciprocal cancel** runs during `resolve-pending` (both effects stay queued until
+  then). If only the counter is later removed (e.g. special cancel), the original still applies.
+- **`PendingEffect.damageMultiplier`** (number, default 1): upgraded Mirror does `*= 2` and
+  **stacks** on unlimited redirect chains. Mutual-cancel and damage use catalog × multiplier.
+- **AGENTS.md golden rule 10** ("One backlog task at a time") removed. One commit per backlog
+  task (§10) remains.
+

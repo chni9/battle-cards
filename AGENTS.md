@@ -90,8 +90,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    special card purchase, Mirror's default target. Without a seed nothing is reproducible.
 6. **Never invent a rule.** If the rules spec, the technical spec and the backlog's **Watch
    point** line do not clearly resolve a case, **stop and ask** — even when the answer looks
-   obvious. Open decisions #1, #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
-   #2 and #3 are closed.
+   obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
+   #1, #2 and #3 are closed.
 7. **V1 scope is closed.** The 11 other kits, Team/God/Quick modes, bots, accounts,
    in-progress persistence, monetization and art direction are out (technical spec §9) — not
    to be implemented "even partially, even to lay groundwork".
@@ -100,8 +100,6 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    not validation.
 9. **The 25-life cap applies to every source of gain** — Regeneration, Absorber, Imposition,
    elimination rewards, upgraded Cloning. Read it from `GameState.lifeLimit`, never hardcode it.
-10. **One backlog task at a time.** Read its **Watch point** and **Acceptance** lines before
-    writing code. Do not bundle several task IDs into one pass, and do not skip ahead.
 
 ## 6. Code conventions
 
