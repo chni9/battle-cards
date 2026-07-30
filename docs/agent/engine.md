@@ -133,7 +133,8 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 - Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02). Imposition
-  and Points Generator fill the dispatch; deactivated counter cards join the shared pool.
+  taxes the current player from other players' active Impositions; Points Generator ticks on
+  the owner's turn (including the play turn). Deactivated counter cards join the shared pool.
 
 ## Mutual attacks — mechanics
 
