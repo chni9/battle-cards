@@ -36,7 +36,9 @@ describe('Tax (rules spec §3, L3-01)', () => {
     actor.lives = 10;
     actor.points = 0;
     actor.shield = 7;
-    actor.activePersistentEffects = [makeCounterEffect({ counter: 3 })];
+    actor.activePersistentEffects = [
+      makeCounterEffect({ cardId: 'imposition', counter: 3 }),
+    ];
     actor.hand = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
 
     const result = performTurnAction(state, actorId, {

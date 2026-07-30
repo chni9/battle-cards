@@ -46,7 +46,7 @@ describe('special card model (L5-01)', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(actor.points).toBe(0);
+    expect(actor.points).toBe(2); // paid 5, then Points Generator step-4 tick +2
     expect(actor.turnLedger.pointsSpent).toBe(5);
     expect(actor.specialCards).toHaveLength(0);
     expect(actor.activePersistentEffects).toHaveLength(1);
