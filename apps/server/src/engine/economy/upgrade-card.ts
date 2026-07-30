@@ -27,7 +27,9 @@ export function upgradeCard(
     return { ok: false, message: 'Not enough upgrade points.' };
   }
 
-  const instance = actor.hand.find((card) => card.instanceId === instanceId);
+  const instance =
+    actor.hand.find((card) => card.instanceId === instanceId) ??
+    actor.specialCards.find((card) => card.instanceId === instanceId);
 
   if (instance === undefined) {
     return { ok: false, message: 'You do not hold that card.' };

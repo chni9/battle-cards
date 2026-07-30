@@ -1,6 +1,7 @@
 export * from './domain/visibility';
 export * from './domain/card';
 export * from './domain/card-catalog';
+export * from './domain/special-card-catalog';
 export * from './domain/attack-damage';
 export * from './domain/effect';
 export * from './domain/game-state';

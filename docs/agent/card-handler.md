@@ -124,11 +124,14 @@ placed before use is lost when the card is played. After use the card joins the 
 
 **Lot 4 → Lot 5 handoff:** starting specials are already dealt into `player.specialCards` at
 `createInitialState` (L4-02). Lot 5 adds static definitions, handlers, and unlocks play — do
-**not** redistribute kit specials again at L5-01. Until a handler exists, play is rejected.
+**not** redistribute kit specials again at L5-01. Play rejects specials whose handler is still
+pending (`PENDING_CARD_IDS`).
 
 Attack and action cards are **not** consumed on play: the player pays the usage cost each time
 and keeps the copy (infinite reuse while they hold it and can afford the cost). Only specials
-leave the hand on use.
+leave the zone on use. Special **Price** is paid on play (`getCard`); persistent specials
+(Imposition, Points Generator) activate `activePersistentEffects` instead of joining the pool
+immediately.
 
 **Counter cards** ("card lives", rules spec §5) in V1: Points Generator 3, Imposition 2. The
 counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever

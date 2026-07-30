@@ -11,7 +11,9 @@ import type { CardId } from '@card-battle/shared';
 import type { CardHandler } from './handler';
 import { absorberHandler } from './handlers/absorber';
 import { basicAttackHandler } from './handlers/basic-attack';
+import { impositionHandler } from './handlers/imposition';
 import { mirrorHandler } from './handlers/mirror';
+import { pointsGeneratorHandler } from './handlers/points-generator';
 import { regenerationHandler } from './handlers/regeneration';
 import { shieldHandler } from './handlers/shield';
 import { spyHandler } from './handlers/spy';
@@ -32,6 +34,8 @@ export const IMPLEMENTED_CARD_IDS = [
   'spy',
   'absorber',
   'mirror',
+  'imposition',
+  'points-generator',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -41,10 +45,8 @@ type PendingCardId = Exclude<CardId, ImplementedCardId>;
 export const PENDING_CARD_IDS = [
   'suicide',
   'spy-thief',
-  'imposition',
   'cloning',
   'sentence',
-  'points-generator',
 ] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
@@ -58,6 +60,8 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   spy: spyHandler,
   absorber: absorberHandler,
   mirror: mirrorHandler,
+  imposition: impositionHandler,
+  'points-generator': pointsGeneratorHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

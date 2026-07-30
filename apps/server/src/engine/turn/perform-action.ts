@@ -5,8 +5,9 @@
 
 import {
   ATTACK_CARD_IDS,
+  getCard,
   getKit,
-  getSharedCard,
+  isPersistentSpecialCardId,
   type AttackCardId,
   type CardId,
   type CardInstance,
@@ -400,7 +401,7 @@ function playMultipleAttacksAction(
       return { ok: false, message: 'That play is not legal.' };
     }
 
-    const definition = getSharedCard(instance.cardId);
+    const definition = getCard(instance.cardId);
     const playPoints = definition?.cost.points ?? 0;
     totalCost += playPoints;
     prepared.push({
@@ -466,19 +467,17 @@ function playCardAction(
     return { ok: false, message: 'Unknown player.' };
   }
 
-  const instanceIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
+  const handIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
+  const specialIndex = actor.specialCards.findIndex((card) => card.instanceId === instanceId);
+  const fromSpecials = handIndex < 0 && specialIndex >= 0;
 
-  if (instanceIndex < 0) {
-    const specialIndex = actor.specialCards.findIndex((card) => card.instanceId === instanceId);
-
-    if (specialIndex >= 0) {
-      return { ok: false, message: 'Special cards are not playable yet.' };
-    }
-
+  if (handIndex < 0 && specialIndex < 0) {
     return { ok: false, message: 'You do not hold that card.' };
   }
 
-  const instance = actor.hand[instanceIndex];
+  const instance = fromSpecials
+    ? actor.specialCards[specialIndex]
+    : actor.hand[handIndex];
 
   if (instance === undefined) {
     return { ok: false, message: 'You do not hold that card.' };
@@ -515,9 +514,9 @@ function playCardAction(
     return { ok: false, message: 'That play is not legal.' };
   }
 
-  // Play payment: points from catalog. Life / pointsPerLife play costs land with
-  // their handlers (Tax, Regeneration) — shop life transfers use payCost instead.
-  const definition = getSharedCard(cardId);
+  // Play payment: points from catalog (shared or special Price). Life / pointsPerLife
+  // play costs land with their handlers (Tax, Regeneration).
+  const definition = getCard(cardId);
   const playPoints = definition?.cost.points ?? 0;
 
   if (actor.points < playPoints) {
@@ -529,9 +528,17 @@ function playCardAction(
     actor.turnLedger.pointsSpent += playPoints;
   }
 
-  // Attack and action cards are reusable: pay the usage cost each play, keep the copy
-  // (rules spec §1 / §5 — only specials are single-use).
+  // Attack and action cards are reusable; specials are single-use (rules spec §5).
   handler.play(context);
+
+  if (fromSpecials) {
+    actor.specialCards = actor.specialCards.filter((card) => card.instanceId !== instanceId);
+
+    // Persistent specials stay active via activePersistentEffects until deactivated.
+    if (!isPersistentSpecialCardId(cardId)) {
+      state.pool.push(instance);
+    }
+  }
 
   return {
     ok: true,

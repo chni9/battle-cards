@@ -552,3 +552,15 @@ Developer playtest correction (supersedes earlier “tokens = points only”):
 - **Upgraded Spy:** live lives/points/UP/shield (no snapshot in the client view).
 - Matches rules §3 upgrade text (“all of the opponent's resources”).
 - PROTOCOL_VERSION 14.
+
+## 2026-07-30 · [P] Lot 5 special play model (L5-01)
+
+Developer session locked before Lot 5 implementation:
+
+- Special **Price** is a **play cost** (paid on play), same pattern as shared cards. The 20-point
+  `buySpecialCard` purchase remains separate.
+- Specials play from `specialCards` via `playCard` + `instanceId`. On successful play the copy
+  leaves the zone. Instant specials join the shared pool; Imposition / Points Generator activate
+  `activePersistentEffects` and join the pool only on deactivation (L5-02).
+- `upgradeCard` searches `hand` and `specialCards`. Kit starting specials are not re-dealt.
+- `getCard` resolves shared or special catalog definitions for play payment.

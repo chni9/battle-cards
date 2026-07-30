@@ -2,15 +2,16 @@
  * Static V1 shared-card definitions — rules spec §1–§3.
  *
  * Shop prices (`buyCost` / `sellYield`) are always base-cost transfers; upgraded play
- * cost never changes them (Lot 2 ruling). Specials are omitted: not bought/sold
- * individually (rules spec §5).
+ * cost never changes them (Lot 2 ruling). Specials live in `special-card-catalog.ts`.
  */
 
 import {
   type Card,
+  type CardId,
   type SharedCardId,
   SHARED_CARD_IDS,
 } from './card';
+import { getSpecialCard } from './special-card-catalog';
 
 function pointsCard(
   id: SharedCardId,
@@ -131,6 +132,11 @@ export function getSharedCard(cardId: string): Card | undefined {
   }
 
   return undefined;
+}
+
+/** Shared or special catalog lookup — play payment and UI definitions. */
+export function getCard(cardId: CardId): Card | undefined {
+  return getSharedCard(cardId) ?? getSpecialCard(cardId);
 }
 
 export function isSharedCardId(cardId: string): cardId is SharedCardId {

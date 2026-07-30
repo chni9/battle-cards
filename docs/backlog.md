@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-39 of 63 tasks done. **Lot 4 complete** — next up is L5-01.
+40 of 63 tasks done. **Lot 5 in progress** — next up is L5-02.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -51,7 +51,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 5 |
-| 5 · Special cards | 9 | 0 |
+| 5 · Special cards | 9 | 1 |
 | 6 · Elimination | 5 | 0 |
 | 7 · Robustness | 5 | 0 |
 | 8 · Game log | 2 | 0 |
@@ -417,7 +417,7 @@ Several attack cards count as a single action. Each attack targets freely and ke
 
 ## Lot 5 · Special cards
 
-### L5-01 · Special card model — `To do`
+### L5-01 · Special card model — `Done`
 
 Single use, not purchasable individually, upgrade lost on use, joins the pool after use.
 
