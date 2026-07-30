@@ -30,6 +30,8 @@ export function App() {
     playCard,
     buyCard,
     sellCard,
+    buyUpgradePoint,
+    sellUpgradePoint,
     lastTurnStarted,
   } = connection;
   const [nickname, setNickname] = useState('');
@@ -104,6 +106,8 @@ export function App() {
             sellCard(sellInstanceId);
           }
         }}
+        onBuyUpgradePoint={buyUpgradePoint}
+        onSellUpgradePoint={sellUpgradePoint}
         onLeave={() => {
           void leaveGame();
         }}
@@ -225,6 +229,8 @@ function TableScreen(props: {
   onAttack: () => void;
   onBuy: () => void;
   onSell: () => void;
+  onBuyUpgradePoint: () => void;
+  onSellUpgradePoint: () => void;
   onLeave: () => void;
 }) {
   const {
@@ -243,6 +249,8 @@ function TableScreen(props: {
     onAttack,
     onBuy,
     onSell,
+    onBuyUpgradePoint,
+    onSellUpgradePoint,
     onLeave,
   } = props;
 
@@ -423,6 +431,16 @@ function TableScreen(props: {
             Sell card
           </button>
         </div>
+        <button type="button" disabled={!isMyTurn} onClick={onBuyUpgradePoint}>
+          Buy upgrade point
+        </button>
+        <button
+          type="button"
+          disabled={!isMyTurn || view.self.upgradePoints < 1}
+          onClick={onSellUpgradePoint}
+        >
+          Sell upgrade point
+        </button>
       </section>
 
       <button type="button" onClick={onLeave}>

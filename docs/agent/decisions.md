@@ -448,3 +448,9 @@ from L2-01 onward. Technical spec §5.2's `cardId` wording is superseded for tho
 - Full V1 shared catalog (10 cards) is buyable from L2-01; play of unimplemented cards still
   rejected by the registry.
 
+## 2026-07-30 · [P] `sellUpgradePoint` wire event (L2-02)
+
+Rules spec §1 defines resale at 7 points; technical spec §5.2 listed only `buyUpgradePoint`.
+Added `sellUpgradePoint` (empty payload). Prices live in `UPGRADE_POINT_ECONOMY` so Upgrader
+(out of V1) can change buy cost without hunting literals.
+

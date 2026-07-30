@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01, L2-06 done).
+19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01, L2-02, L2-06 done).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 2 |
+| 2 · Economy and attacks | 6 | 3 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -245,13 +245,14 @@ Purchase at double the usage cost from an infinite stock. Sale at usage cost. Th
 - **Acceptance** Points change correctly, the card enters or leaves the hand
 - **Note** Shared catalog uses `buyCost`/`sellYield` (`CardCost`). Tax shop: buy 2 lives (reject if lives < 2) / sell 1 life; Regen shop: buy 6 / sell 3 points. `playCard`/`sellCard` use `instanceId`. PROTOCOL_VERSION 4.
 
-### L2-02 · Upgrade points — `To do`
+### L2-02 · Upgrade points — `Done`
 
 Purchase at 10 points, resale at 7 points.
 
 - **Reference** Rules spec §1 · **Depends on** L2-01 · **Complexity** S · **Risk** Low
 - **Watch point** Cost modifiable by a kit ability (Upgrader, out of V1): do not hardcode 10 into the logic.
 - **Acceptance** Purchase and resale correct
+- **Note** `UPGRADE_POINT_ECONOMY` in shared; `sellUpgradePoint` added to protocol (absent from §5.2). PROTOCOL_VERSION 5.
 
 ### L2-03 · Card upgrade — `To do`
 

@@ -17,6 +17,8 @@ export const DRAW_CARD = 'drawCard';
 export const PLAY_CARD = 'playCard';
 export const BUY_CARD = 'buyCard';
 export const SELL_CARD = 'sellCard';
+export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
+export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
@@ -29,7 +31,13 @@ export interface TurnStartedPayload {
   deadlineMs: number;
 }
 
-export type PublicActionKind = 'draw' | 'playCard' | 'buyCard' | 'sellCard';
+export type PublicActionKind =
+  | 'draw'
+  | 'playCard'
+  | 'buyCard'
+  | 'sellCard'
+  | 'buyUpgradePoint'
+  | 'sellUpgradePoint';
 
 export interface ActionPlayedPayload {
   actorPlayerId: string;
@@ -94,4 +102,6 @@ export interface ClientToServerMessages {
   [PLAY_CARD]: PlayCardPayload;
   [BUY_CARD]: BuyCardPayload;
   [SELL_CARD]: SellCardPayload;
+  [BUY_UPGRADE_POINT]: undefined;
+  [SELL_UPGRADE_POINT]: undefined;
 }

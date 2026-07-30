@@ -8,6 +8,7 @@ import { getSharedCard, type CardId, type GameState } from '@card-battle/shared'
 import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
 import { sellCard } from '../economy/sell-card';
+import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import { L1_PLACEHOLDER_RESOURCES } from '../l1-placeholders';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
@@ -16,9 +17,17 @@ export type TurnAction =
   | { type: 'draw' }
   | { type: 'playCard'; instanceId: string; targetPlayerId: string }
   | { type: 'buyCard'; cardId: CardId }
-  | { type: 'sellCard'; instanceId: string };
+  | { type: 'sellCard'; instanceId: string }
+  | { type: 'buyUpgradePoint' }
+  | { type: 'sellUpgradePoint' };
 
-export type PublicActionKind = 'draw' | 'playCard' | 'buyCard' | 'sellCard';
+export type PublicActionKind =
+  | 'draw'
+  | 'playCard'
+  | 'buyCard'
+  | 'sellCard'
+  | 'buyUpgradePoint'
+  | 'sellUpgradePoint';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;
@@ -106,6 +115,30 @@ export function performTurnAction(
       actorPlayerId,
       action: 'sellCard',
       cardId: sold.cardId,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'buyUpgradePoint') {
+    const bought = buyUpgradePoint(state, actorPlayerId);
+
+    if (!bought.ok) {
+      return bought;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'buyUpgradePoint',
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'sellUpgradePoint') {
+    const sold = sellUpgradePoint(state, actorPlayerId);
+
+    if (!sold.ok) {
+      return sold;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'sellUpgradePoint',
       turnSequence: state.turnSequence,
     };
   } else {

@@ -9,6 +9,7 @@ import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
   BUY_CARD,
+  BUY_UPGRADE_POINT,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
@@ -17,6 +18,7 @@ import {
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
   SELL_CARD,
+  SELL_UPGRADE_POINT,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
@@ -188,6 +190,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.handleAction(client, { type: 'sellCard', instanceId: parsed.instanceId });
+    },
+
+    [BUY_UPGRADE_POINT]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'buyUpgradePoint' });
+    },
+
+    [SELL_UPGRADE_POINT]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'sellUpgradePoint' });
     },
   };
 

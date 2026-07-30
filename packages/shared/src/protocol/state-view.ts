@@ -80,7 +80,13 @@ export interface PlayingStateView {
 
 export interface ActionLogEntryView {
   actorPlayerId: string;
-  action: 'draw' | 'playCard' | 'buyCard' | 'sellCard';
+  action:
+    | 'draw'
+    | 'playCard'
+    | 'buyCard'
+    | 'sellCard'
+    | 'buyUpgradePoint'
+    | 'sellUpgradePoint';
   cardId?: CardId;
   targetPlayerId?: string;
   turnSequence: number;

@@ -58,7 +58,8 @@ cloned player (ruling §6.2 #11).
 Client → server (technical spec §5.2):
 
 `createRoom` · `joinRoom` · `startGame` · `playCard` · `playMultipleAttacks` (Assassin only) ·
-`buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `drawCard` · `buySpecialCard` ·
+`buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
+`buySpecialCard` ·
 `chooseMirrorTarget` · `chooseEliminationReward`
 
 Server → clients (§5.3):
