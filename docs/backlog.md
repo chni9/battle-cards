@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-34 of 63 tasks done. **Lot 3 complete** — next up is L4-01.
+39 of 63 tasks done. **Lot 4 complete** — next up is L5-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -50,7 +50,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 9 |
-| 4 · Kits | 5 | 0 |
+| 4 · Kits | 5 | 5 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
 | 7 · Robustness | 5 | 0 |
@@ -166,7 +166,7 @@ The player gains a number of points equal to their kit's Draw value. No card gai
 
 - **Reference** Rules spec §6 · **Depends on** L1-04 · **Complexity** S · **Risk** Low
 - **Acceptance** The player gains the right number of points, their turn ends
-- **Note** Uses `L1_PLACEHOLDER_RESOURCES.draw` (= 1) until kits land.
+- **Note** Draw uses `getKit(player.kitId).startingResources.draw` (L4-01+).
 
 ### L1-06 · Turn timer — `Done`
 
@@ -375,7 +375,7 @@ Redirects a non-upgraded attack pending against the user. Choice among several. 
 
 ## Lot 4 · Kits
 
-### L4-01 · Kit model and traits — `To do`
+### L4-01 · Kit model and traits — `Done`
 
 Traits: alwaysUpgraded, immuneTo, allowsMultipleAttacksPerTurn. Checked on every card acquisition.
 
@@ -383,7 +383,7 @@ Traits: alwaysUpgraded, immuneTo, allowsMultipleAttacksPerTurn. Checked on every
 - **Watch point** alwaysUpgraded is not a flag set at distribution: it applies to any later acquisition and to every held copy.
 - **Acceptance** The trait applies to a card acquired after the start of the game
 
-### L4-02 · Starting distribution — `To do`
+### L4-02 · Starting distribution — `Done`
 
 Kit resources, random draw of action and attack cards per the roster's quantities, duplicates possible, kit's special cards.
 
@@ -391,7 +391,7 @@ Kit resources, random draw of action and attack cards per the roster's quantitie
 - **Watch point** Replaces the placeholder values from lot 1 (L1-03).
 - **Acceptance** Quantities conforming to the roster for the 4 kits in the lot
 
-### L4-03 · Kamikaze and Untouchable — `To do`
+### L4-03 · Kamikaze and Untouchable — `Done`
 
 Starting stats for both kits. Untouchable: immunity to Thief and Spy.
 
@@ -399,7 +399,7 @@ Starting stats for both kits. Untouchable: immunity to Thief and Spy.
 - **Watch point** Should the immunity block Spy Thief? Not yet ruled on, see Open decisions tab.
 - **Acceptance** Thief and Spy have no effect on Untouchable
 
-### L4-04 · Scientific — `To do`
+### L4-04 · Scientific — `Done`
 
 alwaysUpgraded trait on Spy, permanent and free.
 
@@ -407,7 +407,7 @@ alwaysUpgraded trait on Spy, permanent and free.
 - **Watch point** Mandatory test: a Spy card bought mid-game arrives already upgraded, and every held copy is too.
 - **Acceptance** Purchase on turn 12: card upgraded without consuming an upgrade point
 
-### L4-05 · Assassin and multiple attacks — `To do`
+### L4-05 · Assassin and multiple attacks — `Done`
 
 Several attack cards count as a single action. Each attack targets freely and keeps its own independent resolution.
 

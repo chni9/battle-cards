@@ -4,14 +4,21 @@
  */
 
 import {
+  ATTACK_CARD_IDS,
   PROTOCOL_VERSION,
   SHARED_CARD_IDS,
+  getKit,
+  type ActionResolvedPayload,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
 } from '@card-battle/shared';
 import { useEffect, useState } from 'react';
 
 import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
+
+function isAttackCardId(cardId: string): boolean {
+  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
 
 const STATUS_LABELS = {
   idle: 'Not connected',
@@ -33,6 +40,7 @@ export function App() {
     startGame,
     drawCard,
     playCard,
+    playMultipleAttacks,
     chooseMirrorTarget,
     buyCard,
     sellCard,
@@ -40,6 +48,7 @@ export function App() {
     buyUpgradePoint,
     sellUpgradePoint,
     lastTurnStarted,
+    lastActionResolved,
     mirrorChoice,
   } = connection;
   const [nickname, setNickname] = useState('');
@@ -53,6 +62,8 @@ export function App() {
   const [upgradeInstanceId, setUpgradeInstanceId] = useState('');
   const [mirrorEffectId, setMirrorEffectId] = useState('');
   const [mirrorTargetId, setMirrorTargetId] = useState('');
+  const [multiAttackIds, setMultiAttackIds] = useState<string[]>([]);
+  const [multiAttackTargets, setMultiAttackTargets] = useState<Record<string, string>>({});
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -98,6 +109,7 @@ export function App() {
         statusLabel={STATUS_LABELS[status]}
         nowMs={nowMs}
         deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
+        lastActionResolved={lastActionResolved}
         targetId={targetId}
         setTargetId={setTargetId}
         playInstanceId={playInstanceId}
@@ -130,6 +142,32 @@ export function App() {
           };
           playCard(playInstanceId, options);
         }}
+        onPlayMultipleAttacks={() => {
+          if (multiAttackIds.length < 2) {
+            return;
+          }
+
+          const attacks = multiAttackIds.flatMap((instanceId) => {
+            const targetPlayerId = multiAttackTargets[instanceId];
+            if (targetPlayerId === undefined || targetPlayerId === '') {
+              return [];
+            }
+
+            return [{ instanceId, targetPlayerId }];
+          });
+
+          if (attacks.length !== multiAttackIds.length) {
+            return;
+          }
+
+          playMultipleAttacks(attacks);
+          setMultiAttackIds([]);
+          setMultiAttackTargets({});
+        }}
+        multiAttackIds={multiAttackIds}
+        setMultiAttackIds={setMultiAttackIds}
+        multiAttackTargets={multiAttackTargets}
+        setMultiAttackTargets={setMultiAttackTargets}
         onChooseMirror={() => {
           if (mirrorEffectId !== '' && mirrorTargetId !== '') {
             chooseMirrorTarget(mirrorEffectId, mirrorTargetId);
@@ -261,6 +299,7 @@ function TableScreen(props: {
   statusLabel: string;
   nowMs: number;
   deadlineMs: number | null;
+  lastActionResolved: ActionResolvedPayload | null;
   targetId: string;
   setTargetId: (id: string) => void;
   playInstanceId: string;
@@ -282,6 +321,11 @@ function TableScreen(props: {
   setMirrorTargetId: (id: string) => void;
   onDraw: () => void;
   onPlay: () => void;
+  onPlayMultipleAttacks: () => void;
+  multiAttackIds: string[];
+  setMultiAttackIds: (ids: string[]) => void;
+  multiAttackTargets: Record<string, string>;
+  setMultiAttackTargets: (targets: Record<string, string>) => void;
   onChooseMirror: () => void;
   onBuy: () => void;
   onSell: () => void;
@@ -296,6 +340,7 @@ function TableScreen(props: {
     statusLabel,
     nowMs,
     deadlineMs,
+    lastActionResolved,
     targetId,
     setTargetId,
     playInstanceId,
@@ -317,6 +362,11 @@ function TableScreen(props: {
     setMirrorTargetId,
     onDraw,
     onPlay,
+    onPlayMultipleAttacks,
+    multiAttackIds,
+    setMultiAttackIds,
+    multiAttackTargets,
+    setMultiAttackTargets,
     onChooseMirror,
     onBuy,
     onSell,
@@ -327,6 +377,10 @@ function TableScreen(props: {
   } = props;
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
+  const kit = getKit(view.self.kitId);
+  const drawValue = kit.startingResources.draw;
+  const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
+  const attackCards = view.self.hand.filter((card) => isAttackCardId(card.cardId));
   const secondsLeft =
     deadlineMs === null ? null : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
   const opponents = view.players.filter((player) => !player.isYou);
@@ -417,6 +471,11 @@ function TableScreen(props: {
           {isMyTurn ? ' (you)' : ''}
         </p>
         <p>Timer: {secondsLeft === null ? '—' : `${secondsLeft}s`}</p>
+        {lastActionResolved?.outcome === 'immune' && (
+          <p>
+            {lastActionResolved.cardId} failed — target is immune
+          </p>
+        )}
       </section>
 
       {mirrorChoice !== null && (
@@ -483,15 +542,43 @@ function TableScreen(props: {
                   }}
                 />
                 {player.nickname}
-                {player.spied !== undefined
-                  ? ` — ${player.spied.hand.length + player.spied.specialCards.length} cards · spied: kit ${player.spied.kitId}${
-                      player.spied.lives !== undefined
-                        ? `, ${player.spied.lives} lives, shield ${String(player.spied.shield)}, ${String(player.spied.points)} pts`
-                        : ''
-                    }`
-                  : ''}
                 {player.isEliminated ? ' (eliminated)' : ''}
               </label>
+              {player.spied !== undefined && (
+                <div>
+                  <p>
+                    Spied · kit {player.spied.kitId}
+                    {player.spied.points !== undefined
+                      ? ` · live points ${player.spied.points}`
+                      : ''}
+                    {player.spied.pointsSnapshot !== undefined
+                      ? ` · points snapshot from turn ${player.spied.pointsSnapshot.turnSequence}: ${player.spied.pointsSnapshot.points}`
+                      : ''}
+                  </p>
+                  <p>Hand:</p>
+                  <ul>
+                    {player.spied.hand.map((card) => (
+                      <li key={card.instanceId}>
+                        {card.cardId}
+                        {card.isUpgraded ? ' (upgraded)' : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  {player.spied.specialCards.length > 0 && (
+                    <>
+                      <p>Specials:</p>
+                      <ul>
+                        {player.spied.specialCards.map((card) => (
+                          <li key={card.instanceId}>
+                            {card.cardId}
+                            {card.isUpgraded ? ' (upgraded)' : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -526,6 +613,14 @@ function TableScreen(props: {
                 {entry.targetPlayerId !== undefined
                   ? ` → ${nicknameOf(view, entry.targetPlayerId)}`
                   : ''}
+                {entry.attacks !== undefined
+                  ? ` [${entry.attacks
+                      .map(
+                        (attack) =>
+                          `${attack.cardId}→${nicknameOf(view, attack.targetPlayerId)}`,
+                      )
+                      .join(', ')}]`
+                  : ''}
               </li>
             ))}
           </ol>
@@ -547,12 +642,25 @@ function TableScreen(props: {
             </li>
           ))}
         </ul>
+        <h3>Specials (not playable yet)</h3>
+        {view.self.specialCards.length === 0 ? (
+          <p>None</p>
+        ) : (
+          <ul>
+            {view.self.specialCards.map((card) => (
+              <li key={card.instanceId}>
+                {card.cardId}
+                {card.isUpgraded ? ' (upgraded)' : ''}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section>
         <h2>Actions</h2>
         <button type="button" disabled={!isMyTurn || mirrorChoice !== null} onClick={onDraw}>
-          Draw (+1 point)
+          Draw (+{drawValue} point{drawValue === 1 ? '' : 's'})
         </button>
         <div>
           <label>
@@ -613,6 +721,86 @@ function TableScreen(props: {
             {selectedPlayCard !== undefined ? ` (${selectedPlayCard.cardId})` : ''}
           </button>
         </div>
+        {allowsMultiAttack && (
+          <div>
+            <h3>Assassin multi-attack (min 2)</h3>
+            <ul>
+              {attackCards.map((card) => {
+                const checked = multiAttackIds.includes(card.instanceId);
+                const rowTarget = multiAttackTargets[card.instanceId] ?? targetId;
+
+                return (
+                  <li key={card.instanceId}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={!isMyTurn || mirrorChoice !== null}
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            setMultiAttackIds([...multiAttackIds, card.instanceId]);
+                            setMultiAttackTargets({
+                              ...multiAttackTargets,
+                              [card.instanceId]: rowTarget !== '' ? rowTarget : (opponents[0]?.id ?? ''),
+                            });
+                          } else {
+                            setMultiAttackIds(
+                              multiAttackIds.filter((id) => id !== card.instanceId),
+                            );
+                            const next: Record<string, string> = {};
+                            for (const [id, value] of Object.entries(multiAttackTargets)) {
+                              if (id !== card.instanceId) {
+                                next[id] = value;
+                              }
+                            }
+                            setMultiAttackTargets(next);
+                          }
+                        }}
+                      />{' '}
+                      {card.cardId}
+                      {card.isUpgraded ? ' ↑' : ''}
+                    </label>
+                    {checked && (
+                      <select
+                        value={rowTarget}
+                        disabled={!isMyTurn || mirrorChoice !== null}
+                        onChange={(event) => {
+                          setMultiAttackTargets({
+                            ...multiAttackTargets,
+                            [card.instanceId]: event.target.value,
+                          });
+                        }}
+                      >
+                        {opponents
+                          .filter((player) => !player.isEliminated)
+                          .map((player) => (
+                            <option key={player.id} value={player.id}>
+                              {player.nickname}
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <button
+              type="button"
+              disabled={
+                !isMyTurn ||
+                mirrorChoice !== null ||
+                multiAttackIds.length < 2 ||
+                multiAttackIds.some((id) => {
+                  const chosen = multiAttackTargets[id];
+                  return chosen === undefined || chosen === '';
+                })
+              }
+              onClick={onPlayMultipleAttacks}
+            >
+              Play {multiAttackIds.length} attacks
+            </button>
+          </div>
+        )}
         <div>
           <label>
             Buy{' '}

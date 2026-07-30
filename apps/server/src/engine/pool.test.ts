@@ -75,6 +75,7 @@ describe('shared pool (L2-06)', () => {
     }
 
     const handSize = defender.hand.length;
+    const specialsSize = defender.specialCards.length;
     defender.lives = 1;
     queueEffect({
       state,
@@ -89,7 +90,8 @@ describe('shared pool (L2-06)', () => {
 
     expect(result.ok).toBe(true);
     expect(defender.isEliminated).toBe(true);
-    expect(state.pool.length).toBe(before + handSize);
+    expect(state.pool.length).toBe(before + handSize + specialsSize);
     expect(defender.hand).toHaveLength(0);
+    expect(defender.specialCards).toHaveLength(0);
   });
 });

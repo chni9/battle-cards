@@ -116,7 +116,22 @@ Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
 
 Invariant to hold at every step: **a player never suffers a loss of life or resources outside
 their own turn, and never before playing their action.** "Drawing" grants no card — it gains
-points equal to the kit's `draw` value (rules spec §6).
+points equal to the kit's `draw` value (rules spec §6), read from
+`getKit(player.kitId).startingResources.draw`.
+
+## Kits and traits (Lot 4)
+
+Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **with replacement**
+(duplicates allowed). Distribution uses seeded `Rng` + `acquireCardToHand` /
+`acquireSpecialCard` (`apps/server/src/engine/kits/`).
+
+- **`alwaysUpgraded`**: checked on every acquisition helper call — never a one-shot at deal.
+- **`immuneTo`**: resolve-time only (`isImmuneTo`); play still queues; public
+  `actionResolved.outcome: 'immune'`.
+- **`allowsMultipleAttacksPerTurn`**: Assassin uses `playMultipleAttacks` (min 2, all-or-nothing);
+  single attack still `playCard`.
+- Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
+  L5-01.
 
 ## Mutual attacks — mechanics
 
@@ -184,3 +199,4 @@ Rules spec §6, rulings §6.2 #2, #3, #4.
 - [ ] Any gain of lives goes through `gainLives` with `GameState.lifeLimit` as the cap
 - [ ] Ledger records spending and theft separately
 - [ ] Test added for each rule touched (`testing.md`)
+- [ ] Task committed when marked `Done` (AGENTS.md §10)

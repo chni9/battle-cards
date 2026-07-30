@@ -15,6 +15,7 @@ export const CLIENT_READY = 'clientReady';
 export const START_GAME = 'startGame';
 export const DRAW_CARD = 'drawCard';
 export const PLAY_CARD = 'playCard';
+export const PLAY_MULTIPLE_ATTACKS = 'playMultipleAttacks';
 export const BUY_CARD = 'buyCard';
 export const SELL_CARD = 'sellCard';
 export const UPGRADE_CARD = 'upgradeCard';
@@ -37,17 +38,25 @@ export interface TurnStartedPayload {
 export type PublicActionKind =
   | 'draw'
   | 'playCard'
+  | 'playMultipleAttacks'
   | 'buyCard'
   | 'sellCard'
   | 'upgradeCard'
   | 'buyUpgradePoint'
   | 'sellUpgradePoint';
 
+export interface PublicAttackPlay {
+  cardId: CardId;
+  targetPlayerId: string;
+}
+
 export interface ActionPlayedPayload {
   actorPlayerId: string;
   action: PublicActionKind;
   cardId?: CardId;
   targetPlayerId?: string;
+  /** Present when action is `playMultipleAttacks` (Assassin). */
+  attacks?: readonly PublicAttackPlay[];
   turnSequence: number;
 }
 
@@ -58,6 +67,13 @@ export interface ActionResolvedPayload {
   cardId: CardId;
   livesLost: number;
   shieldAbsorbed: number;
+  /**
+   * Resolve result — L4-03.
+   * `immune`: kit `immuneTo` (Untouchable vs Thief/Spy).
+   * `cancelled`: mutual attack, Spy/Thief counter, or upgraded Shield block.
+   * `applied`: effect ran (damage / steal / Spy grant).
+   */
+  outcome: 'applied' | 'immune' | 'cancelled';
 }
 
 export interface PlayerEliminatedPayload {
@@ -74,6 +90,10 @@ export interface PlayCardPayload {
   targetPlayerId?: string;
   /** Lives to buy when playing Regeneration (1–4). Ignored for other cards. */
   quantity?: number;
+}
+
+export interface PlayMultipleAttacksPayload {
+  attacks: readonly { instanceId: string; targetPlayerId: string }[];
 }
 
 export interface BuyCardPayload {
@@ -121,6 +141,7 @@ export interface ClientToServerMessages {
   [START_GAME]: undefined;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
+  [PLAY_MULTIPLE_ATTACKS]: PlayMultipleAttacksPayload;
   [BUY_CARD]: BuyCardPayload;
   [SELL_CARD]: SellCardPayload;
   [UPGRADE_CARD]: UpgradeCardPayload;

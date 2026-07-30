@@ -30,6 +30,7 @@ describe('Spy/Thief counter (L3-06)', () => {
 
     alice.points = 4;
     alice.hand = [{ instanceId: 'spy-a', cardId: 'spy', isUpgraded: false }];
+    bob.kitId = 'kamikaze';
     bob.points = 4;
     bob.hand = [{ instanceId: 'spy-b', cardId: 'spy', isUpgraded: false }];
 
@@ -71,8 +72,10 @@ describe('Spy/Thief counter (L3-06)', () => {
 
     alice.points = 4;
     alice.hand = [{ instanceId: 'spy-a', cardId: 'spy', isUpgraded: false }];
+    bob.kitId = 'kamikaze';
     bob.points = 4;
     bob.hand = [{ instanceId: 'spy-b', cardId: 'spy', isUpgraded: false }];
+    carol.kitId = 'assassin';
 
     performTurnAction(state, 'a', {
       type: 'playCard',
@@ -108,6 +111,7 @@ describe('Spy/Thief counter (L3-06)', () => {
     }
 
     state.visibility = [];
+    bob.kitId = 'kamikaze';
     bob.pendingEffects = [
       {
         id: 'orig',

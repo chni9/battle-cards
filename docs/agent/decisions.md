@@ -161,7 +161,6 @@ Surface the question when work reaches these; do not pick an interpretation.
 |---|---|---|
 | 4 | Which metrics the game log records | L8-01, and any serious playtest |
 | 5 | Simultaneous eliminators — is the italicised tie-break a validated rule or an untested hypothesis? | L6-05 |
-| 6 | Does Untouchable's immunity to "Thief and Spy" extend to Spy Thief? | L5-04 |
 | 7 | Are the timers deliberately absent from the rules spec, or an oversight? | Nothing — non-blocking |
 
 ## 2026-07-29 · [P] Card counters lose one point per life lost, not per hit (L0-04)
@@ -423,8 +422,9 @@ do not silently change the wire before that ruling is approved.
 ## 2026-07-29 · [T] One commit per backlog task
 
 Default: each backlog ID gets its own Conventional Commit after it passes `pnpm verify` and is
-marked `Done`. Bundling a whole lot into one commit is allowed only when the developer says so
-for that session (as for Lot 1 catch-up). Recorded in `AGENTS.md` §10.
+marked `Done`. **Always commit in the same session** — never leave a `Done` task uncommitted.
+Bundling a whole lot into one commit is allowed only when the developer says so for that
+session (as for Lot 1 / Lot 4 catch-up). Recorded in `AGENTS.md` §10.
 
 ## 2026-07-30 · [P] `instanceId` on play/sell/upgrade (closes cardId discrepancy)
 
@@ -501,3 +501,50 @@ Developer playtest follow-up: opponent **card count** is no longer public (overr
 and the earlier same-day visibility note). Unspied opponents expose only nickname + elimination.
 Any Spy level reveals hand (+ specials), so count is recoverable from `spied`. PROTOCOL_VERSION 10.
 
+## 2026-07-30 · [P] Kit distribution with replacement (L4-02)
+
+- Kits are assigned independently with **replacement** (duplicates allowed across players).
+- Starting hands: random action/attack draws per kit counts (duplicates possible); specials
+  granted from the kit roster into `specialCards`.
+- Draw action reads `getKit(kitId).startingResources.draw`.
+- L1 placeholders and the temporary full shared hand are removed.
+
+## 2026-07-30 · [P] Specials granted in L4, unplayable until Lot 5
+
+L4-02 places kit special `CardInstance`s in `player.specialCards` at game start. Handlers and
+special catalog land in Lot 5 — `playCard` rejects specials until then ("Special cards are not
+playable yet."). **Lot 5 agents:** do **not** re-grant starting specials at L5-01; only add
+definitions/handlers and unlock play.
+
+## 2026-07-30 · [P] Untouchable immunity + actionResolved.outcome (L4-03)
+
+Thief/Spy targeting Untouchable: play allowed and queued; at resolve the effect is a no-op and
+`actionResolved.outcome` is `'immune'` (public). Spy Thief is **not** covered — closes open
+decision #6 as **not immune** (`immuneTo: ['thief','spy']` only). Other outcomes:
+`'applied' | 'cancelled'` (mutual cancel, Spy/Thief counter, upgraded Shield block).
+PROTOCOL_VERSION 11.
+
+## 2026-07-30 · [P] Assassin playMultipleAttacks (L4-05)
+
+- Client → `playMultipleAttacks: { attacks: [{ instanceId, targetPlayerId }, …] }` (min 2).
+- Single attack stays on `playCard`. All-or-nothing cost/validation.
+- Public `actionPlayed` uses `action: 'playMultipleAttacks'` + `attacks: [{ cardId, targetPlayerId }]`.
+- PROTOCOL_VERSION 12.
+
+## 2026-07-30 · [P] Spy tokens = points; base snapshot at resolve
+
+Developer playtest ruling (overrides reading upgraded Spy as “all resources” in the UI/protocol
+slice for V1 playtest):
+
+- **Tokens** mean **points** only (not lives, shield, or upgrade points).
+- **Both Spy levels** reveal kit + full hand/special **card lists** forever.
+- **Base Spy:** also a **frozen points snapshot** taken at resolve on the victim’s turn
+  (`points` + `turnSequence` at that moment). Snapshot stays visible forever and is labeled
+  by turn sequence. It does not update when the target’s points change later.
+- **Upgraded Spy:** live points (no snapshot in the view; live `points` field instead).
+- PROTOCOL_VERSION 13.
+
+## 2026-07-30 · [T] Always commit on Done (developer instruction)
+
+Agents must create the Conventional Commit for each finished backlog task before ending the
+session. Reinforced in `AGENTS.md` §9–§10 and playbook checklists.

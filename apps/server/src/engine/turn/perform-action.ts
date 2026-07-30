@@ -3,14 +3,21 @@
  * Technical spec §4.3, §5.2, §5.4 · rules spec §1, §2, §6 · backlog L2-01.
  */
 
-import { getSharedCard, type CardId, type GameState } from '@card-battle/shared';
+import {
+  ATTACK_CARD_IDS,
+  getKit,
+  getSharedCard,
+  type AttackCardId,
+  type CardId,
+  type CardInstance,
+  type GameState,
+} from '@card-battle/shared';
 
 import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
-import { L1_PLACEHOLDER_RESOURCES } from '../l1-placeholders';
 import type { Rng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
 import {
@@ -22,6 +29,10 @@ import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 export type TurnAction =
   | { type: 'draw' }
   | { type: 'playCard'; instanceId: string; targetPlayerId?: string; quantity?: number }
+  | {
+      type: 'playMultipleAttacks';
+      attacks: readonly { instanceId: string; targetPlayerId: string }[];
+    }
   | { type: 'buyCard'; cardId: CardId }
   | { type: 'sellCard'; instanceId: string }
   | { type: 'upgradeCard'; instanceId: string }
@@ -31,6 +42,7 @@ export type TurnAction =
 export type PublicActionKind =
   | 'draw'
   | 'playCard'
+  | 'playMultipleAttacks'
   | 'buyCard'
   | 'sellCard'
   | 'upgradeCard'
@@ -42,6 +54,7 @@ export interface ActionPlayedEvent {
   action: PublicActionKind;
   cardId?: CardId;
   targetPlayerId?: string;
+  attacks?: readonly { cardId: CardId; targetPlayerId: string }[];
   turnSequence: number;
 }
 
@@ -52,6 +65,7 @@ export interface ActionResolvedEvent {
   cardId: CardId;
   livesLost: number;
   shieldAbsorbed: number;
+  outcome: 'applied' | 'immune' | 'cancelled';
 }
 
 export interface TurnResult {
@@ -95,7 +109,7 @@ export function performTurnAction(
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
-    actor.points += L1_PLACEHOLDER_RESOURCES.draw;
+    actor.points += getKit(actor.kitId).startingResources.draw;
     actionPlayed = {
       actorPlayerId,
       action: 'draw',
@@ -164,6 +178,14 @@ export function performTurnAction(
       action: 'sellUpgradePoint',
       turnSequence: state.turnSequence,
     };
+  } else if (action.type === 'playMultipleAttacks') {
+    const multi = playMultipleAttacksAction(state, actorPlayerId, action.attacks);
+
+    if (!multi.ok) {
+      return multi;
+    }
+
+    actionPlayed = multi.actionPlayed;
   } else {
     const playResult = playCardAction(
       state,
@@ -297,6 +319,140 @@ function finishTurnPhases(
   };
 }
 
+function isAttackCardId(cardId: string): cardId is AttackCardId {
+  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
+
+/**
+ * Assassin multi-attack — rules spec §4, backlog L4-05.
+ * All-or-nothing: validate fully before paying or queuing.
+ */
+function playMultipleAttacksAction(
+  state: GameState,
+  actorPlayerId: string,
+  attacks: readonly { instanceId: string; targetPlayerId: string }[],
+): TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor === undefined) {
+    return { ok: false, message: 'Unknown player.' };
+  }
+
+  if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
+    return { ok: false, message: 'Your kit cannot play multiple attacks in one turn.' };
+  }
+
+  if (attacks.length < 2) {
+    return { ok: false, message: 'Select at least two attacks.' };
+  }
+
+  const seenIds = new Set<string>();
+
+  for (const attack of attacks) {
+    if (seenIds.has(attack.instanceId)) {
+      return { ok: false, message: 'Duplicate attack selection.' };
+    }
+
+    seenIds.add(attack.instanceId);
+  }
+
+  interface PreparedAttack {
+    instance: CardInstance;
+    targetPlayerId: string;
+    playPoints: number;
+  }
+
+  const prepared: PreparedAttack[] = [];
+  let totalCost = 0;
+
+  for (const attack of attacks) {
+    const instance = actor.hand.find((card) => card.instanceId === attack.instanceId);
+
+    if (instance === undefined) {
+      return { ok: false, message: 'You do not hold that card.' };
+    }
+
+    if (!isAttackCardId(instance.cardId)) {
+      return { ok: false, message: 'Only attack cards can be multi-played.' };
+    }
+
+    const target = findPlayer(state, attack.targetPlayerId);
+
+    if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
+      return { ok: false, message: 'Invalid target.' };
+    }
+
+    const handler = findHandler(instance.cardId);
+
+    if (handler === undefined) {
+      return { ok: false, message: 'That card is not playable yet.' };
+    }
+
+    const context = {
+      state,
+      sourcePlayerId: actorPlayerId,
+      targetPlayerId: attack.targetPlayerId,
+      card: instance,
+      quantity: null,
+    };
+
+    if (!handler.canPlay(context)) {
+      return { ok: false, message: 'That play is not legal.' };
+    }
+
+    const definition = getSharedCard(instance.cardId);
+    const playPoints = definition?.cost.points ?? 0;
+    totalCost += playPoints;
+    prepared.push({
+      instance,
+      targetPlayerId: attack.targetPlayerId,
+      playPoints,
+    });
+  }
+
+  if (actor.points < totalCost) {
+    return { ok: false, message: 'Not enough points.' };
+  }
+
+  const publicAttacks: { cardId: CardId; targetPlayerId: string }[] = [];
+
+  for (const entry of prepared) {
+    if (entry.playPoints > 0) {
+      actor.points -= entry.playPoints;
+      actor.turnLedger.pointsSpent += entry.playPoints;
+    }
+
+    const handler = findHandler(entry.instance.cardId);
+
+    if (handler === undefined) {
+      return { ok: false, message: 'That card is not playable yet.' };
+    }
+
+    handler.play({
+      state,
+      sourcePlayerId: actorPlayerId,
+      targetPlayerId: entry.targetPlayerId,
+      card: entry.instance,
+      quantity: null,
+    });
+
+    publicAttacks.push({
+      cardId: entry.instance.cardId,
+      targetPlayerId: entry.targetPlayerId,
+    });
+  }
+
+  return {
+    ok: true,
+    actionPlayed: {
+      actorPlayerId,
+      action: 'playMultipleAttacks',
+      attacks: publicAttacks,
+      turnSequence: state.turnSequence,
+    },
+  };
+}
+
 function playCardAction(
   state: GameState,
   actorPlayerId: string,
@@ -313,6 +469,12 @@ function playCardAction(
   const instanceIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
 
   if (instanceIndex < 0) {
+    const specialIndex = actor.specialCards.findIndex((card) => card.instanceId === instanceId);
+
+    if (specialIndex >= 0) {
+      return { ok: false, message: 'Special cards are not playable yet.' };
+    }
+
     return { ok: false, message: 'You do not hold that card.' };
   }
 
@@ -391,6 +553,7 @@ function toResolvedEvents(resolved: ResolvedEffect[]): ActionResolvedEvent[] {
     cardId: entry.effect.cardId,
     livesLost: entry.livesLost,
     shieldAbsorbed: entry.shieldAbsorbed,
+    outcome: entry.outcome,
   }));
 }
 

@@ -1,5 +1,6 @@
 /**
  * Buy a shared card from infinite stock — rules spec §1, backlog L2-01.
+ * Acquisition applies kit `alwaysUpgraded` (L4-01 / technical spec §4.5).
  */
 
 import {
@@ -9,8 +10,8 @@ import {
   type CardInstance,
   type GameState,
 } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
+import { acquireCardToHand } from '../kits/acquire-card';
 import { findPlayer } from '../turn/advance-turn';
 import { payCost } from './transfers';
 
@@ -50,13 +51,7 @@ export function buyCard(state: GameState, actorPlayerId: string, cardId: CardId)
     return paid;
   }
 
-  const instance: CardInstance = {
-    instanceId: randomUUID(),
-    cardId,
-    isUpgraded: false,
-  };
-
-  actor.hand.push(instance);
+  const instance = acquireCardToHand(actor, cardId);
 
   return { ok: true, cardId, instance };
 }

@@ -1,37 +1,83 @@
-import { SHARED_CARD_IDS } from '@card-battle/shared';
+import {
+  ACTION_CARD_IDS,
+  ATTACK_CARD_IDS,
+  getKit,
+  KIT_IDS,
+  type CardId,
+} from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from './create-initial-state';
-import { L1_PLACEHOLDER_RESOURCES } from './l1-placeholders';
 import { createRng } from './rng';
 
-describe('createInitialState (L1-03)', () => {
+describe('createInitialState (L4-02)', () => {
   const seats = [
     { id: 'a', nickname: 'Alice' },
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('applies L1 placeholder resources and a full shared-card hand', () => {
-    const state = createInitialState({ seats, seed: 'fixed' });
+  it('assigns kit resources, card counts, and specials from the roster', () => {
+    const state = createInitialState({ seats, seed: 'kit-dist-1' });
 
     for (const player of state.players) {
-      expect(player.lives).toBe(L1_PLACEHOLDER_RESOURCES.lives);
-      expect(player.points).toBe(L1_PLACEHOLDER_RESOURCES.points);
-      expect(player.upgradePoints).toBe(L1_PLACEHOLDER_RESOURCES.upgradePoints);
-      expect(player.hand).toHaveLength(SHARED_CARD_IDS.length);
-      expect(player.hand.map((card) => card.cardId).sort()).toEqual(
-        [...SHARED_CARD_IDS].sort(),
+      expect(KIT_IDS).toContain(player.kitId);
+      const kit = getKit(player.kitId);
+      expect(player.lives).toBe(kit.startingResources.lives);
+      expect(player.points).toBe(kit.startingResources.points);
+      expect(player.upgradePoints).toBe(kit.startingResources.upgradePoints);
+      expect(player.hand).toHaveLength(
+        kit.startingCardCounts.action + kit.startingCardCounts.attack,
       );
+
+      const actionCount = player.hand.filter((card) =>
+        (ACTION_CARD_IDS as readonly CardId[]).includes(card.cardId),
+      ).length;
+      const attackCount = player.hand.filter((card) =>
+        (ATTACK_CARD_IDS as readonly CardId[]).includes(card.cardId),
+      ).length;
+      expect(actionCount).toBe(kit.startingCardCounts.action);
+      expect(attackCount).toBe(kit.startingCardCounts.attack);
+
+      expect(player.specialCards.map((card) => card.cardId)).toEqual(kit.specialCards);
     }
   });
 
-  it('produces a stable turn order for the same seed', () => {
+  it('allows duplicate kits across players (with replacement)', () => {
+    // Enough seats that collisions are likely; assert the algorithm permits equals.
+    const manySeats = [
+      { id: 'a', nickname: 'A' },
+      { id: 'b', nickname: 'B' },
+      { id: 'c', nickname: 'C' },
+      { id: 'd', nickname: 'D' },
+    ] as const;
+
+    let sawDuplicate = false;
+
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const state = createInitialState({ seats: manySeats, seed: `dup-${attempt}` });
+      const kits = state.players.map((player) => player.kitId);
+      if (new Set(kits).size < kits.length) {
+        sawDuplicate = true;
+        break;
+      }
+    }
+
+    expect(sawDuplicate).toBe(true);
+  });
+
+  it('produces a stable deal for the same seed (kit and card ids)', () => {
     const first = createInitialState({ seats, seed: 'order-seed' });
     const second = createInitialState({ seats, seed: 'order-seed' });
 
     expect(second.players.map((player) => player.id)).toEqual(
       first.players.map((player) => player.id),
     );
+    expect(second.players.map((player) => player.kitId)).toEqual(
+      first.players.map((player) => player.kitId),
+    );
+    expect(
+      second.players.map((player) => player.hand.map((card) => card.cardId)),
+    ).toEqual(first.players.map((player) => player.hand.map((card) => card.cardId)));
     expect(second.currentTurnPlayerId).toBe(first.currentTurnPlayerId);
   });
 
@@ -48,5 +94,34 @@ describe('createInitialState (L1-03)', () => {
     expect(() => createInitialState({ seats: [{ id: 'a', nickname: 'Solo' }] })).toThrow(
       RangeError,
     );
+  });
+
+  it('Scientific starting Spies arrive already upgraded', () => {
+    let scientific:
+      | ReturnType<typeof createInitialState>['players'][number]
+      | undefined;
+
+    for (let attempt = 0; attempt < 200; attempt += 1) {
+      const state = createInitialState({ seats, seed: `sci-start-${attempt}` });
+      scientific = state.players.find(
+        (player) =>
+          player.kitId === 'scientific' &&
+          player.hand.some((card) => card.cardId === 'spy'),
+      );
+      if (scientific !== undefined) {
+        break;
+      }
+    }
+
+    expect(scientific).toBeDefined();
+    if (scientific === undefined) {
+      return;
+    }
+
+    const spies = scientific.hand.filter((entry) => entry.cardId === 'spy');
+    expect(spies.length).toBeGreaterThan(0);
+    for (const card of spies) {
+      expect(card.isUpgraded).toBe(true);
+    }
   });
 });

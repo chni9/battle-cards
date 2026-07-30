@@ -81,14 +81,12 @@ describe('buyCard / sellCard (rules spec §1, L2-01)', () => {
   it('sells a basic attack for 1 point into the pool', () => {
     const state = started();
     const player = actor(state);
-    const copy = player.hand[0];
-
-    expect(copy).toBeDefined();
-
-    if (copy === undefined) {
-      return;
-    }
-
+    const copy = {
+      instanceId: 'basic-sell-1',
+      cardId: 'basic-attack' as const,
+      isUpgraded: false,
+    };
+    player.hand = [copy];
     player.points = 0;
     const result = sellCard(state, player.id, copy.instanceId);
 

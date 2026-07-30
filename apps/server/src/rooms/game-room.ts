@@ -17,6 +17,7 @@ import {
   GAME_OVER,
   MIRROR_CHOICE_REQUIRED,
   PLAY_CARD,
+  PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
   SELL_CARD,
@@ -33,6 +34,7 @@ import {
   type GameState,
   type LobbySeatView,
   type PlayCardPayload,
+  type PlayMultipleAttacksPayload,
   type SellCardPayload,
   type UpgradeCardPayload,
   type ServerToClientMessages,
@@ -188,6 +190,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
           ? { targetPlayerId: parsed.targetPlayerId }
           : {}),
         ...(parsed.quantity !== undefined ? { quantity: parsed.quantity } : {}),
+      });
+    },
+
+    [PLAY_MULTIPLE_ATTACKS]: (client: GameClient, payload: unknown): void => {
+      const parsed = readPlayMultipleAttacksPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid playMultipleAttacks payload.' });
+        return;
+      }
+
+      this.handleAction(client, {
+        type: 'playMultipleAttacks',
+        attacks: parsed.attacks,
       });
     },
 
@@ -374,6 +390,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         : {}),
       ...(result.actionPlayed.targetPlayerId !== undefined
         ? { targetPlayerId: result.actionPlayed.targetPlayerId }
+        : {}),
+      ...(result.actionPlayed.attacks !== undefined
+        ? { attacks: result.actionPlayed.attacks }
         : {}),
     };
 
@@ -674,6 +693,47 @@ function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
     ...(targetPlayerId !== undefined ? { targetPlayerId } : {}),
     ...(quantity !== undefined ? { quantity } : {}),
   };
+}
+
+function readPlayMultipleAttacksPayload(
+  payload: unknown,
+): PlayMultipleAttacksPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('attacks' in payload)) {
+    return null;
+  }
+
+  const { attacks } = payload;
+
+  if (!Array.isArray(attacks) || attacks.length < 2) {
+    return null;
+  }
+
+  const parsed: { instanceId: string; targetPlayerId: string }[] = [];
+
+  for (const entry of attacks as unknown[]) {
+    if (typeof entry !== 'object' || entry === null) {
+      return null;
+    }
+
+    if (!('instanceId' in entry) || !('targetPlayerId' in entry)) {
+      return null;
+    }
+
+    const { instanceId, targetPlayerId } = entry;
+
+    if (
+      typeof instanceId !== 'string' ||
+      instanceId.length === 0 ||
+      typeof targetPlayerId !== 'string' ||
+      targetPlayerId.length === 0
+    ) {
+      return null;
+    }
+
+    parsed.push({ instanceId, targetPlayerId });
+  }
+
+  return { attacks: parsed };
 }
 
 function readBuyCardPayload(payload: unknown): BuyCardPayload | null {

@@ -15,6 +15,7 @@ import {
   GAME_ROOM_NAME,
   MIRROR_CHOICE_REQUIRED,
   PLAY_CARD,
+  PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
   SELL_CARD,
@@ -29,6 +30,7 @@ import {
   type GameOverPayload,
   type MirrorChoiceRequiredPayload,
   type PlayCardPayload,
+  type PlayMultipleAttacksPayload,
   type RoomJoinOptions,
   type StateView,
   type TurnStartedPayload,
@@ -80,6 +82,9 @@ export interface UseRoomConnectionResult extends RoomConnection {
   startGame: () => void;
   drawCard: () => void;
   playCard: (instanceId: string, options?: PlayCardOptions) => void;
+  playMultipleAttacks: (
+    attacks: readonly { instanceId: string; targetPlayerId: string }[],
+  ) => void;
   chooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
   buyCard: (cardId: CardId) => void;
   sellCard: (instanceId: string) => void;
@@ -249,6 +254,14 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(PLAY_CARD, payload);
   }, []);
 
+  const playMultipleAttacks = useCallback(
+    (attacks: readonly { instanceId: string; targetPlayerId: string }[]): void => {
+      const payload: PlayMultipleAttacksPayload = { attacks };
+      roomRef.current?.send(PLAY_MULTIPLE_ATTACKS, payload);
+    },
+    [],
+  );
+
   const chooseMirrorTarget = useCallback(
     (pendingEffectId: string, newTargetPlayerId: string): void => {
       roomRef.current?.send(CHOOSE_MIRROR_TARGET, {
@@ -288,6 +301,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     startGame,
     drawCard,
     playCard,
+    playMultipleAttacks,
     chooseMirrorTarget,
     buyCard,
     sellCard,
@@ -351,7 +365,11 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
     typeof payload === 'object' &&
     payload !== null &&
     'effectId' in payload &&
-    'livesLost' in payload
+    'livesLost' in payload &&
+    'outcome' in payload &&
+    (payload.outcome === 'applied' ||
+      payload.outcome === 'immune' ||
+      payload.outcome === 'cancelled')
   );
 }
 

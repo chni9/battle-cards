@@ -2,6 +2,8 @@
  * Who-sees-what-of-whom Spy matrix — technical spec §5.1, backlog L3-05.
  *
  * Checked on every view construction. Never stored as a flag on the spied player.
+ *
+ * First grant captures a points snapshot at resolve (victim's turn).
  */
 
 import type { GameState, SpyRelation, SpyVisibilityLevel } from '@card-battle/shared';
@@ -24,6 +26,9 @@ export function findSpyRelation(
 /**
  * Grant or upgrade a Spy relation. An upgraded Spy may raise `kit-and-cards` to
  * `full-resources`; a weaker grant never downgrades.
+ *
+ * On first grant, freezes the subject's current points + `turnSequence` as
+ * `pointsSnapshot` (base Spy display; upgraded uses live points instead).
  */
 export function grantSpy(
   state: GameState,
@@ -34,7 +39,21 @@ export function grantSpy(
   const existing = findSpyRelation(state, viewerId, subjectId);
 
   if (existing === undefined) {
-    state.visibility.push({ viewerId, subjectId, level });
+    const subject = state.players.find((player) => player.id === subjectId);
+    const relation: SpyRelation = {
+      viewerId,
+      subjectId,
+      level,
+      ...(subject !== undefined
+        ? {
+            pointsSnapshot: {
+              points: subject.points,
+              turnSequence: state.turnSequence,
+            },
+          }
+        : {}),
+    };
+    state.visibility.push(relation);
     return;
   }
 

@@ -3,6 +3,7 @@
  *
  * Ascending `queuedAt`. Mutual attacks (L2-05) and Spy/Thief counter (L3-06) cancel
  * reciprocal pairs during resolve so a later cancel of only the counter leaves the original.
+ * Untouchable `immuneTo` is checked at resolve (L4-03).
  */
 
 import {
@@ -15,14 +16,18 @@ import {
   type Player,
 } from '@card-battle/shared';
 
-import { stealPoints } from '../economy/steal-points';
-import { applyDamage } from '../life/apply-damage';
 import { grantSpy } from '../../protocol/visibility-matrix';
+import { stealPoints } from '../economy/steal-points';
+import { isImmuneTo } from '../kits/is-immune-to';
+import { applyDamage } from '../life/apply-damage';
+
+export type ResolveOutcome = 'applied' | 'immune' | 'cancelled';
 
 export interface ResolvedEffect {
   effect: PendingEffect;
   livesLost: number;
   shieldAbsorbed: number;
+  outcome: ResolveOutcome;
 }
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
@@ -118,10 +123,10 @@ function cancelEqualMutualAttack(
   return true;
 }
 
-function resolveThief(state: GameState, target: Player, effect: PendingEffect): void {
+function resolveThief(state: GameState, target: Player, effect: PendingEffect): ResolveOutcome {
   // Upgraded Shield blocks Thief at resolve, no shield-point cost (Lot 3 ruling).
   if (target.shield > 0 && target.shieldIsUpgraded) {
-    return;
+    return 'cancelled';
   }
 
   stealPoints({
@@ -131,12 +136,13 @@ function resolveThief(state: GameState, target: Player, effect: PendingEffect): 
     amount: 10,
     gainMultiplier: effect.isUpgraded ? 2 : 1,
   });
+  return 'applied';
 }
 
-function resolveSpy(state: GameState, target: Player, effect: PendingEffect): void {
+function resolveSpy(state: GameState, target: Player, effect: PendingEffect): ResolveOutcome {
   // Upgraded Shield blocks Spy at resolve, no shield-point cost (Lot 3 ruling).
   if (target.shield > 0 && target.shieldIsUpgraded) {
-    return;
+    return 'cancelled';
   }
 
   grantSpy(
@@ -145,6 +151,7 @@ function resolveSpy(state: GameState, target: Player, effect: PendingEffect): vo
     target.id,
     effect.isUpgraded ? 'full-resources' : 'kit-and-cards',
   );
+  return 'applied';
 }
 
 export function resolvePendingEffects(
@@ -165,36 +172,43 @@ export function resolvePendingEffects(
   for (const effect of ordered) {
     let livesLost = 0;
     let shieldAbsorbed = 0;
+    let outcome: ResolveOutcome = 'applied';
 
     if (isAttackCardId(effect.cardId)) {
       if (cancelEqualMutualAttack(state, player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0 });
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
       const amount =
         attackDamageFor(effect.cardId, effect.isUpgraded) * effect.damageMultiplier;
-      const outcome = applyDamage(player, amount, effect.cardId);
-      livesLost = outcome.livesLost;
-      shieldAbsorbed = outcome.shieldAbsorbed;
-      player.turnLedger.livesLost += outcome.livesLost;
+      const damageOutcome = applyDamage(player, amount, effect.cardId);
+      livesLost = damageOutcome.livesLost;
+      shieldAbsorbed = damageOutcome.shieldAbsorbed;
+      player.turnLedger.livesLost += damageOutcome.livesLost;
+      outcome = 'applied';
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0 });
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
-      if (effect.cardId === 'thief') {
-        resolveThief(state, player, effect);
-      } else {
-        resolveSpy(state, player, effect);
+      if (isImmuneTo(player, effect.cardId)) {
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+        continue;
       }
+
+      outcome =
+        effect.cardId === 'thief'
+          ? resolveThief(state, player, effect)
+          : resolveSpy(state, player, effect);
     }
 
     resolved.push({
       effect,
       livesLost,
       shieldAbsorbed,
+      outcome,
     });
   }
 

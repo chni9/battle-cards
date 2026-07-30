@@ -35,6 +35,7 @@ describe('Thief (rules spec §3, L3-04)', () => {
 
     attacker.points = 5;
     attacker.hand = [{ instanceId: 'th-1', cardId: 'thief', isUpgraded: false }];
+    target.kitId = 'kamikaze';
     // Target will draw (+1) before resolve; start at 2 so resolve sees 3.
     target.points = 2;
 
@@ -80,6 +81,7 @@ describe('Thief (rules spec §3, L3-04)', () => {
 
     attacker.points = 5;
     attacker.hand = [{ instanceId: 'th-1', cardId: 'thief', isUpgraded: true }];
+    target.kitId = 'kamikaze';
     // Draw +1 before resolve → 10 at steal time.
     target.points = 9;
 
@@ -119,6 +121,7 @@ describe('Thief (rules spec §3, L3-04)', () => {
 
     attacker.points = 5;
     attacker.hand = [{ instanceId: 'th-1', cardId: 'thief', isUpgraded: false }];
+    target.kitId = 'kamikaze';
     target.points = 9;
     target.shield = 7;
     target.shieldIsUpgraded = true;

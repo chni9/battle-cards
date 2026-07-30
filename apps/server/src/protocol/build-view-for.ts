@@ -3,8 +3,8 @@
  *
  * One function, one recipient. No "full view" builder to filter down from.
  *
- * Lives/shield are private (2026-07-30 ruling): only on `self`, or on `spied` when the
- * recipient has upgraded Spy (`full-resources`) on that subject.
+ * Spy (2026-07-30 tokens ruling): kit + card lists always; base adds frozen points
+ * snapshot; upgraded adds live points only (tokens = points).
  */
 
 import type {
@@ -75,11 +75,12 @@ function buildSpiedView(
   };
 
   if (relation.level === 'full-resources') {
-    spied.lives = subject.lives;
-    spied.shield = subject.shield;
-    spied.shieldIsUpgraded = subject.shieldIsUpgraded;
     spied.points = subject.points;
-    spied.upgradePoints = subject.upgradePoints;
+  } else if (relation.pointsSnapshot !== undefined) {
+    spied.pointsSnapshot = {
+      points: relation.pointsSnapshot.points,
+      turnSequence: relation.pointsSnapshot.turnSequence,
+    };
   }
 
   return spied;

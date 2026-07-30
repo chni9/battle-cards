@@ -39,20 +39,21 @@ export interface PublicPlayerView {
  * Spy-gated slice of another player — only when the recipient has a Spy relation
  * on them (technical spec §5.1).
  *
- * Base Spy (`kit-and-cards`): kit + hand + specials.
- * Upgraded Spy (`full-resources`): also lives, shield, points, upgrade points
- * (developer ruling 2026-07-30 — lives/shield are not public).
+ * Both levels: kit + full hand/special card lists forever.
+ * Base (`kit-and-cards`): also a frozen points snapshot from resolve turn.
+ * Upgraded (`full-resources`): also live points (developer ruling: tokens = points).
  */
 export interface SpiedPlayerView {
   kitId: KitId;
   hand: readonly CardInstance[];
   specialCards: readonly CardInstance[];
-  /** Present only at Spy level `full-resources`. */
-  lives?: number;
-  shield?: number;
-  shieldIsUpgraded?: boolean;
+  /** Live points — upgraded Spy only. */
   points?: number;
-  upgradePoints?: number;
+  /** Frozen points at first Spy resolve — base Spy (always shown when present). */
+  pointsSnapshot?: {
+    points: number;
+    turnSequence: number;
+  };
 }
 
 /** Private resources — only on the recipient's own entry. */
@@ -82,7 +83,7 @@ export interface PendingEffectView {
  *
  * Private: own kit, hand, lives, shield, exact resources.
  * Public: card count, elimination status, pending queue, turn order, actions.
- * Spy (base): kit + cards of the subject. Spy (upgraded): also lives/shield/resources.
+ * Spy (base): kit + cards + frozen points snapshot. Spy (upgraded): kit + cards + live points.
  * Server-only: never `seed`.
  *
  * Developer ruling 2026-07-30: lives and shield are **not** public (overrides tech §5.1
@@ -112,6 +113,7 @@ export interface ActionLogEntryView {
   action:
     | 'draw'
     | 'playCard'
+    | 'playMultipleAttacks'
     | 'buyCard'
     | 'sellCard'
     | 'upgradeCard'
@@ -119,6 +121,7 @@ export interface ActionLogEntryView {
     | 'sellUpgradePoint';
   cardId?: CardId;
   targetPlayerId?: string;
+  attacks?: readonly { cardId: CardId; targetPlayerId: string }[];
   turnSequence: number;
 }
 

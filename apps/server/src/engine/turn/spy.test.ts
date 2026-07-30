@@ -82,14 +82,18 @@ describe('Spy (rules spec §3, L3-05)', () => {
     expect(spiedBySpy?.kitId).toBe('kamikaze');
     expect(spiedBySpy?.hand.length).toBe(target.hand.length);
     expect(spiedBySpy?.points).toBeUndefined();
-    expect(spiedBySpy?.lives).toBeUndefined();
+    const relation = state.visibility.find(
+      (entry) => entry.viewerId === spyId && entry.subjectId === target.id,
+    );
+    expect(spiedBySpy?.pointsSnapshot).toEqual(relation?.pointsSnapshot);
+    expect(spiedBySpy?.pointsSnapshot?.points).toBe(target.points);
     expect(viewForSpy.players.find((player) => player.id === target.id)).not.toHaveProperty(
       'lives',
     );
     expect(spiedByOutsider).toBeUndefined();
   });
 
-  it('upgraded: also reveals lives, shield, points and upgrade points', () => {
+  it('upgraded: reveals live points (tokens) and card lists, not lives/shield/UP', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -117,6 +121,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
 
     spy.points = 4;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: true }];
+    target.kitId = 'kamikaze';
     target.points = 12;
     target.upgradePoints = 2;
     target.lives = 17;
@@ -142,9 +147,72 @@ describe('Spy (rules spec §3, L3-05)', () => {
     const spied = view.players.find((player) => player.id === target.id)?.spied;
 
     expect(spied?.points).toBe(target.points);
-    expect(spied?.upgradePoints).toBe(2);
-    expect(spied?.lives).toBe(target.lives);
-    expect(spied?.shield).toBe(4);
+    expect(spied?.pointsSnapshot).toBeUndefined();
+    expect(spied).not.toHaveProperty('lives');
+    expect(spied).not.toHaveProperty('shield');
+    expect(spied).not.toHaveProperty('upgradePoints');
+    expect(spied?.hand.length).toBe(target.hand.length);
+  });
+
+  it('base points snapshot stays frozen when the target later gains points', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'spy-snap',
+    });
+    const spyId = state.currentTurnPlayerId;
+
+    expect(spyId).not.toBeNull();
+    if (spyId === null) {
+      return;
+    }
+
+    const spy = state.players.find((player) => player.id === spyId);
+    const target = state.players.find((player) => player.id !== spyId);
+    expect(spy).toBeDefined();
+    expect(target).toBeDefined();
+    if (spy === undefined || target === undefined) {
+      return;
+    }
+
+    spy.points = 4;
+    spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
+    target.kitId = 'assassin';
+    target.points = 5;
+
+    performTurnAction(state, spyId, {
+      type: 'playCard',
+      instanceId: 'spy-1',
+      targetPlayerId: target.id,
+    });
+
+    state.currentTurnPlayerId = target.id;
+    performTurnAction(state, target.id, { type: 'draw' });
+    const relation = state.visibility.find(
+      (entry) => entry.viewerId === spyId && entry.subjectId === target.id,
+    );
+    expect(relation?.pointsSnapshot).toBeDefined();
+    const frozenPoints = relation?.pointsSnapshot?.points;
+    const frozenSequence = relation?.pointsSnapshot?.turnSequence;
+
+    target.points += 20;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: spyId,
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const spied = view.players.find((player) => player.id === target.id)?.spied;
+
+    expect(spied?.pointsSnapshot).toEqual({
+      points: frozenPoints,
+      turnSequence: frozenSequence,
+    });
+    expect(spied?.points).toBeUndefined();
   });
 
   it('fizzles against an active upgraded shield', () => {

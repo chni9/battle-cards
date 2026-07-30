@@ -1,25 +1,22 @@
 /**
- * Build the authoritative GameState at launch — backlog L1-03.
+ * Build the authoritative GameState at launch — backlog L1-03 / L4-02.
  *
- * Placeholder resources until L4-02. Temporary full shared-card hand for playtesting
- * until kit distribution lands (developer instruction 2026-07-30). Turn order is a
- * seeded shuffle of the seated players (AGENTS golden rule 5).
+ * Kit assignment (with replacement), resources, random shared-card draws, and kit
+ * specials — rules spec §4 / §6. Turn order is a seeded shuffle of seated players
+ * (AGENTS golden rule 5).
  */
 
 import {
+  ACTION_CARD_IDS,
+  ATTACK_CARD_IDS,
   CLASSIC_LIFE_LIMIT,
-  SHARED_CARD_IDS,
-  type CardInstance,
+  getKit,
+  KIT_IDS,
   type GameState,
   type Player,
-  type SharedCardId,
 } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
-import {
-  L1_PLACEHOLDER_KIT_ID,
-  L1_PLACEHOLDER_RESOURCES,
-} from './l1-placeholders';
+import { acquireCardToHand, acquireSpecialCard } from './kits/acquire-card';
 import { createRng, createSeed, type Rng } from './rng';
 
 export interface SeatInput {
@@ -44,7 +41,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
   const rng = options.rng ?? createRng(seed);
   const orderedSeats = rng.shuffle(options.seats);
 
-  const players: Player[] = orderedSeats.map((seat) => makePlaceholderPlayer(seat));
+  const players: Player[] = orderedSeats.map((seat) => makePlayer(seat, rng));
 
   const first = players[0];
 
@@ -65,17 +62,20 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
   };
 }
 
-function makePlaceholderPlayer(seat: SeatInput): Player {
-  return {
+function makePlayer(seat: SeatInput, rng: Rng): Player {
+  const kitId = rng.pick(KIT_IDS);
+  const kit = getKit(kitId);
+
+  const player: Player = {
     id: seat.id,
     nickname: seat.nickname,
-    kitId: L1_PLACEHOLDER_KIT_ID,
-    lives: L1_PLACEHOLDER_RESOURCES.lives,
-    points: L1_PLACEHOLDER_RESOURCES.points,
-    upgradePoints: L1_PLACEHOLDER_RESOURCES.upgradePoints,
+    kitId,
+    lives: kit.startingResources.lives,
+    points: kit.startingResources.points,
+    upgradePoints: kit.startingResources.upgradePoints,
     shield: 0,
     shieldIsUpgraded: false,
-    hand: makeFullSharedHand(),
+    hand: [],
     specialCards: [],
     pendingEffects: [],
     activePersistentEffects: [],
@@ -94,16 +94,18 @@ function makePlaceholderPlayer(seat: SeatInput): Player {
     },
     isEliminated: false,
   };
-}
 
-/**
- * One copy of every V1 shared card (10 attacks + actions). Temporary until L4-02
- * kit distribution. Specials stay kit-granted.
- */
-function makeFullSharedHand(): CardInstance[] {
-  return SHARED_CARD_IDS.map((cardId: SharedCardId) => ({
-    instanceId: randomUUID(),
-    cardId,
-    isUpgraded: false,
-  }));
+  for (let index = 0; index < kit.startingCardCounts.action; index += 1) {
+    acquireCardToHand(player, rng.pick(ACTION_CARD_IDS));
+  }
+
+  for (let index = 0; index < kit.startingCardCounts.attack; index += 1) {
+    acquireCardToHand(player, rng.pick(ATTACK_CARD_IDS));
+  }
+
+  for (const specialId of kit.specialCards) {
+    acquireSpecialCard(player, specialId);
+  }
+
+  return player;
 }

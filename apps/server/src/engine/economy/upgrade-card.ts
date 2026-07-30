@@ -1,7 +1,7 @@
 /**
  * Spend 1 upgrade point to permanently upgrade one held copy — rules spec §1, L2-03.
  *
- * `alwaysUpgraded` kit trait (Lot 4) is not applied here — acquisition-time only.
+ * `alwaysUpgraded` kit trait is applied at acquisition (`acquireCardToHand`), not here.
  */
 
 import type { CardId, GameState } from '@card-battle/shared';

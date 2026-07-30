@@ -26,7 +26,10 @@
    the engine resolves it on the target's turn (`engine.md`).
 5. **`alwaysUpgraded` is checked on every card acquisition** — distribution, purchase,
    elimination reward, theft — and applies to every copy held. It is never a flag written once
-   at distribution, and it consumes no upgrade point (technical spec §4.5).
+   at distribution, and it consumes no upgrade point (technical spec §4.5). Server helper:
+   `acquireCardToHand` / `acquireSpecialCard` in `apps/server/src/engine/kits/acquire-card.ts`.
+   Kit roster: `packages/shared/src/domain/kit-catalog.ts`. Immunity helper: `isImmuneTo`
+   (resolve-time, L4-03).
 
 ## The V1 card set
 
@@ -119,6 +122,10 @@ Rules spec §5: single use, cannot be bought or sold individually, and 20 points
 **random** one — in V1 drawn only from the 6 cards of the lot (ruling §6.2 #10). An upgrade
 placed before use is lost when the card is played. After use the card joins the shared pool.
 
+**Lot 4 → Lot 5 handoff:** starting specials are already dealt into `player.specialCards` at
+`createInitialState` (L4-02). Lot 5 adds static definitions, handlers, and unlocks play — do
+**not** redistribute kit specials again at L5-01. Until a handler exists, play is rejected.
+
 Attack and action cards are **not** consumed on play: the player pays the usage cost each time
 and keeps the copy (infinite reuse while they hold it and can afford the cost). Only specials
 leave the hand on use.
@@ -147,5 +154,7 @@ the user loses a life **to damage**, and at 0 the card deactivates and is perman
 - [ ] All values cross-checked against the rules spec tables, base and upgraded
 - [ ] Opponent-targeting effects queued, never applied inline
 - [ ] Only primitives touch lives, points, shield and counters
-- [ ] Kit traits (`alwaysUpgraded`, `immuneTo`) honoured on acquisition, not distribution
+- [x] Kit traits (`alwaysUpgraded`) honoured on every acquisition via `acquireCardToHand`
+- [x] Kit trait `immuneTo` honoured at resolve with `actionResolved.outcome: 'immune'` (L4-03)
 - [ ] Tests for base and upgraded versions
+- [ ] Task committed when marked `Done` (AGENTS.md §10)

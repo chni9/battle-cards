@@ -37,7 +37,8 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Category | Visibility |
 |---|---|
 | Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief |
-| Lives, shield | **Private** (developer ruling 2026-07-30 — overrides tech §5.1). Revealed only by **upgraded** Spy (`full-resources`) |
+| Lives, shield | **Private** (developer ruling 2026-07-30 — overrides tech §5.1). Not revealed by Spy |
+| Points (tokens) | **Private.** Base Spy: frozen snapshot at resolve (`pointsSnapshot`). Upgraded Spy: live `points` |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
 | Elimination status | **Public** |
@@ -59,7 +60,8 @@ cloned player (ruling §6.2 #11).
 
 Client → server (technical spec §5.2):
 
-`createRoom` · `joinRoom` · `startGame` · `playCard` · `playMultipleAttacks` (Assassin only) ·
+`createRoom` · `joinRoom` · `startGame` · `playCard` · `playMultipleAttacks` (Assassin only,
+min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·
 `chooseMirrorTarget` · `chooseEliminationReward`
@@ -67,7 +69,8 @@ Client → server (technical spec §5.2):
 Server → clients (§5.3):
 
 `stateUpdate` (personalised per recipient) · `turnStarted` (active player + deadline) ·
-`actionPlayed` (broadcast immediately) · `actionResolved` (broadcast on resolution) ·
+`actionPlayed` (broadcast immediately) · `actionResolved` (broadcast on resolution; includes
+`outcome: 'applied' | 'immune' | 'cancelled'` since L4-03) ·
 `mirrorChoiceRequired` (to one player, with deadline) · `rewardChoiceRequired` (to the
 eliminator, chainable) · `playerEliminated` · `gameOver` · `error`
 
@@ -176,6 +179,9 @@ console — absent player, automatic-turn counter before elimination, both timer
 - [ ] No code path builds a complete state for an unspecified recipient
 - [ ] Every new message name declared in `packages/shared/src/protocol/messages.ts`
 - [ ] `actionPlayed` broadcast on play, `actionResolved` on resolution, in that order
+      (`outcome: 'applied' | 'immune' | 'cancelled'`)
+- [ ] Assassin multi-attack uses `playMultipleAttacks` (not a Mirror-style sub-choice)
 - [ ] Action revalidated server side, forged payloads rejected
 - [ ] Deadlines server-computed and sent
 - [ ] Test proving a client payload never contains an unspied opponent's hand
+- [ ] Task committed when `Done` (AGENTS.md §10) — never leave finished protocol work uncommitted
