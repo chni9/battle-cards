@@ -20,6 +20,7 @@ import { grantSpy } from '../../protocol/visibility-matrix';
 import { stealPoints } from '../economy/steal-points';
 import { isImmuneTo } from '../kits/is-immune-to';
 import { applyDamage } from '../life/apply-damage';
+import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 
 export type ResolveOutcome = 'applied' | 'immune' | 'cancelled';
 
@@ -186,6 +187,7 @@ export function resolvePendingEffects(
       livesLost = damageOutcome.livesLost;
       shieldAbsorbed = damageOutcome.shieldAbsorbed;
       player.turnLedger.livesLost += damageOutcome.livesLost;
+      poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
       outcome = 'applied';
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {

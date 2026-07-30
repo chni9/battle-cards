@@ -5,7 +5,7 @@
  * paths must never be merged, wrapped in a common helper, or selected by a flag.
  */
 
-import type { AttackCardId, Player } from '@card-battle/shared';
+import type { AttackCardId, PersistentEffect, Player } from '@card-battle/shared';
 
 import type { CounterDecrement, DamageOutcome } from './outcome';
 
@@ -42,7 +42,7 @@ export function applyDamage(
   target.lives -= livesLost;
 
   const countersDecremented: CounterDecrement[] = [];
-  const deactivatedEffectIds: string[] = [];
+  const deactivatedEffects: PersistentEffect[] = [];
 
   if (livesLost > 0) {
     for (const effect of target.activePersistentEffects) {
@@ -58,17 +58,24 @@ export function applyDamage(
       }
 
       if (effect.counter <= 0) {
-        deactivatedEffectIds.push(effect.id);
+        deactivatedEffects.push(effect);
       }
     }
 
-    if (deactivatedEffectIds.length > 0) {
-      const deactivated = new Set(deactivatedEffectIds);
+    if (deactivatedEffects.length > 0) {
+      const deactivated = new Set(deactivatedEffects.map((effect) => effect.id));
       target.activePersistentEffects = target.activePersistentEffects.filter(
         (effect) => !deactivated.has(effect.id),
       );
     }
   }
 
-  return { source, shieldAbsorbed, livesLost, countersDecremented, deactivatedEffectIds };
+  return {
+    source,
+    shieldAbsorbed,
+    livesLost,
+    countersDecremented,
+    deactivatedEffects,
+    deactivatedEffectIds: deactivatedEffects.map((effect) => effect.id),
+  };
 }

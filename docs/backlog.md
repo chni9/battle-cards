@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-40 of 63 tasks done. **Lot 5 in progress** — next up is L5-02.
+41 of 63 tasks done. **Lot 5 in progress** — next up is L5-03.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -51,7 +51,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 2 · Economy and attacks | 6 | 6 |
 | 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 5 |
-| 5 · Special cards | 9 | 1 |
+| 5 · Special cards | 9 | 2 |
 | 6 · Elimination | 5 | 0 |
 | 7 · Robustness | 5 | 0 |
 | 8 · Game log | 2 | 0 |
@@ -424,7 +424,7 @@ Single use, not purchasable individually, upgrade lost on use, joins the pool af
 - **Reference** Rules spec §5 · **Depends on** L4-02 · **Complexity** M · **Risk** Low
 - **Acceptance** A used card permanently disappears from the hand
 
-### L5-02 · Internal counters — `To do`
+### L5-02 · Internal counters — `Done`
 
 Points Generator 3, Imposition 2. Decrements by 1 each time the user loses a life to damage. At 0, the card deactivates and is lost.
 

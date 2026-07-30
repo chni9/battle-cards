@@ -9,7 +9,7 @@
  * Mutation still happens inside the primitive; the outcome is purely descriptive.
  */
 
-import type { AttackCardId, CardId, LifeLossReason } from '@card-battle/shared';
+import type { AttackCardId, CardId, LifeLossReason, PersistentEffect } from '@card-battle/shared';
 
 /** One persistent effect's internal counter losing points (rules spec §5). */
 export interface CounterDecrement {
@@ -30,8 +30,11 @@ export interface DamageOutcome {
   countersDecremented: readonly CounterDecrement[];
   /**
    * Effects whose counter reached 0: deactivated and permanently lost (rules spec §5). They
-   * are no longer on the player, so nothing can decrement them again.
+   * are no longer on the player, so nothing can decrement them again. Callers must send
+   * each to the shared pool (L5-02).
    */
+  deactivatedEffects: readonly PersistentEffect[];
+  /** Ids of `deactivatedEffects` — kept for callers that only need identity. */
   deactivatedEffectIds: readonly string[];
 }
 

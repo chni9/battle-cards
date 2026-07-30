@@ -21,6 +21,7 @@ import { upgradeCard } from '../economy/upgrade-card';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import type { Rng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
+import { applyPersistentEffects } from './apply-persistent-effects';
 import {
   applyDefaultMirrorRedirect,
   redirectPendingAttack,
@@ -302,6 +303,7 @@ function finishTurnPhases(
   actionPlayed: ActionPlayedEvent,
 ): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId);
+  applyPersistentEffects(state, actorPlayerId);
   const eliminatedPlayerIds = markEliminations(state);
   const winnerPlayerId = findWinner(state);
 
