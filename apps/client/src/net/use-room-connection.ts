@@ -7,11 +7,13 @@ import {
   ACTION_RESOLVED,
   BUY_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
   GAME_ROOM_NAME,
+  MIRROR_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
@@ -25,6 +27,8 @@ import {
   type ActionResolvedPayload,
   type CardId,
   type GameOverPayload,
+  type MirrorChoiceRequiredPayload,
+  type PlayCardPayload,
   type RoomJoinOptions,
   type StateView,
   type TurnStartedPayload,
@@ -41,6 +45,11 @@ export type RoomConnectionStatus =
   | 'disconnected'
   | 'failed';
 
+export interface PlayCardOptions {
+  targetPlayerId?: string;
+  quantity?: number;
+}
+
 export interface RoomConnection {
   status: RoomConnectionStatus;
   view: StateView | null;
@@ -49,6 +58,8 @@ export interface RoomConnection {
   lastTurnStarted: TurnStartedPayload | null;
   lastActionPlayed: ActionPlayedPayload | null;
   lastActionResolved: ActionResolvedPayload | null;
+  /** Set when the server asks this client for a Mirror redirect (L3-09). */
+  mirrorChoice: MirrorChoiceRequiredPayload | null;
 }
 
 const INITIAL: RoomConnection = {
@@ -59,6 +70,7 @@ const INITIAL: RoomConnection = {
   lastTurnStarted: null,
   lastActionPlayed: null,
   lastActionResolved: null,
+  mirrorChoice: null,
 };
 
 export interface UseRoomConnectionResult extends RoomConnection {
@@ -67,7 +79,8 @@ export interface UseRoomConnectionResult extends RoomConnection {
   leaveGame: () => Promise<void>;
   startGame: () => void;
   drawCard: () => void;
-  playCard: (instanceId: string, targetPlayerId: string) => void;
+  playCard: (instanceId: string, options?: PlayCardOptions) => void;
+  chooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
   buyCard: (cardId: CardId) => void;
   sellCard: (instanceId: string) => void;
   upgradeCard: (instanceId: string) => void;
@@ -102,7 +115,12 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onMessage(TURN_STARTED, (payload: unknown) => {
       if (isTurnStarted(payload)) {
-        setConnection((previous) => ({ ...previous, lastTurnStarted: payload }));
+        setConnection((previous) => ({
+          ...previous,
+          lastTurnStarted: payload,
+          // Mirror sub-choice ends before the next turn starts (play or expiry).
+          mirrorChoice: null,
+        }));
       }
     });
 
@@ -118,6 +136,12 @@ export function useRoomConnection(): UseRoomConnectionResult {
       }
     });
 
+    room.onMessage(MIRROR_CHOICE_REQUIRED, (payload: unknown) => {
+      if (isMirrorChoiceRequired(payload)) {
+        setConnection((previous) => ({ ...previous, mirrorChoice: payload }));
+      }
+    });
+
     room.onMessage(PLAYER_ELIMINATED, () => {
       // stateUpdate follows with isEliminated flags
     });
@@ -126,8 +150,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
       if (isGameOver(payload)) {
         setConnection((previous) => ({
           ...previous,
-          // view will arrive via stateUpdate; keep winner visible if needed
           error: null,
+          mirrorChoice: null,
         }));
         void payload;
       }
@@ -214,9 +238,27 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(DRAW_CARD);
   }, []);
 
-  const playCard = useCallback((instanceId: string, targetPlayerId: string): void => {
-    roomRef.current?.send(PLAY_CARD, { instanceId, targetPlayerId });
+  const playCard = useCallback((instanceId: string, options?: PlayCardOptions): void => {
+    const payload: PlayCardPayload = {
+      instanceId,
+      ...(options?.targetPlayerId !== undefined
+        ? { targetPlayerId: options.targetPlayerId }
+        : {}),
+      ...(options?.quantity !== undefined ? { quantity: options.quantity } : {}),
+    };
+    roomRef.current?.send(PLAY_CARD, payload);
   }, []);
+
+  const chooseMirrorTarget = useCallback(
+    (pendingEffectId: string, newTargetPlayerId: string): void => {
+      roomRef.current?.send(CHOOSE_MIRROR_TARGET, {
+        pendingEffectId,
+        newTargetPlayerId,
+      });
+      setConnection((previous) => ({ ...previous, mirrorChoice: null }));
+    },
+    [],
+  );
 
   const buyCard = useCallback((cardId: CardId): void => {
     roomRef.current?.send(BUY_CARD, { cardId });
@@ -246,6 +288,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     startGame,
     drawCard,
     playCard,
+    chooseMirrorTarget,
     buyCard,
     sellCard,
     upgradeCard,
@@ -309,6 +352,17 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
     payload !== null &&
     'effectId' in payload &&
     'livesLost' in payload
+  );
+}
+
+function isMirrorChoiceRequired(payload: unknown): payload is MirrorChoiceRequiredPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'eligibleEffectIds' in payload &&
+    'deadlineMs' in payload &&
+    Array.isArray(payload.eligibleEffectIds) &&
+    typeof payload.deadlineMs === 'number'
   );
 }
 

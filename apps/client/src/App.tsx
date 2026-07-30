@@ -3,10 +3,15 @@
  * Functional only; no design system (see docs/agent/frontend.md).
  */
 
-import { PROTOCOL_VERSION, SHARED_CARD_IDS, type PlayingStateView } from '@card-battle/shared';
+import {
+  PROTOCOL_VERSION,
+  SHARED_CARD_IDS,
+  type MirrorChoiceRequiredPayload,
+  type PlayingStateView,
+} from '@card-battle/shared';
 import { useEffect, useState } from 'react';
 
-import { useRoomConnection } from './net/use-room-connection';
+import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
 
 const STATUS_LABELS = {
   idle: 'Not connected',
@@ -28,19 +33,26 @@ export function App() {
     startGame,
     drawCard,
     playCard,
+    chooseMirrorTarget,
     buyCard,
     sellCard,
     upgradeCard,
     buyUpgradePoint,
     sellUpgradePoint,
     lastTurnStarted,
+    mirrorChoice,
   } = connection;
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [targetId, setTargetId] = useState('');
+  const [playInstanceId, setPlayInstanceId] = useState('');
+  const [includeTarget, setIncludeTarget] = useState(true);
+  const [playQuantity, setPlayQuantity] = useState(1);
   const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [sellInstanceId, setSellInstanceId] = useState('');
   const [upgradeInstanceId, setUpgradeInstanceId] = useState('');
+  const [mirrorEffectId, setMirrorEffectId] = useState('');
+  const [mirrorTargetId, setMirrorTargetId] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -79,8 +91,6 @@ export function App() {
   }
 
   if (view?.phase === 'playing') {
-    const attackCopy = view.self.hand.find((card) => card.cardId === 'basic-attack');
-
     return (
       <TableScreen
         view={view}
@@ -90,16 +100,39 @@ export function App() {
         deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
         targetId={targetId}
         setTargetId={setTargetId}
+        playInstanceId={playInstanceId}
+        setPlayInstanceId={setPlayInstanceId}
+        includeTarget={includeTarget}
+        setIncludeTarget={setIncludeTarget}
+        playQuantity={playQuantity}
+        setPlayQuantity={setPlayQuantity}
         buyCardId={buyCardId}
         setBuyCardId={setBuyCardId}
         sellInstanceId={sellInstanceId}
         setSellInstanceId={setSellInstanceId}
         upgradeInstanceId={upgradeInstanceId}
         setUpgradeInstanceId={setUpgradeInstanceId}
+        mirrorChoice={mirrorChoice}
+        mirrorEffectId={mirrorEffectId}
+        setMirrorEffectId={setMirrorEffectId}
+        mirrorTargetId={mirrorTargetId}
+        setMirrorTargetId={setMirrorTargetId}
         onDraw={drawCard}
-        onAttack={() => {
-          if (targetId !== '' && attackCopy !== undefined) {
-            playCard(attackCopy.instanceId, targetId);
+        onPlay={() => {
+          if (playInstanceId === '') {
+            return;
+          }
+
+          const selected = view.self.hand.find((card) => card.instanceId === playInstanceId);
+          const options: PlayCardOptions = {
+            ...(includeTarget && targetId !== '' ? { targetPlayerId: targetId } : {}),
+            ...(selected?.cardId === 'regeneration' ? { quantity: playQuantity } : {}),
+          };
+          playCard(playInstanceId, options);
+        }}
+        onChooseMirror={() => {
+          if (mirrorEffectId !== '' && mirrorTargetId !== '') {
+            chooseMirrorTarget(mirrorEffectId, mirrorTargetId);
           }
         }}
         onBuy={() => {
@@ -230,14 +263,26 @@ function TableScreen(props: {
   deadlineMs: number | null;
   targetId: string;
   setTargetId: (id: string) => void;
+  playInstanceId: string;
+  setPlayInstanceId: (id: string) => void;
+  includeTarget: boolean;
+  setIncludeTarget: (value: boolean) => void;
+  playQuantity: number;
+  setPlayQuantity: (value: number) => void;
   buyCardId: string;
   setBuyCardId: (id: string) => void;
   sellInstanceId: string;
   setSellInstanceId: (id: string) => void;
   upgradeInstanceId: string;
   setUpgradeInstanceId: (id: string) => void;
+  mirrorChoice: MirrorChoiceRequiredPayload | null;
+  mirrorEffectId: string;
+  setMirrorEffectId: (id: string) => void;
+  mirrorTargetId: string;
+  setMirrorTargetId: (id: string) => void;
   onDraw: () => void;
-  onAttack: () => void;
+  onPlay: () => void;
+  onChooseMirror: () => void;
   onBuy: () => void;
   onSell: () => void;
   onUpgrade: () => void;
@@ -253,14 +298,26 @@ function TableScreen(props: {
     deadlineMs,
     targetId,
     setTargetId,
+    playInstanceId,
+    setPlayInstanceId,
+    includeTarget,
+    setIncludeTarget,
+    playQuantity,
+    setPlayQuantity,
     buyCardId,
     setBuyCardId,
     sellInstanceId,
     setSellInstanceId,
     upgradeInstanceId,
     setUpgradeInstanceId,
+    mirrorChoice,
+    mirrorEffectId,
+    setMirrorEffectId,
+    mirrorTargetId,
+    setMirrorTargetId,
     onDraw,
-    onAttack,
+    onPlay,
+    onChooseMirror,
     onBuy,
     onSell,
     onUpgrade,
@@ -273,13 +330,31 @@ function TableScreen(props: {
   const secondsLeft =
     deadlineMs === null ? null : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
   const opponents = view.players.filter((player) => !player.isYou);
-  const hasAttack = view.self.hand.some((card) => card.cardId === 'basic-attack');
+  const selectedPlayCard = view.self.hand.find((card) => card.instanceId === playInstanceId);
+  const mirrorSecondsLeft =
+    mirrorChoice === null
+      ? null
+      : Math.max(0, Math.ceil((mirrorChoice.deadlineMs - nowMs) / 1000));
+  const eligibleMirrorEffects = view.pendingEffects.filter(
+    (effect) => mirrorChoice?.eligibleEffectIds.includes(effect.id) ?? false,
+  );
 
   useEffect(() => {
     if (targetId === '' && opponents[0] !== undefined) {
       setTargetId(opponents[0].id);
     }
   }, [opponents, setTargetId, targetId]);
+
+  useEffect(() => {
+    if (
+      playInstanceId !== '' &&
+      view.self.hand.some((card) => card.instanceId === playInstanceId)
+    ) {
+      return;
+    }
+
+    setPlayInstanceId(view.self.hand[0]?.instanceId ?? '');
+  }, [playInstanceId, setPlayInstanceId, view.self.hand]);
 
   useEffect(() => {
     if (
@@ -307,6 +382,24 @@ function TableScreen(props: {
     setUpgradeInstanceId(next?.instanceId ?? '');
   }, [upgradeInstanceId, setUpgradeInstanceId, view.self.hand]);
 
+  useEffect(() => {
+    if (mirrorChoice === null) {
+      setMirrorEffectId('');
+      return;
+    }
+
+    const first = mirrorChoice.eligibleEffectIds[0];
+    if (first !== undefined && !mirrorChoice.eligibleEffectIds.includes(mirrorEffectId)) {
+      setMirrorEffectId(first);
+    }
+  }, [mirrorChoice, mirrorEffectId, setMirrorEffectId]);
+
+  useEffect(() => {
+    if (mirrorTargetId === '' && opponents[0] !== undefined) {
+      setMirrorTargetId(opponents[0].id);
+    }
+  }, [mirrorTargetId, opponents, setMirrorTargetId]);
+
   return (
     <main>
       <h1>Card Battle</h1>
@@ -326,6 +419,54 @@ function TableScreen(props: {
         <p>Timer: {secondsLeft === null ? '—' : `${secondsLeft}s`}</p>
       </section>
 
+      {mirrorChoice !== null && (
+        <section>
+          <h2>Mirror redirect</h2>
+          <p>Choose which pending attack to redirect ({mirrorSecondsLeft ?? '—'}s left).</p>
+          <label>
+            Effect{' '}
+            <select
+              value={mirrorEffectId}
+              onChange={(event) => {
+                setMirrorEffectId(event.target.value);
+              }}
+            >
+              {eligibleMirrorEffects.map((effect) => (
+                <option key={effect.id} value={effect.id}>
+                  {effect.cardId}
+                  {effect.isUpgraded ? ' ↑' : ''} from{' '}
+                  {nicknameOf(view, effect.sourcePlayerId)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            New target{' '}
+            <select
+              value={mirrorTargetId}
+              onChange={(event) => {
+                setMirrorTargetId(event.target.value);
+              }}
+            >
+              {opponents
+                .filter((player) => !player.isEliminated)
+                .map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.nickname}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            disabled={mirrorEffectId === '' || mirrorTargetId === ''}
+            onClick={onChooseMirror}
+          >
+            Confirm redirect
+          </button>
+        </section>
+      )}
+
       <section>
         <h2>Opponents</h2>
         <ul>
@@ -341,12 +482,12 @@ function TableScreen(props: {
                     setTargetId(player.id);
                   }}
                 />
-                {player.nickname} — {player.cardCount} cards
+                {player.nickname}
                 {player.spied !== undefined
-                  ? ` · spied: kit ${player.spied.kitId}${
+                  ? ` — ${player.spied.hand.length + player.spied.specialCards.length} cards · spied: kit ${player.spied.kitId}${
                       player.spied.lives !== undefined
                         ? `, ${player.spied.lives} lives, shield ${String(player.spied.shield)}, ${String(player.spied.points)} pts`
-                        : ` (${player.spied.hand.length} hand cards visible)`
+                        : ''
                     }`
                   : ''}
                 {player.isEliminated ? ' (eliminated)' : ''}
@@ -410,22 +551,74 @@ function TableScreen(props: {
 
       <section>
         <h2>Actions</h2>
-        <button type="button" disabled={!isMyTurn} onClick={onDraw}>
+        <button type="button" disabled={!isMyTurn || mirrorChoice !== null} onClick={onDraw}>
           Draw (+1 point)
         </button>
-        <button
-          type="button"
-          disabled={!isMyTurn || targetId === '' || !hasAttack}
-          onClick={onAttack}
-        >
-          Basic attack
-        </button>
+        <div>
+          <label>
+            Play{' '}
+            <select
+              value={playInstanceId}
+              disabled={!isMyTurn || mirrorChoice !== null || view.self.hand.length === 0}
+              onChange={(event) => {
+                setPlayInstanceId(event.target.value);
+              }}
+            >
+              {view.self.hand.map((card) => (
+                <option key={card.instanceId} value={card.instanceId}>
+                  {card.cardId}
+                  {card.isUpgraded ? ' ↑' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={includeTarget}
+              disabled={!isMyTurn || mirrorChoice !== null}
+              onChange={(event) => {
+                setIncludeTarget(event.target.checked);
+              }}
+            />{' '}
+            Include target (uncheck for Tax / Regen / Shield / Mirror)
+          </label>
+          <label>
+            Quantity (Regen){' '}
+            <input
+              type="number"
+              min={1}
+              max={4}
+              value={playQuantity}
+              disabled={!isMyTurn || mirrorChoice !== null}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (Number.isInteger(next) && next >= 1 && next <= 4) {
+                  setPlayQuantity(next);
+                }
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={
+              !isMyTurn ||
+              mirrorChoice !== null ||
+              playInstanceId === '' ||
+              (includeTarget && targetId === '')
+            }
+            onClick={onPlay}
+          >
+            Play card
+            {selectedPlayCard !== undefined ? ` (${selectedPlayCard.cardId})` : ''}
+          </button>
+        </div>
         <div>
           <label>
             Buy{' '}
             <select
               value={buyCardId}
-              disabled={!isMyTurn}
+              disabled={!isMyTurn || mirrorChoice !== null}
               onChange={(event) => {
                 setBuyCardId(event.target.value);
               }}
@@ -437,7 +630,7 @@ function TableScreen(props: {
               ))}
             </select>
           </label>
-          <button type="button" disabled={!isMyTurn} onClick={onBuy}>
+          <button type="button" disabled={!isMyTurn || mirrorChoice !== null} onClick={onBuy}>
             Buy card
           </button>
         </div>
@@ -446,7 +639,9 @@ function TableScreen(props: {
             Sell{' '}
             <select
               value={sellInstanceId}
-              disabled={!isMyTurn || view.self.hand.length === 0}
+              disabled={
+                !isMyTurn || mirrorChoice !== null || view.self.hand.length === 0
+              }
               onChange={(event) => {
                 setSellInstanceId(event.target.value);
               }}
@@ -461,7 +656,7 @@ function TableScreen(props: {
           </label>
           <button
             type="button"
-            disabled={!isMyTurn || sellInstanceId === ''}
+            disabled={!isMyTurn || mirrorChoice !== null || sellInstanceId === ''}
             onClick={onSell}
           >
             Sell card
@@ -472,7 +667,7 @@ function TableScreen(props: {
             Upgrade{' '}
             <select
               value={upgradeInstanceId}
-              disabled={!isMyTurn || upgradable.length === 0}
+              disabled={!isMyTurn || mirrorChoice !== null || upgradable.length === 0}
               onChange={(event) => {
                 setUpgradeInstanceId(event.target.value);
               }}
@@ -487,19 +682,26 @@ function TableScreen(props: {
           <button
             type="button"
             disabled={
-              !isMyTurn || upgradeInstanceId === '' || view.self.upgradePoints < 1
+              !isMyTurn ||
+              mirrorChoice !== null ||
+              upgradeInstanceId === '' ||
+              view.self.upgradePoints < 1
             }
             onClick={onUpgrade}
           >
             Upgrade card
           </button>
         </div>
-        <button type="button" disabled={!isMyTurn} onClick={onBuyUpgradePoint}>
+        <button
+          type="button"
+          disabled={!isMyTurn || mirrorChoice !== null}
+          onClick={onBuyUpgradePoint}
+        >
           Buy upgrade point
         </button>
         <button
           type="button"
-          disabled={!isMyTurn || view.self.upgradePoints < 1}
+          disabled={!isMyTurn || mirrorChoice !== null || view.self.upgradePoints < 1}
           onClick={onSellUpgradePoint}
         >
           Sell upgrade point

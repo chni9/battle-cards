@@ -71,7 +71,15 @@ interface Seat {
   nickname: string;
 }
 
-const TURN_DURATION_MS = 30_000;
+const TURN_DURATION_MS = (() => {
+  const raw = process.env['TURN_DURATION_MS'];
+  if (raw === undefined) {
+    return 30_000;
+  }
+
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 5_000 ? parsed : 30_000;
+})();
 
 export class GameRoom extends Room<{ client: GameClient }> {
   override maxClients = MAX_PLAYERS;
