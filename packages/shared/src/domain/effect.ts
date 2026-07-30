@@ -34,6 +34,11 @@ export interface PendingEffect {
    * ascending `queuedAt` — a global counter, never per player.
    */
   queuedAt: number;
+  /**
+   * Damage scale for attack effects. Default 1; upgraded Mirror multiplies by 2 on
+   * each redirect and stacks (Lot 3 ruling).
+   */
+  damageMultiplier: number;
 }
 
 /**

@@ -51,4 +51,17 @@ export interface GameState {
    * (technical spec §5.1). Empty until Spy resolves (L3-05).
    */
   visibility: SpyRelation[];
+  /**
+   * Active Mirror sub-choice, or `null`. While set, the Mirror user's turn has paid
+   * but has not yet resolved pending effects (technical spec §5.5–5.6).
+   */
+  mirrorChoice: MirrorChoiceState | null;
+}
+
+/** In-flight Mirror redirect sub-choice — technical spec §5.5. */
+export interface MirrorChoiceState {
+  playerId: string;
+  isUpgraded: boolean;
+  eligibleEffectIds: readonly string[];
+  deadlineMs: number;
 }

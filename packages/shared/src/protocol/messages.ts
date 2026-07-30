@@ -20,12 +20,14 @@ export const SELL_CARD = 'sellCard';
 export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
+export const CHOOSE_MIRROR_TARGET = 'chooseMirrorTarget';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
 export const ACTION_RESOLVED = 'actionResolved';
 export const PLAYER_ELIMINATED = 'playerEliminated';
 export const GAME_OVER = 'gameOver';
+export const MIRROR_CHOICE_REQUIRED = 'mirrorChoiceRequired';
 
 export interface TurnStartedPayload {
   activePlayerId: string;
@@ -86,6 +88,16 @@ export interface UpgradeCardPayload {
   instanceId: string;
 }
 
+export interface ChooseMirrorTargetPayload {
+  pendingEffectId: string;
+  newTargetPlayerId: string;
+}
+
+export interface MirrorChoiceRequiredPayload {
+  eligibleEffectIds: readonly string[];
+  deadlineMs: number;
+}
+
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
   [ERROR_MESSAGE]: { message: string };
@@ -94,6 +106,7 @@ export interface ServerToClientMessages {
   [ACTION_RESOLVED]: ActionResolvedPayload;
   [PLAYER_ELIMINATED]: PlayerEliminatedPayload;
   [GAME_OVER]: GameOverPayload;
+  [MIRROR_CHOICE_REQUIRED]: MirrorChoiceRequiredPayload;
 }
 
 export interface RoomJoinOptions {
@@ -113,4 +126,5 @@ export interface ClientToServerMessages {
   [UPGRADE_CARD]: UpgradeCardPayload;
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
+  [CHOOSE_MIRROR_TARGET]: ChooseMirrorTargetPayload;
 }

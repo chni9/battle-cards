@@ -29,6 +29,7 @@ export function queueEffect(input: QueueEffectInput): PendingEffect {
     cardId: input.cardId,
     isUpgraded: input.isUpgraded,
     queuedAt: input.state.turnSequence,
+    damageMultiplier: 1,
   };
 
   target.pendingEffects.push(effect);

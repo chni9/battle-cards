@@ -11,7 +11,12 @@ import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import { L1_PLACEHOLDER_RESOURCES } from '../l1-placeholders';
+import type { Rng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
+import {
+  applyDefaultMirrorRedirect,
+  redirectPendingAttack,
+} from './mirror-choice';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
@@ -56,6 +61,8 @@ export interface TurnResult {
   /** Set when exactly one non-eliminated player remains after this turn. */
   winnerPlayerId: string | null;
   eliminatedPlayerIds: string[];
+  /** True when Mirror paid and is waiting for chooseMirrorTarget / default. */
+  mirrorChoicePending?: boolean;
 }
 
 export interface TurnRejection {
@@ -173,6 +180,104 @@ export function performTurnAction(
     actionPlayed = playResult.actionPlayed;
   }
 
+  // Mirror starts a sub-choice: paid, but resolve/advance wait for chooseMirrorTarget.
+  if (state.mirrorChoice !== null) {
+    return {
+      ok: true,
+      actionPlayed,
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      mirrorChoicePending: true,
+    };
+  }
+
+  return finishTurnPhases(state, actorPlayerId, actionPlayed);
+}
+
+/**
+ * Complete a Mirror redirect then finish the Mirror user's turn (resolve + advance).
+ */
+export function completeMirrorChoice(
+  state: GameState,
+  actorPlayerId: string,
+  pendingEffectId: string,
+  newTargetPlayerId: string,
+): PerformActionResult {
+  const choice = state.mirrorChoice;
+
+  if (choice?.playerId !== actorPlayerId) {
+    return { ok: false, message: 'No Mirror choice pending.' };
+  }
+
+  if (state.currentTurnPlayerId !== actorPlayerId) {
+    return { ok: false, message: 'It is not your turn.' };
+  }
+
+  if (!choice.eligibleEffectIds.includes(pendingEffectId)) {
+    return { ok: false, message: 'That pending attack is not available.' };
+  }
+
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor === undefined) {
+    return { ok: false, message: 'Unknown player.' };
+  }
+
+  const redirected = redirectPendingAttack(
+    state,
+    actor,
+    pendingEffectId,
+    newTargetPlayerId,
+    choice.isUpgraded,
+  );
+
+  if (!redirected.ok) {
+    return redirected;
+  }
+
+  state.mirrorChoice = null;
+
+  return finishTurnPhases(state, actorPlayerId, {
+    actorPlayerId,
+    action: 'playCard',
+    cardId: 'mirror',
+    turnSequence: state.turnSequence,
+  });
+}
+
+/**
+ * Apply Mirror default redirect on sub-choice expiry, then finish the turn.
+ */
+export function expireMirrorChoice(state: GameState, rng: Rng): PerformActionResult {
+  const choice = state.mirrorChoice;
+
+  if (choice === null) {
+    return { ok: false, message: 'No Mirror choice pending.' };
+  }
+
+  const actorPlayerId = choice.playerId;
+  const applied = applyDefaultMirrorRedirect(state, rng);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  state.mirrorChoice = null;
+
+  return finishTurnPhases(state, actorPlayerId, {
+    actorPlayerId,
+    action: 'playCard',
+    cardId: 'mirror',
+    turnSequence: state.turnSequence,
+  });
+}
+
+function finishTurnPhases(
+  state: GameState,
+  actorPlayerId: string,
+  actionPlayed: ActionPlayedEvent,
+): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId);
   const eliminatedPlayerIds = markEliminations(state);
   const winnerPlayerId = findWinner(state);

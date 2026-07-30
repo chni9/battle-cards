@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-33 of 63 tasks done. **Lot 3 in progress** — next up is L3-09.
+34 of 63 tasks done. **Lot 3 complete** — next up is L4-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 8 |
+| 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -364,13 +364,14 @@ Gains the lives lost by the target during their last complete turn, resolution i
 - **Acceptance** Correct absorption after a turn where the target suffered an attack and paid a tax
 - **Note** Immediate (not queued); ignores theft fields.
 
-### L3-09 · Mirror — `To do`
+### L3-09 · Mirror — `Done`
 
 Redirects a non-upgraded attack pending against the user. Choice among several. Unlimited redirection chain. Upgraded version: also redirects upgraded attacks and doubles the redirected attack's damage.
 
 - **Reference** Rules spec §3 · **Depends on** L3-06 · **Complexity** L · **Risk** High
 - **Watch point** 20s sub-choice, default = first attack in the queue toward a randomly drawn opponent. Invalid action if nothing pending. A redirection can create a mutual-attack pair.
 - **Acceptance** 3-player chain tested, invalid case rejected, default applied on expiry
+- **Note** `damageMultiplier` stacks; PROTOCOL_VERSION 8; `chooseMirrorTarget` / `mirrorChoiceRequired`.
 
 ## Lot 4 · Kits
 

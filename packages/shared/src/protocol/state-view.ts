@@ -69,6 +69,7 @@ export interface PendingEffectView {
   cardId: CardId;
   isUpgraded: boolean;
   queuedAt: number;
+  damageMultiplier: number;
 }
 
 /**

@@ -105,8 +105,10 @@ function cancelEqualMutualAttack(
     return false;
   }
 
-  const incomingDamage = attackDamageFor(incoming.cardId, incoming.isUpgraded);
-  const retaliationDamage = attackDamageFor(retaliation.cardId, retaliation.isUpgraded);
+  const incomingDamage =
+    attackDamageFor(incoming.cardId, incoming.isUpgraded) * incoming.damageMultiplier;
+  const retaliationDamage =
+    attackDamageFor(retaliation.cardId, retaliation.isUpgraded) * retaliation.damageMultiplier;
 
   if (incomingDamage !== retaliationDamage) {
     return false;
@@ -170,7 +172,8 @@ export function resolvePendingEffects(
         continue;
       }
 
-      const amount = attackDamageFor(effect.cardId, effect.isUpgraded);
+      const amount =
+        attackDamageFor(effect.cardId, effect.isUpgraded) * effect.damageMultiplier;
       const outcome = applyDamage(player, amount, effect.cardId);
       livesLost = outcome.livesLost;
       shieldAbsorbed = outcome.shieldAbsorbed;

@@ -95,6 +95,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       cardId: effect.cardId,
       isUpgraded: effect.isUpgraded,
       queuedAt: effect.queuedAt,
+      damageMultiplier: effect.damageMultiplier,
     })),
   );
 

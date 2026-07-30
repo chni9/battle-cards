@@ -59,6 +59,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     turnSequence: 0,
     seed,
     visibility: [],
+    mirrorChoice: null,
   };
 }
 

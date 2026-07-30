@@ -116,6 +116,7 @@ describe('Spy/Thief counter (L3-06)', () => {
         cardId: 'spy',
         isUpgraded: false,
         queuedAt: 1,
+        damageMultiplier: 1,
       },
     ];
 

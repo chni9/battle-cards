@@ -10,10 +10,12 @@ import {
   ACTION_RESOLVED,
   BUY_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
+  MIRROR_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
@@ -27,6 +29,7 @@ import {
   type ActionPlayedPayload,
   type BuyCardPayload,
   type CardId,
+  type ChooseMirrorTargetPayload,
   type GameState,
   type LobbySeatView,
   type PlayCardPayload,
@@ -37,7 +40,15 @@ import {
 import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { createInitialState } from '../engine/create-initial-state';
-import { performTurnAction, type TurnAction } from '../engine/turn/perform-action';
+import { createRng } from '../engine/rng';
+import {
+  completeMirrorChoice,
+  expireMirrorChoice,
+  performTurnAction,
+  type TurnAction,
+  type TurnResult,
+} from '../engine/turn/perform-action';
+import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
 import {
   buildFinishedViewFor,
   buildLobbyViewFor,
@@ -73,6 +84,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private actionTakenThisTurn = false;
   private turnDeadlineMs: number | null = null;
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
+  private mirrorTimer: ReturnType<typeof setTimeout> | null = null;
   private actionLog: ActionLogEntryView[] = [];
 
   override async onCreate(): Promise<void> {
@@ -82,6 +94,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   override async onDispose(): Promise<void> {
     this.clearTurnTimer();
+    this.clearMirrorTimer();
     await this.presence.srem(GAME_CODE_PRESENCE_CHANNEL, this.roomId);
   }
 
@@ -210,6 +223,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     [SELL_UPGRADE_POINT]: (client: GameClient): void => {
       this.handleAction(client, { type: 'sellUpgradePoint' });
     },
+
+    [CHOOSE_MIRROR_TARGET]: (client: GameClient, payload: unknown): void => {
+      this.handleMirrorChoice(client, payload);
+    },
   };
 
   override onJoin(client: GameClient, options: unknown): void {
@@ -257,6 +274,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (this.hasActiveMirrorChoice(state)) {
+      client.send(ERROR_MESSAGE, { message: 'Finish your Mirror choice first.' });
+      return;
+    }
+
     if (this.actionTakenThisTurn) {
       client.send(ERROR_MESSAGE, { message: 'You already acted this turn.' });
       return;
@@ -269,6 +291,69 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.applyTurnResult(result);
+
+    if (result.mirrorChoicePending === true) {
+      const choice = state.mirrorChoice;
+
+      if (choice === null) {
+        client.send(ERROR_MESSAGE, { message: 'Mirror choice missing.' });
+        return;
+      }
+
+      this.beginMirrorTimer(client, choice.deadlineMs, choice.eligibleEffectIds);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnTimer();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private handleMirrorChoice(client: GameClient, payload: unknown): void {
+    const state = this.gameState;
+    const parsed = readChooseMirrorTargetPayload(payload);
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid chooseMirrorTarget payload.' });
+      return;
+    }
+
+    const result = completeMirrorChoice(
+      state,
+      client.sessionId,
+      parsed.pendingEffectId,
+      parsed.newTargetPlayerId,
+    );
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearMirrorTimer();
+    this.applyTurnResult(result);
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnTimer();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private applyTurnResult(result: TurnResult): void {
     this.actionTakenThisTurn = true;
     this.clearTurnTimer();
 
@@ -306,6 +391,43 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.actionTakenThisTurn = false;
+  }
+
+  private beginMirrorTimer(
+    client: GameClient,
+    deadlineMs: number,
+    eligibleEffectIds: readonly string[],
+  ): void {
+    this.clearMirrorTimer();
+    client.send(MIRROR_CHOICE_REQUIRED, { eligibleEffectIds, deadlineMs });
+
+    const remaining = Math.max(0, deadlineMs - Date.now());
+    this.mirrorTimer = setTimeout(() => {
+      this.onMirrorTimeout();
+    }, remaining > 0 ? remaining : MIRROR_SUB_CHOICE_MS);
+  }
+
+  private onMirrorTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.mirrorChoice == null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireMirrorChoice(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.mirrorChoice = null;
+      return;
+    }
+
+    this.clearMirrorTimer();
+    this.applyTurnResult(result);
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
     this.beginTurnTimer();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
@@ -326,6 +448,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.turnTimer = setTimeout(() => {
       this.onTurnTimeout(activePlayerId);
     }, TURN_DURATION_MS);
+  }
+
+  private hasActiveMirrorChoice(state: GameState): boolean {
+    return state.mirrorChoice !== null;
+  }
+
+  private clearMirrorTimer(): void {
+    if (this.mirrorTimer !== null) {
+      clearTimeout(this.mirrorTimer);
+      this.mirrorTimer = null;
+    }
   }
 
   private onTurnTimeout(expectedPlayerId: string): void {
@@ -566,3 +699,27 @@ function readSellCardPayload(payload: unknown): SellCardPayload | null {
 function readUpgradeCardPayload(payload: unknown): UpgradeCardPayload | null {
   return readSellCardPayload(payload);
 }
+
+function readChooseMirrorTargetPayload(payload: unknown): ChooseMirrorTargetPayload | null {
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('pendingEffectId' in payload) ||
+    !('newTargetPlayerId' in payload)
+  ) {
+    return null;
+  }
+
+  const { pendingEffectId, newTargetPlayerId } = payload;
+
+  if (typeof pendingEffectId !== 'string' || pendingEffectId.length === 0) {
+    return null;
+  }
+
+  if (typeof newTargetPlayerId !== 'string' || newTargetPlayerId.length === 0) {
+    return null;
+  }
+
+  return { pendingEffectId, newTargetPlayerId };
+}
+
