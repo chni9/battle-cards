@@ -70,6 +70,7 @@ function makePlaceholderPlayer(seat: SeatInput): Player {
     points: L1_PLACEHOLDER_RESOURCES.points,
     upgradePoints: L1_PLACEHOLDER_RESOURCES.upgradePoints,
     shield: 0,
+    shieldIsUpgraded: false,
     hand: makeBasicAttackHand(),
     specialCards: [],
     pendingEffects: [],

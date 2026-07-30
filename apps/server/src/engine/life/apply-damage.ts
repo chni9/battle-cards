@@ -34,6 +34,10 @@ export function applyDamage(
   const shieldAbsorbed = Math.min(target.shield, amount);
   target.shield -= shieldAbsorbed;
 
+  if (target.shield === 0) {
+    target.shieldIsUpgraded = false;
+  }
+
   const livesLost = Math.min(target.lives, amount - shieldAbsorbed);
   target.lives -= livesLost;
 

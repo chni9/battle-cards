@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-27 of 63 tasks done. **Lot 3 in progress** — next up is L3-03.
+28 of 63 tasks done. **Lot 3 in progress** — next up is L3-04.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 2 |
+| 3 · Action cards | 9 | 3 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -310,13 +310,14 @@ Up to 4 lives per use, 3 points per life, 2 points in the upgraded version. 25-l
 - **Acceptance** Gain capped, excess lost
 - **Note** `playCard.quantity` (1–4); PROTOCOL_VERSION 7.
 
-### L3-03 · Shield — `To do`
+### L3-03 · Shield — `Done`
 
 4 shield points, 7 in the upgraded version. Only one active shield at a time. The upgraded version blocks Thief and Spy at no shield-point cost.
 
 - **Reference** Rules spec §3 · **Depends on** L3-02 · **Complexity** M · **Risk** Medium
 - **Watch point** Partially overlaps with Untouchable's immunity (lot 4): redundant but no conflict.
 - **Acceptance** Recreation rejected while a shield is active
+- **Note** `shieldIsUpgraded` on Player; Thief/Spy fizzle at resolve in L3-04/L3-05.
 
 ### L3-04 · Thief — `To do`
 

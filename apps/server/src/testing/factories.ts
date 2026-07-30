@@ -15,6 +15,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
     points: 0,
     upgradePoints: 0,
     shield: 0,
+    shieldIsUpgraded: false,
     hand: [],
     specialCards: [],
     pendingEffects: [],

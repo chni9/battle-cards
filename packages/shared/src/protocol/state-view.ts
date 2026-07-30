@@ -30,6 +30,8 @@ export interface PublicPlayerView {
   nickname: string;
   lives: number;
   shield: number;
+  /** True while an upgraded Shield is active (blocks Thief/Spy at resolve). */
+  shieldIsUpgraded: boolean;
   cardCount: number;
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */

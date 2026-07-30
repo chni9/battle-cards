@@ -64,6 +64,12 @@ export interface Player {
    * active at a time (rules spec §1, §3). 0 means no active shield.
    */
   shield: number;
+  /**
+   * True while an upgraded Shield is active. Upgraded Shield blocks Thief and Spy at
+   * resolution with no shield-point cost (rules spec §3, Lot 3 ruling). Cleared when
+   * `shield` reaches 0.
+   */
+  shieldIsUpgraded: boolean;
   /** Attack and action cards held. */
   hand: CardInstance[];
   /** Special cards held. Single use each (rules spec §5). */
