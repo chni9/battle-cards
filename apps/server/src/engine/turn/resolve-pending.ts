@@ -1,14 +1,15 @@
 /**
- * Resolve pending effects on the active player after their action — technical spec §4.3, §4.6.
+ * Resolve pending effects on the active player after their action — technical spec §4.3, §4.6, §4.7.
  *
- * Ascending `queuedAt`. Before each attack resolution, check mutual cancellation.
- * Thief resolves here (L3-04); Spy/Counter land in later Lot 3 tasks.
+ * Ascending `queuedAt`. Mutual attacks (L2-05) and Spy/Thief counter (L3-06) cancel
+ * reciprocal pairs during resolve so a later cancel of only the counter leaves the original.
  */
 
 import {
   ATTACK_CARD_IDS,
   attackDamageFor,
   type AttackCardId,
+  type CardId,
   type GameState,
   type PendingEffect,
   type Player,
@@ -24,8 +25,48 @@ export interface ResolvedEffect {
   shieldAbsorbed: number;
 }
 
+const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
+
 function isAttackCardId(cardId: string): cardId is AttackCardId {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
+
+function isCounterableCardId(cardId: CardId): boolean {
+  return COUNTERABLE_CARD_IDS.has(cardId);
+}
+
+/**
+ * Spy/Thief counter: same card played back at the source cancels both at resolve
+ * (rules spec §1, tech §4.7). Mirror is excluded.
+ */
+function cancelReciprocalCounter(
+  state: GameState,
+  resolvingPlayer: Player,
+  incoming: PendingEffect,
+): boolean {
+  if (!isCounterableCardId(incoming.cardId)) {
+    return false;
+  }
+
+  const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
+
+  if (source === undefined || source.isEliminated) {
+    return false;
+  }
+
+  const counterIndex = source.pendingEffects.findIndex(
+    (effect) =>
+      effect.cardId === incoming.cardId &&
+      effect.sourcePlayerId === resolvingPlayer.id &&
+      effect.targetPlayerId === source.id,
+  );
+
+  if (counterIndex < 0) {
+    return false;
+  }
+
+  source.pendingEffects.splice(counterIndex, 1);
+  return true;
 }
 
 /**
@@ -134,10 +175,17 @@ export function resolvePendingEffects(
       livesLost = outcome.livesLost;
       shieldAbsorbed = outcome.shieldAbsorbed;
       player.turnLedger.livesLost += outcome.livesLost;
-    } else if (effect.cardId === 'thief') {
-      resolveThief(state, player, effect);
-    } else if (effect.cardId === 'spy') {
-      resolveSpy(state, player, effect);
+    } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
+      if (cancelReciprocalCounter(state, player, effect)) {
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0 });
+        continue;
+      }
+
+      if (effect.cardId === 'thief') {
+        resolveThief(state, player, effect);
+      } else {
+        resolveSpy(state, player, effect);
+      }
     }
 
     resolved.push({

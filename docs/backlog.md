@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-30 of 63 tasks done. **Lot 3 in progress** — next up is L3-06.
+31 of 63 tasks done. **Lot 3 in progress** — next up is L3-07.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 5 |
+| 3 · Action cards | 9 | 6 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -337,13 +337,14 @@ See the target's kit and cards until the end of the game. Upgraded version: also
 - **Acceptance** The spied-on player stays invisible to others, the spy sees everything
 - **Note** `visibility-matrix.ts` + `GameState.visibility`; Spy-gated `spied` on public views.
 
-### L3-06 · Counter rule — `To do`
+### L3-06 · Counter rule — `Done`
 
 Spy and Thief only. The countering card must target the source of the pending effect. Both effects cancel, both costs are paid (copies stay in hand).
 
 - **Reference** Rules spec §1 · Spec §4.7 · **Depends on** L3-05 · **Complexity** M · **Risk** Medium
 - **Watch point** Never applies to attack cards: those fall under L2-05.
 - **Acceptance** Same card played on a third party: no cancellation
+- **Note** Cancel at resolve-pending; Mirror excluded.
 
 ### L3-07 · Turn ledger — `To do`
 
