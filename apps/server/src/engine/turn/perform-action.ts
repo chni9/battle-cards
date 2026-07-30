@@ -16,10 +16,12 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
+import { buySpecialCard } from '../economy/buy-special-card';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import type { Rng } from '../rng';
+import { createRng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import {
@@ -39,7 +41,8 @@ export type TurnAction =
   | { type: 'sellCard'; instanceId: string }
   | { type: 'upgradeCard'; instanceId: string }
   | { type: 'buyUpgradePoint' }
-  | { type: 'sellUpgradePoint' };
+  | { type: 'sellUpgradePoint' }
+  | { type: 'buySpecialCard' };
 
 export type PublicActionKind =
   | 'draw'
@@ -49,7 +52,8 @@ export type PublicActionKind =
   | 'sellCard'
   | 'upgradeCard'
   | 'buyUpgradePoint'
-  | 'sellUpgradePoint';
+  | 'sellUpgradePoint'
+  | 'buySpecialCard';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;
@@ -97,6 +101,7 @@ export function performTurnAction(
   state: GameState,
   actorPlayerId: string,
   action: TurnAction,
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
 ): PerformActionResult {
   if (state.currentTurnPlayerId !== actorPlayerId) {
     return { ok: false, message: 'It is not your turn.' };
@@ -180,8 +185,21 @@ export function performTurnAction(
       action: 'sellUpgradePoint',
       turnSequence: state.turnSequence,
     };
+  } else if (action.type === 'buySpecialCard') {
+    const bought = buySpecialCard(state, actorPlayerId, rng);
+
+    if (!bought.ok) {
+      return bought;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'buySpecialCard',
+      cardId: bought.instance.cardId,
+      turnSequence: state.turnSequence,
+    };
   } else if (action.type === 'playMultipleAttacks') {
-    const multi = playMultipleAttacksAction(state, actorPlayerId, action.attacks);
+    const multi = playMultipleAttacksAction(state, actorPlayerId, action.attacks, rng);
 
     if (!multi.ok) {
       return multi;
@@ -195,6 +213,7 @@ export function performTurnAction(
       action.instanceId,
       action.targetPlayerId,
       action.quantity,
+      rng,
     );
 
     if (!playResult.ok) {
@@ -334,6 +353,7 @@ function playMultipleAttacksAction(
   state: GameState,
   actorPlayerId: string,
   attacks: readonly { instanceId: string; targetPlayerId: string }[],
+  rng: Rng,
 ): TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -397,6 +417,7 @@ function playMultipleAttacksAction(
       targetPlayerId: attack.targetPlayerId,
       card: instance,
       quantity: null,
+      rng,
     };
 
     if (!handler.canPlay(context)) {
@@ -437,6 +458,7 @@ function playMultipleAttacksAction(
       targetPlayerId: entry.targetPlayerId,
       card: entry.instance,
       quantity: null,
+      rng,
     });
 
     publicAttacks.push({
@@ -462,6 +484,7 @@ function playCardAction(
   instanceId: string,
   targetPlayerId: string | undefined,
   quantity: number | undefined,
+  rng: Rng,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -510,6 +533,7 @@ function playCardAction(
     targetPlayerId: resolvedTargetId,
     card: instance,
     quantity: quantity ?? null,
+    rng,
   };
 
   if (!handler.canPlay(context)) {

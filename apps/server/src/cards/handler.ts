@@ -8,6 +8,8 @@
 
 import type { CardInstance, GameState } from '@card-battle/shared';
 
+import type { Rng } from '../engine/rng';
+
 /**
  * What a handler is given when its card is played.
  *
@@ -33,6 +35,8 @@ export interface EffectContext {
    * omitted it; other cards ignore this field.
    */
   quantity: number | null;
+  /** Injected seeded generator — Sentence, Mirror default, special purchase. */
+  rng: Rng;
 }
 
 export interface CardHandler {
