@@ -10,17 +10,21 @@ import type { CardId } from '@card-battle/shared';
 
 import type { CardHandler } from './handler';
 import { basicAttackHandler } from './handlers/basic-attack';
+import { strongAttackHandler } from './handlers/strong-attack';
+import { superAttackHandler } from './handlers/super-attack';
 
 /** Cards with a working handler. Grows by one entry per card task. */
-export const IMPLEMENTED_CARD_IDS = ['basic-attack'] as const satisfies readonly CardId[];
+export const IMPLEMENTED_CARD_IDS = [
+  'basic-attack',
+  'strong-attack',
+  'super-attack',
+] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'strong-attack',
-  'super-attack',
   'tax',
   'regeneration',
   'shield',
@@ -38,6 +42,8 @@ export const PENDING_CARD_IDS = [
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,
+  'strong-attack': strongAttackHandler,
+  'super-attack': superAttackHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

@@ -4,7 +4,13 @@
  * Ascending `queuedAt`. Mutual-attack cancellation is L2-05 — not applied here.
  */
 
-import type { GameState, PendingEffect } from '@card-battle/shared';
+import {
+  ATTACK_CARD_IDS,
+  attackDamageFor,
+  type AttackCardId,
+  type GameState,
+  type PendingEffect,
+} from '@card-battle/shared';
 
 import { applyDamage } from '../life/apply-damage';
 
@@ -14,16 +20,8 @@ export interface ResolvedEffect {
   shieldAbsorbed: number;
 }
 
-/**
- * Basic-attack damage by upgrade — rules spec §2.
- * Strong/super arrive in lot 2; unknown cards yield 0 (should not be queued in L1).
- */
-function damageFor(effect: PendingEffect): number {
-  if (effect.cardId === 'basic-attack') {
-    return effect.isUpgraded ? 3 : 1;
-  }
-
-  return 0;
+function isAttackCardId(cardId: string): cardId is AttackCardId {
+  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
 }
 
 export function resolvePendingEffects(
@@ -45,9 +43,9 @@ export function resolvePendingEffects(
     let livesLost = 0;
     let shieldAbsorbed = 0;
 
-    if (effect.cardId === 'basic-attack') {
-      const amount = damageFor(effect);
-      const outcome = applyDamage(player, amount, 'basic-attack');
+    if (isAttackCardId(effect.cardId)) {
+      const amount = attackDamageFor(effect.cardId, effect.isUpgraded);
+      const outcome = applyDamage(player, amount, effect.cardId);
       livesLost = outcome.livesLost;
       shieldAbsorbed = outcome.shieldAbsorbed;
       player.turnLedger.livesLost += outcome.livesLost;

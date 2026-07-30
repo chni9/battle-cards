@@ -42,13 +42,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01–03, L2-06 done).
+19 of 63 tasks done. **Lot 1 complete (M1)** — Lot 2 in progress (L2-01–04, L2-06 done).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
-| 2 · Economy and attacks | 6 | 4 |
+| 2 · Economy and attacks | 6 | 5 |
 | 3 · Action cards | 9 | 0 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
@@ -263,13 +263,14 @@ Purchase at 10 points, resale at 7 points.
 - **Acceptance** Only one copy upgraded, other copies unchanged
 - **Note** `upgradeCard` by `instanceId`. `alwaysUpgraded` deferred to Lot 4. PROTOCOL_VERSION 6.
 
-### L2-04 · The three attack cards — `To do`
+### L2-04 · The three attack cards — `Done`
 
 Basic attack, Strong attack, Super attack, base and upgraded versions.
 
 - **Reference** Rules spec §2 · **Depends on** L2-03 · **Complexity** M · **Risk** Low
 - **Watch point** Check all six values one by one against the spec's table: a damage error triggers no alert.
 - **Acceptance** All 6 combinations tested, values conforming to the spec
+- **Note** `ATTACK_DAMAGE` in shared; strong/super handlers registered.
 
 ### L2-05 · Mutual attacks — `To do`
 
