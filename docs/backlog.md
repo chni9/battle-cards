@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-26 of 63 tasks done. **Lot 3 in progress** — next up is L3-02.
+27 of 63 tasks done. **Lot 3 in progress** — next up is L3-03.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 1 |
+| 3 · Action cards | 9 | 2 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -301,13 +301,14 @@ Fed by sales, used special cards, and eliminated players' cards. Write-only in V
 - **Acceptance** The shield does not intervene, no counter decrements
 - **Note** Null-target play path added; Tax registered.
 
-### L3-02 · Regeneration — `To do`
+### L3-02 · Regeneration — `Done`
 
 Up to 4 lives per use, 3 points per life, 2 points in the upgraded version. 25-life cap.
 
 - **Reference** Rules spec §3 · §7 · **Depends on** L2-04 · **Complexity** S · **Risk** Low
 - **Watch point** The 25-life cap applies here like on every other source of gain.
 - **Acceptance** Gain capped, excess lost
+- **Note** `playCard.quantity` (1–4); PROTOCOL_VERSION 7.
 
 ### L3-03 · Shield — `To do`
 

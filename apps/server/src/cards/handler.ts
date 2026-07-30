@@ -28,6 +28,11 @@ export interface EffectContext {
   targetPlayerId: string | null;
   /** The exact copy being played — it carries the card id and its own `isUpgraded`. */
   card: CardInstance;
+  /**
+   * Optional play quantity — Regeneration lives bought (L3-02). `null` when the client
+   * omitted it; other cards ignore this field.
+   */
+  quantity: number | null;
 }
 
 export interface CardHandler {

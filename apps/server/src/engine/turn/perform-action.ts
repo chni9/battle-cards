@@ -16,7 +16,7 @@ import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
   | { type: 'draw' }
-  | { type: 'playCard'; instanceId: string; targetPlayerId?: string }
+  | { type: 'playCard'; instanceId: string; targetPlayerId?: string; quantity?: number }
   | { type: 'buyCard'; cardId: CardId }
   | { type: 'sellCard'; instanceId: string }
   | { type: 'upgradeCard'; instanceId: string }
@@ -158,7 +158,13 @@ export function performTurnAction(
       turnSequence: state.turnSequence,
     };
   } else {
-    const playResult = playCardAction(state, actorPlayerId, action.instanceId, action.targetPlayerId);
+    const playResult = playCardAction(
+      state,
+      actorPlayerId,
+      action.instanceId,
+      action.targetPlayerId,
+      action.quantity,
+    );
 
     if (!playResult.ok) {
       return playResult;
@@ -191,6 +197,7 @@ function playCardAction(
   actorPlayerId: string,
   instanceId: string,
   targetPlayerId: string | undefined,
+  quantity: number | undefined,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -234,6 +241,7 @@ function playCardAction(
     sourcePlayerId: actorPlayerId,
     targetPlayerId: resolvedTargetId,
     card: instance,
+    quantity: quantity ?? null,
   };
 
   if (!handler.canPlay(context)) {

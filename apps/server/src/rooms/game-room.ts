@@ -166,6 +166,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ...(parsed.targetPlayerId !== undefined
           ? { targetPlayerId: parsed.targetPlayerId }
           : {}),
+        ...(parsed.quantity !== undefined ? { quantity: parsed.quantity } : {}),
       });
     },
 
@@ -503,17 +504,35 @@ function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
     return null;
   }
 
-  if (!('targetPlayerId' in payload)) {
-    return { instanceId };
+  let targetPlayerId: string | undefined;
+
+  if ('targetPlayerId' in payload) {
+    const value = payload.targetPlayerId;
+
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    targetPlayerId = value;
   }
 
-  const { targetPlayerId } = payload;
+  let quantity: number | undefined;
 
-  if (typeof targetPlayerId !== 'string') {
-    return null;
+  if ('quantity' in payload) {
+    const value = payload.quantity;
+
+    if (typeof value !== 'number' || !Number.isInteger(value)) {
+      return null;
+    }
+
+    quantity = value;
   }
 
-  return { instanceId, targetPlayerId };
+  return {
+    instanceId,
+    ...(targetPlayerId !== undefined ? { targetPlayerId } : {}),
+    ...(quantity !== undefined ? { quantity } : {}),
+  };
 }
 
 function readBuyCardPayload(payload: unknown): BuyCardPayload | null {

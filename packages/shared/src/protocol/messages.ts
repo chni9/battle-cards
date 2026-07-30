@@ -70,6 +70,8 @@ export interface GameOverPayload {
 export interface PlayCardPayload {
   instanceId: string;
   targetPlayerId?: string;
+  /** Lives to buy when playing Regeneration (1–4). Ignored for other cards. */
+  quantity?: number;
 }
 
 export interface BuyCardPayload {
