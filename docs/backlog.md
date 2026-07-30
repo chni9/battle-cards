@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-20 of 63 tasks done. **Lot 2 complete** — next up is L3-01.
+25 of 63 tasks done. **Lot 2 complete** — next up is L3-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
