@@ -12,6 +12,7 @@ import type { CardHandler } from './handler';
 import { basicAttackHandler } from './handlers/basic-attack';
 import { regenerationHandler } from './handlers/regeneration';
 import { shieldHandler } from './handlers/shield';
+import { spyHandler } from './handlers/spy';
 import { strongAttackHandler } from './handlers/strong-attack';
 import { superAttackHandler } from './handlers/super-attack';
 import { taxHandler } from './handlers/tax';
@@ -26,6 +27,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'regeneration',
   'shield',
   'thief',
+  'spy',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -33,7 +35,6 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'spy',
   'absorber',
   'mirror',
   'suicide',
@@ -52,6 +53,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   regeneration: regenerationHandler,
   shield: shieldHandler,
   thief: thiefHandler,
+  spy: spyHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

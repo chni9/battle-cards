@@ -4,6 +4,7 @@
 
 import type { CardInstance } from './card';
 import type { Player } from './player';
+import type { SpyRelation } from './visibility';
 
 /** V1 implements Classic only. Team, God and Quick modes are out of scope (technical spec §9). */
 export type GameMode = 'classic';
@@ -45,4 +46,9 @@ export interface GameState {
    * Mirror's default target. Not a field of technical spec §4.1's list; added in L0-05.
    */
   seed: string;
+  /**
+   * Spy visibility matrix: who may see whose private kit/hand/resources
+   * (technical spec §5.1). Empty until Spy resolves (L3-05).
+   */
+  visibility: SpyRelation[];
 }

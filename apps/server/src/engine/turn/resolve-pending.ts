@@ -16,6 +16,7 @@ import {
 
 import { stealPoints } from '../economy/steal-points';
 import { applyDamage } from '../life/apply-damage';
+import { grantSpy } from '../../protocol/visibility-matrix';
 
 export interface ResolvedEffect {
   effect: PendingEffect;
@@ -89,6 +90,20 @@ function resolveThief(state: GameState, target: Player, effect: PendingEffect): 
   });
 }
 
+function resolveSpy(state: GameState, target: Player, effect: PendingEffect): void {
+  // Upgraded Shield blocks Spy at resolve, no shield-point cost (Lot 3 ruling).
+  if (target.shield > 0 && target.shieldIsUpgraded) {
+    return;
+  }
+
+  grantSpy(
+    state,
+    effect.sourcePlayerId,
+    target.id,
+    effect.isUpgraded ? 'full-resources' : 'kit-and-cards',
+  );
+}
+
 export function resolvePendingEffects(
   state: GameState,
   playerId: string,
@@ -121,6 +136,8 @@ export function resolvePendingEffects(
       player.turnLedger.livesLost += outcome.livesLost;
     } else if (effect.cardId === 'thief') {
       resolveThief(state, player, effect);
+    } else if (effect.cardId === 'spy') {
+      resolveSpy(state, player, effect);
     }
 
     resolved.push({

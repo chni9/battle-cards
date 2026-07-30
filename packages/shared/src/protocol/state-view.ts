@@ -36,6 +36,21 @@ export interface PublicPlayerView {
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */
   isYou: boolean;
+  /** Filled only when the recipient spies this player (L3-05). */
+  spied?: SpiedPlayerView;
+}
+
+/**
+ * Spy-gated slice of another player — only when the recipient has a Spy relation
+ * on them (technical spec §5.1).
+ */
+export interface SpiedPlayerView {
+  kitId: KitId;
+  hand: readonly CardInstance[];
+  specialCards: readonly CardInstance[];
+  /** Present only at Spy level `full-resources`. */
+  points?: number;
+  upgradePoints?: number;
 }
 
 /** Private resources — only on the recipient's own entry. */

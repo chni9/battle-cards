@@ -58,6 +58,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     currentTurnPlayerId: first.id,
     turnSequence: 0,
     seed,
+    visibility: [],
   };
 }
 

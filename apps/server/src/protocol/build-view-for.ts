@@ -14,7 +14,10 @@ import type {
   PlayingStateView,
   PrivateSelfView,
   PublicPlayerView,
+  SpiedPlayerView,
 } from '@card-battle/shared';
+
+import { findSpyRelation } from './visibility-matrix';
 
 export interface LobbyViewInput {
   recipientSessionId: string;
@@ -47,6 +50,35 @@ export interface PlayingViewInput {
   actionLog: readonly ActionLogEntryView[];
 }
 
+function buildSpiedView(
+  state: GameState,
+  recipientSessionId: string,
+  subject: GameState['players'][number],
+): SpiedPlayerView | undefined {
+  if (subject.id === recipientSessionId) {
+    return undefined;
+  }
+
+  const relation = findSpyRelation(state, recipientSessionId, subject.id);
+
+  if (relation === undefined) {
+    return undefined;
+  }
+
+  const spied: SpiedPlayerView = {
+    kitId: subject.kitId,
+    hand: subject.hand.map((card) => ({ ...card })),
+    specialCards: subject.specialCards.map((card) => ({ ...card })),
+  };
+
+  if (relation.level === 'full-resources') {
+    spied.points = subject.points;
+    spied.upgradePoints = subject.upgradePoints;
+  }
+
+  return spied;
+}
+
 export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog } = input;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
@@ -66,16 +98,20 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     })),
   );
 
-  const players: PublicPlayerView[] = state.players.map((player) => ({
-    id: player.id,
-    nickname: player.nickname,
-    lives: player.lives,
-    shield: player.shield,
-    shieldIsUpgraded: player.shieldIsUpgraded,
-    cardCount: player.hand.length + player.specialCards.length,
-    isEliminated: player.isEliminated,
-    isYou: player.id === recipientSessionId,
-  }));
+  const players: PublicPlayerView[] = state.players.map((player) => {
+    const spied = buildSpiedView(state, recipientSessionId, player);
+    return {
+      id: player.id,
+      nickname: player.nickname,
+      lives: player.lives,
+      shield: player.shield,
+      shieldIsUpgraded: player.shieldIsUpgraded,
+      cardCount: player.hand.length + player.specialCards.length,
+      isEliminated: player.isEliminated,
+      isYou: player.id === recipientSessionId,
+      ...(spied !== undefined ? { spied } : {}),
+    };
+  });
 
   const self: PrivateSelfView = {
     points: selfPlayer.points,

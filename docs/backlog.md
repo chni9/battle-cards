@@ -42,14 +42,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-29 of 63 tasks done. **Lot 3 in progress** — next up is L3-05.
+30 of 63 tasks done. **Lot 3 in progress** — next up is L3-06.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 0 · Project foundation | 6 | 6 |
 | 1 · Vertical slice | 13 | 13 |
 | 2 · Economy and attacks | 6 | 6 |
-| 3 · Action cards | 9 | 4 |
+| 3 · Action cards | 9 | 5 |
 | 4 · Kits | 5 | 0 |
 | 5 · Special cards | 9 | 0 |
 | 6 · Elimination | 5 | 0 |
@@ -328,13 +328,14 @@ Steals 10 points, capped at the target's amount. Upgraded version: the target lo
 - **Acceptance** A target with 3 points loses 3, not 10
 - **Note** `stealPoints` primitive; upgraded-shield fizzle at resolve.
 
-### L3-05 · Spy and visibility matrix — `To do`
+### L3-05 · Spy and visibility matrix — `Done`
 
 See the target's kit and cards until the end of the game. Upgraded version: also see all their resources. A who-sees-what-of-whom matrix in a dedicated module.
 
 - **Reference** Rules spec §3 · Spec §5.1 · **Depends on** L1-09 · **Complexity** L · **Risk** High
 - **Watch point** Persistent, asymmetric right, checked on every view construction. A global boolean is not enough.
 - **Acceptance** The spied-on player stays invisible to others, the spy sees everything
+- **Note** `visibility-matrix.ts` + `GameState.visibility`; Spy-gated `spied` on public views.
 
 ### L3-06 · Counter rule — `To do`
 

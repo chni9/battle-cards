@@ -8,7 +8,8 @@
 >
 > **Status:** lobby + playing + finished per-recipient views exist (L1-01…L1-13) in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
-> `apps/client/src/net/`. The Spy visibility matrix arrives with L3-05.
+> `apps/client/src/net/`. Spy visibility matrix lives in
+> `apps/server/src/protocol/visibility-matrix.ts` (L3-05).
 > Fetch current Colyseus APIs via Context7 before coding; do not write them from memory —
 > 0.17 renamed the client package and changed the server bootstrap.
 
