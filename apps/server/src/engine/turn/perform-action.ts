@@ -253,7 +253,8 @@ function playCardAction(
     actor.turnLedger.pointsSpent += playPoints;
   }
 
-  actor.hand.splice(instanceIndex, 1);
+  // Attack and action cards are reusable: pay the usage cost each play, keep the copy
+  // (rules spec §1 / §5 — only specials are single-use).
   handler.play(context);
 
   return {

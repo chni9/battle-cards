@@ -118,6 +118,10 @@ Rules spec §5: single use, cannot be bought or sold individually, and 20 points
 **random** one — in V1 drawn only from the 6 cards of the lot (ruling §6.2 #10). An upgrade
 placed before use is lost when the card is played. After use the card joins the shared pool.
 
+Attack and action cards are **not** consumed on play: the player pays the usage cost each time
+and keeps the copy (infinite reuse while they hold it and can afford the cost). Only specials
+leave the hand on use.
+
 **Counter cards** ("card lives", rules spec §5) in V1: Points Generator 3, Imposition 2. The
 counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.

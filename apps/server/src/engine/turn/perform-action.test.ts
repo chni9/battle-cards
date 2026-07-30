@@ -102,6 +102,9 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
     });
 
     expect(attack.ok).toBe(true);
+    expect(requirePlayer(state, firstId).hand.some((card) => card.instanceId === attackCopy.instanceId)).toBe(
+      true,
+    );
     expect(second.lives).toBe(10);
     expect(second.pendingEffects).toHaveLength(1);
 

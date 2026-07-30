@@ -72,6 +72,7 @@ describe('three attack cards (rules spec §2, L2-04)', () => {
 
       expect(play.ok).toBe(true);
       expect(attacker.points).toBe(0);
+      expect(attacker.hand.some((card) => card.instanceId === 'atk-1')).toBe(true);
       expect(defender.pendingEffects).toHaveLength(1);
 
       state.currentTurnPlayerId = defender.id;

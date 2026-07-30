@@ -451,7 +451,12 @@ Developer authorized editing `docs/spec_bataille_des_cartes_en.md`: §2 Super-at
 §6 Mutual Attacks now match technical spec §4.6 (equal damage cancels both; different damage
 means no interaction). Code implements the same rule in `resolve-pending` (L2-05).
 
-## 2026-07-30 · [P] `sellUpgradePoint` wire event (L2-02)
+## 2026-07-30 · [P] Attack/action cards are reusable (not consumed on play)
+
+Rules spec §5 makes **specials** single-use. Attack and action cards only cost their usage
+price each play and stay in hand. L1 incorrectly removed the copy on `playCard`; fixed so a
+held basic attack can be replayed whenever the player has enough points.
+
 
 Rules spec §1 defines resale at 7 points; technical spec §5.2 listed only `buyUpgradePoint`.
 Added `sellUpgradePoint` (empty payload). Prices live in `UPGRADE_POINT_ECONOMY` so Upgrader
