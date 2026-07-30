@@ -33,8 +33,8 @@ Functional UI only for V1 — no art direction (technical spec §9). Screens liv
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Draw label uses
   `getKit(self.kitId).startingResources.draw`.
-- **Spy display:** list each spied hand/special card. Base: show points snapshot labeled by
-  turn sequence. Upgraded: show live points (tokens = points only).
+- **Spy display:** list each spied hand/special card. Base: show full resource snapshot
+  (lives, points, UP, shield) labeled by turn sequence. Upgraded: show those values live.
 - **`actionResolved.outcome === 'immune'`**: show public failure (Untouchable vs Thief/Spy).
 - **Mirror**: listen for `mirrorChoiceRequired`, send `chooseMirrorTarget`. Clear the
   prompt on confirm or the next `turnStarted`.

@@ -3,7 +3,7 @@
  *
  * Checked on every view construction. Never stored as a flag on the spied player.
  *
- * First grant captures a points snapshot at resolve (victim's turn).
+ * First grant captures a full resource snapshot at resolve (victim's turn).
  */
 
 import type { GameState, SpyRelation, SpyVisibilityLevel } from '@card-battle/shared';
@@ -27,8 +27,8 @@ export function findSpyRelation(
  * Grant or upgrade a Spy relation. An upgraded Spy may raise `kit-and-cards` to
  * `full-resources`; a weaker grant never downgrades.
  *
- * On first grant, freezes the subject's current points + `turnSequence` as
- * `pointsSnapshot` (base Spy display; upgraded uses live points instead).
+ * On first grant, freezes the subject's current resources + `turnSequence` as
+ * `resourcesSnapshot` (base Spy display; upgraded uses live values instead).
  */
 export function grantSpy(
   state: GameState,
@@ -46,8 +46,11 @@ export function grantSpy(
       level,
       ...(subject !== undefined
         ? {
-            pointsSnapshot: {
+            resourcesSnapshot: {
+              lives: subject.lives,
               points: subject.points,
+              upgradePoints: subject.upgradePoints,
+              shield: subject.shield,
               turnSequence: state.turnSequence,
             },
           }

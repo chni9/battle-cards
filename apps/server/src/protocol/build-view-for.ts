@@ -3,8 +3,8 @@
  *
  * One function, one recipient. No "full view" builder to filter down from.
  *
- * Spy (2026-07-30 tokens ruling): kit + card lists always; base adds frozen points
- * snapshot; upgraded adds live points only (tokens = points).
+ * Spy (2026-07-30 resources ruling): kit + card lists always; base adds frozen
+ * full-resource snapshot; upgraded adds live lives/points/UP/shield (rules §3).
  */
 
 import type {
@@ -75,12 +75,12 @@ function buildSpiedView(
   };
 
   if (relation.level === 'full-resources') {
+    spied.lives = subject.lives;
     spied.points = subject.points;
-  } else if (relation.pointsSnapshot !== undefined) {
-    spied.pointsSnapshot = {
-      points: relation.pointsSnapshot.points,
-      turnSequence: relation.pointsSnapshot.turnSequence,
-    };
+    spied.upgradePoints = subject.upgradePoints;
+    spied.shield = subject.shield;
+  } else if (relation.resourcesSnapshot !== undefined) {
+    spied.resourcesSnapshot = { ...relation.resourcesSnapshot };
   }
 
   return spied;

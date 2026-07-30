@@ -533,18 +533,22 @@ PROTOCOL_VERSION 11.
 
 ## 2026-07-30 · [P] Spy tokens = points; base snapshot at resolve
 
-Developer playtest ruling (overrides reading upgraded Spy as “all resources” in the UI/protocol
-slice for V1 playtest):
-
-- **Tokens** mean **points** only (not lives, shield, or upgrade points).
-- **Both Spy levels** reveal kit + full hand/special **card lists** forever.
-- **Base Spy:** also a **frozen points snapshot** taken at resolve on the victim’s turn
-  (`points` + `turnSequence` at that moment). Snapshot stays visible forever and is labeled
-  by turn sequence. It does not update when the target’s points change later.
-- **Upgraded Spy:** live points (no snapshot in the view; live `points` field instead).
-- PROTOCOL_VERSION 13.
+Superseded by the evening entry “Spy resources = full set” below. Kept for history.
 
 ## 2026-07-30 · [T] Always commit on Done (developer instruction)
 
 Agents must create the Conventional Commit for each finished backlog task before ending the
 session. Reinforced in `AGENTS.md` §9–§10 and playbook checklists.
+
+## 2026-07-30 · [P] Spy resources = full set (lives/points/UP/shield)
+
+Developer playtest correction (supersedes earlier “tokens = points only”):
+
+- **Resources** for Spy = **lives, points, upgrade points, shield**.
+- **Both Spy levels** reveal kit + full hand/special **card lists** forever.
+- **Base Spy:** frozen **full resource snapshot** at resolve on the victim’s turn
+  (`resourcesSnapshot` + `turnSequence`). Snapshot stays visible forever and is labeled by
+  turn sequence; it does not update when the target’s resources change later.
+- **Upgraded Spy:** live lives/points/UP/shield (no snapshot in the client view).
+- Matches rules §3 upgrade text (“all of the opponent's resources”).
+- PROTOCOL_VERSION 14.

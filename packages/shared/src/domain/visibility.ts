@@ -3,17 +3,21 @@
  *
  * Persistent asymmetric who-sees-what-of-whom. Never a boolean on the spied player.
  *
- * Developer ruling 2026-07-30 (Spy tokens): "tokens" means **points** only.
- * Base Spy freezes a points snapshot at resolve; upgraded Spy sees live points.
+ * Developer ruling 2026-07-30 (evening): Spy "resources" = lives, points, upgrade
+ * points, shield. Base Spy freezes a full-resource snapshot at resolve; upgraded Spy
+ * sees those values live (rules §3 upgrade text).
  */
 
 export const SPY_VISIBILITY_LEVELS = ['kit-and-cards', 'full-resources'] as const;
 
 export type SpyVisibilityLevel = (typeof SPY_VISIBILITY_LEVELS)[number];
 
-/** Points frozen when base Spy resolves on the victim's turn. */
-export interface SpyPointsSnapshot {
+/** Resources frozen when Spy first resolves on the victim's turn. */
+export interface SpyResourcesSnapshot {
+  lives: number;
   points: number;
+  upgradePoints: number;
+  shield: number;
   /** `GameState.turnSequence` at the moment of resolve. */
   turnSequence: number;
 }
@@ -24,7 +28,7 @@ export interface SpyRelation {
   level: SpyVisibilityLevel;
   /**
    * Set once when the relation is first granted (base or upgraded).
-   * Never updated afterward — always the points at first Spy resolve.
+   * Never updated afterward — resources at first Spy resolve.
    */
-  pointsSnapshot?: SpyPointsSnapshot;
+  resourcesSnapshot?: SpyResourcesSnapshot;
 }

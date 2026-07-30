@@ -37,8 +37,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Category | Visibility |
 |---|---|
 | Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief |
-| Lives, shield | **Private** (developer ruling 2026-07-30 — overrides tech §5.1). Not revealed by Spy |
-| Points (tokens) | **Private.** Base Spy: frozen snapshot at resolve (`pointsSnapshot`). Upgraded Spy: live `points` |
+| Lives, shield, points, upgrade points | **Private** without Spy. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
 | Elimination status | **Public** |

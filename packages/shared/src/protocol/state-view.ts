@@ -37,21 +37,27 @@ export interface PublicPlayerView {
 
 /**
  * Spy-gated slice of another player — only when the recipient has a Spy relation
- * on them (technical spec §5.1).
+ * on them (technical spec §5.1, rules §3).
  *
  * Both levels: kit + full hand/special card lists forever.
- * Base (`kit-and-cards`): also a frozen points snapshot from resolve turn.
- * Upgraded (`full-resources`): also live points (developer ruling: tokens = points).
+ * Base (`kit-and-cards`): frozen resource snapshot from resolve turn.
+ * Upgraded (`full-resources`): live lives, points, upgrade points, shield.
  */
 export interface SpiedPlayerView {
   kitId: KitId;
   hand: readonly CardInstance[];
   specialCards: readonly CardInstance[];
-  /** Live points — upgraded Spy only. */
+  /** Live resources — upgraded Spy only. */
+  lives?: number;
   points?: number;
-  /** Frozen points at first Spy resolve — base Spy (always shown when present). */
-  pointsSnapshot?: {
+  upgradePoints?: number;
+  shield?: number;
+  /** Frozen resources at first Spy resolve — base Spy. */
+  resourcesSnapshot?: {
+    lives: number;
     points: number;
+    upgradePoints: number;
+    shield: number;
     turnSequence: number;
   };
 }
@@ -83,13 +89,13 @@ export interface PendingEffectView {
  *
  * Private: own kit, hand, lives, shield, exact resources.
  * Public: card count, elimination status, pending queue, turn order, actions.
- * Spy (base): kit + cards + frozen points snapshot. Spy (upgraded): kit + cards + live points.
+ * Spy (base): kit + cards + frozen resource snapshot. Spy (upgraded): kit + cards + live
+ * resources (lives, points, upgrade points, shield).
  * Server-only: never `seed`.
  *
- * Developer ruling 2026-07-30: lives and shield are **not** public (overrides tech §5.1
- * table for those two fields until kits / playtest revisits).
- * Developer ruling 2026-07-30 (evening): hand **card count** is also private — revealed
- * only via Spy (`spied.hand` / `spied.specialCards`).
+ * Developer ruling 2026-07-30: lives and shield are **not** public without Spy
+ * (overrides tech §5.1 table for unspied opponents).
+ * Hand **card count** is also private — revealed only via Spy (`spied.hand` / specials).
  */
 export interface PlayingStateView {
   phase: 'playing';

@@ -548,11 +548,11 @@ function TableScreen(props: {
                 <div>
                   <p>
                     Spied · kit {player.spied.kitId}
-                    {player.spied.points !== undefined
-                      ? ` · live points ${player.spied.points}`
+                    {player.spied.lives !== undefined
+                      ? ` · live: lives ${player.spied.lives}, points ${player.spied.points ?? 0}, UP ${player.spied.upgradePoints ?? 0}, shield ${player.spied.shield ?? 0}`
                       : ''}
-                    {player.spied.pointsSnapshot !== undefined
-                      ? ` · points snapshot from turn ${player.spied.pointsSnapshot.turnSequence}: ${player.spied.pointsSnapshot.points}`
+                    {player.spied.resourcesSnapshot !== undefined
+                      ? ` · snapshot from turn ${player.spied.resourcesSnapshot.turnSequence}: lives ${player.spied.resourcesSnapshot.lives}, points ${player.spied.resourcesSnapshot.points}, UP ${player.spied.resourcesSnapshot.upgradePoints}, shield ${player.spied.resourcesSnapshot.shield}`
                       : ''}
                   </p>
                   <p>Hand:</p>

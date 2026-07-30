@@ -15,7 +15,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
     { id: 'c', nickname: 'Carol' },
   ] as const;
 
-  it('base: spy sees kit and cards; a third player does not', () => {
+  it('base: spy sees kit, cards, and frozen resource snapshot; a third player does not', () => {
     const state = createInitialState({ seats, seed: 'spy-base' });
     const spyId = state.currentTurnPlayerId;
 
@@ -48,6 +48,9 @@ describe('Spy (rules spec §3, L3-05)', () => {
     spy.points = 4;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     target.points = 9;
+    target.lives = 11;
+    target.upgradePoints = 3;
+    target.shield = 2;
     target.kitId = 'kamikaze';
 
     performTurnAction(state, spyId, {
@@ -81,19 +84,26 @@ describe('Spy (rules spec §3, L3-05)', () => {
 
     expect(spiedBySpy?.kitId).toBe('kamikaze');
     expect(spiedBySpy?.hand.length).toBe(target.hand.length);
+    expect(spiedBySpy?.lives).toBeUndefined();
     expect(spiedBySpy?.points).toBeUndefined();
     const relation = state.visibility.find(
       (entry) => entry.viewerId === spyId && entry.subjectId === target.id,
     );
-    expect(spiedBySpy?.pointsSnapshot).toEqual(relation?.pointsSnapshot);
-    expect(spiedBySpy?.pointsSnapshot?.points).toBe(target.points);
+    expect(spiedBySpy?.resourcesSnapshot).toEqual(relation?.resourcesSnapshot);
+    expect(spiedBySpy?.resourcesSnapshot).toEqual({
+      lives: target.lives,
+      points: target.points,
+      upgradePoints: target.upgradePoints,
+      shield: target.shield,
+      turnSequence: relation?.resourcesSnapshot?.turnSequence,
+    });
     expect(viewForSpy.players.find((player) => player.id === target.id)).not.toHaveProperty(
       'lives',
     );
     expect(spiedByOutsider).toBeUndefined();
   });
 
-  it('upgraded: reveals live points (tokens) and card lists, not lives/shield/UP', () => {
+  it('upgraded: reveals live resources and card lists', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -146,15 +156,15 @@ describe('Spy (rules spec §3, L3-05)', () => {
 
     const spied = view.players.find((player) => player.id === target.id)?.spied;
 
+    expect(spied?.lives).toBe(target.lives);
     expect(spied?.points).toBe(target.points);
-    expect(spied?.pointsSnapshot).toBeUndefined();
-    expect(spied).not.toHaveProperty('lives');
-    expect(spied).not.toHaveProperty('shield');
-    expect(spied).not.toHaveProperty('upgradePoints');
+    expect(spied?.upgradePoints).toBe(target.upgradePoints);
+    expect(spied?.shield).toBe(target.shield);
+    expect(spied?.resourcesSnapshot).toBeUndefined();
     expect(spied?.hand.length).toBe(target.hand.length);
   });
 
-  it('base points snapshot stays frozen when the target later gains points', () => {
+  it('base resource snapshot stays frozen when the target later changes resources', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -181,6 +191,9 @@ describe('Spy (rules spec §3, L3-05)', () => {
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     target.kitId = 'assassin';
     target.points = 5;
+    target.lives = 8;
+    target.upgradePoints = 1;
+    target.shield = 0;
 
     performTurnAction(state, spyId, {
       type: 'playCard',
@@ -193,11 +206,13 @@ describe('Spy (rules spec §3, L3-05)', () => {
     const relation = state.visibility.find(
       (entry) => entry.viewerId === spyId && entry.subjectId === target.id,
     );
-    expect(relation?.pointsSnapshot).toBeDefined();
-    const frozenPoints = relation?.pointsSnapshot?.points;
-    const frozenSequence = relation?.pointsSnapshot?.turnSequence;
+    expect(relation?.resourcesSnapshot).toBeDefined();
+    const frozen = relation?.resourcesSnapshot;
 
     target.points += 20;
+    target.lives -= 1;
+    target.upgradePoints += 1;
+    target.shield = 4;
 
     const view = buildPlayingViewFor({
       recipientSessionId: spyId,
@@ -208,10 +223,8 @@ describe('Spy (rules spec §3, L3-05)', () => {
     });
     const spied = view.players.find((player) => player.id === target.id)?.spied;
 
-    expect(spied?.pointsSnapshot).toEqual({
-      points: frozenPoints,
-      turnSequence: frozenSequence,
-    });
+    expect(spied?.resourcesSnapshot).toEqual(frozen);
+    expect(spied?.lives).toBeUndefined();
     expect(spied?.points).toBeUndefined();
   });
 
