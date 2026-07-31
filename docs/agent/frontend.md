@@ -168,3 +168,11 @@ do not hand off an untested lot.
 - Action log: turn groups, draw/playCard/Resolved entries, player/kind/search filters.
 - End screen: winner, single `(eliminated)` badge, recap counts + elim reason, Return home.
 - Leave forfeit → game over recap (`P2 eliminated (leave)`). Rooms: `NNOLEX`, `UGVKXF`, etc.
+
+### Lot 10 verified 2026-08-01 (Playwright, `TURN_DURATION_MS=300000`, PROTOCOL 18)
+
+- Home: Outfit + surface tokens, Motion title enter, CSS hex CTA `Button` (Create/Join).
+- Lobby: Start/Leave buttons; room `RQNKXT` (HostA + GuestB).
+- Table: `KitPortrait`, `ResourceIcon` row, `Card` hand/specials with V1 art, opponent
+  `opponent.png` placeholder when unspied; action bar uses shared `Button` variants.
+- No protocol/intent change; favicon 404 only (pre-existing, unrelated).
