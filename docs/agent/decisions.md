@@ -136,6 +136,8 @@ live in `db.md` (L8-01 / L8-02).
 from commit `50f5bc5`). All 63 tasks, the milestones and the Legend were carried over
 programmatically, so the text is the workbook's verbatim. The Open decisions tab was **not**
 copied: it already lives in this file, and duplicating it would give two places to update.
+(On 2026-08-01 that combined file was split into `docs/backlog_v1.md` + `docs/backlog_v2.md`
+— see the entry below.)
 
 Reason: the Status column has to change on every finished task, and a spreadsheet cell is not
 editable without either opening Excel or patching xlsx XML — a scripted patcher was written and
@@ -675,12 +677,14 @@ direct developer instruction unless marked inferred:
 
 ## 2026-08-01 · [T] Backlog synced to match already-landed L9-02/L9-03 (pre-V2 bookkeeping fix)
 
-Before V2 scoping began, `docs/backlog.md` still listed L9-02 and L9-03 as `To do` (progress
-"61 of 63"), even though both had already landed and been committed (`166a99f`, `64a84c2`,
-polish `9e227d4`) and this file already carried the corresponding decision entry below. Fixed
-during this session: both flipped to `Done` with commit references, progress corrected to
-"63 of 63 — V1 complete." Recorded because AGENTS.md §9/§12 treats a stale backlog as worse
-than none, and because it was the trigger for confirming V1 could close before V2 opened.
+Before V2 scoping began, the then-combined `docs/backlog.md` still listed L9-02 and L9-03 as
+`To do` (progress "61 of 63"), even though both had already landed and been committed
+(`166a99f`, `64a84c2`, polish `9e227d4`) and this file already carried the corresponding
+decision entry below. Fixed during this session: both flipped to `Done` with commit
+references, progress corrected to "63 of 63 — V1 complete." Recorded because AGENTS.md
+§9/§12 treats a stale backlog as worse than none, and because it was the trigger for
+confirming V1 could close before V2 opened. (That combined file was later split — see
+2026-08-01 backlog split entry.)
 
 ## 2026-08-01 · [P] Public history kinds + finished recap (L9-02 / L9-03)
 
@@ -694,3 +698,26 @@ than none, and because it was the trigger for confirming V1 could close before V
 - **`FinishedStateView.recap`**: turnSequence + per-player public counts + eliminations.
   Kits and exact final resources stay private at game over (visibility §5.1 / 2026-07-30).
 - PROTOCOL_VERSION 18.
+
+## 2026-08-01 · [T] Backlog split into V1 archive and V2 active tracker
+
+The combined `docs/backlog.md` (V1 Lots 0–9 + V2 Lots 10–14) was split into:
+
+- `docs/backlog_v1.md` — closed V1 archive (63/63 `Done`, read-only)
+- `docs/backlog_v2.md` — **active** tracker for V2 visual design (Lots 10–14)
+
+`docs/backlog.md` removed. AGENTS.md, README, technical_spec_v2.md, and agent
+playbooks updated so DoD / workflow point at `backlog_v2.md`. Task bodies for
+Lots 10–14 unchanged from the pre-split file.
+
+## 2026-08-01 · [T] V2 client stack — Tailwind CSS + Motion (L10-01)
+
+Installed into `apps/client` via `pnpm add` (lockfile is source of truth):
+
+- `tailwindcss` 4.3.3 + `@tailwindcss/vite` 4.3.3 — Vite plugin in
+  `apps/client/vite.config.ts`, entry `@import "tailwindcss"` in
+  `apps/client/src/index.css`
+- `motion` 12.43.0 — import from `motion/react`
+
+Smoke: Home title uses a Tailwind class and a trivial Motion enter animation.
+Versions recorded here rather than restated in `technical_spec_v2.md` §3.

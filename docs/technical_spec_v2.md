@@ -44,7 +44,7 @@ Specifically out of scope, per the 2026-08-01 session:
 - No per-kit "eliminated" illustration. One generic visual treatment covers every kit,
   including Kamikaze, which has no such asset today.
 - L9-02 (browsable action log) and L9-03 (end screen) are not being re-implemented — both are
-  `Done` in `docs/backlog.md`. V2 restyles their existing output.
+  `Done` in `docs/backlog_v1.md`. V2 restyles their existing output.
 
 ---
 
@@ -222,8 +222,8 @@ Unlike V1, "correct" alone is not sufficient for a visual task — there is no a
 - [ ] No V1 test was weakened, skipped, or deleted to accommodate a visual change
 - [ ] The developer has looked at the result (screenshot or live) and signed off — a green
       `pnpm verify` on a design task is necessary, not sufficient
-- [ ] The task's own Acceptance line in `docs/backlog.md` is satisfied
-- [ ] Status flipped to `Done` in `docs/backlog.md`, in the same change as the code
+- [ ] The task's own Acceptance line in `docs/backlog_v2.md` is satisfied
+- [ ] Status flipped to `Done` in `docs/backlog_v2.md`, in the same change as the code
 - [ ] Committed with a Conventional Commit referencing the task id (AGENTS.md §10)
 
 ---

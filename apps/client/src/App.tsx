@@ -14,6 +14,7 @@ import {
   type RewardChoice,
   type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
+import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { ActionLogPanel } from './action-log/action-log-panel';
@@ -336,8 +337,16 @@ export function App() {
   }
 
   return (
-    <main>
-      <h1>Card Battle</h1>
+    <main className="p-4">
+      {/* L10-01 smoke: Tailwind class + trivial Motion enter (technical spec v2 §3) */}
+      <motion.h1
+        className="text-2xl font-semibold tracking-tight"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        Card Battle
+      </motion.h1>
       <p>Protocol v{PROTOCOL_VERSION}</p>
       <p>{STATUS_LABELS[status]}</p>
       {error !== null && <p>{error}</p>}

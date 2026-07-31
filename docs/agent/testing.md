@@ -4,7 +4,8 @@
 > Transverse rules → `/AGENTS.md`. Domain specifics → `engine.md`, `card-handler.md`, `protocol.md`.
 >
 > Sources: technical spec §8 (Definition of Done), §5.5–§5.7 (thresholds), §6.2 (rulings) ·
-> `../backlog.md` ("How to read this", and each task's **Acceptance** line) ·
+> `../backlog_v2.md` (active; "How to read this" and each task's **Acceptance** line) ·
+> `../backlog_v1.md` (V1 archive, for citing finished V1 acceptance only) ·
 > config in `vitest.config.ts`, example in `packages/shared/src/domain/v1-scope.test.ts`.
 
 ## Golden rules

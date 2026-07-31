@@ -1,11 +1,15 @@
-# Backlog — Card Battle V1
+# Backlog — Card Battle V1 (archive)
 
-> Task tracker and single source of truth for what to build, in what order.
+> **Closed archive.** 63/63 tasks `Done`. Do not flip statuses here.
+> Active work lives in `docs/backlog_v2.md` (visual design), scoped by
+> `docs/technical_spec_v2.md`.
+>
 > Converted from `backlog_v1_card_battle.xlsx` on 2026-07-29; the workbook is retired.
-> **Keep each task's status current as you finish it** — see `/AGENTS.md` §9.
 > Open decisions are tracked in `agent/decisions.md`, not duplicated here.
+>
+> Formerly `docs/backlog.md` (V1 + V2 in one file); split 2026-08-01.
 
-Status values: `To do` · `In progress` · `Done` · `Blocked`
+Status values (historical): `To do` · `In progress` · `Done` · `Blocked`
 
 ## How to read this
 
@@ -36,14 +40,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 - Rules spec §N refers to spec_bataille_des_cartes_en.md. Spec §N refers to technical_spec_v1.md. No rule is copied here: when in doubt, read the source.
 
-**Out of scope**
+**Out of scope (V1)**
 
-- The 11 remaining kits, Team / God / Quick modes, bots, user accounts, persistence of an in-progress game, monetization. See technical spec §9. **Art direction is no longer out of scope** — it is V2, specified in `docs/technical_spec_v2.md` and sequenced in Lots 10–14 below. It changes no rule, no screen flow, and no protocol event.
+- The 11 remaining kits, Team / God / Quick modes, bots, user accounts, persistence of an in-progress game, monetization. See technical spec v1 §9. **Art direction** is V2 — see `docs/technical_spec_v2.md` and `docs/backlog_v2.md`. It changes no rule, no screen flow, and no protocol event.
 
 ## Progress
 
-63 of 63 V1 tasks done. **V1 backlog complete.** Next: V2 — visual design, see
-`docs/technical_spec_v2.md` and Lot 10 onward.
+63 of 63 V1 tasks done. **V1 backlog complete.** Active tracker: `docs/backlog_v2.md`.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -57,11 +60,6 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 7 · Robustness | 5 | 5 |
 | 8 · Game log | 2 | 2 |
 | 9 · Polish | 3 | 3 |
-| 10 · V2 design system foundations | 5 | 0 |
-| 11 · V2 Home and Lobby | 2 | 0 |
-| 12 · V2 Table | 7 | 0 |
-| 13 · V2 End screen | 1 | 0 |
-| 14 · V2 Animation | 5 | 0 |
 
 ## Milestones
 
@@ -617,7 +615,7 @@ Complete history since the start of the game, including card identity, purchases
   `playerEliminated` / `mirrorRedirected` / `rewardsClaimed`); `rewardsClaimed` stays opaque
   (no reward picks — product ruling). Client: `apps/client/src/action-log/`. Commit `166a99f`.
   PROTOCOL_VERSION 18. See `agent/decisions.md` 2026-08-01. **V2 restyles this component; the
-  logic and wire shape do not change** (Lot 12, L12-05).
+  logic and wire shape do not change** (`docs/backlog_v2.md` Lot 12, L12-05).
 
 ### L9-03 · End screen — `Done`
 
@@ -628,205 +626,4 @@ Winner and game recap, return to home.
 - **Note** `FinishedStateView.recap` (turnSequence, per-player public counts, eliminations); kits
   and exact final resources stay private at game over. Commit `64a84c2`, polish `9e227d4`. See
   `agent/decisions.md` 2026-08-01. **V2 restyles this screen; the data it renders does not
-  change** (Lot 13, L13-01).
-
-# V2 — Visual design
-
-> V1 (above) is complete and closed: 63/63 tasks, engine and protocol frozen except where a
-> V2 task explicitly says otherwise. Everything below is scoped by `docs/technical_spec_v2.md`,
-> validated with the developer 2026-08-01. **Same 4 screens, same client-server contract, same
-> audience (friends, web only) — no new rule, card, kit, mode, or screen.** A V2 task that
-> looks like it needs a new protocol event or a rule change is out of bounds: stop and ask,
-> same discipline as V1 golden rule 6.
-
-**V2-specific watch points**
-
-- There is no automated test for "looks good." Definition of Done for a V2 task is `pnpm verify`
-  green (nothing about styling breaks typecheck/lint/existing tests) **plus** a visual check
-  the developer signs off on — screenshots or a live look, not just green CI.
-- The illustration/icon assets already exist in the `images/` folder (outside this repo) — see
-  `technical_spec_v2.md` §4 for the confirmed mapping. **Never invent a mapping for an
-  ambiguous or missing asset** — the Absorber/Absorption and Kamikaze-portrait questions in this
-  session are exactly that kind of trap. Ask.
-- `docs/agent/frontend.md` stays the live reference for client conventions (connection hook,
-  visibility rules, degraded states). V2 tasks restyle; they update that file's examples in
-  place rather than forking a second source of truth.
-
-## Lot 10 · V2 design system foundations
-
-### L10-01 · Tailwind and Motion setup — `To do`
-
-Add Tailwind CSS and Motion (`motion` package, formerly Framer Motion) to `apps/client` via
-`pnpm add`, base Tailwind config, confirm the Vite build and `pnpm verify` stay green.
-
-- **Reference** Technical spec v2 §3 · **Depends on** nothing (V1 complete) · **Complexity** S · **Risk** Low
-- **Watch point** Dependency additions must go through `pnpm add` so the lockfile updates — never hand-edit `package.json` (AGENTS.md §3).
-- **Acceptance** `pnpm dev`, `pnpm typecheck`, `pnpm lint` all pass with Tailwind classes and one trivial Motion animation rendering in the client
-
-### L10-02 · Design tokens from source assets — `To do`
-
-Extract a color palette and typography scale from the existing illustrations and generic
-assets (resource icons, colored buttons, card backs), encode them as the Tailwind theme.
-
-- **Reference** Technical spec v2 §5 · **Depends on** L10-01 · **Complexity** M · **Risk** Medium
-- **Watch point** This is a subjective creative decision, not a derivable rule — **no palette
-  ships without the developer looking at it and saying yes.** Do not present it as a fait accompli in a commit message.
-- **Acceptance** Tailwind theme config committed; developer has reviewed and approved the palette/type scale against the real assets
-
-### L10-03 · Asset pipeline and mapping table — `To do`
-
-Copy the confirmed V1 subset of illustrations into `apps/client/src/assets/`, build a typed
-lookup (`KitId` → portrait, `CardId` → base/upgraded/activated art) from the mapping table in
-technical spec v2 §4, including the `scientific → Scientist.png` and `absorber → Absorption.png`
-mappings decided in this session.
-
-- **Reference** Technical spec v2 §4 · **Depends on** L10-01 · **Complexity** M · **Risk** High
-- **Watch point** A wrong or guessed mapping puts incorrect art on a card every kit can hold — silent, and nobody will report a bug for "wrong flavor art." Only wire the confirmed table; leave any still-unconfirmed entry as an explicit placeholder, not a guess.
-- **Acceptance** Every V1 `CardId` and `KitId` resolves to the correct file at both upgrade states where they exist; no import of an out-of-V1-scope asset (the other 11 kits, non-V1 cards)
-
-### L10-04 · Base components — `To do`
-
-`Card`, `ResourceIcon` (life / point / shield / upgrade point), `Button`, connection/status
-badge — built once, reused by every screen.
-
-- **Reference** Technical spec v2 §5 · **Depends on** L10-02, L10-03 · **Complexity** M · **Risk** Low
-- **Acceptance** Home, Lobby, Table and End all consume these components — no screen redefines its own card or icon markup
-
-### L10-05 · Generic elimination treatment — `To do`
-
-One visual treatment (not per-kit art) applied to any eliminated player's portrait — developer
-ruling 2026-08-01: no "(dead)" illustration per kit, including Kamikaze, which has none today.
-
-- **Reference** Technical spec v2 §2 · **Depends on** L10-04 · **Complexity** S · **Risk** Low
-- **Acceptance** An eliminated player of any V1 kit renders the same generic treatment; no code path looks for a per-kit dead asset
-
-## Lot 11 · V2 Home and Lobby
-
-### L11-01 · Home screen redesign — `To do`
-
-Nickname entry, create/join, using the Lot 10 component set. Same intents, same validation,
-no new field.
-
-- **Reference** Technical spec v2 §6 · rules spec/tech spec v1 §7 (screen: Home) · **Depends on** L10-04 · **Complexity** M · **Risk** Low
-- **Acceptance** Create and join both work exactly as today, visually redesigned
-
-### L11-02 · Lobby screen redesign — `To do`
-
-Seated players, game code (with copy affordance), host Start — restyled.
-
-- **Reference** Technical spec v2 §6 · tech spec v1 §7 (screen: Lobby) · **Depends on** L11-01 · **Complexity** S · **Risk** Low
-- **Acceptance** 2–4 player lobby flow unchanged functionally, visually redesigned
-
-## Lot 12 · V2 Table
-
-### L12-01 · Table layout shell — `To do`
-
-Overall structure: opponents band, private zone, log panel, action bar, pending-effects queue,
-timers — responsive to 2, 3, and 4 seated players.
-
-- **Reference** Technical spec v2 §6 · tech spec v1 §7 (Table) · **Depends on** L10-04 · **Complexity** L · **Risk** Medium
-- **Watch point** The action log is the screen's main organ (AGENTS.md §L1-12 watch point) — the redesign must not demote it to a sidebar.
-- **Acceptance** All existing Table zones present and legible at 2, 3, and 4 players
-
-### L12-02 · Opponent zone — `To do`
-
-Nickname, lives/shield/status via `ResourceIcon`, card count, connection badges (reuse L9-01
-states), Spy-revealed kit/cards.
-
-- **Reference** Technical spec v2 §4, §6 · frontend.md (visibility, degraded states) · **Depends on** L12-01 · **Complexity** M · **Risk** Medium
-- **Watch point** Zero rule logic on the client (AGENTS.md §"Conventions") — this restyles what `stateUpdate` already sends, it does not decide what is visible.
-- **Acceptance** Every opponent-zone field the current client shows is still shown, same visibility rules, new look
-
-### L12-03 · Private zone and hand — `To do`
-
-Hand with real card illustrations (base/upgraded art swap), kit portrait, exact resources via
-icons, special cards.
-
-- **Reference** Technical spec v2 §4, §6 · **Depends on** L10-03, L12-01 · **Complexity** M · **Risk** Medium
-- **Watch point** Upgrade state must select the `+` asset variant, never a manual per-card `if` — reuse the L10-03 lookup.
-- **Acceptance** Every held card shows the correct base/upgraded illustration; kit portrait matches `kitId`
-
-### L12-04 · Pending effects queue — `To do`
-
-Visual queue of effects in flight (source, card, target), restyled.
-
-- **Reference** Technical spec v2 §6 · tech spec v1 §7 (Pending effects queue) · **Depends on** L12-01 · **Complexity** S · **Risk** Low
-- **Acceptance** Same information as today's queue, new look
-
-### L12-05 · Action log panel restyle — `To do`
-
-Reskin `apps/client/src/action-log/action-log-panel.tsx` (L9-02) with the Lot 10 components.
-No change to `action-log.ts` logic or the `ActionLogEntryView` shape.
-
-- **Reference** Technical spec v2 §6 · **Depends on** L10-04 · **Complexity** M · **Risk** Low
-- **Watch point** `rewardsClaimed` stays opaque (product ruling, decisions.md 2026-08-01) — the restyle must not surface the two reward picks.
-- **Acceptance** Same browsable history, same entry kinds, new look; `action-log.test.ts` unchanged and green
-
-### L12-06 · Action bar and target selection — `To do`
-
-Play / buy / sell / upgrade / draw, target picker, quantity picker (Regeneration), Assassin
-multi-select, Mirror sub-choice, elimination reward sub-choice — all restyled.
-
-- **Reference** Technical spec v2 §6, §7 · frontend.md (playCard variants, Assassin, Mirror, rewards) · **Depends on** L12-01, L10-04 · **Complexity** L · **Risk** Medium
-- **Watch point** Every one of these interactions has a specific payload shape (frontend.md) — restyle the control, never the payload it sends.
-- **Acceptance** Every action variant listed in `frontend.md`'s Conventions section still sends the exact same intent it does today
-
-### L12-07 · Timers and degraded states — `To do`
-
-Turn timer and sub-choice timer as a visual progress element; absent/idle badges restyled per
-existing conventions.
-
-- **Reference** Technical spec v2 §6 · frontend.md (Timer display, Degraded states) · **Depends on** L12-01 · **Complexity** M · **Risk** Medium
-- **Watch point** The timer display stays cosmetic — trust `turnDeadlineMs` / `deadlineMs` from the server, never a client-only authority (frontend.md, unchanged rule).
-- **Acceptance** Same timer behavior and degraded-state thresholds as today, new visual treatment
-
-## Lot 13 · V2 End screen
-
-### L13-01 · End screen redesign — `To do`
-
-Restyle the L9-03 output: winner, `FinishedStateView.recap`, return-home action.
-
-- **Reference** Technical spec v2 §6 · **Depends on** L10-04 · **Complexity** S · **Risk** Low
-- **Acceptance** Same recap data displayed, new look; no change to `build-view-for.ts`
-
-## Lot 14 · V2 Animation
-
-### L14-01 · Card flip and reveal — `To do`
-
-Hand entry, upgrade-state reveal, play-to-table motion.
-
-- **Reference** Technical spec v2 §7 · **Depends on** L10-01, L12-03 · **Complexity** M · **Risk** Low
-- **Watch point** Purely presentational — must not delay or block the intent being sent to the server.
-- **Acceptance** Animation plays on the actions it targets, never blocks or delays the underlying intent
-
-### L14-02 · Action-resolution animation — `To do`
-
-Visual effect tied to `actionResolved.outcome` (`applied` / `cancelled` / `immune`).
-
-- **Reference** Technical spec v2 §7 · frontend.md (`actionResolved.outcome === 'immune'`) · **Depends on** L14-01, L12-04 · **Complexity** M · **Risk** Medium
-- **Watch point** Three distinct outcomes need three distinct, honest visual treatments — do not animate `cancelled` or `immune` as if the effect landed.
-- **Acceptance** Each of the three outcomes has a visibly distinct animation
-
-### L14-03 · Elimination and reward-sequence animation — `To do`
-
-Elimination moment, then the reward sub-choice sequence (chainable at multi-elimination).
-
-- **Reference** Technical spec v2 §7 · frontend.md (Elimination rewards) · **Depends on** L14-02 · **Complexity** L · **Risk** Medium
-- **Watch point** Must stay correct through a chained multi-elimination (up to 6 choices in a row at 4 players, per L6-02) — test the animation at the edge case, not just a single elimination.
-- **Acceptance** A multi-elimination sequence animates every step without getting visually stuck, matching the underlying prompt/lock state
-
-### L14-04 · Mirror and Assassin animation — `To do`
-
-Mirror redirect sub-choice, Assassin multi-attack targeting.
-
-- **Reference** Technical spec v2 §7 · frontend.md (Mirror, Assassin) · **Depends on** L14-02 · **Complexity** M · **Risk** Low
-- **Acceptance** Both interactions remain fully usable within their existing timers with the animation on
-
-### L14-05 · Timer motion — `To do`
-
-Motion polish for the turn and sub-choice timers (e.g. a depleting ring/bar), on top of L12-07's
-static treatment.
-
-- **Reference** Technical spec v2 §7 · **Depends on** L12-07, L10-01 · **Complexity** S · **Risk** Low
-- **Watch point** Cosmetic only — the countdown must still derive from server `deadlineMs`, never drift into a client-authoritative timer.
-- **Acceptance** Visual countdown matches the server deadline within a small, imperceptible tolerance
+  change** (`docs/backlog_v2.md` Lot 13, L13-01).

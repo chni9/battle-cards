@@ -13,7 +13,8 @@ to any rule, screen flow, or protocol event.
 | `docs/spec_bataille_des_cartes_en.md` | The game rules. Authoritative on rules. |
 | `docs/technical_spec_v1.md` | V1 scope, architecture, protocol, Definition of Done. Contains no rule — refers to the rules spec by section. |
 | `docs/technical_spec_v2.md` | V2 scope: design system, asset mapping, screens, animation. Changes no rule, screen flow, or protocol event. |
-| `docs/backlog.md` | Task tracker: V1 (Lots 0–9, 63 tasks, all `Done`) and V2 (Lots 10–14, in progress), each with a watch point and acceptance criteria. Read "How to read this" first. |
+| `docs/backlog_v1.md` | V1 task archive (Lots 0–9, 63 tasks, all `Done`). Read-only history. |
+| `docs/backlog_v2.md` | **Active** task tracker: V2 visual design (Lots 10–14). Watch point and acceptance criteria per task. Read "How to read this" first. |
 | `AGENTS.md` | Working rules for agents and developers. `docs/agent/` holds the per-domain playbooks. |
 
 **Known correction not yet applied to the rules spec:** the mutual-attacks rule in rules spec

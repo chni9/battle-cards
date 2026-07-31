@@ -23,7 +23,8 @@ Spy) · **lifecycle** (timers, disconnection, inactivity).
 1. **Code + lock files** — operational truth.
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
-   `docs/backlog.md` sequences the work and carries per-task acceptance criteria.
+   `docs/backlog_v2.md` sequences active work (acceptance criteria per task);
+   `docs/backlog_v1.md` is the closed V1 archive.
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -63,7 +64,7 @@ apps/server         Authoritative game server. ALL rule logic lives here.
 apps/client         React client. Renders state, sends intents. Zero rule logic.
 packages/shared     Domain types shared by both. One definition, never duplicated.
   src/domain/       card · kit · effect · player · game-state
-docs/               Rules spec, technical spec, and backlog.md (the task tracker).
+docs/               Rules spec, technical specs, backlog_v1.md (archive), backlog_v2.md (active).
 docs/agent/         Playbooks for agents. Read the relevant one before coding.
 ```
 
@@ -96,8 +97,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    bots, accounts, in-progress persistence and monetization are still out (technical spec §9) —
    not to be implemented "even partially, even to lay groundwork". **Art direction is no longer
    out of scope**: it is V2, specified in `docs/technical_spec_v2.md` and sequenced in
-   `docs/backlog.md` Lots 10–14. V2 changes no rule, screen flow, or protocol event — it is a
-   visual layer over the exact system this file already describes.
+   `docs/backlog_v2.md` (Lots 10–14). V2 changes no rule, screen flow, or protocol event — it
+   is a visual layer over the exact system this file already describes.
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.
@@ -143,9 +144,9 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through `docs/backlog.md` **in task-ID order**, starting at lot 0. The sequencing is
-deliberate: lot 1 is a thin vertical slice, almost free of game content, so nothing later
-rests on an unproven foundation.
+Work through `docs/backlog_v2.md` **in task-ID order** (Lot 10 onward). V1 is closed
+(`docs/backlog_v1.md`). The sequencing is deliberate: static design (Lots 10–13) before
+animation (Lot 14), so the client stays shippable if motion slips.
 
 **Keep the backlog current.** `In progress` when you start a task, `Done` once it passes the
 gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md`) — in the same
@@ -165,8 +166,8 @@ than none: the next session trusts it and redoes finished work.
 - [ ] `pnpm verify` green: `tsc` clean, linter clean, all tests passing
 - [ ] No test skipped, disabled, or weakened to pass
 - [ ] Every card or rule touched has its test created or updated
-- [ ] The task's own **Acceptance** line in `docs/backlog.md` is satisfied
-- [ ] That task's status set to `Done` in `docs/backlog.md`
+- [ ] The task's own **Acceptance** line in `docs/backlog_v2.md` is satisfied
+- [ ] That task's status set to `Done` in `docs/backlog_v2.md`
 - [ ] **Committed** — Conventional Commit referencing the task ID (see §10). Never leave a
       `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
@@ -184,7 +185,7 @@ Body only when the *why* is not obvious — and always for a rule interpretation
 deviation, or a decision that a future reader would otherwise have to re-derive. No AI
 attribution. A project-local `caveman-commit` skill (`.agents/skills/`) enforces this style.
 
-**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog.md`
+**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog_v2.md`
 status flip — not a later cleanup. Leaving finished work uncommitted is a process failure.
 
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
