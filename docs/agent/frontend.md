@@ -16,7 +16,7 @@ Functional UI only for V1 — no art direction (technical spec §9). Screens liv
 |---|---|
 | Home | No room — create / join + nickname |
 | Lobby | `phase: 'lobby'` — seats, code, host Start |
-| Table | `phase: 'playing'` — opponents, log, queue, timer, play any hand card, Assassin multi-attack, economy; specials listed but not playable until Lot 5 |
+| Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` |
 | End | `phase: 'finished'` — winner, return home |
 
 ## Conventions

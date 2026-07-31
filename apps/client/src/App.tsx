@@ -46,6 +46,7 @@ export function App() {
     sellCard,
     upgradeCard,
     buyUpgradePoint,
+    buySpecialCard,
     sellUpgradePoint,
     lastTurnStarted,
     lastActionResolved,
@@ -135,7 +136,9 @@ export function App() {
             return;
           }
 
-          const selected = view.self.hand.find((card) => card.instanceId === playInstanceId);
+          const selected =
+            view.self.hand.find((card) => card.instanceId === playInstanceId) ??
+            view.self.specialCards.find((card) => card.instanceId === playInstanceId);
           const options: PlayCardOptions = {
             ...(includeTarget && targetId !== '' ? { targetPlayerId: targetId } : {}),
             ...(selected?.cardId === 'regeneration' ? { quantity: playQuantity } : {}),
@@ -187,6 +190,7 @@ export function App() {
           }
         }}
         onBuyUpgradePoint={buyUpgradePoint}
+        onBuySpecialCard={buySpecialCard}
         onSellUpgradePoint={sellUpgradePoint}
         onLeave={() => {
           void leaveGame();
@@ -331,6 +335,7 @@ function TableScreen(props: {
   onSell: () => void;
   onUpgrade: () => void;
   onBuyUpgradePoint: () => void;
+  onBuySpecialCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
 }) {
@@ -372,6 +377,7 @@ function TableScreen(props: {
     onSell,
     onUpgrade,
     onBuyUpgradePoint,
+    onBuySpecialCard,
     onSellUpgradePoint,
     onLeave,
   } = props;
@@ -381,10 +387,11 @@ function TableScreen(props: {
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
   const attackCards = view.self.hand.filter((card) => isAttackCardId(card.cardId));
+  const playableCards = [...view.self.hand, ...view.self.specialCards];
   const secondsLeft =
     deadlineMs === null ? null : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
   const opponents = view.players.filter((player) => !player.isYou);
-  const selectedPlayCard = view.self.hand.find((card) => card.instanceId === playInstanceId);
+  const selectedPlayCard = playableCards.find((card) => card.instanceId === playInstanceId);
   const mirrorSecondsLeft =
     mirrorChoice === null
       ? null
@@ -400,15 +407,17 @@ function TableScreen(props: {
   }, [opponents, setTargetId, targetId]);
 
   useEffect(() => {
+    const playable = [...view.self.hand, ...view.self.specialCards];
+
     if (
       playInstanceId !== '' &&
-      view.self.hand.some((card) => card.instanceId === playInstanceId)
+      playable.some((card) => card.instanceId === playInstanceId)
     ) {
       return;
     }
 
-    setPlayInstanceId(view.self.hand[0]?.instanceId ?? '');
-  }, [playInstanceId, setPlayInstanceId, view.self.hand]);
+    setPlayInstanceId(playable[0]?.instanceId ?? '');
+  }, [playInstanceId, setPlayInstanceId, view.self.hand, view.self.specialCards]);
 
   useEffect(() => {
     if (
@@ -421,20 +430,22 @@ function TableScreen(props: {
     setSellInstanceId(view.self.hand[0]?.instanceId ?? '');
   }, [sellInstanceId, setSellInstanceId, view.self.hand]);
 
-  const upgradable = view.self.hand.filter((card) => !card.isUpgraded);
+  const upgradable = [...view.self.hand, ...view.self.specialCards].filter(
+    (card) => !card.isUpgraded,
+  );
 
   useEffect(() => {
-    const stillValid = view.self.hand.some(
-      (card) => card.instanceId === upgradeInstanceId && !card.isUpgraded,
+    const candidates = [...view.self.hand, ...view.self.specialCards].filter(
+      (card) => !card.isUpgraded,
     );
+    const stillValid = candidates.some((card) => card.instanceId === upgradeInstanceId);
 
     if (stillValid) {
       return;
     }
 
-    const next = view.self.hand.find((card) => !card.isUpgraded);
-    setUpgradeInstanceId(next?.instanceId ?? '');
-  }, [upgradeInstanceId, setUpgradeInstanceId, view.self.hand]);
+    setUpgradeInstanceId(candidates[0]?.instanceId ?? '');
+  }, [upgradeInstanceId, setUpgradeInstanceId, view.self.hand, view.self.specialCards]);
 
   useEffect(() => {
     if (mirrorChoice === null) {
@@ -642,7 +653,7 @@ function TableScreen(props: {
             </li>
           ))}
         </ul>
-        <h3>Specials (not playable yet)</h3>
+        <h3>Specials</h3>
         {view.self.specialCards.length === 0 ? (
           <p>None</p>
         ) : (
@@ -667,7 +678,7 @@ function TableScreen(props: {
             Play{' '}
             <select
               value={playInstanceId}
-              disabled={!isMyTurn || mirrorChoice !== null || view.self.hand.length === 0}
+              disabled={!isMyTurn || mirrorChoice !== null || playableCards.length === 0}
               onChange={(event) => {
                 setPlayInstanceId(event.target.value);
               }}
@@ -675,6 +686,12 @@ function TableScreen(props: {
               {view.self.hand.map((card) => (
                 <option key={card.instanceId} value={card.instanceId}>
                   {card.cardId}
+                  {card.isUpgraded ? ' ↑' : ''}
+                </option>
+              ))}
+              {view.self.specialCards.map((card) => (
+                <option key={card.instanceId} value={card.instanceId}>
+                  [special] {card.cardId}
                   {card.isUpgraded ? ' ↑' : ''}
                 </option>
               ))}
@@ -689,7 +706,8 @@ function TableScreen(props: {
                 setIncludeTarget(event.target.checked);
               }}
             />{' '}
-            Include target (uncheck for Tax / Regen / Shield / Mirror)
+            Include target (uncheck for Tax / Regen / Shield / Mirror / most specials; check for
+            Cloning)
           </label>
           <label>
             Quantity (Regen){' '}
@@ -886,6 +904,13 @@ function TableScreen(props: {
           onClick={onBuyUpgradePoint}
         >
           Buy upgrade point
+        </button>
+        <button
+          type="button"
+          disabled={!isMyTurn || mirrorChoice !== null || view.self.points < 20}
+          onClick={onBuySpecialCard}
+        >
+          Buy special card (20 pts)
         </button>
         <button
           type="button"
