@@ -190,6 +190,10 @@ Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/e
 - **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide
   self-elim, elimination by absence. Cards still go to the pool immediately.
 
+Manual two-browser exercise of the reward gate (create/join, Tax-farm, super-attack elim,
+reward pick / 20s default, game over) lives in `docs/agent/frontend.md` § Manual two-browser
+check.
+
 ## What not to do
 
 - ❌ One life-loss function with a `isAttack` flag — reintroduces the exact bug §4.2 warns about.

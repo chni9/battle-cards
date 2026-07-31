@@ -442,7 +442,12 @@ function TableScreen(props: {
   } = props;
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
-  const actionsLocked = rewardChoice !== null || mirrorChoice !== null;
+  const selfEliminated =
+    view.players.find((player) => player.id === view.you)?.isEliminated === true;
+  // Lock while Mirror/reward sub-choice is up, or once this seat is eliminated (turn may
+  // still point at the dead player until rewards finish — Lot 6 pause).
+  const actionsLocked =
+    rewardChoice !== null || mirrorChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -581,6 +586,13 @@ function TableScreen(props: {
           </p>
         )}
       </section>
+
+      {selfEliminated && (
+        <section>
+          <h2>Eliminated</h2>
+          <p>You are a spectator. Actions are locked while rewards (if any) resolve.</p>
+        </section>
+      )}
 
       {mirrorChoice !== null && (
         <section>
