@@ -803,6 +803,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
   /**
    * Start the turn timer, or immediately auto-draw if the active seat is absent.
    * technical spec §5.7.
+   *
+   * Absent auto-draws are deferred with `setTimeout(0)` so consecutive absent seats
+   * do not recurse synchronously (stack overflow when several seats are absent).
    */
   private beginTurnOrAbsentAutoPlay(): void {
     const state = this.gameState;
@@ -815,7 +818,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const active = findPlayer(state, state.currentTurnPlayerId);
 
     if (active?.connectionState.status === 'absent') {
-      this.runAbsentAutoDraw(active.id);
+      const playerId = active.id;
+      setTimeout(() => {
+        this.runAbsentAutoDraw(playerId);
+      }, 0);
       return;
     }
 
@@ -932,13 +938,21 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private runAbsentAutoDraw(playerId: string): void {
     const state = this.gameState;
 
-    if (state === null || this.winnerPlayerId !== null) {
+    if (state === null || this.getWinnerPlayerId() !== null) {
+      return;
+    }
+
+    if (state.currentTurnPlayerId !== playerId || this.actionTakenThisTurn) {
       return;
     }
 
     const player = findPlayer(state, playerId);
 
-    if (player === undefined || player.isEliminated) {
+    if (
+      player === undefined ||
+      player.isEliminated ||
+      player.connectionState.status !== 'absent'
+    ) {
       return;
     }
 
