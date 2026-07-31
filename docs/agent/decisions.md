@@ -128,7 +128,7 @@ at seeding time the repo held only the scaffold and the shared domain types. **R
 template with the real pattern as its task lands.**
 
 `frontend.md` created during L1-12 from the real client. Postgres/game-log conventions
-likewise wait for lot 8 (L8-01).
+live in `db.md` (L8-01 / L8-02).
 
 ## 2026-07-29 · [T] Backlog moved from xlsx to markdown
 
@@ -159,9 +159,9 @@ Surface the question when work reaches these; do not pick an interpretation.
 
 | # | Question | Blocks |
 |---|---|---|
-| 4 | Which metrics the game log records | L8-01, and any serious playtest |
 | 7 | Are the timers deliberately absent from the rules spec, or an oversight? | Nothing — non-blocking |
 
+Open decision #4 (game-log metrics) closed 2026-08-01 — see below.
 Open decision #5 (simultaneous eliminators) closed 2026-07-31 — see below.
 
 ## 2026-07-29 · [P] Card counters lose one point per life lost, not per hit (L0-04)
@@ -613,3 +613,22 @@ Rulings locked for technical spec §5.7:
   PROTOCOL_VERSION 17. Client: SDK auto-reconnect + `sessionStorage` token fallback; Leave
   disables reconnect.
 - **`eliminateWithoutReward`:** lives may still be above 0 (absence / inactivity / leave).
+
+## 2026-08-01 · [P] Game-log metrics and Postgres conventions (closes Open decision #4, L8-01 / L8-02)
+
+Finished games are written once to Postgres (technical spec §3). Stack and shape:
+
+- **Driver:** `pg` only (no ORM). Explicit SQL migrations via
+  `pnpm --filter @card-battle/server db:migrate` — never auto-migrate on boot.
+- **Shape:** hybrid — `finished_games` + `finished_game_players` +
+  `finished_game_eliminations`; full public `action_log` as JSONB on the game row.
+- **Metrics (locked):** kits, winner, `turn_sequence` (turn count), cards played per
+  player (denormalized aggregates at write — Approach B), eliminations + cause, final
+  resources, **seed**, full **actionLog**, **room id / started_at / ended_at / duration_ms**,
+  final **hands / specials / shield**. **No nicknames.**
+- **Missing DB / write failure:** soft-skip always for the match; louder `console.error`
+  when `NODE_ENV === 'production'`.
+- **Tests:** pure snapshot builder + mocked writer; optional integration only when
+  `DATABASE_URL` is set. Default `pnpm verify` needs no Postgres.
+
+Playbook: `docs/agent/db.md`.

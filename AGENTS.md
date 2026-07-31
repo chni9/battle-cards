@@ -128,6 +128,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 | `docs/agent/card-handler.md` | Adding or changing any card |
 | `docs/agent/protocol.md` | Colyseus rooms, events, per-recipient views, Spy visibility |
 | `docs/agent/frontend.md` | Client screens and connection conventions (from L1-12) |
+| `docs/agent/db.md` | Finished-game Postgres log, migrations, end-of-game write |
 | `docs/agent/testing.md` | Writing tests — which are mandatory and what they must prove |
 | `docs/agent/decisions.md` | Checking why something is the way it is, or logging a new decision |
 

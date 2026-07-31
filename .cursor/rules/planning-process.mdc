@@ -1,0 +1,12 @@
+---
+description: Backlog/feature planning process — questions then one full plan
+alwaysApply: true
+---
+
+# Planning process
+
+For backlog or feature planning:
+
+1. Ask clarifying questions (and the approach / trade-off question) first.
+2. Once answers lock the approach, write **one complete plan** in a single pass.
+3. Do **not** drip design section-by-section for approval after the approach is locked.

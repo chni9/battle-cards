@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-59 of 63 tasks done. **Lot 7 complete (M4)** — next up is L8-01.
+60 of 63 tasks done. **Lot 8 in progress** — L8-02 next.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -54,7 +54,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 5 · Special cards | 9 | 9 |
 | 6 · Elimination | 5 | 5 |
 | 7 · Robustness | 5 | 5 |
-| 8 · Game log | 2 | 0 |
+| 8 · Game log | 2 | 1 |
 | 9 · Polish | 3 | 1 |
 
 ## Milestones
@@ -574,7 +574,7 @@ Full playthroughs with the 4 kits, special cards, disconnections, and sub-choice
 
 ## Lot 8 · Game log
 
-### L8-01 · Log schema — `To do`
+### L8-01 · Log schema — `Done`
 
 Table of finished games: kits distributed, winner, turn count, cards played per player, eliminations and their cause, final resources.
 
