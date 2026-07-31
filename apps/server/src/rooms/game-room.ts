@@ -35,6 +35,7 @@ import {
   type CardId,
   type ChooseEliminationRewardPayload,
   type ChooseMirrorTargetPayload,
+  type EliminationReason,
   type GameState,
   type LobbySeatView,
   type PlayCardPayload,
@@ -46,6 +47,9 @@ import {
 } from '@card-battle/shared';
 import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
+import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
+import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
+import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
 import { RECONNECT_GRACE_MS } from '../engine/lifecycle/constants';
 import {
@@ -116,6 +120,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private hasStarted = false;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
+  /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
+  private startedAtMs: number | null = null;
+  /** Elimination history for the finished-game log (wire reasons; not on GameState). */
+  private eliminations: FinishedGameEliminationRecord[] = [];
   private actionTakenThisTurn = false;
   private turnDeadlineMs: number | null = null;
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
@@ -192,6 +200,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.hasStarted = true;
+      this.startedAtMs = Date.now();
+      this.eliminations = [];
       this.gameState = createInitialState({
         seats: this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname })),
       });
@@ -423,7 +433,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearAbsentTimer(sessionId);
     this.rejectReconnection(sessionId, new Error('Player left'));
     eliminateWithoutReward(state, sessionId);
-    this.broadcast(PLAYER_ELIMINATED, {
+    this.recordElimination({
       playerId: sessionId,
       eliminatorPlayerId: null,
       reason: 'leave',
@@ -617,7 +627,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       this.rejectReconnection(playerId, new Error('Player eliminated'));
       this.clearAbsentTimer(playerId);
-      this.broadcast(PLAYER_ELIMINATED, {
+      this.recordElimination({
         playerId,
         eliminatorPlayerId: elimination?.eliminatorPlayerId ?? null,
         reason: 'combat',
@@ -625,10 +635,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     if (result.winnerPlayerId !== null) {
-      this.winnerPlayerId = result.winnerPlayerId;
-      this.rejectAllReconnections(new Error('Game over'));
-      this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
-      this.sendStateToEveryone();
+      this.onGameOver(result.winnerPlayerId);
       return;
     }
 
@@ -775,10 +782,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     winnerPlayerId: string | null;
   }): void {
     if (result.winnerPlayerId !== null) {
-      this.winnerPlayerId = result.winnerPlayerId;
-      this.rejectAllReconnections(new Error('Game over'));
-      this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
-      this.sendStateToEveryone();
+      this.onGameOver(result.winnerPlayerId);
       return;
     }
 
@@ -1127,7 +1131,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.rejectReconnection(playerId, new Error('Player eliminated'));
     this.clearAbsentTimer(playerId);
-    this.broadcast(PLAYER_ELIMINATED, {
+    this.recordElimination({
       playerId,
       eliminatorPlayerId: null,
       reason,
@@ -1157,14 +1161,51 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return false;
     }
 
-    this.winnerPlayerId = survivor;
-    this.rejectAllReconnections(new Error('Game over'));
     this.clearTurnTimer();
     this.clearMirrorTimer();
     this.clearRewardTimer();
-    this.broadcast(GAME_OVER, { winnerPlayerId: survivor });
-    this.sendStateToEveryone();
+    this.onGameOver(survivor);
     return true;
+  }
+
+  private recordElimination(entry: {
+    playerId: string;
+    eliminatorPlayerId: string | null;
+    reason: EliminationReason;
+  }): void {
+    this.eliminations.push(entry);
+    this.broadcast(PLAYER_ELIMINATED, entry);
+  }
+
+  /**
+   * Sole game-over exit: broadcast, views, then fire-and-forget finished-game write
+   * (technical spec §3, L8-02). Write failure must never affect the match.
+   */
+  private onGameOver(winnerPlayerId: string): void {
+    this.winnerPlayerId = winnerPlayerId;
+    this.rejectAllReconnections(new Error('Game over'));
+    this.broadcast(GAME_OVER, { winnerPlayerId });
+    this.sendStateToEveryone();
+
+    const state = this.gameState;
+    const startedAtMs = this.startedAtMs;
+
+    if (state === null || startedAtMs === null) {
+      console.warn(`[${this.roomId}] finished-game persist skipped — missing state or start time`);
+      return;
+    }
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: this.roomId,
+      startedAtMs,
+      endedAtMs: Date.now(),
+      winnerPlayerId,
+      gameState: state,
+      actionLog: this.actionLog,
+      eliminations: this.eliminations,
+    });
+
+    void persistFinishedGame(snapshot);
   }
 
   private rejectReconnection(sessionId: string, reason: Error): void {

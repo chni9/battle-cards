@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-60 of 63 tasks done. **Lot 8 in progress** — L8-02 next.
+61 of 63 tasks done. **Lot 8 complete** — next up is L9-02.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -54,7 +54,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 5 · Special cards | 9 | 9 |
 | 6 · Elimination | 5 | 5 |
 | 7 · Robustness | 5 | 5 |
-| 8 · Game log | 2 | 1 |
+| 8 · Game log | 2 | 2 |
 | 9 · Polish | 3 | 1 |
 
 ## Milestones
@@ -582,7 +582,7 @@ Table of finished games: kits distributed, winner, turn count, cards played per 
 - **Watch point** Define this BEFORE the first playtests. A game not logged is lost forever for balancing.
 - **Acceptance** The schema covers the metrics needed for the future balancing work
 
-### L8-02 · End-of-game write — `To do`
+### L8-02 · End-of-game write — `Done`
 
 One single Postgres write, at the end of each game. Never the state of an in-progress game.
 
