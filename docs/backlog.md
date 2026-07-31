@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-62 of 63 tasks done. **Lot 9** — L9-02 Done; next up is L9-03.
+63 of 63 tasks done. **V1 backlog complete.**
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -55,7 +55,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 6 · Elimination | 5 | 5 |
 | 7 · Robustness | 5 | 5 |
 | 8 · Game log | 2 | 2 |
-| 9 · Polish | 3 | 2 |
+| 9 · Polish | 3 | 3 |
 
 ## Milestones
 
@@ -608,7 +608,7 @@ Complete history since the start of the game, including card identity, purchases
 - **Watch point** Every action is public: the log is the players' primary source of information.
 - **Acceptance** A player can browse the entire game's history
 
-### L9-03 · End screen — `To do`
+### L9-03 · End screen — `Done`
 
 Winner and game recap, return to home.
 

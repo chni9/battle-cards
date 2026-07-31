@@ -129,6 +129,8 @@ export function App() {
 
   if (view?.phase === 'finished') {
     const winner = view.players.find((player) => player.id === view.winnerPlayerId);
+    const nickname = (playerId: string): string =>
+      view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
 
     return (
       <main>
@@ -139,10 +141,37 @@ export function App() {
           {view.players.map((player) => (
             <li key={player.id}>
               {player.nickname}
+              {player.isEliminated ? ' (eliminated)' : ''}
               {formatConnectionBadge(player)}
             </li>
           ))}
         </ul>
+        <section>
+          <h3>Recap</h3>
+          <p>Turns played: {view.recap.turnSequence}</p>
+          <ul>
+            {view.recap.players.map((row) => (
+              <li key={row.playerId}>
+                {nickname(row.playerId)} — played {row.cardsPlayedCount}, bought {row.buyCount},
+                sold {row.sellCount}, upgraded {row.upgradeCount}
+              </li>
+            ))}
+          </ul>
+          {view.recap.eliminations.length === 0 ? (
+            <p>No eliminations</p>
+          ) : (
+            <ul>
+              {view.recap.eliminations.map((entry) => (
+                <li key={`${entry.playerId}-${entry.reason}`}>
+                  {nickname(entry.playerId)} eliminated ({entry.reason})
+                  {entry.eliminatorPlayerId !== null
+                    ? ` by ${nickname(entry.eliminatorPlayerId)}`
+                    : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
         <button type="button" onClick={() => void leaveGame()}>
           Return home
         </button>
