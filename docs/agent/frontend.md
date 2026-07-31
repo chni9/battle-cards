@@ -103,3 +103,10 @@ Prereq: `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=8000 pnpm dev` (short timers f
    the other seat.
 5. Repeat full 4-player playthroughs (kits / specials / Mirror or rewards) **three times** with
    no stuck state — M4 proof.
+
+Verified 2026-07-31 (Playwright, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=8000`):
+
+- 4p rooms `RXAFII`, `MJXLKL`, `IIFWJS` — multi-draw rotation, Leave forfeit elim on one seat,
+  no stuck state / protocol mismatch.
+- 2p room `BFIOVB` — disconnected grace badge, absent after grace, win by forfeit for the
+  remaining seat.

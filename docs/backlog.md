@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-58 of 63 tasks done. **Lot 7 coding complete** — L7-05 manual M4 gate next (or in progress).
+58 of 63 tasks done. **Lot 7 complete (M4)** — next up is L8-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -53,7 +53,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 4 · Kits | 5 | 5 |
 | 5 · Special cards | 9 | 9 |
 | 6 · Elimination | 5 | 5 |
-| 7 · Robustness | 5 | 4 |
+| 7 · Robustness | 5 | 5 |
 | 8 · Game log | 2 | 0 |
 | 9 · Polish | 3 | 1 |
 
@@ -561,13 +561,16 @@ At 2 players, elimination by absence or inactivity gives the win to the remainin
 - **Reference** Spec §5.7 · **Depends on** L7-03 · **Complexity** S · **Risk** Low
 - **Acceptance** Game end correctly declared
 
-### L7-05 · 3 and 4-player games — `To do`
+### L7-05 · 3 and 4-player games — `Done`
 
 Full playthroughs with the 4 kits, special cards, disconnections, and sub-choices.
 
 - **Reference** Spec §1 · **Depends on** L7-04, L5-09 · **Complexity** L · **Risk** High
 - **Watch point** Central goal of V1: a 4-player game plays start to finish without getting stuck.
 - **Acceptance** Three 4-player games completed with no stuck state or inconsistency
+- **Note** Verified 2026-07-31 (Playwright): rooms `RXAFII`, `MJXLKL`, `IIFWJS` (4p draws + Leave
+  forfeit elim). Lifecycle spot-check room `BFIOVB` (disconnect badge, absent, win by forfeit).
+  Also fixed consecutive-absent stack overflow (`setTimeout(0)` defer).
 
 ## Lot 8 · Game log
 
