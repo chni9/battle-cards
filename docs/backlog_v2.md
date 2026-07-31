@@ -68,11 +68,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-0 of 20 V2 tasks done. Active from Lot 10.
+3 of 20 V2 tasks done. Active from Lot 10.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 10 · Design system foundations | 5 | 0 |
+| 10 · Design system foundations | 5 | 3 |
 | 11 · Home and Lobby | 2 | 0 |
 | 12 · Table | 7 | 0 |
 | 13 · End screen | 1 | 0 |
@@ -108,7 +108,7 @@ assets (resource icons, colored buttons, card backs), encode them as the Tailwin
   ships without the developer looking at it and saying yes.** Do not present it as a fait accompli in a commit message.
 - **Acceptance** Tailwind theme config committed; developer has reviewed and approved the palette/type scale against the real assets
 
-### L10-03 · Asset pipeline and mapping table — `To do`
+### L10-03 · Asset pipeline and mapping table — `Done`
 
 Copy the confirmed V1 subset of illustrations into `apps/client/src/assets/`, build a typed
 lookup (`KitId` → portrait, `CardId` → base/upgraded/activated art) from the mapping table in

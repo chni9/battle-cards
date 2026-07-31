@@ -20,6 +20,8 @@ export default defineConfig({
         },
       },
       {
+        // Vite asset pipeline so `import.meta.glob(...?url)` resolves PNGs (L10-03).
+        extends: './apps/client/vite.config.ts',
         test: {
           name: 'client',
           root: './apps/client',
