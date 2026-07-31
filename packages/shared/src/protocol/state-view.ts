@@ -8,6 +8,21 @@ import type { CardId, CardInstance } from '../domain/card';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
+/** Mirrors `EliminationReason` in messages.ts — kept local to avoid a circular import. */
+export type ActionLogEliminationReason = 'combat' | 'absence' | 'inactivity' | 'leave';
+
+/** Mirrors `PublicActionKind` — local copy avoids messages ↔ state-view cycle. */
+export type ActionLogPlayedAction =
+  | 'draw'
+  | 'playCard'
+  | 'playMultipleAttacks'
+  | 'buyCard'
+  | 'sellCard'
+  | 'upgradeCard'
+  | 'buyUpgradePoint'
+  | 'sellUpgradePoint'
+  | 'buySpecialCard';
+
 /** A seated player as seen in the lobby — nicknames are public once joined. */
 export interface LobbySeatView {
   id: string;
@@ -120,26 +135,100 @@ export interface PlayingStateView {
   /** Present only for the recipient. */
   self: PrivateSelfView;
   pendingEffects: readonly PendingEffectView[];
-  /** Public action log entries (card identity included — ruling §6.2 #7). */
+  /**
+   * Public history since game start (technical spec §7 / L9-02).
+   * Discriminated by `kind` — plays, resolutions, elims, Mirror redirects,
+   * opaque reward claims. Card identity included on plays (ruling §6.2 #7).
+   */
   actionLog: readonly ActionLogEntryView[];
 }
 
-export interface ActionLogEntryView {
+/** Played action — same public fields as `actionPlayed` wire payload. */
+export interface ActionPlayedLogEntry {
+  kind: 'actionPlayed';
   actorPlayerId: string;
-  action:
-    | 'draw'
-    | 'playCard'
-    | 'playMultipleAttacks'
-    | 'buyCard'
-    | 'sellCard'
-    | 'upgradeCard'
-    | 'buyUpgradePoint'
-    | 'sellUpgradePoint'
-    | 'buySpecialCard';
+  action: ActionLogPlayedAction;
   cardId?: CardId;
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string }[];
   turnSequence: number;
+}
+
+/** Effect resolution outcome — durable copy of `actionResolved`. */
+export interface ActionResolvedLogEntry {
+  kind: 'actionResolved';
+  effectId: string;
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  cardId: CardId;
+  livesLost: number;
+  shieldAbsorbed: number;
+  outcome: 'applied' | 'immune' | 'cancelled';
+  turnSequence: number;
+}
+
+/** Public elimination — durable copy of `playerEliminated`. */
+export interface PlayerEliminatedLogEntry {
+  kind: 'playerEliminated';
+  playerId: string;
+  eliminatorPlayerId: string | null;
+  reason: ActionLogEliminationReason;
+  turnSequence: number;
+}
+
+/** Mirror redirected a pending attack onto a new target. */
+export interface MirrorRedirectedLogEntry {
+  kind: 'mirrorRedirected';
+  actorPlayerId: string;
+  cardId: CardId;
+  previousTargetPlayerId: string;
+  newTargetPlayerId: string;
+  turnSequence: number;
+}
+
+/**
+ * Elimination rewards were claimed (or defaulted on timeout).
+ * Opaque — never includes the specific picks (L9-02 product ruling).
+ */
+export interface RewardsClaimedLogEntry {
+  kind: 'rewardsClaimed';
+  eliminatorPlayerId: string;
+  eliminatedPlayerId: string;
+  turnSequence: number;
+}
+
+export type ActionLogEntryView =
+  | ActionPlayedLogEntry
+  | ActionResolvedLogEntry
+  | PlayerEliminatedLogEntry
+  | MirrorRedirectedLogEntry
+  | RewardsClaimedLogEntry;
+
+export type ActionLogEntryKind = ActionLogEntryView['kind'];
+
+/** Per-player public aggregates for the end-screen recap (L9-03). */
+export interface GameRecapPlayerView {
+  playerId: string;
+  cardsPlayedCount: number;
+  buyCount: number;
+  sellCount: number;
+  upgradeCount: number;
+}
+
+export interface GameRecapEliminationView {
+  playerId: string;
+  eliminatorPlayerId: string | null;
+  reason: ActionLogEliminationReason;
+}
+
+/**
+ * Public game-over summary — no kits, hands, seed, or private resources
+ * (visibility §5.1 / 2026-07-30; L9-03).
+ */
+export interface GameRecapView {
+  turnSequence: number;
+  players: readonly GameRecapPlayerView[];
+  eliminations: readonly GameRecapEliminationView[];
 }
 
 export interface FinishedStateView {
@@ -148,6 +237,7 @@ export interface FinishedStateView {
   gameCode: string;
   winnerPlayerId: string;
   players: readonly PublicPlayerView[];
+  recap: GameRecapView;
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

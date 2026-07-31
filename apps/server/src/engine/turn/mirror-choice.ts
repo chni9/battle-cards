@@ -5,6 +5,7 @@
 import {
   ATTACK_CARD_IDS,
   type AttackCardId,
+  type CardId,
   type GameState,
   type PendingEffect,
   type Player,
@@ -14,6 +15,13 @@ import type { Rng } from '../rng';
 import { findPlayer } from './advance-turn';
 
 export const MIRROR_SUB_CHOICE_MS = 20_000;
+
+export interface MirrorRedirectInfo {
+  actorPlayerId: string;
+  cardId: CardId;
+  previousTargetPlayerId: string;
+  newTargetPlayerId: string;
+}
 
 function isAttackCardId(cardId: string): cardId is AttackCardId {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
@@ -44,7 +52,7 @@ export function redirectPendingAttack(
   effectId: string,
   newTargetPlayerId: string,
   doubleDamage: boolean,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true; redirect: MirrorRedirectInfo } | { ok: false; message: string } {
   if (newTargetPlayerId === owner.id) {
     return { ok: false, message: 'Invalid Mirror target.' };
   }
@@ -67,6 +75,7 @@ export function redirectPendingAttack(
     return { ok: false, message: 'That pending attack is not available.' };
   }
 
+  const previousTargetPlayerId = effect.targetPlayerId;
   effect.targetPlayerId = newTargetPlayerId;
 
   if (doubleDamage) {
@@ -74,10 +83,21 @@ export function redirectPendingAttack(
   }
 
   newTarget.pendingEffects.push(effect);
-  return { ok: true };
+  return {
+    ok: true,
+    redirect: {
+      actorPlayerId: owner.id,
+      cardId: effect.cardId,
+      previousTargetPlayerId,
+      newTargetPlayerId,
+    },
+  };
 }
 
-export function applyDefaultMirrorRedirect(state: GameState, rng: Rng): { ok: true } | { ok: false; message: string } {
+export function applyDefaultMirrorRedirect(
+  state: GameState,
+  rng: Rng,
+): { ok: true; redirect: MirrorRedirectInfo } | { ok: false; message: string } {
   const choice = state.mirrorChoice;
 
   if (choice === null) {

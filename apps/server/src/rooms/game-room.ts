@@ -593,6 +593,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.clearRewardTimer();
+    this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
 
@@ -600,25 +601,49 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.actionTakenThisTurn = true;
     this.clearTurnTimer();
 
-    const played: ActionPlayedPayload = {
-      actorPlayerId: result.actionPlayed.actorPlayerId,
-      action: result.actionPlayed.action,
-      turnSequence: result.actionPlayed.turnSequence,
-      ...(result.actionPlayed.cardId !== undefined
-        ? { cardId: result.actionPlayed.cardId }
-        : {}),
-      ...(result.actionPlayed.targetPlayerId !== undefined
-        ? { targetPlayerId: result.actionPlayed.targetPlayerId }
-        : {}),
-      ...(result.actionPlayed.attacks !== undefined
-        ? { attacks: result.actionPlayed.attacks }
-        : {}),
-    };
+    const turnSequence = result.actionPlayed.turnSequence;
 
-    this.actionLog.push(played);
-    this.broadcast(ACTION_PLAYED, played);
+    if (result.mirrorRedirect !== undefined) {
+      this.actionLog.push({
+        kind: 'mirrorRedirected',
+        actorPlayerId: result.mirrorRedirect.actorPlayerId,
+        cardId: result.mirrorRedirect.cardId,
+        previousTargetPlayerId: result.mirrorRedirect.previousTargetPlayerId,
+        newTargetPlayerId: result.mirrorRedirect.newTargetPlayerId,
+        turnSequence: result.mirrorRedirect.turnSequence,
+      });
+    } else {
+      const played: ActionPlayedPayload = {
+        actorPlayerId: result.actionPlayed.actorPlayerId,
+        action: result.actionPlayed.action,
+        turnSequence,
+        ...(result.actionPlayed.cardId !== undefined
+          ? { cardId: result.actionPlayed.cardId }
+          : {}),
+        ...(result.actionPlayed.targetPlayerId !== undefined
+          ? { targetPlayerId: result.actionPlayed.targetPlayerId }
+          : {}),
+        ...(result.actionPlayed.attacks !== undefined
+          ? { attacks: result.actionPlayed.attacks }
+          : {}),
+      };
+
+      this.actionLog.push({ kind: 'actionPlayed', ...played });
+      this.broadcast(ACTION_PLAYED, played);
+    }
 
     for (const resolved of result.resolved) {
+      this.actionLog.push({
+        kind: 'actionResolved',
+        effectId: resolved.effectId,
+        sourcePlayerId: resolved.sourcePlayerId,
+        targetPlayerId: resolved.targetPlayerId,
+        cardId: resolved.cardId,
+        livesLost: resolved.livesLost,
+        shieldAbsorbed: resolved.shieldAbsorbed,
+        outcome: resolved.outcome,
+        turnSequence,
+      });
       this.broadcast(ACTION_RESOLVED, resolved);
     }
 
@@ -640,6 +665,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.actionTakenThisTurn = false;
+  }
+
+  private appendRewardsClaimed(claimed: {
+    eliminatorPlayerId: string;
+    eliminatedPlayerId: string;
+  }): void {
+    const turnSequence = this.gameState?.turnSequence ?? 0;
+
+    this.actionLog.push({
+      kind: 'rewardsClaimed',
+      eliminatorPlayerId: claimed.eliminatorPlayerId,
+      eliminatedPlayerId: claimed.eliminatedPlayerId,
+      turnSequence,
+    });
   }
 
   private beginMirrorTimer(
@@ -746,6 +785,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.clearRewardTimer();
+    this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
 
@@ -1174,6 +1214,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
     reason: EliminationReason;
   }): void {
     this.eliminations.push(entry);
+    this.actionLog.push({
+      kind: 'playerEliminated',
+      playerId: entry.playerId,
+      eliminatorPlayerId: entry.eliminatorPlayerId,
+      reason: entry.reason,
+      turnSequence: this.gameState?.turnSequence ?? 0,
+    });
     this.broadcast(PLAYER_ELIMINATED, entry);
   }
 
@@ -1284,6 +1331,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
           gameCode: this.roomId,
           state: this.gameState,
           winnerPlayerId: this.winnerPlayerId,
+          actionLog: this.actionLog,
+          eliminations: this.eliminations,
         }),
       );
       return;

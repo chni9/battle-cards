@@ -16,6 +16,7 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useState } from 'react';
 
+import { ActionLogPanel } from './action-log/action-log-panel';
 import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
 
 type RewardKind = RewardChoice['type'];
@@ -845,32 +846,7 @@ function TableScreen(props: {
         )}
       </section>
 
-      <section>
-        <h2>Action log</h2>
-        {view.actionLog.length === 0 ? (
-          <p>No actions yet</p>
-        ) : (
-          <ol>
-            {view.actionLog.map((entry, index) => (
-              <li key={`${entry.turnSequence}-${index}`}>
-                {nicknameOf(view, entry.actorPlayerId)}: {entry.action}
-                {entry.cardId !== undefined ? ` ${entry.cardId}` : ''}
-                {entry.targetPlayerId !== undefined
-                  ? ` → ${nicknameOf(view, entry.targetPlayerId)}`
-                  : ''}
-                {entry.attacks !== undefined
-                  ? ` [${entry.attacks
-                      .map(
-                        (attack) =>
-                          `${attack.cardId}→${nicknameOf(view, attack.targetPlayerId)}`,
-                      )
-                      .join(', ')}]`
-                  : ''}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <ActionLogPanel view={view} />
 
       <section>
         <h2>Your zone</h2>

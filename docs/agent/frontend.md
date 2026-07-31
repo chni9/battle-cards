@@ -17,7 +17,7 @@ Functional UI only for V1 — no art direction (technical spec §9). Screens liv
 | Home | No room — create / join + nickname |
 | Lobby | `phase: 'lobby'` — seats, code, host Start |
 | Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` |
-| End | `phase: 'finished'` — winner, return home |
+| End | `phase: 'finished'` — winner, public recap stats, return home |
 
 ## Conventions
 
@@ -32,7 +32,14 @@ Functional UI only for V1 — no art direction (technical spec §9). Screens liv
   show paused copy instead of a live countdown.
 - **Degraded states (L9-01):** each `PublicPlayerView.connection` drives badges —
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
-- Action log is the table's main organ (technical spec §7).
+- Action log is the table's main organ (technical spec §7). Browsable history lives in
+  `apps/client/src/action-log/` — scrollable turn groups, player/kind/search filters.
+  Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
+  `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
+  shown.
+- **End screen (L9-03):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
+  counts + eliminations. No kits, hands, seed, or exact final resources. Return home via
+  `leaveGame()`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror) and may include
   `quantity` (Regen 1–4). Table: hand select + “Include target” checkbox + quantity field.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2

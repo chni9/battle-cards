@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-61 of 63 tasks done. **Lot 8 complete** — next up is L9-02.
+62 of 63 tasks done. **Lot 9** — L9-02 Done; next up is L9-03.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -55,7 +55,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 6 · Elimination | 5 | 5 |
 | 7 · Robustness | 5 | 5 |
 | 8 · Game log | 2 | 2 |
-| 9 · Polish | 3 | 1 |
+| 9 · Polish | 3 | 2 |
 
 ## Milestones
 
@@ -600,7 +600,7 @@ Absent player, automatic-turn counter before elimination, turn and sub-choice ti
 - **Acceptance** States are readable without opening the console
 - **Note** Pulled forward into Lot 7 playtest readiness (PROTOCOL_VERSION 17 `connection` on `PublicPlayerView`).
 
-### L9-02 · Browsable action log — `To do`
+### L9-02 · Browsable action log — `Done`
 
 Complete history since the start of the game, including card identity, purchases and upgrades included.
 

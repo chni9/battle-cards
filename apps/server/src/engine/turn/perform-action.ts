@@ -27,6 +27,7 @@ import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import {
   applyDefaultMirrorRedirect,
+  type MirrorRedirectInfo,
   redirectPendingAttack,
 } from './mirror-choice';
 import {
@@ -95,6 +96,11 @@ export interface TurnResult {
   mirrorChoicePending?: boolean;
   /** True when elimination rewards are waiting for chooseEliminationReward / default. */
   rewardChoicePending?: boolean;
+  /**
+   * Present when this result completes a Mirror redirect (choice or default).
+   * Room logs `mirrorRedirected` instead of a second `actionPlayed` for Mirror.
+   */
+  mirrorRedirect?: MirrorRedirectInfo & { turnSequence: number };
 }
 
 export interface TurnRejection {
@@ -297,19 +303,25 @@ export function completeMirrorChoice(
     return redirected;
   }
 
+  const turnSequence = state.turnSequence;
   state.mirrorChoice = null;
 
-  return finishTurnPhases(
+  const result = finishTurnPhases(
     state,
     actorPlayerId,
     {
       actorPlayerId,
       action: 'playCard',
       cardId: 'mirror',
-      turnSequence: state.turnSequence,
+      turnSequence,
     },
     rng,
   );
+
+  return {
+    ...result,
+    mirrorRedirect: { ...redirected.redirect, turnSequence },
+  };
 }
 
 /**
@@ -329,19 +341,25 @@ export function expireMirrorChoice(state: GameState, rng: Rng): PerformActionRes
     return applied;
   }
 
+  const turnSequence = state.turnSequence;
   state.mirrorChoice = null;
 
-  return finishTurnPhases(
+  const result = finishTurnPhases(
     state,
     actorPlayerId,
     {
       actorPlayerId,
       action: 'playCard',
       cardId: 'mirror',
-      turnSequence: state.turnSequence,
+      turnSequence,
     },
     rng,
   );
+
+  return {
+    ...result,
+    mirrorRedirect: { ...applied.redirect, turnSequence },
+  };
 }
 
 export type EliminationRewardTurnResult =
@@ -349,6 +367,10 @@ export type EliminationRewardTurnResult =
       ok: true;
       rewardChoicePending: boolean;
       winnerPlayerId: string | null;
+      rewardsClaimed: {
+        eliminatorPlayerId: string;
+        eliminatedPlayerId: string;
+      };
     }
   | { ok: false; message: string };
 

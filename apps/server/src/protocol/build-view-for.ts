@@ -10,6 +10,7 @@
 import type {
   ActionLogEntryView,
   FinishedStateView,
+  GameRecapView,
   GameState,
   LobbySeatView,
   LobbyStateView,
@@ -20,6 +21,8 @@ import type {
   SpiedPlayerView,
 } from '@card-battle/shared';
 
+import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
+import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { findSpyRelation } from './visibility-matrix';
 
 export interface LobbyViewInput {
@@ -154,10 +157,38 @@ export interface FinishedViewInput {
   gameCode: string;
   state: GameState;
   winnerPlayerId: string;
+  actionLog: readonly ActionLogEntryView[];
+  eliminations: readonly FinishedGameEliminationRecord[];
+}
+
+export function buildGameRecapView(
+  state: GameState,
+  actionLog: readonly ActionLogEntryView[],
+  eliminations: readonly FinishedGameEliminationRecord[],
+): GameRecapView {
+  return {
+    turnSequence: state.turnSequence,
+    players: state.players.map((player) => {
+      const aggregates = aggregateActionsForPlayer(player.id, actionLog);
+
+      return {
+        playerId: player.id,
+        cardsPlayedCount: aggregates.cardsPlayedCount,
+        buyCount: aggregates.buyCount,
+        sellCount: aggregates.sellCount,
+        upgradeCount: aggregates.upgradeCount,
+      };
+    }),
+    eliminations: eliminations.map((entry) => ({
+      playerId: entry.playerId,
+      eliminatorPlayerId: entry.eliminatorPlayerId,
+      reason: entry.reason,
+    })),
+  };
 }
 
 export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateView {
-  const { recipientSessionId, gameCode, state, winnerPlayerId } = input;
+  const { recipientSessionId, gameCode, state, winnerPlayerId, actionLog, eliminations } = input;
 
   if (!state.players.some((player) => player.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
@@ -180,5 +211,6 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
       },
     })),
+    recap: buildGameRecapView(state, actionLog, eliminations),
   };
 }

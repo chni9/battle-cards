@@ -632,3 +632,16 @@ Finished games are written once to Postgres (technical spec §3). Stack and shap
   `DATABASE_URL` is set. Default `pnpm verify` needs no Postgres.
 
 Playbook: `docs/agent/db.md`.
+
+## 2026-08-01 · [P] Public history kinds + finished recap (L9-02 / L9-03)
+
+- **`ActionLogEntryView`** becomes a `kind` discriminated union: `actionPlayed`,
+  `actionResolved`, `playerEliminated`, `mirrorRedirected`, `rewardsClaimed`.
+- **`rewardsClaimed` is opaque** — eliminator + eliminated player ids only; never the two
+  picks (lives / points / UP / card). Product ruling for L9-02.
+- Mirror completion logs `mirrorRedirected` instead of a second `actionPlayed` for Mirror
+  (avoids double-counting plays in L8 aggregates).
+- L8 / L9-03 aggregates count **only** `kind === 'actionPlayed'`.
+- **`FinishedStateView.recap`**: turnSequence + per-player public counts + eliminations.
+  Kits and exact final resources stay private at game over (visibility §5.1 / 2026-07-30).
+- PROTOCOL_VERSION 18.

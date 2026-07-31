@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../engine/create-initial-state';
-import { buildLobbyViewFor, buildPlayingViewFor } from './build-view-for';
+import { buildFinishedViewFor, buildLobbyViewFor, buildPlayingViewFor } from './build-view-for';
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
@@ -124,5 +124,70 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(serialised).not.toContain('19');
     expect(serialised).not.toContain('"shield"');
     expect(view.self.lives).toBe(state.players.find((player) => player.id === 'a')?.lives);
+  });
+});
+
+describe('buildFinishedViewFor (L9-03)', () => {
+  it('includes public recap aggregates without kits or private resources', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'finished-recap',
+    });
+
+    const view = buildFinishedViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'playCard',
+          cardId: 'basic-attack',
+          targetPlayerId: 'b',
+          turnSequence: 1,
+        },
+        {
+          kind: 'actionResolved',
+          effectId: 'e1',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'basic-attack',
+          livesLost: 1,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 2,
+        },
+        {
+          kind: 'rewardsClaimed',
+          eliminatorPlayerId: 'a',
+          eliminatedPlayerId: 'b',
+          turnSequence: 2,
+        },
+      ],
+      eliminations: [
+        { playerId: 'b', eliminatorPlayerId: 'a', reason: 'combat' },
+      ],
+    });
+
+    expect(view.phase).toBe('finished');
+    expect(view.recap.players.find((row) => row.playerId === 'a')).toMatchObject({
+      cardsPlayedCount: 1,
+      buyCount: 0,
+      sellCount: 0,
+      upgradeCount: 0,
+    });
+    expect(view.recap.eliminations).toEqual([
+      { playerId: 'b', eliminatorPlayerId: 'a', reason: 'combat' },
+    ]);
+
+    const serialised = JSON.stringify(view);
+    expect(serialised).not.toContain('finished-recap');
+    expect(serialised).not.toMatch(/"kitId"/);
+    expect(view.players[0]).not.toHaveProperty('lives');
   });
 });

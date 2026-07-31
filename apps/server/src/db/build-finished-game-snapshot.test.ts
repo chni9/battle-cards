@@ -42,6 +42,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
       },
       actionLog: [
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'playCard',
           cardId: 'basic-attack',
@@ -49,6 +50,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
           turnSequence: 1,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'playMultipleAttacks',
           attacks: [
@@ -58,40 +60,47 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
           turnSequence: 2,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'bob',
           action: 'buyCard',
           cardId: 'tax',
           turnSequence: 3,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'bob',
           action: 'sellCard',
           cardId: 'tax',
           turnSequence: 4,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'upgradeCard',
           cardId: 'basic-attack',
           turnSequence: 5,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'buySpecialCard',
           cardId: 'suicide',
           turnSequence: 6,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'bob',
           action: 'buyUpgradePoint',
           turnSequence: 7,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'bob',
           action: 'sellUpgradePoint',
           turnSequence: 8,
         },
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'draw',
           turnSequence: 9,
@@ -180,6 +189,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
       },
       actionLog: [
         {
+          kind: 'actionPlayed',
           actorPlayerId: 'alice',
           action: 'playMultipleAttacks',
           turnSequence: 1,

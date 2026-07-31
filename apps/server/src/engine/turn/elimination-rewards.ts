@@ -335,7 +335,16 @@ function finishRewardJob(state: GameState): void {
 }
 
 export type ApplyRewardResult =
-  | { ok: true; rewardChoicePending: boolean; winnerPlayerId: string | null }
+  | {
+      ok: true;
+      rewardChoicePending: boolean;
+      winnerPlayerId: string | null;
+      /** Opaque public history — picks never included (L9-02). */
+      rewardsClaimed: {
+        eliminatorPlayerId: string;
+        eliminatedPlayerId: string;
+      };
+    }
   | { ok: false; message: string };
 
 /**
@@ -383,11 +392,16 @@ export function applyEliminationRewardChoices(
     return secondCheck;
   }
 
+  const rewardsClaimed = {
+    eliminatorPlayerId: active.eliminatorPlayerId,
+    eliminatedPlayerId: active.eliminatedPlayerId,
+  };
+
   applyOneChoice(state, eliminator, eliminated, choices[0]);
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
   finishRewardJob(state);
-  return resumeAfterRewards(state);
+  return { ...resumeAfterRewards(state), rewardsClaimed };
 }
 
 /**

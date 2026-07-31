@@ -74,6 +74,15 @@ Server → clients (§5.3):
 eliminator, chainable: `{ eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`) ·
 `playerEliminated` · `gameOver` · `error`
 
+`PlayingStateView.actionLog` (PROTOCOL_VERSION 18) is the durable public history: discriminated
+`kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
+`rewardsClaimed` (eliminator + victim only — never the picks). Ephemeral `actionPlayed` /
+`actionResolved` broadcasts stay separate.
+
+`FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
+counts per player + eliminations). Kits and final private resources stay off the finished
+view.
+
 `chooseEliminationReward`: `{ eliminationId, choices: [RewardChoice, RewardChoice] }` where each
 choice is `{ type: 'lives' | 'points' | 'upgradePoint' }` or `{ type: 'card', instanceId }`.
 While `rewardChoice` is active on the server, other actions are rejected (Mirror-shaped gate).
