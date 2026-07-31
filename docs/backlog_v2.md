@@ -68,11 +68,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-3 of 20 V2 tasks done. Active from Lot 10.
+4 of 20 V2 tasks done. Active from Lot 10.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 10 · Design system foundations | 5 | 3 |
+| 10 · Design system foundations | 5 | 4 |
 | 11 · Home and Lobby | 2 | 0 |
 | 12 · Table | 7 | 0 |
 | 13 · End screen | 1 | 0 |
@@ -119,7 +119,7 @@ mappings decided in this session.
 - **Watch point** A wrong or guessed mapping puts incorrect art on a card every kit can hold — silent, and nobody will report a bug for "wrong flavor art." Only wire the confirmed table; leave any still-unconfirmed entry as an explicit placeholder, not a guess.
 - **Acceptance** Every V1 `CardId` and `KitId` resolves to the correct file at both upgrade states where they exist; no import of an out-of-V1-scope asset (the other 11 kits, non-V1 cards)
 
-### L10-04 · Base components — `To do`
+### L10-04 · Base components — `Done`
 
 `Card`, `ResourceIcon` (life / point / shield / upgrade point), `Button`, connection/status
 badge — built once, reused by every screen.

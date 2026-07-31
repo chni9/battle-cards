@@ -18,6 +18,11 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { ActionLogPanel } from './action-log/action-log-panel';
+import { Button } from './design/components/button';
+import { Card } from './design/components/card';
+import { ConnectionBadge } from './design/components/connection-badge';
+import { KitPortrait } from './design/components/kit-portrait';
+import { ResourceIcon } from './design/components/resource-icon';
 import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
 
 type RewardKind = RewardChoice['type'];
@@ -42,34 +47,6 @@ const STATUS_LABELS = {
   failed: 'Could not join',
 } as const;
 
-function formatConnectionBadge(player: {
-  connection: {
-    status: 'connected' | 'disconnected' | 'absent';
-    automaticTurnsTaken: number;
-    consecutiveTimeouts: number;
-  };
-  isEliminated: boolean;
-}): string {
-  if (player.isEliminated) {
-    return ' (eliminated)';
-  }
-
-  const { status, automaticTurnsTaken, consecutiveTimeouts } = player.connection;
-
-  if (status === 'disconnected') {
-    return ' (disconnected — grace)';
-  }
-
-  if (status === 'absent') {
-    return ` (absent ${automaticTurnsTaken}/3)`;
-  }
-
-  if (consecutiveTimeouts > 0) {
-    return ` (idle timeouts ${consecutiveTimeouts}/5)`;
-  }
-
-  return '';
-}
 
 export function App() {
   const connection = useRoomConnection();
@@ -134,15 +111,15 @@ export function App() {
       view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
 
     return (
-      <main>
-        <h1>Card Battle</h1>
+      <main className="bg-surface p-4 font-sans text-ink">
+        <h1 className="text-2xl font-semibold text-ink">Card Battle</h1>
         <h2>Game over</h2>
         <p>Winner: {winner?.nickname ?? view.winnerPlayerId}</p>
         <ul>
           {view.players.map((player) => (
             <li key={player.id}>
               {player.nickname}
-              {formatConnectionBadge(player)}
+              <ConnectionBadge player={player} />
             </li>
           ))}
         </ul>
@@ -172,9 +149,9 @@ export function App() {
             </ul>
           )}
         </section>
-        <button type="button" onClick={() => void leaveGame()}>
+        <Button variant="red" onClick={() => void leaveGame()}>
           Return home
-        </button>
+        </Button>
       </main>
     );
   }
@@ -303,8 +280,8 @@ export function App() {
     const canLaunch = isHost && view.players.length >= 2;
 
     return (
-      <main>
-        <h1>Card Battle</h1>
+      <main className="bg-surface p-4 font-sans text-ink">
+        <h1 className="text-2xl font-semibold text-ink">Card Battle</h1>
         <p>Protocol v{PROTOCOL_VERSION}</p>
         <h2>Lobby</h2>
         <p>
@@ -324,14 +301,14 @@ export function App() {
           ))}
         </ul>
         {isHost && (
-          <button type="button" disabled={!canLaunch} onClick={startGame}>
+          <Button variant="green" disabled={!canLaunch} onClick={startGame}>
             Start game
-          </button>
+          </Button>
         )}
         {!isHost && <p>Waiting for the host to start…</p>}
-        <button type="button" onClick={() => void leaveGame()}>
+        <Button variant="red" onClick={() => void leaveGame()}>
           Leave
-        </button>
+        </Button>
       </main>
     );
   }
@@ -365,15 +342,14 @@ export function App() {
 
       <section>
         <h2>Create a game</h2>
-        <button
-          type="button"
+        <Button variant="green"
           disabled={!canSubmit}
           onClick={() => {
             void createGame(nickname);
           }}
         >
           Create
-        </button>
+        </Button>
       </section>
 
       <section>
@@ -390,15 +366,14 @@ export function App() {
             spellCheck={false}
           />
         </label>
-        <button
-          type="button"
+        <Button variant="green"
           disabled={!canSubmit || joinCode.trim().length !== 6}
           onClick={() => {
             void joinGame(joinCode, nickname);
           }}
         >
           Join
-        </button>
+        </Button>
       </section>
     </main>
   );
@@ -716,13 +691,12 @@ function TableScreen(props: {
                 ))}
             </select>
           </label>
-          <button
-            type="button"
+          <Button variant="green"
             disabled={mirrorEffectId === '' || mirrorTargetId === ''}
             onClick={onChooseMirror}
           >
             Confirm redirect
-          </button>
+          </Button>
         </section>
       )}
 
@@ -803,9 +777,9 @@ function TableScreen(props: {
               </label>
             )}
           </div>
-          <button type="button" disabled={!rewardConfirmReady} onClick={onChooseReward}>
+          <Button variant="green" disabled={!rewardConfirmReady} onClick={onChooseReward}>
             Confirm rewards
-          </button>
+          </Button>
         </section>
       )}
 
@@ -825,41 +799,58 @@ function TableScreen(props: {
                   }}
                 />
                 {player.nickname}
-                {formatConnectionBadge(player)}
+                <ConnectionBadge player={player} />
               </label>
               {player.spied !== undefined && (
                 <div>
-                  <p>
-                    Spied · kit {player.spied.kitId}
-                    {player.spied.lives !== undefined
-                      ? ` · live: lives ${player.spied.lives}, points ${player.spied.points ?? 0}, UP ${player.spied.upgradePoints ?? 0}, shield ${player.spied.shield ?? 0}`
-                      : ''}
-                    {player.spied.resourcesSnapshot !== undefined
-                      ? ` · snapshot from turn ${player.spied.resourcesSnapshot.turnSequence}: lives ${player.spied.resourcesSnapshot.lives}, points ${player.spied.resourcesSnapshot.points}, UP ${player.spied.resourcesSnapshot.upgradePoints}, shield ${player.spied.resourcesSnapshot.shield}`
-                      : ''}
-                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <KitPortrait kitId={player.spied.kitId} nickname={player.nickname} />
+                    {player.spied.lives !== undefined ? (
+                      <>
+                        <ResourceIcon kind="life" value={player.spied.lives} />
+                        <ResourceIcon kind="point" value={player.spied.points ?? 0} />
+                        <ResourceIcon kind="upgradePoint" value={player.spied.upgradePoints ?? 0} />
+                        <ResourceIcon kind="shield" value={player.spied.shield ?? 0} />
+                      </>
+                    ) : null}
+                    {player.spied.resourcesSnapshot !== undefined ? (
+                      <span className="text-xs text-ink-muted">
+                        Snapshot turn {player.spied.resourcesSnapshot.turnSequence}:{' '}
+                        <ResourceIcon kind="life" value={player.spied.resourcesSnapshot.lives} />{' '}
+                        <ResourceIcon kind="point" value={player.spied.resourcesSnapshot.points} />{' '}
+                        <ResourceIcon
+                          kind="upgradePoint"
+                          value={player.spied.resourcesSnapshot.upgradePoints}
+                        />{' '}
+                        <ResourceIcon kind="shield" value={player.spied.resourcesSnapshot.shield} />
+                      </span>
+                    ) : null}
+                  </div>
                   <p>Hand:</p>
-                  <ul>
+                  <div className="flex flex-wrap gap-2">
                     {player.spied.hand.map((card) => (
-                      <li key={card.instanceId}>
-                        {card.cardId}
-                        {card.isUpgraded ? ' (upgraded)' : ''}
-                      </li>
+                      <Card key={card.instanceId} instance={card} />
                     ))}
-                  </ul>
+                  </div>
                   {player.spied.specialCards.length > 0 && (
                     <>
                       <p>Specials:</p>
-                      <ul>
+                      <div className="flex flex-wrap gap-2">
                         {player.spied.specialCards.map((card) => (
-                          <li key={card.instanceId}>
-                            {card.cardId}
-                            {card.isUpgraded ? ' (upgraded)' : ''}
-                          </li>
+                          <Card key={card.instanceId} instance={card} />
                         ))}
-                      </ul>
+                      </div>
                     </>
                   )}
+                </div>
+              )}
+              {player.spied === undefined && !player.isYou && (
+                <div className="mt-1">
+                  <KitPortrait
+                    kitId={null}
+                    nickname={player.nickname}
+                    isEliminated={player.isEliminated}
+                  />
                 </div>
               )}
             </li>
@@ -887,50 +878,54 @@ function TableScreen(props: {
 
       <section>
         <h2>Your zone</h2>
-        <p>
+        <p className="flex flex-wrap items-center gap-2">
           Status:
           {(() => {
             const self = view.players.find((player) => player.isYou);
             if (self === undefined) {
               return ' —';
             }
-            const badge = formatConnectionBadge(self);
-            return badge === '' ? ' connected' : badge;
+            return (
+              <>
+                {' '}
+                connected
+                <ConnectionBadge player={self} />
+              </>
+            );
           })()}
         </p>
-        <p>
-          Lives {view.self.lives} · Shield {view.self.shield}
-          {view.self.shieldIsUpgraded ? ' (upgraded)' : ''} · Points {view.self.points} · Upgrade
-          points {view.self.upgradePoints} · Kit {view.self.kitId}
-        </p>
-        <ul>
+        <div className="flex flex-wrap items-center gap-3">
+          <KitPortrait kitId={view.self.kitId} />
+          <ResourceIcon kind="life" value={view.self.lives} />
+          <ResourceIcon kind="shield" value={view.self.shield} />
+          <ResourceIcon kind="point" value={view.self.points} />
+          <ResourceIcon kind="upgradePoint" value={view.self.upgradePoints} />
+          {view.self.shieldIsUpgraded ? (
+            <span className="text-xs text-ink-muted">Shield upgraded</span>
+          ) : null}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
           {view.self.hand.map((card) => (
-            <li key={card.instanceId}>
-              {card.cardId}
-              {card.isUpgraded ? ' (upgraded)' : ''}
-            </li>
+            <Card key={card.instanceId} instance={card} />
           ))}
-        </ul>
+        </div>
         <h3>Specials</h3>
         {view.self.specialCards.length === 0 ? (
           <p>None</p>
         ) : (
-          <ul>
+          <div className="flex flex-wrap gap-2">
             {view.self.specialCards.map((card) => (
-              <li key={card.instanceId}>
-                {card.cardId}
-                {card.isUpgraded ? ' (upgraded)' : ''}
-              </li>
+              <Card key={card.instanceId} instance={card} />
             ))}
-          </ul>
+          </div>
         )}
       </section>
 
       <section>
         <h2>Actions</h2>
-        <button type="button" disabled={!isMyTurn || actionsLocked} onClick={onDraw}>
+        <Button variant="yellow" disabled={!isMyTurn || actionsLocked} onClick={onDraw}>
           Draw (+{drawValue} point{drawValue === 1 ? '' : 's'})
-        </button>
+        </Button>
         <div>
           <label>
             Play{' '}
@@ -983,8 +978,7 @@ function TableScreen(props: {
               }}
             />
           </label>
-          <button
-            type="button"
+          <Button variant="purple"
             disabled={
               !isMyTurn ||
               actionsLocked ||
@@ -995,7 +989,7 @@ function TableScreen(props: {
           >
             Play card
             {selectedPlayCard !== undefined ? ` (${selectedPlayCard.cardId})` : ''}
-          </button>
+          </Button>
         </div>
         {allowsMultiAttack && (
           <div>
@@ -1060,8 +1054,7 @@ function TableScreen(props: {
                 );
               })}
             </ul>
-            <button
-              type="button"
+            <Button variant="purple"
               disabled={
                 !isMyTurn ||
                 actionsLocked ||
@@ -1074,7 +1067,7 @@ function TableScreen(props: {
               onClick={onPlayMultipleAttacks}
             >
               Play {multiAttackIds.length} attacks
-            </button>
+            </Button>
           </div>
         )}
         <div>
@@ -1094,9 +1087,9 @@ function TableScreen(props: {
               ))}
             </select>
           </label>
-          <button type="button" disabled={!isMyTurn || actionsLocked} onClick={onBuy}>
+          <Button variant="orange" disabled={!isMyTurn || actionsLocked} onClick={onBuy}>
             Buy card
-          </button>
+          </Button>
         </div>
         <div>
           <label>
@@ -1118,13 +1111,12 @@ function TableScreen(props: {
               ))}
             </select>
           </label>
-          <button
-            type="button"
+          <Button variant="orange"
             disabled={!isMyTurn || actionsLocked || sellInstanceId === ''}
             onClick={onSell}
           >
             Sell card
-          </button>
+          </Button>
         </div>
         <div>
           <label>
@@ -1143,8 +1135,7 @@ function TableScreen(props: {
               ))}
             </select>
           </label>
-          <button
-            type="button"
+          <Button variant="orange"
             disabled={
               !isMyTurn ||
               actionsLocked ||
@@ -1154,34 +1145,31 @@ function TableScreen(props: {
             onClick={onUpgrade}
           >
             Upgrade card
-          </button>
+          </Button>
         </div>
-        <button
-          type="button"
+        <Button variant="orange"
           disabled={!isMyTurn || actionsLocked}
           onClick={onBuyUpgradePoint}
         >
           Buy upgrade point
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button variant="orange"
           disabled={!isMyTurn || actionsLocked || view.self.points < 20}
           onClick={onBuySpecialCard}
         >
           Buy special card (20 pts)
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button variant="orange"
           disabled={!isMyTurn || actionsLocked || view.self.upgradePoints < 1}
           onClick={onSellUpgradePoint}
         >
           Sell upgrade point
-        </button>
+        </Button>
       </section>
 
-      <button type="button" onClick={onLeave}>
+      <Button variant="red" onClick={onLeave}>
         Leave
-      </button>
+      </Button>
     </main>
   );
 }

@@ -38,6 +38,9 @@ rules above are unchanged — this section only covers how the client looks.
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`. Art resolution: `apps/client/src/design/asset-lookup.ts`
   (never invent a mapping; never import out-of-V1 art from `images/`).
+- **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
+  `red` (Leave / return home), `orange` (buy/sell/upgrade). CSS ornate CTAs only — no
+  `*_button.png` skins.
 - **Activated art** for Imposition / Points Generator is in the lookup with an optional
   `activated` prop on `Card`, but no screen may pass `activated` until a ruled protocol
   exposure of `activePersistentEffects`.

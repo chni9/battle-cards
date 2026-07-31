@@ -89,8 +89,8 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
   }
 
   return (
-    <section>
-      <h2>Action log</h2>
+    <section className="font-sans text-ink">
+      <h2 className="text-lg font-semibold">Action log</h2>
       <div>
         <label>
           Player{' '}
