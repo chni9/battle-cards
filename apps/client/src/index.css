@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens derived from V1 illustration/generic assets (technical spec v2 §5, L10-02).
+ * Sources: card faces, kit pastel pinks, verso/opponent slate, resource icons,
+ * button PNG hues only (buttons themselves are CSS — no PNG skins).
+ */
+
+@theme {
+  /* Surfaces — white attack cards + soft kit pastel */
+  --color-surface: #f7f4f2;
+  --color-surface-raised: #ffffff;
+  --color-surface-kit: #fadadd;
+  --color-ink: #1c1a1f;
+  --color-ink-muted: #4a5d6e;
+  --color-border: #2a2a2e;
+  --color-border-soft: #c5cdd4;
+
+  /* Opponent / verso chrome */
+  --color-slate: #506677;
+  --color-slate-soft: #b0c4de;
+
+  /* Resources — life.png / point.png / upgrade_point.png / shield_point.png */
+  --color-resource-life: #e85d5d;
+  --color-resource-point: #e6b422;
+  --color-resource-upgrade: #3cb371;
+  --color-resource-shield: #5b8def;
+
+  /* CTA accents — hues sampled from colored button PNGs (CSS only) */
+  --color-cta-purple: #8a2be2;
+  --color-cta-purple-hi: #ff49db;
+  --color-cta-yellow: #f0c419;
+  --color-cta-green: #54e20c;
+  --color-cta-green-deep: #1a6b02;
+  --color-cta-red: #d62828;
+  --color-cta-orange: #f0771f;
+  --color-cta-frame: #c9a227;
+  --color-cta-frame-deep: #5e3d01;
+  --color-cta-label: #1c1a1f;
+  --color-cta-label-on-dark: #f7f4f2;
+
+  /* Radius — thin card border language */
+  --radius-card: 0.375rem;
+  --radius-control: 0.25rem;
+  --radius-badge: 0.125rem;
+
+  /* Typography — Outfit (not Inter); assets carry no font */
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-surface);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+}

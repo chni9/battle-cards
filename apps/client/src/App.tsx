@@ -337,10 +337,10 @@ export function App() {
   }
 
   return (
-    <main className="p-4">
+    <main className="bg-surface p-4 font-sans text-ink">
       {/* L10-01 smoke: Tailwind class + trivial Motion enter (technical spec v2 §3) */}
       <motion.h1
-        className="text-2xl font-semibold tracking-tight"
+        className="font-sans text-2xl font-semibold tracking-tight text-ink"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}

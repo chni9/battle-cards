@@ -98,7 +98,7 @@ Add Tailwind CSS and Motion (`motion` package, formerly Framer Motion) to `apps/
 - **Watch point** Dependency additions must go through `pnpm add` so the lockfile updates — never hand-edit `package.json` (AGENTS.md §3).
 - **Acceptance** `pnpm dev`, `pnpm typecheck`, `pnpm lint` all pass with Tailwind classes and one trivial Motion animation rendering in the client
 
-### L10-02 · Design tokens from source assets — `To do`
+### L10-02 · Design tokens from source assets — `Done`
 
 Extract a color palette and typography scale from the existing illustrations and generic
 assets (resource icons, colored buttons, card backs), encode them as the Tailwind theme.

@@ -24,6 +24,29 @@ examples in place as V2 components land; don't fork a second frontend playbook.
 | Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` |
 | End | `phase: 'finished'` — winner, public recap stats, return home |
 
+## Design system (V2 · Lots 10+)
+
+Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
+rules above are unchanged — this section only covers how the client looks.
+
+- **Stack:** Tailwind CSS v4 (`@tailwindcss/vite`) + Motion (`motion/react`). Entry CSS:
+  `apps/client/src/index.css` (`@import "tailwindcss"` + `@theme` tokens). Font: Outfit via
+  `@fontsource/outfit` (not Inter).
+- **Tokens:** palette and type scale derived from the V1 asset subset (card faces, kit pastels,
+  verso/opponent slate, resource icons, button PNG *hues*). Colored `*_button.png` files are
+  **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
+- **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
+  `ConnectionBadge`, `KitPortrait`. Art resolution: `apps/client/src/design/asset-lookup.ts`
+  (never invent a mapping; never import out-of-V1 art from `images/`).
+- **Activated art** for Imposition / Points Generator is in the lookup with an optional
+  `activated` prop on `Card`, but no screen may pass `activated` until a ruled protocol
+  exposure of `activePersistentEffects`.
+- **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
+  No `*(dead).png` paths.
+- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
+  (contrast, touch targets, focus, reduced-motion). Landing-page layout rules from
+  design-taste-frontend do **not** apply to Home/Lobby/Table/End.
+
 ## Conventions
 
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.

@@ -721,3 +721,12 @@ Installed into `apps/client` via `pnpm add` (lockfile is source of truth):
 
 Smoke: Home title uses a Tailwind class and a trivial Motion enter animation.
 Versions recorded here rather than restated in `technical_spec_v2.md` §3.
+
+## 2026-08-01 · [P] V2 design tokens from assets (L10-02)
+
+Palette and type encoded in `apps/client/src/index.css` `@theme`, sampled from the V1
+asset subset (card faces, kit pastel pinks, verso/`opponent.png` slate, resource icons,
+button PNG hues only). Typography: Outfit via `@fontsource/outfit` 5.3.0 — assets carry
+no font; Outfit chosen over Inter as the creative call for this game UI. Colored button
+PNGs remain unused as skins (CSS CTAs later). Playbook: `docs/agent/frontend.md` · Design
+system section.
