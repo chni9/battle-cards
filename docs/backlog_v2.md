@@ -68,11 +68,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-4 of 20 V2 tasks done. Active from Lot 10.
+5 of 20 V2 tasks done. Active from Lot 11.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 10 · Design system foundations | 5 | 4 |
+| 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 2 | 0 |
 | 12 · Table | 7 | 0 |
 | 13 · End screen | 1 | 0 |
@@ -127,7 +127,7 @@ badge — built once, reused by every screen.
 - **Reference** Technical spec v2 §5 · **Depends on** L10-02, L10-03 · **Complexity** M · **Risk** Low
 - **Acceptance** Home, Lobby, Table and End all consume these components — no screen redefines its own card or icon markup
 
-### L10-05 · Generic elimination treatment — `To do`
+### L10-05 · Generic elimination treatment — `Done`
 
 One visual treatment (not per-kit art) applied to any eliminated player's portrait — developer
 ruling 2026-08-01: no "(dead)" illustration per kit, including Kamikaze, which has none today.

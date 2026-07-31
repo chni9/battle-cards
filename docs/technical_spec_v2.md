@@ -135,11 +135,11 @@ absence of one for Kamikaze, are both irrelevant under this ruling.
 | Resource icons | `life.png`, `point.png`, `shield_point.png`, `upgrade_point.png` |
 | Card backs | `verso attack card.png`, `verso action card.png`, `verso_special_card.png`, `verso kit.png` |
 | Card-type logos | `attack_logo.png`, `action_logo.png` |
-| Generic opponent avatar | `opponent.png` — **assumed** use: placeholder for an opponent zone before their kit is revealed (unspied). Flagged, not yet confirmed by the developer. |
-| Colored action buttons | `purple_button.png`, `yellow_button.png`, `green_button.png`, `red_button.png`, `orange_button.png` — **assumed** use: generic UI action buttons, not a per-kit color code. Flagged, not yet confirmed by the developer. |
+| Generic opponent avatar | `opponent.png` — **confirmed** (2026-08-01): placeholder for an opponent zone before their kit is revealed (unspied). |
+| Colored action buttons | `purple_button.png`, `yellow_button.png`, `green_button.png`, `red_button.png`, `orange_button.png` — **confirmed unused as UI skins** (2026-08-01). Hues inspire CSS `Button` variants only; the PNG files are not imported by the client. |
 
-The two "assumed" rows above must be confirmed (or corrected) before L10-04 builds the base
-`Button` component around them — do not let an assumption silently become the shipped design.
+`opponent.png` is wired via `getOpponentPlaceholderUrl()`. Button PNGs must not be copied into
+`apps/client/src/assets/` or referenced from code.
 
 ### 4.4 Explicitly not wired in V2
 
@@ -168,8 +168,8 @@ Base components (L10-04), built once and reused by every screen:
 - `Card` — renders a `CardInstance` (base/upgraded art, cost, effect text) from the L10-03
   asset lookup.
 - `ResourceIcon` — the four resource icons, each with its numeric value.
-- `Button` — the shared action button, using the design tokens from L10-02 (and the colored
-  button assets, once §4.3's assumption is confirmed).
+- `Button` — the shared action button, using the design tokens from L10-02 (CSS ornate CTAs
+  inspired by colored button PNG hues; those PNGs are not used as skins — 2026-08-01 ruling).
 - Connection/status badge — reused from the existing degraded-state model (`frontend.md`), only
   its appearance is new.
 

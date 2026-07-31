@@ -730,3 +730,18 @@ button PNG hues only). Typography: Outfit via `@fontsource/outfit` 5.3.0 — ass
 no font; Outfit chosen over Inter as the creative call for this game UI. Colored button
 PNGs remain unused as skins (CSS CTAs later). Playbook: `docs/agent/frontend.md` · Design
 system section.
+
+## 2026-08-01 · [P] Lot 10 visual rulings (L10-03–L10-05)
+
+Developer session while implementing Lot 10:
+
+- **`opponent.png`:** confirmed as unrevealed-kit placeholder.
+- **Colored `*_button.png`:** do **not** use as UI images. CSS `Button` component uses their
+  hues only (ornate hex CTAs). Files stay in repo `images/` but are not copied into
+  `apps/client/src/assets/`.
+- **`Draw.png`:** leave unwired in V2 for now.
+- **Activated art:** include Imposition/Generator activated files in the typed lookup and
+  optional `Card` `activated` prop; no screen passes `activated` until a ruled protocol
+  exposure of `activePersistentEffects` (no protocol bump in Lot 10).
+- **Elimination (L10-05):** greyscale/desaturate portrait **plus** an “Eliminated” badge
+  overlay on `KitPortrait`. No `*(dead).png` paths for any kit.

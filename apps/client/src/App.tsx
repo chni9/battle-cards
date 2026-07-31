@@ -804,7 +804,11 @@ function TableScreen(props: {
               {player.spied !== undefined && (
                 <div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <KitPortrait kitId={player.spied.kitId} nickname={player.nickname} />
+                    <KitPortrait
+                      kitId={player.spied.kitId}
+                      nickname={player.nickname}
+                      isEliminated={player.isEliminated}
+                    />
                     {player.spied.lives !== undefined ? (
                       <>
                         <ResourceIcon kind="life" value={player.spied.lives} />
