@@ -172,15 +172,23 @@ turn order rotates, so when it is your turn every opponent's last turn is alread
 
 ## Elimination
 
-Rules spec §6, rulings §6.2 #2, #3, #4.
+Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/elimination-rewards.ts`.
 
-- Eliminated player loses all lives, becomes a spectator, unclaimed cards go to the shared pool.
-- The eliminator picks **2 rewards** among: 4 lives, 8 points, a card of the eliminated
-  player's (unused special cards included), an upgrade point. The two may be identical.
-- **2 rewards per eliminated player**, cumulative, when one effect kills several.
-- **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide,
-  elimination by absence. Cards still go to the pool.
-- Simultaneous eliminators: tie-break is **Open decision #5**, unresolved. Stop and ask.
+- Eliminated player loses all lives, becomes a spectator. Pending effects **on** them are
+  cleared; their active persistents deactivate into the pool; pending effects **they** queued
+  on others stay (Suicide can still earn later rewards).
+- Cards are **held** until that elim's rewards finish; unclaimed cards then join the pool.
+- Contributors: every third-party source that dealt life loss (or a lethal Sentence) in the
+  same resolve+persist phase. Self Tax / self-Sentence / self-Suicide record no contributor.
+- Simultaneous eliminators (Open decision #5, closed): fewest lives → fewest points → seeded
+  `rng.pick`.
+- The eliminator picks **2 rewards** among: 4 lives (`gainLives` + `lifeLimit`), 8 points, a
+  card of the eliminated player's (unused specials included), an upgrade point. Both may match.
+- **2 rewards per eliminated player**, cumulative via a chainable `rewardQueue` (Mirror-shaped
+  pause: no `advanceTurn` / `gameOver` until the queue is empty). 20s sub-choice; expiry →
+  `2 × 4 lives`. Impossible card picks are rejected.
+- **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide
+  self-elim, elimination by absence. Cards still go to the pool immediately.
 
 ## What not to do
 

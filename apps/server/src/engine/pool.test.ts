@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from './create-initial-state';
 import { sellCard } from './economy/sell-card';
+import { applyDefaultEliminationRewards } from './turn/elimination-rewards';
 import { performTurnAction } from './turn/perform-action';
 import { queueEffect } from './turn/queue-effect';
 
@@ -90,6 +91,9 @@ describe('shared pool (L2-06)', () => {
 
     expect(result.ok).toBe(true);
     expect(defender.isEliminated).toBe(true);
+    // Cards are held until elimination rewards complete (Lot 6).
+    expect(result.ok && result.rewardChoicePending).toBe(true);
+    expect(applyDefaultEliminationRewards(state).ok).toBe(true);
     expect(state.pool.length).toBe(before + handSize + specialsSize);
     expect(defender.hand).toHaveLength(0);
     expect(defender.specialCards).toHaveLength(0);

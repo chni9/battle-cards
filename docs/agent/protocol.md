@@ -71,11 +71,13 @@ Server → clients (§5.3):
 `actionPlayed` (broadcast immediately) · `actionResolved` (broadcast on resolution; includes
 `outcome: 'applied' | 'immune' | 'cancelled'` since L4-03) ·
 `mirrorChoiceRequired` (to one player, with deadline) · `rewardChoiceRequired` (to the
-eliminator, chainable) · `playerEliminated` · `gameOver` · `error`
+eliminator, chainable: `{ eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`) ·
+`playerEliminated` · `gameOver` · `error`
 
-Payloads are specified in §5.2/§5.3. **`playCard`, `sellCard` and `upgradeCard` key on
-`instanceId`** (Lot 2 ruling — closes the §5.2 `cardId` discrepancy). `buyCard` still takes
-`cardId` (infinite stock, new copy). Wired economy events: `buyCard`, `sellCard`.
+`chooseEliminationReward`: `{ eliminationId, choices: [RewardChoice, RewardChoice] }` where each
+choice is `{ type: 'lives' | 'points' | 'upgradePoint' }` or `{ type: 'card', instanceId }`.
+While `rewardChoice` is active on the server, other actions are rejected (Mirror-shaped gate).
+On expiry the server grants `2 × 4 lives`. PROTOCOL_VERSION 16.
 
 One event is **not** in §5.2: `clientReady`, sent by a client once its handlers are registered.
 See "Transport" below — without it the first view is dropped.

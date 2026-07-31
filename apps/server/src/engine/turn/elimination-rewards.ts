@@ -1,0 +1,410 @@
+/**
+ * Elimination rewards — rules spec §6, technical spec §5.5–§5.6, backlog Lot 6.
+ */
+
+import {
+  type CardInstance,
+  type GameState,
+  type Player,
+  type RewardChoice,
+} from '@card-battle/shared';
+import { randomUUID } from 'node:crypto';
+
+import { transferCardInstance } from '../kits/acquire-card';
+import { gainLives } from '../life/gain-lives';
+import type { Rng } from '../rng';
+import { advanceTurn, findPlayer } from './advance-turn';
+import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+
+export const REWARD_SUB_CHOICE_MS = 20_000;
+export const ELIMINATION_REWARD_LIVES = 4;
+export const ELIMINATION_REWARD_POINTS = 8;
+
+export interface EliminationEvent {
+  playerId: string;
+  eliminatorPlayerId: string | null;
+}
+
+/**
+ * Record a third-party source that dealt life loss or a lethal effect this phase.
+ * Self sources are ignored. Distinct sources only.
+ */
+export function recordEliminationContributor(
+  state: GameState,
+  victimPlayerId: string,
+  sourcePlayerId: string,
+  livesLostOrLethal: number,
+): void {
+  if (livesLostOrLethal <= 0) {
+    return;
+  }
+
+  if (sourcePlayerId === victimPlayerId) {
+    return;
+  }
+
+  const already = state.eliminationContributors.some(
+    (entry) =>
+      entry.victimPlayerId === victimPlayerId && entry.sourcePlayerId === sourcePlayerId,
+  );
+
+  if (already) {
+    return;
+  }
+
+  state.eliminationContributors.push({ victimPlayerId, sourcePlayerId });
+}
+
+/**
+ * Pick the reward recipient among simultaneous eliminators — rules spec §6 italic.
+ * Fewest lives, then fewest points, then seeded random among remaining ties.
+ */
+export function selectEliminator(
+  candidateIds: readonly string[],
+  state: GameState,
+  rng: Rng,
+): string | null {
+  if (candidateIds.length === 0) {
+    return null;
+  }
+
+  if (candidateIds.length === 1) {
+    return candidateIds[0] ?? null;
+  }
+
+  const candidates = candidateIds
+    .map((id) => findPlayer(state, id))
+    .filter((player): player is Player => player !== undefined);
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  let minLives = Infinity;
+
+  for (const player of candidates) {
+    if (player.lives < minLives) {
+      minLives = player.lives;
+    }
+  }
+
+  const byLives = candidates.filter((player) => player.lives === minLives);
+
+  if (byLives.length === 1) {
+    return byLives[0]?.id ?? null;
+  }
+
+  let minPoints = Infinity;
+
+  for (const player of byLives) {
+    if (player.points < minPoints) {
+      minPoints = player.points;
+    }
+  }
+
+  const byPoints = byLives.filter((player) => player.points === minPoints);
+
+  if (byPoints.length === 1) {
+    return byPoints[0]?.id ?? null;
+  }
+
+  return rng.pick(byPoints).id;
+}
+
+function candidatesForVictim(state: GameState, victimPlayerId: string): string[] {
+  const ids: string[] = [];
+
+  for (const entry of state.eliminationContributors) {
+    if (entry.victimPlayerId !== victimPlayerId) {
+      continue;
+    }
+
+    if (!ids.includes(entry.sourcePlayerId)) {
+      ids.push(entry.sourcePlayerId);
+    }
+  }
+
+  return ids;
+}
+
+function cleanupEliminatedPlayer(state: GameState, player: Player): void {
+  player.pendingEffects = [];
+  if (player.activePersistentEffects.length > 0) {
+    poolDeactivatedPersistentEffects(state, player.activePersistentEffects);
+    player.activePersistentEffects = [];
+  }
+}
+
+function dumpCardsToPool(state: GameState, player: Player): void {
+  state.pool.push(...player.hand, ...player.specialCards);
+  player.hand = [];
+  player.specialCards = [];
+}
+
+function activateRewardHead(state: GameState): void {
+  const head = state.rewardQueue[0];
+
+  if (head === undefined) {
+    state.rewardChoice = null;
+    return;
+  }
+
+  state.rewardChoice = {
+    eliminationId: head.eliminationId,
+    eliminatorPlayerId: head.eliminatorPlayerId,
+    eliminatedPlayerId: head.eliminatedPlayerId,
+    deadlineMs: Date.now() + REWARD_SUB_CHOICE_MS,
+  };
+}
+
+/**
+ * Mark players at 0 lives, attribute eliminators, enqueue rewards or pool cards.
+ */
+export function processEliminations(state: GameState, rng: Rng): EliminationEvent[] {
+  const events: EliminationEvent[] = [];
+
+  for (const player of state.players) {
+    if (player.isEliminated || player.lives > 0) {
+      continue;
+    }
+
+    player.isEliminated = true;
+    player.lives = 0;
+    cleanupEliminatedPlayer(state, player);
+
+    const candidates = candidatesForVictim(state, player.id);
+    const eliminatorPlayerId = selectEliminator(candidates, state, rng);
+
+    events.push({ playerId: player.id, eliminatorPlayerId });
+
+    if (eliminatorPlayerId === null) {
+      dumpCardsToPool(state, player);
+      continue;
+    }
+
+    state.rewardQueue.push({
+      eliminationId: randomUUID(),
+      eliminatedPlayerId: player.id,
+      eliminatorPlayerId,
+    });
+  }
+
+  state.eliminationContributors = [];
+
+  if (state.rewardChoice === null && state.rewardQueue.length > 0) {
+    activateRewardHead(state);
+  }
+
+  return events;
+}
+
+export function listAvailableRewardCards(state: GameState, eliminatedPlayerId: string): CardInstance[] {
+  const player = findPlayer(state, eliminatedPlayerId);
+
+  if (player === undefined) {
+    return [];
+  }
+
+  return [...player.hand, ...player.specialCards];
+}
+
+function takeCardFromEliminated(
+  eliminated: Player,
+  instanceId: string,
+): CardInstance | null {
+  const handIndex = eliminated.hand.findIndex((card) => card.instanceId === instanceId);
+
+  if (handIndex >= 0) {
+    const [card] = eliminated.hand.splice(handIndex, 1);
+    return card ?? null;
+  }
+
+  const specialIndex = eliminated.specialCards.findIndex(
+    (card) => card.instanceId === instanceId,
+  );
+
+  if (specialIndex >= 0) {
+    const [card] = eliminated.specialCards.splice(specialIndex, 1);
+    return card ?? null;
+  }
+
+  return null;
+}
+
+function validateChoice(
+  eliminated: Player,
+  choice: RewardChoice,
+  claimedInstanceIds: Set<string>,
+): { ok: true } | { ok: false; message: string } {
+  if (choice.type !== 'card') {
+    return { ok: true };
+  }
+
+  if (claimedInstanceIds.has(choice.instanceId)) {
+    return { ok: false, message: 'That card was already chosen as a reward.' };
+  }
+
+  const inHand = eliminated.hand.some((card) => card.instanceId === choice.instanceId);
+  const inSpecials = eliminated.specialCards.some(
+    (card) => card.instanceId === choice.instanceId,
+  );
+
+  if (!inHand && !inSpecials) {
+    return { ok: false, message: 'That card is not available.' };
+  }
+
+  claimedInstanceIds.add(choice.instanceId);
+  return { ok: true };
+}
+
+function applyOneChoice(
+  state: GameState,
+  eliminator: Player,
+  eliminated: Player,
+  choice: RewardChoice,
+): void {
+  if (choice.type === 'lives') {
+    gainLives(eliminator, ELIMINATION_REWARD_LIVES, state.lifeLimit);
+    return;
+  }
+
+  if (choice.type === 'points') {
+    eliminator.points += ELIMINATION_REWARD_POINTS;
+    return;
+  }
+
+  if (choice.type === 'upgradePoint') {
+    eliminator.upgradePoints += 1;
+    return;
+  }
+
+  const card = takeCardFromEliminated(eliminated, choice.instanceId);
+
+  if (card !== null) {
+    transferCardInstance(eliminator, card);
+  }
+}
+
+function finishRewardJob(state: GameState): void {
+  const job = state.rewardQueue.shift();
+
+  if (job === undefined) {
+    state.rewardChoice = null;
+    return;
+  }
+
+  const eliminated = findPlayer(state, job.eliminatedPlayerId);
+
+  if (eliminated !== undefined) {
+    dumpCardsToPool(state, eliminated);
+  }
+
+  state.rewardChoice = null;
+  activateRewardHead(state);
+}
+
+export type ApplyRewardResult =
+  | { ok: true; rewardChoicePending: boolean; winnerPlayerId: string | null }
+  | { ok: false; message: string };
+
+/**
+ * Apply the eliminator's two reward picks for the active job.
+ */
+export function applyEliminationRewardChoices(
+  state: GameState,
+  chooserPlayerId: string,
+  eliminationId: string,
+  choices: readonly [RewardChoice, RewardChoice],
+): ApplyRewardResult {
+  const active = state.rewardChoice;
+
+  if (active?.eliminationId !== eliminationId) {
+    return { ok: false, message: 'No matching elimination reward pending.' };
+  }
+
+  if (active.eliminatorPlayerId !== chooserPlayerId) {
+    return { ok: false, message: 'Only the eliminator may choose rewards.' };
+  }
+
+  const head = state.rewardQueue[0];
+
+  if (head?.eliminationId !== eliminationId) {
+    return { ok: false, message: 'No matching elimination reward pending.' };
+  }
+
+  const eliminator = findPlayer(state, active.eliminatorPlayerId);
+  const eliminated = findPlayer(state, active.eliminatedPlayerId);
+
+  if (eliminator === undefined || eliminated === undefined) {
+    return { ok: false, message: 'Unknown player.' };
+  }
+
+  const claimed = new Set<string>();
+  const firstCheck = validateChoice(eliminated, choices[0], claimed);
+
+  if (!firstCheck.ok) {
+    return firstCheck;
+  }
+
+  const secondCheck = validateChoice(eliminated, choices[1], claimed);
+
+  if (!secondCheck.ok) {
+    return secondCheck;
+  }
+
+  applyOneChoice(state, eliminator, eliminated, choices[0]);
+  applyOneChoice(state, eliminator, eliminated, choices[1]);
+
+  finishRewardJob(state);
+  return resumeAfterRewards(state);
+}
+
+/**
+ * Default on sub-choice expiry: 2 × 4 lives (technical spec §5.6).
+ */
+export function applyDefaultEliminationRewards(state: GameState): ApplyRewardResult {
+  const active = state.rewardChoice;
+
+  if (active === null) {
+    return { ok: false, message: 'No elimination reward pending.' };
+  }
+
+  return applyEliminationRewardChoices(state, active.eliminatorPlayerId, active.eliminationId, [
+    { type: 'lives' },
+    { type: 'lives' },
+  ]);
+}
+
+function findWinner(state: GameState): string | null {
+  const alive = state.players.filter((player) => !player.isEliminated);
+
+  if (alive.length === 1) {
+    return alive[0]?.id ?? null;
+  }
+
+  return null;
+}
+
+export function resumeAfterRewards(state: GameState): {
+  ok: true;
+  rewardChoicePending: boolean;
+  winnerPlayerId: string | null;
+} {
+  if (state.rewardChoice !== null || state.rewardQueue.length > 0) {
+    return { ok: true, rewardChoicePending: true, winnerPlayerId: null };
+  }
+
+  const winnerPlayerId = findWinner(state);
+
+  if (winnerPlayerId === null) {
+    advanceTurn(state);
+  } else {
+    state.currentTurnPlayerId = null;
+  }
+
+  return { ok: true, rewardChoicePending: false, winnerPlayerId };
+}
+
+export function hasPendingEliminationRewards(state: GameState): boolean {
+  return state.rewardChoice !== null || state.rewardQueue.length > 0;
+}

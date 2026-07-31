@@ -57,17 +57,42 @@ export interface GameState {
    */
   mirrorChoice: MirrorChoiceState | null;
   /**
-   * Who eliminated whom this game — for Lot 6 reward selection. `eliminatorPlayerId`
-   * is `null` when no third party earns rewards (Tax, self-Sentence, self-Suicide).
-   * Appended when a player reaches 0 lives for a known cause; Lot 6 consumes it.
+   * Third-party sources that dealt life loss (or a lethal effect) to a victim during
+   * the current resolve+persist phase. Consumed when eliminations are marked (L6).
+   * Self damage is never recorded.
    */
-  eliminationAttributions: EliminationAttribution[];
+  eliminationContributors: EliminationContributor[];
+  /**
+   * Pending elimination reward jobs (2 picks each). Server-only queue; the active head
+   * is mirrored in `rewardChoice` (technical spec §5.5–§5.6, rules spec §6).
+   */
+  rewardQueue: EliminationRewardJob[];
+  /**
+   * Active elimination reward sub-choice, or `null`. While set, turn advance and
+   * game-over are paused (Mirror-shaped gate).
+   */
+  rewardChoice: RewardChoiceState | null;
 }
 
-/** One elimination event awaiting reward handling (Lot 6). */
-export interface EliminationAttribution {
+/** One third-party contributor to a potential elimination this phase. */
+export interface EliminationContributor {
+  victimPlayerId: string;
+  sourcePlayerId: string;
+}
+
+/** Queued reward selection for one eliminated player (rules spec §6). */
+export interface EliminationRewardJob {
+  eliminationId: string;
   eliminatedPlayerId: string;
-  eliminatorPlayerId: string | null;
+  eliminatorPlayerId: string;
+}
+
+/** In-flight reward sub-choice — technical spec §5.5. */
+export interface RewardChoiceState {
+  eliminationId: string;
+  eliminatorPlayerId: string;
+  eliminatedPlayerId: string;
+  deadlineMs: number;
 }
 
 /** In-flight Mirror redirect sub-choice — technical spec §5.5. */

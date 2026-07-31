@@ -8,6 +8,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_ELIMINATION_REWARD,
   CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
   DRAW_CARD,
@@ -19,6 +20,7 @@ import {
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
   UPGRADE_CARD,
@@ -28,10 +30,13 @@ import {
   type ActionPlayedPayload,
   type ActionResolvedPayload,
   type CardId,
+  type ChooseEliminationRewardPayload,
   type GameOverPayload,
   type MirrorChoiceRequiredPayload,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
+  type RewardChoice,
+  type RewardChoiceRequiredPayload,
   type RoomJoinOptions,
   type StateView,
   type TurnStartedPayload,
@@ -63,6 +68,8 @@ export interface RoomConnection {
   lastActionResolved: ActionResolvedPayload | null;
   /** Set when the server asks this client for a Mirror redirect (L3-09). */
   mirrorChoice: MirrorChoiceRequiredPayload | null;
+  /** Set when the server asks this client for an elimination reward (Lot 6). */
+  rewardChoice: RewardChoiceRequiredPayload | null;
 }
 
 const INITIAL: RoomConnection = {
@@ -74,6 +81,7 @@ const INITIAL: RoomConnection = {
   lastActionPlayed: null,
   lastActionResolved: null,
   mirrorChoice: null,
+  rewardChoice: null,
 };
 
 export interface UseRoomConnectionResult extends RoomConnection {
@@ -87,6 +95,10 @@ export interface UseRoomConnectionResult extends RoomConnection {
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ) => void;
   chooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
+  chooseEliminationReward: (
+    eliminationId: string,
+    choices: [RewardChoice, RewardChoice],
+  ) => void;
   buyCard: (cardId: CardId) => void;
   sellCard: (instanceId: string) => void;
   upgradeCard: (instanceId: string) => void;
@@ -125,8 +137,9 @@ export function useRoomConnection(): UseRoomConnectionResult {
         setConnection((previous) => ({
           ...previous,
           lastTurnStarted: payload,
-          // Mirror sub-choice ends before the next turn starts (play or expiry).
+          // Mirror / reward sub-choices end before the next turn starts (play or expiry).
           mirrorChoice: null,
+          rewardChoice: null,
         }));
       }
     });
@@ -149,6 +162,12 @@ export function useRoomConnection(): UseRoomConnectionResult {
       }
     });
 
+    room.onMessage(REWARD_CHOICE_REQUIRED, (payload: unknown) => {
+      if (isRewardChoiceRequired(payload)) {
+        setConnection((previous) => ({ ...previous, rewardChoice: payload }));
+      }
+    });
+
     room.onMessage(PLAYER_ELIMINATED, () => {
       // stateUpdate follows with isEliminated flags
     });
@@ -159,6 +178,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
           ...previous,
           error: null,
           mirrorChoice: null,
+          rewardChoice: null,
         }));
         void payload;
       }
@@ -275,6 +295,15 @@ export function useRoomConnection(): UseRoomConnectionResult {
     [],
   );
 
+  const chooseEliminationReward = useCallback(
+    (eliminationId: string, choices: [RewardChoice, RewardChoice]): void => {
+      const payload: ChooseEliminationRewardPayload = { eliminationId, choices };
+      roomRef.current?.send(CHOOSE_ELIMINATION_REWARD, payload);
+      setConnection((previous) => ({ ...previous, rewardChoice: null }));
+    },
+    [],
+  );
+
   const buyCard = useCallback((cardId: CardId): void => {
     roomRef.current?.send(BUY_CARD, { cardId });
   }, []);
@@ -309,6 +338,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     playCard,
     playMultipleAttacks,
     chooseMirrorTarget,
+    chooseEliminationReward,
     buyCard,
     sellCard,
     upgradeCard,
@@ -387,6 +417,21 @@ function isMirrorChoiceRequired(payload: unknown): payload is MirrorChoiceRequir
     'eligibleEffectIds' in payload &&
     'deadlineMs' in payload &&
     Array.isArray(payload.eligibleEffectIds) &&
+    typeof payload.deadlineMs === 'number'
+  );
+}
+
+function isRewardChoiceRequired(payload: unknown): payload is RewardChoiceRequiredPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'eliminationId' in payload &&
+    'eliminatedPlayerId' in payload &&
+    'availableCards' in payload &&
+    'deadlineMs' in payload &&
+    typeof payload.eliminationId === 'string' &&
+    typeof payload.eliminatedPlayerId === 'string' &&
+    Array.isArray(payload.availableCards) &&
     typeof payload.deadlineMs === 'number'
   );
 }

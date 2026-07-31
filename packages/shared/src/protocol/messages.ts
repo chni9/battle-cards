@@ -6,6 +6,10 @@
  */
 
 import type { CardId } from '../domain/card';
+import type {
+  ChooseEliminationRewardPayload,
+  RewardChoiceRequiredPayload,
+} from './reward-choice';
 import type { StateView } from './state-view';
 
 export const GAME_ROOM_NAME = 'game';
@@ -23,6 +27,7 @@ export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const BUY_SPECIAL_CARD = 'buySpecialCard';
 export const CHOOSE_MIRROR_TARGET = 'chooseMirrorTarget';
+export const CHOOSE_ELIMINATION_REWARD = 'chooseEliminationReward';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
@@ -30,6 +35,13 @@ export const ACTION_RESOLVED = 'actionResolved';
 export const PLAYER_ELIMINATED = 'playerEliminated';
 export const GAME_OVER = 'gameOver';
 export const MIRROR_CHOICE_REQUIRED = 'mirrorChoiceRequired';
+export const REWARD_CHOICE_REQUIRED = 'rewardChoiceRequired';
+
+export type {
+  ChooseEliminationRewardPayload,
+  RewardChoice,
+  RewardChoiceRequiredPayload,
+} from './reward-choice';
 
 export interface TurnStartedPayload {
   activePlayerId: string;
@@ -129,6 +141,7 @@ export interface ServerToClientMessages {
   [PLAYER_ELIMINATED]: PlayerEliminatedPayload;
   [GAME_OVER]: GameOverPayload;
   [MIRROR_CHOICE_REQUIRED]: MirrorChoiceRequiredPayload;
+  [REWARD_CHOICE_REQUIRED]: RewardChoiceRequiredPayload;
 }
 
 export interface RoomJoinOptions {
@@ -151,4 +164,5 @@ export interface ClientToServerMessages {
   [SELL_UPGRADE_POINT]: undefined;
   [BUY_SPECIAL_CARD]: undefined;
   [CHOOSE_MIRROR_TARGET]: ChooseMirrorTargetPayload;
+  [CHOOSE_ELIMINATION_REWARD]: ChooseEliminationRewardPayload;
 }

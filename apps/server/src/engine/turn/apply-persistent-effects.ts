@@ -8,6 +8,7 @@ import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
 import { findPlayer } from './advance-turn';
+import { recordEliminationContributor } from './elimination-rewards';
 
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
@@ -71,4 +72,5 @@ function applyOneImposition(
   const loss = applyLifeLoss(victim, livesDue, 'imposition');
   victim.turnLedger.livesLost += loss.livesLost;
   gainLives(imposer, loss.livesLost, state.lifeLimit);
+  recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
 }

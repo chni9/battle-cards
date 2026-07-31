@@ -38,5 +38,8 @@ Functional UI only for V1 — no art direction (technical spec §9). Screens liv
 - **`actionResolved.outcome === 'immune'`**: show public failure (Untouchable vs Thief/Spy).
 - **Mirror**: listen for `mirrorChoiceRequired`, send `chooseMirrorTarget`. Clear the
   prompt on confirm or the next `turnStarted`.
+- **Elimination rewards**: listen for `rewardChoiceRequired`, send `chooseEliminationReward`
+  with two picks. Clear on confirm / `turnStarted` / `gameOver`. Lock other table actions while
+  the prompt is up (same as Mirror).
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default still 30s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.

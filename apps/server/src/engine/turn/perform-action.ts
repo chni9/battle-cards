@@ -12,6 +12,7 @@ import {
   type CardId,
   type CardInstance,
   type GameState,
+  type RewardChoice,
 } from '@card-battle/shared';
 
 import { findHandler } from '../../cards/registry';
@@ -28,6 +29,13 @@ import {
   applyDefaultMirrorRedirect,
   redirectPendingAttack,
 } from './mirror-choice';
+import {
+  applyDefaultEliminationRewards,
+  applyEliminationRewardChoices,
+  hasPendingEliminationRewards,
+  processEliminations,
+  type EliminationEvent,
+} from './elimination-rewards';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
@@ -81,8 +89,12 @@ export interface TurnResult {
   /** Set when exactly one non-eliminated player remains after this turn. */
   winnerPlayerId: string | null;
   eliminatedPlayerIds: string[];
+  /** Eliminator attribution per eliminated player (Lot 6). */
+  eliminations: EliminationEvent[];
   /** True when Mirror paid and is waiting for chooseMirrorTarget / default. */
   mirrorChoicePending?: boolean;
+  /** True when elimination rewards are waiting for chooseEliminationReward / default. */
+  rewardChoicePending?: boolean;
 }
 
 export interface TurnRejection {
@@ -105,6 +117,10 @@ export function performTurnAction(
 ): PerformActionResult {
   if (state.currentTurnPlayerId !== actorPlayerId) {
     return { ok: false, message: 'It is not your turn.' };
+  }
+
+  if (hasPendingEliminationRewards(state)) {
+    return { ok: false, message: 'Finish elimination rewards first.' };
   }
 
   const actor = findPlayer(state, actorPlayerId);
@@ -231,11 +247,12 @@ export function performTurnAction(
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
+      eliminations: [],
       mirrorChoicePending: true,
     };
   }
 
-  return finishTurnPhases(state, actorPlayerId, actionPlayed);
+  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng);
 }
 
 /**
@@ -246,6 +263,7 @@ export function completeMirrorChoice(
   actorPlayerId: string,
   pendingEffectId: string,
   newTargetPlayerId: string,
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
 ): PerformActionResult {
   const choice = state.mirrorChoice;
 
@@ -281,12 +299,17 @@ export function completeMirrorChoice(
 
   state.mirrorChoice = null;
 
-  return finishTurnPhases(state, actorPlayerId, {
+  return finishTurnPhases(
+    state,
     actorPlayerId,
-    action: 'playCard',
-    cardId: 'mirror',
-    turnSequence: state.turnSequence,
-  });
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'mirror',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+  );
 }
 
 /**
@@ -308,22 +331,69 @@ export function expireMirrorChoice(state: GameState, rng: Rng): PerformActionRes
 
   state.mirrorChoice = null;
 
-  return finishTurnPhases(state, actorPlayerId, {
+  return finishTurnPhases(
+    state,
     actorPlayerId,
-    action: 'playCard',
-    cardId: 'mirror',
-    turnSequence: state.turnSequence,
-  });
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'mirror',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+  );
+}
+
+export type EliminationRewardTurnResult =
+  | {
+      ok: true;
+      rewardChoicePending: boolean;
+      winnerPlayerId: string | null;
+    }
+  | { ok: false; message: string };
+
+/**
+ * Apply the eliminator's reward picks, then continue the queue or resume the turn.
+ */
+export function completeEliminationRewardChoice(
+  state: GameState,
+  chooserPlayerId: string,
+  eliminationId: string,
+  choices: readonly [RewardChoice, RewardChoice],
+): EliminationRewardTurnResult {
+  return applyEliminationRewardChoices(state, chooserPlayerId, eliminationId, choices);
+}
+
+/**
+ * Grant 2×4 lives on reward sub-choice expiry (technical spec §5.6).
+ */
+export function expireEliminationRewardChoice(state: GameState): EliminationRewardTurnResult {
+  return applyDefaultEliminationRewards(state);
 }
 
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
   actionPlayed: ActionPlayedEvent,
+  rng: Rng,
 ): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId);
   applyPersistentEffects(state, actorPlayerId);
-  const eliminatedPlayerIds = markEliminations(state);
+  const eliminations = processEliminations(state, rng);
+  const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
+
+  if (hasPendingEliminationRewards(state)) {
+    return {
+      ok: true,
+      actionPlayed,
+      resolved: toResolvedEvents(resolvedEffects),
+      winnerPlayerId: null,
+      eliminatedPlayerIds,
+      eliminations,
+      rewardChoicePending: true,
+    };
+  }
+
   const winnerPlayerId = findWinner(state);
 
   if (winnerPlayerId === null) {
@@ -338,6 +408,7 @@ function finishTurnPhases(
     resolved: toResolvedEvents(resolvedEffects),
     winnerPlayerId,
     eliminatedPlayerIds,
+    eliminations,
   };
 }
 
@@ -591,25 +662,8 @@ function toResolvedEvents(resolved: ResolvedEffect[]): ActionResolvedEvent[] {
 }
 
 /**
- * Elimination at 0 lives — rules spec §1 / §6. Rewards deferred to lot 6.
- * `eliminatorPlayerId` is recorded only for events; L1 grants no rewards.
+ * Elimination at 0 lives is handled by `processEliminations` (Lot 6).
  */
-function markEliminations(state: GameState): string[] {
-  const eliminated: string[] = [];
-
-  for (const player of state.players) {
-    if (!player.isEliminated && player.lives <= 0) {
-      player.isEliminated = true;
-      player.lives = 0;
-      state.pool.push(...player.hand, ...player.specialCards);
-      player.hand = [];
-      player.specialCards = [];
-      eliminated.push(player.id);
-    }
-  }
-
-  return eliminated;
-}
 
 function findWinner(state: GameState): string | null {
   const alive = state.players.filter((player) => !player.isEliminated);

@@ -11,10 +11,21 @@ import {
   type ActionResolvedPayload,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
+  type RewardChoice,
+  type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
 import { useEffect, useState } from 'react';
 
 import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
+
+type RewardKind = RewardChoice['type'];
+
+const REWARD_KINDS: readonly RewardKind[] = [
+  'lives',
+  'points',
+  'upgradePoint',
+  'card',
+] as const;
 
 function isAttackCardId(cardId: string): boolean {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
@@ -42,6 +53,7 @@ export function App() {
     playCard,
     playMultipleAttacks,
     chooseMirrorTarget,
+    chooseEliminationReward,
     buyCard,
     sellCard,
     upgradeCard,
@@ -51,6 +63,7 @@ export function App() {
     lastTurnStarted,
     lastActionResolved,
     mirrorChoice,
+    rewardChoice,
   } = connection;
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -63,6 +76,10 @@ export function App() {
   const [upgradeInstanceId, setUpgradeInstanceId] = useState('');
   const [mirrorEffectId, setMirrorEffectId] = useState('');
   const [mirrorTargetId, setMirrorTargetId] = useState('');
+  const [rewardKind1, setRewardKind1] = useState<RewardKind>('lives');
+  const [rewardKind2, setRewardKind2] = useState<RewardKind>('points');
+  const [rewardCard1, setRewardCard1] = useState('');
+  const [rewardCard2, setRewardCard2] = useState('');
   const [multiAttackIds, setMultiAttackIds] = useState<string[]>([]);
   const [multiAttackTargets, setMultiAttackTargets] = useState<Record<string, string>>({});
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -130,6 +147,15 @@ export function App() {
         setMirrorEffectId={setMirrorEffectId}
         mirrorTargetId={mirrorTargetId}
         setMirrorTargetId={setMirrorTargetId}
+        rewardChoice={rewardChoice}
+        rewardKind1={rewardKind1}
+        setRewardKind1={setRewardKind1}
+        rewardKind2={rewardKind2}
+        setRewardKind2={setRewardKind2}
+        rewardCard1={rewardCard1}
+        setRewardCard1={setRewardCard1}
+        rewardCard2={rewardCard2}
+        setRewardCard2={setRewardCard2}
         onDraw={drawCard}
         onPlay={() => {
           if (playInstanceId === '') {
@@ -175,6 +201,19 @@ export function App() {
           if (mirrorEffectId !== '' && mirrorTargetId !== '') {
             chooseMirrorTarget(mirrorEffectId, mirrorTargetId);
           }
+        }}
+        onChooseReward={() => {
+          if (rewardChoice === null) {
+            return;
+          }
+
+          const choice1 = buildRewardChoice(rewardKind1, rewardCard1);
+          const choice2 = buildRewardChoice(rewardKind2, rewardCard2);
+          if (choice1 === null || choice2 === null) {
+            return;
+          }
+
+          chooseEliminationReward(rewardChoice.eliminationId, [choice1, choice2]);
         }}
         onBuy={() => {
           buyCard(buyCardId as (typeof SHARED_CARD_IDS)[number]);
@@ -323,6 +362,15 @@ function TableScreen(props: {
   setMirrorEffectId: (id: string) => void;
   mirrorTargetId: string;
   setMirrorTargetId: (id: string) => void;
+  rewardChoice: RewardChoiceRequiredPayload | null;
+  rewardKind1: RewardKind;
+  setRewardKind1: (kind: RewardKind) => void;
+  rewardKind2: RewardKind;
+  setRewardKind2: (kind: RewardKind) => void;
+  rewardCard1: string;
+  setRewardCard1: (id: string) => void;
+  rewardCard2: string;
+  setRewardCard2: (id: string) => void;
   onDraw: () => void;
   onPlay: () => void;
   onPlayMultipleAttacks: () => void;
@@ -331,6 +379,7 @@ function TableScreen(props: {
   multiAttackTargets: Record<string, string>;
   setMultiAttackTargets: (targets: Record<string, string>) => void;
   onChooseMirror: () => void;
+  onChooseReward: () => void;
   onBuy: () => void;
   onSell: () => void;
   onUpgrade: () => void;
@@ -365,6 +414,15 @@ function TableScreen(props: {
     setMirrorEffectId,
     mirrorTargetId,
     setMirrorTargetId,
+    rewardChoice,
+    rewardKind1,
+    setRewardKind1,
+    rewardKind2,
+    setRewardKind2,
+    rewardCard1,
+    setRewardCard1,
+    rewardCard2,
+    setRewardCard2,
     onDraw,
     onPlay,
     onPlayMultipleAttacks,
@@ -373,6 +431,7 @@ function TableScreen(props: {
     multiAttackTargets,
     setMultiAttackTargets,
     onChooseMirror,
+    onChooseReward,
     onBuy,
     onSell,
     onUpgrade,
@@ -383,6 +442,7 @@ function TableScreen(props: {
   } = props;
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
+  const actionsLocked = rewardChoice !== null || mirrorChoice !== null;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -396,6 +456,10 @@ function TableScreen(props: {
     mirrorChoice === null
       ? null
       : Math.max(0, Math.ceil((mirrorChoice.deadlineMs - nowMs) / 1000));
+  const rewardSecondsLeft =
+    rewardChoice === null
+      ? null
+      : Math.max(0, Math.ceil((rewardChoice.deadlineMs - nowMs) / 1000));
   const eligibleMirrorEffects = view.pendingEffects.filter(
     (effect) => mirrorChoice?.eligibleEffectIds.includes(effect.id) ?? false,
   );
@@ -465,6 +529,35 @@ function TableScreen(props: {
     }
   }, [mirrorTargetId, opponents, setMirrorTargetId]);
 
+  useEffect(() => {
+    if (rewardChoice === null) {
+      return;
+    }
+
+    const firstCard = rewardChoice.availableCards[0];
+    const firstId = firstCard?.instanceId ?? '';
+    const ids = rewardChoice.availableCards.map((card) => card.instanceId);
+
+    if (rewardKind1 === 'card' && (rewardCard1 === '' || !ids.includes(rewardCard1))) {
+      setRewardCard1(firstId);
+    }
+    if (rewardKind2 === 'card' && (rewardCard2 === '' || !ids.includes(rewardCard2))) {
+      setRewardCard2(firstId);
+    }
+  }, [
+    rewardCard1,
+    rewardCard2,
+    rewardChoice,
+    rewardKind1,
+    rewardKind2,
+    setRewardCard1,
+    setRewardCard2,
+  ]);
+
+  const rewardConfirmReady =
+    buildRewardChoice(rewardKind1, rewardCard1) !== null &&
+    buildRewardChoice(rewardKind2, rewardCard2) !== null;
+
   return (
     <main>
       <h1>Card Battle</h1>
@@ -533,6 +626,89 @@ function TableScreen(props: {
             onClick={onChooseMirror}
           >
             Confirm redirect
+          </button>
+        </section>
+      )}
+
+      {rewardChoice !== null && (
+        <section>
+          <h2>Elimination reward</h2>
+          <p>
+            Pick two rewards from {nicknameOf(view, rewardChoice.eliminatedPlayerId)} (
+            {rewardSecondsLeft ?? '—'}s left).
+          </p>
+          <div>
+            <label>
+              Choice 1{' '}
+              <select
+                value={rewardKind1}
+                onChange={(event) => {
+                  setRewardKind1(event.target.value as RewardKind);
+                }}
+              >
+                {REWARD_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kind}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {rewardKind1 === 'card' && (
+              <label>
+                Card{' '}
+                <select
+                  value={rewardCard1}
+                  onChange={(event) => {
+                    setRewardCard1(event.target.value);
+                  }}
+                >
+                  {rewardChoice.availableCards.map((card) => (
+                    <option key={card.instanceId} value={card.instanceId}>
+                      {card.cardId} ({card.instanceId})
+                      {card.isUpgraded ? ' ↑' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+          <div>
+            <label>
+              Choice 2{' '}
+              <select
+                value={rewardKind2}
+                onChange={(event) => {
+                  setRewardKind2(event.target.value as RewardKind);
+                }}
+              >
+                {REWARD_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kind}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {rewardKind2 === 'card' && (
+              <label>
+                Card{' '}
+                <select
+                  value={rewardCard2}
+                  onChange={(event) => {
+                    setRewardCard2(event.target.value);
+                  }}
+                >
+                  {rewardChoice.availableCards.map((card) => (
+                    <option key={card.instanceId} value={card.instanceId}>
+                      {card.cardId} ({card.instanceId})
+                      {card.isUpgraded ? ' ↑' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+          <button type="button" disabled={!rewardConfirmReady} onClick={onChooseReward}>
+            Confirm rewards
           </button>
         </section>
       )}
@@ -670,7 +846,7 @@ function TableScreen(props: {
 
       <section>
         <h2>Actions</h2>
-        <button type="button" disabled={!isMyTurn || mirrorChoice !== null} onClick={onDraw}>
+        <button type="button" disabled={!isMyTurn || actionsLocked} onClick={onDraw}>
           Draw (+{drawValue} point{drawValue === 1 ? '' : 's'})
         </button>
         <div>
@@ -678,7 +854,7 @@ function TableScreen(props: {
             Play{' '}
             <select
               value={playInstanceId}
-              disabled={!isMyTurn || mirrorChoice !== null || playableCards.length === 0}
+              disabled={!isMyTurn || actionsLocked || playableCards.length === 0}
               onChange={(event) => {
                 setPlayInstanceId(event.target.value);
               }}
@@ -701,7 +877,7 @@ function TableScreen(props: {
             <input
               type="checkbox"
               checked={includeTarget}
-              disabled={!isMyTurn || mirrorChoice !== null}
+              disabled={!isMyTurn || actionsLocked}
               onChange={(event) => {
                 setIncludeTarget(event.target.checked);
               }}
@@ -716,7 +892,7 @@ function TableScreen(props: {
               min={1}
               max={4}
               value={playQuantity}
-              disabled={!isMyTurn || mirrorChoice !== null}
+              disabled={!isMyTurn || actionsLocked}
               onChange={(event) => {
                 const next = Number(event.target.value);
                 if (Number.isInteger(next) && next >= 1 && next <= 4) {
@@ -729,7 +905,7 @@ function TableScreen(props: {
             type="button"
             disabled={
               !isMyTurn ||
-              mirrorChoice !== null ||
+              actionsLocked ||
               playInstanceId === '' ||
               (includeTarget && targetId === '')
             }
@@ -753,7 +929,7 @@ function TableScreen(props: {
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={!isMyTurn || mirrorChoice !== null}
+                        disabled={!isMyTurn || actionsLocked}
                         onChange={(event) => {
                           if (event.target.checked) {
                             setMultiAttackIds([...multiAttackIds, card.instanceId]);
@@ -781,7 +957,7 @@ function TableScreen(props: {
                     {checked && (
                       <select
                         value={rowTarget}
-                        disabled={!isMyTurn || mirrorChoice !== null}
+                        disabled={!isMyTurn || actionsLocked}
                         onChange={(event) => {
                           setMultiAttackTargets({
                             ...multiAttackTargets,
@@ -806,7 +982,7 @@ function TableScreen(props: {
               type="button"
               disabled={
                 !isMyTurn ||
-                mirrorChoice !== null ||
+                actionsLocked ||
                 multiAttackIds.length < 2 ||
                 multiAttackIds.some((id) => {
                   const chosen = multiAttackTargets[id];
@@ -824,7 +1000,7 @@ function TableScreen(props: {
             Buy{' '}
             <select
               value={buyCardId}
-              disabled={!isMyTurn || mirrorChoice !== null}
+              disabled={!isMyTurn || actionsLocked}
               onChange={(event) => {
                 setBuyCardId(event.target.value);
               }}
@@ -836,7 +1012,7 @@ function TableScreen(props: {
               ))}
             </select>
           </label>
-          <button type="button" disabled={!isMyTurn || mirrorChoice !== null} onClick={onBuy}>
+          <button type="button" disabled={!isMyTurn || actionsLocked} onClick={onBuy}>
             Buy card
           </button>
         </div>
@@ -846,7 +1022,7 @@ function TableScreen(props: {
             <select
               value={sellInstanceId}
               disabled={
-                !isMyTurn || mirrorChoice !== null || view.self.hand.length === 0
+                !isMyTurn || actionsLocked || view.self.hand.length === 0
               }
               onChange={(event) => {
                 setSellInstanceId(event.target.value);
@@ -862,7 +1038,7 @@ function TableScreen(props: {
           </label>
           <button
             type="button"
-            disabled={!isMyTurn || mirrorChoice !== null || sellInstanceId === ''}
+            disabled={!isMyTurn || actionsLocked || sellInstanceId === ''}
             onClick={onSell}
           >
             Sell card
@@ -873,7 +1049,7 @@ function TableScreen(props: {
             Upgrade{' '}
             <select
               value={upgradeInstanceId}
-              disabled={!isMyTurn || mirrorChoice !== null || upgradable.length === 0}
+              disabled={!isMyTurn || actionsLocked || upgradable.length === 0}
               onChange={(event) => {
                 setUpgradeInstanceId(event.target.value);
               }}
@@ -889,7 +1065,7 @@ function TableScreen(props: {
             type="button"
             disabled={
               !isMyTurn ||
-              mirrorChoice !== null ||
+              actionsLocked ||
               upgradeInstanceId === '' ||
               view.self.upgradePoints < 1
             }
@@ -900,21 +1076,21 @@ function TableScreen(props: {
         </div>
         <button
           type="button"
-          disabled={!isMyTurn || mirrorChoice !== null}
+          disabled={!isMyTurn || actionsLocked}
           onClick={onBuyUpgradePoint}
         >
           Buy upgrade point
         </button>
         <button
           type="button"
-          disabled={!isMyTurn || mirrorChoice !== null || view.self.points < 20}
+          disabled={!isMyTurn || actionsLocked || view.self.points < 20}
           onClick={onBuySpecialCard}
         >
           Buy special card (20 pts)
         </button>
         <button
           type="button"
-          disabled={!isMyTurn || mirrorChoice !== null || view.self.upgradePoints < 1}
+          disabled={!isMyTurn || actionsLocked || view.self.upgradePoints < 1}
           onClick={onSellUpgradePoint}
         >
           Sell upgrade point
@@ -930,4 +1106,16 @@ function TableScreen(props: {
 
 function nicknameOf(view: PlayingStateView, playerId: string): string {
   return view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
+}
+
+function buildRewardChoice(kind: RewardKind, cardInstanceId: string): RewardChoice | null {
+  if (kind === 'card') {
+    if (cardInstanceId === '') {
+      return null;
+    }
+
+    return { type: 'card', instanceId: cardInstanceId };
+  }
+
+  return { type: kind };
 }

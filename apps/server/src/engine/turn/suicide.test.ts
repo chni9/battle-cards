@@ -5,7 +5,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../create-initial-state';
+import { applyDefaultEliminationRewards } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
+
+function settleRewards(state: ReturnType<typeof createInitialState>): void {
+  while (state.rewardChoice !== null) {
+    const result = applyDefaultEliminationRewards(state);
+    expect(result.ok).toBe(true);
+  }
+}
 
 describe('Suicide (L5-03)', () => {
   const seats = [
@@ -60,6 +68,13 @@ describe('Suicide (L5-03)', () => {
       opp.points = Math.max(opp.points, 1);
       const turn = performTurnAction(state, opp.id, { type: 'draw' });
       expect(turn.ok).toBe(true);
+
+      if (turn.ok && turn.rewardChoicePending === true) {
+        expect(turn.eliminations.some((entry) => entry.eliminatorPlayerId === kam.id)).toBe(
+          true,
+        );
+        settleRewards(state);
+      }
     }
 
     expect(o1.isEliminated).toBe(true);
@@ -67,11 +82,6 @@ describe('Suicide (L5-03)', () => {
     expect(o3.isEliminated).toBe(false);
     expect(o3.lives).toBe(15);
     expect(o3.points).toBe(0);
-    expect(
-      state.eliminationAttributions.some(
-        (entry) => entry.eliminatedPlayerId === o1.id && entry.eliminatorPlayerId === kam.id,
-      ),
-    ).toBe(true);
 
     // User's next turn: they act, then self-Suicide eliminates them.
     state.currentTurnPlayerId = kam.id;
@@ -85,11 +95,7 @@ describe('Suicide (L5-03)', () => {
     }
 
     expect(kam.isEliminated).toBe(true);
-    expect(
-      state.eliminationAttributions.some(
-        (entry) => entry.eliminatedPlayerId === kam.id && entry.eliminatorPlayerId === null,
-      ),
-    ).toBe(true);
+    expect(final.eliminations[0]?.eliminatorPlayerId).toBeNull();
     expect(final.winnerPlayerId).toBe(o3.id);
   });
 
@@ -124,12 +130,12 @@ describe('Suicide (L5-03)', () => {
 
     state.currentTurnPlayerId = b.id;
     b.points = 1;
-    expect(performTurnAction(state, b.id, { type: 'draw' }).ok).toBe(true);
+    const turn = performTurnAction(state, b.id, { type: 'draw' });
+    expect(turn.ok).toBe(true);
     expect(b.isEliminated).toBe(true);
     expect(a.isEliminated).toBe(false);
-    expect(
-      state.eliminationAttributions.find((entry) => entry.eliminatedPlayerId === b.id)
-        ?.eliminatorPlayerId,
-    ).toBe(a.id);
+    expect(turn.ok && turn.eliminations[0]?.eliminatorPlayerId).toBe(a.id);
+    settleRewards(state);
+    expect(a.isEliminated).toBe(false);
   });
 });

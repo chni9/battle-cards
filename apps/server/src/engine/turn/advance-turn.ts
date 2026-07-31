@@ -1,5 +1,8 @@
 /**
  * Advance to the next non-eliminated player and bump the global turnSequence — L1-04.
+ *
+ * Walks the full seat order so a player eliminated on their own turn does not
+ * incorrectly jump to `alive[0]` (Lot 6).
  */
 
 import type { GameState, Player } from '@card-battle/shared';
@@ -13,18 +16,26 @@ export function advanceTurn(state: GameState): void {
   }
 
   const currentId = state.currentTurnPlayerId;
-  const currentIndex = alive.findIndex((player) => player.id === currentId);
-  const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % alive.length;
-  const next = alive[nextIndex];
+  const full = state.players;
+  let start = full.findIndex((player) => player.id === currentId);
 
-  if (next === undefined) {
-    state.currentTurnPlayerId = null;
-    return;
+  if (start < 0) {
+    start = -1;
   }
 
-  state.currentTurnPlayerId = next.id;
-  state.turnSequence += 1;
-  resetLedger(next);
+  for (let offset = 1; offset <= full.length; offset += 1) {
+    const index = (start + offset) % full.length;
+    const candidate = full[index];
+
+    if (candidate !== undefined && !candidate.isEliminated) {
+      state.currentTurnPlayerId = candidate.id;
+      state.turnSequence += 1;
+      resetLedger(candidate);
+      return;
+    }
+  }
+
+  state.currentTurnPlayerId = null;
 }
 
 function resetLedger(player: Player): void {

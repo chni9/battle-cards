@@ -11,6 +11,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_ELIMINATION_REWARD,
   CHOOSE_MIRROR_TARGET,
   CLIENT_READY,
   DRAW_CARD,
@@ -21,6 +22,7 @@ import {
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
   UPGRADE_CARD,
@@ -31,11 +33,13 @@ import {
   type ActionPlayedPayload,
   type BuyCardPayload,
   type CardId,
+  type ChooseEliminationRewardPayload,
   type ChooseMirrorTargetPayload,
   type GameState,
   type LobbySeatView,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
+  type RewardChoice,
   type SellCardPayload,
   type UpgradeCardPayload,
   type ServerToClientMessages,
@@ -45,13 +49,20 @@ import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import {
+  REWARD_SUB_CHOICE_MS,
+  hasPendingEliminationRewards,
+  listAvailableRewardCards,
+} from '../engine/turn/elimination-rewards';
+import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
+import {
+  completeEliminationRewardChoice,
   completeMirrorChoice,
+  expireEliminationRewardChoice,
   expireMirrorChoice,
   performTurnAction,
   type TurnAction,
   type TurnResult,
 } from '../engine/turn/perform-action';
-import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
 import {
   buildFinishedViewFor,
   buildLobbyViewFor,
@@ -96,6 +107,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private turnDeadlineMs: number | null = null;
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
   private mirrorTimer: ReturnType<typeof setTimeout> | null = null;
+  private rewardTimer: ReturnType<typeof setTimeout> | null = null;
   private actionLog: ActionLogEntryView[] = [];
 
   override async onCreate(): Promise<void> {
@@ -106,6 +118,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   override async onDispose(): Promise<void> {
     this.clearTurnTimer();
     this.clearMirrorTimer();
+    this.clearRewardTimer();
     await this.presence.srem(GAME_CODE_PRESENCE_CHANNEL, this.roomId);
   }
 
@@ -256,6 +269,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     [CHOOSE_MIRROR_TARGET]: (client: GameClient, payload: unknown): void => {
       this.handleMirrorChoice(client, payload);
     },
+
+    [CHOOSE_ELIMINATION_REWARD]: (client: GameClient, payload: unknown): void => {
+      this.handleRewardChoice(client, payload);
+    },
   };
 
   override onJoin(client: GameClient, options: unknown): void {
@@ -308,6 +325,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (hasPendingEliminationRewards(state)) {
+      client.send(ERROR_MESSAGE, { message: 'Finish elimination rewards first.' });
+      return;
+    }
+
     if (this.actionTakenThisTurn) {
       client.send(ERROR_MESSAGE, { message: 'You already acted this turn.' });
       return;
@@ -331,6 +353,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.beginMirrorTimer(client, choice.deadlineMs, choice.eligibleEffectIds);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
       this.sendStateToEveryone();
       return;
     }
@@ -373,6 +401,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearMirrorTimer();
     this.applyTurnResult(result);
 
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.winnerPlayerId !== null) {
       return;
     }
@@ -380,6 +414,36 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.beginTurnTimer();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
+  }
+
+  private handleRewardChoice(client: GameClient, payload: unknown): void {
+    const state = this.gameState;
+    const parsed = readChooseEliminationRewardPayload(payload);
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid chooseEliminationReward payload.' });
+      return;
+    }
+
+    const result = completeEliminationRewardChoice(
+      state,
+      client.sessionId,
+      parsed.eliminationId,
+      parsed.choices,
+    );
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearRewardTimer();
+    this.continueAfterRewards(result);
   }
 
   private applyTurnResult(result: TurnResult): void {
@@ -409,9 +473,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     for (const playerId of result.eliminatedPlayerIds) {
+      const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
+
       this.broadcast(PLAYER_ELIMINATED, {
         playerId,
-        eliminatorPlayerId: null,
+        eliminatorPlayerId: elimination?.eliminatorPlayerId ?? null,
       });
     }
 
@@ -456,10 +522,107 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearMirrorTimer();
     this.applyTurnResult(result);
 
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.winnerPlayerId !== null) {
       return;
     }
 
+    this.beginTurnTimer();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private beginRewardTimer(state: GameState): void {
+    this.clearRewardTimer();
+    this.sendRewardChoiceRequired(state);
+
+    const choice = state.rewardChoice;
+
+    if (choice === null) {
+      return;
+    }
+
+    const remaining = Math.max(0, choice.deadlineMs - Date.now());
+    this.rewardTimer = setTimeout(() => {
+      this.onRewardTimeout();
+    }, remaining > 0 ? remaining : REWARD_SUB_CHOICE_MS);
+  }
+
+  private onRewardTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.rewardChoice == null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireEliminationRewardChoice(state);
+
+    if (!result.ok) {
+      state.rewardChoice = null;
+      return;
+    }
+
+    this.clearRewardTimer();
+    this.continueAfterRewards(result);
+  }
+
+  private clearRewardTimer(): void {
+    if (this.rewardTimer !== null) {
+      clearTimeout(this.rewardTimer);
+      this.rewardTimer = null;
+    }
+  }
+
+  private sendRewardChoiceRequired(state: GameState): void {
+    const choice = state.rewardChoice;
+
+    if (choice === null) {
+      return;
+    }
+
+    const client = this.clients.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
+
+    if (client === undefined) {
+      return;
+    }
+
+    client.send(REWARD_CHOICE_REQUIRED, {
+      eliminationId: choice.eliminationId,
+      eliminatedPlayerId: choice.eliminatedPlayerId,
+      availableCards: listAvailableRewardCards(state, choice.eliminatedPlayerId),
+      deadlineMs: choice.deadlineMs,
+    });
+  }
+
+  private continueAfterRewards(result: {
+    rewardChoicePending: boolean;
+    winnerPlayerId: string | null;
+  }): void {
+    if (result.winnerPlayerId !== null) {
+      this.winnerPlayerId = result.winnerPlayerId;
+      this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.rewardChoicePending) {
+      const state = this.gameState;
+
+      if (state === null) {
+        return;
+      }
+
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    this.actionTakenThisTurn = false;
     this.beginTurnTimer();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
@@ -520,14 +683,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.actionLog.push(result.actionPlayed);
-    this.broadcast(ACTION_PLAYED, result.actionPlayed);
+    this.applyTurnResult(result);
 
-    for (const resolved of result.resolved) {
-      this.broadcast(ACTION_RESOLVED, resolved);
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
     }
 
-    this.actionTakenThisTurn = false;
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
     this.beginTurnTimer();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
@@ -794,5 +961,61 @@ function readChooseMirrorTargetPayload(payload: unknown): ChooseMirrorTargetPayl
   }
 
   return { pendingEffectId, newTargetPlayerId };
+}
+
+function readChooseEliminationRewardPayload(
+  payload: unknown,
+): ChooseEliminationRewardPayload | null {
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('eliminationId' in payload) ||
+    !('choices' in payload)
+  ) {
+    return null;
+  }
+
+  const { eliminationId, choices } = payload;
+
+  if (typeof eliminationId !== 'string' || eliminationId.length === 0) {
+    return null;
+  }
+
+  if (!Array.isArray(choices) || choices.length !== 2) {
+    return null;
+  }
+
+  const first = readRewardChoice(choices[0]);
+  const second = readRewardChoice(choices[1]);
+
+  if (first === null || second === null) {
+    return null;
+  }
+
+  return { eliminationId, choices: [first, second] };
+}
+
+function readRewardChoice(value: unknown): RewardChoice | null {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return null;
+  }
+
+  const { type } = value;
+
+  if (type === 'lives' || type === 'points' || type === 'upgradePoint') {
+    return { type };
+  }
+
+  if (type !== 'card' || !('instanceId' in value)) {
+    return null;
+  }
+
+  const { instanceId } = value;
+
+  if (typeof instanceId !== 'string' || instanceId.length === 0) {
+    return null;
+  }
+
+  return { type: 'card', instanceId };
 }
 

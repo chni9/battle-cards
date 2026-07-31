@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-48 of 63 tasks done. **Lot 5 complete** — next up is L6-01.
+53 of 63 tasks done. **Lot 6 complete** — next up is L7-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -52,7 +52,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 3 · Action cards | 9 | 9 |
 | 4 · Kits | 5 | 5 |
 | 5 · Special cards | 9 | 9 |
-| 6 · Elimination | 5 | 0 |
+| 6 · Elimination | 5 | 5 |
 | 7 · Robustness | 5 | 0 |
 | 8 · Game log | 2 | 0 |
 | 9 · Polish | 3 | 0 |
@@ -489,7 +489,7 @@ Eliminates a randomly drawn player among everyone in the game, user included. Up
 
 ## Lot 6 · Elimination
 
-### L6-01 · Elimination rewards — `To do`
+### L6-01 · Elimination rewards — `Done`
 
 The eliminator picks 2 rewards among: 4 lives, 8 points, a card from the eliminated player, an upgrade point. Both choices can be identical.
 
@@ -497,7 +497,7 @@ The eliminator picks 2 rewards among: 4 lives, 8 points, a card from the elimina
 - **Watch point** The life gain is subject to the 25-life cap.
 - **Acceptance** Both choices applied correctly, card transferred if chosen
 
-### L6-02 · Multiple elimination — `To do`
+### L6-02 · Multiple elimination — `Done`
 
 2 rewards per eliminated player, cumulative, choices chainable.
 
@@ -505,7 +505,7 @@ The eliminator picks 2 rewards among: 4 lives, 8 points, a card from the elimina
 - **Watch point** Upgraded Suicide can trigger several at once: up to 6 choices in a row at 4 players.
 - **Acceptance** Full choice sequence playable without getting stuck
 
-### L6-03 · Reward sub-choice — `To do`
+### L6-03 · Reward sub-choice — `Done`
 
 20s timer per choice. On expiry: 2 × 4 lives granted by default.
 
@@ -513,14 +513,14 @@ The eliminator picks 2 rewards among: 4 lives, 8 points, a card from the elimina
 - **Watch point** Never silently waste an already-paid card.
 - **Acceptance** On expiry, lives are granted with no intervention
 
-### L6-04 · Elimination without an eliminator — `To do`
+### L6-04 · Elimination without an eliminator — `Done`
 
 Tax's life cost, self-targeted Sentence, non-upgraded Suicide, elimination by absence: no reward, cards to the pool.
 
 - **Reference** Rules spec §6 · **Depends on** L6-01, L2-06 · **Complexity** S · **Risk** Low
 - **Acceptance** No player receives a reward, the pool receives the cards
 
-### L6-05 · Simultaneous eliminators — `To do`
+### L6-05 · Simultaneous eliminators — `Done`
 
 Reward goes to the eliminator with the fewest remaining lives, then fewest points, then a random draw among ties.
 

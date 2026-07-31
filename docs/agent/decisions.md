@@ -160,8 +160,9 @@ Surface the question when work reaches these; do not pick an interpretation.
 | # | Question | Blocks |
 |---|---|---|
 | 4 | Which metrics the game log records | L8-01, and any serious playtest |
-| 5 | Simultaneous eliminators — is the italicised tie-break a validated rule or an untested hypothesis? | L6-05 |
 | 7 | Are the timers deliberately absent from the rules spec, or an oversight? | Nothing — non-blocking |
+
+Open decision #5 (simultaneous eliminators) closed 2026-07-31 — see below.
 
 ## 2026-07-29 · [P] Card counters lose one point per life lost, not per hit (L0-04)
 
@@ -584,3 +585,13 @@ Overrides former tech §6.2 #3 / rules §5 Suicide reward wording:
 - **Cloning:** immediate; copies target persistents; clears user pending; visibility wipe both ways.
 - **Sentence:** injected `EffectContext.rng`; queue elim on drawn victim; self → no eliminator.
 - **buySpecialCard:** 20 pts, RNG among `SPECIAL_CARD_IDS` only. PROTOCOL_VERSION 15.
+
+## 2026-07-31 · [P] Lot 6 elimination rewards (L6-01…L6-05) (closes Open decision #5)
+
+- Contributor log per resolve+persist phase: every third-party source that dealt life loss or a
+  lethal effect; self sources never record. Multi-contributor → italic §6 tie-break (fewest
+  lives → fewest points → seeded `rng.pick`) — **validated rule**, not hypothesis.
+- Cards held until that elim's 2 picks finish; remainder → pool. No eliminator → pool immediately.
+- Mirror-shaped `rewardQueue` / `rewardChoice` pause; 20s default `2×4 lives`; impossible card
+  picks rejected. Cleanup: clear pending on victim, pool their persistents, keep pending from them.
+- PROTOCOL_VERSION 16. Suicide timing unchanged (N-queue rare in V1; still chainable).

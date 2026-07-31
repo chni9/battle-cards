@@ -10,5 +10,6 @@ export * from './domain/kit-catalog';
 export * from './domain/player';
 export * from './domain/upgrade-point-economy';
 export * from './protocol/messages';
+export * from './protocol/reward-choice';
 export * from './protocol/state-view';
 export { PROTOCOL_VERSION } from './protocol-version';

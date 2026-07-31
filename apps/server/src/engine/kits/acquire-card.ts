@@ -6,7 +6,13 @@
  * stay consistent.
  */
 
-import { getKit, type CardId, type CardInstance, type Player } from '@card-battle/shared';
+import {
+  getKit,
+  isSpecialCardId,
+  type CardId,
+  type CardInstance,
+  type Player,
+} from '@card-battle/shared';
 import { randomUUID } from 'node:crypto';
 
 function isAlwaysUpgraded(player: Player, cardId: CardId): boolean {
@@ -33,4 +39,21 @@ export function acquireSpecialCard(player: Player, cardId: CardId): CardInstance
   };
   player.specialCards.push(instance);
   return instance;
+}
+
+/**
+ * Move an existing instance into the recipient's hand or specials zone.
+ * Applies `alwaysUpgraded` without minting a new instanceId (elimination reward / theft).
+ */
+export function transferCardInstance(player: Player, instance: CardInstance): void {
+  if (isAlwaysUpgraded(player, instance.cardId)) {
+    instance.isUpgraded = true;
+  }
+
+  if (isSpecialCardId(instance.cardId)) {
+    player.specialCards.push(instance);
+    return;
+  }
+
+  player.hand.push(instance);
 }

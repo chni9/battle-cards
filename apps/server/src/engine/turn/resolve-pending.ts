@@ -22,6 +22,7 @@ import { isImmuneTo } from '../kits/is-immune-to';
 import { applyDamage } from '../life/apply-damage';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = 'applied' | 'immune' | 'cancelled';
 
@@ -206,23 +207,14 @@ function resolveSuicide(
   if (isSelf) {
     const livesLost = target.lives;
     target.lives = 0;
-    state.eliminationAttributions.push({
-      eliminatedPlayerId: target.id,
-      eliminatorPlayerId: null,
-    });
+    // Self-elim: no third-party contributor (rules spec §6).
     return { livesLost, outcome: 'applied' };
   }
 
   const loss = applyLifeLoss(target, SUICIDE_OPPONENT_LIFE_LOSS, 'suicide');
   target.points = 0;
   target.turnLedger.livesLost += loss.livesLost;
-
-  if (target.lives <= 0) {
-    state.eliminationAttributions.push({
-      eliminatedPlayerId: target.id,
-      eliminatorPlayerId: effect.sourcePlayerId,
-    });
-  }
+  recordEliminationContributor(state, target.id, effect.sourcePlayerId, loss.livesLost);
 
   return { livesLost: loss.livesLost, outcome: 'applied' };
 }
@@ -270,6 +262,7 @@ export function resolvePendingEffects(
       shieldAbsorbed = damageOutcome.shieldAbsorbed;
       player.turnLedger.livesLost += damageOutcome.livesLost;
       poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
+      recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
       outcome = 'applied';
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {
@@ -293,17 +286,22 @@ export function resolvePendingEffects(
     } else if (effect.cardId === 'spy-thief') {
       outcome = resolveSpyThief(state, player, effect);
     } else if (effect.cardId === 'sentence') {
-      const livesLost = player.lives;
+      const livesBefore = player.lives;
       player.lives = 0;
       const isSelf = effect.sourcePlayerId === player.id;
-      state.eliminationAttributions.push({
-        eliminatedPlayerId: player.id,
-        eliminatorPlayerId: isSelf ? null : effect.sourcePlayerId,
-      });
+      // Lethal effect: record even when lives were already 0 (livesBefore used as signal).
+      if (!isSelf) {
+        recordEliminationContributor(
+          state,
+          player.id,
+          effect.sourcePlayerId,
+          Math.max(livesBefore, 1),
+        );
+      }
       outcome = 'applied';
       resolved.push({
         effect,
-        livesLost,
+        livesLost: livesBefore,
         shieldAbsorbed: 0,
         outcome,
       });
