@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-58 of 63 tasks done. **Lot 7 complete (M4)** — next up is L8-01.
+59 of 63 tasks done. **Lot 7 complete (M4)** — next up is L8-01.
 
 | Lot | Tasks | Done |
 |---|---|---|
