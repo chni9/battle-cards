@@ -77,6 +77,16 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
     expect(filtered[0]?.kind).toBe('actionPlayed');
   });
 
+  it('shows nothing when no kinds are selected', () => {
+    const filtered = filterActionLog(
+      sample,
+      { playerId: null, kinds: new Set(), query: '' },
+      nick,
+    );
+
+    expect(filtered).toHaveLength(0);
+  });
+
   it('groups consecutive entries by turnSequence', () => {
     const groups = groupByTurn(sample);
 

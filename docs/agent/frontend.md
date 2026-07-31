@@ -117,3 +117,23 @@ Verified 2026-07-31 (Playwright, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=8000`
   no stuck state / protocol mismatch.
 - 2p room `BFIOVB` — disconnected grace badge, absent after grace, win by forfeit for the
   remaining seat.
+
+## Post-lot browser gate
+
+Required after the last task of a backlog lot is `Done` (AGENTS.md §9). Agents own this —
+do not hand off an untested lot.
+
+1. Restart `pnpm dev` on the current code (match PROTOCOL_VERSION). Prefer long turns for
+   interactive play (`TURN_DURATION_MS=300000`); short timers only when testing lifecycle.
+2. Drive at least one **two-browser** (or multi-tab) session covering that lot's acceptance
+   criteria end-to-end — not only unit tests.
+3. Exercise the new UI paths (filters, screens, degraded states, log entries, recap, etc.).
+4. On every defect: root-cause, fix, `pnpm verify`, commit, and **re-test** until clean.
+5. Record the room code(s) and what was verified in this file (same pattern as the Lot 6/7
+   notes above).
+
+### Lot 9 verified 2026-08-01 (Playwright, `TURN_DURATION_MS=300000`, PROTOCOL 18)
+
+- Action log: turn groups, draw/playCard/Resolved entries, player/kind/search filters.
+- End screen: winner, single `(eliminated)` badge, recap counts + elim reason, Return home.
+- Leave forfeit → game over recap (`P2 eliminated (leave)`). Rooms: `NNOLEX`, `UGVKXF`, etc.

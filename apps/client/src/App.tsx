@@ -141,7 +141,6 @@ export function App() {
           {view.players.map((player) => (
             <li key={player.id}>
               {player.nickname}
-              {player.isEliminated ? ' (eliminated)' : ''}
               {formatConnectionBadge(player)}
             </li>
           ))}

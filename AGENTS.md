@@ -168,6 +168,11 @@ than none: the next session trusts it and redoes finished work.
       `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
 
+**After finishing a lot** (all tasks in that lot `Done`): run an autonomous browser
+playtest of the lot's surface (see `docs/agent/frontend.md` · Post-lot browser gate). Fix
+every issue found, re-verify, and commit fixes before moving to the next lot. Do not wait
+for the developer to discover integration gaps.
+
 ## 10. Commits & PR
 
 Conventional Commits, imperative mood, subject ≤50 chars (hard cap 72), no trailing period.

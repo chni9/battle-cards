@@ -106,7 +106,7 @@ export function filterActionLog(
   const query = filters.query.trim().toLowerCase();
 
   return entries.filter((entry) => {
-    if (filters.kinds.size > 0 && !filters.kinds.has(entry.kind)) {
+    if (!filters.kinds.has(entry.kind)) {
       return false;
     }
 
