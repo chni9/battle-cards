@@ -148,7 +148,14 @@ Technical spec §5.7 — two independent mechanisms, deliberately different thre
   without waiting the 30s. Eliminated after **3** automatic turns, with no eliminator and so no
   reward. Any reconnection resets both the window and the counter.
 - **Connected but inactive:** the 30s timer expires and they draw. Eliminated after **5**
-  consecutive expired turns.
+  consecutive expired turns. Reconnect does **not** reset this counter.
+- **Colyseus:** `onDrop` → `allowReconnection(client, "manual")` until elim or game over (so
+  reclaim stays possible while *absent*). Own 60s timer only flips status. Consented Leave
+  mid-game → forfeit elim (`reason: 'leave'`), not a grace window.
+- **Timers:** while `disconnected`, pause turn / Mirror / reward timers owned by that seat and
+  resume remaining ms on `onReconnect`. Pure transitions live in
+  `apps/server/src/engine/lifecycle/`; hooks stay in `game-room.ts`.
+- **Views:** every `PublicPlayerView` carries a public `connection` slice (L9-01).
 
 In both cases the player stays a valid target — attacks and persistent effects apply normally,
 no immunity. At 2 players this elimination wins the game by forfeit.

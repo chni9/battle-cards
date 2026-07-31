@@ -42,7 +42,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-53 of 63 tasks done. **Lot 6 complete** — next up is L7-01.
+58 of 63 tasks done. **Lot 7 coding complete** — L7-05 manual M4 gate next (or in progress).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -53,9 +53,9 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 4 · Kits | 5 | 5 |
 | 5 · Special cards | 9 | 9 |
 | 6 · Elimination | 5 | 5 |
-| 7 · Robustness | 5 | 0 |
+| 7 · Robustness | 5 | 4 |
 | 8 · Game log | 2 | 0 |
-| 9 · Polish | 3 | 0 |
+| 9 · Polish | 3 | 1 |
 
 ## Milestones
 
@@ -530,7 +530,7 @@ Reward goes to the eliminator with the fewest remaining lives, then fewest point
 
 ## Lot 7 · Robustness
 
-### L7-01 · Reconnection window — `To do`
+### L7-01 · Reconnection window — `Done`
 
 60 seconds triggered the instant of disconnection, in real time, independent of the current turn. Reconnection before expiry: no effect.
 
@@ -538,7 +538,7 @@ Reward goes to the eliminator with the fewest remaining lives, then fewest point
 - **Watch point** The counter starts at disconnection, not at the player's turn.
 - **Acceptance** 40s disconnection then reconnection: no consequence
 
-### L7-02 · Absent player — `To do`
+### L7-02 · Absent player — `Done`
 
 Beyond 60s: immediate draw on each of their turns, without waiting the 30s. Elimination after 3 automatic turns, no reward. Remains a valid target.
 
@@ -546,7 +546,7 @@ Beyond 60s: immediate draw on each of their turns, without waiting the 30s. Elim
 - **Watch point** Any reconnection resets both the 60-second window and the 3-turn counter.
 - **Acceptance** Elimination on the 3rd automatic turn, cards to the pool
 
-### L7-03 · Connected inactivity — `To do`
+### L7-03 · Connected inactivity — `Done`
 
 The 30-second timer expires, the player draws. Elimination after 5 consecutive expired turns.
 
@@ -554,7 +554,7 @@ The 30-second timer expires, the player draws. Elimination after 5 consecutive e
 - **Watch point** Independent mechanism from disconnection, threshold deliberately higher.
 - **Acceptance** Elimination on the 5th consecutive expired turn
 
-### L7-04 · Win by forfeit — `To do`
+### L7-04 · Win by forfeit — `Done`
 
 At 2 players, elimination by absence or inactivity gives the win to the remaining player.
 
@@ -589,12 +589,13 @@ One single Postgres write, at the end of each game. Never the state of an in-pro
 
 ## Lot 9 · Polish
 
-### L9-01 · Visible degraded states — `To do`
+### L9-01 · Visible degraded states — `Done`
 
 Absent player, automatic-turn counter before elimination, turn and sub-choice timers.
 
 - **Reference** Spec §7 · **Depends on** L7-03 · **Complexity** M · **Risk** Low
 - **Acceptance** States are readable without opening the console
+- **Note** Pulled forward into Lot 7 playtest readiness (PROTOCOL_VERSION 17 `connection` on `PublicPlayerView`).
 
 ### L9-02 · Browsable action log — `To do`
 

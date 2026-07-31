@@ -113,6 +113,12 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       nickname: player.nickname,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
+      connection: {
+        status: player.connectionState.status,
+        disconnectedAt: player.connectionState.disconnectedAt,
+        automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
+        consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
+      },
       ...(spied !== undefined ? { spied } : {}),
     };
   });
@@ -167,6 +173,12 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
       nickname: player.nickname,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
+      connection: {
+        status: player.connectionState.status,
+        disconnectedAt: player.connectionState.disconnectedAt,
+        automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
+        consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
+      },
     })),
   };
 }

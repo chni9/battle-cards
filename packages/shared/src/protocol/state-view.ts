@@ -6,6 +6,7 @@
 
 import type { CardId, CardInstance } from '../domain/card';
 import type { KitId } from '../domain/kit';
+import type { ConnectionStatus } from '../domain/player';
 
 /** A seated player as seen in the lobby — nicknames are public once joined. */
 export interface LobbySeatView {
@@ -24,6 +25,14 @@ export interface LobbyStateView {
   players: readonly LobbySeatView[];
 }
 
+/** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */
+export interface PublicConnectionView {
+  status: ConnectionStatus;
+  disconnectedAt: number | null;
+  automaticTurnsTaken: number;
+  consecutiveTimeouts: number;
+}
+
 /** Public slice of another player — status only (2026-07-30 rulings). */
 export interface PublicPlayerView {
   id: string;
@@ -31,6 +40,7 @@ export interface PublicPlayerView {
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */
   isYou: boolean;
+  connection: PublicConnectionView;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
 }

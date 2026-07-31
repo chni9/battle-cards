@@ -44,12 +44,25 @@ import {
   type UpgradeCardPayload,
   type ServerToClientMessages,
 } from '@card-battle/shared';
-import { ErrorCode, Room, ServerError, type Client } from 'colyseus';
+import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { createInitialState } from '../engine/create-initial-state';
+import { RECONNECT_GRACE_MS } from '../engine/lifecycle/constants';
+import {
+  markAbsent,
+  markDisconnected,
+  markReconnected,
+  recordAbsentAutoTurn,
+  recordConnectedTimeout,
+  remainingMs,
+  resetConnectedTimeouts,
+} from '../engine/lifecycle/connection';
 import { createRng } from '../engine/rng';
+import { advanceTurn, findPlayer } from '../engine/turn/advance-turn';
 import {
   REWARD_SUB_CHOICE_MS,
+  eliminateWithoutReward,
+  findSoleSurvivorId,
   hasPendingEliminationRewards,
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
@@ -109,6 +122,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private mirrorTimer: ReturnType<typeof setTimeout> | null = null;
   private rewardTimer: ReturnType<typeof setTimeout> | null = null;
   private actionLog: ActionLogEntryView[] = [];
+  /** Colyseus manual reconnection Deferreds — reject on elim / Leave / game over. */
+  private reconnectionRejectors = new Map<string, (reason?: Error) => void>();
+  private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private pausedTurnRemainingMs: number | null = null;
+  private pausedMirrorRemainingMs: number | null = null;
+  private pausedRewardRemainingMs: number | null = null;
 
   override async onCreate(): Promise<void> {
     this.roomId = await this.allocateGameCode();
@@ -119,6 +138,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearTurnTimer();
     this.clearMirrorTimer();
     this.clearRewardTimer();
+    this.clearAllAbsentTimers();
+    this.rejectAllReconnections(new Error('Room disposed'));
     await this.presence.srem(GAME_CODE_PRESENCE_CHANNEL, this.roomId);
   }
 
@@ -180,7 +201,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       console.log(
         `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
       );
-      this.beginTurnTimer();
+      this.beginTurnOrAbsentAutoPlay();
       this.sendStateToEveryone();
       this.broadcastTurnStarted();
     },
@@ -296,7 +317,80 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.sendStateToEveryoneExcept(client);
   }
 
-  override onLeave(client: GameClient): void {
+  /**
+   * Unexpected disconnect mid-game — technical spec §5.7, L7-01.
+   * Keep the seat reclaimable (`manual`) until elim or game over.
+   */
+  override async onDrop(client: GameClient): Promise<void> {
+    const state = this.gameState;
+
+    if (!this.hasStarted || state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const player = findPlayer(state, client.sessionId);
+
+    if (player === undefined || player.isEliminated) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] ${client.sessionId} dropped — grace ${RECONNECT_GRACE_MS}ms`);
+    markDisconnected(player, Date.now());
+    this.pauseTimersOwnedBy(client.sessionId);
+    this.scheduleAbsentTransition(client.sessionId);
+    this.sendStateToEveryone();
+
+    const deferred = this.allowReconnection(client, 'manual');
+    this.reconnectionRejectors.set(client.sessionId, (reason?: Error) => {
+      // Deferred.reject is loosely typed on the Colyseus Deferred helper.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Colyseus Deferred.reject
+      deferred.reject(reason ?? new Error('Reconnection closed'));
+    });
+
+    try {
+      await deferred;
+    } catch {
+      // Rejected on elim / Leave / dispose, or never reclaimed.
+    } finally {
+      this.reconnectionRejectors.delete(client.sessionId);
+    }
+  }
+
+  override onReconnect(client: GameClient): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
+    const player = findPlayer(state, client.sessionId);
+
+    if (player === undefined || player.isEliminated) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] ${client.sessionId} reconnected`);
+    markReconnected(player);
+    this.clearAbsentTimer(client.sessionId);
+    this.resumeTimersOwnedBy(client.sessionId);
+    this.sendStateToEveryone();
+  }
+
+  override onLeave(client: GameClient, code?: number): void {
+    const consented = code === CloseCode.CONSENTED;
+
+    if (this.hasStarted && this.gameState !== null && this.winnerPlayerId === null) {
+      if (consented) {
+        this.handleConsentedLeave(client.sessionId);
+      }
+
+      // Permanent leave after drop (reconnection rejected): seat may stay for lobby id map;
+      // player remains in gameState (possibly already eliminated).
+      this.clearAbsentTimer(client.sessionId);
+      this.rejectReconnection(client.sessionId, new Error('Client left'));
+      return;
+    }
+
     this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
 
     if (this.hostSessionId === client.sessionId) {
@@ -310,6 +404,46 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.sendStateToEveryoneExcept(client);
+  }
+
+  private handleConsentedLeave(sessionId: string): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
+    const player = findPlayer(state, sessionId);
+
+    if (player === undefined || player.isEliminated) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
+    this.clearAbsentTimer(sessionId);
+    this.rejectReconnection(sessionId, new Error('Player left'));
+    eliminateWithoutReward(state, sessionId);
+    this.broadcast(PLAYER_ELIMINATED, {
+      playerId: sessionId,
+      eliminatorPlayerId: null,
+      reason: 'leave',
+    });
+
+    if (this.finishIfSoleSurvivor(state)) {
+      return;
+    }
+
+    if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
+      this.clearTurnTimer();
+      advanceTurn(state);
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+      return;
+    }
+
+    this.sendStateToEveryone();
   }
 
   private handleAction(client: GameClient, action: TurnAction): void {
@@ -333,6 +467,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (this.actionTakenThisTurn) {
       client.send(ERROR_MESSAGE, { message: 'You already acted this turn.' });
       return;
+    }
+
+    const actor = findPlayer(state, client.sessionId);
+
+    if (actor !== undefined) {
+      resetConnectedTimeouts(actor);
     }
 
     const result = performTurnAction(state, client.sessionId, action);
@@ -367,7 +507,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.beginTurnTimer();
+    this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
   }
@@ -411,7 +551,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.beginTurnTimer();
+    this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
   }
@@ -475,14 +615,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
     for (const playerId of result.eliminatedPlayerIds) {
       const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
 
+      this.rejectReconnection(playerId, new Error('Player eliminated'));
+      this.clearAbsentTimer(playerId);
       this.broadcast(PLAYER_ELIMINATED, {
         playerId,
         eliminatorPlayerId: elimination?.eliminatorPlayerId ?? null,
+        reason: 'combat',
       });
     }
 
     if (result.winnerPlayerId !== null) {
       this.winnerPlayerId = result.winnerPlayerId;
+      this.rejectAllReconnections(new Error('Game over'));
       this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
       this.sendStateToEveryone();
       return;
@@ -495,14 +639,31 @@ export class GameRoom extends Room<{ client: GameClient }> {
     client: GameClient,
     deadlineMs: number,
     eligibleEffectIds: readonly string[],
+    durationMs?: number,
   ): void {
     this.clearMirrorTimer();
-    client.send(MIRROR_CHOICE_REQUIRED, { eligibleEffectIds, deadlineMs });
+    this.pausedMirrorRemainingMs = null;
 
-    const remaining = Math.max(0, deadlineMs - Date.now());
+    const remainingFromDeadline = Math.max(0, deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? MIRROR_SUB_CHOICE_MS : remainingFromDeadline);
+    const effectiveDeadline = durationMs !== undefined ? Date.now() + ms : deadlineMs;
+
+    const state = this.gameState;
+
+    if (state?.mirrorChoice != null && durationMs !== undefined) {
+      state.mirrorChoice = { ...state.mirrorChoice, deadlineMs: effectiveDeadline };
+    }
+
+    client.send(MIRROR_CHOICE_REQUIRED, {
+      eligibleEffectIds,
+      deadlineMs: effectiveDeadline,
+    });
+
     this.mirrorTimer = setTimeout(() => {
       this.onMirrorTimeout();
-    }, remaining > 0 ? remaining : MIRROR_SUB_CHOICE_MS);
+    }, ms > 0 ? ms : MIRROR_SUB_CHOICE_MS);
   }
 
   private onMirrorTimeout(): void {
@@ -532,13 +693,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.beginTurnTimer();
+    this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
   }
 
-  private beginRewardTimer(state: GameState): void {
+  private beginRewardTimer(state: GameState, durationMs?: number): void {
     this.clearRewardTimer();
+    this.pausedRewardRemainingMs = null;
     this.sendRewardChoiceRequired(state);
 
     const choice = state.rewardChoice;
@@ -547,10 +709,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const remaining = Math.max(0, choice.deadlineMs - Date.now());
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? REWARD_SUB_CHOICE_MS : remainingFromDeadline);
+
+    if (durationMs !== undefined) {
+      choice.deadlineMs = Date.now() + ms;
+      this.sendRewardChoiceRequired(state);
+    }
+
     this.rewardTimer = setTimeout(() => {
       this.onRewardTimeout();
-    }, remaining > 0 ? remaining : REWARD_SUB_CHOICE_MS);
+    }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS);
   }
 
   private onRewardTimeout(): void {
@@ -605,6 +776,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }): void {
     if (result.winnerPlayerId !== null) {
       this.winnerPlayerId = result.winnerPlayerId;
+      this.rejectAllReconnections(new Error('Game over'));
       this.broadcast(GAME_OVER, { winnerPlayerId: result.winnerPlayerId });
       this.sendStateToEveryone();
       return;
@@ -623,13 +795,44 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.actionTakenThisTurn = false;
-    this.beginTurnTimer();
+    this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
   }
 
-  private beginTurnTimer(): void {
+  /**
+   * Start the turn timer, or immediately auto-draw if the active seat is absent.
+   * technical spec §5.7.
+   */
+  private beginTurnOrAbsentAutoPlay(): void {
+    const state = this.gameState;
+
+    if (state?.currentTurnPlayerId == null) {
+      this.turnDeadlineMs = null;
+      return;
+    }
+
+    const active = findPlayer(state, state.currentTurnPlayerId);
+
+    if (active?.connectionState.status === 'absent') {
+      this.runAbsentAutoDraw(active.id);
+      return;
+    }
+
+    if (active?.connectionState.status === 'disconnected') {
+      // Grace window: do not start the 30s timer — wait for reconnect or absent.
+      this.clearTurnTimer();
+      this.turnDeadlineMs = null;
+      this.pausedTurnRemainingMs = TURN_DURATION_MS;
+      return;
+    }
+
+    this.beginTurnTimer(TURN_DURATION_MS);
+  }
+
+  private beginTurnTimer(durationMs: number): void {
     this.clearTurnTimer();
+    this.pausedTurnRemainingMs = null;
     const state = this.gameState;
 
     if (state?.currentTurnPlayerId === null || state === null) {
@@ -637,12 +840,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.turnDeadlineMs = Date.now() + TURN_DURATION_MS;
+    const ms = Math.max(0, durationMs);
+    this.turnDeadlineMs = Date.now() + ms;
     const activePlayerId = state.currentTurnPlayerId;
 
     this.turnTimer = setTimeout(() => {
       this.onTurnTimeout(activePlayerId);
-    }, TURN_DURATION_MS);
+    }, ms);
   }
 
   private hasActiveMirrorChoice(state: GameState): boolean {
@@ -668,16 +872,41 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    console.log(`[${this.roomId}] turn timeout — auto draw for ${expectedPlayerId}`);
-    const client = this.clients.find((entry) => entry.sessionId === expectedPlayerId);
+    const actor = findPlayer(state, expectedPlayerId);
 
-    if (client !== undefined) {
-      this.handleAction(client, { type: 'draw' });
+    if (actor?.connectionState.status === 'disconnected') {
       return;
     }
 
-    // Player missing from clients: still advance via engine.
-    const result = performTurnAction(state, expectedPlayerId, { type: 'draw' });
+    console.log(`[${this.roomId}] turn timeout — auto draw for ${expectedPlayerId}`);
+
+    let shouldElimForInactivity = false;
+
+    if (actor?.connectionState.status === 'connected') {
+      shouldElimForInactivity = recordConnectedTimeout(actor);
+    }
+
+    this.performAutoDraw(expectedPlayerId);
+
+    if (!shouldElimForInactivity) {
+      return;
+    }
+
+    const still = findPlayer(state, expectedPlayerId);
+
+    if (still !== undefined && !still.isEliminated && this.getWinnerPlayerId() === null) {
+      this.applyLifecycleElimination(expectedPlayerId, 'inactivity');
+    }
+  }
+
+  private performAutoDraw(playerId: string): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
+    const result = performTurnAction(state, playerId, { type: 'draw' });
 
     if (!result.ok) {
       return;
@@ -695,9 +924,41 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.beginTurnTimer();
+    this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
+  }
+
+  private runAbsentAutoDraw(playerId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const player = findPlayer(state, playerId);
+
+    if (player === undefined || player.isEliminated) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] absent auto-draw for ${playerId}`);
+    const shouldElim = recordAbsentAutoTurn(player);
+    this.performAutoDraw(playerId);
+
+    if (!shouldElim) {
+      return;
+    }
+
+    const still = findPlayer(state, playerId);
+
+    if (still !== undefined && !still.isEliminated && this.getWinnerPlayerId() === null) {
+      this.applyLifecycleElimination(playerId, 'absence');
+    }
+  }
+
+  private getWinnerPlayerId(): string | null {
+    return this.winnerPlayerId;
   }
 
   private broadcastTurnStarted(): void {
@@ -716,6 +977,209 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (this.turnTimer !== null) {
       clearTimeout(this.turnTimer);
       this.turnTimer = null;
+    }
+  }
+
+  private scheduleAbsentTransition(sessionId: string): void {
+    this.clearAbsentTimer(sessionId);
+    const timer = setTimeout(() => {
+      this.onReconnectGraceExpired(sessionId);
+    }, RECONNECT_GRACE_MS);
+    this.absentTimers.set(sessionId, timer);
+  }
+
+  private onReconnectGraceExpired(sessionId: string): void {
+    this.absentTimers.delete(sessionId);
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const player = findPlayer(state, sessionId);
+
+    if (
+      player === undefined ||
+      player.isEliminated ||
+      player.connectionState.status !== 'disconnected'
+    ) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] ${sessionId} absent after grace`);
+    markAbsent(player);
+
+    // Sub-choice defaults if they own an open prompt.
+    if (state.mirrorChoice?.playerId === sessionId) {
+      this.onMirrorTimeout();
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (state.rewardChoice?.eliminatorPlayerId === sessionId) {
+      this.onRewardTimeout();
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
+      this.runAbsentAutoDraw(sessionId);
+      return;
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  private pauseTimersOwnedBy(sessionId: string): void {
+    const state = this.gameState;
+    const now = Date.now();
+
+    if (state === null) {
+      return;
+    }
+
+    if (state.currentTurnPlayerId === sessionId && this.turnDeadlineMs !== null) {
+      this.pausedTurnRemainingMs = remainingMs(this.turnDeadlineMs, now);
+      this.clearTurnTimer();
+    }
+
+    if (state.mirrorChoice?.playerId === sessionId && this.mirrorTimer !== null) {
+      this.pausedMirrorRemainingMs = remainingMs(state.mirrorChoice.deadlineMs, now);
+      this.clearMirrorTimer();
+    }
+
+    if (state.rewardChoice?.eliminatorPlayerId === sessionId && this.rewardTimer !== null) {
+      this.pausedRewardRemainingMs = remainingMs(state.rewardChoice.deadlineMs, now);
+      this.clearRewardTimer();
+    }
+  }
+
+  private resumeTimersOwnedBy(sessionId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    if (
+      state.currentTurnPlayerId === sessionId &&
+      !this.actionTakenThisTurn &&
+      this.pausedTurnRemainingMs !== null
+    ) {
+      const remaining = this.pausedTurnRemainingMs;
+      this.pausedTurnRemainingMs = null;
+      this.beginTurnTimer(remaining);
+      this.broadcastTurnStarted();
+    }
+
+    if (state.mirrorChoice?.playerId === sessionId && this.pausedMirrorRemainingMs !== null) {
+      const remaining = this.pausedMirrorRemainingMs;
+      this.pausedMirrorRemainingMs = null;
+      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+
+      if (client !== undefined) {
+        this.beginMirrorTimer(
+          client,
+          state.mirrorChoice.deadlineMs,
+          state.mirrorChoice.eligibleEffectIds,
+          remaining,
+        );
+      }
+    }
+
+    if (
+      state.rewardChoice?.eliminatorPlayerId === sessionId &&
+      this.pausedRewardRemainingMs !== null
+    ) {
+      const remaining = this.pausedRewardRemainingMs;
+      this.pausedRewardRemainingMs = null;
+      this.beginRewardTimer(state, remaining);
+    }
+  }
+
+  private applyLifecycleElimination(
+    playerId: string,
+    reason: 'absence' | 'inactivity' | 'leave',
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    if (!eliminateWithoutReward(state, playerId)) {
+      return;
+    }
+
+    this.rejectReconnection(playerId, new Error('Player eliminated'));
+    this.clearAbsentTimer(playerId);
+    this.broadcast(PLAYER_ELIMINATED, {
+      playerId,
+      eliminatorPlayerId: null,
+      reason,
+    });
+
+    if (this.finishIfSoleSurvivor(state)) {
+      return;
+    }
+
+    if (state.currentTurnPlayerId === playerId) {
+      this.clearTurnTimer();
+      advanceTurn(state);
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+      return;
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  private finishIfSoleSurvivor(state: GameState): boolean {
+    const survivor = findSoleSurvivorId(state);
+
+    if (survivor === null) {
+      return false;
+    }
+
+    this.winnerPlayerId = survivor;
+    this.rejectAllReconnections(new Error('Game over'));
+    this.clearTurnTimer();
+    this.clearMirrorTimer();
+    this.clearRewardTimer();
+    this.broadcast(GAME_OVER, { winnerPlayerId: survivor });
+    this.sendStateToEveryone();
+    return true;
+  }
+
+  private rejectReconnection(sessionId: string, reason: Error): void {
+    const reject = this.reconnectionRejectors.get(sessionId);
+
+    if (reject !== undefined) {
+      reject(reason);
+      this.reconnectionRejectors.delete(sessionId);
+    }
+  }
+
+  private rejectAllReconnections(reason: Error): void {
+    for (const sessionId of [...this.reconnectionRejectors.keys()]) {
+      this.rejectReconnection(sessionId, reason);
+    }
+  }
+
+  private clearAbsentTimer(sessionId: string): void {
+    const timer = this.absentTimers.get(sessionId);
+
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.absentTimers.delete(sessionId);
+    }
+  }
+
+  private clearAllAbsentTimers(): void {
+    for (const sessionId of [...this.absentTimers.keys()]) {
+      this.clearAbsentTimer(sessionId);
     }
   }
 

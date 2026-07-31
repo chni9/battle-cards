@@ -141,6 +141,37 @@ function dumpCardsToPool(state: GameState, player: Player): void {
   player.specialCards = [];
 }
 
+/**
+ * Eliminate a player who still has lives (absence, inactivity, or Leave forfeit).
+ * No eliminator → cards to the pool immediately — technical spec §5.7, L7-02…L7-04.
+ *
+ * @returns true when the player was newly eliminated.
+ */
+export function eliminateWithoutReward(state: GameState, playerId: string): boolean {
+  const player = findPlayer(state, playerId);
+
+  if (player === undefined || player.isEliminated) {
+    return false;
+  }
+
+  player.isEliminated = true;
+  player.lives = 0;
+  cleanupEliminatedPlayer(state, player);
+  dumpCardsToPool(state, player);
+  return true;
+}
+
+/** Sole remaining non-eliminated player, or null if the match is not decided. */
+export function findSoleSurvivorId(state: GameState): string | null {
+  const alive = state.players.filter((player) => !player.isEliminated);
+
+  if (alive.length !== 1) {
+    return null;
+  }
+
+  return alive[0]?.id ?? null;
+}
+
 function activateRewardHead(state: GameState): void {
   const head = state.rewardQueue[0];
 

@@ -90,9 +90,13 @@ export interface ActionResolvedPayload {
   outcome: 'applied' | 'immune' | 'cancelled';
 }
 
+export type EliminationReason = 'combat' | 'absence' | 'inactivity' | 'leave';
+
 export interface PlayerEliminatedPayload {
   playerId: string;
   eliminatorPlayerId: string | null;
+  /** Absent from older combat paths until PROTOCOL_VERSION 17 — prefer setting explicitly. */
+  reason?: EliminationReason;
 }
 
 export interface GameOverPayload {

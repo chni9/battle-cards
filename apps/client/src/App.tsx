@@ -35,9 +35,39 @@ const STATUS_LABELS = {
   idle: 'Not connected',
   connecting: 'Connecting…',
   connected: 'Connected',
+  reconnecting: 'Reconnecting…',
   disconnected: 'Disconnected',
   failed: 'Could not join',
 } as const;
+
+function formatConnectionBadge(player: {
+  connection: {
+    status: 'connected' | 'disconnected' | 'absent';
+    automaticTurnsTaken: number;
+    consecutiveTimeouts: number;
+  };
+  isEliminated: boolean;
+}): string {
+  if (player.isEliminated) {
+    return ' (eliminated)';
+  }
+
+  const { status, automaticTurnsTaken, consecutiveTimeouts } = player.connection;
+
+  if (status === 'disconnected') {
+    return ' (disconnected — grace)';
+  }
+
+  if (status === 'absent') {
+    return ` (absent ${automaticTurnsTaken}/3)`;
+  }
+
+  if (consecutiveTimeouts > 0) {
+    return ` (idle timeouts ${consecutiveTimeouts}/5)`;
+  }
+
+  return '';
+}
 
 export function App() {
   const connection = useRoomConnection();
@@ -108,7 +138,7 @@ export function App() {
           {view.players.map((player) => (
             <li key={player.id}>
               {player.nickname}
-              {player.isEliminated ? ' (eliminated)' : ''}
+              {formatConnectionBadge(player)}
             </li>
           ))}
         </ul>
@@ -453,8 +483,24 @@ function TableScreen(props: {
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
   const attackCards = view.self.hand.filter((card) => isAttackCardId(card.cardId));
   const playableCards = [...view.self.hand, ...view.self.specialCards];
+  const activePlayer = view.players.find(
+    (player) => player.id === view.currentTurnPlayerId,
+  );
+  const activeStatus = activePlayer?.connection.status;
+  const turnPaused =
+    activeStatus === 'disconnected' ||
+    (activeStatus === 'absent' && deadlineMs === null);
   const secondsLeft =
-    deadlineMs === null ? null : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
+    deadlineMs === null || turnPaused
+      ? null
+      : Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000));
+  const timerLabel = turnPaused
+    ? activeStatus === 'disconnected'
+      ? 'Paused — reconnecting'
+      : 'Absent — auto-draw'
+    : secondsLeft === null
+      ? '—'
+      : `${secondsLeft}s`;
   const opponents = view.players.filter((player) => !player.isYou);
   const selectedPlayCard = playableCards.find((card) => card.instanceId === playInstanceId);
   const mirrorSecondsLeft =
@@ -579,7 +625,7 @@ function TableScreen(props: {
             '—'}
           {isMyTurn ? ' (you)' : ''}
         </p>
-        <p>Timer: {secondsLeft === null ? '—' : `${secondsLeft}s`}</p>
+        <p>Timer: {timerLabel}</p>
         {lastActionResolved?.outcome === 'immune' && (
           <p>
             {lastActionResolved.cardId} failed — target is immune
@@ -741,7 +787,7 @@ function TableScreen(props: {
                   }}
                 />
                 {player.nickname}
-                {player.isEliminated ? ' (eliminated)' : ''}
+                {formatConnectionBadge(player)}
               </label>
               {player.spied !== undefined && (
                 <div>
@@ -828,6 +874,17 @@ function TableScreen(props: {
 
       <section>
         <h2>Your zone</h2>
+        <p>
+          Status:
+          {(() => {
+            const self = view.players.find((player) => player.isYou);
+            if (self === undefined) {
+              return ' —';
+            }
+            const badge = formatConnectionBadge(self);
+            return badge === '' ? ' connected' : badge;
+          })()}
+        </p>
         <p>
           Lives {view.self.lives} · Shield {view.self.shield}
           {view.self.shieldIsUpgraded ? ' (upgraded)' : ''} · Points {view.self.points} · Upgrade

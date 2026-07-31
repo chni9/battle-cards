@@ -1,5 +1,5 @@
 /**
- * Client connection and intents — technical spec §3, §5.
+ * Client connection and intents — technical spec §3, §5, §5.7 (L7 reconnect).
  */
 
 import {
@@ -42,14 +42,20 @@ import {
   type TurnStartedPayload,
 } from '@card-battle/shared';
 import { Client, type Room } from '@colyseus/sdk';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 const DEFAULT_SERVER_URL = 'http://localhost:2567';
+const RECONNECT_TOKEN_KEY = 'card-battle:reconnection-token';
+
+/** Cover grace + absent reclaim window (manual server-side until elim). */
+const RECONNECT_MAX_RETRIES = 120;
+const RECONNECT_MAX_DELAY_MS = 5_000;
 
 export type RoomConnectionStatus =
   | 'idle'
   | 'connecting'
   | 'connected'
+  | 'reconnecting'
   | 'disconnected'
   | 'failed';
 
@@ -110,12 +116,30 @@ export interface UseRoomConnectionResult extends RoomConnection {
 export function useRoomConnection(): UseRoomConnectionResult {
   const [connection, setConnection] = useState<RoomConnection>(INITIAL);
   const roomRef = useRef<Room | null>(null);
+  const intentionalLeaveRef = useRef(false);
+  const attachRoomRef = useRef<(room: Room) => void>(() => {
+    /* assigned below */
+  });
 
   const attachRoom = useCallback((room: Room): void => {
     roomRef.current = room;
+    intentionalLeaveRef.current = false;
+
+    room.reconnection.enabled = true;
+    room.reconnection.maxRetries = RECONNECT_MAX_RETRIES;
+    room.reconnection.maxDelay = RECONNECT_MAX_DELAY_MS;
+    room.reconnection.minDelay = 500;
+
+    persistToken(room.reconnectionToken);
 
     room.onMessage(STATE_UPDATE, (payload: unknown) => {
       if (isStateView(payload)) {
+        if (payload.phase === 'playing') {
+          persistToken(room.reconnectionToken);
+        } else if (payload.phase === 'finished') {
+          clearToken();
+        }
+
         setConnection((previous) => ({
           ...previous,
           status: 'connected',
@@ -137,7 +161,6 @@ export function useRoomConnection(): UseRoomConnectionResult {
         setConnection((previous) => ({
           ...previous,
           lastTurnStarted: payload,
-          // Mirror / reward sub-choices end before the next turn starts (play or expiry).
           mirrorChoice: null,
           rewardChoice: null,
         }));
@@ -174,6 +197,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onMessage(GAME_OVER, (payload: unknown) => {
       if (isGameOver(payload)) {
+        clearToken();
         setConnection((previous) => ({
           ...previous,
           error: null,
@@ -192,8 +216,47 @@ export function useRoomConnection(): UseRoomConnectionResult {
       }));
     });
 
+    room.onDrop(() => {
+      if (intentionalLeaveRef.current) {
+        return;
+      }
+
+      setConnection((previous) => ({
+        ...previous,
+        status: 'reconnecting',
+        error: null,
+      }));
+    });
+
+    room.onReconnect(() => {
+      persistToken(room.reconnectionToken);
+      room.send(CLIENT_READY);
+      setConnection((previous) => ({
+        ...previous,
+        status: 'connected',
+        error: null,
+      }));
+    });
+
     room.onLeave((_code, reason) => {
       roomRef.current = null;
+
+      if (intentionalLeaveRef.current) {
+        clearToken();
+        setConnection(INITIAL);
+        return;
+      }
+
+      // Auto-reconnect exhausted — try one more manual reclaim while token is valid.
+      const token = readToken();
+
+      if (token !== null) {
+        void attemptManualReconnect(token, setConnection, roomRef, (nextRoom) => {
+          attachRoomRef.current(nextRoom);
+        });
+        return;
+      }
+
       setConnection({
         ...INITIAL,
         status: 'disconnected',
@@ -210,9 +273,16 @@ export function useRoomConnection(): UseRoomConnectionResult {
     room.send(CLIENT_READY);
   }, []);
 
+  useEffect(() => {
+    attachRoomRef.current = attachRoom;
+  }, [attachRoom]);
+
   const createGame = useCallback(
     async (nickname: string): Promise<void> => {
+      intentionalLeaveRef.current = true;
       await leaveCurrent(roomRef);
+      intentionalLeaveRef.current = false;
+      clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
       const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
@@ -233,7 +303,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
   const joinGame = useCallback(
     async (gameCode: string, nickname: string): Promise<void> => {
+      intentionalLeaveRef.current = true;
       await leaveCurrent(roomRef);
+      intentionalLeaveRef.current = false;
+      clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
       const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
@@ -253,7 +326,16 @@ export function useRoomConnection(): UseRoomConnectionResult {
   );
 
   const leaveGame = useCallback(async (): Promise<void> => {
-    await leaveCurrent(roomRef);
+    intentionalLeaveRef.current = true;
+    clearToken();
+    const room = roomRef.current;
+
+    if (room !== null) {
+      room.reconnection.enabled = false;
+      roomRef.current = null;
+      await room.leave(true);
+    }
+
     setConnection(INITIAL);
   }, []);
 
@@ -348,12 +430,65 @@ export function useRoomConnection(): UseRoomConnectionResult {
   };
 }
 
+async function attemptManualReconnect(
+  token: string,
+  setConnection: Dispatch<SetStateAction<RoomConnection>>,
+  roomRef: { current: Room | null },
+  attachRoom: (room: Room) => void,
+): Promise<void> {
+  setConnection((previous) => ({
+    ...previous,
+    status: 'reconnecting',
+    error: null,
+  }));
+
+  const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+
+  try {
+    const room = await client.reconnect(token);
+    attachRoom(room);
+  } catch (error) {
+    clearToken();
+    roomRef.current = null;
+    setConnection({
+      ...INITIAL,
+      status: 'disconnected',
+      error: describe(error),
+    });
+  }
+}
+
 async function leaveCurrent(roomRef: { current: Room | null }): Promise<void> {
   const room = roomRef.current;
 
   if (room !== null) {
+    room.reconnection.enabled = false;
     roomRef.current = null;
-    await room.leave();
+    await room.leave(true);
+  }
+}
+
+function persistToken(token: string): void {
+  try {
+    sessionStorage.setItem(RECONNECT_TOKEN_KEY, token);
+  } catch {
+    // sessionStorage may be unavailable
+  }
+}
+
+function readToken(): string | null {
+  try {
+    return sessionStorage.getItem(RECONNECT_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearToken(): void {
+  try {
+    sessionStorage.removeItem(RECONNECT_TOKEN_KEY);
+  } catch {
+    // ignore
   }
 }
 

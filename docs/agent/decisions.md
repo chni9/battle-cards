@@ -595,3 +595,21 @@ Overrides former tech §6.2 #3 / rules §5 Suicide reward wording:
 - Mirror-shaped `rewardQueue` / `rewardChoice` pause; 20s default `2×4 lives`; impossible card
   picks rejected. Cleanup: clear pending on victim, pool their persistents, keep pending from them.
 - PROTOCOL_VERSION 16. Suicide timing unchanged (N-queue rare in V1; still chainable).
+
+## 2026-07-31 · [P] Lot 7 disconnection / inactivity (L7-01…L7-04, L9-01)
+
+Rulings locked for technical spec §5.7:
+
+- **Reconnect while absent:** Colyseus `allowReconnection(client, "manual")` stays open until
+  that seat is eliminated or the game ends. The 60s clock only flips `disconnected` → `absent`.
+- **Leave mid-game:** consented `room.leave()` → immediate forfeit elim (cards to pool, no
+  reward). Lobby leave unchanged (seat drop).
+- **Timers while disconnected:** pause turn and Mirror/reward timers; stash remaining ms; resume
+  on reconnect. On transition to `absent`, immediate draw if it is their turn, or sub-choice
+  default if they hold a prompt.
+- **`consecutiveTimeouts`:** independent of reconnect; resets only on a successful voluntary
+  action. Absence counter resets on any reconnect.
+- **Wire:** `PublicPlayerView.connection` + optional `PlayerEliminatedPayload.reason`.
+  PROTOCOL_VERSION 17. Client: SDK auto-reconnect + `sessionStorage` token fallback; Leave
+  disables reconnect.
+- **`eliminateWithoutReward`:** lives may still be above 0 (absence / inactivity / leave).
