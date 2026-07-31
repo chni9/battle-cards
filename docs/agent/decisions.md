@@ -633,6 +633,55 @@ Finished games are written once to Postgres (technical spec §3). Stack and shap
 
 Playbook: `docs/agent/db.md`.
 
+## 2026-08-01 · [P] V2 scoped — visual design layer, no rule/scope change
+
+Developer session scoped and validated `docs/technical_spec_v2.md`. Key decisions, all by
+direct developer instruction unless marked inferred:
+
+- **V1 is closed** (63/63 backlog tasks — see the backlog-sync note below) before V2 starts.
+  V2 restyles L9-02/L9-03's existing output; it does not re-implement them.
+- **Scope: full visual redesign** of all 4 existing screens and every shared component
+  (buttons, opponent zone, private zone, log, queue, timers, action bar) + integration of the
+  developer's existing card/kit illustrations + custom iconography for the 4 resources +
+  game-quality animation. No new screen, rule, card, kit, mode, or protocol event.
+- **Audience unchanged:** friends only, web only — no mobile-first or stranger-onboarding
+  requirement (this rules out a wider redesign scope that "real UI" could otherwise imply).
+- **Stack: Tailwind CSS + Motion** (`motion` package), added via `pnpm add`, over a
+  zero-dependency CSS alternative — developer chose speed of iteration for a solo dev over
+  avoiding the added dependency surface.
+- **Phased sequencing:** static design system (tokens, components, asset integration, all 4
+  screens) before the animation layer, so a working reskin exists even if animation slips.
+  Same "vertical slice before content" logic already applied to V1.
+- **No per-kit "eliminated" portrait.** One generic treatment for every kit, including
+  Kamikaze, which has no such asset today. Resolves what would otherwise have been a missing-
+  asset blocker.
+- **Card/kit asset mapping resolved:**
+  - `scientific` (kit id, name "Scientific") maps to `Scientist.png` — naming mismatch between
+    code and asset, mapped in code only, no rename.
+  - `absorber` (card id, name "Absorber") maps to `Absorption.png` / `Absorption +.png`.
+    **Not** `Card Absorber` (Warrior's out-of-scope special) or `Super Absorber` (Specialist's
+    out-of-scope special) — confirmed against the rules spec's own kit roster, which lists
+    both as distinct cards. Developer explicitly declined renaming the code id/name to
+    "Absorption" ("too complex") — the mapping alone resolves the naming gap.
+  - Two generic assets (`opponent.png`, the 5 colored buttons) are **assumed**, not confirmed:
+    generic opponent placeholder and generic action buttons respectively. Flagged in
+    `technical_spec_v2.md` §4.3 — confirm before L10-04 builds `Button` around them.
+- **Illustration source:** a 120-file `images/` folder outside this repo, covering the full
+  15-kit/~20-card game. V2 wires in only the V1 subset; the rest stays unreferenced (golden
+  rule 7 / technical spec v1 §9 applies to art the same as to code).
+- **`AGENTS.md` golden rule 7 amended** — "art direction" removed from the out-of-scope list,
+  replaced with a pointer to `technical_spec_v2.md`. V1's engine/protocol/scope freeze is
+  otherwise unchanged.
+
+## 2026-08-01 · [T] Backlog synced to match already-landed L9-02/L9-03 (pre-V2 bookkeeping fix)
+
+Before V2 scoping began, `docs/backlog.md` still listed L9-02 and L9-03 as `To do` (progress
+"61 of 63"), even though both had already landed and been committed (`166a99f`, `64a84c2`,
+polish `9e227d4`) and this file already carried the corresponding decision entry below. Fixed
+during this session: both flipped to `Done` with commit references, progress corrected to
+"63 of 63 — V1 complete." Recorded because AGENTS.md §9/§12 treats a stale backlog as worse
+than none, and because it was the trigger for confirming V1 could close before V2 opened.
+
 ## 2026-08-01 · [P] Public history kinds + finished recap (L9-02 / L9-03)
 
 - **`ActionLogEntryView`** becomes a `kind` discriminated union: `actionPlayed`,

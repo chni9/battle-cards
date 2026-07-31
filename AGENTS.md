@@ -92,9 +92,12 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    point** line do not clearly resolve a case, **stop and ask** — even when the answer looks
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
    #1, #2 and #3 are closed.
-7. **V1 scope is closed.** The 11 other kits, Team/God/Quick modes, bots, accounts,
-   in-progress persistence, monetization and art direction are out (technical spec §9) — not
-   to be implemented "even partially, even to lay groundwork".
+7. **V1 scope is closed (63/63) and V2 has started.** The 11 other kits, Team/God/Quick modes,
+   bots, accounts, in-progress persistence and monetization are still out (technical spec §9) —
+   not to be implemented "even partially, even to lay groundwork". **Art direction is no longer
+   out of scope**: it is V2, specified in `docs/technical_spec_v2.md` and sequenced in
+   `docs/backlog.md` Lots 10–14. V2 changes no rule, screen flow, or protocol event — it is a
+   visual layer over the exact system this file already describes.
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.

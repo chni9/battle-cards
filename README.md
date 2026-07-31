@@ -1,16 +1,19 @@
-# Card Battle — V1
+# Card Battle
 
 Turn-based elimination card game, 2 to 4 players, hidden information, delayed resolution.
-This repo is the first online-playable version: a narrow slice of the full game, meant to
-validate the engine before content is added.
+**V1** (this repo's engine and protocol) is complete: a narrow slice of the full game, built to
+validate it before content is added — 63/63 backlog tasks done. **V2**, in progress, gives the
+existing client a real design system, the game's illustrations, and animation, with no change
+to any rule, screen flow, or protocol event.
 
 ## Documents
 
 | Document | Authority |
 |---|---|
 | `docs/spec_bataille_des_cartes_en.md` | The game rules. Authoritative on rules. |
-| `docs/technical_spec_v1.md` | Scope, architecture, protocol, Definition of Done. Contains no rule — refers to the rules spec by section. |
-| `docs/backlog.md` | Task tracker: 63 tasks in 10 lots, each with a watch point and acceptance criteria. Read "How to read this" first. |
+| `docs/technical_spec_v1.md` | V1 scope, architecture, protocol, Definition of Done. Contains no rule — refers to the rules spec by section. |
+| `docs/technical_spec_v2.md` | V2 scope: design system, asset mapping, screens, animation. Changes no rule, screen flow, or protocol event. |
+| `docs/backlog.md` | Task tracker: V1 (Lots 0–9, 63 tasks, all `Done`) and V2 (Lots 10–14, in progress), each with a watch point and acceptance criteria. Read "How to read this" first. |
 | `AGENTS.md` | Working rules for agents and developers. `docs/agent/` holds the per-domain playbooks. |
 
 **Known correction not yet applied to the rules spec:** the mutual-attacks rule in rules spec

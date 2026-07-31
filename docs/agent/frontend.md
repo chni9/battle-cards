@@ -7,8 +7,13 @@
 
 ## Status
 
-Functional UI only for V1 — no art direction (technical spec §9). Screens live in
-`apps/client/src/App.tsx` for now; split further when the surface grows past one file.
+V1 shipped functional UI only, no art direction (technical spec v1 §9) — screens live in
+`apps/client/src/App.tsx` (grown past 1000 lines; `action-log/` is already split out as its own
+folder, the pattern to follow when splitting the rest). **V2 is in progress**
+(`docs/technical_spec_v2.md`, `docs/backlog.md` Lots 10–14): a design system, the game's
+illustrations, and animation, restyling these exact screens and conventions — nothing on this
+page describing intents, payloads, or visibility changes because of it. Update this file's
+examples in place as V2 components land; don't fork a second frontend playbook.
 
 ## Screens
 
