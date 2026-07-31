@@ -63,3 +63,22 @@ How agents / developers verified elimination rewards in a real room:
 8. Spot-checks already done: card + upgradePoint pick → game over; reward expiry alone → game
    over; acting as victim during the pause → server `Finish elimination rewards first.` (UI now
    prevents the click).
+
+## Manual 4-player check (Lot 6)
+
+Same stack as above; open **four** tabs (or windows), join one code, host **Start**.
+
+Verified 2026-07-31 (Playwright, room `BGZEXW` family):
+
+1. Seats P1–P4. Prefer a low-life kit as first victim (Kamikaze starts at 4 lives — one
+   base super resolves to an elim on their turn).
+2. Target the victim via the **nickname label** (more reliable than `getByRole('radio', { name })`
+   for short nicknames in automation), play **super-attack**, rotate **Draw** until their
+   resolve phase runs.
+3. Only the **eliminator** sees **Elimination reward**. Other alive tabs do not. Victim sees
+   **You are a spectator** and Draw disabled.
+4. Confirm rewards (e.g. lives + card). **Game must not end** while ≥2 players remain: turn
+   advances to the next alive seat; opponents list shows `(eliminated)` on the victim.
+5. Repeat for a second elim (still ≥2 alive afterward). Example: after P3 then P2 died, P1/P4
+   still played — `gameOver` stayed false, Active moved on.
+6. Final elim of the penultimate player → rewards → then `gameOver` for the last survivor.
