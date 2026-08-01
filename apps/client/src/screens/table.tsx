@@ -240,6 +240,7 @@ export function TableScreen({
             view={view}
             effects={othersPending}
             title="Pending on others"
+            compact
             tone="felt"
           />
         }
