@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-11 of 22 V2 tasks done. Active from Lot 12.
+12 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 3 |
+| 12 · Table | 8 | 4 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -194,7 +194,7 @@ icons, special cards.
 - **Watch point** Upgrade state must select the `+` asset variant, never a manual per-card `if` — reuse the L10-03 lookup.
 - **Acceptance** Every held card shows the correct base/upgraded illustration; kit portrait matches `kitId`
 
-### L12-04 · Pending effects queue — `To do`
+### L12-04 · Pending effects queue — `Done`
 
 Visual queue of effects in flight (source, card, target), restyled.
 
