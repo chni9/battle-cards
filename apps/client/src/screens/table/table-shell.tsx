@@ -1,7 +1,6 @@
 /**
- * Felt-table layout shell — L12-01.
- * Opponents arc by seat count; action log is the center-stage band (main organ).
- * technical spec v2 §6 · backlog L12-01.
+ * Felt-table layout shell — viewport-locked (no page scroll).
+ * Opponents arc; center-stage action log; private dock bottom.
  */
 
 import type { ReactElement, ReactNode } from 'react';
@@ -12,6 +11,7 @@ export interface TableShellProps {
   prompts: ReactNode;
   /** Ordered opponent seats (1–3). Placement depends on length. */
   opponentSeats: ReactNode[];
+  /** Pending effects aimed at others (not the local player). */
   pending: ReactNode;
   actionLog: ReactNode;
   privateZone: ReactNode;
@@ -19,12 +19,6 @@ export interface TableShellProps {
   legacyActions?: ReactNode;
 }
 
-/**
- * Seat slots for 1–3 opponents:
- * - 1 (2p game): top-center
- * - 2 (3p): left + right
- * - 3 (4p): left + top + right
- */
 function seatAreas(count: number): readonly ('left' | 'top' | 'right')[] {
   if (count <= 1) {
     return ['top'];
@@ -58,10 +52,10 @@ export function TableShell({
 
   return (
     <main
-      className="min-h-[100dvh] bg-surface font-sans text-ink"
+      className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-surface font-sans text-ink"
       data-zone="table"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-4 md:px-6 md:py-5">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-1.5 px-2 py-2 md:gap-2 md:px-4 md:py-3">
         <header data-zone="header" className="shrink-0">
           {header}
         </header>
@@ -70,15 +64,16 @@ export function TableShell({
           {turn}
         </div>
 
-        {prompts}
+        {prompts !== null && prompts !== false && prompts !== undefined ? (
+          <div className="shrink-0">{prompts}</div>
+        ) : null}
 
-        {/* Felt board */}
         <div
           data-zone="felt"
-          className="grid gap-3 rounded-[length:var(--radius-card)] border border-border bg-slate p-3 text-cta-label-on-dark md:gap-4 md:p-4"
+          className="grid min-h-0 flex-1 gap-1.5 overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-slate p-1.5 text-cta-label-on-dark md:gap-2 md:p-2"
           style={{
             gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr)',
-            gridTemplateRows: 'auto auto minmax(14rem, 1fr) auto',
+            gridTemplateRows: 'auto auto minmax(0, 1fr) minmax(12rem, 42dvh)',
             gridTemplateAreas: `
               "opp-left opp-top opp-right"
               "pending pending pending"
@@ -89,21 +84,21 @@ export function TableShell({
         >
           <div
             data-zone="opponents-left"
-            className="flex items-start justify-center"
+            className="flex min-h-0 items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-left' }}
           >
             {byArea.left ?? null}
           </div>
           <div
             data-zone="opponents-top"
-            className="flex items-start justify-center"
+            className="flex min-h-0 items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-top' }}
           >
             {byArea.top ?? null}
           </div>
           <div
             data-zone="opponents-right"
-            className="flex items-start justify-center"
+            className="flex min-h-0 items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-right' }}
           >
             {byArea.right ?? null}
@@ -111,7 +106,7 @@ export function TableShell({
 
           <div
             data-zone="pending"
-            className="min-h-0 rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 p-2"
+            className="min-h-0 max-h-[4.5rem] overflow-y-auto rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
             style={{ gridArea: 'pending' }}
           >
             {pending}
@@ -119,7 +114,7 @@ export function TableShell({
 
           <div
             data-zone="action-log"
-            className="flex min-h-[14rem] flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-2 text-ink md:min-h-[18rem]"
+            className="flex min-h-0 flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1.5 text-ink"
             style={{ gridArea: 'log' }}
           >
             {actionLog}
@@ -127,13 +122,17 @@ export function TableShell({
 
           <div
             data-zone="dock"
-            className="flex flex-col gap-3 rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit/90 p-3 text-ink"
+            className="flex min-h-0 flex-col gap-1.5 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit/90 p-2 text-ink"
             style={{ gridArea: 'dock' }}
           >
-            <div data-zone="private">{privateZone}</div>
-            <div data-zone="economy">{economy}</div>
+            <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
+              {privateZone}
+            </div>
+            <div data-zone="economy" className="shrink-0">
+              {economy}
+            </div>
             {legacyActions !== undefined && (
-              <div data-zone="legacy-actions" className="border-t border-border-soft pt-3">
+              <div data-zone="legacy-actions" className="border-t border-border-soft pt-2">
                 {legacyActions}
               </div>
             )}

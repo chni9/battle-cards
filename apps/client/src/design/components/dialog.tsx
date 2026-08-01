@@ -22,6 +22,8 @@ export interface DialogProps {
   onClose: () => void;
   /** When false, overlay click does not close (default true). */
   closeOnOverlayClick?: boolean;
+  /** Extra classes on the dialog panel (e.g. wider kit inspect). */
+  panelClassName?: string;
 }
 
 const FOCUSABLE =
@@ -34,6 +36,7 @@ export function Dialog({
   actions,
   onClose,
   closeOnOverlayClick = true,
+  panelClassName = '',
 }: DialogProps): ReactElement | null {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -143,17 +146,23 @@ export function Dialog({
         tabIndex={-1}
         onKeyDown={onPanelKeyDown}
         className={[
-          'w-full max-w-md rounded-[length:var(--radius-card)] border border-border',
+          'flex max-h-[min(90dvh,40rem)] w-full max-w-md flex-col overflow-hidden',
+          'rounded-[length:var(--radius-card)] border border-border',
           'bg-surface-raised p-5 font-sans text-ink shadow-[0_12px_40px_rgba(28,26,31,0.28)]',
           'outline-none',
+          panelClassName,
         ].join(' ')}
       >
-        <h2 id={titleId} className="text-lg font-semibold tracking-tight text-ink">
+        <h2 id={titleId} className="shrink-0 text-lg font-semibold tracking-tight text-ink">
           {title}
         </h2>
-        <div className="mt-3 text-sm text-ink-muted">{children}</div>
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto text-sm text-ink-muted">
+          {children}
+        </div>
         {actions !== undefined && (
-          <div className="mt-5 flex flex-wrap items-center justify-end gap-3">{actions}</div>
+          <div className="mt-5 flex shrink-0 flex-wrap items-center justify-end gap-3">
+            {actions}
+          </div>
         )}
       </div>
     </div>

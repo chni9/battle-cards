@@ -61,7 +61,12 @@ rules above are unchanged — this section only covers how the client looks.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
-  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave.
+  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is
+  `h-[100dvh] overflow-hidden` (no page scroll); action log height is fixed by the flex
+  grid and scrolls internally. Pending effects targeting `view.you` render in the private
+  zone (Incoming); effects on others stay on the felt strip. Kit portrait opens a visual
+  inspect Dialog from `getKit` / `getCard` only (resources, starting counts, specials,
+  traits — no invented flavor copy).
 - **Table card-first (L12-08):** click own hand/specials → Dialog Use / Upgrade / Sell; nested
   Dialog for target, Regen quantity, Assassin multi-attack; self-only Use is one-shot (no
   confirm); Spy-revealed cards inspect-only; unavailable = not clickable + Tooltip reason;

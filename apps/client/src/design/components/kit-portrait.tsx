@@ -13,6 +13,10 @@ export interface KitPortraitProps {
   nickname?: string;
   isEliminated?: boolean;
   className?: string;
+  /** When set, portrait is a button (e.g. kit inspect Dialog). */
+  onClick?: () => void;
+  /** Accessible name when clickable. */
+  ariaLabel?: string;
 }
 
 export function KitPortrait({
@@ -20,26 +24,30 @@ export function KitPortrait({
   nickname,
   isEliminated = false,
   className = '',
+  onClick,
+  ariaLabel,
 }: KitPortraitProps): ReactElement {
   const src = kitId === null ? getOpponentPlaceholderUrl() : getKitPortraitUrl(kitId);
   const alt = kitId === null ? (nickname ?? 'Unknown kit') : `${kitId} portrait`;
 
-  return (
-    <span
-      className={[
-        'relative inline-block overflow-hidden rounded-[length:var(--radius-card)]',
-        'border border-border bg-surface-raised',
-        className,
-      ].join(' ')}
-      data-eliminated={isEliminated ? 'true' : 'false'}
-    >
+  const frameClass = [
+    'relative inline-block overflow-hidden rounded-[length:var(--radius-card)]',
+    'border border-border bg-surface-raised',
+    onClick !== undefined
+      ? 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cta-purple focus-visible:ring-offset-2'
+      : '',
+    className,
+  ].join(' ');
+
+  const body = (
+    <>
       <img
         src={src}
-        alt={alt}
+        alt={onClick !== undefined ? '' : alt}
         width={72}
         height={96}
         className={[
-          'aspect-[3/4] w-[4.5rem] object-cover',
+          'aspect-[3/4] w-full min-w-[3.5rem] object-cover',
           isEliminated ? 'opacity-55 grayscale' : '',
         ].join(' ')}
         draggable={false}
@@ -55,6 +63,26 @@ export function KitPortrait({
           Eliminated
         </span>
       ) : null}
+    </>
+  );
+
+  if (onClick !== undefined) {
+    return (
+      <button
+        type="button"
+        className={frameClass}
+        onClick={onClick}
+        aria-label={ariaLabel ?? `Inspect ${alt}`}
+        data-eliminated={isEliminated ? 'true' : 'false'}
+      >
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    <span className={frameClass} data-eliminated={isEliminated ? 'true' : 'false'}>
+      {body}
     </span>
   );
 }

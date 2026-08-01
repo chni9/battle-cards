@@ -89,13 +89,18 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
   }
 
   const controlClass =
-    'rounded-[length:var(--radius-control)] border border-border-soft bg-surface px-2 py-1.5 text-sm text-ink';
+    'rounded-[length:var(--radius-control)] border border-border-soft bg-surface px-1.5 py-1 text-xs text-ink md:text-sm';
 
   return (
-    <section data-zone="action-log-panel" className="flex h-full min-h-0 flex-col font-sans text-ink">
-      <h2 className="shrink-0 text-base font-semibold tracking-tight">Action log</h2>
-      <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2">
-        <label className="text-xs text-ink-muted">
+    <section
+      data-zone="action-log-panel"
+      className="flex h-full min-h-0 flex-col overflow-hidden font-sans text-ink"
+    >
+      <h2 className="shrink-0 text-sm font-semibold tracking-tight md:text-base">
+        Action log
+      </h2>
+      <div className="mt-1 flex shrink-0 flex-wrap items-center gap-1.5">
+        <label className="text-[10px] text-ink-muted md:text-xs">
           Player{' '}
           <select
             className={`ml-1 ${controlClass}`}
@@ -113,11 +118,11 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
             ))}
           </select>
         </label>
-        <label className="text-xs text-ink-muted">
+        <label className="text-[10px] text-ink-muted md:text-xs">
           Search{' '}
           <input
             type="search"
-            className={`ml-1 min-w-[10rem] ${controlClass}`}
+            className={`ml-1 min-w-[8rem] ${controlClass}`}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -126,12 +131,15 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
           />
         </label>
       </div>
-      <div className="mt-2 flex shrink-0 flex-wrap gap-x-3 gap-y-1">
+      <div className="mt-1 flex shrink-0 flex-wrap gap-x-2 gap-y-0.5">
         {ACTION_LOG_KINDS.map((kind) => (
-          <label key={kind} className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
+          <label
+            key={kind}
+            className="inline-flex items-center gap-1 text-[10px] text-ink-muted md:text-xs"
+          >
             <input
               type="checkbox"
-              className="size-3.5 accent-cta-purple"
+              className="size-3 accent-cta-purple"
               checked={kinds.has(kind)}
               onChange={() => {
                 toggleKind(kind);
@@ -142,17 +150,21 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
         ))}
       </div>
       {view.actionLog.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-muted">No actions yet</p>
+        <p className="mt-2 min-h-0 flex-1 text-sm text-ink-muted">No actions yet</p>
       ) : filtered.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-muted">No matching entries</p>
+        <p className="mt-2 min-h-0 flex-1 text-sm text-ink-muted">No matching entries</p>
       ) : (
         <div
           ref={listRef}
           onScroll={onScroll}
-          className="mt-2 min-h-0 flex-1 overflow-auto rounded-[length:var(--radius-card)] border border-border-soft bg-surface px-2 py-1"
+          className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-border-soft bg-surface px-2 py-1"
         >
           {groups.map((group) => (
-            <details key={group.turnSequence} open className="border-b border-border-soft py-1 last:border-b-0">
+            <details
+              key={group.turnSequence}
+              open
+              className="border-b border-border-soft py-1 last:border-b-0"
+            >
               <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-ink-muted">
                 Turn {group.turnSequence}
               </summary>

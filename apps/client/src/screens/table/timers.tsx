@@ -30,7 +30,7 @@ export function Timers({
   return (
     <section
       data-zone="timers"
-      className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-3"
+      className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised px-2.5 py-2"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink">
@@ -48,7 +48,7 @@ export function Timers({
         </p>
       </div>
       <div
-        className="mt-2 h-2.5 overflow-hidden rounded-full bg-border-soft"
+        className="mt-1.5 h-2 overflow-hidden rounded-full bg-border-soft"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -71,7 +71,7 @@ export function Timers({
         />
       </div>
       {subChoiceLabel !== undefined && (
-        <div className="mt-3">
+        <div className="mt-2">
           <p className="text-xs font-medium text-ink-muted">{subChoiceLabel}</p>
           {subChoiceProgressRatio !== undefined && subChoiceProgressRatio !== null && (
             <div
@@ -94,7 +94,7 @@ export function Timers({
       )}
       {lastActionResolved?.outcome === 'immune' && (
         <p
-          className="mt-2 rounded-[length:var(--radius-badge)] bg-cta-red/10 px-2 py-1 text-sm font-medium text-cta-red"
+          className="mt-1.5 rounded-[length:var(--radius-badge)] bg-cta-red/10 px-2 py-1 text-sm font-medium text-cta-red"
           role="status"
         >
           {lastActionResolved.cardId} failed — target is immune

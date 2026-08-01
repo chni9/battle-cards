@@ -9,6 +9,7 @@ import {
   getKit,
   type ActionResolvedPayload,
   type CardInstance,
+  type KitId,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
   type RewardChoice,
@@ -20,6 +21,7 @@ import { ActionLogPanel } from '../action-log/action-log-panel';
 import type { PlayCardOptions } from '../net/use-room-connection';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { EconomyBar } from './table/economy-bar';
+import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
@@ -82,6 +84,7 @@ export function TableScreen({
   onLeave,
 }: TableScreenProps): ReactElement {
   const [dialog, setDialog] = useState<TableDialog>(null);
+  const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
@@ -116,6 +119,12 @@ export function TableScreen({
       : Math.max(0, Math.min(1, (deadlineMs - nowMs) / 60_000));
 
   const opponents = view.players.filter((player) => !player.isYou);
+  const incomingEffects = view.pendingEffects.filter(
+    (effect) => effect.targetPlayerId === view.you,
+  );
+  const othersPending = view.pendingEffects.filter(
+    (effect) => effect.targetPlayerId !== view.you,
+  );
 
   const mirrorSecondsLeft =
     mirrorChoice === null
@@ -199,12 +208,14 @@ export function TableScreen({
       <TableShell
         header={
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">Card Battle</h1>
-            <p className="mt-1 text-sm text-ink-muted">
+            <h1 className="text-lg font-semibold tracking-tight text-ink md:text-xl">
+              Card Battle
+            </h1>
+            <p className="text-xs text-ink-muted md:text-sm">
               Code {view.gameCode} · {statusLabel}
             </p>
             {error !== null && (
-              <p className="mt-1 text-sm font-medium text-cta-red" role="alert">
+              <p className="mt-0.5 text-sm font-medium text-cta-red" role="alert">
                 {error}
               </p>
             )}
@@ -223,9 +234,9 @@ export function TableScreen({
         }
         prompts={
           selfEliminated ? (
-            <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-3">
+            <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Eliminated</h2>
-              <p className="mt-1 text-sm text-ink-muted">
+              <p className="mt-0.5 text-xs text-ink-muted">
                 You are a spectator. Actions are locked while rewards (if any) resolve.
               </p>
             </section>
@@ -238,14 +249,28 @@ export function TableScreen({
             onInspectCard={(instanceId) => {
               onInspectSpyCard(player.id, instanceId);
             }}
+            onInspectKit={(kitId) => {
+              setInspectKitId(kitId);
+            }}
           />
         ))}
-        pending={<PendingQueue view={view} effects={view.pendingEffects} />}
+        pending={
+          <PendingQueue
+            view={view}
+            effects={othersPending}
+            title="Pending on others"
+            tone="felt"
+          />
+        }
         actionLog={<ActionLogPanel view={view} />}
         privateZone={
           <PrivateZone
             view={view}
             selfPublic={selfPublic}
+            incomingEffects={incomingEffects}
+            onInspectKit={() => {
+              setInspectKitId(view.self.kitId);
+            }}
             cardDisabledReason={() => unavailableReason()}
             onSelectOwnCard={onSelectOwnCard}
           />
@@ -266,6 +291,16 @@ export function TableScreen({
           />
         }
       />
+
+      {inspectKitId !== null && (
+        <KitInspectDialog
+          open
+          kitId={inspectKitId}
+          onClose={() => {
+            setInspectKitId(null);
+          }}
+        />
+      )}
 
       <CardActions
         view={view}

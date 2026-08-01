@@ -3,7 +3,7 @@
  * Visibility follows PlayingStateView only (Spy-gated). No public lives/card-count.
  */
 
-import type { PublicPlayerView } from '@card-battle/shared';
+import type { KitId, PublicPlayerView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { Card } from '../../design/components/card';
@@ -14,17 +14,21 @@ import { ResourceIcon } from '../../design/components/resource-icon';
 export interface OpponentZoneProps {
   player: PublicPlayerView;
   onInspectCard?: (instanceId: string) => void;
+  onInspectKit?: (kitId: KitId) => void;
 }
 
 export function OpponentZone({
   player,
   onInspectCard,
+  onInspectKit,
 }: OpponentZoneProps): ReactElement {
+  const spiedKitId = player.spied?.kitId;
+
   return (
     <article
       data-zone="opponent-seat"
       data-player-id={player.id}
-      className="w-full max-w-[15rem] rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-3 text-ink shadow-sm"
+      className="max-h-full w-full max-w-[13rem] overflow-y-auto rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-2 text-ink shadow-sm"
     >
       <div className="flex flex-wrap items-center gap-1">
         <h3 className="truncate text-sm font-semibold text-ink">{player.nickname}</h3>
@@ -37,13 +41,21 @@ export function OpponentZone({
       )}
 
       {player.spied !== undefined ? (
-        <div className="mt-3 space-y-2 border-t border-border-soft pt-2">
+        <div className="mt-2 space-y-1.5 border-t border-border-soft pt-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <KitPortrait
               kitId={player.spied.kitId}
               nickname={player.nickname}
               isEliminated={player.isEliminated}
-              className="w-[4.5rem]"
+              className="w-14"
+              {...(onInspectKit !== undefined && spiedKitId !== undefined
+                ? {
+                    onClick: () => {
+                      onInspectKit(spiedKitId);
+                    },
+                    ariaLabel: `Inspect ${player.nickname}'s kit`,
+                  }
+                : {})}
             />
             {player.spied.lives !== undefined ? (
               <div className="flex flex-wrap gap-1">
@@ -78,12 +90,12 @@ export function OpponentZone({
             <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
               Hand
             </p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
+            <div className="mt-1 flex flex-wrap gap-1">
               {player.spied.hand.map((card) => (
                 <Card
                   key={card.instanceId}
                   instance={card}
-                  className="w-14"
+                  className="w-12"
                   {...(onInspectCard !== undefined
                     ? {
                         onSelect: () => {
@@ -100,12 +112,12 @@ export function OpponentZone({
               <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
                 Specials
               </p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
+              <div className="mt-1 flex flex-wrap gap-1">
                 {player.spied.specialCards.map((card) => (
                   <Card
                     key={card.instanceId}
                     instance={card}
-                    className="w-14"
+                    className="w-12"
                     {...(onInspectCard !== undefined
                       ? {
                           onSelect: () => {
@@ -120,12 +132,12 @@ export function OpponentZone({
           )}
         </div>
       ) : (
-        <div className="mt-3 flex justify-center border-t border-border-soft pt-2">
+        <div className="mt-2 flex justify-center border-t border-border-soft pt-1.5">
           <KitPortrait
             kitId={null}
             nickname={player.nickname}
             isEliminated={player.isEliminated}
-            className="w-[4.5rem]"
+            className="w-14"
           />
         </div>
       )}

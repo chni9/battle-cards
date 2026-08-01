@@ -35,7 +35,7 @@ export function EconomyBar({
   return (
     <section
       data-zone="economy-bar"
-      className="flex flex-wrap items-center gap-2 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-2"
+      className="flex flex-wrap items-center gap-1.5 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1.5"
     >
       <Button variant="yellow" disabled={disabled} onClick={onDraw}>
         Draw (+{drawValue})
