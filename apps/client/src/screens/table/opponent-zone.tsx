@@ -95,6 +95,7 @@ export function OpponentZone({
                 <Card
                   key={card.instanceId}
                   instance={card}
+                  detail="face"
                   className="w-12"
                   {...(onInspectCard !== undefined
                     ? {
@@ -117,6 +118,7 @@ export function OpponentZone({
                   <Card
                     key={card.instanceId}
                     instance={card}
+                    detail="face"
                     className="w-12"
                     {...(onInspectCard !== undefined
                       ? {

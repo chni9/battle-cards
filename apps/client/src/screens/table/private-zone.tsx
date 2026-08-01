@@ -2,8 +2,8 @@
  * Private zone — kit, resources, incoming pending, hand, specials.
  * Kit portrait opens inspect Dialog (catalog facts only).
  *
- * Hand/specials are shrink-0 so a tight dock never collapses the hand to 0 height
- * (flex-1 + overflow-hidden was clipping cards while specials still showed).
+ * Must fit the dock without vertical scroll: compact faces, side-by-side
+ * hand/specials, overflow-hidden (horizontal scroll only if many cards).
  */
 
 import type {
@@ -44,7 +44,10 @@ function OwnCardFace({
   const face = (
     <Card
       instance={card}
-      className={['w-[4.25rem] shrink-0', reason !== null ? 'opacity-50' : ''].join(' ')}
+      detail="face"
+      className={['w-[3.25rem] shrink-0 p-0.5', reason !== null ? 'opacity-50' : ''].join(
+        ' ',
+      )}
       {...(canSelect
         ? {
             onSelect: () => {
@@ -72,10 +75,10 @@ export function PrivateZone({
   return (
     <section
       data-zone="private-zone"
-      className="flex h-full min-h-0 flex-col gap-1 overflow-y-auto overflow-x-hidden"
+      className="flex h-full min-h-0 flex-col gap-1 overflow-hidden"
     >
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-ink">Your zone</h2>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-1">
+        <h2 className="text-xs font-semibold text-ink md:text-sm">Your zone</h2>
         {selfPublic !== undefined && (
           <span className="flex items-center gap-2 text-xs text-ink-muted">
             <ConnectionBadge player={selfPublic} />
@@ -84,14 +87,14 @@ export function PrivateZone({
       </div>
 
       <div className="flex shrink-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-end gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <KitPortrait
             kitId={view.self.kitId}
-            className="w-16"
+            className="w-12"
             onClick={onInspectKit}
             ariaLabel="Inspect your kit"
           />
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
             <ResourceIcon kind="life" value={view.self.lives} label="Lives" />
             <ResourceIcon kind="shield" value={view.self.shield} label="Shield" />
             <ResourceIcon kind="point" value={view.self.points} label="Points" />
@@ -109,7 +112,7 @@ export function PrivateZone({
         </div>
         <div
           data-zone="incoming-pending"
-          className="max-w-[min(100%,14rem)] shrink-0 self-start"
+          className="max-h-[4.5rem] max-w-[min(100%,12rem)] shrink-0 self-start overflow-y-auto"
         >
           <PendingQueue
             view={view}
@@ -121,47 +124,50 @@ export function PrivateZone({
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-          Hand
-        </p>
-        <div
-          className="flex flex-nowrap items-start gap-1.5 overflow-x-auto pb-0.5"
-          data-zone="hand"
-        >
-          {view.self.hand.length === 0 ? (
-            <p className="text-sm text-ink-muted">Empty</p>
-          ) : (
-            view.self.hand.map((card) => (
-              <OwnCardFace
-                key={card.instanceId}
-                card={card}
-                {...(onSelectOwnCard !== undefined ? { onSelectOwnCard } : {})}
-                {...(cardDisabledReason !== undefined ? { cardDisabledReason } : {})}
-              />
-            ))
-          )}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-1 overflow-hidden sm:grid-cols-2">
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+          <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+            Hand
+          </p>
+          <div
+            className="mt-0.5 flex min-h-0 flex-nowrap items-start gap-1 overflow-x-auto overflow-y-hidden"
+            data-zone="hand"
+          >
+            {view.self.hand.length === 0 ? (
+              <p className="text-xs text-ink-muted">Empty</p>
+            ) : (
+              view.self.hand.map((card) => (
+                <OwnCardFace
+                  key={card.instanceId}
+                  card={card}
+                  {...(onSelectOwnCard !== undefined ? { onSelectOwnCard } : {})}
+                  {...(cardDisabledReason !== undefined ? { cardDisabledReason } : {})}
+                />
+              ))
+            )}
+          </div>
         </div>
-
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-          Specials
-        </p>
-        <div
-          className="flex flex-nowrap items-start gap-1.5 overflow-x-auto pb-0.5"
-          data-zone="specials"
-        >
-          {view.self.specialCards.length === 0 ? (
-            <p className="text-sm text-ink-muted">None</p>
-          ) : (
-            view.self.specialCards.map((card) => (
-              <OwnCardFace
-                key={card.instanceId}
-                card={card}
-                {...(onSelectOwnCard !== undefined ? { onSelectOwnCard } : {})}
-                {...(cardDisabledReason !== undefined ? { cardDisabledReason } : {})}
-              />
-            ))
-          )}
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+          <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+            Specials
+          </p>
+          <div
+            className="mt-0.5 flex min-h-0 flex-nowrap items-start gap-1 overflow-x-auto overflow-y-hidden"
+            data-zone="specials"
+          >
+            {view.self.specialCards.length === 0 ? (
+              <p className="text-xs text-ink-muted">None</p>
+            ) : (
+              view.self.specialCards.map((card) => (
+                <OwnCardFace
+                  key={card.instanceId}
+                  card={card}
+                  {...(onSelectOwnCard !== undefined ? { onSelectOwnCard } : {})}
+                  {...(cardDisabledReason !== undefined ? { cardDisabledReason } : {})}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
     </section>

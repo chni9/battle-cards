@@ -5,6 +5,8 @@
 
 import {
   ATTACK_CARD_IDS,
+  getCard,
+  type CardInstance,
   type PlayingStateView,
   type RewardChoice,
 } from '@card-battle/shared';
@@ -50,4 +52,13 @@ export function cardPlayNeedsTarget(cardId: string): boolean {
 
 export function cardIsSelfOnlyPlay(cardId: string): boolean {
   return !cardPlayNeedsTarget(cardId);
+}
+
+/** Effect copy for Dialogs when Table `Card detail="face"` omits it. */
+export function cardEffectText(instance: CardInstance): string {
+  const definition = getCard(instance.cardId);
+  if (definition === undefined) {
+    return '';
+  }
+  return instance.isUpgraded ? definition.upgradeEffect : definition.effect;
 }

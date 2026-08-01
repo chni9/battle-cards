@@ -23,6 +23,7 @@ import type { PlayCardOptions } from '../../net/use-room-connection';
 import {
   REWARD_KINDS,
   buildRewardChoice,
+  cardEffectText,
   nicknameOf,
   type RewardKind,
 } from './table-helpers';
@@ -151,6 +152,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const actionsOpen = dialog?.kind === 'actions';
   const actionInstance = dialog?.kind === 'actions' ? dialog.instance : null;
   const fromSpecial = dialog?.kind === 'actions' ? dialog.fromSpecial : false;
+  const actionEffect =
+    actionInstance !== null ? cardEffectText(actionInstance) : '';
+  const inspectEffect =
+    dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
 
   return (
     <>
@@ -219,8 +224,13 @@ export function CardActions(props: CardActionsProps): ReactElement {
       >
         {actionInstance !== null && (
           <div className="flex gap-3">
-            <Card instance={actionInstance} className="w-24" />
-            <p className="text-sm text-ink-muted">Choose Use, Upgrade, or Sell.</p>
+            <Card instance={actionInstance} detail="face" className="w-24 shrink-0" />
+            <div className="min-w-0 space-y-2">
+              {actionEffect.length > 0 && (
+                <p className="text-sm leading-snug text-ink">{actionEffect}</p>
+              )}
+              <p className="text-sm text-ink-muted">Choose Use, Upgrade, or Sell.</p>
+            </div>
           </div>
         )}
       </Dialog>
@@ -240,9 +250,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
         }
       >
         {dialog?.kind === 'inspect' && (
-          <div className="flex flex-col items-center gap-2">
-            <Card instance={dialog.instance} className="w-32" />
-            <p className="text-center text-sm text-ink-muted">Spy reveal — inspect only</p>
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+            <Card instance={dialog.instance} detail="face" className="w-28 shrink-0" />
+            <div className="min-w-0 space-y-2 text-center sm:text-left">
+              {inspectEffect.length > 0 && (
+                <p className="text-sm leading-snug text-ink">{inspectEffect}</p>
+              )}
+              <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
+            </div>
           </div>
         )}
       </Dialog>

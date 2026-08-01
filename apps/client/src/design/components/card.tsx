@@ -16,6 +16,11 @@ export interface CardProps {
   selected?: boolean;
   onSelect?: (instanceId: string) => void;
   className?: string;
+  /**
+   * `full` — art, name, effect text (Dialogs).
+   * `face` — art + name only (Table hand / specials / Spy seats).
+   */
+  detail?: 'full' | 'face';
 }
 
 export function Card({
@@ -24,6 +29,7 @@ export function Card({
   selected = false,
   onSelect,
   className = '',
+  detail = 'full',
 }: CardProps): ReactElement {
   const definition = getCard(instance.cardId);
   const name = definition?.name ?? instance.cardId;
@@ -43,11 +49,16 @@ export function Card({
         className="aspect-[2/3] w-full object-contain"
         draggable={false}
       />
-      <span className="mt-1 block text-center text-xs font-semibold text-ink">
+      <span
+        className={[
+          'mt-0.5 block truncate text-center font-semibold text-ink',
+          detail === 'face' ? 'text-[9px] leading-tight' : 'mt-1 text-xs',
+        ].join(' ')}
+      >
         {name}
         {instance.isUpgraded ? ' ↑' : ''}
       </span>
-      {effect.length > 0 && (
+      {detail === 'full' && effect.length > 0 && (
         <span className="mt-0.5 block text-center text-[10px] leading-snug text-ink-muted">
           {effect}
         </span>
