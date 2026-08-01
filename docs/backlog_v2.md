@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-5 of 20 V2 tasks done. Active from Lot 11.
+8 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
-| 11 · Home and Lobby | 2 | 0 |
-| 12 · Table | 7 | 0 |
+| 11 · Home and Lobby | 3 | 3 |
+| 12 · Table | 8 | 0 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -137,17 +137,30 @@ ruling 2026-08-01: no "(dead)" illustration per kit, including Kamikaze, which h
 
 ## Lot 11 · V2 Home and Lobby
 
-### L11-01 · Home screen redesign — `To do`
+### L11-03 · Shared Dialog / ActionSheet — `Done`
 
-Nickname entry, create/join, using the Lot 10 component set. Same intents, same validation,
-no new field.
+Accessible modal primitive (overlay, title, body, action slots) reused by Home/Lobby smoke
+paths and by Table prompting in L12-08. Primary/secondary actions use existing `Button`
+variants. No new dependency unless ruled later.
 
-- **Reference** Technical spec v2 §6 · rules spec/tech spec v1 §7 (screen: Home) · **Depends on** L10-04 · **Complexity** M · **Risk** Low
-- **Acceptance** Create and join both work exactly as today, visually redesigned
+- **Reference** Technical spec v2 §5, §6 · **Depends on** L10-04 · **Complexity** M · **Risk** Low
+- **Acceptance** Focus trap, Esc, overlay dismiss, `aria-modal`, labelled title, reduced-motion
+  safe; reusable from at least one Lot 11 screen
 
-### L11-02 · Lobby screen redesign — `To do`
+### L11-01 · Home screen redesign — `Done`
 
-Seated players, game code (with copy affordance), host Start — restyled.
+Nickname entry, create/join, using the Lot 10 component set and L11-03 where needed. Same
+intents, same validation, no new field. Branded composition with decorative V1 kit/card art
+from the asset lookup only.
+
+- **Reference** Technical spec v2 §6 · rules spec/tech spec v1 §7 (screen: Home) · **Depends on** L10-04, L11-03 · **Complexity** M · **Risk** Low
+- **Acceptance** Create and join both work exactly as today, visually redesigned; muted Protocol
+  vN remains visible
+
+### L11-02 · Lobby screen redesign — `Done`
+
+Seated players, game code (with copy affordance), host Start — restyled. Copy success may use
+L11-03.
 
 - **Reference** Technical spec v2 §6 · tech spec v1 §7 (screen: Lobby) · **Depends on** L11-01 · **Complexity** S · **Risk** Low
 - **Acceptance** 2–4 player lobby flow unchanged functionally, visually redesigned
@@ -197,14 +210,17 @@ No change to `action-log.ts` logic or the `ActionLogEntryView` shape.
 - **Watch point** `rewardsClaimed` stays opaque (product ruling, decisions.md 2026-08-01) — the restyle must not surface the two reward picks.
 - **Acceptance** Same browsable history, same entry kinds, new look; `action-log.test.ts` unchanged and green
 
-### L12-06 · Action bar and target selection — `To do`
+### L12-06 · Economy action bar restyle — `To do`
 
-Play / buy / sell / upgrade / draw, target picker, quantity picker (Regeneration), Assassin
-multi-select, Mirror sub-choice, elimination reward sub-choice — all restyled.
+Restyle the remaining non-card action chrome: Draw, buy/sell upgrade points, Leave, and any
+economy that is not “click a held card.” Card play / upgrade / sell / target / quantity /
+Assassin / Mirror / reward prompting moves to L12-08.
 
-- **Reference** Technical spec v2 §6, §7 · frontend.md (playCard variants, Assassin, Mirror, rewards) · **Depends on** L12-01, L10-04 · **Complexity** L · **Risk** Medium
-- **Watch point** Every one of these interactions has a specific payload shape (frontend.md) — restyle the control, never the payload it sends.
-- **Acceptance** Every action variant listed in `frontend.md`'s Conventions section still sends the exact same intent it does today
+- **Reference** Technical spec v2 §6 · frontend.md · **Depends on** L12-01, L10-04 · **Complexity** M · **Risk** Low
+- **Watch point** Intent payloads for Draw and upgrade-point buy/sell stay unchanged — restyle
+  only.
+- **Acceptance** Draw and upgrade-point buy/sell (and Leave) still send the same intents as
+  today, new look; no duplicate Play/Upgrade/target chrome once L12-08 lands
 
 ### L12-07 · Timers and degraded states — `To do`
 
@@ -214,6 +230,24 @@ existing conventions.
 - **Reference** Technical spec v2 §6 · frontend.md (Timer display, Degraded states) · **Depends on** L12-01 · **Complexity** M · **Risk** Medium
 - **Watch point** The timer display stays cosmetic — trust `turnDeadlineMs` / `deadlineMs` from the server, never a client-only authority (frontend.md, unchanged rule).
 - **Acceptance** Same timer behavior and degraded-state thresholds as today, new visual treatment
+
+### L12-08 · Card-first action UX — `To do`
+
+Make own hand and special card images the primary way to act: click opens Dialog actions
+(Use / Upgrade when eligible / Sell when card-scoped); nested Dialog for opponent target and
+other prompts (Regeneration quantity, Assassin multi-attack, Mirror choice, elimination
+rewards, buy flows that need prompting). Self-only Use is one-shot (no confirm). Spy-revealed
+opponent cards open an inspect-only Dialog. Unavailable cards are not clickable and show a
+tooltip with the reason. Removes Play / Upgrade / target chrome from the action bar. Same
+intent payloads as today — UI-only (technical spec v2 §6 ruling).
+
+- **Reference** Technical spec v2 §5, §6 · frontend.md · **Depends on** L11-03, L12-01, L12-03 · **Complexity** L · **Risk** Medium
+- **Watch point** Zero rule logic on the client; never change payload shapes. All Table user
+  prompting must go through the shared Dialog. Do not invent visibility or affordances the
+  view does not already support.
+- **Acceptance** Every play/upgrade/sell/target/quantity/Assassin/Mirror/reward path still
+  sends the exact same intent as today; own cards clickable; Spy-revealed inspect-only;
+  illegal cards non-interactive with reason tooltip; Play/Upgrade/target bar controls gone
 
 ## Lot 13 · V2 End screen
 

@@ -1,11 +1,10 @@
 /**
- * Home, lobby, table, and end screens — technical spec §7.
- * Functional only; no design system (see docs/agent/frontend.md).
+ * Phase router — Home/Lobby extracted (L11); Table/End still inline until Lot 12/13.
+ * Conventions: docs/agent/frontend.md · technical spec v2 §6.
  */
 
 import {
   ATTACK_CARD_IDS,
-  PROTOCOL_VERSION,
   SHARED_CARD_IDS,
   getKit,
   type ActionResolvedPayload,
@@ -14,7 +13,6 @@ import {
   type RewardChoice,
   type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
-import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { ActionLogPanel } from './action-log/action-log-panel';
@@ -24,6 +22,9 @@ import { ConnectionBadge } from './design/components/connection-badge';
 import { KitPortrait } from './design/components/kit-portrait';
 import { ResourceIcon } from './design/components/resource-icon';
 import { useRoomConnection, type PlayCardOptions } from './net/use-room-connection';
+import { HomeScreen } from './screens/home';
+import { LobbyScreen } from './screens/lobby';
+import { STATUS_LABELS } from './screens/status-labels';
 
 type RewardKind = RewardChoice['type'];
 
@@ -37,15 +38,6 @@ const REWARD_KINDS: readonly RewardKind[] = [
 function isAttackCardId(cardId: string): boolean {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
 }
-
-const STATUS_LABELS = {
-  idle: 'Not connected',
-  connecting: 'Connecting…',
-  connected: 'Connected',
-  reconnecting: 'Reconnecting…',
-  disconnected: 'Disconnected',
-  failed: 'Could not join',
-} as const;
 
 
 export function App() {
@@ -102,8 +94,6 @@ export function App() {
       window.clearInterval(id);
     };
   }, []);
-
-  const canSubmit = nickname.trim().length > 0 && status !== 'connecting';
 
   if (view?.phase === 'finished') {
     const winner = view.players.find((player) => player.id === view.winnerPlayerId);
@@ -276,106 +266,34 @@ export function App() {
   }
 
   if (view?.phase === 'lobby') {
-    const isHost = view.hostPlayerId === view.you;
-    const canLaunch = isHost && view.players.length >= 2;
-
     return (
-      <main className="bg-surface p-4 font-sans text-ink">
-        <h1 className="text-2xl font-semibold text-ink">Card Battle</h1>
-        <p>Protocol v{PROTOCOL_VERSION}</p>
-        <h2>Lobby</h2>
-        <p>
-          Game code: <strong>{view.gameCode}</strong>
-          {isHost ? ' (you are the host)' : ''}
-        </p>
-        <p>{STATUS_LABELS[status]}</p>
-        {error !== null && <p>{error}</p>}
-        <h3>Players ({view.players.length}/4)</h3>
-        <ul>
-          {view.players.map((player) => (
-            <li key={player.id}>
-              {player.nickname}
-              {player.id === view.you ? ' (you)' : ''}
-              {player.id === view.hostPlayerId ? ' — host' : ''}
-            </li>
-          ))}
-        </ul>
-        {isHost && (
-          <Button variant="green" disabled={!canLaunch} onClick={startGame}>
-            Start game
-          </Button>
-        )}
-        {!isHost && <p>Waiting for the host to start…</p>}
-        <Button variant="red" onClick={() => void leaveGame()}>
-          Leave
-        </Button>
-      </main>
+      <LobbyScreen
+        view={view}
+        status={status}
+        error={error}
+        onStart={startGame}
+        onLeave={() => {
+          void leaveGame();
+        }}
+      />
     );
   }
 
   return (
-    <main className="bg-surface p-4 font-sans text-ink">
-      {/* L10-01 smoke: Tailwind class + trivial Motion enter (technical spec v2 §3) */}
-      <motion.h1
-        className="font-sans text-2xl font-semibold tracking-tight text-ink"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-      >
-        Card Battle
-      </motion.h1>
-      <p>Protocol v{PROTOCOL_VERSION}</p>
-      <p>{STATUS_LABELS[status]}</p>
-      {error !== null && <p>{error}</p>}
-
-      <label>
-        Nickname
-        <input
-          value={nickname}
-          onChange={(event) => {
-            setNickname(event.target.value);
-          }}
-          maxLength={24}
-          autoComplete="nickname"
-        />
-      </label>
-
-      <section>
-        <h2>Create a game</h2>
-        <Button variant="green"
-          disabled={!canSubmit}
-          onClick={() => {
-            void createGame(nickname);
-          }}
-        >
-          Create
-        </Button>
-      </section>
-
-      <section>
-        <h2>Join a game</h2>
-        <label>
-          Game code
-          <input
-            value={joinCode}
-            onChange={(event) => {
-              setJoinCode(event.target.value.toUpperCase());
-            }}
-            maxLength={6}
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
-        <Button variant="green"
-          disabled={!canSubmit || joinCode.trim().length !== 6}
-          onClick={() => {
-            void joinGame(joinCode, nickname);
-          }}
-        >
-          Join
-        </Button>
-      </section>
-    </main>
+    <HomeScreen
+      nickname={nickname}
+      joinCode={joinCode}
+      status={status}
+      error={error}
+      onNicknameChange={setNickname}
+      onJoinCodeChange={setJoinCode}
+      onCreate={() => {
+        void createGame(nickname);
+      }}
+      onJoin={() => {
+        void joinGame(joinCode, nickname);
+      }}
+    />
   );
 }
 

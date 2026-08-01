@@ -745,3 +745,20 @@ Developer session while implementing Lot 10:
   exposure of `activePersistentEffects` (no protocol bump in Lot 10).
 - **Elimination (L10-05):** greyscale/desaturate portrait **plus** an “Eliminated” badge
   overlay on `KitPortrait`. No `*(dead).png` paths for any kit.
+
+## 2026-08-01 · [P] Lot 11 Home/Lobby + card-first Table (L11 / L12-08 draft)
+
+Developer session locking Lot 11 implementation and drafting L12-08 (docs only until Lot 12):
+
+- **L11-03:** shared accessible `Dialog` / ActionSheet in `design/components/` — foundation
+  for Lobby copy feedback and all future Table prompts. Prefer hand-rolled React + Tailwind;
+  no new dependency without a separate ruling.
+- **Home (L11-01):** branded composition using decorative V1 kit/card art from the existing
+  asset lookup only; muted Protocol vN remains visible.
+- **Lobby (L11-02):** copy game code affordance; may reuse Dialog for copy success.
+- **Card-first Table (L12-08, drafted):** click own hand/specials → Dialog Use / Upgrade /
+  Sell; nested Dialog for target and other prompts; self-only Use is one-shot (no confirm);
+  Spy-revealed cards are inspect-only; unavailable cards are not clickable + tooltip reason;
+  all Table prompting via Dialog; Play / Upgrade / target bar chrome removed. Same intents /
+  payloads — UI-only. Spec: `technical_spec_v2.md` §5–§6. Backlog: L12-08; L12-06 narrowed to
+  economy bar restyle only.

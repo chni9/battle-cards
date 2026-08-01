@@ -7,22 +7,24 @@
 
 ## Status
 
-V1 shipped functional UI only, no art direction (technical spec v1 §9) — screens live in
-`apps/client/src/App.tsx` (grown past 1000 lines; `action-log/` is already split out as its own
-folder, the pattern to follow when splitting the rest). **V2 is in progress**
-(`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14): a design system, the game's
-illustrations, and animation, restyling these exact screens and conventions — nothing on this
-page describing intents, payloads, or visibility changes because of it. Update this file's
-examples in place as V2 components land; don't fork a second frontend playbook.
+V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is in progress**
+(`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
+router; Home and Lobby live under `apps/client/src/screens/` (Lot 11). Table and End remain
+inline in `App.tsx` until Lots 12–13. Update this file's examples in place as V2 components
+land; don't fork a second frontend playbook. Intents, payloads, and visibility rules are
+unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
+payloads, different chrome; implemented in L12-08).
 
 ## Screens
 
-| Screen | When |
-|---|---|
-| Home | No room — create / join + nickname |
-| Lobby | `phase: 'lobby'` — seats, code, host Start |
-| Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` |
-| End | `phase: 'finished'` — winner, public recap stats, return home |
+| Screen | When | File |
+|---|---|---|
+| Home | No room — create / join + nickname | `screens/home.tsx` |
+| Lobby | `phase: 'lobby'` — seats, code, host Start | `screens/lobby.tsx` |
+| Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` | `App.tsx` (`TableScreen`) until Lot 12 |
+| End | `phase: 'finished'` — winner, public recap stats, return home | `App.tsx` until Lot 13 |
+
+Shared status copy: `screens/status-labels.ts`.
 
 ## Design system (V2 · Lots 10+)
 
@@ -36,19 +38,32 @@ rules above are unchanged — this section only covers how the client looks.
   verso/opponent slate, resource icons, button PNG *hues*). Colored `*_button.png` files are
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
-  `ConnectionBadge`, `KitPortrait`. Art resolution: `apps/client/src/design/asset-lookup.ts`
-  (never invent a mapping; never import out-of-V1 art from `images/`).
+  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03). Art resolution:
+  `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never import out-of-V1 art
+  from `images/`).
+- **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
+  focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants. Prefer this
+  for every modal prompt (Lobby copy feedback today; Table card-first prompts in L12-08). No
+  extra npm dependency unless separately ruled.
 - **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
-  `red` (Leave / return home), `orange` (buy/sell/upgrade). CSS ornate CTAs only — no
+  `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). CSS ornate CTAs only — no
   `*_button.png` skins.
+- **Home (L11-01):** branded split — title + forms + decorative V1 kit/card art from the
+  lookup; muted Protocol vN; same create/join validation.
+- **Lobby (L11-02):** game code + Copy (clipboard); copy result via `Dialog`; Start / Leave
+  unchanged functionally.
 - **Activated art** for Imposition / Points Generator is in the lookup with an optional
   `activated` prop on `Card`, but no screen may pass `activated` until a ruled protocol
   exposure of `activePersistentEffects`.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
+- **Future Table (L12-08):** card-first click → Dialog Use / Upgrade / Sell; nested Dialog for
+  targets and other prompts; Spy-revealed inspect-only; unavailable = not clickable + tooltip;
+  self-only Use one-shot. See technical spec v2 §6.1 — do not implement until L12-08.
 - **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
-  (contrast, touch targets, focus, reduced-motion). Landing-page layout rules from
-  design-taste-frontend do **not** apply to Home/Lobby/Table/End.
+  (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
+  Landing-page layout rules from design-taste-frontend do **not** apply to
+  Home/Lobby/Table/End.
 
 ## Conventions
 
@@ -176,3 +191,10 @@ do not hand off an untested lot.
 - Table: `KitPortrait`, `ResourceIcon` row, `Card` hand/specials with V1 art, opponent
   `opponent.png` placeholder when unspied; action bar uses shared `Button` variants.
 - No protocol/intent change; favicon 404 only (pre-existing, unrelated).
+
+### Lot 11 verified 2026-08-01 (Playwright, `TURN_DURATION_MS=300000`, PROTOCOL 18)
+
+- Home: branded split with V1 decorative art, nickname + Create/Join, muted Protocol v18.
+- Lobby: game code Copy → `Dialog` “Code copied”; seats; host Start / guest waiting / Leave.
+- Two-tab flow: HostA create → GuestB join `HIWOGA` → host Start → Table (unchanged intents).
+- No protocol/intent change.

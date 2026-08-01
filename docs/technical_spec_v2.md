@@ -163,7 +163,7 @@ before any screen is built on top of it. Treating a first draft as final without
 would repeat the exact "never invent a rule, ask" discipline this project already applies to
 game rules — here applied to visual decisions instead.
 
-Base components (L10-04), built once and reused by every screen:
+Base components (L10-04 + L11-03), built once and reused by every screen:
 
 - `Card` — renders a `CardInstance` (base/upgraded art, cost, effect text) from the L10-03
   asset lookup.
@@ -172,24 +172,49 @@ Base components (L10-04), built once and reused by every screen:
   inspired by colored button PNG hues; those PNGs are not used as skins — 2026-08-01 ruling).
 - Connection/status badge — reused from the existing degraded-state model (`frontend.md`), only
   its appearance is new.
+- `Dialog` / ActionSheet (L11-03) — accessible modal (overlay, titled panel, action slots)
+  used for Lobby copy feedback and, from L12-08, for every Table user prompt. No new npm
+  dependency unless separately ruled.
 
 ---
 
 ## 6. Screens
 
 Same four screens as `technical_spec_v1.md` §7, same flows, same intents. Only the visual
-treatment changes.
+treatment changes — except the **control-pattern** ruling below, which does not add intents,
+fields, or protocol events.
 
 | Screen | V2 scope | Backlog |
 |---|---|---|
-| Home | Nickname entry, create/join — redesigned | Lot 11, L11-01 |
-| Lobby | Seated players, game code, host Start — redesigned | Lot 11, L11-02 |
-| Table | Layout shell, opponent zone, private zone/hand, pending queue, action log, action bar, timers — redesigned, this is the largest surface | Lot 12 |
+| Home | Nickname entry, create/join — redesigned; branded with decorative V1 art; muted Protocol vN | Lot 11, L11-01 (Dialog: L11-03) |
+| Lobby | Seated players, game code with copy affordance, host Start — redesigned | Lot 11, L11-02 |
+| Table | Layout shell, opponent zone, private zone/hand, pending queue, action log, economy bar, timers; **card-first action UX** (L12-08) | Lot 12 |
 | Game over | Winner, `FinishedStateView.recap`, return home — redesigned | Lot 13, L13-01 |
 
-No screen gains a field, a control, or an intent it doesn't already have. Where a redesign
-seems to call for one (e.g. a rules/help affordance), that is a scope decision for the
-developer to make explicitly — it is not assumed here.
+No screen gains a field or an intent it doesn't already have. Where a redesign seems to call
+for a new *kind* of control, that is a scope decision for the developer — recorded here when
+ruled.
+
+### 6.1 Card-first Table interaction (developer ruling, 2026-08-01)
+
+Approved control-pattern change for the Table only. **Same** `playCard` / `upgradeCard` /
+`sellCard` / `playMultipleAttacks` / Mirror / reward / buy payloads as V1 (`frontend.md`).
+No protocol bump.
+
+- **Own hand and specials:** click the card image → Dialog with available actions (Use;
+  Upgrade when the copy is upgradable; Sell when that path applies to the held copy). Nested
+  Dialog for opponent target and other required prompts (Regeneration quantity, Assassin
+  multi-attack, Mirror choice, elimination rewards, buy flows that need prompting).
+- **Self-only Use** (no target required): send the intent immediately — no confirm Dialog.
+- **Spy-revealed opponent cards:** inspect-only Dialog (art / name / effect); no Use /
+  Upgrade / Sell.
+- **Unavailable actions:** card is not clickable; tooltip explains why (not your turn, locked
+  by Mirror/rewards, cannot afford, already upgraded, etc.). Reasons are derived from view
+  fields the client already has — never invented rule logic.
+- **All Table user prompting** (including Mirror and reward event prompts) uses the shared
+  Dialog from L11-03.
+- **Action bar** after L12-08: economy chrome only (Draw, buy/sell upgrade points, Leave).
+  Play / Upgrade / target pickers are removed from the bar.
 
 ---
 
