@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-14 of 22 V2 tasks done. Active from Lot 12.
+15 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 6 |
+| 12 · Table | 8 | 7 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -222,7 +222,7 @@ Assassin / Mirror / reward prompting moves to L12-08.
 - **Acceptance** Draw and upgrade-point buy/sell (and Leave) still send the same intents as
   today, new look; no duplicate Play/Upgrade/target chrome once L12-08 lands
 
-### L12-07 · Timers and degraded states — `To do`
+### L12-07 · Timers and degraded states — `Done`
 
 Turn timer and sub-choice timer as a visual progress element; absent/idle badges restyled per
 existing conventions.
