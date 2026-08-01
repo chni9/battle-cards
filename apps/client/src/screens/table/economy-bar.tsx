@@ -1,6 +1,6 @@
 /**
- * Economy action bar — L12-01 shell; L12-06 restyles Buy entry.
- * Draw / UP buy-sell / Leave; Buy opens dialog in L12-08.
+ * Economy action bar — L12-06.
+ * Draw / buy-sell UP / Buy (Dialog entry) / Leave. Play chrome is legacy until L12-08.
  */
 
 import type { ReactElement } from 'react';
@@ -33,23 +33,27 @@ export function EconomyBar({
   const disabled = !isMyTurn || actionsLocked;
 
   return (
-    <section data-zone="economy-bar" className="flex flex-wrap items-center gap-2">
+    <section
+      data-zone="economy-bar"
+      className="flex flex-wrap items-center gap-2 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-2"
+    >
       <Button variant="yellow" disabled={disabled} onClick={onDraw}>
-        Draw (+{drawValue} point{drawValue === 1 ? '' : 's'})
+        Draw (+{drawValue})
       </Button>
       <Button variant="orange" disabled={disabled} onClick={onBuyUpgradePoint}>
-        Buy upgrade point
+        Buy UP
       </Button>
       <Button
         variant="orange"
         disabled={disabled || upgradePoints < 1}
         onClick={onSellUpgradePoint}
       >
-        Sell upgrade point
+        Sell UP
       </Button>
       <Button variant="orange" disabled={disabled} onClick={onOpenBuy}>
         Buy
       </Button>
+      <span className="mx-1 hidden h-6 w-px bg-border-soft sm:inline-block" aria-hidden />
       <Button variant="red" onClick={onLeave}>
         Leave
       </Button>

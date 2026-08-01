@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-13 of 22 V2 tasks done. Active from Lot 12.
+14 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 5 |
+| 12 · Table | 8 | 6 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -210,7 +210,7 @@ No change to `action-log.ts` logic or the `ActionLogEntryView` shape.
 - **Watch point** `rewardsClaimed` stays opaque (product ruling, decisions.md 2026-08-01) — the restyle must not surface the two reward picks.
 - **Acceptance** Same browsable history, same entry kinds, new look; `action-log.test.ts` unchanged and green
 
-### L12-06 · Economy action bar restyle — `To do`
+### L12-06 · Economy action bar restyle — `Done`
 
 Restyle the remaining non-card action chrome: Draw, buy/sell upgrade points, Leave, and any
 economy that is not “click a held card.” Card play / upgrade / sell / target / quantity /
