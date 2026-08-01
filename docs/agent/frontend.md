@@ -70,8 +70,9 @@ rules above are unchanged — this section only covers how the client looks.
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
   match action cards; resources sit above the economy bar; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list + compact filter rail on the right
-  (player, search, kind icon toggles); entries grouped under a sticky Turn N header with
-  one line per action.
+  (player, search, kind icon toggles); entries grouped under a sticky **Round N** header
+  (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
+  shown) with one line per action.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.

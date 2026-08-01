@@ -15,7 +15,7 @@ import {
   ACTION_LOG_KINDS,
   filterActionLog,
   formatActionLogEntry,
-  groupByTurn,
+  groupByRound,
 } from './action-log';
 
 const KIND_META: Record<
@@ -108,7 +108,7 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
     { playerId, kinds, query },
     resolveNick,
   );
-  const groups = groupByTurn(filtered);
+  const groups = groupByRound(filtered, view.players.length);
 
   useEffect(() => {
     const el = listRef.current;
@@ -162,12 +162,12 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
           >
             {groups.map((group) => (
               <div
-                key={group.turnSequence}
+                key={group.round}
                 className="border-b border-border-soft last:border-b-0"
               >
                 <div className="sticky top-0 z-[1] bg-surface-raised/95 px-2 py-0.5 backdrop-blur-sm">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                    Turn {group.turnSequence}
+                    Round {group.round}
                   </p>
                 </div>
                 <ul className="px-2 pb-1">

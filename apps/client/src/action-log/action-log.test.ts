@@ -5,7 +5,9 @@ import type { ActionLogEntryView } from '@card-battle/shared';
 import {
   filterActionLog,
   formatActionLogEntry,
+  groupByRound,
   groupByTurn,
+  roundOfTurn,
 } from './action-log';
 
 const nick = (id: string): string => (id === 'a' ? 'Alice' : id === 'b' ? 'Bob' : id);
@@ -93,6 +95,19 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
     expect(groups).toEqual([
       { turnSequence: 1, entries: [sample[0]] },
       { turnSequence: 2, entries: [sample[1], sample[2]] },
+    ]);
+  });
+
+  it('groups by table round from seat count (no turn numbers in grouping key)', () => {
+    expect(roundOfTurn(0, 2)).toBe(1);
+    expect(roundOfTurn(1, 2)).toBe(1);
+    expect(roundOfTurn(2, 2)).toBe(2);
+
+    const groups = groupByRound(sample, 2);
+
+    expect(groups).toEqual([
+      { round: 1, entries: [sample[0]] },
+      { round: 2, entries: [sample[1], sample[2]] },
     ]);
   });
 });

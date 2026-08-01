@@ -143,3 +143,38 @@ export function groupByTurn(entries: readonly ActionLogEntryView[]): TurnGroup[]
 
   return groups;
 }
+
+/**
+ * Table round = one full cycle of seats (rules “table round” = until the table
+ * comes back around). Derived for UI only: floor(turnSequence / seatCount) + 1.
+ */
+export interface RoundGroup {
+  round: number;
+  entries: ActionLogEntryView[];
+}
+
+export function roundOfTurn(turnSequence: number, seatCount: number): number {
+  const n = Math.max(1, seatCount);
+  return Math.floor(turnSequence / n) + 1;
+}
+
+export function groupByRound(
+  entries: readonly ActionLogEntryView[],
+  seatCount: number,
+): RoundGroup[] {
+  const groups: RoundGroup[] = [];
+
+  for (const entry of entries) {
+    const round = roundOfTurn(entry.turnSequence, seatCount);
+    const last = groups[groups.length - 1];
+
+    if (last?.round !== round) {
+      groups.push({ round, entries: [entry] });
+      continue;
+    }
+
+    last.entries.push(entry);
+  }
+
+  return groups;
+}
