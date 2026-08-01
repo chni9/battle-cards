@@ -229,7 +229,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
               {actionEffect.length > 0 && (
                 <p className="text-sm leading-snug text-ink">{actionEffect}</p>
               )}
-              <p className="text-sm text-ink-muted">Choose Use, Upgrade, or Sell.</p>
+              <p className="text-sm text-ink-muted">
+                {!isMyTurn || actionsLocked
+                  ? 'Actions locked — you can still read the card.'
+                  : 'Choose Use, Upgrade, or Sell.'}
+              </p>
             </div>
           </div>
         )}

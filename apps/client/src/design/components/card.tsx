@@ -18,9 +18,10 @@ export interface CardProps {
   className?: string;
   /**
    * `full` — art, name, effect text (Dialogs).
-   * `face` — art + name only (Table hand / specials / Spy seats).
+   * `face` — art + name (private hand / specials).
+   * `thumb` — art only (Spy opponent seats, tiny).
    */
-  detail?: 'full' | 'face';
+  detail?: 'full' | 'face' | 'thumb';
 }
 
 export function Card({
@@ -49,15 +50,17 @@ export function Card({
         className="aspect-[2/3] w-full object-contain"
         draggable={false}
       />
-      <span
-        className={[
-          'mt-0.5 block truncate text-center font-semibold text-ink',
-          detail === 'face' ? 'text-[9px] leading-tight' : 'mt-1 text-xs',
-        ].join(' ')}
-      >
-        {name}
-        {instance.isUpgraded ? ' ↑' : ''}
-      </span>
+      {detail !== 'thumb' && (
+        <span
+          className={[
+            'mt-0.5 block truncate text-center font-semibold text-ink',
+            detail === 'face' ? 'text-[9px] leading-tight' : 'mt-1 text-xs',
+          ].join(' ')}
+        >
+          {name}
+          {instance.isUpgraded ? ' ↑' : ''}
+        </span>
+      )}
       {detail === 'full' && effect.length > 0 && (
         <span className="mt-0.5 block text-center text-[10px] leading-snug text-ink-muted">
           {effect}
@@ -65,6 +68,11 @@ export function Card({
       )}
     </>
   );
+
+  const label =
+    detail === 'thumb'
+      ? `${name}${instance.isUpgraded ? ' upgraded' : ''}`
+      : undefined;
 
   if (onSelect !== undefined) {
     return (
@@ -74,10 +82,13 @@ export function Card({
           onSelect(instance.instanceId);
         }}
         aria-pressed={selected}
+        aria-label={label}
+        title={label}
         className={[
-          'w-28 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1',
+          'rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1',
           'text-left font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
           selected ? 'ring-2 ring-cta-purple' : '',
+          className.includes('w-') ? '' : 'w-28',
           className,
         ].join(' ')}
       >
@@ -89,9 +100,12 @@ export function Card({
   return (
     <article
       className={[
-        'w-28 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1 font-sans',
+        'rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1 font-sans',
+        className.includes('w-') ? '' : 'w-28',
         className,
       ].join(' ')}
+      aria-label={label}
+      title={label}
     >
       {body}
     </article>

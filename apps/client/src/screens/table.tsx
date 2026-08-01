@@ -149,26 +149,7 @@ export function TableScreen({
         ? Math.max(0, Math.min(1, (rewardChoice.deadlineMs - nowMs) / 30_000))
         : null;
 
-  function unavailableReason(): string | null {
-    if (selfEliminated) {
-      return 'You are eliminated';
-    }
-    if (mirrorChoice !== null) {
-      return 'Waiting for Mirror choice';
-    }
-    if (rewardChoice !== null) {
-      return 'Waiting for reward choice';
-    }
-    if (!isMyTurn) {
-      return 'Not your turn';
-    }
-    return null;
-  }
-
   function onSelectOwnCard(instanceId: string): void {
-    if (unavailableReason() !== null) {
-      return;
-    }
     const fromSpecial = view.self.specialCards.some((c) => c.instanceId === instanceId);
     const instance =
       view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -271,7 +252,6 @@ export function TableScreen({
             onInspectKit={() => {
               setInspectKitId(view.self.kitId);
             }}
-            cardDisabledReason={() => unavailableReason()}
             onSelectOwnCard={onSelectOwnCard}
           />
         }

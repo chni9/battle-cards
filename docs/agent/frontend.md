@@ -62,18 +62,18 @@ rules above are unchanged — this section only covers how the client looks.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
   UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is
-  `h-[100dvh] overflow-hidden` (no page scroll); action log height is fixed by the flex
-  grid and scrolls internally. Pending effects targeting `view.you` render in the private
-  zone (Incoming); effects on others stay on the felt strip. Kit portrait opens a visual
-  inspect Dialog from `getKit` / `getCard` only (resources, starting counts, specials,
-  traits — no invented flavor copy). **Private zone must fit the dock without vertical
-  scroll** — compact `Card` faces (`detail="face"`: art + name only), denser side-by-side
-  hand/specials; horizontal overflow on a card row is OK when the hand is large. Effect
-  copy lives in the card Dialog, not on the hand/specials strip.
-- **Table card-first (L12-08):** click own hand/specials → Dialog Use / Upgrade / Sell (effect
-  text in the Dialog); nested Dialog for target, Regen quantity, Assassin multi-attack;
-  self-only Use is one-shot (no confirm); Spy-revealed cards inspect-only; unavailable =
-  not clickable + Tooltip reason; Mirror and elimination rewards via Dialog. Same
+  `h-[100dvh] overflow-hidden` (no page scroll). **Only the action log scrolls** — opponents,
+  pending, and private dock must fit without vertical scroll (tiny Spy thumbs / fluid faces as
+  needed). Pending effects targeting `view.you` render in the private zone (Incoming); effects
+  on others stay on the felt strip. Kit portrait opens a visual inspect Dialog from `getKit` /
+  `getCard` only. **Private zone:** fluid hand fills available width/height (`FluidCardRow`);
+  resources sit above the economy bar; `Card detail="face"` (art + name); effect copy in the
+  card Dialog.
+- **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
+  Upgrade / Sell. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
+  player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
+  Nested Dialog for target, Regen quantity, Assassin multi-attack; self-only Use is one-shot;
+  Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
   intents/payloads as V1.
 - **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).

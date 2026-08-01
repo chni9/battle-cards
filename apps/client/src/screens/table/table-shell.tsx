@@ -1,6 +1,6 @@
 /**
- * Felt-table layout shell — viewport-locked (no page scroll).
- * Opponents arc; center-stage action log; private dock bottom.
+ * Felt-table layout shell — viewport-locked.
+ * Only the action log scrolls; opponents / pending / dock do not.
  */
 
 import type { ReactElement, ReactNode } from 'react';
@@ -55,7 +55,7 @@ export function TableShell({
       className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-surface font-sans text-ink"
       data-zone="table"
     >
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-1.5 px-2 py-2 md:gap-2 md:px-4 md:py-3">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-1 px-2 py-1.5 md:gap-1.5 md:px-4 md:py-2">
         <header data-zone="header" className="shrink-0">
           {header}
         </header>
@@ -70,10 +70,11 @@ export function TableShell({
 
         <div
           data-zone="felt"
-          className="grid min-h-0 flex-1 gap-1.5 overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-slate p-1.5 text-cta-label-on-dark md:gap-2 md:p-2"
+          className="grid min-h-0 flex-1 gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-slate p-1 text-cta-label-on-dark md:gap-1.5 md:p-1.5"
           style={{
             gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr)',
-            gridTemplateRows: 'auto auto minmax(0, 1fr) minmax(12rem, 42dvh)',
+            gridTemplateRows:
+              'minmax(0, min(22vh, 11rem)) auto minmax(5rem, 1fr) minmax(0, min(34vh, 16rem))',
             gridTemplateAreas: `
               "opp-left opp-top opp-right"
               "pending pending pending"
@@ -84,21 +85,21 @@ export function TableShell({
         >
           <div
             data-zone="opponents-left"
-            className="flex min-h-0 items-start justify-center overflow-hidden"
+            className="flex min-h-0 items-stretch justify-center overflow-hidden"
             style={{ gridArea: 'opp-left' }}
           >
             {byArea.left ?? null}
           </div>
           <div
             data-zone="opponents-top"
-            className="flex min-h-0 items-start justify-center overflow-hidden"
+            className="flex min-h-0 items-stretch justify-center overflow-hidden"
             style={{ gridArea: 'opp-top' }}
           >
             {byArea.top ?? null}
           </div>
           <div
             data-zone="opponents-right"
-            className="flex min-h-0 items-start justify-center overflow-hidden"
+            className="flex min-h-0 items-stretch justify-center overflow-hidden"
             style={{ gridArea: 'opp-right' }}
           >
             {byArea.right ?? null}
@@ -106,7 +107,7 @@ export function TableShell({
 
           <div
             data-zone="pending"
-            className="min-h-0 max-h-[4.5rem] overflow-y-auto rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
+            className="min-h-0 max-h-[3.25rem] overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
             style={{ gridArea: 'pending' }}
           >
             {pending}
@@ -122,7 +123,7 @@ export function TableShell({
 
           <div
             data-zone="dock"
-            className="flex min-h-0 flex-col gap-1.5 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit/90 p-2 text-ink"
+            className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit/90 p-1.5 text-ink"
             style={{ gridArea: 'dock' }}
           >
             <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
