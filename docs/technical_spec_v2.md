@@ -168,8 +168,9 @@ Base components (L10-04 + L11-03), built once and reused by every screen:
 - `Card` — renders a `CardInstance` (base/upgraded art, cost, effect text) from the L10-03
   asset lookup.
 - `ResourceIcon` — the four resource icons, each with its numeric value.
-- `Button` — the shared action button, using the design tokens from L10-02 (CSS ornate CTAs
-  inspired by colored button PNG hues; those PNGs are not used as skins — 2026-08-01 ruling).
+- `Button` — the shared action button, using the design tokens from L10-02 (solid rounded
+  CTAs inspired by colored button PNG hues; those PNGs are not used as skins — 2026-08-01
+  ruling; hex clip-path retired 2026-08-01 Lot 11 refresh).
 - Connection/status badge — reused from the existing degraded-state model (`frontend.md`), only
   its appearance is new.
 - `Dialog` / ActionSheet (L11-03) — accessible modal (overlay, titled panel, action slots)

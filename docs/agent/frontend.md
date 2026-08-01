@@ -46,8 +46,8 @@ rules above are unchanged — this section only covers how the client looks.
   for every modal prompt (Lobby copy feedback today; Table card-first prompts in L12-08). No
   extra npm dependency unless separately ruled.
 - **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
-  `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). CSS ornate CTAs only — no
-  `*_button.png` skins.
+  `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
+  token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01):** branded split — title + forms + decorative V1 kit/card art from the
   lookup; muted Protocol vN; same create/join validation.
 - **Lobby (L11-02):** game code + Copy (clipboard); copy result via `Dialog`; Start / Leave

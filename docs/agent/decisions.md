@@ -762,3 +762,10 @@ Developer session locking Lot 11 implementation and drafting L12-08 (docs only u
   all Table prompting via Dialog; Play / Upgrade / target bar chrome removed. Same intents /
   payloads — UI-only. Spec: `technical_spec_v2.md` §5–§6. Backlog: L12-08; L12-06 narrowed to
   economy bar restyle only.
+
+## 2026-08-01 · [P] Button visual refresh (modern solid CTAs)
+
+Developer asked to retire the ornate hex `clip-path` CTAs. `Button` keeps the five hue
+variants (`purple` / `yellow` / `green` / `red` / `orange`) from the colored PNG samples,
+but renders as solid rounded rectangles (`--radius-button`), soft tinted shadow, and
+hover/active press feedback. Still no `*_button.png` skins. Playbook: `frontend.md`.
