@@ -1,6 +1,6 @@
 /**
  * Pending effects strip — L12-04 / self-targeted in private zone.
- * Same info as V1 queue: card, source, target, queuedAt.
+ * Chips stay fully visible; strip scrolls when many effects queue.
  */
 
 import type { PendingEffectView, PlayingStateView } from '@card-battle/shared';
@@ -13,7 +13,7 @@ export interface PendingQueueProps {
   effects: readonly PendingEffectView[];
   /** Section title. */
   title?: string;
-  /** Compact chips for private-zone incoming strip. */
+  /** Compact single-line chips (Incoming / felt strip). */
   compact?: boolean;
   /** Tone for placement on felt (light on dark) vs private dock. */
   tone?: 'felt' | 'dock';
@@ -31,44 +31,59 @@ export function PendingQueue({
       ? 'text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-soft'
       : 'text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted';
   const emptyClass =
-    tone === 'felt' ? 'text-sm text-slate-soft/90' : 'text-xs text-ink-muted';
+    tone === 'felt' ? 'text-xs text-slate-soft/90' : 'text-xs text-ink-muted';
   const chipClass =
     tone === 'felt'
       ? 'border-slate-soft/50 bg-surface-raised text-ink'
       : 'border-border-soft bg-surface-raised text-ink';
 
   return (
-    <section data-zone="pending-queue" className={compact ? '' : ''}>
-      <h2 className={titleClass}>{title}</h2>
+    <section data-zone="pending-queue" className="flex min-h-0 flex-col">
+      <h2 className={`shrink-0 ${titleClass}`}>{title}</h2>
       {effects.length === 0 ? (
-        <p className={`mt-0.5 ${emptyClass}`}>None</p>
+        <p className={`mt-0.5 shrink-0 ${emptyClass}`}>None</p>
       ) : (
-        <ul className={`mt-1 flex flex-wrap gap-1.5 ${compact ? 'justify-end' : ''}`}>
-          {effects.map((effect) => (
-            <li
-              key={effect.id}
-              data-pending-id={effect.id}
-              className={[
-                'flex flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm',
-                chipClass,
-                compact ? 'min-w-0 max-w-[9rem]' : 'min-w-[8rem]',
-              ].join(' ')}
-            >
-              <span className={compact ? 'text-xs font-semibold' : 'text-sm font-semibold'}>
-                {effect.cardId}
-              </span>
-              <span className="text-[10px] leading-tight text-ink-muted">
-                {nicknameOf(view, effect.sourcePlayerId)}
-                {' → '}
-                {nicknameOf(view, effect.targetPlayerId)}
-              </span>
-              {!compact && (
+        <ul
+          className={[
+            'mt-1 flex min-h-0 gap-1.5',
+            compact ? 'flex-wrap justify-end overflow-y-auto' : 'flex-wrap overflow-y-auto',
+          ].join(' ')}
+        >
+          {effects.map((effect) => {
+            const route = `${nicknameOf(view, effect.sourcePlayerId)} → ${nicknameOf(view, effect.targetPlayerId)}`;
+            if (compact) {
+              return (
+                <li
+                  key={effect.id}
+                  data-pending-id={effect.id}
+                  title={`${effect.cardId} · ${route} · queued #${String(effect.queuedAt)}`}
+                  className={[
+                    'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm',
+                    chipClass,
+                  ].join(' ')}
+                >
+                  <span className="truncate text-xs font-semibold">{effect.cardId}</span>
+                  <span className="truncate text-[10px] text-ink-muted">{route}</span>
+                </li>
+              );
+            }
+            return (
+              <li
+                key={effect.id}
+                data-pending-id={effect.id}
+                className={[
+                  'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm',
+                  chipClass,
+                ].join(' ')}
+              >
+                <span className="text-sm font-semibold">{effect.cardId}</span>
+                <span className="text-[10px] leading-tight text-ink-muted">{route}</span>
                 <span className="text-[10px] tabular-nums text-ink-muted">
                   queued #{effect.queuedAt}
                 </span>
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

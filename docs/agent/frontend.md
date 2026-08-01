@@ -65,7 +65,8 @@ rules above are unchanged — this section only covers how the client looks.
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
   (hand fills remaining height); action log is capped (~18vh) and is the only scroll region.
   Opponents hug content (no empty white seat slab). Pending effects targeting `view.you`
-  render in the private zone (Incoming); effects on others stay on the felt strip. Kit
+  render in the private   zone (Incoming); effects on others stay on the felt strip — both strips size to show full
+  chips and scroll internally when many effects queue. Kit
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
   match action cards; resources sit above the economy bar; `Card detail="face"`; effect

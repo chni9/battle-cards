@@ -112,7 +112,7 @@ export function TableShell({
 
           <div
             data-zone="pending"
-            className="min-h-0 max-h-[2.5rem] overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-0.5"
+            className="min-h-0 max-h-[5.5rem] overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
             style={{ gridArea: 'pending' }}
           >
             {pending}
