@@ -206,3 +206,13 @@ do not hand off an untested lot.
 - Lobby: game code Copy → `Dialog` “Code copied”; seats; host Start / guest waiting / Leave.
 - Two-tab flow: HostA create → GuestB join `HIWOGA` → host Start → Table (unchanged intents).
 - No protocol/intent change.
+
+### Lot 12 verified 2026-08-01 (Playwright, `TURN_DURATION_MS=300000`, PROTOCOL 18)
+
+- Felt Table: opponents arc, pending strip, center-stage action log, private dock + economy bar.
+- Room `VYFEUG` (HostA + GuestB). GuestB Tax via card Dialog Use (self-only one-shot) → log
+  `playCard tax`; lives/points updated.
+- HostA: Basic attack → Use → nested target Dialog (GuestB); server rejected without points
+  (`Not enough points`) — correct; Draw (+1) still works from economy bar.
+- Timers progress bar + connection status; unspied opponent shows `opponent.png` / Hidden kit.
+- No protocol/intent change.
