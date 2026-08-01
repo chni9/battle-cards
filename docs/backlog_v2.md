@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-9 of 22 V2 tasks done. Active from Lot 12.
+11 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 1 |
+| 12 · Table | 8 | 3 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -185,7 +185,7 @@ states), Spy-revealed kit/cards.
 - **Watch point** Zero rule logic on the client (AGENTS.md §"Conventions") — this restyles what `stateUpdate` already sends, it does not decide what is visible.
 - **Acceptance** Every opponent-zone field the current client shows is still shown, same visibility rules, new look
 
-### L12-03 · Private zone and hand — `To do`
+### L12-03 · Private zone and hand — `Done`
 
 Hand with real card illustrations (base/upgraded art swap), kit portrait, exact resources via
 icons, special cards.
