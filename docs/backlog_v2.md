@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-15 of 22 V2 tasks done. Active from Lot 12.
+16 of 22 V2 tasks done. Active from Lot 13.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 7 |
+| 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -231,7 +231,7 @@ existing conventions.
 - **Watch point** The timer display stays cosmetic — trust `turnDeadlineMs` / `deadlineMs` from the server, never a client-only authority (frontend.md, unchanged rule).
 - **Acceptance** Same timer behavior and degraded-state thresholds as today, new visual treatment
 
-### L12-08 · Card-first action UX — `To do`
+### L12-08 · Card-first action UX — `Done`
 
 Make own hand and special card images the primary way to act: click opens Dialog actions
 (Use / Upgrade when eligible / Sell when card-scoped); nested Dialog for opponent target and

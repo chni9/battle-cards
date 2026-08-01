@@ -38,13 +38,15 @@ rules above are unchanged — this section only covers how the client looks.
   verso/opponent slate, resource icons, button PNG *hues*). Colored `*_button.png` files are
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
-  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03). Art resolution:
+  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never import out-of-V1 art
   from `images/`).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
   focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants. Prefer this
-  for every modal prompt (Lobby copy feedback today; Table card-first prompts in L12-08). No
+  for every modal prompt (Lobby copy feedback; Table card-first prompts). No
   extra npm dependency unless separately ruled.
+- **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
+  view fields only).
 - **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
   `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
@@ -58,11 +60,12 @@ rules above are unchanged — this section only covers how the client looks.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
-  action log**, private dock + economy bar. Zones use `data-zone` hooks for Lot 14. Economy:
-  Draw / UP buy-sell / Buy (Dialog) / Leave. Legacy play chrome remains until L12-08.
-- **Future Table (L12-08):** card-first click → Dialog Use / Upgrade / Sell; nested Dialog for
-  targets and other prompts; Spy-revealed inspect-only; unavailable = not clickable + tooltip;
-  self-only Use one-shot. See technical spec v2 §6.1.
+  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
+  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave.
+- **Table card-first (L12-08):** click own hand/specials → Dialog Use / Upgrade / Sell; nested
+  Dialog for target, Regen quantity, Assassin multi-attack; self-only Use is one-shot (no
+  confirm); Spy-revealed cards inspect-only; unavailable = not clickable + Tooltip reason;
+  Mirror and elimination rewards via Dialog. Same intents/payloads as V1.
 - **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
   Landing-page layout rules from design-taste-frontend do **not** apply to
@@ -89,11 +92,13 @@ rules above are unchanged — this section only covers how the client looks.
 - **End screen (L9-03):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
   counts + eliminations. No kits, hands, seed, or exact final resources. Return home via
   `leaveGame()`.
-- **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror) and may include
-  `quantity` (Regen 1–4). Table: hand select + “Include target” checkbox + quantity field.
+- **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
+  V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
+  self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
+  quantity Dialog.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
-  `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Draw label uses
-  `getKit(self.kitId).startingResources.draw`.
+  `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
+  from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
 - **Spy display:** list each spied hand/special card. Base: show full resource snapshot
   (lives, points, UP, shield) labeled by turn sequence. Upgraded: show those values live.
 - **`actionResolved.outcome === 'immune'`**: show public failure (Untouchable vs Thief/Spy).

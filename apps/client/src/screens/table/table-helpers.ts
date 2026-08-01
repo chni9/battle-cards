@@ -1,8 +1,13 @@
 /**
- * Shared Table helpers — no rule logic.
+ * Shared Table helpers — presentation helpers only; server revalidates intents.
+ * Target-needed list mirrors frontend.md / V1 Table chrome (not new rules).
  */
 
-import type { PlayingStateView, RewardChoice } from '@card-battle/shared';
+import {
+  ATTACK_CARD_IDS,
+  type PlayingStateView,
+  type RewardChoice,
+} from '@card-battle/shared';
 
 export type RewardKind = RewardChoice['type'];
 
@@ -30,4 +35,19 @@ export function buildRewardChoice(
   }
 
   return { type: kind };
+}
+
+/** Cards that V1 Table sent with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning). */
+export function cardPlayNeedsTarget(cardId: string): boolean {
+  return (
+    (ATTACK_CARD_IDS as readonly string[]).includes(cardId) ||
+    cardId === 'spy' ||
+    cardId === 'thief' ||
+    cardId === 'absorber' ||
+    cardId === 'cloning'
+  );
+}
+
+export function cardIsSelfOnlyPlay(cardId: string): boolean {
+  return !cardPlayNeedsTarget(cardId);
 }
