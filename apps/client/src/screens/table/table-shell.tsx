@@ -1,6 +1,6 @@
 /**
- * Felt-table layout shell — viewport-locked.
- * Only the action log scrolls; opponents / pending / dock do not.
+ * Felt-table layout shell — full-bleed viewport, dock-first.
+ * Only the action log scrolls; opponents hug content.
  */
 
 import type { ReactElement, ReactNode } from 'react';
@@ -9,9 +9,7 @@ export interface TableShellProps {
   header: ReactNode;
   turn: ReactNode;
   prompts: ReactNode;
-  /** Ordered opponent seats (1–3). Placement depends on length. */
   opponentSeats: ReactNode[];
-  /** Pending effects aimed at others (not the local player). */
   pending: ReactNode;
   actionLog: ReactNode;
   privateZone: ReactNode;
@@ -52,29 +50,36 @@ export function TableShell({
 
   return (
     <main
-      className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-surface font-sans text-ink"
+      className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
       data-zone="table"
     >
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-1 px-2 py-1.5 md:gap-1.5 md:px-4 md:py-2">
-        <header data-zone="header" className="shrink-0">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5 md:p-2">
+        <header
+          data-zone="header"
+          className="shrink-0 rounded-[length:var(--radius-card)] bg-surface px-3 py-1.5 text-ink"
+        >
           {header}
         </header>
 
-        <div data-zone="turn" className="shrink-0">
+        <div
+          data-zone="turn"
+          className="shrink-0 rounded-[length:var(--radius-card)] bg-surface text-ink"
+        >
           {turn}
         </div>
 
         {prompts !== null && prompts !== false && prompts !== undefined ? (
-          <div className="shrink-0">{prompts}</div>
+          <div className="shrink-0 rounded-[length:var(--radius-card)] bg-surface text-ink">
+            {prompts}
+          </div>
         ) : null}
 
         <div
           data-zone="felt"
-          className="grid min-h-0 flex-1 gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-slate p-1 text-cta-label-on-dark md:gap-1.5 md:p-1.5"
+          className="grid min-h-0 flex-1 gap-1 overflow-hidden md:gap-1.5"
           style={{
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr)',
-            gridTemplateRows:
-              'minmax(0, min(22vh, 11rem)) auto minmax(5rem, 1fr) minmax(0, min(34vh, 16rem))',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)',
+            gridTemplateRows: 'auto auto minmax(3rem, 14vh) minmax(0, 1fr)',
             gridTemplateAreas: `
               "opp-left opp-top opp-right"
               "pending pending pending"
@@ -85,21 +90,21 @@ export function TableShell({
         >
           <div
             data-zone="opponents-left"
-            className="flex min-h-0 items-stretch justify-center overflow-hidden"
+            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-left' }}
           >
             {byArea.left ?? null}
           </div>
           <div
             data-zone="opponents-top"
-            className="flex min-h-0 items-stretch justify-center overflow-hidden"
+            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-top' }}
           >
             {byArea.top ?? null}
           </div>
           <div
             data-zone="opponents-right"
-            className="flex min-h-0 items-stretch justify-center overflow-hidden"
+            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
             style={{ gridArea: 'opp-right' }}
           >
             {byArea.right ?? null}
@@ -107,7 +112,7 @@ export function TableShell({
 
           <div
             data-zone="pending"
-            className="min-h-0 max-h-[3.25rem] overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
+            className="min-h-0 max-h-[2.5rem] overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-0.5"
             style={{ gridArea: 'pending' }}
           >
             {pending}
@@ -123,7 +128,7 @@ export function TableShell({
 
           <div
             data-zone="dock"
-            className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit/90 p-1.5 text-ink"
+            className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit p-2 text-ink"
             style={{ gridArea: 'dock' }}
           >
             <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">

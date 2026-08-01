@@ -61,14 +61,15 @@ rules above are unchanged — this section only covers how the client looks.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
-  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is
-  `h-[100dvh] overflow-hidden` (no page scroll). **Only the action log scrolls** — opponents,
-  pending, and private dock must fit without vertical scroll (tiny Spy thumbs / fluid faces as
-  needed). Pending effects targeting `view.you` render in the private zone (Incoming); effects
-  on others stay on the felt strip. Kit portrait opens a visual inspect Dialog from `getKit` /
-  `getCard` only. **Private zone:** fluid hand fills available width/height (`FluidCardRow`);
-  resources sit above the economy bar; `Card detail="face"` (art + name); effect copy in the
-  card Dialog.
+  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is full-bleed
+  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
+  (hand fills remaining height); action log is capped (~18vh) and is the only scroll region.
+  Opponents hug content (no empty white seat slab). Pending effects targeting `view.you`
+  render in the private zone (Incoming); effects on others stay on the felt strip. Kit
+  portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
+  `FluidCardRow` uses equal CSS columns so hand faces always fill the band width
+  (≥44px min column); resources sit above the economy bar; `Card detail="face"`; effect
+  copy in the card Dialog.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.

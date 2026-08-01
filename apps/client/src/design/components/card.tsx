@@ -47,14 +47,14 @@ export function Card({
       <img
         src={artUrl}
         alt=""
-        className="aspect-[2/3] w-full object-contain"
+        className="aspect-[2/3] max-h-full w-full object-contain"
         draggable={false}
       />
       {detail !== 'thumb' && (
         <span
           className={[
-            'mt-0.5 block truncate text-center font-semibold text-ink',
-            detail === 'face' ? 'text-[9px] leading-tight' : 'mt-1 text-xs',
+            'mt-0.5 block shrink-0 truncate text-center font-semibold text-ink',
+            detail === 'face' ? 'text-[10px] leading-tight' : 'mt-1 text-xs',
           ].join(' ')}
         >
           {name}
@@ -62,7 +62,7 @@ export function Card({
         </span>
       )}
       {detail === 'full' && effect.length > 0 && (
-        <span className="mt-0.5 block text-center text-[10px] leading-snug text-ink-muted">
+        <span className="mt-0.5 block shrink-0 text-center text-[10px] leading-snug text-ink-muted">
           {effect}
         </span>
       )}
@@ -85,9 +85,10 @@ export function Card({
         aria-label={label}
         title={label}
         className={[
-          'rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1',
+          'rounded-[length:var(--radius-card)] border border-border bg-surface-raised',
           'text-left font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
           selected ? 'ring-2 ring-cta-purple' : '',
+          className.includes('p-') ? '' : 'p-1',
           className.includes('w-') ? '' : 'w-28',
           className,
         ].join(' ')}
@@ -100,7 +101,8 @@ export function Card({
   return (
     <article
       className={[
-        'rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-1 font-sans',
+        'rounded-[length:var(--radius-card)] border border-border bg-surface-raised font-sans',
+        className.includes('p-') ? '' : 'p-1',
         className.includes('w-') ? '' : 'w-28',
         className,
       ].join(' ')}
