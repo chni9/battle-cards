@@ -1,6 +1,6 @@
 /**
- * Browsable action log panel — technical spec §7, L9-02.
- * Functional visuals only; scroll + turn groups + filters.
+ * Browsable action log panel — technical spec §7, L9-02 / L12-05 restyle.
+ * No change to action-log.ts logic or entry shapes. rewardsClaimed stays opaque.
  */
 
 import type {
@@ -88,13 +88,17 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
     stickToBottomRef.current = distanceFromBottom < 48;
   }
 
+  const controlClass =
+    'rounded-[length:var(--radius-control)] border border-border-soft bg-surface px-2 py-1.5 text-sm text-ink';
+
   return (
-    <section className="font-sans text-ink">
-      <h2 className="text-lg font-semibold">Action log</h2>
-      <div>
-        <label>
+    <section data-zone="action-log-panel" className="flex h-full min-h-0 flex-col font-sans text-ink">
+      <h2 className="shrink-0 text-base font-semibold tracking-tight">Action log</h2>
+      <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2">
+        <label className="text-xs text-ink-muted">
           Player{' '}
           <select
+            className={`ml-1 ${controlClass}`}
             value={playerId ?? ''}
             onChange={(event) => {
               const value = event.target.value;
@@ -108,11 +112,12 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
               </option>
             ))}
           </select>
-        </label>{' '}
-        <label>
+        </label>
+        <label className="text-xs text-ink-muted">
           Search{' '}
           <input
             type="search"
+            className={`ml-1 min-w-[10rem] ${controlClass}`}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -121,34 +126,37 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
           />
         </label>
       </div>
-      <div>
+      <div className="mt-2 flex shrink-0 flex-wrap gap-x-3 gap-y-1">
         {ACTION_LOG_KINDS.map((kind) => (
-          <label key={kind} style={{ marginRight: '0.75rem' }}>
+          <label key={kind} className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
             <input
               type="checkbox"
+              className="size-3.5 accent-cta-purple"
               checked={kinds.has(kind)}
               onChange={() => {
                 toggleKind(kind);
               }}
-            />{' '}
+            />
             {KIND_LABELS[kind]}
           </label>
         ))}
       </div>
       {view.actionLog.length === 0 ? (
-        <p>No actions yet</p>
+        <p className="mt-3 text-sm text-ink-muted">No actions yet</p>
       ) : filtered.length === 0 ? (
-        <p>No matching entries</p>
+        <p className="mt-3 text-sm text-ink-muted">No matching entries</p>
       ) : (
         <div
           ref={listRef}
           onScroll={onScroll}
-          style={{ maxHeight: '16rem', overflow: 'auto', border: '1px solid #ccc' }}
+          className="mt-2 min-h-0 flex-1 overflow-auto rounded-[length:var(--radius-card)] border border-border-soft bg-surface px-2 py-1"
         >
           {groups.map((group) => (
-            <details key={group.turnSequence} open>
-              <summary>Turn {group.turnSequence}</summary>
-              <ol>
+            <details key={group.turnSequence} open className="border-b border-border-soft py-1 last:border-b-0">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                Turn {group.turnSequence}
+              </summary>
+              <ol className="mt-1 space-y-0.5 pb-1 pl-1">
                 {group.entries.map((entry, index) => (
                   <LogLine
                     key={entryKey(entry, index)}
@@ -172,7 +180,11 @@ function LogLine({
   entry: ActionLogEntryView;
   nicknameOf: (playerId: string) => string;
 }): ReactElement {
-  return <li>{formatActionLogEntry(entry, resolve)}</li>;
+  return (
+    <li className="text-sm leading-snug text-ink">
+      {formatActionLogEntry(entry, resolve)}
+    </li>
+  );
 }
 
 function entryKey(entry: ActionLogEntryView, index: number): string {

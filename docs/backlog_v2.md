@@ -68,13 +68,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-12 of 22 V2 tasks done. Active from Lot 12.
+13 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 4 |
+| 12 · Table | 8 | 5 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -201,7 +201,7 @@ Visual queue of effects in flight (source, card, target), restyled.
 - **Reference** Technical spec v2 §6 · tech spec v1 §7 (Pending effects queue) · **Depends on** L12-01 · **Complexity** S · **Risk** Low
 - **Acceptance** Same information as today's queue, new look
 
-### L12-05 · Action log panel restyle — `To do`
+### L12-05 · Action log panel restyle — `Done`
 
 Reskin `apps/client/src/action-log/action-log-panel.tsx` (L9-02) with the Lot 10 components.
 No change to `action-log.ts` logic or the `ActionLogEntryView` shape.
