@@ -79,7 +79,7 @@ export function TableShell({
           className="grid min-h-0 flex-1 gap-1 overflow-hidden md:gap-1.5"
           style={{
             gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)',
-            gridTemplateRows: 'auto auto minmax(3rem, 14vh) minmax(0, 1fr)',
+            gridTemplateRows: 'auto auto minmax(4.5rem, 18vh) minmax(0, 1fr)',
             gridTemplateAreas: `
               "opp-left opp-top opp-right"
               "pending pending pending"
@@ -90,21 +90,21 @@ export function TableShell({
         >
           <div
             data-zone="opponents-left"
-            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
+            className="flex items-start justify-center"
             style={{ gridArea: 'opp-left' }}
           >
             {byArea.left ?? null}
           </div>
           <div
             data-zone="opponents-top"
-            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
+            className="flex items-start justify-center"
             style={{ gridArea: 'opp-top' }}
           >
             {byArea.top ?? null}
           </div>
           <div
             data-zone="opponents-right"
-            className="flex min-h-0 max-h-[16vh] items-start justify-center overflow-hidden"
+            className="flex items-start justify-center"
             style={{ gridArea: 'opp-right' }}
           >
             {byArea.right ?? null}

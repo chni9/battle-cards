@@ -31,7 +31,8 @@ export function KitPortrait({
   const alt = kitId === null ? (nickname ?? 'Unknown kit') : `${kitId} portrait`;
 
   const frameClass = [
-    'relative inline-block overflow-hidden rounded-[length:var(--radius-card)]',
+    'relative inline-block rounded-[length:var(--radius-card)]',
+    isEliminated ? 'overflow-hidden' : 'overflow-visible',
     'border border-border bg-surface-raised',
     onClick !== undefined
       ? 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cta-purple focus-visible:ring-offset-2'
@@ -47,7 +48,7 @@ export function KitPortrait({
         width={72}
         height={96}
         className={[
-          'aspect-[3/4] w-full min-w-[3.5rem] object-cover',
+          'aspect-[3/4] w-full min-w-[2.75rem] rounded-[length:var(--radius-card)] object-contain',
           isEliminated ? 'opacity-55 grayscale' : '',
         ].join(' ')}
         draggable={false}

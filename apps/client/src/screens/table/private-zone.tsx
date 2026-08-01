@@ -1,5 +1,5 @@
 /**
- * Private zone — kit + incoming, shared-height hand/specials, resources.
+ * Private zone — kit + incoming, shared-size hand/specials, resources.
  * No vertical scroll. Effect text only in Dialogs.
  */
 
@@ -13,7 +13,7 @@ import type { ReactElement } from 'react';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
-import { FluidCardRow } from './fluid-card-row';
+import { CardBand } from './card-band';
 import { PendingQueue } from './pending-queue';
 
 export interface PrivateZoneProps {
@@ -40,7 +40,7 @@ export function PrivateZone({
         <div className="flex min-w-0 items-center gap-2">
           <KitPortrait
             kitId={view.self.kitId}
-            className="w-11"
+            className="w-14 shrink-0"
             onClick={onInspectKit}
             ariaLabel="Inspect your kit"
           />
@@ -63,36 +63,12 @@ export function PrivateZone({
         </div>
       </div>
 
-      {/* One shared card band so hand + specials share height and stay readable. */}
-      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
-        <div className="flex min-h-0 min-w-0 flex-[1_1_78%] flex-col overflow-hidden">
-          <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Hand
-          </p>
-          <div className="mt-0.5 min-h-0 flex-1 overflow-hidden">
-            <FluidCardRow
-              cards={view.self.hand}
-              detail="face"
-              emptyLabel="Empty"
-              data-zone="hand"
-              {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
-            />
-          </div>
-        </div>
-        <div className="flex min-h-0 w-[min(22%,9rem)] shrink-0 flex-col overflow-hidden">
-          <p className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Specials
-          </p>
-          <div className="mt-0.5 min-h-0 flex-1 overflow-hidden">
-            <FluidCardRow
-              cards={view.self.specialCards}
-              detail="face"
-              emptyLabel="None"
-              data-zone="specials"
-              {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
-            />
-          </div>
-        </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <CardBand
+          hand={view.self.hand}
+          specials={view.self.specialCards}
+          {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
+        />
       </div>
 
       <div
