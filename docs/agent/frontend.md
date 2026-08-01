@@ -9,8 +9,8 @@
 
 V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is in progress**
 (`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
-router; Home and Lobby live under `apps/client/src/screens/` (Lot 11). Table and End remain
-inline in `App.tsx` until Lots 12–13. Update this file's examples in place as V2 components
+router; Home, Lobby, and Table live under `apps/client/src/screens/` (Lots 11–12). End remains
+inline in `App.tsx` until Lot 13. Update this file's examples in place as V2 components
 land; don't fork a second frontend playbook. Intents, payloads, and visibility rules are
 unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
 payloads, different chrome; implemented in L12-08).
@@ -21,7 +21,7 @@ payloads, different chrome; implemented in L12-08).
 |---|---|---|
 | Home | No room — create / join + nickname | `screens/home.tsx` |
 | Lobby | `phase: 'lobby'` — seats, code, host Start | `screens/lobby.tsx` |
-| Table | `phase: 'playing'` — opponents, log, queue, timer, play hand or special cards, Assassin multi-attack, economy including `buySpecialCard` | `App.tsx` (`TableScreen`) until Lot 12 |
+| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — winner, public recap stats, return home | `App.tsx` until Lot 13 |
 
 Shared status copy: `screens/status-labels.ts`.
@@ -57,9 +57,12 @@ rules above are unchanged — this section only covers how the client looks.
   exposure of `activePersistentEffects`.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
+- **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
+  action log**, private dock + economy bar. Zones use `data-zone` hooks for Lot 14. Economy:
+  Draw / UP buy-sell / Buy (Dialog) / Leave. Legacy play chrome remains until L12-08.
 - **Future Table (L12-08):** card-first click → Dialog Use / Upgrade / Sell; nested Dialog for
   targets and other prompts; Spy-revealed inspect-only; unavailable = not clickable + tooltip;
-  self-only Use one-shot. See technical spec v2 §6.1 — do not implement until L12-08.
+  self-only Use one-shot. See technical spec v2 §6.1.
 - **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
   Landing-page layout rules from design-taste-frontend do **not** apply to

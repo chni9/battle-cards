@@ -769,3 +769,17 @@ Developer asked to retire the ornate hex `clip-path` CTAs. `Button` keeps the fi
 variants (`purple` / `yellow` / `green` / `red` / `orange`) from the colored PNG samples,
 but renders as solid rounded rectangles (`--radius-button`), soft tinted shadow, and
 hover/active press feedback. Still no `*_button.png` skins. Playbook: `frontend.md`.
+
+## 2026-08-01 · [P] Lot 12 Table shell / buy / tooltip rulings
+
+Developer session locking Lot 12 implementation approach:
+
+- **Felt table shell (L12-01):** opponents arc top/sides by seat count (2p top-center; 3p
+  left+right; 4p left+top+right); hand + economy dock bottom; slate felt board chrome.
+- **Action log:** center-stage band on the board (main organ — not a thin sidebar).
+- **Buy flows:** Buy special and Buy shared both via shared `Dialog`; single **Buy** control
+  on the economy bar opens the chooser. Bar otherwise: Draw / buy-sell UP / Leave.
+- **Unavailable cards (L12-08):** shared hand-rolled `Tooltip` in `design/components/` — no
+  new npm dependency.
+- Skills: product-UI (design / ui-styling / ui-ux-pro-max). Landing-page design-taste rules
+  do not apply to Table.

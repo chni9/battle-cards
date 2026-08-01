@@ -74,7 +74,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
-| 12 · Table | 8 | 0 |
+| 12 · Table | 8 | 1 |
 | 13 · End screen | 1 | 0 |
 | 14 · Animation | 5 | 0 |
 
@@ -167,7 +167,7 @@ L11-03.
 
 ## Lot 12 · V2 Table
 
-### L12-01 · Table layout shell — `To do`
+### L12-01 · Table layout shell — `Done`
 
 Overall structure: opponents band, private zone, log panel, action bar, pending-effects queue,
 timers — responsive to 2, 3, and 4 seated players.
