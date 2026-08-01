@@ -1,6 +1,6 @@
 /**
- * Opponent seat — L12-01 shell placement; L12-02 restyles.
- * Visibility follows PlayingStateView only (Spy-gated).
+ * Opponent seat — L12-02 / L12-08 Spy inspect.
+ * Visibility follows PlayingStateView only (Spy-gated). No public lives/card-count.
  */
 
 import type { PublicPlayerView } from '@card-battle/shared';
@@ -13,46 +13,40 @@ import { ResourceIcon } from '../../design/components/resource-icon';
 
 export interface OpponentZoneProps {
   player: PublicPlayerView;
-  /** Legacy target radio until L12-08. */
-  selectedAsTarget: boolean;
-  onSelectTarget: () => void;
-  targetDisabled: boolean;
+  onInspectCard?: (instanceId: string) => void;
 }
 
 export function OpponentZone({
   player,
-  selectedAsTarget,
-  onSelectTarget,
-  targetDisabled,
+  onInspectCard,
 }: OpponentZoneProps): ReactElement {
   return (
     <article
       data-zone="opponent-seat"
-      className="w-full max-w-[14rem] rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-2 text-ink shadow-sm"
+      data-player-id={player.id}
+      className="w-full max-w-[15rem] rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-3 text-ink shadow-sm"
     >
-      <label className="flex cursor-pointer flex-wrap items-center gap-2 text-sm font-semibold">
-        <input
-          type="radio"
-          name="target"
-          checked={selectedAsTarget}
-          disabled={targetDisabled}
-          onChange={onSelectTarget}
-          className="size-4 accent-cta-purple"
-        />
-        <span>{player.nickname}</span>
+      <div className="flex flex-wrap items-center gap-1">
+        <h3 className="truncate text-sm font-semibold text-ink">{player.nickname}</h3>
         <ConnectionBadge player={player} />
-      </label>
+      </div>
+      {player.spied === undefined && (
+        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-muted">
+          Hidden kit
+        </p>
+      )}
 
       {player.spied !== undefined ? (
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-2 border-t border-border-soft pt-2">
           <div className="flex flex-wrap items-center gap-2">
             <KitPortrait
               kitId={player.spied.kitId}
               nickname={player.nickname}
               isEliminated={player.isEliminated}
+              className="w-[4.5rem]"
             />
             {player.spied.lives !== undefined ? (
-              <>
+              <div className="flex flex-wrap gap-1">
                 <ResourceIcon kind="life" value={player.spied.lives} />
                 <ResourceIcon kind="point" value={player.spied.points ?? 0} />
                 <ResourceIcon
@@ -60,47 +54,78 @@ export function OpponentZone({
                   value={player.spied.upgradePoints ?? 0}
                 />
                 <ResourceIcon kind="shield" value={player.spied.shield ?? 0} />
-              </>
+              </div>
             ) : null}
-            {player.spied.resourcesSnapshot !== undefined ? (
-              <span className="text-xs text-ink-muted">
-                Snapshot turn {player.spied.resourcesSnapshot.turnSequence}:{' '}
-                <ResourceIcon kind="life" value={player.spied.resourcesSnapshot.lives} />{' '}
-                <ResourceIcon kind="point" value={player.spied.resourcesSnapshot.points} />{' '}
+          </div>
+          {player.spied.resourcesSnapshot !== undefined ? (
+            <p className="text-[11px] leading-snug text-ink-muted">
+              Snapshot turn {player.spied.resourcesSnapshot.turnSequence}
+              <span className="mt-1 flex flex-wrap gap-1">
+                <ResourceIcon kind="life" value={player.spied.resourcesSnapshot.lives} />
+                <ResourceIcon kind="point" value={player.spied.resourcesSnapshot.points} />
                 <ResourceIcon
                   kind="upgradePoint"
                   value={player.spied.resourcesSnapshot.upgradePoints}
-                />{' '}
+                />
                 <ResourceIcon
                   kind="shield"
                   value={player.spied.resourcesSnapshot.shield}
                 />
               </span>
-            ) : null}
-          </div>
-          <p className="text-xs font-medium text-ink-muted">Hand</p>
-          <div className="flex flex-wrap gap-2">
-            {player.spied.hand.map((card) => (
-              <Card key={card.instanceId} instance={card} className="w-16" />
-            ))}
+            </p>
+          ) : null}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+              Hand
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {player.spied.hand.map((card) => (
+                <Card
+                  key={card.instanceId}
+                  instance={card}
+                  className="w-14"
+                  {...(onInspectCard !== undefined
+                    ? {
+                        onSelect: () => {
+                          onInspectCard(card.instanceId);
+                        },
+                      }
+                    : {})}
+                />
+              ))}
+            </div>
           </div>
           {player.spied.specialCards.length > 0 && (
-            <>
-              <p className="text-xs font-medium text-ink-muted">Specials</p>
-              <div className="flex flex-wrap gap-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                Specials
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
                 {player.spied.specialCards.map((card) => (
-                  <Card key={card.instanceId} instance={card} className="w-16" />
+                  <Card
+                    key={card.instanceId}
+                    instance={card}
+                    className="w-14"
+                    {...(onInspectCard !== undefined
+                      ? {
+                          onSelect: () => {
+                            onInspectCard(card.instanceId);
+                          },
+                        }
+                      : {})}
+                  />
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       ) : (
-        <div className="mt-2">
+        <div className="mt-3 flex justify-center border-t border-border-soft pt-2">
           <KitPortrait
             kitId={null}
             nickname={player.nickname}
             isEliminated={player.isEliminated}
+            className="w-[4.5rem]"
           />
         </div>
       )}

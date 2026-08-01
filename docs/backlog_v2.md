@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-8 of 22 V2 tasks done. Active from Lot 12.
+9 of 22 V2 tasks done. Active from Lot 12.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -176,7 +176,7 @@ timers — responsive to 2, 3, and 4 seated players.
 - **Watch point** The action log is the screen's main organ (AGENTS.md §L1-12 watch point) — the redesign must not demote it to a sidebar.
 - **Acceptance** All existing Table zones present and legible at 2, 3, and 4 players
 
-### L12-02 · Opponent zone — `To do`
+### L12-02 · Opponent zone — `Done`
 
 Nickname, lives/shield/status via `ResourceIcon`, card count, connection badges (reuse L9-01
 states), Spy-revealed kit/cards.
