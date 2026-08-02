@@ -1,7 +1,6 @@
 /**
  * Browsable action log — technical spec §7, L9-02 / L12-05.
- * Filters in a compact right rail; entries grouped by turn (one line each).
- * No change to action-log.ts logic or entry shapes.
+ * Round groups, one line each. No filters (space reserved for the table).
  */
 
 import type {
@@ -9,34 +8,24 @@ import type {
   ActionLogEntryView,
   PlayingStateView,
 } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 
-import {
-  ACTION_LOG_KINDS,
-  filterActionLog,
-  formatActionLogEntry,
-  groupByRound,
-} from './action-log';
+import { formatActionLogEntry, groupByRound } from './action-log';
 
 const KIND_META: Record<
   ActionLogEntryKind,
-  { label: string; short: string; icon: ReactElement }
+  { label: string; icon: ReactElement }
 > = {
   actionPlayed: {
     label: 'Played',
-    short: 'Play',
     icon: (
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M3 2.5v11l10-5.5L3 2.5Z"
-        />
+        <path fill="currentColor" d="M3 2.5v11l10-5.5L3 2.5Z" />
       </svg>
     ),
   },
   actionResolved: {
     label: 'Resolved',
-    short: 'Res',
     icon: (
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
         <path
@@ -48,7 +37,6 @@ const KIND_META: Record<
   },
   playerEliminated: {
     label: 'Eliminated',
-    short: 'Out',
     icon: (
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
         <path
@@ -60,7 +48,6 @@ const KIND_META: Record<
   },
   mirrorRedirected: {
     label: 'Mirror',
-    short: 'Mir',
     icon: (
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
         <path
@@ -72,7 +59,6 @@ const KIND_META: Record<
   },
   rewardsClaimed: {
     label: 'Rewards',
-    short: 'Rwd',
     icon: (
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
         <path
@@ -93,22 +79,12 @@ function nicknameOf(view: PlayingStateView, playerId: string): string {
 }
 
 export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
-  const [playerId, setPlayerId] = useState<string | null>(null);
-  const [kinds, setKinds] = useState<ReadonlySet<ActionLogEntryKind>>(
-    () => new Set(ACTION_LOG_KINDS),
-  );
-  const [query, setQuery] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
   const previousLengthRef = useRef(0);
 
   const resolveNick = (id: string): string => nicknameOf(view, id);
-  const filtered = filterActionLog(
-    view.actionLog,
-    { playerId, kinds, query },
-    resolveNick,
-  );
-  const groups = groupByRound(filtered, view.players.length);
+  const groups = groupByRound(view.actionLog, view.players.length);
 
   useEffect(() => {
     const el = listRef.current;
@@ -122,18 +98,6 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
     el.scrollTop = el.scrollHeight;
   }, [view.actionLog]);
 
-  function toggleKind(kind: ActionLogEntryKind): void {
-    setKinds((previous) => {
-      const next = new Set(previous);
-      if (next.has(kind)) {
-        next.delete(kind);
-      } else {
-        next.add(kind);
-      }
-      return next;
-    });
-  }
-
   function onScroll(): void {
     const el = listRef.current;
     if (el === null) {
@@ -146,109 +110,42 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
   return (
     <section
       data-zone="action-log-panel"
-      className="flex h-full min-h-0 gap-2 overflow-hidden font-sans text-ink"
+      className="flex h-full min-h-0 flex-col overflow-hidden font-sans text-ink"
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <h2 className="shrink-0 text-sm font-semibold tracking-tight">Action log</h2>
-        {view.actionLog.length === 0 ? (
-          <p className="mt-1 text-xs text-ink-muted">No actions yet</p>
-        ) : filtered.length === 0 ? (
-          <p className="mt-1 text-xs text-ink-muted">No matching entries</p>
-        ) : (
-          <div
-            ref={listRef}
-            onScroll={onScroll}
-            className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-border-soft bg-surface"
-          >
-            {groups.map((group) => (
-              <div
-                key={group.round}
-                className="border-b border-border-soft last:border-b-0"
-              >
-                <div className="sticky top-0 z-[1] bg-surface-raised/95 px-2 py-0.5 backdrop-blur-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
-                    Round {group.round}
-                  </p>
-                </div>
-                <ul className="px-2 pb-1">
-                  {group.entries.map((entry, index) => (
-                    <LogLine
-                      key={entryKey(entry, index)}
-                      entry={entry}
-                      nicknameOf={resolveNick}
-                    />
-                  ))}
-                </ul>
+      <h2 className="shrink-0 text-xs font-semibold tracking-tight sm:text-sm">
+        Action log
+      </h2>
+      {view.actionLog.length === 0 ? (
+        <p className="mt-1 text-xs text-ink-muted">No actions yet</p>
+      ) : (
+        <div
+          ref={listRef}
+          onScroll={onScroll}
+          className="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-border-soft bg-surface"
+        >
+          {groups.map((group) => (
+            <div
+              key={group.round}
+              className="border-b border-border-soft last:border-b-0"
+            >
+              <div className="sticky top-0 z-[1] bg-surface-raised/95 px-2 py-0.5 backdrop-blur-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                  Round {group.round}
+                </p>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <aside
-        data-zone="action-log-filters"
-        className="flex w-[7.5rem] shrink-0 flex-col gap-1.5 border-l border-border-soft pl-2"
-      >
-        <label className="block">
-          <span className="sr-only">Player</span>
-          <select
-            className="w-full rounded-[length:var(--radius-control)] border border-border-soft bg-surface px-1.5 py-1 text-[10px] text-ink"
-            value={playerId ?? ''}
-            aria-label="Filter by player"
-            onChange={(event) => {
-              const value = event.target.value;
-              setPlayerId(value === '' ? null : value);
-            }}
-          >
-            <option value="">All players</option>
-            {view.players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.nickname}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="sr-only">Search</span>
-          <input
-            type="search"
-            className="w-full rounded-[length:var(--radius-control)] border border-border-soft bg-surface px-1.5 py-1 text-[10px] text-ink"
-            value={query}
-            aria-label="Search log"
-            placeholder="Search…"
-            onChange={(event) => {
-              setQuery(event.target.value);
-            }}
-          />
-        </label>
-        <div className="flex flex-col gap-1" role="group" aria-label="Entry kinds">
-          {ACTION_LOG_KINDS.map((kind) => {
-            const meta = KIND_META[kind];
-            const active = kinds.has(kind);
-            return (
-              <button
-                key={kind}
-                type="button"
-                title={meta.label}
-                aria-pressed={active}
-                onClick={() => {
-                  toggleKind(kind);
-                }}
-                className={[
-                  'inline-flex min-h-8 items-center gap-1.5 rounded-[length:var(--radius-badge)] px-1.5 text-left text-[10px] font-semibold',
-                  'outline-none focus-visible:ring-2 focus-visible:ring-cta-purple',
-                  active
-                    ? 'bg-cta-purple/15 text-ink'
-                    : 'bg-surface text-ink-muted opacity-60',
-                ].join(' ')}
-              >
-                <span className="shrink-0 text-cta-purple">{meta.icon}</span>
-                <span className="truncate">{meta.short}</span>
-              </button>
-            );
-          })}
+              <ul className="px-2 pb-1">
+                {group.entries.map((entry, index) => (
+                  <LogLine
+                    key={entryKey(entry, index)}
+                    entry={entry}
+                    nicknameOf={resolveNick}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-      </aside>
+      )}
     </section>
   );
 }

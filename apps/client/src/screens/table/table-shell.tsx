@@ -1,12 +1,14 @@
 /**
  * Felt-table layout shell — full-bleed viewport, dock-first.
- * Only the action log scrolls; opponents hug content.
+ * Portrait: opponents → pending → log → dock (vertical).
+ * Landscape: left column (opponents + pending + log) | right dock.
+ * Only the action log (and pending strips) scroll — never the page.
  */
 
 import type { ReactElement, ReactNode } from 'react';
 
 export interface TableShellProps {
-  header: ReactNode;
+  /** Compact meta + turn strip (no separate Card Battle title). */
   turn: ReactNode;
   prompts: ReactNode;
   opponentSeats: ReactNode[];
@@ -17,18 +19,7 @@ export interface TableShellProps {
   legacyActions?: ReactNode;
 }
 
-function seatAreas(count: number): readonly ('left' | 'top' | 'right')[] {
-  if (count <= 1) {
-    return ['top'];
-  }
-  if (count === 2) {
-    return ['left', 'right'];
-  }
-  return ['left', 'top', 'right'];
-}
-
 export function TableShell({
-  header,
   turn,
   prompts,
   opponentSeats,
@@ -38,29 +29,12 @@ export function TableShell({
   economy,
   legacyActions,
 }: TableShellProps): ReactElement {
-  const areas = seatAreas(opponentSeats.length);
-  const byArea: Partial<Record<'left' | 'top' | 'right', ReactNode>> = {};
-  for (let i = 0; i < opponentSeats.length; i++) {
-    const area = areas[i];
-    const seat = opponentSeats[i];
-    if (area !== undefined && seat !== undefined) {
-      byArea[area] = seat;
-    }
-  }
-
   return (
     <main
-      className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
+      className="table-shell flex h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
       data-zone="table"
     >
-      <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5 md:p-2">
-        <header
-          data-zone="header"
-          className="shrink-0 rounded-[length:var(--radius-card)] bg-surface px-3 py-1.5 text-ink"
-        >
-          {header}
-        </header>
-
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5">
         <div
           data-zone="turn"
           className="shrink-0 rounded-[length:var(--radius-card)] bg-surface text-ink"
@@ -74,62 +48,31 @@ export function TableShell({
           </div>
         ) : null}
 
-        <div
-          data-zone="felt"
-          className="grid min-h-0 flex-1 gap-1 overflow-hidden md:gap-1.5"
-          style={{
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)',
-            gridTemplateRows: 'auto auto minmax(4.5rem, 18vh) minmax(0, 1fr)',
-            gridTemplateAreas: `
-              "opp-left opp-top opp-right"
-              "pending pending pending"
-              "log log log"
-              "dock dock dock"
-            `,
-          }}
-        >
+        <div data-zone="felt" className="table-felt min-h-0 flex-1 overflow-hidden">
           <div
-            data-zone="opponents-left"
-            className="flex items-start justify-center"
-            style={{ gridArea: 'opp-left' }}
+            data-zone="opponents"
+            className="table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-hidden overscroll-contain"
           >
-            {byArea.left ?? null}
-          </div>
-          <div
-            data-zone="opponents-top"
-            className="flex items-start justify-center"
-            style={{ gridArea: 'opp-top' }}
-          >
-            {byArea.top ?? null}
-          </div>
-          <div
-            data-zone="opponents-right"
-            className="flex items-start justify-center"
-            style={{ gridArea: 'opp-right' }}
-          >
-            {byArea.right ?? null}
+            {opponentSeats}
           </div>
 
           <div
             data-zone="pending"
-            className="min-h-0 max-h-[5.5rem] overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
-            style={{ gridArea: 'pending' }}
+            className="table-felt__pending min-h-0 overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
           >
             {pending}
           </div>
 
           <div
             data-zone="action-log"
-            className="flex min-h-0 flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1.5 text-ink"
-            style={{ gridArea: 'log' }}
+            className="table-felt__log flex min-h-0 flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1 text-ink sm:p-1.5"
           >
             {actionLog}
           </div>
 
           <div
             data-zone="dock"
-            className="flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit p-2 text-ink"
-            style={{ gridArea: 'dock' }}
+            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit p-1.5 text-ink sm:p-2"
           >
             <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
               {privateZone}

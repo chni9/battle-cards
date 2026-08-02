@@ -187,23 +187,11 @@ export function TableScreen({
   return (
     <>
       <TableShell
-        header={
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink md:text-xl">
-              Card Battle
-            </h1>
-            <p className="text-xs text-ink-muted md:text-sm">
-              Code {view.gameCode} · {statusLabel}
-            </p>
-            {error !== null && (
-              <p className="mt-0.5 text-sm font-medium text-cta-red" role="alert">
-                {error}
-              </p>
-            )}
-          </div>
-        }
         turn={
           <Timers
+            gameCode={view.gameCode}
+            statusLabel={statusLabel}
+            error={error}
             activeNickname={activePlayer?.nickname ?? '—'}
             isMyTurn={isMyTurn}
             timerLabel={timerLabel}

@@ -61,3 +61,75 @@
     min-height: 100dvh;
   }
 }
+
+/*
+ * Table felt — portrait stacks dock under the log; landscape puts the dock on the
+ * right so short phone heights keep the hand on-screen (no page scroll).
+ * Unlayered so these beat Tailwind utility min-heights on economy CTAs.
+ */
+.table-felt {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(3.5rem, 15vh) minmax(0, 1fr);
+  grid-template-areas:
+    "opponents"
+    "pending"
+    "log"
+    "dock";
+}
+
+.table-felt__opponents {
+  grid-area: opponents;
+}
+
+.table-felt__pending {
+  grid-area: pending;
+  max-height: 5.5rem;
+}
+
+.table-felt__log {
+  grid-area: log;
+}
+
+.table-felt__dock {
+  grid-area: dock;
+}
+
+@media (orientation: landscape) {
+  .table-felt {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "opponents dock"
+      "pending dock"
+      "log dock";
+  }
+
+  .table-felt__pending {
+    max-height: 2.75rem;
+  }
+
+  .table-felt__opponents {
+    max-height: 26dvh;
+  }
+
+  /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */
+  [data-zone="economy-bar"] button {
+    min-height: 2rem;
+    min-width: 0;
+    padding-inline: 0.55rem;
+    padding-block: 0.2rem;
+    font-size: 0.65rem;
+    box-shadow: none;
+  }
+
+  [data-zone="private-zone"] [data-zone="kit-portrait"],
+  [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
+    width: 2.35rem;
+  }
+
+  [data-zone="card-band"] {
+    overflow: hidden;
+  }
+}

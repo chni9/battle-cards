@@ -34,24 +34,24 @@ export function PrivateZone({
   return (
     <section
       data-zone="private-zone"
-      className="flex h-full min-h-0 flex-col gap-1 overflow-hidden"
+      className="flex h-full min-h-0 flex-col gap-0.5 overflow-hidden landscape:gap-1"
     >
-      <div className="flex shrink-0 items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <KitPortrait
             kitId={view.self.kitId}
-            className="w-14 shrink-0"
+            className="w-10 shrink-0 landscape:w-12 sm:w-14"
             onClick={onInspectKit}
             ariaLabel="Inspect your kit"
           />
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <h2 className="text-sm font-semibold text-ink">Your zone</h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
+            <h2 className="text-xs font-semibold text-ink sm:text-sm">You</h2>
             {selfPublic !== undefined && <ConnectionBadge player={selfPublic} />}
           </div>
         </div>
         <div
           data-zone="incoming-pending"
-          className="max-h-[5.5rem] max-w-[min(100%,14rem)] shrink-0 overflow-y-auto overscroll-contain"
+          className="max-h-[3.5rem] max-w-[min(100%,12rem)] shrink-0 overflow-y-auto overscroll-contain landscape:max-h-[5rem] sm:max-h-[5.5rem] sm:max-w-[min(100%,14rem)]"
         >
           <PendingQueue
             view={view}
@@ -73,7 +73,7 @@ export function PrivateZone({
 
       <div
         data-zone="resources"
-        className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border-soft pt-1"
+        className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border-soft pt-0.5 sm:gap-2 sm:pt-1"
       >
         <ResourceIcon kind="life" value={view.self.lives} label="Lives" />
         <ResourceIcon kind="shield" value={view.self.shield} label="Shield" />

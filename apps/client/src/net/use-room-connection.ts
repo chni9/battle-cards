@@ -47,6 +47,26 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 const DEFAULT_SERVER_URL = 'http://localhost:2567';
 const RECONNECT_TOKEN_KEY = 'card-battle:reconnection-token';
 
+/**
+ * LAN / phone-hotspot: dial the same host as the page, not `localhost` (which is the
+ * phone itself). Override with `VITE_SERVER_URL` when the API is elsewhere.
+ */
+function resolveServerUrl(): string {
+  const fromEnv = import.meta.env.VITE_SERVER_URL;
+  if (fromEnv !== undefined && fromEnv.length > 0) {
+    return fromEnv;
+  }
+
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol } = window.location;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${protocol}//${hostname}:2567`;
+    }
+  }
+
+  return DEFAULT_SERVER_URL;
+}
+
 /** Cover grace + absent reclaim window (manual server-side until elim). */
 const RECONNECT_MAX_RETRIES = 120;
 const RECONNECT_MAX_DELAY_MS = 5_000;
@@ -285,7 +305,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
       clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
-      const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+      const client = new Client(resolveServerUrl());
       const options: RoomJoinOptions = {
         protocolVersion: PROTOCOL_VERSION,
         nickname: nickname.trim(),
@@ -309,7 +329,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
       clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
-      const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+      const client = new Client(resolveServerUrl());
       const options: RoomJoinOptions = {
         protocolVersion: PROTOCOL_VERSION,
         nickname: nickname.trim(),
@@ -442,7 +462,7 @@ async function attemptManualReconnect(
     error: null,
   }));
 
-  const client = new Client(import.meta.env.VITE_SERVER_URL ?? DEFAULT_SERVER_URL);
+  const client = new Client(resolveServerUrl());
 
   try {
     const room = await client.reconnect(token);

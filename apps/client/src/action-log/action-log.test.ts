@@ -54,12 +54,55 @@ describe('formatActionLogEntry (L9-02)', () => {
       return;
     }
 
-    expect(formatActionLogEntry(play, nick)).toBe('Alice: playCard basic-attack → Bob');
-    expect(formatActionLogEntry(resolved, nick)).toContain('Resolved:');
-    expect(formatActionLogEntry(rewards, nick)).toBe(
-      'Alice claimed elimination rewards (Bob)',
+    expect(formatActionLogEntry(play, nick)).toBe(
+      'Alice attacks Bob with Basic attack',
     );
-    expect(formatActionLogEntry(rewards, nick)).not.toMatch(/lives|points|card/i);
+    expect(formatActionLogEntry(resolved, nick)).toBe(
+      "Alice's Basic attack hits Bob (−1 life)",
+    );
+    expect(formatActionLogEntry(rewards, nick)).toBe(
+      'Alice claims elimination rewards from Bob',
+    );
+    expect(formatActionLogEntry(rewards, nick)).not.toMatch(/lives|points/i);
+  });
+
+  it('omits card names for buy, sell, and upgrade', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'sellCard',
+          cardId: 'basic-attack',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice sold a card');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'upgradeCard',
+          cardId: 'spy',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice upgraded a card');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyCard',
+          cardId: 'shield',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought a card');
   });
 });
 

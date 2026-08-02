@@ -29,22 +29,26 @@ export function OpponentZone({
     <article
       data-zone="opponent-seat"
       data-player-id={player.id}
-      className="flex w-auto max-w-[20rem] flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-2 text-ink shadow-sm"
+      className="flex w-auto max-w-[11rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm landscape:max-w-[14rem] sm:max-w-[20rem] sm:p-2"
     >
-      <div className="flex flex-wrap items-center gap-1.5">
-        <h3 className="truncate text-sm font-semibold text-ink">{player.nickname}</h3>
+      <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+        <h3 className="truncate text-xs font-semibold text-ink sm:text-sm">
+          {player.nickname}
+        </h3>
         <ConnectionBadge player={player} />
       </div>
 
       {spied === undefined ? (
-        <div className="mt-1.5 flex items-center gap-2 border-t border-border-soft pt-1.5">
+        <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
           <KitPortrait
             kitId={null}
             nickname={player.nickname}
             isEliminated={player.isEliminated}
-            className="w-14 shrink-0"
+            className="w-10 shrink-0 sm:w-14"
           />
-          <p className="text-[10px] uppercase tracking-wide text-ink-muted">Hidden kit</p>
+          <p className="text-[9px] uppercase tracking-wide text-ink-muted sm:text-[10px]">
+            Hidden kit
+          </p>
         </div>
       ) : (
         <div className="mt-1.5 flex flex-col gap-1 border-t border-border-soft pt-1.5">

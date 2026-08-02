@@ -63,17 +63,21 @@ rules above are unchanged — this section only covers how the client looks.
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
   UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
-  (hand fills remaining height); action log is capped (~18vh) and is the only scroll region.
-  Opponents hug content (no empty white seat slab). Pending effects targeting `view.you`
+  (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
+  region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
+  dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
+  “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
+  white seat slab). Pending effects targeting `view.you`
   render in the private   zone (Incoming); effects on others stay on the felt strip — both strips size to show full
   chips and scroll internally when many effects queue. Kit
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
   match action cards; resources sit above the economy bar; `Card detail="face"`; effect
-  copy in the card Dialog. Action log: scrollable list + compact filter rail on the right
-  (player, search, kind icon toggles); entries grouped under a sticky **Round N** header
+  copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
+  grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
-  shown) with one line per action.
+  shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
+  without overflow; paginates only when even 2 rows at min width cannot hold the pile.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
@@ -99,7 +103,9 @@ rules above are unchanged — this section only covers how the client looks.
 - **Degraded states (L9-01):** each `PublicPlayerView.connection` drives badges —
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
-  `apps/client/src/action-log/` — scrollable turn groups, player/kind/search filters.
+  `apps/client/src/action-log/` — scrollable round groups (no player/kind/search filters).
+  Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit
+  the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
   shown.

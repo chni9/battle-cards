@@ -3,7 +3,13 @@
  * No rule logic — formatting and filter only.
  */
 
-import type { ActionLogEntryKind, ActionLogEntryView } from '@card-battle/shared';
+import {
+  ATTACK_CARD_IDS,
+  getCard,
+  type ActionLogEntryKind,
+  type ActionLogEntryView,
+  type CardId,
+} from '@card-battle/shared';
 
 export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'actionPlayed',
@@ -21,34 +27,92 @@ export interface ActionLogFilters {
 
 export type NicknameResolver = (playerId: string) => string;
 
+function cardName(cardId: CardId): string {
+  return getCard(cardId)?.name ?? cardId;
+}
+
+function isAttackCardId(cardId: string): boolean {
+  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
+
+function formatPlayedAction(
+  entry: Extract<ActionLogEntryView, { kind: 'actionPlayed' }>,
+  nicknameOf: NicknameResolver,
+): string {
+  const actor = nicknameOf(entry.actorPlayerId);
+
+  switch (entry.action) {
+    case 'draw':
+      return `${actor} draws`;
+    case 'buyCard':
+      return `${actor} bought a card`;
+    case 'sellCard':
+      return `${actor} sold a card`;
+    case 'upgradeCard':
+      return `${actor} upgraded a card`;
+    case 'buySpecialCard':
+      return `${actor} bought a special card`;
+    case 'buyUpgradePoint':
+      return `${actor} bought an upgrade point`;
+    case 'sellUpgradePoint':
+      return `${actor} sold an upgrade point`;
+    case 'playMultipleAttacks': {
+      if (entry.attacks === undefined || entry.attacks.length === 0) {
+        return `${actor} plays multiple attacks`;
+      }
+      const parts = entry.attacks.map(
+        (attack) =>
+          `${cardName(attack.cardId)} against ${nicknameOf(attack.targetPlayerId)}`,
+      );
+      return `${actor} attacks with ${parts.join(', ')}`;
+    }
+    case 'playCard': {
+      const id = entry.cardId;
+      if (id === undefined) {
+        return `${actor} plays a card`;
+      }
+      const name = cardName(id);
+      const targetId = entry.targetPlayerId;
+      if (targetId !== undefined) {
+        const target = nicknameOf(targetId);
+        if (isAttackCardId(id)) {
+          return `${actor} attacks ${target} with ${name}`;
+        }
+        return `${actor} plays ${name} on ${target}`;
+      }
+      return `${actor} plays ${name}`;
+    }
+  }
+}
+
 export function formatActionLogEntry(
   entry: ActionLogEntryView,
   nicknameOf: NicknameResolver,
 ): string {
   switch (entry.kind) {
-    case 'actionPlayed': {
-      const actor = nicknameOf(entry.actorPlayerId);
-      const card = entry.cardId !== undefined ? ` ${entry.cardId}` : '';
-      const target =
-        entry.targetPlayerId !== undefined ? ` → ${nicknameOf(entry.targetPlayerId)}` : '';
-      const attacks =
-        entry.attacks !== undefined
-          ? ` [${entry.attacks
-              .map((attack) => `${attack.cardId}→${nicknameOf(attack.targetPlayerId)}`)
-              .join(', ')}]`
-          : '';
-
-      return `${actor}: ${entry.action}${card}${target}${attacks}`;
-    }
+    case 'actionPlayed':
+      return formatPlayedAction(entry, nicknameOf);
     case 'actionResolved': {
       const source = nicknameOf(entry.sourcePlayerId);
       const target = nicknameOf(entry.targetPlayerId);
-      const detail =
-        entry.outcome === 'applied'
-          ? ` (−${String(entry.livesLost)} life, shield ${String(entry.shieldAbsorbed)})`
+      const name = cardName(entry.cardId);
+      if (entry.outcome === 'immune') {
+        return `${name} from ${source} fails against ${target} — immune`;
+      }
+      if (entry.outcome === 'cancelled') {
+        return `${name} from ${source} against ${target} is cancelled`;
+      }
+      const shield =
+        entry.shieldAbsorbed > 0
+          ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
           : '';
-
-      return `Resolved: ${entry.cardId} ${source} → ${target} (${entry.outcome})${detail}`;
+      if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
+        return `${source}'s ${name} hits ${target} (−${String(entry.livesLost)} life${shield})`;
+      }
+      if (entry.shieldAbsorbed > 0) {
+        return `${name} from ${source} resolves on ${target} (${String(entry.shieldAbsorbed)} absorbed by shield)`;
+      }
+      return `${name} from ${source} resolves on ${target}`;
     }
     case 'playerEliminated': {
       const victim = nicknameOf(entry.playerId);
@@ -56,21 +120,24 @@ export function formatActionLogEntry(
         entry.eliminatorPlayerId !== null
           ? ` by ${nicknameOf(entry.eliminatorPlayerId)}`
           : '';
-
-      return `Eliminated: ${victim}${by} (${entry.reason})`;
+      const reasonLabel: Record<typeof entry.reason, string> = {
+        combat: 'in combat',
+        absence: 'by absence',
+        inactivity: 'by inactivity',
+        leave: 'after leaving',
+      };
+      return `${victim} is eliminated${by} ${reasonLabel[entry.reason]}`;
     }
     case 'mirrorRedirected': {
       const actor = nicknameOf(entry.actorPlayerId);
       const from = nicknameOf(entry.previousTargetPlayerId);
       const to = nicknameOf(entry.newTargetPlayerId);
-
-      return `Mirror: ${actor} redirected ${entry.cardId} ${from} → ${to}`;
+      return `${actor} redirects ${cardName(entry.cardId)} from ${from} to ${to}`;
     }
     case 'rewardsClaimed': {
       const eliminator = nicknameOf(entry.eliminatorPlayerId);
       const eliminated = nicknameOf(entry.eliminatedPlayerId);
-
-      return `${eliminator} claimed elimination rewards (${eliminated})`;
+      return `${eliminator} claims elimination rewards from ${eliminated}`;
     }
   }
 }

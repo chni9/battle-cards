@@ -48,7 +48,7 @@ export function KitPortrait({
         width={72}
         height={96}
         className={[
-          'aspect-[3/4] w-full min-w-[2.75rem] rounded-[length:var(--radius-card)] object-contain',
+          'aspect-[3/4] w-full min-w-0 rounded-[length:var(--radius-card)] object-contain',
           isEliminated ? 'opacity-55 grayscale' : '',
         ].join(' ')}
         draggable={false}
@@ -74,6 +74,7 @@ export function KitPortrait({
         className={frameClass}
         onClick={onClick}
         aria-label={ariaLabel ?? `Inspect ${alt}`}
+        data-zone="kit-portrait"
         data-eliminated={isEliminated ? 'true' : 'false'}
       >
         {body}
@@ -82,7 +83,11 @@ export function KitPortrait({
   }
 
   return (
-    <span className={frameClass} data-eliminated={isEliminated ? 'true' : 'false'}>
+    <span
+      className={frameClass}
+      data-zone="kit-portrait"
+      data-eliminated={isEliminated ? 'true' : 'false'}
+    >
       {body}
     </span>
   );
