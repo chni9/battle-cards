@@ -14,16 +14,19 @@ import { ResourceIcon } from '../../design/components/resource-icon';
 export interface OpponentZoneProps {
   player: PublicPlayerView;
   onInspectCard?: (instanceId: string) => void;
+  onInspectActive?: (effectId: string) => void;
   onInspectKit?: (kitId: KitId) => void;
 }
 
 export function OpponentZone({
   player,
   onInspectCard,
+  onInspectActive,
   onInspectKit,
 }: OpponentZoneProps): ReactElement {
   const spiedKitId = player.spied?.kitId;
   const spied = player.spied;
+  const actives = player.activePersistentEffects;
 
   return (
     <article
@@ -37,6 +40,36 @@ export function OpponentZone({
         </h3>
         <ConnectionBadge player={player} />
       </div>
+
+      {actives.length > 0 && (
+        <div className="mt-1 border-t border-border-soft pt-1">
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-ink-muted">
+            Active
+          </p>
+          <div className="mt-0.5 flex flex-wrap gap-0.5">
+            {actives.map((effect) => (
+              <Card
+                key={effect.id}
+                instance={{
+                  instanceId: effect.id,
+                  cardId: effect.cardId,
+                  isUpgraded: effect.isUpgraded,
+                }}
+                detail="thumb"
+                activated
+                className="w-8 !p-0.5"
+                {...(onInspectActive !== undefined
+                  ? {
+                      onSelect: () => {
+                        onInspectActive(effect.id);
+                      },
+                    }
+                  : {})}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {spied === undefined ? (
         <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">

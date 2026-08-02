@@ -3,7 +3,7 @@
  * Chips stay fully visible; strip scrolls when many effects queue.
  */
 
-import type { PendingEffectView, PlayingStateView } from '@card-battle/shared';
+import { formatCardLabel, type PendingEffectView, type PlayingStateView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { nicknameOf } from './table-helpers';
@@ -50,19 +50,20 @@ export function PendingQueue({
           ].join(' ')}
         >
           {effects.map((effect) => {
+            const label = formatCardLabel(effect.cardId, effect.isUpgraded);
             const route = `${nicknameOf(view, effect.sourcePlayerId)} → ${nicknameOf(view, effect.targetPlayerId)}`;
             if (compact) {
               return (
                 <li
                   key={effect.id}
                   data-pending-id={effect.id}
-                  title={`${effect.cardId} · ${route} · queued #${String(effect.queuedAt)}`}
+                  title={`${label} · ${route} · queued #${String(effect.queuedAt)}`}
                   className={[
                     'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm',
                     chipClass,
                   ].join(' ')}
                 >
-                  <span className="truncate text-xs font-semibold">{effect.cardId}</span>
+                  <span className="truncate text-xs font-semibold">{label}</span>
                   <span className="truncate text-[10px] text-ink-muted">{route}</span>
                 </li>
               );
@@ -76,7 +77,7 @@ export function PendingQueue({
                   chipClass,
                 ].join(' ')}
               >
-                <span className="text-sm font-semibold">{effect.cardId}</span>
+                <span className="text-sm font-semibold">{label}</span>
                 <span className="text-[10px] leading-tight text-ink-muted">{route}</span>
                 <span className="text-[10px] tabular-nums text-ink-muted">
                   queued #{effect.queuedAt}

@@ -181,7 +181,32 @@ export function TableScreen({
     if (instance === undefined) {
       return;
     }
-    setDialog({ kind: 'inspect', instance });
+    setDialog({ kind: 'inspect', instance, source: 'spy' });
+  }
+
+  function onInspectActive(playerId: string, effectId: string): void {
+    const player =
+      playerId === view.you
+        ? undefined
+        : opponents.find((p) => p.id === playerId);
+    const effect =
+      playerId === view.you
+        ? view.self.activePersistentEffects.find((e) => e.id === effectId)
+        : player?.activePersistentEffects.find((e) => e.id === effectId);
+    if (effect === undefined) {
+      return;
+    }
+    setDialog({
+      kind: 'inspect',
+      instance: {
+        instanceId: effect.id,
+        cardId: effect.cardId,
+        isUpgraded: effect.isUpgraded,
+      },
+      activated: true,
+      counter: effect.counter,
+      source: 'active',
+    });
   }
 
   return (
@@ -218,6 +243,9 @@ export function TableScreen({
             onInspectCard={(instanceId) => {
               onInspectSpyCard(player.id, instanceId);
             }}
+            onInspectActive={(effectId) => {
+              onInspectActive(player.id, effectId);
+            }}
             onInspectKit={(kitId) => {
               setInspectKitId(kitId);
             }}
@@ -242,6 +270,9 @@ export function TableScreen({
               setInspectKitId(view.self.kitId);
             }}
             onSelectOwnCard={onSelectOwnCard}
+            onSelectActive={(effectId) => {
+              onInspectActive(view.you, effectId);
+            }}
           />
         }
         economy={

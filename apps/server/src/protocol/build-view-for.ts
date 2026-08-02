@@ -15,6 +15,7 @@ import type {
   LobbySeatView,
   LobbyStateView,
   PendingEffectView,
+  PersistentEffectView,
   PlayingStateView,
   PrivateSelfView,
   PublicPlayerView,
@@ -24,6 +25,17 @@ import type {
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { findSpyRelation } from './visibility-matrix';
+
+function mapPersistentEffects(
+  effects: GameState['players'][number]['activePersistentEffects'],
+): PersistentEffectView[] {
+  return effects.map((effect) => ({
+    id: effect.id,
+    cardId: effect.cardId,
+    isUpgraded: effect.isUpgraded,
+    counter: effect.counter,
+  }));
+}
 
 export interface LobbyViewInput {
   recipientSessionId: string;
@@ -122,6 +134,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
         consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
       },
+      activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
       ...(spied !== undefined ? { spied } : {}),
     };
   });
@@ -135,6 +148,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     kitId: selfPlayer.kitId,
     hand: selfPlayer.hand.map((card) => ({ ...card })),
     specialCards: selfPlayer.specialCards.map((card) => ({ ...card })),
+    activePersistentEffects: mapPersistentEffects(selfPlayer.activePersistentEffects),
   };
 
   return {
@@ -210,6 +224,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
         consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
       },
+      activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
     })),
     recap: buildGameRecapView(state, actionLog, eliminations),
   };

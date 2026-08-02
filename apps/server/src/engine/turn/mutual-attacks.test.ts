@@ -106,6 +106,58 @@ describe('mutual attacks (technical spec §4.6, L2-05)', () => {
     expect(alice.pendingEffects).toHaveLength(0);
   });
 
+  it('strong vs super via playCard: unequal, no cancel; each resolves on target turn', () => {
+    const state = twoPlayers('mutual-strong-super');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+    alice.points = 10;
+    bob.points = 10;
+    alice.hand = [{ instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false }];
+    bob.hand = [{ instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false }];
+
+    state.currentTurnPlayerId = alice.id;
+    const alicePlay = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'strong-1',
+      targetPlayerId: bob.id,
+    });
+    expect(alicePlay.ok).toBe(true);
+    if (!alicePlay.ok) {
+      return;
+    }
+    expect(alicePlay.resolved.every((r) => r.outcome !== 'cancelled')).toBe(true);
+    expect(bob.pendingEffects.some((e) => e.cardId === 'strong-attack')).toBe(true);
+
+    state.currentTurnPlayerId = bob.id;
+    const bobPlay = performTurnAction(state, bob.id, {
+      type: 'playCard',
+      instanceId: 'super-1',
+      targetPlayerId: alice.id,
+    });
+    expect(bobPlay.ok).toBe(true);
+    if (!bobPlay.ok) {
+      return;
+    }
+    // Strong (2) vs Super (7): no mutual cancel — Strong applies on Bob's turn.
+    expect(bobPlay.resolved.some((r) => r.outcome === 'cancelled')).toBe(false);
+    expect(bob.lives).toBe(18);
+    expect(alice.pendingEffects.some((e) => e.cardId === 'super-attack')).toBe(true);
+    expect(alice.lives).toBe(20);
+
+    state.currentTurnPlayerId = alice.id;
+    const aliceDraw = performTurnAction(state, alice.id, { type: 'draw' });
+    expect(aliceDraw.ok).toBe(true);
+    if (!aliceDraw.ok) {
+      return;
+    }
+    expect(aliceDraw.resolved.some((r) => r.outcome === 'cancelled')).toBe(false);
+    expect(alice.lives).toBe(13);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
   it('does not cancel when two players attack a third (no reciprocity)', () => {
     const state = createInitialState({
       seats: [

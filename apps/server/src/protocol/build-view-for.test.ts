@@ -125,6 +125,48 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(serialised).not.toContain('"shield"');
     expect(view.self.lives).toBe(state.players.find((player) => player.id === 'a')?.lives);
   });
+
+  it('exposes active persistents on self and every public seat', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'actives-public',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    if (alice === undefined || bob === undefined) {
+      return;
+    }
+
+    alice.activePersistentEffects = [
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+    ];
+    bob.activePersistentEffects = [
+      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+    ];
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.self.activePersistentEffects).toEqual([
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+    ]);
+    expect(view.players.find((p) => p.id === 'a')?.activePersistentEffects).toEqual([
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+    ]);
+    expect(view.players.find((p) => p.id === 'b')?.activePersistentEffects).toEqual([
+      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+    ]);
+  });
 });
 
 describe('buildFinishedViewFor (L9-03)', () => {
@@ -157,6 +199,7 @@ describe('buildFinishedViewFor (L9-03)', () => {
           sourcePlayerId: 'a',
           targetPlayerId: 'b',
           cardId: 'basic-attack',
+          isUpgraded: false,
           livesLost: 1,
           shieldAbsorbed: 0,
           outcome: 'applied',

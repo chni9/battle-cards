@@ -620,6 +620,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ...(result.actionPlayed.cardId !== undefined
           ? { cardId: result.actionPlayed.cardId }
           : {}),
+        ...(result.actionPlayed.isUpgraded !== undefined
+          ? { isUpgraded: result.actionPlayed.isUpgraded }
+          : {}),
         ...(result.actionPlayed.targetPlayerId !== undefined
           ? { targetPlayerId: result.actionPlayed.targetPlayerId }
           : {}),
@@ -639,6 +642,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         sourcePlayerId: resolved.sourcePlayerId,
         targetPlayerId: resolved.targetPlayerId,
         cardId: resolved.cardId,
+        isUpgraded: resolved.isUpgraded,
         livesLost: resolved.livesLost,
         shieldAbsorbed: resolved.shieldAbsorbed,
         outcome: resolved.outcome,

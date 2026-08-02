@@ -48,7 +48,7 @@ The 4 kits were chosen to cover the structuring mechanics with the minimum conte
 |---|---|
 | Kamikaze | Life loss outside of attack (Suicide); atypical starting stats |
 | Untouchable | Permanent immunity (exception to a general rule); persistent effect with a counter (Imposition) |
-| Scientific | Kit trait on upgrade; full state replacement (Cloning) |
+| Scientific | Kit trait on upgrade; kit + resources copy (Cloning) |
 | Assassin | Only exception to "one action per turn"; counter-based effect (Points Generator); possible self-targeting (Sentence) |
 
 ---
@@ -445,6 +445,6 @@ These points were decided in session and are not yet reflected in `spec_bataille
 ### To note for the balancing pass
 
 - Upgraded Suicide is immediately available to Kamikaze (1 starting upgrade point). At 4 players, eliminating 2 out of 3 opponents nets 4 rewards against a last player stripped of their points and 5 lives.
-- Cloning at 3 points also serves as a defensive escape hatch: it wipes all incoming attacks in addition to copying an opponent.
+- Cloning at 3 points also serves as a defensive escape hatch: it wipes all incoming attacks in addition to copying an opponent's kit and resources.
 - Spy loses a lot of value with fully public actions: the opponent's hand can be reconstructed by deduction. Also concerns Spy Thief.
 - An idle player's auto-draw yields 1 point per turn in V1. With a future kit at Draw 4, going idle would become profitable.

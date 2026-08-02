@@ -558,6 +558,8 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
     payload !== null &&
     'effectId' in payload &&
     'livesLost' in payload &&
+    'isUpgraded' in payload &&
+    typeof payload.isUpgraded === 'boolean' &&
     'outcome' in payload &&
     (payload.outcome === 'applied' ||
       payload.outcome === 'immune' ||

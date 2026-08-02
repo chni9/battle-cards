@@ -56,6 +56,11 @@ export interface PublicPlayerView {
   /** True when this player is the recipient — private fields filled below. */
   isYou: boolean;
   connection: PublicConnectionView;
+  /**
+   * Active persistent specials (Imposition, Points Generator) — public for every seat
+   * (developer ruling 2026-08-02). Not Spy-gated.
+   */
+  activePersistentEffects: readonly PersistentEffectView[];
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
 }
@@ -97,6 +102,16 @@ export interface PrivateSelfView {
   kitId: KitId;
   hand: readonly CardInstance[];
   specialCards: readonly CardInstance[];
+  /** Own active persistents (also listed on PublicPlayerView for you). */
+  activePersistentEffects: readonly PersistentEffectView[];
+}
+
+/** Active persistent special on a seat — public (developer ruling 2026-08-02). */
+export interface PersistentEffectView {
+  id: string;
+  cardId: CardId;
+  isUpgraded: boolean;
+  counter: number | null;
 }
 
 export interface PendingEffectView {
@@ -149,8 +164,10 @@ export interface ActionPlayedLogEntry {
   actorPlayerId: string;
   action: ActionLogPlayedAction;
   cardId?: CardId;
+  /** Present when `playCard` / multi-attack entries carry upgrade state. */
+  isUpgraded?: boolean;
   targetPlayerId?: string;
-  attacks?: readonly { cardId: CardId; targetPlayerId: string }[];
+  attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
 }
 
@@ -161,6 +178,7 @@ export interface ActionResolvedLogEntry {
   sourcePlayerId: string;
   targetPlayerId: string;
   cardId: CardId;
+  isUpgraded: boolean;
   livesLost: number;
   shieldAbsorbed: number;
   outcome: 'applied' | 'immune' | 'cancelled';

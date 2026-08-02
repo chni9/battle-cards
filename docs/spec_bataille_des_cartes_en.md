@@ -173,7 +173,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: allows choosing the special card obtained instead of a random draw.
 
 **Cloning** — Price: 3 points
-- Action: the user becomes a clone of an opponent of choice: same kit, same lives, points, upgrade points, shield and cards (including remaining special cards). Entirely replaces the user's previous state. This action cancels all effects pending against the user; they inherit no effect pending against the cloned player. Any visibility gained through Spy (or equivalent) is reset to zero both ways: what the user held over other players, and what others held over them.
+- Action: the user copies an opponent of choice's kit, lives, points, upgrade points and shield. The user keeps their own hand, special cards and active persistent cards. This action cancels all effects pending against the user; they inherit no effect pending against the cloned player. Any visibility gained through Spy (or equivalent) is reset to zero both ways: what the user held over other players, and what others held over them.
 - Upgrade: also gains 10 points, 2 upgrade points and 4 lives.
 
 **Invisibility** — Price: 10 points

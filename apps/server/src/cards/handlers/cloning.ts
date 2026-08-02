@@ -1,34 +1,15 @@
 /**
- * Cloning — rules spec §5, backlog L5-06.
+ * Cloning — rules spec §5 (updated 2026-08-02).
  *
- * Immediate full state replace from the chosen opponent. Cancels pending against the
- * user; does not inherit target pending; copies active persistents with new ids;
- * resets Spy visibility both ways. Upgrade adds resources under the life cap.
+ * Immediate: copy kit + resources (lives, points, upgrade points, shield) from the
+ * chosen opponent. Keep the user's own hand, specials, and active persistents. Cancels
+ * pending against the user; does not inherit target pending; resets Spy visibility both
+ * ways. Upgrade adds resources under the life cap.
  */
-
-import type { CardInstance, PersistentEffect } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
 import { gainLives } from '../../engine/life/gain-lives';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
-
-function cloneInstances(cards: readonly CardInstance[]): CardInstance[] {
-  return cards.map((card) => ({
-    instanceId: randomUUID(),
-    cardId: card.cardId,
-    isUpgraded: card.isUpgraded,
-  }));
-}
-
-function clonePersistents(effects: readonly PersistentEffect[]): PersistentEffect[] {
-  return effects.map((effect) => ({
-    id: randomUUID(),
-    cardId: effect.cardId,
-    isUpgraded: effect.isUpgraded,
-    counter: effect.counter,
-  }));
-}
 
 export const cloningHandler: CardHandler = {
   canPlay(context: EffectContext): boolean {
@@ -56,9 +37,7 @@ export const cloningHandler: CardHandler = {
     user.upgradePoints = target.upgradePoints;
     user.shield = target.shield;
     user.shieldIsUpgraded = target.shieldIsUpgraded;
-    user.hand = cloneInstances(target.hand);
-    user.specialCards = cloneInstances(target.specialCards);
-    user.activePersistentEffects = clonePersistents(target.activePersistentEffects);
+    // Keep user.hand, user.specialCards, user.activePersistentEffects.
     user.pendingEffects = [];
 
     state.visibility = state.visibility.filter(

@@ -21,6 +21,7 @@ describe('aggregateActionsForPlayer (L8 / L9)', () => {
         sourcePlayerId: 'alice',
         targetPlayerId: 'bob',
         cardId: 'basic-attack',
+        isUpgraded: false,
         livesLost: 1,
         shieldAbsorbed: 0,
         outcome: 'applied',

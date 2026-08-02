@@ -68,8 +68,9 @@ export interface ActionPlayedEvent {
   actorPlayerId: string;
   action: PublicActionKind;
   cardId?: CardId;
+  isUpgraded?: boolean;
   targetPlayerId?: string;
-  attacks?: readonly { cardId: CardId; targetPlayerId: string }[];
+  attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
 }
 
@@ -78,6 +79,7 @@ export interface ActionResolvedEvent {
   sourcePlayerId: string;
   targetPlayerId: string;
   cardId: CardId;
+  isUpgraded: boolean;
   livesLost: number;
   shieldAbsorbed: number;
   outcome: 'applied' | 'immune' | 'cancelled';
@@ -531,7 +533,7 @@ function playMultipleAttacksAction(
     return { ok: false, message: 'Not enough points.' };
   }
 
-  const publicAttacks: { cardId: CardId; targetPlayerId: string }[] = [];
+  const publicAttacks: { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[] = [];
 
   for (const entry of prepared) {
     if (entry.playPoints > 0) {
@@ -557,6 +559,7 @@ function playMultipleAttacksAction(
     publicAttacks.push({
       cardId: entry.instance.cardId,
       targetPlayerId: entry.targetPlayerId,
+      isUpgraded: entry.instance.isUpgraded,
     });
   }
 
@@ -665,6 +668,7 @@ function playCardAction(
       actorPlayerId,
       action: 'playCard',
       cardId,
+      isUpgraded: instance.isUpgraded,
       ...(resolvedTargetId !== null ? { targetPlayerId: resolvedTargetId } : {}),
       turnSequence: state.turnSequence,
     },
@@ -677,6 +681,7 @@ function toResolvedEvents(resolved: ResolvedEffect[]): ActionResolvedEvent[] {
     sourcePlayerId: entry.effect.sourcePlayerId,
     targetPlayerId: entry.effect.targetPlayerId,
     cardId: entry.effect.cardId,
+    isUpgraded: entry.effect.isUpgraded,
     livesLost: entry.livesLost,
     shieldAbsorbed: entry.shieldAbsorbed,
     outcome: entry.outcome,

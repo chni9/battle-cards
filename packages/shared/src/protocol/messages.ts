@@ -62,12 +62,14 @@ export type PublicActionKind =
 export interface PublicAttackPlay {
   cardId: CardId;
   targetPlayerId: string;
+  isUpgraded: boolean;
 }
 
 export interface ActionPlayedPayload {
   actorPlayerId: string;
   action: PublicActionKind;
   cardId?: CardId;
+  isUpgraded?: boolean;
   targetPlayerId?: string;
   /** Present when action is `playMultipleAttacks` (Assassin). */
   attacks?: readonly PublicAttackPlay[];
@@ -79,6 +81,7 @@ export interface ActionResolvedPayload {
   sourcePlayerId: string;
   targetPlayerId: string;
   cardId: CardId;
+  isUpgraded: boolean;
   livesLost: number;
   shieldAbsorbed: number;
   /**

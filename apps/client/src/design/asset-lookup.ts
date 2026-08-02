@@ -4,9 +4,8 @@
  * Source files live under `apps/client/src/assets/` (copied from repo `images/`).
  * Never import out-of-V1 art, `*(dead).png`, `Draw.png`, or `*_button.png`.
  *
- * Activated art for Imposition / Points Generator is resolvable here, but UI must
- * not pass `activated: true` until a ruled protocol exposure of
- * `activePersistentEffects` (Lot 10 ruling).
+ * Activated art for Imposition / Points Generator: pass `activated: true` only for
+ * cards currently in `activePersistentEffects` (PROTOCOL_VERSION 19).
  */
 
 import {

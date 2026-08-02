@@ -62,7 +62,7 @@ export const SPECIAL_CARD_CATALOG = {
     'cloning',
     'Cloning',
     3,
-    'Become a clone of an opponent; cancel pending effects against you; reset visibility both ways.',
+    'Copy an opponent\'s kit, lives, points, upgrade points and shield; keep your own cards; cancel pending effects against you; reset visibility both ways.',
     'Also gain 10 points, 2 upgrade points and 4 lives (life cap applies).',
   ),
   sentence: specialCard(

@@ -22,6 +22,7 @@ export interface PrivateZoneProps {
   incomingEffects: readonly PendingEffectView[];
   onInspectKit: () => void;
   onSelectOwnCard?: (instanceId: string) => void;
+  onSelectActive?: (instanceId: string) => void;
 }
 
 export function PrivateZone({
@@ -30,7 +31,14 @@ export function PrivateZone({
   incomingEffects,
   onInspectKit,
   onSelectOwnCard,
+  onSelectActive,
 }: PrivateZoneProps): ReactElement {
+  const actives = view.self.activePersistentEffects.map((effect) => ({
+    instanceId: effect.id,
+    cardId: effect.cardId,
+    isUpgraded: effect.isUpgraded,
+  }));
+
   return (
     <section
       data-zone="private-zone"
@@ -67,7 +75,9 @@ export function PrivateZone({
         <CardBand
           hand={view.self.hand}
           specials={view.self.specialCards}
+          actives={actives}
           {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
+          {...(onSelectActive !== undefined ? { onSelectActive } : {})}
         />
       </div>
 

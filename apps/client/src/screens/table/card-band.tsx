@@ -17,18 +17,24 @@ import { CARD_BAND_GAP_PX, fitCardBand } from './card-band-fit';
 export interface CardBandProps {
   hand: readonly CardInstance[];
   specials: readonly CardInstance[];
+  /** Active persistents — rendered with activated art. */
+  actives?: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
+  /** Called for active-strip cards (inspect-only). */
+  onSelectActive?: (instanceId: string) => void;
 }
 
 function CardSection({
   label,
   zone,
   cards,
+  activated = false,
   onSelect,
 }: {
   label: string;
   zone: string;
   cards: readonly CardInstance[];
+  activated?: boolean;
   onSelect?: (instanceId: string) => void;
 }): ReactElement {
   const areaRef = useRef<HTMLDivElement>(null);
@@ -103,6 +109,7 @@ function CardSection({
             <Card
               instance={card}
               detail="face"
+              activated={activated}
               className="w-full max-h-full !p-0.5"
               {...(onSelect !== undefined
                 ? {
@@ -153,12 +160,27 @@ function CardSection({
   );
 }
 
-export function CardBand({ hand, specials, onSelect }: CardBandProps): ReactElement {
+export function CardBand({
+  hand,
+  specials,
+  actives = [],
+  onSelect,
+  onSelectActive,
+}: CardBandProps): ReactElement {
   return (
     <div
       data-zone="card-band"
       className="flex h-full min-h-0 w-full flex-col justify-end gap-1 overflow-hidden"
     >
+      {actives.length > 0 && (
+        <CardSection
+          label="Active"
+          zone="actives"
+          cards={actives}
+          activated
+          {...(onSelectActive !== undefined ? { onSelect: onSelectActive } : {})}
+        />
+      )}
       <CardSection
         label="Hand"
         zone="hand"

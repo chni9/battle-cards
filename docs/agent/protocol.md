@@ -40,6 +40,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Lives, shield, points, upgrade points | **Private** without Spy. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
+| Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Elimination status | **Public** |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 
@@ -53,7 +54,8 @@ deduction, which costs Spy some value. That is accepted, not a bug.
 
 Cloning **resets visibility to zero in both directions** — what the user saw of others and what
 others saw of them — and cancels effects pending against the user while inheriting none from the
-cloned player (ruling §6.2 #11).
+cloned player (ruling §6.2 #11). Cloning copies kit + resources only; the user keeps their own
+hand, specials, and active persistents (2026-08-02).
 
 ## Events
 
@@ -68,16 +70,18 @@ min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 Server → clients (§5.3):
 
 `stateUpdate` (personalised per recipient) · `turnStarted` (active player + deadline) ·
-`actionPlayed` (broadcast immediately) · `actionResolved` (broadcast on resolution; includes
-`outcome: 'applied' | 'immune' | 'cancelled'` since L4-03) ·
+`actionPlayed` (broadcast immediately; includes `isUpgraded` on plays / per multi-attack since
+PROTOCOL_VERSION 19) · `actionResolved` (broadcast on resolution; includes
+`outcome: 'applied' | 'immune' | 'cancelled'` since L4-03 and `isUpgraded` since v19) ·
 `mirrorChoiceRequired` (to one player, with deadline) · `rewardChoiceRequired` (to the
 eliminator, chainable: `{ eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`) ·
 `playerEliminated` · `gameOver` · `error`
 
-`PlayingStateView.actionLog` (PROTOCOL_VERSION 18) is the durable public history: discriminated
+`PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
 `rewardsClaimed` (eliminator + victim only — never the picks). Ephemeral `actionPlayed` /
-`actionResolved` broadcasts stay separate.
+`actionResolved` broadcasts stay separate. PROTOCOL_VERSION 19 adds `isUpgraded` on play/resolve
+log entries and public `activePersistentEffects` on every seat.
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
 counts per player + eliminations). Kits and final private resources stay off the finished

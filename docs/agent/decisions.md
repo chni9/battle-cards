@@ -584,7 +584,8 @@ Overrides former tech §6.2 #3 / rules §5 Suicide reward wording:
 - **Spy Thief:** per-opponent queue; uncapped steal; Spy visibility parity; not counterable;
   not Shield-blocked; Untouchable not immune.
 - **Imposition / Points Generator:** step-4 applicator; PG ticks on owner turn including play turn.
-- **Cloning:** immediate; copies target persistents; clears user pending; visibility wipe both ways.
+- **Cloning:** immediate; copies kit + resources only; keeps user hand/specials/persistents;
+  clears user pending; visibility wipe both ways. (Superseded 2026-08-02 — see that entry.)
 - **Sentence:** injected `EffectContext.rng`; queue elim on drawn victim; self → no eliminator.
 - **buySpecialCard:** 20 pts, RNG among `SPECIAL_CARD_IDS` only. PROTOCOL_VERSION 15.
 
@@ -743,6 +744,7 @@ Developer session while implementing Lot 10:
 - **Activated art:** include Imposition/Generator activated files in the typed lookup and
   optional `Card` `activated` prop; no screen passes `activated` until a ruled protocol
   exposure of `activePersistentEffects` (no protocol bump in Lot 10).
+  **Superseded 2026-08-02:** PROTOCOL_VERSION 19 exposes actives; UI may pass `activated`.
 - **Elimination (L10-05):** greyscale/desaturate portrait **plus** an “Eliminated” badge
   overlay on `KitPortrait`. No `*(dead).png` paths for any kit.
 
@@ -783,3 +785,20 @@ Developer session locking Lot 12 implementation approach:
   new npm dependency.
 - Skills: product-UI (design / ui-styling / ui-ux-pro-max). Landing-page design-taste rules
   do not apply to Table.
+
+## 2026-08-02 · [P] Cloning kit+resources only; actives public; upgraded log labels
+
+Developer session (out of backlog):
+
+- **Cloning:** copies kit, lives, points, upgrade points, shield (`shieldIsUpgraded`) only.
+  User keeps own hand, specials, and `activePersistentEffects`. Pending against user cleared;
+  Spy visibility wiped both ways; upgraded bonuses unchanged. Rules spec §5 Cloning text
+  updated to match.
+- **Mutual Strong↔Super:** engine already correct under §4.6 (unequal = no interaction).
+  Regression via `playCard` path added. Observed “Super did not go through” on the retaliator
+  turn is expected delayed resolution — Super resolves on the target’s next turn.
+- **Active persistents:** `PersistentEffectView` on `PrivateSelfView` and every
+  `PublicPlayerView` (not Spy-gated). Client Active strip + opponent thumbs use activated art;
+  inspect Dialog shows Active (+ counter). PROTOCOL_VERSION 19.
+- **Action log / pending:** `formatCardLabel` → catalog name, upgraded as `Name +`.
+  `isUpgraded` threaded on `actionPlayed` / `actionResolved` and multi-attack entries.

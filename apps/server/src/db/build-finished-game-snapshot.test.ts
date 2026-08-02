@@ -54,8 +54,8 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
           actorPlayerId: 'alice',
           action: 'playMultipleAttacks',
           attacks: [
-            { cardId: 'basic-attack', targetPlayerId: 'bob' },
-            { cardId: 'super-attack', targetPlayerId: 'bob' },
+            { cardId: 'basic-attack', targetPlayerId: 'bob', isUpgraded: false },
+            { cardId: 'super-attack', targetPlayerId: 'bob', isUpgraded: false },
           ],
           turnSequence: 2,
         },

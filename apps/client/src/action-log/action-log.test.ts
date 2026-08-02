@@ -27,6 +27,7 @@ const sample: ActionLogEntryView[] = [
     sourcePlayerId: 'a',
     targetPlayerId: 'b',
     cardId: 'basic-attack',
+    isUpgraded: false,
     livesLost: 1,
     shieldAbsorbed: 0,
     outcome: 'applied',
@@ -103,6 +104,40 @@ describe('formatActionLogEntry (L9-02)', () => {
         nick,
       ),
     ).toBe('Alice bought a card');
+  });
+
+  it('marks upgraded cards with a + suffix', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'playCard',
+          cardId: 'strong-attack',
+          isUpgraded: true,
+          targetPlayerId: 'b',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice attacks Bob with Strong attack +');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e2',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'super-attack',
+          isUpgraded: true,
+          livesLost: 10,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 2,
+        },
+        nick,
+      ),
+    ).toBe("Alice's Super attack + hits Bob (−10 life)");
   });
 });
 

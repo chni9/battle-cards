@@ -5,10 +5,9 @@
 
 import {
   ATTACK_CARD_IDS,
-  getCard,
+  formatCardLabel,
   type ActionLogEntryKind,
   type ActionLogEntryView,
-  type CardId,
 } from '@card-battle/shared';
 
 export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
@@ -26,10 +25,6 @@ export interface ActionLogFilters {
 }
 
 export type NicknameResolver = (playerId: string) => string;
-
-function cardName(cardId: CardId): string {
-  return getCard(cardId)?.name ?? cardId;
-}
 
 function isAttackCardId(cardId: string): boolean {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
@@ -62,7 +57,7 @@ function formatPlayedAction(
       }
       const parts = entry.attacks.map(
         (attack) =>
-          `${cardName(attack.cardId)} against ${nicknameOf(attack.targetPlayerId)}`,
+          `${formatCardLabel(attack.cardId, attack.isUpgraded)} against ${nicknameOf(attack.targetPlayerId)}`,
       );
       return `${actor} attacks with ${parts.join(', ')}`;
     }
@@ -71,7 +66,7 @@ function formatPlayedAction(
       if (id === undefined) {
         return `${actor} plays a card`;
       }
-      const name = cardName(id);
+      const name = formatCardLabel(id, entry.isUpgraded === true);
       const targetId = entry.targetPlayerId;
       if (targetId !== undefined) {
         const target = nicknameOf(targetId);
@@ -95,7 +90,7 @@ export function formatActionLogEntry(
     case 'actionResolved': {
       const source = nicknameOf(entry.sourcePlayerId);
       const target = nicknameOf(entry.targetPlayerId);
-      const name = cardName(entry.cardId);
+      const name = formatCardLabel(entry.cardId, entry.isUpgraded);
       if (entry.outcome === 'immune') {
         return `${name} from ${source} fails against ${target} — immune`;
       }
@@ -132,7 +127,7 @@ export function formatActionLogEntry(
       const actor = nicknameOf(entry.actorPlayerId);
       const from = nicknameOf(entry.previousTargetPlayerId);
       const to = nicknameOf(entry.newTargetPlayerId);
-      return `${actor} redirects ${cardName(entry.cardId)} from ${from} to ${to}`;
+      return `${actor} redirects ${formatCardLabel(entry.cardId, false)} from ${from} to ${to}`;
     }
     case 'rewardsClaimed': {
       const eliminator = nicknameOf(entry.eliminatorPlayerId);

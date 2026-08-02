@@ -30,7 +30,13 @@ import {
 
 export type TableDialog =
   | { kind: 'actions'; instance: CardInstance; fromSpecial: boolean }
-  | { kind: 'inspect'; instance: CardInstance }
+  | {
+      kind: 'inspect';
+      instance: CardInstance;
+      activated?: boolean;
+      counter?: number | null;
+      source: 'spy' | 'active';
+    }
   | { kind: 'target'; instance: CardInstance }
   | { kind: 'quantity'; instance: CardInstance }
   | { kind: 'multi' }
@@ -255,12 +261,28 @@ export function CardActions(props: CardActionsProps): ReactElement {
       >
         {dialog?.kind === 'inspect' && (
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-start">
-            <Card instance={dialog.instance} detail="face" className="w-28 shrink-0" />
+            <Card
+              instance={dialog.instance}
+              detail="face"
+              activated={dialog.activated === true}
+              className="w-28 shrink-0"
+            />
             <div className="min-w-0 space-y-2 text-center sm:text-left">
               {inspectEffect.length > 0 && (
                 <p className="text-sm leading-snug text-ink">{inspectEffect}</p>
               )}
-              <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
+              {dialog.source === 'active' ? (
+                <>
+                  <p className="text-sm font-semibold text-ink">Active</p>
+                  {dialog.counter !== undefined && dialog.counter !== null && (
+                    <p className="text-sm text-ink-muted">
+                      Counter: {String(dialog.counter)}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
+              )}
             </div>
           </div>
         )}

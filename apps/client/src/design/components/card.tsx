@@ -1,7 +1,7 @@
 /**
  * Card face from CardInstance — technical spec v2 §5, L10-04.
- * Activated art is supported via prop but must stay unused until protocol exposes
- * activePersistentEffects (Lot 10 ruling).
+ * Pass `activated` for Imposition / Points Generator while they sit in
+ * `activePersistentEffects` (PROTOCOL_VERSION 19).
  */
 
 import { getCard, type CardInstance } from '@card-battle/shared';
@@ -11,7 +11,7 @@ import { getCardArtUrl } from '../asset-lookup';
 
 export interface CardProps {
   instance: CardInstance;
-  /** Do not pass true until activePersistentEffects are on the wire. */
+  /** Use activated art for public/self active persistents. */
   activated?: boolean;
   selected?: boolean;
   onSelect?: (instanceId: string) => void;

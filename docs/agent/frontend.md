@@ -54,9 +54,8 @@ rules above are unchanged — this section only covers how the client looks.
   lookup; muted Protocol vN; same create/join validation.
 - **Lobby (L11-02):** game code + Copy (clipboard); copy result via `Dialog`; Start / Leave
   unchanged functionally.
-- **Activated art** for Imposition / Points Generator is in the lookup with an optional
-  `activated` prop on `Card`, but no screen may pass `activated` until a ruled protocol
-  exposure of `activePersistentEffects`.
+- **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
+  rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
