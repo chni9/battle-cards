@@ -1,6 +1,6 @@
 /**
- * Shared-size card band — hand + specials never overflow the dock.
- * Fits 1–2 rows; paginates only when even 2 rows at min width cannot hold all cards.
+ * Shared-size card band — hand + specials never overflow or crop.
+ * Each section measures its own area; cards shrink to fit 1–2 rows, then paginate.
  */
 
 import { type CardInstance } from '@card-battle/shared';
@@ -12,15 +12,7 @@ import {
 } from 'react';
 
 import { Card } from '../../design/components/card';
-import {
-  CARD_BAND_GAP_PX,
-  CARD_BAND_MAX_W,
-  fitCardBand,
-} from './card-band-fit';
-
-const LABEL_H = 14;
-const PAGER_H = 22;
-const SECTION_GAP_PX = 8;
+import { CARD_BAND_GAP_PX, fitCardBand } from './card-band-fit';
 
 export interface CardBandProps {
   hand: readonly CardInstance[];
@@ -32,18 +24,46 @@ function CardSection({
   label,
   zone,
   cards,
-  cardWidth,
-  pageSize,
   onSelect,
 }: {
   label: string;
   zone: string;
   cards: readonly CardInstance[];
-  cardWidth: number;
-  pageSize: number;
   onSelect?: (instanceId: string) => void;
 }): ReactElement {
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState(40);
+  const [pageSize, setPageSize] = useState(Math.max(1, cards.length));
   const [page, setPage] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = areaRef.current;
+    if (el === null) {
+      return;
+    }
+
+    const measure = (): void => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w <= 0 || h <= 0 || cards.length === 0) {
+        return;
+      }
+      const fit = fitCardBand(cards.length, w, h);
+      setCardWidth((prev) =>
+        Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,
+      );
+      setPageSize((prev) => (prev === fit.pageSize ? prev : fit.pageSize));
+    };
+
+    measure();
+    requestAnimationFrame(measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [cards.length]);
+
   const pageCount = Math.max(1, Math.ceil(cards.length / Math.max(1, pageSize)));
   const safePage = Math.min(page, pageCount - 1);
   const start = safePage * pageSize;
@@ -53,7 +73,7 @@ function CardSection({
   if (cards.length === 0) {
     return (
       <div className="flex min-h-0 min-w-0 flex-col items-center gap-0.5">
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
+        <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
         <p className="text-xs text-ink-muted" data-zone={zone}>
@@ -69,20 +89,21 @@ function CardSection({
         {label}
       </p>
       <div
+        ref={areaRef}
         data-zone={zone}
-        className="flex min-h-0 w-full flex-1 flex-wrap content-end items-end justify-center overflow-hidden"
+        className="flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center overflow-hidden"
         style={{ gap: CARD_BAND_GAP_PX }}
       >
         {visible.map((card) => (
           <div
             key={card.instanceId}
-            style={{ width: cardWidth }}
-            className="shrink-0"
+            style={{ width: cardWidth, maxHeight: '100%' }}
+            className="shrink-0 overflow-hidden"
           >
             <Card
               instance={card}
               detail="face"
-              className="w-full !p-0.5"
+              className="w-full max-h-full !p-0.5"
               {...(onSelect !== undefined
                 ? {
                     onSelect: () => {
@@ -119,7 +140,9 @@ function CardSection({
             disabled={safePage >= pageCount - 1}
             aria-label={`Next ${label} page`}
             onClick={() => {
-              setPage((p) => Math.min(pageCount - 1, Math.min(p, pageCount - 1) + 1));
+              setPage((p) =>
+                Math.min(pageCount - 1, Math.min(p, pageCount - 1) + 1),
+              );
             }}
           >
             ›
@@ -131,96 +154,21 @@ function CardSection({
 }
 
 export function CardBand({ hand, specials, onSelect }: CardBandProps): ReactElement {
-  const ref = useRef<HTMLDivElement>(null);
-  const [cardWidth, setCardWidth] = useState(56);
-  const [handPageSize, setHandPageSize] = useState(Math.max(1, hand.length));
-  const [specialPageSize, setSpecialPageSize] = useState(
-    Math.max(1, specials.length),
-  );
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (el === null) {
-      return;
-    }
-
-    const measure = (): void => {
-      const width = el.clientWidth;
-      const height = el.clientHeight;
-      if (width <= 0 || height <= 0) {
-        return;
-      }
-
-      const hasHand = hand.length > 0;
-      const hasSpecials = specials.length > 0;
-      const sectionCount = (hasHand ? 1 : 0) + (hasSpecials ? 1 : 0);
-      if (sectionCount === 0) {
-        return;
-      }
-
-      const both = hasHand && hasSpecials;
-      const chromePerSection = LABEL_H + PAGER_H * 0.35;
-      const available =
-        height - chromePerSection * sectionCount - (both ? SECTION_GAP_PX : 0);
-      const handShare = both
-        ? available * (hand.length / (hand.length + specials.length))
-        : available;
-      const specialShare = both
-        ? available * (specials.length / (hand.length + specials.length))
-        : available;
-
-      const handFit = fitCardBand(
-        Math.max(1, hand.length),
-        width,
-        Math.max(24, handShare),
-      );
-      const specialFit = fitCardBand(
-        Math.max(1, specials.length),
-        width,
-        Math.max(24, specialShare),
-      );
-
-      const nextWidth = Math.min(
-        hasHand ? handFit.cardWidth : CARD_BAND_MAX_W,
-        hasSpecials ? specialFit.cardWidth : CARD_BAND_MAX_W,
-      );
-
-      setCardWidth((prev) => (Math.abs(prev - nextWidth) < 0.5 ? prev : nextWidth));
-      setHandPageSize(hasHand ? handFit.pageSize : 1);
-      setSpecialPageSize(hasSpecials ? specialFit.pageSize : 1);
-    };
-
-    measure();
-    requestAnimationFrame(measure);
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-    };
-  }, [hand.length, specials.length]);
-
   return (
     <div
-      ref={ref}
       data-zone="card-band"
       className="flex h-full min-h-0 w-full flex-col justify-end gap-1 overflow-hidden"
     >
       <CardSection
-        key={`hand-${String(handPageSize)}-${String(hand.length)}`}
         label="Hand"
         zone="hand"
         cards={hand}
-        cardWidth={cardWidth}
-        pageSize={handPageSize}
         {...(onSelect !== undefined ? { onSelect } : {})}
       />
       <CardSection
-        key={`specials-${String(specialPageSize)}-${String(specials.length)}`}
         label="Specials"
         zone="specials"
         cards={specials}
-        cardWidth={cardWidth}
-        pageSize={specialPageSize}
         {...(onSelect !== undefined ? { onSelect } : {})}
       />
     </div>

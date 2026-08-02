@@ -85,7 +85,7 @@ export function Card({
         aria-label={label}
         title={label}
         className={[
-          'rounded-[length:var(--radius-card)] border border-border bg-surface-raised',
+          'flex max-h-full flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised',
           'text-left font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
           selected ? 'ring-2 ring-cta-purple' : '',
           className.includes('p-') ? '' : 'p-1',
@@ -101,7 +101,7 @@ export function Card({
   return (
     <article
       className={[
-        'rounded-[length:var(--radius-card)] border border-border bg-surface-raised font-sans',
+        'flex max-h-full flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised font-sans',
         className.includes('p-') ? '' : 'p-1',
         className.includes('w-') ? '' : 'w-28',
         className,
