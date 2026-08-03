@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-18 of 22 V2 tasks done. Active from Lot 14.
+19 of 22 V2 tasks done. Active from Lot 14.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +76,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 1 |
-| 14 · Animation | 5 | 1 |
+| 14 · Animation | 5 | 2 |
 
 ## Milestones
 
@@ -268,7 +268,7 @@ Hand entry, upgrade-state reveal, play-to-table motion.
 - **Watch point** Purely presentational — must not delay or block the intent being sent to the server.
 - **Acceptance** Animation plays on the actions it targets, never blocks or delays the underlying intent
 
-### L14-02 · Action-resolution animation — `To do`
+### L14-02 · Action-resolution animation — `Done`
 
 Visual effect tied to `actionResolved.outcome` (`applied` / `cancelled` / `immune`).
 

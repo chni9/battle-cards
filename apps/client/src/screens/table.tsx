@@ -15,7 +15,7 @@ import {
   type RewardChoice,
   type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import { measurePlayFlyout } from '../fx/play-flyout';
@@ -131,6 +131,23 @@ function TableScreenInner({
       enqueue({ kind: 'playFlyout', ...measured });
     }
   };
+
+  const lastResolvedKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastActionResolved === null) {
+      return;
+    }
+    const key = `${lastActionResolved.effectId}:${lastActionResolved.outcome}`;
+    if (lastResolvedKey.current === key) {
+      return;
+    }
+    lastResolvedKey.current = key;
+    enqueue({
+      kind: 'resolutionFlash',
+      outcome: lastActionResolved.outcome,
+      effectId: lastActionResolved.effectId,
+    });
+  }, [lastActionResolved, enqueue]);
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);

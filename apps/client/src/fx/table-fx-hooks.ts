@@ -6,11 +6,16 @@ import { createContext, useContext } from 'react';
 
 import type { TableFxEvent } from './table-fx-types';
 
+/** Enqueue payload — full event minus id/expiresAt (optional override). */
+export type TableFxInput = {
+  [K in TableFxEvent['kind']]: Omit<Extract<TableFxEvent, { kind: K }>, 'id' | 'expiresAt'> & {
+    expiresAt?: number;
+  };
+}[TableFxEvent['kind']];
+
 export interface TableFxContextValue {
   /** Enqueue a presentational FX. Returns void — never await. */
-  enqueue: (
-    event: Omit<TableFxEvent, 'id' | 'expiresAt'> & { expiresAt?: number },
-  ) => void;
+  enqueue: (event: TableFxInput) => void;
   events: readonly TableFxEvent[];
   /** Sticky Mirror highlight ids while the prompt is open (L14-04). */
   mirrorHighlightIds: readonly string[];

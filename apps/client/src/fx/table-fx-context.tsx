@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { TableFxContext, type TableFxContextValue } from './table-fx-hooks';
+import { TableFxContext, type TableFxContextValue, type TableFxInput } from './table-fx-hooks';
 import { TableFxOverlay } from './table-fx-overlay';
 import { FX_TTL_MS, type TableFxEvent } from './table-fx-types';
 
@@ -21,18 +21,15 @@ export function TableFxProvider({ children }: { children: ReactNode }): ReactEle
   const [events, setEvents] = useState<TableFxEvent[]>([]);
   const [mirrorHighlightIds, setMirrorHighlightIds] = useState<readonly string[]>([]);
 
-  const enqueue = useCallback(
-    (event: Omit<TableFxEvent, 'id' | 'expiresAt'> & { expiresAt?: number }): void => {
-      const id = `fx-${String(++fxSeq)}`;
-      const expiresAt = event.expiresAt ?? Date.now() + FX_TTL_MS;
-      const full = { ...event, id, expiresAt } as TableFxEvent;
-      setEvents((prev) => [...prev.filter((e) => e.expiresAt > Date.now()), full]);
-      window.setTimeout(() => {
-        setEvents((prev) => prev.filter((e) => e.id !== id));
-      }, Math.max(0, expiresAt - Date.now()) + 50);
-    },
-    [],
-  );
+  const enqueue = useCallback((event: TableFxInput): void => {
+    const id = `fx-${String(++fxSeq)}`;
+    const expiresAt = event.expiresAt ?? Date.now() + FX_TTL_MS;
+    const full: TableFxEvent = { ...event, id, expiresAt };
+    setEvents((prev) => [...prev.filter((e) => e.expiresAt > Date.now()), full]);
+    window.setTimeout(() => {
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    }, Math.max(0, expiresAt - Date.now()) + 50);
+  }, []);
 
   const value = useMemo(
     (): TableFxContextValue => ({
