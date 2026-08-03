@@ -94,13 +94,13 @@ import {
   MAX_PLAYERS,
   startGameRejectionMessage,
 } from './lobby-rules';
+import {
+  shouldLockForOccupancy,
+  shouldUnlockForOccupancy,
+  type Seat,
+} from './seats';
 
 type GameClient = Client<{ messages: ServerToClientMessages }>;
-
-interface Seat {
-  sessionId: string;
-  nickname: string;
-}
 
 const TURN_DURATION_MS = (() => {
   const raw = process.env['TURN_DURATION_MS'];
@@ -313,14 +313,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       throw new ServerError(ErrorCode.APPLICATION_ERROR, 'A nickname is required to join.');
     }
 
-    this.seats.push({ sessionId: client.sessionId, nickname });
+    this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
     this.hostSessionId ??= client.sessionId;
 
     console.log(
       `[${this.roomId}] ${nickname} (${client.sessionId}) joined — ${this.seats.length} seated`,
     );
 
-    if (this.clients.length >= this.maxClients) {
+    if (shouldLockForOccupancy(this.seats.length)) {
       void this.lock();
     }
 
@@ -409,7 +409,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${client.sessionId} left — ${this.seats.length} seated`);
 
-    if (!this.hasStarted && this.clients.length < this.maxClients) {
+    if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {
       void this.unlock();
     }
 

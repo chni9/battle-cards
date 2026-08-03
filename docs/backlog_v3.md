@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-1 of 22 V3 tasks done.
+2 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 1 |
+| 15 · Seat abstraction and protocol | 6 | 2 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -111,7 +111,7 @@ so the values exist at runtime (`AGENTS.md` §6). One definition, imported by se
 - **Watch point** Union over enum, `as const` array for the runtime values — same pattern as `packages/shared/src/domain/card.ts`. Do not duplicate the labels in the client.
 - **Acceptance** `BotDifficulty` importable from `@card-battle/shared`; the difficulty labels exist in exactly one place in the repo
 
-### L15-02 · Seat union and occupancy — `To do`
+### L15-02 · Seat union and occupancy — `Done`
 
 Replace `Seat` in `game-room.ts` with the `HumanSeat | BotSeat` union in a new
 `apps/server/src/rooms/seats.ts`. Switch every occupancy read from `this.clients.length` to
