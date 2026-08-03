@@ -194,6 +194,24 @@ Manual two-browser exercise of the reward gate (create/join, Tax-farm, super-att
 reward pick / 20s default, game over) lives in `docs/agent/frontend.md` § Manual two-browser
 check.
 
+## Legal-action enumerator and view parity (V3)
+
+`listLegalActions(state, playerId)` in `apps/server/src/engine/turn/list-legal-actions.ts`
+is the engine query technical spec v1 §3 promised. It calls real `canPlay` / economy
+validators and the shared play-cost gate — never a second copy of a rule.
+
+**§10.1 invariant (technical spec v3):** for the V1 card set, the legal set computed from
+authoritative `GameState` equals the legal set computed from the acting player's
+`PlayingStateView` alone (`enumerationStateFromView` + the same enumerator). No V1
+`canPlay` may read a hidden opponent field. A failing §10.1 guard is a **rule / handler
+question**, not a flaky test — stop and ask (golden rule 6). Consequence: a human client
+that probes rejected actions (free; messages differ by cause) must not learn hidden state
+through legality either.
+
+Assassin `playMultipleAttacks` candidates are a deliberate ≤8 approximation (L16-02 /
+`decisions.md`); opponent order inside the generator uses a seeded shuffle of alive ids
+only so the set stays view-derivable.
+
 ## What not to do
 
 - ❌ One life-loss function with a `isAttack` flag — reintroduces the exact bug §4.2 warns about.

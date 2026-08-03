@@ -865,9 +865,10 @@ immediately and write nothing — there is no game to play out.
 (technical spec v3 §4.3).
 
 V3 uses a greedy generator: attacks ordered by `attackDamageFor` descending; opponents
-ordered by ascending lives (enumerator has `GameState`, not the public action log); sizes
-2 and 3 only; hard cap `ASSASSIN_CANDIDATE_CAP = 8` (tunable default). Deliberate
-approximation — not a bug to “fix” later with exhaustive search.
+in a seeded shuffle of living seats (alive ids only — **not** hidden lives, so §10.1
+holds); sizes 2 and 3 only; hard cap `ASSASSIN_CANDIDATE_CAP = 8` (tunable default).
+Deliberate approximation — not a bug to “fix” later with exhaustive search.
 
-Policy scoring (§4.4) still ranks opponents via the view/`livesLost` proxy; the
-enumerator’s lives order only chooses which ≤8 candidates enter the legal set.
+Policy scoring (§4.4) ranks opponents via the view/`livesLost` proxy when choosing
+among enumerated actions; the enumerator’s shuffle only chooses which ≤8 candidates
+enter the legal set.

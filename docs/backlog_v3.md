@@ -80,12 +80,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-8 of 22 V3 tasks done.
+9 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 2 |
+| 16 · Bot brain | 6 | 3 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -190,7 +190,7 @@ damage-ordered attacks and threat-ordered targets. Hard cap: 8 candidates.
 - **Watch point** Full subset × target enumeration is exponential and **must not be written**. This is the one place V3 knowingly does not enumerate the full legal space — record it as a deliberate approximation in `decisions.md`, not as a bug to fix later. `playMultipleAttacksAction` is all-or-nothing and charges the sum of play costs, so most subsets are unaffordable anyway.
 - **Acceptance** Every generated candidate is accepted by `performTurnAction`; candidate count never exceeds 8 for any hand; a non-Assassin kit generates none
 
-### L16-03 · View-only legality guard test — `To do`
+### L16-03 · View-only legality guard test — `Done`
 
 Encode invariant §10.1: for a spread of fixture states, including active base and upgraded Spy
 relations, assert `listLegalActions(state, p)` equals the set derivable from

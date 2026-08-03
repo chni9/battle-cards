@@ -100,36 +100,15 @@ function rankAttackCopies(actor: Player): AttackPick[] {
 }
 
 /**
- * Enumerator has GameState (no action log): closest to death first, then seeded
- * tie-break keys. Policy (§4.4) uses the view/log proxy separately — see decisions.md.
+ * Living opponents in seeded shuffle order — view-derivable (alive ids only).
+ * Must not read hidden lives: §10.1 / L16-03. Policy threat ranking is separate (§4.4).
  */
 function rankOpponentTargets(state: GameState, actor: Player): Player[] {
   const living = state.players.filter(
     (player) => player.id !== actor.id && !player.isEliminated,
   );
   const rng = createRng(`${state.seed}:list-legal-targets:${actor.id}:${state.turnSequence}`);
-  const tieKey = new Map<string, number>();
-
-  for (const player of living) {
-    tieKey.set(player.id, rng.nextInt(1_000_000));
-  }
-
-  living.sort((left, right) => {
-    if (left.lives !== right.lives) {
-      return left.lives - right.lives;
-    }
-
-    const leftKey = tieKey.get(left.id) ?? 0;
-    const rightKey = tieKey.get(right.id) ?? 0;
-
-    if (leftKey !== rightKey) {
-      return leftKey < rightKey ? -1 : 1;
-    }
-
-    return left.id.localeCompare(right.id);
-  });
-
-  return living;
+  return rng.shuffle(living);
 }
 
 function buildRawCandidates(
