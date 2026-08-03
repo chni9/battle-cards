@@ -7,6 +7,7 @@
 
 import type { GameState } from '@card-battle/shared';
 
+import { listAssassinMultiAttackCandidates } from './assassin-candidates';
 import { listLegalEconomyActions } from './list-legal-economy';
 import { listLegalPlayCardActions, requireLivingActor } from './list-legal-play-card';
 import type { TurnAction } from './perform-action';
@@ -21,6 +22,7 @@ export function listLegalActions(state: GameState, playerId: string): readonly T
   return [
     { type: 'draw' },
     ...listLegalPlayCardActions(state, actor),
+    ...listAssassinMultiAttackCandidates(state, actor),
     ...listLegalEconomyActions(actor),
   ];
 }

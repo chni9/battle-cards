@@ -857,3 +857,17 @@ game via the existing `onGameOver` path. Dispose the room after game over when n
 
 **Lobby complement:** if every human leaves before start and only bots remain, dispose
 immediately and write nothing — there is no game to play out.
+
+## 2026-08-03 · [T] Assassin multi-attack candidate approximation (L16-02)
+
+`listLegalActions` does **not** enumerate the full legal `playMultipleAttacks` space
+(sizes ≥2 × all target assignments). That is exponential and must never be written
+(technical spec v3 §4.3).
+
+V3 uses a greedy generator: attacks ordered by `attackDamageFor` descending; opponents
+ordered by ascending lives (enumerator has `GameState`, not the public action log); sizes
+2 and 3 only; hard cap `ASSASSIN_CANDIDATE_CAP = 8` (tunable default). Deliberate
+approximation — not a bug to “fix” later with exhaustive search.
+
+Policy scoring (§4.4) still ranks opponents via the view/`livesLost` proxy; the
+enumerator’s lives order only chooses which ≤8 candidates enter the legal set.

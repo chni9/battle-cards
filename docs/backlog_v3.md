@@ -80,12 +80,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-6 of 22 V3 tasks done.
+8 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 1 |
+| 16 · Bot brain | 6 | 2 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -181,7 +181,7 @@ rule. `{ type: 'draw' }` is always present.
 - **Watch point** Two non-behavioural prerequisites: export `MAX_LIVES_PER_USE` from `handlers/regeneration.ts` (module-private today), and narrow `PendingEffectView.cardId` (`CardId`) before passing it to `attackDamageFor` (`AttackCardId`) — never with a cast (`AGENTS.md` §6).
 - **Acceptance** §10.2 property test green (every enumerated action returns `ok: true` from `performTurnAction` on a state clone); `draw` present in every state; no unbounded loop for any hand size
 
-### L16-02 · Assassin multi-attack candidate generator — `To do`
+### L16-02 · Assassin multi-attack candidate generator — `Done`
 
 Bounded generator for `playMultipleAttacks`, sizes 2 and 3 only, built greedily from
 damage-ordered attacks and threat-ordered targets. Hard cap: 8 candidates.
