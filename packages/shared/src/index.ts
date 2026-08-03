@@ -1,4 +1,5 @@
 export * from './domain/visibility';
+export * from './domain/bot';
 export * from './domain/card';
 export * from './domain/card-catalog';
 export * from './domain/card-label';

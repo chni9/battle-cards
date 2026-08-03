@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-0 of 22 V3 tasks done.
+1 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 0 |
+| 15 · Seat abstraction and protocol | 6 | 1 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -102,7 +102,7 @@ _Task count = number of tasks in the lot named in column B only, not the cumulat
 
 ## Lot 15 · Seat abstraction and protocol
 
-### L15-01 · `BotDifficulty` in shared — `To do`
+### L15-01 · `BotDifficulty` in shared — `Done`
 
 `packages/shared/src/domain/bot.ts`: the `BotDifficulty` union, derived from an `as const` array
 so the values exist at runtime (`AGENTS.md` §6). One definition, imported by server and client.
