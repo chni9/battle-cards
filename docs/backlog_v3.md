@@ -80,12 +80,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-10 of 22 V3 tasks done.
+11 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 4 |
+| 16 · Bot brain | 6 | 5 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -210,7 +210,7 @@ technical spec v3 §4.4. Weights as named constants in one module.
 - **Watch point** The signature takes **no** `GameState` — that is the enforcement of decision 2, not a stylistic choice. Absolute opponent lives are **not** knowable without Spy (starting lives come from the hidden kit); the legitimate proxy is cumulative `livesLost` summed from the public action log. Opponent tiebreaks go through `rng`, never seat order: a fixed tiebreak makes bots gang up on seat 0 and poisons every simulator result. Every weight is a tunable default — label them as such in the code.
 - **Acceptance** A 4-bot game completes with no exception and no timeout default fired; the policy never returns an action absent from `actions`; same view + same seed → same action
 
-### L16-05 · Difficulty as seeded noise — `To do`
+### L16-05 · Difficulty as seeded noise — `Done`
 
 One axis: probability of substituting a uniformly random legal action for the top-scored one.
 Defaults `easy` 0.55 / `normal` 0.20 / `hard` 0.00. Noise draws from
