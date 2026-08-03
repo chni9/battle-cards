@@ -18,12 +18,19 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { ActionLogPanel } from '../action-log/action-log-panel';
+import { measurePlayFlyout } from '../fx/play-flyout';
+import { TableFxProvider } from '../fx/table-fx-context';
+import { useTableFx } from '../fx/table-fx-hooks';
 import type { PlayCardOptions } from '../net/use-room-connection';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { EconomyBar } from './table/economy-bar';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
+import {
+  buildPersistentIncomingChips,
+  buildPersistentOthersChips,
+} from './table/persistent-incoming';
 import { PrivateZone } from './table/private-zone';
 import { cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
@@ -61,7 +68,15 @@ export interface TableScreenProps {
   onLeave: () => void;
 }
 
-export function TableScreen({
+export function TableScreen(props: TableScreenProps): ReactElement {
+  return (
+    <TableFxProvider>
+      <TableScreenInner {...props} />
+    </TableFxProvider>
+  );
+}
+
+function TableScreenInner({
   view,
   error,
   statusLabel,
@@ -83,8 +98,43 @@ export function TableScreen({
   onSellUpgradePoint,
   onLeave,
 }: TableScreenProps): ReactElement {
+  const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
+
+  const findOwnCard = (instanceId: string): CardInstance | undefined =>
+    view.self.hand.find((c) => c.instanceId === instanceId) ??
+    view.self.specialCards.find((c) => c.instanceId === instanceId);
+
+  const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
+    const card = findOwnCard(instanceId);
+    onPlayCard(instanceId, options);
+    if (card === undefined) {
+      return;
+    }
+    const measured = measurePlayFlyout(instanceId, card.cardId, card.isUpgraded);
+    if (measured !== null) {
+      enqueue({ kind: 'playFlyout', ...measured });
+    }
+  };
+
+  const playMultipleWithFx = (
+    attacks: readonly { instanceId: string; targetPlayerId: string }[],
+  ): void => {
+    onPlayMultipleAttacks(attacks);
+    const first = attacks[0];
+    if (first === undefined) {
+      return;
+    }
+    const card = findOwnCard(first.instanceId);
+    if (card === undefined) {
+      return;
+    }
+    const measured = measurePlayFlyout(first.instanceId, card.cardId, card.isUpgraded);
+    if (measured !== null) {
+      enqueue({ kind: 'playFlyout', ...measured });
+    }
+  };
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
@@ -119,12 +169,14 @@ export function TableScreen({
       : Math.max(0, Math.min(1, (deadlineMs - nowMs) / 60_000));
 
   const opponents = view.players.filter((player) => !player.isYou);
-  const incomingEffects = view.pendingEffects.filter(
-    (effect) => effect.targetPlayerId === view.you,
-  );
-  const othersPending = view.pendingEffects.filter(
-    (effect) => effect.targetPlayerId !== view.you,
-  );
+  const incomingEffects = [
+    ...view.pendingEffects.filter((effect) => effect.targetPlayerId === view.you),
+    ...buildPersistentIncomingChips(view),
+  ];
+  const othersPending = [
+    ...view.pendingEffects.filter((effect) => effect.targetPlayerId !== view.you),
+    ...buildPersistentOthersChips(view),
+  ];
 
   const mirrorSecondsLeft =
     mirrorChoice === null
@@ -169,7 +221,7 @@ export function TableScreen({
       setDialog({ kind: 'target', instance });
       return;
     }
-    onPlayCard(instance.instanceId);
+    playCardWithFx(instance.instanceId);
     setDialog(null);
   }
 
@@ -314,8 +366,8 @@ export function TableScreen({
         mirrorChoice={mirrorChoice}
         rewardChoice={rewardChoice}
         nowMs={nowMs}
-        onPlayCard={onPlayCard}
-        onPlayMultipleAttacks={onPlayMultipleAttacks}
+        onPlayCard={playCardWithFx}
+        onPlayMultipleAttacks={playMultipleWithFx}
         onUpgradeCard={onUpgradeCard}
         onSellCard={onSellCard}
         onBuyCard={onBuyCard}

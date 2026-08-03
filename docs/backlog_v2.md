@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-17 of 22 V2 tasks done. Active from Lot 14.
+18 of 22 V2 tasks done. Active from Lot 14.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +76,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 1 |
-| 14 · Animation | 5 | 0 |
+| 14 · Animation | 5 | 1 |
 
 ## Milestones
 
@@ -260,7 +260,7 @@ Restyle the L9-03 output: winner, `FinishedStateView.recap`, return-home action.
 
 ## Lot 14 · V2 Animation
 
-### L14-01 · Card flip and reveal — `To do`
+### L14-01 · Card flip and reveal — `Done`
 
 Hand entry, upgrade-state reveal, play-to-table motion.
 

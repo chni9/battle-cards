@@ -91,6 +91,9 @@ rules above are unchanged — this section only covers how the client looks.
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
   Landing-page layout rules from design-taste-frontend do **not** apply to
   Home/Lobby/Table/End.
+- **Table FX (Lot 14):** `apps/client/src/fx/` — hybrid presentational layer. Local Motion on
+  cards/timers; `TableFxProvider` queue for flyouts / resolution / elim / rewards. Intents
+  must never await FX. `useReducedMotion` skips choreography.
 
 ## Conventions
 

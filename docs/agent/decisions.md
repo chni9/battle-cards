@@ -813,3 +813,13 @@ Developer-locked for Lot 13:
 - **Seats:** nicknames + eliminated marker; **no** `ConnectionBadge` (connection state is
   noise after game over). Winner emphasized; full public `recap` unchanged.
 - Screen extracted to `apps/client/src/screens/end.tsx`.
+
+## 2026-08-03 · [T] Table FX hybrid architecture (L14-01)
+
+Developer-locked for Lot 14:
+
+- **Hybrid Motion:** local card flip / timer bar; central `apps/client/src/fx/` for play
+  flyout, resolution, elimination, rewards, Mirror highlights.
+- **Fire-and-forget:** enqueue after intent send; never block or delay payloads.
+- **Intensity:** restrained 150–300ms; `useReducedMotion` → skip choreography.
+- **Play-to-table:** ghost art from hand/`data-instance-id` toward `[data-zone="pending"]`.
