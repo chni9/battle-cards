@@ -80,12 +80,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-9 of 22 V3 tasks done.
+10 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 3 |
+| 16 · Bot brain | 6 | 4 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -200,7 +200,7 @@ relations, assert `listLegalActions(state, p)` equals the set derivable from
 - **Watch point** Verified true by audit on 2026-08-03 for all 16 V1 handlers, and **fragile**: one future card whose `canPlay` reads a hidden opponent field turns the enumerator into an information leak, exploitable by a human client too (rejected actions are free and their messages differ by cause). A failure of this test is a rule question, not a test bug — **stop and ask.**
 - **Acceptance** Test green today; test fails loudly if a handler is changed to read a hidden opponent field; the invariant and its consequence are written into `docs/agent/engine.md`
 
-### L16-04 · Heuristic policy — `To do`
+### L16-04 · Heuristic policy — `Done`
 
 New `apps/server/src/bots/heuristic-policy.ts`:
 `decide(view: PlayingStateView, actions, rng): TurnAction`. Derived reads and scoring bands per

@@ -872,3 +872,10 @@ Deliberate approximation — not a bug to “fix” later with exhaustive search
 Policy scoring (§4.4) ranks opponents via the view/`livesLost` proxy when choosing
 among enumerated actions; the enumerator’s shuffle only chooses which ≤8 candidates
 enter the legal set.
+
+## 2026-08-03 · [P] Bot scoring weights stay module constants (#V3-5 / L16-04)
+
+Closed open decision #V3-5: scoring weights and related tunable defaults live as named
+constants in `apps/server/src/bots/heuristic-weights.ts`. No CLI / env / config file sweep
+in V3 — a single tunable module is enough; exposing weights for simulator sweeps is scope
+creep (technical spec v3 §11 recommendation).
