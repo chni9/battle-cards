@@ -823,3 +823,15 @@ Developer-locked for Lot 14:
 - **Fire-and-forget:** enqueue after intent send; never block or delay payloads.
 - **Intensity:** restrained 150–300ms; `useReducedMotion` → skip choreography.
 - **Play-to-table:** ghost art from hand/`data-instance-id` toward `[data-zone="pending"]`.
+
+## 2026-08-03 · [P] V3 baseline PROTOCOL 20 — public shield presence (#V3-0)
+
+Closed open decision #V3-0 (technical spec v3 §11). Kept the committed PROTOCOL 20 work
+(`fa73ebd`): `PublicPlayerView.activeShield` exposes Combat Shield **presence + upgrade tier**
+to every seat so the Table can render Shield beside kit actives. **Remaining shield points stay
+private** (Spy-gated as before).
+
+This partially overrides the 2026-07-30 ruling that “lives and shield are **not** public without
+Spy”: lives and exact shield points remain private; only the boolean-up presence signal is
+public. V3’s starting baseline is PROTOCOL 20; L15-05 bumps **20 → 21** once for bot intents
+and seat fields.

@@ -10,26 +10,6 @@
 
 Status values: `To do` · `In progress` · `Done` · `Blocked`
 
-> ## ⚠ Precondition — do not start L15-01 until this is closed
->
-> The working tree on 2026-08-03 holds **uncommitted work that is in no backlog task and no
-> `decisions.md` entry**: 19 modified files and 4 untracked ones, roughly 600 lines, including
-> `PROTOCOL_VERSION` bumped 19 → 20 and a new public `PublicPlayerView.activeShield` (shield
-> presence + upgrade tier public; remaining points still private).
->
-> Two reasons this blocks V3 rather than merely being untidy:
->
-> 1. **Every version number in `technical_spec_v3.md` §7 and in L15-05 assumes a known
->    baseline.** Right now `HEAD` says 19 and the tree says 20, so V3's bump is either 19 → 20
->    or 20 → 21 depending on a decision nobody has recorded.
-> 2. **Making shield presence public partially overrides a recorded developer ruling** — the
->    2026-07-30 ruling in `state-view.ts` states *"lives and shield are **not** public without
->    Spy"*. That override may well be intended and correct; it is currently undocumented, which
->    is exactly the condition `AGENTS.md` §2 says to surface rather than reconcile silently.
->
-> Close it either way — commit with a `decisions.md` entry and a backlog line, or revert. Then
-> delete this block and fix L15-05's target number.
-
 ## How to read this
 
 **Sequencing principle**
@@ -113,7 +93,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Milestone | Reached at the end of | What must be true | Expected proof |
 |---|---|---|---|
-| **M8** | Lot 15 · Seats | A seat exists without a Colyseus `Client`; a bot seat can be added, removed, re-configured and counted; no bot seat ever arms a turn or sub-choice timer. Protocol bumped once, to whatever #V3-0 settles the baseline at. | A room of 1 human + 3 bots reaches `startGame` and plays turns with a stub policy that always draws; `pnpm verify` green; every §10.4 test passing. |
+| **M8** | Lot 15 · Seats | A seat exists without a Colyseus `Client`; a bot seat can be added, removed, re-configured and counted; no bot seat ever arms a turn or sub-choice timer. Protocol bumped once, **20 → 21** (#V3-0 closed at baseline 20). | A room of 1 human + 3 bots reaches `startGame` and plays turns with a stub policy that always draws; `pnpm verify` green; Lot 15 §10.4 subset green (full 4-bot completion is L16-06). |
 | **M9** | Lot 16 · Bot brain | `listLegalActions` is exhaustive-and-accepted, the policy plays a complete game from the view alone including both sub-choices, difficulty is one seeded number. | §10.1 and §10.2 guard tests green; a full 4-bot game completes with no timeout default fired; developer has watched one game and signed off. |
 | **M10** | Lot 17 · Playable | Solo mode is reachable from Home in three clicks; a host can fill lobby seats with bots at chosen difficulties; bot seats are labelled for everyone. | Developer plays a solo game start to finish and a mixed human+bot lobby game; V2 animations read correctly at bot pace. |
 | **M11** | Lot 18 · Simulation | N games run with no room and no timers, deterministic from a seed, with controlled kit matchups and aggregated output. | Same seed and config → byte-identical output file; §10.3 room-vs-simulator equivalence test green; first gross-imbalance screen produced and read. |
@@ -172,8 +152,8 @@ Add `addBot` / `removeBot` / `setBotDifficulty` client→server intents and `isB
 `botDifficulty` to `LobbySeatView` and `PublicPlayerView`. Wire the room handlers to L15-03's
 predicates. Bump `PROTOCOL_VERSION` once, here.
 
-- **Reference** Technical spec v3 §7 · **Depends on** L15-03, **#V3-0** · **Complexity** M · **Risk** Medium
-- **Watch point** **The target number depends on #V3-0.** `HEAD` is 19; the working tree is 20 uncommitted. `20 → 21` assumes that work is kept. Confirm the baseline before touching the constant — do not bump on top of an uncommitted bump.
+- **Reference** Technical spec v3 §7 · **Depends on** L15-03, **#V3-0** (closed: baseline 20) · **Complexity** M · **Risk** Medium
+- **Watch point** Baseline is PROTOCOL **20** (#V3-0 closed). This task bumps **20 → 21** once. Do not bump on top of any other uncommitted version change.
 - **Watch point** **No new server→client event.** A bot's turn already broadcasts `actionPlayed` / `actionResolved` / `turnStarted` exactly as a human's does; adding a bot-specific event forks the client's rendering path for no gain. This is the only task in V3 that touches `PROTOCOL_VERSION`.
 - **Acceptance** A client at the previous version is refused with the existing mismatch message; bot seats appear with their difficulty in the lobby view of **every** recipient, not only the host; `buildPlayingViewFor` marks bot players for everyone
 

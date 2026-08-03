@@ -259,7 +259,7 @@ Pure and synchronous. Same input, same `rng` seed, same output.
 | Incoming threat | `view.pendingEffects` filtered on `targetPlayerId === view.you`, damage via `attackDamageFor(cardId, isUpgraded) × damageMultiplier` | Attack cards only; `damageMultiplier` carries upgraded-Mirror doubling. |
 | Cumulative damage taken per opponent | Sum `livesLost` over `actionLog` entries of kind `actionResolved` with `outcome === 'applied'`, grouped by `targetPlayerId` | The honest substitute for hidden lives. Absolute lives are **not** knowable without Spy, because starting lives come from the hidden kit. |
 | Spied opponents | `view.players[].spied` | When present, use real `lives` (upgraded Spy) or the frozen `resourcesSnapshot` (base Spy) instead of the proxy above, and say so in the log line. |
-| Opponent shield up | `view.players[].activeShield` — **conditional on #V3-0** | If that field survives, it is a legitimately useful public signal: prefer a large hit or a non-attack card against a shielded seat rather than chipping into it. If #V3-0 resolves by reverting, drop this row — do not reintroduce the field to serve the bot. |
+| Opponent shield up | `view.players[].activeShield` | Public signal (PROTOCOL 20 / #V3-0 kept): prefer a large hit or a non-attack card against a shielded seat rather than chipping into it. |
 | Redirectable attack pending | A `listEligibleMirrorTargets`-equivalent read over `view.pendingEffects` | The existing function takes a `Player`, not a view, and returns pending *effects* rather than targets despite its name — so the policy needs its own view-side equivalent, filtering on attack `cardId` and (base Mirror) `isUpgraded === false`. The enumerator already gates Mirror's legality; the policy only needs to pick which effect and which new target. |
 
 **Threat ranking of opponents** (used for every target choice): most cumulative damage taken
@@ -402,11 +402,9 @@ V3 changes the client/server contract, so `PROTOCOL_VERSION` moves **20 → 21**
 is expected rather than a stop-and-ask (`technical_spec_v2.md` §1) — but it is still one bump
 for the whole of V3, declared here, not one per lot.
 
-> **Baseline caveat, 2026-08-03.** `HEAD` is at 19; the **working tree** is at 20, with a
-> `PublicPlayerView.activeShield` field and its `build-view-for` population, uncommitted and
-> recorded in no backlog task and no `decisions.md` entry. V3's baseline is therefore whatever
-> that work settles at. See §11 #V3-0 — this must be resolved before L15-01 starts, or the
-> version numbers in this document are wrong on day one.
+> **Baseline (closed #V3-0, 2026-08-03).** V3 starts at PROTOCOL **20** (`activeShield` public —
+> presence + upgrade tier; remaining points private). See `docs/agent/decisions.md`. L15-05
+> bumps **20 → 21**.
 
 **New client → server intents** (host-only, lobby-only, all revalidated server-side):
 
@@ -615,7 +613,7 @@ throws falls back to `draw` and the turn advances; no bot seat ever accumulates
 
 | # | Question | Options | Blocks |
 |---|---|---|---|
-| **#V3-0** | **What is V3's actual starting point?** `HEAD` is `PROTOCOL_VERSION` 19. The working tree is 20, with `PublicPlayerView.activeShield` (shield presence + upgrade tier now public, remaining points still private), plus roughly 600 lines of further FX/table work — 19 modified files and 4 untracked ones, **committed nowhere, in no backlog task, in no `decisions.md` entry.** Two problems: (1) every version number in this document assumes a known baseline; (2) making shield presence public partially overrides the developer ruling of 2026-07-30 recorded in `state-view.ts` — *"lives and shield are **not** public without Spy"* — and that override is currently undocumented. | Commit the work with a `decisions.md` entry recording the shield-visibility ruling and a backlog line accounting for it; **or** revert it. Either is fine. Leaving it is not: the next session cannot tell whether 20 is intended or accidental, and V3's §7 is wrong either way. | **L15-01 — everything** |
+| **#V3-0** | ~~What is V3's actual starting point?~~ **Closed 2026-08-03:** kept PROTOCOL **20** (`activeShield` public). See `docs/agent/decisions.md`. | — | — |
 | **#V3-1** | Where does the simulator live? | (a) `apps/simulator` — a third app, consistent with `apps/server` / `apps/client`, but a third `package.json` and tsconfig to maintain. (b) A `bin/` script inside `apps/server` — no new workspace member, but a batch tool shipped inside the game server. | L18-04 |
 | **#V3-2** | Does the client show *what* a bot decided, beyond the existing public log? | Nothing extra is required — a bot's play already broadcasts `actionPlayed` like a human's. But debugging a heuristic from the public log alone is painful, and a dev-only reasoning panel is a distinct feature with a real cost. | L17-05 |
 | **#V3-3** | Last human leaves a room containing bots — what happens? | (a) Dispose the room immediately, write nothing. (b) Play the game out and write it. Recommendation: (a) — a game with no human observer has no value and would pollute the finished-game log. Currently undefined in the code, and reachable today via consented leave. | L15-06 |
