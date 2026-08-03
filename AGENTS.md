@@ -10,21 +10,23 @@
 *Card Battle* is a turn-based elimination card game for 2 to 4 players, built on hidden
 information and **delayed resolution**: an action aimed at an opponent takes effect on that
 opponent's next turn, after they have played their own action, giving them a chance to react.
-This repo is **V1**, the first online-playable version — a deliberately narrow slice
-(16 cards, 4 kits, Classic mode, no accounts) whose only job is to prove the engine before
-content is added. Audience: the designer and his friends.
+The content slice is still V1's — 16 cards, 4 kits, Classic mode, no accounts — deliberately
+narrow, to prove the engine before content is added. V2 gave it a visual identity; V3 adds
+heuristic bots, a solo mode, and headless simulation on top of the same rules.
+Audience: the designer and his friends.
 
-Domains: **engine** (turn loop, resolution, elimination) · **cards** (16, one isolated handler
-each) · **kits** (4, with permanent traits) · **protocol and visibility** (per-recipient state,
-Spy) · **lifecycle** (timers, disconnection, inactivity).
+Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
+**cards** (16, one isolated handler each) · **kits** (4, with permanent traits) ·
+**protocol and visibility** (per-recipient state, Spy) · **lifecycle** (timers, disconnection,
+inactivity) · **bots** (virtual seats, heuristic policy, simulation).
 
 ## 2. Source hierarchy (always follow this order)
 
 1. **Code + lock files** — operational truth.
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
-   `docs/backlog_v2.md` sequences active work (acceptance criteria per task);
-   `docs/backlog_v1.md` is the closed V1 archive.
+   `docs/backlog_v3.md` sequences active work (acceptance criteria per task);
+   `docs/backlog_v1.md` and `docs/backlog_v2.md` are closed archives.
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -64,7 +66,7 @@ apps/server         Authoritative game server. ALL rule logic lives here.
 apps/client         React client. Renders state, sends intents. Zero rule logic.
 packages/shared     Domain types shared by both. One definition, never duplicated.
   src/domain/       card · kit · effect · player · game-state
-docs/               Rules spec, technical specs, backlog_v1.md (archive), backlog_v2.md (active).
+docs/               Rules spec, technical specs, backlog_v1/v2.md (archives), backlog_v3.md (active).
 docs/agent/         Playbooks for agents. Read the relevant one before coding.
 ```
 
@@ -93,12 +95,15 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    point** line do not clearly resolve a case, **stop and ask** — even when the answer looks
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
    #1, #2 and #3 are closed.
-7. **V1 scope is closed (63/63) and V2 has started.** The 11 other kits, Team/God/Quick modes,
-   bots, accounts, in-progress persistence and monetization are still out (technical spec §9) —
-   not to be implemented "even partially, even to lay groundwork". **Art direction is no longer
-   out of scope**: it is V2, specified in `docs/technical_spec_v2.md` and sequenced in
-   `docs/backlog_v2.md` (Lots 10–14). V2 changes no rule, screen flow, or protocol event — it
-   is a visual layer over the exact system this file already describes.
+7. **V1 (63/63) and V2 (22/22) are closed; V3 has started.** The 11 other kits,
+   Team/God/Quick modes, accounts, in-progress persistence and monetization are still out
+   (technical spec v1 §9) — not to be implemented "even partially, even to lay groundwork".
+   Two things are no longer out of scope: **art direction** (V2, `docs/technical_spec_v2.md`,
+   Lots 10–14 — a visual layer that changed no rule, flow, or protocol event) and **bots**
+   (V3, `docs/technical_spec_v3.md`, sequenced in `docs/backlog_v3.md`, Lots 15–18: heuristic
+   bots, solo mode, headless simulation). V3 changes **no rule** either; it bumps
+   `PROTOCOL_VERSION` exactly once, in L15-05. A bot playing badly is never grounds for
+   touching a rule. Learning bots, search and lookahead stay out (technical spec v3 §13).
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.
@@ -144,9 +149,11 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through `docs/backlog_v2.md` **in task-ID order** (Lot 10 onward). V1 is closed
-(`docs/backlog_v1.md`). The sequencing is deliberate: static design (Lots 10–13) before
-animation (Lot 14), so the client stays shippable if motion slips.
+Work through `docs/backlog_v3.md` **in task-ID order** (Lot 15 onward). V1 and V2 are closed
+(`docs/backlog_v1.md`, `docs/backlog_v2.md`). The sequencing is deliberate: bot foundations
+(Lots 15–16, all provable in Vitest with no UI) before playable surfaces (Lot 17), and
+simulation (Lot 18) depends on Lot 16 only — so the balance instrument still lands if the UI
+work slips.
 
 **Keep the backlog current.** `In progress` when you start a task, `Done` once it passes the
 gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md`) — in the same
@@ -166,8 +173,8 @@ than none: the next session trusts it and redoes finished work.
 - [ ] `pnpm verify` green: `tsc` clean, linter clean, all tests passing
 - [ ] No test skipped, disabled, or weakened to pass
 - [ ] Every card or rule touched has its test created or updated
-- [ ] The task's own **Acceptance** line in `docs/backlog_v2.md` is satisfied
-- [ ] That task's status set to `Done` in `docs/backlog_v2.md`
+- [ ] The task's own **Acceptance** line in `docs/backlog_v3.md` is satisfied
+- [ ] That task's status set to `Done` in `docs/backlog_v3.md`
 - [ ] **Committed** — Conventional Commit referencing the task ID (see §10). Never leave a
       `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
@@ -185,7 +192,7 @@ Body only when the *why* is not obvious — and always for a rule interpretation
 deviation, or a decision that a future reader would otherwise have to re-derive. No AI
 attribution. A project-local `caveman-commit` skill (`.agents/skills/`) enforces this style.
 
-**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog_v2.md`
+**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog_v3.md`
 status flip — not a later cleanup. Leaving finished work uncommitted is a process failure.
 
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
