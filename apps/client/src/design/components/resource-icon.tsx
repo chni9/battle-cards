@@ -7,7 +7,13 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { measureTokenFlyout } from '../../fx/play-flyout';
-import { MOTION_EASE, MOTION_PULSE_S, RESOURCE_FLASH_MS } from '../../fx/motion-timing';
+import {
+  MOTION_EASE,
+  MOTION_PULSE_S,
+  RESOURCE_FLASH_MS,
+  TOKEN_FLYOUT_DURATION_S,
+  TOKEN_STAGGER_MS,
+} from '../../fx/motion-timing';
 import { useTableFxOptional } from '../../fx/table-fx-hooks';
 import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
 
@@ -52,9 +58,20 @@ export function ResourceIcon({
     setFloatDelta(d);
 
     if (flyToken && enqueue !== undefined && reduceMotion !== true) {
-      const measured = measureTokenFlyout(kind, nextFlash === 'gain' ? 'gain' : 'loss');
-      if (measured !== null) {
-        enqueue({ kind: 'tokenFlyout', ...measured });
+      const direction = nextFlash === 'gain' ? 'gain' : 'loss';
+      const count = Math.abs(d);
+      for (let i = 0; i < count; i++) {
+        const measured = measureTokenFlyout(kind, direction, i);
+        if (measured === null) {
+          break;
+        }
+        const delayMs = i * TOKEN_STAGGER_MS;
+        enqueue({
+          kind: 'tokenFlyout',
+          ...measured,
+          delayMs,
+          expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
+        });
       }
     }
 

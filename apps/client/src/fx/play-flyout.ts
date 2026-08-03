@@ -50,32 +50,45 @@ export function measurePlayFlyout(
 }
 
 /**
- * Token chip flyout — gain: source → resource row; loss: resource → economy.
- * Used for Draw (points chip), buy/sell UP, and resource deltas.
+ * Token chip flyout — gain: action log → resource; loss: resource → action log.
+ * Callers enqueue one event per unit of |Δ| with staggered delayMs.
  */
 export function measureTokenFlyout(
   kind: ResourceKind,
   direction: 'gain' | 'loss',
+  index = 0,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
   const resourceEl =
     document.querySelector(
       `[data-zone="resources"] [data-resource-kind="${CSS.escape(kind)}"]`,
     ) ?? document.querySelector(`[data-resource-kind="${CSS.escape(kind)}"]`);
-  const economyEl =
-    document.querySelector('[data-zone="economy-bar"]') ??
-    document.querySelector('[data-zone="economy"]') ??
-    document.querySelector('[data-zone="dock"]');
+  const logEl = document.querySelector('[data-zone="action-log-panel"]');
   const resource = rectOf(resourceEl);
-  const economy = rectOf(economyEl);
-  if (resource === null || economy === null) {
+  const log = rectOf(logEl);
+  if (resource === null || log === null) {
     return null;
   }
-  const from = direction === 'gain' ? tokenRect(economy, 32) : tokenRect(resource, 32);
-  const to = direction === 'gain' ? tokenRect(resource, 24) : tokenRect(economy, 24);
+  // Slight fan so stacked chips are readable before/while staggering.
+  const fanX = (index % 3) * 5 - 5;
+  const fanY = Math.floor(index / 3) * 4;
+  const logChip = tokenRect(log, 32);
+  const resourceChip = tokenRect(resource, 24);
+  const fromBase = direction === 'gain' ? logChip : resourceChip;
+  const toBase = direction === 'gain' ? resourceChip : logChip;
   return {
     artUrl: getResourceIconUrl(kind),
-    from,
-    to,
+    from: {
+      left: fromBase.left + fanX,
+      top: fromBase.top + fanY,
+      width: fromBase.width,
+      height: fromBase.height,
+    },
+    to: {
+      left: toBase.left + fanX * 0.4,
+      top: toBase.top + fanY * 0.4,
+      width: toBase.width,
+      height: toBase.height,
+    },
   };
 }
 

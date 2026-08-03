@@ -5,7 +5,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
-import { MOTION_DURATION_S, MOTION_EASE } from './motion-timing';
+import { MOTION_DURATION_S, MOTION_EASE, TOKEN_FLYOUT_DURATION_S } from './motion-timing';
 import { useTableFx } from './table-fx-hooks';
 
 function outcomeClass(outcome: 'applied' | 'cancelled' | 'immune'): string {
@@ -103,7 +103,7 @@ export function TableFxOverlay(): ReactElement {
             if (reduceMotion === true) {
               return null;
             }
-            const { from, to, artUrl, id } = event;
+            const { from, to, artUrl, id, delayMs = 0 } = event;
             return (
               <motion.img
                 key={id}
@@ -115,7 +115,7 @@ export function TableFxOverlay(): ReactElement {
                   top: from.top,
                   width: from.width,
                   height: from.height,
-                  opacity: 1,
+                  opacity: 0,
                   scale: 1.15,
                 }}
                 animate={{
@@ -123,11 +123,15 @@ export function TableFxOverlay(): ReactElement {
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: 0.15,
+                  opacity: [0, 1, 0.15],
                   scale: 0.9,
                 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
+                transition={{
+                  duration: TOKEN_FLYOUT_DURATION_S,
+                  ease: MOTION_EASE,
+                  delay: delayMs / 1000,
+                }}
                 draggable={false}
               />
             );

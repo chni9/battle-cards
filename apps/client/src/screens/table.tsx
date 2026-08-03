@@ -23,7 +23,6 @@ import {
   measureBuySpecialFlyout,
   measurePlayFlyout,
   measureSellCardFlyout,
-  measureTokenFlyout,
 } from '../fx/play-flyout';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx } from '../fx/table-fx-hooks';
@@ -140,12 +139,8 @@ function TableScreenInner({
   };
 
   const drawWithFx = (): void => {
+    // Points Δ → ResourceIcon enqueues log ↔ token chips (avoid double flyout).
     onDraw();
-    // Presentational: point chip from economy → points row (not a card ghost).
-    const measured = measureTokenFlyout('point', 'gain');
-    if (measured !== null) {
-      enqueue({ kind: 'tokenFlyout', ...measured });
-    }
   };
 
   const buyUpgradeWithFx = (): void => {

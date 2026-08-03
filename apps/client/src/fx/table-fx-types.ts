@@ -27,6 +27,8 @@ export type TableFxEvent =
       artUrl: string;
       from: DomRectLite;
       to: DomRectLite;
+      /** Delay before this chip starts moving (multi-token stagger). */
+      delayMs?: number;
       expiresAt: number;
     }
   | {
