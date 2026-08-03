@@ -1,12 +1,13 @@
 /**
- * Home screen — technical spec v2 §6, L11-01.
- * Branded create/join; same intents and validation as V1.
+ * Home screen — technical spec v2 §6, L11-01; solo path L17-01 / technical spec v3 §5.
+ * Branded create/join/solo; same intents and validation as V1 (solo composes existing ones).
  */
 
-import { PROTOCOL_VERSION } from '@card-battle/shared';
+import { BOT_DIFFICULTIES, PROTOCOL_VERSION, type BotDifficulty } from '@card-battle/shared';
 import { motion } from 'motion/react';
-import type { ReactElement, SyntheticEvent } from 'react';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
+import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
@@ -17,10 +18,12 @@ export interface HomeScreenProps {
   joinCode: string;
   status: RoomConnectionStatus;
   error: string | null;
+  soloLaunchPending: boolean;
   onNicknameChange: (value: string) => void;
   onJoinCodeChange: (value: string) => void;
   onCreate: () => void;
   onJoin: () => void;
+  onStartSolo: (opponentCount: 1 | 2 | 3, difficulty: BotDifficulty) => void;
 }
 
 const inputClassName = [
@@ -30,17 +33,26 @@ const inputClassName = [
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
 ].join(' ');
 
+const OPPONENT_COUNTS = [1, 2, 3] as const;
+
 export function HomeScreen({
   nickname,
   joinCode,
   status,
   error,
+  soloLaunchPending,
   onNicknameChange,
   onJoinCodeChange,
   onCreate,
   onJoin,
+  onStartSolo,
 }: HomeScreenProps): ReactElement {
-  const canSubmit = nickname.trim().length > 0 && status !== 'connecting';
+  const [soloOpponents, setSoloOpponents] = useState<1 | 2 | 3>(1);
+  const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
+  const [soloOpen, setSoloOpen] = useState(false);
+
+  const busy = status === 'connecting' || soloLaunchPending;
+  const canSubmit = nickname.trim().length > 0 && !busy;
   const canJoin = canSubmit && joinCode.trim().length === 6;
 
   const onCreateSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
@@ -54,6 +66,13 @@ export function HomeScreen({
     event.preventDefault();
     if (canJoin) {
       onJoin();
+    }
+  };
+
+  const onSoloSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    if (canSubmit) {
+      onStartSolo(soloOpponents, soloDifficulty);
     }
   };
 
@@ -78,10 +97,12 @@ export function HomeScreen({
               Card Battle
             </h1>
             <p className="mt-3 max-w-[36ch] text-base leading-relaxed text-ink-muted">
-              Create a room or join with a code. Same rules, sharper table.
+              Create a room, join with a code, or play solo against bots.
             </p>
             <p className="mt-4 text-xs text-ink-muted">Protocol v{PROTOCOL_VERSION}</p>
-            <p className="mt-1 text-sm text-ink-muted">{STATUS_LABELS[status]}</p>
+            <p className="mt-1 text-sm text-ink-muted">
+              {soloLaunchPending ? 'Starting solo game…' : STATUS_LABELS[status]}
+            </p>
             {error !== null && (
               <p className="mt-2 text-sm font-medium text-cta-red" role="alert">
                 {error}
@@ -101,6 +122,7 @@ export function HomeScreen({
                 maxLength={24}
                 autoComplete="nickname"
                 placeholder="Your name"
+                disabled={busy}
               />
             </label>
 
@@ -125,12 +147,71 @@ export function HomeScreen({
                   autoComplete="off"
                   spellCheck={false}
                   placeholder="ABCDEF"
+                  disabled={busy}
                 />
               </label>
               <Button type="submit" variant="green" disabled={!canJoin}>
                 Join
               </Button>
             </form>
+
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-ink">Play solo</h2>
+              {!soloOpen ? (
+                <Button
+                  type="button"
+                  variant="green"
+                  disabled={!canSubmit}
+                  onClick={() => {
+                    setSoloOpen(true);
+                  }}
+                >
+                  Play solo
+                </Button>
+              ) : (
+                <form onSubmit={onSoloSubmit} className="space-y-3">
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium text-ink">Opponents</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {OPPONENT_COUNTS.map((count) => (
+                        <Button
+                          key={count}
+                          type="button"
+                          variant={soloOpponents === count ? 'green' : 'orange'}
+                          disabled={busy}
+                          onClick={() => {
+                            setSoloOpponents(count);
+                          }}
+                        >
+                          {count}
+                        </Button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium text-ink">Difficulty</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {BOT_DIFFICULTIES.map((tier) => (
+                        <Button
+                          key={tier}
+                          type="button"
+                          variant={soloDifficulty === tier ? 'green' : 'orange'}
+                          disabled={busy}
+                          onClick={() => {
+                            setSoloDifficulty(tier);
+                          }}
+                        >
+                          {formatBotDifficulty(tier)}
+                        </Button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <Button type="submit" variant="green" disabled={!canSubmit}>
+                    Start
+                  </Button>
+                </form>
+              )}
+            </div>
           </div>
         </section>
 

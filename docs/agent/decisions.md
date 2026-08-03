@@ -879,3 +879,9 @@ Closed open decision #V3-5: scoring weights and related tunable defaults live as
 constants in `apps/server/src/bots/heuristic-weights.ts`. No CLI / env / config file sweep
 in V3 — a single tunable module is enough; exposing weights for simulator sweeps is scope
 creep (technical spec v3 §11 recommendation).
+
+## 2026-08-04 · [P] Difficulty display labels Title Case (#V3-4 / L17-01)
+
+Closed open decision #V3-4: wire values stay `easy` / `normal` / `hard`. Player-facing copy
+is **Easy / Normal / Hard** via `formatBotDifficulty` on the client. No softer synonyms
+(`Calm` / `Steady` / `Sharp`) and no numbered levels.

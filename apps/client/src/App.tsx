@@ -1,6 +1,6 @@
 /**
  * Phase router — Home / Lobby / Table / End.
- * Conventions: docs/agent/frontend.md · technical spec v2 §6.
+ * Conventions: docs/agent/frontend.md · technical spec v2 §6 · L17-01 solo skip-lobby.
  */
 
 import { useEffect, useState } from 'react';
@@ -18,10 +18,12 @@ export function App() {
     status,
     view,
     error,
+    soloLaunchPending,
     createGame,
     joinGame,
     leaveGame,
     startGame,
+    startSoloGame,
     drawCard,
     playCard,
     playMultipleAttacks,
@@ -92,7 +94,7 @@ export function App() {
     );
   }
 
-  if (view?.phase === 'lobby') {
+  if (view?.phase === 'lobby' && !soloLaunchPending) {
     return (
       <LobbyScreen
         view={view}
@@ -112,6 +114,7 @@ export function App() {
       joinCode={joinCode}
       status={status}
       error={error}
+      soloLaunchPending={soloLaunchPending}
       onNicknameChange={setNickname}
       onJoinCodeChange={setJoinCode}
       onCreate={() => {
@@ -119,6 +122,9 @@ export function App() {
       }}
       onJoin={() => {
         void joinGame(joinCode, nickname);
+      }}
+      onStartSolo={(opponentCount, difficulty) => {
+        void startSoloGame({ nickname, opponentCount, difficulty });
       }}
     />
   );

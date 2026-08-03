@@ -80,13 +80,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-12 of 22 V3 tasks done.
+13 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
-| 17 · Solo mode and lobby bots | 5 | 1 |
+| 17 · Solo mode and lobby bots | 5 | 2 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -233,7 +233,7 @@ enters every bot turn through a `setTimeout` (`BOT_THINK_MS`, default 900 ms, en
 
 ## Lot 17 · Solo mode and lobby bots
 
-### L17-01 · Solo mode entry on Home — `To do`
+### L17-01 · Solo mode entry on Home — `Done`
 
 A third path beside Create and Join: opponent count (1–3) and one difficulty for all opponents.
 Creates a room, seats that many bots, starts immediately — the lobby is skipped.

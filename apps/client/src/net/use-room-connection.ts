@@ -5,6 +5,7 @@
 import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
+  ADD_BOT,
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
@@ -20,15 +21,18 @@ import {
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  REMOVE_BOT,
   REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  SET_BOT_DIFFICULTY,
   UPGRADE_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
   type ActionPlayedPayload,
   type ActionResolvedPayload,
+  type BotDifficulty,
   type CardId,
   type ChooseEliminationRewardPayload,
   type GameOverPayload,
@@ -96,6 +100,17 @@ export interface RoomConnection {
   mirrorChoice: MirrorChoiceRequiredPayload | null;
   /** Set when the server asks this client for an elimination reward (Lot 6). */
   rewardChoice: RewardChoiceRequiredPayload | null;
+  /**
+   * Solo create → addBot → startGame in flight (L17-01).
+   * App keeps Home visible so Lobby does not flash.
+   */
+  soloLaunchPending: boolean;
+}
+
+export interface StartSoloGameOptions {
+  nickname: string;
+  opponentCount: 1 | 2 | 3;
+  difficulty: BotDifficulty;
 }
 
 const INITIAL: RoomConnection = {
@@ -108,6 +123,7 @@ const INITIAL: RoomConnection = {
   lastActionResolved: null,
   mirrorChoice: null,
   rewardChoice: null,
+  soloLaunchPending: false,
 };
 
 export interface UseRoomConnectionResult extends RoomConnection {
@@ -115,6 +131,10 @@ export interface UseRoomConnectionResult extends RoomConnection {
   joinGame: (gameCode: string, nickname: string) => Promise<void>;
   leaveGame: () => Promise<void>;
   startGame: () => void;
+  startSoloGame: (options: StartSoloGameOptions) => Promise<void>;
+  addBot: (difficulty: BotDifficulty) => void;
+  removeBot: (playerId: string) => void;
+  setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   drawCard: () => void;
   playCard: (instanceId: string, options?: PlayCardOptions) => void;
   playMultipleAttacks: (
@@ -137,6 +157,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
   const [connection, setConnection] = useState<RoomConnection>(INITIAL);
   const roomRef = useRef<Room | null>(null);
   const intentionalLeaveRef = useRef(false);
+  const soloLaunchPendingRef = useRef(false);
   const attachRoomRef = useRef<(room: Room) => void>(() => {
     /* assigned below */
   });
@@ -156,8 +177,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
       if (isStateView(payload)) {
         if (payload.phase === 'playing') {
           persistToken(room.reconnectionToken);
+          soloLaunchPendingRef.current = false;
         } else if (payload.phase === 'finished') {
           clearToken();
+          soloLaunchPendingRef.current = false;
         }
 
         setConnection((previous) => ({
@@ -166,12 +189,32 @@ export function useRoomConnection(): UseRoomConnectionResult {
           view: payload,
           error: null,
           gameCode: payload.gameCode,
+          soloLaunchPending:
+            previous.soloLaunchPending && payload.phase !== 'playing',
         }));
       }
     });
 
     room.onMessage(ERROR_MESSAGE, (payload: unknown) => {
       if (isErrorPayload(payload)) {
+        if (soloLaunchPendingRef.current) {
+          soloLaunchPendingRef.current = false;
+          intentionalLeaveRef.current = true;
+          clearToken();
+          const current = roomRef.current;
+          roomRef.current = null;
+          if (current !== null) {
+            current.reconnection.enabled = false;
+            void current.leave(true);
+          }
+          setConnection({
+            ...INITIAL,
+            status: 'failed',
+            error: payload.message,
+          });
+          return;
+        }
+
         setConnection((previous) => ({ ...previous, error: payload.message }));
       }
     });
@@ -347,6 +390,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
   const leaveGame = useCallback(async (): Promise<void> => {
     intentionalLeaveRef.current = true;
+    soloLaunchPendingRef.current = false;
     clearToken();
     const room = roomRef.current;
 
@@ -362,6 +406,58 @@ export function useRoomConnection(): UseRoomConnectionResult {
   const startGame = useCallback((): void => {
     roomRef.current?.send(START_GAME);
   }, []);
+
+  const addBot = useCallback((difficulty: BotDifficulty): void => {
+    roomRef.current?.send(ADD_BOT, { difficulty });
+  }, []);
+
+  const removeBot = useCallback((playerId: string): void => {
+    roomRef.current?.send(REMOVE_BOT, { playerId });
+  }, []);
+
+  const setBotDifficulty = useCallback(
+    (playerId: string, difficulty: BotDifficulty): void => {
+      roomRef.current?.send(SET_BOT_DIFFICULTY, { playerId, difficulty });
+    },
+    [],
+  );
+
+  const startSoloGame = useCallback(
+    async (options: StartSoloGameOptions): Promise<void> => {
+      intentionalLeaveRef.current = true;
+      await leaveCurrent(roomRef);
+      intentionalLeaveRef.current = false;
+      clearToken();
+      soloLaunchPendingRef.current = true;
+      setConnection({ ...INITIAL, status: 'connecting', soloLaunchPending: true });
+
+      const client = new Client(resolveServerUrl());
+      const joinOptions: RoomJoinOptions = {
+        protocolVersion: PROTOCOL_VERSION,
+        nickname: options.nickname.trim(),
+      };
+
+      try {
+        const room = await client.create(GAME_ROOM_NAME, joinOptions);
+        attachRoom(room);
+
+        for (let index = 0; index < options.opponentCount; index += 1) {
+          room.send(ADD_BOT, { difficulty: options.difficulty });
+        }
+
+        room.send(START_GAME);
+      } catch (error) {
+        soloLaunchPendingRef.current = false;
+        setConnection({
+          ...INITIAL,
+          status: 'failed',
+          error: describe(error),
+          soloLaunchPending: false,
+        });
+      }
+    },
+    [attachRoom],
+  );
 
   const drawCard = useCallback((): void => {
     roomRef.current?.send(DRAW_CARD);
@@ -436,6 +532,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     joinGame,
     leaveGame,
     startGame,
+    startSoloGame,
+    addBot,
+    removeBot,
+    setBotDifficulty,
     drawCard,
     playCard,
     playMultipleAttacks,
