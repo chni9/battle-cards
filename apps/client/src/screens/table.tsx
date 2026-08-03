@@ -27,10 +27,6 @@ import { EconomyBar } from './table/economy-bar';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
-import {
-  buildPersistentIncomingChips,
-  buildPersistentOthersChips,
-} from './table/persistent-incoming';
 import { PrivateZone } from './table/private-zone';
 import { cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
@@ -169,14 +165,12 @@ function TableScreenInner({
       : Math.max(0, Math.min(1, (deadlineMs - nowMs) / 60_000));
 
   const opponents = view.players.filter((player) => !player.isYou);
-  const incomingEffects = [
-    ...view.pendingEffects.filter((effect) => effect.targetPlayerId === view.you),
-    ...buildPersistentIncomingChips(view),
-  ];
-  const othersPending = [
-    ...view.pendingEffects.filter((effect) => effect.targetPlayerId !== view.you),
-    ...buildPersistentOthersChips(view),
-  ];
+  const incomingEffects = view.pendingEffects.filter(
+    (effect) => effect.targetPlayerId === view.you,
+  );
+  const othersPending = view.pendingEffects.filter(
+    (effect) => effect.targetPlayerId !== view.you,
+  );
 
   const mirrorSecondsLeft =
     mirrorChoice === null
