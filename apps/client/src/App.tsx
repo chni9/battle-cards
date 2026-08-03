@@ -24,6 +24,9 @@ export function App() {
     leaveGame,
     startGame,
     startSoloGame,
+    addBot,
+    removeBot,
+    setBotDifficulty,
     drawCard,
     playCard,
     playMultipleAttacks,
@@ -104,6 +107,9 @@ export function App() {
         onLeave={() => {
           void leaveGame();
         }}
+        onAddBot={addBot}
+        onRemoveBot={removeBot}
+        onSetBotDifficulty={setBotDifficulty}
       />
     );
   }

@@ -1,11 +1,17 @@
 /**
- * Lobby screen — technical spec v2 §6, L11-02.
- * Seats, copyable game code, host Start; same intents as V1.
+ * Lobby screen — technical spec v2 §6, L11-02; bot controls L17-02 / technical spec v3 §6.
+ * Seats, copyable game code, host Start / bot controls; same intents as V1 + L15 bot messages.
  */
 
-import { PROTOCOL_VERSION, type LobbyStateView } from '@card-battle/shared';
+import {
+  BOT_DIFFICULTIES,
+  PROTOCOL_VERSION,
+  type BotDifficulty,
+  type LobbyStateView,
+} from '@card-battle/shared';
 import { useCallback, useState, type ReactElement } from 'react';
 
+import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
@@ -17,6 +23,9 @@ export interface LobbyScreenProps {
   error: string | null;
   onStart: () => void;
   onLeave: () => void;
+  onAddBot: (difficulty: BotDifficulty) => void;
+  onRemoveBot: (playerId: string) => void;
+  onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
 }
 
 export function LobbyScreen({
@@ -25,11 +34,16 @@ export function LobbyScreen({
   error,
   onStart,
   onLeave,
+  onAddBot,
+  onRemoveBot,
+  onSetBotDifficulty,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
   const canLaunch = isHost && view.players.length >= 2;
+  const canAddBot = isHost && view.players.length < 4;
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
 
   const closeCopyDialog = useCallback(() => {
     setCopyOpen(false);
@@ -86,21 +100,84 @@ export function LobbyScreen({
             {view.players.map((player) => (
               <li
                 key={player.id}
-                className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-sm"
+                className="flex min-h-11 flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
-                <span className="font-medium text-ink">
-                  {player.nickname}
-                  {player.id === view.you ? ' (you)' : ''}
-                </span>
-                {player.id === view.hostPlayerId && (
-                  <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    Host
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-ink">
+                    {player.nickname}
+                    {player.id === view.you ? ' (you)' : ''}
                   </span>
+                  {player.id === view.hostPlayerId && (
+                    <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                      Host
+                    </span>
+                  )}
+                  {player.isBot && player.botDifficulty !== undefined && (
+                    <span className="text-xs text-ink-muted">
+                      Bot · {formatBotDifficulty(player.botDifficulty)}
+                    </span>
+                  )}
+                </div>
+                {isHost && player.isBot && player.botDifficulty !== undefined && (
+                  <div className="flex flex-wrap gap-2">
+                    {BOT_DIFFICULTIES.map((tier) => (
+                      <Button
+                        key={tier}
+                        type="button"
+                        variant={player.botDifficulty === tier ? 'green' : 'orange'}
+                        onClick={() => {
+                          onSetBotDifficulty(player.id, tier);
+                        }}
+                      >
+                        {formatBotDifficulty(tier)}
+                      </Button>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="red"
+                      onClick={() => {
+                        onRemoveBot(player.id);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 )}
               </li>
             ))}
           </ul>
         </section>
+
+        {isHost && (
+          <section className="mt-6 space-y-3">
+            <h2 className="text-sm font-medium text-ink">Add bot</h2>
+            <div className="flex flex-wrap gap-2">
+              {BOT_DIFFICULTIES.map((tier) => (
+                <Button
+                  key={tier}
+                  type="button"
+                  variant={addDifficulty === tier ? 'green' : 'orange'}
+                  disabled={!canAddBot}
+                  onClick={() => {
+                    setAddDifficulty(tier);
+                  }}
+                >
+                  {formatBotDifficulty(tier)}
+                </Button>
+              ))}
+              <Button
+                type="button"
+                variant="green"
+                disabled={!canAddBot}
+                onClick={() => {
+                  onAddBot(addDifficulty);
+                }}
+              >
+                Add bot
+              </Button>
+            </div>
+          </section>
+        )}
 
         <div className="mt-8 flex flex-wrap gap-3">
           {isHost && (

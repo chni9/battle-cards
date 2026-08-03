@@ -80,13 +80,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-13 of 22 V3 tasks done.
+14 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
-| 17 · Solo mode and lobby bots | 5 | 2 |
+| 17 · Solo mode and lobby bots | 5 | 3 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -242,7 +242,7 @@ Creates a room, seats that many bots, starts immediately — the lobby is skippe
 - **Watch point** Solo mode needs **no new intent**: it is `create` + N × `addBot` + `startGame`, which is exactly why it inherits the existing validation for free. Per-opponent difficulty is deliberately not offered here (it is in the lobby) — two UIs for one thing. Build from V2's `Button` and `Dialog`; no new dependency, no new design token.
 - **Acceptance** Three clicks from Home to a running 1v1 solo game; 1, 2 and 3 opponents all work; no client-side rule or decision logic added (`AGENTS.md` §4)
 
-### L17-02 · Lobby bot controls — `To do`
+### L17-02 · Lobby bot controls — `Done`
 
 Host-only add / remove / change-difficulty per bot seat, with the `Players (n/4)` count and seat
 list including bots.

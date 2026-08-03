@@ -1,7 +1,7 @@
 /**
  * Bot difficulty tiers — technical spec v3 §4.5, §5, §7.
  *
- * Wire values only. Display labels are a separate product question (#V3-4 / L17).
+ * Wire values only. Display labels: Easy / Normal / Hard (`formatBotDifficulty`, #V3-4).
  * One definition imported by server and client (`AGENTS.md` §4).
  */
 
