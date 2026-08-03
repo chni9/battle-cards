@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 22 V2 tasks done. Active from Lot 14.
+20 of 22 V2 tasks done. Active from Lot 14.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +76,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 1 |
-| 14 · Animation | 5 | 2 |
+| 14 · Animation | 5 | 3 |
 
 ## Milestones
 
@@ -276,7 +276,7 @@ Visual effect tied to `actionResolved.outcome` (`applied` / `cancelled` / `immun
 - **Watch point** Three distinct outcomes need three distinct, honest visual treatments — do not animate `cancelled` or `immune` as if the effect landed.
 - **Acceptance** Each of the three outcomes has a visibly distinct animation
 
-### L14-03 · Elimination and reward-sequence animation — `To do`
+### L14-03 · Elimination and reward-sequence animation — `Done`
 
 Elimination moment, then the reward sub-choice sequence (chainable at multi-elimination).
 

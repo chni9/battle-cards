@@ -149,6 +149,37 @@ function TableScreenInner({
     });
   }, [lastActionResolved, enqueue]);
 
+  const seenElimKeys = useRef(new Set<string>());
+  useEffect(() => {
+    for (const entry of view.actionLog) {
+      if (entry.kind !== 'playerEliminated') {
+        continue;
+      }
+      const key = `${entry.playerId}:${String(entry.turnSequence)}:${entry.reason}`;
+      if (seenElimKeys.current.has(key)) {
+        continue;
+      }
+      seenElimKeys.current.add(key);
+      enqueue({ kind: 'eliminationBeat', playerId: entry.playerId });
+    }
+  }, [view.actionLog, enqueue]);
+
+  const lastRewardElimId = useRef<string | null>(null);
+  useEffect(() => {
+    if (rewardChoice === null) {
+      lastRewardElimId.current = null;
+      return;
+    }
+    if (lastRewardElimId.current === rewardChoice.eliminationId) {
+      return;
+    }
+    lastRewardElimId.current = rewardChoice.eliminationId;
+    enqueue({
+      kind: 'rewardPulse',
+      eliminationId: rewardChoice.eliminationId,
+    });
+  }, [rewardChoice, enqueue]);
+
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
   const selfEliminated = selfPublic?.isEliminated === true;
