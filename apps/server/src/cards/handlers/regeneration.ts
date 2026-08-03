@@ -7,7 +7,8 @@ import { gainLives } from '../../engine/life/gain-lives';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
-const MAX_LIVES_PER_USE = 4;
+/** Per-use quantity cap — rules spec §3; exported for `listLegalActions` (L16-01). */
+export const MAX_LIVES_PER_USE = 4;
 const POINTS_PER_LIFE_BASE = 3;
 const POINTS_PER_LIFE_UPGRADED = 2;
 

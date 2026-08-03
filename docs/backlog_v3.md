@@ -85,7 +85,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 0 |
+| 16 · Bot brain | 6 | 1 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -168,7 +168,7 @@ empty room and write a finished game to Postgres.
 
 ## Lot 16 · Bot brain
 
-### L16-01 · `listLegalActions` — `To do`
+### L16-01 · `listLegalActions` — `Done`
 
 New `apps/server/src/engine/turn/list-legal-actions.ts`, returning the existing `TurnAction`
 union. Enumerate per the table in technical spec v3 §4.3, calling the real validators

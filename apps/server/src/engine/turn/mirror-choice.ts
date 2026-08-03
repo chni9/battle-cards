@@ -3,8 +3,7 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
-  type AttackCardId,
+  isAttackCardId,
   type CardId,
   type GameState,
   type PendingEffect,
@@ -21,10 +20,6 @@ export interface MirrorRedirectInfo {
   cardId: CardId;
   previousTargetPlayerId: string;
   newTargetPlayerId: string;
-}
-
-function isAttackCardId(cardId: string): cardId is AttackCardId {
-  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
 }
 
 export function listEligibleMirrorTargets(

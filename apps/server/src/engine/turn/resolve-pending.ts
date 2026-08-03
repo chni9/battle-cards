@@ -7,9 +7,8 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
   attackDamageFor,
-  type AttackCardId,
+  isAttackCardId,
   type CardId,
   type GameState,
   type PendingEffect,
@@ -35,10 +34,6 @@ export interface ResolvedEffect {
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
 const SUICIDE_OPPONENT_LIFE_LOSS = 5;
-
-function isAttackCardId(cardId: string): cardId is AttackCardId {
-  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
-}
 
 function isCounterableCardId(cardId: CardId): boolean {
   return COUNTERABLE_CARD_IDS.has(cardId);

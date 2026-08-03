@@ -4,11 +4,9 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
-  getCard,
   getKit,
+  isAttackCardId,
   isPersistentSpecialCardId,
-  type AttackCardId,
   type CardId,
   type CardInstance,
   type GameState,
@@ -37,6 +35,7 @@ import {
   processEliminations,
   type EliminationEvent,
 } from './elimination-rewards';
+import { canAffordPlayPoints, playPointsCost } from './play-cost';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
 
 export type TurnAction =
@@ -436,10 +435,6 @@ function finishTurnPhases(
   };
 }
 
-function isAttackCardId(cardId: string): cardId is AttackCardId {
-  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
-}
-
 /**
  * Assassin multi-attack — rules spec §4, backlog L4-05.
  * All-or-nothing: validate fully before paying or queuing.
@@ -519,8 +514,7 @@ function playMultipleAttacksAction(
       return { ok: false, message: 'That play is not legal.' };
     }
 
-    const definition = getCard(instance.cardId);
-    const playPoints = definition?.cost.points ?? 0;
+    const playPoints = playPointsCost(instance.cardId);
     totalCost += playPoints;
     prepared.push({
       instance,
@@ -637,13 +631,13 @@ function playCardAction(
   }
 
   // Play payment: points from catalog (shared or special Price). Life / pointsPerLife
-  // play costs land with their handlers (Tax, Regeneration).
-  const definition = getCard(cardId);
-  const playPoints = definition?.cost.points ?? 0;
-
-  if (actor.points < playPoints) {
+  // play costs land with their handlers (Tax, Regeneration). Shared with listLegalActions
+  // (technical spec v3 §4.3 rule 4).
+  if (!canAffordPlayPoints(actor, cardId)) {
     return { ok: false, message: 'Not enough points.' };
   }
+
+  const playPoints = playPointsCost(cardId);
 
   if (playPoints > 0) {
     actor.points -= playPoints;

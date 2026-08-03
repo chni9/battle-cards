@@ -39,6 +39,11 @@ export const SPECIAL_CARD_IDS = [
  */
 export type AttackCardId = (typeof ATTACK_CARD_IDS)[number];
 
+/** Narrow any string (e.g. `PendingEffect.cardId`) before `attackDamageFor`. */
+export function isAttackCardId(cardId: string): cardId is AttackCardId {
+  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
+}
+
 export type ActionCardId = (typeof ACTION_CARD_IDS)[number];
 
 export type SpecialCardId = (typeof SPECIAL_CARD_IDS)[number];
