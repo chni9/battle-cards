@@ -180,6 +180,9 @@ function TableScreenInner({
     });
   }, [rewardChoice, enqueue]);
 
+  const mirrorHighlightIds =
+    mirrorChoice === null ? [] : mirrorChoice.eligibleEffectIds;
+
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
   const selfEliminated = selfPublic?.isEliminated === true;
@@ -352,6 +355,7 @@ function TableScreenInner({
             title="Pending on others"
             compact
             tone="felt"
+            highlightedIds={mirrorHighlightIds}
           />
         }
         actionLog={<ActionLogPanel view={view} />}
@@ -360,6 +364,7 @@ function TableScreenInner({
             view={view}
             selfPublic={selfPublic}
             incomingEffects={incomingEffects}
+            mirrorHighlightIds={mirrorHighlightIds}
             onInspectKit={() => {
               setInspectKitId(view.self.kitId);
             }}

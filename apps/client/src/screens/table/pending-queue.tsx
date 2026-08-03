@@ -1,6 +1,7 @@
 /**
  * Pending effects strip — L12-04 / self-targeted in private zone.
  * Chips stay fully visible; strip scrolls when many effects queue.
+ * L14-04: optional Mirror highlight via highlightedIds.
  */
 
 import { formatCardLabel, type PendingEffectView, type PlayingStateView } from '@card-battle/shared';
@@ -17,6 +18,8 @@ export interface PendingQueueProps {
   compact?: boolean;
   /** Tone for placement on felt (light on dark) vs private dock. */
   tone?: 'felt' | 'dock';
+  /** Pending effect ids to emphasize (Mirror eligible). */
+  highlightedIds?: readonly string[];
 }
 
 export function PendingQueue({
@@ -25,6 +28,7 @@ export function PendingQueue({
   title = 'Pending effects',
   compact = false,
   tone = 'felt',
+  highlightedIds = [],
 }: PendingQueueProps): ReactElement {
   const titleClass =
     tone === 'felt'
@@ -36,6 +40,7 @@ export function PendingQueue({
     tone === 'felt'
       ? 'border-slate-soft/50 bg-surface-raised text-ink'
       : 'border-border-soft bg-surface-raised text-ink';
+  const highlightClass = 'ring-2 ring-cta-purple border-cta-purple shadow-md';
 
   return (
     <section data-zone="pending-queue" className="flex min-h-0 flex-col">
@@ -52,6 +57,7 @@ export function PendingQueue({
           {effects.map((effect) => {
             const label = formatCardLabel(effect.cardId, effect.isUpgraded);
             const route = `${nicknameOf(view, effect.sourcePlayerId)} → ${nicknameOf(view, effect.targetPlayerId)}`;
+            const highlighted = highlightedIds.includes(effect.id);
             if (compact) {
               return (
                 <li
@@ -59,8 +65,9 @@ export function PendingQueue({
                   data-pending-id={effect.id}
                   title={`${label} · ${route} · queued #${String(effect.queuedAt)}`}
                   className={[
-                    'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm',
+                    'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                     chipClass,
+                    highlighted ? highlightClass : '',
                   ].join(' ')}
                 >
                   <span className="truncate text-xs font-semibold">{label}</span>
@@ -73,8 +80,9 @@ export function PendingQueue({
                 key={effect.id}
                 data-pending-id={effect.id}
                 className={[
-                  'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm',
+                  'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                   chipClass,
+                  highlighted ? highlightClass : '',
                 ].join(' ')}
               >
                 <span className="text-sm font-semibold">{label}</span>

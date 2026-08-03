@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-20 of 22 V2 tasks done. Active from Lot 14.
+21 of 22 V2 tasks done. Active from Lot 14.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +76,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 1 |
-| 14 · Animation | 5 | 3 |
+| 14 · Animation | 5 | 4 |
 
 ## Milestones
 
@@ -284,7 +284,7 @@ Elimination moment, then the reward sub-choice sequence (chainable at multi-elim
 - **Watch point** Must stay correct through a chained multi-elimination (up to 6 choices in a row at 4 players, per L6-02) — test the animation at the edge case, not just a single elimination.
 - **Acceptance** A multi-elimination sequence animates every step without getting visually stuck, matching the underlying prompt/lock state
 
-### L14-04 · Mirror and Assassin animation — `To do`
+### L14-04 · Mirror and Assassin animation — `Done`
 
 Mirror redirect sub-choice, Assassin multi-attack targeting.
 

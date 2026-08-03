@@ -1,6 +1,6 @@
 /**
- * Private zone — kit + incoming, shared-size hand/specials, resources.
- * No vertical scroll. Effect text only in Dialogs.
+ * Private zone — kit + actives + incoming on one header row; hand/specials below.
+ * Activating a card must not steal vertical space from the card band.
  */
 
 import type {
@@ -10,6 +10,7 @@ import type {
 } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
+import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
@@ -20,6 +21,7 @@ export interface PrivateZoneProps {
   view: PlayingStateView;
   selfPublic: PublicPlayerView | undefined;
   incomingEffects: readonly PendingEffectView[];
+  mirrorHighlightIds?: readonly string[];
   onInspectKit: () => void;
   onSelectOwnCard?: (instanceId: string) => void;
   onSelectActive?: (instanceId: string) => void;
@@ -29,15 +31,12 @@ export function PrivateZone({
   view,
   selfPublic,
   incomingEffects,
+  mirrorHighlightIds = [],
   onInspectKit,
   onSelectOwnCard,
   onSelectActive,
 }: PrivateZoneProps): ReactElement {
-  const actives = view.self.activePersistentEffects.map((effect) => ({
-    instanceId: effect.id,
-    cardId: effect.cardId,
-    isUpgraded: effect.isUpgraded,
-  }));
+  const actives = view.self.activePersistentEffects;
 
   return (
     <section
@@ -56,6 +55,34 @@ export function PrivateZone({
             <h2 className="text-xs font-semibold text-ink sm:text-sm">You</h2>
             {selfPublic !== undefined && <ConnectionBadge player={selfPublic} />}
           </div>
+          {actives.length > 0 && (
+            <div
+              data-zone="own-actives"
+              className="flex shrink-0 items-center gap-0.5"
+              title="Active cards"
+            >
+              {actives.map((effect) => (
+                <Card
+                  key={effect.id}
+                  instance={{
+                    instanceId: effect.id,
+                    cardId: effect.cardId,
+                    isUpgraded: effect.isUpgraded,
+                  }}
+                  detail="thumb"
+                  activated
+                  className="w-7 !p-0.5 sm:w-8"
+                  {...(onSelectActive !== undefined
+                    ? {
+                        onSelect: () => {
+                          onSelectActive(effect.id);
+                        },
+                      }
+                    : {})}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div
           data-zone="incoming-pending"
@@ -67,6 +94,7 @@ export function PrivateZone({
             title="Incoming"
             compact
             tone="dock"
+            highlightedIds={mirrorHighlightIds}
           />
         </div>
       </div>
@@ -75,9 +103,7 @@ export function PrivateZone({
         <CardBand
           hand={view.self.hand}
           specials={view.self.specialCards}
-          actives={actives}
           {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
-          {...(onSelectActive !== undefined ? { onSelectActive } : {})}
         />
       </div>
 

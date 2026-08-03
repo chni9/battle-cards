@@ -14,6 +14,7 @@ import {
   type RewardChoice,
   type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
+import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
@@ -162,6 +163,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
     actionInstance !== null ? cardEffectText(actionInstance) : '';
   const inspectEffect =
     dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
+  const reduceMotion = useReducedMotion();
 
   return (
     <>
@@ -418,11 +420,24 @@ export function CardActions(props: CardActionsProps): ReactElement {
           Select at least two attack cards and a target each.
         </p>
         <ul className="space-y-2">
-          {attackCards.map((card) => {
+          {attackCards.map((card, index) => {
             const checked = multiIds.includes(card.instanceId);
             const rowTarget = multiTargets[card.instanceId] ?? resolvedTarget;
             return (
-              <li key={card.instanceId} className="flex flex-wrap items-center gap-2">
+              <motion.li
+                key={card.instanceId}
+                className="flex flex-wrap items-center gap-2"
+                initial={
+                  reduceMotion === true || dialog?.kind !== 'multi'
+                    ? false
+                    : { opacity: 0, y: 6 }
+                }
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.18,
+                  delay: reduceMotion === true ? 0 : index * 0.04,
+                }}
+              >
                 <label className="text-sm">
                   <input
                     type="checkbox"
@@ -461,7 +476,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                     ))}
                   </select>
                 )}
-              </li>
+              </motion.li>
             );
           })}
         </ul>
