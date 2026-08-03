@@ -210,7 +210,11 @@ describe('heuristic decide (L16-04)', () => {
       ],
     });
     const pick = pickMirrorRedirect(view, createRng('mirror-pick'));
-    expect(pick).toEqual({ pendingEffectId: 'eff-1', newTargetPlayerId: 'bot-c' });
+    expect(pick).toEqual({
+      pendingEffectId: 'eff-1',
+      newTargetPlayerId: 'bot-c',
+      reason: { code: 'mirror-highest-damage' },
+    });
   });
 
   it('pickEliminationRewards prefers lives below half lifeLimit', () => {

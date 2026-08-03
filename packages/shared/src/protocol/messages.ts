@@ -6,7 +6,7 @@
  */
 
 import type { CardId } from '../domain/card';
-import type { BotDifficulty } from '../domain/bot';
+import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type {
   ChooseEliminationRewardPayload,
   RewardChoiceRequiredPayload,
@@ -78,6 +78,8 @@ export interface ActionPlayedPayload {
   /** Present when action is `playMultipleAttacks` (Assassin). */
   attacks?: readonly PublicAttackPlay[];
   turnSequence: number;
+  /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
+  botReason?: BotDecisionReason;
 }
 
 export interface ActionResolvedPayload {

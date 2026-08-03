@@ -36,6 +36,7 @@ import {
   type ActionLogEntryView,
   type ActionPlayedPayload,
   type AddBotPayload,
+  type BotDecisionReason,
   type BotDifficulty,
   type BuyCardPayload,
   type CardId,
@@ -175,21 +176,26 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       return seat.difficulty;
     },
-    performBotAction: (botId, action) => {
-      this.performBotAction(botId, action);
+    performBotAction: (botId, action, reason) => {
+      this.performBotAction(botId, action, reason);
     },
-    performBotDraw: (botId) => {
-      this.performAutoDraw(botId);
+    performBotDraw: (botId, reason) => {
+      this.performAutoDraw(botId, reason);
     },
-    completeBotMirror: (botId, pendingEffectId, newTargetPlayerId) => {
-      this.applyBotMirrorChoice(botId, pendingEffectId, newTargetPlayerId);
+    completeBotMirror: (botId, pendingEffectId, newTargetPlayerId, reason) => {
+      this.applyBotMirrorChoice(botId, pendingEffectId, newTargetPlayerId, reason);
     },
-    completeBotReward: (botId, eliminationId, choices) => {
-      this.applyBotRewardChoice(botId, eliminationId, [choices[0], choices[1]]);
+    completeBotReward: (botId, eliminationId, choices, reason) => {
+      this.applyBotRewardChoice(botId, eliminationId, [choices[0], choices[1]], reason);
     },
   });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
   private startedAtMs: number | null = null;
+  /**
+   * Next bot action/log reason to attach (L17-05). Cleared when consumed.
+   * Explanatory only — never affects legality or resolution.
+   */
+  private pendingBotReason: BotDecisionReason | null = null;
   /** Elimination history for the finished-game log (wire reasons; not on GameState). */
   private eliminations: FinishedGameEliminationRecord[] = [];
   private actionTakenThisTurn = false;
@@ -813,6 +819,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const turnSequence = result.actionPlayed.turnSequence;
 
     if (result.mirrorRedirect !== undefined) {
+      const botReason = this.consumePendingBotReason();
       this.actionLog.push({
         kind: 'mirrorRedirected',
         actorPlayerId: result.mirrorRedirect.actorPlayerId,
@@ -820,8 +827,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
         previousTargetPlayerId: result.mirrorRedirect.previousTargetPlayerId,
         newTargetPlayerId: result.mirrorRedirect.newTargetPlayerId,
         turnSequence: result.mirrorRedirect.turnSequence,
+        ...(botReason !== null ? { botReason } : {}),
       });
     } else {
+      const botReason = this.consumePendingBotReason();
       const played: ActionPlayedPayload = {
         actorPlayerId: result.actionPlayed.actorPlayerId,
         action: result.actionPlayed.action,
@@ -838,6 +847,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ...(result.actionPlayed.attacks !== undefined
           ? { attacks: result.actionPlayed.attacks }
           : {}),
+        ...(botReason !== null ? { botReason } : {}),
       };
 
       this.actionLog.push({ kind: 'actionPlayed', ...played });
@@ -885,13 +895,25 @@ export class GameRoom extends Room<{ client: GameClient }> {
     eliminatedPlayerId: string;
   }): void {
     const turnSequence = this.gameState?.turnSequence ?? 0;
+    const botReason = this.consumePendingBotReason();
 
     this.actionLog.push({
       kind: 'rewardsClaimed',
       eliminatorPlayerId: claimed.eliminatorPlayerId,
       eliminatedPlayerId: claimed.eliminatedPlayerId,
       turnSequence,
+      ...(botReason !== null ? { botReason } : {}),
     });
+  }
+
+  private consumePendingBotReason(): BotDecisionReason | null {
+    const reason = this.pendingBotReason;
+    this.pendingBotReason = null;
+    return reason;
+  }
+
+  private setPendingBotReason(reason: BotDecisionReason | undefined): void {
+    this.pendingBotReason = reason ?? null;
   }
 
   private beginMirrorTimer(
@@ -1195,26 +1217,36 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
   }
 
-  private performAutoDraw(playerId: string): void {
-    this.performBotAction(playerId, { type: 'draw' });
+  private performAutoDraw(playerId: string, reason?: BotDecisionReason): void {
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+    const resolvedReason =
+      reason ??
+      (seat !== undefined && isBotSeat(seat) ? { code: 'policy-fallback' as const } : undefined);
+    this.performBotAction(playerId, { type: 'draw' }, resolvedReason);
   }
 
   /**
    * Bot (or absent auto-draw) action path — same post-routing as human handleAction
    * without a Client (technical spec v3 §4.2).
    */
-  private performBotAction(playerId: string, action: TurnAction): void {
+  private performBotAction(
+    playerId: string,
+    action: TurnAction,
+    reason?: BotDecisionReason,
+  ): void {
     const state = this.gameState;
 
     if (state === null) {
       return;
     }
 
+    this.setPendingBotReason(reason);
     const result = performTurnAction(state, playerId, action);
 
     if (!result.ok) {
+      this.pendingBotReason = null;
       if (action.type !== 'draw') {
-        this.performAutoDraw(playerId);
+        this.performAutoDraw(playerId, { code: 'policy-fallback' });
       }
 
       return;
@@ -1271,6 +1303,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     botId: string,
     pendingEffectId: string,
     newTargetPlayerId: string,
+    reason?: BotDecisionReason,
   ): void {
     const state = this.gameState;
 
@@ -1278,10 +1311,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.setPendingBotReason(reason);
     const result = completeMirrorChoice(state, botId, pendingEffectId, newTargetPlayerId);
 
     if (!result.ok) {
-      this.performAutoDraw(botId);
+      this.pendingBotReason = null;
+      this.performAutoDraw(botId, { code: 'policy-fallback' });
       return;
     }
 
@@ -1307,6 +1342,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     botId: string,
     eliminationId: string,
     choices: [RewardChoice, RewardChoice],
+    reason?: BotDecisionReason,
   ): void {
     const state = this.gameState;
 
@@ -1314,9 +1350,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.setPendingBotReason(reason);
     const result = completeEliminationRewardChoice(state, botId, eliminationId, choices);
 
     if (!result.ok) {
+      this.pendingBotReason = null;
       return;
     }
 

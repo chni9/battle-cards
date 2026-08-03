@@ -17,6 +17,11 @@ export const DIFFICULTY_RANDOM_RATES: Readonly<Record<BotDifficulty, number>> = 
   hard: 0,
 };
 
+export interface DifficultyNoiseResult {
+  action: TurnAction;
+  substituted: boolean;
+}
+
 /** Whether this decision substitutes a random legal action (seeded). */
 export function rollDifficultyNoise(difficulty: BotDifficulty, rng: Rng): boolean {
   const rate = DIFFICULTY_RANDOM_RATES[difficulty];
@@ -34,13 +39,22 @@ export function applyDifficultyNoise(
   difficulty: BotDifficulty,
   rng: Rng,
 ): TurnAction {
+  return applyDifficultyNoiseWithMeta(topAction, actions, difficulty, rng).action;
+}
+
+export function applyDifficultyNoiseWithMeta(
+  topAction: TurnAction,
+  actions: readonly TurnAction[],
+  difficulty: BotDifficulty,
+  rng: Rng,
+): DifficultyNoiseResult {
   if (actions.length === 0) {
     throw new RangeError('applyDifficultyNoise received an empty action list');
   }
 
   if (!rollDifficultyNoise(difficulty, rng)) {
-    return topAction;
+    return { action: topAction, substituted: false };
   }
 
-  return rng.pick(actions);
+  return { action: rng.pick(actions), substituted: true };
 }

@@ -80,13 +80,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-15 of 22 V3 tasks done.
+16 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
-| 17 · Solo mode and lobby bots | 5 | 4 |
+| 17 · Solo mode and lobby bots | 5 | 5 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -270,7 +270,7 @@ screens. Reuses V2's existing components and tokens.
 - **Watch point** Without this, the first balance query after V3 ships silently averages human games with games against `easy` bots, and **no later migration can separate them retroactively**. Explicit migration only, never auto-run on boot (`docs/agent/db.md`).
 - **Acceptance** A solo game's row has `has_bots = true` with per-player `is_bot` / `bot_difficulty` set; an all-human game is unchanged from today; existing games keep working under the defaults
 
-### L17-05 · Bot reasoning visibility — `To do`
+### L17-05 · Bot reasoning visibility — `Done`
 
 Implement the ruling on open decision #V3-2.
 

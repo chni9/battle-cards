@@ -1,15 +1,17 @@
 /**
  * Browsable action log — technical spec §7, L9-02 / L12-05.
- * Round groups, one line each. No filters (space reserved for the table).
+ * Round groups, one line each. Bot reason toggle: L17-05 / #V3-2.
  */
 
 import type {
   ActionLogEntryKind,
   ActionLogEntryView,
+  BotDecisionReason,
   PlayingStateView,
 } from '@card-battle/shared';
-import { useEffect, useRef, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { formatBotReason } from '../bots/format-bot-reason';
 import { formatActionLogEntry, groupByRound } from './action-log';
 
 const KIND_META: Record<
@@ -158,20 +160,60 @@ function LogLine({
   nicknameOf: (playerId: string) => string;
 }): ReactElement {
   const meta = KIND_META[entry.kind];
+  const botReason = botReasonOf(entry);
+  const [open, setOpen] = useState(false);
+
   return (
-    <li className="flex items-baseline gap-1.5 border-b border-border-soft/60 py-0.5 last:border-b-0">
-      <span
-        className="mt-0.5 shrink-0 text-ink-muted"
-        title={meta.label}
-        aria-hidden
-      >
-        {meta.icon}
-      </span>
-      <p className="min-w-0 flex-1 truncate text-xs leading-5 text-ink">
-        {formatActionLogEntry(entry, resolve)}
-      </p>
+    <li className="border-b border-border-soft/60 py-0.5 last:border-b-0">
+      <div className="flex items-baseline gap-1.5">
+        <span
+          className="mt-0.5 shrink-0 text-ink-muted"
+          title={meta.label}
+          aria-hidden
+        >
+          {meta.icon}
+        </span>
+        <p className="min-w-0 flex-1 truncate text-xs leading-5 text-ink">
+          {formatActionLogEntry(entry, resolve)}
+        </p>
+        {botReason !== undefined && (
+          <button
+            type="button"
+            className={[
+              'shrink-0 rounded-[length:var(--radius-badge)] border border-border-soft',
+              'px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted',
+              'hover:bg-surface-raised focus-visible:outline focus-visible:outline-2',
+              'focus-visible:outline-offset-1 focus-visible:outline-ink',
+            ].join(' ')}
+            aria-expanded={open}
+            aria-label={open ? 'Hide bot reason' : 'Show bot reason'}
+            onClick={() => {
+              setOpen((previous) => !previous);
+            }}
+          >
+            Why
+          </button>
+        )}
+      </div>
+      {open && botReason !== undefined && (
+        <p className="mt-0.5 pl-5 text-[11px] leading-4 text-ink-muted">
+          {formatBotReason(botReason)}
+        </p>
+      )}
     </li>
   );
+}
+
+function botReasonOf(entry: ActionLogEntryView): BotDecisionReason | undefined {
+  if (
+    entry.kind === 'actionPlayed' ||
+    entry.kind === 'mirrorRedirected' ||
+    entry.kind === 'rewardsClaimed'
+  ) {
+    return entry.botReason;
+  }
+
+  return undefined;
 }
 
 function entryKey(entry: ActionLogEntryView, index: number): string {

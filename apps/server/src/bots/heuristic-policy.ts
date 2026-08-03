@@ -8,6 +8,8 @@ import {
   attackDamageFor,
   getCard,
   isAttackCardId,
+  type BotDecisionReason,
+  type BotReasonCode,
   type CardId,
   type CardInstance,
   type PlayingStateView,
@@ -26,11 +28,18 @@ import {
 export interface MirrorPolicyPick {
   pendingEffectId: string;
   newTargetPlayerId: string;
+  reason: BotDecisionReason;
+}
+
+export interface PolicyDecision {
+  action: TurnAction;
+  reason: BotDecisionReason;
 }
 
 interface ScoredAction {
   action: TurnAction;
   score: number;
+  code: BotReasonCode;
 }
 
 export function decide(
@@ -38,15 +47,23 @@ export function decide(
   actions: readonly TurnAction[],
   rng: Rng,
 ): TurnAction {
+  return decideWithReason(view, actions, rng).action;
+}
+
+export function decideWithReason(
+  view: PlayingStateView,
+  actions: readonly TurnAction[],
+  rng: Rng,
+): PolicyDecision {
   if (actions.length === 0) {
     throw new RangeError('decide received an empty action list');
   }
 
   const ctx = buildContext(view, rng);
-  const scored: ScoredAction[] = actions.map((action) => ({
-    action,
-    score: scoreAction(view, action, ctx),
-  }));
+  const scored: ScoredAction[] = actions.map((action) => {
+    const evaluated = scoreAction(view, action, ctx);
+    return { action, score: evaluated.score, code: evaluated.code };
+  });
 
   let best = scored[0]?.score ?? Number.NEGATIVE_INFINITY;
 
@@ -56,8 +73,13 @@ export function decide(
     }
   }
 
-  const top = scored.filter((entry) => entry.score === best).map((entry) => entry.action);
-  return rng.pick(top);
+  const top = scored.filter((entry) => entry.score === best);
+  const pick = rng.pick(top);
+
+  return {
+    action: pick.action,
+    reason: { code: pick.code },
+  };
 }
 
 export function pickMirrorRedirect(
@@ -91,7 +113,16 @@ export function pickMirrorRedirect(
     return null;
   }
 
-  return { pendingEffectId: effect.id, newTargetPlayerId: newTarget };
+  return {
+    pendingEffectId: effect.id,
+    newTargetPlayerId: newTarget,
+    reason: { code: 'mirror-highest-damage' },
+  };
+}
+
+export interface RewardPolicyPicks {
+  choices: [RewardChoice, RewardChoice];
+  reason: BotDecisionReason;
 }
 
 export function pickEliminationRewards(
@@ -100,6 +131,15 @@ export function pickEliminationRewards(
   lifeLimit: number,
   rng: Rng,
 ): [RewardChoice, RewardChoice] {
+  return pickEliminationRewardsWithReason(view, availableCards, lifeLimit, rng).choices;
+}
+
+export function pickEliminationRewardsWithReason(
+  view: PlayingStateView,
+  availableCards: readonly CardInstance[],
+  lifeLimit: number,
+  rng: Rng,
+): RewardPolicyPicks {
   const pickOne = (claimed: ReadonlySet<string>): RewardChoice => {
     const attackCards = availableCards
       .filter(
@@ -141,9 +181,26 @@ export function pickEliminationRewards(
     claimed.add(first.instanceId);
   }
 
-  const second = pickOne(claimed);
-  void rng;
-  return [first, second];
+  let second = pickOne(claimed);
+
+  if (
+    first.type === 'card' &&
+    second.type === 'card' &&
+    first.instanceId === second.instanceId
+  ) {
+    second = rng.nextInt(2) === 0 ? { type: 'lives' } : { type: 'points' };
+  }
+
+  return {
+    choices: [first, second],
+    reason: {
+      code: 'reward-pick',
+      params: {
+        first: first.type,
+        second: second.type,
+      },
+    },
+  };
 }
 
 interface PolicyContext {
@@ -176,9 +233,13 @@ function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
   };
 }
 
-function scoreAction(view: PlayingStateView, action: TurnAction, ctx: PolicyContext): number {
+function scoreAction(
+  view: PlayingStateView,
+  action: TurnAction,
+  ctx: PolicyContext,
+): { score: number; code: BotReasonCode } {
   if (action.type === 'draw') {
-    return HEURISTIC_BAND_WEIGHTS.sustain;
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain, code: 'sustain' };
   }
 
   if (action.type === 'playCard') {
@@ -190,34 +251,37 @@ function scoreAction(view: PlayingStateView, action: TurnAction, ctx: PolicyCont
   }
 
   if (action.type === 'buyUpgradePoint' || action.type === 'upgradeCard') {
-    return HEURISTIC_BAND_WEIGHTS.invest + secondaryInvest(view, action);
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + secondaryInvest(view, action),
+      code: 'invest',
+    };
   }
 
   if (action.type === 'buyCard') {
-    return HEURISTIC_BAND_WEIGHTS.invest + 10;
+    return { score: HEURISTIC_BAND_WEIGHTS.invest + 10, code: 'invest' };
   }
 
   if (action.type === 'buySpecialCard') {
     if (view.self.points < BUY_SPECIAL_POINTS_FLOOR) {
-      return Number.NEGATIVE_INFINITY;
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
     }
 
-    return HEURISTIC_BAND_WEIGHTS.invest;
+    return { score: HEURISTIC_BAND_WEIGHTS.invest, code: 'invest' };
   }
 
   // sellCard | sellUpgradePoint
-  return HEURISTIC_BAND_WEIGHTS.sustain - 20;
+  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
 }
 
 function scorePlayCard(
   view: PlayingStateView,
   action: Extract<TurnAction, { type: 'playCard' }>,
   ctx: PolicyContext,
-): number {
+): { score: number; code: BotReasonCode } {
   const instance = findOwnCard(view, action.instanceId);
 
   if (instance === undefined) {
-    return Number.NEGATIVE_INFINITY;
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
 
   const { cardId, isUpgraded } = instance;
@@ -225,38 +289,41 @@ function scorePlayCard(
   // Kamikaze: never base Suicide; upgraded only if estimated elim ≥ 1.
   if (cardId === 'suicide' && view.self.kitId === 'kamikaze') {
     if (!isUpgraded) {
-      return Number.NEGATIVE_INFINITY;
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
     }
 
     const elims = estimateSuicideElims(view, ctx);
 
     if (elims < 1) {
-      return Number.NEGATIVE_INFINITY;
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
     }
 
-    return HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10;
+    return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10, code: 'lethal-now' };
   }
 
   if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
-    return 0;
+    return { score: 0, code: 'sustain' };
   }
 
   // Survive band
   if (view.self.lives <= ctx.incomingThreat) {
     if (cardId === 'mirror') {
-      return HEURISTIC_BAND_WEIGHTS.survive + 30;
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 30, code: 'survive' };
     }
 
     if (cardId === 'shield') {
-      return HEURISTIC_BAND_WEIGHTS.survive + 20;
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 20, code: 'survive' };
     }
 
     if (cardId === 'regeneration') {
-      return HEURISTIC_BAND_WEIGHTS.survive + (action.quantity ?? 0);
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.survive + (action.quantity ?? 0),
+        code: 'survive',
+      };
     }
 
     if (cardId === 'cloning') {
-      return HEURISTIC_BAND_WEIGHTS.survive + 10;
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 10, code: 'survive' };
     }
   }
 
@@ -268,7 +335,7 @@ function scorePlayCard(
       const damage = attackDamageFor(cardId, isUpgraded);
 
       if (damage >= knownLives) {
-        return HEURISTIC_BAND_WEIGHTS.lethalNow + damage;
+        return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damage, code: 'lethal-now' };
       }
     }
   }
@@ -278,7 +345,7 @@ function scorePlayCard(
     const lastLoss = ctx.lastAppliedLoss.get(action.targetPlayerId) ?? 0;
 
     if (lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST) {
-      return HEURISTIC_BAND_WEIGHTS.deny + lastLoss;
+      return { score: HEURISTIC_BAND_WEIGHTS.deny + lastLoss, code: 'deny' };
     }
   }
 
@@ -289,7 +356,10 @@ function scorePlayCard(
     const maxSpend = Math.max(0, ...[...ctx.observedSpend.values()]);
 
     if (spend === maxSpend && spend > 0) {
-      return HEURISTIC_BAND_WEIGHTS.deny + spend + (topSpender === action.targetPlayerId ? 1 : 0);
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.deny + spend + (topSpender === action.targetPlayerId ? 1 : 0),
+        code: 'deny',
+      };
     }
   }
 
@@ -303,35 +373,41 @@ function scorePlayCard(
       ?.activeShield
       ? -2
       : 0;
-    return HEURISTIC_BAND_WEIGHTS.pressure + damage / cost + onTop + shieldPenalty;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.pressure + damage / cost + onTop + shieldPenalty,
+      code: 'pressure',
+    };
   }
 
   // Tax sustain
   if (cardId === 'tax') {
     if (view.self.lives > ctx.incomingThreat + TAX_LIFE_BUFFER) {
-      return HEURISTIC_BAND_WEIGHTS.sustain + 5;
+      return { score: HEURISTIC_BAND_WEIGHTS.sustain + 5, code: 'sustain' };
     }
 
-    return Number.NEGATIVE_INFINITY;
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
 
   // Other self / utility
   if (cardId === 'regeneration') {
-    return HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0);
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0),
+      code: 'sustain',
+    };
   }
 
   if (cardId === 'shield' || cardId === 'mirror') {
-    return HEURISTIC_BAND_WEIGHTS.sustain + 2;
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain + 2, code: 'sustain' };
   }
 
-  return HEURISTIC_BAND_WEIGHTS.sustain;
+  return { score: HEURISTIC_BAND_WEIGHTS.sustain, code: 'sustain' };
 }
 
 function scoreMultiAttack(
   view: PlayingStateView,
   action: Extract<TurnAction, { type: 'playMultipleAttacks' }>,
   ctx: PolicyContext,
-): number {
+): { score: number; code: BotReasonCode } {
   let damageSum = 0;
   let costSum = 0;
 
@@ -339,7 +415,7 @@ function scoreMultiAttack(
     const instance = findOwnCard(view, part.instanceId);
 
     if (instance === undefined || !isAttackCardId(instance.cardId)) {
-      return Number.NEGATIVE_INFINITY;
+      return { score: Number.NEGATIVE_INFINITY, code: 'pressure' };
     }
 
     damageSum += attackDamageFor(instance.cardId, instance.isUpgraded);
@@ -348,13 +424,16 @@ function scoreMultiAttack(
     const knownLives = knownOpponentLives(view, part.targetPlayerId);
 
     if (knownLives !== null && damageSum >= knownLives) {
-      return HEURISTIC_BAND_WEIGHTS.lethalNow + damageSum;
+      return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damageSum, code: 'lethal-now' };
     }
   }
 
   const topTarget = ctx.threatOrder[0];
   const hitsTop = action.attacks.some((part) => part.targetPlayerId === topTarget) ? 5 : 0;
-  return HEURISTIC_BAND_WEIGHTS.pressure + (damageSum - costSum) + hitsTop;
+  return {
+    score: HEURISTIC_BAND_WEIGHTS.pressure + (damageSum - costSum) + hitsTop,
+    code: 'pressure',
+  };
 }
 
 function secondaryInvest(

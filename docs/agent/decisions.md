@@ -885,3 +885,12 @@ creep (technical spec v3 §11 recommendation).
 Closed open decision #V3-4: wire values stay `easy` / `normal` / `hard`. Player-facing copy
 is **Easy / Normal / Hard** via `formatBotDifficulty` on the client. No softer synonyms
 (`Calm` / `Steady` / `Sharp`) and no numbered levels.
+
+## 2026-08-04 · [P] Bot reasoning on the public action log (#V3-2 / L17-05)
+
+Closed open decision #V3-2: everyone can open a short reason from a **Why** control on
+action-log rows that carry `botReason`. Payload is a stable **code + optional string params**
+on existing `actionPlayed` / `mirrorRedirected` / `rewardsClaimed` entries (and the live
+`actionPlayed` broadcast). No new S→C event; no PROTOCOL bump (additive under 21). Coarse
+vocabulary (~10 codes from heuristic bands + noise / Mirror / reward / fallback). Reasons are
+explanatory only — never a second source of game state and must not drive table legality.

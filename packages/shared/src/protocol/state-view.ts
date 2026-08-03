@@ -5,7 +5,7 @@
  */
 
 import type { CardId, CardInstance } from '../domain/card';
-import type { BotDifficulty } from '../domain/bot';
+import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
@@ -184,6 +184,8 @@ export interface ActionPlayedLogEntry {
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
+  /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
+  botReason?: BotDecisionReason;
 }
 
 /** Effect resolution outcome — durable copy of `actionResolved`. */
@@ -217,6 +219,8 @@ export interface MirrorRedirectedLogEntry {
   previousTargetPlayerId: string;
   newTargetPlayerId: string;
   turnSequence: number;
+  /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
+  botReason?: BotDecisionReason;
 }
 
 /**
@@ -228,6 +232,8 @@ export interface RewardsClaimedLogEntry {
   eliminatorPlayerId: string;
   eliminatedPlayerId: string;
   turnSequence: number;
+  /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
+  botReason?: BotDecisionReason;
 }
 
 export type ActionLogEntryView =
