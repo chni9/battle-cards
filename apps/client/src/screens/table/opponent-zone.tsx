@@ -6,6 +6,7 @@
 import type { KitId, PublicPlayerView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
+import { BotSeatLabel } from '../../design/components/bot-seat-label';
 import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
@@ -85,6 +86,9 @@ export function OpponentZone({
           {player.nickname}
         </h3>
         <ConnectionBadge player={player} />
+        {player.isBot && player.botDifficulty !== undefined && (
+          <BotSeatLabel difficulty={player.botDifficulty} />
+        )}
       </div>
 
       {spied === undefined ? (

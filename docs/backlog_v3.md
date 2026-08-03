@@ -80,13 +80,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-14 of 22 V3 tasks done.
+15 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
-| 17 · Solo mode and lobby bots | 5 | 3 |
+| 17 · Solo mode and lobby bots | 5 | 4 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -251,7 +251,7 @@ list including bots.
 - **Watch point** Non-host clients see the bot seats but get no controls; rejection is server-side, as `START_GAME` already is. Adding a bot reduces the human slots available and the lock follows total occupancy — a human joining a bot-full lobby is refused by the existing lock, with no new rejection path.
 - **Acceptance** A host builds a mixed 2-human + 2-bot lobby with different difficulties per bot and starts it; a non-host's `addBot` is rejected with L15-03's message
 
-### L17-03 · Bot labelling on Lobby and Table — `To do`
+### L17-03 · Bot labelling on Lobby and Table — `Done`
 
 Every seat that is a bot is visibly a bot, with its difficulty, to **every** player on both
 screens. Reuses V2's existing components and tokens.

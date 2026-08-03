@@ -12,6 +12,7 @@ import {
 import { useCallback, useState, type ReactElement } from 'react';
 
 import { formatBotDifficulty } from '../bots/format-bot-difficulty';
+import { BotSeatLabel } from '../design/components/bot-seat-label';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
@@ -113,9 +114,7 @@ export function LobbyScreen({
                     </span>
                   )}
                   {player.isBot && player.botDifficulty !== undefined && (
-                    <span className="text-xs text-ink-muted">
-                      Bot · {formatBotDifficulty(player.botDifficulty)}
-                    </span>
+                    <BotSeatLabel difficulty={player.botDifficulty} />
                   )}
                 </div>
                 {isHost && player.isBot && player.botDifficulty !== undefined && (
