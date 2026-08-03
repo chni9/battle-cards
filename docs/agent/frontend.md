@@ -19,8 +19,8 @@ implemented in L12-08).
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — create / join + nickname | `screens/home.tsx` |
-| Lobby | `phase: 'lobby'` — seats, code, host Start | `screens/lobby.tsx` |
+| Home | No room — create / join / solo + nickname | `screens/home.tsx` |
+| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls | `screens/lobby.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — winner, public recap stats, return home | `screens/end.tsx` |
 
@@ -50,10 +50,15 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
   `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-- **Home (L11-01):** branded split — title + forms + decorative V1 kit/card art from the
-  lookup; muted Protocol vN; same create/join validation.
-- **Lobby (L11-02):** game code + Copy (clipboard); copy result via `Dialog`; Start / Leave
-  unchanged functionally.
+- **Home (L11-01 / L17-01):** branded split — title + forms + decorative V1 kit/card art from the
+  lookup; muted Protocol vN; create / join / **Play solo** (inline opponent count + difficulty,
+  defaults 1 + Normal). Solo composes `create` + N× `addBot` + `startGame`; `soloLaunchPending`
+  skips Lobby flash. Difficulty copy via `formatBotDifficulty` (Easy / Normal / Hard).
+- **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
+  Start / Leave; host-only Add bot / Remove / set difficulty; `BotSeatLabel` on every bot seat
+  for all recipients.
+- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones; action-log **Why**
+  opens `botReason` copy (`formatBotReason`) — explanatory only, never table legality.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
@@ -118,7 +123,8 @@ rules above are unchanged — this section only covers how the client looks.
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
-  shown.
+  shown. Bot rows may carry optional `botReason` (L17-05); UI exposes a Why control only —
+  never feed reasons into play/legal UI.
 - **End screen (L9-03 / L13-01):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
   counts + eliminations. No kits, hands, seed, or exact final resources. Home-like branded
   layout with decorative V1 art only (not player-mapped). Seat list shows nicknames +
@@ -262,3 +268,13 @@ do not hand off an untested lot.
   Leave forfeit → redesigned End.
 - Hybrid FX: local card entrance + timer; overlay for flyout/resolution/elim/rewards.
 - No protocol/intent change; intents never await FX.
+
+### Lot 17 verified 2026-08-04 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 21)
+
+- **Solo:** Home Play solo → defaults (1 opp, Normal) → Start. Room `SSHUHB`. Lobby skipped.
+  Table: opponent `Alpha` with `Bot · Normal`; action log Why → “Investing for a stronger later
+  turn.” Bot pace readable between turns.
+- **Lobby bots:** Create → room `MKZBSV` → Add Easy + Add Hard (`Alpha` Easy, `Bravo` Hard) →
+  Start. Table shows both bot labels; Why on bot plays; resolution FX still fires
+  (`Bravo's Strong attack hits Alpha`).
+- Living docs: `frontend.md`, `protocol.md`, `db.md` updated for solo / lobby bots / `botReason`.

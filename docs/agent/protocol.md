@@ -85,7 +85,9 @@ eliminator, chainable: `{ eliminationId, eliminatedPlayerId, availableCards, dea
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
 `rewardsClaimed` (eliminator + victim only — never the picks). Ephemeral `actionPlayed` /
 `actionResolved` broadcasts stay separate. PROTOCOL_VERSION 19 adds `isUpgraded` on play/resolve
-log entries and public `activePersistentEffects` on every seat.
+log entries and public `activePersistentEffects` on every seat. L17-05 adds optional `botReason`
+(`{ code, params? }`) on bot `actionPlayed` / `mirrorRedirected` / `rewardsClaimed` — additive
+under PROTOCOL 21, not a new event; explanatory only.
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
 counts per player + eliminations). Kits and final private resources stay off the finished
