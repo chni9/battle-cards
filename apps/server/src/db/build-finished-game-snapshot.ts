@@ -1,8 +1,9 @@
 /**
  * Pure builder for the finished-game Postgres snapshot (technical spec §3, L8-01).
+ * Bot markers: technical spec v3 §9, L17-04.
  */
 
-import type { ActionLogEntryView } from '@card-battle/shared';
+import type { ActionLogEntryView, BotDifficulty } from '@card-battle/shared';
 
 import { aggregateActionsForPlayer } from './aggregate-action-log';
 import type {
@@ -15,6 +16,8 @@ export function buildFinishedGameSnapshot(
   input: BuildFinishedGameSnapshotInput,
 ): FinishedGameSnapshot {
   const durationMs = input.endedAtMs - input.startedAtMs;
+  const botDifficulties = input.botDifficultiesByPlayerId ?? new Map<string, BotDifficulty>();
+  const hasBots = botDifficulties.size > 0;
 
   return {
     roomId: input.roomId,
@@ -26,8 +29,9 @@ export function buildFinishedGameSnapshot(
     endedAt: new Date(input.endedAtMs),
     durationMs,
     actionLog: input.actionLog,
+    hasBots,
     players: input.gameState.players.map((player, seatIndex) =>
-      buildPlayerRecord(player, seatIndex, input.winnerPlayerId, input.actionLog),
+      buildPlayerRecord(player, seatIndex, input.winnerPlayerId, input.actionLog, botDifficulties),
     ),
     eliminations: input.eliminations,
   };
@@ -38,8 +42,11 @@ function buildPlayerRecord(
   seatIndex: number,
   winnerPlayerId: string,
   actionLog: readonly ActionLogEntryView[],
+  botDifficulties: ReadonlyMap<string, BotDifficulty>,
 ): FinishedGamePlayerRecord {
   const aggregates = aggregateActionsForPlayer(player.id, actionLog);
+  const botDifficulty = botDifficulties.get(player.id);
+  const isBot = botDifficulty !== undefined;
 
   return {
     playerId: player.id,
@@ -59,5 +66,7 @@ function buildPlayerRecord(
     buyCount: aggregates.buyCount,
     sellCount: aggregates.sellCount,
     upgradeCount: aggregates.upgradeCount,
+    isBot,
+    botDifficulty: isBot ? botDifficulty : null,
   };
 }

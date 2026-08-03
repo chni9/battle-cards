@@ -1,9 +1,17 @@
 /**
  * Server-only finished-game snapshot for the Postgres log (technical spec §3, L8-01).
  * Seed and full holdings must never leak into client views.
+ * Bot markers: technical spec v3 §9, L17-04.
  */
 
-import type { ActionLogEntryView, CardInstance, EliminationReason, GameMode, KitId } from '@card-battle/shared';
+import type {
+  ActionLogEntryView,
+  BotDifficulty,
+  CardInstance,
+  EliminationReason,
+  GameMode,
+  KitId,
+} from '@card-battle/shared';
 
 export interface FinishedGameEliminationRecord {
   playerId: string;
@@ -29,6 +37,10 @@ export interface FinishedGamePlayerRecord {
   buyCount: number;
   sellCount: number;
   upgradeCount: number;
+  /** L17-04 — false for humans and for rows written before migration defaults. */
+  isBot: boolean;
+  /** L17-04 — set only when `isBot`; null for humans. */
+  botDifficulty: BotDifficulty | null;
 }
 
 export interface FinishedGameSnapshot {
@@ -43,6 +55,8 @@ export interface FinishedGameSnapshot {
   actionLog: readonly ActionLogEntryView[];
   players: readonly FinishedGamePlayerRecord[];
   eliminations: readonly FinishedGameEliminationRecord[];
+  /** L17-04 — true when any seat was a bot. */
+  hasBots: boolean;
 }
 
 export interface BuildFinishedGameSnapshotInput {
@@ -69,4 +83,9 @@ export interface BuildFinishedGameSnapshotInput {
   };
   actionLog: readonly ActionLogEntryView[];
   eliminations: readonly FinishedGameEliminationRecord[];
+  /**
+   * Bot seat difficulties keyed by player id (L17-04).
+   * Presence means the seat is a bot. Omit or empty → all-human defaults.
+   */
+  botDifficultiesByPlayerId?: ReadonlyMap<string, BotDifficulty>;
 }

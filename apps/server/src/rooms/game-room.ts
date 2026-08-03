@@ -1601,6 +1601,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       gameState: state,
       actionLog: this.actionLog,
       eliminations: this.eliminations,
+      botDifficultiesByPlayerId: this.botDifficulties(),
     });
 
     void persistFinishedGame(snapshot);

@@ -63,8 +63,8 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
   const gameResult = await client.query<{ id: string }>(
     `INSERT INTO finished_games (
       room_id, mode, seed, winner_player_id, turn_sequence,
-      started_at, ended_at, duration_ms, action_log
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      started_at, ended_at, duration_ms, action_log, has_bots
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING id`,
     [
       snapshot.roomId,
@@ -76,6 +76,7 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
       snapshot.endedAt.toISOString(),
       snapshot.durationMs,
       JSON.stringify(snapshot.actionLog),
+      snapshot.hasBots,
     ],
   );
 
@@ -91,12 +92,12 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         game_id, player_id, seat_index, kit_id, is_winner, is_eliminated,
         lives, points, upgrade_points, shield, shield_is_upgraded,
         hand, special_cards, cards_played_count, cards_played_by_id,
-        buy_count, sell_count, upgrade_count
+        buy_count, sell_count, upgrade_count, is_bot, bot_difficulty
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10, $11,
         $12, $13, $14, $15,
-        $16, $17, $18
+        $16, $17, $18, $19, $20
       )`,
       [
         gameId,
@@ -117,6 +118,8 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         player.buyCount,
         player.sellCount,
         player.upgradeCount,
+        player.isBot,
+        player.botDifficulty,
       ],
     );
   }

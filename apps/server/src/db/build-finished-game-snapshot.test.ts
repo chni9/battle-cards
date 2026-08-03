@@ -123,6 +123,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
     expect(snapshot.startedAt.toISOString()).toBe(new Date(1_000).toISOString());
     expect(snapshot.endedAt.toISOString()).toBe(new Date(4_000).toISOString());
     expect(snapshot.durationMs).toBe(3_000);
+    expect(snapshot.hasBots).toBe(false);
     expect(snapshot.actionLog).toHaveLength(9);
     expect(snapshot.eliminations).toEqual([
       { playerId: 'bob', eliminatorPlayerId: 'alice', reason: 'combat' },
@@ -146,6 +147,8 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
       buyCount: 1,
       sellCount: 0,
       upgradeCount: 1,
+      isBot: false,
+      botDifficulty: null,
     });
     expect(aliceRow?.hand).toEqual([
       { instanceId: 'h1', cardId: 'basic-attack', isUpgraded: false },
@@ -200,5 +203,38 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
 
     expect(snapshot.players[0]?.cardsPlayedCount).toBe(1);
     expect(snapshot.players[0]?.cardsPlayedById).toEqual({});
+  });
+
+  it('marks solo bot seats (L17-04)', () => {
+    const human = makePlayer({ id: 'human', kitId: 'kamikaze' });
+    const bot = makePlayer({ id: 'bot-1', kitId: 'scientific', isEliminated: true });
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: 'SOLO01',
+      startedAtMs: 0,
+      endedAtMs: 10,
+      winnerPlayerId: 'human',
+      gameState: {
+        mode: 'classic',
+        seed: 's',
+        turnSequence: 1,
+        players: [human, bot],
+      },
+      actionLog: [],
+      eliminations: [],
+      botDifficultiesByPlayerId: new Map([['bot-1', 'easy']]),
+    });
+
+    expect(snapshot.hasBots).toBe(true);
+    expect(snapshot.players[0]).toMatchObject({
+      playerId: 'human',
+      isBot: false,
+      botDifficulty: null,
+    });
+    expect(snapshot.players[1]).toMatchObject({
+      playerId: 'bot-1',
+      isBot: true,
+      botDifficulty: 'easy',
+    });
   });
 });

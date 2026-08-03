@@ -86,7 +86,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
-| 17 · Solo mode and lobby bots | 5 | 0 |
+| 17 · Solo mode and lobby bots | 5 | 1 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -260,7 +260,7 @@ screens. Reuses V2's existing components and tokens.
 - **Watch point** A human must never be unable to tell whether an opponent is a bot. Not host-only information.
 - **Acceptance** Bot label and difficulty visible on Lobby and Table for every recipient; an eliminated bot still renders L10-05's generic treatment
 
-### L17-04 · Postgres bot markers (migration 002) — `To do`
+### L17-04 · Postgres bot markers (migration 002) — `Done`
 
 `002_bot_seats.sql`: `finished_games.has_bots`, `finished_game_players.is_bot`,
 `finished_game_players.bot_difficulty`. Populate them in

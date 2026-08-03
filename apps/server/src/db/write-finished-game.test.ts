@@ -15,6 +15,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
     endedAt: new Date(2_000),
     durationMs: 1_000,
     actionLog: [],
+    hasBots: false,
     players: [
       {
         playerId: 'alice',
@@ -34,6 +35,8 @@ function sampleSnapshot(): FinishedGameSnapshot {
         buyCount: 0,
         sellCount: 0,
         upgradeCount: 0,
+        isBot: false,
+        botDifficulty: null,
       },
     ],
     eliminations: [
@@ -104,6 +107,58 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     );
     expect(queries).toContain('ROLLBACK');
     expect(client.release).toHaveBeenCalledOnce();
+  });
+  it('inserts has_bots and per-player bot columns (L17-04)', async () => {
+    const bound: unknown[][] = [];
+    const client = {
+      query: vi.fn((sql: string, params?: unknown[]) => {
+        if (params !== undefined) {
+          bound.push(params);
+        }
+
+        if (sql.includes('RETURNING id')) {
+          return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      }),
+      release: vi.fn(),
+    };
+    const pool = {
+      connect: vi.fn(() => Promise.resolve(client)),
+    };
+
+    const snapshot = sampleSnapshot();
+    snapshot.hasBots = true;
+    const player = snapshot.players[0];
+    if (player === undefined) {
+      throw new Error('expected player');
+    }
+    const botPlayer = {
+      ...player,
+      playerId: 'bot-1',
+      isBot: true,
+      botDifficulty: 'normal' as const,
+      isWinner: false,
+    };
+
+    await writeFinishedGame(pool as never, {
+      ...snapshot,
+      players: [
+        { ...player, isBot: false, botDifficulty: null },
+        botPlayer,
+      ],
+    });
+
+    const gameInsert = bound.find((params) => params.length === 10);
+    expect(gameInsert?.[9]).toBe(true);
+
+    const playerInserts = bound.filter((params) => params.length === 20);
+    expect(playerInserts).toHaveLength(2);
+    expect(playerInserts[0]?.[18]).toBe(false);
+    expect(playerInserts[0]?.[19]).toBeNull();
+    expect(playerInserts[1]?.[18]).toBe(true);
+    expect(playerInserts[1]?.[19]).toBe('normal');
   });
 });
 
