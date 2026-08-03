@@ -97,7 +97,12 @@ import {
   startGameRejectionMessage,
 } from './lobby-rules';
 import {
+  shouldDisposeLobbyWithOnlyBots,
+  shouldKeepRoomAlive,
+} from './last-human-leave';
+import {
   isBotSeat,
+  isHumanSeat,
   shouldLockForOccupancy,
   shouldUnlockForOccupancy,
   type Seat,
@@ -232,6 +237,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       console.log(
         `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
       );
+      this.refreshAutoDispose();
       this.beginTurnOrAbsentAutoPlay();
       this.sendStateToEveryone();
       this.broadcastTurnStarted();
@@ -434,6 +440,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       void this.unlock();
     }
 
+    if (
+      shouldDisposeLobbyWithOnlyBots({
+        hasStarted: this.hasStarted,
+        humanSeatCount: this.seats.filter(isHumanSeat).length,
+        botSeatCount: this.seats.filter(isBotSeat).length,
+      })
+    ) {
+      // Lobby orphan bots: dispose, write nothing (#V3-3b complement).
+      void this.disconnect();
+      return;
+    }
+
     this.sendStateToEveryoneExcept(client);
   }
 
@@ -463,6 +481,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (this.finishIfSoleSurvivor(state)) {
       return;
     }
+
+    this.refreshAutoDispose();
 
     if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
       this.clearTurnTimer();
@@ -1373,6 +1393,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   /**
    * Sole game-over exit: broadcast, views, then fire-and-forget finished-game write
    * (technical spec §3, L8-02). Write failure must never affect the match.
+   * #V3-3b: after persist, dispose the room (bots may have been the only occupants).
    */
   private onGameOver(winnerPlayerId: string): void {
     this.winnerPlayerId = winnerPlayerId;
@@ -1385,6 +1406,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state === null || startedAtMs === null) {
       console.warn(`[${this.roomId}] finished-game persist skipped — missing state or start time`);
+      this.refreshAutoDispose();
+      if (this.clients.length === 0) {
+        void this.disconnect();
+      }
       return;
     }
 
@@ -1399,6 +1424,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
 
     void persistFinishedGame(snapshot);
+    this.refreshAutoDispose();
+    // Humans still need the finished view. Dispose only when no sockets remain (bot-only finish).
+    if (this.clients.length === 0) {
+      void this.disconnect();
+    }
+  }
+
+  /**
+   * Colyseus disposes empty rooms by default. Mid-game with bots and no sockets must
+   * stay alive until game over (#V3-3b). technical spec v3 §4.1 / §11.
+   */
+  private refreshAutoDispose(): void {
+    const keep = shouldKeepRoomAlive({
+      hasBots: this.seats.some(isBotSeat),
+      hasStarted: this.hasStarted,
+      winnerPlayerId: this.winnerPlayerId,
+    });
+    this.autoDispose = !keep;
   }
 
   private rejectReconnection(sessionId: string, reason: Error): void {

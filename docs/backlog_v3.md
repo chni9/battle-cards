@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-4 of 22 V3 tasks done.
+5 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 4 |
+| 15 · Seat abstraction and protocol | 6 | 5 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -156,14 +156,14 @@ predicates. Bump `PROTOCOL_VERSION` once, here.
 - **Watch point** **No new server→client event.** A bot's turn already broadcasts `actionPlayed` / `actionResolved` / `turnStarted` exactly as a human's does; adding a bot-specific event forks the client's rendering path for no gain. This is the only task in V3 that touches `PROTOCOL_VERSION`.
 - **Acceptance** A client at the previous version is refused with the existing mismatch message; bot seats appear with their difficulty in the lobby view of **every** recipient, not only the host; `buildPlayingViewFor` marks bot players for everyone
 
-### L15-06 · Last human leaves a bot room — `To do`
+### L15-06 · Last human leaves a bot room — `Done`
 
 Implement the ruling on open decision #V3-3. Reachable today via consented leave and currently
 **undefined**: a solo game whose human leaves would otherwise play out with three bots in an
 empty room and write a finished game to Postgres.
 
 - **Reference** Technical spec v3 §4.1, §11 #V3-3 · **Depends on** L15-02 · **Complexity** S · **Risk** Medium
-- **Watch point** **Blocked until #V3-3 is ruled.** Do not pick a behaviour. Recommendation on record is dispose-and-write-nothing, but it is a product decision.
+- **Watch point** Ruled **(b)** play-out-and-write mid-game; lobby-only bots → dispose, write nothing. See `docs/agent/decisions.md`.
 - **Acceptance** The ruled behaviour is implemented and tested for both paths (consented leave and reconnection-grace expiry) with 1 human + N bots
 
 ## Lot 16 · Bot brain

@@ -848,3 +848,12 @@ back to `Bot-${shortId}` once. Not a product nickname scheme — only an exhaust
 eligible effect + first other alive seat; reward: 2× lives inline). Full “4-bot room plays to
 completion” stays on L16-06 once the heuristic can end games. Stub Mirror may use seat-order
 target pick; L16 must break ties with seeded rng, never seat order.
+
+## 2026-08-03 · [P] Last human leaves bot room — play out (#V3-3b / L15-06)
+
+Closed open decision #V3-3: **(b)** When the last human leaves an **in-progress** game that
+still has bots, keep the room (`autoDispose = false`), let bots finish, and write the finished
+game via the existing `onGameOver` path. Dispose the room after game over when no sockets remain.
+
+**Lobby complement:** if every human leaves before start and only bots remain, dispose
+immediately and write nothing — there is no game to play out.
