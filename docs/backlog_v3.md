@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-2 of 22 V3 tasks done.
+3 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 2 |
+| 15 · Seat abstraction and protocol | 6 | 3 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -123,7 +123,7 @@ collide with a human's or another bot's.
 - **Watch point** `sessionId` stays the one player identity across `GameState`, the protocol, the action log and Postgres — a bot must not get a second id kind. And `maxClients` still governs *sockets*: total occupancy is now a separate concept. Mixing the two is how a fifth player joins a full room.
 - **Acceptance** A room holding 1 human + 3 bot seats reports `4/4`, is locked to new joins, and `canStartGame` returns `null`; removing a bot unlocks it; `pnpm verify` green with every existing lobby test unchanged
 
-### L15-03 · Host-only bot lobby rules — `To do`
+### L15-03 · Host-only bot lobby rules — `Done`
 
 Extend `lobby-rules.ts` with pure predicates for `addBot` / `removeBot` / `setBotDifficulty`:
 host-only, pre-start only, capacity-bounded, target must be an existing bot seat. Rejection
