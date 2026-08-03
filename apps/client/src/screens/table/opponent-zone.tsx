@@ -102,10 +102,10 @@ export function OpponentZone({
             />
             {spied.lives !== undefined ? (
               <div className="flex min-w-0 flex-wrap gap-1">
-                <ResourceIcon kind="life" value={spied.lives} />
-                <ResourceIcon kind="point" value={spied.points ?? 0} />
-                <ResourceIcon kind="upgradePoint" value={spied.upgradePoints ?? 0} />
-                <ResourceIcon kind="shield" value={spied.shield ?? 0} />
+                <ResourceIcon kind="life" value={spied.lives} flyToken={false} />
+                <ResourceIcon kind="point" value={spied.points ?? 0} flyToken={false} />
+                <ResourceIcon kind="upgradePoint" value={spied.upgradePoints ?? 0} flyToken={false} />
+                <ResourceIcon kind="shield" value={spied.shield ?? 0} flyToken={false} />
               </div>
             ) : null}
           </div>

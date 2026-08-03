@@ -46,12 +46,13 @@ export function KitInspectDialog({
               Starting resources
             </h3>
             <div className="mt-1.5 flex flex-wrap gap-2">
-              <ResourceIcon kind="life" value={res.lives} label="Lives" />
-              <ResourceIcon kind="point" value={res.points} label="Points" />
+              <ResourceIcon kind="life" value={res.lives} label="Lives" flyToken={false} />
+              <ResourceIcon kind="point" value={res.points} label="Points" flyToken={false} />
               <ResourceIcon
                 kind="upgradePoint"
                 value={res.upgradePoints}
                 label="Upgrade points"
+                flyToken={false}
               />
               <span
                 className="inline-flex items-center gap-1 rounded-[length:var(--radius-badge)] border border-border-soft bg-surface px-2 py-1 text-xs font-semibold tabular-nums text-ink"

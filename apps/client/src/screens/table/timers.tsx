@@ -8,6 +8,8 @@ import type { ActionResolvedPayload } from '@card-battle/shared';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
+import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
+
 export interface TimersProps {
   gameCode: string;
   statusLabel: string;
@@ -95,7 +97,7 @@ export function Timers({
           transition={
             reduceMotion === true
               ? { duration: 0 }
-              : { duration: 0.2, ease: 'easeOut' }
+              : { duration: MOTION_DURATION_S, ease: MOTION_EASE }
           }
         />
       </div>
@@ -125,7 +127,7 @@ export function Timers({
                 transition={
                   reduceMotion === true
                     ? { duration: 0 }
-                    : { duration: 0.2, ease: 'easeOut' }
+                    : { duration: MOTION_DURATION_S, ease: MOTION_EASE }
                 }
               />
             </div>

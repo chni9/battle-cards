@@ -18,7 +18,13 @@ import {
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { ActionLogPanel } from '../action-log/action-log-panel';
-import { measurePlayFlyout } from '../fx/play-flyout';
+import {
+  measureBuyCardFlyout,
+  measureBuySpecialFlyout,
+  measurePlayFlyout,
+  measureSellCardFlyout,
+  measureTokenFlyout,
+} from '../fx/play-flyout';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx } from '../fx/table-fx-hooks';
 import type { PlayCardOptions } from '../net/use-room-connection';
@@ -127,6 +133,51 @@ function TableScreenInner({
       return;
     }
     const measured = measurePlayFlyout(first.instanceId, card.cardId, card.isUpgraded);
+    if (measured !== null) {
+      enqueue({ kind: 'playFlyout', ...measured });
+    }
+  };
+
+  const drawWithFx = (): void => {
+    onDraw();
+    // Presentational: point chip from economy → points row (not a card ghost).
+    const measured = measureTokenFlyout('point', 'gain');
+    if (measured !== null) {
+      enqueue({ kind: 'tokenFlyout', ...measured });
+    }
+  };
+
+  const buyUpgradeWithFx = (): void => {
+    onBuyUpgradePoint();
+  };
+
+  const sellUpgradeWithFx = (): void => {
+    onSellUpgradePoint();
+  };
+
+  const buyCardWithFx = (cardId: (typeof SHARED_CARD_IDS)[number]): void => {
+    onBuyCard(cardId);
+    const measured = measureBuyCardFlyout(cardId);
+    if (measured !== null) {
+      enqueue({ kind: 'playFlyout', ...measured });
+    }
+  };
+
+  const buySpecialWithFx = (): void => {
+    onBuySpecialCard();
+    const measured = measureBuySpecialFlyout();
+    if (measured !== null) {
+      enqueue({ kind: 'playFlyout', ...measured });
+    }
+  };
+
+  const sellCardWithFx = (instanceId: string): void => {
+    const card = findOwnCard(instanceId);
+    onSellCard(instanceId);
+    if (card === undefined) {
+      return;
+    }
+    const measured = measureSellCardFlyout(instanceId, card.cardId, card.isUpgraded);
     if (measured !== null) {
       enqueue({ kind: 'playFlyout', ...measured });
     }
@@ -380,9 +431,9 @@ function TableScreenInner({
             actionsLocked={actionsLocked}
             drawValue={drawValue}
             upgradePoints={view.self.upgradePoints}
-            onDraw={onDraw}
-            onBuyUpgradePoint={onBuyUpgradePoint}
-            onSellUpgradePoint={onSellUpgradePoint}
+            onDraw={drawWithFx}
+            onBuyUpgradePoint={buyUpgradeWithFx}
+            onSellUpgradePoint={sellUpgradeWithFx}
             onOpenBuy={() => {
               setDialog({ kind: 'buy' });
             }}
@@ -416,9 +467,9 @@ function TableScreenInner({
         onPlayCard={playCardWithFx}
         onPlayMultipleAttacks={playMultipleWithFx}
         onUpgradeCard={onUpgradeCard}
-        onSellCard={onSellCard}
-        onBuyCard={onBuyCard}
-        onBuySpecialCard={onBuySpecialCard}
+        onSellCard={sellCardWithFx}
+        onBuyCard={buyCardWithFx}
+        onBuySpecialCard={buySpecialWithFx}
         onChooseMirrorTarget={onChooseMirrorTarget}
         onChooseEliminationReward={onChooseEliminationReward}
         onBeginUse={onBeginUse}

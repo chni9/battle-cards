@@ -7,6 +7,7 @@ import type { CardInstance } from '@card-battle/shared';
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
 import { Card, type CardProps } from './card';
 
 export type AnimatedCardProps = CardProps & {
@@ -36,7 +37,7 @@ export function AnimatedCard({
         reduceMotion === true ? false : { opacity: 0, rotateY: -70, scale: 0.96 }
       }
       animate={{ opacity: 1, rotateY: 0, scale: 1 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
     >
       <motion.div
         key={upgradePulse}
@@ -46,7 +47,7 @@ export function AnimatedCard({
             : { rotateY: 90, opacity: 0.6 }
         }
         animate={{ rotateY: 0, opacity: 1 }}
-        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
         className="h-full w-full"
         style={{ transformStyle: 'preserve-3d' }}
       >

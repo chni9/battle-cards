@@ -92,8 +92,10 @@ rules above are unchanged — this section only covers how the client looks.
   Landing-page layout rules from design-taste-frontend do **not** apply to
   Home/Lobby/Table/End.
 - **Table FX (Lot 14):** `apps/client/src/fx/` — hybrid presentational layer. Local Motion on
-  cards/timers; `TableFxProvider` queue for flyouts / resolution / elim / rewards. Intents
-  must never await FX. `useReducedMotion` skips choreography.
+  cards/timers/resources; `TableFxProvider` queue for play flyouts, **token** chips (points/
+  lives/UP/shield — not cards from Draw), buy/sell card ghosts, resolution, elim, rewards.
+  Resource flash clears after ~1.6s. Shared timing in `fx/motion-timing.ts` (~0.55s). Dialogs
+  animate open/close. Intents must never await FX. `useReducedMotion` skips choreography.
 
 ## Conventions
 

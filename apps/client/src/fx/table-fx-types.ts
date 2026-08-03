@@ -23,6 +23,14 @@ export type TableFxEvent =
     }
   | {
       id: string;
+      kind: 'tokenFlyout';
+      artUrl: string;
+      from: DomRectLite;
+      to: DomRectLite;
+      expiresAt: number;
+    }
+  | {
+      id: string;
       kind: 'resolutionFlash';
       outcome: ResolutionOutcome;
       effectId: string;
@@ -41,4 +49,4 @@ export type TableFxEvent =
       expiresAt: number;
     };
 
-export const FX_TTL_MS = 280;
+export { FX_TTL_MS } from './motion-timing';
