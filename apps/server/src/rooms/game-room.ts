@@ -150,6 +150,34 @@ export class GameRoom extends Room<{ client: GameClient }> {
     },
     getGameState: () => this.gameState,
     isGameOver: () => this.winnerPlayerId !== null,
+    getPlayingView: (botId) => {
+      const state = this.gameState;
+
+      if (state === null) {
+        return null;
+      }
+
+      return buildPlayingViewFor({
+        recipientSessionId: botId,
+        gameCode: this.roomId,
+        state,
+        turnDeadlineMs: this.turnDeadlineMs,
+        actionLog: this.actionLog,
+        botDifficulties: this.botDifficulties(),
+      });
+    },
+    getBotDifficulty: (botId) => {
+      const seat = this.seats.find((entry) => entry.sessionId === botId);
+
+      if (seat === undefined || !isBotSeat(seat)) {
+        return 'hard';
+      }
+
+      return seat.difficulty;
+    },
+    performBotAction: (botId, action) => {
+      this.performBotAction(botId, action);
+    },
     performBotDraw: (botId) => {
       this.performAutoDraw(botId);
     },
@@ -157,7 +185,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.applyBotMirrorChoice(botId, pendingEffectId, newTargetPlayerId);
     },
     completeBotReward: (botId, eliminationId, choices) => {
-      this.applyBotRewardChoice(botId, eliminationId, choices);
+      this.applyBotRewardChoice(botId, eliminationId, [choices[0], choices[1]]);
     },
   });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
@@ -1168,15 +1196,27 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private performAutoDraw(playerId: string): void {
+    this.performBotAction(playerId, { type: 'draw' });
+  }
+
+  /**
+   * Bot (or absent auto-draw) action path — same post-routing as human handleAction
+   * without a Client (technical spec v3 §4.2).
+   */
+  private performBotAction(playerId: string, action: TurnAction): void {
     const state = this.gameState;
 
     if (state === null) {
       return;
     }
 
-    const result = performTurnAction(state, playerId, { type: 'draw' });
+    const result = performTurnAction(state, playerId, action);
 
     if (!result.ok) {
+      if (action.type !== 'draw') {
+        this.performAutoDraw(playerId);
+      }
+
       return;
     }
 

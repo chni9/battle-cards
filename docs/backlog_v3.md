@@ -80,12 +80,12 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-11 of 22 V3 tasks done.
+12 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
-| 16 · Bot brain | 6 | 5 |
+| 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
 
@@ -220,7 +220,7 @@ Defaults `easy` 0.55 / `normal` 0.20 / `hard` 0.00. Noise draws from
 - **Watch point** No tier reads extra information (decision 2) — a "cheating" tier was rejected because tiers reading different inputs are not comparable in the simulator. `Math.random` here silently destroys replay for the whole game (golden rule 5). `hard` means "this heuristic, undegraded" — not "hard".
 - **Acceptance** Replaying a game from its seed reproduces every bot decision exactly, at every tier; `hard` never substitutes; over a large sample `easy` substitutes at ≈0.55
 
-### L16-06 · Bot driver and sub-choices — `To do`
+### L16-06 · Bot driver and sub-choices — `Done`
 
 New `apps/server/src/bots/bot-driver.ts`: owns the room-side bot lifecycle (§4.2), routes both
 sub-choices inline via `completeMirrorChoice` and `completeEliminationRewardChoice` (§4.6),

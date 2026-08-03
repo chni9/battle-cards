@@ -1,20 +1,29 @@
 /**
- * Room-side bot lifecycle — technical spec v3 §4.2, §4.6, §4.7 (L15-04 stub).
+ * Room-side bot lifecycle — technical spec v3 §4.2, §4.6, §4.7 (L16-06).
  *
- * Lot 15 stub: always draw; Mirror/reward via first-legal / 2×lives.
- * L16-06 replaces decideAndAct with the heuristic policy; this module stays.
+ * Enumerate → view-only decide → difficulty noise → performBotAction.
+ * Sub-choices answered inline; every turn entered via setTimeout.
  */
 
-import type { GameState } from '@card-battle/shared';
+import type { BotDifficulty, GameState, PlayingStateView, RewardChoice } from '@card-battle/shared';
 
+import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { listAvailableRewardCards } from '../engine/turn/elimination-rewards';
+import type { TurnAction } from '../engine/turn/perform-action';
+import { createRng } from '../engine/rng';
 import { readBotThinkMs } from './bot-think-ms';
-import { pickStubMirrorChoice, stubRewardChoices } from './stub-policy';
+import { applyDifficultyNoise } from './difficulty-noise';
+import { decide, pickEliminationRewards, pickMirrorRedirect } from './heuristic-policy';
 
 export interface BotDriverHost {
   isBotSeat(playerId: string): boolean;
   getGameState(): GameState | null;
   isGameOver(): boolean;
-  /** Unconditionally legal draw through the room's perform path. */
+  getPlayingView(botId: string): PlayingStateView | null;
+  getBotDifficulty(botId: string): BotDifficulty;
+  /** Full action path through the room's performTurnAction + routing. */
+  performBotAction(botId: string, action: TurnAction): void;
+  /** Unconditionally legal draw — fallback on throw / rejection. */
   performBotDraw(botId: string): void;
   completeBotMirror(
     botId: string,
@@ -24,7 +33,7 @@ export interface BotDriverHost {
   completeBotReward(
     botId: string,
     eliminationId: string,
-    choices: ReturnType<typeof stubRewardChoices>,
+    choices: readonly [RewardChoice, RewardChoice],
   ): void;
 }
 
@@ -57,7 +66,15 @@ export class BotDriver {
       return;
     }
 
-    const pick = pickStubMirrorChoice(state);
+    const view = this.host.getPlayingView(botId);
+
+    if (view === null) {
+      this.host.performBotDraw(botId);
+      return;
+    }
+
+    const rng = createRng(`${state.seed}:bot:${botId}:mirror:${state.turnSequence}`);
+    const pick = pickMirrorRedirect(view, rng);
 
     if (pick === null) {
       this.host.performBotDraw(botId);
@@ -84,8 +101,18 @@ export class BotDriver {
       return;
     }
 
+    const view = this.host.getPlayingView(botId);
+
+    if (view === null) {
+      this.host.performBotDraw(botId);
+      return;
+    }
+
     try {
-      this.host.completeBotReward(botId, choice.eliminationId, stubRewardChoices());
+      const available = listAvailableRewardCards(state, choice.eliminatedPlayerId);
+      const rng = createRng(`${state.seed}:bot:${botId}:reward:${state.turnSequence}`);
+      const picks = pickEliminationRewards(view, available, state.lifeLimit, rng);
+      this.host.completeBotReward(botId, choice.eliminationId, picks);
     } catch {
       this.host.performBotDraw(botId);
     }
@@ -111,7 +138,25 @@ export class BotDriver {
     }
 
     try {
-      this.host.performBotDraw(botId);
+      const view = this.host.getPlayingView(botId);
+
+      if (view === null) {
+        this.host.performBotDraw(botId);
+        return;
+      }
+
+      const actions = listLegalActions(state, botId);
+
+      if (actions.length === 0) {
+        this.host.performBotDraw(botId);
+        return;
+      }
+
+      const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
+      const top = decide(view, actions, rng);
+      const difficulty = this.host.getBotDifficulty(botId);
+      const chosen = applyDifficultyNoise(top, actions, difficulty, rng);
+      this.host.performBotAction(botId, chosen);
     } catch {
       this.host.performBotDraw(botId);
     }

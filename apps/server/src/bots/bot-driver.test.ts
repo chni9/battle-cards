@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { PlayingStateView } from '@card-battle/shared';
+
 import { BotDriver, type BotDriverHost } from './bot-driver';
 import { readBotThinkMs } from './bot-think-ms';
 import { classifyRewardRoute, classifyTurnEntry } from './turn-entry';
 import type { HumanSeat, BotSeat } from '../rooms/seats';
+import type { TurnAction } from '../engine/turn/perform-action';
 
 function human(sessionId: string): HumanSeat {
   return { kind: 'human', sessionId, nickname: 'Host' };
@@ -11,6 +14,49 @@ function human(sessionId: string): HumanSeat {
 
 function bot(sessionId: string): BotSeat {
   return { kind: 'bot', sessionId, nickname: 'Alpha', difficulty: 'normal' };
+}
+
+function emptyView(you: string): PlayingStateView {
+  return {
+    phase: 'playing',
+    you,
+    gameCode: 'TEST',
+    currentTurnPlayerId: you,
+    turnSequence: 0,
+    turnOrder: [you],
+    turnDeadlineMs: null,
+    players: [
+      {
+        id: you,
+        nickname: 'Bot',
+        isEliminated: false,
+        isYou: true,
+        isBot: true,
+        botDifficulty: 'hard',
+        connection: {
+          status: 'connected',
+          disconnectedAt: null,
+          automaticTurnsTaken: 0,
+          consecutiveTimeouts: 0,
+        },
+        activePersistentEffects: [],
+        activeShield: null,
+      },
+    ],
+    self: {
+      lives: 10,
+      shield: 0,
+      shieldIsUpgraded: false,
+      points: 0,
+      upgradePoints: 0,
+      kitId: 'assassin',
+      hand: [],
+      specialCards: [],
+      activePersistentEffects: [],
+    },
+    pendingEffects: [],
+    actionLog: [],
+  };
 }
 
 describe('turn entry classification (L15-04)', () => {
@@ -54,21 +100,63 @@ describe('readBotThinkMs (L15-04)', () => {
   });
 });
 
-describe('BotDriver stub (L15-04)', () => {
-  it('schedules draw via setTimeout and never arms a turn timer itself', async () => {
-    const draws: string[] = [];
+describe('BotDriver (L16-06)', () => {
+  it('schedules decideAndAct via setTimeout and performs an action', async () => {
+    const performed: TurnAction[] = [];
     const host: BotDriverHost = {
       isBotSeat: (id) => id.startsWith('bot-'),
       getGameState: () =>
         ({
           currentTurnPlayerId: 'bot-1',
-          players: [],
-          seed: 's',
+          players: [
+            {
+              id: 'bot-1',
+              nickname: 'A',
+              kitId: 'assassin',
+              lives: 10,
+              points: 0,
+              upgradePoints: 0,
+              shield: 0,
+              shieldIsUpgraded: false,
+              hand: [],
+              specialCards: [],
+              pendingEffects: [],
+              activePersistentEffects: [],
+              turnLedger: {
+                livesLost: 0,
+                pointsSpent: 0,
+                upgradePointsSpent: 0,
+                pointsLostToTheft: 0,
+                upgradePointsLostToTheft: 0,
+              },
+              connectionState: {
+                status: 'connected',
+                disconnectedAt: null,
+                automaticTurnsTaken: 0,
+                consecutiveTimeouts: 0,
+              },
+              isEliminated: false,
+            },
+          ],
+          seed: 'driver-seed',
           turnSequence: 1,
+          mode: 'classic',
+          lifeLimit: 25,
+          pool: [],
+          visibility: [],
+          mirrorChoice: null,
+          eliminationContributors: [],
+          rewardQueue: [],
+          rewardChoice: null,
         }) as never,
       isGameOver: () => false,
-      performBotDraw: (id) => {
-        draws.push(id);
+      getPlayingView: () => emptyView('bot-1'),
+      getBotDifficulty: () => 'hard',
+      performBotAction: (_id, action) => {
+        performed.push(action);
+      },
+      performBotDraw: () => {
+        performed.push({ type: 'draw' });
       },
       completeBotMirror: () => {
         throw new Error('unexpected mirror');
@@ -81,8 +169,9 @@ describe('BotDriver stub (L15-04)', () => {
     const driver = new BotDriver(host, 0);
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
-      expect(draws).toEqual(['bot-1']);
+      expect(performed.length).toBeGreaterThan(0);
     });
+    expect(performed[0]).toBeDefined();
     driver.clear();
   });
 
@@ -98,12 +187,51 @@ describe('BotDriver stub (L15-04)', () => {
       getGameState: () =>
         ({
           currentTurnPlayerId: botIds[turn] ?? null,
-          players: [],
+          players: [
+            {
+              id: botIds[turn] ?? 'bot-1',
+              nickname: 'A',
+              kitId: 'assassin',
+              lives: 10,
+              points: 0,
+              upgradePoints: 0,
+              shield: 0,
+              shieldIsUpgraded: false,
+              hand: [],
+              specialCards: [],
+              pendingEffects: [],
+              activePersistentEffects: [],
+              turnLedger: {
+                livesLost: 0,
+                pointsSpent: 0,
+                upgradePointsSpent: 0,
+                pointsLostToTheft: 0,
+                upgradePointsLostToTheft: 0,
+              },
+              connectionState: {
+                status: 'connected',
+                disconnectedAt: null,
+                automaticTurnsTaken: 0,
+                consecutiveTimeouts: 0,
+              },
+              isEliminated: false,
+            },
+          ],
           seed: 's',
           turnSequence: turn,
+          mode: 'classic',
+          lifeLimit: 25,
+          pool: [],
+          visibility: [],
+          mirrorChoice: null,
+          eliminationContributors: [],
+          rewardQueue: [],
+          rewardChoice: null,
         }) as never,
       isGameOver: () => turn >= botIds.length,
-      performBotDraw: (id) => {
+      getPlayingView: (id) => emptyView(id),
+      getBotDifficulty: () => 'hard',
+      performBotAction: (id) => {
         depth += 1;
         maxDepth = Math.max(maxDepth, depth);
         order.push(id);
@@ -116,6 +244,9 @@ describe('BotDriver stub (L15-04)', () => {
           driver.scheduleTurn(next);
         }
       },
+      performBotDraw: (id) => {
+        host.performBotAction(id, { type: 'draw' });
+      },
       completeBotMirror: () => undefined,
       completeBotReward: () => undefined,
     };
@@ -126,6 +257,40 @@ describe('BotDriver stub (L15-04)', () => {
       expect(order).toEqual(botIds);
     });
     expect(maxDepth).toBe(1);
+    driver.clear();
+  });
+
+  it('degrades to draw when the policy path throws', async () => {
+    const draws: string[] = [];
+    const host: BotDriverHost = {
+      isBotSeat: () => true,
+      getGameState: () =>
+        ({
+          currentTurnPlayerId: 'bot-1',
+          players: [],
+          seed: 'throw',
+          turnSequence: 0,
+        }) as never,
+      isGameOver: () => false,
+      getPlayingView: () => {
+        throw new Error('view boom');
+      },
+      getBotDifficulty: () => 'hard',
+      performBotAction: () => {
+        throw new Error('should not act');
+      },
+      performBotDraw: (id) => {
+        draws.push(id);
+      },
+      completeBotMirror: () => undefined,
+      completeBotReward: () => undefined,
+    };
+
+    const driver = new BotDriver(host, 0);
+    driver.scheduleTurn('bot-1');
+    await vi.waitFor(() => {
+      expect(draws).toEqual(['bot-1']);
+    });
     driver.clear();
   });
 });
