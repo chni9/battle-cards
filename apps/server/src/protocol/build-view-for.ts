@@ -135,6 +135,8 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
       },
       activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
+      activeShield:
+        player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
       ...(spied !== undefined ? { spied } : {}),
     };
   });
@@ -225,6 +227,8 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
       },
       activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
+      activeShield:
+        player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
     })),
     recap: buildGameRecapView(state, actionLog, eliminations),
   };

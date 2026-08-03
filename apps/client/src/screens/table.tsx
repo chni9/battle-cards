@@ -29,6 +29,7 @@ import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx } from '../fx/table-fx-hooks';
 import type { PlayCardOptions } from '../net/use-room-connection';
 import { CardActions, type TableDialog } from './table/card-actions';
+import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentZone } from './table/opponent-zone';
@@ -333,6 +334,33 @@ function TableScreenInner({
   }
 
   function onInspectActive(playerId: string, effectId: string): void {
+    if (effectId === ACTIVE_SHIELD_INSTANCE_ID) {
+      const isUpgraded =
+        playerId === view.you
+          ? view.self.shieldIsUpgraded
+          : (opponents.find((p) => p.id === playerId)?.activeShield?.isUpgraded ??
+            false);
+      const hasShield =
+        playerId === view.you
+          ? view.self.shield > 0
+          : (opponents.find((p) => p.id === playerId)?.activeShield ?? null) !==
+            null;
+      if (!hasShield) {
+        return;
+      }
+      setDialog({
+        kind: 'inspect',
+        instance: {
+          instanceId: ACTIVE_SHIELD_INSTANCE_ID,
+          cardId: 'shield',
+          isUpgraded,
+        },
+        activated: false,
+        source: 'active',
+      });
+      return;
+    }
+
     const player =
       playerId === view.you
         ? undefined

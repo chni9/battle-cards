@@ -1,6 +1,6 @@
 /**
  * Opponent seat — hug content, never crop kit portrait.
- * Spy thumbs stay compact; no internal scroll.
+ * Active persistents sit beside the kit as tiny thumbs (not a row above).
  */
 
 import type { KitId, PublicPlayerView } from '@card-battle/shared';
@@ -10,12 +10,59 @@ import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
+import {
+  persistentToCardInstance,
+  shieldActiveInstance,
+} from './active-display';
 
 export interface OpponentZoneProps {
   player: PublicPlayerView;
   onInspectCard?: (instanceId: string) => void;
   onInspectActive?: (effectId: string) => void;
   onInspectKit?: (kitId: KitId) => void;
+}
+
+function ActiveThumbs({
+  player,
+  onInspectActive,
+}: {
+  player: PublicPlayerView;
+  onInspectActive?: (effectId: string) => void;
+}): ReactElement | null {
+  const actives = [
+    ...(player.activeShield !== null
+      ? [shieldActiveInstance(player.activeShield.isUpgraded)]
+      : []),
+    ...player.activePersistentEffects.map(persistentToCardInstance),
+  ];
+  if (actives.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      data-zone="opponent-actives"
+      className="flex shrink-0 items-center gap-0.5"
+      title="Active cards"
+    >
+      {actives.map((instance) => (
+        <Card
+          key={instance.instanceId}
+          instance={instance}
+          detail="thumb"
+          activated={instance.cardId !== 'shield'}
+          className="w-6 !p-0 sm:w-7"
+          {...(onInspectActive !== undefined
+            ? {
+                onSelect: () => {
+                  onInspectActive(instance.instanceId);
+                },
+              }
+            : {})}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function OpponentZone({
@@ -26,7 +73,6 @@ export function OpponentZone({
 }: OpponentZoneProps): ReactElement {
   const spiedKitId = player.spied?.kitId;
   const spied = player.spied;
-  const actives = player.activePersistentEffects;
 
   return (
     <article
@@ -41,36 +87,6 @@ export function OpponentZone({
         <ConnectionBadge player={player} />
       </div>
 
-      {actives.length > 0 && (
-        <div className="mt-1 border-t border-border-soft pt-1">
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-ink-muted">
-            Active
-          </p>
-          <div className="mt-0.5 flex flex-wrap gap-0.5">
-            {actives.map((effect) => (
-              <Card
-                key={effect.id}
-                instance={{
-                  instanceId: effect.id,
-                  cardId: effect.cardId,
-                  isUpgraded: effect.isUpgraded,
-                }}
-                detail="thumb"
-                activated
-                className="w-8 !p-0.5"
-                {...(onInspectActive !== undefined
-                  ? {
-                      onSelect: () => {
-                        onInspectActive(effect.id);
-                      },
-                    }
-                  : {})}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
       {spied === undefined ? (
         <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
           <KitPortrait
@@ -79,6 +95,7 @@ export function OpponentZone({
             isEliminated={player.isEliminated}
             className="w-10 shrink-0 sm:w-14"
           />
+          <ActiveThumbs player={player} {...(onInspectActive !== undefined ? { onInspectActive } : {})} />
           <p className="text-[9px] uppercase tracking-wide text-ink-muted sm:text-[10px]">
             Hidden kit
           </p>
@@ -100,11 +117,19 @@ export function OpponentZone({
                   }
                 : {})}
             />
+            <ActiveThumbs
+              player={player}
+              {...(onInspectActive !== undefined ? { onInspectActive } : {})}
+            />
             {spied.lives !== undefined ? (
               <div className="flex min-w-0 flex-wrap gap-1">
                 <ResourceIcon kind="life" value={spied.lives} flyToken={false} />
                 <ResourceIcon kind="point" value={spied.points ?? 0} flyToken={false} />
-                <ResourceIcon kind="upgradePoint" value={spied.upgradePoints ?? 0} flyToken={false} />
+                <ResourceIcon
+                  kind="upgradePoint"
+                  value={spied.upgradePoints ?? 0}
+                  flyToken={false}
+                />
                 <ResourceIcon kind="shield" value={spied.shield ?? 0} flyToken={false} />
               </div>
             ) : null}

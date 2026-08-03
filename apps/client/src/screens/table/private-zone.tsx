@@ -14,6 +14,7 @@ import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
+import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
 import { PendingQueue } from './pending-queue';
 
@@ -36,7 +37,12 @@ export function PrivateZone({
   onSelectOwnCard,
   onSelectActive,
 }: PrivateZoneProps): ReactElement {
-  const actives = view.self.activePersistentEffects;
+  const actives = [
+    ...(view.self.shield > 0
+      ? [shieldActiveInstance(view.self.shieldIsUpgraded)]
+      : []),
+    ...view.self.activePersistentEffects.map(persistentToCardInstance),
+  ];
 
   return (
     <section
@@ -61,21 +67,17 @@ export function PrivateZone({
               className="flex shrink-0 items-center gap-0.5"
               title="Active cards"
             >
-              {actives.map((effect) => (
+              {actives.map((instance) => (
                 <Card
-                  key={effect.id}
-                  instance={{
-                    instanceId: effect.id,
-                    cardId: effect.cardId,
-                    isUpgraded: effect.isUpgraded,
-                  }}
+                  key={instance.instanceId}
+                  instance={instance}
                   detail="thumb"
-                  activated
+                  activated={instance.cardId !== 'shield'}
                   className="w-7 !p-0.5 sm:w-8"
                   {...(onSelectActive !== undefined
                     ? {
                         onSelect: () => {
-                          onSelectActive(effect.id);
+                          onSelectActive(instance.instanceId);
                         },
                       }
                     : {})}

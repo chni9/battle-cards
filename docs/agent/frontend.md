@@ -56,8 +56,9 @@ rules above are unchanged — this section only covers how the client looks.
   unchanged functionally.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
-  Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row).
-  Opponent actives sit beside the kit portrait. Imposition / Points Generator also get
+  Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
+  including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
+  Opponent actives sit beside the kit portrait (`activeShield` + persistents). Imposition / Points Generator also get
   presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
   them in step 4 — not real pending).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.

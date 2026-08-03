@@ -41,6 +41,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
+| Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Elimination status | **Public** |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 

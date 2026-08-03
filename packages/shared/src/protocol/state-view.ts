@@ -61,6 +61,12 @@ export interface PublicPlayerView {
    * (developer ruling 2026-08-02). Not Spy-gated.
    */
   activePersistentEffects: readonly PersistentEffectView[];
+  /**
+   * Combat Shield is up (`Player.shield > 0`). Remaining points stay private;
+   * only presence + upgrade tier are public so it can render as an active card
+   * (PROTOCOL_VERSION 20). `null` when no shield.
+   */
+  activeShield: { isUpgraded: boolean } | null;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
 }

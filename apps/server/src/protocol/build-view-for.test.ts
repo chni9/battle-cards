@@ -167,6 +167,36 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
       { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 },
     ]);
   });
+
+  it('exposes activeShield when combat shield points remain', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'shield-active',
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(bob).toBeDefined();
+    if (bob === undefined) {
+      return;
+    }
+    bob.shield = 4;
+    bob.shieldIsUpgraded = true;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.players.find((p) => p.id === 'b')?.activeShield).toEqual({
+      isUpgraded: true,
+    });
+    expect(view.players.find((p) => p.id === 'a')?.activeShield).toBeNull();
+  });
 });
 
 describe('buildFinishedViewFor (L9-03)', () => {
