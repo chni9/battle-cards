@@ -8,3 +8,9 @@
 export const BOT_DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
 
 export type BotDifficulty = (typeof BOT_DIFFICULTIES)[number];
+
+export function isBotDifficulty(value: unknown): value is BotDifficulty {
+  return (
+    typeof value === 'string' && (BOT_DIFFICULTIES as readonly string[]).includes(value)
+  );
+}

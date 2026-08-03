@@ -9,6 +9,7 @@
 
 import type {
   ActionLogEntryView,
+  BotDifficulty,
   FinishedStateView,
   GameRecapView,
   GameState,
@@ -56,7 +57,19 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
     you: recipientSessionId,
     gameCode,
     hostPlayerId,
-    players: seats.map((seat) => ({ id: seat.id, nickname: seat.nickname })),
+    players: seats.map((seat) => {
+      const view: LobbySeatView = {
+        id: seat.id,
+        nickname: seat.nickname,
+        isBot: seat.isBot,
+      };
+
+      if (seat.botDifficulty !== undefined) {
+        view.botDifficulty = seat.botDifficulty;
+      }
+
+      return view;
+    }),
   };
 }
 
@@ -66,6 +79,8 @@ export interface PlayingViewInput {
   state: GameState;
   turnDeadlineMs: number | null;
   actionLog: readonly ActionLogEntryView[];
+  /** Bot seat difficulties keyed by player id — from room seats, not GameState. */
+  botDifficulties?: ReadonlyMap<string, BotDifficulty>;
 }
 
 function buildSpiedView(
@@ -102,7 +117,8 @@ function buildSpiedView(
 }
 
 export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
-  const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog } = input;
+  const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog, botDifficulties } =
+    input;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
   if (selfPlayer === undefined) {
@@ -123,11 +139,14 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
 
   const players: PublicPlayerView[] = state.players.map((player) => {
     const spied = buildSpiedView(state, recipientSessionId, player);
-    return {
+    const difficulty = botDifficulties?.get(player.id);
+    const isBot = difficulty !== undefined;
+    const view: PublicPlayerView = {
       id: player.id,
       nickname: player.nickname,
       isEliminated: player.isEliminated,
       isYou: player.id === recipientSessionId,
+      isBot,
       connection: {
         status: player.connectionState.status,
         disconnectedAt: player.connectionState.disconnectedAt,
@@ -137,8 +156,17 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
       activeShield:
         player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
-      ...(spied !== undefined ? { spied } : {}),
     };
+
+    if (difficulty !== undefined) {
+      view.botDifficulty = difficulty;
+    }
+
+    if (spied !== undefined) {
+      view.spied = spied;
+    }
+
+    return view;
   });
 
   const self: PrivateSelfView = {
@@ -175,6 +203,7 @@ export interface FinishedViewInput {
   winnerPlayerId: string;
   actionLog: readonly ActionLogEntryView[];
   eliminations: readonly FinishedGameEliminationRecord[];
+  botDifficulties?: ReadonlyMap<string, BotDifficulty>;
 }
 
 export function buildGameRecapView(
@@ -204,7 +233,15 @@ export function buildGameRecapView(
 }
 
 export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateView {
-  const { recipientSessionId, gameCode, state, winnerPlayerId, actionLog, eliminations } = input;
+  const {
+    recipientSessionId,
+    gameCode,
+    state,
+    winnerPlayerId,
+    actionLog,
+    eliminations,
+    botDifficulties,
+  } = input;
 
   if (!state.players.some((player) => player.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
@@ -215,21 +252,31 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     you: recipientSessionId,
     gameCode,
     winnerPlayerId,
-    players: state.players.map((player) => ({
-      id: player.id,
-      nickname: player.nickname,
-      isEliminated: player.isEliminated,
-      isYou: player.id === recipientSessionId,
-      connection: {
-        status: player.connectionState.status,
-        disconnectedAt: player.connectionState.disconnectedAt,
-        automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
-        consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
-      },
-      activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
-      activeShield:
-        player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
-    })),
+    players: state.players.map((player) => {
+      const difficulty = botDifficulties?.get(player.id);
+      const view: PublicPlayerView = {
+        id: player.id,
+        nickname: player.nickname,
+        isEliminated: player.isEliminated,
+        isYou: player.id === recipientSessionId,
+        isBot: difficulty !== undefined,
+        connection: {
+          status: player.connectionState.status,
+          disconnectedAt: player.connectionState.disconnectedAt,
+          automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
+          consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
+        },
+        activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
+        activeShield:
+          player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
+      };
+
+      if (difficulty !== undefined) {
+        view.botDifficulty = difficulty;
+      }
+
+      return view;
+    }),
     recap: buildGameRecapView(state, actionLog, eliminations),
   };
 }

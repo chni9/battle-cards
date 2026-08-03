@@ -22,6 +22,7 @@ function baseView(): PlayingStateView {
         nickname: 'Alice',
         isEliminated: false,
         isYou: true,
+        isBot: false,
         connection: {
           status: 'connected',
           disconnectedAt: null,
@@ -36,6 +37,7 @@ function baseView(): PlayingStateView {
         nickname: 'Bob',
         isEliminated: false,
         isYou: false,
+        isBot: false,
         connection: {
           status: 'connected',
           disconnectedAt: null,

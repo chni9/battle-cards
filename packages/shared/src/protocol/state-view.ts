@@ -5,6 +5,7 @@
  */
 
 import type { CardId, CardInstance } from '../domain/card';
+import type { BotDifficulty } from '../domain/bot';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
@@ -27,6 +28,10 @@ export type ActionLogPlayedAction =
 export interface LobbySeatView {
   id: string;
   nickname: string;
+  /** True for virtual bot seats (PROTOCOL_VERSION 21). */
+  isBot: boolean;
+  /** Present only when `isBot` is true. */
+  botDifficulty?: BotDifficulty;
 }
 
 /**
@@ -55,6 +60,10 @@ export interface PublicPlayerView {
   isEliminated: boolean;
   /** True when this player is the recipient — private fields filled below. */
   isYou: boolean;
+  /** Virtual bot seat (PROTOCOL_VERSION 21). Visible to every recipient. */
+  isBot: boolean;
+  /** Present only when `isBot` is true. */
+  botDifficulty?: BotDifficulty;
   connection: PublicConnectionView;
   /**
    * Active persistent specials (Imposition, Points Generator) — public for every seat

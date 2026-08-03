@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-5 of 22 V3 tasks done.
+6 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 5 |
+| 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -145,7 +145,7 @@ timer default).
 - **Reference** Technical spec v3 §4.1, §4.2, §4.6 · **Depends on** L15-02 · **Complexity** M · **Risk** High
 - **Watch point** `sendRewardChoiceRequired` today returns silently when no client matches the eliminator. With bots that becomes "the bot is never asked and defaults to 2×4 lives after 20 real seconds" — functional, invisible, and wrong. Make both branches explicit.
 - **Acceptance** Lot 15 §10.4 subset green: no bot seat shows a non-`connected` status or a non-zero timeout counter; no `MIRROR_CHOICE_REQUIRED` / `REWARD_CHOICE_REQUIRED` **timer** is ever armed for a bot; consecutive bot turns enter via `setTimeout` with no sync recursion; stub always draws when asked. Full “4-bot room plays to completion” remains **L16-06**.
-### L15-05 · Protocol: bot intents and view fields (PROTOCOL_VERSION 20 → 21) — `To do`
+### L15-05 · Protocol: bot intents and view fields (PROTOCOL_VERSION 20 → 21) — `Done`
 
 Add `addBot` / `removeBot` / `setBotDifficulty` client→server intents and `isBot` /
 `botDifficulty` to `LobbySeatView` and `PublicPlayerView`. Wire the room handlers to L15-03's

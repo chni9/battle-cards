@@ -6,6 +6,7 @@
  */
 
 import type { CardId } from '../domain/card';
+import type { BotDifficulty } from '../domain/bot';
 import type {
   ChooseEliminationRewardPayload,
   RewardChoiceRequiredPayload,
@@ -17,6 +18,9 @@ export const GAME_ROOM_NAME = 'game';
 export const STATE_UPDATE = 'stateUpdate';
 export const CLIENT_READY = 'clientReady';
 export const START_GAME = 'startGame';
+export const ADD_BOT = 'addBot';
+export const REMOVE_BOT = 'removeBot';
+export const SET_BOT_DIFFICULTY = 'setBotDifficulty';
 export const DRAW_CARD = 'drawCard';
 export const PLAY_CARD = 'playCard';
 export const PLAY_MULTIPLE_ATTACKS = 'playMultipleAttacks';
@@ -134,6 +138,19 @@ export interface ChooseMirrorTargetPayload {
   newTargetPlayerId: string;
 }
 
+export interface AddBotPayload {
+  difficulty: BotDifficulty;
+}
+
+export interface RemoveBotPayload {
+  playerId: string;
+}
+
+export interface SetBotDifficultyPayload {
+  playerId: string;
+  difficulty: BotDifficulty;
+}
+
 export interface MirrorChoiceRequiredPayload {
   eligibleEffectIds: readonly string[];
   deadlineMs: number;
@@ -161,6 +178,9 @@ export type JoinRoomOptions = RoomJoinOptions;
 export interface ClientToServerMessages {
   [CLIENT_READY]: undefined;
   [START_GAME]: undefined;
+  [ADD_BOT]: AddBotPayload;
+  [REMOVE_BOT]: RemoveBotPayload;
+  [SET_BOT_DIFFICULTY]: SetBotDifficultyPayload;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
   [PLAY_MULTIPLE_ATTACKS]: PlayMultipleAttacksPayload;

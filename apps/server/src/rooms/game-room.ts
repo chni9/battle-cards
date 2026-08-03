@@ -8,6 +8,7 @@
 import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
+  ADD_BOT,
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
@@ -17,20 +18,25 @@ import {
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
+  isBotDifficulty,
   MIRROR_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  REMOVE_BOT,
   REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  SET_BOT_DIFFICULTY,
   UPGRADE_CARD,
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
   type ActionLogEntryView,
   type ActionPlayedPayload,
+  type AddBotPayload,
+  type BotDifficulty,
   type BuyCardPayload,
   type CardId,
   type ChooseEliminationRewardPayload,
@@ -40,8 +46,10 @@ import {
   type LobbySeatView,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
+  type RemoveBotPayload,
   type RewardChoice,
   type SellCardPayload,
+  type SetBotDifficultyPayload,
   type UpgradeCardPayload,
   type ServerToClientMessages,
 } from '@card-battle/shared';
@@ -92,8 +100,14 @@ import {
   generateGameCodeCandidate,
 } from './game-code';
 import {
+  addBotRejectionMessage,
+  canAddBot,
+  canRemoveBot,
+  canSetBotDifficulty,
   canStartGame,
   MAX_PLAYERS,
+  removeBotRejectionMessage,
+  setBotDifficultyRejectionMessage,
   startGameRejectionMessage,
 } from './lobby-rules';
 import {
@@ -101,6 +115,7 @@ import {
   shouldKeepRoomAlive,
 } from './last-human-leave';
 import {
+  createBotSeat,
   isBotSeat,
   isHumanSeat,
   shouldLockForOccupancy,
@@ -241,6 +256,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.beginTurnOrAbsentAutoPlay();
       this.sendStateToEveryone();
       this.broadcastTurnStarted();
+    },
+
+    [ADD_BOT]: (client: GameClient, payload: unknown): void => {
+      this.handleAddBot(client, payload);
+    },
+
+    [REMOVE_BOT]: (client: GameClient, payload: unknown): void => {
+      this.handleRemoveBot(client, payload);
+    },
+
+    [SET_BOT_DIFFICULTY]: (client: GameClient, payload: unknown): void => {
+      this.handleSetBotDifficulty(client, payload);
     },
 
     [DRAW_CARD]: (client: GameClient): void => {
@@ -494,6 +521,119 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.sendStateToEveryone();
+  }
+
+  private handleAddBot(client: GameClient, payload: unknown): void {
+    const hostSessionId = this.hostSessionId;
+
+    if (hostSessionId === null) {
+      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      return;
+    }
+
+    const parsed = readAddBotPayload(payload);
+
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid addBot payload.' });
+      return;
+    }
+
+    const rejection = canAddBot({
+      requesterSessionId: client.sessionId,
+      hostSessionId,
+      seatCount: this.seats.length,
+      hasStarted: this.hasStarted,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, { message: addBotRejectionMessage(rejection) });
+      return;
+    }
+
+    this.seats.push(createBotSeat(this.seats, parsed.difficulty));
+
+    if (shouldLockForOccupancy(this.seats.length)) {
+      void this.lock();
+    }
+
+    this.refreshAutoDispose();
+    this.sendStateToEveryone();
+  }
+
+  private handleRemoveBot(client: GameClient, payload: unknown): void {
+    const hostSessionId = this.hostSessionId;
+
+    if (hostSessionId === null) {
+      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      return;
+    }
+
+    const parsed = readRemoveBotPayload(payload);
+
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid removeBot payload.' });
+      return;
+    }
+
+    const target = this.seats.find((seat) => seat.sessionId === parsed.playerId);
+    const rejection = canRemoveBot({
+      requesterSessionId: client.sessionId,
+      hostSessionId,
+      hasStarted: this.hasStarted,
+      targetExists: target !== undefined,
+      targetIsBot: target !== undefined && isBotSeat(target),
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, { message: removeBotRejectionMessage(rejection) });
+      return;
+    }
+
+    this.seats = this.seats.filter((seat) => seat.sessionId !== parsed.playerId);
+
+    if (shouldUnlockForOccupancy(this.seats.length)) {
+      void this.unlock();
+    }
+
+    this.refreshAutoDispose();
+    this.sendStateToEveryone();
+  }
+
+  private handleSetBotDifficulty(client: GameClient, payload: unknown): void {
+    const hostSessionId = this.hostSessionId;
+
+    if (hostSessionId === null) {
+      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      return;
+    }
+
+    const parsed = readSetBotDifficultyPayload(payload);
+
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid setBotDifficulty payload.' });
+      return;
+    }
+
+    const target = this.seats.find((seat) => seat.sessionId === parsed.playerId);
+    const rejection = canSetBotDifficulty({
+      requesterSessionId: client.sessionId,
+      hostSessionId,
+      hasStarted: this.hasStarted,
+      targetExists: target !== undefined,
+      targetIsBot: target !== undefined && isBotSeat(target),
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, { message: setBotDifficultyRejectionMessage(rejection) });
+      return;
+    }
+
+    if (target === undefined || !isBotSeat(target)) {
+      return;
+    }
+
+    target.difficulty = parsed.difficulty;
     this.sendStateToEveryone();
   }
 
@@ -1475,7 +1615,34 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private seatViews(): LobbySeatView[] {
-    return this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
+    return this.seats.map((seat) => {
+      if (isBotSeat(seat)) {
+        return {
+          id: seat.sessionId,
+          nickname: seat.nickname,
+          isBot: true,
+          botDifficulty: seat.difficulty,
+        };
+      }
+
+      return {
+        id: seat.sessionId,
+        nickname: seat.nickname,
+        isBot: false,
+      };
+    });
+  }
+
+  private botDifficulties(): ReadonlyMap<string, BotDifficulty> {
+    const map = new Map<string, BotDifficulty>();
+
+    for (const seat of this.seats) {
+      if (isBotSeat(seat)) {
+        map.set(seat.sessionId, seat.difficulty);
+      }
+    }
+
+    return map;
   }
 
   private sendStateToEveryone(): void {
@@ -1522,6 +1689,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           winnerPlayerId: this.winnerPlayerId,
           actionLog: this.actionLog,
           eliminations: this.eliminations,
+          botDifficulties: this.botDifficulties(),
         }),
       );
       return;
@@ -1535,6 +1703,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         state: this.gameState,
         turnDeadlineMs: this.turnDeadlineMs,
         actionLog: this.actionLog,
+        botDifficulties: this.botDifficulties(),
       }),
     );
   }
@@ -1550,6 +1719,53 @@ export class GameRoom extends Room<{ client: GameClient }> {
     await this.presence.sadd(GAME_CODE_PRESENCE_CHANNEL, code);
     return code;
   }
+}
+
+function readAddBotPayload(payload: unknown): AddBotPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('difficulty' in payload)) {
+    return null;
+  }
+
+  const difficulty = payload.difficulty;
+
+  if (!isBotDifficulty(difficulty)) {
+    return null;
+  }
+
+  return { difficulty };
+}
+
+function readRemoveBotPayload(payload: unknown): RemoveBotPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('playerId' in payload)) {
+    return null;
+  }
+
+  if (typeof payload.playerId !== 'string' || payload.playerId.length === 0) {
+    return null;
+  }
+
+  return { playerId: payload.playerId };
+}
+
+function readSetBotDifficultyPayload(payload: unknown): SetBotDifficultyPayload | null {
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('playerId' in payload) ||
+    !('difficulty' in payload)
+  ) {
+    return null;
+  }
+
+  if (typeof payload.playerId !== 'string' || payload.playerId.length === 0) {
+    return null;
+  }
+
+  if (!isBotDifficulty(payload.difficulty)) {
+    return null;
+  }
+
+  return { playerId: payload.playerId, difficulty: payload.difficulty };
 }
 
 function readProtocolVersion(options: unknown): number | null {

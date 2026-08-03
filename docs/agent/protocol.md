@@ -42,6 +42,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Queue of pending effects | **Public** |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
+| Bot seat flag + difficulty | **Public** as `isBot` / `botDifficulty` (PROTOCOL_VERSION 21) |
 | Elimination status | **Public** |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 
@@ -62,7 +63,9 @@ hand, specials, and active persistents (2026-08-02).
 
 Client → server (technical spec §5.2):
 
-`createRoom` · `joinRoom` · `startGame` · `playCard` · `playMultipleAttacks` (Assassin only,
+`createRoom` · `joinRoom` · `startGame` · `addBot` · `removeBot` · `setBotDifficulty`
+(host-only, lobby-only; PROTOCOL_VERSION 21) ·
+`playCard` · `playMultipleAttacks` (Assassin only,
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·

@@ -5,8 +5,8 @@ import { buildFinishedViewFor, buildLobbyViewFor, buildPlayingViewFor } from './
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
-    { id: 'session-a', nickname: 'Alice' },
-    { id: 'session-b', nickname: 'Bob' },
+    { id: 'session-a', nickname: 'Alice', isBot: false },
+    { id: 'session-b', nickname: 'Bob', isBot: false },
   ] as const;
 
   it('tells the recipient which session is theirs', () => {
@@ -30,6 +30,61 @@ describe('buildLobbyViewFor (L1-01)', () => {
         seats,
       }),
     ).toThrow(/not in the room/);
+  });
+
+  it('exposes bot seats and difficulty to every recipient (L15-05)', () => {
+    const withBot = [
+      { id: 'session-a', nickname: 'Alice', isBot: false },
+      {
+        id: 'bot-1',
+        nickname: 'Alpha',
+        isBot: true,
+        botDifficulty: 'hard' as const,
+      },
+    ];
+
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'session-a',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats: withBot,
+    });
+
+    expect(view.players[1]).toMatchObject({
+      id: 'bot-1',
+      isBot: true,
+      botDifficulty: 'hard',
+    });
+  });
+});
+
+describe('buildPlayingViewFor (L15-05) — bot markers', () => {
+  it('marks bot players for every recipient from seat metadata', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'bot-1', nickname: 'Alpha' },
+      ],
+      seed: 'bot-view',
+    });
+
+    const bots = new Map([['bot-1', 'easy' as const]]);
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      botDifficulties: bots,
+    });
+
+    const bot = view.players.find((player) => player.id === 'bot-1');
+    const human = view.players.find((player) => player.id === 'a');
+
+    expect(bot?.isBot).toBe(true);
+    expect(bot?.botDifficulty).toBe('easy');
+    expect(human?.isBot).toBe(false);
+    expect(human?.botDifficulty).toBeUndefined();
   });
 });
 
