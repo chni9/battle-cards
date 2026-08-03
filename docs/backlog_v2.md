@@ -68,14 +68,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-16 of 22 V2 tasks done. Active from Lot 13.
+17 of 22 V2 tasks done. Active from Lot 14.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 10 · Design system foundations | 5 | 5 |
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
-| 13 · End screen | 1 | 0 |
+| 13 · End screen | 1 | 1 |
 | 14 · Animation | 5 | 0 |
 
 ## Milestones
@@ -251,7 +251,7 @@ intent payloads as today — UI-only (technical spec v2 §6 ruling).
 
 ## Lot 13 · V2 End screen
 
-### L13-01 · End screen redesign — `To do`
+### L13-01 · End screen redesign — `Done`
 
 Restyle the L9-03 output: winner, `FinishedStateView.recap`, return-home action.
 

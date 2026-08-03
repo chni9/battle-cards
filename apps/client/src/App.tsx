@@ -1,13 +1,12 @@
 /**
- * Phase router — Home/Lobby/Table extracted; End still inline until Lot 13.
+ * Phase router — Home / Lobby / Table / End.
  * Conventions: docs/agent/frontend.md · technical spec v2 §6.
  */
 
 import { useEffect, useState } from 'react';
 
-import { Button } from './design/components/button';
-import { ConnectionBadge } from './design/components/connection-badge';
 import { useRoomConnection } from './net/use-room-connection';
+import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
 import { LobbyScreen } from './screens/lobby';
 import { STATUS_LABELS } from './screens/status-labels';
@@ -54,53 +53,13 @@ export function App() {
   }, []);
 
   if (view?.phase === 'finished') {
-    const winner = view.players.find((player) => player.id === view.winnerPlayerId);
-    const nick = (playerId: string): string =>
-      view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
-
     return (
-      <main className="bg-surface p-4 font-sans text-ink">
-        <h1 className="text-2xl font-semibold text-ink">Card Battle</h1>
-        <h2>Game over</h2>
-        <p>Winner: {winner?.nickname ?? view.winnerPlayerId}</p>
-        <ul>
-          {view.players.map((player) => (
-            <li key={player.id}>
-              {player.nickname}
-              <ConnectionBadge player={player} />
-            </li>
-          ))}
-        </ul>
-        <section>
-          <h3>Recap</h3>
-          <p>Turns played: {view.recap.turnSequence}</p>
-          <ul>
-            {view.recap.players.map((row) => (
-              <li key={row.playerId}>
-                {nick(row.playerId)} — played {row.cardsPlayedCount}, bought {row.buyCount},
-                sold {row.sellCount}, upgraded {row.upgradeCount}
-              </li>
-            ))}
-          </ul>
-          {view.recap.eliminations.length === 0 ? (
-            <p>No eliminations</p>
-          ) : (
-            <ul>
-              {view.recap.eliminations.map((entry) => (
-                <li key={`${entry.playerId}-${entry.reason}`}>
-                  {nick(entry.playerId)} eliminated ({entry.reason})
-                  {entry.eliminatorPlayerId !== null
-                    ? ` by ${nick(entry.eliminatorPlayerId)}`
-                    : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <Button variant="red" onClick={() => void leaveGame()}>
-          Return home
-        </Button>
-      </main>
+      <EndScreen
+        view={view}
+        onLeave={() => {
+          void leaveGame();
+        }}
+      />
     );
   }
 

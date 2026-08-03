@@ -802,3 +802,14 @@ Developer session (out of backlog):
   inspect Dialog shows Active (+ counter). PROTOCOL_VERSION 19.
 - **Action log / pending:** `formatCardLabel` → catalog name, upgraded as `Name +`.
   `isUpgraded` threaded on `actionPlayed` / `actionResolved` and multi-attack entries.
+
+## 2026-08-03 · [P] End screen restyle (L13-01)
+
+Developer-locked for Lot 13:
+
+- **Visual family:** Home-like branded `surface` + decorative V1 art from the asset lookup
+  (card backs / kit portraits as decoration only — not mapped to seated players).
+- **No kits on End:** `FinishedStateView` has no `kitId`; do not change `build-view-for.ts`.
+- **Seats:** nicknames + eliminated marker; **no** `ConnectionBadge` (connection state is
+  noise after game over). Winner emphasized; full public `recap` unchanged.
+- Screen extracted to `apps/client/src/screens/end.tsx`.

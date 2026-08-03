@@ -9,11 +9,11 @@
 
 V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is in progress**
 (`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
-router; Home, Lobby, and Table live under `apps/client/src/screens/` (Lots 11–12). End remains
-inline in `App.tsx` until Lot 13. Update this file's examples in place as V2 components
-land; don't fork a second frontend playbook. Intents, payloads, and visibility rules are
-unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
-payloads, different chrome; implemented in L12-08).
+router; Home, Lobby, Table, and End live under `apps/client/src/screens/` (Lots 11–13).
+Update this file's examples in place as V2 components land; don't fork a second frontend
+playbook. Intents, payloads, and visibility rules are unchanged by V2 (except the Table
+**control pattern** in technical spec v2 §6.1 — same payloads, different chrome;
+implemented in L12-08).
 
 ## Screens
 
@@ -22,7 +22,7 @@ payloads, different chrome; implemented in L12-08).
 | Home | No room — create / join + nickname | `screens/home.tsx` |
 | Lobby | `phase: 'lobby'` — seats, code, host Start | `screens/lobby.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — winner, public recap stats, return home | `App.tsx` until Lot 13 |
+| End | `phase: 'finished'` — winner, public recap stats, return home | `screens/end.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -56,6 +56,10 @@ rules above are unchanged — this section only covers how the client looks.
   unchanged functionally.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
+  Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row).
+  Opponent actives sit beside the kit portrait. Imposition / Points Generator also get
+  presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
+  them in step 4 — not real pending).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
@@ -108,9 +112,10 @@ rules above are unchanged — this section only covers how the client looks.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
   shown.
-- **End screen (L9-03):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
-  counts + eliminations. No kits, hands, seed, or exact final resources. Return home via
-  `leaveGame()`.
+- **End screen (L9-03 / L13-01):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
+  counts + eliminations. No kits, hands, seed, or exact final resources. Home-like branded
+  layout with decorative V1 art only (not player-mapped). Seat list shows nicknames +
+  eliminated marker; no connection badges. Return home via `leaveGame()`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
@@ -235,3 +240,10 @@ do not hand off an untested lot.
   (`Not enough points`) — correct; Draw (+1) still works from economy bar.
 - Timers progress bar + connection status; unspied opponent shows `opponent.png` / Hidden kit.
 - No protocol/intent change.
+
+### Lot 13 verified 2026-08-03 (Playwright, `TURN_DURATION_MS=300000`)
+
+- Room `BBTWGH`: HostA + GuestB → Start → GuestB Leave forfeit.
+- End: Home-like branded layout, Winner HostA (you), Players + Eliminated marker, Recap,
+  Return home → Home. No connection badges on End.
+- No protocol/intent change; `build-view-for.ts` untouched.
