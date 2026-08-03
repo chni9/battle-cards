@@ -80,11 +80,11 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-3 of 22 V3 tasks done.
+4 of 22 V3 tasks done.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 15 · Seat abstraction and protocol | 6 | 3 |
+| 15 · Seat abstraction and protocol | 6 | 4 |
 | 16 · Bot brain | 6 | 0 |
 | 17 · Solo mode and lobby bots | 5 | 0 |
 | 18 · Headless simulation | 5 | 0 |
@@ -133,7 +133,7 @@ messages in the same shape as `startGameRejectionMessage`.
 - **Watch point** Keep it pure, in `lobby-rules.ts`, so the reject cases are unit-tested without a Colyseus room — the reason `canStartGame` lives there. A non-host client will send these messages; server-side rejection is the validation, a hidden button is not (golden rule 8).
 - **Acceptance** Each rejection case (not host, already started, room full, unknown bot id, target is a human seat) has a test and a distinct message
 
-### L15-04 · Bot seat lifecycle isolation — `To do`
+### L15-04 · Bot seat lifecycle isolation — `Done`
 
 A bot seat is permanently `connected`: it never enters `disconnected` or `absent`, never
 accumulates `consecutiveTimeouts` or `automaticTurnsTaken`, and never arms a turn, Mirror or
@@ -144,8 +144,7 @@ timer default).
 
 - **Reference** Technical spec v3 §4.1, §4.2, §4.6 · **Depends on** L15-02 · **Complexity** M · **Risk** High
 - **Watch point** `sendRewardChoiceRequired` today returns silently when no client matches the eliminator. With bots that becomes "the bot is never asked and defaults to 2×4 lives after 20 real seconds" — functional, invisible, and wrong. Make both branches explicit.
-- **Acceptance** Every §10.4 test green: 4-bot room plays to completion; no bot seat ever shows a non-`connected` status or a non-zero timeout counter; no `MIRROR_CHOICE_REQUIRED` / `REWARD_CHOICE_REQUIRED` timer is ever armed for a bot
-
+- **Acceptance** Lot 15 §10.4 subset green: no bot seat shows a non-`connected` status or a non-zero timeout counter; no `MIRROR_CHOICE_REQUIRED` / `REWARD_CHOICE_REQUIRED` **timer** is ever armed for a bot; consecutive bot turns enter via `setTimeout` with no sync recursion; stub always draws when asked. Full “4-bot room plays to completion” remains **L16-06**.
 ### L15-05 · Protocol: bot intents and view fields (PROTOCOL_VERSION 20 → 21) — `To do`
 
 Add `addBot` / `removeBot` / `setBotDifficulty` client→server intents and `isBot` /

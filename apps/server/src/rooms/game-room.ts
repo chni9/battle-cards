@@ -49,6 +49,8 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
+import { BotDriver } from '../bots/bot-driver';
+import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
 import { RECONNECT_GRACE_MS } from '../engine/lifecycle/constants';
@@ -95,6 +97,7 @@ import {
   startGameRejectionMessage,
 } from './lobby-rules';
 import {
+  isBotSeat,
   shouldLockForOccupancy,
   shouldUnlockForOccupancy,
   type Seat,
@@ -120,6 +123,23 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private hasStarted = false;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
+  private readonly botDriver = new BotDriver({
+    isBotSeat: (playerId) => {
+      const seat = this.seats.find((entry) => entry.sessionId === playerId);
+      return seat !== undefined && isBotSeat(seat);
+    },
+    getGameState: () => this.gameState,
+    isGameOver: () => this.winnerPlayerId !== null,
+    performBotDraw: (botId) => {
+      this.performAutoDraw(botId);
+    },
+    completeBotMirror: (botId, pendingEffectId, newTargetPlayerId) => {
+      this.applyBotMirrorChoice(botId, pendingEffectId, newTargetPlayerId);
+    },
+    completeBotReward: (botId, eliminationId, choices) => {
+      this.applyBotRewardChoice(botId, eliminationId, choices);
+    },
+  });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
   private startedAtMs: number | null = null;
   /** Elimination history for the finished-game log (wire reasons; not on GameState). */
@@ -147,6 +167,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearMirrorTimer();
     this.clearRewardTimer();
     this.clearAllAbsentTimers();
+    this.botDriver.clear();
     this.rejectAllReconnections(new Error('Room disposed'));
     await this.presence.srem(GAME_CODE_PRESENCE_CHANNEL, this.roomId);
   }
@@ -751,13 +772,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private beginRewardTimer(state: GameState, durationMs?: number): void {
     this.clearRewardTimer();
     this.pausedRewardRemainingMs = null;
-    this.sendRewardChoiceRequired(state);
 
     const choice = state.rewardChoice;
 
     if (choice === null) {
       return;
     }
+
+    const seat = this.seats.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
+    const hasClient = this.clients.some((c) => c.sessionId === choice.eliminatorPlayerId);
+    const route = classifyRewardRoute(seat, hasClient);
+
+    if (route === 'bot') {
+      // No REWARD_CHOICE_REQUIRED timer for bots — driver answers inline (v3 §4.6).
+      this.botDriver.handleRewardChoice(choice.eliminatorPlayerId);
+      return;
+    }
+
+    this.sendRewardChoiceRequired(state);
 
     const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
     const ms =
@@ -807,7 +839,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    const seat = this.seats.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
     const client = this.clients.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
+    const route = classifyRewardRoute(seat, client !== undefined);
+
+    if (route === 'bot') {
+      this.botDriver.handleRewardChoice(choice.eliminatorPlayerId);
+      return;
+    }
+
+    if (route === 'human-dropped') {
+      // Dropped human: keep today's timer default (armed by beginRewardTimer).
+      return;
+    }
 
     if (client === undefined) {
       return;
@@ -849,8 +893,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
-   * Start the turn timer, or immediately auto-draw if the active seat is absent.
-   * technical spec §5.7.
+   * Start the turn timer, or drive a bot / absent seat.
+   * technical spec §5.7; bot branch — technical spec v3 §4.2 (before connected).
    *
    * Absent auto-draws are deferred with `setTimeout(0)` so consecutive absent seats
    * do not recurse synchronously (stack overflow when several seats are absent).
@@ -863,17 +907,27 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const active = findPlayer(state, state.currentTurnPlayerId);
+    const activePlayerId = state.currentTurnPlayerId;
+    const seat = this.seats.find((entry) => entry.sessionId === activePlayerId);
+    const active = findPlayer(state, activePlayerId);
+    const entry = classifyTurnEntry(seat, active?.connectionState.status);
 
-    if (active?.connectionState.status === 'absent') {
-      const playerId = active.id;
+    if (entry === 'bot') {
+      this.clearTurnTimer();
+      this.turnDeadlineMs = null;
+      this.botDriver.scheduleTurn(activePlayerId);
+      return;
+    }
+
+    if (entry === 'absent') {
+      const playerId = activePlayerId;
       setTimeout(() => {
         this.runAbsentAutoDraw(playerId);
       }, 0);
       return;
     }
 
-    if (active?.connectionState.status === 'disconnected') {
+    if (entry === 'disconnected') {
       // Grace window: do not start the 30s timer — wait for reconnect or absent.
       this.clearTurnTimer();
       this.turnDeadlineMs = null;
@@ -968,6 +1022,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.applyTurnResult(result);
 
+    if (result.mirrorChoicePending === true) {
+      this.routeMirrorChoice(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
       this.sendStateToEveryone();
@@ -981,6 +1041,88 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
+  }
+
+  /** Bot or human Mirror prompt — bots never arm MIRROR_CHOICE_REQUIRED (v3 §4.6). */
+  private routeMirrorChoice(state: GameState): void {
+    const choice = state.mirrorChoice;
+
+    if (choice === null) {
+      return;
+    }
+
+    const seat = this.seats.find((entry) => entry.sessionId === choice.playerId);
+
+    if (seat !== undefined && isBotSeat(seat)) {
+      this.botDriver.handleMirrorChoice(choice.playerId);
+      return;
+    }
+
+    const client = this.clients.find((entry) => entry.sessionId === choice.playerId);
+
+    if (client === undefined) {
+      return;
+    }
+
+    this.beginMirrorTimer(client, choice.deadlineMs, choice.eligibleEffectIds);
+  }
+
+  private applyBotMirrorChoice(
+    botId: string,
+    pendingEffectId: string,
+    newTargetPlayerId: string,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = completeMirrorChoice(state, botId, pendingEffectId, newTargetPlayerId);
+
+    if (!result.ok) {
+      this.performAutoDraw(botId);
+      return;
+    }
+
+    this.clearMirrorTimer();
+    this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private applyBotRewardChoice(
+    botId: string,
+    eliminationId: string,
+    choices: [RewardChoice, RewardChoice],
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = completeEliminationRewardChoice(state, botId, eliminationId, choices);
+
+    if (!result.ok) {
+      return;
+    }
+
+    this.clearRewardTimer();
+    this.appendRewardsClaimed(result.rewardsClaimed);
+    this.continueAfterRewards(result);
   }
 
   private runAbsentAutoDraw(playerId: string): void {

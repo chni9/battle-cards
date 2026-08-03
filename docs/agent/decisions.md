@@ -835,3 +835,16 @@ This partially overrides the 2026-07-30 ruling that “lives and shield are **no
 Spy”: lives and exact shield points remain private; only the boolean-up presence signal is
 public. V3’s starting baseline is PROTOCOL 20; L15-05 bumps **20 → 21** once for bot intents
 and seat fields.
+
+## 2026-08-03 · [T] Bot nickname pool escape hatch (L15-02)
+
+Bot seats pick from a fixed phonetic pool (`Alpha`…`Hotel`), skipping names already seated
+(case-insensitive). If every pool name is taken (pathological: humans claimed them all), fall
+back to `Bot-${shortId}` once. Not a product nickname scheme — only an exhaustion escape.
+
+## 2026-08-03 · [T] Lot 15 stub bot driver; §10.4 completion deferred (L15-04)
+
+`apps/server/src/bots/bot-driver.ts` ships in L15 with an always-draw stub (Mirror: first
+eligible effect + first other alive seat; reward: 2× lives inline). Full “4-bot room plays to
+completion” stays on L16-06 once the heuristic can end games. Stub Mirror may use seat-order
+target pick; L16 must break ties with seeded rng, never seat order.
