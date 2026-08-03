@@ -1,10 +1,11 @@
 /**
- * Turn / sub-choice timers — L12-07.
- * Cosmetic only: trust server deadlineMs. Static progress (L14-05 adds motion).
+ * Turn / sub-choice timers — L12-07 / L14-05.
+ * Cosmetic only: trust server deadlineMs. Motion polish on progress bars.
  * Landscape meta (code · status) lives here — no separate Card Battle header.
  */
 
 import type { ActionResolvedPayload } from '@card-battle/shared';
+import { motion, useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
 export interface TimersProps {
@@ -34,6 +35,14 @@ export function Timers({
   subChoiceLabel,
   subChoiceProgressRatio,
 }: TimersProps): ReactElement {
+  const reduceMotion = useReducedMotion();
+  const turnPct =
+    progressRatio === null ? 0 : Math.round(progressRatio * 100);
+  const subPct =
+    subChoiceProgressRatio === undefined || subChoiceProgressRatio === null
+      ? null
+      : Math.round(subChoiceProgressRatio * 100);
+
   return (
     <section
       data-zone="timers"
@@ -68,22 +77,26 @@ export function Timers({
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
-        {...(progressRatio === null
-          ? {}
-          : { 'aria-valuenow': Math.round(progressRatio * 100) })}
+        {...(progressRatio === null ? {} : { 'aria-valuenow': turnPct })}
         aria-label="Turn timer"
       >
-        <div
+        <motion.div
           className={[
-            'h-full rounded-full transition-[width] duration-200 ease-out motion-reduce:transition-none',
+            'h-full rounded-full origin-left',
             progressRatio !== null && progressRatio < 0.2
               ? 'bg-cta-red'
               : 'bg-cta-yellow',
           ].join(' ')}
-          style={{
-            width:
-              progressRatio === null ? '0%' : `${Math.round(progressRatio * 100)}%`,
+          initial={false}
+          animate={{
+            width: `${String(turnPct)}%`,
+            scaleY: progressRatio !== null && progressRatio < 0.2 ? 1.15 : 1,
           }}
+          transition={
+            reduceMotion === true
+              ? { duration: 0 }
+              : { duration: 0.2, ease: 'easeOut' }
+          }
         />
       </div>
       {error !== null && (
@@ -96,20 +109,24 @@ export function Timers({
           <p className="text-[10px] font-medium text-ink-muted sm:text-xs">
             {subChoiceLabel}
           </p>
-          {subChoiceProgressRatio !== undefined && subChoiceProgressRatio !== null && (
+          {subPct !== null && (
             <div
               className="mt-1 h-1 overflow-hidden rounded-full bg-border-soft sm:h-1.5"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuenow={Math.round(subChoiceProgressRatio * 100)}
+              aria-valuenow={subPct}
               aria-label="Sub-choice timer"
             >
-              <div
-                className="h-full rounded-full bg-cta-orange transition-[width] duration-200 ease-out motion-reduce:transition-none"
-                style={{
-                  width: `${Math.round(subChoiceProgressRatio * 100)}%`,
-                }}
+              <motion.div
+                className="h-full rounded-full bg-cta-orange origin-left"
+                initial={false}
+                animate={{ width: `${String(subPct)}%` }}
+                transition={
+                  reduceMotion === true
+                    ? { duration: 0 }
+                    : { duration: 0.2, ease: 'easeOut' }
+                }
               />
             </div>
           )}

@@ -250,3 +250,11 @@ do not hand off an untested lot.
 - End: Home-like branded layout, Winner HostA (you), Players + Eliminated marker, Recap,
   Return home → Home. No connection badges on End.
 - No protocol/intent change; `build-view-for.ts` untouched.
+
+### Lot 14 verified 2026-08-03 (Playwright, `TURN_DURATION_MS=300000`)
+
+- Rooms `JMGZOZ`, `VSJDBP`: two-tab Start → Table FX layer present (`data-zone="table-fx"`);
+  timer progressbar Motion width from server deadline; card Dialog Use path still sends;
+  Leave forfeit → redesigned End.
+- Hybrid FX: local card entrance + timer; overlay for flyout/resolution/elim/rewards.
+- No protocol/intent change; intents never await FX.

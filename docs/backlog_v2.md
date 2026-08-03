@@ -68,7 +68,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-21 of 22 V2 tasks done. Active from Lot 14.
+22 of 22 V2 tasks done. V2 visual layer complete (Lots 10–14).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +76,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 11 · Home and Lobby | 3 | 3 |
 | 12 · Table | 8 | 8 |
 | 13 · End screen | 1 | 1 |
-| 14 · Animation | 5 | 4 |
+| 14 · Animation | 5 | 5 |
 
 ## Milestones
 
@@ -291,7 +291,7 @@ Mirror redirect sub-choice, Assassin multi-attack targeting.
 - **Reference** Technical spec v2 §7 · frontend.md (Mirror, Assassin) · **Depends on** L14-02 · **Complexity** M · **Risk** Low
 - **Acceptance** Both interactions remain fully usable within their existing timers with the animation on
 
-### L14-05 · Timer motion — `To do`
+### L14-05 · Timer motion — `Done`
 
 Motion polish for the turn and sub-choice timers (e.g. a depleting ring/bar), on top of L12-07's
 static treatment.
