@@ -189,6 +189,105 @@ describe('heuristic decide (L16-04)', () => {
     });
   });
 
+  it('cancels equal-damage mutual attack with Basic before drawing or pressing Super', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 20,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+    ];
+    expect(decide(view, actions, createRng('mutual-cancel'))).toEqual({
+      type: 'playCard',
+      instanceId: 'basic-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('soft-defense: prefers Regeneration over Super when a big hit is pending', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 20,
+        hand: [
+          { instanceId: 'regen-1', cardId: 'regeneration', isUpgraded: false },
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          // Strong (2) — Super cannot mutual-cancel; Regen should still win Survive.
+          cardId: 'strong-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'regen-1', quantity: 4 },
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+    ];
+    expect(decide(view, actions, createRng('soft-regen'))).toEqual({
+      type: 'playCard',
+      instanceId: 'regen-1',
+      quantity: 4,
+    });
+  });
+
+  it('soft-defense: prefers Shield over shop Tax when a hit is pending', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 20,
+        hand: [{ instanceId: 'sh-1', cardId: 'shield', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'strong-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'buyCard', cardId: 'tax' },
+      { type: 'playCard', instanceId: 'sh-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('soft-shield'))).toEqual({
+      type: 'playCard',
+      instanceId: 'sh-1',
+    });
+  });
+
   it('pickMirrorRedirect chooses a living non-source target', () => {
     const view = baseView({
       turnOrder: ['bot-a', 'bot-b', 'bot-c'],
@@ -258,5 +357,36 @@ describe('heuristic decide (L16-04)', () => {
       { type: 'draw' },
     ];
     expect(decide(view, actions, createRng('tax-buffer'))).toEqual({ type: 'draw' });
+  });
+
+  it('refuses buying Tax when the life cost would kill or breach the Tax buffer', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 2,
+        points: 0,
+        hand: [],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'buyCard', cardId: 'tax' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('buy-tax-lethal'))).toEqual({ type: 'draw' });
+  });
+
+  it('refuses buying Tax when lives after buy would sit at or below the Tax buffer', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 7,
+        points: 0,
+        hand: [],
+      }),
+    });
+    // After −2 lives → 5, and 5 <= threat(0) + buffer(5) → refuse
+    const actions: TurnAction[] = [
+      { type: 'buyCard', cardId: 'tax' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('buy-tax-buffer'))).toEqual({ type: 'draw' });
   });
 });

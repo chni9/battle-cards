@@ -904,3 +904,28 @@ term in `heuristic-policy.ts`) — no rule change (#V3-5).
 - Pressure: `damage / cost` → `damage - cost / PRESSURE_COST_DIVISOR` (`PRESSURE_COST_DIVISOR = 2`)
   so Super (7 − 5) beats Basic (1 − 0.5).
 - `TAX_LIFE_BUFFER`: **3 → 5** (Tax only while `lives > incomingThreat + 5`).
+
+## 2026-08-04 · [T] Refuse lethal / buffer-breaking Tax shop buys
+
+Engine allows buying Tax at exactly 2 lives (`canAffordCost`: `lives >= buyCost`); payment goes
+through `applyLifeLoss`, so the buyer can hit 0 and eliminate. Policy scored every `buyCard` as
+invest +10 with no life-cost check. Hard bots were suiciding on Tax purchases.
+
+Fix (policy only): life-priced `buyCard` scores −∞ when `livesAfter <= 0` or
+`livesAfter <= incomingThreat + TAX_LIFE_BUFFER` — same safety floor as playing Tax.
+
+## 2026-08-04 · [T] Heuristic leans into counters under fire
+
+Playtest: bots ignored defense until `lives ≤ incomingThreat` (already lethal). Equal-damage
+Basic cancels and Regeneration life-buys scored as plain Pressure / Sustain, so Hard seats
+kept attacking or shopping while hit.
+
+Tunables only (#V3-5):
+
+- Survive defenses (Mirror / Shield / Regeneration / Cloning) fire on **any** pending
+  attack (`incomingThreat > 0`), not only when already lethal.
+- Equal-damage mutual cancel and Spy/Thief reciprocal counter score Survive +
+  `MUTUAL_CANCEL_BONUS` (40).
+- Soft shop lean: Regeneration / Shield / Mirror `buyCard` get a modest Invest bump under
+  any incoming threat (still below same-turn Survive plays).
+- Unequal retaliation at the attacker gets a small Pressure bonus (+8).

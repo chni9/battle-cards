@@ -33,3 +33,9 @@ export const DENY_ABSORBER_MIN_LIVES_LOST = 3;
  * relevant without making expensive attacks worse than chip damage.
  */
 export const PRESSURE_COST_DIVISOR = 2;
+
+/**
+ * Extra Survive score for equal-damage mutual cancel (tech §4.6) or Spy/Thief counter.
+ * Sits above Mirror's +30 so a matching Basic cancel beats Mirror on a Basic hit.
+ */
+export const MUTUAL_CANCEL_BONUS = 40;

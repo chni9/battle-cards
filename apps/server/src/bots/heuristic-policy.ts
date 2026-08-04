@@ -22,6 +22,7 @@ import {
   BUY_SPECIAL_POINTS_FLOOR,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
+  MUTUAL_CANCEL_BONUS,
   PRESSURE_COST_DIVISOR,
   TAX_LIFE_BUFFER,
 } from './heuristic-weights';
@@ -259,6 +260,32 @@ function scoreAction(
   }
 
   if (action.type === 'buyCard') {
+    const definition = getCard(action.cardId);
+    const lifeCost = definition?.buyCost.lives ?? 0;
+
+    // Tax (and any life-priced shop buy) can legally leave the buyer at 0 lives.
+    // Never choose a lethal or buffer-breaking life buy — same safety floor as playing Tax.
+    if (lifeCost > 0) {
+      const livesAfter = view.self.lives - lifeCost;
+
+      if (livesAfter <= 0 || livesAfter <= ctx.incomingThreat + TAX_LIFE_BUFFER) {
+        return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+      }
+    }
+
+    // Under fire: prefer stocking Regeneration (life buys next turn) over random shop.
+    // Still Invest-band — never outranks a same-turn Survive play.
+    if (action.cardId === 'regeneration' && ctx.incomingThreat > 0) {
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + 40, code: 'invest' };
+    }
+
+    if (
+      (action.cardId === 'shield' || action.cardId === 'mirror') &&
+      ctx.incomingThreat > 0
+    ) {
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
+    }
+
     return { score: HEURISTIC_BAND_WEIGHTS.invest + 10, code: 'invest' };
   }
 
@@ -306,8 +333,32 @@ function scorePlayCard(
     return { score: 0, code: 'sustain' };
   }
 
-  // Survive band
-  if (view.self.lives <= ctx.incomingThreat) {
+  // Equal-damage mutual cancel (tech §4.6) — play matching attack back at the source.
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const damage = attackDamageFor(cardId, isUpgraded);
+
+    if (hasEqualIncomingFrom(view, action.targetPlayerId, damage)) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS + damage,
+        code: 'survive',
+      };
+    }
+  }
+
+  // Spy/Thief counter — same card back at the source cancels both (tech §4.7).
+  if (
+    (cardId === 'spy' || cardId === 'thief') &&
+    action.targetPlayerId !== undefined &&
+    hasPendingCardFrom(view, action.targetPlayerId, cardId)
+  ) {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS,
+      code: 'survive',
+    };
+  }
+
+  // Survive band — any pending attack (lean into counters / life buys under fire).
+  if (ctx.incomingThreat > 0) {
     if (cardId === 'mirror') {
       return { score: HEURISTIC_BAND_WEIGHTS.survive + 30, code: 'survive' };
     }
@@ -370,6 +421,7 @@ function scorePlayCard(
     const cost = Math.max(1, getCard(cardId)?.cost.points ?? 1);
     const topTarget = ctx.threatOrder[0];
     const onTop = action.targetPlayerId === topTarget ? 5 : 0;
+    const retaliateBonus = hasAnyIncomingFrom(view, action.targetPlayerId) ? 8 : 0;
     const shieldPenalty = view.players.find((p) => p.id === action.targetPlayerId)
       ?.activeShield
       ? -2
@@ -380,6 +432,7 @@ function scorePlayCard(
         damage -
         cost / PRESSURE_COST_DIVISOR +
         onTop +
+        retaliateBonus +
         shieldPenalty,
       code: 'pressure',
     };
@@ -473,6 +526,47 @@ function effectDamage(cardId: CardId, isUpgraded: boolean, multiplier: number): 
   }
 
   return attackDamageFor(cardId, isUpgraded) * multiplier;
+}
+
+/** Pending equal-damage attack from `sourceId` aimed at us — mutual cancel candidate. */
+function hasEqualIncomingFrom(
+  view: PlayingStateView,
+  sourceId: string,
+  damage: number,
+): boolean {
+  return view.pendingEffects.some((effect) => {
+    if (
+      effect.targetPlayerId !== view.you ||
+      effect.sourcePlayerId !== sourceId ||
+      !isAttackCardId(effect.cardId)
+    ) {
+      return false;
+    }
+
+    return effectDamage(effect.cardId, effect.isUpgraded, effect.damageMultiplier) === damage;
+  });
+}
+
+function hasAnyIncomingFrom(view: PlayingStateView, sourceId: string): boolean {
+  return view.pendingEffects.some(
+    (effect) =>
+      effect.targetPlayerId === view.you &&
+      effect.sourcePlayerId === sourceId &&
+      isAttackCardId(effect.cardId),
+  );
+}
+
+function hasPendingCardFrom(
+  view: PlayingStateView,
+  sourceId: string,
+  cardId: CardId,
+): boolean {
+  return view.pendingEffects.some(
+    (effect) =>
+      effect.targetPlayerId === view.you &&
+      effect.sourcePlayerId === sourceId &&
+      effect.cardId === cardId,
+  );
 }
 
 function knownOpponentLives(view: PlayingStateView, opponentId: string): number | null {
