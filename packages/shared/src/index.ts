@@ -11,6 +11,7 @@ export * from './domain/kit';
 export * from './domain/kit-catalog';
 export * from './domain/player';
 export * from './domain/upgrade-point-economy';
+export * from './protocol/action-outcome';
 export * from './protocol/messages';
 export * from './protocol/reward-choice';
 export * from './protocol/state-view';

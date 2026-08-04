@@ -97,6 +97,9 @@ export function formatActionLogEntry(
       if (entry.outcome === 'cancelled') {
         return `${name} from ${source} against ${target} is cancelled`;
       }
+      if (entry.outcome === 'blocked') {
+        return `${name} from ${source} against ${target} is blocked`;
+      }
       const shield =
         entry.shieldAbsorbed > 0
           ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`

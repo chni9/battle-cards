@@ -7,6 +7,7 @@ import {
   getKit,
   isSharedAttackCardId,
   isPersistentSpecialCardId,
+  type ActionResolutionOutcome,
   type CardId,
   type CardInstance,
   type GameState,
@@ -82,7 +83,7 @@ export interface ActionResolvedEvent {
   isUpgraded: boolean;
   livesLost: number;
   shieldAbsorbed: number;
-  outcome: 'applied' | 'immune' | 'cancelled';
+  outcome: ActionResolutionOutcome;
 }
 
 export interface TurnResult {

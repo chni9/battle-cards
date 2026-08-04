@@ -3,6 +3,8 @@
  * Never invent game info; payloads are ids/URLs the client already has.
  */
 
+import type { ActionResolutionOutcome } from '@card-battle/shared';
+
 export interface DomRectLite {
   left: number;
   top: number;
@@ -10,7 +12,7 @@ export interface DomRectLite {
   height: number;
 }
 
-export type ResolutionOutcome = 'applied' | 'cancelled' | 'immune';
+export type ResolutionOutcome = ActionResolutionOutcome;
 
 export type TableFxEvent =
   | {

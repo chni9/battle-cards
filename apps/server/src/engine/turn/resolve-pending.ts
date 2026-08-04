@@ -9,6 +9,7 @@
 import {
   attackDamageFor,
   isAttackCardId,
+  type ActionResolutionOutcome,
   type CardId,
   type GameState,
   type PendingEffect,
@@ -23,7 +24,7 @@ import { applyLifeLoss } from '../life/apply-life-loss';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { recordEliminationContributor } from './elimination-rewards';
 
-export type ResolveOutcome = 'applied' | 'immune' | 'cancelled';
+export type ResolveOutcome = ActionResolutionOutcome;
 
 export interface ResolvedEffect {
   effect: PendingEffect;

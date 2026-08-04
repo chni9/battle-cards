@@ -661,7 +661,8 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
     'outcome' in payload &&
     (payload.outcome === 'applied' ||
       payload.outcome === 'immune' ||
-      payload.outcome === 'cancelled')
+      payload.outcome === 'cancelled' ||
+      payload.outcome === 'blocked')
   );
 }
 

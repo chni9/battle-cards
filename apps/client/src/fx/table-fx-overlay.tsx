@@ -5,25 +5,30 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
+import type { ActionResolutionOutcome } from '@card-battle/shared';
+
 import { MOTION_DURATION_S, MOTION_EASE, TOKEN_FLYOUT_DURATION_S } from './motion-timing';
 import { useTableFx } from './table-fx-hooks';
 
-function outcomeClass(outcome: 'applied' | 'cancelled' | 'immune'): string {
+function outcomeClass(outcome: ActionResolutionOutcome): string {
   if (outcome === 'applied') {
     return 'border-cta-green bg-cta-green/25 text-cta-green';
   }
-  if (outcome === 'cancelled') {
+  if (outcome === 'cancelled' || outcome === 'blocked') {
     return 'border-ink-muted bg-surface/80 text-ink-muted';
   }
   return 'border-cta-red bg-cta-red/20 text-cta-red';
 }
 
-function outcomeLabel(outcome: 'applied' | 'cancelled' | 'immune'): string {
+function outcomeLabel(outcome: ActionResolutionOutcome): string {
   if (outcome === 'applied') {
     return 'Applied';
   }
   if (outcome === 'cancelled') {
     return 'Cancelled';
+  }
+  if (outcome === 'blocked') {
+    return 'Blocked';
   }
   return 'Immune';
 }

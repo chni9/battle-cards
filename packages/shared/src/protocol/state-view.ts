@@ -4,6 +4,7 @@
  * The server builds one of these **per recipient**. No complete-state type exists to filter.
  */
 
+import type { ActionResolutionOutcome } from './action-outcome';
 import type { CardId, CardInstance } from '../domain/card';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { KitId } from '../domain/kit';
@@ -224,7 +225,7 @@ export interface ActionResolvedLogEntry {
   isUpgraded: boolean;
   livesLost: number;
   shieldAbsorbed: number;
-  outcome: 'applied' | 'immune' | 'cancelled';
+  outcome: ActionResolutionOutcome;
   turnSequence: number;
 }
 

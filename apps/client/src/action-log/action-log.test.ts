@@ -193,6 +193,43 @@ describe('formatActionLogEntry (L9-02)', () => {
       ),
     ).not.toMatch(/immune/i);
   });
+
+  it('formats blocked resolutions without applied phrasing', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-blocked',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'strong-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'blocked',
+          turnSequence: 5,
+        },
+        nick,
+      ),
+    ).toBe('Strong attack from Alice against Bob is blocked');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-blocked',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'strong-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'blocked',
+          turnSequence: 5,
+        },
+        nick,
+      ),
+    ).not.toMatch(/hits|life/i);
+  });
 });
 
 describe('filterActionLog / groupByTurn (L9-02)', () => {

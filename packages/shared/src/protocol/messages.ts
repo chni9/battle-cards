@@ -6,6 +6,7 @@
  */
 
 import type { CardId } from '../domain/card';
+import type { ActionResolutionOutcome } from './action-outcome';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type {
   ChooseEliminationRewardPayload,
@@ -91,12 +92,13 @@ export interface ActionResolvedPayload {
   livesLost: number;
   shieldAbsorbed: number;
   /**
-   * Resolve result — L4-03.
+   * Resolve result — L4-03, technical spec v4 §4.2.
    * `immune`: kit `immuneTo` (Untouchable vs Thief/Spy).
    * `cancelled`: mutual attack, Spy/Thief counter, or upgraded Shield block.
+   * `blocked`: targeted removal via `cancelPendingEffect` (Attack Thief, Block).
    * `applied`: effect ran (damage / steal / Spy grant).
    */
-  outcome: 'applied' | 'immune' | 'cancelled';
+  outcome: ActionResolutionOutcome;
 }
 
 export type EliminationReason = 'combat' | 'absence' | 'inactivity' | 'leave';
