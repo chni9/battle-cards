@@ -9,6 +9,7 @@ import {
   type RewardChoice,
 } from '@card-battle/shared';
 
+import { takeCardFrom } from '../cards/steal-card';
 import { gainPoints } from '../economy/gain-points';
 import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { transferCardInstance } from '../kits/acquire-card';
@@ -176,6 +177,8 @@ export function eliminateWithoutReward(state: GameState, playerId: string): bool
 
   captureEliminationSnapshot(player, state.turnSequence);
   player.isEliminated = true;
+  // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
+  // Not a typed loss: the player may still have lives; this is administrative state only.
   player.lives = 0;
   cleanupEliminatedPlayer(state, player);
   dumpCardsToPool(state, player);
@@ -229,6 +232,8 @@ export function processEliminations(
 
     captureEliminationSnapshot(player, state.turnSequence);
     player.isEliminated = true;
+    // Idempotent normalization — technical spec §4.3 step 5, §4.2.
+    // Lives were already 0 from typed primitives or lethal effects; not a new loss event.
     player.lives = 0;
     cleanupEliminatedPlayer(state, player);
 
@@ -266,29 +271,6 @@ export function listAvailableRewardCards(state: GameState, eliminatedPlayerId: s
   }
 
   return [...player.hand, ...player.specialCards];
-}
-
-function takeCardFromEliminated(
-  eliminated: Player,
-  instanceId: string,
-): CardInstance | null {
-  const handIndex = eliminated.hand.findIndex((card) => card.instanceId === instanceId);
-
-  if (handIndex >= 0) {
-    const [card] = eliminated.hand.splice(handIndex, 1);
-    return card ?? null;
-  }
-
-  const specialIndex = eliminated.specialCards.findIndex(
-    (card) => card.instanceId === instanceId,
-  );
-
-  if (specialIndex >= 0) {
-    const [card] = eliminated.specialCards.splice(specialIndex, 1);
-    return card ?? null;
-  }
-
-  return null;
 }
 
 function validateChoice(
@@ -338,9 +320,9 @@ function applyOneChoice(
     return;
   }
 
-  const card = takeCardFromEliminated(eliminated, choice.instanceId);
+  const card = takeCardFrom(eliminated, choice.instanceId);
 
-  if (card !== null) {
+  if (card !== undefined) {
     transferCardInstance(eliminator, card);
   }
 }
