@@ -88,7 +88,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
 | 19 · Designer feedback (rules + UX) | 3 | 3 |
-| 18 · Headless simulation | 5 | 0 |
+| 18 · Headless simulation | 5 | 1 |
 
 ## Milestones
 
@@ -314,7 +314,7 @@ carries turn history + full event log. End screen downloads a two-sheet `.xlsx`.
 
 ## Lot 18 · Headless simulation
 
-### L18-01 · Deterministic sub-choice deadlines — `To do`
+### L18-01 · Deterministic sub-choice deadlines — `Done`
 
 Close the reproducibility hole in technical spec v3 §8.1: `handlers/mirror.ts` and
 `elimination-rewards.ts` both read `Date.now()` and store the result inside `GameState`

@@ -8,7 +8,6 @@ import {
   type Player,
   type RewardChoice,
 } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
 import { transferCardInstance } from '../kits/acquire-card';
 import { gainLives } from '../life/gain-lives';
@@ -192,7 +191,7 @@ export function findSoleSurvivorId(state: GameState): string | null {
   return alive[0]?.id ?? null;
 }
 
-function activateRewardHead(state: GameState): void {
+function activateRewardHead(state: GameState, nowMs: number): void {
   const head = state.rewardQueue[0];
 
   if (head === undefined) {
@@ -204,14 +203,21 @@ function activateRewardHead(state: GameState): void {
     eliminationId: head.eliminationId,
     eliminatorPlayerId: head.eliminatorPlayerId,
     eliminatedPlayerId: head.eliminatedPlayerId,
-    deadlineMs: Date.now() + REWARD_SUB_CHOICE_MS,
+    deadlineMs: nowMs + REWARD_SUB_CHOICE_MS,
   };
 }
 
 /**
  * Mark players at 0 lives, attribute eliminators, enqueue rewards or pool cards.
+ *
+ * `eliminationId` is seed-derived (not `randomUUID`) so scripted / simulated games can
+ * deep-equal `GameState` — technical spec v3 §8.1 / §10.3 companion to clock injection.
  */
-export function processEliminations(state: GameState, rng: Rng): EliminationEvent[] {
+export function processEliminations(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): EliminationEvent[] {
   const events: EliminationEvent[] = [];
 
   for (const player of state.players) {
@@ -235,7 +241,7 @@ export function processEliminations(state: GameState, rng: Rng): EliminationEven
     }
 
     state.rewardQueue.push({
-      eliminationId: randomUUID(),
+      eliminationId: `elim:${state.turnSequence}:${player.id}`,
       eliminatedPlayerId: player.id,
       eliminatorPlayerId,
     });
@@ -244,7 +250,7 @@ export function processEliminations(state: GameState, rng: Rng): EliminationEven
   state.eliminationContributors = [];
 
   if (state.rewardChoice === null && state.rewardQueue.length > 0) {
-    activateRewardHead(state);
+    activateRewardHead(state, nowMs);
   }
 
   return events;
@@ -337,7 +343,7 @@ function applyOneChoice(
   }
 }
 
-function finishRewardJob(state: GameState): void {
+function finishRewardJob(state: GameState, nowMs: number): void {
   const job = state.rewardQueue.shift();
 
   if (job === undefined) {
@@ -352,7 +358,7 @@ function finishRewardJob(state: GameState): void {
   }
 
   state.rewardChoice = null;
-  activateRewardHead(state);
+  activateRewardHead(state, nowMs);
 }
 
 export type ApplyRewardResult =
@@ -376,6 +382,7 @@ export function applyEliminationRewardChoices(
   chooserPlayerId: string,
   eliminationId: string,
   choices: readonly [RewardChoice, RewardChoice],
+  nowMs: number = Date.now(),
 ): ApplyRewardResult {
   const active = state.rewardChoice;
 
@@ -421,24 +428,30 @@ export function applyEliminationRewardChoices(
   applyOneChoice(state, eliminator, eliminated, choices[0]);
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
-  finishRewardJob(state);
+  finishRewardJob(state, nowMs);
   return { ...resumeAfterRewards(state), rewardsClaimed };
 }
 
 /**
  * Default on sub-choice expiry: 2 × 4 lives (technical spec §5.6).
  */
-export function applyDefaultEliminationRewards(state: GameState): ApplyRewardResult {
+export function applyDefaultEliminationRewards(
+  state: GameState,
+  nowMs: number = Date.now(),
+): ApplyRewardResult {
   const active = state.rewardChoice;
 
   if (active === null) {
     return { ok: false, message: 'No elimination reward pending.' };
   }
 
-  return applyEliminationRewardChoices(state, active.eliminatorPlayerId, active.eliminationId, [
-    { type: 'lives' },
-    { type: 'lives' },
-  ]);
+  return applyEliminationRewardChoices(
+    state,
+    active.eliminatorPlayerId,
+    active.eliminationId,
+    [{ type: 'lives' }, { type: 'lives' }],
+    nowMs,
+  );
 }
 
 function findWinner(state: GameState): string | null {

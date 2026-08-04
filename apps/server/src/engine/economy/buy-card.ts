@@ -51,7 +51,11 @@ export function buyCard(state: GameState, actorPlayerId: string, cardId: CardId)
     return paid;
   }
 
-  const instance = acquireCardToHand(actor, cardId);
+  const instance = acquireCardToHand(
+    actor,
+    cardId,
+    `buy:${actor.id}:${String(state.turnSequence)}:${String(actor.hand.length)}`,
+  );
 
   return { ok: true, cardId, instance };
 }

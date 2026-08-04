@@ -981,3 +981,42 @@ rarely unlocked lethal-now. Policy: Spy on an unspied living seat is Deny
 (`SPY_UNSPIED_BONUS`, prefer top threat). Skip re-Spy unless upgraded Spy can add live
 resources after a base Spy. Shop `buyCard` Spy preferred while any living opponent is
 unspied. Ready Pressure gets a bonus when Spy-known lives are in finish range.
+
+## 2026-08-04 · [T] Heuristic ONMMBZ log fixes — sell-to-fund, immune Spy, soft Regen
+
+Playtest export `ONMMBZ-action-log.xlsx`: Scientific bots at 0 pts bought Tax while holding
+Spy+Mirror, then drew to death under Imposition; Kamikaze Spied Untouchable (immune) then
+drew with an unaffordable upgraded Super.
+
+Policy only (#V3-5):
+
+- `sellCard` scores Invest when funding Spy / ready strike / soft Regen; prefer high
+  `sellYield` (Mirror). Refuse `buyCard` Tax while Spy is held but unaffordable.
+- Spy/Thief −∞ on seats with a prior public `immune` resolve (learn Untouchable).
+- Regeneration Invest when `lives ≤ REGEN_SOFT_LIFE` even with no pending attack.
+
+## 2026-08-04 · [T] Heuristic CBCPXV — burn public counter persistents
+
+Playtest export `CBCPXV-action-log.xlsx`: human activated Imposition; bots sold attacks,
+Taxed, and Spied elsewhere while the counter drained them. Public
+`activePersistentEffects` already expose counters.
+
+Policy only (#V3-5):
+
+- Attacks at a seat with `counter > 0` persistents score Deny + `BURN_COUNTER_BONUS`
+  (chip Basic allowed; higher damage preferred to clear in one hit).
+- Never `sellCard` an attack while any living opponent still has a burnable counter.
+
+## 2026-08-04 · [T] Clock injection for sub-choice deadlines (#V3-6 / L18-01)
+
+Closed open decision #V3-6: inject `nowMs` into `EffectContext` and the turn APIs
+(`performTurnAction`, Mirror/reward complete+expire). `mirror.ts` and
+`activateRewardHead` no longer call `Date.now()`. Omitted `nowMs` defaults to
+`Date.now()` at the API edge so room behaviour is unchanged; the simulator passes a
+fixed clock.
+
+Companion: pending-effect, persistent, elimination, pool, and acquisition ids are
+derived from seat/turn counters (not `randomUUID`, and **not** embedding
+`GameState.seed` — that would leak through hand views). Opaque wire ids — clients
+treat them as strings only. Same seed + same script → identical ids via identical
+deal/queue order.

@@ -234,6 +234,7 @@ function isAffordableCandidate(
         card: instance,
         quantity: null,
         rng,
+        nowMs: 0,
       })
     ) {
       return false;

@@ -89,6 +89,13 @@ the 20-point special card purchase (L5-09), Mirror's default target on expiry (L
 that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
 downstream of it.
 
+Sub-choice deadlines (`mirrorChoice.deadlineMs`, `rewardChoice.deadlineMs`) take an **injected
+`nowMs`** on `EffectContext` and the turn APIs (technical spec v3 §8.1 / L18-01). Defaults to
+`Date.now()` at the API edge so the room keeps wall-clock behaviour; the simulator passes a
+fixed value. Handlers must not call `Date.now()`. Pending-effect / persistent / elimination /
+acquisition ids use seat/turn counters (never embed `GameState.seed` — it must stay
+server-only; see `protocol.md`) so §10.3 can deep-equal whole states.
+
 - The generator's algorithm is an implementation detail; tests assert reproducibility and
   bounds, never specific numbers.
 - `nextInt` rejection-samples rather than taking a modulo, which would favour low indices and

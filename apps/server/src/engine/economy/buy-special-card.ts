@@ -33,6 +33,10 @@ export function buySpecialCard(
   actor.turnLedger.pointsSpent += SPECIAL_CARD_PURCHASE_COST;
 
   const cardId = rng.pick(SPECIAL_CARD_IDS);
-  const instance = acquireSpecialCard(actor, cardId);
+  const instance = acquireSpecialCard(
+    actor,
+    cardId,
+    `buy-special:${actor.id}:${String(state.turnSequence)}:${String(actor.specialCards.length)}`,
+  );
   return { ok: true, instance };
 }

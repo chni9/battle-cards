@@ -40,6 +40,7 @@ export function listLegalPlayCardActions(
           card: instance,
           quantity,
           rng,
+          nowMs: 0,
         };
 
         if (handler.canPlay(context)) {
@@ -63,6 +64,7 @@ export function listLegalPlayCardActions(
         card: instance,
         quantity: null,
         rng,
+        nowMs: 0,
       };
 
       if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {
@@ -78,6 +80,7 @@ export function listLegalPlayCardActions(
         card: instance,
         quantity: null,
         rng,
+        nowMs: 0,
       };
 
       if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {

@@ -121,6 +121,7 @@ export function performTurnAction(
   actorPlayerId: string,
   action: TurnAction,
   rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
 ): PerformActionResult {
   if (state.currentTurnPlayerId !== actorPlayerId) {
     return { ok: false, message: 'It is not your turn.' };
@@ -222,7 +223,7 @@ export function performTurnAction(
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'playMultipleAttacks') {
-    const multi = playMultipleAttacksAction(state, actorPlayerId, action.attacks, rng);
+    const multi = playMultipleAttacksAction(state, actorPlayerId, action.attacks, rng, nowMs);
 
     if (!multi.ok) {
       return multi;
@@ -237,6 +238,7 @@ export function performTurnAction(
       action.targetPlayerId,
       action.quantity,
       rng,
+      nowMs,
     );
 
     if (!playResult.ok) {
@@ -259,7 +261,7 @@ export function performTurnAction(
     };
   }
 
-  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng);
+  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
 }
 
 /**
@@ -271,6 +273,7 @@ export function completeMirrorChoice(
   pendingEffectId: string,
   newTargetPlayerId: string,
   rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
 ): PerformActionResult {
   const choice = state.mirrorChoice;
 
@@ -317,6 +320,7 @@ export function completeMirrorChoice(
       turnSequence,
     },
     rng,
+    nowMs,
   );
 
   return {
@@ -328,7 +332,11 @@ export function completeMirrorChoice(
 /**
  * Apply Mirror default redirect on sub-choice expiry, then finish the turn.
  */
-export function expireMirrorChoice(state: GameState, rng: Rng): PerformActionResult {
+export function expireMirrorChoice(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): PerformActionResult {
   const choice = state.mirrorChoice;
 
   if (choice === null) {
@@ -355,6 +363,7 @@ export function expireMirrorChoice(state: GameState, rng: Rng): PerformActionRes
       turnSequence,
     },
     rng,
+    nowMs,
   );
 
   return {
@@ -383,15 +392,19 @@ export function completeEliminationRewardChoice(
   chooserPlayerId: string,
   eliminationId: string,
   choices: readonly [RewardChoice, RewardChoice],
+  nowMs: number = Date.now(),
 ): EliminationRewardTurnResult {
-  return applyEliminationRewardChoices(state, chooserPlayerId, eliminationId, choices);
+  return applyEliminationRewardChoices(state, chooserPlayerId, eliminationId, choices, nowMs);
 }
 
 /**
  * Grant 2×4 lives on reward sub-choice expiry (technical spec §5.6).
  */
-export function expireEliminationRewardChoice(state: GameState): EliminationRewardTurnResult {
-  return applyDefaultEliminationRewards(state);
+export function expireEliminationRewardChoice(
+  state: GameState,
+  nowMs: number = Date.now(),
+): EliminationRewardTurnResult {
+  return applyDefaultEliminationRewards(state, nowMs);
 }
 
 function finishTurnPhases(
@@ -399,10 +412,11 @@ function finishTurnPhases(
   actorPlayerId: string,
   actionPlayed: ActionPlayedEvent,
   rng: Rng,
+  nowMs: number,
 ): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId);
   applyPersistentEffects(state, actorPlayerId);
-  const eliminations = processEliminations(state, rng);
+  const eliminations = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
 
   if (hasPendingEliminationRewards(state)) {
@@ -444,6 +458,7 @@ function playMultipleAttacksAction(
   actorPlayerId: string,
   attacks: readonly { instanceId: string; targetPlayerId: string }[],
   rng: Rng,
+  nowMs: number,
 ): TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -508,6 +523,7 @@ function playMultipleAttacksAction(
       card: instance,
       quantity: null,
       rng,
+      nowMs,
     };
 
     if (!handler.canPlay(context)) {
@@ -548,6 +564,7 @@ function playMultipleAttacksAction(
       card: entry.instance,
       quantity: null,
       rng,
+      nowMs,
     });
 
     publicAttacks.push({
@@ -575,6 +592,7 @@ function playCardAction(
   targetPlayerId: string | undefined,
   quantity: number | undefined,
   rng: Rng,
+  nowMs: number,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -624,6 +642,7 @@ function playCardAction(
     card: instance,
     quantity: quantity ?? null,
     rng,
+    nowMs,
   };
 
   if (!handler.canPlay(context)) {

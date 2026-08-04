@@ -38,7 +38,7 @@ export const mirrorHandler: CardHandler = {
       playerId: context.sourcePlayerId,
       isUpgraded: context.card.isUpgraded,
       eligibleEffectIds: eligible.map((effect) => effect.id),
-      deadlineMs: Date.now() + MIRROR_SUB_CHOICE_MS,
+      deadlineMs: context.nowMs + MIRROR_SUB_CHOICE_MS,
     };
   },
 };

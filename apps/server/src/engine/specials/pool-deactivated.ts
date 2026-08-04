@@ -1,9 +1,9 @@
 /**
  * Send deactivated persistent specials to the shared pool — rules spec §5, L5-02.
+ * Instance ids are seed-derived (technical spec v3 §8.1 / §10.3).
  */
 
 import type { CardInstance, GameState, PersistentEffect } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
 export function poolDeactivatedPersistentEffects(
   state: GameState,
@@ -11,7 +11,7 @@ export function poolDeactivatedPersistentEffects(
 ): void {
   for (const effect of effects) {
     const instance: CardInstance = {
-      instanceId: randomUUID(),
+      instanceId: `pool:${effect.id}:${String(state.pool.length)}`,
       cardId: effect.cardId,
       isUpgraded: effect.isUpgraded,
     };

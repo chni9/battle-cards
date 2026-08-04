@@ -2,10 +2,11 @@
  * Queue a delayed effect on its target — technical spec §4.3, rules spec §6.
  *
  * Handlers call this; they never apply opponent-targeted effects inline.
+ * Effect ids are seed-derived so scripted / simulated `GameState` can deep-equal
+ * (technical spec v3 §8.1 / §10.3).
  */
 
 import type { CardId, GameState, PendingEffect } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
 export interface QueueEffectInput {
   state: GameState;
@@ -23,7 +24,7 @@ export function queueEffect(input: QueueEffectInput): PendingEffect {
   }
 
   const effect: PendingEffect = {
-    id: randomUUID(),
+    id: `fx:${input.state.turnSequence}:${input.targetPlayerId}:${String(target.pendingEffects.length)}`,
     sourcePlayerId: input.sourcePlayerId,
     targetPlayerId: input.targetPlayerId,
     cardId: input.cardId,

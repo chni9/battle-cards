@@ -37,6 +37,11 @@ export interface EffectContext {
   quantity: number | null;
   /** Injected seeded generator — Sentence, Mirror default, special purchase. */
   rng: Rng;
+  /**
+   * Injected wall-clock ms — Mirror / reward sub-choice deadlines (technical spec v3 §8.1).
+   * Handlers must not call `Date.now()` themselves.
+   */
+  nowMs: number;
 }
 
 export interface CardHandler {

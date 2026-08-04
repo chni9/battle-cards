@@ -3,10 +3,10 @@
  *
  * The played copy leaves `specialCards` in the play path; this records the live
  * effect until the counter (or other deactivation) sends it to the pool.
+ * Effect ids are seed-derived (technical spec v3 §8.1 / §10.3).
  */
 
 import type { CardId, GameState, PersistentEffect } from '@card-battle/shared';
-import { randomUUID } from 'node:crypto';
 
 import { findPlayer } from '../turn/advance-turn';
 
@@ -26,7 +26,7 @@ export function activatePersistentEffect(input: ActivatePersistentInput): Persis
   }
 
   const effect: PersistentEffect = {
-    id: randomUUID(),
+    id: `persist:${input.ownerPlayerId}:${String(owner.activePersistentEffects.length)}:${input.cardId}`,
     cardId: input.cardId,
     isUpgraded: input.isUpgraded,
     counter: input.counter,

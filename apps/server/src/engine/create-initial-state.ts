@@ -100,15 +100,17 @@ function makePlayer(seat: SeatInput, rng: Rng): Player {
   };
 
   for (let index = 0; index < kit.startingCardCounts.action; index += 1) {
-    acquireCardToHand(player, rng.pick(ACTION_CARD_IDS));
+    const cardId = rng.pick(ACTION_CARD_IDS);
+    acquireCardToHand(player, cardId, `${seat.id}:start:action:${String(index)}`);
   }
 
   for (let index = 0; index < kit.startingCardCounts.attack; index += 1) {
-    acquireCardToHand(player, rng.pick(ATTACK_CARD_IDS));
+    const cardId = rng.pick(ATTACK_CARD_IDS);
+    acquireCardToHand(player, cardId, `${seat.id}:start:attack:${String(index)}`);
   }
 
-  for (const specialId of kit.specialCards) {
-    acquireSpecialCard(player, specialId);
+  for (const [index, specialId] of kit.specialCards.entries()) {
+    acquireSpecialCard(player, specialId, `${seat.id}:start:special:${String(index)}`);
   }
 
   return player;
