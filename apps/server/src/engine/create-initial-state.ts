@@ -68,6 +68,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     lifeLimit: CLASSIC_LIFE_LIMIT,
     players,
     pool: [],
+    nextPoolInstanceSeq: 0,
     currentTurnPlayerId: first.id,
     turnSequence: 0,
     seed,

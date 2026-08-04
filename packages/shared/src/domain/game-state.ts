@@ -29,6 +29,14 @@ export interface GameState {
    * eliminated players. Write-only in V1 — no V1 card reads from it (technical spec §6.3).
    */
   pool: CardInstance[];
+  /**
+   * Monotonic counter for minting `instanceId`s when deactivated persistents join the
+   * pool (technical spec v4 §3.3 #1 / §5.1). Must not derive from `pool.length` (collides
+   * once the pool shrinks) or from `seed` (server-only and must stay so).
+   *
+   * **Server-only — never include it in a view sent to a client.**
+   */
+  nextPoolInstanceSeq: number;
   /** `null` before the first turn begins. */
   currentTurnPlayerId: string | null;
   /**

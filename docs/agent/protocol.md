@@ -46,6 +46,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Elimination status | **Public** |
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
+| `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's

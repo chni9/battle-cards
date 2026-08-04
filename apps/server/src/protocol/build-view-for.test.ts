@@ -144,6 +144,27 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(JSON.stringify(view)).not.toContain('secret-seed-value');
   });
 
+  it('never includes nextPoolInstanceSeq (server-only)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'pool-seq-view',
+    });
+    state.nextPoolInstanceSeq = 42;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(JSON.stringify(view)).not.toContain('nextPoolInstanceSeq');
+  });
+
   it('never puts opponent lives or shield in the public player slice', () => {
     const state = createInitialState({
       seats: [

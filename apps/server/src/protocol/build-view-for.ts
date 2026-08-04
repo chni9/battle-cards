@@ -5,6 +5,11 @@
  *
  * Spy (2026-07-30 resources ruling): kit + card lists always; base adds frozen
  * full-resource snapshot; upgraded adds live lives/points/UP/shield (rules §3).
+ *
+ * Server-only fields omitted from every view (never defaulted; classified here):
+ * - `GameState.seed`
+ * - `GameState.nextPoolInstanceSeq` (technical spec v4 §5.1)
+ * - sub-choice slot/queue (unicast events, not StateView)
  */
 
 import type {
