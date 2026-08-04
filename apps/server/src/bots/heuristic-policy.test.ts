@@ -389,4 +389,23 @@ describe('heuristic decide (L16-04)', () => {
     ];
     expect(decide(view, actions, createRng('buy-tax-buffer'))).toEqual({ type: 'draw' });
   });
+
+  it('refuses buying a card already held in hand', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 15,
+        points: 20,
+        hand: [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'buyCard', cardId: 'tax' },
+      { type: 'buyCard', cardId: 'basic-attack' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('no-dup-tax'))).toEqual({
+      type: 'buyCard',
+      cardId: 'basic-attack',
+    });
+  });
 });

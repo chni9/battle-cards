@@ -929,3 +929,9 @@ Tunables only (#V3-5):
 - Soft shop lean: Regeneration / Shield / Mirror `buyCard` get a modest Invest bump under
   any incoming threat (still below same-turn Survive plays).
 - Unequal retaliation at the attacker gets a small Pressure bonus (+8).
+
+## 2026-08-04 · [T] Heuristic never buys a duplicate cardId
+
+Playtest: bots repeatedly bought Tax while already holding Tax. Engine allows multiple copies
+(rules spec §1); policy now scores `buyCard` −∞ when that `cardId` is already in hand or
+specials. Humans / legality unchanged.

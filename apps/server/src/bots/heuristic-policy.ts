@@ -260,6 +260,11 @@ function scoreAction(
   }
 
   if (action.type === 'buyCard') {
+    // Policy: never stock a second copy — engine allows it; bots waste turns/resources.
+    if (ownsCardId(view, action.cardId)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
     const definition = getCard(action.cardId);
     const lifeCost = definition?.buyCost.lives ?? 0;
 
@@ -517,6 +522,13 @@ function findOwnCard(
   return (
     view.self.hand.find((card) => card.instanceId === instanceId) ??
     view.self.specialCards.find((card) => card.instanceId === instanceId)
+  );
+}
+
+function ownsCardId(view: PlayingStateView, cardId: CardId): boolean {
+  return (
+    view.self.hand.some((card) => card.cardId === cardId) ||
+    view.self.specialCards.some((card) => card.cardId === cardId)
   );
 }
 
