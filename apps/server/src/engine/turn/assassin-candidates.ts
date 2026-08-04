@@ -8,7 +8,7 @@
 import {
   attackDamageFor,
   getKit,
-  isAttackCardId,
+  isSharedAttackCardId,
   type CardInstance,
   type GameState,
   type Player,
@@ -78,7 +78,7 @@ function rankAttackCopies(actor: Player): AttackPick[] {
   const picks: AttackPick[] = [];
 
   for (const instance of actor.hand) {
-    if (!isAttackCardId(instance.cardId)) {
+    if (!isSharedAttackCardId(instance.cardId)) {
       continue;
     }
 
@@ -210,7 +210,7 @@ function isAffordableCandidate(
   for (const slot of attacks) {
     const instance = actor.hand.find((card) => card.instanceId === slot.instanceId);
 
-    if (instance === undefined || !isAttackCardId(instance.cardId)) {
+    if (instance === undefined || !isSharedAttackCardId(instance.cardId)) {
       return false;
     }
 

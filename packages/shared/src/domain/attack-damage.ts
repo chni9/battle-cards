@@ -10,6 +10,8 @@ export const ATTACK_DAMAGE = {
   'basic-attack': { base: 1, upgraded: 3 },
   'strong-attack': { base: 2, upgraded: 4 },
   'super-attack': { base: 7, upgraded: 10 },
+  // Upgrade changes redirectability, not damage (rules spec §5 / tech v4 §4.1).
+  'mega-attack': { base: 20, upgraded: 20 },
 } as const satisfies Record<AttackCardId, { base: number; upgraded: number }>;
 
 export function attackDamageFor(cardId: AttackCardId, isUpgraded: boolean): number {

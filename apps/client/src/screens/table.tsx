@@ -4,7 +4,7 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
+  isSharedAttackCardId,
   SHARED_CARD_IDS,
   getKit,
   type ActionResolvedPayload,
@@ -38,10 +38,6 @@ import { PrivateZone } from './table/private-zone';
 import { cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
-
-function isAttackCardId(cardId: string): boolean {
-  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
-}
 
 export interface TableScreenProps {
   view: PlayingStateView;
@@ -244,7 +240,7 @@ function TableScreenInner({
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
-  const attackCards = view.self.hand.filter((card) => isAttackCardId(card.cardId));
+  const attackCards = view.self.hand.filter((card) => isSharedAttackCardId(card.cardId));
   const activePlayer = view.players.find(
     (player) => player.id === view.currentTurnPlayerId,
   );

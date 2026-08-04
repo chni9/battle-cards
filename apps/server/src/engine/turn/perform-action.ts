@@ -5,7 +5,7 @@
 
 import {
   getKit,
-  isAttackCardId,
+  isSharedAttackCardId,
   isPersistentSpecialCardId,
   type CardId,
   type CardInstance,
@@ -500,7 +500,7 @@ function playMultipleAttacksAction(
       return { ok: false, message: 'You do not hold that card.' };
     }
 
-    if (!isAttackCardId(instance.cardId)) {
+    if (!isSharedAttackCardId(instance.cardId)) {
       return { ok: false, message: 'Only attack cards can be multi-played.' };
     }
 

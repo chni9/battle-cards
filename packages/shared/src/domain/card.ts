@@ -58,13 +58,26 @@ export const PURCHASABLE_SPECIAL_CARD_IDS = [
  * Cards that inflict *damage* as rules spec §1 defines it, and therefore the only
  * cards `applyDamage` may ever be called for.
  *
- * Shop/deal attacks live in `ATTACK_CARD_IDS`. Special attacks (MEGA ATTACK) join via
- * `SPECIAL_ATTACK_CARD_IDS` in L20-05 without becoming shop-buyable.
+ * Shop/deal attacks stay in `ATTACK_CARD_IDS` (length 3). Special attacks such as
+ * MEGA ATTACK live in `SPECIAL_ATTACK_CARD_IDS` and join `AttackCardId` without
+ * becoming shop-buyable (technical spec v4 §4.1 / L20-05).
  */
-export type AttackCardId = (typeof ATTACK_CARD_IDS)[number];
+export const SPECIAL_ATTACK_CARD_IDS = ['mega-attack'] as const;
+
+export type SharedAttackCardId = (typeof ATTACK_CARD_IDS)[number];
+export type SpecialAttackCardId = (typeof SPECIAL_ATTACK_CARD_IDS)[number];
+export type AttackCardId = SharedAttackCardId | SpecialAttackCardId;
 
 /** Narrow any string (e.g. `PendingEffect.cardId`) before `attackDamageFor`. */
 export function isAttackCardId(cardId: string): cardId is AttackCardId {
+  return (
+    (ATTACK_CARD_IDS as readonly string[]).includes(cardId) ||
+    (SPECIAL_ATTACK_CARD_IDS as readonly string[]).includes(cardId)
+  );
+}
+
+/** Shop/deal attack membership — never includes special attacks like MEGA. */
+export function isSharedAttackCardId(cardId: string): cardId is SharedAttackCardId {
   return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
 }
 

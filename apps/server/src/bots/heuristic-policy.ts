@@ -8,6 +8,7 @@ import {
   attackDamageFor,
   getCard,
   isAttackCardId,
+  isSharedAttackCardId,
   type BotDecisionReason,
   type BotReasonCode,
   type CardId,
@@ -772,7 +773,7 @@ function scoreMultiAttack(
   for (const part of action.attacks) {
     const instance = findOwnCard(view, part.instanceId);
 
-    if (instance === undefined || !isAttackCardId(instance.cardId)) {
+    if (instance === undefined || !isSharedAttackCardId(instance.cardId)) {
       return { score: Number.NEGATIVE_INFINITY, code: 'pressure' };
     }
 

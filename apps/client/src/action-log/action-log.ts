@@ -4,8 +4,8 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
   formatCardLabel,
+  isAttackCardId,
   type ActionLogEntryKind,
   type ActionLogEntryView,
 } from '@card-battle/shared';
@@ -25,10 +25,6 @@ export interface ActionLogFilters {
 }
 
 export type NicknameResolver = (playerId: string) => string;
-
-function isAttackCardId(cardId: string): boolean {
-  return (ATTACK_CARD_IDS as readonly string[]).includes(cardId);
-}
 
 function formatPlayedAction(
   entry: Extract<ActionLogEntryView, { kind: 'actionPlayed' }>,
@@ -74,6 +70,9 @@ function formatPlayedAction(
           return `${actor} attacks ${target} with ${name}`;
         }
         return `${actor} plays ${name} on ${target}`;
+      }
+      if (isAttackCardId(id)) {
+        return `${actor} attacks with ${name}`;
       }
       return `${actor} plays ${name}`;
     }

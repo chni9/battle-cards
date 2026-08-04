@@ -221,6 +221,40 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
     expect(filtered).toHaveLength(0);
   });
 
+  it('phrases MEGA ATTACK as an attack, including full shield absorb (L20-05)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'playCard',
+          cardId: 'mega-attack',
+          isUpgraded: false,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice attacks with MEGA ATTACK');
+
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-mega',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'mega-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 20,
+          outcome: 'applied',
+          turnSequence: 2,
+        },
+        nick,
+      ),
+    ).toBe("Alice's MEGA ATTACK hits Bob (−0 life, 20 absorbed by shield)");
+  });
+
   it('groups consecutive entries by turnSequence', () => {
     const groups = groupByTurn(sample);
 
