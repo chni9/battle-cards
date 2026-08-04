@@ -141,6 +141,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
   } = props;
 
   const close = (): void => {
+    setQuantityText('1');
     setDialog(null);
   };
 
@@ -148,7 +149,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const defaultTarget = aliveOpponents[0]?.id ?? '';
 
   const [targetId, setTargetId] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [quantityText, setQuantityText] = useState('1');
   const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
@@ -189,6 +190,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const rewardReady =
     buildRewardChoice(rewardKind1, resolvedRewardCard1) !== null &&
     buildRewardChoice(rewardKind2, resolvedRewardCard2) !== null;
+
+  const quantityTrimmed = quantityText.trim();
+  const quantityParsed = Number(quantityTrimmed);
+  const quantityValid =
+    quantityTrimmed !== '' &&
+    Number.isInteger(quantityParsed) &&
+    quantityParsed >= 1 &&
+    quantityParsed <= 4;
 
   const mirrorSeconds =
     mirrorChoice === null
@@ -387,8 +396,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <>
               <Button
                 variant="purple"
+                disabled={!quantityValid}
                 onClick={() => {
-                  onPlayCard(dialog.instance.instanceId, { quantity });
+                  if (!quantityValid) {
+                    return;
+                  }
+                  onPlayCard(dialog.instance.instanceId, {
+                    quantity: quantityParsed,
+                  });
                   close();
                 }}
               >
@@ -401,49 +416,33 @@ export function CardActions(props: CardActionsProps): ReactElement {
           ) : undefined
         }
       >
-        <div>
-          <p className="text-sm text-ink">Lives (1–4)</p>
-          <div
-            className="mt-2 flex items-center gap-2"
-            role="group"
-            aria-label="Regeneration quantity"
-          >
-            <Button
-              variant="orange"
-              disabled={quantity <= 1}
-              onClick={() => {
-                setQuantity((prev) => Math.max(1, prev - 1));
-              }}
-            >
-              −
-            </Button>
-            <span className="min-w-[2rem] text-center text-lg font-semibold tabular-nums text-ink">
-              {quantity}
-            </span>
-            <Button
-              variant="green"
-              disabled={quantity >= 4}
-              onClick={() => {
-                setQuantity((prev) => Math.min(4, prev + 1));
-              }}
-            >
-              +
-            </Button>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {([1, 2, 3, 4] as const).map((n) => (
-              <Button
-                key={n}
-                variant={quantity === n ? 'purple' : 'yellow'}
-                onClick={() => {
-                  setQuantity(n);
-                }}
-              >
-                {n}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <label className="block text-sm text-ink">
+          Lives (1–4)
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            value={quantityText}
+            onChange={(event) => {
+              setQuantityText(event.target.value);
+            }}
+            className="mt-2 block w-full max-w-[8rem] rounded-[length:var(--radius-control)] border border-border bg-surface px-3 py-2 text-base tabular-nums text-ink"
+            aria-invalid={!quantityValid}
+            aria-describedby="regen-quantity-hint"
+          />
+        </label>
+        <p
+          id="regen-quantity-hint"
+          className={[
+            'mt-2 text-xs',
+            quantityValid ? 'text-ink-muted' : 'text-cta-red',
+          ].join(' ')}
+        >
+          {quantityValid
+            ? 'Enter how many lives to buy.'
+            : 'Enter a whole number from 1 to 4 to confirm.'}
+        </p>
       </Dialog>
 
       <Dialog

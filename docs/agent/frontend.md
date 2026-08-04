@@ -132,8 +132,8 @@ rules above are unchanged — this section only covers how the client looks.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
-  quantity Dialog. Regen quantity uses ± / chip buttons (no `type="number"` — mobile
-  controlled inputs stuck at 1).
+  quantity Dialog. Regen quantity is a free text field; Confirm stays disabled until
+  the value is an integer from 1 to 4 (mobile `type="number"` was unusable).
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
