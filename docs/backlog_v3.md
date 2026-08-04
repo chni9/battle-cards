@@ -80,7 +80,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-22 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
+25 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -88,7 +88,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
 | 19 · Designer feedback (rules + UX) | 3 | 3 |
-| 18 · Headless simulation | 5 | 4 |
+| 18 · Headless simulation | 5 | 5 |
 
 ## Milestones
 
@@ -355,7 +355,7 @@ per the field-source table in technical spec v3 §8.
 - **Watch point** **Blocked on #V3-1** (own app vs a `bin/` script in `apps/server`) before the first file is created. Simulated games are **not** written to Postgres (§8.2) — a batch of 10 000 would make every future query start with an exclusion clause. `BOT_THINK_MS` is 0 here. Determinism is the acceptance criterion, not a nice-to-have: without it no result is checkable and no regression detectable.
 - **Acceptance** Same base seed and config → byte-identical output file across runs; 1 000 games complete with no exception; nothing is written to Postgres
 
-### L18-05 · First gross-imbalance screen — `To do`
+### L18-05 · First gross-imbalance screen — `Done`
 
 Run the batch across the 4 V1 kits at all three difficulties, aggregate win rate by kit and by
 matchup, game-length distribution, and elimination causes. Write up what the numbers do and do

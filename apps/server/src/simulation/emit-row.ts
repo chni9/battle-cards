@@ -14,6 +14,7 @@ export function serializeGameRow(row: SimulationGameRow): string {
     players: row.players.map((player) => ({
       playerId: player.playerId,
       seatIndex: player.seatIndex,
+      startingKitId: player.startingKitId,
       kitId: player.kitId,
       isWinner: player.isWinner,
       isEliminated: player.isEliminated,

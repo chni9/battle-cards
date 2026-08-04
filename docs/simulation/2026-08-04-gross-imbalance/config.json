@@ -1,0 +1,38 @@
+{
+  "baseSeed": "gross-imbalance-2026-08-04",
+  "gamesPerCell": 200,
+  "difficulty": "hard",
+  "oneVOnePairs": [
+    [
+      "untouchable",
+      "kamikaze"
+    ],
+    [
+      "untouchable",
+      "scientific"
+    ],
+    [
+      "untouchable",
+      "assassin"
+    ],
+    [
+      "kamikaze",
+      "scientific"
+    ],
+    [
+      "kamikaze",
+      "assassin"
+    ],
+    [
+      "scientific",
+      "assassin"
+    ]
+  ],
+  "fourPlayerMix": [
+    "untouchable",
+    "kamikaze",
+    "scientific",
+    "assassin"
+  ],
+  "note": "Difficulty sweeps deferred. Stalls counted separately (heuristic hangs)."
+}

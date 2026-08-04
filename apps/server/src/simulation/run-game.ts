@@ -47,6 +47,8 @@ export interface SimulationGameRow {
   players: readonly {
     playerId: string;
     seatIndex: number;
+    /** Kit at deal time — Cloning can change `kitId` mid-game. */
+    startingKitId: KitId;
     kitId: KitId;
     isWinner: boolean;
     isEliminated: boolean;
@@ -136,6 +138,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     seed: input.seed,
     ...(input.kitAssignment !== undefined ? { kitAssignment: input.kitAssignment } : {}),
   });
+
+  const startingKitByPlayerId = new Map(
+    state.players.map((player) => [player.id, player.kitId] as const),
+  );
 
   const actionLog: ActionLogEntryView[] = [];
   const eliminations: FinishedGameEliminationRecord[] = [];
@@ -298,6 +304,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       return {
         playerId: player.playerId,
         seatIndex: player.seatIndex,
+        startingKitId: startingKitByPlayerId.get(player.playerId) ?? player.kitId,
         kitId: player.kitId,
         isWinner: player.isWinner,
         isEliminated: player.isEliminated,
