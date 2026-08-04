@@ -75,6 +75,11 @@ function driveManually(
 
   while (result.rewardChoicePending === true) {
     const pick = hooks.resolveReward(state);
+
+    if (pick === null) {
+      return;
+    }
+
     const reward = completeEliminationRewardChoice(
       state,
       pick.chooserPlayerId,
@@ -209,5 +214,59 @@ describe('orchestrate-turn equivalence (§10.3 / L18-03)', () => {
     };
 
     expect(run()).toEqual(run());
+  });
+
+  it('resolveReward null leaves rewardChoice pending for the caller (human eliminator)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'human', nickname: 'Human' },
+        { id: 'bot', nickname: 'Bot' },
+      ],
+      seed: `${SEED}-defer-reward`,
+    });
+    const human = state.players.find((player) => player.id === 'human');
+    const bot = state.players.find((player) => player.id === 'bot');
+
+    if (human === undefined || bot === undefined) {
+      throw new Error('missing seats');
+    }
+
+    human.points = 1;
+    human.hand = [{ instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false }];
+    state.currentTurnPlayerId = 'human';
+    performTurnAction(
+      state,
+      'human',
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot' },
+      undefined,
+      FIXED_NOW_MS,
+    );
+
+    bot.lives = 1;
+    state.currentTurnPlayerId = 'bot';
+
+    const result = performAndCompleteTurn(
+      state,
+      'bot',
+      { type: 'draw' },
+      {
+        resolveMirror: () => {
+          throw new Error('Mirror not expected');
+        },
+        resolveReward: () => null,
+      },
+      { nowMs: FIXED_NOW_MS },
+    );
+
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.rewardChoicePending).toBe(true);
+    expect(result.winnerPlayerId).toBeNull();
+    expect(state.rewardChoice?.eliminatorPlayerId).toBe('human');
+    expect(bot.isEliminated).toBe(true);
   });
 });

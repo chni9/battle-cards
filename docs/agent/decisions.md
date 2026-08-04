@@ -1038,3 +1038,13 @@ always-upgraded copies. Specials remain unsellable. Rules spec §1 updated.
 Companion fix: `pickMirrorRedirect` must honour `mirrorChoice.eligibleEffectIds` so base
 Mirror never targets an upgraded pending attack (surfaced once sell refunds changed sim
 trajectories).
+
+## 2026-08-04 · [P] Bot turn orchestrator defers human elimination rewards
+
+`performBotAction` uses `performAndCompleteTurn` (L18-03). Its `resolveReward` hook must
+not auto-pick when the eliminator is a human — delayed kills resolve on the victim's turn,
+so a human who queued the killing attack still needs `REWARD_CHOICE_REQUIRED`.
+
+Hook contract: `resolveReward` may return `null` to leave `rewardChoice` pending; the room
+then calls `beginRewardTimer`. When a winner appears only after bot-resolved rewards,
+`performBotAction` must call `onGameOver` (applyTurnResult never saw that winner).

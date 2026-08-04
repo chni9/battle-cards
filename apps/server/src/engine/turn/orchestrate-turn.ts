@@ -32,7 +32,12 @@ export interface RewardResolvePick {
 
 export interface TurnSubChoiceHooks {
   resolveMirror(state: GameState, actorPlayerId: string): MirrorResolvePick;
-  resolveReward(state: GameState): RewardResolvePick;
+  /**
+   * Return picks to complete the active reward job, or `null` to leave
+   * `rewardChoice` pending for an external handler (human UI / room timer).
+   * Headless bots always return picks; the Colyseus room returns null for humans.
+   */
+  resolveReward(state: GameState): RewardResolvePick | null;
 }
 
 export interface PerformAndCompleteOptions {
@@ -105,6 +110,12 @@ export function continuePendingSubChoices(
 
   while (result.rewardChoicePending === true) {
     const pick = hooks.resolveReward(state);
+
+    if (pick === null) {
+      // Leave rewardChoicePending — caller arms human UI or bot-driver path.
+      return result;
+    }
+
     const rewardResult = completeEliminationRewardChoice(
       state,
       pick.chooserPlayerId,

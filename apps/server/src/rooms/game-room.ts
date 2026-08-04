@@ -1299,6 +1299,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         const pick = pickMirrorRedirect(
           view,
           createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
+          s.mirrorChoice?.eligibleEffectIds,
         );
 
         if (pick === null) {
@@ -1313,6 +1314,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
         if (choice === null) {
           throw new Error('reward pending without rewardChoice');
+        }
+
+        const seat = this.seats.find(
+          (entry) => entry.sessionId === choice.eliminatorPlayerId,
+        );
+
+        // Human eliminator (incl. kill on a bot's turn) must get REWARD_CHOICE_REQUIRED.
+        if (seat === undefined || !isBotSeat(seat)) {
+          return null;
         }
 
         const view = this.buildBotPlayingView(choice.eliminatorPlayerId);
@@ -1381,7 +1391,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    // Winner after rewards is not seen by applyTurnResult (onRewardResult only logs).
     if (result.winnerPlayerId !== null) {
+      if (this.winnerPlayerId === null) {
+        this.onGameOver(result.winnerPlayerId);
+      }
       return;
     }
 
