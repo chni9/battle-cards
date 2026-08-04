@@ -1062,3 +1062,28 @@ Hosting is VPS + Coolify (technical spec §3). Locked choices:
   because `docker/entrypoint.sh` runs `db:migrate` before listen (fail-fast). This
   **overrides** the earlier “never auto-migrate on boot” stance for the production
   entrypoint only; local/dev stays explicit (`docs/agent/db.md`).
+
+## 2026-08-04 · [T] Heuristic: explicit scores for Sentence / Imposition / Spy Thief / PG (#V3-5)
+
+Bug: `scorePlayCard` fell through to `HEURISTIC_BAND_WEIGHTS.sustain` (100) for any
+unbranched `playCard` — the same literal as `draw`. Ties go to `rng.pick`, so base
+**Sentence** (15 pts, random victim including self) was coin-flipped against draw.
+Permanently unscored: `spy-thief`, `imposition`, `sentence`, `points-generator`.
+Conditional fallthrough also hit Cloning / Thief / Absorber without a signal.
+Consequence: L18-05 Assassin / Untouchable win rates partly measured that artefact;
+Kamikaze (~78%) was closer to clean because Suicide already had a branch.
+
+Fix (policy only — no rule change):
+
+| Card | Band | Behaviour |
+|---|---|---|
+| Sentence (base) | refuse (`−∞`) | self-elim risk |
+| Sentence (upgraded) | lethal-now | random living opponent |
+| Imposition / Points Generator | invest + bonus | refuse if already active |
+| Spy Thief | deny + bonus | per living / unspied seats |
+| Cloning (no threat) | invest if Spy-richer else below draw | |
+| Thief (no spend) / Absorber (weak) | refuse / below draw | |
+| Any remaining fallthrough | `sustain − UNSCORED_PLAY_PENALTY` | never tie draw |
+
+Tunables in `heuristic-weights.ts` (`IMPOSITION_INVEST_BONUS`, etc.). Re-run the
+gross-imbalance screen before trusting kit rates again.

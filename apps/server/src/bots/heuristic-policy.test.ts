@@ -772,4 +772,103 @@ describe('heuristic decide (L16-04)', () => {
       targetPlayerId: 'bot-b',
     });
   });
+
+  it('never picks base Sentence over draw (self-elim risk)', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'sent-1' },
+    ];
+
+    for (const seed of ['sent-base-a', 'sent-base-b', 'sent-base-c', 'sent-base-d']) {
+      expect(decide(view, actions, createRng(seed))).toEqual({ type: 'draw' });
+    }
+  });
+
+  it('prefers upgraded Sentence over draw', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: true }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'sent-1' },
+    ];
+    expect(decide(view, actions, createRng('sent-up'))).toEqual({
+      type: 'playCard',
+      instanceId: 'sent-1',
+    });
+  });
+
+  it('prefers Imposition and Points Generator over draw', () => {
+    const impositionView = baseView({
+      self: baseSelf({
+        kitId: 'untouchable',
+        specialCards: [{ instanceId: 'imp-1', cardId: 'imposition', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        impositionView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'imp-1' }],
+        createRng('imp-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'imp-1' });
+
+    const generatorView = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        specialCards: [{ instanceId: 'pg-1', cardId: 'points-generator', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        generatorView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'pg-1' }],
+        createRng('pg-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'pg-1' });
+  });
+
+  it('prefers Spy Thief over draw', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'untouchable',
+        specialCards: [{ instanceId: 'st-1', cardId: 'spy-thief', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'st-1' }],
+        createRng('spy-thief-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'st-1' });
+  });
+
+  it('refuses duplicate Imposition / Points Generator activation', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'untouchable',
+        specialCards: [{ instanceId: 'imp-2', cardId: 'imposition', isUpgraded: false }],
+        activePersistentEffects: [
+          { id: 'imp-live', cardId: 'imposition', isUpgraded: false, counter: 2 },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'imp-2' }],
+        createRng('imp-dup'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
 });

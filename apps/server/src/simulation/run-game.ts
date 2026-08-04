@@ -37,6 +37,8 @@ export interface RunGameInput {
   playerCount: number;
   difficulties: readonly BotDifficulty[];
   kitAssignment?: readonly KitId[];
+  /** Override default 2500 — tests force MAX_TURNS without hunting stall seeds. */
+  maxTurns?: number;
 }
 
 export interface SimulationGameRow {
@@ -147,7 +149,9 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
   const eliminations: FinishedGameEliminationRecord[] = [];
   let turns = 0;
 
-  while (findSoleSurvivorId(state) === null && turns < MAX_TURNS) {
+  const turnCap = input.maxTurns ?? MAX_TURNS;
+
+  while (findSoleSurvivorId(state) === null && turns < turnCap) {
     const botId = state.currentTurnPlayerId;
 
     if (botId === null) {

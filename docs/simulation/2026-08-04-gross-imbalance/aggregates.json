@@ -1,79 +1,79 @@
 {
-  "completedGames": 1296,
-  "stalledGames": 104,
+  "completedGames": 1326,
+  "stalledGames": 74,
   "winRateByKit": {
     "kamikaze": {
-      "wins": 583,
-      "games": 745,
-      "rate": 0.7825503355704698
+      "wins": 473,
+      "games": 755,
+      "rate": 0.6264900662251656
     },
     "untouchable": {
-      "wins": 212,
-      "games": 748,
-      "rate": 0.28342245989304815
+      "wins": 451,
+      "games": 757,
+      "rate": 0.5957727873183619
     },
     "scientific": {
-      "wins": 209,
-      "games": 720,
-      "rate": 0.2902777777777778
+      "wins": 146,
+      "games": 762,
+      "rate": 0.19160104986876642
     },
     "assassin": {
-      "wins": 292,
-      "games": 741,
-      "rate": 0.3940620782726046
+      "wins": 256,
+      "games": 754,
+      "rate": 0.3395225464190981
     }
   },
   "winRateByMatchup": {
     "kamikaze_vs_untouchable": {
       "kitA": "kamikaze",
       "kitB": "untouchable",
-      "winsA": 163,
-      "winsB": 27,
+      "winsA": 99,
+      "winsB": 91,
       "games": 190
     },
     "scientific_vs_untouchable": {
       "kitA": "scientific",
       "kitB": "untouchable",
-      "winsA": 93,
-      "winsB": 93,
-      "games": 186
+      "winsA": 38,
+      "winsB": 155,
+      "games": 193
     },
     "assassin_vs_untouchable": {
       "kitA": "assassin",
       "kitB": "untouchable",
-      "winsA": 122,
-      "winsB": 69,
-      "games": 191
+      "winsA": 92,
+      "winsB": 94,
+      "games": 186
     },
     "kamikaze_vs_scientific": {
       "kitA": "kamikaze",
       "kitB": "scientific",
-      "winsA": 161,
-      "winsB": 18,
-      "games": 179
+      "winsA": 158,
+      "winsB": 31,
+      "games": 189
     },
     "assassin_vs_kamikaze": {
       "kitA": "assassin",
       "kitB": "kamikaze",
-      "winsA": 32,
-      "winsB": 163,
-      "games": 195
+      "winsA": 26,
+      "winsB": 162,
+      "games": 188
     },
     "assassin_vs_scientific": {
       "kitA": "assassin",
       "kitB": "scientific",
-      "winsA": 105,
-      "winsB": 69,
-      "games": 174
+      "winsA": 132,
+      "winsB": 60,
+      "games": 192
     }
   },
   "turnSequence": {
     "min": 5,
-    "max": 1175,
-    "mean": 59.77237654320987,
-    "p50": 36
+    "max": 574,
+    "mean": 39.166666666666664,
+    "p50": 28
   },
   "eliminationReasons": {
-    "combat": 1658
+    "combat": 1702
   }
 }

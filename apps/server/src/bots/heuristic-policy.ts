@@ -24,15 +24,19 @@ import {
   BUY_UPGRADE_POINT_BONUS,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
+  IMPOSITION_INVEST_BONUS,
   MUTUAL_CANCEL_BONUS,
+  POINTS_GENERATOR_INVEST_BONUS,
   PRESSURE_COST_DIVISOR,
   REGEN_SOFT_LIFE,
   SELL_TO_FUND_BONUS,
+  SPY_THIEF_DENY_BONUS,
   SPY_TOP_THREAT_BONUS,
   SPY_UNSPIED_BONUS,
   STRIKE_MIN_DAMAGE,
   TAX_INVEST_BONUS,
   TAX_LIFE_BUFFER,
+  UNSCORED_PLAY_PENALTY,
   UPGRADE_ATTACK_BONUS,
 } from './heuristic-weights';
 
@@ -439,6 +443,67 @@ function scorePlayCard(
     return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10, code: 'lethal-now' };
   }
 
+  // Sentence — base draw includes self (no eliminator reward on self-elim). Refuse base.
+  // Upgraded: random living opponent only → lethal-now (guaranteed one elim).
+  if (cardId === 'sentence') {
+    if (!isUpgraded) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    const opponents = view.players.filter(
+      (player) => player.id !== view.you && !player.isEliminated,
+    ).length;
+
+    if (opponents < 1) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.lethalNow + opponents * 5,
+      code: 'lethal-now',
+    };
+  }
+
+  // Imposition / Points Generator — activate once; Invest economy (not draw-tied).
+  if (cardId === 'imposition') {
+    if (hasOwnPersistent(view, 'imposition')) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + IMPOSITION_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  if (cardId === 'points-generator') {
+    if (hasOwnPersistent(view, 'points-generator')) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + POINTS_GENERATOR_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  // Spy Thief — steal all points + Spy all (Untouchable is not immune). Deny band.
+  if (cardId === 'spy-thief') {
+    const living = view.players.filter(
+      (player) => player.id !== view.you && !player.isEliminated,
+    );
+    const unspied = living.filter((player) => player.spied === undefined).length;
+
+    return {
+      score:
+        HEURISTIC_BAND_WEIGHTS.deny +
+        SPY_THIEF_DENY_BONUS +
+        living.length * 10 +
+        unspied * 20,
+      code: 'deny',
+    };
+  }
+
   if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
     return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
@@ -580,6 +645,42 @@ function scorePlayCard(
         code: 'deny',
       };
     }
+
+    // No spend signal — do not rng-tie with draw.
+    return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+  }
+
+  // Cloning without incoming threat: only when Spy shows a richer seat; else below draw.
+  if (cardId === 'cloning' && action.targetPlayerId !== undefined && ctx.incomingThreat <= 0) {
+    const target = view.players.find((player) => player.id === action.targetPlayerId);
+    const spied = target?.spied;
+
+    if (spied?.lives !== undefined && spied.lives > view.self.lives + 2) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.invest + 40 + (isUpgraded ? 15 : 0),
+        code: 'invest',
+      };
+    }
+
+    if (spied?.points !== undefined && spied.points > view.self.points + 5) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.invest + 35 + (isUpgraded ? 15 : 0),
+        code: 'invest',
+      };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      code: 'sustain',
+    };
+  }
+
+  // Absorber without a large last-loss signal — defer below draw.
+  if (cardId === 'absorber') {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      code: 'sustain',
+    };
   }
 
   // Pressure — only upgraded, high-damage strikes. Chip / base attacks stay below Invest.
@@ -648,7 +749,11 @@ function scorePlayCard(
     return { score: HEURISTIC_BAND_WEIGHTS.sustain + 2, code: 'sustain' };
   }
 
-  return { score: HEURISTIC_BAND_WEIGHTS.sustain, code: 'sustain' };
+  // Never rng-tie with draw for an unscored playCard.
+  return {
+    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    code: 'sustain',
+  };
 }
 
 function scoreMultiAttack(
@@ -730,6 +835,10 @@ function findOwnCard(
     view.self.hand.find((card) => card.instanceId === instanceId) ??
     view.self.specialCards.find((card) => card.instanceId === instanceId)
   );
+}
+
+function hasOwnPersistent(view: PlayingStateView, cardId: CardId): boolean {
+  return view.self.activePersistentEffects.some((effect) => effect.cardId === cardId);
 }
 
 function ownsCardId(view: PlayingStateView, cardId: CardId): boolean {

@@ -91,27 +91,35 @@ describe('simulation batch (L18-04)', () => {
     const out = path.join(dir, 'out.jsonl');
 
     try {
-      // Seed `random-kits:0` is a known hard stall; batch must not abort.
-      const result = await runBatch([
-        '--games',
-        '5',
-        '--players',
-        '4',
-        '--difficulties',
-        'hard,hard,hard,hard',
-        '--seed',
-        'random-kits',
-        '--out',
-        out,
-      ]);
+      // Force MAX_TURNS via a tiny cap — policy changes can clear natural stall seeds.
+      const result = await runBatch(
+        [
+          '--games',
+          '3',
+          '--players',
+          '2',
+          '--difficulties',
+          'hard,hard',
+          '--seed',
+          'force-stall-batch',
+          '--kits',
+          'assassin,kamikaze',
+          '--out',
+          out,
+        ],
+        { maxTurns: 1 },
+      );
 
-      expect(result.stalled).toBeGreaterThan(0);
-      expect(result.completed + result.stalled).toBe(5);
+      expect(result.stalled).toBe(3);
+      expect(result.completed).toBe(0);
+      expect(result.stalledSeeds).toEqual([
+        'force-stall-batch:0',
+        'force-stall-batch:1',
+        'force-stall-batch:2',
+      ]);
       const file = await readFile(out, 'utf8');
+      expect(file).toBe('');
       expect(file).toBe(result.body);
-      if (result.completed > 0) {
-        expect(file.trimEnd().split('\n')).toHaveLength(result.completed);
-      }
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

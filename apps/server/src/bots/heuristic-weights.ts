@@ -78,3 +78,15 @@ export const BURN_COUNTER_BONUS = 150;
  * counter. Sits above Mirror's +30 so a matching Basic cancel beats Mirror on a Basic hit.
  */
 export const MUTUAL_CANCEL_BONUS = 40;
+
+/**
+ * Cards that previously fell through to `sustain` (= draw = 100) and were rng-tied with
+ * draw — including Sentence (random self-elim). Explicit Invest / Deny offsets below.
+ * Tunable defaults (2026-08-04 scoring hole fix).
+ */
+export const IMPOSITION_INVEST_BONUS = 55;
+export const POINTS_GENERATOR_INVEST_BONUS = 50;
+/** Spy Thief: mass steal + Spy all — Deny offset before per-opponent add-ons. */
+export const SPY_THIEF_DENY_BONUS = 100;
+/** Fallthrough for any playCard still without a branch — must stay strictly below draw. */
+export const UNSCORED_PLAY_PENALTY = 50;

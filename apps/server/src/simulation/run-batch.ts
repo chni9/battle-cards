@@ -30,7 +30,15 @@ export interface BatchRunResult {
   stalledSeeds: readonly string[];
 }
 
-export async function runBatch(argv: readonly string[]): Promise<BatchRunResult> {
+export interface RunBatchOptions {
+  /** Test-only: force every game's turn cap (default 2500). */
+  maxTurns?: number;
+}
+
+export async function runBatch(
+  argv: readonly string[],
+  options: RunBatchOptions = {},
+): Promise<BatchRunResult> {
   const config = parseBatchArgs(argv);
   const lines: string[] = [];
   const stalledSeeds: string[] = [];
@@ -46,6 +54,7 @@ export async function runBatch(argv: readonly string[]): Promise<BatchRunResult>
         ...(config.kitAssignment !== undefined
           ? { kitAssignment: config.kitAssignment }
           : {}),
+        ...(options.maxTurns !== undefined ? { maxTurns: options.maxTurns } : {}),
       });
       lines.push(serializeGameRow(row));
     } catch (error) {
