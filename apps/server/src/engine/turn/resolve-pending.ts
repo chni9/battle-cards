@@ -209,6 +209,8 @@ function resolveSuicide(
 
   if (isSelf) {
     const livesLost = target.lives;
+    // Lethal self-elimination in one step — rules spec §5 (Suicide), technical spec §4.2.
+    // Not `applyLifeLoss`: no bounded debit, no card-counter decrement; elimination is step 5.
     target.lives = 0;
     // Self-elim: no third-party contributor (rules spec §6).
     return { livesLost, outcome: 'applied' };
@@ -290,6 +292,8 @@ export function resolvePendingEffects(
       outcome = resolveSpyThief(state, player, effect);
     } else if (effect.cardId === 'sentence') {
       const livesBefore = player.lives;
+      // Instant lethal elimination — rules spec §5 (Sentence), technical spec §4.2.
+      // Not `applyDamage` (no shield) and not `applyLifeLoss`: zeroes lives regardless of count.
       player.lives = 0;
       const isSelf = effect.sourcePlayerId === player.id;
       // Lethal effect: record even when lives were already 0 (livesBefore used as signal).

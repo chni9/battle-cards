@@ -34,6 +34,8 @@ export const cloningHandler: CardHandler = {
     }
 
     user.kitId = target.kitId;
+    // Resource snapshot — rules spec §5 (Cloning), technical spec v4 §4.6.
+    // Assignment copies the target's count; neither `gainLives` nor a loss primitive.
     user.lives = target.lives;
     user.points = target.points;
     user.upgradePoints = target.upgradePoints;
