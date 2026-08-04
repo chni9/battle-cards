@@ -6,6 +6,7 @@
 import {
   ATTACK_CARD_IDS,
   SHARED_CARD_IDS,
+  formatCardLabel,
   getCard,
   type CardCost,
   type CardInstance,
@@ -24,6 +25,7 @@ import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import {
+  REWARD_KIND_LABELS,
   REWARD_KINDS,
   buildRewardChoice,
   cardEffectText,
@@ -766,7 +768,7 @@ function RewardPick({
         >
           {REWARD_KINDS.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {REWARD_KIND_LABELS[k]}
             </option>
           ))}
         </select>
@@ -783,8 +785,7 @@ function RewardPick({
           >
             {cards.map((card) => (
               <option key={card.instanceId} value={card.instanceId}>
-                {card.cardId}
-                {card.isUpgraded ? ' ↑' : ''}
+                {formatCardLabel(card.cardId, card.isUpgraded)}
               </option>
             ))}
           </select>

@@ -139,6 +139,60 @@ describe('formatActionLogEntry (L9-02)', () => {
       ),
     ).toBe("Alice's Super attack + hits Bob (−10 life)");
   });
+
+  it('does not spell out immunity when Spy or Thief fails', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-spy',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'spy',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'immune',
+          turnSequence: 3,
+        },
+        nick,
+      ),
+    ).toBe('Spy from Alice resolves on Bob');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-thief',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'thief',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'immune',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe('Thief from Alice resolves on Bob');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-spy',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'spy',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'immune',
+          turnSequence: 3,
+        },
+        nick,
+      ),
+    ).not.toMatch(/immune/i);
+  });
 });
 
 describe('filterActionLog / groupByTurn (L9-02)', () => {

@@ -31,6 +31,7 @@ import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
+import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
@@ -103,6 +104,7 @@ function TableScreenInner({
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
+  const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -189,6 +191,10 @@ function TableScreenInner({
       return;
     }
     lastResolvedKey.current = key;
+    // Immunity stays opaque in the UI (no banner / no "Immune" flash).
+    if (lastActionResolved.outcome === 'immune') {
+      return;
+    }
     enqueue({
       kind: 'resolutionFlash',
       outcome: lastActionResolved.outcome,
@@ -269,6 +275,33 @@ function TableScreenInner({
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
+
+  const inspectOpponent = opponents.find((entry) => entry.id === inspectOpponentId);
+  const inspectReveal =
+    inspectOpponent?.eliminationReveal !== undefined
+      ? {
+          mode: 'elimination' as const,
+          kitId: inspectOpponent.eliminationReveal.kitId,
+          hand: inspectOpponent.eliminationReveal.hand,
+          specialCards: inspectOpponent.eliminationReveal.specialCards,
+          lives: inspectOpponent.eliminationReveal.lives,
+          points: inspectOpponent.eliminationReveal.points,
+          upgradePoints: inspectOpponent.eliminationReveal.upgradePoints,
+          shield: inspectOpponent.eliminationReveal.shield,
+        }
+      : inspectOpponent?.spied !== undefined
+        ? {
+            mode: 'spy' as const,
+            kitId: inspectOpponent.spied.kitId,
+            hand: inspectOpponent.spied.hand,
+            specialCards: inspectOpponent.spied.specialCards,
+            lives: inspectOpponent.spied.lives,
+            points: inspectOpponent.spied.points,
+            upgradePoints: inspectOpponent.spied.upgradePoints,
+            shield: inspectOpponent.spied.shield,
+            resourcesSnapshot: inspectOpponent.spied.resourcesSnapshot,
+          }
+        : null;
 
   const mirrorSecondsLeft =
     mirrorChoice === null
@@ -393,7 +426,6 @@ function TableScreenInner({
             activeNickname={activePlayer?.nickname ?? '—'}
             isMyTurn={isMyTurn}
             timerLabel={timerLabel}
-            lastActionResolved={lastActionResolved}
             progressRatio={progressRatio}
             {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
             subChoiceProgressRatio={subChoiceProgressRatio}
@@ -413,15 +445,17 @@ function TableScreenInner({
           <OpponentZone
             key={player.id}
             player={player}
-            onInspectCard={(instanceId) => {
-              onInspectSpyCard(player.id, instanceId);
-            }}
             onInspectActive={(effectId) => {
               onInspectActive(player.id, effectId);
             }}
-            onInspectKit={(kitId) => {
-              setInspectKitId(kitId);
-            }}
+            {...(player.eliminationReveal !== undefined || player.spied !== undefined
+              ? {
+                  onInspectReveal: () => {
+                    setInspectKitId(null);
+                    setInspectOpponentId(player.id);
+                  },
+                }
+              : {})}
           />
         ))}
         pending={
@@ -473,6 +507,33 @@ function TableScreenInner({
           kitId={inspectKitId}
           onClose={() => {
             setInspectKitId(null);
+          }}
+        />
+      )}
+
+      {inspectOpponent !== undefined && inspectReveal !== null && (
+        <OpponentRevealDialog
+          open
+          nickname={inspectOpponent.nickname}
+          mode={inspectReveal.mode}
+          kitId={inspectReveal.kitId}
+          hand={inspectReveal.hand}
+          specialCards={inspectReveal.specialCards}
+          {...(inspectReveal.lives !== undefined ? { lives: inspectReveal.lives } : {})}
+          {...(inspectReveal.points !== undefined ? { points: inspectReveal.points } : {})}
+          {...(inspectReveal.upgradePoints !== undefined
+            ? { upgradePoints: inspectReveal.upgradePoints }
+            : {})}
+          {...(inspectReveal.shield !== undefined ? { shield: inspectReveal.shield } : {})}
+          {...(inspectReveal.mode === 'spy' && inspectReveal.resourcesSnapshot !== undefined
+            ? { resourcesSnapshot: inspectReveal.resourcesSnapshot }
+            : {})}
+          onClose={() => {
+            setInspectOpponentId(null);
+          }}
+          onInspectCard={(instanceId) => {
+            setInspectOpponentId(null);
+            onInspectSpyCard(inspectOpponent.id, instanceId);
           }}
         />
       )}

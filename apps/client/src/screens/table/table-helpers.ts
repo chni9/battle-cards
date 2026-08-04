@@ -20,6 +20,14 @@ export const REWARD_KINDS: readonly RewardKind[] = [
   'card',
 ] as const;
 
+/** Player-facing labels for reward option dropdowns (not wire `type` ids). */
+export const REWARD_KIND_LABELS: Record<RewardKind, string> = {
+  lives: '4 lives',
+  points: '8 points',
+  upgradePoint: '1 upgrade point',
+  card: 'A card',
+};
+
 export function nicknameOf(view: PlayingStateView, playerId: string): string {
   return view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
 }

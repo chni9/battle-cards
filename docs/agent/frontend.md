@@ -136,9 +136,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy display:** list each spied hand/special card. Base: show full resource snapshot
-  (lives, points, UP, shield) labeled by turn sequence. Upgraded: show those values live.
-- **`actionResolved.outcome === 'immune'`**: show public failure (Untouchable vs Thief/Spy).
+- **Spy / death reveal:** keep the opponent seat compact (kit portrait + “Spied — tap” /
+  “Revealed — tap”). Opening the portrait shows `OpponentRevealDialog` with kit name,
+  resources (live or base Spy snapshot), hand, and specials — this replaces
+  `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`.
+- **`actionResolved.outcome === 'immune'`**: do **not** surface “immune” in the timers
+  banner, resolution FX flash, or action-log copy (Untouchable vs Thief/Spy stays opaque).
+- **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
+  names via `formatCardLabel`) — never raw `RewardChoice` type ids or `cardId` strings.
 - **Mirror**: listen for `mirrorChoiceRequired`, send `chooseMirrorTarget`. Clear the
   prompt on confirm or the next `turnStarted`.
 - **Elimination rewards**: listen for `rewardChoiceRequired`, send `chooseEliminationReward`

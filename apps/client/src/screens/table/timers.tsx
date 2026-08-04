@@ -4,7 +4,6 @@
  * Landscape meta (code · status) lives here — no separate Card Battle header.
  */
 
-import type { ActionResolvedPayload } from '@card-battle/shared';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
@@ -17,7 +16,6 @@ export interface TimersProps {
   activeNickname: string;
   isMyTurn: boolean;
   timerLabel: string;
-  lastActionResolved: ActionResolvedPayload | null;
   /** 0–1 remaining fraction when known; null when paused/unknown. */
   progressRatio: number | null;
   subChoiceLabel?: string | undefined;
@@ -32,7 +30,6 @@ export function Timers({
   activeNickname,
   isMyTurn,
   timerLabel,
-  lastActionResolved,
   progressRatio,
   subChoiceLabel,
   subChoiceProgressRatio,
@@ -133,14 +130,6 @@ export function Timers({
             </div>
           )}
         </div>
-      )}
-      {lastActionResolved?.outcome === 'immune' && (
-        <p
-          className="mt-1 rounded-[length:var(--radius-badge)] bg-cta-red/10 px-2 py-0.5 text-xs font-medium text-cta-red sm:mt-1.5 sm:text-sm"
-          role="status"
-        >
-          {lastActionResolved.cardId} failed — target is immune
-        </p>
       )}
     </section>
   );

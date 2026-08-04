@@ -92,7 +92,8 @@ export function formatActionLogEntry(
       const target = nicknameOf(entry.targetPlayerId);
       const name = formatCardLabel(entry.cardId, entry.isUpgraded);
       if (entry.outcome === 'immune') {
-        return `${name} from ${source} fails against ${target} — immune`;
+        // Do not name immunity — public log stays opaque (designer feedback).
+        return `${name} from ${source} resolves on ${target}`;
       }
       if (entry.outcome === 'cancelled') {
         return `${name} from ${source} against ${target} is cancelled`;
