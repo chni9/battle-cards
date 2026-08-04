@@ -778,3 +778,12 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | 16 | §4 Kit upgrades: `alwaysUpgraded` is never retro-applied, so Cloning does not transfer it to cards already held. | Clarification |
 | 17 | §4 Tactician: Draw 4 makes deliberate inactivity worth 4 points a turn, and the timeout counter resets on any real action. Already flagged in technical spec v1's Appendix A as a balancing note; now reachable. | Balancing note |
 | 18 | §5 The 20-point random special purchase now draws from all 20 specials. | Clarification (closes a V1 scope artefact) |
+
+## 11.1 Ruled in Lot 20 (2026-08-04)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-2** | Mutual cancel compares **final damage** (multiplier included), not card identity. Docs corrected; no behaviour change. | `decisions.md`, L20-07 |
+| **#V4-3** | Each of N pending attacks pairs **independently** on its own target's turn. | `decisions.md`, L20-07 |
+| **#V4-30** | Player count stays **2–4** in V4 (docs-only). | `decisions.md`, L20-19 |
+

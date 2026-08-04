@@ -1168,3 +1168,9 @@ blocks constructing them). When one of those tasks lands, decide then whether to
 own dedicated field (this task's precedent) or finally introduce a literal generic
 `subChoice` slot / `subChoiceQueue` — at that point the tests are new, so the constraint that
 forced this decision no longer applies.
+
+## 2026-08-04 · [P] #V4-30 Player count stays 2–4 (L20-19)
+
+Designer ruling (session): Classic mode remains 2 to 4 players in V4. Documentation
+only — no change to `batch-config.ts`, `lobby-rules.MAX_PLAYERS`, or `game-room.maxClients`.
+
