@@ -4,6 +4,9 @@
  * Kit assignment (with replacement), resources, random shared-card draws, and kit
  * specials — rules spec §4 / §6. Turn order is a seeded shuffle of seated players
  * (AGENTS golden rule 5).
+ *
+ * Optional `kitAssignment` (L18-02 / tech §8): kits bind to **input** seat index
+ * before shuffle; shuffle only reorders turn order.
  */
 
 import {
@@ -11,8 +14,10 @@ import {
   ATTACK_CARD_IDS,
   CLASSIC_LIFE_LIMIT,
   getKit,
+  isKitId,
   KIT_IDS,
   type GameState,
+  type KitId,
   type Player,
 } from '@card-battle/shared';
 
@@ -30,6 +35,11 @@ export interface CreateInitialStateOptions {
   seed?: string;
   /** Injected in tests. Built from `seed` when omitted. */
   rng?: Rng;
+  /**
+   * Forced kits by input seat index (simulator / tests). Length must match
+   * `seats`. Omitted → random `rng.pick(KIT_IDS)` with replacement.
+   */
+  kitAssignment?: readonly KitId[];
 }
 
 export function createInitialState(options: CreateInitialStateOptions): GameState {
@@ -37,11 +47,15 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     throw new RangeError('createInitialState needs at least two seated players');
   }
 
+  const kitBySeatId = buildKitBySeatId(options.seats, options.kitAssignment);
+
   const seed = options.seed ?? createSeed();
   const rng = options.rng ?? createRng(seed);
   const orderedSeats = rng.shuffle(options.seats);
 
-  const players: Player[] = orderedSeats.map((seat) => makePlayer(seat, rng));
+  const players: Player[] = orderedSeats.map((seat) =>
+    makePlayer(seat, rng, kitBySeatId?.get(seat.id)),
+  );
 
   const first = players[0];
 
@@ -65,8 +79,37 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
   };
 }
 
-function makePlayer(seat: SeatInput, rng: Rng): Player {
-  const kitId = rng.pick(KIT_IDS);
+function buildKitBySeatId(
+  seats: readonly SeatInput[],
+  kitAssignment: readonly KitId[] | undefined,
+): ReadonlyMap<string, KitId> | undefined {
+  if (kitAssignment === undefined) {
+    return undefined;
+  }
+
+  if (kitAssignment.length !== seats.length) {
+    throw new RangeError(
+      `kitAssignment length ${String(kitAssignment.length)} must match seats (${String(seats.length)})`,
+    );
+  }
+
+  const map = new Map<string, KitId>();
+
+  for (const [index, seat] of seats.entries()) {
+    const kitId = kitAssignment[index];
+
+    if (kitId === undefined || !isKitId(kitId)) {
+      throw new RangeError(`kitAssignment[${String(index)}] is not a KitId`);
+    }
+
+    map.set(seat.id, kitId);
+  }
+
+  return map;
+}
+
+function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): Player {
+  const kitId = forcedKitId ?? rng.pick(KIT_IDS);
   const kit = getKit(kitId);
 
   const player: Player = {

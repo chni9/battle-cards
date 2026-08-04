@@ -80,7 +80,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-19 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
+20 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -88,7 +88,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
 | 19 · Designer feedback (rules + UX) | 3 | 3 |
-| 18 · Headless simulation | 5 | 1 |
+| 18 · Headless simulation | 5 | 2 |
 
 ## Milestones
 
@@ -325,7 +325,7 @@ into both call sites (recommended) or exclude both fields everywhere.
 - **Watch point** **Do this before L18-03, not after.** The byte-identical acceptance criterion is unreachable while a wall-clock value lives in authoritative state, and §10.3's equivalence test compares whole `GameState` objects, so the "just exclude the fields" route does not get that test out of trouble either. Injecting the clock must not change a single human-game behaviour: the room still passes the real clock.
 - **Acceptance** Two identical scripted games from the same seed produce deeply equal `GameState` objects including both deadline fields; no change to observed room behaviour; `pnpm verify` green
 
-### L18-02 · Controlled kit assignment — `To do`
+### L18-02 · Controlled kit assignment — `Done`
 
 `createInitialState` gains an optional `kitAssignment?: readonly KitId[]` (one entry per seat,
 in seat order), used by the simulator and tests only.

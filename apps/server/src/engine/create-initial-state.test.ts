@@ -125,3 +125,65 @@ describe('createInitialState (L4-02)', () => {
     }
   });
 });
+
+describe('createInitialState kitAssignment (L18-02)', () => {
+  const seats = [
+    { id: 'a', nickname: 'Alice' },
+    { id: 'b', nickname: 'Bob' },
+    { id: 'c', nickname: 'Carol' },
+    { id: 'd', nickname: 'Dave' },
+  ] as const;
+
+  it('binds kits to input seat ids before shuffle', () => {
+    const assignment = [
+      'assassin',
+      'kamikaze',
+      'scientific',
+      'untouchable',
+    ] as const;
+    const state = createInitialState({
+      seats,
+      seed: 'forced-kits-shuffle',
+      kitAssignment: assignment,
+    });
+
+    for (const [index, seat] of seats.entries()) {
+      const player = state.players.find((entry) => entry.id === seat.id);
+      expect(player?.kitId).toBe(assignment[index]);
+    }
+
+    // Turn order may differ from input order.
+    expect(state.players.map((player) => player.id)).not.toEqual(seats.map((seat) => seat.id));
+  });
+
+  it('omitting kitAssignment matches random draw bit-for-bit for a seed', () => {
+    const first = createInitialState({ seats, seed: 'omit-kits-parity' });
+    const second = createInitialState({ seats, seed: 'omit-kits-parity' });
+
+    const byId = (state: ReturnType<typeof createInitialState>) =>
+      Object.fromEntries(
+        state.players.map((player) => [
+          player.id,
+          {
+            kitId: player.kitId,
+            hand: player.hand.map((card) => card.cardId),
+            specials: player.specialCards.map((card) => card.cardId),
+          },
+        ]),
+      );
+
+    expect(byId(second)).toEqual(byId(first));
+  });
+
+  it('rejects kitAssignment length mismatch', () => {
+    expect(() =>
+      createInitialState({
+        seats: [
+          { id: 'a', nickname: 'A' },
+          { id: 'b', nickname: 'B' },
+        ],
+        kitAssignment: ['assassin'],
+      }),
+    ).toThrow(RangeError);
+  });
+});
