@@ -34,6 +34,7 @@ describe('cancelPendingEffect (technical spec v4 §4.2, L20-12)', () => {
         isUpgraded: false,
         queuedAt: 1,
         damageMultiplier: 1,
+        redirectedBy: null,
       },
     ];
 

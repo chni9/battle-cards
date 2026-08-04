@@ -31,6 +31,7 @@ function baseView(): PlayingStateView {
         },
         activePersistentEffects: [],
         activeShield: null,
+        blockTurnsRemaining: 0,
       },
       {
         id: 'b',
@@ -46,6 +47,7 @@ function baseView(): PlayingStateView {
         },
         activePersistentEffects: [],
         activeShield: null,
+        blockTurnsRemaining: 0,
       },
     ],
     self: {

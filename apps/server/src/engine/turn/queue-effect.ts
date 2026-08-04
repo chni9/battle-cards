@@ -31,6 +31,7 @@ export function queueEffect(input: QueueEffectInput): PendingEffect {
     isUpgraded: input.isUpgraded,
     queuedAt: input.state.turnSequence,
     damageMultiplier: 1,
+    redirectedBy: null,
   };
 
   target.pendingEffects.push(effect);

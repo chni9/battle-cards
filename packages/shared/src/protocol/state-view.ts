@@ -7,6 +7,7 @@
 import type { ActionResolutionOutcome } from './action-outcome';
 import type { CardId, CardInstance } from '../domain/card';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
+import type { PendingEffectRedirectSource } from '../domain/effect';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
@@ -77,6 +78,11 @@ export interface PublicPlayerView {
    * (PROTOCOL_VERSION 20). `null` when no shield.
    */
   activeShield: { isUpgraded: boolean } | null;
+  /**
+   * Consecutive turns remaining (Block) — public for every seat (technical spec v4 §5.1).
+   * 0 when inactive.
+   */
+  blockTurnsRemaining: number;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
   /**
@@ -159,6 +165,7 @@ export interface PendingEffectView {
   isUpgraded: boolean;
   queuedAt: number;
   damageMultiplier: number;
+  redirectedBy: PendingEffectRedirectSource | null;
 }
 
 /**
@@ -304,6 +311,7 @@ export interface ExportPendingAttackView {
   sourcePlayerId: string;
   targetPlayerId: string;
   damageMultiplier: number;
+  redirectedBy: PendingEffectRedirectSource | null;
 }
 
 /** Full private params for one seat at a point in time — finished export only. */

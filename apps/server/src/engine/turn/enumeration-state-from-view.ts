@@ -57,6 +57,7 @@ export function enumerationStateFromView(
         connectionState: { ...CONNECTED },
         isEliminated: publicPlayer.isEliminated,
         eliminationSnapshot: null,
+        blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
       };
     }
 
@@ -82,6 +83,7 @@ export function enumerationStateFromView(
       connectionState: { ...CONNECTED },
       isEliminated: publicPlayer.isEliminated,
       eliminationSnapshot: null,
+      blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
     };
   });
 
@@ -100,6 +102,7 @@ export function enumerationStateFromView(
       isUpgraded: effect.isUpgraded,
       queuedAt: effect.queuedAt,
       damageMultiplier: effect.damageMultiplier,
+      redirectedBy: effect.redirectedBy,
     });
   }
 

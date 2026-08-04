@@ -35,6 +35,7 @@ export function snapshotPlayersForExport(state: GameState): ExportPlayerParamsVi
           sourcePlayerId: effect.sourcePlayerId,
           targetPlayerId: effect.targetPlayerId,
           damageMultiplier: effect.damageMultiplier,
+          redirectedBy: effect.redirectedBy,
         },
       ];
     }),

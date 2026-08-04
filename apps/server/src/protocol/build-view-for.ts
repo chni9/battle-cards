@@ -164,6 +164,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       isUpgraded: effect.isUpgraded,
       queuedAt: effect.queuedAt,
       damageMultiplier: effect.damageMultiplier,
+      redirectedBy: effect.redirectedBy,
     })),
   );
 
@@ -187,6 +188,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
       activeShield:
         player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
+      blockTurnsRemaining: player.blockTurnsRemaining,
     };
 
     if (difficulty !== undefined) {
@@ -314,6 +316,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
         activeShield:
           player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
+        blockTurnsRemaining: player.blockTurnsRemaining,
       };
 
       if (difficulty !== undefined) {

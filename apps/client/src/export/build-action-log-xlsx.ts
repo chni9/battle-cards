@@ -19,12 +19,16 @@ function pendingCell(
     isUpgraded: boolean;
     sourcePlayerId: string;
     damageMultiplier: number;
+    redirectedBy: 'mirror' | 'super-mirror' | null;
   }[],
 ): string {
   return pending
     .map(
-      (effect) =>
-        `${effect.cardId}${effect.isUpgraded ? '*' : ''}×${effect.damageMultiplier}←${effect.sourcePlayerId}`,
+      (effect) => {
+        const redirect =
+          effect.redirectedBy === null ? '' : `→${effect.redirectedBy}`;
+        return `${effect.cardId}${effect.isUpgraded ? '*' : ''}×${effect.damageMultiplier}←${effect.sourcePlayerId}${redirect}`;
+      },
     )
     .join('; ');
 }

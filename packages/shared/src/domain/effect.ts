@@ -16,6 +16,11 @@ export const LIFE_LOSS_REASONS = ['tax', 'card-buy', 'suicide', 'imposition'] as
 
 export type LifeLossReason = (typeof LIFE_LOSS_REASONS)[number];
 
+/** How a pending attack arrived at its current target — technical spec v4 §4.7. */
+export const PENDING_EFFECT_REDIRECT_SOURCES = ['mirror', 'super-mirror'] as const;
+
+export type PendingEffectRedirectSource = (typeof PENDING_EFFECT_REDIRECT_SOURCES)[number];
+
 /**
  * An effect queued against a player, resolved on that player's turn *after* they have
  * played their own action (rules spec §6). Held on the target's `pendingEffects`.
@@ -39,6 +44,12 @@ export interface PendingEffect {
    * each redirect and stacks (Lot 3 ruling).
    */
   damageMultiplier: number;
+  /**
+   * Provenance when an attack was redirected — `null` for a direct queue.
+   * Super-mirror redirects are ineligible for Mirror; mirror redirects may be
+   * re-mirrored (technical spec v4 §4.7).
+   */
+  redirectedBy: PendingEffectRedirectSource | null;
 }
 
 /**

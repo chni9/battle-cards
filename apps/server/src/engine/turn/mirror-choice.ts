@@ -36,6 +36,21 @@ export function listEligibleMirrorTargets(
         return false;
       }
 
+      // Super-mirror redirects are ineligible for Mirror (regular or upgraded).
+      if (effect.redirectedBy === 'super-mirror') {
+        return false;
+      }
+
+      // MEGA ATTACK redirection — technical spec v4 §4.7.
+      if (effect.cardId === 'mega-attack') {
+        if (effect.isUpgraded) {
+          return false;
+        }
+        if (!isUpgradedMirror) {
+          return false;
+        }
+      }
+
       return true;
     })
     .sort((left, right) => left.queuedAt - right.queuedAt);
@@ -72,6 +87,7 @@ export function redirectPendingAttack(
 
   const previousTargetPlayerId = effect.targetPlayerId;
   effect.targetPlayerId = newTargetPlayerId;
+  effect.redirectedBy = 'mirror';
 
   if (doubleDamage) {
     effect.damageMultiplier *= 2;

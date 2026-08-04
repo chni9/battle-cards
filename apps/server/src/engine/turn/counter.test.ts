@@ -121,6 +121,7 @@ describe('Spy/Thief counter (L3-06)', () => {
         isUpgraded: false,
         queuedAt: 1,
         damageMultiplier: 1,
+        redirectedBy: null,
       },
     ];
 

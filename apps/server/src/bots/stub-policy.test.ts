@@ -30,6 +30,7 @@ describe('stub policy (L15-04)', () => {
       queuedAt: 1,
       isUpgraded: false,
       damageMultiplier: 1,
+      redirectedBy: null,
     };
     bot.pendingEffects.push(effect);
     state.mirrorChoice = {

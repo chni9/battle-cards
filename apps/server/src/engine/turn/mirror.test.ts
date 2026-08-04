@@ -143,7 +143,7 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     // That's a different rule — out of scope to reinvent. For this test, just assert redirect moved.
     expect(carol.pendingEffects.some((e) => e.id === aAttack.id)).toBe(false);
     expect(bob.pendingEffects.some((e) => e.id === aAttack.id)).toBe(true);
-    expect(bob.pendingEffects.find((e) => e.id === aAttack.id)?.targetPlayerId).toBe('b');
+    expect(bob.pendingEffects.find((e) => e.id === aAttack.id)?.redirectedBy).toBe('mirror');
   });
 
   it('upgraded Mirror stacks damageMultiplier', () => {

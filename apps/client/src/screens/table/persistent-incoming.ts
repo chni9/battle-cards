@@ -38,6 +38,7 @@ export function buildPersistentIncomingChips(
           isUpgraded: effect.isUpgraded,
           queuedAt: SYNTHETIC_QUEUED_AT,
           damageMultiplier: 1,
+          redirectedBy: null,
         });
       }
 
@@ -50,6 +51,7 @@ export function buildPersistentIncomingChips(
           isUpgraded: effect.isUpgraded,
           queuedAt: SYNTHETIC_QUEUED_AT,
           damageMultiplier: 1,
+          redirectedBy: null,
         });
       }
     }
@@ -90,6 +92,7 @@ export function buildPersistentOthersChips(
         isUpgraded: effect.isUpgraded,
         queuedAt: SYNTHETIC_QUEUED_AT,
         damageMultiplier: 1,
+        redirectedBy: null,
       });
     }
   }

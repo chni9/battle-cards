@@ -43,6 +43,7 @@ describe('Cloning (kit + resources only)', () => {
         isUpgraded: false,
         queuedAt: 0,
         damageMultiplier: 1,
+        redirectedBy: null,
       },
     ];
     b.kitId = 'scientific';
@@ -65,6 +66,7 @@ describe('Cloning (kit + resources only)', () => {
         isUpgraded: false,
         queuedAt: 0,
         damageMultiplier: 1,
+        redirectedBy: null,
       },
     ];
     state.visibility = [
