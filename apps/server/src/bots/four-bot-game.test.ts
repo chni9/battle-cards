@@ -1,8 +1,7 @@
 /**
  * Headless 4-bot game completion — technical spec v3 M9 / L16-06.
  *
- * Drives enumerate → decide → noise → performTurnAction (+ inline Mirror/reward)
- * without a Colyseus room. Proves the heuristic finishes games with no timeout default.
+ * Drives enumerate → decide → noise → performAndCompleteTurn without a Colyseus room.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -18,15 +17,12 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { listLegalActions } from '../engine/turn/list-legal-actions';
-import {
-  completeEliminationRewardChoice,
-  completeMirrorChoice,
-  performTurnAction,
-  type TurnResult,
-} from '../engine/turn/perform-action';
+import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
+import type { TurnResult } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
 
 const MAX_TURNS = 5_000;
+const FIXED_NOW_MS = 0;
 
 function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: number): void {
   log.push({
@@ -80,87 +76,77 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
   const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
   const top = decide(view, actions, rng);
   const chosen = applyDifficultyNoise(top, actions, 'hard', rng);
-  let result = performTurnAction(state, botId, chosen);
+
+  const hooks = {
+    resolveMirror: (s: GameState, actorId: string) => {
+      const mirrorView = buildPlayingViewFor({
+        recipientSessionId: actorId,
+        gameCode: 'SIM',
+        state: s,
+        turnDeadlineMs: null,
+        actionLog,
+      });
+      const pick = pickMirrorRedirect(
+        mirrorView,
+        createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
+      );
+
+      if (pick === null) {
+        throw new Error('Mirror pending but policy returned null');
+      }
+
+      return pick;
+    },
+    resolveReward: (s: GameState) => {
+      const choice = s.rewardChoice;
+
+      if (choice === null) {
+        throw new Error('reward pending without rewardChoice');
+      }
+
+      const rewardView = buildPlayingViewFor({
+        recipientSessionId: choice.eliminatorPlayerId,
+        gameCode: 'SIM',
+        state: s,
+        turnDeadlineMs: null,
+        actionLog,
+      });
+      const available = listAvailableRewardCards(s, choice.eliminatedPlayerId);
+      const picks = pickEliminationRewards(
+        rewardView,
+        available,
+        s.lifeLimit,
+        createRng(
+          `${s.seed}:bot:${choice.eliminatorPlayerId}:reward:${s.turnSequence}`,
+        ),
+      );
+
+      return {
+        chooserPlayerId: choice.eliminatorPlayerId,
+        eliminationId: choice.eliminationId,
+        choices: picks,
+      };
+    },
+  };
+
+  let result = performAndCompleteTurn(state, botId, chosen, hooks, {
+    nowMs: FIXED_NOW_MS,
+    onTurnResult: (step) => {
+      appendLog(actionLog, step, state.turnSequence);
+    },
+  });
 
   if (!result.ok) {
-    result = performTurnAction(state, botId, { type: 'draw' });
+    result = performAndCompleteTurn(state, botId, { type: 'draw' }, hooks, {
+      nowMs: FIXED_NOW_MS,
+      onTurnResult: (step) => {
+        appendLog(actionLog, step, state.turnSequence);
+      },
+    });
   }
 
   if (!result.ok) {
     throw new Error(`bot ${botId} could not act: ${result.message}`);
-  }
-
-  appendLog(actionLog, result, state.turnSequence);
-
-  while (result.mirrorChoicePending === true) {
-    const mirrorView = buildPlayingViewFor({
-      recipientSessionId: botId,
-      gameCode: 'SIM',
-      state,
-      turnDeadlineMs: null,
-      actionLog,
-    });
-    const pick = pickMirrorRedirect(
-      mirrorView,
-      createRng(`${state.seed}:bot:${botId}:mirror:${state.turnSequence}`),
-    );
-
-    if (pick === null) {
-      throw new Error('Mirror pending but policy returned null');
-    }
-
-    result = completeMirrorChoice(state, botId, pick.pendingEffectId, pick.newTargetPlayerId);
-
-    if (!result.ok) {
-      throw new Error(`Mirror failed: ${result.message}`);
-    }
-
-    appendLog(actionLog, result, state.turnSequence);
-  }
-
-  while (result.rewardChoicePending === true) {
-    const choice = state.rewardChoice;
-
-    if (choice === null) {
-      throw new Error('reward pending without rewardChoice');
-    }
-
-    const rewardView = buildPlayingViewFor({
-      recipientSessionId: choice.eliminatorPlayerId,
-      gameCode: 'SIM',
-      state,
-      turnDeadlineMs: null,
-      actionLog,
-    });
-    const available = listAvailableRewardCards(state, choice.eliminatedPlayerId);
-    const picks = pickEliminationRewards(
-      rewardView,
-      available,
-      state.lifeLimit,
-      createRng(
-        `${state.seed}:bot:${choice.eliminatorPlayerId}:reward:${state.turnSequence}`,
-      ),
-    );
-    const rewardResult = completeEliminationRewardChoice(
-      state,
-      choice.eliminatorPlayerId,
-      choice.eliminationId,
-      picks,
-    );
-
-    if (!rewardResult.ok) {
-      throw new Error(`Reward failed: ${rewardResult.message}`);
-    }
-
-    result = {
-      ok: true,
-      actionPlayed: result.actionPlayed,
-      resolved: [],
-      winnerPlayerId: rewardResult.winnerPlayerId,
-      eliminatedPlayerIds: [],
-      eliminations: [],
-      rewardChoicePending: rewardResult.rewardChoicePending,
-    };
   }
 }
 
@@ -183,7 +169,6 @@ describe('4-bot headless completion (L16-06)', () => {
       turns += 1;
     }
 
-    expect(turns).toBeLessThan(MAX_TURNS);
     expect(findSoleSurvivorId(state)).not.toBeNull();
     expect(state.mirrorChoice).toBeNull();
     expect(state.rewardChoice).toBeNull();

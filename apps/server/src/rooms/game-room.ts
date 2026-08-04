@@ -60,6 +60,10 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { BotDriver } from '../bots/bot-driver';
+import {
+  pickEliminationRewardsWithReason,
+  pickMirrorRedirect,
+} from '../bots/heuristic-policy';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
@@ -84,6 +88,7 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
+import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
@@ -1262,8 +1267,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
-   * Bot (or absent auto-draw) action path — same post-routing as human handleAction
-   * without a Client (technical spec v3 §4.2).
+   * Bot (or absent auto-draw) action path — sequences act → Mirror → rewards via the
+   * shared orchestrator (technical spec v3 §4.2 / §10.3), then broadcasts.
    */
   private performBotAction(
     playerId: string,
@@ -1278,9 +1283,77 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.setPendingBotReason(reason);
     const before = snapshotPlayersForExport(state);
-    const result = performTurnAction(state, playerId, action);
+    let historyRecorded = false;
 
-    if (!result.ok) {
+    const hooks = {
+      resolveMirror: (s: GameState, actorId: string) => {
+        const view = this.buildBotPlayingView(actorId);
+
+        if (view === null) {
+          throw new Error('no view for Mirror');
+        }
+
+        const pick = pickMirrorRedirect(
+          view,
+          createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
+        );
+
+        if (pick === null) {
+          throw new Error('Mirror pick failed');
+        }
+
+        this.setPendingBotReason(pick.reason);
+        return pick;
+      },
+      resolveReward: (s: GameState) => {
+        const choice = s.rewardChoice;
+
+        if (choice === null) {
+          throw new Error('reward pending without rewardChoice');
+        }
+
+        const view = this.buildBotPlayingView(choice.eliminatorPlayerId);
+
+        if (view === null) {
+          throw new Error('no view for reward');
+        }
+
+        const available = listAvailableRewardCards(s, choice.eliminatedPlayerId);
+        const picks = pickEliminationRewardsWithReason(
+          view,
+          available,
+          s.lifeLimit,
+          createRng(
+            `${s.seed}:bot:${choice.eliminatorPlayerId}:reward:${s.turnSequence}`,
+          ),
+        );
+        this.setPendingBotReason(picks.reason);
+        return {
+          chooserPlayerId: choice.eliminatorPlayerId,
+          eliminationId: choice.eliminationId,
+          choices: picks.choices,
+        };
+      },
+    };
+
+    let result: TurnResult | { ok: false; message: string };
+
+    try {
+      result = performAndCompleteTurn(state, playerId, action, hooks, {
+        nowMs: Date.now(),
+        onTurnResult: (step) => {
+          if (!historyRecorded) {
+            this.recordTurnHistory(before, step);
+            historyRecorded = true;
+          }
+
+          this.applyTurnResult(step);
+        },
+        onRewardResult: (reward) => {
+          this.appendRewardsClaimed(reward.rewardsClaimed);
+        },
+      });
+    } catch {
       this.pendingBotReason = null;
       if (action.type !== 'draw') {
         this.performAutoDraw(playerId, { code: 'policy-fallback' });
@@ -1289,18 +1362,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.recordTurnHistory(before, result);
-    this.applyTurnResult(result);
+    if (!result.ok) {
+      this.pendingBotReason = null;
+      if (action.type !== 'draw') {
+        this.performAutoDraw(playerId, { code: 'policy-fallback' });
+      }
 
-    if (result.mirrorChoicePending === true) {
-      this.routeMirrorChoice(state);
-      this.sendStateToEveryone();
-      return;
-    }
-
-    if (result.rewardChoicePending === true) {
-      this.beginRewardTimer(state);
-      this.sendStateToEveryone();
       return;
     }
 
@@ -1313,30 +1380,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.broadcastTurnStarted();
   }
 
-  /** Bot or human Mirror prompt — bots never arm MIRROR_CHOICE_REQUIRED (v3 §4.6). */
-  private routeMirrorChoice(state: GameState): void {
-    const choice = state.mirrorChoice;
+  private buildBotPlayingView(botId: string): ReturnType<typeof buildPlayingViewFor> | null {
+    const state = this.gameState;
 
-    if (choice === null) {
-      return;
+    if (state === null) {
+      return null;
     }
 
-    const seat = this.seats.find((entry) => entry.sessionId === choice.playerId);
-
-    if (seat !== undefined && isBotSeat(seat)) {
-      this.botDriver.handleMirrorChoice(choice.playerId);
-      return;
-    }
-
-    const client = this.clients.find((entry) => entry.sessionId === choice.playerId);
-
-    if (client === undefined) {
-      return;
-    }
-
-    this.beginMirrorTimer(client, choice.deadlineMs, choice.eligibleEffectIds);
+    return buildPlayingViewFor({
+      recipientSessionId: botId,
+      gameCode: this.roomId,
+      state,
+      turnDeadlineMs: this.turnDeadlineMs,
+      actionLog: this.actionLog,
+      botDifficulties: this.botDifficulties(),
+    });
   }
 
+  /** Inline Mirror completion for BotDriver (reward-after-human still uses applyBot*). */
   private applyBotMirrorChoice(
     botId: string,
     pendingEffectId: string,

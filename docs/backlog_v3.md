@@ -80,7 +80,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-20 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
+21 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -88,7 +88,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
 | 19 · Designer feedback (rules + UX) | 3 | 3 |
-| 18 · Headless simulation | 5 | 2 |
+| 18 · Headless simulation | 5 | 3 |
 
 ## Milestones
 
@@ -334,7 +334,7 @@ in seat order), used by the simulator and tests only.
 - **Watch point** `makePlayer` picks kits with `rng.pick(KIT_IDS)` — **with replacement** — so four Kamikaze in one game is legal. A random batch therefore gives uncontrolled per-matchup sample sizes, which makes per-kit conclusions meaningless. Production paths keep the existing random draw untouched: this is an injection point, not a behaviour change.
 - **Acceptance** A forced assignment produces exactly those kits in seat order; omitting it reproduces today's random draw bit-for-bit for a given seed
 
-### L18-03 · Shared turn-orchestration helper — `To do`
+### L18-03 · Shared turn-orchestration helper — `Done`
 
 Extract the act → resolve → sub-choices → advance sequencing so the room and the simulator call
 one implementation. Add the §10.3 equivalence test: a scripted action sequence produces an
