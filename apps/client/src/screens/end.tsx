@@ -1,14 +1,18 @@
 /**
  * End screen — technical spec v2 §6, L13-01.
- * Winner + public recap + return home. Decorative V1 art only (no player kits).
+ * Winner + public recap + Excel action-log export (Lot 19) + return home.
  */
 
 import { PROTOCOL_VERSION, type FinishedStateView } from '@card-battle/shared';
 import { motion, useReducedMotion } from 'motion/react';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
+import {
+  buildActionLogWorkbook,
+  downloadWorkbookBuffer,
+} from '../export/build-action-log-xlsx';
 
 export interface EndScreenProps {
   view: FinishedStateView;
@@ -23,6 +27,22 @@ export function EndScreen({ view, onLeave }: EndScreenProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const winnerNick = nickOf(view, view.winnerPlayerId);
   const youWon = view.winnerPlayerId === view.you;
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function onExportLog(): Promise<void> {
+    setExportBusy(true);
+    setExportError(null);
+
+    try {
+      const buffer = await buildActionLogWorkbook(view.exportLog);
+      downloadWorkbookBuffer(buffer, `${view.gameCode}-action-log.xlsx`);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Export failed');
+    } finally {
+      setExportBusy(false);
+    }
+  }
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden bg-surface font-sans text-ink">
@@ -111,11 +131,26 @@ export function EndScreen({ view, onLeave }: EndScreenProps): ReactElement {
             )}
           </section>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="purple"
+              disabled={exportBusy}
+              onClick={() => {
+                void onExportLog();
+              }}
+            >
+              {exportBusy ? 'Building Excel…' : 'Download action log (Excel)'}
+            </Button>
             <Button type="button" variant="red" onClick={onLeave}>
               Return home
             </Button>
           </div>
+          {exportError !== null && (
+            <p className="mt-2 text-sm text-ink-muted" role="alert">
+              {exportError}
+            </p>
+          )}
         </section>
 
         <aside

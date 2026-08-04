@@ -20,11 +20,17 @@ import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import {
   BUY_SPECIAL_POINTS_FLOOR,
+  BUY_UPGRADE_POINT_BONUS,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
   MUTUAL_CANCEL_BONUS,
   PRESSURE_COST_DIVISOR,
+  SPY_TOP_THREAT_BONUS,
+  SPY_UNSPIED_BONUS,
+  STRIKE_MIN_DAMAGE,
+  TAX_INVEST_BONUS,
   TAX_LIFE_BUFFER,
+  UPGRADE_ATTACK_BONUS,
 } from './heuristic-weights';
 
 export interface MirrorPolicyPick {
@@ -253,8 +259,16 @@ function scoreAction(
   }
 
   if (action.type === 'buyUpgradePoint' || action.type === 'upgradeCard') {
+    const bonus =
+      action.type === 'buyUpgradePoint'
+        ? BUY_UPGRADE_POINT_BONUS
+        : (() => {
+            const secondary = secondaryInvest(view, action);
+            return secondary > 0 ? UPGRADE_ATTACK_BONUS + secondary : secondary;
+          })();
+
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + secondaryInvest(view, action),
+      score: HEURISTIC_BAND_WEIGHTS.invest + bonus,
       code: 'invest',
     };
   }
@@ -288,6 +302,19 @@ function scoreAction(
       (action.cardId === 'shield' || action.cardId === 'mirror') &&
       ctx.incomingThreat > 0
     ) {
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
+    }
+
+    // Economy / kill tools / intel before filler shop buys.
+    if (action.cardId === 'tax') {
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + 35, code: 'invest' };
+    }
+
+    if (action.cardId === 'spy' && hasUnspiedLivingOpponent(view)) {
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + 55, code: 'invest' };
+    }
+
+    if (action.cardId === 'super-attack') {
       return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
     }
 
@@ -338,11 +365,11 @@ function scorePlayCard(
     return { score: 0, code: 'sustain' };
   }
 
-  // Equal-damage mutual cancel (tech §4.6) — play matching attack back at the source.
+  // Mutual cancel (Lot 19): equal or stronger attack back at the source cancels the weaker.
   if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
     const damage = attackDamageFor(cardId, isUpgraded);
 
-    if (hasEqualIncomingFrom(view, action.targetPlayerId, damage)) {
+    if (hasCancelingIncomingFrom(view, action.targetPlayerId, damage)) {
       return {
         score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS + damage,
         code: 'survive',
@@ -406,6 +433,35 @@ function scorePlayCard(
     }
   }
 
+  // Spy — unlock kit/hand (and upgraded: live tokens) so lethal-now can fire later.
+  if (cardId === 'spy' && action.targetPlayerId !== undefined) {
+    const target = view.players.find((player) => player.id === action.targetPlayerId);
+
+    if (target === undefined || target.isEliminated || target.isYou) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
+    const already = target.spied;
+
+    if (already !== undefined) {
+      // Base Spy already on them: only upgraded Spy still adds live resources.
+      if (isUpgraded && already.lives === undefined) {
+        return {
+          score: HEURISTIC_BAND_WEIGHTS.deny + 25,
+          code: 'deny',
+        };
+      }
+
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
+    const onTop = action.targetPlayerId === ctx.threatOrder[0] ? SPY_TOP_THREAT_BONUS : 0;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.deny + SPY_UNSPIED_BONUS + onTop,
+      code: 'deny',
+    };
+  }
+
   if (cardId === 'thief' && action.targetPlayerId !== undefined) {
     const spend = ctx.observedSpend.get(action.targetPlayerId) ?? 0;
     const topSpender = ctx.threatOrder.find((id) => (ctx.observedSpend.get(id) ?? 0) > 0);
@@ -420,13 +476,25 @@ function scorePlayCard(
     }
   }
 
-  // Pressure — prefer raw damage with a soft cost penalty (not pure damage/cost).
+  // Pressure — only upgraded, high-damage strikes. Chip / base attacks stay below Invest.
+  // Prefer finishing a Spy-known low-life seat when the strike is ready.
   if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
     const damage = attackDamageFor(cardId, isUpgraded);
+
+    if (!isUpgraded || damage < STRIKE_MIN_DAMAGE) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.sustain - 15,
+        code: 'pressure',
+      };
+    }
+
     const cost = Math.max(1, getCard(cardId)?.cost.points ?? 1);
     const topTarget = ctx.threatOrder[0];
     const onTop = action.targetPlayerId === topTarget ? 5 : 0;
     const retaliateBonus = hasAnyIncomingFrom(view, action.targetPlayerId) ? 8 : 0;
+    const knownLives = knownOpponentLives(view, action.targetPlayerId);
+    const knownFinishBonus =
+      knownLives !== null && knownLives <= damage + 2 ? 20 : knownLives !== null ? 8 : 0;
     const shieldPenalty = view.players.find((p) => p.id === action.targetPlayerId)
       ?.activeShield
       ? -2
@@ -438,15 +506,16 @@ function scorePlayCard(
         cost / PRESSURE_COST_DIVISOR +
         onTop +
         retaliateBonus +
+        knownFinishBonus +
         shieldPenalty,
       code: 'pressure',
     };
   }
 
-  // Tax sustain
+  // Tax — primary point engine (Invest), not a last-resort sustain play.
   if (cardId === 'tax') {
     if (view.self.lives > ctx.incomingThreat + TAX_LIFE_BUFFER) {
-      return { score: HEURISTIC_BAND_WEIGHTS.sustain + 5, code: 'sustain' };
+      return { score: HEURISTIC_BAND_WEIGHTS.invest + TAX_INVEST_BONUS, code: 'invest' };
     }
 
     return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
@@ -474,12 +543,17 @@ function scoreMultiAttack(
 ): { score: number; code: BotReasonCode } {
   let damageSum = 0;
   let costSum = 0;
+  let allUpgraded = true;
 
   for (const part of action.attacks) {
     const instance = findOwnCard(view, part.instanceId);
 
     if (instance === undefined || !isAttackCardId(instance.cardId)) {
       return { score: Number.NEGATIVE_INFINITY, code: 'pressure' };
+    }
+
+    if (!instance.isUpgraded) {
+      allUpgraded = false;
     }
 
     damageSum += attackDamageFor(instance.cardId, instance.isUpgraded);
@@ -490,6 +564,10 @@ function scoreMultiAttack(
     if (knownLives !== null && damageSum >= knownLives) {
       return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damageSum, code: 'lethal-now' };
     }
+  }
+
+  if (!allUpgraded || damageSum < STRIKE_MIN_DAMAGE) {
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 15, code: 'pressure' };
   }
 
   const topTarget = ctx.threatOrder[0];
@@ -532,6 +610,13 @@ function ownsCardId(view: PlayingStateView, cardId: CardId): boolean {
   );
 }
 
+function hasUnspiedLivingOpponent(view: PlayingStateView): boolean {
+  return view.players.some(
+    (player) =>
+      player.id !== view.you && !player.isEliminated && player.spied === undefined,
+  );
+}
+
 function effectDamage(cardId: CardId, isUpgraded: boolean, multiplier: number): number {
   if (!isAttackCardId(cardId)) {
     return 0;
@@ -540,8 +625,8 @@ function effectDamage(cardId: CardId, isUpgraded: boolean, multiplier: number): 
   return attackDamageFor(cardId, isUpgraded) * multiplier;
 }
 
-/** Pending equal-damage attack from `sourceId` aimed at us — mutual cancel candidate. */
-function hasEqualIncomingFrom(
+/** Pending attack from `sourceId` we can cancel (equal or weaker than our riposte). */
+function hasCancelingIncomingFrom(
   view: PlayingStateView,
   sourceId: string,
   damage: number,
@@ -555,7 +640,7 @@ function hasEqualIncomingFrom(
       return false;
     }
 
-    return effectDamage(effect.cardId, effect.isUpgraded, effect.damageMultiplier) === damage;
+    return effectDamage(effect.cardId, effect.isUpgraded, effect.damageMultiplier) <= damage;
   });
 }
 

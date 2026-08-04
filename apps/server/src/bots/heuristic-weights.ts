@@ -35,7 +35,30 @@ export const DENY_ABSORBER_MIN_LIVES_LOST = 3;
 export const PRESSURE_COST_DIVISOR = 2;
 
 /**
- * Extra Survive score for equal-damage mutual cancel (tech §4.6) or Spy/Thief counter.
- * Sits above Mirror's +30 so a matching Basic cancel beats Mirror on a Basic hit.
+ * Non-lethal Pressure only when the attack is upgraded and damage ≥ this.
+ * Base chips / unupgraded Super score below Invest — bots build points & upgrades first
+ * (playtest 2026-08-04: early Basic spam instead of economy → upgraded kill).
+ * Upgraded Strong = 4, upgraded Super = 10; base Super = 7 is deferred until upgraded.
+ */
+export const STRIKE_MIN_DAMAGE = 4;
+
+/** Tax play as Invest bonus when life-safe — primary point engine for upgrade buys. */
+export const TAX_INVEST_BONUS = 40;
+
+/** buyUpgradePoint Invest bonus — spend points into upgrade currency. */
+export const BUY_UPGRADE_POINT_BONUS = 45;
+
+/** Extra Invest for upgrading an attack card (on top of upgraded damage secondary). */
+export const UPGRADE_ATTACK_BONUS = 60;
+
+/** Spy on an unspied living seat — Deny-band offset (intel unlocks lethal-now). */
+export const SPY_UNSPIED_BONUS = 80;
+
+/** Prefer Spying the current top threat seat. */
+export const SPY_TOP_THREAT_BONUS = 15;
+
+/**
+ * Extra Survive score for mutual cancel (equal or stronger riposte — Lot 19) or Spy/Thief
+ * counter. Sits above Mirror's +30 so a matching Basic cancel beats Mirror on a Basic hit.
  */
 export const MUTUAL_CANCEL_BONUS = 40;

@@ -80,13 +80,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-16 of 22 V3 tasks done.
+19 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 15 · Seat abstraction and protocol | 6 | 6 |
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
+| 19 · Designer feedback (rules + UX) | 3 | 3 |
 | 18 · Headless simulation | 5 | 0 |
 
 ## Milestones
@@ -277,6 +278,39 @@ Implement the ruling on open decision #V3-2.
 - **Reference** Technical spec v3 §11 #V3-2 · **Depends on** L17-03 · **Complexity** S · **Risk** Low
 - **Watch point** **Blocked until #V3-2 is ruled.** Nothing extra is *required* — a bot's play already appears in the public action log. If a dev-only reasoning panel is ruled in, it must not become a second source of truth for game state and must not ship enabled to a normal player.
 - **Acceptance** The ruled behaviour is implemented, or the task is closed as "no additional visibility" with that ruling recorded in `decisions.md`
+
+## Lot 19 · Designer feedback (rules + UX)
+
+Post-V3 playtest feedback. Priority ahead of remaining Lot 18. Bumps `PROTOCOL_VERSION`
+**21 → 22** once for death reveal + finished export fields. Mutual-attack rule change is
+engine-only but documented in the same lot.
+
+### L19-01 · Mutual attacks: stronger cancels weaker — `Done`
+
+Equal damage still cancels both. Unequal damage cancels the weaker; the stronger stays pending
+and resolves on its target's turn. Update bots Survive scoring for higher-damage ripostes.
+
+- **Reference** Rules §6 · tech §4.6 · decisions 2026-08-04 · **Depends on** nothing · **Complexity** M · **Risk** High
+- **Watch point** Designer ruling supersedes the 2026-07-29/30 "unequal = no interaction" override. Do not leave AGENTS golden rule 1 / tech §4.6 / rules §6 disagreeing with the engine.
+- **Acceptance** Equal cancel unchanged; Basic↔Strong cancels Basic and leaves Strong pending; Strong↔Super cancels Strong; third-party non-reciprocity unchanged; bot tests updated; `pnpm verify` green
+
+### L19-02 · Auto-reveal eliminated players — `Done`
+
+On elimination, freeze kit + hand + specials + tokens into `eliminationSnapshot` before reward
+hold / pool dump. Every view exposes `eliminationReveal` for dead seats (no Spy matrix mutation).
+
+- **Reference** decisions 2026-08-04 · **Depends on** nothing · **Complexity** M · **Risk** Medium
+- **Watch point** Snapshot must precede `dumpCardsToPool` / reward hold so cards remain visible after leftovers enter the pool. Finished views must include the reveal too.
+- **Acceptance** Unspied opponents see dead player's kit, death-hand cards, and token snapshot; PROTOCOL 22; `pnpm verify` green
+
+### L19-03 · End-screen Excel action log — `Done`
+
+Server records before/after player-param snapshots each turn. `FinishedStateView.exportLog`
+carries turn history + full event log. End screen downloads a two-sheet `.xlsx`.
+
+- **Reference** decisions 2026-08-04 · **Depends on** L19-02 (PROTOCOL 22 payload) · **Complexity** L · **Risk** Medium
+- **Watch point** Fog of war lifted only in the finished export — never on playing views. Sheet `Turns` has before+after columns per seat; Sheet `Events` is the public action log.
+- **Acceptance** End screen export button yields a readable `.xlsx` with both sheets; history covers every turn; `pnpm verify` green
 
 ## Lot 18 · Headless simulation
 

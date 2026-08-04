@@ -138,12 +138,14 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 
 ## Mutual attacks — mechanics
 
-The rule itself is `/AGENTS.md` golden rule 1, and technical spec §4.6. Held in one place
-because the rules spec contradicts it, and two copies of a contested rule drift.
+The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
+(designer ruling 2026-08-04 / Lot 19: stronger cancels weaker; equal cancels both).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
+- When damage differs, the weaker pending effect is removed (`outcome: 'cancelled'`); the
+  stronger remains queued and resolves on its target's turn.
 - A Mirror redirection produces a fully pending attack at its new target, so it can create a new
   mutual pair, and can be redirected again with no chain limit (rules spec §3).
 - Three-player case with no reciprocity: A and B both attack C. Nothing cancels — mutual means

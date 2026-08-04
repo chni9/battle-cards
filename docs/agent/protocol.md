@@ -44,6 +44,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Bot seat flag + difficulty | **Public** as `isBot` / `botDifficulty` (PROTOCOL_VERSION 21) |
 | Elimination status | **Public** |
+| Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
@@ -90,8 +91,9 @@ log entries and public `activePersistentEffects` on every seat. L17-05 adds opti
 under PROTOCOL 21, not a new event; explanatory only.
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
-counts per player + eliminations). Kits and final private resources stay off the finished
-view.
+counts per player + eliminations). PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats
+and `exportLog` (turn before/after snapshots + full event log) for the Excel download — fog of
+war lifted only there.
 
 `chooseEliminationReward`: `{ eliminationId, choices: [RewardChoice, RewardChoice] }` where each
 choice is `{ type: 'lives' | 'points' | 'upgradePoint' }` or `{ type: 'card', instanceId }`.

@@ -189,15 +189,12 @@ describe('heuristic decide (L16-04)', () => {
     });
   });
 
-  it('cancels equal-damage mutual attack with Basic before drawing or pressing Super', () => {
+  it('cancels equal-damage mutual attack with Basic before drawing', () => {
     const view = baseView({
       self: baseSelf({
         lives: 10,
         points: 20,
-        hand: [
-          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
-          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
-        ],
+        hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
       }),
       pendingEffects: [
         {
@@ -214,7 +211,6 @@ describe('heuristic decide (L16-04)', () => {
     const actions: TurnAction[] = [
       { type: 'draw' },
       { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
-      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
     ];
     expect(decide(view, actions, createRng('mutual-cancel'))).toEqual({
       type: 'playCard',
@@ -223,7 +219,37 @@ describe('heuristic decide (L16-04)', () => {
     });
   });
 
-  it('soft-defense: prefers Regeneration over Super when a big hit is pending', () => {
+  it('cancels weaker incoming Strong with Super before drawing', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 20,
+        hand: [{ instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'strong-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+    ];
+    expect(decide(view, actions, createRng('stronger-cancel'))).toEqual({
+      type: 'playCard',
+      instanceId: 'super-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('soft-defense: prefers Regeneration over Super when a bigger hit cannot be cancelled', () => {
     const view = baseView({
       self: baseSelf({
         lives: 10,
@@ -238,9 +264,9 @@ describe('heuristic decide (L16-04)', () => {
           id: 'eff-1',
           sourcePlayerId: 'bot-b',
           targetPlayerId: 'bot-a',
-          // Strong (2) — Super cannot mutual-cancel; Regen should still win Survive.
-          cardId: 'strong-attack',
-          isUpgraded: false,
+          // Upgraded Super (10) — base Super (7) cannot cancel; Regen should win Survive.
+          cardId: 'super-attack',
+          isUpgraded: true,
           queuedAt: 1,
           damageMultiplier: 1,
         },
@@ -322,13 +348,13 @@ describe('heuristic decide (L16-04)', () => {
     expect(picks).toEqual([{ type: 'lives' }, { type: 'lives' }]);
   });
 
-  it('prefers Super over Basic on the same target (pressure uses damage − cost/2)', () => {
+  it('prefers upgraded Super over Basic on the same target (committed strike)', () => {
     const view = baseView({
       self: baseSelf({
         points: 20,
         hand: [
           { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
-          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: true },
         ],
       }),
     });
@@ -341,6 +367,69 @@ describe('heuristic decide (L16-04)', () => {
       type: 'playCard',
       instanceId: 'super-1',
       targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('defers base attacks — prefers buyUpgradePoint over chip Basic or base Super', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        upgradePoints: 0,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+      { type: 'buyUpgradePoint' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('invest-first'))).toEqual({
+      type: 'buyUpgradePoint',
+    });
+  });
+
+  it('prefers safe Tax play over base attack (point engine)', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 15,
+        points: 5,
+        hand: [
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('tax-engine'))).toEqual({
+      type: 'playCard',
+      instanceId: 'tax-1',
+    });
+  });
+
+  it('prefers upgrading Super over playing the base copy', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        upgradePoints: 1,
+        hand: [{ instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+      { type: 'upgradeCard', instanceId: 'super-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('upgrade-before-strike'))).toEqual({
+      type: 'upgradeCard',
+      instanceId: 'super-1',
     });
   });
 
@@ -406,6 +495,69 @@ describe('heuristic decide (L16-04)', () => {
     expect(decide(view, actions, createRng('no-dup-tax'))).toEqual({
       type: 'buyCard',
       cardId: 'basic-attack',
+    });
+  });
+
+  it('prefers Spy on an unspied opponent over Tax or buyUpgradePoint', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 15,
+        points: 20,
+        hand: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'buyUpgradePoint' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('spy-intel'))).toEqual({
+      type: 'playCard',
+      instanceId: 'spy-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('does not re-Spy a seat that is already Spied (base)', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 15,
+        points: 20,
+        hand: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'assassin',
+            hand: [],
+            specialCards: [],
+            resourcesSnapshot: {
+              lives: 12,
+              points: 5,
+              upgradePoints: 0,
+              shield: 0,
+              turnSequence: 1,
+            },
+          },
+        }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('spy-skip'))).toEqual({
+      type: 'playCard',
+      instanceId: 'tax-1',
     });
   });
 });

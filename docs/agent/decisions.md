@@ -935,3 +935,49 @@ Tunables only (#V3-5):
 Playtest: bots repeatedly bought Tax while already holding Tax. Engine allows multiple copies
 (rules spec §1); policy now scores `buyCard` −∞ when that `cardId` is already in hand or
 specials. Humans / legality unchanged.
+
+## 2026-08-04 · [P] Mutual attacks — stronger cancels weaker (Lot 19)
+
+Designer feedback restores stronger-prevails. Two pending attacks aimed at each other,
+compared on the retaliator's turn:
+
+- **Equal damage** → both cancel (unchanged).
+- **Unequal damage** → weaker is cancelled; stronger stays pending and resolves on its
+  target's turn.
+
+Supersedes tech §4.6 / AGENTS golden rule 1 / rules §6 "unequal = no interaction" (the
+2026-07-29/30 override). Rules file, tech §4.6, AGENTS, and `engine.md` updated in the same
+change. Bots score higher-damage ripostes that cancel a weaker incoming with
+`MUTUAL_CANCEL_BONUS` as well as equal-damage cancels.
+
+## 2026-08-04 · [P] Eliminated players are auto-revealed (Lot 19)
+
+On elimination, freeze kit + hand + specials + tokens (lives, points, UP, shield,
+`shieldIsUpgraded`) into `Player.eliminationSnapshot` **before** reward hold / pool dump.
+Every recipient's view gets `PublicPlayerView.eliminationReveal` for eliminated seats —
+Spy matrix is not mutated. PROTOCOL_VERSION 22.
+
+## 2026-08-04 · [P] End-screen Excel action log (Lot 19)
+
+Finished games expose `FinishedStateView.exportLog`: turn history with every seat's params
+before and after each turn, plus the full public event log. Client builds a two-sheet `.xlsx`
+download. Fog of war lifted only in this finished export. PROTOCOL_VERSION 22.
+
+## 2026-08-04 · [T] Heuristic invest-first — defer chip attacks
+
+Playtest ask: bots attacked immediately instead of building points → upgrade points →
+upgraded cards → low-risk kills. Policy only (#V3-5):
+
+- Non-lethal Pressure requires `isUpgraded` and `damage ≥ STRIKE_MIN_DAMAGE` (4). Base
+  Basic / Strong / Super score below Invest (`sustain − 15`). Lethal-now and mutual cancel
+  unchanged.
+- Safe Tax play moves to Invest (`TAX_INVEST_BONUS`). `buyUpgradePoint` /
+  `upgradeCard` (attacks) get Invest bonuses. Shop prefers Tax and Super over filler.
+
+## 2026-08-04 · [T] Heuristic Spy-first intel on unspied seats
+
+Bots share the human `PlayingStateView` (decision 2) but were not scoring Spy, so they
+rarely unlocked lethal-now. Policy: Spy on an unspied living seat is Deny
+(`SPY_UNSPIED_BONUS`, prefer top threat). Skip re-Spy unless upgraded Spy can add live
+resources after a base Spy. Shop `buyCard` Spy preferred while any living opponent is
+unspied. Ready Pressure gets a bonus when Spy-known lives are in finish range.

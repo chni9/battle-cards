@@ -86,10 +86,10 @@ function cancelReciprocalCounter(
 }
 
 /**
- * Equal-damage mutual pair: cancel both without applyDamage (tech §4.6).
- * Different damage: no interaction — return false and resolve normally.
+ * Mutual attack pair (tech §4.6 / Lot 19): equal damage cancels both; unequal cancels the
+ * weaker and leaves the stronger pending. Returns true when the incoming effect is cancelled.
  */
-function cancelEqualMutualAttack(
+function resolveMutualAttack(
   state: GameState,
   resolvingPlayer: Player,
   incoming: PendingEffect,
@@ -126,11 +126,19 @@ function cancelEqualMutualAttack(
   const retaliationDamage =
     attackDamageFor(retaliation.cardId, retaliation.isUpgraded) * retaliation.damageMultiplier;
 
-  if (incomingDamage !== retaliationDamage) {
+  if (incomingDamage === retaliationDamage) {
+    // Equal: cancel both.
+    source.pendingEffects.splice(retaliationIndex, 1);
+    return true;
+  }
+
+  if (incomingDamage > retaliationDamage) {
+    // Incoming stronger: drop the weaker retaliation; resolve incoming normally.
+    source.pendingEffects.splice(retaliationIndex, 1);
     return false;
   }
 
-  source.pendingEffects.splice(retaliationIndex, 1);
+  // Retaliation stronger: cancel incoming; stronger stays on source's queue.
   return true;
 }
 
@@ -245,7 +253,7 @@ export function resolvePendingEffects(
     let outcome: ResolveOutcome = 'applied';
 
     if (isAttackCardId(effect.cardId)) {
-      if (cancelEqualMutualAttack(state, player, effect)) {
+      if (resolveMutualAttack(state, player, effect)) {
         resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }

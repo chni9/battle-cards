@@ -141,6 +141,25 @@ function dumpCardsToPool(state: GameState, player: Player): void {
   player.specialCards = [];
 }
 
+/** Freeze kit/cards/tokens before reward hold or pool dump — Lot 19. */
+function captureEliminationSnapshot(player: Player, turnSequence: number): void {
+  if (player.eliminationSnapshot !== null) {
+    return;
+  }
+
+  player.eliminationSnapshot = {
+    kitId: player.kitId,
+    hand: player.hand.map((card) => ({ ...card })),
+    specialCards: player.specialCards.map((card) => ({ ...card })),
+    lives: player.lives,
+    points: player.points,
+    upgradePoints: player.upgradePoints,
+    shield: player.shield,
+    shieldIsUpgraded: player.shieldIsUpgraded,
+    turnSequence,
+  };
+}
+
 /**
  * Eliminate a player who still has lives (absence, inactivity, or Leave forfeit).
  * No eliminator → cards to the pool immediately — technical spec §5.7, L7-02…L7-04.
@@ -154,6 +173,7 @@ export function eliminateWithoutReward(state: GameState, playerId: string): bool
     return false;
   }
 
+  captureEliminationSnapshot(player, state.turnSequence);
   player.isEliminated = true;
   player.lives = 0;
   cleanupEliminatedPlayer(state, player);
@@ -199,6 +219,7 @@ export function processEliminations(state: GameState, rng: Rng): EliminationEven
       continue;
     }
 
+    captureEliminationSnapshot(player, state.turnSequence);
     player.isEliminated = true;
     player.lives = 0;
     cleanupEliminatedPlayer(state, player);

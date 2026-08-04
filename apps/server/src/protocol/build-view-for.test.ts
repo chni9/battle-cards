@@ -254,8 +254,8 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
   });
 });
 
-describe('buildFinishedViewFor (L9-03)', () => {
-  it('includes public recap aggregates without kits or private resources', () => {
+describe('buildFinishedViewFor (L9-03 / L19-02)', () => {
+  it('includes public recap aggregates; dead seats expose eliminationReveal', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -263,6 +263,25 @@ describe('buildFinishedViewFor (L9-03)', () => {
       ],
       seed: 'finished-recap',
     });
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (bob === undefined) {
+      throw new Error('missing bob');
+    }
+
+    bob.isEliminated = true;
+    bob.lives = 0;
+    bob.eliminationSnapshot = {
+      kitId: bob.kitId,
+      hand: [{ instanceId: 'h1', cardId: 'basic-attack', isUpgraded: false }],
+      specialCards: [],
+      lives: 0,
+      points: 3,
+      upgradePoints: 1,
+      shield: 0,
+      shieldIsUpgraded: false,
+      turnSequence: 2,
+    };
 
     const view = buildFinishedViewFor({
       recipientSessionId: 'a',
@@ -313,9 +332,69 @@ describe('buildFinishedViewFor (L9-03)', () => {
       { playerId: 'b', eliminatorPlayerId: 'a', reason: 'combat' },
     ]);
 
-    const serialised = JSON.stringify(view);
-    expect(serialised).not.toContain('finished-recap');
-    expect(serialised).not.toMatch(/"kitId"/);
-    expect(view.players[0]).not.toHaveProperty('lives');
+    const alice = view.players.find((player) => player.id === 'a');
+    const bobView = view.players.find((player) => player.id === 'b');
+    expect(alice).not.toHaveProperty('lives');
+    expect(alice?.eliminationReveal).toBeUndefined();
+    expect(bobView?.eliminationReveal).toMatchObject({
+      kitId: bob.kitId,
+      points: 3,
+      upgradePoints: 1,
+      hand: [{ instanceId: 'h1', cardId: 'basic-attack', isUpgraded: false }],
+    });
+    expect(view.exportLog.events).toHaveLength(3);
+    expect(view.exportLog.turns).toEqual([]);
+  });
+});
+
+describe('buildPlayingViewFor (L19-02) — elimination reveal', () => {
+  it('exposes eliminationReveal to unspied recipients without Spy relations', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'elim-reveal-view',
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (bob === undefined) {
+      throw new Error('missing bob');
+    }
+
+    bob.isEliminated = true;
+    bob.lives = 0;
+    bob.eliminationSnapshot = {
+      kitId: bob.kitId,
+      hand: [{ instanceId: 'x1', cardId: 'strong-attack', isUpgraded: false }],
+      specialCards: [{ instanceId: 's1', cardId: 'suicide', isUpgraded: false }],
+      lives: 0,
+      points: 12,
+      upgradePoints: 0,
+      shield: 2,
+      shieldIsUpgraded: true,
+      turnSequence: 5,
+    };
+    bob.hand = [];
+    bob.specialCards = [];
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    const bobView = view.players.find((player) => player.id === 'b');
+    expect(bobView?.spied).toBeUndefined();
+    expect(bobView?.eliminationReveal).toMatchObject({
+      kitId: bob.kitId,
+      points: 12,
+      shield: 2,
+      shieldIsUpgraded: true,
+      hand: [{ instanceId: 'x1', cardId: 'strong-attack', isUpgraded: false }],
+      specialCards: [{ instanceId: 's1', cardId: 'suicide', isUpgraded: false }],
+    });
   });
 });

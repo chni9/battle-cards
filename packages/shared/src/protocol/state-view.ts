@@ -78,6 +78,11 @@ export interface PublicPlayerView {
   activeShield: { isUpgraded: boolean } | null;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
+  /**
+   * Death-time freeze of kit / cards / tokens — present when `isEliminated`
+   * (PROTOCOL_VERSION 22 / Lot 19). Visible to every recipient.
+   */
+  eliminationReveal?: EliminationRevealView;
 }
 
 /**
@@ -105,6 +110,22 @@ export interface SpiedPlayerView {
     shield: number;
     turnSequence: number;
   };
+}
+
+/**
+ * Public death reveal — Lot 19 / PROTOCOL_VERSION 22.
+ * Frozen at elimination before reward hold / pool dump; not a Spy relation.
+ */
+export interface EliminationRevealView {
+  kitId: KitId;
+  hand: readonly CardInstance[];
+  specialCards: readonly CardInstance[];
+  lives: number;
+  points: number;
+  upgradePoints: number;
+  shield: number;
+  shieldIsUpgraded: boolean;
+  turnSequence: number;
 }
 
 /** Private resources — only on the recipient's own entry. */
@@ -261,13 +282,60 @@ export interface GameRecapEliminationView {
 }
 
 /**
- * Public game-over summary — no kits, hands, seed, or private resources
- * (visibility §5.1 / 2026-07-30; L9-03).
+ * Public game-over summary — L9-03.
+ * PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats and `exportLog` for Excel.
  */
 export interface GameRecapView {
   turnSequence: number;
   players: readonly GameRecapPlayerView[];
   eliminations: readonly GameRecapEliminationView[];
+}
+
+/** Pending attack summary for export snapshots — Lot 19. */
+export interface ExportPendingAttackView {
+  cardId: CardId;
+  isUpgraded: boolean;
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  damageMultiplier: number;
+}
+
+/** Full private params for one seat at a point in time — finished export only. */
+export interface ExportPlayerParamsView {
+  playerId: string;
+  nickname: string;
+  kitId: KitId;
+  lives: number;
+  points: number;
+  upgradePoints: number;
+  shield: number;
+  shieldIsUpgraded: boolean;
+  isEliminated: boolean;
+  hand: readonly CardInstance[];
+  specialCards: readonly CardInstance[];
+  pendingAttacks: readonly ExportPendingAttackView[];
+}
+
+/** One turn row: action + every seat before and after — Lot 19. */
+export interface ExportTurnRowView {
+  turnSequence: number;
+  actorPlayerId: string;
+  action: ActionLogPlayedAction;
+  cardId?: CardId;
+  isUpgraded?: boolean;
+  targetPlayerId?: string;
+  attacks?: readonly {
+    cardId: CardId;
+    isUpgraded: boolean;
+    targetPlayerId: string;
+  }[];
+  before: readonly ExportPlayerParamsView[];
+  after: readonly ExportPlayerParamsView[];
+}
+
+export interface GameExportLogView {
+  turns: readonly ExportTurnRowView[];
+  events: readonly ActionLogEntryView[];
 }
 
 export interface FinishedStateView {
@@ -277,6 +345,8 @@ export interface FinishedStateView {
   winnerPlayerId: string;
   players: readonly PublicPlayerView[];
   recap: GameRecapView;
+  /** Complete before/after turn log + events for Excel download (PROTOCOL 22). */
+  exportLog: GameExportLogView;
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

@@ -10,7 +10,10 @@
 import type {
   ActionLogEntryView,
   BotDifficulty,
+  EliminationRevealView,
+  ExportTurnRowView,
   FinishedStateView,
+  GameExportLogView,
   GameRecapView,
   GameState,
   LobbySeatView,
@@ -36,6 +39,28 @@ function mapPersistentEffects(
     isUpgraded: effect.isUpgraded,
     counter: effect.counter,
   }));
+}
+
+function buildEliminationReveal(
+  player: GameState['players'][number],
+): EliminationRevealView | undefined {
+  const snapshot = player.eliminationSnapshot;
+
+  if (!player.isEliminated || snapshot === null) {
+    return undefined;
+  }
+
+  return {
+    kitId: snapshot.kitId,
+    hand: snapshot.hand.map((card) => ({ ...card })),
+    specialCards: snapshot.specialCards.map((card) => ({ ...card })),
+    lives: snapshot.lives,
+    points: snapshot.points,
+    upgradePoints: snapshot.upgradePoints,
+    shield: snapshot.shield,
+    shieldIsUpgraded: snapshot.shieldIsUpgraded,
+    turnSequence: snapshot.turnSequence,
+  };
 }
 
 export interface LobbyViewInput {
@@ -139,6 +164,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
 
   const players: PublicPlayerView[] = state.players.map((player) => {
     const spied = buildSpiedView(state, recipientSessionId, player);
+    const eliminationReveal = buildEliminationReveal(player);
     const difficulty = botDifficulties?.get(player.id);
     const isBot = difficulty !== undefined;
     const view: PublicPlayerView = {
@@ -164,6 +190,10 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
 
     if (spied !== undefined) {
       view.spied = spied;
+    }
+
+    if (eliminationReveal !== undefined) {
+      view.eliminationReveal = eliminationReveal;
     }
 
     return view;
@@ -204,6 +234,8 @@ export interface FinishedViewInput {
   actionLog: readonly ActionLogEntryView[];
   eliminations: readonly FinishedGameEliminationRecord[];
   botDifficulties?: ReadonlyMap<string, BotDifficulty>;
+  /** Before/after turn snapshots for Excel — Lot 19. */
+  turnHistory?: readonly ExportTurnRowView[];
 }
 
 export function buildGameRecapView(
@@ -241,11 +273,17 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     actionLog,
     eliminations,
     botDifficulties,
+    turnHistory = [],
   } = input;
 
   if (!state.players.some((player) => player.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
+
+  const exportLog: GameExportLogView = {
+    turns: [...turnHistory],
+    events: [...actionLog],
+  };
 
   return {
     phase: 'finished',
@@ -254,6 +292,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     winnerPlayerId,
     players: state.players.map((player) => {
       const difficulty = botDifficulties?.get(player.id);
+      const eliminationReveal = buildEliminationReveal(player);
       const view: PublicPlayerView = {
         id: player.id,
         nickname: player.nickname,
@@ -275,8 +314,13 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         view.botDifficulty = difficulty;
       }
 
+      if (eliminationReveal !== undefined) {
+        view.eliminationReveal = eliminationReveal;
+      }
+
       return view;
     }),
     recap: buildGameRecapView(state, actionLog, eliminations),
+    exportLog,
   };
 }

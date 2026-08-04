@@ -96,6 +96,7 @@ function makePlayer(seat: SeatInput, rng: Rng): Player {
       consecutiveTimeouts: 0,
     },
     isEliminated: false,
+    eliminationSnapshot: null,
   };
 
   for (let index = 0; index < kit.startingCardCounts.action; index += 1) {

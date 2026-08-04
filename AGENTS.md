@@ -72,12 +72,11 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 
 ## 5. Golden rules
 
-1. **The rules spec is wrong about mutual attacks — do not follow it.** §6 (line 243) and the
-   §2 note (line 55) still say the stronger attack prevails. That clause is **overruled**.
-   Actual rule: two attacks targeting each other, both still pending — *equal damage cancels
-   both*, on the retaliating player's turn; *different damage means no interaction at all*,
-   each resolves on its own target's turn. Technical spec §4.6 is correct. Fixing the rules
-   spec file is a human-owned task: **do not edit it.**
+1. **Mutual attacks — stronger cancels weaker.** Two attacks targeting each other, both still
+   pending, compared on the retaliating player's turn: *equal damage cancels both*; *unequal
+   damage cancels the weaker*, and the stronger stays pending until its target's turn. Designer
+   ruling 2026-08-04 (Lot 19) restores stronger-prevails and supersedes the earlier tech §4.6
+   "unequal = no interaction" override. See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
    player's card counters. `applyLifeLoss` is for Tax, Suicide, Imposition and every other

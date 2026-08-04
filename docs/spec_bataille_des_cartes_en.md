@@ -240,7 +240,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 
 ### Mutual Attacks
 
-When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated: if both attacks deal exactly the same damage, they both cancel out. If the damage differs, there is no interaction at all — each attack resolves normally on its own target's turn.
+When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated: if both attacks deal exactly the same damage, they both cancel out. If the damage differs, the weaker attack is cancelled and the stronger stays pending — it resolves normally on its target's turn.
 
 An attack redirected by Mirror remains a fully pending attack: if the player it is redirected to has their own attack pending against the one who redirected it, both attacks are evaluated as mutual attacks between them, following the same rule. Example: player A attacks player C, and player B also attacks player C with the same card. On C's turn, C uses Mirror to redirect A's attack toward B. B's attack against C and A's attack (redirected by C) toward B face off as mutual attacks between B and C, and cancel out since they deal the same damage.
 

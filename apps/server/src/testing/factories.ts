@@ -34,6 +34,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
       consecutiveTimeouts: 0,
     },
     isEliminated: false,
+    eliminationSnapshot: null,
     ...overrides,
   };
 }

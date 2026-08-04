@@ -1,5 +1,5 @@
 /**
- * Mutual attacks — technical spec §4.6, backlog L2-05.
+ * Mutual attacks — technical spec §4.6 / Lot 19 (stronger cancels weaker).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ import { createInitialState } from '../create-initial-state';
 import { performTurnAction } from './perform-action';
 import { queueEffect } from './queue-effect';
 
-describe('mutual attacks (technical spec §4.6, L2-05)', () => {
+describe('mutual attacks (technical spec §4.6, L19-01)', () => {
   function twoPlayers(seed: string) {
     return createInitialState({
       seats: [
@@ -66,15 +66,60 @@ describe('mutual attacks (technical spec §4.6, L2-05)', () => {
     expect(alice.pendingEffects).toHaveLength(0);
   });
 
-  it('does not interact when damage differs — each resolves on its own turn', () => {
-    const state = twoPlayers('mutual-unequal');
+  it('retaliation stronger: cancels weaker incoming; stronger resolves on target turn', () => {
+    const state = twoPlayers('mutual-retaliation-stronger');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
 
     alice.lives = 20;
     bob.lives = 20;
 
-    // A → B super (7), B → A basic (1).
+    // A → B basic (1), B → A strong (2). On B's turn Basic is cancelled; Strong stays.
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const onBob = performTurnAction(state, bob.id, { type: 'draw' });
+
+    expect(onBob.ok).toBe(true);
+    if (!onBob.ok) {
+      return;
+    }
+    expect(onBob.resolved.some((r) => r.outcome === 'cancelled')).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects).toHaveLength(1);
+    expect(alice.pendingEffects[0]?.cardId).toBe('strong-attack');
+    expect(alice.lives).toBe(20);
+
+    state.currentTurnPlayerId = alice.id;
+    const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
+
+    expect(onAlice.ok).toBe(true);
+    expect(alice.lives).toBe(18);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('incoming stronger: cancels weaker retaliation; incoming applies this turn', () => {
+    const state = twoPlayers('mutual-incoming-stronger');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+
+    // A → B super (7), B → A basic (1). On B's turn Basic is dropped; Super applies to Bob.
     queueEffect({
       state,
       sourcePlayerId: alice.id,
@@ -95,18 +140,11 @@ describe('mutual attacks (technical spec §4.6, L2-05)', () => {
 
     expect(onBob.ok).toBe(true);
     expect(bob.lives).toBe(13);
-    expect(alice.pendingEffects).toHaveLength(1);
-    expect(alice.lives).toBe(20);
-
-    state.currentTurnPlayerId = alice.id;
-    const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
-
-    expect(onAlice.ok).toBe(true);
-    expect(alice.lives).toBe(19);
     expect(alice.pendingEffects).toHaveLength(0);
+    expect(alice.lives).toBe(20);
   });
 
-  it('strong vs super via playCard: unequal, no cancel; each resolves on target turn', () => {
+  it('strong vs super via playCard: Strong cancelled; Super resolves on Alice turn', () => {
     const state = twoPlayers('mutual-strong-super');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -141,10 +179,11 @@ describe('mutual attacks (technical spec §4.6, L2-05)', () => {
     if (!bobPlay.ok) {
       return;
     }
-    // Strong (2) vs Super (7): no mutual cancel — Strong applies on Bob's turn.
-    expect(bobPlay.resolved.some((r) => r.outcome === 'cancelled')).toBe(false);
-    expect(bob.lives).toBe(18);
+    // Strong (2) vs Super (7): Strong cancelled; Bob takes no damage; Super stays for Alice.
+    expect(bobPlay.resolved.some((r) => r.outcome === 'cancelled')).toBe(true);
+    expect(bob.lives).toBe(20);
     expect(alice.pendingEffects.some((e) => e.cardId === 'super-attack')).toBe(true);
+    expect(bob.pendingEffects.some((e) => e.cardId === 'strong-attack')).toBe(false);
     expect(alice.lives).toBe(20);
 
     state.currentTurnPlayerId = alice.id;

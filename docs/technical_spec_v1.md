@@ -174,9 +174,11 @@ traits: {
 Two attacks directed at each other between two players, both still pending:
 
 - **Equal damage** → both are cancelled, on the turn of the player who retaliated. Neither player is affected.
-- **Different damage** → no interaction at all. Each attack resolves normally, on its own target's turn.
+- **Unequal damage** → the weaker attack is cancelled; the stronger stays pending and resolves on its target's turn.
 
-This rule replaces the "the stronger one prevails" clause from spec §6, which is removed (Appendix A).
+Designer ruling 2026-08-04 (Lot 19) restores stronger-cancels-weaker. It supersedes the earlier
+session that had removed "the stronger one prevails" in favour of "unequal = no interaction"
+(Appendix A point 6 / previous §4.6 text).
 
 Consequence: the comparison always triggers on the turn of the player who attacked second, since a retaliation can only be born during that player's own turn, and their resolution phase immediately follows.
 

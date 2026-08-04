@@ -70,6 +70,16 @@ describe('Elimination rewards (Lot 6)', () => {
     expect(state.rewardChoice).not.toBeNull();
     expect(b.hand).toHaveLength(2);
     expect(b.specialCards).toHaveLength(1);
+    expect(b.eliminationSnapshot).not.toBeNull();
+    expect(b.eliminationSnapshot?.kitId).toBe(b.kitId);
+    expect(b.eliminationSnapshot?.points).toBe(b.points);
+    expect(b.eliminationSnapshot?.hand.map((card) => card.instanceId).toSorted()).toEqual([
+      'atk-1',
+      'spy-1',
+    ]);
+    expect(b.eliminationSnapshot?.specialCards.map((card) => card.instanceId)).toEqual([
+      'su-1',
+    ]);
 
     const eliminationId = state.rewardChoice?.eliminationId;
 

@@ -86,4 +86,25 @@ export interface Player {
    * elimination is processed, and upgraded Suicide spares its own user.
    */
   isEliminated: boolean;
+  /**
+   * Frozen kit / cards / tokens at the moment of elimination (Lot 19). Present once
+   * eliminated; used for the public `eliminationReveal` view. Not Spy relations.
+   */
+  eliminationSnapshot: EliminationSnapshot | null;
+}
+
+/**
+ * Death-time freeze of private state — Lot 19 designer feedback.
+ * Captured before reward hold / pool dump so cards stay visible after leftovers leave.
+ */
+export interface EliminationSnapshot {
+  kitId: KitId;
+  hand: CardInstance[];
+  specialCards: CardInstance[];
+  lives: number;
+  points: number;
+  upgradePoints: number;
+  shield: number;
+  shieldIsUpgraded: boolean;
+  turnSequence: number;
 }

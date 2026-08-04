@@ -56,6 +56,7 @@ export function enumerationStateFromView(
         turnLedger: { ...EMPTY_LEDGER },
         connectionState: { ...CONNECTED },
         isEliminated: publicPlayer.isEliminated,
+        eliminationSnapshot: null,
       };
     }
 
@@ -80,6 +81,7 @@ export function enumerationStateFromView(
       turnLedger: { ...EMPTY_LEDGER },
       connectionState: { ...CONNECTED },
       isEliminated: publicPlayer.isEliminated,
+      eliminationSnapshot: null,
     };
   });
 

@@ -72,8 +72,32 @@ export function OpponentZone({
   onInspectActive,
   onInspectKit,
 }: OpponentZoneProps): ReactElement {
-  const spiedKitId = player.spied?.kitId;
+  // Death reveal (Lot 19) beats Spy for dead seats — same display shape.
+  const reveal = player.eliminationReveal;
   const spied = player.spied;
+  const shown =
+    reveal !== undefined
+      ? {
+          kitId: reveal.kitId,
+          hand: reveal.hand,
+          specialCards: reveal.specialCards,
+          lives: reveal.lives,
+          points: reveal.points,
+          upgradePoints: reveal.upgradePoints,
+          shield: reveal.shield,
+        }
+      : spied !== undefined
+        ? {
+            kitId: spied.kitId,
+            hand: spied.hand,
+            specialCards: spied.specialCards,
+            lives: spied.lives,
+            points: spied.points,
+            upgradePoints: spied.upgradePoints,
+            shield: spied.shield,
+          }
+        : undefined;
+  const shownKitId = shown?.kitId;
 
   return (
     <article
@@ -91,7 +115,7 @@ export function OpponentZone({
         )}
       </div>
 
-      {spied === undefined ? (
+      {shown === undefined ? (
         <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
           <KitPortrait
             kitId={null}
@@ -108,14 +132,14 @@ export function OpponentZone({
         <div className="mt-1.5 flex flex-col gap-1 border-t border-border-soft pt-1.5">
           <div className="flex items-center gap-1.5">
             <KitPortrait
-              kitId={spied.kitId}
+              kitId={shown.kitId}
               nickname={player.nickname}
               isEliminated={player.isEliminated}
               className="w-11 shrink-0"
-              {...(onInspectKit !== undefined && spiedKitId !== undefined
+              {...(onInspectKit !== undefined && shownKitId !== undefined
                 ? {
                     onClick: () => {
-                      onInspectKit(spiedKitId);
+                      onInspectKit(shownKitId);
                     },
                     ariaLabel: `Inspect ${player.nickname}'s kit`,
                   }
@@ -125,16 +149,16 @@ export function OpponentZone({
               player={player}
               {...(onInspectActive !== undefined ? { onInspectActive } : {})}
             />
-            {spied.lives !== undefined ? (
+            {shown.lives !== undefined ? (
               <div className="flex min-w-0 flex-wrap gap-1">
-                <ResourceIcon kind="life" value={spied.lives} flyToken={false} />
-                <ResourceIcon kind="point" value={spied.points ?? 0} flyToken={false} />
+                <ResourceIcon kind="life" value={shown.lives} flyToken={false} />
+                <ResourceIcon kind="point" value={shown.points ?? 0} flyToken={false} />
                 <ResourceIcon
                   kind="upgradePoint"
-                  value={spied.upgradePoints ?? 0}
+                  value={shown.upgradePoints ?? 0}
                   flyToken={false}
                 />
-                <ResourceIcon kind="shield" value={spied.shield ?? 0} flyToken={false} />
+                <ResourceIcon kind="shield" value={shown.shield ?? 0} flyToken={false} />
               </div>
             ) : null}
           </div>
@@ -144,7 +168,7 @@ export function OpponentZone({
               Hand
             </p>
             <div className="mt-0.5 flex flex-wrap gap-0.5">
-              {spied.hand.map((card) => (
+              {shown.hand.map((card) => (
                 <Card
                   key={card.instanceId}
                   instance={card}
@@ -162,13 +186,13 @@ export function OpponentZone({
             </div>
           </div>
 
-          {spied.specialCards.length > 0 && (
+          {shown.specialCards.length > 0 && (
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-wide text-ink-muted">
                 Specials
               </p>
               <div className="mt-0.5 flex flex-wrap gap-0.5">
-                {spied.specialCards.map((card) => (
+                {shown.specialCards.map((card) => (
                   <Card
                     key={card.instanceId}
                     instance={card}

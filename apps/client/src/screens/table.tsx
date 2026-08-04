@@ -320,6 +320,8 @@ function TableScreenInner({
   function onInspectSpyCard(playerId: string, instanceId: string): void {
     const player = opponents.find((p) => p.id === playerId);
     const instance =
+      player?.eliminationReveal?.hand.find((c) => c.instanceId === instanceId) ??
+      player?.eliminationReveal?.specialCards.find((c) => c.instanceId === instanceId) ??
       player?.spied?.hand.find((c) => c.instanceId === instanceId) ??
       player?.spied?.specialCards.find((c) => c.instanceId === instanceId);
     if (instance === undefined) {

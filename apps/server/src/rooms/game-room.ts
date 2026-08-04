@@ -52,6 +52,7 @@ import {
   type SellCardPayload,
   type SetBotDifficultyPayload,
   type UpgradeCardPayload,
+  type ExportTurnRowView,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
@@ -62,6 +63,7 @@ import { BotDriver } from '../bots/bot-driver';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
+import { buildExportTurnRow, snapshotPlayersForExport } from '../export/turn-history';
 import { RECONNECT_GRACE_MS } from '../engine/lifecycle/constants';
 import {
   markAbsent,
@@ -204,6 +206,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private mirrorTimer: ReturnType<typeof setTimeout> | null = null;
   private rewardTimer: ReturnType<typeof setTimeout> | null = null;
   private actionLog: ActionLogEntryView[] = [];
+  /** Before/after player-param history for finished Excel export — Lot 19. */
+  private turnHistory: ExportTurnRowView[] = [];
   /** Colyseus manual reconnection Deferreds — reject on elim / Leave / game over. */
   private reconnectionRejectors = new Map<string, (reason?: Error) => void>();
   private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -700,6 +704,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       resetConnectedTimeouts(actor);
     }
 
+    const before = snapshotPlayersForExport(state);
     const result = performTurnAction(state, client.sessionId, action);
 
     if (!result.ok) {
@@ -707,6 +712,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.recordTurnHistory(before, result);
     this.applyTurnResult(result);
 
     if (result.mirrorChoicePending === true) {
@@ -810,6 +816,36 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.clearRewardTimer();
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
+  }
+
+  private recordTurnHistory(
+    before: ReturnType<typeof snapshotPlayersForExport>,
+    result: TurnResult,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
+    const after = snapshotPlayersForExport(state);
+    const played = result.actionPlayed;
+
+    this.turnHistory.push(
+      buildExportTurnRow({
+        turnSequence: played.turnSequence,
+        actorPlayerId: played.actorPlayerId,
+        action: played.action,
+        ...(played.cardId !== undefined ? { cardId: played.cardId } : {}),
+        ...(played.isUpgraded !== undefined ? { isUpgraded: played.isUpgraded } : {}),
+        ...(played.targetPlayerId !== undefined
+          ? { targetPlayerId: played.targetPlayerId }
+          : {}),
+        ...(played.attacks !== undefined ? { attacks: played.attacks } : {}),
+        before,
+        after,
+      }),
+    );
   }
 
   private applyTurnResult(result: TurnResult): void {
@@ -1241,6 +1277,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.setPendingBotReason(reason);
+    const before = snapshotPlayersForExport(state);
     const result = performTurnAction(state, playerId, action);
 
     if (!result.ok) {
@@ -1252,6 +1289,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.recordTurnHistory(before, result);
     this.applyTurnResult(result);
 
     if (result.mirrorChoicePending === true) {
@@ -1769,6 +1807,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           actionLog: this.actionLog,
           eliminations: this.eliminations,
           botDifficulties: this.botDifficulties(),
+          turnHistory: this.turnHistory,
         }),
       );
       return;
