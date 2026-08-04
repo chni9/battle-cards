@@ -1,7 +1,7 @@
 # Coolify Dockerfile deploy — design
 
 Date: 2026-08-04  
-Status: approved — implementation plan in `docs/superpowers/plans/2026-08-04-coolify-dockerfile-deploy.md`
+Status: implemented — see `Dockerfile`, `docker/entrypoint.sh`, and `docs/agent/decisions.md` (2026-08-04 Coolify entry)
 
 ## Goal
 

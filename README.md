@@ -54,6 +54,21 @@ apps/client       React client. Displays state, sends intents, holds no rule log
 packages/shared   Domain types shared by both. Single definition, never duplicated.
 ```
 
+## Production (Coolify)
+
+Single container: SPA + Colyseus on `$PORT`. See `Dockerfile` and
+`docs/superpowers/specs/2026-08-04-coolify-dockerfile-deploy-design.md`.
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `DATABASE_URL` | yes (prod image) | Postgres; entrypoint migrates then starts |
+| `PORT` | no (default 2567) | Listen port — match Coolify `ports_exposes` |
+| `NODE_ENV` | yes in prod | `production` |
+| `STATIC_DIR` | no | SPA root (image default `/app/apps/client/dist`) |
+| `VITE_SERVER_URL` | no | Leave unset for same-origin Coolify deploys |
+
+Coolify: Git Dockerfile build → attach domain + HTTPS → link Postgres `DATABASE_URL` → deploy.
+
 ## Toolchain
 
 | Tool | Version | Note |

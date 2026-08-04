@@ -48,27 +48,25 @@ import {
 import { Client, type Room } from '@colyseus/sdk';
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-const DEFAULT_SERVER_URL = 'http://localhost:2567';
+import { resolveServerUrl } from './resolve-server-url';
+
 const RECONNECT_TOKEN_KEY = 'card-battle:reconnection-token';
 
 /**
- * LAN / phone-hotspot: dial the same host as the page, not `localhost` (which is the
- * phone itself). Override with `VITE_SERVER_URL` when the API is elsewhere.
+ * Colyseus endpoint: `VITE_SERVER_URL` override, localhost:2567 in dev, same-origin
+ * `window.location.origin` behind Coolify (no :2567 — proxy serves WS on the page host).
  */
-function resolveServerUrl(): string {
-  const fromEnv = import.meta.env.VITE_SERVER_URL;
-  if (fromEnv !== undefined && fromEnv.length > 0) {
-    return fromEnv;
-  }
-
-  if (typeof window !== 'undefined') {
-    const { hostname, protocol } = window.location;
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `${protocol}//${hostname}:2567`;
-    }
-  }
-
-  return DEFAULT_SERVER_URL;
+function serverUrl(): string {
+  return resolveServerUrl(
+    import.meta.env.VITE_SERVER_URL,
+    typeof window !== 'undefined'
+      ? {
+          protocol: window.location.protocol,
+          hostname: window.location.hostname,
+          origin: window.location.origin,
+        }
+      : undefined,
+  );
 }
 
 /** Cover grace + absent reclaim window (manual server-side until elim). */
@@ -348,7 +346,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
       clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
-      const client = new Client(resolveServerUrl());
+      const client = new Client(serverUrl());
       const options: RoomJoinOptions = {
         protocolVersion: PROTOCOL_VERSION,
         nickname: nickname.trim(),
@@ -372,7 +370,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
       clearToken();
       setConnection({ ...INITIAL, status: 'connecting' });
 
-      const client = new Client(resolveServerUrl());
+      const client = new Client(serverUrl());
       const options: RoomJoinOptions = {
         protocolVersion: PROTOCOL_VERSION,
         nickname: nickname.trim(),
@@ -431,7 +429,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
       soloLaunchPendingRef.current = true;
       setConnection({ ...INITIAL, status: 'connecting', soloLaunchPending: true });
 
-      const client = new Client(resolveServerUrl());
+      const client = new Client(serverUrl());
       const joinOptions: RoomJoinOptions = {
         protocolVersion: PROTOCOL_VERSION,
         nickname: options.nickname.trim(),
@@ -562,7 +560,7 @@ async function attemptManualReconnect(
     error: null,
   }));
 
-  const client = new Client(resolveServerUrl());
+  const client = new Client(serverUrl());
 
   try {
     const room = await client.reconnect(token);

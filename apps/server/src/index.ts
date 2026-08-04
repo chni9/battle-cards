@@ -8,6 +8,7 @@
 import { GAME_ROOM_NAME, PROTOCOL_VERSION } from '@card-battle/shared';
 import { defineRoom, defineServer } from 'colyseus';
 
+import { mountStaticSpa, resolveStaticDir } from './http/static-spa';
 import { GameRoom } from './rooms/game-room';
 
 const DEFAULT_PORT = 2567;
@@ -15,6 +16,14 @@ const DEFAULT_PORT = 2567;
 const server = defineServer({
   rooms: {
     [GAME_ROOM_NAME]: defineRoom(GameRoom),
+  },
+  express: (app) => {
+    const staticDir = resolveStaticDir();
+    if (staticDir === undefined) {
+      console.warn('STATIC_DIR missing or not found — SPA not served');
+      return;
+    }
+    mountStaticSpa(app, staticDir);
   },
 });
 

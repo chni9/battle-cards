@@ -18,8 +18,11 @@
    unset; log and swallow on write errors. In `NODE_ENV=production`, log at error level.
 4. **`GameState.seed` is server-only.** It is stored in the log for replay/balancing and
    must never appear in a client view.
-5. **Migrations are explicit.** Never auto-migrate on server boot. Run
+5. **Migrations are explicit in local/dev.** Run
    `pnpm --filter @card-battle/server db:migrate` against `DATABASE_URL`.
+   **Production exception:** the Docker entrypoint (`docker/entrypoint.sh`) runs
+   migrations once before `listen`, and exits non-zero if they fail (fail-fast).
+   Do not add migrate-on-boot to the `tsx`/`pnpm dev` path.
 
 ## Schema map
 
@@ -47,6 +50,8 @@ separate player-turn counter.
 # Apply pending *.sql under apps/server/db/migrations (idempotent via schema_migrations)
 DATABASE_URL=postgres://… pnpm --filter @card-battle/server db:migrate
 ```
+
+In production, `docker/entrypoint.sh` runs the same command before starting the server.
 
 ## Extending metrics
 

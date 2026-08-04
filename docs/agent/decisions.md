@@ -1048,3 +1048,17 @@ so a human who queued the killing attack still needs `REWARD_CHOICE_REQUIRED`.
 Hook contract: `resolveReward` may return `null` to leave `rewardChoice` pending; the room
 then calls `beginRewardTimer`. When a winner appears only after bot-resolved rewards,
 `performBotAction` must call `onGameOver` (applyTurnResult never saw that winner).
+
+## 2026-08-04 · [T] Coolify single-container deploy + migrate-on-boot
+
+Hosting is VPS + Coolify (technical spec §3). Locked choices:
+
+- One Dockerfile: Colyseus serves Vite `apps/client/dist` via the `defineServer` `express`
+  hook (`STATIC_DIR`, default `/app/apps/client/dist` in the image). Same HTTPS origin for
+  page and WebSocket; client uses `window.location.origin` off localhost.
+- Server still runs under `tsx` in production (no emit bundle yet) — deferred deliberately;
+  `tsx` moved to `@card-battle/server` `dependencies` so `--prod` images can start.
+- Postgres remains Coolify-managed; `DATABASE_URL` is required for the container to boot
+  because `docker/entrypoint.sh` runs `db:migrate` before listen (fail-fast). This
+  **overrides** the earlier “never auto-migrate on boot” stance for the production
+  entrypoint only; local/dev stays explicit (`docs/agent/db.md`).
