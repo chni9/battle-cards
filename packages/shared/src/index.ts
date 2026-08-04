@@ -10,6 +10,7 @@ export * from './domain/game-state';
 export * from './domain/kit';
 export * from './domain/kit-catalog';
 export * from './domain/player';
+export * from './domain/sub-choice';
 export * from './domain/upgrade-point-economy';
 export * from './protocol/action-outcome';
 export * from './protocol/messages';

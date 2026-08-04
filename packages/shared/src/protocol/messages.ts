@@ -31,16 +31,21 @@ export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const BUY_SPECIAL_CARD = 'buySpecialCard';
-export const CHOOSE_MIRROR_TARGET = 'chooseMirrorTarget';
-export const CHOOSE_ELIMINATION_REWARD = 'chooseEliminationReward';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
 export const ACTION_RESOLVED = 'actionResolved';
 export const PLAYER_ELIMINATED = 'playerEliminated';
 export const GAME_OVER = 'gameOver';
-export const MIRROR_CHOICE_REQUIRED = 'mirrorChoiceRequired';
-export const REWARD_CHOICE_REQUIRED = 'rewardChoiceRequired';
+/**
+ * Generic sub-choice pair (technical spec v4 §4.4, backlog L20-18) — replaces the
+ * former `mirrorChoiceRequired` / `chooseMirrorTarget` and `rewardChoiceRequired` /
+ * `chooseEliminationReward` pairs. `SUB_CHOICE_REQUIRED` carries a `kind`-discriminated
+ * payload (`SubChoiceRequiredPayload`); `RESOLVE_SUB_CHOICE` carries the matching
+ * resolution (`ResolveSubChoicePayload`). PROTOCOL_VERSION 22 → 23.
+ */
+export const SUB_CHOICE_REQUIRED = 'subChoiceRequired';
+export const RESOLVE_SUB_CHOICE = 'resolveSubChoice';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -144,6 +149,21 @@ export interface ChooseMirrorTargetPayload {
   newTargetPlayerId: string;
 }
 
+/** Carried inside the generic `subChoiceRequired` event — `kind: 'mirror'`. */
+export interface MirrorChoiceRequiredPayload {
+  kind: 'mirror';
+  eligibleEffectIds: readonly string[];
+  deadlineMs: number;
+}
+
+/** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
+export type SubChoiceRequiredPayload = MirrorChoiceRequiredPayload | RewardChoiceRequiredPayload;
+
+/** `resolveSubChoice`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
+export type ResolveSubChoicePayload =
+  | ({ kind: 'mirror' } & ChooseMirrorTargetPayload)
+  | ({ kind: 'elimination-reward' } & ChooseEliminationRewardPayload);
+
 export interface AddBotPayload {
   difficulty: BotDifficulty;
 }
@@ -157,11 +177,6 @@ export interface SetBotDifficultyPayload {
   difficulty: BotDifficulty;
 }
 
-export interface MirrorChoiceRequiredPayload {
-  eligibleEffectIds: readonly string[];
-  deadlineMs: number;
-}
-
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
   [ERROR_MESSAGE]: { message: string };
@@ -170,8 +185,7 @@ export interface ServerToClientMessages {
   [ACTION_RESOLVED]: ActionResolvedPayload;
   [PLAYER_ELIMINATED]: PlayerEliminatedPayload;
   [GAME_OVER]: GameOverPayload;
-  [MIRROR_CHOICE_REQUIRED]: MirrorChoiceRequiredPayload;
-  [REWARD_CHOICE_REQUIRED]: RewardChoiceRequiredPayload;
+  [SUB_CHOICE_REQUIRED]: SubChoiceRequiredPayload;
 }
 
 export interface RoomJoinOptions {
@@ -196,6 +210,5 @@ export interface ClientToServerMessages {
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
   [BUY_SPECIAL_CARD]: undefined;
-  [CHOOSE_MIRROR_TARGET]: ChooseMirrorTargetPayload;
-  [CHOOSE_ELIMINATION_REWARD]: ChooseEliminationRewardPayload;
+  [RESOLVE_SUB_CHOICE]: ResolveSubChoicePayload;
 }

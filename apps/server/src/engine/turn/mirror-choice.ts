@@ -12,8 +12,10 @@ import {
 
 import type { Rng } from '../rng';
 import { findPlayer } from './advance-turn';
+import { SUB_CHOICE_MS } from './sub-choice';
 
-export const MIRROR_SUB_CHOICE_MS = 20_000;
+/** Re-exports the single `SUB_CHOICE_MS` — technical spec v4 §4.4 (L20-18). */
+export const MIRROR_SUB_CHOICE_MS = SUB_CHOICE_MS;
 
 export interface MirrorRedirectInfo {
   actorPlayerId: string;

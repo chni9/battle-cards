@@ -73,7 +73,7 @@ export class BotDriver {
     this.timers.add(timer);
   }
 
-  /** Inline Mirror answer — no MIRROR_CHOICE_REQUIRED timer. */
+  /** Inline Mirror answer — no `subChoiceRequired` timer. */
   handleMirrorChoice(botId: string): void {
     const state = this.host.getGameState();
 
@@ -112,7 +112,7 @@ export class BotDriver {
     }
   }
 
-  /** Inline reward answer — no REWARD_CHOICE_REQUIRED timer. */
+  /** Inline reward answer — no `subChoiceRequired` timer. */
   handleRewardChoice(botId: string): void {
     const state = this.host.getGameState();
     const choice = state?.rewardChoice;

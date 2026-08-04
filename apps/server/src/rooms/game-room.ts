@@ -12,20 +12,18 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
-  CHOOSE_ELIMINATION_REWARD,
-  CHOOSE_MIRROR_TARGET,
+  RESOLVE_SUB_CHOICE,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
   isBotDifficulty,
-  MIRROR_CHOICE_REQUIRED,
+  SUB_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
   REMOVE_BOT,
-  REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
   SET_BOT_DIFFICULTY,
@@ -48,9 +46,11 @@ import {
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
   type RemoveBotPayload,
+  type ResolveSubChoicePayload,
   type RewardChoice,
   type SellCardPayload,
   type SetBotDifficultyPayload,
+  type SubChoiceKind,
   type UpgradeCardPayload,
   type ExportTurnRowView,
   type ServerToClientMessages,
@@ -84,7 +84,6 @@ import {
   REWARD_SUB_CHOICE_MS,
   eliminateWithoutReward,
   findSoleSurvivorId,
-  hasPendingEliminationRewards,
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
@@ -98,6 +97,7 @@ import {
   type TurnAction,
   type TurnResult,
 } from '../engine/turn/perform-action';
+import { hasActiveSubChoice } from '../engine/turn/sub-choice';
 import {
   buildFinishedViewFor,
   buildLobbyViewFor,
@@ -211,8 +211,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private actionTakenThisTurn = false;
   private turnDeadlineMs: number | null = null;
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
-  private mirrorTimer: ReturnType<typeof setTimeout> | null = null;
-  private rewardTimer: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * One timer registry keyed by sub-choice kind — technical spec v4 §4.4 (L20-18).
+   * Replaces the former `mirrorTimer` / `rewardTimer` / `pausedMirrorRemainingMs` /
+   * `pausedRewardRemainingMs` field quadruplet. Only `'mirror'` and
+   * `'elimination-reward'` keys are ever populated in Lot 20.
+   */
+  private readonly subChoiceTimers = new Map<SubChoiceKind, ReturnType<typeof setTimeout>>();
+  private readonly pausedSubChoiceRemainingMs = new Map<SubChoiceKind, number>();
   private actionLog: ActionLogEntryView[] = [];
   /** Before/after player-param history for finished Excel export — Lot 19. */
   private turnHistory: ExportTurnRowView[] = [];
@@ -220,8 +226,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private reconnectionRejectors = new Map<string, (reason?: Error) => void>();
   private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private pausedTurnRemainingMs: number | null = null;
-  private pausedMirrorRemainingMs: number | null = null;
-  private pausedRewardRemainingMs: number | null = null;
 
   override async onCreate(): Promise<void> {
     this.roomId = await this.allocateGameCode();
@@ -230,8 +234,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   override async onDispose(): Promise<void> {
     this.clearTurnTimer();
-    this.clearMirrorTimer();
-    this.clearRewardTimer();
+    this.clearAllSubChoiceTimers();
     this.clearAllAbsentTimers();
     this.botDriver.clear();
     this.rejectAllReconnections(new Error('Room disposed'));
@@ -397,12 +400,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.handleAction(client, { type: 'sellUpgradePoint' });
     },
 
-    [CHOOSE_MIRROR_TARGET]: (client: GameClient, payload: unknown): void => {
-      this.handleMirrorChoice(client, payload);
-    },
-
-    [CHOOSE_ELIMINATION_REWARD]: (client: GameClient, payload: unknown): void => {
-      this.handleRewardChoice(client, payload);
+    [RESOLVE_SUB_CHOICE]: (client: GameClient, payload: unknown): void => {
+      this.handleResolveSubChoice(client, payload);
     },
   };
 
@@ -691,13 +690,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    if (this.hasActiveMirrorChoice(state)) {
-      client.send(ERROR_MESSAGE, { message: 'Finish your Mirror choice first.' });
-      return;
-    }
-
-    if (hasPendingEliminationRewards(state)) {
-      client.send(ERROR_MESSAGE, { message: 'Finish elimination rewards first.' });
+    if (hasActiveSubChoice(state)) {
+      client.send(ERROR_MESSAGE, {
+        message:
+          state.mirrorChoice !== null
+            ? 'Finish your Mirror choice first.'
+            : 'Finish elimination rewards first.',
+      });
       return;
     }
 
@@ -751,17 +750,33 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.broadcastTurnStarted();
   }
 
-  private handleMirrorChoice(client: GameClient, payload: unknown): void {
-    const state = this.gameState;
-    const parsed = readChooseMirrorTargetPayload(payload);
+  /**
+   * Single `resolveSubChoice` handler — technical spec v4 §4.4 (L20-18). Dispatches
+   * on `kind` to the Mirror or elimination-reward completion, which are otherwise
+   * unchanged from the former `chooseMirrorTarget` / `chooseEliminationReward`
+   * handlers.
+   */
+  private handleResolveSubChoice(client: GameClient, payload: unknown): void {
+    const parsed = readResolveSubChoicePayload(payload);
 
-    if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+    if (parsed === null) {
+      client.send(ERROR_MESSAGE, { message: 'Invalid resolveSubChoice payload.' });
       return;
     }
 
-    if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid chooseMirrorTarget payload.' });
+    if (parsed.kind === 'mirror') {
+      this.handleMirrorChoice(client, parsed);
+      return;
+    }
+
+    this.handleRewardChoice(client, parsed);
+  }
+
+  private handleMirrorChoice(client: GameClient, parsed: ChooseMirrorTargetPayload): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
       return;
     }
 
@@ -777,7 +792,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearMirrorTimer();
+    this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
 
     if (result.rewardChoicePending === true) {
@@ -795,17 +810,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.broadcastTurnStarted();
   }
 
-  private handleRewardChoice(client: GameClient, payload: unknown): void {
+  private handleRewardChoice(client: GameClient, parsed: ChooseEliminationRewardPayload): void {
     const state = this.gameState;
-    const parsed = readChooseEliminationRewardPayload(payload);
 
     if (state === null || this.winnerPlayerId !== null) {
       client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
-      return;
-    }
-
-    if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid chooseEliminationReward payload.' });
       return;
     }
 
@@ -821,7 +830,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearRewardTimer();
+    this.clearSubChoiceTimer('elimination-reward');
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
@@ -966,8 +975,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     eligibleEffectIds: readonly string[],
     durationMs?: number,
   ): void {
-    this.clearMirrorTimer();
-    this.pausedMirrorRemainingMs = null;
+    this.clearSubChoiceTimer('mirror');
 
     const remainingFromDeadline = Math.max(0, deadlineMs - Date.now());
     const ms =
@@ -981,14 +989,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       state.mirrorChoice = { ...state.mirrorChoice, deadlineMs: effectiveDeadline };
     }
 
-    client.send(MIRROR_CHOICE_REQUIRED, {
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'mirror',
       eligibleEffectIds,
       deadlineMs: effectiveDeadline,
     });
 
-    this.mirrorTimer = setTimeout(() => {
-      this.onMirrorTimeout();
-    }, ms > 0 ? ms : MIRROR_SUB_CHOICE_MS);
+    this.subChoiceTimers.set(
+      'mirror',
+      setTimeout(() => {
+        this.onMirrorTimeout();
+      }, ms > 0 ? ms : MIRROR_SUB_CHOICE_MS),
+    );
   }
 
   private onMirrorTimeout(): void {
@@ -1005,7 +1017,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearMirrorTimer();
+    this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
 
     if (result.rewardChoicePending === true) {
@@ -1024,8 +1036,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private beginRewardTimer(state: GameState, durationMs?: number): void {
-    this.clearRewardTimer();
-    this.pausedRewardRemainingMs = null;
+    this.clearSubChoiceTimer('elimination-reward');
 
     const choice = state.rewardChoice;
 
@@ -1038,7 +1049,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const route = classifyRewardRoute(seat, hasClient);
 
     if (route === 'bot') {
-      // No REWARD_CHOICE_REQUIRED timer for bots — driver answers inline (v3 §4.6).
+      // No subChoiceRequired timer for bots — driver answers inline (v3 §4.6).
       this.botDriver.handleRewardChoice(choice.eliminatorPlayerId);
       return;
     }
@@ -1055,9 +1066,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.sendRewardChoiceRequired(state);
     }
 
-    this.rewardTimer = setTimeout(() => {
-      this.onRewardTimeout();
-    }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS);
+    this.subChoiceTimers.set(
+      'elimination-reward',
+      setTimeout(() => {
+        this.onRewardTimeout();
+      }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS),
+    );
   }
 
   private onRewardTimeout(): void {
@@ -1074,16 +1088,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearRewardTimer();
+    this.clearSubChoiceTimer('elimination-reward');
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
-  }
-
-  private clearRewardTimer(): void {
-    if (this.rewardTimer !== null) {
-      clearTimeout(this.rewardTimer);
-      this.rewardTimer = null;
-    }
   }
 
   private sendRewardChoiceRequired(state: GameState): void {
@@ -1111,7 +1118,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    client.send(REWARD_CHOICE_REQUIRED, {
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'elimination-reward',
       eliminationId: choice.eliminationId,
       eliminatedPlayerId: choice.eliminatedPlayerId,
       availableCards: listAvailableRewardCards(state, choice.eliminatedPlayerId),
@@ -1211,14 +1219,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }, ms);
   }
 
-  private hasActiveMirrorChoice(state: GameState): boolean {
-    return state.mirrorChoice !== null;
+  private clearSubChoiceTimer(kind: SubChoiceKind): void {
+    const timer = this.subChoiceTimers.get(kind);
+
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.subChoiceTimers.delete(kind);
+    }
   }
 
-  private clearMirrorTimer(): void {
-    if (this.mirrorTimer !== null) {
-      clearTimeout(this.mirrorTimer);
-      this.mirrorTimer = null;
+  private clearAllSubChoiceTimers(): void {
+    for (const kind of [...this.subChoiceTimers.keys()]) {
+      this.clearSubChoiceTimer(kind);
     }
   }
 
@@ -1320,7 +1332,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           (entry) => entry.sessionId === choice.eliminatorPlayerId,
         );
 
-        // Human eliminator (incl. kill on a bot's turn) must get REWARD_CHOICE_REQUIRED.
+        // Human eliminator (incl. kill on a bot's turn) must get subChoiceRequired.
         if (seat === undefined || !isBotSeat(seat)) {
           return null;
         }
@@ -1426,7 +1438,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const expired = expireMirrorChoice(state, createRng(state.seed));
 
       if (expired.ok) {
-        this.clearMirrorTimer();
+        this.clearSubChoiceTimer('mirror');
         this.applyTurnResult(expired);
 
         if (expired.rewardChoicePending === true) {
@@ -1493,7 +1505,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearMirrorTimer();
+    this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
 
     if (result.rewardChoicePending === true) {
@@ -1533,7 +1545,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearRewardTimer();
+    this.clearSubChoiceTimer('elimination-reward');
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
@@ -1564,7 +1576,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.clearRewardTimer();
+    this.clearSubChoiceTimer('elimination-reward');
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
@@ -1694,14 +1706,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.clearTurnTimer();
     }
 
-    if (state.mirrorChoice?.playerId === sessionId && this.mirrorTimer !== null) {
-      this.pausedMirrorRemainingMs = remainingMs(state.mirrorChoice.deadlineMs, now);
-      this.clearMirrorTimer();
+    if (state.mirrorChoice?.playerId === sessionId && this.subChoiceTimers.has('mirror')) {
+      this.pausedSubChoiceRemainingMs.set('mirror', remainingMs(state.mirrorChoice.deadlineMs, now));
+      this.clearSubChoiceTimer('mirror');
     }
 
-    if (state.rewardChoice?.eliminatorPlayerId === sessionId && this.rewardTimer !== null) {
-      this.pausedRewardRemainingMs = remainingMs(state.rewardChoice.deadlineMs, now);
-      this.clearRewardTimer();
+    if (
+      state.rewardChoice?.eliminatorPlayerId === sessionId &&
+      this.subChoiceTimers.has('elimination-reward')
+    ) {
+      this.pausedSubChoiceRemainingMs.set(
+        'elimination-reward',
+        remainingMs(state.rewardChoice.deadlineMs, now),
+      );
+      this.clearSubChoiceTimer('elimination-reward');
     }
   }
 
@@ -1723,9 +1741,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.broadcastTurnStarted();
     }
 
-    if (state.mirrorChoice?.playerId === sessionId && this.pausedMirrorRemainingMs !== null) {
-      const remaining = this.pausedMirrorRemainingMs;
-      this.pausedMirrorRemainingMs = null;
+    const pausedMirrorRemainingMs = this.pausedSubChoiceRemainingMs.get('mirror');
+
+    if (state.mirrorChoice?.playerId === sessionId && pausedMirrorRemainingMs !== undefined) {
+      this.pausedSubChoiceRemainingMs.delete('mirror');
       const client = this.clients.find((entry) => entry.sessionId === sessionId);
 
       if (client !== undefined) {
@@ -1733,18 +1752,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
           client,
           state.mirrorChoice.deadlineMs,
           state.mirrorChoice.eligibleEffectIds,
-          remaining,
+          pausedMirrorRemainingMs,
         );
       }
     }
 
+    const pausedRewardRemainingMs = this.pausedSubChoiceRemainingMs.get('elimination-reward');
+
     if (
       state.rewardChoice?.eliminatorPlayerId === sessionId &&
-      this.pausedRewardRemainingMs !== null
+      pausedRewardRemainingMs !== undefined
     ) {
-      const remaining = this.pausedRewardRemainingMs;
-      this.pausedRewardRemainingMs = null;
-      this.beginRewardTimer(state, remaining);
+      this.pausedSubChoiceRemainingMs.delete('elimination-reward');
+      this.beginRewardTimer(state, pausedRewardRemainingMs);
     }
   }
 
@@ -1795,8 +1815,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.clearTurnTimer();
-    this.clearMirrorTimer();
-    this.clearRewardTimer();
+    this.clearAllSubChoiceTimers();
     this.onGameOver(survivor);
     return true;
   }
@@ -2223,6 +2242,27 @@ function readChooseMirrorTargetPayload(payload: unknown): ChooseMirrorTargetPayl
   }
 
   return { pendingEffectId, newTargetPlayerId };
+}
+
+/** Dispatches on `kind` to the Mirror or reward payload readers — technical spec v4 §4.4. */
+function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload | null {
+  if (typeof payload !== 'object' || payload === null || !('kind' in payload)) {
+    return null;
+  }
+
+  const { kind } = payload;
+
+  if (kind === 'mirror') {
+    const mirror = readChooseMirrorTargetPayload(payload);
+    return mirror === null ? null : { kind: 'mirror', ...mirror };
+  }
+
+  if (kind === 'elimination-reward') {
+    const reward = readChooseEliminationRewardPayload(payload);
+    return reward === null ? null : { kind: 'elimination-reward', ...reward };
+  }
+
+  return null;
 }
 
 function readChooseEliminationRewardPayload(

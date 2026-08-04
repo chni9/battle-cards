@@ -89,26 +89,32 @@ export function continuePendingSubChoices(
   let result: TurnResult = initial;
   const rng = options.rng ?? createRng(`${state.seed}:turn:${state.turnSequence}`);
 
-  while (result.mirrorChoicePending === true) {
-    const pick = hooks.resolveMirror(state, actorPlayerId);
-    const mirrorResult = completeMirrorChoice(
-      state,
-      actorPlayerId,
-      pick.pendingEffectId,
-      pick.newTargetPlayerId,
-      rng,
-      nowMs,
-    );
+  // One loop over both sub-choice kinds (technical spec v4 §4.4 — replaces two
+  // hardcoded `while`s). `mirrorChoicePending` and `rewardChoicePending` are never
+  // both true on the same result — Mirror always finishes before any reward can be
+  // enqueued from the same `finishTurnPhases` call — so checking Mirror first and
+  // falling through to rewards is equivalent to draining each independently.
+  while (result.mirrorChoicePending === true || result.rewardChoicePending === true) {
+    if (result.mirrorChoicePending === true) {
+      const pick = hooks.resolveMirror(state, actorPlayerId);
+      const mirrorResult = completeMirrorChoice(
+        state,
+        actorPlayerId,
+        pick.pendingEffectId,
+        pick.newTargetPlayerId,
+        rng,
+        nowMs,
+      );
 
-    if (!mirrorResult.ok) {
-      return mirrorResult;
+      if (!mirrorResult.ok) {
+        return mirrorResult;
+      }
+
+      options.onTurnResult?.(mirrorResult);
+      result = mirrorResult;
+      continue;
     }
 
-    options.onTurnResult?.(mirrorResult);
-    result = mirrorResult;
-  }
-
-  while (result.rewardChoicePending === true) {
     const pick = hooks.resolveReward(state);
 
     if (pick === null) {

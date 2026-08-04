@@ -72,16 +72,22 @@ Client → server (technical spec §5.2):
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·
-`chooseMirrorTarget` · `chooseEliminationReward`
+`resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18) —
+`{ kind: 'mirror', pendingEffectId, newTargetPlayerId }` or
+`{ kind: 'elimination-reward', eliminationId, choices }`; replaces the former
+`chooseMirrorTarget` / `chooseEliminationReward` pair
 
 Server → clients (§5.3):
 
 `stateUpdate` (personalised per recipient) · `turnStarted` (active player + deadline) ·
 `actionPlayed` (broadcast immediately; includes `isUpgraded` on plays / per multi-attack since
 PROTOCOL_VERSION 19) · `actionResolved` (broadcast on resolution; includes
-`outcome: 'applied' | 'immune' | 'cancelled'` since L4-03 and `isUpgraded` since v19) ·
-`mirrorChoiceRequired` (to one player, with deadline) · `rewardChoiceRequired` (to the
-eliminator, chainable: `{ eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`) ·
+`outcome: 'applied' | 'immune' | 'cancelled' | 'blocked'` since L4-03/v4 §4.2 and `isUpgraded`
+since v19) ·
+`subChoiceRequired` (technical spec v4 §4.4, PROTOCOL_VERSION 23) — to the sub-choice owner,
+`kind`-discriminated: `{ kind: 'mirror', eligibleEffectIds, deadlineMs }` or
+`{ kind: 'elimination-reward', eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`;
+replaces the former `mirrorChoiceRequired` / `rewardChoiceRequired` pair ·
 `playerEliminated` · `gameOver` · `error`
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
@@ -97,10 +103,14 @@ counts per player + eliminations). PROTOCOL_VERSION 22 adds `eliminationReveal` 
 and `exportLog` (turn before/after snapshots + full event log) for the Excel download — fog of
 war lifted only there.
 
-`chooseEliminationReward`: `{ eliminationId, choices: [RewardChoice, RewardChoice] }` where each
-choice is `{ type: 'lives' | 'points' | 'upgradePoint' }` or `{ type: 'card', instanceId }`.
-While `rewardChoice` is active on the server, other actions are rejected (Mirror-shaped gate).
-On expiry the server grants `2 × 4 lives`. PROTOCOL_VERSION 16.
+`resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
+choices: [RewardChoice, RewardChoice] }` where each choice is
+`{ type: 'lives' | 'points' | 'upgradePoint' }` or `{ type: 'card', instanceId }`.
+While `rewardChoice` is active on the server, other actions are rejected — since
+PROTOCOL_VERSION 23 (L20-18) through the single `hasActiveSubChoice` predicate that also gates
+Mirror and that `listLegalActions` now consults (technical spec v4 §10.2), not a Mirror-shaped
+special case. On expiry the server grants `2 × 4 lives`. Message introduced PROTOCOL_VERSION 16,
+folded into `resolveSubChoice` at PROTOCOL_VERSION 23.
 
 One event is **not** in §5.2: `clientReady`, sent by a client once its handlers are registered.
 See "Transport" below — without it the first view is dropped.

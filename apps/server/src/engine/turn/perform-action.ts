@@ -39,6 +39,7 @@ import {
 } from './elimination-rewards';
 import { canAffordPlayPoints, playPointsCost } from './play-cost';
 import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
+import { hasActiveSubChoice } from './sub-choice';
 
 export type TurnAction =
   | { type: 'draw' }
@@ -129,8 +130,19 @@ export function performTurnAction(
     return { ok: false, message: 'It is not your turn.' };
   }
 
-  if (hasPendingEliminationRewards(state)) {
-    return { ok: false, message: 'Finish elimination rewards first.' };
+  // Single sub-choice gate (technical spec v4 §4.4/§10.2) — Mirror or elimination
+  // reward, whichever is active. Unreachable in practice today: the room blocks
+  // Mirror earlier and the sub-choice loop always drains before another action is
+  // possible, but the enumerator (`listLegalActions`) needs the same predicate, so
+  // this function must not be the odd one out.
+  if (hasActiveSubChoice(state)) {
+    return {
+      ok: false,
+      message:
+        state.mirrorChoice !== null
+          ? 'Finish your Mirror choice first.'
+          : 'Finish elimination rewards first.',
+    };
   }
 
   const actor = findPlayer(state, actorPlayerId);

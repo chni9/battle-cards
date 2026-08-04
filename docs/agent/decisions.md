@@ -1114,3 +1114,57 @@ Designer ruling (session): each of N pending attacks from a multi-target play
 (e.g. MEGA) is evaluated **independently on its own target's turn**, consistent with
 Assassin multi-attacks. Pairing on a given turn still uses the existing first-match
 `findIndex` among reciprocal pending attacks targeting the acting player.
+
+## 2026-08-04 · [P] L20-18 sub-choice factoring keeps `mirrorChoice`/`rewardChoice`/`rewardQueue`
+
+Technical spec v4 §4.4 asks for "one slot and one queue on `GameState`" for the generic
+`SubChoiceState`. Literally renaming `GameState.mirrorChoice` / `rewardChoice` / `rewardQueue`
+to a single generic field is incompatible with L20-18's own acceptance line — "every existing
+V1/V2/V3 test passes untouched" — because several tests construct or mutate these fields by
+their current literal name and shape, with no `kind` discriminant:
+`stub-policy.test.ts` builds a bare `{ playerId, isUpgraded, eligibleEffectIds, deadlineMs }`
+Mirror literal; `list-legal-actions.test.ts`, `assassin-candidates.test.ts` and
+`bot-driver.test.ts` reset/construct `mirrorChoice` / `rewardChoice` / `rewardQueue` directly;
+`elimination-rewards.test.ts` and `forfeit.test.ts` read/push `state.rewardQueue` as a live
+array. Renaming or adding a `kind` field to any of these breaks compilation, which the task
+explicitly forbids fixing by editing the test.
+
+**Resolution:** `GameState.mirrorChoice` / `rewardChoice` / `rewardQueue` stay exactly as they
+were — same field names, same shapes, no `kind` tag. The generic model
+(`packages/shared/src/domain/sub-choice.ts`: `SubChoiceKind`, `SubChoiceState`) is instead the
+single source of truth for *type shape* — `MirrorChoiceState` and `RewardChoiceState` are now
+`Omit<Extract<SubChoiceState, { kind: '...' }>, 'kind'>`, not independently declared — and for
+everything else the task asks to unify:
+
+- **One gate.** `hasActiveSubChoice` (`apps/server/src/engine/turn/sub-choice.ts`) is the one
+  predicate `performTurnAction` and `listLegalActions` both consult (§10.2's new guard test,
+  `sub-choice-gate.test.ts`). It reads all three legacy fields internally.
+- **One constant.** `SUB_CHOICE_MS = 20_000` lives there too; `mirror-choice.ts`'s
+  `MIRROR_SUB_CHOICE_MS` and `elimination-rewards.ts`'s `REWARD_SUB_CHOICE_MS` are now aliases
+  of it, not independent literals — kept under their historical names only because
+  `clock-injection.test.ts` imports them by name.
+- **One timer registry.** `game-room.ts`'s `mirrorTimer` / `rewardTimer` /
+  `pausedMirrorRemainingMs` / `pausedRewardRemainingMs` quadruplet is gone, replaced by
+  `subChoiceTimers: Map<SubChoiceKind, Timer>` and `pausedSubChoiceRemainingMs: Map<SubChoiceKind, number>`.
+  No test touches these private fields, so this part *is* a full rename.
+- **One message pair.** `subChoiceRequired` / `resolveSubChoice` (`kind`-discriminated)
+  replace `mirrorChoiceRequired`/`chooseMirrorTarget` and `rewardChoiceRequired`/
+  `chooseEliminationReward` on the wire — PROTOCOL_VERSION 22 → 23. No test sends or receives
+  these message names directly (only `GameState` fields, which are unaffected), so this *is*
+  a full rename too. The client's `use-room-connection.ts` translates the generic wire pair
+  back into the same `mirrorChoice` / `rewardChoice` / `chooseMirrorTarget` /
+  `chooseEliminationReward` shapes `table.tsx` and `card-actions.tsx` already consume, so
+  neither of those files needed touching.
+- **One orchestration loop.** `continuePendingSubChoices` is one `while` over
+  `mirrorChoicePending || rewardChoicePending` instead of two hardcoded loops — `TurnResult`
+  keeps both distinct optional booleans (read directly by `mirror.test.ts` /
+  `elimination-rewards.test.ts` / `orchestrate-turn.test.ts`), since they are never both `true`
+  on the same result.
+
+**Consequence for later Lots (21/24/26):** Card Absorber's pool pick, Card Thief's
+steal-when-spied pick, Card Transformer's special pick and Reanimation's kit pick are declared
+in `SubChoiceKind` but have no `GameState` storage yet (`payload: never` in `SubChoiceState`
+blocks constructing them). When one of those tasks lands, decide then whether to give it its
+own dedicated field (this task's precedent) or finally introduce a literal generic
+`subChoice` slot / `subChoiceQueue` — at that point the tests are new, so the constraint that
+forced this decision no longer applies.

@@ -15,7 +15,12 @@ export interface ChooseEliminationRewardPayload {
   choices: [RewardChoice, RewardChoice];
 }
 
+/**
+ * Carried inside the generic `subChoiceRequired` event (technical spec v4 §4.4,
+ * backlog L20-18) — `kind` discriminates it from `MirrorChoiceRequiredPayload`.
+ */
 export interface RewardChoiceRequiredPayload {
+  kind: 'elimination-reward';
   eliminationId: string;
   eliminatedPlayerId: string;
   availableCards: readonly CardInstance[];

@@ -9,20 +9,18 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
-  CHOOSE_ELIMINATION_REWARD,
-  CHOOSE_MIRROR_TARGET,
+  RESOLVE_SUB_CHOICE,
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
   GAME_ROOM_NAME,
-  MIRROR_CHOICE_REQUIRED,
+  SUB_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
   REMOVE_BOT,
-  REWARD_CHOICE_REQUIRED,
   SELL_CARD,
   SELL_UPGRADE_POINT,
   SET_BOT_DIFFICULTY,
@@ -34,7 +32,6 @@ import {
   type ActionResolvedPayload,
   type BotDifficulty,
   type CardId,
-  type ChooseEliminationRewardPayload,
   type GameOverPayload,
   type MirrorChoiceRequiredPayload,
   type PlayCardPayload,
@@ -240,13 +237,12 @@ export function useRoomConnection(): UseRoomConnectionResult {
       }
     });
 
-    room.onMessage(MIRROR_CHOICE_REQUIRED, (payload: unknown) => {
+    room.onMessage(SUB_CHOICE_REQUIRED, (payload: unknown) => {
       if (isMirrorChoiceRequired(payload)) {
         setConnection((previous) => ({ ...previous, mirrorChoice: payload }));
+        return;
       }
-    });
 
-    room.onMessage(REWARD_CHOICE_REQUIRED, (payload: unknown) => {
       if (isRewardChoiceRequired(payload)) {
         setConnection((previous) => ({ ...previous, rewardChoice: payload }));
       }
@@ -482,7 +478,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
   const chooseMirrorTarget = useCallback(
     (pendingEffectId: string, newTargetPlayerId: string): void => {
-      roomRef.current?.send(CHOOSE_MIRROR_TARGET, {
+      roomRef.current?.send(RESOLVE_SUB_CHOICE, {
+        kind: 'mirror',
         pendingEffectId,
         newTargetPlayerId,
       });
@@ -493,8 +490,11 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
   const chooseEliminationReward = useCallback(
     (eliminationId: string, choices: [RewardChoice, RewardChoice]): void => {
-      const payload: ChooseEliminationRewardPayload = { eliminationId, choices };
-      roomRef.current?.send(CHOOSE_ELIMINATION_REWARD, payload);
+      roomRef.current?.send(RESOLVE_SUB_CHOICE, {
+        kind: 'elimination-reward',
+        eliminationId,
+        choices,
+      });
       setConnection((previous) => ({ ...previous, rewardChoice: null }));
     },
     [],
@@ -670,6 +670,8 @@ function isMirrorChoiceRequired(payload: unknown): payload is MirrorChoiceRequir
   return (
     typeof payload === 'object' &&
     payload !== null &&
+    'kind' in payload &&
+    payload.kind === 'mirror' &&
     'eligibleEffectIds' in payload &&
     'deadlineMs' in payload &&
     Array.isArray(payload.eligibleEffectIds) &&
@@ -681,6 +683,8 @@ function isRewardChoiceRequired(payload: unknown): payload is RewardChoiceRequir
   return (
     typeof payload === 'object' &&
     payload !== null &&
+    'kind' in payload &&
+    payload.kind === 'elimination-reward' &&
     'eliminationId' in payload &&
     'eliminatedPlayerId' in payload &&
     'availableCards' in payload &&

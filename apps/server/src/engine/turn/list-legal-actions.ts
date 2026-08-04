@@ -11,11 +11,20 @@ import { listAssassinMultiAttackCandidates } from './assassin-candidates';
 import { listLegalEconomyActions } from './list-legal-economy';
 import { listLegalPlayCardActions, requireLivingActor } from './list-legal-play-card';
 import type { TurnAction } from './perform-action';
+import { hasActiveSubChoice } from './sub-choice';
 
 export function listLegalActions(state: GameState, playerId: string): readonly TurnAction[] {
   const actor = requireLivingActor(state, playerId);
 
   if (actor === undefined) {
+    return [];
+  }
+
+  // Single sub-choice gate (technical spec v4 §4.4/§10.2): while Mirror or an
+  // elimination reward is active, no ordinary TurnAction is legal for anyone — the
+  // only legal moves are that sub-choice's own resolution, which is not part of
+  // this enumeration (`resolveSubChoice` is a distinct message, not a `TurnAction`).
+  if (hasActiveSubChoice(state)) {
     return [];
   }
 

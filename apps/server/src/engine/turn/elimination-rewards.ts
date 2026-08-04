@@ -17,8 +17,10 @@ import { gainLives } from '../life/gain-lives';
 import type { Rng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import { SUB_CHOICE_MS } from './sub-choice';
 
-export const REWARD_SUB_CHOICE_MS = 20_000;
+/** Re-exports the single `SUB_CHOICE_MS` — technical spec v4 §4.4 (L20-18). */
+export const REWARD_SUB_CHOICE_MS = SUB_CHOICE_MS;
 export const ELIMINATION_REWARD_LIVES = 4;
 export const ELIMINATION_REWARD_POINTS = 8;
 
