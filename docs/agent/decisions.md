@@ -1020,3 +1020,11 @@ derived from seat/turn counters (not `randomUUID`, and **not** embedding
 `GameState.seed` — that would leak through hand views). Opaque wire ids — clients
 treat them as strings only. Same seed + same script → identical ids via identical
 deal/queue order.
+
+## 2026-08-04 · [P] Simulator lives in apps/server (#V3-1 / L18-04)
+
+Closed open decision #V3-1: **(b)** batch CLI is a `tsx` script inside `apps/server`
+(`src/simulation/run-batch.ts`, `pnpm --filter @card-battle/server simulate`), same
+pattern as `db:migrate`. No third workspace app. Per-game seed is
+`` `${baseSeed}:${gameIndex}` ``. Output is JSONL only. Simulated games never write
+Postgres (§8.2).

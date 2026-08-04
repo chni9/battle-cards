@@ -19,12 +19,15 @@ import {
 import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import {
+  BURN_COUNTER_BONUS,
   BUY_SPECIAL_POINTS_FLOOR,
   BUY_UPGRADE_POINT_BONUS,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
   MUTUAL_CANCEL_BONUS,
   PRESSURE_COST_DIVISOR,
+  REGEN_SOFT_LIFE,
+  SELL_TO_FUND_BONUS,
   SPY_TOP_THREAT_BONUS,
   SPY_UNSPIED_BONUS,
   STRIKE_MIN_DAMAGE,
@@ -114,7 +117,7 @@ export function pickMirrorRedirect(
     return null;
   }
 
-  const targets = rankThreatOpponents(view, rng).filter((id) => id !== effect.sourcePlayerId);
+  const targets = rankThreatOpponents(view, rng);
   const newTarget = targets[0];
 
   if (newTarget === undefined) {
@@ -306,11 +309,16 @@ function scoreAction(
     }
 
     // Economy / kill tools / intel before filler shop buys.
+    // ONMMBZ: do not buy Tax when Spy is held but unaffordable — sell to fund Spy instead.
     if (action.cardId === 'tax') {
+      if (needsPointsToPlaySpy(view)) {
+        return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+      }
+
       return { score: HEURISTIC_BAND_WEIGHTS.invest + 35, code: 'invest' };
     }
 
-    if (action.cardId === 'spy' && hasUnspiedLivingOpponent(view)) {
+    if (action.cardId === 'spy' && hasSpyableUnspiedOpponent(view)) {
       return { score: HEURISTIC_BAND_WEIGHTS.invest + 55, code: 'invest' };
     }
 
@@ -329,7 +337,65 @@ function scoreAction(
     return { score: HEURISTIC_BAND_WEIGHTS.invest, code: 'invest' };
   }
 
-  // sellCard | sellUpgradePoint
+  if (action.type === 'sellCard') {
+    return scoreSellCard(view, action);
+  }
+
+  // sellUpgradePoint
+  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+}
+
+function scoreSellCard(
+  view: PlayingStateView,
+  action: Extract<TurnAction, { type: 'sellCard' }>,
+): { score: number; code: BotReasonCode } {
+  const instance = findOwnCard(view, action.instanceId);
+
+  if (instance === undefined) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  const yieldPoints = getCard(instance.cardId)?.sellYield.points ?? 0;
+  const fundSpy = needsPointsToPlaySpy(view);
+  const fundStrike = needsPointsToPlayReadyStrike(view);
+  const fundRegen =
+    view.self.lives <= REGEN_SOFT_LIFE &&
+    ownsCardId(view, 'regeneration') &&
+    view.self.points < 3;
+
+  // Never sell the card we are trying to fund.
+  if (fundSpy && instance.cardId === 'spy') {
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 30, code: 'sustain' };
+  }
+
+  if (
+    fundStrike &&
+    isAttackCardId(instance.cardId) &&
+    instance.isUpgraded &&
+    attackDamageFor(instance.cardId, true) >= STRIKE_MIN_DAMAGE
+  ) {
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 30, code: 'sustain' };
+  }
+
+  if (yieldPoints <= 0) {
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+  }
+
+  // CBCPXV: never sell attacks while an opponent's Imposition / Points Generator is live —
+  // those hits are how counters die (rules §5 / applyDamage).
+  if (hasOpponentBurnTarget(view) && isAttackCardId(instance.cardId)) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  if (fundSpy || fundStrike || fundRegen) {
+    const duplicateBonus =
+      view.self.hand.filter((card) => card.cardId === instance.cardId).length > 1 ? 5 : 0;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + SELL_TO_FUND_BONUS + yieldPoints + duplicateBonus,
+      code: 'invest',
+    };
+  }
+
   return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
 }
 
@@ -362,7 +428,7 @@ function scorePlayCard(
   }
 
   if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
-    return { score: 0, code: 'sustain' };
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
 
   // Mutual cancel (Lot 19): equal or stronger attack back at the source cancels the weaker.
@@ -433,11 +499,35 @@ function scorePlayCard(
     }
   }
 
+  // Burn public counter persistents (Imposition / Points Generator) — any attack damage
+  // that reaches lives decrements counters (engine.md). Chip attacks allowed here.
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const need = maxBurnableCounter(view, action.targetPlayerId);
+
+    if (need > 0) {
+      const damage = attackDamageFor(cardId, isUpgraded);
+      const clears = damage >= need ? 40 : 0;
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.deny +
+          BURN_COUNTER_BONUS +
+          Math.min(damage, need) * 15 +
+          clears,
+        code: 'deny',
+      };
+    }
+  }
+
   // Spy — unlock kit/hand (and upgraded: live tokens) so lethal-now can fire later.
   if (cardId === 'spy' && action.targetPlayerId !== undefined) {
     const target = view.players.find((player) => player.id === action.targetPlayerId);
 
-    if (target === undefined || target.isEliminated || target.isYou) {
+    if (
+      target === undefined ||
+      target.isEliminated ||
+      target.isYou ||
+      isSpyThiefImmuneSeat(view, action.targetPlayerId)
+    ) {
       return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
     }
 
@@ -463,6 +553,10 @@ function scorePlayCard(
   }
 
   if (cardId === 'thief' && action.targetPlayerId !== undefined) {
+    if (isSpyThiefImmuneSeat(view, action.targetPlayerId)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
     const spend = ctx.observedSpend.get(action.targetPlayerId) ?? 0;
     const topSpender = ctx.threatOrder.find((id) => (ctx.observedSpend.get(id) ?? 0) > 0);
     // Prefer highest observed spending
@@ -523,6 +617,15 @@ function scorePlayCard(
 
   // Other self / utility
   if (cardId === 'regeneration') {
+    // Soft top-up when lives are low (Imposition drip / post-Tax floor) — ONMMBZ bots
+    // drew to death with Regen in hand.
+    if (view.self.lives <= REGEN_SOFT_LIFE) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.invest + 50 + (action.quantity ?? 0),
+        code: 'invest',
+      };
+    }
+
     return {
       score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0),
       code: 'sustain',
@@ -544,6 +647,7 @@ function scoreMultiAttack(
   let damageSum = 0;
   let costSum = 0;
   let allUpgraded = true;
+  let burnNeed = 0;
 
   for (const part of action.attacks) {
     const instance = findOwnCard(view, part.instanceId);
@@ -558,12 +662,25 @@ function scoreMultiAttack(
 
     damageSum += attackDamageFor(instance.cardId, instance.isUpgraded);
     costSum += getCard(instance.cardId)?.cost.points ?? 0;
+    burnNeed = Math.max(burnNeed, maxBurnableCounter(view, part.targetPlayerId));
 
     const knownLives = knownOpponentLives(view, part.targetPlayerId);
 
     if (knownLives !== null && damageSum >= knownLives) {
       return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damageSum, code: 'lethal-now' };
     }
+  }
+
+  if (burnNeed > 0) {
+    const clears = damageSum >= burnNeed ? 40 : 0;
+    return {
+      score:
+        HEURISTIC_BAND_WEIGHTS.deny +
+        BURN_COUNTER_BONUS +
+        Math.min(damageSum, burnNeed) * 15 +
+        clears,
+      code: 'deny',
+    };
   }
 
   if (!allUpgraded || damageSum < STRIKE_MIN_DAMAGE) {
@@ -610,10 +727,90 @@ function ownsCardId(view: PlayingStateView, cardId: CardId): boolean {
   );
 }
 
-function hasUnspiedLivingOpponent(view: PlayingStateView): boolean {
+function spyPlayCost(): number {
+  return getCard('spy')?.cost.points ?? 4;
+}
+
+function hasSpyableUnspiedOpponent(view: PlayingStateView): boolean {
   return view.players.some(
     (player) =>
-      player.id !== view.you && !player.isEliminated && player.spied === undefined,
+      player.id !== view.you &&
+      !player.isEliminated &&
+      player.spied === undefined &&
+      !isSpyThiefImmuneSeat(view, player.id),
+  );
+}
+
+function needsPointsToPlaySpy(view: PlayingStateView): boolean {
+  if (!ownsCardId(view, 'spy') || !hasSpyableUnspiedOpponent(view)) {
+    return false;
+  }
+
+  return view.self.points < spyPlayCost();
+}
+
+function needsPointsToPlayReadyStrike(view: PlayingStateView): boolean {
+  for (const card of view.self.hand) {
+    if (!isAttackCardId(card.cardId) || !card.isUpgraded) {
+      continue;
+    }
+
+    const damage = attackDamageFor(card.cardId, true);
+
+    if (damage < STRIKE_MIN_DAMAGE) {
+      continue;
+    }
+
+    const cost = getCard(card.cardId)?.cost.points ?? 0;
+
+    if (view.self.points < cost) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** Highest remaining counter among an opponent's public persistents (Imposition = 2, etc.). */
+function maxBurnableCounter(view: PlayingStateView, opponentId: string): number {
+  const player = view.players.find((entry) => entry.id === opponentId);
+
+  if (player === undefined || player.isEliminated) {
+    return 0;
+  }
+
+  let max = 0;
+
+  for (const effect of player.activePersistentEffects) {
+    if (effect.counter !== null && effect.counter > max) {
+      max = effect.counter;
+    }
+  }
+
+  return max;
+}
+
+function hasOpponentBurnTarget(view: PlayingStateView): boolean {
+  return view.players.some(
+    (player) =>
+      player.id !== view.you &&
+      !player.isEliminated &&
+      maxBurnableCounter(view, player.id) > 0,
+  );
+}
+
+function isSpyThiefImmuneSeat(view: PlayingStateView, targetId: string): boolean {
+  if (isImmuneTarget(view, targetId, 'spy')) {
+    return true;
+  }
+
+  // Learn Untouchable from a public immune resolve (ONMMBZ: Spy on human → immune).
+  return view.actionLog.some(
+    (entry) =>
+      entry.kind === 'actionResolved' &&
+      entry.outcome === 'immune' &&
+      entry.targetPlayerId === targetId &&
+      (entry.cardId === 'spy' || entry.cardId === 'thief' || entry.cardId === 'spy-thief'),
   );
 }
 

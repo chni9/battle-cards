@@ -80,7 +80,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 ## Progress
 
-21 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
+22 of 25 V3+feedback tasks done (Lot 19 is post-V3 designer feedback; priority ahead of Lot 18).
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -88,7 +88,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 16 · Bot brain | 6 | 6 |
 | 17 · Solo mode and lobby bots | 5 | 5 |
 | 19 · Designer feedback (rules + UX) | 3 | 3 |
-| 18 · Headless simulation | 5 | 3 |
+| 18 · Headless simulation | 5 | 4 |
 
 ## Milestones
 
@@ -344,7 +344,7 @@ identical final `GameState` (same seed) through either driver.
 - **Watch point** Written twice, the room and the simulator **will** diverge, and the divergence stays invisible until simulator conclusions stop applying to real games. Do this before the runner, not after — retrofitting it means rewriting the runner.
 - **Acceptance** §10.3 test green; `game-room.ts` no longer holds its own copy of the sequencing; no behaviour change to a human game
 
-### L18-04 · Batch runner CLI — `To do`
+### L18-04 · Batch runner CLI — `Done`
 
 Runs N games with no room, no sockets, no timers. Config: game count, player count, per-seat
 difficulty, base seed, optional forced kit assignment, output path. One JSONL/CSV row per game,
