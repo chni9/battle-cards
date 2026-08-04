@@ -23,9 +23,10 @@ export interface ConnectionState {
   /** Turns auto-played because the player is absent. Elimination at 3 (technical spec §5.7). */
   automaticTurnsTaken: number;
   /**
-   * Consecutive turns where the 30-second timer expired while connected. Elimination
+   * Consecutive turns where the turn timer expired while connected. Elimination
    * at 5 — a deliberately higher threshold, and a mechanism independent of the
-   * disconnection counter above (technical spec §5.7).
+   * disconnection counter above (technical spec §5.7). Default turn duration is
+   * 60s (`TURN_DURATION_MS`).
    */
   consecutiveTimeouts: number;
 }

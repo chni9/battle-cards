@@ -153,7 +153,7 @@ rules above are unchanged — this section only covers how the client looks.
   with two picks. Clear on confirm / `turnStarted` / `gameOver`. Lock other table actions while
   the prompt is up (same as Mirror). Also lock actions when `players[you].isEliminated` — after
   an elim the turn pointer may still sit on the dead seat until rewards finish.
-- Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default still 30s.
+- Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default 60s.
   `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.
 

@@ -1099,3 +1099,9 @@ Proxy is now `lastCompleteTurnLivesLostByTarget`: sum applied `livesLost` on the
 target's latest completed `actionPlayed` turnSequence (rules §3 / technical spec v3
 Deny band). Pending attacks do not count. Tax-only ledger loss stays invisible in the
 public log (unchanged visibility).
+
+## 2026-08-04 · [P] Turn timer default 60s
+
+Prod / unset `TURN_DURATION_MS` is **60s** (was 30s per tech §5.5). Env override
+unchanged (`TURN_DURATION_MS`, min 5000ms). Sub-choices stay 20s; reconnect grace
+stays 60s. Living agent docs updated; tech §5.5 left for a later rules pass.

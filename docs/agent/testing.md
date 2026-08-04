@@ -87,7 +87,7 @@ ability effective. Mandatory specific test: a Spy **bought mid-game** by Scienti
 already upgraded, without consuming an upgrade point.
 
 **6 — Lifecycle.** Disconnection (60s, immediate draw, 3 turns, elimination without reward) ·
-connected inactivity (30s, 5 turns) · sub-choices (20s and their default actions) · win by
+connected inactivity (60s, 5 turns) · sub-choices (20s and their default actions) · win by
 forfeit at 2 players · last survivor.
 
 ## Cases worth a test even though nothing asks for them

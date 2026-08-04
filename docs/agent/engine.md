@@ -110,7 +110,7 @@ server-only; see `protocol.md`) so §10.3 can deep-equal whole states.
 Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
 
 ```
-1. Player P's turn begins — 30s timer starts, deadline computed server side
+1. Player P's turn begins — 60s timer starts, deadline computed server side
 2. P plays their single action
    (Assassin: several attack cards still count as ONE action)
    Timer expires → automatic draw
