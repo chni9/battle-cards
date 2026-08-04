@@ -13,13 +13,27 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(Object.keys(SPECIAL_CARD_CATALOG).sort()).toEqual([...SPECIAL_CARD_IDS].sort());
   });
 
-  it('lists the ruled play Prices', () => {
+  it('lists the ruled play Prices (rules spec §5, re-verified L20-04)', () => {
     expect(SPECIAL_CARD_CATALOG.suicide.cost).toEqual({ points: 3 });
     expect(SPECIAL_CARD_CATALOG['spy-thief'].cost).toEqual({ points: 5 });
     expect(SPECIAL_CARD_CATALOG.imposition.cost).toEqual({ points: 6 });
     expect(SPECIAL_CARD_CATALOG.cloning.cost).toEqual({ points: 3 });
     expect(SPECIAL_CARD_CATALOG.sentence.cost).toEqual({ points: 15 });
     expect(SPECIAL_CARD_CATALOG['points-generator'].cost).toEqual({ points: 5 });
+    expect(SPECIAL_CARD_CATALOG['upgrade-point-thief'].cost).toEqual({ points: 5 });
+    expect(SPECIAL_CARD_CATALOG.block.cost).toEqual({ points: 5 });
+    expect(SPECIAL_CARD_CATALOG['super-regeneration'].cost).toEqual({ points: 6 });
+    expect(SPECIAL_CARD_CATALOG['card-thief'].cost).toEqual({ points: 5 });
+    expect(SPECIAL_CARD_CATALOG['card-transformer'].cost).toEqual({ points: 2 });
+    expect(SPECIAL_CARD_CATALOG.invisibility.cost).toEqual({ points: 10 });
+    expect(SPECIAL_CARD_CATALOG.reanimation.cost).toEqual({ points: 8 });
+    expect(SPECIAL_CARD_CATALOG['card-absorber'].cost).toEqual({ points: 4 });
+    expect(SPECIAL_CARD_CATALOG['mega-attack'].cost).toEqual({ points: 16 });
+    expect(SPECIAL_CARD_CATALOG['super-mirror'].cost).toEqual({ points: 7 });
+    expect(SPECIAL_CARD_CATALOG['super-absorber'].cost).toEqual({ points: 8 });
+    expect(SPECIAL_CARD_CATALOG.curse.cost).toEqual({ points: 8 });
+    expect(SPECIAL_CARD_CATALOG.poison.cost).toEqual({ points: 8 });
+    expect(SPECIAL_CARD_CATALOG['attack-thief'].cost).toEqual({ points: 8 });
   });
 
   it('marks only Imposition and Points Generator as persistent-on-play', () => {

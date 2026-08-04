@@ -11,7 +11,6 @@
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
-  SPECIAL_CARD_IDS,
   type CardId,
   type CardType,
   type KitId,
@@ -35,6 +34,16 @@ const KIT_FILES = {
   scientific: 'Scientist.png',
   assassin: 'Assassin.png',
 } as const satisfies Record<KitId, string>;
+
+type ShippedArtCardId =
+  | (typeof ATTACK_CARD_IDS)[number]
+  | (typeof ACTION_CARD_IDS)[number]
+  | 'suicide'
+  | 'spy-thief'
+  | 'imposition'
+  | 'cloning'
+  | 'sentence'
+  | 'points-generator';
 
 const CARD_FILES = {
   'basic-attack': { base: 'Basic attack.png', upgraded: 'Basic attack +.png' },
@@ -63,7 +72,9 @@ const CARD_FILES = {
     activatedBase: 'Generator (activated).png',
     activatedUpgraded: 'Generator + (activated).png',
   },
-} as const satisfies Record<CardId, CardArtFiles>;
+} as const satisfies Record<ShippedArtCardId, CardArtFiles>;
+
+type ArtCardId = keyof typeof CARD_FILES;
 
 const RESOURCE_FILES = {
   life: 'life.png',
@@ -124,7 +135,11 @@ export function getCardArtUrl(
   cardId: CardId,
   opts: { isUpgraded: boolean; activated?: boolean },
 ): string {
-  const files = CARD_FILES[cardId];
+  if (!Object.prototype.hasOwnProperty.call(CARD_FILES, cardId)) {
+    throw new Error(`Card ${cardId} has no art entry yet (L30-01)`);
+  }
+
+  const files = CARD_FILES[cardId as ArtCardId];
   const activated = opts.activated === true;
 
   if (activated) {
@@ -157,11 +172,16 @@ export function getActionLogoUrl(): string {
   return urlFromGlob(backModules, 'action_logo.png', 'backs');
 }
 
-/** Exhaustive V1 card id list — for tests and callers that need every id. */
-export const V1_CARD_IDS: readonly CardId[] = [
+/** Card ids with shipped art — V4 pending specials land in L30-01. */
+export const V1_CARD_IDS: readonly ArtCardId[] = [
   ...ATTACK_CARD_IDS,
   ...ACTION_CARD_IDS,
-  ...SPECIAL_CARD_IDS,
-];
+  'suicide',
+  'spy-thief',
+  'imposition',
+  'cloning',
+  'sentence',
+  'points-generator',
+] as const;
 
 export type { ResourceKind, CardBackKind };

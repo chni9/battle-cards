@@ -1,9 +1,12 @@
 /**
- * Static V1 special-card definitions — rules spec §5.
+ * Static special-card definitions — rules spec §5, technical spec v4 §8.1.
  *
  * Specials are not bought/sold individually (`buyCost` / `sellYield` keep the Card
  * shape but are unused by the shared shop). Play cost is the listed Price. Random
- * acquisition uses `buySpecialCard` (20 points) among these six only (§6.2 #10).
+ * acquisition uses `buySpecialCard` among `PURCHASABLE_SPECIAL_CARD_IDS` until L21-01
+ * lifts ruling §6.2 #10.
+ *
+ * Every price re-verified against rules spec §5 at L20-04.
  */
 
 import {
@@ -78,6 +81,104 @@ export const SPECIAL_CARD_CATALOG = {
     5,
     'Generate 2 points per turn while the internal counter is not depleted.',
     'Generate 4 points per turn.',
+  ),
+  'upgrade-point-thief': specialCard(
+    'upgrade-point-thief',
+    'Upgrade Point Thief',
+    5,
+    'Steal all unspent upgrade points from all opponents and remove the upgrade from all of their currently upgraded cards (1 UP each to you).',
+    'Also steals all of all opponents\' current points.',
+  ),
+  block: specialCard(
+    'block',
+    'Block',
+    5,
+    'Cancel any action pending resolution against you, then play 3 consecutive turns (no attack cards).',
+    '7 consecutive turns instead of 3.',
+  ),
+  'super-regeneration': specialCard(
+    'super-regeneration',
+    'Super Regeneration',
+    6,
+    'Gain 9 lives (life cap applies).',
+    'Gain 18 lives (life cap applies).',
+  ),
+  'card-thief': specialCard(
+    'card-thief',
+    'Card Thief',
+    5,
+    'Steal a random card from a chosen opponent (choose the card if they are spied).',
+    'Steal a card from every opponent (same spied exception).',
+  ),
+  'card-transformer': specialCard(
+    'card-transformer',
+    'Card Transformer',
+    2,
+    'Transform an owned action or attack card into a random special.',
+    'Choose the special obtained instead of a random draw.',
+  ),
+  invisibility: specialCard(
+    'invisibility',
+    'Invisibility',
+    10,
+    'Become immune to opposing actions and gain 4 points per turn; deactivate manually.',
+    'Gain 6 points per turn instead of 4.',
+  ),
+  reanimation: specialCard(
+    'reanimation',
+    'Reanimation',
+    8,
+    'If you are eliminated later, return with a random kit and its starting resources.',
+    'Choose the reanimation kit instead of a random draw.',
+  ),
+  'card-absorber': specialCard(
+    'card-absorber',
+    'Card Absorber',
+    4,
+    'Recover 4 random cards from the shared pool.',
+    'Choose the 4 recovered cards instead of a random draw.',
+  ),
+  'mega-attack': specialCard(
+    'mega-attack',
+    'MEGA ATTACK',
+    16,
+    'Attack every player for 20 damage (shield applies). Redirectable only by an upgraded Mirror.',
+    'Can no longer be redirected at all.',
+  ),
+  'super-mirror': specialCard(
+    'super-mirror',
+    'Super Mirror',
+    7,
+    'Redirect every attack pending against you to all opponents, each independently. Not re-redirectable by a regular Mirror.',
+    'Doubles the damage of the redirected attacks.',
+  ),
+  'super-absorber': specialCard(
+    'super-absorber',
+    'Super Absorber',
+    8,
+    'Absorb all points, lives and upgrade points spent by all opponents while the counter holds.',
+    'Doubles all gains obtained this way.',
+  ),
+  curse: specialCard(
+    'curse',
+    'Curse',
+    8,
+    'A chosen opponent loses 1 life per 3 points they spend on their turn; deactivates at 1 life remaining.',
+    '1 life lost per 2 points spent instead of 3.',
+  ),
+  poison: specialCard(
+    'poison',
+    'Poison',
+    8,
+    'All opponents lose 1 life per turn while the counter holds.',
+    '2 lives lost per turn instead of 1.',
+  ),
+  'attack-thief': specialCard(
+    'attack-thief',
+    'Attack Thief',
+    8,
+    'Block one attack targeting you once, and steal a random attack card from each opponent.',
+    'Steal all attack cards from all opponents.',
   ),
 } as const satisfies Record<SpecialCardId, Card>;
 

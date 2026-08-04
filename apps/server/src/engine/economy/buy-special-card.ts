@@ -1,8 +1,13 @@
 /**
- * Buy a random V1 special for 20 points — rules spec §5, tech §6.2 #10, L5-09.
+ * Buy a random special for 20 points — rules spec §5, tech §6.2 #10, L5-09.
+ * Still restricted to `PURCHASABLE_SPECIAL_CARD_IDS` until L21-01.
  */
 
-import { SPECIAL_CARD_IDS, type CardInstance, type GameState } from '@card-battle/shared';
+import {
+  PURCHASABLE_SPECIAL_CARD_IDS,
+  type CardInstance,
+  type GameState,
+} from '@card-battle/shared';
 
 import { acquireSpecialCard } from '../kits/acquire-card';
 import type { Rng } from '../rng';
@@ -32,7 +37,7 @@ export function buySpecialCard(
   actor.points -= SPECIAL_CARD_PURCHASE_COST;
   actor.turnLedger.pointsSpent += SPECIAL_CARD_PURCHASE_COST;
 
-  const cardId = rng.pick(SPECIAL_CARD_IDS);
+  const cardId = rng.pick(PURCHASABLE_SPECIAL_CARD_IDS);
   const instance = acquireSpecialCard(
     actor,
     cardId,

@@ -1,10 +1,9 @@
 /**
  * Card identity and static card data — technical spec §4.1, rules spec §1–§3, §5.
  *
- * The id lists are the V1 scope (technical spec §2): 3 attack, 7 action, 6 special.
- * They exist at runtime because several rules draw from them: starting card
- * distribution (rules spec §4) and the 20-point special card purchase, which V1
- * restricts to the 6 special cards in the lot (technical spec ruling §6.2 #10).
+ * Attack / action lists are the shop/deal shared set. Specials cover the full rules
+ * special lot (20); handlers land per card task, with undeclared ones in
+ * `PENDING_CARD_IDS` (technical spec v4 §8.1 / L20-04).
  */
 
 export const ATTACK_CARD_IDS = ['basic-attack', 'strong-attack', 'super-attack'] as const;
@@ -26,16 +25,41 @@ export const SPECIAL_CARD_IDS = [
   'cloning',
   'sentence',
   'points-generator',
+  'upgrade-point-thief',
+  'block',
+  'super-regeneration',
+  'card-thief',
+  'card-transformer',
+  'invisibility',
+  'reanimation',
+  'card-absorber',
+  'mega-attack',
+  'super-mirror',
+  'super-absorber',
+  'curse',
+  'poison',
+  'attack-thief',
+] as const;
+
+/**
+ * Specials that may be granted by the 20-point random purchase until L21-01 lifts
+ * ruling §6.2 #10 — still the six V1 specials with handlers.
+ */
+export const PURCHASABLE_SPECIAL_CARD_IDS = [
+  'suicide',
+  'spy-thief',
+  'imposition',
+  'cloning',
+  'sentence',
+  'points-generator',
 ] as const;
 
 /**
  * Cards that inflict *damage* as rules spec §1 defines it, and therefore the only
  * cards `applyDamage` may ever be called for.
  *
- * In V1 this is exactly the 'attack' category. It is a separate type because rules
- * spec §1 makes attack-ness a property of the card, not of its category: a special
- * card can be an attack (MEGA ATTACK, out of V1 scope). When such a card is added,
- * it joins this union without becoming an `ActionCardId`.
+ * Shop/deal attacks live in `ATTACK_CARD_IDS`. Special attacks (MEGA ATTACK) join via
+ * `SPECIAL_ATTACK_CARD_IDS` in L20-05 without becoming shop-buyable.
  */
 export type AttackCardId = (typeof ATTACK_CARD_IDS)[number];
 

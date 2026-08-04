@@ -2,7 +2,7 @@
  * Special card purchase — rules spec §5, tech §6.2 #10, backlog L5-09.
  */
 
-import { SPECIAL_CARD_IDS } from '@card-battle/shared';
+import { PURCHASABLE_SPECIAL_CARD_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createRng } from '../rng';
@@ -10,7 +10,7 @@ import { createInitialState } from '../create-initial-state';
 import { buySpecialCard, SPECIAL_CARD_PURCHASE_COST } from './buy-special-card';
 
 describe('buySpecialCard (L5-09)', () => {
-  it('draws only from the 6 V1 specials', () => {
+  it('draws only from the 6 purchasable specials (ruling §6.2 #10 until L21-01)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -37,7 +37,9 @@ describe('buySpecialCard (L5-09)', () => {
         return;
       }
 
-      expect((SPECIAL_CARD_IDS as readonly string[]).includes(result.instance.cardId)).toBe(true);
+      expect(
+        (PURCHASABLE_SPECIAL_CARD_IDS as readonly string[]).includes(result.instance.cardId),
+      ).toBe(true);
       drawn.add(result.instance.cardId);
     }
 

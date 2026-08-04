@@ -50,7 +50,22 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
-export const PENDING_CARD_IDS = [] as const satisfies readonly PendingCardId[];
+export const PENDING_CARD_IDS = [
+  'upgrade-point-thief',
+  'block',
+  'super-regeneration',
+  'card-thief',
+  'card-transformer',
+  'invisibility',
+  'reanimation',
+  'card-absorber',
+  'mega-attack',
+  'super-mirror',
+  'super-absorber',
+  'curse',
+  'poison',
+  'attack-thief',
+] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,

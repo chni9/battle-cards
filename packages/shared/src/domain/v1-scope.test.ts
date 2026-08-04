@@ -23,12 +23,12 @@ describe('V1 content scope (technical spec §2)', () => {
     expect(ACTION_CARD_IDS).toHaveLength(7);
   });
 
-  it('holds the 6 special cards of the V1 lot, not the full 20 of rules spec §5', () => {
-    expect(SPECIAL_CARD_IDS).toHaveLength(6);
+  it('holds the 20 special cards of rules spec §5 (L20-04)', () => {
+    expect(SPECIAL_CARD_IDS).toHaveLength(20);
   });
 
-  it('totals 16 cards', () => {
-    expect(ALL_CARD_IDS).toHaveLength(16);
+  it('totals 30 cards', () => {
+    expect(ALL_CARD_IDS).toHaveLength(30);
   });
 
   it('holds the 4 kits of the V1 lot, not the 15 of rules spec §4', () => {
