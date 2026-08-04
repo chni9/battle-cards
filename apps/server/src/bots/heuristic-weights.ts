@@ -58,6 +58,22 @@ export const SPY_UNSPIED_BONUS = 80;
 export const SPY_TOP_THREAT_BONUS = 15;
 
 /**
+ * Sell-to-fund Invest offset — ONMMBZ log: bots at 0 pts drew forever while holding Spy/Mirror
+ * instead of selling Mirror (6 pts) to play Spy.
+ */
+export const SELL_TO_FUND_BONUS = 70;
+
+/** Soft Regen when lives ≤ this even with no pending attack (Imposition drip / Tax floor). */
+export const REGEN_SOFT_LIFE = 6;
+
+/**
+ * Deny offset for attacking a seat with an active counter persistent (Imposition /
+ * Points Generator). CBCPXV: human Imposition ran unchecked while bots sold attacks.
+ * Even base Basic must outrank Invest / Spy-on-someone-else once a counter is live.
+ */
+export const BURN_COUNTER_BONUS = 150;
+
+/**
  * Extra Survive score for mutual cancel (equal or stronger riposte — Lot 19) or Spy/Thief
  * counter. Sits above Mirror's +30 so a matching Basic cancel beats Mirror on a Basic hit.
  */

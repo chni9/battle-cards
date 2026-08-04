@@ -48,6 +48,8 @@ export interface BotDriverHost {
     choices: readonly [RewardChoice, RewardChoice],
     reason?: BotDecisionReason,
   ): void;
+  /** Expire reward sub-choice when the bot policy throws or picks illegally. */
+  failBotReward(botId: string): void;
 }
 
 export class BotDriver {
@@ -87,7 +89,11 @@ export class BotDriver {
     }
 
     const rng = createRng(`${state.seed}:bot:${botId}:mirror:${state.turnSequence}`);
-    const pick = pickMirrorRedirect(view, rng);
+    const pick = pickMirrorRedirect(
+      view,
+      rng,
+      state.mirrorChoice?.eligibleEffectIds,
+    );
 
     if (pick === null) {
       this.host.performBotDraw(botId, { code: 'policy-fallback' });
@@ -122,7 +128,7 @@ export class BotDriver {
     const view = this.host.getPlayingView(botId);
 
     if (view === null) {
-      this.host.performBotDraw(botId, { code: 'policy-fallback' });
+      this.host.failBotReward(botId);
       return;
     }
 
@@ -132,7 +138,8 @@ export class BotDriver {
       const picks = pickEliminationRewardsWithReason(view, available, state.lifeLimit, rng);
       this.host.completeBotReward(botId, choice.eliminationId, picks.choices, picks.reason);
     } catch {
-      this.host.performBotDraw(botId, { code: 'policy-fallback' });
+      // Do not draw during a pending reward — that leaves rewardChoice set and freezes the room.
+      this.host.failBotReward(botId);
     }
   }
 

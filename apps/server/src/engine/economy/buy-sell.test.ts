@@ -88,18 +88,21 @@ describe('buyCard / sellCard (rules spec §1, L2-01)', () => {
     };
     player.hand = [copy];
     player.points = 0;
+    player.upgradePoints = 0;
     const result = sellCard(state, player.id, copy.instanceId);
 
     expect(result.ok).toBe(true);
     expect(player.points).toBe(1);
+    expect(player.upgradePoints).toBe(0);
     expect(player.hand.find((card) => card.instanceId === copy.instanceId)).toBeUndefined();
     expect(state.pool).toContainEqual(copy);
   });
 
-  it('sells Tax for 1 life (25-cap applied) and ignores upgrade on shop price', () => {
+  it('sells Tax for 1 life (25-cap applied); shop life yield ignores upgrade tier', () => {
     const state = started();
     const player = actor(state);
     player.lives = 10;
+    player.upgradePoints = 0;
     const taxCopy = {
       instanceId: 'tax-1',
       cardId: 'tax' as const,
@@ -111,7 +114,27 @@ describe('buyCard / sellCard (rules spec §1, L2-01)', () => {
 
     expect(result.ok).toBe(true);
     expect(player.lives).toBe(11);
+    expect(player.upgradePoints).toBe(1);
     expect(state.pool).toContainEqual(taxCopy);
+  });
+
+  it('selling an upgraded card refunds 1 upgrade point on top of base sellYield', () => {
+    const state = started();
+    const player = actor(state);
+    const copy = {
+      instanceId: 'basic-up-1',
+      cardId: 'basic-attack' as const,
+      isUpgraded: true,
+    };
+    player.hand = [copy];
+    player.points = 0;
+    player.upgradePoints = 2;
+
+    const result = sellCard(state, player.id, copy.instanceId);
+
+    expect(result.ok).toBe(true);
+    expect(player.points).toBe(1);
+    expect(player.upgradePoints).toBe(3);
   });
 
   it('buys and sells Regeneration at 6 / 3 points', () => {

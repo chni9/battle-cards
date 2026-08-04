@@ -1028,3 +1028,13 @@ Closed open decision #V3-1: **(b)** batch CLI is a `tsx` script inside `apps/ser
 pattern as `db:migrate`. No third workspace app. Per-game seed is
 `` `${baseSeed}:${gameIndex}` ``. Output is JSONL only. Simulated games never write
 Postgres (§8.2).
+
+## 2026-08-04 · [P] Selling an upgraded card refunds 1 upgrade point
+
+Designer ruling: `sellCard` still pays base `sellYield` (points/lives), and when
+`instance.isUpgraded` is true also grants **+1 upgrade point** — including kit-permanent
+always-upgraded copies. Specials remain unsellable. Rules spec §1 updated.
+
+Companion fix: `pickMirrorRedirect` must honour `mirrorChoice.eligibleEffectIds` so base
+Mirror never targets an upgraded pending attack (surfaced once sell refunds changed sim
+trajectories).

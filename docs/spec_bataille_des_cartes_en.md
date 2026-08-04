@@ -18,6 +18,8 @@
 ### Card Economy (attack and action)
 
 - Selling a card yields its usage cost in points, unless stated otherwise for a given card.
+  Selling an **upgraded** copy also refunds 1 upgrade point (including copies that are
+  upgraded by a permanent kit trait).
 - Buying a card you don't own costs double its usage cost. This purchase comes from an infinite stock, independent of cards sold or lost by eliminated players.
 - Upgrading a card costs 1 upgrade point, regardless of the card.
 - A player can own multiple copies of the same card.

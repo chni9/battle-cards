@@ -195,6 +195,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
     completeBotReward: (botId, eliminationId, choices, reason) => {
       this.applyBotRewardChoice(botId, eliminationId, [choices[0], choices[1]], reason);
     },
+    failBotReward: (botId) => {
+      this.failBotRewardChoice(botId);
+    },
   });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
   private startedAtMs: number | null = null;
@@ -1353,12 +1356,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
           this.appendRewardsClaimed(reward.rewardsClaimed);
         },
       });
-    } catch {
+    } catch (error) {
       this.pendingBotReason = null;
       if (action.type !== 'draw') {
         this.performAutoDraw(playerId, { code: 'policy-fallback' });
+        return;
       }
 
+      console.error(`[${this.roomId}] bot turn threw for ${playerId}`, error);
+      this.recoverStuckBotTurn(playerId);
       return;
     }
 
@@ -1366,8 +1372,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.pendingBotReason = null;
       if (action.type !== 'draw') {
         this.performAutoDraw(playerId, { code: 'policy-fallback' });
+        return;
       }
 
+      // Draw itself failed — without advancing, bot seats hang forever (no turn timer).
+      console.error(`[${this.roomId}] bot draw failed for ${playerId}: ${result.message}`);
+      this.recoverStuckBotTurn(playerId);
       return;
     }
 
@@ -1375,6 +1385,50 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private recoverStuckBotTurn(playerId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    if (state.rewardChoice !== null) {
+      this.failBotRewardChoice(playerId);
+      return;
+    }
+
+    if (state.mirrorChoice !== null) {
+      const expired = expireMirrorChoice(state, createRng(state.seed));
+
+      if (expired.ok) {
+        this.clearMirrorTimer();
+        this.applyTurnResult(expired);
+
+        if (expired.rewardChoicePending === true) {
+          this.beginRewardTimer(state);
+          this.sendStateToEveryone();
+          return;
+        }
+
+        if (expired.winnerPlayerId !== null) {
+          return;
+        }
+      } else {
+        state.mirrorChoice = null;
+      }
+    }
+
+    if (state.currentTurnPlayerId === playerId && !this.actionTakenThisTurn) {
+      // Cannot legally act — skip seat so the table does not freeze.
+      advanceTurn(state);
+    }
+
+    this.actionTakenThisTurn = false;
     this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
@@ -1454,6 +1508,39 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (!result.ok) {
       this.pendingBotReason = null;
+      // Illegal pick must not leave rewardChoice pending — that freezes the table.
+      this.failBotRewardChoice(botId);
+      return;
+    }
+
+    this.clearRewardTimer();
+    this.appendRewardsClaimed(result.rewardsClaimed);
+    this.continueAfterRewards(result);
+  }
+
+  /** Default the pending reward when a bot cannot complete it. */
+  private failBotRewardChoice(botId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const choice = state.rewardChoice;
+
+    if (choice?.eliminatorPlayerId !== botId) {
+      return;
+    }
+
+    console.error(`[${this.roomId}] bot reward failed for ${botId} — expiring defaults`);
+    const result = expireEliminationRewardChoice(state);
+
+    if (!result.ok) {
+      state.rewardChoice = null;
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
       return;
     }
 

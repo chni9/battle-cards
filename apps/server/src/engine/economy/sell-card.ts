@@ -49,8 +49,13 @@ export function sellCard(
   }
 
   actor.hand.splice(instanceIndex, 1);
-  // Shop yield ignores isUpgraded — always base sellYield (Lot 2 ruling).
+  // Shop point/life yield ignores upgrade tier — always base sellYield (Lot 2 ruling).
   grantYield(state, actor, definition.sellYield);
+  // Selling an upgraded copy refunds 1 upgrade point (designer ruling 2026-08-04),
+  // including kit-permanent always-upgraded copies.
+  if (instance.isUpgraded) {
+    actor.upgradePoints += 1;
+  }
   state.pool.push(instance);
 
   return { ok: true, cardId: instance.cardId };

@@ -164,6 +164,9 @@ describe('BotDriver (L16-06)', () => {
       completeBotReward: () => {
         throw new Error('unexpected reward');
       },
+      failBotReward: () => {
+        throw new Error('unexpected failBotReward');
+      },
     };
 
     const driver = new BotDriver(host, 0);
@@ -249,6 +252,7 @@ describe('BotDriver (L16-06)', () => {
       },
       completeBotMirror: () => undefined,
       completeBotReward: () => undefined,
+      failBotReward: () => undefined,
     };
 
     const driver = new BotDriver(host, 0);
@@ -284,6 +288,7 @@ describe('BotDriver (L16-06)', () => {
       },
       completeBotMirror: () => undefined,
       completeBotReward: () => undefined,
+      failBotReward: () => undefined,
     };
 
     const driver = new BotDriver(host, 0);

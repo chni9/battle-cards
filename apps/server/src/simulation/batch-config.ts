@@ -25,11 +25,17 @@ export function parseBatchArgs(argv: readonly string[]): BatchConfig {
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
 
-    if (token?.startsWith('--') !== true) {
+    // pnpm forwards a bare `--` before script args; ignore it.
+    if (token === '--' || token?.startsWith('--') !== true) {
       continue;
     }
 
     const key = token.slice(2);
+
+    if (key === '') {
+      continue;
+    }
+
     const value = argv[index + 1];
 
     if (value === undefined || value.startsWith('--')) {

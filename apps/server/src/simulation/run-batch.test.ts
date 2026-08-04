@@ -36,6 +36,25 @@ describe('simulation batch (L18-04)', () => {
     expect(gameSeed('demo', 3)).toBe('demo:3');
   });
 
+  it('ignores a bare -- forwarded by pnpm', () => {
+    const config = parseBatchArgs([
+      '--',
+      '--games',
+      '2',
+      '--players',
+      '2',
+      '--difficulties',
+      'hard,hard',
+      '--seed',
+      'pnpm-sep',
+      '--out',
+      '/tmp/out.jsonl',
+    ]);
+
+    expect(config.games).toBe(2);
+    expect(config.baseSeed).toBe('pnpm-sep');
+  });
+
   it('same base seed and config → byte-identical JSONL', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-sim-'));
     const outA = path.join(dir, 'a.jsonl');
@@ -55,12 +74,44 @@ describe('simulation batch (L18-04)', () => {
     ] as const;
 
     try {
-      await runBatch([...argv, outA]);
-      await runBatch([...argv, outB]);
+      const aResult = await runBatch([...argv, outA]);
+      const bResult = await runBatch([...argv, outB]);
       const a = await readFile(outA, 'utf8');
       const b = await readFile(outB, 'utf8');
       expect(a).toBe(b);
-      expect(a.trimEnd().split('\n')).toHaveLength(2);
+      expect(aResult.body).toBe(bResult.body);
+      expect(a.trimEnd().split('\n')).toHaveLength(aResult.completed);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips stalled hard games and still writes completed rows', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-sim-stall-'));
+    const out = path.join(dir, 'out.jsonl');
+
+    try {
+      // Seed `random-kits:0` is a known hard stall; batch must not abort.
+      const result = await runBatch([
+        '--games',
+        '5',
+        '--players',
+        '4',
+        '--difficulties',
+        'hard,hard,hard,hard',
+        '--seed',
+        'random-kits',
+        '--out',
+        out,
+      ]);
+
+      expect(result.stalled).toBeGreaterThan(0);
+      expect(result.completed + result.stalled).toBe(5);
+      const file = await readFile(out, 'utf8');
+      expect(file).toBe(result.body);
+      if (result.completed > 0) {
+        expect(file.trimEnd().split('\n')).toHaveLength(result.completed);
+      }
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -89,7 +89,8 @@ export interface Card {
   buyCost: CardCost;
   /**
    * Yield when selling a held copy — always the **base** usage transfer (rules spec §1),
-   * never an upgraded play cost.
+   * never an upgraded play cost. Separately, an upgraded copy also refunds 1 upgrade
+   * point on sell (rules spec §1, designer ruling 2026-08-04).
    */
   sellYield: CardCost;
 }

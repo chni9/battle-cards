@@ -342,6 +342,41 @@ describe('heuristic decide (L16-04)', () => {
     });
   });
 
+  it('pickMirrorRedirect ignores upgraded hits when they are not eligible (base Mirror)', () => {
+    const view = baseView({
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false),
+        player('bot-c', 'Charlie', false),
+      ],
+      pendingEffects: [
+        {
+          id: 'upgraded-super',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'super-attack',
+          isUpgraded: true,
+          queuedAt: 0,
+          damageMultiplier: 1,
+        },
+        {
+          id: 'base-basic',
+          sourcePlayerId: 'bot-c',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+    });
+    const pick = pickMirrorRedirect(view, createRng('mirror-eligible'), [
+      'base-basic',
+    ]);
+    expect(pick?.pendingEffectId).toBe('base-basic');
+  });
+
   it('pickEliminationRewards prefers lives below half lifeLimit', () => {
     const view = baseView({ self: baseSelf({ lives: 5, points: 0 }) });
     const picks = pickEliminationRewards(view, [], 25, createRng('reward-lives'));
@@ -558,6 +593,183 @@ describe('heuristic decide (L16-04)', () => {
     expect(decide(view, actions, createRng('spy-skip'))).toEqual({
       type: 'playCard',
       instanceId: 'tax-1',
+    });
+  });
+
+  it('ONMMBZ: sells Mirror to fund Spy instead of buying Tax at 0 points', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 0,
+        hand: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: true },
+          { instanceId: 'mirror-1', cardId: 'mirror', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'buyCard', cardId: 'tax' },
+      { type: 'sellCard', instanceId: 'mirror-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('onmmbz-sell-spy'))).toEqual({
+      type: 'sellCard',
+      instanceId: 'mirror-1',
+    });
+  });
+
+  it('ONMMBZ: refuses Spy on a seat that already resolved Spy as immune', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 10,
+        hand: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      actionLog: [
+        {
+          kind: 'actionResolved',
+          effectId: 'res-1',
+          turnSequence: 2,
+          sourcePlayerId: 'bot-a',
+          targetPlayerId: 'bot-b',
+          cardId: 'spy',
+          isUpgraded: false,
+          outcome: 'immune',
+          livesLost: 0,
+          shieldAbsorbed: 0,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('onmmbz-no-respy'))).toEqual({
+      type: 'playCard',
+      instanceId: 'tax-1',
+    });
+  });
+
+  it('ONMMBZ: prefers Regeneration over draw when lives are soft-low', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 4,
+        points: 12,
+        hand: [{ instanceId: 'regen-1', cardId: 'regeneration', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'regen-1', quantity: 4 },
+    ];
+    expect(decide(view, actions, createRng('onmmbz-regen'))).toEqual({
+      type: 'playCard',
+      instanceId: 'regen-1',
+      quantity: 4,
+    });
+  });
+
+  it('CBCPXV: attacks Imposition owner with Basic instead of Tax or Spy elsewhere', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 10,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+          ],
+        }),
+        player('bot-c', 'Charlie', false),
+      ],
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-c' },
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('cbcpxv-burn'))).toEqual({
+      type: 'playCard',
+      instanceId: 'basic-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('CBCPXV: prefers Strong over Basic to clear Imposition in one hit', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 10,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+          ],
+        }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'strong-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('cbcpxv-strong'))).toEqual({
+      type: 'playCard',
+      instanceId: 'strong-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('CBCPXV: refuses selling attacks while an opponent Imposition is active', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 10,
+        points: 0,
+        hand: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'mirror-1', cardId: 'mirror', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+          ],
+        }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'basic-1' },
+      { type: 'sellCard', instanceId: 'mirror-1' },
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('cbcpxv-keep-atk'))).toEqual({
+      type: 'playCard',
+      instanceId: 'basic-1',
+      targetPlayerId: 'bot-b',
     });
   });
 });

@@ -96,10 +96,22 @@ export function decideWithReason(
 export function pickMirrorRedirect(
   view: PlayingStateView,
   rng: Rng,
+  /** From `GameState.mirrorChoice.eligibleEffectIds` — base Mirror excludes upgraded hits. */
+  eligibleEffectIds?: readonly string[],
 ): MirrorPolicyPick | null {
-  const incoming = view.pendingEffects.filter(
-    (effect) => effect.targetPlayerId === view.you && isAttackCardId(effect.cardId),
-  );
+  const eligible =
+    eligibleEffectIds === undefined ? null : new Set(eligibleEffectIds);
+  const incoming = view.pendingEffects.filter((effect) => {
+    if (effect.targetPlayerId !== view.you || !isAttackCardId(effect.cardId)) {
+      return false;
+    }
+
+    if (eligible !== null && !eligible.has(effect.id)) {
+      return false;
+    }
+
+    return true;
+  });
 
   if (incoming.length === 0) {
     return null;

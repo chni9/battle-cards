@@ -7,6 +7,7 @@ import {
   ATTACK_CARD_IDS,
   SHARED_CARD_IDS,
   getCard,
+  type CardCost,
   type CardInstance,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
@@ -30,6 +31,45 @@ import {
   type RewardKind,
 } from './table-helpers';
 
+function formatShopCost(cost: CardCost | undefined): string {
+  if (cost === undefined) {
+    return '—';
+  }
+
+  if (cost.points !== undefined && cost.points > 0) {
+    return `${String(cost.points)} pts`;
+  }
+
+  if (cost.lives !== undefined && cost.lives > 0) {
+    return `${String(cost.lives)} ${cost.lives === 1 ? 'life' : 'lives'}`;
+  }
+
+  return '—';
+}
+
+function canAffordSharedBuy(
+  view: PlayingStateView,
+  cardId: (typeof SHARED_CARD_IDS)[number],
+): boolean {
+  const cost = getCard(cardId)?.buyCost;
+
+  if (cost === undefined) {
+    return false;
+  }
+
+  const points = cost.points ?? 0;
+  const lives = cost.lives ?? 0;
+
+  if (points > 0 && view.self.points < points) {
+    return false;
+  }
+
+  if (lives > 0 && view.self.lives < lives) {
+    return false;
+  }
+
+  return points > 0 || lives > 0;
+}
 export type TableDialog =
   | { kind: 'actions'; instance: CardInstance; fromSpecial: boolean }
   | {
@@ -486,8 +526,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
 
       <Dialog
         open={dialog?.kind === 'buy'}
-        title="Buy"
+        title="Buy a card"
         onClose={close}
+        panelClassName="max-w-3xl"
         actions={
           <>
             <Button
@@ -502,13 +543,17 @@ export function CardActions(props: CardActionsProps): ReactElement {
             </Button>
             <Button
               variant="orange"
-              disabled={!isMyTurn || actionsLocked}
+              disabled={
+                !isMyTurn ||
+                actionsLocked ||
+                !canAffordSharedBuy(view, buyCardId as (typeof SHARED_CARD_IDS)[number])
+              }
               onClick={() => {
                 onBuyCard(buyCardId as (typeof SHARED_CARD_IDS)[number]);
                 close();
               }}
             >
-              Buy shared
+              Buy selected
             </Button>
             <Button variant="red" onClick={close}>
               Cancel
@@ -516,22 +561,69 @@ export function CardActions(props: CardActionsProps): ReactElement {
           </>
         }
       >
-        <label className="block text-sm">
-          Shared card
-          <select
-            value={buyCardId}
-            onChange={(event) => {
-              setBuyCardId(event.target.value);
-            }}
-            className="mt-1 w-full rounded-[length:var(--radius-control)] border border-border px-2 py-2"
-          >
-            {SHARED_CARD_IDS.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="text-sm text-ink-muted">
+          Choose a shared card from the shop. Prices are double the base play cost.
+        </p>
+        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          {SHARED_CARD_IDS.map((id) => {
+            const definition = getCard(id);
+            const name = definition?.name ?? id;
+            const price = formatShopCost(definition?.buyCost);
+            const affordable = canAffordSharedBuy(view, id);
+            const selected = buyCardId === id;
+            const shopInstance = {
+              instanceId: `shop-${id}`,
+              cardId: id,
+              isUpgraded: false,
+            } as const;
+
+            return (
+              <li key={id}>
+                <button
+                  type="button"
+                  disabled={!isMyTurn || actionsLocked}
+                  aria-pressed={selected}
+                  aria-label={`${name}, ${price}${affordable ? '' : ', cannot afford'}`}
+                  onClick={() => {
+                    setBuyCardId(id);
+                  }}
+                  onDoubleClick={() => {
+                    if (!isMyTurn || actionsLocked || !affordable) {
+                      return;
+                    }
+                    onBuyCard(id);
+                    close();
+                  }}
+                  className={[
+                    'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
+                    selected
+                      ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
+                      : 'border-border-soft bg-surface hover:border-border',
+                    !affordable ? 'opacity-55' : '',
+                    (!isMyTurn || actionsLocked) && 'cursor-not-allowed',
+                  ].join(' ')}
+                >
+                  <Card
+                    instance={shopInstance}
+                    detail="thumb"
+                    className="pointer-events-none w-full max-w-[5.5rem]"
+                  />
+                  <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
+                    {name}
+                  </span>
+                  <span
+                    className={[
+                      'mt-0.5 text-center text-[11px] font-medium',
+                      affordable ? 'text-ink' : 'text-ink-muted',
+                    ].join(' ')}
+                  >
+                    {price}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </Dialog>
 
       <Dialog

@@ -89,6 +89,7 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
       const pick = pickMirrorRedirect(
         mirrorView,
         createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
+        s.mirrorChoice?.eligibleEffectIds,
       );
 
       if (pick === null) {
