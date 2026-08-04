@@ -5,6 +5,7 @@
 
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 
+import { gainPoints } from '../economy/gain-points';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
 import { findPlayer } from './advance-turn';
@@ -34,7 +35,11 @@ function applyPointsGeneratorTicks(owner: Player): void {
       continue;
     }
 
-    owner.points += effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE;
+    gainPoints(
+      owner,
+      effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
+      'direct',
+    );
   }
 }
 
@@ -65,7 +70,7 @@ function applyOneImposition(
 
   if (victim.points >= pointsDue) {
     victim.points -= pointsDue;
-    imposer.points += pointsDue;
+    gainPoints(imposer, pointsDue, 'direct');
     return;
   }
 

@@ -8,6 +8,7 @@
 import type { GameState, Player } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
+import { gainPoints } from './gain-points';
 
 export interface StealPointsInput {
   state: GameState;
@@ -50,7 +51,7 @@ function stealPointsBetween(
   target.turnLedger.pointsLostToTheft += taken;
 
   const gained = taken * gainMultiplier;
-  source.points += gained;
+  gainPoints(source, gained, 'direct');
 
   return { taken, gained };
 }

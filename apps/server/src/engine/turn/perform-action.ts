@@ -18,6 +18,7 @@ import { buyCard } from '../economy/buy-card';
 import { buySpecialCard } from '../economy/buy-special-card';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
+import { gainPoints } from '../economy/gain-points';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
@@ -140,7 +141,7 @@ export function performTurnAction(
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
-    actor.points += getKit(actor.kitId).startingResources.draw;
+    gainPoints(actor, getKit(actor.kitId).startingResources.draw, 'direct');
     actionPlayed = {
       actorPlayerId,
       action: 'draw',

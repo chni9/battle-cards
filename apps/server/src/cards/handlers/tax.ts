@@ -3,6 +3,7 @@
  * Strictly personal: no target. Shield never absorbs the life cost.
  */
 
+import { gainPoints } from '../../engine/economy/gain-points';
 import { applyLifeLoss } from '../../engine/life/apply-life-loss';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
@@ -24,6 +25,10 @@ export const taxHandler: CardHandler = {
 
     const outcome = applyLifeLoss(actor, 1, 'tax');
     actor.turnLedger.livesLost += outcome.livesLost;
-    actor.points += context.card.isUpgraded ? TAX_POINTS_UPGRADED : TAX_POINTS_BASE;
+    gainPoints(
+      actor,
+      context.card.isUpgraded ? TAX_POINTS_UPGRADED : TAX_POINTS_BASE,
+      'direct',
+    );
   },
 };

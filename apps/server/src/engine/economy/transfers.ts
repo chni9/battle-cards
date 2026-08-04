@@ -9,6 +9,7 @@ import type { CardCost, GameState, Player } from '@card-battle/shared';
 
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
+import { gainPoints } from './gain-points';
 
 export function canAffordCost(player: Player, cost: CardCost): boolean {
   if (cost.pointsPerLife !== undefined) {
@@ -80,7 +81,7 @@ export function grantYield(state: GameState, player: Player, yieldCost: CardCost
   const lives = yieldCost.lives ?? 0;
 
   if (points > 0) {
-    player.points += points;
+    gainPoints(player, points, 'direct');
   }
 
   if (lives > 0) {

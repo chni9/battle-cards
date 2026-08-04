@@ -7,6 +7,8 @@
  * ways. Upgrade adds resources under the life cap.
  */
 
+import { gainPoints } from '../../engine/economy/gain-points';
+import { gainUpgradePoints } from '../../engine/economy/gain-upgrade-points';
 import { gainLives } from '../../engine/life/gain-lives';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
@@ -45,8 +47,8 @@ export const cloningHandler: CardHandler = {
     );
 
     if (card.isUpgraded) {
-      user.points += 10;
-      user.upgradePoints += 2;
+      gainPoints(user, 10, 'direct');
+      gainUpgradePoints(user, 2, 'direct');
       gainLives(user, 4, state.lifeLimit);
     }
   },

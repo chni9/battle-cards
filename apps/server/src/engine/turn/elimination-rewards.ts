@@ -9,6 +9,8 @@ import {
   type RewardChoice,
 } from '@card-battle/shared';
 
+import { gainPoints } from '../economy/gain-points';
+import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { transferCardInstance } from '../kits/acquire-card';
 import { gainLives } from '../life/gain-lives';
 import type { Rng } from '../rng';
@@ -327,12 +329,12 @@ function applyOneChoice(
   }
 
   if (choice.type === 'points') {
-    eliminator.points += ELIMINATION_REWARD_POINTS;
+    gainPoints(eliminator, ELIMINATION_REWARD_POINTS, 'direct');
     return;
   }
 
   if (choice.type === 'upgradePoint') {
-    eliminator.upgradePoints += 1;
+    gainUpgradePoints(eliminator, 1, 'direct');
     return;
   }
 
