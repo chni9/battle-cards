@@ -51,6 +51,8 @@ export type {
 export interface TurnStartedPayload {
   activePlayerId: string;
   deadlineMs: number;
+  /** Consecutive turns remaining for the active player (Block). 0 when inactive — technical spec v4 §4.5. */
+  blockTurnsRemaining: number;
 }
 
 export type PublicActionKind =

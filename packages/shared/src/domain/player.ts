@@ -87,6 +87,12 @@ export interface Player {
    */
   isEliminated: boolean;
   /**
+   * Consecutive turns remaining for Block (technical spec v4 §4.5). 0 when inactive.
+   * Decremented in `advanceTurn`, not in `PersistentEffect.counter` — that field is
+   * eaten by `applyDamage` one point per life lost.
+   */
+  blockTurnsRemaining: number;
+  /**
    * Frozen kit / cards / tokens at the moment of elimination (Lot 19). Present once
    * eliminated; used for the public `eliminationReveal` view. Not Spy relations.
    */

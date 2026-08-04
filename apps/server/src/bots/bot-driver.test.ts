@@ -41,6 +41,7 @@ function emptyView(you: string): PlayingStateView {
         },
         activePersistentEffects: [],
         activeShield: null,
+        blockTurnsRemaining: 0,
       },
     ],
     self: {

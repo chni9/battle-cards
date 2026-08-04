@@ -3,6 +3,11 @@
  *
  * Walks the full seat order so a player eliminated on their own turn does not
  * incorrectly jump to `alive[0]` (Lot 6).
+ *
+ * Block consecutive turns (technical spec v4 §4.5): when the player who just
+ * finished still has `blockTurnsRemaining > 0`, decrement it, keep the same
+ * `currentTurnPlayerId`, still bump `turnSequence`, and reset the ledger. Both
+ * `finishTurnPhases` and `resumeAfterRewards` call here — not either alone.
  */
 
 import type { GameState, Player } from '@card-battle/shared';
@@ -16,6 +21,19 @@ export function advanceTurn(state: GameState): void {
   }
 
   const currentId = state.currentTurnPlayerId;
+  const currentPlayer = currentId === null ? undefined : findPlayer(state, currentId);
+
+  if (
+    currentPlayer !== undefined &&
+    !currentPlayer.isEliminated &&
+    currentPlayer.blockTurnsRemaining > 0
+  ) {
+    currentPlayer.blockTurnsRemaining -= 1;
+    state.turnSequence += 1;
+    resetLedger(currentPlayer);
+    return;
+  }
+
   const full = state.players;
   let start = full.findIndex((player) => player.id === currentId);
 

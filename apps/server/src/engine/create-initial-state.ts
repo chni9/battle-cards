@@ -140,6 +140,7 @@ function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): 
       consecutiveTimeouts: 0,
     },
     isEliminated: false,
+    blockTurnsRemaining: 0,
     eliminationSnapshot: null,
   };
 

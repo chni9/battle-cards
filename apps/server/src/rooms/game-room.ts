@@ -1614,11 +1614,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const activePlayerId = state?.currentTurnPlayerId;
     const deadlineMs = this.turnDeadlineMs;
 
-    if (activePlayerId === null || activePlayerId === undefined || deadlineMs === null) {
+    if (activePlayerId === null || activePlayerId === undefined || deadlineMs === null || state === null) {
       return;
     }
 
-    this.broadcast(TURN_STARTED, { activePlayerId, deadlineMs });
+    const activePlayer = findPlayer(state, activePlayerId);
+    const blockTurnsRemaining = activePlayer?.blockTurnsRemaining ?? 0;
+
+    this.broadcast(TURN_STARTED, { activePlayerId, deadlineMs, blockTurnsRemaining });
   }
 
   private clearTurnTimer(): void {
