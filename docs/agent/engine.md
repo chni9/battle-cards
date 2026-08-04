@@ -230,7 +230,8 @@ only so the set stays view-derivable.
 - ❌ A per-player sequence counter for `queuedAt`.
 - ❌ Hardcoding 25 for the life cap, or 10 for the upgrade-point cost (a future kit changes it).
 - ❌ Adding lives with `player.lives += n` and clamping by hand instead of calling `gainLives`.
-- ❌ Reading from `GameState.pool` — it is write-only in V1, no card consumes it. Do not invent a use.
+- ❌ Inventing a second pool-removal path outside `takeFromPool` — the pool is public and
+  readable (rules spec §1, technical spec v4 §4.3); removals still go through one primitive.
 - ❌ Granting immunity to an absent or inactive player. They remain a valid target throughout.
 
 ## Checklist

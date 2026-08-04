@@ -26,7 +26,8 @@ export interface GameState {
   players: Player[];
   /**
    * The shared pool (rules spec §1): sold cards, used special cards, and the cards of
-   * eliminated players. Write-only in V1 — no V1 card reads from it (technical spec §6.3).
+   * eliminated players. Public to all players (rules spec §1); readable by Card Absorber
+   * via `takeFromPool` (technical spec v4 §4.3).
    */
   pool: CardInstance[];
   /**

@@ -71,6 +71,7 @@ function baseView(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     self,
     pendingEffects: [],
     actionLog: [],
+    pool: [],
   };
   return { ...base, ...overrides, self: overrides.self ?? base.self };
 }

@@ -165,6 +165,33 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(JSON.stringify(view)).not.toContain('nextPoolInstanceSeq');
   });
 
+  it('includes the shared pool as public state (L20-03)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'pool-in-view',
+    });
+    state.pool.push({
+      instanceId: 'pool-1',
+      cardId: 'tax',
+      isUpgraded: false,
+    });
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.pool).toEqual([
+      { instanceId: 'pool-1', cardId: 'tax', isUpgraded: false },
+    ]);
+  });
+
   it('never puts opponent lives or shield in the public player slice', () => {
     const state = createInitialState({
       seats: [

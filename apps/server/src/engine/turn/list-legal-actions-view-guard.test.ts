@@ -3,10 +3,11 @@
  * Technical spec v3 §10.1. Failure = a handler leaks hidden state — stop and ask.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { GameState } from '@card-battle/shared';
 
+import { taxHandler } from '../../cards/handlers/tax';
 import { createInitialState } from '../create-initial-state';
 import { grantSpy } from '../../protocol/visibility-matrix';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
@@ -137,5 +138,43 @@ describe('listLegalActions §10.1 view-only guard (L16-03)', () => {
 
     assertViewParity(state, a.id);
     assertViewParity(state, b.id);
+  });
+
+  it('matches when a canPlay reads pool contents (L20-03)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'view-legal-pool',
+    });
+    const actor = state.players.find((player) => player.id === 'a');
+
+    if (actor === undefined) {
+      throw new Error('missing actor');
+    }
+
+    state.pool.push({
+      instanceId: 'pool-card-1',
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    actor.hand = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    actor.lives = 5;
+    state.currentTurnPlayerId = actor.id;
+
+    const canPlaySpy = vi.spyOn(taxHandler, 'canPlay').mockImplementation((context) => {
+      return context.targetPlayerId === null && context.state.pool.length > 0;
+    });
+
+    try {
+      assertViewParity(state, actor.id);
+      const fromState = listLegalActions(state, actor.id);
+      expect(fromState.some((action) => action.type === 'playCard' && action.instanceId === 'tax-1')).toBe(
+        true,
+      );
+    } finally {
+      canPlaySpy.mockRestore();
+    }
   });
 });

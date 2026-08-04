@@ -61,6 +61,7 @@ function baseView(): PlayingStateView {
     },
     pendingEffects: [],
     actionLog: [],
+    pool: [],
   };
 }
 

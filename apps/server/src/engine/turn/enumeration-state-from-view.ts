@@ -107,7 +107,7 @@ export function enumerationStateFromView(
     mode: 'classic',
     lifeLimit: CLASSIC_LIFE_LIMIT,
     players,
-    pool: [],
+    pool: view.pool.map((card) => ({ ...card })),
     nextPoolInstanceSeq: 0,
     currentTurnPlayerId: view.currentTurnPlayerId,
     turnSequence: view.turnSequence,

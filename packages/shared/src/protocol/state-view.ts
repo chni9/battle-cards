@@ -192,6 +192,11 @@ export interface PlayingStateView {
    * opaque reward claims. Card identity included on plays (ruling §6.2 #7).
    */
   actionLog: readonly ActionLogEntryView[];
+  /**
+   * Shared pool — rules spec §1 "visible to all players"; technical spec v4 §4.3 / §5.1.
+   * Required so `enumerationStateFromView` can reconstruct pool contents for §10.1.
+   */
+  pool: readonly CardInstance[];
 }
 
 /** Played action — same public fields as `actionPlayed` wire payload. */

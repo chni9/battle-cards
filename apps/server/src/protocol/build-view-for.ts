@@ -228,6 +228,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     self,
     pendingEffects,
     actionLog: [...actionLog],
+    pool: state.pool.map((card) => ({ ...card })),
   };
 }
 
