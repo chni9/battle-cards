@@ -25,9 +25,10 @@ What follows is what those rules do not say.
 3. **The mutual-attack comparison always triggers on the turn of the player who attacked
    second**, because a retaliation can only be born during that player's own turn, whose
    resolution phase follows immediately.
-4. **In V1 all damage values are distinct** (1, 2, 3, 4, 7, 10), so "equal damage" necessarily
-   means the same card at the same upgrade level (technical spec §6.3). Do not build a
-   cancellation test that only works because two different cards happen to tie.
+4. **Mutual cancellation compares final damage** (base/upgraded damage × `damageMultiplier`),
+   not card identity (#V4-2). Equal final damage cancels both even when the cards differ
+   (e.g. Mirror-doubled basic = 2 cancels strong = 2). Unequal cancels the weaker; the
+   stronger stays pending (Lot 19 / AGENTS golden rule 1).
 
 ## The two life-loss primitives
 
@@ -69,6 +70,21 @@ Three properties of the implementation, each decided rather than obvious:
 `gainLives` is the *only* way a player ever gains lives — golden rule 9 has to live somewhere,
 and clamping inline in each card would defeat it. It takes the cap as a parameter, always read
 from `GameState.lifeLimit`.
+
+### Direct `player.lives` mutations — exempted
+
+Technical spec v4 §4.6. Five production call sites bypass the three life primitives. Each carries
+an inline comment citing why; do not route them through `applyDamage` or `applyLifeLoss` without
+a ruling — golden rule 2 forbids enriching those primitives to absorb these cases. Future kit
+hooks (Ghost, Duplicator) observe outcomes caller-side, not inside the primitives.
+
+| Site | Why not a typed loss or gain |
+|---|---|
+| `resolve-pending.ts` — self-Suicide | Lethal self-elimination in one step (rules spec §5). Not a bounded debit; must not decrement card counters. |
+| `resolve-pending.ts` — Sentence | Instant lethal effect (rules spec §5). Zeroes lives regardless of current count; not attack damage and not incremental loss. |
+| `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. |
+| `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. |
+| `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. |
 
 ## Seeded randomness
 
@@ -226,7 +242,7 @@ only so the set stays view-derivable.
 - ❌ One life-loss function with a `isAttack` flag — reintroduces the exact bug §4.2 warns about.
 - ❌ Resolving a queued effect at queue time, or at the start of the target's turn — it must be
   after their action.
-- ❌ Comparing attacks by "which is stronger" — that clause is deleted.
+- ❌ Inventing a mutual-cancel rule other than final-damage compare (Lot 19 / #V4-2).
 - ❌ A per-player sequence counter for `queuedAt`.
 - ❌ Hardcoding 25 for the life cap, or 10 for the upgrade-point cost (a future kit changes it).
 - ❌ Adding lives with `player.lives += n` and clamping by hand instead of calling `gainLives`.

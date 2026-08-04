@@ -1099,3 +1099,18 @@ Proxy is now `lastCompleteTurnLivesLostByTarget`: sum applied `livesLost` on the
 target's latest completed `actionPlayed` turnSequence (rules §3 / technical spec v3
 Deny band). Pending attacks do not count. Tax-only ledger loss stays invisible in the
 public log (unchanged visibility).
+
+## 2026-08-04 · [P] #V4-2 Mutual cancel compares final damage (L20-07)
+
+Designer ruling (session): mutual cancellation uses **final damage**
+(`attackDamageFor × damageMultiplier`), not card identity at equal upgrade.
+Code already did this; docs that claimed “all damage values are distinct” were wrong
+and are corrected in L20-07. A Mirror-doubled basic attack (2) cancels a strong attack
+(2) today — confirmed, not a behaviour change.
+
+## 2026-08-04 · [P] #V4-3 Multi-pending mutual pairing (L20-07)
+
+Designer ruling (session): each of N pending attacks from a multi-target play
+(e.g. MEGA) is evaluated **independently on its own target's turn**, consistent with
+Assassin multi-attacks. Pairing on a given turn still uses the existing first-match
+`findIndex` among reciprocal pending attacks targeting the acting player.

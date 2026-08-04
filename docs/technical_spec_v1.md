@@ -325,8 +325,8 @@ Accepted case: a player who disconnects during their own turn blocks the game fo
 ### 6.3 Clarifications
 
 - The 25-life cap (spec §7) applies to every source of gain: Regeneration, Absorber, Imposition, elimination rewards, upgraded Cloning.
-- The **shared pool** must be fed correctly (sales, used special cards, eliminated players' cards), but no V1 card reads from it. It stays write-only. Do not invent a use for it.
-- V1 damage values are all distinct (1, 2, 3, 4, 7, 10). Two attacks dealing equal damage are therefore necessarily the same card at the same upgrade level.
+- The **shared pool** must be fed correctly (sales, used special cards, eliminated players' cards). As of V4 the pool is public and readable via `takeFromPool` (technical spec v4 §4.3); V1 left it write-only.
+- Mutual attack cancellation compares **final damage** (including `damageMultiplier`), not card identity (#V4-2 / L20-07). The older claim that “all V1 damage values are distinct” was a documentation bug — Mirror multipliers already made equal final damage reachable across different cards.
 
 ---
 

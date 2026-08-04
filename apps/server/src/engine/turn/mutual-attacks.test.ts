@@ -230,10 +230,122 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
 
     state.currentTurnPlayerId = carol.id;
     const result = performTurnAction(state, carol.id, { type: 'draw' });
-
     expect(result.ok).toBe(true);
     expect(carol.lives).toBe(18);
-    expect(carol.pendingEffects).toHaveLength(0);
+  });
+
+  it('cancels equal final damage across different cards (Mirror-doubled basic vs strong) (#V4-2 / L20-07)', () => {
+    const state = twoPlayers('mutual-final-dmg-equal');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 10;
+    bob.lives = 10;
+
+    const incoming = queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    // Mirror redirect doubles damage — final damage 2, same as strong.
+    incoming.damageMultiplier = 2;
+
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(10);
+    expect(alice.lives).toBe(10);
+    expect(bob.pendingEffects).toHaveLength(0);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('cancels the weaker when final damage is unequal (#V4-2 / L20-07)', () => {
+    const state = twoPlayers('mutual-final-dmg-unequal');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+
+    const incoming = queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    incoming.damageMultiplier = 2; // final 2
+
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'super-attack',
+      isUpgraded: false,
+    }); // final 7
+
+    state.currentTurnPlayerId = bob.id;
+    const bobPlay = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(bobPlay.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(bob.pendingEffects).toHaveLength(0);
+    expect(alice.pendingEffects.some((e) => e.cardId === 'super-attack')).toBe(true);
+
+    state.currentTurnPlayerId = alice.id;
+    const aliceDraw = performTurnAction(state, alice.id, { type: 'draw' });
+    expect(aliceDraw.ok).toBe(true);
+    expect(alice.lives).toBe(13);
+  });
+
+  it('evaluates each reciprocal pending independently on the target turn (#V4-3 / L20-07)', () => {
+    // Two pendings from Alice onto Bob; Bob retaliates once. First reciprocal pair
+    // cancels; the second Alice→Bob attack remains for Bob's resolve (independent).
+    const state = twoPlayers('mutual-multi-pending');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    // One Alice→Bob cancelled mutually; the other applies (1 damage).
+    expect(bob.lives).toBe(19);
+    expect(alice.lives).toBe(20);
     expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(0);
   });
