@@ -89,8 +89,8 @@ export function OpponentZone({
         <h3 className="truncate text-xs font-semibold text-ink sm:text-sm">
           {player.nickname}
         </h3>
-        <ConnectionBadge player={player} />
-        {player.isBot && player.botDifficulty !== undefined && (
+        {!player.isEliminated && <ConnectionBadge player={player} />}
+        {!player.isEliminated && player.isBot && player.botDifficulty !== undefined && (
           <BotSeatLabel difficulty={player.botDifficulty} />
         )}
       </div>

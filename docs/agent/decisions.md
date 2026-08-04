@@ -1087,3 +1087,15 @@ Fix (policy only — no rule change):
 
 Tunables in `heuristic-weights.ts` (`IMPOSITION_INVEST_BONUS`, etc.). Re-run the
 gross-imbalance screen before trusting kit rates again.
+
+## 2026-08-04 · [P] Absorber Deny uses last complete turn, not last log hit
+
+`lastLivesLostByTarget` kept the most recent `actionResolved.livesLost` for a seat
+forever. After a clean later turn (draw only), Absorber still scored Deny and gained
+0 from the ledger — playtests saw Absorber on the turn an attack was *played*, before
+resolve, chasing a stale signal.
+
+Proxy is now `lastCompleteTurnLivesLostByTarget`: sum applied `livesLost` on the
+target's latest completed `actionPlayed` turnSequence (rules §3 / technical spec v3
+Deny band). Pending attacks do not count. Tax-only ledger loss stays invisible in the
+public log (unchanged visibility).

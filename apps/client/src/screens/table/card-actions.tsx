@@ -401,22 +401,49 @@ export function CardActions(props: CardActionsProps): ReactElement {
           ) : undefined
         }
       >
-        <label className="text-sm">
-          Lives (1–4){' '}
-          <input
-            type="number"
-            min={1}
-            max={4}
-            value={quantity}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              if (Number.isInteger(next) && next >= 1 && next <= 4) {
-                setQuantity(next);
-              }
-            }}
-            className="ml-2 w-16 rounded-[length:var(--radius-control)] border border-border px-2 py-1"
-          />
-        </label>
+        <div>
+          <p className="text-sm text-ink">Lives (1–4)</p>
+          <div
+            className="mt-2 flex items-center gap-2"
+            role="group"
+            aria-label="Regeneration quantity"
+          >
+            <Button
+              variant="orange"
+              disabled={quantity <= 1}
+              onClick={() => {
+                setQuantity((prev) => Math.max(1, prev - 1));
+              }}
+            >
+              −
+            </Button>
+            <span className="min-w-[2rem] text-center text-lg font-semibold tabular-nums text-ink">
+              {quantity}
+            </span>
+            <Button
+              variant="green"
+              disabled={quantity >= 4}
+              onClick={() => {
+                setQuantity((prev) => Math.min(4, prev + 1));
+              }}
+            >
+              +
+            </Button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {([1, 2, 3, 4] as const).map((n) => (
+              <Button
+                key={n}
+                variant={quantity === n ? 'purple' : 'yellow'}
+                onClick={() => {
+                  setQuantity(n);
+                }}
+              >
+                {n}
+              </Button>
+            ))}
+          </div>
+        </div>
       </Dialog>
 
       <Dialog

@@ -234,7 +234,8 @@ interface PolicyContext {
   incomingThreat: number;
   threatOrder: readonly string[];
   cumulativeLoss: ReadonlyMap<string, number>;
-  lastAppliedLoss: ReadonlyMap<string, number>;
+  /** Public proxy for Absorber: summed applied livesLost on each seat's last complete turn. */
+  lastCompleteTurnLoss: ReadonlyMap<string, number>;
   observedSpend: ReadonlyMap<string, number>;
   rng: Rng;
 }
@@ -254,7 +255,7 @@ function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
     incomingThreat,
     threatOrder: rankThreatOpponents(view, rng),
     cumulativeLoss: sumLivesLostByTarget(view),
-    lastAppliedLoss: lastLivesLostByTarget(view),
+    lastCompleteTurnLoss: lastCompleteTurnLivesLostByTarget(view),
     observedSpend: sumPointsSpentByActor(view),
     rng,
   };
@@ -567,9 +568,11 @@ function scorePlayCard(
     }
   }
 
-  // Deny
+  // Deny — Absorber only when the target's last *complete* turn lost enough lives
+  // (rules §3 / ledger). Never the stale last resolution from earlier turns, and
+  // never pending attacks that have not resolved yet.
   if (cardId === 'absorber' && action.targetPlayerId !== undefined) {
-    const lastLoss = ctx.lastAppliedLoss.get(action.targetPlayerId) ?? 0;
+    const lastLoss = ctx.lastCompleteTurnLoss.get(action.targetPlayerId) ?? 0;
 
     if (lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST) {
       return { score: HEURISTIC_BAND_WEIGHTS.deny + lastLoss, code: 'deny' };
@@ -1081,15 +1084,55 @@ function sumLivesLostByTarget(view: PlayingStateView): Map<string, number> {
   return map;
 }
 
-function lastLivesLostByTarget(view: PlayingStateView): Map<string, number> {
-  const map = new Map<string, number>();
+/**
+ * Public Absorber proxy for `TurnLedger.livesLost` on each seat's last complete turn.
+ *
+ * Resolutions land on the target's turn (`turnSequence` matches their `actionPlayed`).
+ * Using the global last resolution per target was wrong: an old big hit stayed forever
+ * when later turns had no `actionResolved` on them — bots Absorbed for 0 ledger gain.
+ */
+function lastCompleteTurnLivesLostByTarget(view: PlayingStateView): Map<string, number> {
+  const lastCompleteTurnSeq = new Map<string, number>();
 
   for (const entry of view.actionLog) {
-    if (entry.kind !== 'actionResolved' || entry.outcome !== 'applied') {
+    if (entry.kind !== 'actionPlayed') {
       continue;
     }
 
-    map.set(entry.targetPlayerId, entry.livesLost);
+    // In-progress turn is not complete — ledger still accumulating / will reset next.
+    if (
+      entry.actorPlayerId === view.currentTurnPlayerId &&
+      entry.turnSequence === view.turnSequence
+    ) {
+      continue;
+    }
+
+    const previous = lastCompleteTurnSeq.get(entry.actorPlayerId) ?? -1;
+
+    if (entry.turnSequence > previous) {
+      lastCompleteTurnSeq.set(entry.actorPlayerId, entry.turnSequence);
+    }
+  }
+
+  const map = new Map<string, number>();
+
+  for (const [playerId, turnSeq] of lastCompleteTurnSeq) {
+    let lost = 0;
+
+    for (const entry of view.actionLog) {
+      if (
+        entry.kind !== 'actionResolved' ||
+        entry.outcome !== 'applied' ||
+        entry.targetPlayerId !== playerId ||
+        entry.turnSequence !== turnSeq
+      ) {
+        continue;
+      }
+
+      lost += entry.livesLost;
+    }
+
+    map.set(playerId, lost);
   }
 
   return map;

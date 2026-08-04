@@ -871,4 +871,121 @@ describe('heuristic decide (L16-04)', () => {
       ),
     ).toEqual({ type: 'draw' });
   });
+
+  it('Absorber Deny only when target lost lives on their last complete turn', () => {
+    const absorb: TurnAction = {
+      type: 'playCard',
+      instanceId: 'abs-1',
+      targetPlayerId: 'bot-b',
+    };
+    const actions: TurnAction[] = [{ type: 'draw' }, absorb];
+
+    // Stale hit from an older turn, then a clean complete turn with no life loss —
+    // Absorber must not Deny (would gain 0 from the ledger).
+    const staleThenClean = baseView({
+      turnSequence: 10,
+      currentTurnPlayerId: 'bot-a',
+      self: baseSelf({
+        points: 10,
+        hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }],
+      }),
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'playCard',
+          cardId: 'tax',
+          turnSequence: 4,
+        },
+        {
+          kind: 'actionResolved',
+          effectId: 'old-hit',
+          sourcePlayerId: 'bot-a',
+          targetPlayerId: 'bot-b',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          livesLost: 7,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 4,
+        },
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'draw',
+          turnSequence: 8,
+        },
+      ],
+    });
+    expect(decide(staleThenClean, actions, createRng('abs-stale'))).toEqual({ type: 'draw' });
+
+    // Fresh complete turn with a large applied loss — Deny Absorber.
+    const freshLoss = baseView({
+      turnSequence: 10,
+      currentTurnPlayerId: 'bot-a',
+      self: baseSelf({
+        points: 10,
+        hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }],
+      }),
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'draw',
+          turnSequence: 8,
+        },
+        {
+          kind: 'actionResolved',
+          effectId: 'fresh-hit',
+          sourcePlayerId: 'bot-a',
+          targetPlayerId: 'bot-b',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          livesLost: 7,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 8,
+        },
+      ],
+    });
+    expect(decide(freshLoss, actions, createRng('abs-fresh'))).toEqual(absorb);
+
+    // Pending attack only (not yet resolved) — must not Absorber.
+    const pendingOnly = baseView({
+      turnSequence: 10,
+      currentTurnPlayerId: 'bot-a',
+      self: baseSelf({
+        points: 10,
+        hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'pend-1',
+          sourcePlayerId: 'bot-a',
+          targetPlayerId: 'bot-b',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+        },
+      ],
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-a',
+          action: 'playCard',
+          cardId: 'super-attack',
+          targetPlayerId: 'bot-b',
+          turnSequence: 9,
+        },
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'draw',
+          turnSequence: 6,
+        },
+      ],
+    });
+    expect(decide(pendingOnly, actions, createRng('abs-pending'))).toEqual({ type: 'draw' });
+  });
 });

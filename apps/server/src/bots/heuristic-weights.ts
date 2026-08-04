@@ -24,7 +24,7 @@ export const BUY_SPECIAL_POINTS_FLOOR = 40;
  */
 export const TAX_LIFE_BUFFER = 5;
 
-/** Absorber Deny band: last applied resolution livesLost on target ≥ this. */
+/** Absorber Deny band: livesLost on target's last complete turn (public log) ≥ this. */
 export const DENY_ABSORBER_MIN_LIVES_LOST = 3;
 
 /**

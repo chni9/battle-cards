@@ -132,14 +132,17 @@ rules above are unchanged — this section only covers how the client looks.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
-  quantity Dialog.
+  quantity Dialog. Regen quantity uses ± / chip buttons (no `type="number"` — mobile
+  controlled inputs stuck at 1).
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
 - **Spy / death reveal:** keep the opponent seat compact (kit portrait + “Spied — tap” /
   “Revealed — tap”). Opening the portrait shows `OpponentRevealDialog` with kit name,
   resources (live or base Spy snapshot), hand, and specials — this replaces
-  `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`.
+  `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`. Dead seats: kit
+  portrait “Eliminated” overlay only — no connection “eliminated” badge and no Bot · hard
+  label (they waste space next to the reveal).
 - **`actionResolved.outcome === 'immune'`**: do **not** surface “immune” in the timers
   banner, resolution FX flash, or action-log copy (Untouchable vs Thief/Spy stays opaque).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
