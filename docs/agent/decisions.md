@@ -894,3 +894,13 @@ on existing `actionPlayed` / `mirrorRedirected` / `rewardsClaimed` entries (and 
 `actionPlayed` broadcast). No new S→C event; no PROTOCOL bump (additive under 21). Coarse
 vocabulary (~10 codes from heuristic bands + noise / Mirror / reward / fallback). Reasons are
 explanatory only — never a second source of game state and must not drive table legality.
+
+## 2026-08-04 · [T] Heuristic pressure + Tax buffer retune (Hard playtest)
+
+Playtest vs Hard (1 and 3 bots): policy always preferred Basic attack over Super, and Taxed
+down toward ~4 lives with no pending hits. Tunables only (`heuristic-weights.ts` / pressure
+term in `heuristic-policy.ts`) — no rule change (#V3-5).
+
+- Pressure: `damage / cost` → `damage - cost / PRESSURE_COST_DIVISOR` (`PRESSURE_COST_DIVISOR = 2`)
+  so Super (7 − 5) beats Basic (1 − 0.5).
+- `TAX_LIFE_BUFFER`: **3 → 5** (Tax only while `lives > incomingThreat + 5`).

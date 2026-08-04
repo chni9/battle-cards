@@ -22,6 +22,7 @@ import {
   BUY_SPECIAL_POINTS_FLOOR,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
+  PRESSURE_COST_DIVISOR,
   TAX_LIFE_BUFFER,
 } from './heuristic-weights';
 
@@ -363,7 +364,7 @@ function scorePlayCard(
     }
   }
 
-  // Pressure
+  // Pressure — prefer raw damage with a soft cost penalty (not pure damage/cost).
   if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
     const damage = attackDamageFor(cardId, isUpgraded);
     const cost = Math.max(1, getCard(cardId)?.cost.points ?? 1);
@@ -374,7 +375,12 @@ function scorePlayCard(
       ? -2
       : 0;
     return {
-      score: HEURISTIC_BAND_WEIGHTS.pressure + damage / cost + onTop + shieldPenalty,
+      score:
+        HEURISTIC_BAND_WEIGHTS.pressure +
+        damage -
+        cost / PRESSURE_COST_DIVISOR +
+        onTop +
+        shieldPenalty,
       code: 'pressure',
     };
   }

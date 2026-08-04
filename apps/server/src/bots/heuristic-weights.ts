@@ -18,8 +18,18 @@ export const HEURISTIC_BAND_WEIGHTS = {
 /** `buySpecialCard` only when points ≥ this (2 × SPECIAL_CARD_PURCHASE_COST). */
 export const BUY_SPECIAL_POINTS_FLOOR = 40;
 
-/** Tax only while lives > incomingThreat + this buffer. */
-export const TAX_LIFE_BUFFER = 3;
+/**
+ * Tax only while lives > incomingThreat + this buffer.
+ * Raised 3 → 5 (2026-08-04 playtest): buffer 3 Taxed down to ~4 lives with no pending hits.
+ */
+export const TAX_LIFE_BUFFER = 5;
 
 /** Absorber Deny band: last applied resolution livesLost on target ≥ this. */
 export const DENY_ABSORBER_MIN_LIVES_LOST = 3;
+
+/**
+ * Pressure soft cost penalty: score uses `damage - cost / PRESSURE_COST_DIVISOR`.
+ * Pure `damage/cost` ranked Basic (1/1) above Super (7/10). Divisor 2 keeps cost
+ * relevant without making expensive attacks worse than chip damage.
+ */
+export const PRESSURE_COST_DIVISOR = 2;

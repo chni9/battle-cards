@@ -222,4 +222,41 @@ describe('heuristic decide (L16-04)', () => {
     const picks = pickEliminationRewards(view, [], 25, createRng('reward-lives'));
     expect(picks).toEqual([{ type: 'lives' }, { type: 'lives' }]);
   });
+
+  it('prefers Super over Basic on the same target (pressure uses damage − cost/2)', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'super-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('prefer-super'))).toEqual({
+      type: 'playCard',
+      instanceId: 'super-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('refuses Tax when lives are only just above incoming threat + buffer', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 5,
+        hand: [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }],
+      }),
+      // buffer 5 + threat 0 → need lives > 5 to Tax; at 5, Tax is illegal for the policy
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('tax-buffer'))).toEqual({ type: 'draw' });
+  });
 });
