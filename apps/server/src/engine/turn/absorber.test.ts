@@ -88,7 +88,7 @@ describe('Absorber (rules spec §3, L3-08)', () => {
       pointsSpent: 7,
       upgradePointsSpent: 1,
       pointsLostToTheft: 10,
-      upgradePointsLostToTheft: 0,
+      upgradePointsLostToTheft: 4,
     };
 
     alice.points = 3;
