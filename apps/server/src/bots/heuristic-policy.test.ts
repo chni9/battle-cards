@@ -2,8 +2,9 @@
  * Heuristic policy — technical spec v3 §4.4 (L16-04).
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import * as shared from '@card-battle/shared';
 import type {
   PlayingStateView,
   PrivateSelfView,
@@ -53,6 +54,7 @@ function player(
     connection: CONNECTED,
     activePersistentEffects: [],
     activeShield: null,
+    blockTurnsRemaining: 0,
     ...extras,
   };
 }
@@ -176,6 +178,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -206,6 +209,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -236,6 +240,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -270,6 +275,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: true,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -301,6 +307,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -332,6 +339,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 0,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -360,6 +368,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: true,
           queuedAt: 0,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
         {
           id: 'base-basic',
@@ -369,6 +378,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
     });
@@ -968,6 +978,7 @@ describe('heuristic decide (L16-04)', () => {
           isUpgraded: false,
           queuedAt: 1,
           damageMultiplier: 1,
+          redirectedBy: null,
         },
       ],
       actionLog: [
@@ -988,5 +999,119 @@ describe('heuristic decide (L16-04)', () => {
       ],
     });
     expect(decide(pendingOnly, actions, createRng('abs-pending'))).toEqual({ type: 'draw' });
+  });
+
+  it('L20-17: fallthrough playCard never beats draw across rng seeds', () => {
+    const fallthroughCases: {
+      label: string;
+      view: PlayingStateView;
+      play: TurnAction;
+    }[] = [
+      {
+        label: 'non-Kamikaze Suicide',
+        view: baseView({
+          self: baseSelf({
+            kitId: 'assassin',
+            specialCards: [{ instanceId: 'su-1', cardId: 'suicide', isUpgraded: false }],
+          }),
+        }),
+        play: { type: 'playCard', instanceId: 'su-1' },
+      },
+      {
+        label: 'Cloning without Spy signal or incoming threat',
+        view: baseView({
+          self: baseSelf({
+            kitId: 'scientific',
+            points: 10,
+            specialCards: [{ instanceId: 'clone-1', cardId: 'cloning', isUpgraded: false }],
+          }),
+        }),
+        play: {
+          type: 'playCard',
+          instanceId: 'clone-1',
+          targetPlayerId: 'bot-b',
+        },
+      },
+      {
+        label: 'Absorber without a last-turn loss signal',
+        view: baseView({
+          self: baseSelf({
+            points: 10,
+            hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }],
+          }),
+        }),
+        play: { type: 'playCard', instanceId: 'abs-1', targetPlayerId: 'bot-b' },
+      },
+    ];
+
+    for (const { label, view, play } of fallthroughCases) {
+      const actions: TurnAction[] = [{ type: 'draw' }, play];
+
+      for (let i = 0; i < 12; i += 1) {
+        expect(decide(view, actions, createRng(`l20-17-fallthrough-${label}-${i}`)), label).toEqual({
+          type: 'draw',
+        });
+      }
+    }
+  });
+
+  it('L20-17: honours KitTraits.immuneTo from spied kitId, not hardcoded untouchable', () => {
+    const scientific = shared.getKit('scientific');
+    const originalGetKit = shared.getKit;
+    const getKitSpy = vi.spyOn(shared, 'getKit').mockImplementation((kitId) => {
+      if (kitId === 'scientific') {
+        return {
+          ...scientific,
+          traits: {
+            ...scientific.traits,
+            immuneTo: ['spy', 'thief'],
+          },
+        };
+      }
+
+      return originalGetKit(kitId);
+    });
+
+    try {
+      const view = baseView({
+        self: baseSelf({
+          lives: 15,
+          points: 20,
+          hand: [
+            { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+            { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+          ],
+        }),
+        players: [
+          player('bot-a', 'Alpha', true),
+          player('bot-b', 'Bravo', false, {
+            spied: {
+              kitId: 'scientific',
+              hand: [],
+              specialCards: [],
+              resourcesSnapshot: {
+                lives: 12,
+                points: 5,
+                upgradePoints: 0,
+                shield: 0,
+                turnSequence: 1,
+              },
+            },
+          }),
+        ],
+      });
+      const actions: TurnAction[] = [
+        { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+        { type: 'playCard', instanceId: 'tax-1' },
+        { type: 'draw' },
+      ];
+
+      expect(decide(view, actions, createRng('l20-17-immune-trait'))).toEqual({
+        type: 'playCard',
+        instanceId: 'tax-1',
+      });
+    } finally {
+      getKitSpy.mockRestore();
+    }
   });
 });

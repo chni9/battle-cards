@@ -13,10 +13,12 @@ import {
   type BotReasonCode,
   type CardId,
   type CardInstance,
+  type Player,
   type PlayingStateView,
   type RewardChoice,
 } from '@card-battle/shared';
 
+import { isImmuneTo } from '../engine/kits/is-immune-to';
 import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import {
@@ -1001,12 +1003,14 @@ function knownOpponentLives(view: PlayingStateView, opponentId: string): number 
 }
 
 function isImmuneTarget(view: PlayingStateView, targetId: string, cardId: CardId): boolean {
-  if (cardId !== 'thief' && cardId !== 'spy') {
+  const kitId = view.players.find((player) => player.id === targetId)?.spied?.kitId;
+
+  if (kitId === undefined) {
     return false;
   }
 
-  const kitId = view.players.find((player) => player.id === targetId)?.spied?.kitId;
-  return kitId === 'untouchable';
+  // `isImmuneTo` only reads `kitId` — traits come from the catalog.
+  return isImmuneTo({ kitId } as Player, cardId);
 }
 
 function estimateSuicideElims(view: PlayingStateView, ctx: PolicyContext): number {
