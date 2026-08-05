@@ -426,6 +426,17 @@ function scoreAction(
     return scoreSellCard(view, action, ctx);
   }
 
+  if (action.type === 'deactivatePersistent') {
+    // L25-02: must not fall through to sellUpgradePoint. Full policy is L29-08.
+    const underPressure = ctx.incomingThreat > 0;
+    return {
+      score: underPressure
+        ? HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY
+        : HEURISTIC_BAND_WEIGHTS.sustain - 5,
+      code: 'sustain',
+    };
+  }
+
   // sellUpgradePoint
   return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
 }

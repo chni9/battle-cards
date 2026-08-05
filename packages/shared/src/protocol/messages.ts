@@ -31,6 +31,7 @@ export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const BUY_SPECIAL_CARD = 'buySpecialCard';
+export const DEACTIVATE_PERSISTENT = 'deactivatePersistent';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
@@ -69,7 +70,8 @@ export type PublicActionKind =
   | 'upgradeCard'
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
-  | 'buySpecialCard';
+  | 'buySpecialCard'
+  | 'deactivatePersistent';
 
 export interface PublicAttackPlay {
   cardId: CardId;
@@ -147,6 +149,10 @@ export interface SellCardPayload {
 
 export interface UpgradeCardPayload {
   instanceId: string;
+}
+
+export interface DeactivatePersistentPayload {
+  effectId: string;
 }
 
 export interface ChooseMirrorTargetPayload {
@@ -258,5 +264,6 @@ export interface ClientToServerMessages {
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
   [BUY_SPECIAL_CARD]: undefined;
+  [DEACTIVATE_PERSISTENT]: DeactivatePersistentPayload;
   [RESOLVE_SUB_CHOICE]: ResolveSubChoicePayload;
 }

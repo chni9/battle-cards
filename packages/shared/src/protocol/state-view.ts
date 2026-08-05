@@ -24,7 +24,8 @@ export type ActionLogPlayedAction =
   | 'upgradeCard'
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
-  | 'buySpecialCard';
+  | 'buySpecialCard'
+  | 'deactivatePersistent';
 
 /** A seated player as seen in the lobby — nicknames are public once joined. */
 export interface LobbySeatView {

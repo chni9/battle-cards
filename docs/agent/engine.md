@@ -157,19 +157,33 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 - **`alwaysUpgraded`**: checked on every acquisition helper call — never a one-shot at deal.
 - **`immuneTo`**: resolve-time only (`isImmuneTo`); play still queues; public
   `actionResolved.outcome: 'immune'`.
+- **Invisibility (L25-02 / #V4-9):** `playerIsInvisible` / active persistent
+  `cardId === 'invisibility'`. Ready pending against an invisible player resolve as
+  `'immune'` at the head of `resolvePendingEffects` (before mutual cancel). Victim-side
+  persistent ticks (Imposition / Poison / Curse / Super Absorber) **skip** while invisible
+  and resume after deactivate; own Invisibility + Points Generator ticks still run.
+  Cloning reports `'immune'` via `immediateResolved`. Sentence excludes invisible seats
+  from its candidate pool. Lifecycle elim is unaffected.
+- **Block (L25-01):** `grantBlockTurns` sets `blockTurnsRemaining` and
+  `blockAttacksForbidden` (ban must not rely on remaining alone — last chain turn has
+  remaining 0). Attack **play/use** banned at the four portals; buy/upgrade stay legal.
+  `#V4-6`: one timeout/absent auto-draw calls `endBlockChain` and counts as one lifecycle
+  tick. Ledger resets each Block turn (`#V4-8`).
 - **`allowsMultipleAttacksPerTurn`**: Assassin uses `playMultipleAttacks` (min 2, all-or-nothing);
   single attack still `playCard`.
 - Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
-  Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator → Super
-  Absorber → Imposition → Poison → Curse. Super Absorber reads the current seat's ledger
+  Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator →
+  Invisibility → (if not invisible) Super Absorber → Imposition → Poison → Curse. Super Absorber
+  reads the current seat's ledger
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses. Imposition /
   Poison / Curse act on the current player from other seats' active effects; Points Generator
   ticks on the owner's turn (including the play turn). Curse has no counter — it stores
   `targetPlayerId` and exits via `deactivatePersistentEffect` when the victim reaches 1 life
-  (#V4-20). Deactivated counter cards join the shared pool.
+  (#V4-20). Deactivated counter cards join the shared pool. Invisibility is
+  `counter: null` and exits only via the `deactivatePersistent` TurnAction (#V4-10).
 
 ## Mutual attacks — mechanics
 

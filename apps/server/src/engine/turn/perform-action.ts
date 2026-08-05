@@ -28,6 +28,7 @@ import { createRng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
+import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
 import {
   applyDefaultMirrorRedirect,
   type MirrorRedirectInfo,
@@ -69,7 +70,8 @@ export type TurnAction =
   | { type: 'upgradeCard'; instanceId: string }
   | { type: 'buyUpgradePoint' }
   | { type: 'sellUpgradePoint' }
-  | { type: 'buySpecialCard' };
+  | { type: 'buySpecialCard' }
+  | { type: 'deactivatePersistent'; effectId: string };
 
 export type PublicActionKind =
   | 'draw'
@@ -80,7 +82,8 @@ export type PublicActionKind =
   | 'upgradeCard'
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
-  | 'buySpecialCard';
+  | 'buySpecialCard'
+  | 'deactivatePersistent';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;
@@ -260,6 +263,19 @@ export function performTurnAction(
       actorPlayerId,
       action: 'buySpecialCard',
       cardId: bought.instance.cardId,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'deactivatePersistent') {
+    const deactivated = deactivatePersistentAction(state, actorPlayerId, action.effectId);
+
+    if (!deactivated.ok) {
+      return deactivated;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'deactivatePersistent',
+      cardId: deactivated.cardId,
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'playMultipleAttacks') {

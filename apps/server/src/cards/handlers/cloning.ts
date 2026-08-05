@@ -1,15 +1,18 @@
 /**
- * Cloning — rules spec §5 (updated 2026-08-02).
+ * Cloning — rules spec §5 (updated 2026-08-02), L25-02 #V4-9.
  *
  * Immediate: copy kit + resources (lives, points, upgrade points, shield) from the
  * chosen opponent. Keep the user's own hand, specials, and active persistents. Cancels
  * pending against the user; does not inherit target pending; resets Spy visibility both
  * ways. Upgrade adds resources under the life cap.
+ *
+ * Invisible target → no copy; report `'immune'` via `immediateResolved` (#V4-9d).
  */
 
 import { gainPoints } from '../../engine/economy/gain-points';
 import { gainUpgradePoints } from '../../engine/economy/gain-upgrade-points';
 import { gainLives } from '../../engine/life/gain-lives';
+import { playerIsInvisible } from '../../engine/specials/is-invisible';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
@@ -19,7 +22,7 @@ export const cloningHandler: CardHandler = {
   },
 
   play(context: EffectContext): void {
-    const { state, sourcePlayerId, card } = context;
+    const { state, sourcePlayerId, card, immediateResolved } = context;
     const targetPlayerId = context.targetPlayerId;
 
     if (targetPlayerId === null) {
@@ -30,6 +33,20 @@ export const cloningHandler: CardHandler = {
     const target = findPlayer(state, targetPlayerId);
 
     if (user === undefined || target === undefined) {
+      return;
+    }
+
+    if (playerIsInvisible(target)) {
+      immediateResolved.push({
+        effectId: `cloning-immune:${card.instanceId}`,
+        sourcePlayerId,
+        targetPlayerId,
+        cardId: 'cloning',
+        isUpgraded: card.isUpgraded,
+        livesLost: 0,
+        shieldAbsorbed: 0,
+        outcome: 'immune',
+      });
       return;
     }
 

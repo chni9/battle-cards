@@ -9,6 +9,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  DEACTIVATE_PERSISTENT,
   RESOLVE_SUB_CHOICE,
   CLIENT_READY,
   DRAW_CARD,
@@ -153,6 +154,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   buyUpgradePoint: () => void;
   buySpecialCard: () => void;
   sellUpgradePoint: () => void;
+  deactivatePersistent: (effectId: string) => void;
 }
 
 export function useRoomConnection(): UseRoomConnectionResult {
@@ -549,6 +551,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(SELL_UPGRADE_POINT);
   }, []);
 
+  const deactivatePersistent = useCallback((effectId: string): void => {
+    roomRef.current?.send(DEACTIVATE_PERSISTENT, { effectId });
+  }, []);
+
   return {
     ...connection,
     createGame,
@@ -571,6 +577,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     buyUpgradePoint,
     buySpecialCard,
     sellUpgradePoint,
+    deactivatePersistent,
   };
 }
 

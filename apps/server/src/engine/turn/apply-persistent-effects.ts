@@ -14,6 +14,7 @@ import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
@@ -23,6 +24,8 @@ const IMPOSITION_LIVES_BASE = 1;
 const IMPOSITION_LIVES_UPGRADED = 2;
 const POINTS_GENERATOR_BASE = 2;
 const POINTS_GENERATOR_UPGRADED = 4;
+const INVISIBILITY_POINTS_BASE = 4;
+const INVISIBILITY_POINTS_UPGRADED = 6;
 const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
@@ -36,6 +39,13 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(player);
+  applyInvisibilityTicks(player);
+
+  // #V4-9a: already-active persistents stay armed; ticks skip while invisible.
+  if (playerIsInvisible(player)) {
+    return;
+  }
+
   applySuperAbsorbersOnVictim(state, player);
   applyImpositionsOnVictim(state, player);
   applyPoisonsOnVictim(state, player);
@@ -51,6 +61,20 @@ function applyPointsGeneratorTicks(owner: Player): void {
     gainPoints(
       owner,
       effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
+      'direct',
+    );
+  }
+}
+
+function applyInvisibilityTicks(owner: Player): void {
+  for (const effect of owner.activePersistentEffects) {
+    if (effect.cardId !== 'invisibility') {
+      continue;
+    }
+
+    gainPoints(
+      owner,
+      effect.isUpgraded ? INVISIBILITY_POINTS_UPGRADED : INVISIBILITY_POINTS_BASE,
       'direct',
     );
   }

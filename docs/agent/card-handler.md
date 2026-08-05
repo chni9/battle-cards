@@ -103,6 +103,22 @@ The two shared lists and the registry are the card's registration, not collatera
 card forces you to edit another handler or the engine, the primitive it needs is missing — say
 so rather than working around it.
 
+## New `TurnAction` variants (Lot 25 / 28)
+
+Adding a `TurnAction` / `PublicActionKind` (e.g. `deactivatePersistent`, later
+`activateDuplication`) requires every contact point in one pass:
+
+1. `TurnAction` + `PublicActionKind` in `perform-action.ts`
+2. Mirror in `messages.ts` + `ActionLogPlayedAction` in `state-view.ts`
+3. Client→server message constant + `ClientToServerMessages` + room `onMessage` + payload reader
+4. `listLegalActions` (or a dedicated enumerator)
+5. `performTurnAction` branch
+6. Client `use-room-connection` send helper
+7. Action-log `formatPlayedAction` + `aggregate-action-log` switch (exhaustive, never-typed default)
+8. Bot `scoreAction` — **must not** fall through to `sellUpgradePoint`
+
+No `PROTOCOL_VERSION` bump for additive action kinds in V4 (already at 23).
+
 ## Card economy
 
 Rules spec §1: sale returns the usage cost (in the cost's currency), purchase costs **double**

@@ -10,6 +10,7 @@ import type { GameState } from '@card-battle/shared';
 import { listAssassinMultiAttackCandidates } from './assassin-candidates';
 import { listLegalEconomyActions } from './list-legal-economy';
 import { listLegalPlayCardActions, requireLivingActor } from './list-legal-play-card';
+import { listLegalDeactivateActions } from '../specials/list-legal-deactivate';
 import type { TurnAction } from './perform-action';
 import { hasActiveSubChoice } from './sub-choice';
 
@@ -33,5 +34,6 @@ export function listLegalActions(state: GameState, playerId: string): readonly T
     ...listLegalPlayCardActions(state, actor),
     ...listAssassinMultiAttackCandidates(state, actor),
     ...listLegalEconomyActions(actor),
+    ...listLegalDeactivateActions(actor),
   ];
 }

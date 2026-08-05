@@ -66,6 +66,7 @@ export function aggregateActionsForPlayer(
         upgradeCount += 1;
         break;
       }
+      case 'deactivatePersistent':
       case 'draw': {
         break;
       }

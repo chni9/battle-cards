@@ -19,6 +19,7 @@ import { cardTransformerHandler } from './handlers/card-transformer';
 import { cloningHandler } from './handlers/cloning';
 import { curseHandler } from './handlers/curse';
 import { impositionHandler } from './handlers/imposition';
+import { invisibilityHandler } from './handlers/invisibility';
 import { megaAttackHandler } from './handlers/mega-attack';
 import { mirrorHandler } from './handlers/mirror';
 import { pointsGeneratorHandler } from './handlers/points-generator';
@@ -68,6 +69,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'card-absorber',
   'card-transformer',
   'block',
+  'invisibility',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -75,7 +77,6 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'invisibility',
   'reanimation',
 ] as const satisfies readonly PendingCardId[];
 
@@ -108,6 +109,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'card-absorber': cardAbsorberHandler,
   'card-transformer': cardTransformerHandler,
   block: blockHandler,
+  invisibility: invisibilityHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

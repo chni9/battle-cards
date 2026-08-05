@@ -47,6 +47,8 @@ function formatPlayedAction(
       return `${actor} bought an upgrade point`;
     case 'sellUpgradePoint':
       return `${actor} sold an upgrade point`;
+    case 'deactivatePersistent':
+      return `${actor} deactivated ${entry.cardId !== undefined ? formatCardLabel(entry.cardId, entry.isUpgraded ?? false) : 'a persistent'}`;
     case 'playMultipleAttacks': {
       if (entry.attacks === undefined || entry.attacks.length === 0) {
         return `${actor} plays multiple attacks`;

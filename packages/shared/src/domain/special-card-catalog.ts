@@ -188,6 +188,7 @@ export const PERSISTENT_SPECIAL_CARD_IDS = [
   'poison',
   'curse',
   'super-absorber',
+  'invisibility',
 ] as const;
 
 export type PersistentSpecialCardId = (typeof PERSISTENT_SPECIAL_CARD_IDS)[number];

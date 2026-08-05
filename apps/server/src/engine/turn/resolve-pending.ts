@@ -28,6 +28,7 @@ import { isImmuneTo } from '../kits/is-immune-to';
 import { applyDamage } from '../life/apply-damage';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import type { Rng } from '../rng';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { findPlayer } from './advance-turn';
 import { consumeAttackBlockCharge } from './consume-attack-block';
@@ -358,6 +359,12 @@ export function resolvePendingEffects(
   const resolved: ResolvedEffect[] = [];
 
   for (const effect of ready) {
+    // Invisibility — #V4-9: all opposing pending resolve as immune before mutual cancel.
+    if (playerIsInvisible(player)) {
+      resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+      continue;
+    }
+
     let livesLost = 0;
     let shieldAbsorbed = 0;
     let outcome: ResolveOutcome = 'applied';

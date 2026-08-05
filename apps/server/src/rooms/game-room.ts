@@ -12,6 +12,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  DEACTIVATE_PERSISTENT,
   RESOLVE_SUB_CHOICE,
   CLIENT_READY,
   DRAW_CARD,
@@ -43,6 +44,7 @@ import {
   type ChoosePoolPickPayload,
   type ChooseSpecialPickPayload,
   type ChooseStealPickPayload,
+  type DeactivatePersistentPayload,
   isSpecialCardId,
   type EliminationReason,
   type GameState,
@@ -421,6 +423,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [SELL_UPGRADE_POINT]: (client: GameClient): void => {
       this.handleAction(client, { type: 'sellUpgradePoint' });
+    },
+
+    [DEACTIVATE_PERSISTENT]: (client: GameClient, payload: unknown): void => {
+      const parsed = readDeactivatePersistentPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, { message: 'Invalid deactivatePersistent payload.' });
+        return;
+      }
+
+      this.handleAction(client, {
+        type: 'deactivatePersistent',
+        effectId: parsed.effectId,
+      });
     },
 
     [RESOLVE_SUB_CHOICE]: (client: GameClient, payload: unknown): void => {
@@ -2870,6 +2886,22 @@ function readSellCardPayload(payload: unknown): SellCardPayload | null {
 
 function readUpgradeCardPayload(payload: unknown): UpgradeCardPayload | null {
   return readSellCardPayload(payload);
+}
+
+function readDeactivatePersistentPayload(
+  payload: unknown,
+): DeactivatePersistentPayload | null {
+  if (typeof payload !== 'object' || payload === null || !('effectId' in payload)) {
+    return null;
+  }
+
+  const { effectId } = payload;
+
+  if (typeof effectId !== 'string' || effectId.length === 0) {
+    return null;
+  }
+
+  return { effectId };
 }
 
 function readChooseMirrorTargetPayload(payload: unknown): ChooseMirrorTargetPayload | null {
