@@ -294,3 +294,19 @@ do not hand off an untested lot.
   Start. Table shows both bot labels; Why on bot plays; resolution FX still fires
   (`Bravo's Strong attack hits Alpha`).
 - Living docs: `frontend.md`, `protocol.md`, `db.md` updated for solo / lobby bots / `botReason`.
+
+### Lot 30 verified 2026-08-05 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 23)
+
+- **2p human:** rooms `JLHWBF` (Player1 + Player2). Pool `(N)` → Shared pool dialog (empty
+  copy + Close); kit inspect loads special art + Always upgraded / Immune to / Multiple
+  attacks sections; Draw rotates turns; action log updates; no app JS errors (favicon 404
+  only, pre-existing).
+- **Solo:** rooms `LEGUIR` / `SOZVBU` — Pool + kit inspect + Tax/Thief/Draw paths; bot turn
+  rotation works when the human keeps acting. Early “stall” reports were turn-ownership
+  confusion / tab leave, not a client lock (`FJKUXN` HostA `consented leave` in server log).
+- **L30 surfaces covered:** art map (30 cards), pool button, SubChoiceHost wiring (Mirror /
+  reward host present; mid-game Mirror not forced this pass), Block/Invis/Duplicator chrome
+  code paths wired (kit RNG did not force those kits this session), immune log copy,
+  trait-section count test.
+- Deeper forced paths (MEGA / Super Mirror / Reanimation / Absorber pool-pick) remain
+  engine-tested; re-check in a longer session once Lot 29 bots bias toward those cards.
