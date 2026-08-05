@@ -90,3 +90,24 @@ export const POINTS_GENERATOR_INVEST_BONUS = 50;
 export const SPY_THIEF_DENY_BONUS = 100;
 /** Fallthrough for any playCard still without a branch — must stay strictly below draw. */
 export const UNSCORED_PLAY_PENALTY = 50;
+
+/**
+ * Stance-pass upgrade / Absorber / finish tunables — playtest BNBBSH/CTHNVP/ESCEKV
+ * (docs/superpowers/specs/2026-08-05-heuristic-stance-design.md). Inventions (#V3-5).
+ */
+export const UPGRADE_TAX_BONUS = 80;
+export const UPGRADE_REGEN_BONUS = 75;
+export const UPGRADE_MIRROR_BONUS = 55;
+export const UPGRADE_SHIELD_BONUS = 50;
+export const UPGRADE_ABSORBER_BONUS = 45;
+export const UPGRADE_SENTENCE_BONUS = 65;
+/** Contest extra on Mirror/Shield/attack upgrades. */
+export const CONTEST_UPGRADE_EXTRA = 25;
+/** Absorber+ when last complete turn spent ≥1 upgrade point — below lethal-now. */
+export const ABSORBER_UP_DENY_BONUS = 120;
+/** Absorber+ when pointsSpent > absorberCost + kit draw. */
+export const ABSORBER_POINTS_DENY_BONUS = 70;
+/** Finish stance: chip attack that reaches Spy-known lives. */
+export const FINISH_CHIP_BONUS = 80;
+/** Min last-turn livesLost for Absorber life top-up when Regen is held. */
+export const ABSORBER_MIN_LIVES_VS_REGEN = 2;

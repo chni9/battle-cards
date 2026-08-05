@@ -1114,4 +1114,202 @@ describe('heuristic decide (L16-04)', () => {
       getKitSpy.mockRestore();
     }
   });
+
+  it('stance: upgrades Tax before playing base Tax when life-safe', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        upgradePoints: 1,
+        hand: [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'tax-1' },
+      { type: 'upgradeCard', instanceId: 'tax-1' },
+      { type: 'draw' },
+    ];
+    expect(decide(view, actions, createRng('upgrade-tax'))).toEqual({
+      type: 'upgradeCard',
+      instanceId: 'tax-1',
+    });
+  });
+
+  it('stance: Absorber+ on last-turn UP spend beats draw but loses to Spy lethal', () => {
+    const absorb: TurnAction = {
+      type: 'playCard',
+      instanceId: 'abs-1',
+      targetPlayerId: 'bot-b',
+    };
+    const upSpendLog = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: 'bot-b',
+        action: 'upgradeCard' as const,
+        cardId: 'tax' as const,
+        turnSequence: 8,
+      },
+    ];
+
+    const vsDraw = baseView({
+      turnSequence: 10,
+      self: baseSelf({
+        points: 10,
+        hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: true }],
+      }),
+      actionLog: upSpendLog,
+    });
+    expect(decide(vsDraw, [{ type: 'draw' }, absorb], createRng('abs-up-draw'))).toEqual(
+      absorb,
+    );
+
+    const vsLethal = baseView({
+      turnSequence: 10,
+      self: baseSelf({
+        points: 20,
+        hand: [
+          { instanceId: 'abs-1', cardId: 'absorber', isUpgraded: true },
+          { instanceId: 'sa-1', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'scientific',
+            hand: [],
+            specialCards: [],
+            lives: 5,
+            points: 0,
+            upgradePoints: 0,
+            shield: 0,
+          },
+        }),
+      ],
+      actionLog: upSpendLog,
+    });
+    expect(
+      decide(
+        vsLethal,
+        [
+          absorb,
+          { type: 'playCard', instanceId: 'sa-1', targetPlayerId: 'bot-b' },
+          { type: 'draw' },
+        ],
+        createRng('abs-up-lethal'),
+      ),
+    ).toEqual({
+      type: 'playCard',
+      instanceId: 'sa-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('stance: Absorber+ with small points spend and no UP stays below draw', () => {
+    // Spy cost 4; absorber 3 + assassin draw 1 = 4 — spend must be > 4 to qualify.
+    const view = baseView({
+      turnSequence: 10,
+      self: baseSelf({
+        points: 10,
+        hand: [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: true }],
+      }),
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'playCard',
+          cardId: 'spy',
+          isUpgraded: false,
+          targetPlayerId: 'bot-a',
+          turnSequence: 8,
+        },
+      ],
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'draw' },
+          { type: 'playCard', instanceId: 'abs-1', targetPlayerId: 'bot-b' },
+        ],
+        createRng('abs-small-pts'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('stance: finish prefers chip attack on Spy-known low lives over Tax+', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 12,
+        points: 10,
+        hand: [
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: true },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'scientific',
+            hand: [],
+            specialCards: [],
+            lives: 1,
+            points: 0,
+            upgradePoints: 0,
+            shield: 0,
+          },
+        }),
+      ],
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'playCard', instanceId: 'tax-1' },
+          { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+          { type: 'draw' },
+        ],
+        createRng('finish-chip'),
+      ),
+    ).toEqual({
+      type: 'playCard',
+      instanceId: 'basic-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('stance: contest does not sell Mirror when opponent upgraded Super publicly', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 12,
+        points: 5,
+        hand: [
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: true },
+          { instanceId: 'regen-1', cardId: 'regeneration', isUpgraded: true },
+          { instanceId: 'mirror-1', cardId: 'mirror', isUpgraded: false },
+          { instanceId: 'sa-1', cardId: 'super-attack', isUpgraded: true },
+        ],
+      }),
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'bot-b',
+          action: 'upgradeCard',
+          cardId: 'super-attack',
+          turnSequence: 2,
+        },
+      ],
+    });
+    const pick = decide(
+      view,
+      [
+        { type: 'sellCard', instanceId: 'mirror-1' },
+        { type: 'draw' },
+        { type: 'playCard', instanceId: 'tax-1' },
+      ],
+      createRng('contest-keep-mirror'),
+    );
+    expect(pick).not.toEqual({ type: 'sellCard', instanceId: 'mirror-1' });
+  });
 });

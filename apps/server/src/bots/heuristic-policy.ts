@@ -7,8 +7,10 @@
 import {
   attackDamageFor,
   getCard,
+  getKit,
   isAttackCardId,
   isSharedAttackCardId,
+  UPGRADE_POINT_ECONOMY,
   type BotDecisionReason,
   type BotReasonCode,
   type CardId,
@@ -21,11 +23,17 @@ import {
 import { isImmuneTo } from '../engine/kits/is-immune-to';
 import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
+import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
 import {
+  ABSORBER_MIN_LIVES_VS_REGEN,
+  ABSORBER_POINTS_DENY_BONUS,
+  ABSORBER_UP_DENY_BONUS,
   BURN_COUNTER_BONUS,
   BUY_SPECIAL_POINTS_FLOOR,
   BUY_UPGRADE_POINT_BONUS,
+  CONTEST_UPGRADE_EXTRA,
   DENY_ABSORBER_MIN_LIVES_LOST,
+  FINISH_CHIP_BONUS,
   HEURISTIC_BAND_WEIGHTS,
   IMPOSITION_INVEST_BONUS,
   MUTUAL_CANCEL_BONUS,
@@ -40,8 +48,16 @@ import {
   TAX_INVEST_BONUS,
   TAX_LIFE_BUFFER,
   UNSCORED_PLAY_PENALTY,
+  UPGRADE_ABSORBER_BONUS,
   UPGRADE_ATTACK_BONUS,
+  UPGRADE_MIRROR_BONUS,
+  UPGRADE_REGEN_BONUS,
+  UPGRADE_SENTENCE_BONUS,
+  UPGRADE_SHIELD_BONUS,
+  UPGRADE_TAX_BONUS,
 } from './heuristic-weights';
+
+export type HeuristicStance = 'build' | 'contest' | 'finish';
 
 export interface MirrorPolicyPick {
   pendingEffectId: string;
@@ -239,7 +255,14 @@ interface PolicyContext {
   cumulativeLoss: ReadonlyMap<string, number>;
   /** Public proxy for Absorber: summed applied livesLost on each seat's last complete turn. */
   lastCompleteTurnLoss: ReadonlyMap<string, number>;
+  /** Points actively spent on each seat's last complete turn (Absorber+ proxy). */
+  lastTurnPointsSpent: ReadonlyMap<string, number>;
+  /** Upgrade points spent on each seat's last complete turn (Absorber+ proxy). */
+  lastTurnUpgradePointsSpent: ReadonlyMap<string, number>;
   observedSpend: ReadonlyMap<string, number>;
+  stance: HeuristicStance;
+  /** Contest: keep at least this many points for Mirror/Shield/counter. */
+  pointReserve: number;
   rng: Rng;
 }
 
@@ -254,12 +277,20 @@ function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
     incomingThreat += effectDamage(effect.cardId, effect.isUpgraded, effect.damageMultiplier);
   }
 
+  const spend = lastCompleteTurnSpendByActor(view);
+  const stance = deriveStance(view, incomingThreat);
+  const pointReserve = stance === 'contest' ? computePointReserve(view) : 0;
+
   return {
     incomingThreat,
     threatOrder: rankThreatOpponents(view, rng),
     cumulativeLoss: sumLivesLostByTarget(view),
     lastCompleteTurnLoss: lastCompleteTurnLivesLostByTarget(view),
+    lastTurnPointsSpent: spend.points,
+    lastTurnUpgradePointsSpent: spend.upgradePoints,
     observedSpend: sumPointsSpentByActor(view),
+    stance,
+    pointReserve,
     rng,
   };
 }
@@ -282,13 +313,33 @@ function scoreAction(
   }
 
   if (action.type === 'buyUpgradePoint' || action.type === 'upgradeCard') {
-    const bonus =
-      action.type === 'buyUpgradePoint'
-        ? BUY_UPGRADE_POINT_BONUS
-        : (() => {
-            const secondary = secondaryInvest(view, action);
-            return secondary > 0 ? UPGRADE_ATTACK_BONUS + secondary : secondary;
-          })();
+    if (action.type === 'buyUpgradePoint') {
+      if (violatesPointReserve(view, ctx, view.self.points - UPGRADE_POINT_ECONOMY.buyCostPoints)) {
+        return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+      }
+
+      const hasPriorityUpgrade = ownCards(view).some(
+        (card) =>
+          !card.isUpgraded &&
+          (card.cardId === 'tax' ||
+            card.cardId === 'regeneration' ||
+            card.cardId === 'mirror' ||
+            card.cardId === 'shield' ||
+            card.cardId === 'absorber' ||
+            card.cardId === 'sentence' ||
+            isAttackCardId(card.cardId)),
+      );
+
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.invest +
+          BUY_UPGRADE_POINT_BONUS +
+          (hasPriorityUpgrade ? 20 : 0),
+        code: 'invest',
+      };
+    }
+
+    const bonus = secondaryInvest(view, action, ctx);
 
     return {
       score: HEURISTIC_BAND_WEIGHTS.invest + bonus,
@@ -304,6 +355,14 @@ function scoreAction(
 
     const definition = getCard(action.cardId);
     const lifeCost = definition?.buyCost.lives ?? 0;
+    const pointCost =
+      definition?.buyCost !== undefined && 'points' in definition.buyCost
+        ? definition.buyCost.points
+        : 0;
+
+    if (pointCost > 0 && violatesPointReserve(view, ctx, view.self.points - pointCost)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
 
     // Tax (and any life-priced shop buy) can legally leave the buyer at 0 lives.
     // Never choose a lethal or buffer-breaking life buy — same safety floor as playing Tax.
@@ -323,7 +382,7 @@ function scoreAction(
 
     if (
       (action.cardId === 'shield' || action.cardId === 'mirror') &&
-      ctx.incomingThreat > 0
+      (ctx.incomingThreat > 0 || ctx.stance === 'contest')
     ) {
       return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
     }
@@ -354,11 +413,17 @@ function scoreAction(
       return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
     }
 
+    if (
+      violatesPointReserve(view, ctx, view.self.points - SPECIAL_CARD_PURCHASE_COST)
+    ) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
     return { score: HEURISTIC_BAND_WEIGHTS.invest, code: 'invest' };
   }
 
   if (action.type === 'sellCard') {
-    return scoreSellCard(view, action);
+    return scoreSellCard(view, action, ctx);
   }
 
   // sellUpgradePoint
@@ -368,6 +433,7 @@ function scoreAction(
 function scoreSellCard(
   view: PlayingStateView,
   action: Extract<TurnAction, { type: 'sellCard' }>,
+  ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   const instance = findOwnCard(view, action.instanceId);
 
@@ -375,8 +441,18 @@ function scoreSellCard(
     return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
 
+  // Contest / sole defense: never dump Mirror, Shield, Absorber.
+  if (
+    (instance.cardId === 'mirror' ||
+      instance.cardId === 'shield' ||
+      instance.cardId === 'absorber') &&
+    (ctx.stance === 'contest' || ctx.incomingThreat > 0)
+  ) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
   const yieldPoints = getCard(instance.cardId)?.sellYield.points ?? 0;
-  const fundSpy = needsPointsToPlaySpy(view);
+  const fundSpy = needsPointsToPlaySpy(view) && ctx.stance === 'build';
   const fundStrike = needsPointsToPlayReadyStrike(view);
   const fundRegen =
     view.self.lives <= REGEN_SOFT_LIFE &&
@@ -407,6 +483,7 @@ function scoreSellCard(
     return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
   }
 
+  // Early build only: sell-to-fund Spy may dump Mirror/Shield; contest already refused above.
   if (fundSpy || fundStrike || fundRegen) {
     const duplicateBonus =
       view.self.hand.filter((card) => card.cardId === instance.cardId).length > 1 ? 5 : 0;
@@ -431,6 +508,24 @@ function scorePlayCard(
   }
 
   const { cardId, isUpgraded } = instance;
+
+  const playCostPoints = estimatedPlayPoints(cardId, isUpgraded);
+
+  if (
+    playCostPoints > 0 &&
+    violatesPointReserve(view, ctx, view.self.points - playCostPoints) &&
+    ctx.stance !== 'finish'
+  ) {
+    // Still allow Survive-band counters below.
+    if (
+      !(
+        (cardId === 'mirror' || cardId === 'shield') &&
+        ctx.incomingThreat > 0
+      )
+    ) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+    }
+  }
 
   // Kamikaze: never base Suicide; upgraded only if estimated elim ≥ 1.
   if (cardId === 'suicide' && view.self.kitId === 'kamikaze') {
@@ -571,15 +666,9 @@ function scorePlayCard(
     }
   }
 
-  // Deny — Absorber only when the target's last *complete* turn lost enough lives
-  // (rules §3 / ledger). Never the stale last resolution from earlier turns, and
-  // never pending attacks that have not resolved yet.
+  // Deny — Absorber (base: lives; upgraded: UP / points / lives from last complete turn).
   if (cardId === 'absorber' && action.targetPlayerId !== undefined) {
-    const lastLoss = ctx.lastCompleteTurnLoss.get(action.targetPlayerId) ?? 0;
-
-    if (lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST) {
-      return { score: HEURISTIC_BAND_WEIGHTS.deny + lastLoss, code: 'deny' };
-    }
+    return scoreAbsorber(view, action.targetPlayerId, isUpgraded, ctx);
   }
 
   // Burn public counter persistents (Imposition / Points Generator) — any attack damage
@@ -681,7 +770,7 @@ function scorePlayCard(
     };
   }
 
-  // Absorber without a large last-loss signal — defer below draw.
+  // Absorber without a target should not reach here; safety below draw.
   if (cardId === 'absorber') {
     return {
       score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
@@ -689,10 +778,29 @@ function scorePlayCard(
     };
   }
 
-  // Pressure — only upgraded, high-damage strikes. Chip / base attacks stay below Invest.
-  // Prefer finishing a Spy-known low-life seat when the strike is ready.
+  // Pressure — finish stance chips Spy-known dying seats; otherwise upgraded strikes only.
   if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
     const damage = attackDamageFor(cardId, isUpgraded);
+    const playCost = getCard(cardId)?.cost.points ?? 0;
+
+    if (violatesPointReserve(view, ctx, view.self.points - playCost)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'pressure' };
+    }
+
+    const knownLives = knownOpponentLives(view, action.targetPlayerId);
+    const canFinishKnown =
+      knownLives !== null && knownLives > 0 && damage >= knownLives && playCost <= view.self.points;
+
+    if (ctx.stance === 'finish' && canFinishKnown) {
+      const onWeakest =
+        action.targetPlayerId === weakestDyingSeat(view, bestAffordableStrikeDamage(view))
+          ? 15
+          : 0;
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.pressure + FINISH_CHIP_BONUS + damage + onWeakest,
+        code: 'pressure',
+      };
+    }
 
     if (!isUpgraded || damage < STRIKE_MIN_DAMAGE) {
       return {
@@ -701,11 +809,10 @@ function scorePlayCard(
       };
     }
 
-    const cost = Math.max(1, getCard(cardId)?.cost.points ?? 1);
+    const cost = Math.max(1, playCost || 1);
     const topTarget = ctx.threatOrder[0];
     const onTop = action.targetPlayerId === topTarget ? 5 : 0;
     const retaliateBonus = hasAnyIncomingFrom(view, action.targetPlayerId) ? 8 : 0;
-    const knownLives = knownOpponentLives(view, action.targetPlayerId);
     const knownFinishBonus =
       knownLives !== null && knownLives <= damage + 2 ? 20 : knownLives !== null ? 8 : 0;
     const shieldPenalty = view.players.find((p) => p.id === action.targetPlayerId)
@@ -725,10 +832,22 @@ function scorePlayCard(
     };
   }
 
-  // Tax — primary point engine (Invest), not a last-resort sustain play.
+  // Tax — farm engine; prefer upgraded; refuse when reserve would break after other spends only.
   if (cardId === 'tax') {
     if (view.self.lives > ctx.incomingThreat + TAX_LIFE_BUFFER) {
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + TAX_INVEST_BONUS, code: 'invest' };
+      const upgradeBias = isUpgraded ? 25 : 0;
+      // In contest, still Tax but below defense upgrades / Mirror.
+      const contestPenalty = ctx.stance === 'contest' ? -15 : 0;
+      const finishPenalty = ctx.stance === 'finish' ? -40 : 0;
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.invest +
+          TAX_INVEST_BONUS +
+          upgradeBias +
+          contestPenalty +
+          finishPenalty,
+        code: 'invest',
+      };
     }
 
     return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
@@ -738,21 +857,29 @@ function scorePlayCard(
   if (cardId === 'regeneration') {
     // Soft top-up when lives are low (Imposition drip / post-Tax floor) — ONMMBZ bots
     // drew to death with Regen in hand.
-    if (view.self.lives <= REGEN_SOFT_LIFE) {
+    if (view.self.lives <= REGEN_SOFT_LIFE || (isUpgraded && view.self.lives <= REGEN_SOFT_LIFE + 2)) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.invest + 50 + (action.quantity ?? 0),
+        score:
+          HEURISTIC_BAND_WEIGHTS.invest +
+          50 +
+          (action.quantity ?? 0) +
+          (isUpgraded ? 20 : 0),
         code: 'invest',
       };
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0),
+      score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0) + (isUpgraded ? 5 : 0),
       code: 'sustain',
     };
   }
 
   if (cardId === 'shield' || cardId === 'mirror') {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain + 2, code: 'sustain' };
+    const contestBias = ctx.stance === 'contest' ? 40 : 0;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain + 2 + contestBias + (isUpgraded ? 10 : 0),
+      code: 'sustain',
+    };
   }
 
   // Never rng-tie with draw for an unscored playCard.
@@ -821,16 +948,50 @@ function scoreMultiAttack(
 function secondaryInvest(
   view: PlayingStateView,
   action: TurnAction,
+  ctx: PolicyContext,
 ): number {
-  if (action.type === 'upgradeCard') {
-    const instance = findOwnCard(view, action.instanceId);
-
-    if (instance !== undefined && isAttackCardId(instance.cardId)) {
-      return attackDamageFor(instance.cardId, true);
-    }
+  if (action.type !== 'upgradeCard') {
+    return 0;
   }
 
-  return 0;
+  const instance = findOwnCard(view, action.instanceId);
+
+  if (instance === undefined || instance.isUpgraded) {
+    return 0;
+  }
+
+  const contestExtra = ctx.stance === 'contest' ? CONTEST_UPGRADE_EXTRA : 0;
+  const { cardId } = instance;
+
+  if (cardId === 'tax') {
+    return UPGRADE_TAX_BONUS;
+  }
+
+  if (cardId === 'regeneration') {
+    return UPGRADE_REGEN_BONUS;
+  }
+
+  if (cardId === 'mirror') {
+    return UPGRADE_MIRROR_BONUS + contestExtra;
+  }
+
+  if (cardId === 'shield') {
+    return UPGRADE_SHIELD_BONUS + contestExtra;
+  }
+
+  if (cardId === 'absorber') {
+    return UPGRADE_ABSORBER_BONUS;
+  }
+
+  if (cardId === 'sentence') {
+    return UPGRADE_SENTENCE_BONUS + (ctx.stance === 'finish' ? 20 : 0);
+  }
+
+  if (isAttackCardId(cardId)) {
+    return UPGRADE_ATTACK_BONUS + attackDamageFor(cardId, true) + contestExtra;
+  }
+
+  return 15;
 }
 
 function findOwnCard(
@@ -1073,6 +1234,358 @@ function rankThreatOpponents(view: PlayingStateView, rng: Rng): string[] {
   });
 
   return decorated.map((entry) => entry.id);
+}
+
+function ownCards(view: PlayingStateView): readonly CardInstance[] {
+  return [...view.self.hand, ...view.self.specialCards];
+}
+
+function isSetupReady(view: PlayingStateView): boolean {
+  const cards = ownCards(view);
+  const taxHeld = cards.filter((card) => card.cardId === 'tax');
+
+  if (taxHeld.length > 0 && taxHeld.some((card) => !card.isUpgraded)) {
+    return false;
+  }
+
+  const regenHeld = cards.filter((card) => card.cardId === 'regeneration');
+
+  if (regenHeld.length > 0 && regenHeld.some((card) => !card.isUpgraded)) {
+    return false;
+  }
+
+  return cards.some(
+    (card) =>
+      card.isUpgraded &&
+      (isAttackCardId(card.cardId) ||
+        card.cardId === 'sentence' ||
+        card.cardId === 'mirror' ||
+        card.cardId === 'shield'),
+  );
+}
+
+function bestAffordableStrikeDamage(view: PlayingStateView): number {
+  let best = 0;
+
+  for (const card of view.self.hand) {
+    if (!isAttackCardId(card.cardId)) {
+      continue;
+    }
+
+    const cost = getCard(card.cardId)?.cost.points ?? 0;
+
+    if (cost > view.self.points) {
+      continue;
+    }
+
+    best = Math.max(best, attackDamageFor(card.cardId, card.isUpgraded));
+  }
+
+  return best;
+}
+
+function hasSentencePlus(view: PlayingStateView): boolean {
+  return view.self.specialCards.some(
+    (card) => card.cardId === 'sentence' && card.isUpgraded,
+  );
+}
+
+function weakestDyingSeat(view: PlayingStateView, strikeDamage: number): string | null {
+  let bestId: string | null = null;
+  let bestLives = Number.POSITIVE_INFINITY;
+
+  for (const player of view.players) {
+    if (player.id === view.you || player.isEliminated) {
+      continue;
+    }
+
+    const lives = player.spied?.lives;
+
+    if (lives === undefined || lives <= 0 || lives > strikeDamage) {
+      continue;
+    }
+
+    if (lives < bestLives) {
+      bestLives = lives;
+      bestId = player.id;
+    }
+  }
+
+  return bestId;
+}
+
+function hasDyingOpponent(view: PlayingStateView): boolean {
+  const strike = bestAffordableStrikeDamage(view);
+
+  if (weakestDyingSeat(view, strike) !== null) {
+    return true;
+  }
+
+  if (hasSentencePlus(view)) {
+    return view.players.some((player) => player.id !== view.you && !player.isEliminated);
+  }
+
+  return false;
+}
+
+function hasLethalAvailable(view: PlayingStateView): boolean {
+  const strike = bestAffordableStrikeDamage(view);
+
+  for (const player of view.players) {
+    if (player.id === view.you || player.isEliminated) {
+      continue;
+    }
+
+    const lives = player.spied?.lives;
+
+    if (lives !== undefined && lives > 0 && strike >= lives) {
+      return true;
+    }
+  }
+
+  return hasSentencePlus(view);
+}
+
+function hasContestThreat(view: PlayingStateView, incomingThreat: number): boolean {
+  if (
+    incomingThreat > 0 &&
+    view.pendingEffects.some(
+      (effect) =>
+        effect.targetPlayerId === view.you &&
+        effect.isUpgraded &&
+        isAttackCardId(effect.cardId),
+    )
+  ) {
+    return true;
+  }
+
+  for (const entry of view.actionLog) {
+    if (entry.kind !== 'actionPlayed' || entry.actorPlayerId === view.you) {
+      continue;
+    }
+
+    if (
+      (entry.action === 'upgradeCard' || entry.action === 'playCard') &&
+      (entry.cardId === 'super-attack' || entry.cardId === 'strong-attack') &&
+      (entry.action === 'upgradeCard' || entry.isUpgraded === true)
+    ) {
+      return true;
+    }
+  }
+
+  for (const player of view.players) {
+    if (player.id === view.you || player.isEliminated || player.spied === undefined) {
+      continue;
+    }
+
+    if (player.spied.lives !== undefined && player.spied.lives > view.self.lives + 3) {
+      return true;
+    }
+
+    if (player.spied.points !== undefined && player.spied.points > view.self.points + 10) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function deriveStance(view: PlayingStateView, incomingThreat: number): HeuristicStance {
+  if (hasLethalAvailable(view) || hasDyingOpponent(view)) {
+    return 'finish';
+  }
+
+  if (isSetupReady(view) && hasContestThreat(view, incomingThreat)) {
+    return 'contest';
+  }
+
+  return 'build';
+}
+
+function computePointReserve(view: PlayingStateView): number {
+  let reserve = 0;
+  const cards = ownCards(view);
+
+  if (cards.some((card) => card.cardId === 'mirror')) {
+    reserve = Math.max(reserve, getCard('mirror')?.cost.points ?? 6);
+  }
+
+  if (cards.some((card) => card.cardId === 'shield')) {
+    reserve = Math.max(reserve, getCard('shield')?.cost.points ?? 7);
+  }
+
+  for (const card of cards) {
+    if (!isAttackCardId(card.cardId) || !card.isUpgraded) {
+      continue;
+    }
+
+    if (attackDamageFor(card.cardId, true) >= STRIKE_MIN_DAMAGE) {
+      reserve = Math.max(reserve, getCard(card.cardId)?.cost.points ?? 0);
+    }
+  }
+
+  return reserve;
+}
+
+function violatesPointReserve(
+  _view: PlayingStateView,
+  ctx: PolicyContext,
+  pointsAfter: number,
+): boolean {
+  if (ctx.stance === 'finish' || ctx.pointReserve <= 0) {
+    return false;
+  }
+
+  return pointsAfter < ctx.pointReserve;
+}
+
+function scoreAbsorber(
+  view: PlayingStateView,
+  targetPlayerId: string,
+  isUpgraded: boolean,
+  ctx: PolicyContext,
+): { score: number; code: BotReasonCode } {
+  const lastLoss = ctx.lastCompleteTurnLoss.get(targetPlayerId) ?? 0;
+  const pointsSpent = ctx.lastTurnPointsSpent.get(targetPlayerId) ?? 0;
+  const upgradeSpent = ctx.lastTurnUpgradePointsSpent.get(targetPlayerId) ?? 0;
+  const absorberCost = getCard('absorber')?.cost.points ?? 3;
+  const kitDraw = getKit(view.self.kitId).startingResources.draw;
+  const hasRegen = ownsCardId(view, 'regeneration');
+
+  if (isUpgraded && upgradeSpent > 0) {
+    // Below lethal-now (10_000); above normal Invest/Tax.
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.deny + ABSORBER_UP_DENY_BONUS + upgradeSpent * 10,
+      code: 'deny',
+    };
+  }
+
+  if (isUpgraded && pointsSpent > absorberCost + kitDraw) {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.deny + ABSORBER_POINTS_DENY_BONUS + pointsSpent,
+      code: 'deny',
+    };
+  }
+
+  const usefulLives =
+    lastLoss >= ABSORBER_MIN_LIVES_VS_REGEN ||
+    lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST ||
+    (lastLoss >= 1 && !hasRegen && view.self.lives <= REGEN_SOFT_LIFE);
+
+  if (usefulLives) {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.deny + lastLoss + (isUpgraded ? 5 : 0),
+      code: 'deny',
+    };
+  }
+
+  return {
+    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    code: 'sustain',
+  };
+}
+
+function estimatedPlayPoints(cardId: CardId, isUpgraded: boolean): number {
+  const card = getCard(cardId);
+
+  if (card === undefined) {
+    return 0;
+  }
+
+  const { cost } = card;
+
+  if ('points' in cost && typeof cost.points === 'number') {
+    return cost.points;
+  }
+
+  if ('pointsPerLife' in cost && typeof cost.pointsPerLife === 'number') {
+    return isUpgraded ? 2 : cost.pointsPerLife;
+  }
+
+  return 0;
+}
+
+/**
+ * Public Absorber proxy for points / upgrade points spent on each seat's last complete turn.
+ */
+function lastCompleteTurnSpendByActor(view: PlayingStateView): {
+  points: Map<string, number>;
+  upgradePoints: Map<string, number>;
+} {
+  const lastCompleteTurnSeq = new Map<string, number>();
+
+  for (const entry of view.actionLog) {
+    if (entry.kind !== 'actionPlayed') {
+      continue;
+    }
+
+    if (
+      entry.actorPlayerId === view.currentTurnPlayerId &&
+      entry.turnSequence === view.turnSequence
+    ) {
+      continue;
+    }
+
+    const previous = lastCompleteTurnSeq.get(entry.actorPlayerId) ?? -1;
+
+    if (entry.turnSequence > previous) {
+      lastCompleteTurnSeq.set(entry.actorPlayerId, entry.turnSequence);
+    }
+  }
+
+  const points = new Map<string, number>();
+  const upgradePoints = new Map<string, number>();
+
+  for (const [playerId, turnSeq] of lastCompleteTurnSeq) {
+    let spentPoints = 0;
+    let spentUp = 0;
+
+    for (const entry of view.actionLog) {
+      if (
+        entry.kind !== 'actionPlayed' ||
+        entry.actorPlayerId !== playerId ||
+        entry.turnSequence !== turnSeq
+      ) {
+        continue;
+      }
+
+      if (entry.action === 'upgradeCard') {
+        spentUp += 1;
+        continue;
+      }
+
+      if (entry.action === 'buyUpgradePoint') {
+        spentPoints += UPGRADE_POINT_ECONOMY.buyCostPoints;
+        continue;
+      }
+
+      if (entry.action === 'buySpecialCard') {
+        spentPoints += SPECIAL_CARD_PURCHASE_COST;
+        continue;
+      }
+
+      if (entry.action === 'buyCard' && entry.cardId !== undefined) {
+        spentPoints += getCard(entry.cardId)?.buyCost.points ?? 0;
+        continue;
+      }
+
+      if (entry.action === 'playCard' && entry.cardId !== undefined) {
+        spentPoints += estimatedPlayPoints(entry.cardId, entry.isUpgraded === true);
+        continue;
+      }
+
+      if (entry.action === 'playMultipleAttacks' && entry.attacks !== undefined) {
+        for (const part of entry.attacks) {
+          spentPoints += estimatedPlayPoints(part.cardId, part.isUpgraded);
+        }
+      }
+    }
+
+    points.set(playerId, spentPoints);
+    upgradePoints.set(playerId, spentUp);
+  }
+
+  return { points, upgradePoints };
 }
 
 function sumLivesLostByTarget(view: PlayingStateView): Map<string, number> {

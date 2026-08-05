@@ -1174,3 +1174,20 @@ forced this decision no longer applies.
 Designer ruling (session): Classic mode remains 2 to 4 players in V4. Documentation
 only — no change to `batch-config.ts`, `lobby-rules.MAX_PLAYERS`, or `game-room.maxClients`.
 
+## 2026-08-05 · [T] Heuristic stance pass (build / contest / finish)
+
+Playtest exports BNBBSH, CTHNVP, ESCEKV: humans Tax+/Regen+ farm, upgrade defense and
+finishers; bots almost never upgraded Mirror/Shield/Absorber (`secondaryInvest` only
+valued attacks). Spec:
+`docs/superpowers/specs/2026-08-05-heuristic-stance-design.md`.
+
+Policy-only (#V3-5 tunables):
+
+- `deriveStance` → `build` | `contest` | `finish` in `buildContext`
+- Farm upgrades: Tax/Regen/Mirror/Shield/Absorber/Sentence bonuses
+- Absorber+ from last-complete-turn points / UP spend proxies (UP absorb below lethal)
+- Contest: point reserve + refuse selling Mirror/Shield/Absorber
+- Finish: chip Pressure when Spy lives ≤ affordable damage
+
+No rule change. Re-screen gross-imbalance after verify.
+

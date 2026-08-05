@@ -34,5 +34,5 @@
     "scientific",
     "assassin"
   ],
-    "note": "Re-run after Sentence/Imposition/Spy Thief/PG scoring fix. Difficulty sweeps deferred. Stalls counted separately."
+  "note": "Re-run after heuristic stance pass (2026-08-05). Difficulty sweeps deferred. Stalls counted separately."
 }
