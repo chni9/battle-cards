@@ -25,7 +25,8 @@ export type ActionLogPlayedAction =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
-  | 'deactivatePersistent';
+  | 'deactivatePersistent'
+  | 'activateDuplication';
 
 /** A seated player as seen in the lobby — nicknames are public once joined. */
 export interface LobbySeatView {
@@ -94,6 +95,11 @@ export interface PublicPlayerView {
    * private on `PrivateSelfView` (technical spec v4 §5.1 / L23-03). `null` when none.
    */
   activeAttackBlock: true | null;
+  /**
+   * Duplicator anticipatory window active (rules spec §4 / L28-02). Public —
+   * changes what every opponent's gain does.
+   */
+  duplicationActive: boolean;
   /**
    * Revive queued after elim consumed armed Reanimation (#V4-12 / L26). Public so
    * the table knows the match is not over. `null` when none.

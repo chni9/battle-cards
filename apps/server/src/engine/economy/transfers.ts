@@ -2,15 +2,14 @@
  * Apply shop buy/sell costs from the catalog — rules spec §1, Lot 2 rulings.
  *
  * Point transfers mutate `points` / ledger. Life transfers use `applyLifeLoss` /
- * `gainLives` so Tax shop never goes through `applyDamage`.
+ * `grantLives` so Tax shop never goes through `applyDamage`.
  */
 
 import type { CardCost, GameState, Player } from '@card-battle/shared';
 
 import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
-import { gainLives } from '../life/gain-lives';
-import { gainPoints } from './gain-points';
+import { grantLives, grantPoints } from './grant-resources';
 
 export function canAffordCost(player: Player, cost: CardCost): boolean {
   if (cost.pointsPerLife !== undefined) {
@@ -72,7 +71,7 @@ export function payCost(
   if (lives > 0) {
     const outcome = applyLifeLoss(player, lives, 'card-buy');
     player.turnLedger.livesLost += outcome.livesLost;
-    creditGhostLifeLoss(player, outcome.livesLost);
+    creditGhostLifeLoss(state, player, outcome.livesLost);
   }
 
   return { ok: true };
@@ -83,10 +82,10 @@ export function grantYield(state: GameState, player: Player, yieldCost: CardCost
   const lives = yieldCost.lives ?? 0;
 
   if (points > 0) {
-    gainPoints(player, points, 'direct');
+    grantPoints(state, player, points, 'direct');
   }
 
   if (lives > 0) {
-    gainLives(player, lives, state.lifeLimit);
+    grantLives(state, player, lives, 'direct');
   }
 }

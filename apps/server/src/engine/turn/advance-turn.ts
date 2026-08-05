@@ -9,6 +9,9 @@
  * `currentTurnPlayerId`, still bump `turnSequence`, and reset the ledger. Both
  * `finishTurnPhases` and `resumeAfterRewards` call here — not either alone.
  * When the seat finally walks away, clear `blockAttacksForbidden` (L25-01).
+ *
+ * Duplicator window (L28-02): clear `duplicationActive` at the start of the
+ * seat that is about to act (including Block same-seat advances).
  */
 
 import type { GameState, Player } from '@card-battle/shared';
@@ -32,8 +35,8 @@ export function advanceTurn(state: GameState): void {
     currentPlayer.blockTurnsRemaining > 0
   ) {
     currentPlayer.blockTurnsRemaining -= 1;
+    beginTurnFor(currentPlayer);
     state.turnSequence += 1;
-    resetLedger(currentPlayer);
     return;
   }
 
@@ -54,13 +57,18 @@ export function advanceTurn(state: GameState): void {
 
     if (candidate !== undefined && !candidate.isEliminated) {
       state.currentTurnPlayerId = candidate.id;
+      beginTurnFor(candidate);
       state.turnSequence += 1;
-      resetLedger(candidate);
       return;
     }
   }
 
   state.currentTurnPlayerId = null;
+}
+
+function beginTurnFor(player: Player): void {
+  player.duplicationActive = false;
+  resetLedger(player);
 }
 
 function resetLedger(player: Player): void {

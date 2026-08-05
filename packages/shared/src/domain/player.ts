@@ -105,6 +105,12 @@ export interface Player {
    */
   attackBlockCharges: number;
   /**
+   * Duplicator anticipatory window (rules spec §4, L28-02). Public.
+   * Set by `activateDuplication`; cleared at the start of this player's next turn
+   * in `advanceTurn` (including Block consecutive turns for this seat).
+   */
+  duplicationActive: boolean;
+  /**
    * Frozen kit / cards / tokens at the moment of elimination (Lot 19). Present once
    * eliminated; used for the public `eliminationReveal` view. Not Spy relations.
    */

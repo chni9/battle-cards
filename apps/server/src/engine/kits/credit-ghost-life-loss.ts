@@ -4,16 +4,21 @@
  * Caller-side only: never enrich `applyDamage` / `applyLifeLoss` (golden rule 2).
  * Credits 2 points per life *actually* lost. Cloning's resource copy and
  * elimination bookkeeping that zeros already-0 lives must not call this.
+ * Routes through `grantPoints` so an active Duplicator can observe (L28-02).
  */
 
-import type { Player } from '@card-battle/shared';
+import type { GameState, Player } from '@card-battle/shared';
 
-import { gainPoints } from '../economy/gain-points';
+import { grantPoints } from '../economy/grant-resources';
 
-export function creditGhostLifeLoss(player: Player, livesLost: number): void {
+export function creditGhostLifeLoss(
+  state: GameState,
+  player: Player,
+  livesLost: number,
+): void {
   if (player.kitId !== 'ghost' || livesLost <= 0) {
     return;
   }
 
-  gainPoints(player, 2 * livesLost, 'direct');
+  grantPoints(state, player, 2 * livesLost, 'direct');
 }

@@ -9,11 +9,13 @@
 
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 
-import { gainPoints } from '../economy/gain-points';
-import { gainUpgradePoints } from '../economy/gain-upgrade-points';
+import {
+  grantLives,
+  grantPoints,
+  grantUpgradePoints,
+} from '../economy/grant-resources';
 import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
-import { gainLives } from '../life/gain-lives';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { findPlayer } from './advance-turn';
@@ -39,8 +41,8 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
     return;
   }
 
-  applyPointsGeneratorTicks(player);
-  applyInvisibilityTicks(player);
+  applyPointsGeneratorTicks(state, player);
+  applyInvisibilityTicks(state, player);
 
   // #V4-9a: already-active persistents stay armed; ticks skip while invisible.
   if (playerIsInvisible(player)) {
@@ -53,13 +55,14 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   applyCursesOnVictim(state, player);
 }
 
-function applyPointsGeneratorTicks(owner: Player): void {
+function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
   for (const effect of owner.activePersistentEffects) {
     if (effect.cardId !== 'points-generator' || effect.counter === null || effect.counter <= 0) {
       continue;
     }
 
-    gainPoints(
+    grantPoints(
+      state,
       owner,
       effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
       'direct',
@@ -67,13 +70,14 @@ function applyPointsGeneratorTicks(owner: Player): void {
   }
 }
 
-function applyInvisibilityTicks(owner: Player): void {
+function applyInvisibilityTicks(state: GameState, owner: Player): void {
   for (const effect of owner.activePersistentEffects) {
     if (effect.cardId !== 'invisibility') {
       continue;
     }
 
-    gainPoints(
+    grantPoints(
+      state,
       owner,
       effect.isUpgraded ? INVISIBILITY_POINTS_UPGRADED : INVISIBILITY_POINTS_BASE,
       'direct',
@@ -95,9 +99,9 @@ function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
       }
 
       const multiplier = effect.isUpgraded ? 2 : 1;
-      gainPoints(owner, ledger.pointsSpent * multiplier, 'direct');
-      gainUpgradePoints(owner, ledger.upgradePointsSpent * multiplier, 'direct');
-      gainLives(owner, ledger.livesLost * multiplier, state.lifeLimit);
+      grantPoints(state, owner, ledger.pointsSpent * multiplier, 'direct');
+      grantUpgradePoints(state, owner, ledger.upgradePointsSpent * multiplier, 'direct');
+      grantLives(state, owner, ledger.livesLost * multiplier, 'direct');
     }
   }
 }
@@ -129,14 +133,14 @@ function applyOneImposition(
 
   if (victim.points >= pointsDue) {
     victim.points -= pointsDue;
-    gainPoints(imposer, pointsDue, 'direct');
+    grantPoints(state, imposer, pointsDue, 'direct');
     return;
   }
 
   const loss = applyLifeLoss(victim, livesDue, 'imposition');
   victim.turnLedger.livesLost += loss.livesLost;
-  creditGhostLifeLoss(victim, loss.livesLost);
-  gainLives(imposer, loss.livesLost, state.lifeLimit);
+  creditGhostLifeLoss(state, victim, loss.livesLost);
+  grantLives(state, imposer, loss.livesLost, 'direct');
   recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
 }
 
@@ -154,7 +158,7 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
       const livesDue = effect.isUpgraded ? POISON_LIVES_UPGRADED : POISON_LIVES_BASE;
       const loss = applyLifeLoss(victim, livesDue, 'poison');
       victim.turnLedger.livesLost += loss.livesLost;
-      creditGhostLifeLoss(victim, loss.livesLost);
+      creditGhostLifeLoss(state, victim, loss.livesLost);
       recordEliminationContributor(state, victim.id, poisoner.id, loss.livesLost);
     }
   }
@@ -201,7 +205,7 @@ function applyOneCurse(
   const lossAmount = Math.min(livesDue, maxLoss);
   const loss = applyLifeLoss(victim, lossAmount, 'curse');
   victim.turnLedger.livesLost += loss.livesLost;
-  creditGhostLifeLoss(victim, loss.livesLost);
+  creditGhostLifeLoss(state, victim, loss.livesLost);
   recordEliminationContributor(state, victim.id, caster.id, loss.livesLost);
 
   if (victim.lives <= 1) {

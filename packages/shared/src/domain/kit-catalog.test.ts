@@ -104,5 +104,14 @@ describe('KIT_CATALOG', () => {
     });
     expect(getKit('ghost').startingCardCounts).toEqual({ action: 4, attack: 2 });
     expect(getKit('ghost').specialCards).toEqual(['curse']);
+
+    expect(getKit('duplicator').startingResources).toEqual({
+      lives: 2,
+      points: 0,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('duplicator').startingCardCounts).toEqual({ action: 1, attack: 0 });
+    expect(getKit('duplicator').specialCards).toEqual(['imposition', 'attack-thief']);
   });
 });

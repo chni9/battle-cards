@@ -60,6 +60,7 @@ export function enumerationStateFromView(
         blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
         blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
         attackBlockCharges: view.self.attackBlockCharges,
+        duplicationActive: publicPlayer.duplicationActive,
         pendingReanimation:
           publicPlayer.pendingReanimation === null
             ? null
@@ -92,6 +93,7 @@ export function enumerationStateFromView(
       blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
       blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
       attackBlockCharges: publicPlayer.activeAttackBlock === true ? 1 : 0,
+      duplicationActive: publicPlayer.duplicationActive,
       pendingReanimation:
         publicPlayer.pendingReanimation === null
           ? null

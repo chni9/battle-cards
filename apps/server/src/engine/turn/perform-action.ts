@@ -22,7 +22,7 @@ import { buyCard } from '../economy/buy-card';
 import { buySpecialCard } from '../economy/buy-special-card';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
-import { gainPoints } from '../economy/gain-points';
+import { grantPoints } from '../economy/grant-resources';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
@@ -30,6 +30,7 @@ import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
+import { activateDuplicationAction } from '../kits/activate-duplication';
 import {
   applyDefaultMirrorRedirect,
   type MirrorRedirectInfo,
@@ -76,7 +77,8 @@ export type TurnAction =
   | { type: 'buyUpgradePoint' }
   | { type: 'sellUpgradePoint' }
   | { type: 'buySpecialCard' }
-  | { type: 'deactivatePersistent'; effectId: string };
+  | { type: 'deactivatePersistent'; effectId: string }
+  | { type: 'activateDuplication' };
 
 export type PublicActionKind =
   | 'draw'
@@ -88,7 +90,8 @@ export type PublicActionKind =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
-  | 'deactivatePersistent';
+  | 'deactivatePersistent'
+  | 'activateDuplication';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;
@@ -188,7 +191,7 @@ export function performTurnAction(
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
-    gainPoints(actor, getKit(actor.kitId).startingResources.draw, 'direct');
+    grantPoints(state, actor, getKit(actor.kitId).startingResources.draw, 'direct');
     actionPlayed = {
       actorPlayerId,
       action: 'draw',
@@ -281,6 +284,18 @@ export function performTurnAction(
       actorPlayerId,
       action: 'deactivatePersistent',
       cardId: deactivated.cardId,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'activateDuplication') {
+    const activated = activateDuplicationAction(state, actorPlayerId);
+
+    if (!activated.ok) {
+      return activated;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'activateDuplication',
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'playMultipleAttacks') {

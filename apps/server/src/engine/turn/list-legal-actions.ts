@@ -11,6 +11,7 @@ import { listAssassinMultiAttackCandidates } from './assassin-candidates';
 import { listLegalEconomyActions } from './list-legal-economy';
 import { listLegalPlayCardActions, requireLivingActor } from './list-legal-play-card';
 import { listLegalDeactivateActions } from '../specials/list-legal-deactivate';
+import { listLegalActivateDuplicationActions } from '../kits/activate-duplication';
 import type { TurnAction } from './perform-action';
 import { hasActiveSubChoice } from './sub-choice';
 
@@ -35,5 +36,6 @@ export function listLegalActions(state: GameState, playerId: string): readonly T
     ...listAssassinMultiAttackCandidates(state, actor),
     ...listLegalEconomyActions(actor),
     ...listLegalDeactivateActions(actor),
+    ...listLegalActivateDuplicationActions(actor),
   ];
 }

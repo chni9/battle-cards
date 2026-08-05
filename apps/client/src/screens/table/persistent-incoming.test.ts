@@ -34,6 +34,7 @@ function baseView(): PlayingStateView {
         blockTurnsRemaining: 0,
         blockAttacksForbidden: false,
         activeAttackBlock: null,
+        duplicationActive: false,
         pendingReanimation: null,
       },
       {
@@ -53,6 +54,7 @@ function baseView(): PlayingStateView {
         blockTurnsRemaining: 0,
         blockAttacksForbidden: false,
         activeAttackBlock: null,
+        duplicationActive: false,
         pendingReanimation: null,
       },
     ],

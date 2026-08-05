@@ -3,7 +3,7 @@
  * Strictly personal. Excess over GameState.lifeLimit is lost.
  */
 
-import { gainLives } from '../../engine/life/gain-lives';
+import { grantLives } from '../../engine/economy/grant-resources';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
@@ -49,6 +49,6 @@ export const regenerationHandler: CardHandler = {
     const cost = quantity * pointsPerLife(context.card.isUpgraded);
     actor.points -= cost;
     actor.turnLedger.pointsSpent += cost;
-    gainLives(actor, quantity, context.state.lifeLimit);
+    grantLives(context.state, actor, quantity, 'direct');
   },
 };

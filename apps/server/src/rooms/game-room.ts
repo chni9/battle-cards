@@ -13,6 +13,7 @@ import {
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   DEACTIVATE_PERSISTENT,
+  ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
   CLIENT_READY,
   DRAW_CARD,
@@ -449,6 +450,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
         type: 'deactivatePersistent',
         effectId: parsed.effectId,
       });
+    },
+
+    [ACTIVATE_DUPLICATION]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'activateDuplication' });
     },
 
     [RESOLVE_SUB_CHOICE]: (client: GameClient, payload: unknown): void => {

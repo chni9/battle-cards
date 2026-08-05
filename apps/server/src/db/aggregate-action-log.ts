@@ -67,6 +67,7 @@ export function aggregateActionsForPlayer(
         break;
       }
       case 'deactivatePersistent':
+      case 'activateDuplication':
       case 'draw': {
         break;
       }

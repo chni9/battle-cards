@@ -33,6 +33,7 @@ export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const BUY_SPECIAL_CARD = 'buySpecialCard';
 export const DEACTIVATE_PERSISTENT = 'deactivatePersistent';
+export const ACTIVATE_DUPLICATION = 'activateDuplication';
 export const ERROR_MESSAGE = 'error';
 export const TURN_STARTED = 'turnStarted';
 export const ACTION_PLAYED = 'actionPlayed';
@@ -72,7 +73,8 @@ export type PublicActionKind =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
-  | 'deactivatePersistent';
+  | 'deactivatePersistent'
+  | 'activateDuplication';
 
 export interface PublicAttackPlay {
   cardId: CardId;
@@ -279,5 +281,6 @@ export interface ClientToServerMessages {
   [SELL_UPGRADE_POINT]: undefined;
   [BUY_SPECIAL_CARD]: undefined;
   [DEACTIVATE_PERSISTENT]: DeactivatePersistentPayload;
+  [ACTIVATE_DUPLICATION]: undefined;
   [RESOLVE_SUB_CHOICE]: ResolveSubChoicePayload;
 }

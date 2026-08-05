@@ -79,9 +79,15 @@ an inline comment citing why; do not route them through `applyDamage` or `applyL
 a ruling — golden rule 2 forbids enriching those primitives to absorb these cases. Future kit
 hooks (Ghost, Duplicator) observe outcomes caller-side, not inside the primitives.
 
-**Ghost (#V4-22 / L28-01):** `creditGhostLifeLoss(player, livesLost)` after every typed
+**Ghost (#V4-22 / L28-01):** `creditGhostLifeLoss(state, player, livesLost)` after every typed
 loss outcome and after Self-Suicide / Sentence (lives before assignment). Does **not**
 run on Cloning's resource copy or elimination bookkeeping that zeros already-0 lives.
+Routes through `grantPoints` so an active Duplicator can observe.
+
+**Duplicator (#V4-23 / L28-02):** `grantPoints` / `grantUpgradePoints` / `grantLives` wrappers
+observe `origin: 'direct'` via `observeDirectGain`. Public `Player.duplicationActive` is set by
+`activateDuplication` and cleared in `advanceTurn` at the start of that seat's next turn.
+Shield gains and Cloning resource assignment never enter the grant wrappers.
 
 | Site | Why not a typed loss or gain |
 |---|---|

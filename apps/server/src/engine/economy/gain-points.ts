@@ -11,8 +11,9 @@ import type { Player } from '@card-battle/shared';
 export type PointGainOrigin = 'direct' | 'duplicated';
 
 /**
- * Grants `amount` points to `player`. `origin` is required so Duplicator can
- * observe direct gains only and avoid duplication loops (technical spec v4 §4.2).
+ * Grants `amount` points to `player`. `origin` is consumed by the grant wrappers
+ * (`grantPoints` / Duplicator observe); this primitive stays kit-agnostic —
+ * `void origin` is still ok (technical spec v4 §4.2).
  */
 export function gainPoints(
   player: Player,

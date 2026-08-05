@@ -37,6 +37,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
     blockTurnsRemaining: 0,
     blockAttacksForbidden: false,
     attackBlockCharges: 0,
+    duplicationActive: false,
     eliminationSnapshot: null,
     pendingReanimation: null,
     ...overrides,

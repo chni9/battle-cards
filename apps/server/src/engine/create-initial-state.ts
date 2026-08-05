@@ -143,6 +143,7 @@ function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): 
     blockTurnsRemaining: 0,
     blockAttacksForbidden: false,
     attackBlockCharges: 0,
+    duplicationActive: false,
     eliminationSnapshot: null,
     pendingReanimation: null,
   };

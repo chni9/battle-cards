@@ -5,7 +5,7 @@
 import { getSharedCard, type CardId, type GameState } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
-import { gainUpgradePoints } from './gain-upgrade-points';
+import { grantUpgradePoints } from './grant-resources';
 import { grantYield } from './transfers';
 
 export interface SellCardSuccess {
@@ -55,7 +55,7 @@ export function sellCard(
   // Selling an upgraded copy refunds 1 upgrade point (designer ruling 2026-08-04),
   // including kit-permanent always-upgraded copies.
   if (instance.isUpgraded) {
-    gainUpgradePoints(actor, 1, 'direct');
+    grantUpgradePoints(state, actor, 1, 'direct');
   }
   state.pool.push(instance);
 

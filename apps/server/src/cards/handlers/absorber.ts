@@ -3,9 +3,11 @@
  * Upgraded also captures points/upgrade points actively spent (not theft).
  */
 
-import { gainPoints } from '../../engine/economy/gain-points';
-import { gainUpgradePoints } from '../../engine/economy/gain-upgrade-points';
-import { gainLives } from '../../engine/life/gain-lives';
+import {
+  grantLives,
+  grantPoints,
+  grantUpgradePoints,
+} from '../../engine/economy/grant-resources';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
@@ -29,11 +31,11 @@ export const absorberHandler: CardHandler = {
     }
 
     const ledger = target.turnLedger;
-    gainLives(actor, ledger.livesLost, context.state.lifeLimit);
+    grantLives(context.state, actor, ledger.livesLost, 'direct');
 
     if (context.card.isUpgraded) {
-      gainPoints(actor, ledger.pointsSpent, 'direct');
-      gainUpgradePoints(actor, ledger.upgradePointsSpent, 'direct');
+      grantPoints(context.state, actor, ledger.pointsSpent, 'direct');
+      grantUpgradePoints(context.state, actor, ledger.upgradePointsSpent, 'direct');
     }
   },
 };

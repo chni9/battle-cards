@@ -5,8 +5,7 @@
 import { UPGRADE_POINT_ECONOMY, type GameState } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
-import { gainPoints } from './gain-points';
-import { gainUpgradePoints } from './gain-upgrade-points';
+import { grantPoints, grantUpgradePoints } from './grant-resources';
 
 export type UpgradePointResult = { ok: true } | { ok: false; message: string };
 
@@ -25,7 +24,7 @@ export function buyUpgradePoint(state: GameState, actorPlayerId: string): Upgrad
 
   actor.points -= cost;
   actor.turnLedger.pointsSpent += cost;
-  gainUpgradePoints(actor, 1, 'direct');
+  grantUpgradePoints(state, actor, 1, 'direct');
 
   return { ok: true };
 }
@@ -42,7 +41,7 @@ export function sellUpgradePoint(state: GameState, actorPlayerId: string): Upgra
   }
 
   actor.upgradePoints -= 1;
-  gainPoints(actor, UPGRADE_POINT_ECONOMY.sellYieldPoints, 'direct');
+  grantPoints(state, actor, UPGRADE_POINT_ECONOMY.sellYieldPoints, 'direct');
 
   return { ok: true };
 }

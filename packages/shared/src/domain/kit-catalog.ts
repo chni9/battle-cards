@@ -136,6 +136,14 @@ export const KIT_CATALOG = {
     specialCards: ['curse'],
     traits: { ...EMPTY_TRAITS },
   },
+  duplicator: {
+    id: 'duplicator',
+    name: 'Duplicator',
+    startingResources: { lives: 2, points: 0, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 1, attack: 0 },
+    specialCards: ['imposition', 'attack-thief'],
+    traits: { ...EMPTY_TRAITS },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {

@@ -192,6 +192,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       blockTurnsRemaining: player.blockTurnsRemaining,
       blockAttacksForbidden: player.blockAttacksForbidden,
       activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
+      duplicationActive: player.duplicationActive,
       pendingReanimation:
         player.pendingReanimation === null
           ? null
@@ -327,6 +328,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         blockTurnsRemaining: player.blockTurnsRemaining,
         blockAttacksForbidden: player.blockAttacksForbidden,
         activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
+        duplicationActive: player.duplicationActive,
         pendingReanimation:
           player.pendingReanimation === null
             ? null

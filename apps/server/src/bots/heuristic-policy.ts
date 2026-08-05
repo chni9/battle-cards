@@ -437,6 +437,11 @@ function scoreAction(
     };
   }
 
+  if (action.type === 'activateDuplication') {
+    // L28-02: must not fall through to sellUpgradePoint. Full policy is L29-08.
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 8, code: 'sustain' };
+  }
+
   // sellUpgradePoint
   return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
 }

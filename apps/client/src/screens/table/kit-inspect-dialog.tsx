@@ -159,6 +159,20 @@ export function KitInspectDialog({
               </p>
             </section>
           )}
+
+          {kitId === 'duplicator' && (
+            <section>
+              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                Ability
+              </h3>
+              <p className="mt-1 text-sm text-ink">
+                Instead of a normal action, activate duplication for the following table
+                round: copy opponents&apos; life, point, and upgrade-point gains (not shield,
+                not Cloning&apos;s resource copy). Renew each turn. Two Duplicators do not
+                loop.
+              </p>
+            </section>
+          )}
         </div>
       </div>
     </Dialog>

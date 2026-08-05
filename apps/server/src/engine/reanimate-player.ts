@@ -77,6 +77,7 @@ export function reanimatePlayer(player: Player, kitId: KitId, rng: Rng): void {
   player.blockTurnsRemaining = 0;
   player.blockAttacksForbidden = false;
   player.attackBlockCharges = 0;
+  player.duplicationActive = false;
   player.eliminationSnapshot = null;
   player.pendingReanimation = null;
 

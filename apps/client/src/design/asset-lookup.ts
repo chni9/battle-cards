@@ -39,6 +39,7 @@ const KIT_FILES = {
   wizard: 'Magician.png',
   juggernaut: 'Juggernaut.png',
   ghost: 'Ghost.png',
+  duplicator: 'Duplicator.png',
 } as const satisfies Record<KitId, string>;
 
 type ShippedArtCardId =

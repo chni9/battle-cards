@@ -10,10 +10,12 @@ import {
 } from '@card-battle/shared';
 
 import { takeCardFrom } from '../cards/steal-card';
-import { gainPoints } from '../economy/gain-points';
-import { gainUpgradePoints } from '../economy/gain-upgrade-points';
+import {
+  grantLives,
+  grantPoints,
+  grantUpgradePoints,
+} from '../economy/grant-resources';
 import { transferCardInstance } from '../kits/acquire-card';
-import { gainLives } from '../life/gain-lives';
 import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import { createRng, type Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
@@ -331,17 +333,17 @@ function applyOneChoice(
   choice: RewardChoice,
 ): void {
   if (choice.type === 'lives') {
-    gainLives(eliminator, ELIMINATION_REWARD_LIVES, state.lifeLimit);
+    grantLives(state, eliminator, ELIMINATION_REWARD_LIVES, 'direct');
     return;
   }
 
   if (choice.type === 'points') {
-    gainPoints(eliminator, ELIMINATION_REWARD_POINTS, 'direct');
+    grantPoints(state, eliminator, ELIMINATION_REWARD_POINTS, 'direct');
     return;
   }
 
   if (choice.type === 'upgradePoint') {
-    gainUpgradePoints(eliminator, 1, 'direct');
+    grantUpgradePoints(state, eliminator, 1, 'direct');
     return;
   }
 

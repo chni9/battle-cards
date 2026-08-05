@@ -8,7 +8,7 @@
 import type { GameState, Player } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
-import { gainPoints } from './gain-points';
+import { grantPoints } from './grant-resources';
 
 export interface StealPointsInput {
   state: GameState;
@@ -33,10 +33,11 @@ export function stealPoints(input: StealPointsInput): StealPointsOutcome {
     throw new Error('stealPoints: unknown source or target');
   }
 
-  return stealPointsBetween(source, target, input.amount, input.gainMultiplier);
+  return stealPointsBetween(input.state, source, target, input.amount, input.gainMultiplier);
 }
 
 function stealPointsBetween(
+  state: GameState,
   source: Player,
   target: Player,
   amount: number,
@@ -51,7 +52,7 @@ function stealPointsBetween(
   target.turnLedger.pointsLostToTheft += taken;
 
   const gained = taken * gainMultiplier;
-  gainPoints(source, gained, 'direct');
+  grantPoints(state, source, gained, 'direct');
 
   return { taken, gained };
 }

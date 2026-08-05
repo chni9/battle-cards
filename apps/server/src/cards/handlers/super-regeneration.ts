@@ -1,9 +1,9 @@
 /**
  * Super Regeneration — rules spec §5, backlog L21-02.
- * Strictly personal: +9 lives (+18 upgraded). Life cap applies via gainLives.
+ * Strictly personal: +9 lives (+18 upgraded). Life cap applies via grantLives.
  */
 
-import { gainLives } from '../../engine/life/gain-lives';
+import { grantLives } from '../../engine/economy/grant-resources';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
@@ -23,6 +23,6 @@ export const superRegenerationHandler: CardHandler = {
     }
 
     const amount = context.card.isUpgraded ? UPGRADED_LIVES : BASE_LIVES;
-    gainLives(actor, amount, context.state.lifeLimit);
+    grantLives(context.state, actor, amount, 'direct');
   },
 };

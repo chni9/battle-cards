@@ -331,7 +331,7 @@ describe('Ghost kit credit (L28-01 / #V4-22)', () => {
     }
 
     kam.points = 0;
-    creditGhostLifeLoss(kam, 3);
+    creditGhostLifeLoss(state, kam, 3);
     expect(kam.points).toBe(0);
   });
 });

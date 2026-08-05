@@ -20,7 +20,7 @@ import {
 import { grantSpy } from '../../protocol/visibility-matrix';
 import { stealRandomCard, takeCardFrom } from '../cards/steal-card';
 import { downgradeAllCards } from '../economy/downgrade-cards';
-import { gainUpgradePoints } from '../economy/gain-upgrade-points';
+import { grantUpgradePoints } from '../economy/grant-resources';
 import { stealPoints } from '../economy/steal-points';
 import { stealUpgradePoints } from '../economy/steal-upgrade-points';
 import { transferCardInstance } from '../kits/acquire-card';
@@ -223,9 +223,9 @@ function resolveUpgradePointThief(
     return 'applied';
   }
 
-  stealUpgradePoints(source, target);
+  stealUpgradePoints(state, source, target);
   const stripped = downgradeAllCards(target);
-  gainUpgradePoints(source, stripped, 'direct');
+  grantUpgradePoints(state, source, stripped, 'direct');
 
   if (effect.isUpgraded) {
     stealPoints({
@@ -321,7 +321,7 @@ function resolveSuicide(
     // Lethal self-elimination in one step — rules spec §5 (Suicide), technical spec §4.2.
     // Not `applyLifeLoss`: no bounded debit, no card-counter decrement; elimination is step 5.
     // Ghost (#V4-22): credit lives before the lethal assignment.
-    creditGhostLifeLoss(target, livesLost);
+    creditGhostLifeLoss(state, target, livesLost);
     target.lives = 0;
     // Self-elim: no third-party contributor (rules spec §6).
     return { livesLost, outcome: 'applied' };
@@ -330,7 +330,7 @@ function resolveSuicide(
   const loss = applyLifeLoss(target, SUICIDE_OPPONENT_LIFE_LOSS, 'suicide');
   target.points = 0;
   target.turnLedger.livesLost += loss.livesLost;
-  creditGhostLifeLoss(target, loss.livesLost);
+  creditGhostLifeLoss(state, target, loss.livesLost);
   recordEliminationContributor(state, target.id, effect.sourcePlayerId, loss.livesLost);
 
   return { livesLost: loss.livesLost, outcome: 'applied' };
@@ -391,7 +391,7 @@ export function resolvePendingEffects(
       livesLost = damageOutcome.livesLost;
       shieldAbsorbed = damageOutcome.shieldAbsorbed;
       player.turnLedger.livesLost += damageOutcome.livesLost;
-      creditGhostLifeLoss(player, damageOutcome.livesLost);
+      creditGhostLifeLoss(state, player, damageOutcome.livesLost);
       poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
       recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
       outcome = 'applied';
@@ -427,7 +427,7 @@ export function resolvePendingEffects(
       // Instant lethal elimination — rules spec §5 (Sentence), technical spec §4.2.
       // Not `applyDamage` (no shield) and not `applyLifeLoss`: zeroes lives regardless of count.
       // Ghost (#V4-22): credit lives before the lethal assignment.
-      creditGhostLifeLoss(player, livesBefore);
+      creditGhostLifeLoss(state, player, livesBefore);
       player.lives = 0;
       const isSelf = effect.sourcePlayerId === player.id;
       // Lethal effect: record even when lives were already 0 (livesBefore used as signal).

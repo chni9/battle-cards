@@ -9,9 +9,11 @@
  * Invisible target → no copy; report `'immune'` via `immediateResolved` (#V4-9d).
  */
 
-import { gainPoints } from '../../engine/economy/gain-points';
-import { gainUpgradePoints } from '../../engine/economy/gain-upgrade-points';
-import { gainLives } from '../../engine/life/gain-lives';
+import {
+  grantLives,
+  grantPoints,
+  grantUpgradePoints,
+} from '../../engine/economy/grant-resources';
 import { playerIsInvisible } from '../../engine/specials/is-invisible';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
@@ -52,7 +54,7 @@ export const cloningHandler: CardHandler = {
 
     user.kitId = target.kitId;
     // Resource snapshot — rules spec §5 (Cloning), technical spec v4 §4.6.
-    // Assignment copies the target's count; neither `gainLives` nor a loss primitive.
+    // Assignment copies the target's count; neither `grantLives` nor a loss primitive.
     user.lives = target.lives;
     user.points = target.points;
     user.upgradePoints = target.upgradePoints;
@@ -66,9 +68,9 @@ export const cloningHandler: CardHandler = {
     );
 
     if (card.isUpgraded) {
-      gainPoints(user, 10, 'direct');
-      gainUpgradePoints(user, 2, 'direct');
-      gainLives(user, 4, state.lifeLimit);
+      grantPoints(state, user, 10, 'direct');
+      grantUpgradePoints(state, user, 2, 'direct');
+      grantLives(state, user, 4, 'direct');
     }
   },
 };
