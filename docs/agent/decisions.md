@@ -1373,9 +1373,242 @@ Designer rulings (session):
 - **#V4-24:** Duplicator starting deal is **1 action / 0 attack** as written (not
   a typo).
 
+## 2026-08-05 · [T] Heuristic: kit-aware draw score (L29-02)
+
+`{ type: 'draw' }` scored a hardcoded `HEURISTIC_BAND_WEIGHTS.sustain` (100) for every kit,
+so a Wizard (kit draw 2) drew as reluctantly as an Untouchable (kit draw 1) even though
+drawing is strictly more valuable for the higher-draw kit. Policy-only (#V3-5 tunable,
+not a measured constant):
+
+```ts
+score = HEURISTIC_BAND_WEIGHTS.sustain + DRAW_SCORE_PER_EXTRA_DRAW * max(0, kitDraw - 1)
+```
+
+`DRAW_SCORE_PER_EXTRA_DRAW = 20` lives in `heuristic-weights.ts`. Untouchable (draw 1) stays
+at exactly 100 — no behaviour change for the majority of kits. Read `kitDraw` from
+`getKit(view.self.kitId).startingResources.draw` at scoring time, never hardcoded, so a
+future kit (e.g. Tactician, not yet in `KIT_IDS`) picks up the right score automatically.
+
+Refactored `decideWithReason` to delegate to a new exported `scoreActions(view, actions, rng)`
+— same scoring, now testable per-action without asserting through `decide`'s rng-tie-break.
+
+## 2026-08-05 · [T] Heuristic: life-relative Tax/Regen thresholds (L29-03)
+
+`REGEN_SOFT_LIFE = 6` and `TAX_LIFE_BUFFER = 5` (`heuristic-weights.ts`) are absolute life
+counts tuned by playtest against 10-life kits. Applied unscaled to Indestructible (18 lives)
+the bot is needlessly timid (never soft-Regens, Taxes only far above what it can afford to
+lose); applied to a low-life kit (Duplicator, 2 lives) it never Taxes or soft-Regens at all,
+because 5–6 lives of buffer exceeds its whole life pool.
+
+New `apps/server/src/bots/heuristic-life-thresholds.ts` scales both to
+`getKit(kitId).startingResources.lives`, keeping the same proportion of the 10-life tuned
+value (#V3-5 tunable, this rescaling itself is untested — not to be cited as measured):
+
+```ts
+regenSoftLifeForKit(L) = max(1, round(REGEN_SOFT_LIFE * L / 10))
+taxLifeBufferForKit(L) = max(1, min(TAX_LIFE_BUFFER, round(TAX_LIFE_BUFFER * L / 10)))
+```
+
+`taxLifeBufferForKit` is capped at the 10-life tuned value rather than scaled up for
+high-life kits — a bigger life pool should make the bot Tax more readily, not need an even
+larger absolute cushion than what playtest already validated. Both floor at 1 so no kit is
+ever gated to "never Tax / never soft-Regen" purely by rounding to 0.
+
+Every comparison site in `heuristic-policy.ts`, `policy-internals.ts` (`scoreAbsorber`) and
+`score-play/score-core.ts` (Tax play, Regen soft top-up) now reads the scaled value via
+`getKit(view.self.kitId).startingResources.lives` instead of the two module constants
+directly. `REGEN_SOFT_LIFE` / `TAX_LIFE_BUFFER` themselves are unchanged and still the single
+source the helpers scale from — no second tunable to drift out of sync.
+
+## 2026-08-05 · [T] Heuristic: score economy / theft specials (L29-05)
+
+`score-play/score-economy-theft.ts` moved off the L29-01 stub. Three branches, all tunable
+defaults (#V3-5), none ever tying `draw`:
+
+- **Super Regeneration** — `survive + SUPER_REGEN_SURVIVE_BONUS` (+10 upgraded) under any
+  incoming threat; `invest + SUPER_REGEN_INVEST_BONUS` (+15 upgraded) when `lives` is at or
+  below the kit-scaled `regenSoftLifeForKit` floor (+3 more for upgraded, since its 18-life
+  heal is worth reaching for slightly earlier); otherwise refused outright — a full-health
+  bot must not play it idly just because nothing else scored.
+- **Upgrade Point Thief** — always `deny` with at least one living opponent (mass effect,
+  no target needed): `UPGRADE_POINT_THIEF_DENY_BONUS + livingCount * 15`, plus `+20` per
+  opponent whose Spy relation already shows an upgraded card or spent upgrade points. Refused
+  outright with zero living opponents (never reachable in practice, kept for safety).
+- **Card Thief** — upgraded is target-less (mass steal): `deny + CARD_THIEF_DENY_BONUS +
+  livingCount * 10`. Base needs a target: refused without one; refused against a target
+  `isImmuneTarget` reports immune to (`card-thief` — no shipped kit lists it yet, defensive
+  only); otherwise `deny + CARD_THIEF_DENY_BONUS`, +15 more when the target is spied with at
+  least one known card to aim at.
+
+`score-turn-pool-reversal.ts`, `score-persistents.ts`, `score-attacks-redirect.ts` stay on
+the L29-01 stub pending L29-06..08.
+
+## 2026-08-05 · [T] Heuristic: persistents move + Poison/Curse/Super Absorber (L29-06)
+
+Sentence, Imposition, Spy Thief and Points Generator had been branched directly in
+`score-core.ts` since the L20-17 fallthrough fix — L29-01's family split left them there
+because they predated the split. Moved verbatim into `score-play/score-persistents.ts` and
+`families.ts` routes their four card ids to `'persistents'` instead of `'core'`. The backlog
+row for L29-06 previously read "plus the four cards that have had no branch since V1", which
+was wrong (they have had one since L20-17, 2026-08-04) — corrected to "retune ... (branched
+since L20-17)".
+
+Retuned in the same change (still tunable defaults, #V3-5, not measured):
+`IMPOSITION_INVEST_BONUS` 55 → 60, `POINTS_GENERATOR_INVEST_BONUS` 50 → 55,
+`SPY_THIEF_DENY_BONUS` 100 → 110, Sentence's upgraded per-opponent add-on 5 → 8
+(`SENTENCE_UPGRADED_PER_OPPONENT`). `cloning`'s outside-threat Invest bonuses in
+`score-core.ts` also bumped 40 → 50 (life-driven) and 35 → 45 (points-driven) — it stays in
+`'core'` since it is not persistent, just already branched there. All four retuned bands and
+Cloning's still clear `HEURISTIC_BAND_WEIGHTS.invest`/`.deny` (1000/4000) by a wide margin, so
+the retune only reorders preference among these specials, never against draw or against a
+Survive/Deny play under real threat.
+
+Three new branches in `score-persistents.ts`:
+
+- **Poison** — `invest + POISON_INVEST_BONUS` (+`POISON_MULTI_TARGET_BONUS` at 2+ living
+  opponents, since it hits every opponent at once); refused with `hasOwnPersistent('poison')`
+  already active or zero living opponents.
+- **Curse** — needs a target; refused without one, against an `isImmuneTarget` result, or a
+  seat this bot's own Curse already sits on (one copy per victim). `deny + CURSE_DENY_BONUS
+  + spentLastTurn` when the target's last complete turn spent ≥ `CURSE_HIGH_SPEND_THRESHOLD`
+  points or the target already tops `ctx.threatOrder`; otherwise a smaller
+  `invest + CURSE_INVEST_BONUS` — still worth activating on any living target, the drip pays
+  off over time even with no signal yet.
+- **Super Absorber** — refused with `hasOwnPersistent('super-absorber')` already active or
+  zero living opponents. Upgraded escalates like Absorber+ (`scoreAbsorber` in
+  `policy-internals.ts`): `deny + SUPER_ABSORBER_UP_DENY_BONUS` when any living opponent's
+  last complete turn spent an upgrade point, else `deny + SUPER_ABSORBER_POINTS_DENY_BONUS`
+  when any spent more points than this bot's kit draw. Otherwise a passive
+  `deny + SUPER_ABSORBER_BASELINE_DENY_BONUS` baseline — unlike single-target Absorber it is
+  activate-once-for-all-opponents (no target), so it is worth playing proactively even before
+  a spend signal exists.
+
+## 2026-08-05 · [T] Heuristic: score MEGA / Super Mirror / Attack Thief (L29-07)
+
+MEGA ATTACK moved from `'core'` to the `'attacks'` family (`families.ts`,
+`score-attacks-redirect.ts`). It had stayed in `'core'` since L29-01 on the theory that it
+would "keep scoring through the existing `isAttackCardId` branches with zero behaviour
+change" — true only in the vacuous sense that it fell through to the unscored penalty either
+way: `megaAttackHandler.canPlay` requires `targetPlayerId === null` (it hits every alive
+opponent at once), so none of `score-core.ts`'s per-target branches (mutual cancel,
+lethal-now, burn counter, pressure) ever matched its target-less action. It needed its own
+branch, not core's:
+
+- **MEGA ATTACK** — `survive + MUTUAL_CANCEL_BONUS + damage` if it would cancel a pending
+  attack from any living opponent (`hasCancelingIncomingFrom`, mirroring core's per-target
+  rule across all targets at once); `lethalNow + damage` if any Spy-known opponent's lives are
+  at or below 20 (`attackDamageFor('mega-attack', isUpgraded)` is 20 either way — the upgrade
+  changes redirectability, not damage); otherwise
+  `pressure + livingCount * MEGA_ATTACK_PRESSURE_PER_OPPONENT + damage`. Refused only with
+  zero living opponents.
+- **Super Mirror** — `survive + SUPER_MIRROR_SURVIVE_BONUS` (+`SUPER_MIRROR_UPGRADED_BONUS`
+  upgraded) only when `incomingThreat > 0` **and** at least one pending effect actually
+  targets self and `isAttackCardId` — redirecting nothing pending is a wasted card. Refused
+  otherwise; never scores outside the Survive band, since it has no use off-threat.
+- **Attack Thief** — `survive + ATTACK_THIEF_SURVIVE_BONUS` under any incoming threat (the
+  block charge is spent before mutual cancel, so it is worth reaching for pre-emptively).
+  Off-threat: `deny + ATTACK_THIEF_DENY_BONUS` with any living opponent (it always steals a
+  random shared attack per opponent even with no intel), +`ATTACK_THIEF_INTEL_BONUS` when a
+  spied opponent's hand shows a shared attack card. Refused only with zero living opponents.
+
+**Mirror eligibility fix (score-core.ts).** The base Mirror Survive branch
+(`ctx.incomingThreat > 0` → `survive + 30`) fired on *any* pending attack, without checking
+whether Mirror could actually redirect it — a base Mirror facing only an upgraded MEGA (never
+redirectable by a base Mirror, technical spec v4 §4.7) scored Survive for a play that would be
+rejected. Added `eligibleMirrorPendingFromView(view, isUpgradedMirror)` in
+`policy-internals.ts`, a hand-duplicated copy of `listEligibleMirrorTargets`'s predicates
+(`engine/turn/mirror-choice.ts`) over `PendingEffectView` instead of `PendingEffect` — the bot
+only ever sees the view, never `Player.pendingEffects`. Gated the Survive branch on
+`eligible.length > 0`; when empty, execution now falls through to the later
+sustain-band `shield`/`mirror` branch instead (still scores above draw in the common case, but
+no longer via a false Survive claim). `mirror-eligibility-parity.test.ts` builds the same
+pending attacks on both sides (direct, upgraded, mirror-redirected, super-mirror-redirected,
+base/upgraded MEGA) and asserts identical eligible-id sets for both a base and an upgraded
+Mirror — the parity contract the two duplicated predicates must never drift on.
+
+## 2026-08-05 · [T] Heuristic: turn-flow specials, new action types, sub-choice picks (L29-08)
+
+Closes Lot 29. Five branches in `score-play/score-turn-pool-reversal.ts`, none of which
+gate on point reserve (unlike core's utility cards) or refuse below draw except where noted —
+these are one-shot or renewable cards with no downside to playing when legal:
+
+- **Block** — `survive + BLOCK_SURVIVE_BONUS` when `incomingThreat > 0` or any pending
+  effect targets self (cancels every one of them); otherwise `invest + BLOCK_INVEST_BONUS`
+  for the proactive consecutive-turn grant. Never refused — no "already active" gate exists
+  on the card itself (replaying it resets the chain, which is legal).
+- **Invisibility** — refused only via `hasOwnPersistent('invisibility')`; otherwise
+  `invest + INVISIBILITY_INVEST_BONUS`.
+- **Card Absorber** — refused on an empty shared pool (`view.pool.length === 0`, the only
+  case `canPlay` itself would reject); otherwise
+  `invest + CARD_ABSORBER_INVEST_BONUS + min(4, pool.length) * CARD_ABSORBER_PER_CARD_BONUS`.
+- **Card Transformer** — the action already carries `consumeInstanceId` from
+  `list-legal-play-card.ts`'s per-hand-card enumeration; refused only if it does not resolve
+  to an owned hand card (defensive — should not happen), else
+  `invest + CARD_TRANSFORMER_INVEST_BONUS`.
+- **Reanimation** — refused only via `hasOwnPersistent('reanimation')` (the engine's own
+  `canPlay` already blocks a second arm — this is a defensive mirror, unreachable through
+  `listLegalPlayCardActions`). Otherwise always `invest + REANIMATION_INVEST_BONUS`
+  (+`REANIMATION_LOW_LIFE_BONUS` at/below the kit-scaled `regenSoftLifeForKit` floor or the
+  flat `REANIMATION_LOW_LIFE_FLOOR`) — insurance the bot should always buy when available,
+  more urgently at low life, never left to rng-tie with draw.
+
+Replaced the L25-02 / L28-02 placeholder scores for the two newer `TurnAction` variants in
+`heuristic-policy.ts` directly (they are not `playCard`, so they stay outside `score-play/`):
+
+- **`deactivatePersistent`** (Invisibility only, today) — kept under
+  `ctx.incomingThreat > 0` (`sustain - UNSCORED_PLAY_PENALTY`, i.e. never chosen while the
+  immunity still matters); otherwise `invest + DEACTIVATE_PERSISTENT_INVEST_BONUS` when the
+  stance wants to attack (`finish`/`contest`, or an attack card in hand) or points are at or
+  above `DEACTIVATE_PERSISTENT_POINTS_FLOOR`; else a small `sustain - 5`.
+- **`activateDuplication`** (Duplicator only) — refused if `view.self.kitId !== 'duplicator'`
+  or the public view already shows `duplicationActive` (both defensive: the engine's own
+  `listLegalActivateDuplicationActions` gate gives the first for free, and the window is
+  always cleared before the owner's own next decision per `advanceTurn`, per
+  `duplicator.test.ts`'s "clears window at next turn start"). Otherwise
+  `invest + ACTIVATE_DUPLICATION_INVEST_BONUS` with any living opponent outside `finish`
+  stance (renewing the anticipatory window is not worth the action once already finishing);
+  else `sustain - 8`.
+
+**New `bots/sub-choice-picks.ts`** — light heuristics for the four generic sub-choices,
+replacing `rng.pick`/`rng.shuffle` wherever a bot resolves one:
+
+- `pickStealInstanceId(view, eligibleIds, rng)` — Card Thief's steal-pick is only ever
+  raised against a spied victim (`needsStealPick` in `card-thief.ts`), so every eligible id
+  is expected to resolve to a real `CardInstance` via some opponent's `spied.hand` /
+  `spied.specialCards`. Ranks upgraded attack > attack > special > plain action; falls back
+  to `rng.pick` if nothing resolves (defensive).
+- `pickPoolInstanceIds(poolCards, eligibleIds, maxCount, rng)` — Card Absorber's upgraded
+  pool-pick. Ranks special > upgraded attack > attack > plain action; cards strictly better
+  than the `maxCount`-th rank are always taken, ties at the cutoff broken by `rng.shuffle`
+  rather than stable array order.
+- `pickSpecialCardId(eligibleCardIds, rng)` — Card Transformer's upgraded special-pick.
+  `beginSpecialPick` always offers the full 20-entry `SPECIAL_CARD_IDS` set, so this resolves
+  to a fixed high-impact-first preference order's first hit; `rng` only matters if the
+  eligible set is ever narrowed later.
+- `pickReanimationKitId(eligibleKitIds, rng)` — upgraded Reanimation's kit choice. Sorts by
+  `startingResources.lives` desc, then `.draw` desc; `rng.pick` breaks a genuine tie (three
+  kits currently tie at 10 lives / 1 draw).
+
+**Wiring** — every remaining `rng.pick`/`rng.shuffle` at a bot decision point now goes
+through one of the four functions above: `bot-driver.ts` (`handleStealChoice`,
+`handleReanimationKitChoice`), `game-room.ts` (all four `performBotAction` hooks —
+`resolveSteal`, `resolvePoolPick`, `resolveSpecialPick`, `resolveReanimationKit` — plus the
+upgraded-steal chain continuation in `applyBotStealChoice`), and `simulation/run-game.ts`'s
+matching hooks, for parity between the room path and the headless simulator.
+
+**Tests** — `sub-choice-picks.test.ts` covers each function's preference order and rng
+fallback in isolation. `v4-specials-stall.test.ts` drives Block and Invisibility through a
+direct play, and Card Absorber / Card Transformer / Reanimation through their full upgraded
+sub-choice (pool-pick, special-pick, reanimation-kit after a forced elimination) via
+`performAndCompleteTurn` with hooks built on the new pick functions, proving none of the five
+throws or leaves the room stuck. `heuristic-policy.test.ts` adds a scoring-level suite per
+card plus `deactivatePersistent` / `activateDuplication`, asserting each beats `draw` when
+expected and neither ever falls back to `sellUpgradePoint`.
+
 ## 2026-08-05 · [P] Public immune outcome copy (L30-04)
 
 Designer instruction: revert the opaque-immunity UI convention. Action log,
 resolution FX, and spectator-readable state may say "immune" (Untouchable,
 Invisibility, and any future `outcome: 'immune'`).
+
 
