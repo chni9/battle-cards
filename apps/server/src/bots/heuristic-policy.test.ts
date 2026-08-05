@@ -1375,4 +1375,63 @@ describe('heuristic decide (L16-04)', () => {
     ];
     expect(decide(view, actions, createRng('draw-vs-fallthrough'))).toEqual({ type: 'draw' });
   });
+
+  it('L29-03: Regen soft-invest threshold scales with kit starting lives', () => {
+    const regenPlay: TurnAction = { type: 'playCard', instanceId: 'regen-1', quantity: 4 };
+
+    // Indestructible (18 lives) scaled soft threshold is 11 — 10 lives qualifies as soft-low.
+    const indestructibleView = baseView({
+      self: baseSelf({
+        kitId: 'indestructible',
+        lives: 10,
+        points: 20,
+        hand: [{ instanceId: 'regen-1', cardId: 'regeneration', isUpgraded: false }],
+      }),
+    });
+    const [indestructibleScore] = scoreActions(
+      indestructibleView,
+      [regenPlay],
+      createRng('l29-03-indestructible'),
+    );
+    expect(indestructibleScore?.code).toBe('invest');
+
+    // Assassin (10 lives) scaled soft threshold is 6 — 10 lives is not soft-low.
+    const assassinView = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        lives: 10,
+        points: 20,
+        hand: [{ instanceId: 'regen-1', cardId: 'regeneration', isUpgraded: false }],
+      }),
+    });
+    const [assassinScore] = scoreActions(assassinView, [regenPlay], createRng('l29-03-assassin'));
+    expect(assassinScore?.code).toBe('sustain');
+  });
+
+  it('L29-03: Tax life buffer scales down for a low-life kit (Duplicator)', () => {
+    const taxPlay: TurnAction = { type: 'playCard', instanceId: 'tax-1' };
+    const actions: TurnAction[] = [{ type: 'draw' }, taxPlay];
+
+    // Duplicator (2 lives) scaled Tax buffer is 1 — safe to Tax at 3 lives.
+    const duplicatorView = baseView({
+      self: baseSelf({
+        kitId: 'duplicator',
+        lives: 3,
+        hand: [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }],
+      }),
+    });
+    expect(decide(duplicatorView, actions, createRng('l29-03-duplicator-tax'))).toEqual(taxPlay);
+
+    // Assassin (10 lives) scaled Tax buffer is 5 (capped) — 3 lives refuses Tax.
+    const assassinView = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        lives: 3,
+        hand: [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }],
+      }),
+    });
+    expect(decide(assassinView, actions, createRng('l29-03-assassin-tax'))).toEqual({
+      type: 'draw',
+    });
+  });
 });

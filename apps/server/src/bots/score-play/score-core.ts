@@ -11,12 +11,14 @@
 import {
   attackDamageFor,
   getCard,
+  getKit,
   isAttackCardId,
   type BotReasonCode,
   type PlayingStateView,
 } from '@card-battle/shared';
 
 import type { TurnAction } from '../../engine/turn/perform-action';
+import { regenSoftLifeForKit, taxLifeBufferForKit } from '../heuristic-life-thresholds';
 import {
   BURN_COUNTER_BONUS,
   FINISH_CHIP_BONUS,
@@ -25,13 +27,11 @@ import {
   MUTUAL_CANCEL_BONUS,
   POINTS_GENERATOR_INVEST_BONUS,
   PRESSURE_COST_DIVISOR,
-  REGEN_SOFT_LIFE,
   SPY_THIEF_DENY_BONUS,
   SPY_TOP_THREAT_BONUS,
   SPY_UNSPIED_BONUS,
   STRIKE_MIN_DAMAGE,
   TAX_INVEST_BONUS,
-  TAX_LIFE_BUFFER,
   UNSCORED_PLAY_PENALTY,
 } from '../heuristic-weights';
 import {
@@ -391,7 +391,9 @@ export function scoreCorePlayCard(
 
   // Tax — farm engine; prefer upgraded; refuse when reserve would break after other spends only.
   if (cardId === 'tax') {
-    if (view.self.lives > ctx.incomingThreat + TAX_LIFE_BUFFER) {
+    const taxBuffer = taxLifeBufferForKit(getKit(view.self.kitId).startingResources.lives);
+
+    if (view.self.lives > ctx.incomingThreat + taxBuffer) {
       const upgradeBias = isUpgraded ? 25 : 0;
       // In contest, still Tax but below defense upgrades / Mirror.
       const contestPenalty = ctx.stance === 'contest' ? -15 : 0;
@@ -414,7 +416,9 @@ export function scoreCorePlayCard(
   if (cardId === 'regeneration') {
     // Soft top-up when lives are low (Imposition drip / post-Tax floor) — ONMMBZ bots
     // drew to death with Regen in hand.
-    if (view.self.lives <= REGEN_SOFT_LIFE || (isUpgraded && view.self.lives <= REGEN_SOFT_LIFE + 2)) {
+    const regenSoftLife = regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives);
+
+    if (view.self.lives <= regenSoftLife || (isUpgraded && view.self.lives <= regenSoftLife + 2)) {
       return {
         score:
           HEURISTIC_BAND_WEIGHTS.invest +

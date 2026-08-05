@@ -22,13 +22,13 @@ import {
 import { isImmuneTo } from '../engine/kits/is-immune-to';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
+import { regenSoftLifeForKit } from './heuristic-life-thresholds';
 import {
   ABSORBER_MIN_LIVES_VS_REGEN,
   ABSORBER_POINTS_DENY_BONUS,
   ABSORBER_UP_DENY_BONUS,
   DENY_ABSORBER_MIN_LIVES_LOST,
   HEURISTIC_BAND_WEIGHTS,
-  REGEN_SOFT_LIFE,
   STRIKE_MIN_DAMAGE,
   UNSCORED_PLAY_PENALTY,
 } from './heuristic-weights';
@@ -529,10 +529,11 @@ export function scoreAbsorber(
     };
   }
 
+  const regenSoftLife = regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives);
   const usefulLives =
     lastLoss >= ABSORBER_MIN_LIVES_VS_REGEN ||
     lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST ||
-    (lastLoss >= 1 && !hasRegen && view.self.lives <= REGEN_SOFT_LIFE);
+    (lastLoss >= 1 && !hasRegen && view.self.lives <= regenSoftLife);
 
   if (usefulLives) {
     return {

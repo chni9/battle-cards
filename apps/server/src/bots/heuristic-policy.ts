@@ -26,6 +26,7 @@ import {
 import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
+import { regenSoftLifeForKit, taxLifeBufferForKit } from './heuristic-life-thresholds';
 import {
   BUY_SPECIAL_POINTS_FLOOR,
   BUY_UPGRADE_POINT_BONUS,
@@ -33,10 +34,8 @@ import {
   CONTEST_UPGRADE_EXTRA,
   DRAW_SCORE_PER_EXTRA_DRAW,
   HEURISTIC_BAND_WEIGHTS,
-  REGEN_SOFT_LIFE,
   SELL_TO_FUND_BONUS,
   STRIKE_MIN_DAMAGE,
-  TAX_LIFE_BUFFER,
   UNSCORED_PLAY_PENALTY,
   UPGRADE_ABSORBER_BONUS,
   UPGRADE_ATTACK_BONUS,
@@ -377,8 +376,9 @@ function scoreAction(
     // Never choose a lethal or buffer-breaking life buy — same safety floor as playing Tax.
     if (lifeCost > 0) {
       const livesAfter = view.self.lives - lifeCost;
+      const taxBuffer = taxLifeBufferForKit(getKit(view.self.kitId).startingResources.lives);
 
-      if (livesAfter <= 0 || livesAfter <= ctx.incomingThreat + TAX_LIFE_BUFFER) {
+      if (livesAfter <= 0 || livesAfter <= ctx.incomingThreat + taxBuffer) {
         return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
       }
     }
@@ -480,7 +480,7 @@ function scoreSellCard(
   const fundSpy = needsPointsToPlaySpy(view) && ctx.stance === 'build';
   const fundStrike = needsPointsToPlayReadyStrike(view);
   const fundRegen =
-    view.self.lives <= REGEN_SOFT_LIFE &&
+    view.self.lives <= regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives) &&
     ownsCardId(view, 'regeneration') &&
     view.self.points < 3;
 

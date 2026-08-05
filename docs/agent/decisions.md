@@ -1392,3 +1392,31 @@ future kit (e.g. Tactician, not yet in `KIT_IDS`) picks up the right score autom
 Refactored `decideWithReason` to delegate to a new exported `scoreActions(view, actions, rng)`
 — same scoring, now testable per-action without asserting through `decide`'s rng-tie-break.
 
+## 2026-08-05 · [T] Heuristic: life-relative Tax/Regen thresholds (L29-03)
+
+`REGEN_SOFT_LIFE = 6` and `TAX_LIFE_BUFFER = 5` (`heuristic-weights.ts`) are absolute life
+counts tuned by playtest against 10-life kits. Applied unscaled to Indestructible (18 lives)
+the bot is needlessly timid (never soft-Regens, Taxes only far above what it can afford to
+lose); applied to a low-life kit (Duplicator, 2 lives) it never Taxes or soft-Regens at all,
+because 5–6 lives of buffer exceeds its whole life pool.
+
+New `apps/server/src/bots/heuristic-life-thresholds.ts` scales both to
+`getKit(kitId).startingResources.lives`, keeping the same proportion of the 10-life tuned
+value (#V3-5 tunable, this rescaling itself is untested — not to be cited as measured):
+
+```ts
+regenSoftLifeForKit(L) = max(1, round(REGEN_SOFT_LIFE * L / 10))
+taxLifeBufferForKit(L) = max(1, min(TAX_LIFE_BUFFER, round(TAX_LIFE_BUFFER * L / 10)))
+```
+
+`taxLifeBufferForKit` is capped at the 10-life tuned value rather than scaled up for
+high-life kits — a bigger life pool should make the bot Tax more readily, not need an even
+larger absolute cushion than what playtest already validated. Both floor at 1 so no kit is
+ever gated to "never Tax / never soft-Regen" purely by rounding to 0.
+
+Every comparison site in `heuristic-policy.ts`, `policy-internals.ts` (`scoreAbsorber`) and
+`score-play/score-core.ts` (Tax play, Regen soft top-up) now reads the scaled value via
+`getKit(view.self.kitId).startingResources.lives` instead of the two module constants
+directly. `REGEN_SOFT_LIFE` / `TAX_LIFE_BUFFER` themselves are unchanged and still the single
+source the helpers scale from — no second tunable to drift out of sync.
+
