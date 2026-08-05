@@ -30,8 +30,7 @@ export function App() {
     drawCard,
     playCard,
     playMultipleAttacks,
-    chooseMirrorTarget,
-    chooseEliminationReward,
+    resolveSubChoice,
     buyCard,
     sellCard,
     upgradeCard,
@@ -40,8 +39,7 @@ export function App() {
     sellUpgradePoint,
     lastTurnStarted,
     lastActionResolved,
-    mirrorChoice,
-    rewardChoice,
+    subChoice,
   } = connection;
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -77,13 +75,11 @@ export function App() {
         nowMs={nowMs}
         deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
         lastActionResolved={lastActionResolved}
-        mirrorChoice={mirrorChoice}
-        rewardChoice={rewardChoice}
+        subChoice={subChoice}
         onDraw={drawCard}
         onPlayCard={playCard}
         onPlayMultipleAttacks={playMultipleAttacks}
-        onChooseMirrorTarget={chooseMirrorTarget}
-        onChooseEliminationReward={chooseEliminationReward}
+        onResolveSubChoice={resolveSubChoice}
         onBuyCard={buyCard}
         onSellCard={sellCard}
         onUpgradeCard={upgradeCard}

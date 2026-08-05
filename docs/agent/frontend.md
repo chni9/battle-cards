@@ -154,12 +154,13 @@ rules above are unchanged — this section only covers how the client looks.
   banner, resolution FX flash, or action-log copy (Untouchable vs Thief/Spy stays opaque).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
   names via `formatCardLabel`) — never raw `RewardChoice` type ids or `cardId` strings.
-- **Mirror**: listen for `mirrorChoiceRequired`, send `chooseMirrorTarget`. Clear the
-  prompt on confirm or the next `turnStarted`.
-- **Elimination rewards**: listen for `rewardChoiceRequired`, send `chooseEliminationReward`
-  with two picks. Clear on confirm / `turnStarted` / `gameOver`. Lock other table actions while
-  the prompt is up (same as Mirror). Also lock actions when `players[you].isEliminated` — after
-  an elim the turn pointer may still sit on the dead seat until rewards finish.
+- **Sub-choices (L30-03):** one unicast `subChoiceRequired` / `resolveSubChoice` pair
+  (`SubChoiceRequiredPayload` discriminated on `kind`). Client stores a single `subChoice`
+  and renders `SubChoiceHost` — Mirror, elimination rewards, steal-pick, pool-pick,
+  special-pick, reanimation-kit. Deadline is `SUB_CHOICE_MS` (20s). Clear on confirm /
+  `turnStarted` / `gameOver`. Lock other table actions while a sub-choice is open. Also lock
+  when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
+  seat until rewards finish. Reward picks stay opaque in the action log.
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default still 30s.
   `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.

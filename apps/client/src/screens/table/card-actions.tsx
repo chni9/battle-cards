@@ -10,11 +10,8 @@ import {
   getCard,
   type CardCost,
   type CardInstance,
-  type MirrorChoiceRequiredPayload,
   type PlayingStateView,
   type PublicPlayerView,
-  type RewardChoice,
-  type RewardChoiceRequiredPayload,
 } from '@card-battle/shared';
 import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
@@ -24,14 +21,7 @@ import { Card } from '../../design/components/card';
 import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
-import {
-  REWARD_KIND_LABELS,
-  REWARD_KINDS,
-  buildRewardChoice,
-  cardEffectText,
-  nicknameOf,
-  type RewardKind,
-} from './table-helpers';
+import { cardEffectText } from './table-helpers';
 
 function formatShopCost(cost: CardCost | undefined): string {
   if (cost === undefined) {
@@ -97,9 +87,6 @@ export interface CardActionsProps {
   actionsLocked: boolean;
   allowsMultiAttack: boolean;
   attackCards: readonly CardInstance[];
-  mirrorChoice: MirrorChoiceRequiredPayload | null;
-  rewardChoice: RewardChoiceRequiredPayload | null;
-  nowMs: number;
   onPlayCard: (instanceId: string, options?: PlayCardOptions) => void;
   onPlayMultipleAttacks: (
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
@@ -108,11 +95,6 @@ export interface CardActionsProps {
   onSellCard: (instanceId: string) => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onBuySpecialCard: () => void;
-  onChooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
-  onChooseEliminationReward: (
-    eliminationId: string,
-    choices: [RewardChoice, RewardChoice],
-  ) => void;
   /** Called when Use needs target or quantity — parent already set dialog via setDialog. */
   onBeginUse: (instance: CardInstance) => void;
 }
@@ -127,17 +109,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
     actionsLocked,
     allowsMultiAttack,
     attackCards,
-    mirrorChoice,
-    rewardChoice,
-    nowMs,
     onPlayCard,
     onPlayMultipleAttacks,
     onUpgradeCard,
     onSellCard,
     onBuyCard,
     onBuySpecialCard,
-    onChooseMirrorTarget,
-    onChooseEliminationReward,
     onBeginUse,
   } = props;
 
@@ -154,43 +131,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
-  const [mirrorEffectId, setMirrorEffectId] = useState('');
-  const [mirrorTargetId, setMirrorTargetId] = useState('');
-  const [rewardKind1, setRewardKind1] = useState<RewardKind>('lives');
-  const [rewardKind2, setRewardKind2] = useState<RewardKind>('points');
-  const [rewardCard1, setRewardCard1] = useState('');
-  const [rewardCard2, setRewardCard2] = useState('');
 
   const resolvedTarget = aliveOpponents.some((p) => p.id === targetId)
     ? targetId
     : defaultTarget;
-
-  const eligibleMirrorEffects = view.pendingEffects.filter(
-    (effect) => mirrorChoice?.eligibleEffectIds.includes(effect.id) ?? false,
-  );
-  const resolvedMirrorEffectId =
-    mirrorChoice === null
-      ? ''
-      : mirrorChoice.eligibleEffectIds.includes(mirrorEffectId)
-        ? mirrorEffectId
-        : (mirrorChoice.eligibleEffectIds[0] ?? '');
-  const resolvedMirrorTargetId = aliveOpponents.some((p) => p.id === mirrorTargetId)
-    ? mirrorTargetId
-    : defaultTarget;
-
-  const rewardIds = rewardChoice?.availableCards.map((c) => c.instanceId) ?? [];
-  const firstReward = rewardChoice?.availableCards[0]?.instanceId ?? '';
-  const resolvedRewardCard1 =
-    rewardKind1 === 'card' && (rewardCard1 === '' || !rewardIds.includes(rewardCard1))
-      ? firstReward
-      : rewardCard1;
-  const resolvedRewardCard2 =
-    rewardKind2 === 'card' && (rewardCard2 === '' || !rewardIds.includes(rewardCard2))
-      ? firstReward
-      : rewardCard2;
-  const rewardReady =
-    buildRewardChoice(rewardKind1, resolvedRewardCard1) !== null &&
-    buildRewardChoice(rewardKind2, resolvedRewardCard2) !== null;
 
   const quantityTrimmed = quantityText.trim();
   const quantityParsed = Number(quantityTrimmed);
@@ -199,15 +143,6 @@ export function CardActions(props: CardActionsProps): ReactElement {
     Number.isInteger(quantityParsed) &&
     quantityParsed >= 1 &&
     quantityParsed <= 4;
-
-  const mirrorSeconds =
-    mirrorChoice === null
-      ? null
-      : Math.max(0, Math.ceil((mirrorChoice.deadlineMs - nowMs) / 1000));
-  const rewardSeconds =
-    rewardChoice === null
-      ? null
-      : Math.max(0, Math.ceil((rewardChoice.deadlineMs - nowMs) / 1000));
 
   const actionsOpen = dialog?.kind === 'actions';
   const actionInstance = dialog?.kind === 'actions' ? dialog.instance : null;
@@ -699,170 +634,6 @@ export function CardActions(props: CardActionsProps): ReactElement {
           </ul>
         )}
       </Dialog>
-
-      <Dialog
-        open={mirrorChoice !== null}
-        title="Mirror redirect"
-        onClose={() => undefined}
-        closeOnOverlayClick={false}
-        actions={
-          <Button
-            variant="green"
-            disabled={resolvedMirrorEffectId === '' || resolvedMirrorTargetId === ''}
-            onClick={() => {
-              onChooseMirrorTarget(resolvedMirrorEffectId, resolvedMirrorTargetId);
-            }}
-          >
-            Confirm redirect
-          </Button>
-        }
-      >
-        <p className="text-sm text-ink-muted">
-          Choose which pending attack to redirect ({mirrorSeconds ?? '—'}s left).
-        </p>
-        <div className="mt-3 flex flex-col gap-2">
-          <label className="text-sm">
-            Effect
-            <select
-              value={resolvedMirrorEffectId}
-              onChange={(event) => {
-                setMirrorEffectId(event.target.value);
-              }}
-              className="mt-1 w-full rounded-[length:var(--radius-control)] border border-border px-2 py-1"
-            >
-              {eligibleMirrorEffects.map((effect) => (
-                <option key={effect.id} value={effect.id}>
-                  {effect.cardId} from {nicknameOf(view, effect.sourcePlayerId)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm">
-            New target
-            <select
-              value={resolvedMirrorTargetId}
-              onChange={(event) => {
-                setMirrorTargetId(event.target.value);
-              }}
-              className="mt-1 w-full rounded-[length:var(--radius-control)] border border-border px-2 py-1"
-            >
-              {aliveOpponents.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.nickname}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={rewardChoice !== null}
-        title="Elimination reward"
-        onClose={() => undefined}
-        closeOnOverlayClick={false}
-        actions={
-          <Button
-            variant="green"
-            disabled={!rewardReady || rewardChoice === null}
-            onClick={() => {
-              if (rewardChoice === null) {
-                return;
-              }
-              const choice1 = buildRewardChoice(rewardKind1, resolvedRewardCard1);
-              const choice2 = buildRewardChoice(rewardKind2, resolvedRewardCard2);
-              if (choice1 === null || choice2 === null) {
-                return;
-              }
-              onChooseEliminationReward(rewardChoice.eliminationId, [choice1, choice2]);
-            }}
-          >
-            Confirm rewards
-          </Button>
-        }
-      >
-        {rewardChoice !== null && (
-          <>
-            <p className="text-sm text-ink-muted">
-              Pick two rewards from {nicknameOf(view, rewardChoice.eliminatedPlayerId)} (
-              {rewardSeconds ?? '—'}s left).
-            </p>
-            <div className="mt-3 space-y-3">
-              <RewardPick
-                label="Choice 1"
-                kind={rewardKind1}
-                onKind={setRewardKind1}
-                cardId={resolvedRewardCard1}
-                onCard={setRewardCard1}
-                cards={rewardChoice.availableCards}
-              />
-              <RewardPick
-                label="Choice 2"
-                kind={rewardKind2}
-                onKind={setRewardKind2}
-                cardId={resolvedRewardCard2}
-                onCard={setRewardCard2}
-                cards={rewardChoice.availableCards}
-              />
-            </div>
-          </>
-        )}
-      </Dialog>
     </>
-  );
-}
-
-function RewardPick({
-  label,
-  kind,
-  onKind,
-  cardId,
-  onCard,
-  cards,
-}: {
-  label: string;
-  kind: RewardKind;
-  onKind: (kind: RewardKind) => void;
-  cardId: string;
-  onCard: (id: string) => void;
-  cards: readonly CardInstance[];
-}): ReactElement {
-  return (
-    <div className="flex flex-wrap gap-2">
-      <label className="text-sm">
-        {label}{' '}
-        <select
-          value={kind}
-          onChange={(event) => {
-            onKind(event.target.value as RewardKind);
-          }}
-          className="rounded-[length:var(--radius-control)] border border-border px-2 py-1"
-        >
-          {REWARD_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {REWARD_KIND_LABELS[k]}
-            </option>
-          ))}
-        </select>
-      </label>
-      {kind === 'card' && (
-        <label className="text-sm">
-          Card{' '}
-          <select
-            value={cardId}
-            onChange={(event) => {
-              onCard(event.target.value);
-            }}
-            className="rounded-[length:var(--radius-control)] border border-border px-2 py-1"
-          >
-            {cards.map((card) => (
-              <option key={card.instanceId} value={card.instanceId}>
-                {formatCardLabel(card.cardId, card.isUpgraded)}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-    </div>
   );
 }

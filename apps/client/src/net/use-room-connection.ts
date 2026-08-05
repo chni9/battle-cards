@@ -35,14 +35,12 @@ import {
   type BotDifficulty,
   type CardId,
   type GameOverPayload,
-  type MirrorChoiceRequiredPayload,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
-  type RewardChoice,
-  type RewardChoiceRequiredPayload,
+  type ResolveSubChoicePayload,
   type RoomJoinOptions,
   type StateView,
-  type StealPickChoiceRequiredPayload,
+  type SubChoiceRequiredPayload,
   type TurnStartedPayload,
 } from '@card-battle/shared';
 import { Client, type Room } from '@colyseus/sdk';
@@ -96,12 +94,8 @@ export interface RoomConnection {
   lastTurnStarted: TurnStartedPayload | null;
   lastActionPlayed: ActionPlayedPayload | null;
   lastActionResolved: ActionResolvedPayload | null;
-  /** Set when the server asks this client for a Mirror redirect (L3-09). */
-  mirrorChoice: MirrorChoiceRequiredPayload | null;
-  /** Set when the server asks this client for a Card Thief steal-pick (L21-03). */
-  stealChoice: StealPickChoiceRequiredPayload | null;
-  /** Set when the server asks this client for an elimination reward (Lot 6). */
-  rewardChoice: RewardChoiceRequiredPayload | null;
+  /** Unicast sub-choice for this client (technical spec v4 §4.4 / L30-03). */
+  subChoice: SubChoiceRequiredPayload | null;
   /**
    * Solo create → addBot → startGame in flight (L17-01).
    * App keeps Home visible so Lobby does not flash.
@@ -123,9 +117,7 @@ const INITIAL: RoomConnection = {
   lastTurnStarted: null,
   lastActionPlayed: null,
   lastActionResolved: null,
-  mirrorChoice: null,
-  stealChoice: null,
-  rewardChoice: null,
+  subChoice: null,
   soloLaunchPending: false,
 };
 
@@ -143,12 +135,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   playMultipleAttacks: (
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ) => void;
-  chooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
-  chooseStealPick: (instanceId: string) => void;
-  chooseEliminationReward: (
-    eliminationId: string,
-    choices: [RewardChoice, RewardChoice],
-  ) => void;
+  resolveSubChoice: (payload: ResolveSubChoicePayload) => void;
   buyCard: (cardId: CardId) => void;
   sellCard: (instanceId: string) => void;
   upgradeCard: (instanceId: string) => void;
@@ -230,9 +217,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         setConnection((previous) => ({
           ...previous,
           lastTurnStarted: payload,
-          mirrorChoice: null,
-          stealChoice: null,
-          rewardChoice: null,
+          subChoice: null,
         }));
       }
     });
@@ -250,18 +235,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
     });
 
     room.onMessage(SUB_CHOICE_REQUIRED, (payload: unknown) => {
-      if (isMirrorChoiceRequired(payload)) {
-        setConnection((previous) => ({ ...previous, mirrorChoice: payload }));
-        return;
-      }
-
-      if (isStealPickChoiceRequired(payload)) {
-        setConnection((previous) => ({ ...previous, stealChoice: payload }));
-        return;
-      }
-
-      if (isRewardChoiceRequired(payload)) {
-        setConnection((previous) => ({ ...previous, rewardChoice: payload }));
+      if (isSubChoiceRequired(payload)) {
+        setConnection((previous) => ({ ...previous, subChoice: payload }));
       }
     });
 
@@ -275,9 +250,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         setConnection((previous) => ({
           ...previous,
           error: null,
-          mirrorChoice: null,
-          stealChoice: null,
-          rewardChoice: null,
+          subChoice: null,
         }));
         void payload;
       }
@@ -497,37 +470,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     [],
   );
 
-  const chooseMirrorTarget = useCallback(
-    (pendingEffectId: string, newTargetPlayerId: string): void => {
-      roomRef.current?.send(RESOLVE_SUB_CHOICE, {
-        kind: 'mirror',
-        pendingEffectId,
-        newTargetPlayerId,
-      });
-      setConnection((previous) => ({ ...previous, mirrorChoice: null }));
-    },
-    [],
-  );
-
-  const chooseStealPick = useCallback((instanceId: string): void => {
-    roomRef.current?.send(RESOLVE_SUB_CHOICE, {
-      kind: 'steal-pick',
-      instanceId,
-    });
-    setConnection((previous) => ({ ...previous, stealChoice: null }));
+  const resolveSubChoice = useCallback((payload: ResolveSubChoicePayload): void => {
+    roomRef.current?.send(RESOLVE_SUB_CHOICE, payload);
+    setConnection((previous) => ({ ...previous, subChoice: null }));
   }, []);
-
-  const chooseEliminationReward = useCallback(
-    (eliminationId: string, choices: [RewardChoice, RewardChoice]): void => {
-      roomRef.current?.send(RESOLVE_SUB_CHOICE, {
-        kind: 'elimination-reward',
-        eliminationId,
-        choices,
-      });
-      setConnection((previous) => ({ ...previous, rewardChoice: null }));
-    },
-    [],
-  );
 
   const buyCard = useCallback((cardId: CardId): void => {
     roomRef.current?.send(BUY_CARD, { cardId });
@@ -574,9 +520,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     drawCard,
     playCard,
     playMultipleAttacks,
-    chooseMirrorTarget,
-    chooseStealPick,
-    chooseEliminationReward,
+    resolveSubChoice,
     buyCard,
     sellCard,
     upgradeCard,
@@ -706,49 +650,48 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
   );
 }
 
-function isMirrorChoiceRequired(payload: unknown): payload is MirrorChoiceRequiredPayload {
-  return (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'kind' in payload &&
-    payload.kind === 'mirror' &&
-    'eligibleEffectIds' in payload &&
-    'deadlineMs' in payload &&
-    Array.isArray(payload.eligibleEffectIds) &&
-    typeof payload.deadlineMs === 'number'
-  );
-}
+function isSubChoiceRequired(payload: unknown): payload is SubChoiceRequiredPayload {
+  if (typeof payload !== 'object' || payload === null || !('kind' in payload)) {
+    return false;
+  }
 
-function isStealPickChoiceRequired(payload: unknown): payload is StealPickChoiceRequiredPayload {
-  return (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'kind' in payload &&
-    payload.kind === 'steal-pick' &&
-    'victimPlayerId' in payload &&
-    'eligibleInstanceIds' in payload &&
-    'deadlineMs' in payload &&
-    typeof payload.victimPlayerId === 'string' &&
-    Array.isArray(payload.eligibleInstanceIds) &&
-    typeof payload.deadlineMs === 'number'
-  );
-}
+  if (!('deadlineMs' in payload) || typeof payload.deadlineMs !== 'number') {
+    return false;
+  }
 
-function isRewardChoiceRequired(payload: unknown): payload is RewardChoiceRequiredPayload {
-  return (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'kind' in payload &&
-    payload.kind === 'elimination-reward' &&
-    'eliminationId' in payload &&
-    'eliminatedPlayerId' in payload &&
-    'availableCards' in payload &&
-    'deadlineMs' in payload &&
-    typeof payload.eliminationId === 'string' &&
-    typeof payload.eliminatedPlayerId === 'string' &&
-    Array.isArray(payload.availableCards) &&
-    typeof payload.deadlineMs === 'number'
-  );
+  switch (payload.kind) {
+    case 'mirror':
+      return 'eligibleEffectIds' in payload && Array.isArray(payload.eligibleEffectIds);
+    case 'elimination-reward':
+      return (
+        'eliminationId' in payload &&
+        typeof payload.eliminationId === 'string' &&
+        'eliminatedPlayerId' in payload &&
+        typeof payload.eliminatedPlayerId === 'string' &&
+        'availableCards' in payload &&
+        Array.isArray(payload.availableCards)
+      );
+    case 'steal-pick':
+      return (
+        'victimPlayerId' in payload &&
+        typeof payload.victimPlayerId === 'string' &&
+        'eligibleInstanceIds' in payload &&
+        Array.isArray(payload.eligibleInstanceIds)
+      );
+    case 'pool-pick':
+      return (
+        'eligibleInstanceIds' in payload &&
+        Array.isArray(payload.eligibleInstanceIds) &&
+        'maxCount' in payload &&
+        typeof payload.maxCount === 'number'
+      );
+    case 'special-pick':
+      return 'eligibleCardIds' in payload && Array.isArray(payload.eligibleCardIds);
+    case 'reanimation-kit':
+      return 'eligibleKitIds' in payload && Array.isArray(payload.eligibleKitIds);
+    default:
+      return false;
+  }
 }
 
 function isGameOver(payload: unknown): payload is GameOverPayload {
