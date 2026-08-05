@@ -140,7 +140,48 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe("Alice's Super attack + hits Bob (−10 life)");
   });
 
-  it('does not spell out immunity when Spy or Thief fails', () => {
+  it('formats deactivation and duplication activation (L30-06)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'deactivatePersistent',
+          cardId: 'invisibility',
+          isUpgraded: false,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice deactivated Invisibility');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'activateDuplication',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice activated duplication');
+  });
+
+  it('formats player reanimation with kit name (L30-06)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerReanimated',
+          playerId: 'b',
+          kitId: 'untouchable',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe('Bob returns with Untouchable');
+  });
+
+  it('spells out immunity when Spy or Thief fails', () => {
     expect(
       formatActionLogEntry(
         {
@@ -157,7 +198,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Spy from Alice resolves on Bob');
+    ).toBe('Spy from Alice resolves on Bob — immune');
     expect(
       formatActionLogEntry(
         {
@@ -174,7 +215,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Thief from Alice resolves on Bob');
+    ).toBe('Thief from Alice resolves on Bob — immune');
     expect(
       formatActionLogEntry(
         {
@@ -191,7 +232,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).not.toMatch(/immune/i);
+    ).toMatch(/immune/i);
   });
 
   it('formats blocked resolutions without applied phrasing', () => {

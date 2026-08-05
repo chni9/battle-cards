@@ -1605,3 +1605,10 @@ throws or leaves the room stuck. `heuristic-policy.test.ts` adds a scoring-level
 card plus `deactivatePersistent` / `activateDuplication`, asserting each beats `draw` when
 expected and neither ever falls back to `sellUpgradePoint`.
 
+## 2026-08-05 · [P] Public immune outcome copy (L30-04)
+
+Designer instruction: revert the opaque-immunity UI convention. Action log,
+resolution FX, and spectator-readable state may say "immune" (Untouchable,
+Invisibility, and any future `outcome: 'immune'`).
+
+

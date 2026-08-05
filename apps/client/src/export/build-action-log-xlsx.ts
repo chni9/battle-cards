@@ -214,6 +214,25 @@ export async function buildActionLogWorkbook(
           `from ${event.previousTargetPlayerId}`,
         ]);
         break;
+      case 'playerReanimated':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          event.playerId,
+          '',
+          '',
+          event.kitId,
+        ]);
+        break;
       case 'rewardsClaimed':
         eventsSheet.addRow([
           event.kind,

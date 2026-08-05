@@ -21,6 +21,8 @@ export interface TimersProps {
   subChoiceLabel?: string | undefined;
   /** Optional sub-choice remaining fraction (Mirror / rewards). */
   subChoiceProgressRatio?: number | null | undefined;
+  /** Block chain / attack-ban hint for the active seat (L30-04). */
+  blockStatusLabel?: string | undefined;
 }
 
 export function Timers({
@@ -33,6 +35,7 @@ export function Timers({
   progressRatio,
   subChoiceLabel,
   subChoiceProgressRatio,
+  blockStatusLabel,
 }: TimersProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const turnPct =
@@ -71,6 +74,11 @@ export function Timers({
           {timerLabel}
         </p>
       </div>
+      {blockStatusLabel !== undefined && (
+        <p className="mt-0.5 text-[10px] font-medium text-ink-muted sm:text-xs">
+          {blockStatusLabel}
+        </p>
+      )}
       <div
         className="mt-1 h-1.5 overflow-hidden rounded-full bg-border-soft sm:h-2"
         role="progressbar"

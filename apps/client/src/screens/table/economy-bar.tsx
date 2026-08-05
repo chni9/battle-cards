@@ -1,6 +1,6 @@
 /**
- * Economy action bar — L12-06.
- * Draw / buy-sell UP / Buy (Dialog entry) / Leave. Play chrome is legacy until L12-08.
+ * Economy action bar — L12-06 / L30-02.
+ * Draw / buy-sell UP / Buy / Pool (Dialog entry) / Leave.
  */
 
 import type { ReactElement } from 'react';
@@ -12,10 +12,13 @@ export interface EconomyBarProps {
   actionsLocked: boolean;
   drawValue: number;
   upgradePoints: number;
+  /** Shared pool size — always readable (rules spec §1 / L30-02). */
+  poolCount: number;
   onDraw: () => void;
   onBuyUpgradePoint: () => void;
   onSellUpgradePoint: () => void;
   onOpenBuy: () => void;
+  onOpenPool: () => void;
   onLeave: () => void;
 }
 
@@ -24,10 +27,12 @@ export function EconomyBar({
   actionsLocked,
   drawValue,
   upgradePoints,
+  poolCount,
   onDraw,
   onBuyUpgradePoint,
   onSellUpgradePoint,
   onOpenBuy,
+  onOpenPool,
   onLeave,
 }: EconomyBarProps): ReactElement {
   const disabled = !isMyTurn || actionsLocked;
@@ -52,6 +57,9 @@ export function EconomyBar({
       </Button>
       <Button variant="orange" disabled={disabled} onClick={onOpenBuy}>
         Buy
+      </Button>
+      <Button variant="green" onClick={onOpenPool}>
+        Pool ({poolCount})
       </Button>
       <span className="mx-1 hidden h-6 w-px bg-border-soft sm:inline-block" aria-hidden />
       <Button variant="red" onClick={onLeave}>

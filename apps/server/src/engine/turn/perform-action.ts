@@ -136,6 +136,13 @@ export interface TurnResult {
    * Room logs `mirrorRedirected` instead of a second `actionPlayed` for Mirror.
    */
   mirrorRedirect?: MirrorRedirectInfo & { turnSequence: number };
+  /**
+   * Super Mirror fan-out — one entry per duplicate (L30-06).
+   * Logged in addition to the Super Mirror `actionPlayed`.
+   */
+  mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[];
+  /** Reanimation revives completed this turn phase (L30-06). */
+  playerReanimated?: readonly { playerId: string; kitId: KitId }[];
 }
 
 export interface TurnRejection {
@@ -368,6 +375,7 @@ export function performTurnAction(
       rng,
       nowMs,
       playResult.immediateResolved,
+      playResult.mirrorRedirects,
     );
   }
 
@@ -821,6 +829,7 @@ export type ReanimationKitTurnResult =
       rewardChoicePending: boolean;
       subChoicePending?: boolean;
       winnerPlayerId: string | null;
+      playerReanimated?: readonly { playerId: string; kitId: KitId }[];
     }
   | { ok: false; message: string };
 
@@ -846,7 +855,16 @@ export function completeReanimationKitPick(
     return applied;
   }
 
-  return resumeAfterRewards(state, rng, nowMs);
+  const resumed = resumeAfterRewards(state, rng, nowMs);
+  const playerReanimated = [
+    applied.playerReanimated,
+    ...(resumed.playerReanimated ?? []),
+  ];
+
+  return {
+    ...resumed,
+    ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
+  };
 }
 
 /**
@@ -869,7 +887,16 @@ export function expireReanimationKitPick(
     return applied;
   }
 
-  return resumeAfterRewards(state, rng, nowMs);
+  const resumed = resumeAfterRewards(state, rng, nowMs);
+  const playerReanimated = [
+    applied.playerReanimated,
+    ...(resumed.playerReanimated ?? []),
+  ];
+
+  return {
+    ...resumed,
+    ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
+  };
 }
 
 function finishTurnPhases(
@@ -879,12 +906,18 @@ function finishTurnPhases(
   rng: Rng,
   nowMs: number,
   immediateResolved: readonly ActionResolvedEvent[] = [],
+  mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[],
 ): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
-  const eliminations = processEliminations(state, rng, nowMs);
+  const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
+
+  const reanimated =
+    playerReanimated.length > 0 ? { playerReanimated } : {};
+  const redirects =
+    mirrorRedirects !== undefined && mirrorRedirects.length > 0 ? { mirrorRedirects } : {};
 
   if (hasPendingEliminationRewards(state)) {
     return {
@@ -895,6 +928,8 @@ function finishTurnPhases(
       eliminatedPlayerIds,
       eliminations,
       rewardChoicePending: true,
+      ...reanimated,
+      ...redirects,
     };
   }
 
@@ -907,6 +942,8 @@ function finishTurnPhases(
       eliminatedPlayerIds,
       eliminations,
       subChoicePending: true,
+      ...reanimated,
+      ...redirects,
     };
   }
 
@@ -925,6 +962,8 @@ function finishTurnPhases(
     winnerPlayerId,
     eliminatedPlayerIds,
     eliminations,
+    ...reanimated,
+    ...redirects,
   };
 }
 
@@ -1072,6 +1111,43 @@ function playMultipleAttacksAction(
   };
 }
 
+function snapshotPendingEffectIds(state: GameState): Set<string> {
+  const ids = new Set<string>();
+
+  for (const player of state.players) {
+    for (const effect of player.pendingEffects) {
+      ids.add(effect.id);
+    }
+  }
+
+  return ids;
+}
+
+function collectSuperMirrorRedirects(
+  state: GameState,
+  actorPlayerId: string,
+  beforeIds: ReadonlySet<string>,
+  turnSequence: number,
+): readonly (MirrorRedirectInfo & { turnSequence: number })[] {
+  const redirects: (MirrorRedirectInfo & { turnSequence: number })[] = [];
+
+  for (const player of state.players) {
+    for (const effect of player.pendingEffects) {
+      if (effect.redirectedBy === 'super-mirror' && !beforeIds.has(effect.id)) {
+        redirects.push({
+          actorPlayerId,
+          cardId: 'super-mirror',
+          previousTargetPlayerId: actorPlayerId,
+          newTargetPlayerId: effect.targetPlayerId,
+          turnSequence,
+        });
+      }
+    }
+  }
+
+  return redirects;
+}
+
 function playCardAction(
   state: GameState,
   actorPlayerId: string,
@@ -1085,6 +1161,7 @@ function playCardAction(
   ok: true;
   actionPlayed: ActionPlayedEvent;
   immediateResolved: ActionResolvedEvent[];
+  mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[];
 } {
   const actor = findPlayer(state, actorPlayerId);
 
@@ -1162,8 +1239,20 @@ function playCardAction(
     actor.turnLedger.pointsSpent += playPoints;
   }
 
+  const beforeEffectIds = cardId === 'super-mirror' ? snapshotPendingEffectIds(state) : null;
+
   // Attack and action cards are reusable; specials are single-use (rules spec §5).
   handler.play(context);
+
+  const mirrorRedirects =
+    beforeEffectIds !== null
+      ? collectSuperMirrorRedirects(
+          state,
+          actorPlayerId,
+          beforeEffectIds,
+          state.turnSequence,
+        )
+      : undefined;
 
   if (fromSpecials) {
     actor.specialCards = actor.specialCards.filter((card) => card.instanceId !== instanceId);
@@ -1185,6 +1274,9 @@ function playCardAction(
       turnSequence: state.turnSequence,
     },
     immediateResolved,
+    ...(mirrorRedirects !== undefined && mirrorRedirects.length > 0
+      ? { mirrorRedirects }
+      : {}),
   };
 }
 

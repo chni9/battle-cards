@@ -150,16 +150,17 @@ rules above are unchanged — this section only covers how the client looks.
   `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`. Dead seats: kit
   portrait “Eliminated” overlay only — no connection “eliminated” badge and no Bot · hard
   label (they waste space next to the reveal).
-- **`actionResolved.outcome === 'immune'`**: do **not** surface “immune” in the timers
-  banner, resolution FX flash, or action-log copy (Untouchable vs Thief/Spy stays opaque).
+- **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
+  resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
   names via `formatCardLabel`) — never raw `RewardChoice` type ids or `cardId` strings.
-- **Mirror**: listen for `mirrorChoiceRequired`, send `chooseMirrorTarget`. Clear the
-  prompt on confirm or the next `turnStarted`.
-- **Elimination rewards**: listen for `rewardChoiceRequired`, send `chooseEliminationReward`
-  with two picks. Clear on confirm / `turnStarted` / `gameOver`. Lock other table actions while
-  the prompt is up (same as Mirror). Also lock actions when `players[you].isEliminated` — after
-  an elim the turn pointer may still sit on the dead seat until rewards finish.
+- **Sub-choices (L30-03):** one unicast `subChoiceRequired` / `resolveSubChoice` pair
+  (`SubChoiceRequiredPayload` discriminated on `kind`). Client stores a single `subChoice`
+  and renders `SubChoiceHost` — Mirror, elimination rewards, steal-pick, pool-pick,
+  special-pick, reanimation-kit. Deadline is `SUB_CHOICE_MS` (20s). Clear on confirm /
+  `turnStarted` / `gameOver`. Lock other table actions while a sub-choice is open. Also lock
+  when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
+  seat until rewards finish. Reward picks stay opaque in the action log.
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default still 30s.
   `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.
@@ -293,3 +294,19 @@ do not hand off an untested lot.
   Start. Table shows both bot labels; Why on bot plays; resolution FX still fires
   (`Bravo's Strong attack hits Alpha`).
 - Living docs: `frontend.md`, `protocol.md`, `db.md` updated for solo / lobby bots / `botReason`.
+
+### Lot 30 verified 2026-08-05 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 23)
+
+- **2p human:** rooms `JLHWBF` (Player1 + Player2). Pool `(N)` → Shared pool dialog (empty
+  copy + Close); kit inspect loads special art + Always upgraded / Immune to / Multiple
+  attacks sections; Draw rotates turns; action log updates; no app JS errors (favicon 404
+  only, pre-existing).
+- **Solo:** rooms `LEGUIR` / `SOZVBU` — Pool + kit inspect + Tax/Thief/Draw paths; bot turn
+  rotation works when the human keeps acting. Early “stall” reports were turn-ownership
+  confusion / tab leave, not a client lock (`FJKUXN` HostA `consented leave` in server log).
+- **L30 surfaces covered:** art map (30 cards), pool button, SubChoiceHost wiring (Mirror /
+  reward host present; mid-game Mirror not forced this pass), Block/Invis/Duplicator chrome
+  code paths wired (kit RNG did not force those kits this session), immune log copy,
+  trait-section count test.
+- Deeper forced paths (MEGA / Super Mirror / Reanimation / Absorber pool-pick) remain
+  engine-tested; re-check in a longer session once Lot 29 bots bias toward those cards.

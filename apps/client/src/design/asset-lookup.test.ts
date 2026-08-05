@@ -1,12 +1,13 @@
 /**
- * Asset lookup coverage — technical spec v2 §4, L10-03.
+ * Asset lookup coverage — technical spec v2 §4 / v4 §3.1, L30-01.
  */
 
 import { KIT_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import {
-  V1_CARD_IDS,
+  ALL_ART_CARD_IDS,
+  CARDS_WITH_ACTIVATED_ART,
   getActionLogoUrl,
   getAttackLogoUrl,
   getCardArtUrl,
@@ -16,8 +17,8 @@ import {
   getResourceIconUrl,
 } from './asset-lookup';
 
-describe('asset-lookup (L10-03)', () => {
-  it('resolves a portrait for every KitId (L28-03)', () => {
+describe('asset-lookup (L30-01)', () => {
+  it('resolves a portrait for every KitId', () => {
     for (const kitId of KIT_IDS) {
       const url = getKitPortraitUrl(kitId);
       expect(url.length).toBeGreaterThan(0);
@@ -29,12 +30,18 @@ describe('asset-lookup (L10-03)', () => {
     expect(getKitPortraitUrl('ghost')).toMatch(/Ghost\.png/);
     expect(getKitPortraitUrl('duplicator')).toMatch(/Duplicator\.png/);
   });
+
   it('maps wizard to Magician.png (L27-08)', () => {
     expect(getKitPortraitUrl('wizard')).toMatch(/Magician\.png/);
   });
 
-  it('resolves base and upgraded art for every V1 CardId', () => {
-    for (const cardId of V1_CARD_IDS) {
+  it('covers all 30 card ids', () => {
+    expect(ALL_ART_CARD_IDS).toHaveLength(30);
+    expect(new Set(ALL_ART_CARD_IDS).size).toBe(30);
+  });
+
+  it('resolves base and upgraded art for every CardId', () => {
+    for (const cardId of ALL_ART_CARD_IDS) {
       const base = getCardArtUrl(cardId, { isUpgraded: false });
       const upgraded = getCardArtUrl(cardId, { isUpgraded: true });
       expect(base.length).toBeGreaterThan(0);
@@ -43,8 +50,23 @@ describe('asset-lookup (L10-03)', () => {
     }
   });
 
-  it('resolves activated art only for imposition and points-generator', () => {
-    for (const cardId of ['imposition', 'points-generator'] as const) {
+  it('resolves MEGA ATTACK, Super Mirror and Card Absorber art', () => {
+    expect(decodeURIComponent(getCardArtUrl('mega-attack', { isUpgraded: false }))).toMatch(
+      /MEGA ATTACK/i,
+    );
+    expect(decodeURIComponent(getCardArtUrl('mega-attack', { isUpgraded: true }))).toMatch(
+      /MEGA ATTACK/i,
+    );
+    expect(decodeURIComponent(getCardArtUrl('super-mirror', { isUpgraded: false }))).toMatch(
+      /Super Mirror/i,
+    );
+    expect(decodeURIComponent(getCardArtUrl('card-absorber', { isUpgraded: false }))).toMatch(
+      /Card Absorber/i,
+    );
+  });
+
+  it('resolves activated art for every persistent that has it', () => {
+    for (const cardId of CARDS_WITH_ACTIVATED_ART) {
       const base = getCardArtUrl(cardId, { isUpgraded: false, activated: true });
       const upgraded = getCardArtUrl(cardId, { isUpgraded: true, activated: true });
       expect(base).toMatch(/activated/i);
@@ -73,12 +95,14 @@ describe('asset-lookup (L10-03)', () => {
   it('never references excluded asset names in resolved URLs', () => {
     const urls = [
       ...KIT_IDS.map((id) => getKitPortraitUrl(id)),
-      ...V1_CARD_IDS.flatMap((id) => [
+      ...ALL_ART_CARD_IDS.flatMap((id) => [
         getCardArtUrl(id, { isUpgraded: false }),
         getCardArtUrl(id, { isUpgraded: true }),
       ]),
-      getCardArtUrl('imposition', { isUpgraded: false, activated: true }),
-      getCardArtUrl('points-generator', { isUpgraded: true, activated: true }),
+      ...CARDS_WITH_ACTIVATED_ART.flatMap((id) => [
+        getCardArtUrl(id, { isUpgraded: false, activated: true }),
+        getCardArtUrl(id, { isUpgraded: true, activated: true }),
+      ]),
       getOpponentPlaceholderUrl(),
       getResourceIconUrl('life'),
     ];
@@ -87,9 +111,6 @@ describe('asset-lookup (L10-03)', () => {
       expect(url).not.toMatch(/button/i);
       expect(url).not.toMatch(/Draw\.png/);
       expect(url).not.toMatch(/\(dead\)/);
-      expect(url).not.toMatch(/MEGA ATTACK/i);
-      expect(url).not.toMatch(/Super Mirror/i);
-      expect(url).not.toMatch(/Card Absorber/i);
     }
   });
 });

@@ -10,10 +10,9 @@ import {
   type ActionResolvedPayload,
   type CardInstance,
   type KitId,
-  type MirrorChoiceRequiredPayload,
   type PlayingStateView,
-  type RewardChoice,
-  type RewardChoiceRequiredPayload,
+  type ResolveSubChoicePayload,
+  type SubChoiceRequiredPayload,
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
@@ -35,6 +34,7 @@ import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
+import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
@@ -46,18 +46,13 @@ export interface TableScreenProps {
   nowMs: number;
   deadlineMs: number | null;
   lastActionResolved: ActionResolvedPayload | null;
-  mirrorChoice: MirrorChoiceRequiredPayload | null;
-  rewardChoice: RewardChoiceRequiredPayload | null;
+  subChoice: SubChoiceRequiredPayload | null;
   onDraw: () => void;
   onPlayCard: (instanceId: string, options?: PlayCardOptions) => void;
   onPlayMultipleAttacks: (
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ) => void;
-  onChooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
-  onChooseEliminationReward: (
-    eliminationId: string,
-    choices: [RewardChoice, RewardChoice],
-  ) => void;
+  onResolveSubChoice: (payload: ResolveSubChoicePayload) => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onSellCard: (instanceId: string) => void;
   onUpgradeCard: (instanceId: string) => void;
@@ -65,6 +60,8 @@ export interface TableScreenProps {
   onBuySpecialCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
+  onDeactivatePersistent?: (effectId: string) => void;
+  onActivateDuplication?: () => void;
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -82,13 +79,11 @@ function TableScreenInner({
   nowMs,
   deadlineMs,
   lastActionResolved,
-  mirrorChoice,
-  rewardChoice,
+  subChoice,
   onDraw,
   onPlayCard,
   onPlayMultipleAttacks,
-  onChooseMirrorTarget,
-  onChooseEliminationReward,
+  onResolveSubChoice,
   onBuyCard,
   onSellCard,
   onUpgradeCard,
@@ -96,6 +91,8 @@ function TableScreenInner({
   onBuySpecialCard,
   onSellUpgradePoint,
   onLeave,
+  onDeactivatePersistent,
+  onActivateDuplication,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
@@ -187,10 +184,6 @@ function TableScreenInner({
       return;
     }
     lastResolvedKey.current = key;
-    // Immunity stays opaque in the UI (no banner / no "Immune" flash).
-    if (lastActionResolved.outcome === 'immune') {
-      return;
-    }
     enqueue({
       kind: 'resolutionFlash',
       outcome: lastActionResolved.outcome,
@@ -215,28 +208,27 @@ function TableScreenInner({
 
   const lastRewardElimId = useRef<string | null>(null);
   useEffect(() => {
-    if (rewardChoice === null) {
+    if (subChoice?.kind !== 'elimination-reward') {
       lastRewardElimId.current = null;
       return;
     }
-    if (lastRewardElimId.current === rewardChoice.eliminationId) {
+    if (lastRewardElimId.current === subChoice.eliminationId) {
       return;
     }
-    lastRewardElimId.current = rewardChoice.eliminationId;
+    lastRewardElimId.current = subChoice.eliminationId;
     enqueue({
       kind: 'rewardPulse',
-      eliminationId: rewardChoice.eliminationId,
+      eliminationId: subChoice.eliminationId,
     });
-  }, [rewardChoice, enqueue]);
+  }, [subChoice, enqueue]);
 
   const mirrorHighlightIds =
-    mirrorChoice === null ? [] : mirrorChoice.eligibleEffectIds;
+    subChoice?.kind === 'mirror' ? subChoice.eligibleEffectIds : [];
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
   const selfEliminated = selfPublic?.isEliminated === true;
-  const actionsLocked =
-    rewardChoice !== null || mirrorChoice !== null || selfEliminated;
+  const actionsLocked = subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -244,6 +236,14 @@ function TableScreenInner({
   const activePlayer = view.players.find(
     (player) => player.id === view.currentTurnPlayerId,
   );
+  const blockStatusLabel =
+    activePlayer === undefined
+      ? undefined
+      : activePlayer.blockTurnsRemaining > 0
+        ? `Block chain · ${String(activePlayer.blockTurnsRemaining)} turn${activePlayer.blockTurnsRemaining === 1 ? '' : 's'} left`
+        : activePlayer.blockAttacksForbidden
+          ? 'Block · attacks banned this turn'
+          : undefined;
   const activeStatus = activePlayer?.connection.status;
   const turnPaused =
     activeStatus === 'disconnected' ||
@@ -299,28 +299,23 @@ function TableScreenInner({
           }
         : null;
 
-  const mirrorSecondsLeft =
-    mirrorChoice === null
+  const subChoiceSecondsLeft =
+    subChoice === null
       ? null
-      : Math.max(0, Math.ceil((mirrorChoice.deadlineMs - nowMs) / 1000));
-  const rewardSecondsLeft =
-    rewardChoice === null
-      ? null
-      : Math.max(0, Math.ceil((rewardChoice.deadlineMs - nowMs) / 1000));
+      : Math.max(0, Math.ceil((subChoice.deadlineMs - nowMs) / 1000));
 
   const subChoiceLabel =
-    mirrorChoice !== null
-      ? `Mirror choice: ${mirrorSecondsLeft ?? '—'}s`
-      : rewardChoice !== null
-        ? `Reward choice: ${rewardSecondsLeft ?? '—'}s`
-        : undefined;
+    subChoice === null
+      ? undefined
+      : `Choice: ${subChoiceSecondsLeft ?? '—'}s`;
 
   const subChoiceProgressRatio =
-    mirrorChoice !== null
-      ? Math.max(0, Math.min(1, (mirrorChoice.deadlineMs - nowMs) / 30_000))
-      : rewardChoice !== null
-        ? Math.max(0, Math.min(1, (rewardChoice.deadlineMs - nowMs) / 30_000))
-        : null;
+    subChoice === null
+      ? null
+      : Math.max(
+          0,
+          Math.min(1, (subChoice.deadlineMs - nowMs) / CLIENT_SUB_CHOICE_MS),
+        );
 
   function onSelectOwnCard(instanceId: string): void {
     const fromSpecial = view.self.specialCards.some((c) => c.instanceId === instanceId);
@@ -425,6 +420,7 @@ function TableScreenInner({
             progressRatio={progressRatio}
             {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
             subChoiceProgressRatio={subChoiceProgressRatio}
+            {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
           />
         }
         prompts={
@@ -471,6 +467,8 @@ function TableScreenInner({
             selfPublic={selfPublic}
             incomingEffects={incomingEffects}
             mirrorHighlightIds={mirrorHighlightIds}
+            isMyTurn={isMyTurn}
+            actionsLocked={actionsLocked}
             onInspectKit={() => {
               setInspectKitId(view.self.kitId);
             }}
@@ -478,6 +476,10 @@ function TableScreenInner({
             onSelectActive={(effectId) => {
               onInspectActive(view.you, effectId);
             }}
+            {...(onDeactivatePersistent !== undefined
+              ? { onDeactivatePersistent }
+              : {})}
+            {...(onActivateDuplication !== undefined ? { onActivateDuplication } : {})}
           />
         }
         economy={
@@ -486,11 +488,15 @@ function TableScreenInner({
             actionsLocked={actionsLocked}
             drawValue={drawValue}
             upgradePoints={view.self.upgradePoints}
+            poolCount={view.pool.length}
             onDraw={drawWithFx}
             onBuyUpgradePoint={buyUpgradeWithFx}
             onSellUpgradePoint={sellUpgradeWithFx}
             onOpenBuy={() => {
               setDialog({ kind: 'buy' });
+            }}
+            onOpenPool={() => {
+              setDialog({ kind: 'pool' });
             }}
             onLeave={onLeave}
           />
@@ -543,19 +549,24 @@ function TableScreenInner({
         actionsLocked={actionsLocked}
         allowsMultiAttack={allowsMultiAttack}
         attackCards={attackCards}
-        mirrorChoice={mirrorChoice}
-        rewardChoice={rewardChoice}
-        nowMs={nowMs}
         onPlayCard={playCardWithFx}
         onPlayMultipleAttacks={playMultipleWithFx}
         onUpgradeCard={onUpgradeCard}
         onSellCard={sellCardWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
-        onChooseMirrorTarget={onChooseMirrorTarget}
-        onChooseEliminationReward={onChooseEliminationReward}
         onBeginUse={onBeginUse}
       />
+
+      {subChoice !== null && (
+        <SubChoiceHost
+          subChoice={subChoice}
+          view={view}
+          opponents={opponents}
+          nowMs={nowMs}
+          onResolve={onResolveSubChoice}
+        />
+      )}
     </>
   );
 }

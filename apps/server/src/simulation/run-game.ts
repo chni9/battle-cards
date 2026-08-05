@@ -107,6 +107,30 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
     });
   }
 
+  if (result.mirrorRedirects !== undefined) {
+    for (const redirect of result.mirrorRedirects) {
+      log.push({
+        kind: 'mirrorRedirected',
+        actorPlayerId: redirect.actorPlayerId,
+        cardId: redirect.cardId,
+        previousTargetPlayerId: redirect.previousTargetPlayerId,
+        newTargetPlayerId: redirect.newTargetPlayerId,
+        turnSequence: redirect.turnSequence,
+      });
+    }
+  }
+
+  if (result.playerReanimated !== undefined) {
+    for (const entry of result.playerReanimated) {
+      log.push({
+        kind: 'playerReanimated',
+        playerId: entry.playerId,
+        kitId: entry.kitId,
+        turnSequence,
+      });
+    }
+  }
+
   for (const resolved of result.resolved) {
     log.push({
       kind: 'actionResolved',
