@@ -12,7 +12,9 @@ import type { CardHandler } from './handler';
 import { attackThiefHandler } from './handlers/attack-thief';
 import { absorberHandler } from './handlers/absorber';
 import { basicAttackHandler } from './handlers/basic-attack';
+import { cardAbsorberHandler } from './handlers/card-absorber';
 import { cardThiefHandler } from './handlers/card-thief';
+import { cardTransformerHandler } from './handlers/card-transformer';
 import { cloningHandler } from './handlers/cloning';
 import { curseHandler } from './handlers/curse';
 import { impositionHandler } from './handlers/imposition';
@@ -62,6 +64,8 @@ export const IMPLEMENTED_CARD_IDS = [
   'mega-attack',
   'super-mirror',
   'attack-thief',
+  'card-absorber',
+  'card-transformer',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -70,10 +74,8 @@ type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
   'block',
-  'card-transformer',
   'invisibility',
   'reanimation',
-  'card-absorber',
 ] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
@@ -102,6 +104,8 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'mega-attack': megaAttackHandler,
   'super-mirror': superMirrorHandler,
   'attack-thief': attackThiefHandler,
+  'card-absorber': cardAbsorberHandler,
+  'card-transformer': cardTransformerHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

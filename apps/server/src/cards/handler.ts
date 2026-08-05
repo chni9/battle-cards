@@ -35,6 +35,11 @@ export interface EffectContext {
    * omitted it; other cards ignore this field.
    */
   quantity: number | null;
+  /**
+   * Hand card consumed by Card Transformer (L24-02). `null` when omitted; other cards
+   * ignore this field.
+   */
+  consumeInstanceId: string | null;
   /** Injected seeded generator — Sentence, Mirror default, special purchase. */
   rng: Rng;
   /**

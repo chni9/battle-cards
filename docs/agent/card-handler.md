@@ -142,6 +142,12 @@ The counter is not a shield — damage still reaches the user normally. It decre
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.
 `applyLifeLoss` must never decrement it.
 
+**Lot 24:** Card Absorber recovers from `state.pool` via `takeFromPool` +
+`transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
+Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
+and mints a special (base: rng; upgraded: `special-pick`). Instant personal effects — not
+opponent-queued. `reanimation-kit` remains untyped until Lot 26.
+
 ## What not to do
 
 - ❌ A shared `switch` on card id inside the engine — that is the DSL this design rejects.

@@ -40,7 +40,10 @@ import {
   type CardId,
   type ChooseEliminationRewardPayload,
   type ChooseMirrorTargetPayload,
+  type ChoosePoolPickPayload,
+  type ChooseSpecialPickPayload,
   type ChooseStealPickPayload,
+  isSpecialCardId,
   type EliminationReason,
   type GameState,
   type LobbySeatView,
@@ -88,14 +91,23 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
+import {
+  POOL_SUB_CHOICE_MS,
+  SPECIAL_SUB_CHOICE_MS,
+  pickRandomPoolInstanceIds,
+} from '../engine/turn/generic-sub-choice';
 import { STEAL_SUB_CHOICE_MS } from '../engine/turn/steal-choice';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
+  completePoolPick,
+  completeSpecialPick,
   completeStealChoice,
   expireEliminationRewardChoice,
   expireMirrorChoice,
+  expirePoolPick,
+  expireSpecialPick,
   expireStealChoice,
   performTurnAction,
   type TurnAction,
@@ -345,6 +357,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
           ? { targetPlayerId: parsed.targetPlayerId }
           : {}),
         ...(parsed.quantity !== undefined ? { quantity: parsed.quantity } : {}),
+        ...(parsed.consumeInstanceId !== undefined
+          ? { consumeInstanceId: parsed.consumeInstanceId }
+          : {}),
       });
     },
 
@@ -698,12 +713,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     if (hasActiveSubChoice(state)) {
-      client.send(ERROR_MESSAGE, {
-        message:
-          state.mirrorChoice !== null
-            ? 'Finish your Mirror choice first.'
-            : 'Finish elimination rewards first.',
-      });
+      client.send(ERROR_MESSAGE, { message: subChoiceGateMessage(state) });
       return;
     }
 
@@ -755,6 +765,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (result.subChoicePending === true) {
+      const choice = state.subChoice;
+
+      if (choice === null) {
+        client.send(ERROR_MESSAGE, { message: 'Sub-choice missing.' });
+        return;
+      }
+
+      if (choice.kind === 'pool-pick') {
+        this.beginPoolTimer(client, choice);
+      } else {
+        this.beginSpecialTimer(client, choice);
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
       this.sendStateToEveryone();
@@ -791,6 +819,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (parsed.kind === 'steal-pick') {
       this.handleStealChoice(client, parsed);
+      return;
+    }
+
+    if (parsed.kind === 'pool-pick') {
+      this.handlePoolPick(client, parsed);
+      return;
+    }
+
+    if (parsed.kind === 'special-pick') {
+      this.handleSpecialPick(client, parsed);
       return;
     }
 
@@ -863,6 +901,72 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.sendStateToEveryone();
       return;
     }
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private handlePoolPick(client: GameClient, parsed: ChoosePoolPickPayload): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    const result = completePoolPick(state, client.sessionId, parsed.instanceIds);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearSubChoiceTimer('pool-pick');
+    this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private handleSpecialPick(client: GameClient, parsed: ChooseSpecialPickPayload): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    const result = completeSpecialPick(state, client.sessionId, parsed.cardId);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearSubChoiceTimer('special-pick');
+    this.applyTurnResult(result);
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
@@ -1166,6 +1270,137 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.sendStateToEveryone();
       return;
     }
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private beginPoolTimer(
+    client: GameClient,
+    choice: Extract<NonNullable<GameState['subChoice']>, { kind: 'pool-pick' }>,
+    durationMs?: number,
+  ): void {
+    this.clearSubChoiceTimer('pool-pick');
+
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? POOL_SUB_CHOICE_MS : remainingFromDeadline);
+    const effectiveDeadline = durationMs !== undefined ? Date.now() + ms : choice.deadlineMs;
+
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind === 'pool-pick' && durationMs !== undefined) {
+      state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
+    }
+
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'pool-pick',
+      eligibleInstanceIds: choice.eligibleInstanceIds,
+      maxCount: choice.maxCount,
+      deadlineMs: effectiveDeadline,
+    });
+
+    this.subChoiceTimers.set(
+      'pool-pick',
+      setTimeout(() => {
+        this.onPoolTimeout();
+      }, ms > 0 ? ms : POOL_SUB_CHOICE_MS),
+    );
+  }
+
+  private onPoolTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind !== 'pool-pick' || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expirePoolPick(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      return;
+    }
+
+    this.clearSubChoiceTimer('pool-pick');
+    this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private beginSpecialTimer(
+    client: GameClient,
+    choice: Extract<NonNullable<GameState['subChoice']>, { kind: 'special-pick' }>,
+    durationMs?: number,
+  ): void {
+    this.clearSubChoiceTimer('special-pick');
+
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? SPECIAL_SUB_CHOICE_MS : remainingFromDeadline);
+    const effectiveDeadline = durationMs !== undefined ? Date.now() + ms : choice.deadlineMs;
+
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind === 'special-pick' && durationMs !== undefined) {
+      state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
+    }
+
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'special-pick',
+      eligibleCardIds: choice.eligibleCardIds,
+      deadlineMs: effectiveDeadline,
+    });
+
+    this.subChoiceTimers.set(
+      'special-pick',
+      setTimeout(() => {
+        this.onSpecialTimeout();
+      }, ms > 0 ? ms : SPECIAL_SUB_CHOICE_MS),
+    );
+  }
+
+  private onSpecialTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind !== 'special-pick' || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireSpecialPick(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      return;
+    }
+
+    this.clearSubChoiceTimer('special-pick');
+    this.applyTurnResult(result);
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
@@ -1488,6 +1723,42 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { instanceId };
       },
+      resolvePoolPick: (s: GameState, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'pool-pick' || choice.playerId !== actorId) {
+          throw new Error('pool pick pending without subChoice');
+        }
+
+        const rng = createRng(`${s.seed}:bot:${actorId}:pool:${s.turnSequence}`);
+        const instanceIds = pickRandomPoolInstanceIds(
+          choice.eligibleInstanceIds.filter((id) =>
+            s.pool.some((card) => card.instanceId === id),
+          ),
+          choice.maxCount,
+          rng,
+        );
+
+        if (instanceIds.length !== choice.maxCount) {
+          throw new Error('Pool pick failed');
+        }
+
+        this.setPendingBotReason({ code: 'policy-fallback' });
+        return { instanceIds };
+      },
+      resolveSpecialPick: (s: GameState, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'special-pick' || choice.playerId !== actorId) {
+          throw new Error('special pick pending without subChoice');
+        }
+
+        const rng = createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`);
+        const cardId = rng.pick(choice.eligibleCardIds);
+
+        this.setPendingBotReason({ code: 'policy-fallback' });
+        return { cardId };
+      },
       resolveReward: (s: GameState) => {
         const choice = s.rewardChoice;
 
@@ -1619,6 +1890,31 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
       } else {
         state.mirrorChoice = null;
+      }
+    }
+
+    if (state.subChoice !== null) {
+      const kind = state.subChoice.kind;
+      const expired =
+        kind === 'pool-pick'
+          ? expirePoolPick(state, createRng(state.seed))
+          : expireSpecialPick(state, createRng(state.seed));
+
+      if (expired.ok) {
+        this.clearSubChoiceTimer(kind);
+        this.applyTurnResult(expired);
+
+        if (expired.rewardChoicePending === true) {
+          this.beginRewardTimer(state);
+          this.sendStateToEveryone();
+          return;
+        }
+
+        if (expired.winnerPlayerId !== null) {
+          return;
+        }
+      } else {
+        state.subChoice = null;
       }
     }
 
@@ -1936,6 +2232,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (state.subChoice?.playerId === sessionId) {
+      if (state.subChoice.kind === 'pool-pick') {
+        this.onPoolTimeout();
+      } else {
+        this.onSpecialTimeout();
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (state.rewardChoice?.eliminatorPlayerId === sessionId) {
       this.onRewardTimeout();
       this.sendStateToEveryone();
@@ -1974,6 +2281,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
         remainingMs(state.stealChoice.deadlineMs, now),
       );
       this.clearSubChoiceTimer('steal-pick');
+    }
+
+    if (state.subChoice?.playerId === sessionId) {
+      const kind = state.subChoice.kind;
+
+      if (this.subChoiceTimers.has(kind)) {
+        this.pausedSubChoiceRemainingMs.set(
+          kind,
+          remainingMs(state.subChoice.deadlineMs, now),
+        );
+        this.clearSubChoiceTimer(kind);
+      }
     }
 
     if (
@@ -2030,6 +2349,36 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       if (client !== undefined) {
         this.beginStealTimer(client, state.stealChoice, pausedStealRemainingMs);
+      }
+    }
+
+    const pausedPoolRemainingMs = this.pausedSubChoiceRemainingMs.get('pool-pick');
+
+    if (
+      state.subChoice?.kind === 'pool-pick' &&
+      state.subChoice.playerId === sessionId &&
+      pausedPoolRemainingMs !== undefined
+    ) {
+      this.pausedSubChoiceRemainingMs.delete('pool-pick');
+      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+
+      if (client !== undefined) {
+        this.beginPoolTimer(client, state.subChoice, pausedPoolRemainingMs);
+      }
+    }
+
+    const pausedSpecialRemainingMs = this.pausedSubChoiceRemainingMs.get('special-pick');
+
+    if (
+      state.subChoice?.kind === 'special-pick' &&
+      state.subChoice.playerId === sessionId &&
+      pausedSpecialRemainingMs !== undefined
+    ) {
+      this.pausedSubChoiceRemainingMs.delete('special-pick');
+      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+
+      if (client !== undefined) {
+        this.beginSpecialTimer(client, state.subChoice, pausedSpecialRemainingMs);
       }
     }
 
@@ -2418,10 +2767,23 @@ function readPlayCardPayload(payload: unknown): PlayCardPayload | null {
     quantity = value;
   }
 
+  let consumeInstanceId: string | undefined;
+
+  if ('consumeInstanceId' in payload) {
+    const value = payload.consumeInstanceId;
+
+    if (typeof value !== 'string' || value.length === 0) {
+      return null;
+    }
+
+    consumeInstanceId = value;
+  }
+
   return {
     instanceId,
     ...(targetPlayerId !== undefined ? { targetPlayerId } : {}),
     ...(quantity !== undefined ? { quantity } : {}),
+    ...(consumeInstanceId !== undefined ? { consumeInstanceId } : {}),
   };
 }
 
@@ -2551,7 +2913,57 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
     return { kind: 'steal-pick', instanceId: payload.instanceId };
   }
 
+  if (kind === 'pool-pick') {
+    if (!('instanceIds' in payload) || !Array.isArray(payload.instanceIds)) {
+      return null;
+    }
+
+    const instanceIds = payload.instanceIds;
+
+    if (
+      !instanceIds.every(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      )
+    ) {
+      return null;
+    }
+
+    return { kind: 'pool-pick', instanceIds };
+  }
+
+  if (kind === 'special-pick') {
+    if (!('cardId' in payload) || typeof payload.cardId !== 'string') {
+      return null;
+    }
+
+    if (payload.cardId.length === 0 || !isSpecialCardId(payload.cardId)) {
+      return null;
+    }
+
+    return { kind: 'special-pick', cardId: payload.cardId };
+  }
+
   return null;
+}
+
+function subChoiceGateMessage(state: GameState): string {
+  if (state.mirrorChoice !== null) {
+    return 'Finish your Mirror choice first.';
+  }
+
+  if (state.stealChoice !== null) {
+    return 'Finish your Steal choice first.';
+  }
+
+  if (state.subChoice?.kind === 'pool-pick') {
+    return 'Finish your pool pick first.';
+  }
+
+  if (state.subChoice?.kind === 'special-pick') {
+    return 'Finish your special pick first.';
+  }
+
+  return 'Finish elimination rewards first.';
 }
 
 function readChooseEliminationRewardPayload(

@@ -1,14 +1,16 @@
 /**
- * Generic sub-choice model — technical spec v4 §4.4, backlog L20-18 / L21-03.
+ * Generic sub-choice model — technical spec v4 §4.4, backlog L20-18 / L21-03 / L24.
  *
  * A sub-choice pauses ordinary turn actions until it resolves (picked, or defaulted
- * on timeout). Mirror and elimination rewards are fully typed. Card Thief's
- * steal-when-spied pick (`steal-pick`) is constructible from L21-03. Three more
- * kinds stay `payload: never` until Lots 24/26.
+ * on timeout). Mirror, elimination rewards, steal-pick, pool-pick and special-pick
+ * are fully typed. `reanimation-kit` stays `payload: never` until Lot 26.
  *
- * `GameState` stores Mirror / reward / steal under dedicated fields — see
- * `docs/agent/decisions.md` 2026-08-04 (L20-18) and 2026-08-05 (L21-03).
+ * `GameState` stores Mirror / reward / steal under dedicated fields; Lot 24's
+ * `pool-pick` / `special-pick` share `GameState.subChoice` — see
+ * `docs/agent/decisions.md` 2026-08-05 (Lot 24).
  */
+
+import type { SpecialCardId } from './card';
 
 export type SubChoiceKind =
   | 'mirror'
@@ -42,14 +44,29 @@ export interface StealPickSubChoicePayload {
   cardIsUpgraded: boolean;
 }
 
+/** Card Absorber upgraded — choose cards from the shared pool (L24-01). */
+export interface PoolPickSubChoicePayload {
+  playerId: string;
+  /** Exactly this many distinct eligible ids must be chosen (#V4-15). */
+  maxCount: number;
+  eligibleInstanceIds: readonly string[];
+  cardIsUpgraded: boolean;
+}
+
+/** Card Transformer upgraded — choose the special obtained (L24-02). */
+export interface SpecialPickSubChoicePayload {
+  playerId: string;
+  /** Always the full `SPECIAL_CARD_IDS` set; duplicates with hand allowed. */
+  eligibleCardIds: readonly SpecialCardId[];
+}
+
 /**
- * Discriminated on `kind`. `'mirror'`, `'elimination-reward'` and `'steal-pick'`
- * are fully typed and constructible.
+ * Discriminated on `kind`. `'reanimation-kit'` stays unconstructible until Lot 26.
  */
 export type SubChoiceState =
   | ({ kind: 'mirror'; deadlineMs: number } & MirrorSubChoicePayload)
   | ({ kind: 'elimination-reward'; deadlineMs: number } & EliminationRewardSubChoicePayload)
   | ({ kind: 'steal-pick'; deadlineMs: number } & StealPickSubChoicePayload)
-  | { kind: 'pool-pick'; deadlineMs: number; payload: never }
-  | { kind: 'special-pick'; deadlineMs: number; payload: never }
+  | ({ kind: 'pool-pick'; deadlineMs: number } & PoolPickSubChoicePayload)
+  | ({ kind: 'special-pick'; deadlineMs: number } & SpecialPickSubChoicePayload)
   | { kind: 'reanimation-kit'; deadlineMs: number; payload: never };

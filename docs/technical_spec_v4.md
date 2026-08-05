@@ -709,9 +709,9 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-11** | Reanimation vs elimination rewards: does the eliminator still get 2 rewards for an elimination that was reversed? | The sharpest one. Rewards include *taking cards from the eliminated player*, and the reward queue is already public via `rewardsClaimed`. Recommendation: **the elimination does not happen at all** — Reanimation intercepts before `processEliminations` marks the player, so no contributor, no reward, no card transfer, no snapshot. Alternative: the elimination happens, the eliminator is paid, and the player returns stripped. Both are defensible; the code cannot choose. | L26-01 |
 | **#V4-12** | Reanimation: does it apply to elimination by absence, inactivity or a consented leave? Is an armed Reanimation public? Can a player hold two? Is the card consumed if the game ends before it triggers? | Rules spec says only "if the user is eliminated later in the game". Recommendation: **applies to every elimination** including lifecycle ones, **public** (consistent with active persistents since PROTOCOL 19), **two can be held and trigger in sequence**, consumed on trigger only. | L26-01 |
 | **#V4-13** | Upgraded Reanimation lets the user choose their kit. When is that sub-choice raised, given the elimination is detected inside `processEliminations`, possibly not on the reanimated player's turn? | Recommendation: **immediately, as a blocking sub-choice like rewards**, which already pauses turn advance and game-over from outside the choosing player's turn. Requires `processEliminations` to become interruptible. | L26-02 |
-| **#V4-14** | Cards in the pool keep the `isUpgraded` they had, so a deactivated upgraded Imposition returns upgraded and Card Absorber can recover it for free. Intended? | Recommendation: **yes, keep it** — the upgrade was paid for once, and the pool is a public record of what was lost. Confirm, because it amounts to a free upgrade point. | L24-01 |
-| **#V4-15** | What if the pool holds fewer than 4 cards? | Recommendation: **take what is there**, with `canPlay` requiring at least 1 card in the pool — playing into an empty pool is an invalid action, not a wasted card, on the Mirror precedent (§6.2 #5). | L24-01 |
-| **#V4-16** | Card Transformer: where does the consumed action/attack card go, and does its upgrade state carry to the special? | Recommendation: **to the shared pool** (consistent with every other card leaving a hand) and **the upgrade is lost** (a different card; and an upgrade placed before use is already lost on play per rules spec §5). Note the result **may** duplicate a special the user already holds — rules spec §1 explicitly allows multiple copies, and #V4-27 recommends the same for Prophet; do not add an exclusion. | L24-02 |
+| ~~**#V4-14**~~ | ~~Pool keeps isUpgraded / Absorber free upgrade~~ — **ruled in §11.5** | L24-01 |
+| ~~**#V4-15**~~ | ~~Pool &lt; 4 / empty Absorber~~ — **ruled in §11.5** | L24-01 |
+| ~~**#V4-16**~~ | ~~Transformer consumed destination + upgrade~~ — **ruled in §11.5** | L24-02 |
 | **#V4-17** | Upgrade Point Thief strips "all of their currently upgraded cards". Does that include `shieldIsUpgraded` and the `isUpgraded` flag on already-active persistent effects? | Recommendation: **neither**. An active shield is not a card held, and an active persistent has already left `specialCards`. Say it explicitly, because "all upgraded cards" reads broader than the model. | L21-02 |
 | **#V4-18** | Does the user gain an upgrade point for stripping an upgrade that came from a kit trait rather than from a spent upgrade point? | The rules spec says yes, explicitly. Recorded to confirm it is not a drafting accident: it makes Upgrade Point Thief far stronger against Warrior, Tactician, Scientific, Witch, Wizard, Indestructible, Juggernaut and Specialist. | L21-02 |
 | **#V4-19** | Card Thief steals "a random card". Hand only, or hand plus unused special cards? | Attack Thief says "attack card" specifically, and elimination rewards say "including their unused special cards" explicitly. Recommendation: **hand and specials**, matching the elimination-reward vocabulary. | L21-03 |
@@ -815,4 +815,13 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-4** | Super Mirror: **no choice** — all pending attacks → every opponent. | `decisions.md`, L23-02 |
 | **#V4-5** | Attack Thief charge spent **before** mutual cancel (overrides preserve-charge recommendation). | `decisions.md`, L23-03 |
 | **#V4-31** | Attack Thief steals **shared** attacks only; MEGA excluded. | `decisions.md`, L23-03 |
+
+## 11.5 Ruled in Lot 24 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-14** | Pool instances keep `isUpgraded`; Absorber recovery preserves it (`alwaysUpgraded` may still force). | `decisions.md`, L24-01 |
+| **#V4-15** | Absorber takes `min(4, pool.length)`; `canPlay` requires `pool.length >= 1`. | `decisions.md`, L24-01 |
+| **#V4-16** | Transformer: consumed hand card → pool as-is; special result does not inherit upgrade; duplicates allowed. | `decisions.md`, L24-02 |
+| *(addr.)* | Optional `consumeInstanceId` on play; eligible = hand `SHARED_CARD_IDS` only. `GameState.subChoice` holds `pool-pick` / `special-pick` (Approach B). | `decisions.md`, L24-01/02 |
 

@@ -121,6 +121,7 @@ export function enumerationStateFromView(
     visibility: [],
     mirrorChoice: null,
     stealChoice: null,
+    subChoice: null,
     eliminationContributors: [],
     rewardQueue: [],
     rewardChoice: null,

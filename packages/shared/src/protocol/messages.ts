@@ -5,7 +5,7 @@
  * `playCard` / `sellCard` / `upgradeCard` key on `instanceId` (Lot 2 ruling).
  */
 
-import type { CardId } from '../domain/card';
+import type { CardId, SpecialCardId } from '../domain/card';
 import type { ActionResolutionOutcome } from './action-outcome';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type {
@@ -126,6 +126,11 @@ export interface PlayCardPayload {
   targetPlayerId?: string;
   /** Lives to buy when playing Regeneration (1–4). Ignored for other cards. */
   quantity?: number;
+  /**
+   * Hand card consumed by Card Transformer (L24-02). Ignored by other cards.
+   * Must be a shared attack/action in the player's hand.
+   */
+  consumeInstanceId?: string;
 }
 
 export interface PlayMultipleAttacksPayload {
@@ -168,17 +173,44 @@ export interface ChooseStealPickPayload {
   instanceId: string;
 }
 
+/** Carried inside `subChoiceRequired` — `kind: 'pool-pick'` (L24-01). */
+export interface PoolPickChoiceRequiredPayload {
+  kind: 'pool-pick';
+  eligibleInstanceIds: readonly string[];
+  maxCount: number;
+  deadlineMs: number;
+}
+
+export interface ChoosePoolPickPayload {
+  instanceIds: readonly string[];
+}
+
+/** Carried inside `subChoiceRequired` — `kind: 'special-pick'` (L24-02). */
+export interface SpecialPickChoiceRequiredPayload {
+  kind: 'special-pick';
+  eligibleCardIds: readonly SpecialCardId[];
+  deadlineMs: number;
+}
+
+export interface ChooseSpecialPickPayload {
+  cardId: SpecialCardId;
+}
+
 /** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type SubChoiceRequiredPayload =
   | MirrorChoiceRequiredPayload
   | RewardChoiceRequiredPayload
-  | StealPickChoiceRequiredPayload;
+  | StealPickChoiceRequiredPayload
+  | PoolPickChoiceRequiredPayload
+  | SpecialPickChoiceRequiredPayload;
 
 /** `resolveSubChoice`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type ResolveSubChoicePayload =
   | ({ kind: 'mirror' } & ChooseMirrorTargetPayload)
   | ({ kind: 'elimination-reward' } & ChooseEliminationRewardPayload)
-  | ({ kind: 'steal-pick' } & ChooseStealPickPayload);
+  | ({ kind: 'steal-pick' } & ChooseStealPickPayload)
+  | ({ kind: 'pool-pick' } & ChoosePoolPickPayload)
+  | ({ kind: 'special-pick' } & ChooseSpecialPickPayload);
 
 export interface AddBotPayload {
   difficulty: BotDifficulty;

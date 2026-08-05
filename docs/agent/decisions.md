@@ -1276,3 +1276,21 @@ Designer rulings (session):
 - **#V4-31:** Attack Thief steals only **shared** attack cards (`isSharedAttackCardId`);
   MEGA ATTACK is not stealable.
 
+## 2026-08-05 · [P] #V4-14 / #V4-15 / #V4-16 Lot 24 pool + transformer
+
+Designer rulings (session) — confirm tech-spec §11 recommendations:
+
+- **#V4-14:** Pool instances keep `isUpgraded`. Card Absorber recovery preserves it;
+  `transferCardInstance` may still force `true` via `alwaysUpgraded`.
+- **#V4-15:** Absorber takes `min(4, pool.length)`. `canPlay` requires `pool.length >= 1`
+  (empty pool = invalid action, Mirror precedent).
+- **#V4-16:** Card Transformer: consumed hand card → shared pool as-is; special result
+  does **not** inherit upgrade (mint via `acquireSpecialCard`); duplicates allowed.
+- **Storage (Approach B):** new Mirror-shaped kinds (`pool-pick`, `special-pick`) share
+  one `GameState.subChoice` field — Mirror / steal / reward keep dedicated fields
+  (L20-18 deferral resolved for Lot 24 new kinds only).
+- **Transformer addressing:** optional `consumeInstanceId` on `PlayCardPayload` /
+  `TurnAction` / `EffectContext`. No `PROTOCOL_VERSION` bump (V4 already at 23).
+- **Transformer eligibility:** hand only, `SHARED_CARD_IDS` (shared attack + action).
+  Not specials, not MEGA ATTACK.
+

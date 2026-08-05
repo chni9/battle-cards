@@ -15,11 +15,15 @@ import type { GameState, SubChoiceKind } from '@card-battle/shared';
 
 export const SUB_CHOICE_MS = 20_000;
 
-/** True while a sub-choice — Mirror, steal-pick or elimination reward — blocks every other action. */
+/**
+ * True while a sub-choice — Mirror, steal-pick, pool/special pick or elimination
+ * reward — blocks every other action.
+ */
 export function hasActiveSubChoice(state: GameState): boolean {
   return (
     state.mirrorChoice !== null ||
     state.stealChoice !== null ||
+    state.subChoice !== null ||
     state.rewardChoice !== null ||
     state.rewardQueue.length > 0
   );
@@ -33,6 +37,10 @@ export function activeSubChoiceKind(state: GameState): SubChoiceKind | null {
 
   if (state.stealChoice !== null) {
     return 'steal-pick';
+  }
+
+  if (state.subChoice !== null) {
+    return state.subChoice.kind;
   }
 
   if (state.rewardChoice !== null || state.rewardQueue.length > 0) {

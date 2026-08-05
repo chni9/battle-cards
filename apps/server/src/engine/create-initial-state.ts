@@ -75,6 +75,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     visibility: [],
     mirrorChoice: null,
     stealChoice: null,
+    subChoice: null,
     eliminationContributors: [],
     rewardQueue: [],
     rewardChoice: null,

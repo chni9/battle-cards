@@ -5,6 +5,7 @@
  */
 
 import type { CardInstance, GameState, Player } from '@card-battle/shared';
+import { SHARED_CARD_IDS } from '@card-battle/shared';
 
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
@@ -12,6 +13,8 @@ import { createRng } from '../rng';
 import { findPlayer } from './advance-turn';
 import type { TurnAction } from './perform-action';
 import { canAffordPlayPoints } from './play-cost';
+
+const SHARED_SET = new Set<string>(SHARED_CARD_IDS);
 
 export function listLegalPlayCardActions(
   state: GameState,
@@ -39,6 +42,7 @@ export function listLegalPlayCardActions(
           targetPlayerId: null,
           card: instance,
           quantity,
+          consumeInstanceId: null,
           rng,
           nowMs: 0,
         };
@@ -55,6 +59,39 @@ export function listLegalPlayCardActions(
       continue;
     }
 
+    if (instance.cardId === 'card-transformer') {
+      if (!canAffordPlayPoints(actor, instance.cardId)) {
+        continue;
+      }
+
+      for (const handCard of actor.hand) {
+        if (!SHARED_SET.has(handCard.cardId)) {
+          continue;
+        }
+
+        const context = {
+          state,
+          sourcePlayerId: actor.id,
+          targetPlayerId: null,
+          card: instance,
+          quantity: null,
+          consumeInstanceId: handCard.instanceId,
+          rng,
+          nowMs: 0,
+        };
+
+        if (handler.canPlay(context)) {
+          actions.push({
+            type: 'playCard',
+            instanceId: instance.instanceId,
+            consumeInstanceId: handCard.instanceId,
+          });
+        }
+      }
+
+      continue;
+    }
+
     // Self-only attempt (no target).
     {
       const context = {
@@ -63,6 +100,7 @@ export function listLegalPlayCardActions(
         targetPlayerId: null,
         card: instance,
         quantity: null,
+        consumeInstanceId: null,
         rng,
         nowMs: 0,
       };
@@ -79,6 +117,7 @@ export function listLegalPlayCardActions(
         targetPlayerId: opponent.id,
         card: instance,
         quantity: null,
+        consumeInstanceId: null,
         rng,
         nowMs: 0,
       };

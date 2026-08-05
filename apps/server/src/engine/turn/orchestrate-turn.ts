@@ -5,13 +5,15 @@
  * Policy / transport stay outside: callers supply sub-choice hooks.
  */
 
-import type { GameState, RewardChoice } from '@card-battle/shared';
+import type { GameState, RewardChoice, SpecialCardId } from '@card-battle/shared';
 
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
+  completePoolPick,
+  completeSpecialPick,
   completeStealChoice,
   performTurnAction,
   type EliminationRewardTurnResult,
@@ -29,6 +31,14 @@ export interface StealResolvePick {
   instanceId: string;
 }
 
+export interface PoolResolvePick {
+  instanceIds: readonly string[];
+}
+
+export interface SpecialResolvePick {
+  cardId: SpecialCardId;
+}
+
 export interface RewardResolvePick {
   chooserPlayerId: string;
   eliminationId: string;
@@ -42,6 +52,15 @@ export interface TurnSubChoiceHooks {
    * external handler (human UI / room timer). Headless bots always return a pick.
    */
   resolveSteal?(state: GameState, actorPlayerId: string): StealResolvePick | null;
+  /**
+   * Return pool instance ids, or `null` to leave `subChoice` pending for an
+   * external handler. Headless bots always return a pick.
+   */
+  resolvePoolPick?(state: GameState, actorPlayerId: string): PoolResolvePick | null;
+  /**
+   * Return a special card id, or `null` to leave `subChoice` pending.
+   */
+  resolveSpecialPick?(state: GameState, actorPlayerId: string): SpecialResolvePick | null;
   /**
    * Return picks to complete the active reward job, or `null` to leave
    * `rewardChoice` pending for an external handler (human UI / room timer).
@@ -107,6 +126,7 @@ export function continuePendingSubChoices(
   while (
     result.mirrorChoicePending === true ||
     result.stealChoicePending === true ||
+    result.subChoicePending === true ||
     result.rewardChoicePending === true
   ) {
     if (result.mirrorChoicePending === true) {
@@ -151,6 +171,60 @@ export function continuePendingSubChoices(
       options.onTurnResult?.(stealResult);
       result = stealResult;
       continue;
+    }
+
+    if (result.subChoicePending === true) {
+      const kind = state.subChoice?.kind;
+
+      if (kind === 'pool-pick') {
+        const pick = hooks.resolvePoolPick?.(state, actorPlayerId) ?? null;
+
+        if (pick === null) {
+          return result;
+        }
+
+        const poolResult = completePoolPick(
+          state,
+          actorPlayerId,
+          pick.instanceIds,
+          rng,
+          nowMs,
+        );
+
+        if (!poolResult.ok) {
+          return poolResult;
+        }
+
+        options.onTurnResult?.(poolResult);
+        result = poolResult;
+        continue;
+      }
+
+      if (kind === 'special-pick') {
+        const pick = hooks.resolveSpecialPick?.(state, actorPlayerId) ?? null;
+
+        if (pick === null) {
+          return result;
+        }
+
+        const specialResult = completeSpecialPick(
+          state,
+          actorPlayerId,
+          pick.cardId,
+          rng,
+          nowMs,
+        );
+
+        if (!specialResult.ok) {
+          return specialResult;
+        }
+
+        options.onTurnResult?.(specialResult);
+        result = specialResult;
+        continue;
+      }
+
+      return result;
     }
 
     const pick = hooks.resolveReward(state);

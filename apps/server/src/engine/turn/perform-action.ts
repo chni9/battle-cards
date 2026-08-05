@@ -12,6 +12,7 @@ import {
   type CardInstance,
   type GameState,
   type RewardChoice,
+  type SpecialCardId,
 } from '@card-battle/shared';
 
 import { findHandler } from '../../cards/registry';
@@ -32,6 +33,12 @@ import {
 } from './mirror-choice';
 import { applyDefaultStealPick, applyStealPick } from './steal-choice';
 import {
+  applyDefaultPoolPick,
+  applyDefaultSpecialPick,
+  applyPoolPick,
+  applySpecialPick,
+} from './generic-sub-choice';
+import {
   applyDefaultEliminationRewards,
   applyEliminationRewardChoices,
   hasPendingEliminationRewards,
@@ -44,7 +51,13 @@ import { hasActiveSubChoice } from './sub-choice';
 
 export type TurnAction =
   | { type: 'draw' }
-  | { type: 'playCard'; instanceId: string; targetPlayerId?: string; quantity?: number }
+  | {
+      type: 'playCard';
+      instanceId: string;
+      targetPlayerId?: string;
+      quantity?: number;
+      consumeInstanceId?: string;
+    }
   | {
       type: 'playMultipleAttacks';
       attacks: readonly { instanceId: string; targetPlayerId: string }[];
@@ -101,6 +114,8 @@ export interface TurnResult {
   mirrorChoicePending?: boolean;
   /** True when Card Thief steal-pick is waiting (L21-03). */
   stealChoicePending?: boolean;
+  /** True when `GameState.subChoice` (pool-pick / special-pick) is waiting (L24). */
+  subChoicePending?: boolean;
   /** True when elimination rewards are waiting for chooseEliminationReward / default. */
   rewardChoicePending?: boolean;
   /**
@@ -146,7 +161,11 @@ export function performTurnAction(
           ? 'Finish your Mirror choice first.'
           : state.stealChoice !== null
             ? 'Finish your Card Thief choice first.'
-            : 'Finish elimination rewards first.',
+            : state.subChoice !== null
+              ? state.subChoice.kind === 'pool-pick'
+                ? 'Finish your pool pick first.'
+                : 'Finish your special pick first.'
+              : 'Finish elimination rewards first.',
     };
   }
 
@@ -256,6 +275,7 @@ export function performTurnAction(
       action.instanceId,
       action.targetPlayerId,
       action.quantity,
+      action.consumeInstanceId,
       rng,
       nowMs,
     );
@@ -289,6 +309,18 @@ export function performTurnAction(
       eliminatedPlayerIds: [],
       eliminations: [],
       stealChoicePending: true,
+    };
+  }
+
+  if (state.subChoice !== null) {
+    return {
+      ok: true,
+      actionPlayed,
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      eliminations: [],
+      subChoicePending: true,
     };
   }
 
@@ -513,6 +545,156 @@ export function expireStealChoice(
   );
 }
 
+/**
+ * Complete a pool-pick (Card Absorber upgraded) then finish the turn.
+ */
+export function completePoolPick(
+  state: GameState,
+  actorPlayerId: string,
+  instanceIds: readonly string[],
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'pool-pick' || choice.playerId !== actorPlayerId) {
+    return { ok: false, message: 'No pool pick pending.' };
+  }
+
+  if (state.currentTurnPlayerId !== actorPlayerId) {
+    return { ok: false, message: 'It is not your turn.' };
+  }
+
+  const applied = applyPoolPick(state, instanceIds);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-absorber',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
+/**
+ * Apply pool-pick default on sub-choice expiry, then finish the turn.
+ */
+export function expirePoolPick(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'pool-pick') {
+    return { ok: false, message: 'No pool pick pending.' };
+  }
+
+  const actorPlayerId = choice.playerId;
+  const applied = applyDefaultPoolPick(state, rng);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-absorber',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
+/**
+ * Complete a special-pick (Card Transformer upgraded) then finish the turn.
+ */
+export function completeSpecialPick(
+  state: GameState,
+  actorPlayerId: string,
+  cardId: SpecialCardId,
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'special-pick' || choice.playerId !== actorPlayerId) {
+    return { ok: false, message: 'No special pick pending.' };
+  }
+
+  if (state.currentTurnPlayerId !== actorPlayerId) {
+    return { ok: false, message: 'It is not your turn.' };
+  }
+
+  const applied = applySpecialPick(state, cardId);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-transformer',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
+/**
+ * Apply special-pick default on sub-choice expiry, then finish the turn.
+ */
+export function expireSpecialPick(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'special-pick') {
+    return { ok: false, message: 'No special pick pending.' };
+  }
+
+  const actorPlayerId = choice.playerId;
+  const applied = applyDefaultSpecialPick(state, rng);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-transformer',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
 export type EliminationRewardTurnResult =
   | {
       ok: true;
@@ -663,6 +845,7 @@ function playMultipleAttacksAction(
       targetPlayerId: attack.targetPlayerId,
       card: instance,
       quantity: null,
+      consumeInstanceId: null,
       rng,
       nowMs,
     };
@@ -704,6 +887,7 @@ function playMultipleAttacksAction(
       targetPlayerId: entry.targetPlayerId,
       card: entry.instance,
       quantity: null,
+      consumeInstanceId: null,
       rng,
       nowMs,
     });
@@ -732,6 +916,7 @@ function playCardAction(
   instanceId: string,
   targetPlayerId: string | undefined,
   quantity: number | undefined,
+  consumeInstanceId: string | undefined,
   rng: Rng,
   nowMs: number,
 ): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
@@ -782,6 +967,7 @@ function playCardAction(
     targetPlayerId: resolvedTargetId,
     card: instance,
     quantity: quantity ?? null,
+    consumeInstanceId: consumeInstanceId ?? null,
     rng,
     nowMs,
   };

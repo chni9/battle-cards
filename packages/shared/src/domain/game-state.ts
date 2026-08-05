@@ -74,6 +74,12 @@ export interface GameState {
    */
   stealChoice: StealChoiceState | null;
   /**
+   * Generic Mirror-shaped slot for Lot 24+ kinds that do not yet have a dedicated
+   * field — currently `pool-pick` and `special-pick` (Approach B / decisions Lot 24).
+   * Gated with Mirror / steal / reward by `hasActiveSubChoice`.
+   */
+  subChoice: GenericSubChoiceState | null;
+  /**
    * Third-party sources that dealt life loss (or a lethal effect) to a victim during
    * the current resolve+persist phase. Consumed when eliminations are marked (L6).
    * Self damage is never recorded.
@@ -125,3 +131,12 @@ export type MirrorChoiceState = Omit<Extract<SubChoiceState, { kind: 'mirror' }>
  * field stays `GameState.stealChoice` (dedicated slot, L20-18 precedent).
  */
 export type StealChoiceState = Omit<Extract<SubChoiceState, { kind: 'steal-pick' }>, 'kind'>;
+
+/**
+ * Lot 24 generic Mirror-shaped picks — stored on `GameState.subChoice` with `kind`
+ * retained so pool-pick and special-pick share one field (Approach B).
+ */
+export type GenericSubChoiceState = Extract<
+  SubChoiceState,
+  { kind: 'pool-pick' } | { kind: 'special-pick' }
+>;

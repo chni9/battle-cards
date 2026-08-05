@@ -21,6 +21,7 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { pickRandomPoolInstanceIds } from '../engine/turn/generic-sub-choice';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import type { TurnResult } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
@@ -212,6 +213,40 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           instanceId: createRng(
             `${s.seed}:bot:${actorId}:steal:${s.turnSequence}`,
           ).pick(choice.eligibleInstanceIds),
+        };
+      },
+      resolvePoolPick: (s: typeof state, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'pool-pick' || choice.playerId !== actorId) {
+          throw new Error('pool pick pending without subChoice');
+        }
+
+        const instanceIds = pickRandomPoolInstanceIds(
+          choice.eligibleInstanceIds.filter((id) =>
+            s.pool.some((card) => card.instanceId === id),
+          ),
+          choice.maxCount,
+          createRng(`${s.seed}:bot:${actorId}:pool:${s.turnSequence}`),
+        );
+
+        if (instanceIds.length !== choice.maxCount) {
+          throw new Error('Pool pick pending but pick failed');
+        }
+
+        return { instanceIds };
+      },
+      resolveSpecialPick: (s: typeof state, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'special-pick' || choice.playerId !== actorId) {
+          throw new Error('special pick pending without subChoice');
+        }
+
+        return {
+          cardId: createRng(
+            `${s.seed}:bot:${actorId}:special:${s.turnSequence}`,
+          ).pick(choice.eligibleCardIds),
         };
       },
       resolveReward: (s: typeof state) => {

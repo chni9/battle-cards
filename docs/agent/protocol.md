@@ -73,10 +73,11 @@ Client → server (technical spec §5.2):
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·
-`resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18) —
-`{ kind: 'mirror', pendingEffectId, newTargetPlayerId }` or
-`{ kind: 'elimination-reward', eliminationId, choices }`; replaces the former
-`chooseMirrorTarget` / `chooseEliminationReward` pair
+`resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
+`kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
+(`instanceIds`), `special-pick` (`cardId`). Replaces the former
+`chooseMirrorTarget` / `chooseEliminationReward` pair. Optional `consumeInstanceId` on
+`playCard` addresses Card Transformer's consumed hand card (L24-02; no version bump).
 
 Server → clients (§5.3):
 
@@ -86,8 +87,7 @@ PROTOCOL_VERSION 19) · `actionResolved` (broadcast on resolution; includes
 `outcome: 'applied' | 'immune' | 'cancelled' | 'blocked'` since L4-03/v4 §4.2 and `isUpgraded`
 since v19) ·
 `subChoiceRequired` (technical spec v4 §4.4, PROTOCOL_VERSION 23) — to the sub-choice owner,
-`kind`-discriminated: `{ kind: 'mirror', eligibleEffectIds, deadlineMs }` or
-`{ kind: 'elimination-reward', eliminationId, eliminatedPlayerId, availableCards, deadlineMs }`;
+`kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`, `special-pick`;
 replaces the former `mirrorChoiceRequired` / `rewardChoiceRequired` pair ·
 `playerEliminated` · `gameOver` · `error`
 

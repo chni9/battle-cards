@@ -82,6 +82,8 @@ export type RoomConnectionStatus =
 export interface PlayCardOptions {
   targetPlayerId?: string;
   quantity?: number;
+  /** Hand card consumed by Card Transformer (L24-02). */
+  consumeInstanceId?: string;
 }
 
 export interface RoomConnection {
@@ -476,6 +478,9 @@ export function useRoomConnection(): UseRoomConnectionResult {
         ? { targetPlayerId: options.targetPlayerId }
         : {}),
       ...(options?.quantity !== undefined ? { quantity: options.quantity } : {}),
+      ...(options?.consumeInstanceId !== undefined
+        ? { consumeInstanceId: options.consumeInstanceId }
+        : {}),
     };
     roomRef.current?.send(PLAY_CARD, payload);
   }, []);

@@ -233,6 +233,7 @@ function isAffordableCandidate(
         targetPlayerId: slot.targetPlayerId,
         card: instance,
         quantity: null,
+        consumeInstanceId: null,
         rng,
         nowMs: 0,
       })
