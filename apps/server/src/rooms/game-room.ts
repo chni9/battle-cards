@@ -1866,6 +1866,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       winnerPlayerId,
       gameState: state,
       actionLog: this.actionLog,
+      turnHistory: this.turnHistory,
       eliminations: this.eliminations,
       botDifficultiesByPlayerId: this.botDifficulties(),
     });

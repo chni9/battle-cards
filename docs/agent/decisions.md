@@ -1174,6 +1174,52 @@ forced this decision no longer applies.
 Designer ruling (session): Classic mode remains 2 to 4 players in V4. Documentation
 only — no change to `batch-config.ts`, `lobby-rules.MAX_PLAYERS`, or `game-room.maxClients`.
 
+## 2026-08-05 · [T] Persist Excel-parity `export_log` on finished games
+
+`finished_games.action_log` already stored public Events. The Excel **Turns** sheet
+(before/after private snapshots) lived only in `GameRoom.turnHistory` for the
+finished client download. Migration `003_finished_game_export_log.sql` adds nullable
+`export_log jsonb`; `buildFinishedGameSnapshot` / `persistFinishedGame` now write
+`GameExportLogView` (`turns` + `events`). `action_log` kept for existing aggregates.
+Simulator still does not write Postgres. Query via SQL only — no admin UI yet.
+
+## 2026-08-05 · [P] #V4-29 20-pt purchase draws from all 20 specials (L21-01)
+
+Designer ruling (session): the 20-point random special purchase draws from
+`SPECIAL_CARD_IDS` (all 20). The V1 six-card restriction (§6.2 #10) was a scope
+artefact, not a lasting rule. Pending-handler specials **may be granted** by this
+path; play stays rejected until the handler lands (L20-04).
+
+## 2026-08-05 · [P] #V4-17 / #V4-18 / #V4-33 Upgrade Point Thief strip + Counter Rule (L21-02)
+
+Designer rulings (session):
+
+- **#V4-17:** Upgrade Point Thief strip **includes** `shieldIsUpgraded` and
+  `isUpgraded` on already-active persistent effects (overrides the tech-spec
+  recommendation and Appendix A #12). Each stripped flag yields 1 upgrade point.
+- **#V4-18:** Stripping a kit-trait upgrade still yields 1 UP to the thief (rules
+  text confirmed, not a drafting accident). Copies acquired afterwards arrive
+  upgraded again via `alwaysUpgraded`.
+- **#V4-33:** Counter Rule stays **Spy and Thief only**. Untouchable `immuneTo`
+  and upgraded Shield's Spy/Thief block stay Spy/Thief only. Card Thief, Upgrade
+  Point Thief, Attack Thief and Curse are **not** counterable and **not** covered
+  by those immunities.
+
+## 2026-08-05 · [P] #V4-19 / #V4-34 / #V4-35 Card Thief pool, empty hand, spied-by (L21-03)
+
+Designer rulings (session):
+
+- **#V4-19:** Steal pool is **hand + unused specials** (elimination-reward vocabulary).
+- **#V4-34:** Against an empty victim the play is **legal and resolves as a no-op**
+  (preserves §10.1; rejects the Mirror "invalid, not wasted" precedent here).
+- **#V4-35:** "Spied" means Spy active **from the user**, not from anyone.
+- **Timing:** opponent-aimed effects queue; resolve on the victim's turn. Spied
+  branch: choose at play, lock `instanceId` on the pending effect. Random: pick
+  with injected `rng` at resolve. Missing card at resolve → no-op.
+- **Storage:** `GameState.stealChoice` is a dedicated Mirror-shaped slot (L20-18
+  precedent); `PendingEffect.chosenInstanceId` is server-only (omitted from
+  `PendingEffectView`).
+
 ## 2026-08-05 · [T] Heuristic stance pass (build / contest / finish)
 
 Playtest exports BNBBSH, CTHNVP, ESCEKV: humans Tax+/Regen+ farm, upgrade defense and

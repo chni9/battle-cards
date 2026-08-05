@@ -18,6 +18,7 @@ export function buildFinishedGameSnapshot(
   const durationMs = input.endedAtMs - input.startedAtMs;
   const botDifficulties = input.botDifficultiesByPlayerId ?? new Map<string, BotDifficulty>();
   const hasBots = botDifficulties.size > 0;
+  const turnHistory = input.turnHistory ?? [];
 
   return {
     roomId: input.roomId,
@@ -29,6 +30,10 @@ export function buildFinishedGameSnapshot(
     endedAt: new Date(input.endedAtMs),
     durationMs,
     actionLog: input.actionLog,
+    exportLog: {
+      turns: [...turnHistory],
+      events: [...input.actionLog],
+    },
     hasBots,
     players: input.gameState.players.map((player, seatIndex) =>
       buildPlayerRecord(player, seatIndex, input.winnerPlayerId, input.actionLog, botDifficulties),

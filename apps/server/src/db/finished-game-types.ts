@@ -9,6 +9,8 @@ import type {
   BotDifficulty,
   CardInstance,
   EliminationReason,
+  ExportTurnRowView,
+  GameExportLogView,
   GameMode,
   KitId,
 } from '@card-battle/shared';
@@ -53,6 +55,11 @@ export interface FinishedGameSnapshot {
   endedAt: Date;
   durationMs: number;
   actionLog: readonly ActionLogEntryView[];
+  /**
+   * Excel-parity payload (Turns + Events). Same shape as FinishedStateView.exportLog.
+   * `events` matches `actionLog` on new writes.
+   */
+  exportLog: GameExportLogView;
   players: readonly FinishedGamePlayerRecord[];
   eliminations: readonly FinishedGameEliminationRecord[];
   /** L17-04 — true when any seat was a bot. */
@@ -82,6 +89,8 @@ export interface BuildFinishedGameSnapshotInput {
     }[];
   };
   actionLog: readonly ActionLogEntryView[];
+  /** Lot 19 turn before/after rows — empty when unavailable (e.g. headless sim). */
+  turnHistory?: readonly ExportTurnRowView[];
   eliminations: readonly FinishedGameEliminationRecord[];
   /**
    * Bot seat difficulties keyed by player id (L17-04).

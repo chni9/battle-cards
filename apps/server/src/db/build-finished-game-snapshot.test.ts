@@ -125,6 +125,8 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
     expect(snapshot.durationMs).toBe(3_000);
     expect(snapshot.hasBots).toBe(false);
     expect(snapshot.actionLog).toHaveLength(9);
+    expect(snapshot.exportLog.events).toEqual([...snapshot.actionLog]);
+    expect(snapshot.exportLog.turns).toEqual([]);
     expect(snapshot.eliminations).toEqual([
       { playerId: 'bob', eliminatorPlayerId: 'alice', reason: 'combat' },
     ]);
@@ -203,6 +205,74 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
 
     expect(snapshot.players[0]?.cardsPlayedCount).toBe(1);
     expect(snapshot.players[0]?.cardsPlayedById).toEqual({});
+  });
+
+  it('embeds turnHistory in exportLog for Excel-parity Postgres storage', () => {
+    const alice = makePlayer({ id: 'alice', kitId: 'assassin' });
+    const bob = makePlayer({ id: 'bob', kitId: 'untouchable', isEliminated: true });
+    const turnRow = {
+      turnSequence: 1,
+      actorPlayerId: 'alice',
+      action: 'draw' as const,
+      before: [
+        {
+          playerId: 'alice',
+          nickname: 'A',
+          kitId: 'assassin' as const,
+          lives: 10,
+          points: 0,
+          upgradePoints: 0,
+          shield: 0,
+          shieldIsUpgraded: false,
+          isEliminated: false,
+          hand: [],
+          specialCards: [],
+          pendingAttacks: [],
+        },
+      ],
+      after: [
+        {
+          playerId: 'alice',
+          nickname: 'A',
+          kitId: 'assassin' as const,
+          lives: 10,
+          points: 1,
+          upgradePoints: 0,
+          shield: 0,
+          shieldIsUpgraded: false,
+          isEliminated: false,
+          hand: [],
+          specialCards: [],
+          pendingAttacks: [],
+        },
+      ],
+    };
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: 'ROOM02',
+      startedAtMs: 0,
+      endedAtMs: 10,
+      winnerPlayerId: 'alice',
+      gameState: {
+        mode: 'classic',
+        seed: 's',
+        turnSequence: 1,
+        players: [alice, bob],
+      },
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'alice',
+          action: 'draw',
+          turnSequence: 1,
+        },
+      ],
+      turnHistory: [turnRow],
+      eliminations: [],
+    });
+
+    expect(snapshot.exportLog.turns).toEqual([turnRow]);
+    expect(snapshot.exportLog.events).toHaveLength(1);
   });
 
   it('marks solo bot seats (L17-04)', () => {

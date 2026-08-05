@@ -28,12 +28,19 @@
 
 | Table | Role |
 |---|---|
-| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, full public `action_log` JSONB, `has_bots` (L17-04) |
+| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04) |
 | `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
 
-SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`.  
+SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
+`003_finished_game_export_log.sql`.  
 Types + builder + writer: `apps/server/src/db/`.
+
+`export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
+before/after private snapshots, `events` = public action log). On new writes,
+`export_log.events` mirrors `action_log`. Private hands/kits stay server-only —
+same trust boundary as the finished Excel download. Headless simulation still
+does not write Postgres.
 
 Turn count in the log is **`turn_sequence`** (= `GameState.turnSequence` at end), not a
 separate player-turn counter.

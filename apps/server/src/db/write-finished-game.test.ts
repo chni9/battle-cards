@@ -15,6 +15,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
     endedAt: new Date(2_000),
     durationMs: 1_000,
     actionLog: [],
+    exportLog: { turns: [], events: [] },
     hasBots: false,
     players: [
       {
@@ -72,6 +73,7 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
 
     expect(queries[0]).toBe('BEGIN');
     expect(queries.some((sql) => sql.includes('INSERT INTO finished_games'))).toBe(true);
+    expect(queries.some((sql) => sql.includes('export_log'))).toBe(true);
     expect(queries.some((sql) => sql.includes('INSERT INTO finished_game_players'))).toBe(true);
     expect(queries.some((sql) => sql.includes('INSERT INTO finished_game_eliminations'))).toBe(
       true,
@@ -150,8 +152,9 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
       ],
     });
 
-    const gameInsert = bound.find((params) => params.length === 10);
-    expect(gameInsert?.[9]).toBe(true);
+    const gameInsert = bound.find((params) => params.length === 11);
+    expect(gameInsert?.[9]).toBe(JSON.stringify(snapshot.exportLog));
+    expect(gameInsert?.[10]).toBe(true);
 
     const playerInserts = bound.filter((params) => params.length === 20);
     expect(playerInserts).toHaveLength(2);
