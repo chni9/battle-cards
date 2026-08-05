@@ -93,6 +93,12 @@ export interface Player {
    */
   blockTurnsRemaining: number;
   /**
+   * Attack Thief block charges (technical spec v4 §5.1, L23-03). 0 when inactive.
+   * Must not live in `PersistentEffect.counter` — `applyDamage` decrements that per
+   * life lost. Public presence only; exact count is private on `PrivateSelfView`.
+   */
+  attackBlockCharges: number;
+  /**
    * Frozen kit / cards / tokens at the moment of elimination (Lot 19). Present once
    * eliminated; used for the public `eliminationReveal` view. Not Spy relations.
    */

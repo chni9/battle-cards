@@ -34,6 +34,7 @@ function baseSelf(overrides: Partial<PrivateSelfView> = {}): PrivateSelfView {
     hand: [],
     specialCards: [],
     activePersistentEffects: [],
+    attackBlockCharges: 0,
     ...overrides,
   };
 }
@@ -55,6 +56,7 @@ function player(
     activePersistentEffects: [],
     activeShield: null,
     blockTurnsRemaining: 0,
+    activeAttackBlock: null,
     ...extras,
   };
 }

@@ -9,6 +9,7 @@
 import {
   attackDamageFor,
   isAttackCardId,
+  isSharedAttackCardId,
   type ActionResolutionOutcome,
   type CardId,
   type GameState,
@@ -29,6 +30,7 @@ import { applyLifeLoss } from '../life/apply-life-loss';
 import type { Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { findPlayer } from './advance-turn';
+import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = ActionResolutionOutcome;
@@ -265,6 +267,43 @@ function resolveCardThief(
 }
 
 /**
+ * Attack Thief steal — rules spec §5, L23-03 / #V4-31.
+ * Shared attack cards only (MEGA excluded). Empty victim → no-op.
+ */
+function resolveAttackThief(
+  state: GameState,
+  target: Player,
+  effect: PendingEffect,
+  rng: Rng,
+): ResolveOutcome {
+  const source = findPlayer(state, effect.sourcePlayerId);
+
+  if (source === undefined) {
+    return 'applied';
+  }
+
+  const isSharedAttack = (card: { cardId: string }): boolean =>
+    isSharedAttackCardId(card.cardId);
+
+  if (effect.isUpgraded) {
+    const sharedAttacks = [...target.hand, ...target.specialCards].filter(isSharedAttack);
+    for (const card of sharedAttacks) {
+      const taken = takeCardFrom(target, card.instanceId);
+      if (taken !== undefined) {
+        transferCardInstance(source, taken);
+      }
+    }
+  } else {
+    const stolen = stealRandomCard(target, rng, isSharedAttack);
+    if (stolen !== undefined) {
+      transferCardInstance(source, stolen);
+    }
+  }
+
+  return 'applied';
+}
+
+/**
  * Suicide on an opponent: 5 lives + all points (applyLifeLoss). Suicide on self: eliminate.
  * Opponent kills attribute the Suicide user as eliminator (Lot 5 ruling); self has none.
  */
@@ -324,6 +363,12 @@ export function resolvePendingEffects(
     let outcome: ResolveOutcome = 'applied';
 
     if (isAttackCardId(effect.cardId)) {
+      // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
+      if (consumeAttackBlockCharge(player, effect)) {
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
+        continue;
+      }
+
       if (resolveMutualAttack(state, player, effect)) {
         resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
@@ -363,6 +408,8 @@ export function resolvePendingEffects(
       outcome = resolveUpgradePointThief(state, player, effect);
     } else if (effect.cardId === 'card-thief') {
       outcome = resolveCardThief(state, player, effect, rng);
+    } else if (effect.cardId === 'attack-thief') {
+      outcome = resolveAttackThief(state, player, effect, rng);
     } else if (effect.cardId === 'sentence') {
       const livesBefore = player.lives;
       // Instant lethal elimination — rules spec §5 (Sentence), technical spec §4.2.

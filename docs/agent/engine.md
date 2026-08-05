@@ -132,11 +132,16 @@ Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
    (Assassin: several attack cards still count as ONE action)
    Timer expires → automatic draw
 3. Resolve P's pendingEffects, ascending queuedAt
-   Before each attack resolution: check mutual cancellation
+   Before each attack resolution: Attack Thief charge (#V4-5) then mutual cancellation
 4. Apply persistent effects targeting P
 5. Check elimination and victory
 6. Next turn
 ```
+
+Attack Thief (`Player.attackBlockCharges`, L23-03): if `attackBlockCharges > 0` when an
+attack is about to resolve on P, spend one charge and emit `outcome: 'blocked'` **before**
+mutual cancel — even when mutual would have cancelled that attack. Do not store the charge
+in `PersistentEffect.counter` (`applyDamage` eats counters).
 
 Invariant to hold at every step: **a player never suffers a loss of life or resources outside
 their own turn, and never before playing their action.** "Drawing" grants no card — it gains

@@ -83,6 +83,11 @@ export interface PublicPlayerView {
    * 0 when inactive.
    */
   blockTurnsRemaining: number;
+  /**
+   * Attack Thief block armed (`Player.attackBlockCharges > 0`). Exact count stays
+   * private on `PrivateSelfView` (technical spec v4 §5.1 / L23-03). `null` when none.
+   */
+  activeAttackBlock: true | null;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
   /**
@@ -147,6 +152,8 @@ export interface PrivateSelfView {
   specialCards: readonly CardInstance[];
   /** Own active persistents (also listed on PublicPlayerView for you). */
   activePersistentEffects: readonly PersistentEffectView[];
+  /** Exact Attack Thief charge count — private (tech v4 §5.1 / L23-03). */
+  attackBlockCharges: number;
 }
 
 /** Active persistent special on a seat — public (developer ruling 2026-08-02). */

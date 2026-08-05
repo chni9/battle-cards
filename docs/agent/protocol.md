@@ -42,6 +42,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Queue of pending effects | **Public** |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
+| Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
 | Bot seat flag + difficulty | **Public** as `isBot` / `botDifficulty` (PROTOCOL_VERSION 21) |
 | Elimination status | **Public** |
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |

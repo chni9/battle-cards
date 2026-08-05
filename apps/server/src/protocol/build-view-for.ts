@@ -190,6 +190,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       activeShield:
         player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
       blockTurnsRemaining: player.blockTurnsRemaining,
+      activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
     };
 
     if (difficulty !== undefined) {
@@ -217,6 +218,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     hand: selfPlayer.hand.map((card) => ({ ...card })),
     specialCards: selfPlayer.specialCards.map((card) => ({ ...card })),
     activePersistentEffects: mapPersistentEffects(selfPlayer.activePersistentEffects),
+    attackBlockCharges: selfPlayer.attackBlockCharges,
   };
 
   return {
@@ -318,6 +320,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         activeShield:
           player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
         blockTurnsRemaining: player.blockTurnsRemaining,
+        activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
       };
 
       if (difficulty !== undefined) {

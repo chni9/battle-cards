@@ -9,6 +9,7 @@
 import type { CardId } from '@card-battle/shared';
 
 import type { CardHandler } from './handler';
+import { attackThiefHandler } from './handlers/attack-thief';
 import { absorberHandler } from './handlers/absorber';
 import { basicAttackHandler } from './handlers/basic-attack';
 import { cardThiefHandler } from './handlers/card-thief';
@@ -60,6 +61,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'super-absorber',
   'mega-attack',
   'super-mirror',
+  'attack-thief',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -72,7 +74,6 @@ export const PENDING_CARD_IDS = [
   'invisibility',
   'reanimation',
   'card-absorber',
-  'attack-thief',
 ] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
@@ -100,6 +101,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'super-absorber': superAbsorberHandler,
   'mega-attack': megaAttackHandler,
   'super-mirror': superMirrorHandler,
+  'attack-thief': attackThiefHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

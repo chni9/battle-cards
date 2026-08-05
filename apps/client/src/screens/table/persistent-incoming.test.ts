@@ -32,6 +32,7 @@ function baseView(): PlayingStateView {
         activePersistentEffects: [],
         activeShield: null,
         blockTurnsRemaining: 0,
+        activeAttackBlock: null,
       },
       {
         id: 'b',
@@ -48,6 +49,7 @@ function baseView(): PlayingStateView {
         activePersistentEffects: [],
         activeShield: null,
         blockTurnsRemaining: 0,
+        activeAttackBlock: null,
       },
     ],
     self: {
@@ -60,6 +62,7 @@ function baseView(): PlayingStateView {
       hand: [],
       specialCards: [],
       activePersistentEffects: [],
+      attackBlockCharges: 0,
     },
     pendingEffects: [],
     actionLog: [],

@@ -35,6 +35,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
     },
     isEliminated: false,
     blockTurnsRemaining: 0,
+    attackBlockCharges: 0,
     eliminationSnapshot: null,
     ...overrides,
   };
