@@ -183,6 +183,12 @@ describe('BotDriver (L16-06)', () => {
       failBotReward: () => {
         throw new Error('unexpected failBotReward');
       },
+      completeBotReanimationKit: () => {
+        throw new Error('unexpected reanimation kit');
+      },
+      failBotReanimationKit: () => {
+        throw new Error('unexpected failBotReanimationKit');
+      },
     };
 
     const driver = new BotDriver(host, 0);
@@ -277,6 +283,8 @@ describe('BotDriver (L16-06)', () => {
       completeBotSteal: () => undefined,
       completeBotReward: () => undefined,
       failBotReward: () => undefined,
+      completeBotReanimationKit: () => undefined,
+      failBotReanimationKit: () => undefined,
     };
 
     const driver = new BotDriver(host, 0);
@@ -314,6 +322,8 @@ describe('BotDriver (L16-06)', () => {
       completeBotSteal: () => undefined,
       completeBotReward: () => undefined,
       failBotReward: () => undefined,
+      completeBotReanimationKit: () => undefined,
+      failBotReanimationKit: () => undefined,
     };
 
     const driver = new BotDriver(host, 0);

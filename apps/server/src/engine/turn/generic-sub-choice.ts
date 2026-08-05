@@ -6,13 +6,16 @@
  */
 
 import {
+  KIT_IDS,
   SPECIAL_CARD_IDS,
   type GameState,
+  type KitId,
   type SpecialCardId,
 } from '@card-battle/shared';
 
 import { acquireSpecialCard, transferCardInstance } from '../kits/acquire-card';
 import { takeFromPool } from '../pool/take-from-pool';
+import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import type { Rng } from '../rng';
 import { findPlayer } from './advance-turn';
 import { SUB_CHOICE_MS } from './sub-choice';
@@ -203,4 +206,62 @@ export function applyDefaultSpecialPick(
 
   const cardId = rng.pick(choice.eligibleCardIds);
   return applySpecialPick(state, cardId);
+}
+
+export const REANIMATION_KIT_SUB_CHOICE_MS = SUB_CHOICE_MS;
+
+export function beginReanimationKitPick(
+  state: GameState,
+  input: {
+    playerId: string;
+    nowMs: number;
+  },
+): void {
+  state.subChoice = {
+    kind: 'reanimation-kit',
+    playerId: input.playerId,
+    eligibleKitIds: [...KIT_IDS],
+    deadlineMs: input.nowMs + REANIMATION_KIT_SUB_CHOICE_MS,
+  };
+}
+
+export function applyReanimationKitPick(
+  state: GameState,
+  kitId: KitId,
+  rng: Rng,
+): { ok: true } | { ok: false; message: string } {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'reanimation-kit') {
+    return { ok: false, message: 'No reanimation kit pick pending.' };
+  }
+
+  if (!choice.eligibleKitIds.includes(kitId)) {
+    return { ok: false, message: 'That kit is not available.' };
+  }
+
+  const player = findPlayer(state, choice.playerId);
+
+  if (player?.pendingReanimation == null) {
+    state.subChoice = null;
+    return { ok: false, message: 'No pending reanimation.' };
+  }
+
+  state.subChoice = null;
+  reanimatePlayer(player, kitId, rng);
+  return { ok: true };
+}
+
+export function applyDefaultReanimationKitPick(
+  state: GameState,
+  rng: Rng,
+): { ok: true } | { ok: false; message: string } {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'reanimation-kit') {
+    return { ok: false, message: 'No reanimation kit pick pending.' };
+  }
+
+  const kitId = pickReanimationKit(rng);
+  return applyReanimationKitPick(state, kitId, rng);
 }

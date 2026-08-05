@@ -42,10 +42,13 @@ import {
   type ChooseEliminationRewardPayload,
   type ChooseMirrorTargetPayload,
   type ChoosePoolPickPayload,
+  type ChooseReanimationKitPayload,
   type ChooseSpecialPickPayload,
   type ChooseStealPickPayload,
   type DeactivatePersistentPayload,
+  isKitId,
   isSpecialCardId,
+  type KitId,
   type EliminationReason,
   type GameState,
   type LobbySeatView,
@@ -96,6 +99,7 @@ import {
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
 import {
   POOL_SUB_CHOICE_MS,
+  REANIMATION_KIT_SUB_CHOICE_MS,
   SPECIAL_SUB_CHOICE_MS,
   pickRandomPoolInstanceIds,
 } from '../engine/turn/generic-sub-choice';
@@ -105,11 +109,13 @@ import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
   completePoolPick,
+  completeReanimationKitPick,
   completeSpecialPick,
   completeStealChoice,
   expireEliminationRewardChoice,
   expireMirrorChoice,
   expirePoolPick,
+  expireReanimationKitPick,
   expireSpecialPick,
   expireStealChoice,
   performTurnAction,
@@ -219,6 +225,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     },
     failBotReward: (botId) => {
       this.failBotRewardChoice(botId);
+    },
+    completeBotReanimationKit: (botId, kitId, reason) => {
+      this.applyBotReanimationKitChoice(botId, kitId, reason);
+    },
+    failBotReanimationKit: (botId) => {
+      this.failBotReanimationKitChoice(botId);
     },
   });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
@@ -602,6 +614,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (state.subChoice?.kind === 'reanimation-kit') {
+      const kitChoice = state.subChoice;
+      const chooser = this.clients.find((entry) => entry.sessionId === kitChoice.playerId);
+      this.beginReanimationKitTimer(kitChoice, chooser);
+      this.sendStateToEveryone();
+      return;
+    }
+
     this.refreshAutoDispose();
 
     if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
@@ -799,10 +819,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
+      const chooser = this.clients.find((entry) => entry.sessionId === choice.playerId);
+
       if (choice.kind === 'pool-pick') {
-        this.beginPoolTimer(client, choice);
+        if (chooser !== undefined) {
+          this.beginPoolTimer(chooser, choice);
+        }
+      } else if (choice.kind === 'special-pick') {
+        if (chooser !== undefined) {
+          this.beginSpecialTimer(chooser, choice);
+        }
       } else {
-        this.beginSpecialTimer(client, choice);
+        this.beginReanimationKitTimer(choice, chooser);
       }
 
       this.sendStateToEveryone();
@@ -855,6 +883,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (parsed.kind === 'special-pick') {
       this.handleSpecialPick(client, parsed);
+      return;
+    }
+
+    if (parsed.kind === 'reanimation-kit') {
+      this.handleReanimationKitPick(client, parsed);
       return;
     }
 
@@ -1007,6 +1040,28 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.beginTurnOrAbsentAutoPlay();
     this.sendStateToEveryone();
     this.broadcastTurnStarted();
+  }
+
+  private handleReanimationKitPick(
+    client: GameClient,
+    parsed: ChooseReanimationKitPayload,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    const result = completeReanimationKitPick(state, client.sessionId, parsed.kitId);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearSubChoiceTimer('reanimation-kit');
+    this.continueAfterRewards(result);
   }
 
   private handleRewardChoice(client: GameClient, parsed: ChooseEliminationRewardPayload): void {
@@ -1452,6 +1507,67 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.broadcastTurnStarted();
   }
 
+  private beginReanimationKitTimer(
+    choice: Extract<NonNullable<GameState['subChoice']>, { kind: 'reanimation-kit' }>,
+    client?: GameClient,
+  ): void {
+    this.clearSubChoiceTimer('reanimation-kit');
+
+    const seat = this.seats.find((entry) => entry.sessionId === choice.playerId);
+    const hasClient =
+      client !== undefined || this.clients.some((c) => c.sessionId === choice.playerId);
+    const route = classifyRewardRoute(seat, hasClient);
+
+    if (route === 'bot') {
+      this.botDriver.handleReanimationKitChoice(choice.playerId);
+      return;
+    }
+
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms = remainingFromDeadline === 0 ? REANIMATION_KIT_SUB_CHOICE_MS : remainingFromDeadline;
+    const effectiveDeadline = Date.now() + ms;
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind === 'reanimation-kit') {
+      state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
+    }
+
+    const target = client ?? this.clients.find((entry) => entry.sessionId === choice.playerId);
+
+    if (target !== undefined) {
+      target.send(SUB_CHOICE_REQUIRED, {
+        kind: 'reanimation-kit',
+        eligibleKitIds: choice.eligibleKitIds,
+        deadlineMs: effectiveDeadline,
+      });
+    }
+
+    this.subChoiceTimers.set(
+      'reanimation-kit',
+      setTimeout(() => {
+        this.onReanimationKitTimeout();
+      }, ms > 0 ? ms : REANIMATION_KIT_SUB_CHOICE_MS),
+    );
+  }
+
+  private onReanimationKitTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind !== 'reanimation-kit' || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireReanimationKitPick(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      return;
+    }
+
+    this.clearSubChoiceTimer('reanimation-kit');
+    this.continueAfterRewards(result);
+  }
+
   private beginRewardTimer(state: GameState, durationMs?: number): void {
     this.clearSubChoiceTimer('elimination-reward');
 
@@ -1546,6 +1662,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   private continueAfterRewards(result: {
     rewardChoicePending: boolean;
+    subChoicePending?: boolean;
     winnerPlayerId: string | null;
   }): void {
     if (result.winnerPlayerId !== null) {
@@ -1563,6 +1680,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.beginRewardTimer(state);
       this.sendStateToEveryone();
       return;
+    }
+
+    if (result.subChoicePending === true) {
+      const state = this.gameState;
+      const choice = state?.subChoice;
+
+      if (state !== null && choice?.kind === 'reanimation-kit') {
+        const chooser = this.clients.find((entry) => entry.sessionId === choice.playerId);
+        this.beginReanimationKitTimer(choice, chooser);
+        this.sendStateToEveryone();
+        return;
+      }
     }
 
     this.actionTakenThisTurn = false;
@@ -1798,6 +1927,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { cardId };
+      },
+      resolveReanimationKit: (s: GameState, playerId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'reanimation-kit' || choice.playerId !== playerId) {
+          throw new Error('reanimation kit pending without subChoice');
+        }
+
+        const rng = createRng(`${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`);
+        const kitId = rng.pick(choice.eligibleKitIds);
+
+        this.setPendingBotReason({ code: 'policy-fallback' });
+        return { kitId };
       },
       resolveReward: (s: GameState) => {
         const choice = s.rewardChoice;
@@ -2168,6 +2310,59 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.continueAfterRewards(result);
   }
 
+  private applyBotReanimationKitChoice(
+    botId: string,
+    kitId: KitId,
+    reason?: BotDecisionReason,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.setPendingBotReason(reason);
+    const result = completeReanimationKitPick(state, botId, kitId);
+
+    if (!result.ok) {
+      this.pendingBotReason = null;
+      this.failBotReanimationKitChoice(botId);
+      return;
+    }
+
+    this.clearSubChoiceTimer('reanimation-kit');
+    this.continueAfterRewards(result);
+  }
+
+  private failBotReanimationKitChoice(botId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const choice = state.subChoice;
+
+    if (choice?.kind !== 'reanimation-kit' || choice.playerId !== botId) {
+      return;
+    }
+
+    console.error(`[${this.roomId}] bot reanimation kit failed for ${botId} — expiring default`);
+    const result = expireReanimationKitPick(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+      return;
+    }
+
+    this.clearSubChoiceTimer('reanimation-kit');
+    this.continueAfterRewards(result);
+  }
+
   private runAbsentAutoDraw(playerId: string): void {
     const state = this.gameState;
 
@@ -2468,6 +2663,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
 
     if (this.finishIfSoleSurvivor(state)) {
+      return;
+    }
+
+    if (state.subChoice?.kind === 'reanimation-kit') {
+      const chooser = this.clients.find((entry) => entry.sessionId === state.subChoice?.playerId);
+      this.beginReanimationKitTimer(state.subChoice, chooser);
+      this.sendStateToEveryone();
       return;
     }
 
@@ -3011,6 +3213,18 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
     return { kind: 'special-pick', cardId: payload.cardId };
   }
 
+  if (kind === 'reanimation-kit') {
+    if (!('kitId' in payload) || typeof payload.kitId !== 'string') {
+      return null;
+    }
+
+    if (!isKitId(payload.kitId)) {
+      return null;
+    }
+
+    return { kind: 'reanimation-kit', kitId: payload.kitId };
+  }
+
   return null;
 }
 
@@ -3029,6 +3243,10 @@ function subChoiceGateMessage(state: GameState): string {
 
   if (state.subChoice?.kind === 'special-pick') {
     return 'Finish your special pick first.';
+  }
+
+  if (state.subChoice?.kind === 'reanimation-kit') {
+    return 'Finish your reanimation kit pick first.';
   }
 
   return 'Finish elimination rewards first.';

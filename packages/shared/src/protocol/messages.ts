@@ -6,6 +6,7 @@
  */
 
 import type { CardId, SpecialCardId } from '../domain/card';
+import type { KitId } from '../domain/kit';
 import type { ActionResolutionOutcome } from './action-outcome';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type {
@@ -202,13 +203,25 @@ export interface ChooseSpecialPickPayload {
   cardId: SpecialCardId;
 }
 
+/** Carried inside `subChoiceRequired` — `kind: 'reanimation-kit'` (L26-02). */
+export interface ReanimationKitChoiceRequiredPayload {
+  kind: 'reanimation-kit';
+  eligibleKitIds: readonly KitId[];
+  deadlineMs: number;
+}
+
+export interface ChooseReanimationKitPayload {
+  kitId: KitId;
+}
+
 /** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type SubChoiceRequiredPayload =
   | MirrorChoiceRequiredPayload
   | RewardChoiceRequiredPayload
   | StealPickChoiceRequiredPayload
   | PoolPickChoiceRequiredPayload
-  | SpecialPickChoiceRequiredPayload;
+  | SpecialPickChoiceRequiredPayload
+  | ReanimationKitChoiceRequiredPayload;
 
 /** `resolveSubChoice`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type ResolveSubChoicePayload =
@@ -216,7 +229,8 @@ export type ResolveSubChoicePayload =
   | ({ kind: 'elimination-reward' } & ChooseEliminationRewardPayload)
   | ({ kind: 'steal-pick' } & ChooseStealPickPayload)
   | ({ kind: 'pool-pick' } & ChoosePoolPickPayload)
-  | ({ kind: 'special-pick' } & ChooseSpecialPickPayload);
+  | ({ kind: 'special-pick' } & ChooseSpecialPickPayload)
+  | ({ kind: 'reanimation-kit' } & ChooseReanimationKitPayload);
 
 export interface AddBotPayload {
   difficulty: BotDifficulty;

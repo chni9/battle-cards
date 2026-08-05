@@ -18,6 +18,7 @@ import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import { createRng, type Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { advanceTurn, findPlayer } from './advance-turn';
+import { beginReanimationKitPick } from './generic-sub-choice';
 import { SUB_CHOICE_MS } from './sub-choice';
 
 /** Re-exports the single `SUB_CHOICE_MS` — technical spec v4 §4.4 (L20-18). */
@@ -191,7 +192,11 @@ export function eliminateWithoutReward(
   player.lives = 0;
   cleanupEliminatedPlayer(state, player);
   dumpCardsToPool(state, player);
-  completePendingReanimationIfReady(player, rng);
+  processPendingReanimations(
+    state,
+    rng,
+    Date.now(),
+  );
   return true;
 }
 
@@ -260,7 +265,8 @@ export function processEliminations(
 
     if (eliminatorPlayerId === null) {
       dumpCardsToPool(state, player);
-      completePendingReanimationIfReady(player, rng);
+      // Defer upgraded kit pick until after the loop so multiple dumps finish first;
+      // processPendingReanimations at the end of processEliminations when no rewards.
       continue;
     }
 
@@ -275,6 +281,8 @@ export function processEliminations(
 
   if (state.rewardChoice === null && state.rewardQueue.length > 0) {
     activateRewardHead(state, nowMs);
+  } else if (state.rewardQueue.length === 0) {
+    processPendingReanimations(state, rng, nowMs);
   }
 
   return events;
@@ -387,24 +395,37 @@ function consumeArmedReanimation(state: GameState, player: Player): void {
 
 /**
  * After cards are dumped (no-reward / lifecycle / post-reward), revive if pending.
- * L26-01: always random kit. L26-02 will branch upgraded into a sub-choice first.
+ * Base: seeded random kit. Upgraded: caller raises `reanimation-kit` via
+ * `processPendingReanimations` (#V4-13 / L26-02).
  */
 function completePendingReanimationIfReady(player: Player, rng: Rng): void {
-  if (player.pendingReanimation === null) {
+  if (player.pendingReanimation === null || player.pendingReanimation.isUpgraded) {
     return;
   }
 
-  // Upgraded kit pick lands in L26-02; until then both tiers use seeded random.
   const kitId = pickReanimationKit(rng);
   reanimatePlayer(player, kitId, rng);
 }
 
-/** Revive every seat still holding `pendingReanimation` once the reward queue is empty. */
-function processPendingReanimations(state: GameState, rng: Rng): void {
+/**
+ * After the reward queue drains: revive base pending immediately; raise at most one
+ * upgraded kit pick on `GameState.subChoice` (serial with rewards, never parallel).
+ */
+function processPendingReanimations(state: GameState, rng: Rng, nowMs: number): void {
   for (const player of state.players) {
-    if (player.pendingReanimation !== null) {
+    if (player.pendingReanimation !== null && !player.pendingReanimation.isUpgraded) {
       completePendingReanimationIfReady(player, rng);
     }
+  }
+
+  if (state.subChoice !== null) {
+    return;
+  }
+
+  const next = state.players.find((player) => player.pendingReanimation?.isUpgraded === true);
+
+  if (next !== undefined) {
+    beginReanimationKitPick(state, { playerId: next.id, nowMs });
   }
 }
 
@@ -412,6 +433,8 @@ export type ApplyRewardResult =
   | {
       ok: true;
       rewardChoicePending: boolean;
+      /** True when upgraded Reanimation kit pick is waiting (L26-02). */
+      subChoicePending?: boolean;
       winnerPlayerId: string | null;
       /** Opaque public history — picks never included (L9-02). */
       rewardsClaimed: {
@@ -477,7 +500,7 @@ export function applyEliminationRewardChoices(
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
   finishRewardJob(state, nowMs);
-  return { ...resumeAfterRewards(state, rng), rewardsClaimed };
+  return { ...resumeAfterRewards(state, rng, nowMs), rewardsClaimed };
 }
 
 /**
@@ -507,16 +530,27 @@ export function applyDefaultEliminationRewards(
 export function resumeAfterRewards(
   state: GameState,
   rng: Rng = createRng(`${state.seed}:resume-rewards:${state.turnSequence}`),
+  nowMs: number = Date.now(),
 ): {
   ok: true;
   rewardChoicePending: boolean;
+  subChoicePending?: boolean;
   winnerPlayerId: string | null;
 } {
   if (state.rewardChoice !== null || state.rewardQueue.length > 0) {
     return { ok: true, rewardChoicePending: true, winnerPlayerId: null };
   }
 
-  processPendingReanimations(state, rng);
+  processPendingReanimations(state, rng, nowMs);
+
+  if (state.subChoice?.kind === 'reanimation-kit') {
+    return {
+      ok: true,
+      rewardChoicePending: false,
+      subChoicePending: true,
+      winnerPlayerId: null,
+    };
+  }
 
   const winnerPlayerId = findSoleSurvivorId(state);
 

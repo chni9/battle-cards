@@ -249,6 +249,19 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           ).pick(choice.eligibleCardIds),
         };
       },
+      resolveReanimationKit: (s: typeof state, playerId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'reanimation-kit' || choice.playerId !== playerId) {
+          throw new Error('reanimation kit pending without subChoice');
+        }
+
+        return {
+          kitId: createRng(
+            `${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`,
+          ).pick(choice.eligibleKitIds),
+        };
+      },
       resolveReward: (s: typeof state) => {
         const choice = s.rewardChoice;
 

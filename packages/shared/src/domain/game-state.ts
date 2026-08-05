@@ -133,10 +133,10 @@ export type MirrorChoiceState = Omit<Extract<SubChoiceState, { kind: 'mirror' }>
 export type StealChoiceState = Omit<Extract<SubChoiceState, { kind: 'steal-pick' }>, 'kind'>;
 
 /**
- * Lot 24 generic Mirror-shaped picks — stored on `GameState.subChoice` with `kind`
- * retained so pool-pick and special-pick share one field (Approach B).
+ * Lot 24/26 generic Mirror-shaped picks — stored on `GameState.subChoice` with `kind`
+ * retained so pool-pick, special-pick and reanimation-kit share one field (Approach B).
  */
 export type GenericSubChoiceState = Extract<
   SubChoiceState,
-  { kind: 'pool-pick' } | { kind: 'special-pick' }
+  { kind: 'pool-pick' } | { kind: 'special-pick' } | { kind: 'reanimation-kit' }
 >;

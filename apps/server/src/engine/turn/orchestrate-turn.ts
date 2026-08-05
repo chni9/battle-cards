@@ -5,7 +5,7 @@
  * Policy / transport stay outside: callers supply sub-choice hooks.
  */
 
-import type { GameState, RewardChoice, SpecialCardId } from '@card-battle/shared';
+import type { GameState, KitId, RewardChoice, SpecialCardId } from '@card-battle/shared';
 
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
@@ -13,6 +13,7 @@ import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
   completePoolPick,
+  completeReanimationKitPick,
   completeSpecialPick,
   completeStealChoice,
   performTurnAction,
@@ -39,6 +40,10 @@ export interface SpecialResolvePick {
   cardId: SpecialCardId;
 }
 
+export interface ReanimationKitResolvePick {
+  kitId: KitId;
+}
+
 export interface RewardResolvePick {
   chooserPlayerId: string;
   eliminationId: string;
@@ -61,6 +66,13 @@ export interface TurnSubChoiceHooks {
    * Return a special card id, or `null` to leave `subChoice` pending.
    */
   resolveSpecialPick?(state: GameState, actorPlayerId: string): SpecialResolvePick | null;
+  /**
+   * Return a kit id for upgraded Reanimation, or `null` to leave pending (L26-02).
+   */
+  resolveReanimationKit?(
+    state: GameState,
+    playerId: string,
+  ): ReanimationKitResolvePick | null;
   /**
    * Return picks to complete the active reward job, or `null` to leave
    * `rewardChoice` pending for an external handler (human UI / room timer).
@@ -221,6 +233,45 @@ export function continuePendingSubChoices(
 
         options.onTurnResult?.(specialResult);
         result = specialResult;
+        continue;
+      }
+
+      if (kind === 'reanimation-kit') {
+        const active = state.subChoice;
+
+        if (active?.kind !== 'reanimation-kit') {
+          return result;
+        }
+
+        const chooserId = active.playerId;
+        const pick = hooks.resolveReanimationKit?.(state, chooserId) ?? null;
+
+        if (pick === null) {
+          return result;
+        }
+
+        const kitResult = completeReanimationKitPick(
+          state,
+          chooserId,
+          pick.kitId,
+          rng,
+          nowMs,
+        );
+
+        if (!kitResult.ok) {
+          return { ok: false, message: kitResult.message };
+        }
+
+        result = {
+          ok: true,
+          actionPlayed: result.actionPlayed,
+          resolved: [],
+          winnerPlayerId: kitResult.winnerPlayerId,
+          eliminatedPlayerIds: [],
+          eliminations: [],
+          rewardChoicePending: kitResult.rewardChoicePending,
+          ...(kitResult.subChoicePending === true ? { subChoicePending: true } : {}),
+        };
         continue;
       }
 

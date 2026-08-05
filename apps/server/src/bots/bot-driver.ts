@@ -10,6 +10,7 @@ import type {
   BotDecisionReason,
   BotDifficulty,
   GameState,
+  KitId,
   PlayingStateView,
   RewardChoice,
 } from '@card-battle/shared';
@@ -51,6 +52,12 @@ export interface BotDriverHost {
   ): void;
   /** Expire reward sub-choice when the bot policy throws or picks illegally. */
   failBotReward(botId: string): void;
+  completeBotReanimationKit(
+    botId: string,
+    kitId: KitId,
+    reason?: BotDecisionReason,
+  ): void;
+  failBotReanimationKit(botId: string): void;
 }
 
 export class BotDriver {
@@ -165,6 +172,34 @@ export class BotDriver {
     } catch {
       // Do not draw during a pending reward — that leaves rewardChoice set and freezes the room.
       this.host.failBotReward(botId);
+    }
+  }
+
+  /** Inline upgraded Reanimation kit pick — no `subChoiceRequired` timer (L26-02). */
+  handleReanimationKitChoice(botId: string): void {
+    const state = this.host.getGameState();
+    const choice = state?.subChoice;
+
+    if (
+      state === null ||
+      choice?.kind !== 'reanimation-kit' ||
+      this.host.isGameOver()
+    ) {
+      return;
+    }
+
+    if (choice.playerId !== botId || choice.eligibleKitIds.length === 0) {
+      this.host.failBotReanimationKit(botId);
+      return;
+    }
+
+    const rng = createRng(`${state.seed}:bot:${botId}:reanim-kit:${state.turnSequence}`);
+    const kitId = rng.pick(choice.eligibleKitIds);
+
+    try {
+      this.host.completeBotReanimationKit(botId, kitId, { code: 'policy-fallback' });
+    } catch {
+      this.host.failBotReanimationKit(botId);
     }
   }
 

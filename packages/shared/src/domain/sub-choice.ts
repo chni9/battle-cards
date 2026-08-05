@@ -1,16 +1,10 @@
 /**
- * Generic sub-choice model — technical spec v4 §4.4, backlog L20-18 / L21-03 / L24.
- *
- * A sub-choice pauses ordinary turn actions until it resolves (picked, or defaulted
- * on timeout). Mirror, elimination rewards, steal-pick, pool-pick and special-pick
- * are fully typed. `reanimation-kit` stays `payload: never` until Lot 26.
- *
- * `GameState` stores Mirror / reward / steal under dedicated fields; Lot 24's
- * `pool-pick` / `special-pick` share `GameState.subChoice` — see
- * `docs/agent/decisions.md` 2026-08-05 (Lot 24).
+ * Discriminated on `kind`. Generic `GameState.subChoice` kinds: pool-pick,
+ * special-pick (Lot 24), and reanimation-kit (Lot 26).
  */
 
 import type { SpecialCardId } from './card';
+import type { KitId } from './kit';
 
 export type SubChoiceKind =
   | 'mirror'
@@ -60,8 +54,14 @@ export interface SpecialPickSubChoicePayload {
   eligibleCardIds: readonly SpecialCardId[];
 }
 
+/** Upgraded Reanimation — choose the kit after rewards (#V4-13 / L26-02). */
+export interface ReanimationKitSubChoicePayload {
+  playerId: string;
+  eligibleKitIds: readonly KitId[];
+}
+
 /**
- * Discriminated on `kind`. `'reanimation-kit'` stays unconstructible until Lot 26.
+ * Discriminated on `kind`.
  */
 export type SubChoiceState =
   | ({ kind: 'mirror'; deadlineMs: number } & MirrorSubChoicePayload)
@@ -69,4 +69,4 @@ export type SubChoiceState =
   | ({ kind: 'steal-pick'; deadlineMs: number } & StealPickSubChoicePayload)
   | ({ kind: 'pool-pick'; deadlineMs: number } & PoolPickSubChoicePayload)
   | ({ kind: 'special-pick'; deadlineMs: number } & SpecialPickSubChoicePayload)
-  | { kind: 'reanimation-kit'; deadlineMs: number; payload: never };
+  | ({ kind: 'reanimation-kit'; deadlineMs: number } & ReanimationKitSubChoicePayload);

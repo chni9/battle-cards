@@ -12,6 +12,7 @@ import {
   type CardId,
   type CardInstance,
   type GameState,
+  type KitId,
   type RewardChoice,
   type SpecialCardId,
 } from '@card-battle/shared';
@@ -37,8 +38,10 @@ import {
 import { applyDefaultStealPick, applyStealPick } from './steal-choice';
 import {
   applyDefaultPoolPick,
+  applyDefaultReanimationKitPick,
   applyDefaultSpecialPick,
   applyPoolPick,
+  applyReanimationKitPick,
   applySpecialPick,
 } from './generic-sub-choice';
 import {
@@ -47,6 +50,7 @@ import {
   findSoleSurvivorId,
   hasPendingEliminationRewards,
   processEliminations,
+  resumeAfterRewards,
   type EliminationEvent,
 } from './elimination-rewards';
 import { canAffordPlayPoints, playPointsCost } from './play-cost';
@@ -764,6 +768,7 @@ export type EliminationRewardTurnResult =
   | {
       ok: true;
       rewardChoicePending: boolean;
+      subChoicePending?: boolean;
       winnerPlayerId: string | null;
       rewardsClaimed: {
         eliminatorPlayerId: string;
@@ -795,6 +800,63 @@ export function expireEliminationRewardChoice(
   return applyDefaultEliminationRewards(state, nowMs);
 }
 
+export type ReanimationKitTurnResult =
+  | {
+      ok: true;
+      rewardChoicePending: boolean;
+      subChoicePending?: boolean;
+      winnerPlayerId: string | null;
+    }
+  | { ok: false; message: string };
+
+/**
+ * Complete upgraded Reanimation kit pick (#V4-13 / L26-02), then resume.
+ */
+export function completeReanimationKitPick(
+  state: GameState,
+  chooserPlayerId: string,
+  kitId: KitId,
+  rng: Rng = createRng(`${state.seed}:reanim-kit:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): ReanimationKitTurnResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'reanimation-kit' || choice.playerId !== chooserPlayerId) {
+    return { ok: false, message: 'No reanimation kit pick pending.' };
+  }
+
+  const applied = applyReanimationKitPick(state, kitId, rng);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return resumeAfterRewards(state, rng, nowMs);
+}
+
+/**
+ * Default upgraded Reanimation kit on expiry — seeded random (#V4-13).
+ */
+export function expireReanimationKitPick(
+  state: GameState,
+  rng: Rng = createRng(`${state.seed}:reanim-kit-default:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): ReanimationKitTurnResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'reanimation-kit') {
+    return { ok: false, message: 'No reanimation kit pick pending.' };
+  }
+
+  const applied = applyDefaultReanimationKitPick(state, rng);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  return resumeAfterRewards(state, rng, nowMs);
+}
+
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
@@ -818,6 +880,18 @@ function finishTurnPhases(
       eliminatedPlayerIds,
       eliminations,
       rewardChoicePending: true,
+    };
+  }
+
+  if (state.subChoice?.kind === 'reanimation-kit') {
+    return {
+      ok: true,
+      actionPlayed,
+      resolved,
+      winnerPlayerId: null,
+      eliminatedPlayerIds,
+      eliminations,
+      subChoicePending: true,
     };
   }
 

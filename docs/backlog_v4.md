@@ -179,7 +179,7 @@ reversible.
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L26-01 | `reanimation` base: armed on play; on a later elimination the user returns with a random kit and full step 2+3+4 (#V4-36). **Ruled #V4-11 = elim happens + eliminator paid + victim stripped** — consume the armed charge before `cleanupEliminatedPlayer` pools persistents, run normal elim (snapshot/rewards/dump), then revive **after** rewards. Extract a reusable player-reset from `create-initial-state.ts`'s private `makePlayer`. Consolidate the three duplicated sole-survivor checks so game-over cannot fire while `pendingReanimation` is set. Do not call `rejectReconnection` for a pending/reanimated player. **Acceptance:** §10.3's suite passes — re-entry into turn order, no premature game-over, a **fresh** `eliminationSnapshot` on the second death, reconnection preserved. **Watch point:** `isEliminated` has never been reset. Read the produced code line by line. | **L** | **High** | L20-18, L20-04 | Done |
-| L26-02 | Upgraded `reanimation`: the user chooses their kit (#V4-13). Raised **after rewards** as a blocking `reanimation-kit` sub-choice (serial with rewards, never parallel). **Acceptance:** turn advance and game-over stay paused while the choice is open; expiry falls back to a seeded random kit; a bot resolves it. | **L** | **High** | L26-01 | To do |
+| L26-02 | Upgraded `reanimation`: the user chooses their kit (#V4-13). Raised **after rewards** as a blocking `reanimation-kit` sub-choice (serial with rewards, never parallel). **Acceptance:** turn advance and game-over stay paused while the choice is open; expiry falls back to a seeded random kit; a bot resolves it. | **L** | **High** | L26-01 | Done |
 
 ---
 
