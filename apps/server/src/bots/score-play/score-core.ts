@@ -1,11 +1,13 @@
 /**
- * Core `playCard` scoring — every V1 card, plus MEGA ATTACK (see `families.ts`) and the
- * four specials that already had a branch before L29-01 (Sentence, Imposition,
- * Points Generator, Spy Thief, and Cloning outside an incoming threat).
+ * Core `playCard` scoring — every V1 card, plus Cloning outside an incoming threat
+ * (already branched since L20-17; retuned by L29-06 alongside the persistents move).
  *
- * Verbatim body of the pre-split `scorePlayCard` (technical spec v3 §4.4, §4.6 / L16-04) —
- * moved here unchanged by L29-01. Re-checks `findOwnCard` and the point-reserve gate
- * itself so the dispatcher in `./index.ts` can stay a plain family switch.
+ * MEGA ATTACK and Sentence/Imposition/Spy Thief/Points Generator moved out to
+ * `score-attacks-redirect.ts` (L29-07) and `score-persistents.ts` (L29-06) — see
+ * `families.ts`. Otherwise the verbatim body of the pre-split `scorePlayCard`
+ * (technical spec v3 §4.4, §4.6 / L16-04), moved here unchanged by L29-01. Re-checks
+ * `findOwnCard` and the point-reserve gate itself so the dispatcher in `./index.ts`
+ * can stay a plain family switch.
  */
 
 import {
@@ -23,11 +25,8 @@ import {
   BURN_COUNTER_BONUS,
   FINISH_CHIP_BONUS,
   HEURISTIC_BAND_WEIGHTS,
-  IMPOSITION_INVEST_BONUS,
   MUTUAL_CANCEL_BONUS,
-  POINTS_GENERATOR_INVEST_BONUS,
   PRESSURE_COST_DIVISOR,
-  SPY_THIEF_DENY_BONUS,
   SPY_TOP_THREAT_BONUS,
   SPY_UNSPIED_BONUS,
   STRIKE_MIN_DAMAGE,
@@ -41,7 +40,6 @@ import {
   findOwnCard,
   hasAnyIncomingFrom,
   hasCancelingIncomingFrom,
-  hasOwnPersistent,
   hasPendingCardFrom,
   isImmuneTarget,
   isSpyThiefImmuneSeat,
@@ -98,67 +96,6 @@ export function scoreCorePlayCard(
     }
 
     return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10, code: 'lethal-now' };
-  }
-
-  // Sentence — base draw includes self (no eliminator reward on self-elim). Refuse base.
-  // Upgraded: random living opponent only → lethal-now (guaranteed one elim).
-  if (cardId === 'sentence') {
-    if (!isUpgraded) {
-      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
-    }
-
-    const opponents = view.players.filter(
-      (player) => player.id !== view.you && !player.isEliminated,
-    ).length;
-
-    if (opponents < 1) {
-      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
-    }
-
-    return {
-      score: HEURISTIC_BAND_WEIGHTS.lethalNow + opponents * 5,
-      code: 'lethal-now',
-    };
-  }
-
-  // Imposition / Points Generator — activate once; Invest economy (not draw-tied).
-  if (cardId === 'imposition') {
-    if (hasOwnPersistent(view, 'imposition')) {
-      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
-    }
-
-    return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + IMPOSITION_INVEST_BONUS,
-      code: 'invest',
-    };
-  }
-
-  if (cardId === 'points-generator') {
-    if (hasOwnPersistent(view, 'points-generator')) {
-      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
-    }
-
-    return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + POINTS_GENERATOR_INVEST_BONUS,
-      code: 'invest',
-    };
-  }
-
-  // Spy Thief — steal all points + Spy all (Untouchable is not immune). Deny band.
-  if (cardId === 'spy-thief') {
-    const living = view.players.filter(
-      (player) => player.id !== view.you && !player.isEliminated,
-    );
-    const unspied = living.filter((player) => player.spied === undefined).length;
-
-    return {
-      score:
-        HEURISTIC_BAND_WEIGHTS.deny +
-        SPY_THIEF_DENY_BONUS +
-        living.length * 10 +
-        unspied * 20,
-      code: 'deny',
-    };
   }
 
   if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
@@ -310,14 +247,16 @@ export function scoreCorePlayCard(
 
     if (spied?.lives !== undefined && spied.lives > view.self.lives + 2) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.invest + 40 + (isUpgraded ? 15 : 0),
+        // Retuned 40 → 50 (2026-08-05, L29-06, decisions.md).
+        score: HEURISTIC_BAND_WEIGHTS.invest + 50 + (isUpgraded ? 15 : 0),
         code: 'invest',
       };
     }
 
     if (spied?.points !== undefined && spied.points > view.self.points + 5) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.invest + 35 + (isUpgraded ? 15 : 0),
+        // Retuned 35 → 45 (2026-08-05, L29-06, decisions.md).
+        score: HEURISTIC_BAND_WEIGHTS.invest + 45 + (isUpgraded ? 15 : 0),
         code: 'invest',
       };
     }

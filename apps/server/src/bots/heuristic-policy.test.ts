@@ -1603,3 +1603,156 @@ describe('L29-05: economy / theft specials', () => {
     ).toEqual({ type: 'playCard', instanceId: 'ct-1' });
   });
 });
+
+describe('L29-06: persistent specials', () => {
+  it('Poison beats draw with a living opponent; refuses a second activation', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'poi-1', cardId: 'poison', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'poi-1' }],
+        createRng('poison-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'poi-1' });
+
+    const alreadyActiveView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'poi-2', cardId: 'poison', isUpgraded: false }],
+        activePersistentEffects: [
+          { id: 'poi-live', cardId: 'poison', isUpgraded: false, counter: 3, targetPlayerId: null },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        alreadyActiveView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'poi-2' }],
+        createRng('poison-dup'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Curse prefers a top-spending target over draw; refuses without a target', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'cur-1', cardId: 'curse', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'draw' },
+          { type: 'playCard', instanceId: 'cur-1', targetPlayerId: 'bot-b' },
+        ],
+        createRng('curse-target'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'cur-1', targetPlayerId: 'bot-b' });
+
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'cur-1' }],
+        createRng('curse-no-target'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Curse refuses re-cursing an already-cursed target', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'cur-2', cardId: 'curse', isUpgraded: false }],
+        activePersistentEffects: [
+          {
+            id: 'cur-live',
+            cardId: 'curse',
+            isUpgraded: false,
+            counter: null,
+            targetPlayerId: 'bot-b',
+          },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'draw' },
+          { type: 'playCard', instanceId: 'cur-2', targetPlayerId: 'bot-b' },
+        ],
+        createRng('curse-dup'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Super Absorber beats draw with a living opponent; refuses a second activation', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sab-1', cardId: 'super-absorber', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'sab-1' }],
+        createRng('sab-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'sab-1' });
+
+    const alreadyActiveView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sab-2', cardId: 'super-absorber', isUpgraded: false }],
+        activePersistentEffects: [
+          {
+            id: 'sab-live',
+            cardId: 'super-absorber',
+            isUpgraded: false,
+            counter: 2,
+            targetPlayerId: null,
+          },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        alreadyActiveView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'sab-2' }],
+        createRng('sab-dup'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('still refuses base Sentence and prefers upgraded Sentence after the retune (L29-06)', () => {
+    const baseSentenceView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
+      }),
+    });
+    for (const seed of ['sent-retune-a', 'sent-retune-b', 'sent-retune-c']) {
+      expect(
+        decide(
+          baseSentenceView,
+          [{ type: 'draw' }, { type: 'playCard', instanceId: 'sent-1' }],
+          createRng(seed),
+        ),
+      ).toEqual({ type: 'draw' });
+    }
+
+    const upgradedSentenceView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: true }],
+      }),
+    });
+    expect(
+      decide(
+        upgradedSentenceView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'sent-1' }],
+        createRng('sent-retune-up'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'sent-1' });
+  });
+});

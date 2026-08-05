@@ -1443,3 +1443,43 @@ defaults (#V3-5), none ever tying `draw`:
 `score-turn-pool-reversal.ts`, `score-persistents.ts`, `score-attacks-redirect.ts` stay on
 the L29-01 stub pending L29-06..08.
 
+## 2026-08-05 · [T] Heuristic: persistents move + Poison/Curse/Super Absorber (L29-06)
+
+Sentence, Imposition, Spy Thief and Points Generator had been branched directly in
+`score-core.ts` since the L20-17 fallthrough fix — L29-01's family split left them there
+because they predated the split. Moved verbatim into `score-play/score-persistents.ts` and
+`families.ts` routes their four card ids to `'persistents'` instead of `'core'`. The backlog
+row for L29-06 previously read "plus the four cards that have had no branch since V1", which
+was wrong (they have had one since L20-17, 2026-08-04) — corrected to "retune ... (branched
+since L20-17)".
+
+Retuned in the same change (still tunable defaults, #V3-5, not measured):
+`IMPOSITION_INVEST_BONUS` 55 → 60, `POINTS_GENERATOR_INVEST_BONUS` 50 → 55,
+`SPY_THIEF_DENY_BONUS` 100 → 110, Sentence's upgraded per-opponent add-on 5 → 8
+(`SENTENCE_UPGRADED_PER_OPPONENT`). `cloning`'s outside-threat Invest bonuses in
+`score-core.ts` also bumped 40 → 50 (life-driven) and 35 → 45 (points-driven) — it stays in
+`'core'` since it is not persistent, just already branched there. All four retuned bands and
+Cloning's still clear `HEURISTIC_BAND_WEIGHTS.invest`/`.deny` (1000/4000) by a wide margin, so
+the retune only reorders preference among these specials, never against draw or against a
+Survive/Deny play under real threat.
+
+Three new branches in `score-persistents.ts`:
+
+- **Poison** — `invest + POISON_INVEST_BONUS` (+`POISON_MULTI_TARGET_BONUS` at 2+ living
+  opponents, since it hits every opponent at once); refused with `hasOwnPersistent('poison')`
+  already active or zero living opponents.
+- **Curse** — needs a target; refused without one, against an `isImmuneTarget` result, or a
+  seat this bot's own Curse already sits on (one copy per victim). `deny + CURSE_DENY_BONUS
+  + spentLastTurn` when the target's last complete turn spent ≥ `CURSE_HIGH_SPEND_THRESHOLD`
+  points or the target already tops `ctx.threatOrder`; otherwise a smaller
+  `invest + CURSE_INVEST_BONUS` — still worth activating on any living target, the drip pays
+  off over time even with no signal yet.
+- **Super Absorber** — refused with `hasOwnPersistent('super-absorber')` already active or
+  zero living opponents. Upgraded escalates like Absorber+ (`scoreAbsorber` in
+  `policy-internals.ts`): `deny + SUPER_ABSORBER_UP_DENY_BONUS` when any living opponent's
+  last complete turn spent an upgrade point, else `deny + SUPER_ABSORBER_POINTS_DENY_BONUS`
+  when any spent more points than this bot's kit draw. Otherwise a passive
+  `deny + SUPER_ABSORBER_BASELINE_DENY_BONUS` baseline — unlike single-target Absorber it is
+  activate-once-for-all-opponents (no target), so it is worth playing proactively even before
+  a spend signal exists.
+

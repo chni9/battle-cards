@@ -18,9 +18,21 @@ const ECONOMY_THEFT_CARD_IDS: ReadonlySet<CardId> = new Set([
   'super-regeneration',
 ]);
 
-/** L29-06 — Poison, Curse, Super Absorber only. Sentence/Imposition/Spy Thief/Points */
-/** Generator and Cloning-outside-threat stay `'core'` for L29-01 (already branched there). */
-const PERSISTENTS_CARD_IDS: ReadonlySet<CardId> = new Set(['poison', 'curse', 'super-absorber']);
+/**
+ * L29-06 — Poison, Curse, Super Absorber, plus Sentence / Imposition / Spy Thief /
+ * Points Generator (moved here from `'core'`, retuned in the same change — see
+ * `score-persistents.ts` and decisions.md 2026-08-05). `cloning` outside an incoming
+ * threat stays `'core'`: it is not persistent, just already branched there since L20-17.
+ */
+const PERSISTENTS_CARD_IDS: ReadonlySet<CardId> = new Set([
+  'poison',
+  'curse',
+  'super-absorber',
+  'sentence',
+  'imposition',
+  'spy-thief',
+  'points-generator',
+]);
 
 /**
  * L29-07 — Super Mirror, Attack Thief only. MEGA ATTACK is deliberately excluded: it
