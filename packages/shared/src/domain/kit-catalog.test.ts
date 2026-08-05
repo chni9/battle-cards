@@ -65,5 +65,15 @@ describe('KIT_CATALOG', () => {
       'card-thief',
       'super-absorber',
     ]);
+
+    expect(getKit('witch').startingResources).toEqual({
+      lives: 10,
+      points: 0,
+      upgradePoints: 1,
+      draw: 1,
+    });
+    expect(getKit('witch').startingCardCounts).toEqual({ action: 5, attack: 2 });
+    expect(getKit('witch').traits.alwaysUpgraded).toEqual(['thief']);
+    expect(getKit('witch').specialCards).toEqual(['reanimation', 'poison']);
   });
 });

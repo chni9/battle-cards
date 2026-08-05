@@ -11,7 +11,11 @@ describe('upgrade points (rules spec §1, L2-02)', () => {
   ] as const;
 
   function actor() {
-    const state = createInitialState({ seats, seed: 'up-seed' });
+    const state = createInitialState({
+      seats,
+      seed: 'up-seed',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const id = state.currentTurnPlayerId;
 
     if (id === null) {

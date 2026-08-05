@@ -92,6 +92,18 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  witch: {
+    id: 'witch',
+    name: 'Witch',
+    startingResources: { lives: 10, points: 0, upgradePoints: 1, draw: 1 },
+    startingCardCounts: { action: 5, attack: 2 },
+    specialCards: ['reanimation', 'poison'],
+    traits: {
+      alwaysUpgraded: ['thief'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {
