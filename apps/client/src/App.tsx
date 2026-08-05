@@ -37,6 +37,8 @@ export function App() {
     buyUpgradePoint,
     buySpecialCard,
     sellUpgradePoint,
+    deactivatePersistent,
+    activateDuplication,
     lastTurnStarted,
     lastActionResolved,
     subChoice,
@@ -86,6 +88,8 @@ export function App() {
         onBuyUpgradePoint={buyUpgradePoint}
         onBuySpecialCard={buySpecialCard}
         onSellUpgradePoint={sellUpgradePoint}
+        onDeactivatePersistent={deactivatePersistent}
+        onActivateDuplication={activateDuplication}
         onLeave={() => {
           void leaveGame();
         }}

@@ -1373,3 +1373,9 @@ Designer rulings (session):
 - **#V4-24:** Duplicator starting deal is **1 action / 0 attack** as written (not
   a typo).
 
+## 2026-08-05 · [P] Public immune outcome copy (L30-04)
+
+Designer instruction: revert the opaque-immunity UI convention. Action log,
+resolution FX, and spectator-readable state may say "immune" (Untouchable,
+Invisibility, and any future `outcome: 'immune'`).
+

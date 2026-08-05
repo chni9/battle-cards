@@ -60,6 +60,8 @@ export interface TableScreenProps {
   onBuySpecialCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
+  onDeactivatePersistent?: (effectId: string) => void;
+  onActivateDuplication?: () => void;
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -89,6 +91,8 @@ function TableScreenInner({
   onBuySpecialCard,
   onSellUpgradePoint,
   onLeave,
+  onDeactivatePersistent,
+  onActivateDuplication,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
@@ -180,10 +184,6 @@ function TableScreenInner({
       return;
     }
     lastResolvedKey.current = key;
-    // Immunity stays opaque in the UI (no banner / no "Immune" flash).
-    if (lastActionResolved.outcome === 'immune') {
-      return;
-    }
     enqueue({
       kind: 'resolutionFlash',
       outcome: lastActionResolved.outcome,
@@ -236,6 +236,14 @@ function TableScreenInner({
   const activePlayer = view.players.find(
     (player) => player.id === view.currentTurnPlayerId,
   );
+  const blockStatusLabel =
+    activePlayer === undefined
+      ? undefined
+      : activePlayer.blockTurnsRemaining > 0
+        ? `Block chain · ${String(activePlayer.blockTurnsRemaining)} turn${activePlayer.blockTurnsRemaining === 1 ? '' : 's'} left`
+        : activePlayer.blockAttacksForbidden
+          ? 'Block · attacks banned this turn'
+          : undefined;
   const activeStatus = activePlayer?.connection.status;
   const turnPaused =
     activeStatus === 'disconnected' ||
@@ -412,6 +420,7 @@ function TableScreenInner({
             progressRatio={progressRatio}
             {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
             subChoiceProgressRatio={subChoiceProgressRatio}
+            {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
           />
         }
         prompts={
@@ -458,6 +467,8 @@ function TableScreenInner({
             selfPublic={selfPublic}
             incomingEffects={incomingEffects}
             mirrorHighlightIds={mirrorHighlightIds}
+            isMyTurn={isMyTurn}
+            actionsLocked={actionsLocked}
             onInspectKit={() => {
               setInspectKitId(view.self.kitId);
             }}
@@ -465,6 +476,10 @@ function TableScreenInner({
             onSelectActive={(effectId) => {
               onInspectActive(view.you, effectId);
             }}
+            {...(onDeactivatePersistent !== undefined
+              ? { onDeactivatePersistent }
+              : {})}
+            {...(onActivateDuplication !== undefined ? { onActivateDuplication } : {})}
           />
         }
         economy={

@@ -150,8 +150,8 @@ rules above are unchanged — this section only covers how the client looks.
   `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`. Dead seats: kit
   portrait “Eliminated” overlay only — no connection “eliminated” badge and no Bot · hard
   label (they waste space next to the reveal).
-- **`actionResolved.outcome === 'immune'`**: do **not** surface “immune” in the timers
-  banner, resolution FX flash, or action-log copy (Untouchable vs Thief/Spy stays opaque).
+- **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
+  resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
   names via `formatCardLabel`) — never raw `RewardChoice` type ids or `cardId` strings.
 - **Sub-choices (L30-03):** one unicast `subChoiceRequired` / `resolveSubChoice` pair

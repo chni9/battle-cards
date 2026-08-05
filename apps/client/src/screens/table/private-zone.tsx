@@ -12,10 +12,12 @@ import type { ReactElement } from 'react';
 
 import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
+import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
+import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
 
 export interface PrivateZoneProps {
@@ -23,9 +25,13 @@ export interface PrivateZoneProps {
   selfPublic: PublicPlayerView | undefined;
   incomingEffects: readonly PendingEffectView[];
   mirrorHighlightIds?: readonly string[];
+  isMyTurn: boolean;
+  actionsLocked: boolean;
   onInspectKit: () => void;
   onSelectOwnCard?: (instanceId: string) => void;
   onSelectActive?: (instanceId: string) => void;
+  onDeactivatePersistent?: (effectId: string) => void;
+  onActivateDuplication?: () => void;
 }
 
 export function PrivateZone({
@@ -33,9 +39,13 @@ export function PrivateZone({
   selfPublic,
   incomingEffects,
   mirrorHighlightIds = [],
+  isMyTurn,
+  actionsLocked,
   onInspectKit,
   onSelectOwnCard,
   onSelectActive,
+  onDeactivatePersistent,
+  onActivateDuplication,
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -43,6 +53,18 @@ export function PrivateZone({
       : []),
     ...view.self.activePersistentEffects.map(persistentToCardInstance),
   ];
+
+  const invisibilityEffect = view.self.activePersistentEffects.find(
+    (effect) => effect.cardId === 'invisibility',
+  );
+  const controlsDisabled = !isMyTurn || actionsLocked;
+  const showActivateDuplication =
+    view.self.kitId === 'duplicator' && selfPublic?.duplicationActive !== true;
+  const showDuplicationActive = selfPublic?.duplicationActive === true;
+  const showTurnFlowControls =
+    invisibilityEffect !== undefined ||
+    showActivateDuplication ||
+    showDuplicationActive;
 
   return (
     <section
@@ -60,6 +82,7 @@ export function PrivateZone({
           <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
             <h2 className="text-xs font-semibold text-ink sm:text-sm">You</h2>
             {selfPublic !== undefined && <ConnectionBadge player={selfPublic} />}
+            {selfPublic !== undefined && <FlowStatusBadges player={selfPublic} />}
           </div>
           {actives.length > 0 && (
             <div
@@ -127,6 +150,40 @@ export function PrivateZone({
           </span>
         ) : null}
       </div>
+      {showTurnFlowControls && (
+        <div
+          data-zone="turn-flow-controls"
+          className="flex shrink-0 flex-wrap items-center gap-1 border-t border-border-soft pt-0.5 sm:gap-1.5 sm:pt-1"
+        >
+          {invisibilityEffect !== undefined && onDeactivatePersistent !== undefined && (
+            <Button
+              variant="purple"
+              disabled={controlsDisabled}
+              className="min-h-8 min-w-0 px-2.5 py-1 text-[11px] sm:text-xs"
+              onClick={() => {
+                onDeactivatePersistent(invisibilityEffect.id);
+              }}
+            >
+              Deactivate invisibility
+            </Button>
+          )}
+          {showActivateDuplication && onActivateDuplication !== undefined && (
+            <Button
+              variant="purple"
+              disabled={controlsDisabled}
+              className="min-h-8 min-w-0 px-2.5 py-1 text-[11px] sm:text-xs"
+              onClick={onActivateDuplication}
+            >
+              Activate duplication
+            </Button>
+          )}
+          {showDuplicationActive && (
+            <span className="text-[10px] font-medium text-ink-muted sm:text-xs">
+              Duplication active
+            </span>
+          )}
+        </div>
+      )}
     </section>
   );
 }
