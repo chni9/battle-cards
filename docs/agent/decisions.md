@@ -1526,3 +1526,82 @@ pending attacks on both sides (direct, upgraded, mirror-redirected, super-mirror
 base/upgraded MEGA) and asserts identical eligible-id sets for both a base and an upgraded
 Mirror — the parity contract the two duplicated predicates must never drift on.
 
+## 2026-08-05 · [T] Heuristic: turn-flow specials, new action types, sub-choice picks (L29-08)
+
+Closes Lot 29. Five branches in `score-play/score-turn-pool-reversal.ts`, none of which
+gate on point reserve (unlike core's utility cards) or refuse below draw except where noted —
+these are one-shot or renewable cards with no downside to playing when legal:
+
+- **Block** — `survive + BLOCK_SURVIVE_BONUS` when `incomingThreat > 0` or any pending
+  effect targets self (cancels every one of them); otherwise `invest + BLOCK_INVEST_BONUS`
+  for the proactive consecutive-turn grant. Never refused — no "already active" gate exists
+  on the card itself (replaying it resets the chain, which is legal).
+- **Invisibility** — refused only via `hasOwnPersistent('invisibility')`; otherwise
+  `invest + INVISIBILITY_INVEST_BONUS`.
+- **Card Absorber** — refused on an empty shared pool (`view.pool.length === 0`, the only
+  case `canPlay` itself would reject); otherwise
+  `invest + CARD_ABSORBER_INVEST_BONUS + min(4, pool.length) * CARD_ABSORBER_PER_CARD_BONUS`.
+- **Card Transformer** — the action already carries `consumeInstanceId` from
+  `list-legal-play-card.ts`'s per-hand-card enumeration; refused only if it does not resolve
+  to an owned hand card (defensive — should not happen), else
+  `invest + CARD_TRANSFORMER_INVEST_BONUS`.
+- **Reanimation** — refused only via `hasOwnPersistent('reanimation')` (the engine's own
+  `canPlay` already blocks a second arm — this is a defensive mirror, unreachable through
+  `listLegalPlayCardActions`). Otherwise always `invest + REANIMATION_INVEST_BONUS`
+  (+`REANIMATION_LOW_LIFE_BONUS` at/below the kit-scaled `regenSoftLifeForKit` floor or the
+  flat `REANIMATION_LOW_LIFE_FLOOR`) — insurance the bot should always buy when available,
+  more urgently at low life, never left to rng-tie with draw.
+
+Replaced the L25-02 / L28-02 placeholder scores for the two newer `TurnAction` variants in
+`heuristic-policy.ts` directly (they are not `playCard`, so they stay outside `score-play/`):
+
+- **`deactivatePersistent`** (Invisibility only, today) — kept under
+  `ctx.incomingThreat > 0` (`sustain - UNSCORED_PLAY_PENALTY`, i.e. never chosen while the
+  immunity still matters); otherwise `invest + DEACTIVATE_PERSISTENT_INVEST_BONUS` when the
+  stance wants to attack (`finish`/`contest`, or an attack card in hand) or points are at or
+  above `DEACTIVATE_PERSISTENT_POINTS_FLOOR`; else a small `sustain - 5`.
+- **`activateDuplication`** (Duplicator only) — refused if `view.self.kitId !== 'duplicator'`
+  or the public view already shows `duplicationActive` (both defensive: the engine's own
+  `listLegalActivateDuplicationActions` gate gives the first for free, and the window is
+  always cleared before the owner's own next decision per `advanceTurn`, per
+  `duplicator.test.ts`'s "clears window at next turn start"). Otherwise
+  `invest + ACTIVATE_DUPLICATION_INVEST_BONUS` with any living opponent outside `finish`
+  stance (renewing the anticipatory window is not worth the action once already finishing);
+  else `sustain - 8`.
+
+**New `bots/sub-choice-picks.ts`** — light heuristics for the four generic sub-choices,
+replacing `rng.pick`/`rng.shuffle` wherever a bot resolves one:
+
+- `pickStealInstanceId(view, eligibleIds, rng)` — Card Thief's steal-pick is only ever
+  raised against a spied victim (`needsStealPick` in `card-thief.ts`), so every eligible id
+  is expected to resolve to a real `CardInstance` via some opponent's `spied.hand` /
+  `spied.specialCards`. Ranks upgraded attack > attack > special > plain action; falls back
+  to `rng.pick` if nothing resolves (defensive).
+- `pickPoolInstanceIds(poolCards, eligibleIds, maxCount, rng)` — Card Absorber's upgraded
+  pool-pick. Ranks special > upgraded attack > attack > plain action; cards strictly better
+  than the `maxCount`-th rank are always taken, ties at the cutoff broken by `rng.shuffle`
+  rather than stable array order.
+- `pickSpecialCardId(eligibleCardIds, rng)` — Card Transformer's upgraded special-pick.
+  `beginSpecialPick` always offers the full 20-entry `SPECIAL_CARD_IDS` set, so this resolves
+  to a fixed high-impact-first preference order's first hit; `rng` only matters if the
+  eligible set is ever narrowed later.
+- `pickReanimationKitId(eligibleKitIds, rng)` — upgraded Reanimation's kit choice. Sorts by
+  `startingResources.lives` desc, then `.draw` desc; `rng.pick` breaks a genuine tie (three
+  kits currently tie at 10 lives / 1 draw).
+
+**Wiring** — every remaining `rng.pick`/`rng.shuffle` at a bot decision point now goes
+through one of the four functions above: `bot-driver.ts` (`handleStealChoice`,
+`handleReanimationKitChoice`), `game-room.ts` (all four `performBotAction` hooks —
+`resolveSteal`, `resolvePoolPick`, `resolveSpecialPick`, `resolveReanimationKit` — plus the
+upgraded-steal chain continuation in `applyBotStealChoice`), and `simulation/run-game.ts`'s
+matching hooks, for parity between the room path and the headless simulator.
+
+**Tests** — `sub-choice-picks.test.ts` covers each function's preference order and rng
+fallback in isolation. `v4-specials-stall.test.ts` drives Block and Invisibility through a
+direct play, and Card Absorber / Card Transformer / Reanimation through their full upgraded
+sub-choice (pool-pick, special-pick, reanimation-kit after a forced elimination) via
+`performAndCompleteTurn` with hooks built on the new pick functions, proving none of the five
+throws or leaves the room stuck. `heuristic-policy.test.ts` adds a scoring-level suite per
+card plus `deactivatePersistent` / `activateDuplication`, asserting each beats `draw` when
+expected and neither ever falls back to `sellUpgradePoint`.
+

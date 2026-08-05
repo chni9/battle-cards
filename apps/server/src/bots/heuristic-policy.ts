@@ -28,10 +28,13 @@ import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
 import { regenSoftLifeForKit, taxLifeBufferForKit } from './heuristic-life-thresholds';
 import {
+  ACTIVATE_DUPLICATION_INVEST_BONUS,
   BUY_SPECIAL_POINTS_FLOOR,
   BUY_UPGRADE_POINT_BONUS,
   BURN_COUNTER_BONUS,
   CONTEST_UPGRADE_EXTRA,
+  DEACTIVATE_PERSISTENT_INVEST_BONUS,
+  DEACTIVATE_PERSISTENT_POINTS_FLOOR,
   DRAW_SCORE_PER_EXTRA_DRAW,
   HEURISTIC_BAND_WEIGHTS,
   SELL_TO_FUND_BONUS,
@@ -436,23 +439,66 @@ function scoreAction(
   }
 
   if (action.type === 'deactivatePersistent') {
-    // L25-02: must not fall through to sellUpgradePoint. Full policy is L29-08.
-    const underPressure = ctx.incomingThreat > 0;
-    return {
-      score: underPressure
-        ? HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY
-        : HEURISTIC_BAND_WEIGHTS.sustain - 5,
-      code: 'sustain',
-    };
+    return scoreDeactivatePersistent(view, ctx);
   }
 
   if (action.type === 'activateDuplication') {
-    // L28-02: must not fall through to sellUpgradePoint. Full policy is L29-08.
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 8, code: 'sustain' };
+    return scoreActivateDuplication(view, ctx);
   }
 
   // sellUpgradePoint
   return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+}
+
+function scoreDeactivatePersistent(
+  view: PlayingStateView,
+  ctx: PolicyContext,
+): { score: number; code: BotReasonCode } {
+  // Under heavy threat, keep Invisibility's immunity — deactivating now is self-harm.
+  if (ctx.incomingThreat > 0) {
+    return { score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY, code: 'sustain' };
+  }
+
+  const wantsToAttack =
+    ctx.stance === 'finish' ||
+    ctx.stance === 'contest' ||
+    ownCards(view).some((card) => isAttackCardId(card.cardId));
+
+  if (wantsToAttack || view.self.points >= DEACTIVATE_PERSISTENT_POINTS_FLOOR) {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + DEACTIVATE_PERSISTENT_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 5, code: 'sustain' };
+}
+
+function scoreActivateDuplication(
+  view: PlayingStateView,
+  ctx: PolicyContext,
+): { score: number; code: BotReasonCode } {
+  const self = view.players.find((player) => player.isYou);
+  const alreadyActive = self?.duplicationActive === true;
+
+  // The engine already gates this to the Duplicator kit (`listLegalActivateDuplicationActions`);
+  // the kit check here is a defensive no-op mirror of that gate.
+  if (view.self.kitId !== 'duplicator' || alreadyActive) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  const living = view.players.filter(
+    (player) => player.id !== view.you && !player.isEliminated,
+  ).length;
+
+  if (living >= 1 && ctx.stance !== 'finish') {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + ACTIVATE_DUPLICATION_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 8, code: 'sustain' };
 }
 
 function scoreSellCard(

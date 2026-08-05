@@ -1914,3 +1914,191 @@ describe('L29-07: attack / redirection specials', () => {
     ).toEqual(mirrorPlay);
   });
 });
+
+describe('L29-08: turn-flow, pool and reversal specials', () => {
+  it('Block beats draw both under threat (Survive) and off-threat (Invest)', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'blk-1', cardId: 'block', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [{ type: 'draw' }, { type: 'playCard', instanceId: 'blk-1' }];
+    expect(decide(view, actions, createRng('block-invest'))).toEqual({
+      type: 'playCard',
+      instanceId: 'blk-1',
+    });
+
+    const underThreatView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'blk-1', cardId: 'block', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'inc-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const scored = scoreActions(underThreatView, actions, createRng('block-survive'));
+    const blockScore = scored.find(
+      (entry) => entry.action.type === 'playCard' && entry.action.instanceId === 'blk-1',
+    );
+    expect(blockScore?.code).toBe('survive');
+  });
+
+  it('Invisibility beats draw; refuses a second activation', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'inv-1', cardId: 'invisibility', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'inv-1' }],
+        createRng('invis-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'inv-1' });
+
+    const alreadyActiveView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'inv-2', cardId: 'invisibility', isUpgraded: false }],
+        activePersistentEffects: [
+          {
+            id: 'inv-live',
+            cardId: 'invisibility',
+            isUpgraded: false,
+            counter: null,
+            targetPlayerId: null,
+          },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        alreadyActiveView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'inv-2' }],
+        createRng('invis-dup'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Card Absorber beats draw with cards in the pool; refuses on an empty pool', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'cab-1', cardId: 'card-absorber', isUpgraded: false }],
+      }),
+      pool: [{ instanceId: 'pool-1', cardId: 'basic-attack', isUpgraded: false }],
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'cab-1' }],
+        createRng('cab-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'cab-1' });
+
+    const emptyPoolView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'cab-1', cardId: 'card-absorber', isUpgraded: false }],
+      }),
+      pool: [],
+    });
+    expect(
+      decide(
+        emptyPoolView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'cab-1' }],
+        createRng('cab-empty'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Card Transformer beats draw when consuming an owned shared card', () => {
+    const view = baseView({
+      self: baseSelf({
+        hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
+        specialCards: [{ instanceId: 'ctr-1', cardId: 'card-transformer', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'draw' },
+          {
+            type: 'playCard',
+            instanceId: 'ctr-1',
+            consumeInstanceId: 'basic-1',
+          },
+        ],
+        createRng('ctr-over-draw'),
+      ),
+    ).toEqual({
+      type: 'playCard',
+      instanceId: 'ctr-1',
+      consumeInstanceId: 'basic-1',
+    });
+  });
+
+  it('Reanimation always beats draw when armable', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'rea-1', cardId: 'reanimation', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'rea-1' }],
+        createRng('rea-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'rea-1' });
+  });
+
+  it('deactivatePersistent and activateDuplication never fall back to sellUpgradePoint', () => {
+    const deactivateActions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'sellUpgradePoint' },
+      { type: 'deactivatePersistent', effectId: 'inv-live' },
+    ];
+    const deactivateView = baseView({
+      self: baseSelf({
+        activePersistentEffects: [
+          {
+            id: 'inv-live',
+            cardId: 'invisibility',
+            isUpgraded: false,
+            counter: null,
+            targetPlayerId: null,
+          },
+        ],
+        hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
+      }),
+    });
+    expect(decide(deactivateView, deactivateActions, createRng('deact-not-sell'))).not.toEqual({
+      type: 'sellUpgradePoint',
+    });
+
+    const activateActions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'sellUpgradePoint' },
+      { type: 'activateDuplication' },
+    ];
+    const activateView = baseView({
+      self: baseSelf({ kitId: 'duplicator' }),
+      players: [
+        player('bot-a', 'Alpha', true, { duplicationActive: false }),
+        player('bot-b', 'Bravo', false),
+      ],
+    });
+    expect(decide(activateView, activateActions, createRng('act-not-sell'))).not.toEqual({
+      type: 'sellUpgradePoint',
+    });
+  });
+});

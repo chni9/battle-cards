@@ -74,6 +74,12 @@ import {
   pickEliminationRewardsWithReason,
   pickMirrorRedirect,
 } from '../bots/heuristic-policy';
+import {
+  pickPoolInstanceIds,
+  pickReanimationKitId,
+  pickSpecialCardId,
+  pickStealInstanceId,
+} from '../bots/sub-choice-picks';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
@@ -102,7 +108,6 @@ import {
   POOL_SUB_CHOICE_MS,
   REANIMATION_KIT_SUB_CHOICE_MS,
   SPECIAL_SUB_CHOICE_MS,
-  pickRandomPoolInstanceIds,
 } from '../engine/turn/generic-sub-choice';
 import { STEAL_SUB_CHOICE_MS } from '../engine/turn/steal-choice';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
@@ -1884,15 +1889,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
           throw new Error('steal pending without stealChoice');
         }
 
-        const rng = createRng(`${s.seed}:bot:${actorId}:steal:${s.turnSequence}`);
-        const instanceId =
-          choice.eligibleInstanceIds.length > 0
-            ? rng.pick(choice.eligibleInstanceIds)
-            : '';
-
-        if (instanceId.length === 0) {
+        if (choice.eligibleInstanceIds.length === 0) {
           throw new Error('Steal pick failed');
         }
+
+        const view = this.buildBotPlayingView(actorId);
+        const rng = createRng(`${s.seed}:bot:${actorId}:steal:${s.turnSequence}`);
+        const instanceId =
+          view === null
+            ? rng.pick(choice.eligibleInstanceIds)
+            : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { instanceId };
@@ -1905,7 +1911,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${actorId}:pool:${s.turnSequence}`);
-        const instanceIds = pickRandomPoolInstanceIds(
+        const instanceIds = pickPoolInstanceIds(
+          s.pool,
           choice.eligibleInstanceIds.filter((id) =>
             s.pool.some((card) => card.instanceId === id),
           ),
@@ -1928,7 +1935,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`);
-        const cardId = rng.pick(choice.eligibleCardIds);
+        const cardId = pickSpecialCardId(choice.eligibleCardIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { cardId };
@@ -1941,7 +1948,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`);
-        const kitId = rng.pick(choice.eligibleKitIds);
+        const kitId = pickReanimationKitId(choice.eligibleKitIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { kitId };
@@ -2226,11 +2233,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const choice = state.stealChoice;
 
       if (choice !== null && choice.playerId === botId) {
+        const view = this.buildBotPlayingView(botId);
         const rng = createRng(`${state.seed}:bot:${botId}:steal:${state.turnSequence}`);
         const nextId =
-          choice.eligibleInstanceIds.length > 0
-            ? rng.pick(choice.eligibleInstanceIds)
-            : '';
+          choice.eligibleInstanceIds.length === 0
+            ? ''
+            : view === null
+              ? rng.pick(choice.eligibleInstanceIds)
+              : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
 
         if (nextId.length > 0) {
           this.applyBotStealChoice(botId, nextId, { code: 'policy-fallback' });

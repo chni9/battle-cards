@@ -14,6 +14,12 @@ import {
   pickEliminationRewards,
   pickMirrorRedirect,
 } from '../bots/heuristic-policy';
+import {
+  pickPoolInstanceIds,
+  pickReanimationKitId,
+  pickSpecialCardId,
+  pickStealInstanceId,
+} from '../bots/sub-choice-picks';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import {
@@ -21,7 +27,6 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { listLegalActions } from '../engine/turn/list-legal-actions';
-import { pickRandomPoolInstanceIds } from '../engine/turn/generic-sub-choice';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import type { TurnResult } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
@@ -209,10 +214,21 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           throw new Error('Steal pending but no eligible cards');
         }
 
+        const stealView = buildPlayingViewFor({
+          recipientSessionId: actorId,
+          gameCode: `sim-${input.seed}`,
+          state: s,
+          turnDeadlineMs: null,
+          actionLog,
+          botDifficulties: difficultiesById,
+        });
+
         return {
-          instanceId: createRng(
-            `${s.seed}:bot:${actorId}:steal:${s.turnSequence}`,
-          ).pick(choice.eligibleInstanceIds),
+          instanceId: pickStealInstanceId(
+            stealView,
+            choice.eligibleInstanceIds,
+            createRng(`${s.seed}:bot:${actorId}:steal:${s.turnSequence}`),
+          ),
         };
       },
       resolvePoolPick: (s: typeof state, actorId: string) => {
@@ -222,7 +238,8 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           throw new Error('pool pick pending without subChoice');
         }
 
-        const instanceIds = pickRandomPoolInstanceIds(
+        const instanceIds = pickPoolInstanceIds(
+          s.pool,
           choice.eligibleInstanceIds.filter((id) =>
             s.pool.some((card) => card.instanceId === id),
           ),
@@ -244,9 +261,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         }
 
         return {
-          cardId: createRng(
-            `${s.seed}:bot:${actorId}:special:${s.turnSequence}`,
-          ).pick(choice.eligibleCardIds),
+          cardId: pickSpecialCardId(
+            choice.eligibleCardIds,
+            createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`),
+          ),
         };
       },
       resolveReanimationKit: (s: typeof state, playerId: string) => {
@@ -257,9 +275,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         }
 
         return {
-          kitId: createRng(
-            `${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`,
-          ).pick(choice.eligibleKitIds),
+          kitId: pickReanimationKitId(
+            choice.eligibleKitIds,
+            createRng(`${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`),
+          ),
         };
       },
       resolveReward: (s: typeof state) => {

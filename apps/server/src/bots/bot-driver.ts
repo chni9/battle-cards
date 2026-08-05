@@ -26,6 +26,7 @@ import {
   pickEliminationRewardsWithReason,
   pickMirrorRedirect,
 } from './heuristic-policy';
+import { pickReanimationKitId, pickStealInstanceId } from './sub-choice-picks';
 
 export interface BotDriverHost {
   isBotSeat(playerId: string): boolean;
@@ -134,8 +135,12 @@ export class BotDriver {
       return;
     }
 
+    const view = this.host.getPlayingView(botId);
     const rng = createRng(`${state.seed}:bot:${botId}:steal:${state.turnSequence}`);
-    const instanceId = rng.pick(choice.eligibleInstanceIds);
+    const instanceId =
+      view === null
+        ? rng.pick(choice.eligibleInstanceIds)
+        : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
 
     try {
       this.host.completeBotSteal(botId, instanceId, { code: 'policy-fallback' });
@@ -194,7 +199,7 @@ export class BotDriver {
     }
 
     const rng = createRng(`${state.seed}:bot:${botId}:reanim-kit:${state.turnSequence}`);
-    const kitId = rng.pick(choice.eligibleKitIds);
+    const kitId = pickReanimationKitId(choice.eligibleKitIds, rng);
 
     try {
       this.host.completeBotReanimationKit(botId, kitId, { code: 'policy-fallback' });
