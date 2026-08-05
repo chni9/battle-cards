@@ -172,10 +172,12 @@ export const BLOCK_SURVIVE_BONUS = 50;
 export const BLOCK_INVEST_BONUS = 30;
 export const INVISIBILITY_INVEST_BONUS = 70;
 export const CARD_ABSORBER_INVEST_BONUS = 60;
-/** Card Absorber Invest add-on per recoverable pool card, capped at `CARD_ABSORBER_MAX_BONUS_CARDS`. */
+/** Card Absorber Invest add-on per recoverable pool card. */
 export const CARD_ABSORBER_PER_CARD_BONUS = 5;
-/** Matches the engine's `CARD_ABSORBER_MAX` (`generic-sub-choice.ts`) — recovers at most 4. */
-export const CARD_ABSORBER_MAX_BONUS_CARDS = 4;
+/** Base Card Absorber recovers at most this many — matches `CARD_ABSORBER_BASE_MAX`. */
+export const CARD_ABSORBER_BASE_BONUS_CARDS = 4;
+/** Upgraded Card Absorber choose-cap — matches `CARD_ABSORBER_UPGRADED_MAX`. */
+export const CARD_ABSORBER_UPGRADED_BONUS_CARDS = 8;
 export const CARD_TRANSFORMER_INVEST_BONUS = 45;
 export const REANIMATION_INVEST_BONUS = 40;
 export const REANIMATION_LOW_LIFE_FLOOR = 4;

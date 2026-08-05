@@ -188,7 +188,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 **Card Absorber** — Price: 4 points
 - Action: recovers 4 random cards from the shared pool (sold cards, used special cards, eliminated players' cards).
-- Upgrade: allows choosing the 4 recovered cards instead of a random draw.
+- Upgrade: allows choosing up to 8 recovered cards from the shared pool instead of a random draw of 4.
 
 **MEGA ATTACK** — Price: 16 points
 - Action: attacks every player in the game for 20 damage. This is an attack-type card (the shield applies normally). Can only be redirected by an upgraded Mirror.

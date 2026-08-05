@@ -38,7 +38,7 @@ export interface StealPickSubChoicePayload {
   cardIsUpgraded: boolean;
 }
 
-/** Card Absorber upgraded — choose cards from the shared pool (L24-01). */
+/** Card Absorber upgraded — choose up to 8 cards from the shared pool (L24-01). */
 export interface PoolPickSubChoicePayload {
   playerId: string;
   /** Exactly this many distinct eligible ids must be chosen (#V4-15). */

@@ -20,7 +20,9 @@ import type { Rng } from '../rng';
 import { findPlayer } from './advance-turn';
 import { SUB_CHOICE_MS } from './sub-choice';
 
-export const CARD_ABSORBER_MAX = 4;
+export const CARD_ABSORBER_BASE_MAX = 4;
+/** Upgraded Card Absorber choose-count — designer ruling 2026-08-05 (session). */
+export const CARD_ABSORBER_UPGRADED_MAX = 8;
 
 /** Re-export the single `SUB_CHOICE_MS` — technical spec v4 §4.4. */
 export const POOL_SUB_CHOICE_MS = SUB_CHOICE_MS;
@@ -67,7 +69,7 @@ export function beginPoolPick(
   },
 ): void {
   const eligibleInstanceIds = state.pool.map((card) => card.instanceId);
-  const maxCount = Math.min(CARD_ABSORBER_MAX, eligibleInstanceIds.length);
+  const maxCount = Math.min(CARD_ABSORBER_UPGRADED_MAX, eligibleInstanceIds.length);
 
   if (maxCount === 0) {
     return;

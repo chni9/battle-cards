@@ -10,9 +10,10 @@ import { regenSoftLifeForKit } from '../heuristic-life-thresholds';
 import {
   BLOCK_INVEST_BONUS,
   BLOCK_SURVIVE_BONUS,
+  CARD_ABSORBER_BASE_BONUS_CARDS,
   CARD_ABSORBER_INVEST_BONUS,
-  CARD_ABSORBER_MAX_BONUS_CARDS,
   CARD_ABSORBER_PER_CARD_BONUS,
+  CARD_ABSORBER_UPGRADED_BONUS_CARDS,
   CARD_TRANSFORMER_INVEST_BONUS,
   HEURISTIC_BAND_WEIGHTS,
   INVISIBILITY_INVEST_BONUS,
@@ -46,7 +47,7 @@ export function scoreTurnPoolPlayCard(
   }
 
   if (cardId === 'card-absorber') {
-    return scoreCardAbsorber(view);
+    return scoreCardAbsorber(view, instance.isUpgraded);
   }
 
   if (cardId === 'card-transformer') {
@@ -86,13 +87,19 @@ function scoreInvisibility(view: PlayingStateView): { score: number; code: BotRe
   };
 }
 
-function scoreCardAbsorber(view: PlayingStateView): { score: number; code: BotReasonCode } {
+function scoreCardAbsorber(
+  view: PlayingStateView,
+  isUpgraded: boolean,
+): { score: number; code: BotReasonCode } {
   if (view.pool.length === 0) {
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
   }
 
+  const cap = isUpgraded
+    ? CARD_ABSORBER_UPGRADED_BONUS_CARDS
+    : CARD_ABSORBER_BASE_BONUS_CARDS;
   const cardsBonus =
-    Math.min(CARD_ABSORBER_MAX_BONUS_CARDS, view.pool.length) * CARD_ABSORBER_PER_CARD_BONUS;
+    Math.min(cap, view.pool.length) * CARD_ABSORBER_PER_CARD_BONUS;
 
   return {
     score: HEURISTIC_BAND_WEIGHTS.invest + CARD_ABSORBER_INVEST_BONUS + cardsBonus,

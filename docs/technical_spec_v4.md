@@ -304,7 +304,7 @@ V4 adds up to four sub-choices:
 
 | Sub-choice | Card | Trigger point | Difficulty |
 |---|---|---|---|
-| Choose 4 cards from the pool | Card Absorber (upgraded) | user's turn, at play | Mirror-shaped |
+| Choose up to 8 cards from the pool | Card Absorber (upgraded) | user's turn, at play | Mirror-shaped |
 | Choose which card to steal | Card Thief, when the target is spied | user's turn, at play | Mirror-shaped |
 | Choose the special obtained | Card Transformer (upgraded) | user's turn, at play | Mirror-shaped |
 | Choose the reanimation kit | Reanimation (upgraded) | **inside `processEliminations`**, possibly not on the reanimated player's turn | harder than both existing ones |
@@ -564,7 +564,7 @@ triggers no alert anywhere.
 | `card-transformer` | Card Transformer | 2 pts | — | Turns an owned action/attack card into a random special. Upgraded: choose the special. |
 | `invisibility` | Invisibility | 10 pts | — | Immune to opposing actions, +4 pts/turn (+6 upgraded). **Manual deactivation only.** |
 | `reanimation` | Reanimation | 8 pts | — | Armed in advance; on a later elimination, return with a random kit and its starting resources. Upgraded: choose the kit. |
-| `card-absorber` | Card Absorber | 4 pts | — | Recovers 4 random cards from the shared pool. Upgraded: choose them. |
+| `card-absorber` | Card Absorber | 4 pts | — | Recovers 4 random cards from the shared pool. Upgraded: choose up to 8. |
 | `mega-attack` | MEGA ATTACK | 16 pts | — | **Attack card.** 20 damage to every player. Shield applies. Base: only an upgraded Mirror redirects it. Upgraded: never redirectable. |
 | `super-mirror` | Super Mirror | 7 pts | — | Redirects every attack pending on the user to all opponents, each independently. Not re-redirectable by a regular Mirror. Upgraded: doubles the damage. |
 | `super-absorber` | Super Absorber | 8 pts | **2** | Absorbs all points, lives and UP spent by all opponents while the counter holds. Upgraded: doubles the gains. |
@@ -821,7 +821,7 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | # | Ruling | Recorded in |
 |---|---|---|
 | **#V4-14** | Pool instances keep `isUpgraded`; Absorber recovery preserves it (`alwaysUpgraded` may still force). | `decisions.md`, L24-01 |
-| **#V4-15** | Absorber takes `min(4, pool.length)`; `canPlay` requires `pool.length >= 1`. | `decisions.md`, L24-01 |
+| **#V4-15** | Absorber base takes `min(4, pool.length)`; upgraded choose takes `min(8, pool.length)`; `canPlay` requires `pool.length >= 1`. (Upgraded choose-count raised from 4→8 by designer 2026-08-05.) | `decisions.md`, L24-01 |
 | **#V4-16** | Transformer: consumed hand card → pool as-is; special result does not inherit upgrade; duplicates allowed. | `decisions.md`, L24-02 |
 | *(addr.)* | Optional `consumeInstanceId` on play; eligible = hand `SHARED_CARD_IDS` only. `GameState.subChoice` holds `pool-pick` / `special-pick` (Approach B). | `decisions.md`, L24-01/02 |
 

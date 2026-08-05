@@ -1663,3 +1663,12 @@ self / Spy-revealed Upgrader buys now read `upgradePointBuyCost(kitId)`.
 Unspied opponents still fall back to the global 10 (kit is private).
 
 
+
+## 2026-08-05 · [P] #V4-15 Card Absorber upgraded choose-count
+
+Designer session: upgraded Card Absorber choose-cap raised from **4 → 8**.
+Base remains `min(4, pool.length)` random. Upgraded `pool-pick` uses
+`min(8, pool.length)`. Empty-pool `canPlay` gate unchanged.
+
+Supersedes the upgraded half of the earlier #V4-15 note (Lot 24 entry above),
+which treated base and upgraded as the same cap of 4.

@@ -1,13 +1,13 @@
 /**
  * Card Absorber — rules spec §5, backlog L24-01 / #V4-14 / #V4-15.
  *
- * Strictly personal: recovers up to 4 cards from the shared pool. Base draws at
- * random; upgraded raises a `pool-pick` on `GameState.subChoice`.
+ * Strictly personal: recovers from the shared pool. Base draws up to 4 at random;
+ * upgraded raises a `pool-pick` for up to 8 chosen cards (designer 2026-08-05).
  */
 
 import {
   beginPoolPick,
-  CARD_ABSORBER_MAX,
+  CARD_ABSORBER_BASE_MAX,
   pickRandomPoolInstanceIds,
   recoverCardsFromPool,
 } from '../../engine/turn/generic-sub-choice';
@@ -33,7 +33,7 @@ export const cardAbsorberHandler: CardHandler = {
     const eligible = state.pool.map((entry) => entry.instanceId);
     const picked = pickRandomPoolInstanceIds(
       eligible,
-      Math.min(CARD_ABSORBER_MAX, eligible.length),
+      Math.min(CARD_ABSORBER_BASE_MAX, eligible.length),
       rng,
     );
     recoverCardsFromPool(state, sourcePlayerId, picked);

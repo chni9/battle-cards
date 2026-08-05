@@ -132,7 +132,7 @@ describe('Card Absorber (L24-01)', () => {
     expect(upgraded?.isUpgraded).toBe(true);
   });
 
-  it('upgraded raises pool-pick; complete recovers chosen cards', () => {
+  it('upgraded raises pool-pick; complete recovers chosen cards (up to 8)', () => {
     const state = createInitialState({ seats, seed: 'l24-01-upgraded' });
     const a = state.players.find((player) => player.id === 'a');
 
@@ -143,7 +143,7 @@ describe('Card Absorber (L24-01)', () => {
     a.specialCards = [{ instanceId: 'ca-1', cardId: 'card-absorber', isUpgraded: true }];
     a.points = 10;
     a.hand = [];
-    seedPool(state, 6);
+    seedPool(state, 10);
     state.currentTurnPlayerId = a.id;
 
     const play = performTurnAction(state, a.id, { type: 'playCard', instanceId: 'ca-1' });
@@ -155,21 +155,41 @@ describe('Card Absorber (L24-01)', () => {
 
     expect(play.subChoicePending).toBe(true);
     expect(state.subChoice?.kind).toBe('pool-pick');
-    expect(state.subChoice?.kind === 'pool-pick' ? state.subChoice.maxCount : 0).toBe(4);
+    expect(state.subChoice?.kind === 'pool-pick' ? state.subChoice.maxCount : 0).toBe(8);
     // Absorber joined the pool after play; pick eligibility was snapshotted before that.
-    expect(state.pool).toHaveLength(7);
+    expect(state.pool).toHaveLength(11);
     expect(state.pool.some((card) => card.instanceId === 'ca-1')).toBe(true);
 
     const pickIds =
       state.subChoice?.kind === 'pool-pick'
-        ? state.subChoice.eligibleInstanceIds.slice(0, 4)
+        ? state.subChoice.eligibleInstanceIds.slice(0, 8)
         : [];
     expect(
       completePoolPick(state, a.id, pickIds).ok,
     ).toBe(true);
     expect(state.pool).toHaveLength(3);
-    expect(a.hand.length + a.specialCards.length).toBe(4);
+    expect(a.hand.length + a.specialCards.length).toBe(8);
     expect(state.subChoice).toBeNull();
+  });
+
+  it('upgraded pool-pick caps at pool size when fewer than 8', () => {
+    const state = createInitialState({ seats, seed: 'l24-01-upgraded-small' });
+    const a = state.players.find((player) => player.id === 'a');
+
+    if (a === undefined) {
+      throw new Error('missing actor');
+    }
+
+    a.specialCards = [{ instanceId: 'ca-1', cardId: 'card-absorber', isUpgraded: true }];
+    a.points = 10;
+    a.hand = [];
+    seedPool(state, 5);
+    state.currentTurnPlayerId = a.id;
+
+    expect(performTurnAction(state, a.id, { type: 'playCard', instanceId: 'ca-1' }).ok).toBe(
+      true,
+    );
+    expect(state.subChoice?.kind === 'pool-pick' ? state.subChoice.maxCount : 0).toBe(5);
   });
 
   it('§10.1 parity: canPlay reads pool via view (real absorber)', () => {
