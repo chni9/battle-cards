@@ -720,10 +720,10 @@ recommendation is not a default and may not be implemented before it is ruled on
 | ~~**#V4-22**~~ | ~~Ghost life-loss credit scope~~ — **ruled in §11.8** | L28-01 |
 | ~~**#V4-23**~~ | ~~Duplicator gain copy scope / life cap~~ — **ruled in §11.8** | L28-02 |
 | ~~**#V4-24**~~ | ~~Duplicator 1 action / 0 attack~~ — **ruled in §11.8** | L28-02 |
-| **#V4-25** | Tactician draws 4, and the inactivity auto-draw uses the same code path. Accept, or cap the automatic draw? | Note the scenario that matters is **not** the AFK-until-elimination one: those 20 points die with the player, since inactivity elimination pays no eliminator. The reachable one is that `resetConnectedTimeouts` fires on **any** real action, so four deliberate timeouts (+16 points) followed by one action resets the counter, indefinitely, with no elimination. Technical spec v1's Appendix A already flagged "a future kit at Draw 4 would make going idle profitable". The rules spec knows nothing about timers (V1 open decision #7, still open). Recommendation: **accept for V4 and record it as a measurement target**, since capping the auto-draw is a balance decision and V4 changes no value. | L27-02 |
-| **#V4-26** | `alwaysUpgraded` is applied at acquisition and never retro-applied, so a player who clones the Warrior does not get their existing attacks upgraded and a Warrior who clones another kit keeps theirs. Intended? | Recommendation: **yes, confirm as written** — it follows from the acquisition-time model, itself a locked decision. Worth confirming before players read it as a bug. | L27-06 |
-| **#V4-27** | Prophet draws 2 specials "from the full pool of all existing special cards". All 20, duplicates possible? | Recommendation: **all 20, duplicates possible** — `rng.pick` with replacement, consistent with kit assignment being with replacement and with the starting deal allowing duplicates. | L27-04 |
-| **#V4-28** | Upgrader buys an upgrade point for 5. Does the resale yield stay 7? | See §4.8 for the precise framing. The round trip's sign flips from −3 to +2, and a bare sale yields +7 in one action with no capital, on a kit holding 3 starting upgrade points. Recommendation: **decide the yield explicitly rather than inherit 7.** | L27-01 |
+| ~~**#V4-25**~~ | ~~Tactician Draw 4 / inactivity auto-draw~~ — **ruled in §11.9** | L27-02 |
+| ~~**#V4-26**~~ | ~~Warrior Cloning / alwaysUpgraded non-retro~~ — **ruled in §11.9** | L27-06 |
+| ~~**#V4-27**~~ | ~~Prophet random specials pool / duplicates~~ — **ruled in §11.9** | L27-04 |
+| ~~**#V4-28**~~ | ~~Upgrader UP resale yield~~ — **ruled in §11.9** | L27-01 |
 | **#V4-29** | The 20-point random special purchase was restricted to the 6 V1 specials by ruling §6.2 #10. Does it now draw from all 20? | Recommendation: **all 20** — the restriction was explicitly a scope artefact, not a rule. | L21-01 |
 | **#V4-30** | Confirm the player count stays 2 to 4. | Seven new or existing cards scale with the opponent count (MEGA ATTACK, Poison, Imposition, Spy Thief, Attack Thief, upgraded Card Thief, Super Mirror), and God mode — out of V4 — would want up to 7 seats. Recommendation: **stays 2 to 4 in V4**, so any change lands with the mode that needs it. | L20-19 |
 | ~~**#V4-31**~~ | ~~Attack Thief steal MEGA?~~ — **ruled in §11.4** | L23-03 |
@@ -732,7 +732,7 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-34** | Card Thief against an opponent with no cards: invalid action, or a wasted play? | If `canPlay` requires the victim to hold a card, §10.1 parity breaks — `PublicPlayerView` publishes no hand count by design (§10.1). Recommendation: **the play is legal and resolves as a no-op**, which keeps parity intact. This is the first case where the Mirror "invalid, not wasted" precedent must be *rejected* to preserve hidden information; say so deliberately. | L21-03 |
 | **#V4-35** | "If that opponent is currently spied on (Spy active on them)" — spied by the user, or by anyone? | Recommendation: **by the user**. Under the "anyone" reading the branch's legality depends on a relation absent from the acting player's view, which breaks §10.1 and leaks a third party's Spy through legality. | L21-03 |
 | ~~**#V4-36**~~ | ~~Reanimation starting resources + old hand~~ — **ruled in §11.7** | L26-01 |
-| **#V4-37** | Warrior's "all attacks already upgraded" — does it cover MEGA ATTACK? | After §4.1, "attack" is ambiguous. If `mega-attack` joins Warrior's `alwaysUpgraded`, a Warrior who acquires one by any route (20-point random purchase, Card Transformer, theft, elimination reward) gets it **upgraded, hence never redirectable**, for free. If it does not, "all attacks" is literally false. Recommendation: **shared attack cards only**, so the trait means the three buyable attacks. | L27-06 |
+| ~~**#V4-37**~~ | ~~Warrior alwaysUpgraded includes MEGA?~~ — **ruled in §11.9** | L27-06 |
 
 ---
 
@@ -859,4 +859,14 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-22** | Ghost: **every life loss except Cloning’s resource copy**; Self-Suicide / Sentence yes; elim bookkeeping at already-0 **no**; post-shield `livesLost`. | `decisions.md`, L28-01 |
 | **#V4-23** | Duplicator: shield **no**; Cloning copy **no**; life cap **yes**; theft + elim rewards **yes**. | `decisions.md`, L28-02 |
 | **#V4-24** | Duplicator starts **1 action / 0 attack** as written. | `decisions.md`, L28-02 |
+
+## 11.9 Ruled in Lot 27 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-28** | Upgrader buy **5**, sell yield stays **7**. | `decisions.md`, L27-01 |
+| **#V4-25** | Tactician inactivity auto-draw is kit draw **4**; accept for V4; L31-02 measurement target. | `decisions.md`, L27-02 |
+| **#V4-27** | Prophet: **all 20** specials, **duplicates OK** (with replacement). | `decisions.md`, L27-04 |
+| **#V4-26** | `alwaysUpgraded` is **non-retro** on Cloning (acquisition-time only). | `decisions.md`, L27-06 |
+| **#V4-37** | Warrior `alwaysUpgraded` = **shared three only** (not MEGA). | `decisions.md`, L27-06 |
 

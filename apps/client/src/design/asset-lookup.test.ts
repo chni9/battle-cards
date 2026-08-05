@@ -19,11 +19,19 @@ import {
 
 describe('asset-lookup (L30-01)', () => {
   it('resolves a portrait for every KitId', () => {
+    expect(KIT_IDS).toHaveLength(15);
     for (const kitId of KIT_IDS) {
       const url = getKitPortraitUrl(kitId);
       expect(url.length).toBeGreaterThan(0);
       expect(url).not.toMatch(/dead/i);
     }
+  });
+
+  it('maps Lot 27 remaining kit portraits', () => {
+    expect(getKitPortraitUrl('upgrader')).toMatch(/Upgrader\.png/);
+    expect(getKitPortraitUrl('tactician')).toMatch(/Tactician\.png/);
+    expect(getKitPortraitUrl('prophet')).toMatch(/Prophet\.png/);
+    expect(getKitPortraitUrl('warrior')).toMatch(/Warrior\.png/);
   });
 
   it('maps ghost and duplicator portraits (L28-03)', () => {

@@ -9,8 +9,8 @@
 import type { CardId } from './card';
 
 /**
- * Growing kit roster (technical spec v4 §8.2). L28-03 asserts catalog/art
- * exhaustiveness; the V4 closed count is 15 once Lot 27's remaining kits land.
+ * Growing kit roster (technical spec v4 §8.2). V4 closed count is **15**
+ * (Lots 27–28). `content-scope.test.ts` asserts exhaustiveness.
  */
 export const KIT_IDS = [
   'untouchable',
