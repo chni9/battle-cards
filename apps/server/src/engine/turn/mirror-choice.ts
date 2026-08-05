@@ -58,6 +58,17 @@ export function listEligibleMirrorTargets(
     .sort((left, right) => left.queuedAt - right.queuedAt);
 }
 
+/**
+ * Super Mirror eligibility — rules spec §5, backlog L23-02 / #V4-4.
+ * Every pending attack on the user, including upgraded MEGA and prior Super Mirror
+ * redirects (another Super Mirror may re-redirect them).
+ */
+export function listEligibleSuperMirrorTargets(player: Player): PendingEffect[] {
+  return [...player.pendingEffects]
+    .filter((effect) => isAttackCardId(effect.cardId))
+    .sort((left, right) => left.queuedAt - right.queuedAt);
+}
+
 export function redirectPendingAttack(
   state: GameState,
   owner: Player,

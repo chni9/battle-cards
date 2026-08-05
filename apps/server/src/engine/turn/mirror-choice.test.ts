@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { PendingEffect } from '@card-battle/shared';
 
 import { makePlayer } from '../../testing/factories';
-import { listEligibleMirrorTargets } from './mirror-choice';
+import { listEligibleMirrorTargets, listEligibleSuperMirrorTargets } from './mirror-choice';
 
 function attack(
   overrides: Partial<PendingEffect> & Pick<PendingEffect, 'id'>,
@@ -53,6 +53,25 @@ describe('listEligibleMirrorTargets (technical spec v4 §4.7, L20-15)', () => {
     expect(listEligibleMirrorTargets(player, false).map((effect) => effect.id)).toEqual([]);
     expect(listEligibleMirrorTargets(player, true).map((effect) => effect.id)).toEqual([
       'mega-base',
+    ]);
+  });
+
+  it('listEligibleSuperMirrorTargets includes every attack including super-mirror and upgraded mega', () => {
+    const player = makePlayer({
+      pendingEffects: [
+        attack({ id: 'direct' }),
+        attack({ id: 'up', isUpgraded: true }),
+        attack({ id: 'super', redirectedBy: 'super-mirror' }),
+        attack({ id: 'mega-up', cardId: 'mega-attack', isUpgraded: true }),
+        attack({ id: 'tax', cardId: 'tax' }),
+      ],
+    });
+
+    expect(listEligibleSuperMirrorTargets(player).map((effect) => effect.id)).toEqual([
+      'direct',
+      'up',
+      'super',
+      'mega-up',
     ]);
   });
 });
