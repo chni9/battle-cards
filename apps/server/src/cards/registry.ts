@@ -15,6 +15,7 @@ import { cardThiefHandler } from './handlers/card-thief';
 import { cloningHandler } from './handlers/cloning';
 import { curseHandler } from './handlers/curse';
 import { impositionHandler } from './handlers/imposition';
+import { megaAttackHandler } from './handlers/mega-attack';
 import { mirrorHandler } from './handlers/mirror';
 import { pointsGeneratorHandler } from './handlers/points-generator';
 import { poisonHandler } from './handlers/poison';
@@ -56,6 +57,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'poison',
   'curse',
   'super-absorber',
+  'mega-attack',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -68,7 +70,6 @@ export const PENDING_CARD_IDS = [
   'invisibility',
   'reanimation',
   'card-absorber',
-  'mega-attack',
   'super-mirror',
   'attack-thief',
 ] as const satisfies readonly PendingCardId[];
@@ -96,6 +97,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   poison: poisonHandler,
   curse: curseHandler,
   'super-absorber': superAbsorberHandler,
+  'mega-attack': megaAttackHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

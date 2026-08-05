@@ -1259,3 +1259,20 @@ Designer rulings (session):
   before life-ticking persistents so it does not re-absorb lives lost later in the same
   phase.
 
+## 2026-08-05 · [P] #V4-1 / #V4-32 / #V4-4 / #V4-5 / #V4-31 Lot 23 attacks
+
+Designer rulings (session):
+
+- **#V4-1:** MEGA ATTACK targets **alive opponents only** (not the user). Overrides the
+  tech-spec recommendation that included the user.
+- **#V4-32:** Assassin **may not** include MEGA ATTACK in a multi-attack. Already
+  enforced by `isSharedAttackCardId`; tests lock it.
+- **#V4-4:** Super Mirror redirects **all** pending attacks on the user to **every**
+  alive opponent automatically — no sub-choice.
+- **#V4-5:** Attack Thief charge is spent **before** mutual cancel. The first eligible
+  incoming attack consumes one charge via `cancelPendingEffect` (`'blocked'`), even
+  when mutual cancel would have cancelled that attack. Overrides the tech-spec
+  recommendation (preserve charge).
+- **#V4-31:** Attack Thief steals only **shared** attack cards (`isSharedAttackCardId`);
+  MEGA ATTACK is not stealable.
+
