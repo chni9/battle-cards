@@ -60,6 +60,10 @@ export function enumerationStateFromView(
         blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
         blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
         attackBlockCharges: view.self.attackBlockCharges,
+        pendingReanimation:
+          publicPlayer.pendingReanimation === null
+            ? null
+            : { isUpgraded: publicPlayer.pendingReanimation.isUpgraded },
       };
     }
 
@@ -88,6 +92,10 @@ export function enumerationStateFromView(
       blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
       blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
       attackBlockCharges: publicPlayer.activeAttackBlock === true ? 1 : 0,
+      pendingReanimation:
+        publicPlayer.pendingReanimation === null
+          ? null
+          : { isUpgraded: publicPlayer.pendingReanimation.isUpgraded },
     };
   });
 

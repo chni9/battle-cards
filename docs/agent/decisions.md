@@ -1326,3 +1326,32 @@ Designer rulings (session):
 - **#V4-10:** Deactivating Invisibility **consumes** the turn's action (new
   `deactivatePersistent` TurnAction).
 
+## 2026-08-05 · [P] #V4-11 / #V4-12 / #V4-13 / #V4-36 Lot 26 Reanimation
+
+Designer rulings (session):
+
+- **#V4-11:** Elimination **happens** and the eliminator is **paid**; the victim
+  returns **stripped**. Overrides the tech-spec recommendation (intercept before
+  mark / no reward). Cards stay on the victim through the reward window as today;
+  leftovers dump to the pool; then revive.
+- **#V4-12a:** Armed Reanimation fires on **every** elimination path, including
+  absence / inactivity / consented leave (`eliminateWithoutReward`).
+- **#V4-12b:** Armed Reanimation is **public** via `activePersistentEffects`.
+- **#V4-12c:** At most **one** armed charge; a second play while armed is
+  **rejected** (invalid action).
+- **#V4-12d:** Consumed on **trigger only**; an unused armed charge evaporates at
+  game end (no special pool deposit).
+- **#V4-36:** Revive is a **full restart** — setup steps 2 + 3 + 4 for the new kit
+  (resources, starting attack/action draws, kit specials). Old hand/specials are
+  already stripped by rewards/dump.
+- **#V4-13:** Upgraded kit pick is an **immediate blocking** `reanimation-kit`
+  sub-choice (not deferred to the player's next turn). Expiry → seeded random kit;
+  bot resolves it.
+- **Revive timing:** After rewards finish (or after immediate dump if no
+  eliminator / lifecycle). Serial order: rewards → kit sub-choice (upgraded) →
+  reset. Never parallel with rewards.
+- **Architecture (Approach 1):** Arm in `activePersistentEffects`
+  (`counter: null`); on elim consume the charge (pool the card instance) and set
+  `Player.pendingReanimation: { isUpgraded }`; sole-survivor treats pending as
+  still in the match; do not `rejectReconnection` while pending.
+

@@ -192,6 +192,10 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       blockTurnsRemaining: player.blockTurnsRemaining,
       blockAttacksForbidden: player.blockAttacksForbidden,
       activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
+      pendingReanimation:
+        player.pendingReanimation === null
+          ? null
+          : { isUpgraded: player.pendingReanimation.isUpgraded },
     };
 
     if (difficulty !== undefined) {
@@ -323,6 +327,10 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         blockTurnsRemaining: player.blockTurnsRemaining,
         blockAttacksForbidden: player.blockAttacksForbidden,
         activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
+        pendingReanimation:
+          player.pendingReanimation === null
+            ? null
+            : { isUpgraded: player.pendingReanimation.isUpgraded },
       };
 
       if (difficulty !== undefined) {

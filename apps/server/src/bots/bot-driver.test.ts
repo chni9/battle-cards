@@ -44,6 +44,7 @@ function emptyView(you: string): PlayingStateView {
         blockTurnsRemaining: 0,
         blockAttacksForbidden: false,
         activeAttackBlock: null,
+        pendingReanimation: null,
       },
     ],
     self: {
@@ -145,6 +146,7 @@ describe('BotDriver (L16-06)', () => {
         blockAttacksForbidden: false,
               attackBlockCharges: 0,
               eliminationSnapshot: null,
+              pendingReanimation: null,
             },
           ],
           seed: 'driver-seed',
@@ -236,6 +238,7 @@ describe('BotDriver (L16-06)', () => {
         blockAttacksForbidden: false,
               attackBlockCharges: 0,
               eliminationSnapshot: null,
+              pendingReanimation: null,
             },
           ],
           seed: 's',

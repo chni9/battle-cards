@@ -58,6 +58,7 @@ function player(
     blockTurnsRemaining: 0,
         blockAttacksForbidden: false,
     activeAttackBlock: null,
+    pendingReanimation: null,
     ...extras,
   };
 }

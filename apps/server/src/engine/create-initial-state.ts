@@ -10,8 +10,6 @@
  */
 
 import {
-  ACTION_CARD_IDS,
-  ATTACK_CARD_IDS,
   CLASSIC_LIFE_LIMIT,
   getKit,
   isKitId,
@@ -21,8 +19,8 @@ import {
   type Player,
 } from '@card-battle/shared';
 
-import { acquireCardToHand, acquireSpecialCard } from './kits/acquire-card';
 import { createRng, createSeed, type Rng } from './rng';
+import { dealStartingLoadout } from './reanimate-player';
 
 export interface SeatInput {
   id: string;
@@ -146,21 +144,9 @@ function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): 
     blockAttacksForbidden: false,
     attackBlockCharges: 0,
     eliminationSnapshot: null,
+    pendingReanimation: null,
   };
 
-  for (let index = 0; index < kit.startingCardCounts.action; index += 1) {
-    const cardId = rng.pick(ACTION_CARD_IDS);
-    acquireCardToHand(player, cardId, `${seat.id}:start:action:${String(index)}`);
-  }
-
-  for (let index = 0; index < kit.startingCardCounts.attack; index += 1) {
-    const cardId = rng.pick(ATTACK_CARD_IDS);
-    acquireCardToHand(player, cardId, `${seat.id}:start:attack:${String(index)}`);
-  }
-
-  for (const [index, specialId] of kit.specialCards.entries()) {
-    acquireSpecialCard(player, specialId, `${seat.id}:start:special:${String(index)}`);
-  }
-
+  dealStartingLoadout(player, kitId, rng, `${seat.id}:start`);
   return player;
 }

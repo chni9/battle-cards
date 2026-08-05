@@ -44,6 +44,7 @@ import {
 import {
   applyDefaultEliminationRewards,
   applyEliminationRewardChoices,
+  findSoleSurvivorId,
   hasPendingEliminationRewards,
   processEliminations,
   type EliminationEvent,
@@ -820,7 +821,7 @@ function finishTurnPhases(
     };
   }
 
-  const winnerPlayerId = findWinner(state);
+  const winnerPlayerId = findSoleSurvivorId(state);
 
   if (winnerPlayerId === null) {
     advanceTurn(state);
@@ -1113,14 +1114,5 @@ function toResolvedEvents(resolved: ResolvedEffect[]): ActionResolvedEvent[] {
 
 /**
  * Elimination at 0 lives is handled by `processEliminations` (Lot 6).
+ * Sole-survivor uses `findSoleSurvivorId` (honours `pendingReanimation`, L26).
  */
-
-function findWinner(state: GameState): string | null {
-  const alive = state.players.filter((player) => !player.isEliminated);
-
-  if (alive.length === 1) {
-    return alive[0]?.id ?? null;
-  }
-
-  return null;
-}

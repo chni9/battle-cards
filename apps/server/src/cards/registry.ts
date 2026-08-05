@@ -24,6 +24,7 @@ import { megaAttackHandler } from './handlers/mega-attack';
 import { mirrorHandler } from './handlers/mirror';
 import { pointsGeneratorHandler } from './handlers/points-generator';
 import { poisonHandler } from './handlers/poison';
+import { reanimationHandler } from './handlers/reanimation';
 import { regenerationHandler } from './handlers/regeneration';
 import { sentenceHandler } from './handlers/sentence';
 import { shieldHandler } from './handlers/shield';
@@ -70,15 +71,14 @@ export const IMPLEMENTED_CARD_IDS = [
   'card-transformer',
   'block',
   'invisibility',
+  'reanimation',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
-export const PENDING_CARD_IDS = [
-  'reanimation',
-] as const satisfies readonly PendingCardId[];
+export const PENDING_CARD_IDS = [] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,
@@ -110,6 +110,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'card-transformer': cardTransformerHandler,
   block: blockHandler,
   invisibility: invisibilityHandler,
+  reanimation: reanimationHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

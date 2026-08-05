@@ -14,9 +14,10 @@ import { gainPoints } from '../economy/gain-points';
 import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { transferCardInstance } from '../kits/acquire-card';
 import { gainLives } from '../life/gain-lives';
-import type { Rng } from '../rng';
-import { advanceTurn, findPlayer } from './advance-turn';
+import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
+import { createRng, type Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import { advanceTurn, findPlayer } from './advance-turn';
 import { SUB_CHOICE_MS } from './sub-choice';
 
 /** Re-exports the single `SUB_CHOICE_MS` — technical spec v4 §4.4 (L20-18). */
@@ -167,16 +168,22 @@ function captureEliminationSnapshot(player: Player, turnSequence: number): void 
 /**
  * Eliminate a player who still has lives (absence, inactivity, or Leave forfeit).
  * No eliminator → cards to the pool immediately — technical spec §5.7, L7-02…L7-04.
+ * Armed Reanimation consumes and revives after the dump (#V4-12a / L26-01).
  *
- * @returns true when the player was newly eliminated.
+ * @returns true when the player was newly eliminated (even if immediately revived).
  */
-export function eliminateWithoutReward(state: GameState, playerId: string): boolean {
+export function eliminateWithoutReward(
+  state: GameState,
+  playerId: string,
+  rng: Rng = createRng(`${state.seed}:lifecycle-elim:${state.turnSequence}:${playerId}`),
+): boolean {
   const player = findPlayer(state, playerId);
 
   if (player === undefined || player.isEliminated) {
     return false;
   }
 
+  consumeArmedReanimation(state, player);
   captureEliminationSnapshot(player, state.turnSequence);
   player.isEliminated = true;
   // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
@@ -184,18 +191,24 @@ export function eliminateWithoutReward(state: GameState, playerId: string): bool
   player.lives = 0;
   cleanupEliminatedPlayer(state, player);
   dumpCardsToPool(state, player);
+  completePendingReanimationIfReady(player, rng);
   return true;
 }
 
-/** Sole remaining non-eliminated player, or null if the match is not decided. */
+/**
+ * Players still in the match for sole-survivor / game-over — includes seats with
+ * `pendingReanimation` (#V4-11 / §10.3).
+ */
 export function findSoleSurvivorId(state: GameState): string | null {
-  const alive = state.players.filter((player) => !player.isEliminated);
+  const contenders = state.players.filter(
+    (player) => !player.isEliminated || player.pendingReanimation !== null,
+  );
 
-  if (alive.length !== 1) {
+  if (contenders.length !== 1) {
     return null;
   }
 
-  return alive[0]?.id ?? null;
+  return contenders[0]?.id ?? null;
 }
 
 function activateRewardHead(state: GameState, nowMs: number): void {
@@ -232,6 +245,7 @@ export function processEliminations(
       continue;
     }
 
+    consumeArmedReanimation(state, player);
     captureEliminationSnapshot(player, state.turnSequence);
     player.isEliminated = true;
     // Idempotent normalization — technical spec §4.3 step 5, §4.2.
@@ -246,6 +260,7 @@ export function processEliminations(
 
     if (eliminatorPlayerId === null) {
       dumpCardsToPool(state, player);
+      completePendingReanimationIfReady(player, rng);
       continue;
     }
 
@@ -347,6 +362,52 @@ function finishRewardJob(state: GameState, nowMs: number): void {
   activateRewardHead(state, nowMs);
 }
 
+/**
+ * Consume an armed Reanimation before cleanup pools all persistents (#V4-11 / L26).
+ * Sets `pendingReanimation` and pools the spent card instance.
+ */
+function consumeArmedReanimation(state: GameState, player: Player): void {
+  const effectIndex = player.activePersistentEffects.findIndex(
+    (effect) => effect.cardId === 'reanimation',
+  );
+
+  if (effectIndex < 0) {
+    return;
+  }
+
+  const [effect] = player.activePersistentEffects.splice(effectIndex, 1);
+
+  if (effect === undefined) {
+    return;
+  }
+
+  poolDeactivatedPersistentEffects(state, [effect]);
+  player.pendingReanimation = { isUpgraded: effect.isUpgraded };
+}
+
+/**
+ * After cards are dumped (no-reward / lifecycle / post-reward), revive if pending.
+ * L26-01: always random kit. L26-02 will branch upgraded into a sub-choice first.
+ */
+function completePendingReanimationIfReady(player: Player, rng: Rng): void {
+  if (player.pendingReanimation === null) {
+    return;
+  }
+
+  // Upgraded kit pick lands in L26-02; until then both tiers use seeded random.
+  const kitId = pickReanimationKit(rng);
+  reanimatePlayer(player, kitId, rng);
+}
+
+/** Revive every seat still holding `pendingReanimation` once the reward queue is empty. */
+function processPendingReanimations(state: GameState, rng: Rng): void {
+  for (const player of state.players) {
+    if (player.pendingReanimation !== null) {
+      completePendingReanimationIfReady(player, rng);
+    }
+  }
+}
+
 export type ApplyRewardResult =
   | {
       ok: true;
@@ -369,6 +430,7 @@ export function applyEliminationRewardChoices(
   eliminationId: string,
   choices: readonly [RewardChoice, RewardChoice],
   nowMs: number = Date.now(),
+  rng: Rng = createRng(`${state.seed}:reward:${state.turnSequence}`),
 ): ApplyRewardResult {
   const active = state.rewardChoice;
 
@@ -415,7 +477,7 @@ export function applyEliminationRewardChoices(
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
   finishRewardJob(state, nowMs);
-  return { ...resumeAfterRewards(state), rewardsClaimed };
+  return { ...resumeAfterRewards(state, rng), rewardsClaimed };
 }
 
 /**
@@ -424,6 +486,7 @@ export function applyEliminationRewardChoices(
 export function applyDefaultEliminationRewards(
   state: GameState,
   nowMs: number = Date.now(),
+  rng: Rng = createRng(`${state.seed}:reward-default:${state.turnSequence}`),
 ): ApplyRewardResult {
   const active = state.rewardChoice;
 
@@ -437,20 +500,14 @@ export function applyDefaultEliminationRewards(
     active.eliminationId,
     [{ type: 'lives' }, { type: 'lives' }],
     nowMs,
+    rng,
   );
 }
 
-function findWinner(state: GameState): string | null {
-  const alive = state.players.filter((player) => !player.isEliminated);
-
-  if (alive.length === 1) {
-    return alive[0]?.id ?? null;
-  }
-
-  return null;
-}
-
-export function resumeAfterRewards(state: GameState): {
+export function resumeAfterRewards(
+  state: GameState,
+  rng: Rng = createRng(`${state.seed}:resume-rewards:${state.turnSequence}`),
+): {
   ok: true;
   rewardChoicePending: boolean;
   winnerPlayerId: string | null;
@@ -459,7 +516,9 @@ export function resumeAfterRewards(state: GameState): {
     return { ok: true, rewardChoicePending: true, winnerPlayerId: null };
   }
 
-  const winnerPlayerId = findWinner(state);
+  processPendingReanimations(state, rng);
+
+  const winnerPlayerId = findSoleSurvivorId(state);
 
   if (winnerPlayerId === null) {
     advanceTurn(state);

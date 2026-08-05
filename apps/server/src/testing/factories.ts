@@ -38,6 +38,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
     blockAttacksForbidden: false,
     attackBlockCharges: 0,
     eliminationSnapshot: null,
+    pendingReanimation: null,
     ...overrides,
   };
 }

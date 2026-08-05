@@ -240,6 +240,10 @@ Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/e
   `2 × 4 lives`. Impossible card picks are rejected.
 - **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide
   self-elim, elimination by absence. Cards still go to the pool immediately.
+- **Reanimation (L26 / #V4-11):** elimination still happens and the eliminator is paid. The
+  armed charge is consumed before cleanup pools persistents; `pendingReanimation` holds through
+  the reward window; after dump the seat resets with a full kit loadout (#V4-36). Sole-survivor
+  treats pending revive as still in the match. `isEliminated` is cleared on revive.
 
 Manual two-browser exercise of the reward gate (create/join, Tax-farm, super-attack elim,
 reward pick / 20s default, game over) lives in `docs/agent/frontend.md` § Manual two-browser

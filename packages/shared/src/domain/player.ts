@@ -109,6 +109,18 @@ export interface Player {
    * eliminated; used for the public `eliminationReveal` view. Not Spy relations.
    */
   eliminationSnapshot: EliminationSnapshot | null;
+  /**
+   * Set when an armed Reanimation is consumed at elimination (#V4-11 / L26).
+   * Player stays `isEliminated` through the reward window; revive runs after
+   * rewards/dump. Public — sole-survivor and reconnection consult it.
+   * `null` when no revive is pending.
+   */
+  pendingReanimation: PendingReanimation | null;
+}
+
+/** Queued revive after elim consumed an armed Reanimation — technical spec v4 §11.7. */
+export interface PendingReanimation {
+  isUpgraded: boolean;
 }
 
 /**

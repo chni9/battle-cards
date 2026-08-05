@@ -581,13 +581,22 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
     this.clearAbsentTimer(sessionId);
-    this.rejectReconnection(sessionId, new Error('Player left'));
     eliminateWithoutReward(state, sessionId);
     this.recordElimination({
       playerId: sessionId,
       eliminatorPlayerId: null,
       reason: 'leave',
     });
+
+    const afterLeave = findPlayer(state, sessionId);
+
+    // Skip reject when Reanimation revived the seat (#V4-12a / L26).
+    if (
+      afterLeave === undefined ||
+      (afterLeave.isEliminated && afterLeave.pendingReanimation === null)
+    ) {
+      this.rejectReconnection(sessionId, new Error('Player left'));
+    }
 
     if (this.finishIfSoleSurvivor(state)) {
       return;
@@ -1115,8 +1124,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     for (const playerId of result.eliminatedPlayerIds) {
       const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
+      const eliminated = this.gameState?.players.find((player) => player.id === playerId);
 
-      this.rejectReconnection(playerId, new Error('Player eliminated'));
+      // Do not reject reconnection while Reanimation revive is pending, or after an
+      // immediate revive (#V4-11 / L26) — seat stays reconnectable.
+      if (
+        eliminated === undefined ||
+        (eliminated.isEliminated && eliminated.pendingReanimation === null)
+      ) {
+        this.rejectReconnection(playerId, new Error('Player eliminated'));
+      }
+
       this.clearAbsentTimer(playerId);
       this.recordElimination({
         playerId,
@@ -2435,7 +2453,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.rejectReconnection(playerId, new Error('Player eliminated'));
+    const after = state.players.find((player) => player.id === playerId);
+
+    // Skip reject when Reanimation revived the seat (#V4-12a / L26).
+    if (after === undefined || (after.isEliminated && after.pendingReanimation === null)) {
+      this.rejectReconnection(playerId, new Error('Player eliminated'));
+    }
+
     this.clearAbsentTimer(playerId);
     this.recordElimination({
       playerId,

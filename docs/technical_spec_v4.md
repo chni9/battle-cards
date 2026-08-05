@@ -487,7 +487,7 @@ no task defaults it. Includes the two fields that are not card-driven.
 | `Player.duplicationActiveUntil` (or equivalent) | **Public** | It changes what every opponent's gain does. |
 | `Player.attackBlockCharges` (Attack Thief) | **Public presence** | Mirrors `activeShield`, public since PROTOCOL 20 as presence-plus-tier with the point count private. |
 | `PendingEffect.redirectedBy` | **Public** | The pending queue is already public. |
-| Reanimation armed on a player | **Ruling needed** — #V4-12 | A hidden Reanimation is a bluff; a public one changes how opponents commit to a kill. The rules spec is silent. |
+| Reanimation armed on a player | **Public** | Via `activePersistentEffects` (#V4-12b). `pendingReanimation` is also public while revive is queued after elim. |
 | Curse active on a victim | **Public** | Persistent effects are already public per seat. |
 | The card stolen by Card Thief | **Private to thief and victim** | Its identity reaches the thief's hand, but `PublicPlayerView` publishes no hand count, so other seats learn nothing. Do **not** put the stolen `cardId` in the public `ActionPlayedLogEntry`, which carries the *played* card. |
 | The special drawn by Card Transformer | **Private to the user** | Same reasoning. The transformation is public, the result is a card in hand. |
@@ -706,9 +706,9 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-8** | With 3 to 7 Block turns, what is "the target's last complete turn" for Absorber, and does the turn ledger reset on each Block turn? | Recommendation: **reset per Block turn**, so Absorber reads the most recent one. This makes Block a partial Absorber defence, which may or may not be intended. | L25-01 |
 | **#V4-9** | Invisibility makes the user "immune to any opposing action". Scope? | Four sub-questions, each needing an answer: does it stop already-active persistent ticks on the user (Poison, Curse, Imposition)? Does it stop attacks, MEGA ATTACK included? Can the user still be hit by a Sentence, which is a random draw rather than an action against them? Does an opponent's targeting attempt become an invalid action, or resolve as `'immune'`? Recommendation: **resolve as `'immune'` rather than reject**, so the opponent's information is not distorted, and **persistents already active continue** — otherwise Invisibility is a universal cleanser at 10 points. | L25-02 |
 | **#V4-10** | Does deactivating Invisibility consume the turn's action? | Recommendation: **yes**. Every state change costs an action, and a free deactivation lets the user become vulnerable and act in the same turn. | L25-02 |
-| **#V4-11** | Reanimation vs elimination rewards: does the eliminator still get 2 rewards for an elimination that was reversed? | The sharpest one. Rewards include *taking cards from the eliminated player*, and the reward queue is already public via `rewardsClaimed`. Recommendation: **the elimination does not happen at all** — Reanimation intercepts before `processEliminations` marks the player, so no contributor, no reward, no card transfer, no snapshot. Alternative: the elimination happens, the eliminator is paid, and the player returns stripped. Both are defensible; the code cannot choose. | L26-01 |
-| **#V4-12** | Reanimation: does it apply to elimination by absence, inactivity or a consented leave? Is an armed Reanimation public? Can a player hold two? Is the card consumed if the game ends before it triggers? | Rules spec says only "if the user is eliminated later in the game". Recommendation: **applies to every elimination** including lifecycle ones, **public** (consistent with active persistents since PROTOCOL 19), **two can be held and trigger in sequence**, consumed on trigger only. | L26-01 |
-| **#V4-13** | Upgraded Reanimation lets the user choose their kit. When is that sub-choice raised, given the elimination is detected inside `processEliminations`, possibly not on the reanimated player's turn? | Recommendation: **immediately, as a blocking sub-choice like rewards**, which already pauses turn advance and game-over from outside the choosing player's turn. Requires `processEliminations` to become interruptible. | L26-02 |
+| ~~**#V4-11**~~ | ~~Reanimation vs elimination rewards~~ — **ruled in §11.7** | L26-01 |
+| ~~**#V4-12**~~ | ~~Reanimation lifecycle / public / stack / unused~~ — **ruled in §11.7** | L26-01 |
+| ~~**#V4-13**~~ | ~~Upgraded Reanimation kit-pick timing~~ — **ruled in §11.7** | L26-02 |
 | ~~**#V4-14**~~ | ~~Pool keeps isUpgraded / Absorber free upgrade~~ — **ruled in §11.5** | L24-01 |
 | ~~**#V4-15**~~ | ~~Pool &lt; 4 / empty Absorber~~ — **ruled in §11.5** | L24-01 |
 | ~~**#V4-16**~~ | ~~Transformer consumed destination + upgrade~~ — **ruled in §11.5** | L24-02 |
@@ -731,7 +731,7 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-33** | Does the Counter Rule apply to the new direct-theft cards? | Rules spec §1 states the rule **generically** — "a card that inflicts a direct effect on an opponent … can be countered by the same card played back against the source" — with Spy and Thief as examples, not as the list. Card Thief, Upgrade Point Thief, Attack Thief and Curse all alter an opponent's resources against their will. The code freezes `COUNTERABLE_CARD_IDS = new Set(['spy','thief'])` and `engine.md` says "Spy and Thief only". The same question applies to Untouchable's `immuneTo` (also `['thief','spy']`, by card id) and to upgraded Shield's Thief/Spy block, which already carries an explicit `spy-thief` exemption from a Lot 5 ruling. Recommendation: **rule the generic principle once, for all four new cards plus the two existing exemption mechanisms**, rather than card by card. | L21-02, L21-03, L22-02, L23-03 |
 | **#V4-34** | Card Thief against an opponent with no cards: invalid action, or a wasted play? | If `canPlay` requires the victim to hold a card, §10.1 parity breaks — `PublicPlayerView` publishes no hand count by design (§10.1). Recommendation: **the play is legal and resolves as a no-op**, which keeps parity intact. This is the first case where the Mirror "invalid, not wasted" precedent must be *rejected* to preserve hidden information; say so deliberately. | L21-03 |
 | **#V4-35** | "If that opponent is currently spied on (Spy active on them)" — spied by the user, or by anyone? | Recommendation: **by the user**. Under the "anyone" reading the branch's legality depends on a relation absent from the acting player's view, which breaks §10.1 and leaks a third party's Spy through legality. | L21-03 |
-| **#V4-36** | Reanimation returns the user with "its starting resources, as at the start of the game". Does that include starting attack/action cards and the new kit's special cards? And what happens to the hand they still held? | Rules spec §6 Setup separates resources (step 2) from attack/action cards (step 3) and kit specials (step 4), so "starting resources" is literally step 2 only. But a player returning with zero cards is barely alive. And because Reanimation intercepts before `cleanupEliminatedPlayer`, the old hand is never pooled, so its fate is undefined too. Recommendation: **full step 2 + 3 + 4 for the new kit, and the old hand and specials go to the pool** — a clean restart, which is what "as at the start of the game" reads like. | L26-01 |
+| ~~**#V4-36**~~ | ~~Reanimation starting resources + old hand~~ — **ruled in §11.7** | L26-01 |
 | **#V4-37** | Warrior's "all attacks already upgraded" — does it cover MEGA ATTACK? | After §4.1, "attack" is ambiguous. If `mega-attack` joins Warrior's `alwaysUpgraded`, a Warrior who acquires one by any route (20-point random purchase, Card Transformer, theft, elimination reward) gets it **upgraded, hence never redirectable**, for free. If it does not, "all attacks" is literally false. Recommendation: **shared attack cards only**, so the trait means the three buyable attacks. | L27-06 |
 
 ---
@@ -838,4 +838,17 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-9d** | Targeting an invisible player is legal and resolves as `'immune'` (not rejected). | `decisions.md`, L25-02 |
 | *(addr.)* | Cloning covered by invisibility immunity; lifecycle elim **not** blocked. Block attack ban = play/use only (buy/upgrade OK). Each Block cancel emits `'blocked'`. | `decisions.md`, L25 |
 | **#V4-10** | Deactivating Invisibility **consumes** the turn's action. | `decisions.md`, L25-02 |
+
+## 11.7 Ruled in Lot 26 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-11** | Elimination **happens**; eliminator is **paid**; victim returns **stripped** (overrides intercept-before-mark recommendation). | `decisions.md`, L26-01 |
+| **#V4-12a** | Fires on **every** elim path including lifecycle. | `decisions.md`, L26-01 |
+| **#V4-12b** | Armed Reanimation is **public** via `activePersistentEffects`. | `decisions.md`, L26-01 |
+| **#V4-12c** | At most **one** armed; second play **rejected**. | `decisions.md`, L26-01 |
+| **#V4-12d** | Consumed on **trigger only**; unused evaporates at game end. | `decisions.md`, L26-01 |
+| **#V4-36** | Full restart steps **2+3+4**; leftovers after rewards/dump already pooled. | `decisions.md`, L26-01 |
+| **#V4-13** | Upgraded kit pick = immediate blocking `reanimation-kit` sub-choice after rewards; expiry → seeded random; bot resolves. | `decisions.md`, L26-02 |
+| *(addr.)* | Revive **after** rewards/dump; serial rewards → kit pick → reset. Architecture: persistent arm + `pendingReanimation`. | `decisions.md`, L26 |
 
