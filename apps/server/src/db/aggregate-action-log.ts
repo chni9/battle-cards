@@ -71,6 +71,10 @@ export function aggregateActionsForPlayer(
       case 'draw': {
         break;
       }
+      default: {
+        const _exhaustive: never = entry.action;
+        void _exhaustive;
+      }
     }
   }
 

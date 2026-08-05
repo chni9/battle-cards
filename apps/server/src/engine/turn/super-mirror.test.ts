@@ -247,4 +247,83 @@ describe('Super Mirror (L23-02)', () => {
     ).toBe(false);
     expect(alice.specialCards).toHaveLength(1);
   });
+
+  it('returns mirrorRedirects for each Super Mirror duplicate (L30-06)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+        { id: 'd', nickname: 'Dan' },
+      ],
+      seed: 'l30-06-super-mirror-log',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
+    const dan = state.players.find((player) => player.id === 'd');
+
+    if (
+      alice === undefined ||
+      bob === undefined ||
+      carol === undefined ||
+      dan === undefined
+    ) {
+      throw new Error('missing players');
+    }
+
+    for (const player of state.players) {
+      player.pendingEffects = [];
+    }
+
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: carol.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    alice.points = 7;
+    alice.specialCards = [
+      { instanceId: 'sm-1', cardId: 'super-mirror', isUpgraded: false },
+    ];
+    state.currentTurnPlayerId = alice.id;
+
+    const result = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'sm-1',
+    });
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.mirrorRedirects).toHaveLength(6);
+    expect(result.mirrorRedirects?.every((redirect) => redirect.cardId === 'super-mirror')).toBe(
+      true,
+    );
+    expect(result.mirrorRedirects?.every((redirect) => redirect.actorPlayerId === alice.id)).toBe(
+      true,
+    );
+    expect(
+      result.mirrorRedirects?.every(
+        (redirect) => redirect.previousTargetPlayerId === alice.id,
+      ),
+    ).toBe(true);
+    expect(
+      new Set(result.mirrorRedirects?.map((redirect) => redirect.newTargetPlayerId)).size,
+    ).toBe(3);
+    void bob;
+    void carol;
+    void dan;
+  });
 });

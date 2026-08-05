@@ -5,6 +5,7 @@
 
 import {
   formatCardLabel,
+  getKit,
   isAttackCardId,
   type ActionLogEntryKind,
   type ActionLogEntryView,
@@ -15,6 +16,7 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'actionResolved',
   'playerEliminated',
   'mirrorRedirected',
+  'playerReanimated',
   'rewardsClaimed',
 ] as const;
 
@@ -80,6 +82,10 @@ function formatPlayedAction(
       }
       return `${actor} plays ${name}`;
     }
+    default: {
+      const _exhaustive: never = entry.action;
+      return _exhaustive;
+    }
   }
 }
 
@@ -94,26 +100,31 @@ export function formatActionLogEntry(
       const source = nicknameOf(entry.sourcePlayerId);
       const target = nicknameOf(entry.targetPlayerId);
       const name = formatCardLabel(entry.cardId, entry.isUpgraded);
-      if (entry.outcome === 'immune') {
-        return `${name} from ${source} resolves on ${target} — immune`;
+      switch (entry.outcome) {
+        case 'immune':
+          return `${name} from ${source} resolves on ${target} — immune`;
+        case 'cancelled':
+          return `${name} from ${source} against ${target} is cancelled`;
+        case 'blocked':
+          return `${name} from ${source} against ${target} is blocked`;
+        case 'applied': {
+          const shield =
+            entry.shieldAbsorbed > 0
+              ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
+              : '';
+          if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
+            return `${source}'s ${name} hits ${target} (−${String(entry.livesLost)} life${shield})`;
+          }
+          if (entry.shieldAbsorbed > 0) {
+            return `${name} from ${source} resolves on ${target} (${String(entry.shieldAbsorbed)} absorbed by shield)`;
+          }
+          return `${name} from ${source} resolves on ${target}`;
+        }
+        default: {
+          const _exhaustive: never = entry.outcome;
+          return _exhaustive;
+        }
       }
-      if (entry.outcome === 'cancelled') {
-        return `${name} from ${source} against ${target} is cancelled`;
-      }
-      if (entry.outcome === 'blocked') {
-        return `${name} from ${source} against ${target} is blocked`;
-      }
-      const shield =
-        entry.shieldAbsorbed > 0
-          ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
-          : '';
-      if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
-        return `${source}'s ${name} hits ${target} (−${String(entry.livesLost)} life${shield})`;
-      }
-      if (entry.shieldAbsorbed > 0) {
-        return `${name} from ${source} resolves on ${target} (${String(entry.shieldAbsorbed)} absorbed by shield)`;
-      }
-      return `${name} from ${source} resolves on ${target}`;
     }
     case 'playerEliminated': {
       const victim = nicknameOf(entry.playerId);
@@ -135,10 +146,19 @@ export function formatActionLogEntry(
       const to = nicknameOf(entry.newTargetPlayerId);
       return `${actor} redirects ${formatCardLabel(entry.cardId, false)} from ${from} to ${to}`;
     }
+    case 'playerReanimated': {
+      const player = nicknameOf(entry.playerId);
+      const kitName = getKit(entry.kitId).name;
+      return `${player} returns with ${kitName}`;
+    }
     case 'rewardsClaimed': {
       const eliminator = nicknameOf(entry.eliminatorPlayerId);
       const eliminated = nicknameOf(entry.eliminatedPlayerId);
       return `${eliminator} claims elimination rewards from ${eliminated}`;
+    }
+    default: {
+      const _exhaustive: never = entry;
+      return _exhaustive;
     }
   }
 }
@@ -161,8 +181,14 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
         entry.previousTargetPlayerId === playerId ||
         entry.newTargetPlayerId === playerId
       );
+    case 'playerReanimated':
+      return entry.playerId === playerId;
     case 'rewardsClaimed':
       return entry.eliminatorPlayerId === playerId || entry.eliminatedPlayerId === playerId;
+    default: {
+      const _exhaustive: never = entry;
+      return _exhaustive;
+    }
   }
 }
 

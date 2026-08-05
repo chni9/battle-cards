@@ -1166,6 +1166,23 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.broadcast(ACTION_PLAYED, played);
     }
 
+    if (result.mirrorRedirects !== undefined) {
+      for (const redirect of result.mirrorRedirects) {
+        this.actionLog.push({
+          kind: 'mirrorRedirected',
+          actorPlayerId: redirect.actorPlayerId,
+          cardId: redirect.cardId,
+          previousTargetPlayerId: redirect.previousTargetPlayerId,
+          newTargetPlayerId: redirect.newTargetPlayerId,
+          turnSequence: redirect.turnSequence,
+        });
+      }
+    }
+
+    if (result.playerReanimated !== undefined) {
+      this.appendPlayerReanimated(result.playerReanimated, turnSequence);
+    }
+
     for (const resolved of result.resolved) {
       this.actionLog.push({
         kind: 'actionResolved',
@@ -1225,6 +1242,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
       turnSequence,
       ...(botReason !== null ? { botReason } : {}),
     });
+  }
+
+  private appendPlayerReanimated(
+    entries: readonly { playerId: string; kitId: KitId }[],
+    turnSequence: number,
+  ): void {
+    for (const entry of entries) {
+      this.actionLog.push({
+        kind: 'playerReanimated',
+        playerId: entry.playerId,
+        kitId: entry.kitId,
+        turnSequence,
+      });
+    }
   }
 
   private consumePendingBotReason(): BotDecisionReason | null {
@@ -1669,7 +1700,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
     rewardChoicePending: boolean;
     subChoicePending?: boolean;
     winnerPlayerId: string | null;
+    playerReanimated?: readonly { playerId: string; kitId: KitId }[];
   }): void {
+    if (result.playerReanimated !== undefined) {
+      const turnSequence = this.gameState?.turnSequence ?? 0;
+      this.appendPlayerReanimated(result.playerReanimated, turnSequence);
+    }
+
     if (result.winnerPlayerId !== null) {
       this.onGameOver(result.winnerPlayerId);
       return;

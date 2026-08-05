@@ -229,7 +229,7 @@ export function applyReanimationKitPick(
   state: GameState,
   kitId: KitId,
   rng: Rng,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true; playerReanimated: { playerId: string; kitId: KitId } } | { ok: false; message: string } {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit') {
@@ -249,13 +249,15 @@ export function applyReanimationKitPick(
 
   state.subChoice = null;
   reanimatePlayer(player, kitId, rng);
-  return { ok: true };
+  return { ok: true, playerReanimated: { playerId: player.id, kitId } };
 }
 
 export function applyDefaultReanimationKitPick(
   state: GameState,
   rng: Rng,
-): { ok: true } | { ok: false; message: string } {
+):
+  | { ok: true; playerReanimated: { playerId: string; kitId: KitId } }
+  | { ok: false; message: string } {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit') {

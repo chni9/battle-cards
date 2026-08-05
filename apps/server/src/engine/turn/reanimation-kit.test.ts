@@ -81,10 +81,14 @@ describe('Reanimation upgraded kit pick (L26-02)', () => {
 
     const result = completeReanimationKitPick(state, b.id, chosen);
     expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
     expect(state.subChoice).toBeNull();
     expect(b.isEliminated).toBe(false);
     expect(b.kitId).toBe(chosen);
     expect(b.pendingReanimation).toBeNull();
+    expect(result.playerReanimated).toEqual([{ playerId: b.id, kitId: chosen }]);
   });
 
   it('defaults to a seeded random kit on expiry', () => {

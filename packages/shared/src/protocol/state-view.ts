@@ -283,6 +283,14 @@ export interface MirrorRedirectedLogEntry {
   botReason?: BotDecisionReason;
 }
 
+/** Player revived via Reanimation — rules spec §5, L26 / L30-06. */
+export interface PlayerReanimatedLogEntry {
+  kind: 'playerReanimated';
+  playerId: string;
+  kitId: KitId;
+  turnSequence: number;
+}
+
 /**
  * Elimination rewards were claimed (or defaulted on timeout).
  * Opaque — never includes the specific picks (L9-02 product ruling).
@@ -301,6 +309,7 @@ export type ActionLogEntryView =
   | ActionResolvedLogEntry
   | PlayerEliminatedLogEntry
   | MirrorRedirectedLogEntry
+  | PlayerReanimatedLogEntry
   | RewardsClaimedLogEntry;
 
 export type ActionLogEntryKind = ActionLogEntryView['kind'];

@@ -320,4 +320,57 @@ describe('Reanimation base (L26-01 / §10.3)', () => {
     expect(findSoleSurvivorId(state)).toBeNull();
     expect(state.players.filter((player) => !player.isEliminated)).toHaveLength(2);
   });
+
+  it('records playerReanimated when base reanimation completes after rewards (L30-06)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l30-06-base-reanim-log',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    b.lives = 1;
+    b.activePersistentEffects = [
+      {
+        id: 'reanim-armed',
+        cardId: 'reanimation',
+        isUpgraded: false,
+        counter: null,
+        targetPlayerId: null,
+      },
+    ];
+    b.pendingEffects = [
+      {
+        id: 'hit-1',
+        cardId: 'basic-attack',
+        sourcePlayerId: a.id,
+        targetPlayerId: b.id,
+        queuedAt: 0,
+        isUpgraded: false,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+    state.currentTurnPlayerId = b.id;
+    expect(performTurnAction(state, b.id, { type: 'draw' }).ok).toBe(true);
+
+    const rewardResult = applyDefaultEliminationRewards(state);
+    expect(rewardResult.ok).toBe(true);
+
+    if (!rewardResult.ok) {
+      return;
+    }
+
+    expect(rewardResult.playerReanimated).toEqual(
+      expect.arrayContaining([expect.objectContaining({ playerId: b.id })]),
+    );
+  });
 });

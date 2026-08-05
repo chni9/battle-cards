@@ -5,6 +5,7 @@
 import {
   type CardInstance,
   type GameState,
+  type KitId,
   type Player,
   type RewardChoice,
 } from '@card-battle/shared';
@@ -234,6 +235,11 @@ function activateRewardHead(state: GameState, nowMs: number): void {
   };
 }
 
+export interface ProcessEliminationsResult {
+  eliminations: EliminationEvent[];
+  playerReanimated: readonly { playerId: string; kitId: KitId }[];
+}
+
 /**
  * Mark players at 0 lives, attribute eliminators, enqueue rewards or pool cards.
  *
@@ -244,8 +250,9 @@ export function processEliminations(
   state: GameState,
   rng: Rng,
   nowMs: number = Date.now(),
-): EliminationEvent[] {
+): ProcessEliminationsResult {
   const events: EliminationEvent[] = [];
+  let playerReanimated: readonly { playerId: string; kitId: KitId }[] = [];
 
   for (const player of state.players) {
     if (player.isEliminated || player.lives > 0) {
@@ -284,10 +291,10 @@ export function processEliminations(
   if (state.rewardChoice === null && state.rewardQueue.length > 0) {
     activateRewardHead(state, nowMs);
   } else if (state.rewardQueue.length === 0) {
-    processPendingReanimations(state, rng, nowMs);
+    playerReanimated = processPendingReanimations(state, rng, nowMs);
   }
 
-  return events;
+  return { eliminations: events, playerReanimated };
 }
 
 export function listAvailableRewardCards(state: GameState, eliminatedPlayerId: string): CardInstance[] {
@@ -400,28 +407,40 @@ function consumeArmedReanimation(state: GameState, player: Player): void {
  * Base: seeded random kit. Upgraded: caller raises `reanimation-kit` via
  * `processPendingReanimations` (#V4-13 / L26-02).
  */
-function completePendingReanimationIfReady(player: Player, rng: Rng): void {
+function completePendingReanimationIfReady(
+  player: Player,
+  rng: Rng,
+): { playerId: string; kitId: KitId } | null {
   if (player.pendingReanimation === null || player.pendingReanimation.isUpgraded) {
-    return;
+    return null;
   }
 
   const kitId = pickReanimationKit(rng);
   reanimatePlayer(player, kitId, rng);
+  return { playerId: player.id, kitId };
 }
 
 /**
  * After the reward queue drains: revive base pending immediately; raise at most one
  * upgraded kit pick on `GameState.subChoice` (serial with rewards, never parallel).
  */
-function processPendingReanimations(state: GameState, rng: Rng, nowMs: number): void {
+export function processPendingReanimations(
+  state: GameState,
+  rng: Rng,
+  nowMs: number,
+): readonly { playerId: string; kitId: KitId }[] {
+  const reanimated: { playerId: string; kitId: KitId }[] = [];
+
   for (const player of state.players) {
-    if (player.pendingReanimation !== null && !player.pendingReanimation.isUpgraded) {
-      completePendingReanimationIfReady(player, rng);
+    const entry = completePendingReanimationIfReady(player, rng);
+
+    if (entry !== null) {
+      reanimated.push(entry);
     }
   }
 
   if (state.subChoice !== null) {
-    return;
+    return reanimated;
   }
 
   const next = state.players.find((player) => player.pendingReanimation?.isUpgraded === true);
@@ -429,6 +448,8 @@ function processPendingReanimations(state: GameState, rng: Rng, nowMs: number): 
   if (next !== undefined) {
     beginReanimationKitPick(state, { playerId: next.id, nowMs });
   }
+
+  return reanimated;
 }
 
 export type ApplyRewardResult =
@@ -438,6 +459,8 @@ export type ApplyRewardResult =
       /** True when upgraded Reanimation kit pick is waiting (L26-02). */
       subChoicePending?: boolean;
       winnerPlayerId: string | null;
+      /** Reanimation revives completed when rewards drain (L30-06). */
+      playerReanimated?: readonly { playerId: string; kitId: KitId }[];
       /** Opaque public history — picks never included (L9-02). */
       rewardsClaimed: {
         eliminatorPlayerId: string;
@@ -538,12 +561,13 @@ export function resumeAfterRewards(
   rewardChoicePending: boolean;
   subChoicePending?: boolean;
   winnerPlayerId: string | null;
+  playerReanimated?: readonly { playerId: string; kitId: KitId }[];
 } {
   if (state.rewardChoice !== null || state.rewardQueue.length > 0) {
     return { ok: true, rewardChoicePending: true, winnerPlayerId: null };
   }
 
-  processPendingReanimations(state, rng, nowMs);
+  const playerReanimated = processPendingReanimations(state, rng, nowMs);
 
   if (state.subChoice?.kind === 'reanimation-kit') {
     return {
@@ -551,6 +575,7 @@ export function resumeAfterRewards(
       rewardChoicePending: false,
       subChoicePending: true,
       winnerPlayerId: null,
+      ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
     };
   }
 
@@ -562,7 +587,12 @@ export function resumeAfterRewards(
     state.currentTurnPlayerId = null;
   }
 
-  return { ok: true, rewardChoicePending: false, winnerPlayerId };
+  return {
+    ok: true,
+    rewardChoicePending: false,
+    winnerPlayerId,
+    ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
+  };
 }
 
 export function hasPendingEliminationRewards(state: GameState): boolean {
