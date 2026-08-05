@@ -1620,4 +1620,15 @@ Designer ruling (session):
 - Round-trip buy-then-sell is therefore **+2**; bare sale of a starting UP is
   **+7** in one action. Accepted for V4 (no value rebalance).
 
+## 2026-08-05 · [P] #V4-25 Tactician Draw 4 / inactivity auto-draw (L27-02)
+
+Designer ruling (session):
+
+- Inactivity / absence auto-draw grants the kit draw value — **4** for Tactician
+  (same `{ type: 'draw' }` path as a deliberate draw; `performAutoDraw` in
+  game-room).
+- Accepted for V4 (no cap). Reachable exploit: four deliberate timeouts (+16 pts)
+  then one real action resets `consecutiveTimeouts` indefinitely. **Measurement
+  target for L31-02** — do not change the draw value in V4.
+
 

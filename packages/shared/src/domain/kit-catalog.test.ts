@@ -52,6 +52,16 @@ describe('KIT_CATALOG', () => {
     expect(getKit('upgrader').traits.upgradePointSellYield).toBe(7);
     expect(getKit('upgrader').specialCards).toEqual(['upgrade-point-thief']);
 
+    expect(getKit('tactician').startingResources).toEqual({
+      lives: 1,
+      points: 15,
+      upgradePoints: 0,
+      draw: 4,
+    });
+    expect(getKit('tactician').startingCardCounts).toEqual({ action: 2, attack: 2 });
+    expect(getKit('tactician').traits.alwaysUpgraded).toEqual(['spy', 'thief', 'mirror']);
+    expect(getKit('tactician').specialCards).toEqual(['block']);
+
     expect(getKit('indestructible').startingResources).toEqual({
       lives: 18,
       points: 0,

@@ -78,6 +78,18 @@ export const KIT_CATALOG = {
       upgradePointSellYield: 7,
     },
   },
+  tactician: {
+    id: 'tactician',
+    name: 'Tactician',
+    startingResources: { lives: 1, points: 15, upgradePoints: 0, draw: 4 },
+    startingCardCounts: { action: 2, attack: 2 },
+    specialCards: ['block'],
+    traits: {
+      alwaysUpgraded: ['spy', 'thief', 'mirror'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
   indestructible: {
     id: 'indestructible',
     name: 'Indestructible',
