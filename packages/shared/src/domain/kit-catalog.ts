@@ -128,6 +128,14 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  ghost: {
+    id: 'ghost',
+    name: 'Ghost',
+    startingResources: { lives: 14, points: 0, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 4, attack: 2 },
+    specialCards: ['curse'],
+    traits: { ...EMPTY_TRAITS },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {

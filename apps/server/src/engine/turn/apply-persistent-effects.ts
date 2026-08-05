@@ -11,6 +11,7 @@ import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 
 import { gainPoints } from '../economy/gain-points';
 import { gainUpgradePoints } from '../economy/gain-upgrade-points';
+import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
@@ -134,6 +135,7 @@ function applyOneImposition(
 
   const loss = applyLifeLoss(victim, livesDue, 'imposition');
   victim.turnLedger.livesLost += loss.livesLost;
+  creditGhostLifeLoss(victim, loss.livesLost);
   gainLives(imposer, loss.livesLost, state.lifeLimit);
   recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
 }
@@ -152,6 +154,7 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
       const livesDue = effect.isUpgraded ? POISON_LIVES_UPGRADED : POISON_LIVES_BASE;
       const loss = applyLifeLoss(victim, livesDue, 'poison');
       victim.turnLedger.livesLost += loss.livesLost;
+      creditGhostLifeLoss(victim, loss.livesLost);
       recordEliminationContributor(state, victim.id, poisoner.id, loss.livesLost);
     }
   }
@@ -198,6 +201,7 @@ function applyOneCurse(
   const lossAmount = Math.min(livesDue, maxLoss);
   const loss = applyLifeLoss(victim, lossAmount, 'curse');
   victim.turnLedger.livesLost += loss.livesLost;
+  creditGhostLifeLoss(victim, loss.livesLost);
   recordEliminationContributor(state, victim.id, caster.id, loss.livesLost);
 
   if (victim.lives <= 1) {

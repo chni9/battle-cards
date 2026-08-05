@@ -22,6 +22,7 @@ export const KIT_IDS = [
   'witch',
   'wizard',
   'juggernaut',
+  'ghost',
 ] as const;
 
 export type KitId = (typeof KIT_IDS)[number];

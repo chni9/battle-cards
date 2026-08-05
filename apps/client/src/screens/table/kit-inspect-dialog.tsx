@@ -147,6 +147,18 @@ export function KitInspectDialog({
               May play several attack cards as one action
             </p>
           )}
+
+          {kitId === 'ghost' && (
+            <section>
+              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                Ability
+              </h3>
+              <p className="mt-1 text-sm text-ink">
+                Every life this player loses (any cause except Cloning&apos;s resource copy)
+                grants 2 points — after shield absorption.
+              </p>
+            </section>
+          )}
         </div>
       </div>
     </Dialog>

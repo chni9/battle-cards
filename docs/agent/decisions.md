@@ -1355,3 +1355,21 @@ Designer rulings (session):
   `Player.pendingReanimation: { isUpgraded }`; sole-survivor treats pending as
   still in the match; do not `rejectReconnection` while pending.
 
+## 2026-08-05 · [P] #V4-22 / #V4-23 / #V4-24 Lot 28 Ghost + Duplicator
+
+Designer rulings (session):
+
+- **#V4-22:** Ghost gains 2 points per life **actually** lost (post-shield) from
+  **every cause except Cloning’s resource copy**. Includes typed losses
+  (`applyDamage` / `applyLifeLoss`), Self-Suicide, and Sentence (credit lives
+  before the lethal assignment). **No** credit on elimination bookkeeping that
+  zeros lives already at 0. Credit is caller-side via helper — never inside the
+  life primitives (golden rule 2).
+- **#V4-23:** Active Duplicator copies opponents’ **lives / points / upgrade
+  points** gained: **shield gain no**; **Cloning resource copy no**; **life copy
+  clamps** at `GameState.lifeLimit`; **theft and elimination-reward gains yes**.
+  Cards never duplicated. `origin: 'duplicated'` prevents Duplicator↔Duplicator
+  loops.
+- **#V4-24:** Duplicator starting deal is **1 action / 0 attack** as written (not
+  a typo).
+

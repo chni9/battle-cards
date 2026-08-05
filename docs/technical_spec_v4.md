@@ -717,9 +717,9 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-19** | Card Thief steals "a random card". Hand only, or hand plus unused special cards? | Attack Thief says "attack card" specifically, and elimination rewards say "including their unused special cards" explicitly. Recommendation: **hand and specials**, matching the elimination-reward vocabulary. | L21-03 |
 | ~~**#V4-20**~~ | ~~Curse threshold / spent vs theft / permanent loss~~ — **ruled in §11.3** | L22-02 |
 | ~~**#V4-21**~~ | ~~Super Absorber Tax lives + life cap~~ — **ruled in §11.3** | L22-03 |
-| **#V4-22** | Ghost gains 2 points per life lost "whatever the cause". Does that include reaching 0 (their own elimination), a self-Sentence, and Cloning a lower-life opponent? | Recommendation: **every typed life loss yes; Cloning's resource copy no** — Cloning assigns rather than loses, and treating a downward copy as a loss would make an upward copy a gain, which cascades into the Duplicator. State it once here rather than deriving it twice. | L28-01 |
-| **#V4-23** | Duplicator copies "all lives, points and upgrade points gained by all opponents, whatever the source". Does a shield gain count? Does Cloning's resource copy count as a gain? Is the copy subject to the life cap? | Recommendation: **shield no** (not one of the three named resources), **Cloning's copy no** (see #V4-22), **cap yes** (golden rule 9). | L28-02 |
-| **#V4-24** | Duplicator starts with 0 attack cards and 1 action card. Intended, or a table typo? | The rules spec table reads 1 action / 0 attack, and the kit's own rebalancing note says "starting action cards from 1 to 2", which corroborates 1. Recommendation: **implement as written**, per the 2026-08-04 ruling. | L28-02 |
+| ~~**#V4-22**~~ | ~~Ghost life-loss credit scope~~ — **ruled in §11.8** | L28-01 |
+| ~~**#V4-23**~~ | ~~Duplicator gain copy scope / life cap~~ — **ruled in §11.8** | L28-02 |
+| ~~**#V4-24**~~ | ~~Duplicator 1 action / 0 attack~~ — **ruled in §11.8** | L28-02 |
 | **#V4-25** | Tactician draws 4, and the inactivity auto-draw uses the same code path. Accept, or cap the automatic draw? | Note the scenario that matters is **not** the AFK-until-elimination one: those 20 points die with the player, since inactivity elimination pays no eliminator. The reachable one is that `resetConnectedTimeouts` fires on **any** real action, so four deliberate timeouts (+16 points) followed by one action resets the counter, indefinitely, with no elimination. Technical spec v1's Appendix A already flagged "a future kit at Draw 4 would make going idle profitable". The rules spec knows nothing about timers (V1 open decision #7, still open). Recommendation: **accept for V4 and record it as a measurement target**, since capping the auto-draw is a balance decision and V4 changes no value. | L27-02 |
 | **#V4-26** | `alwaysUpgraded` is applied at acquisition and never retro-applied, so a player who clones the Warrior does not get their existing attacks upgraded and a Warrior who clones another kit keeps theirs. Intended? | Recommendation: **yes, confirm as written** — it follows from the acquisition-time model, itself a locked decision. Worth confirming before players read it as a bug. | L27-06 |
 | **#V4-27** | Prophet draws 2 specials "from the full pool of all existing special cards". All 20, duplicates possible? | Recommendation: **all 20, duplicates possible** — `rng.pick` with replacement, consistent with kit assignment being with replacement and with the starting deal allowing duplicates. | L27-04 |
@@ -851,4 +851,12 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-36** | Full restart steps **2+3+4**; leftovers after rewards/dump already pooled. | `decisions.md`, L26-01 |
 | **#V4-13** | Upgraded kit pick = immediate blocking `reanimation-kit` sub-choice after rewards; expiry → seeded random; bot resolves. | `decisions.md`, L26-02 |
 | *(addr.)* | Revive **after** rewards/dump; serial rewards → kit pick → reset. Architecture: persistent arm + `pendingReanimation`. | `decisions.md`, L26 |
+
+## 11.8 Ruled in Lot 28 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-22** | Ghost: **every life loss except Cloning’s resource copy**; Self-Suicide / Sentence yes; elim bookkeeping at already-0 **no**; post-shield `livesLost`. | `decisions.md`, L28-01 |
+| **#V4-23** | Duplicator: shield **no**; Cloning copy **no**; life cap **yes**; theft + elim rewards **yes**. | `decisions.md`, L28-02 |
+| **#V4-24** | Duplicator starts **1 action / 0 attack** as written. | `decisions.md`, L28-02 |
 

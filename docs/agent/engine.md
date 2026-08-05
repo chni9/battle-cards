@@ -79,13 +79,17 @@ an inline comment citing why; do not route them through `applyDamage` or `applyL
 a ruling — golden rule 2 forbids enriching those primitives to absorb these cases. Future kit
 hooks (Ghost, Duplicator) observe outcomes caller-side, not inside the primitives.
 
+**Ghost (#V4-22 / L28-01):** `creditGhostLifeLoss(player, livesLost)` after every typed
+loss outcome and after Self-Suicide / Sentence (lives before assignment). Does **not**
+run on Cloning's resource copy or elimination bookkeeping that zeros already-0 lives.
+
 | Site | Why not a typed loss or gain |
 |---|---|
-| `resolve-pending.ts` — self-Suicide | Lethal self-elimination in one step (rules spec §5). Not a bounded debit; must not decrement card counters. |
-| `resolve-pending.ts` — Sentence | Instant lethal effect (rules spec §5). Zeroes lives regardless of current count; not attack damage and not incremental loss. |
-| `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. |
-| `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. |
-| `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. |
+| `resolve-pending.ts` — self-Suicide | Lethal self-elimination in one step (rules spec §5). Not a bounded debit; must not decrement card counters. Ghost credits `livesBefore` then assigns 0. |
+| `resolve-pending.ts` — Sentence | Instant lethal effect (rules spec §5). Zeroes lives regardless of current count; not attack damage and not incremental loss. Ghost credits `livesBefore` then assigns 0. |
+| `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
+| `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
+| `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
 
 ## Seeded randomness
 

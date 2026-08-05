@@ -7,6 +7,7 @@
 
 import type { CardCost, GameState, Player } from '@card-battle/shared';
 
+import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
 import { gainPoints } from './gain-points';
@@ -71,6 +72,7 @@ export function payCost(
   if (lives > 0) {
     const outcome = applyLifeLoss(player, lives, 'card-buy');
     player.turnLedger.livesLost += outcome.livesLost;
+    creditGhostLifeLoss(player, outcome.livesLost);
   }
 
   return { ok: true };

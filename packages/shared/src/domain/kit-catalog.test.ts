@@ -95,5 +95,14 @@ describe('KIT_CATALOG', () => {
     expect(getKit('juggernaut').startingCardCounts).toEqual({ action: 4, attack: 2 });
     expect(getKit('juggernaut').traits.alwaysUpgraded).toEqual(['shield']);
     expect(getKit('juggernaut').specialCards).toEqual(['super-mirror']);
+
+    expect(getKit('ghost').startingResources).toEqual({
+      lives: 14,
+      points: 0,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('ghost').startingCardCounts).toEqual({ action: 4, attack: 2 });
+    expect(getKit('ghost').specialCards).toEqual(['curse']);
   });
 });
