@@ -85,6 +85,7 @@ export type TableDialog =
   | { kind: 'quantity'; instance: CardInstance }
   | { kind: 'multi' }
   | { kind: 'buy' }
+  | { kind: 'pool' }
   | null;
 
 export interface CardActionsProps {
@@ -652,6 +653,51 @@ export function CardActions(props: CardActionsProps): ReactElement {
             );
           })}
         </ul>
+      </Dialog>
+
+      <Dialog
+        open={dialog?.kind === 'pool'}
+        title={`Shared pool (${String(view.pool.length)})`}
+        onClose={close}
+        panelClassName="max-w-3xl"
+        actions={
+          <Button variant="green" onClick={close}>
+            Close
+          </Button>
+        }
+      >
+        <p className="text-sm text-ink-muted">
+          Cards deactivated or dumped here are visible to every player. This is not a hand.
+        </p>
+        {view.pool.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-muted">The pool is empty.</p>
+        ) : (
+          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {view.pool.map((instance) => {
+              const definition = getCard(instance.cardId);
+              const name = formatCardLabel(instance.cardId, instance.isUpgraded);
+              return (
+                <li key={instance.instanceId}>
+                  <div className="flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border border-border-soft bg-surface p-1.5">
+                    <Card
+                      instance={instance}
+                      detail="thumb"
+                      className="pointer-events-none w-full max-w-[5.5rem]"
+                    />
+                    <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
+                      {name}
+                    </span>
+                    {definition !== undefined && (
+                      <span className="mt-0.5 text-center text-[11px] font-medium text-ink-muted">
+                        {definition.type}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Dialog>
 
       <Dialog

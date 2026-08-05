@@ -486,11 +486,15 @@ function TableScreenInner({
             actionsLocked={actionsLocked}
             drawValue={drawValue}
             upgradePoints={view.self.upgradePoints}
+            poolCount={view.pool.length}
             onDraw={drawWithFx}
             onBuyUpgradePoint={buyUpgradeWithFx}
             onSellUpgradePoint={sellUpgradeWithFx}
             onOpenBuy={() => {
               setDialog({ kind: 'buy' });
+            }}
+            onOpenPool={() => {
+              setDialog({ kind: 'pool' });
             }}
             onLeave={onLeave}
           />
