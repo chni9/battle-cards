@@ -2,9 +2,7 @@
  * `scorePlayCard` family dispatch table — L29-01.
  *
  * Card families group the specials that L29-05..L29-08 will each give a real branch.
- * Any `CardId` not listed here (including every V1 core card and MEGA ATTACK, which
- * still scores through the shared `isAttackCardId` paths — see backlog watch point on
- * L29-01) stays `'core'`.
+ * Any `CardId` not listed here (every V1 core card) stays `'core'`.
  */
 
 import type { CardId } from '@card-battle/shared';
@@ -35,11 +33,18 @@ const PERSISTENTS_CARD_IDS: ReadonlySet<CardId> = new Set([
 ]);
 
 /**
- * L29-07 — Super Mirror, Attack Thief only. MEGA ATTACK is deliberately excluded: it
- * must stay routed to `'core'` so it keeps scoring through the existing `isAttackCardId`
- * branches (mutual cancel, lethal-now, burn counter, pressure) with zero behaviour change.
+ * L29-07 — MEGA ATTACK, Super Mirror, Attack Thief. MEGA ATTACK moved here from
+ * `'core'`: its `playCard` action never carries a `targetPlayerId` (the handler's
+ * `canPlay` requires `targetPlayerId === null` — it hits every alive opponent at once),
+ * so none of core's per-target `isAttackCardId` branches (mutual cancel, lethal-now,
+ * burn counter, pressure) ever matched it. It needs its own multi-target branch —
+ * see `score-attacks-redirect.ts`.
  */
-const ATTACKS_REDIRECT_CARD_IDS: ReadonlySet<CardId> = new Set(['super-mirror', 'attack-thief']);
+const ATTACKS_REDIRECT_CARD_IDS: ReadonlySet<CardId> = new Set([
+  'mega-attack',
+  'super-mirror',
+  'attack-thief',
+]);
 
 /** L29-08 — Block, Invisibility, Card Absorber, Card Transformer, Reanimation. */
 const TURN_POOL_REVERSAL_CARD_IDS: ReadonlySet<CardId> = new Set([

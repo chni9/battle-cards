@@ -15,6 +15,7 @@ import {
   type BotReasonCode,
   type CardId,
   type CardInstance,
+  type PendingEffectView,
   type Player,
   type PlayingStateView,
 } from '@card-battle/shared';
@@ -234,6 +235,46 @@ export function isImmuneTarget(
 
   // `isImmuneTo` only reads `kitId` — traits come from the catalog.
   return isImmuneTo({ kitId } as Player, cardId);
+}
+
+/**
+ * Bot-side Mirror eligibility over `PendingEffectView` — duplicates the predicates in
+ * `listEligibleMirrorTargets` (`engine/turn/mirror-choice.ts`) exactly, because the bot
+ * only ever sees the view's `PendingEffectView[]`, never `Player.pendingEffects`.
+ * Kept honest by `mirror-eligibility-parity.test.ts` (L29-07).
+ */
+export function eligibleMirrorPendingFromView(
+  view: PlayingStateView,
+  isUpgradedMirror: boolean,
+): readonly PendingEffectView[] {
+  return view.pendingEffects
+    .filter((effect) => {
+      if (effect.targetPlayerId !== view.you || !isAttackCardId(effect.cardId)) {
+        return false;
+      }
+
+      if (!isUpgradedMirror && effect.isUpgraded) {
+        return false;
+      }
+
+      // Super-mirror redirects are ineligible for Mirror (regular or upgraded).
+      if (effect.redirectedBy === 'super-mirror') {
+        return false;
+      }
+
+      // MEGA ATTACK redirection — technical spec v4 §4.7.
+      if (effect.cardId === 'mega-attack') {
+        if (effect.isUpgraded) {
+          return false;
+        }
+        if (!isUpgradedMirror) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .sort((left, right) => left.queuedAt - right.queuedAt);
 }
 
 export function estimateSuicideElims(view: PlayingStateView, ctx: PolicyContext): number {

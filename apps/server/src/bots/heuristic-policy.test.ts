@@ -14,6 +14,7 @@ import type {
 
 import { createRng } from '../engine/rng';
 import type { TurnAction } from '../engine/turn/perform-action';
+import { HEURISTIC_BAND_WEIGHTS } from './heuristic-weights';
 import {
   decide,
   pickEliminationRewards,
@@ -1754,5 +1755,162 @@ describe('L29-06: persistent specials', () => {
         createRng('sent-retune-up'),
       ),
     ).toEqual({ type: 'playCard', instanceId: 'sent-1' });
+  });
+});
+
+describe('L29-07: attack / redirection specials', () => {
+  it('MEGA ATTACK beats draw with a living opponent', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'mega-1', cardId: 'mega-attack', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'mega-1' }],
+        createRng('mega-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'mega-1' });
+  });
+
+  it('MEGA ATTACK is lethal-now when any Spy-known opponent has 20 lives or fewer', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'mega-1', cardId: 'mega-attack', isUpgraded: false }],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'indestructible',
+            hand: [],
+            specialCards: [],
+            lives: 18,
+            points: 0,
+            upgradePoints: 0,
+            shield: 0,
+          },
+        }),
+      ],
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'mega-1' }],
+        createRng('mega-lethal'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'mega-1' });
+  });
+
+  it('Super Mirror: Survive only when an attack is actually pending on self', () => {
+    const noThreatView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sm-1', cardId: 'super-mirror', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        noThreatView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'sm-1' }],
+        createRng('sm-no-threat'),
+      ),
+    ).toEqual({ type: 'draw' });
+
+    const underAttackView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sm-1', cardId: 'super-mirror', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'inc-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    expect(
+      decide(
+        underAttackView,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'sm-1' }],
+        createRng('sm-under-attack'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'sm-1' });
+  });
+
+  it('Attack Thief beats draw with a living opponent even with no threat', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'at-1', cardId: 'attack-thief', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'at-1' }],
+        createRng('at-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'at-1' });
+  });
+
+  it('Mirror eligibility (mirror-choice.ts parity): base Mirror never scores Survive against only an upgraded MEGA', () => {
+    const view = baseView({
+      self: baseSelf({
+        hand: [{ instanceId: 'mir-1', cardId: 'mirror', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'mega-up',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'mega-attack',
+          isUpgraded: true,
+          queuedAt: 1,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const mirrorPlay: TurnAction = { type: 'playCard', instanceId: 'mir-1' };
+    const scored = scoreActions(view, [{ type: 'draw' }, mirrorPlay], createRng('mirror-vs-mega-base'));
+    const mirrorScore = scored.find(
+      (entry) => entry.action.type === 'playCard' && entry.action.instanceId === 'mir-1',
+    );
+    expect(mirrorScore?.code).not.toBe('survive');
+    expect(mirrorScore?.score).toBeLessThan(HEURISTIC_BAND_WEIGHTS.survive);
+  });
+
+  it('Mirror eligibility: upgraded Mirror scores Survive against a base MEGA', () => {
+    const view = baseView({
+      self: baseSelf({
+        hand: [{ instanceId: 'mir-1', cardId: 'mirror', isUpgraded: true }],
+      }),
+      pendingEffects: [
+        {
+          id: 'mega-base',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'mega-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const mirrorPlay: TurnAction = { type: 'playCard', instanceId: 'mir-1' };
+    const scored = scoreActions(view, [{ type: 'draw' }, mirrorPlay], createRng('mirror-vs-mega-up'));
+    const mirrorScore = scored.find(
+      (entry) => entry.action.type === 'playCard' && entry.action.instanceId === 'mir-1',
+    );
+    expect(mirrorScore?.code).toBe('survive');
+    expect(
+      decide(view, [{ type: 'draw' }, mirrorPlay], createRng('mirror-vs-mega-up-decide')),
+    ).toEqual(mirrorPlay);
   });
 });

@@ -35,6 +35,7 @@ import {
 } from '../heuristic-weights';
 import {
   bestAffordableStrikeDamage,
+  eligibleMirrorPendingFromView,
   estimateSuicideElims,
   estimatedPlayPoints,
   findOwnCard,
@@ -128,7 +129,10 @@ export function scoreCorePlayCard(
 
   // Survive band — any pending attack (lean into counters / life buys under fire).
   if (ctx.incomingThreat > 0) {
-    if (cardId === 'mirror') {
+    // Mirror eligibility (L29-07 / mirror-choice.ts parity): a base Mirror facing only
+    // an upgraded or MEGA-ineligible pending attack has nothing to redirect — falling
+    // through to the sustain band below instead of a Survive it cannot actually fire.
+    if (cardId === 'mirror' && eligibleMirrorPendingFromView(view, isUpgraded).length > 0) {
       return { score: HEURISTIC_BAND_WEIGHTS.survive + 30, code: 'survive' };
     }
 

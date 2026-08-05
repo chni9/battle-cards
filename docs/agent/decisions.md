@@ -1483,3 +1483,46 @@ Three new branches in `score-persistents.ts`:
   activate-once-for-all-opponents (no target), so it is worth playing proactively even before
   a spend signal exists.
 
+## 2026-08-05 · [T] Heuristic: score MEGA / Super Mirror / Attack Thief (L29-07)
+
+MEGA ATTACK moved from `'core'` to the `'attacks'` family (`families.ts`,
+`score-attacks-redirect.ts`). It had stayed in `'core'` since L29-01 on the theory that it
+would "keep scoring through the existing `isAttackCardId` branches with zero behaviour
+change" — true only in the vacuous sense that it fell through to the unscored penalty either
+way: `megaAttackHandler.canPlay` requires `targetPlayerId === null` (it hits every alive
+opponent at once), so none of `score-core.ts`'s per-target branches (mutual cancel,
+lethal-now, burn counter, pressure) ever matched its target-less action. It needed its own
+branch, not core's:
+
+- **MEGA ATTACK** — `survive + MUTUAL_CANCEL_BONUS + damage` if it would cancel a pending
+  attack from any living opponent (`hasCancelingIncomingFrom`, mirroring core's per-target
+  rule across all targets at once); `lethalNow + damage` if any Spy-known opponent's lives are
+  at or below 20 (`attackDamageFor('mega-attack', isUpgraded)` is 20 either way — the upgrade
+  changes redirectability, not damage); otherwise
+  `pressure + livingCount * MEGA_ATTACK_PRESSURE_PER_OPPONENT + damage`. Refused only with
+  zero living opponents.
+- **Super Mirror** — `survive + SUPER_MIRROR_SURVIVE_BONUS` (+`SUPER_MIRROR_UPGRADED_BONUS`
+  upgraded) only when `incomingThreat > 0` **and** at least one pending effect actually
+  targets self and `isAttackCardId` — redirecting nothing pending is a wasted card. Refused
+  otherwise; never scores outside the Survive band, since it has no use off-threat.
+- **Attack Thief** — `survive + ATTACK_THIEF_SURVIVE_BONUS` under any incoming threat (the
+  block charge is spent before mutual cancel, so it is worth reaching for pre-emptively).
+  Off-threat: `deny + ATTACK_THIEF_DENY_BONUS` with any living opponent (it always steals a
+  random shared attack per opponent even with no intel), +`ATTACK_THIEF_INTEL_BONUS` when a
+  spied opponent's hand shows a shared attack card. Refused only with zero living opponents.
+
+**Mirror eligibility fix (score-core.ts).** The base Mirror Survive branch
+(`ctx.incomingThreat > 0` → `survive + 30`) fired on *any* pending attack, without checking
+whether Mirror could actually redirect it — a base Mirror facing only an upgraded MEGA (never
+redirectable by a base Mirror, technical spec v4 §4.7) scored Survive for a play that would be
+rejected. Added `eligibleMirrorPendingFromView(view, isUpgradedMirror)` in
+`policy-internals.ts`, a hand-duplicated copy of `listEligibleMirrorTargets`'s predicates
+(`engine/turn/mirror-choice.ts`) over `PendingEffectView` instead of `PendingEffect` — the bot
+only ever sees the view, never `Player.pendingEffects`. Gated the Survive branch on
+`eligible.length > 0`; when empty, execution now falls through to the later
+sustain-band `shield`/`mirror` branch instead (still scores above draw in the common case, but
+no longer via a false Survive claim). `mirror-eligibility-parity.test.ts` builds the same
+pending attacks on both sides (direct, upgraded, mirror-redirected, super-mirror-redirected,
+base/upgraded MEGA) and asserts identical eligible-id sets for both a base and an upgraded
+Mirror — the parity contract the two duplicated predicates must never drift on.
+
