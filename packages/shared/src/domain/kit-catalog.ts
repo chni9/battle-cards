@@ -63,6 +63,21 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: true,
     },
   },
+  upgrader: {
+    id: 'upgrader',
+    name: 'Upgrader',
+    startingResources: { lives: 10, points: 0, upgradePoints: 3, draw: 1 },
+    startingCardCounts: { action: 4, attack: 2 },
+    specialCards: ['upgrade-point-thief'],
+    traits: {
+      alwaysUpgraded: [],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+      // #V4-28: buy 5, sell yield stays 7 (designer ruling 2026-08-05).
+      upgradePointBuyCost: 5,
+      upgradePointSellYield: 7,
+    },
+  },
   indestructible: {
     id: 'indestructible',
     name: 'Indestructible',

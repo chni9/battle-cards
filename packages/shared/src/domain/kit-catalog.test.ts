@@ -41,6 +41,17 @@ describe('KIT_CATALOG', () => {
     expect(getKit('assassin').traits.allowsMultipleAttacksPerTurn).toBe(true);
     expect(getKit('assassin').specialCards).toEqual(['sentence', 'points-generator']);
 
+    expect(getKit('upgrader').startingResources).toEqual({
+      lives: 10,
+      points: 0,
+      upgradePoints: 3,
+      draw: 1,
+    });
+    expect(getKit('upgrader').startingCardCounts).toEqual({ action: 4, attack: 2 });
+    expect(getKit('upgrader').traits.upgradePointBuyCost).toBe(5);
+    expect(getKit('upgrader').traits.upgradePointSellYield).toBe(7);
+    expect(getKit('upgrader').specialCards).toEqual(['upgrade-point-thief']);
+
     expect(getKit('indestructible').startingResources).toEqual({
       lives: 18,
       points: 0,

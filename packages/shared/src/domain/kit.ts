@@ -17,6 +17,7 @@ export const KIT_IDS = [
   'kamikaze',
   'scientific',
   'assassin',
+  'upgrader',
   'indestructible',
   'specialist',
   'witch',
@@ -58,6 +59,17 @@ export interface KitTraits {
   immuneTo: CardId[];
   /** Assassin only: several attack cards count as a single action (rules spec §4). */
   allowsMultipleAttacksPerTurn: boolean;
+  /**
+   * Per-kit override for upgrade-point buy cost in points. Absent → global
+   * `UPGRADE_POINT_ECONOMY.buyCostPoints`. Upgrader: 5 (#V4-28 / L27-01).
+   * Read via `getKit(player.kitId)` at use sites — never cache (Cloning mutates kitId).
+   */
+  upgradePointBuyCost?: number;
+  /**
+   * Per-kit override for upgrade-point sell yield in points. Absent → global
+   * `UPGRADE_POINT_ECONOMY.sellYieldPoints`. Upgrader: 7 (#V4-28 / L27-01).
+   */
+  upgradePointSellYield?: number;
 }
 
 /** Static, immutable kit definition. */
@@ -67,5 +79,11 @@ export interface Kit {
   startingResources: KitStartingResources;
   startingCardCounts: KitStartingCardCounts;
   specialCards: CardId[];
+  /**
+   * When set, deal this many specials via seeded `rng.pick` over all specials
+   * (with replacement per #V4-27) instead of `specialCards`. Prophet: 2.
+   * `specialCards` stays empty for that kit. technical spec v4 §4.8.
+   */
+  randomStartingSpecialCount?: number;
   traits: KitTraits;
 }

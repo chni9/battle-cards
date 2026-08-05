@@ -34,6 +34,7 @@ const KIT_FILES = {
   kamikaze: 'Kamikaze.png',
   scientific: 'Scientist.png',
   assassin: 'Assassin.png',
+  upgrader: 'Upgrader.png',
   indestructible: 'Indestructible.png',
   specialist: 'Specialist.png',
   witch: 'Witch.png',

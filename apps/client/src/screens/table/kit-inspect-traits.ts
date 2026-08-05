@@ -13,6 +13,8 @@ export const KIT_TRAIT_SECTION_KEYS = [
   'alwaysUpgraded',
   'immuneTo',
   'allowsMultipleAttacksPerTurn',
+  'upgradePointBuyCost',
+  'upgradePointSellYield',
 ] as const satisfies readonly (keyof KitTraits)[];
 
 /** Kit-id abilities that are not `KitTraits` fields (Ghost, Duplicator, …). */

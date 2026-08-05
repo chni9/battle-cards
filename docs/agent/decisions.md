@@ -1611,4 +1611,13 @@ Designer instruction: revert the opaque-immunity UI convention. Action log,
 resolution FX, and spectator-readable state may say "immune" (Untouchable,
 Invisibility, and any future `outcome: 'immune'`).
 
+## 2026-08-05 · [P] #V4-28 Upgrader UP buy/sell (L27-01)
+
+Designer ruling (session):
+
+- **Buy cost:** **5** points (rules spec §4 "instead of 10").
+- **Sell yield:** stays **7** (explicit — not a silent inherit of the global).
+- Round-trip buy-then-sell is therefore **+2**; bare sale of a starting UP is
+  **+7** in one action. Accepted for V4 (no value rebalance).
+
 

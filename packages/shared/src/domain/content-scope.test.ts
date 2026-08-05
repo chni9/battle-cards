@@ -84,14 +84,13 @@ describe('content scope — kits (technical spec v4 §10.5 / L28-03)', () => {
   });
 
   /**
-   * V4's closed kit count is 15. Ghost + Duplicator (Lot 28) are shipped; four Lot 27
-   * kits remain Blocked (upgrader, tactician, prophet, warrior). This assertion is the
-   * ceiling + floor after L28 so a silent 16th kit or a rollback of Ghost/Duplicator fails.
+   * V4's closed kit count is 15. Kits land across Lots 27–28; this assertion is
+   * the ceiling + floor so a silent 16th kit or a rollback of shipped kits fails.
    */
   it('ships Ghost and Duplicator and stays within the V4 15-kit ceiling', () => {
     expect(KIT_IDS).toContain('ghost');
     expect(KIT_IDS).toContain('duplicator');
-    expect(KIT_IDS.length).toBeGreaterThanOrEqual(11);
+    expect(KIT_IDS.length).toBeGreaterThanOrEqual(12);
     expect(KIT_IDS.length).toBeLessThanOrEqual(15);
   });
 });
