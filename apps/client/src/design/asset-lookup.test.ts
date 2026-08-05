@@ -25,6 +25,10 @@ describe('asset-lookup (L10-03)', () => {
     }
   });
 
+  it('maps wizard to Magician.png (L27-08)', () => {
+    expect(getKitPortraitUrl('wizard')).toMatch(/Magician\.png/);
+  });
+
   it('resolves base and upgraded art for every V1 CardId', () => {
     for (const cardId of V1_CARD_IDS) {
       const base = getCardArtUrl(cardId, { isUpgraded: false });

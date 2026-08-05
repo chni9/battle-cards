@@ -15,7 +15,11 @@ describe('Spy Thief (L5-04)', () => {
   ] as const;
 
   it('steals all points from all opponents uncapped and spies on each', () => {
-    const state = createInitialState({ seats, seed: 'l5-04-base' });
+    const state = createInitialState({
+      seats,
+      seed: 'l5-04-base',
+      kitAssignment: ['untouchable', 'untouchable', 'untouchable'],
+    });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
     const c = state.players.find((player) => player.id === 'c');
@@ -64,6 +68,7 @@ describe('Spy Thief (L5-04)', () => {
         { id: 'b', nickname: 'B' },
       ],
       seed: 'l5-04-up',
+      kitAssignment: ['untouchable', 'untouchable'],
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');

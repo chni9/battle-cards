@@ -104,6 +104,18 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  wizard: {
+    id: 'wizard',
+    name: 'Wizard',
+    startingResources: { lives: 10, points: 4, upgradePoints: 0, draw: 2 },
+    startingCardCounts: { action: 4, attack: 2 },
+    specialCards: ['mega-attack'],
+    traits: {
+      alwaysUpgraded: ['thief'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {

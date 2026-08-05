@@ -36,6 +36,7 @@ const KIT_FILES = {
   indestructible: 'Indestructible.png',
   specialist: 'Specialist.png',
   witch: 'Witch.png',
+  wizard: 'Magician.png',
 } as const satisfies Record<KitId, string>;
 
 type ShippedArtCardId =
