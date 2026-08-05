@@ -50,6 +50,14 @@ export interface PendingEffect {
    * re-mirrored (technical spec v4 §4.7).
    */
   redirectedBy: PendingEffectRedirectSource | null;
+  /**
+   * Card Thief steal lock — set when the thief chose a card while the victim was
+   * spied; `null` means steal randomly at resolve (L21-03 / #V4-35).
+   *
+   * **Server-only — never include it in `PendingEffectView`.** Publishing it would
+   * leak the stolen card's identity to seats that must not see it (tech v4 §5).
+   */
+  chosenInstanceId: string | null;
 }
 
 /**

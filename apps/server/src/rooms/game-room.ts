@@ -40,6 +40,7 @@ import {
   type CardId,
   type ChooseEliminationRewardPayload,
   type ChooseMirrorTargetPayload,
+  type ChooseStealPickPayload,
   type EliminationReason,
   type GameState,
   type LobbySeatView,
@@ -87,12 +88,15 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
+import { STEAL_SUB_CHOICE_MS } from '../engine/turn/steal-choice';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
+  completeStealChoice,
   expireEliminationRewardChoice,
   expireMirrorChoice,
+  expireStealChoice,
   performTurnAction,
   type TurnAction,
   type TurnResult,
@@ -191,6 +195,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
     },
     completeBotMirror: (botId, pendingEffectId, newTargetPlayerId, reason) => {
       this.applyBotMirrorChoice(botId, pendingEffectId, newTargetPlayerId, reason);
+    },
+    completeBotSteal: (botId, instanceId, reason) => {
+      this.applyBotStealChoice(botId, instanceId, reason);
     },
     completeBotReward: (botId, eliminationId, choices, reason) => {
       this.applyBotRewardChoice(botId, eliminationId, [choices[0], choices[1]], reason);
@@ -735,6 +742,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (result.stealChoicePending === true) {
+      const choice = state.stealChoice;
+
+      if (choice === null) {
+        client.send(ERROR_MESSAGE, { message: 'Steal choice missing.' });
+        return;
+      }
+
+      this.beginStealTimer(client, choice);
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
       this.sendStateToEveryone();
@@ -769,6 +789,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (parsed.kind === 'steal-pick') {
+      this.handleStealChoice(client, parsed);
+      return;
+    }
+
     this.handleRewardChoice(client, parsed);
   }
 
@@ -794,6 +819,50 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private handleStealChoice(client: GameClient, parsed: ChooseStealPickPayload): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      return;
+    }
+
+    const result = completeStealChoice(state, client.sessionId, parsed.instanceId);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, { message: result.message });
+      return;
+    }
+
+    this.clearSubChoiceTimer('steal-pick');
+    this.applyTurnResult(result);
+
+    if (result.stealChoicePending === true) {
+      const choice = state.stealChoice;
+
+      if (choice !== null) {
+        this.beginStealTimer(client, choice);
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
@@ -1019,6 +1088,84 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private beginStealTimer(
+    client: GameClient,
+    choice: NonNullable<GameState['stealChoice']>,
+    durationMs?: number,
+  ): void {
+    this.clearSubChoiceTimer('steal-pick');
+
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? STEAL_SUB_CHOICE_MS : remainingFromDeadline);
+    const effectiveDeadline = durationMs !== undefined ? Date.now() + ms : choice.deadlineMs;
+
+    const state = this.gameState;
+
+    if (state?.stealChoice != null && durationMs !== undefined) {
+      state.stealChoice = { ...state.stealChoice, deadlineMs: effectiveDeadline };
+    }
+
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'steal-pick',
+      victimPlayerId: choice.victimPlayerId,
+      eligibleInstanceIds: choice.eligibleInstanceIds,
+      deadlineMs: effectiveDeadline,
+    });
+
+    this.subChoiceTimers.set(
+      'steal-pick',
+      setTimeout(() => {
+        this.onStealTimeout();
+      }, ms > 0 ? ms : STEAL_SUB_CHOICE_MS),
+    );
+  }
+
+  private onStealTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.stealChoice == null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireStealChoice(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.stealChoice = null;
+      return;
+    }
+
+    this.clearSubChoiceTimer('steal-pick');
+    this.applyTurnResult(result);
+
+    if (result.stealChoicePending === true) {
+      const choice = state.stealChoice;
+      const client = this.clients.find((entry) => entry.sessionId === choice.playerId);
+
+      if (client !== undefined) {
+        this.beginStealTimer(client, choice);
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
@@ -1321,6 +1468,26 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.setPendingBotReason(pick.reason);
         return pick;
       },
+      resolveSteal: (s: GameState, actorId: string) => {
+        const choice = s.stealChoice;
+
+        if (choice?.playerId !== actorId) {
+          throw new Error('steal pending without stealChoice');
+        }
+
+        const rng = createRng(`${s.seed}:bot:${actorId}:steal:${s.turnSequence}`);
+        const instanceId =
+          choice.eligibleInstanceIds.length > 0
+            ? rng.pick(choice.eligibleInstanceIds)
+            : '';
+
+        if (instanceId.length === 0) {
+          throw new Error('Steal pick failed');
+        }
+
+        this.setPendingBotReason({ code: 'policy-fallback' });
+        return { instanceId };
+      },
       resolveReward: (s: GameState) => {
         const choice = s.rewardChoice;
 
@@ -1455,6 +1622,32 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
     }
 
+    if (state.stealChoice !== null) {
+      const expired = expireStealChoice(state, createRng(state.seed));
+
+      if (expired.ok) {
+        this.clearSubChoiceTimer('steal-pick');
+        this.applyTurnResult(expired);
+
+        if (expired.stealChoicePending === true) {
+          this.sendStateToEveryone();
+          return;
+        }
+
+        if (expired.rewardChoicePending === true) {
+          this.beginRewardTimer(state);
+          this.sendStateToEveryone();
+          return;
+        }
+
+        if (expired.winnerPlayerId !== null) {
+          return;
+        }
+      } else {
+        state.stealChoice = null;
+      }
+    }
+
     if (state.currentTurnPlayerId === playerId && !this.actionTakenThisTurn) {
       // Cannot legally act — skip seat so the table does not freeze.
       advanceTurn(state);
@@ -1507,6 +1700,64 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('mirror');
     this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private applyBotStealChoice(
+    botId: string,
+    instanceId: string,
+    reason?: BotDecisionReason,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.setPendingBotReason(reason);
+    const result = completeStealChoice(state, botId, instanceId);
+
+    if (!result.ok) {
+      this.pendingBotReason = null;
+      this.performAutoDraw(botId, { code: 'policy-fallback' });
+      return;
+    }
+
+    this.clearSubChoiceTimer('steal-pick');
+    this.applyTurnResult(result);
+
+    if (result.stealChoicePending === true) {
+      const choice = state.stealChoice;
+
+      if (choice !== null && choice.playerId === botId) {
+        const rng = createRng(`${state.seed}:bot:${botId}:steal:${state.turnSequence}`);
+        const nextId =
+          choice.eligibleInstanceIds.length > 0
+            ? rng.pick(choice.eligibleInstanceIds)
+            : '';
+
+        if (nextId.length > 0) {
+          this.applyBotStealChoice(botId, nextId, { code: 'policy-fallback' });
+          return;
+        }
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);
@@ -1679,6 +1930,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (state.stealChoice?.playerId === sessionId) {
+      this.onStealTimeout();
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (state.rewardChoice?.eliminatorPlayerId === sessionId) {
       this.onRewardTimeout();
       this.sendStateToEveryone();
@@ -1709,6 +1966,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (state.mirrorChoice?.playerId === sessionId && this.subChoiceTimers.has('mirror')) {
       this.pausedSubChoiceRemainingMs.set('mirror', remainingMs(state.mirrorChoice.deadlineMs, now));
       this.clearSubChoiceTimer('mirror');
+    }
+
+    if (state.stealChoice?.playerId === sessionId && this.subChoiceTimers.has('steal-pick')) {
+      this.pausedSubChoiceRemainingMs.set(
+        'steal-pick',
+        remainingMs(state.stealChoice.deadlineMs, now),
+      );
+      this.clearSubChoiceTimer('steal-pick');
     }
 
     if (
@@ -1754,6 +2019,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
           state.mirrorChoice.eligibleEffectIds,
           pausedMirrorRemainingMs,
         );
+      }
+    }
+
+    const pausedStealRemainingMs = this.pausedSubChoiceRemainingMs.get('steal-pick');
+
+    if (state.stealChoice?.playerId === sessionId && pausedStealRemainingMs !== undefined) {
+      this.pausedSubChoiceRemainingMs.delete('steal-pick');
+      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+
+      if (client !== undefined) {
+        this.beginStealTimer(client, state.stealChoice, pausedStealRemainingMs);
       }
     }
 
@@ -2261,6 +2537,18 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
   if (kind === 'elimination-reward') {
     const reward = readChooseEliminationRewardPayload(payload);
     return reward === null ? null : { kind: 'elimination-reward', ...reward };
+  }
+
+  if (kind === 'steal-pick') {
+    if (!('instanceId' in payload) || typeof payload.instanceId !== 'string') {
+      return null;
+    }
+
+    if (payload.instanceId.length === 0) {
+      return null;
+    }
+
+    return { kind: 'steal-pick', instanceId: payload.instanceId };
   }
 
   return null;

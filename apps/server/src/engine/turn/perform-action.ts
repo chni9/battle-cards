@@ -30,6 +30,7 @@ import {
   type MirrorRedirectInfo,
   redirectPendingAttack,
 } from './mirror-choice';
+import { applyDefaultStealPick, applyStealPick } from './steal-choice';
 import {
   applyDefaultEliminationRewards,
   applyEliminationRewardChoices,
@@ -98,6 +99,8 @@ export interface TurnResult {
   eliminations: EliminationEvent[];
   /** True when Mirror paid and is waiting for chooseMirrorTarget / default. */
   mirrorChoicePending?: boolean;
+  /** True when Card Thief steal-pick is waiting (L21-03). */
+  stealChoicePending?: boolean;
   /** True when elimination rewards are waiting for chooseEliminationReward / default. */
   rewardChoicePending?: boolean;
   /**
@@ -141,7 +144,9 @@ export function performTurnAction(
       message:
         state.mirrorChoice !== null
           ? 'Finish your Mirror choice first.'
-          : 'Finish elimination rewards first.',
+          : state.stealChoice !== null
+            ? 'Finish your Card Thief choice first.'
+            : 'Finish elimination rewards first.',
     };
   }
 
@@ -262,7 +267,7 @@ export function performTurnAction(
     actionPlayed = playResult.actionPlayed;
   }
 
-  // Mirror starts a sub-choice: paid, but resolve/advance wait for chooseMirrorTarget.
+  // Mirror / steal-pick start a sub-choice: paid, but resolve/advance wait.
   if (state.mirrorChoice !== null) {
     return {
       ok: true,
@@ -272,6 +277,18 @@ export function performTurnAction(
       eliminatedPlayerIds: [],
       eliminations: [],
       mirrorChoicePending: true,
+    };
+  }
+
+  if (state.stealChoice !== null) {
+    return {
+      ok: true,
+      actionPlayed,
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      eliminations: [],
+      stealChoicePending: true,
     };
   }
 
@@ -386,6 +403,116 @@ export function expireMirrorChoice(
   };
 }
 
+/**
+ * Complete a Card Thief steal-pick then finish the thief's turn (or raise the next pick).
+ */
+export function completeStealChoice(
+  state: GameState,
+  actorPlayerId: string,
+  instanceId: string,
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.stealChoice;
+
+  if (choice?.playerId !== actorPlayerId) {
+    return { ok: false, message: 'No steal choice pending.' };
+  }
+
+  if (state.currentTurnPlayerId !== actorPlayerId) {
+    return { ok: false, message: 'It is not your turn.' };
+  }
+
+  const applied = applyStealPick(state, instanceId, nowMs);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  if (applied.stillPending) {
+    return {
+      ok: true,
+      actionPlayed: {
+        actorPlayerId,
+        action: 'playCard',
+        cardId: 'card-thief',
+        turnSequence: state.turnSequence,
+      },
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      eliminations: [],
+      stealChoicePending: true,
+    };
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-thief',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
+/**
+ * Apply Card Thief steal-pick default on sub-choice expiry, then finish the turn
+ * (or raise the next pick).
+ */
+export function expireStealChoice(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.stealChoice;
+
+  if (choice === null) {
+    return { ok: false, message: 'No steal choice pending.' };
+  }
+
+  const actorPlayerId = choice.playerId;
+  const applied = applyDefaultStealPick(state, rng, nowMs);
+
+  if (!applied.ok) {
+    return applied;
+  }
+
+  if (applied.stillPending) {
+    return {
+      ok: true,
+      actionPlayed: {
+        actorPlayerId,
+        action: 'playCard',
+        cardId: 'card-thief',
+        turnSequence: state.turnSequence,
+      },
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      eliminations: [],
+      stealChoicePending: true,
+    };
+  }
+
+  return finishTurnPhases(
+    state,
+    actorPlayerId,
+    {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-thief',
+      turnSequence: state.turnSequence,
+    },
+    rng,
+    nowMs,
+  );
+}
+
 export type EliminationRewardTurnResult =
   | {
       ok: true;
@@ -428,7 +555,7 @@ function finishTurnPhases(
   rng: Rng,
   nowMs: number,
 ): TurnResult {
-  const resolvedEffects = resolvePendingEffects(state, actorPlayerId);
+  const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
   const eliminations = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);

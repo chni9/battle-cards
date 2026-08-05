@@ -12,6 +12,7 @@ import { createRng } from '../rng';
 import {
   completeEliminationRewardChoice,
   completeMirrorChoice,
+  completeStealChoice,
   performTurnAction,
   type EliminationRewardTurnResult,
   type PerformActionResult,
@@ -24,6 +25,10 @@ export interface MirrorResolvePick {
   newTargetPlayerId: string;
 }
 
+export interface StealResolvePick {
+  instanceId: string;
+}
+
 export interface RewardResolvePick {
   chooserPlayerId: string;
   eliminationId: string;
@@ -32,6 +37,11 @@ export interface RewardResolvePick {
 
 export interface TurnSubChoiceHooks {
   resolveMirror(state: GameState, actorPlayerId: string): MirrorResolvePick;
+  /**
+   * Return a steal instance id, or `null` to leave stealChoice pending for an
+   * external handler (human UI / room timer). Headless bots always return a pick.
+   */
+  resolveSteal?(state: GameState, actorPlayerId: string): StealResolvePick | null;
   /**
    * Return picks to complete the active reward job, or `null` to leave
    * `rewardChoice` pending for an external handler (human UI / room timer).
@@ -94,7 +104,11 @@ export function continuePendingSubChoices(
   // both true on the same result — Mirror always finishes before any reward can be
   // enqueued from the same `finishTurnPhases` call — so checking Mirror first and
   // falling through to rewards is equivalent to draining each independently.
-  while (result.mirrorChoicePending === true || result.rewardChoicePending === true) {
+  while (
+    result.mirrorChoicePending === true ||
+    result.stealChoicePending === true ||
+    result.rewardChoicePending === true
+  ) {
     if (result.mirrorChoicePending === true) {
       const pick = hooks.resolveMirror(state, actorPlayerId);
       const mirrorResult = completeMirrorChoice(
@@ -112,6 +126,30 @@ export function continuePendingSubChoices(
 
       options.onTurnResult?.(mirrorResult);
       result = mirrorResult;
+      continue;
+    }
+
+    if (result.stealChoicePending === true) {
+      const pick = hooks.resolveSteal?.(state, actorPlayerId) ?? null;
+
+      if (pick === null) {
+        return result;
+      }
+
+      const stealResult = completeStealChoice(
+        state,
+        actorPlayerId,
+        pick.instanceId,
+        rng,
+        nowMs,
+      );
+
+      if (!stealResult.ok) {
+        return stealResult;
+      }
+
+      options.onTurnResult?.(stealResult);
+      result = stealResult;
       continue;
     }
 

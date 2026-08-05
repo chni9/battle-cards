@@ -338,7 +338,7 @@ function TableScreenInner({
       setDialog({ kind: 'quantity', instance });
       return;
     }
-    if (cardPlayNeedsTarget(instance.cardId)) {
+    if (cardPlayNeedsTarget(instance.cardId, instance.isUpgraded)) {
       setDialog({ kind: 'target', instance });
       return;
     }

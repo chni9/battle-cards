@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { createRng } from '../rng';
 import { createInitialState } from '../create-initial-state';
 import { performTurnAction } from './perform-action';
 import { resolvePendingEffects } from './resolve-pending';
@@ -122,10 +123,11 @@ describe('Spy/Thief counter (L3-06)', () => {
         queuedAt: 1,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
-    resolvePendingEffects(state, 'b');
+    resolvePendingEffects(state, 'b', createRng('counter-spy'));
 
     expect(state.visibility.some((r) => r.viewerId === 'a' && r.subjectId === 'b')).toBe(true);
   });

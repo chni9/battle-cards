@@ -98,6 +98,23 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
 
       return pick;
     },
+    resolveSteal: (s: GameState, actorId: string) => {
+      const choice = s.stealChoice;
+
+      if (choice?.playerId !== actorId) {
+        throw new Error('steal pending without stealChoice');
+      }
+
+      if (choice.eligibleInstanceIds.length === 0) {
+        throw new Error('Steal pending but no eligible cards');
+      }
+
+      return {
+        instanceId: createRng(
+          `${s.seed}:bot:${actorId}:steal:${s.turnSequence}`,
+        ).pick(choice.eligibleInstanceIds),
+      };
+    },
     resolveReward: (s: GameState) => {
       const choice = s.rewardChoice;
 

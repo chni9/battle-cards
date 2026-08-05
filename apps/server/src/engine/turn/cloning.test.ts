@@ -44,6 +44,7 @@ describe('Cloning (kit + resources only)', () => {
         queuedAt: 0,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
     b.kitId = 'scientific';
@@ -67,6 +68,7 @@ describe('Cloning (kit + resources only)', () => {
         queuedAt: 0,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
     state.visibility = [

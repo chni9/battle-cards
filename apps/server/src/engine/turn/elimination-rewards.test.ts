@@ -53,6 +53,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
@@ -132,6 +133,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
@@ -192,6 +194,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
@@ -264,6 +267,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
@@ -348,6 +352,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 
@@ -471,6 +476,7 @@ describe('Elimination rewards (Lot 6)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 

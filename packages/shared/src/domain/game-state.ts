@@ -64,10 +64,15 @@ export interface GameState {
   /**
    * Active Mirror sub-choice, or `null`. While set, the Mirror user's turn has paid
    * but has not yet resolved pending effects (technical spec §5.5–5.6). Gated with
-   * `rewardChoice` / `rewardQueue` by the single `hasActiveSubChoice` predicate
-   * (`apps/server/src/engine/turn/sub-choice.ts`, technical spec v4 §4.4/§10.2).
+   * `rewardChoice` / `rewardQueue` / `stealChoice` by the single `hasActiveSubChoice`
+   * predicate (`apps/server/src/engine/turn/sub-choice.ts`, technical spec v4 §4.4/§10.2).
    */
   mirrorChoice: MirrorChoiceState | null;
+  /**
+   * Active Card Thief steal-pick sub-choice, or `null` (L21-03). Mirror-shaped slot:
+   * pauses turn resolve until the thief picks (or the timer defaults).
+   */
+  stealChoice: StealChoiceState | null;
   /**
    * Third-party sources that dealt life loss (or a lethal effect) to a victim during
    * the current resolve+persist phase. Consumed when eliminations are marked (L6).
@@ -114,3 +119,9 @@ export type RewardChoiceState = Omit<Extract<SubChoiceState, { kind: 'eliminatio
  * (`docs/agent/decisions.md` 2026-08-04, L20-18).
  */
 export type MirrorChoiceState = Omit<Extract<SubChoiceState, { kind: 'mirror' }>, 'kind'>;
+
+/**
+ * In-flight Card Thief steal-pick — L21-03. Shape derived from `SubChoiceState`;
+ * field stays `GameState.stealChoice` (dedicated slot, L20-18 precedent).
+ */
+export type StealChoiceState = Omit<Extract<SubChoiceState, { kind: 'steal-pick' }>, 'kind'>;

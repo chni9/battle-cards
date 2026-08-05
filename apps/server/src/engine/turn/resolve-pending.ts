@@ -17,11 +17,18 @@ import {
 } from '@card-battle/shared';
 
 import { grantSpy } from '../../protocol/visibility-matrix';
+import { stealRandomCard, takeCardFrom } from '../cards/steal-card';
+import { downgradeAllCards } from '../economy/downgrade-cards';
+import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { stealPoints } from '../economy/steal-points';
+import { stealUpgradePoints } from '../economy/steal-upgrade-points';
+import { transferCardInstance } from '../kits/acquire-card';
 import { isImmuneTo } from '../kits/is-immune-to';
 import { applyDamage } from '../life/apply-damage';
 import { applyLifeLoss } from '../life/apply-life-loss';
+import type { Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = ActionResolutionOutcome;
@@ -198,6 +205,66 @@ function resolveSpyThief(
 }
 
 /**
+ * Upgrade Point Thief — rules spec §5, L21-02.
+ * Not counterable; not blocked by Shield; Untouchable is not immune (#V4-33).
+ */
+function resolveUpgradePointThief(
+  state: GameState,
+  target: Player,
+  effect: PendingEffect,
+): ResolveOutcome {
+  const source = findPlayer(state, effect.sourcePlayerId);
+
+  if (source === undefined) {
+    return 'applied';
+  }
+
+  stealUpgradePoints(source, target);
+  const stripped = downgradeAllCards(target);
+  gainUpgradePoints(source, stripped, 'direct');
+
+  if (effect.isUpgraded) {
+    stealPoints({
+      state,
+      sourcePlayerId: effect.sourcePlayerId,
+      targetPlayerId: target.id,
+      amount: target.points,
+      gainMultiplier: 1,
+    });
+  }
+
+  return 'applied';
+}
+
+/**
+ * Card Thief — rules spec §5, L21-03.
+ * Not counterable (#V4-33). Stolen identity stays off the public action log.
+ */
+function resolveCardThief(
+  state: GameState,
+  target: Player,
+  effect: PendingEffect,
+  rng: Rng,
+): ResolveOutcome {
+  const source = findPlayer(state, effect.sourcePlayerId);
+
+  if (source === undefined) {
+    return 'applied';
+  }
+
+  const stolen =
+    effect.chosenInstanceId !== null
+      ? takeCardFrom(target, effect.chosenInstanceId)
+      : stealRandomCard(target, rng);
+
+  if (stolen !== undefined) {
+    transferCardInstance(source, stolen);
+  }
+
+  return 'applied';
+}
+
+/**
  * Suicide on an opponent: 5 lives + all points (applyLifeLoss). Suicide on self: eliminate.
  * Opponent kills attribute the Suicide user as eliminator (Lot 5 ruling); self has none.
  */
@@ -228,6 +295,7 @@ function resolveSuicide(
 export function resolvePendingEffects(
   state: GameState,
   playerId: string,
+  rng: Rng,
 ): ResolvedEffect[] {
   const player = state.players.find((entry) => entry.id === playerId);
 
@@ -291,6 +359,10 @@ export function resolvePendingEffects(
       outcome = suicide.outcome;
     } else if (effect.cardId === 'spy-thief') {
       outcome = resolveSpyThief(state, player, effect);
+    } else if (effect.cardId === 'upgrade-point-thief') {
+      outcome = resolveUpgradePointThief(state, player, effect);
+    } else if (effect.cardId === 'card-thief') {
+      outcome = resolveCardThief(state, player, effect, rng);
     } else if (effect.cardId === 'sentence') {
       const livesBefore = player.lives;
       // Instant lethal elimination — rules spec §5 (Sentence), technical spec §4.2.

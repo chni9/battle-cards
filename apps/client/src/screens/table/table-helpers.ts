@@ -47,8 +47,12 @@ export function buildRewardChoice(
   return { type: kind };
 }
 
-/** Cards that V1 Table sent with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning). */
-export function cardPlayNeedsTarget(cardId: string): boolean {
+/** Cards that Table sends with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning, base Card Thief). */
+export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean {
+  if (cardId === 'card-thief') {
+    return !isUpgraded;
+  }
+
   return (
     (ATTACK_CARD_IDS as readonly string[]).includes(cardId) ||
     cardId === 'spy' ||
@@ -58,8 +62,8 @@ export function cardPlayNeedsTarget(cardId: string): boolean {
   );
 }
 
-export function cardIsSelfOnlyPlay(cardId: string): boolean {
-  return !cardPlayNeedsTarget(cardId);
+export function cardIsSelfOnlyPlay(cardId: string, isUpgraded = false): boolean {
+  return !cardPlayNeedsTarget(cardId, isUpgraded);
 }
 
 /** Effect copy for Dialogs when Table `Card detail="face"` omits it. */

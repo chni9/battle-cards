@@ -29,6 +29,7 @@ describe('duplicatePendingEffect (technical spec v4 §4.2, L20-15)', () => {
       queuedAt: 7,
       damageMultiplier: 4,
       redirectedBy: null,
+      chosenInstanceId: null,
     };
 
     const dupB = duplicatePendingEffect(state, source, 'b', 'super-mirror');

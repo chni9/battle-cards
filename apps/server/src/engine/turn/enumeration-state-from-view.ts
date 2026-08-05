@@ -103,6 +103,7 @@ export function enumerationStateFromView(
       queuedAt: effect.queuedAt,
       damageMultiplier: effect.damageMultiplier,
       redirectedBy: effect.redirectedBy,
+      chosenInstanceId: null,
     });
   }
 
@@ -117,6 +118,7 @@ export function enumerationStateFromView(
     seed,
     visibility: [],
     mirrorChoice: null,
+    stealChoice: null,
     eliminationContributors: [],
     rewardQueue: [],
     rewardChoice: null,

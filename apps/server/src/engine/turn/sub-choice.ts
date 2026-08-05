@@ -15,15 +15,24 @@ import type { GameState, SubChoiceKind } from '@card-battle/shared';
 
 export const SUB_CHOICE_MS = 20_000;
 
-/** True while a sub-choice — Mirror or elimination reward — blocks every other action. */
+/** True while a sub-choice — Mirror, steal-pick or elimination reward — blocks every other action. */
 export function hasActiveSubChoice(state: GameState): boolean {
-  return state.mirrorChoice !== null || state.rewardChoice !== null || state.rewardQueue.length > 0;
+  return (
+    state.mirrorChoice !== null ||
+    state.stealChoice !== null ||
+    state.rewardChoice !== null ||
+    state.rewardQueue.length > 0
+  );
 }
 
 /** Which sub-choice is currently blocking the table, or `null`. */
 export function activeSubChoiceKind(state: GameState): SubChoiceKind | null {
   if (state.mirrorChoice !== null) {
     return 'mirror';
+  }
+
+  if (state.stealChoice !== null) {
+    return 'steal-pick';
   }
 
   if (state.rewardChoice !== null || state.rewardQueue.length > 0) {

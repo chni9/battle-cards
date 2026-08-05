@@ -42,17 +42,10 @@ export const SPECIAL_CARD_IDS = [
 ] as const;
 
 /**
- * Specials that may be granted by the 20-point random purchase until L21-01 lifts
- * ruling §6.2 #10 — still the six V1 specials with handlers.
+ * Alias of `SPECIAL_CARD_IDS` — L21-01 / #V4-29: the 20-point purchase draws from
+ * all 20 specials (pending-handler ids included; play stays rejected until implemented).
  */
-export const PURCHASABLE_SPECIAL_CARD_IDS = [
-  'suicide',
-  'spy-thief',
-  'imposition',
-  'cloning',
-  'sentence',
-  'points-generator',
-] as const;
+export const PURCHASABLE_SPECIAL_CARD_IDS = SPECIAL_CARD_IDS;
 
 /**
  * Cards that inflict *damage* as rules spec §1 defines it, and therefore the only

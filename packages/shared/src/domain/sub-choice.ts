@@ -1,24 +1,15 @@
 /**
- * Generic sub-choice model — technical spec v4 §4.4, backlog L20-18.
+ * Generic sub-choice model — technical spec v4 §4.4, backlog L20-18 / L21-03.
  *
  * A sub-choice pauses ordinary turn actions until it resolves (picked, or defaulted
- * on timeout). Today there are two: Mirror (a slot — one player, one instant) and
- * elimination rewards (a queue — one job per elimination, the head active). Both are
- * fully typed and constructible here. Four more kinds are declared for cards that
- * need them later (Card Absorber's pool pick, Card Thief's steal-when-spied pick,
- * Card Transformer's special pick, Reanimation's kit pick — Lots 21/24/26) so their
- * handlers, the engine gate and the wire protocol never repeat this duplication —
- * but they are deliberately impossible to construct before those tasks land
- * (`payload: never`), so a stray literal cannot silently claim a kind before its
- * handler exists.
+ * on timeout). Mirror and elimination rewards are fully typed. Card Thief's
+ * steal-when-spied pick (`steal-pick`) is constructible from L21-03. Three more
+ * kinds stay `payload: never` until Lots 24/26.
  *
- * `GameState` does not (yet) store every kind under one shared field name — see
- * `docs/agent/decisions.md` 2026-08-04 (L20-18): `mirrorChoice` / `rewardChoice` /
- * `rewardQueue` stay the concrete slot/queue storage so no existing test needs
- * editing. This union is instead the single source of truth for their *shape*, for
- * the one engine gate (`hasActiveSubChoice`), and for the `subChoiceRequired` /
- * `resolveSubChoice` wire pair.
+ * `GameState` stores Mirror / reward / steal under dedicated fields — see
+ * `docs/agent/decisions.md` 2026-08-04 (L20-18) and 2026-08-05 (L21-03).
  */
+
 export type SubChoiceKind =
   | 'mirror'
   | 'elimination-reward'
@@ -39,14 +30,26 @@ export interface EliminationRewardSubChoicePayload {
   eliminatedPlayerId: string;
 }
 
+/** Card Thief steal-when-spied — Mirror-shaped slot (L21-03). */
+export interface StealPickSubChoicePayload {
+  /** The thief choosing which card to steal. */
+  playerId: string;
+  victimPlayerId: string;
+  eligibleInstanceIds: readonly string[];
+  /** Remaining spied victims for an upgraded multi-target play (after the current one). */
+  pendingSpiedVictimIds: readonly string[];
+  /** Whether the Card Thief copy being resolved is upgraded. */
+  cardIsUpgraded: boolean;
+}
+
 /**
- * Discriminated on `kind`. Only `'mirror'` and `'elimination-reward'` are fully
- * typed and constructible in Lot 20 — see the module doc comment.
+ * Discriminated on `kind`. `'mirror'`, `'elimination-reward'` and `'steal-pick'`
+ * are fully typed and constructible.
  */
 export type SubChoiceState =
   | ({ kind: 'mirror'; deadlineMs: number } & MirrorSubChoicePayload)
   | ({ kind: 'elimination-reward'; deadlineMs: number } & EliminationRewardSubChoicePayload)
+  | ({ kind: 'steal-pick'; deadlineMs: number } & StealPickSubChoicePayload)
   | { kind: 'pool-pick'; deadlineMs: number; payload: never }
-  | { kind: 'steal-pick'; deadlineMs: number; payload: never }
   | { kind: 'special-pick'; deadlineMs: number; payload: never }
   | { kind: 'reanimation-kit'; deadlineMs: number; payload: never };

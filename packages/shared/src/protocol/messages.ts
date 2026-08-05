@@ -156,13 +156,29 @@ export interface MirrorChoiceRequiredPayload {
   deadlineMs: number;
 }
 
+/** Carried inside `subChoiceRequired` — `kind: 'steal-pick'` (L21-03). */
+export interface StealPickChoiceRequiredPayload {
+  kind: 'steal-pick';
+  victimPlayerId: string;
+  eligibleInstanceIds: readonly string[];
+  deadlineMs: number;
+}
+
+export interface ChooseStealPickPayload {
+  instanceId: string;
+}
+
 /** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
-export type SubChoiceRequiredPayload = MirrorChoiceRequiredPayload | RewardChoiceRequiredPayload;
+export type SubChoiceRequiredPayload =
+  | MirrorChoiceRequiredPayload
+  | RewardChoiceRequiredPayload
+  | StealPickChoiceRequiredPayload;
 
 /** `resolveSubChoice`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type ResolveSubChoicePayload =
   | ({ kind: 'mirror' } & ChooseMirrorTargetPayload)
-  | ({ kind: 'elimination-reward' } & ChooseEliminationRewardPayload);
+  | ({ kind: 'elimination-reward' } & ChooseEliminationRewardPayload)
+  | ({ kind: 'steal-pick' } & ChooseStealPickPayload);
 
 export interface AddBotPayload {
   difficulty: BotDifficulty;

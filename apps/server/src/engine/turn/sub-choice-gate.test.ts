@@ -95,6 +95,7 @@ describe('sub-choice gate is one gate (§10.2, L20-18)', () => {
         isUpgraded: false,
         damageMultiplier: 1,
         redirectedBy: null,
+      chosenInstanceId: null,
       },
     ];
 

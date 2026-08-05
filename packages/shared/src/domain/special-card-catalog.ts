@@ -3,8 +3,7 @@
  *
  * Specials are not bought/sold individually (`buyCost` / `sellYield` keep the Card
  * shape but are unused by the shared shop). Play cost is the listed Price. Random
- * acquisition uses `buySpecialCard` among `PURCHASABLE_SPECIAL_CARD_IDS` until L21-01
- * lifts ruling §6.2 #10.
+ * acquisition uses `buySpecialCard` over all `SPECIAL_CARD_IDS` (L21-01 / #V4-29).
  *
  * Every price re-verified against rules spec §5 at L20-04.
  */

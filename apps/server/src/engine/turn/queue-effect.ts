@@ -14,6 +14,8 @@ export interface QueueEffectInput {
   targetPlayerId: string;
   cardId: CardId;
   isUpgraded: boolean;
+  /** Card Thief steal lock — omitted/`null` for random-at-resolve (L21-03). */
+  chosenInstanceId?: string | null;
 }
 
 export function queueEffect(input: QueueEffectInput): PendingEffect {
@@ -32,6 +34,7 @@ export function queueEffect(input: QueueEffectInput): PendingEffect {
     queuedAt: input.state.turnSequence,
     damageMultiplier: 1,
     redirectedBy: null,
+    chosenInstanceId: input.chosenInstanceId ?? null,
   };
 
   target.pendingEffects.push(effect);

@@ -20,6 +20,7 @@ function attack(
     queuedAt: 1,
     damageMultiplier: 1,
     redirectedBy: null,
+    chosenInstanceId: null,
     ...overrides,
   };
 }

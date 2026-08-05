@@ -40,6 +40,7 @@ import {
   type RewardChoiceRequiredPayload,
   type RoomJoinOptions,
   type StateView,
+  type StealPickChoiceRequiredPayload,
   type TurnStartedPayload,
 } from '@card-battle/shared';
 import { Client, type Room } from '@colyseus/sdk';
@@ -93,6 +94,8 @@ export interface RoomConnection {
   lastActionResolved: ActionResolvedPayload | null;
   /** Set when the server asks this client for a Mirror redirect (L3-09). */
   mirrorChoice: MirrorChoiceRequiredPayload | null;
+  /** Set when the server asks this client for a Card Thief steal-pick (L21-03). */
+  stealChoice: StealPickChoiceRequiredPayload | null;
   /** Set when the server asks this client for an elimination reward (Lot 6). */
   rewardChoice: RewardChoiceRequiredPayload | null;
   /**
@@ -117,6 +120,7 @@ const INITIAL: RoomConnection = {
   lastActionPlayed: null,
   lastActionResolved: null,
   mirrorChoice: null,
+  stealChoice: null,
   rewardChoice: null,
   soloLaunchPending: false,
 };
@@ -136,6 +140,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ) => void;
   chooseMirrorTarget: (pendingEffectId: string, newTargetPlayerId: string) => void;
+  chooseStealPick: (instanceId: string) => void;
   chooseEliminationReward: (
     eliminationId: string,
     choices: [RewardChoice, RewardChoice],
@@ -220,6 +225,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
           ...previous,
           lastTurnStarted: payload,
           mirrorChoice: null,
+          stealChoice: null,
           rewardChoice: null,
         }));
       }
@@ -243,6 +249,11 @@ export function useRoomConnection(): UseRoomConnectionResult {
         return;
       }
 
+      if (isStealPickChoiceRequired(payload)) {
+        setConnection((previous) => ({ ...previous, stealChoice: payload }));
+        return;
+      }
+
       if (isRewardChoiceRequired(payload)) {
         setConnection((previous) => ({ ...previous, rewardChoice: payload }));
       }
@@ -259,6 +270,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
           ...previous,
           error: null,
           mirrorChoice: null,
+          stealChoice: null,
           rewardChoice: null,
         }));
         void payload;
@@ -488,6 +500,14 @@ export function useRoomConnection(): UseRoomConnectionResult {
     [],
   );
 
+  const chooseStealPick = useCallback((instanceId: string): void => {
+    roomRef.current?.send(RESOLVE_SUB_CHOICE, {
+      kind: 'steal-pick',
+      instanceId,
+    });
+    setConnection((previous) => ({ ...previous, stealChoice: null }));
+  }, []);
+
   const chooseEliminationReward = useCallback(
     (eliminationId: string, choices: [RewardChoice, RewardChoice]): void => {
       roomRef.current?.send(RESOLVE_SUB_CHOICE, {
@@ -538,6 +558,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     playCard,
     playMultipleAttacks,
     chooseMirrorTarget,
+    chooseStealPick,
     chooseEliminationReward,
     buyCard,
     sellCard,
@@ -675,6 +696,21 @@ function isMirrorChoiceRequired(payload: unknown): payload is MirrorChoiceRequir
     'eligibleEffectIds' in payload &&
     'deadlineMs' in payload &&
     Array.isArray(payload.eligibleEffectIds) &&
+    typeof payload.deadlineMs === 'number'
+  );
+}
+
+function isStealPickChoiceRequired(payload: unknown): payload is StealPickChoiceRequiredPayload {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'kind' in payload &&
+    payload.kind === 'steal-pick' &&
+    'victimPlayerId' in payload &&
+    'eligibleInstanceIds' in payload &&
+    'deadlineMs' in payload &&
+    typeof payload.victimPlayerId === 'string' &&
+    Array.isArray(payload.eligibleInstanceIds) &&
     typeof payload.deadlineMs === 'number'
   );
 }

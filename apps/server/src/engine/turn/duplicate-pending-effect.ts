@@ -32,6 +32,7 @@ export function duplicatePendingEffect(
     queuedAt: effect.queuedAt,
     damageMultiplier: effect.damageMultiplier,
     redirectedBy,
+    chosenInstanceId: effect.chosenInstanceId,
   };
 
   target.pendingEffects.push(duplicate);

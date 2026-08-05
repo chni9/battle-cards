@@ -147,6 +147,7 @@ describe('BotDriver (L16-06)', () => {
           pool: [],
           visibility: [],
           mirrorChoice: null,
+          stealChoice: null,
           eliminationContributors: [],
           rewardQueue: [],
           rewardChoice: null,
@@ -162,6 +163,9 @@ describe('BotDriver (L16-06)', () => {
       },
       completeBotMirror: () => {
         throw new Error('unexpected mirror');
+      },
+      completeBotSteal: () => {
+        throw new Error('unexpected steal');
       },
       completeBotReward: () => {
         throw new Error('unexpected reward');
@@ -229,6 +233,7 @@ describe('BotDriver (L16-06)', () => {
           pool: [],
           visibility: [],
           mirrorChoice: null,
+          stealChoice: null,
           eliminationContributors: [],
           rewardQueue: [],
           rewardChoice: null,
@@ -253,6 +258,7 @@ describe('BotDriver (L16-06)', () => {
         host.performBotAction(id, { type: 'draw' });
       },
       completeBotMirror: () => undefined,
+      completeBotSteal: () => undefined,
       completeBotReward: () => undefined,
       failBotReward: () => undefined,
     };
@@ -289,6 +295,7 @@ describe('BotDriver (L16-06)', () => {
         draws.push(id);
       },
       completeBotMirror: () => undefined,
+      completeBotSteal: () => undefined,
       completeBotReward: () => undefined,
       failBotReward: () => undefined,
     };

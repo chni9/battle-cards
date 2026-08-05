@@ -787,3 +787,15 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-3** | Each of N pending attacks pairs **independently** on its own target's turn. | `decisions.md`, L20-07 |
 | **#V4-30** | Player count stays **2–4** in V4 (docs-only). | `decisions.md`, L20-19 |
 
+## 11.2 Ruled in Lot 21 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-29** | 20-pt random special purchase draws from **all 20** specials; pending-handler specials may be granted and stay unplayable until their handler lands. | `decisions.md`, L21-01 |
+| **#V4-17** | Upgrade Point Thief strip **includes** `shieldIsUpgraded` and active-persistent `isUpgraded`; each yields 1 UP. | `decisions.md`, L21-02 |
+| **#V4-18** | Kit-trait upgrades yield 1 UP on strip; later acquisitions re-upgrade via `alwaysUpgraded`. | `decisions.md`, L21-02 |
+| **#V4-33** | Counter Rule / Untouchable `immuneTo` / upgraded Shield block stay **Spy + Thief only**. | `decisions.md`, L21-02 |
+| **#V4-19** | Card Thief steals from **hand + unused specials**. | `decisions.md`, L21-03 |
+| **#V4-34** | Empty victim: play is **legal, resolve no-op**. | `decisions.md`, L21-03 |
+| **#V4-35** | "Spied" means Spy from **the user**, not anyone. | `decisions.md`, L21-03 |
+

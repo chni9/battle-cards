@@ -23,8 +23,11 @@ import { spyThiefHandler } from './handlers/spy-thief';
 import { strongAttackHandler } from './handlers/strong-attack';
 import { suicideHandler } from './handlers/suicide';
 import { superAttackHandler } from './handlers/super-attack';
+import { superRegenerationHandler } from './handlers/super-regeneration';
 import { taxHandler } from './handlers/tax';
 import { thiefHandler } from './handlers/thief';
+import { upgradePointThiefHandler } from './handlers/upgrade-point-thief';
+import { cardThiefHandler } from './handlers/card-thief';
 
 /** Cards with a working handler. Grows by one entry per card task. */
 export const IMPLEMENTED_CARD_IDS = [
@@ -44,6 +47,9 @@ export const IMPLEMENTED_CARD_IDS = [
   'spy-thief',
   'cloning',
   'sentence',
+  'super-regeneration',
+  'upgrade-point-thief',
+  'card-thief',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -51,10 +57,7 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
 export const PENDING_CARD_IDS = [
-  'upgrade-point-thief',
   'block',
-  'super-regeneration',
-  'card-thief',
   'card-transformer',
   'invisibility',
   'reanimation',
@@ -84,6 +87,9 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'spy-thief': spyThiefHandler,
   cloning: cloningHandler,
   sentence: sentenceHandler,
+  'super-regeneration': superRegenerationHandler,
+  'upgrade-point-thief': upgradePointThiefHandler,
+  'card-thief': cardThiefHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

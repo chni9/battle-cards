@@ -42,6 +42,7 @@ export interface BotDriverHost {
     newTargetPlayerId: string,
     reason?: BotDecisionReason,
   ): void;
+  completeBotSteal(botId: string, instanceId: string, reason?: BotDecisionReason): void;
   completeBotReward(
     botId: string,
     eliminationId: string,
@@ -107,6 +108,30 @@ export class BotDriver {
         pick.newTargetPlayerId,
         pick.reason,
       );
+    } catch {
+      this.host.performBotDraw(botId, { code: 'policy-fallback' });
+    }
+  }
+
+  /** Inline Card Thief steal-pick — no `subChoiceRequired` timer. */
+  handleStealChoice(botId: string): void {
+    const state = this.host.getGameState();
+    const choice = state?.stealChoice;
+
+    if (state === null || choice === null || choice === undefined || this.host.isGameOver()) {
+      return;
+    }
+
+    if (choice.playerId !== botId || choice.eligibleInstanceIds.length === 0) {
+      this.host.performBotDraw(botId, { code: 'policy-fallback' });
+      return;
+    }
+
+    const rng = createRng(`${state.seed}:bot:${botId}:steal:${state.turnSequence}`);
+    const instanceId = rng.pick(choice.eligibleInstanceIds);
+
+    try {
+      this.host.completeBotSteal(botId, instanceId, { code: 'policy-fallback' });
     } catch {
       this.host.performBotDraw(botId, { code: 'policy-fallback' });
     }
