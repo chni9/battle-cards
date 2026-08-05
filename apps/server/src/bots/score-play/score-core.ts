@@ -1,0 +1,447 @@
+/**
+ * Core `playCard` scoring — every V1 card, plus MEGA ATTACK (see `families.ts`) and the
+ * four specials that already had a branch before L29-01 (Sentence, Imposition,
+ * Points Generator, Spy Thief, and Cloning outside an incoming threat).
+ *
+ * Verbatim body of the pre-split `scorePlayCard` (technical spec v3 §4.4, §4.6 / L16-04) —
+ * moved here unchanged by L29-01. Re-checks `findOwnCard` and the point-reserve gate
+ * itself so the dispatcher in `./index.ts` can stay a plain family switch.
+ */
+
+import {
+  attackDamageFor,
+  getCard,
+  isAttackCardId,
+  type BotReasonCode,
+  type PlayingStateView,
+} from '@card-battle/shared';
+
+import type { TurnAction } from '../../engine/turn/perform-action';
+import {
+  BURN_COUNTER_BONUS,
+  FINISH_CHIP_BONUS,
+  HEURISTIC_BAND_WEIGHTS,
+  IMPOSITION_INVEST_BONUS,
+  MUTUAL_CANCEL_BONUS,
+  POINTS_GENERATOR_INVEST_BONUS,
+  PRESSURE_COST_DIVISOR,
+  REGEN_SOFT_LIFE,
+  SPY_THIEF_DENY_BONUS,
+  SPY_TOP_THREAT_BONUS,
+  SPY_UNSPIED_BONUS,
+  STRIKE_MIN_DAMAGE,
+  TAX_INVEST_BONUS,
+  TAX_LIFE_BUFFER,
+  UNSCORED_PLAY_PENALTY,
+} from '../heuristic-weights';
+import {
+  bestAffordableStrikeDamage,
+  estimateSuicideElims,
+  estimatedPlayPoints,
+  findOwnCard,
+  hasAnyIncomingFrom,
+  hasCancelingIncomingFrom,
+  hasOwnPersistent,
+  hasPendingCardFrom,
+  isImmuneTarget,
+  isSpyThiefImmuneSeat,
+  knownOpponentLives,
+  maxBurnableCounter,
+  scoreAbsorber,
+  violatesPointReserve,
+  weakestDyingSeat,
+  type PolicyContext,
+} from '../policy-internals';
+
+export function scoreCorePlayCard(
+  view: PlayingStateView,
+  action: Extract<TurnAction, { type: 'playCard' }>,
+  ctx: PolicyContext,
+): { score: number; code: BotReasonCode } {
+  const instance = findOwnCard(view, action.instanceId);
+
+  if (instance === undefined) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  const { cardId, isUpgraded } = instance;
+
+  const playCostPoints = estimatedPlayPoints(cardId, isUpgraded);
+
+  if (
+    playCostPoints > 0 &&
+    violatesPointReserve(view, ctx, view.self.points - playCostPoints) &&
+    ctx.stance !== 'finish'
+  ) {
+    // Still allow Survive-band counters below.
+    if (
+      !(
+        (cardId === 'mirror' || cardId === 'shield') &&
+        ctx.incomingThreat > 0
+      )
+    ) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+    }
+  }
+
+  // Kamikaze: never base Suicide; upgraded only if estimated elim ≥ 1.
+  if (cardId === 'suicide' && view.self.kitId === 'kamikaze') {
+    if (!isUpgraded) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    const elims = estimateSuicideElims(view, ctx);
+
+    if (elims < 1) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10, code: 'lethal-now' };
+  }
+
+  // Sentence — base draw includes self (no eliminator reward on self-elim). Refuse base.
+  // Upgraded: random living opponent only → lethal-now (guaranteed one elim).
+  if (cardId === 'sentence') {
+    if (!isUpgraded) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    const opponents = view.players.filter(
+      (player) => player.id !== view.you && !player.isEliminated,
+    ).length;
+
+    if (opponents < 1) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.lethalNow + opponents * 5,
+      code: 'lethal-now',
+    };
+  }
+
+  // Imposition / Points Generator — activate once; Invest economy (not draw-tied).
+  if (cardId === 'imposition') {
+    if (hasOwnPersistent(view, 'imposition')) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + IMPOSITION_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  if (cardId === 'points-generator') {
+    if (hasOwnPersistent(view, 'points-generator')) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.invest + POINTS_GENERATOR_INVEST_BONUS,
+      code: 'invest',
+    };
+  }
+
+  // Spy Thief — steal all points + Spy all (Untouchable is not immune). Deny band.
+  if (cardId === 'spy-thief') {
+    const living = view.players.filter(
+      (player) => player.id !== view.you && !player.isEliminated,
+    );
+    const unspied = living.filter((player) => player.spied === undefined).length;
+
+    return {
+      score:
+        HEURISTIC_BAND_WEIGHTS.deny +
+        SPY_THIEF_DENY_BONUS +
+        living.length * 10 +
+        unspied * 20,
+      code: 'deny',
+    };
+  }
+
+  if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  // Mutual cancel (Lot 19): equal or stronger attack back at the source cancels the weaker.
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const damage = attackDamageFor(cardId, isUpgraded);
+
+    if (hasCancelingIncomingFrom(view, action.targetPlayerId, damage)) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS + damage,
+        code: 'survive',
+      };
+    }
+  }
+
+  // Spy/Thief counter — same card back at the source cancels both (tech §4.7).
+  if (
+    (cardId === 'spy' || cardId === 'thief') &&
+    action.targetPlayerId !== undefined &&
+    hasPendingCardFrom(view, action.targetPlayerId, cardId)
+  ) {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS,
+      code: 'survive',
+    };
+  }
+
+  // Survive band — any pending attack (lean into counters / life buys under fire).
+  if (ctx.incomingThreat > 0) {
+    if (cardId === 'mirror') {
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 30, code: 'survive' };
+    }
+
+    if (cardId === 'shield') {
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 20, code: 'survive' };
+    }
+
+    if (cardId === 'regeneration') {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.survive + (action.quantity ?? 0),
+        code: 'survive',
+      };
+    }
+
+    if (cardId === 'cloning') {
+      return { score: HEURISTIC_BAND_WEIGHTS.survive + 10, code: 'survive' };
+    }
+  }
+
+  // Lethal now — Spy-confirmed lives only
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const knownLives = knownOpponentLives(view, action.targetPlayerId);
+
+    if (knownLives !== null) {
+      const damage = attackDamageFor(cardId, isUpgraded);
+
+      if (damage >= knownLives) {
+        return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damage, code: 'lethal-now' };
+      }
+    }
+  }
+
+  // Deny — Absorber (base: lives; upgraded: UP / points / lives from last complete turn).
+  if (cardId === 'absorber' && action.targetPlayerId !== undefined) {
+    return scoreAbsorber(view, action.targetPlayerId, isUpgraded, ctx);
+  }
+
+  // Burn public counter persistents (Imposition / Points Generator) — any attack damage
+  // that reaches lives decrements counters (engine.md). Chip attacks allowed here.
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const need = maxBurnableCounter(view, action.targetPlayerId);
+
+    if (need > 0) {
+      const damage = attackDamageFor(cardId, isUpgraded);
+      const clears = damage >= need ? 40 : 0;
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.deny +
+          BURN_COUNTER_BONUS +
+          Math.min(damage, need) * 15 +
+          clears,
+        code: 'deny',
+      };
+    }
+  }
+
+  // Spy — unlock kit/hand (and upgraded: live tokens) so lethal-now can fire later.
+  if (cardId === 'spy' && action.targetPlayerId !== undefined) {
+    const target = view.players.find((player) => player.id === action.targetPlayerId);
+
+    if (
+      target === undefined ||
+      target.isEliminated ||
+      target.isYou ||
+      isSpyThiefImmuneSeat(view, action.targetPlayerId)
+    ) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
+    const already = target.spied;
+
+    if (already !== undefined) {
+      // Base Spy already on them: only upgraded Spy still adds live resources.
+      if (isUpgraded && already.lives === undefined) {
+        return {
+          score: HEURISTIC_BAND_WEIGHTS.deny + 25,
+          code: 'deny',
+        };
+      }
+
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
+    const onTop = action.targetPlayerId === ctx.threatOrder[0] ? SPY_TOP_THREAT_BONUS : 0;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.deny + SPY_UNSPIED_BONUS + onTop,
+      code: 'deny',
+    };
+  }
+
+  if (cardId === 'thief' && action.targetPlayerId !== undefined) {
+    if (isSpyThiefImmuneSeat(view, action.targetPlayerId)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+    }
+
+    const spend = ctx.observedSpend.get(action.targetPlayerId) ?? 0;
+    const topSpender = ctx.threatOrder.find((id) => (ctx.observedSpend.get(id) ?? 0) > 0);
+    // Prefer highest observed spending
+    const maxSpend = Math.max(0, ...[...ctx.observedSpend.values()]);
+
+    if (spend === maxSpend && spend > 0) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.deny + spend + (topSpender === action.targetPlayerId ? 1 : 0),
+        code: 'deny',
+      };
+    }
+
+    // No spend signal — do not rng-tie with draw.
+    return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
+  }
+
+  // Cloning without incoming threat: only when Spy shows a richer seat; else below draw.
+  if (cardId === 'cloning' && action.targetPlayerId !== undefined && ctx.incomingThreat <= 0) {
+    const target = view.players.find((player) => player.id === action.targetPlayerId);
+    const spied = target?.spied;
+
+    if (spied?.lives !== undefined && spied.lives > view.self.lives + 2) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.invest + 40 + (isUpgraded ? 15 : 0),
+        code: 'invest',
+      };
+    }
+
+    if (spied?.points !== undefined && spied.points > view.self.points + 5) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.invest + 35 + (isUpgraded ? 15 : 0),
+        code: 'invest',
+      };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      code: 'sustain',
+    };
+  }
+
+  // Absorber without a target should not reach here; safety below draw.
+  if (cardId === 'absorber') {
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      code: 'sustain',
+    };
+  }
+
+  // Pressure — finish stance chips Spy-known dying seats; otherwise upgraded strikes only.
+  if (action.targetPlayerId !== undefined && isAttackCardId(cardId)) {
+    const damage = attackDamageFor(cardId, isUpgraded);
+    const playCost = getCard(cardId)?.cost.points ?? 0;
+
+    if (violatesPointReserve(view, ctx, view.self.points - playCost)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'pressure' };
+    }
+
+    const knownLives = knownOpponentLives(view, action.targetPlayerId);
+    const canFinishKnown =
+      knownLives !== null && knownLives > 0 && damage >= knownLives && playCost <= view.self.points;
+
+    if (ctx.stance === 'finish' && canFinishKnown) {
+      const onWeakest =
+        action.targetPlayerId === weakestDyingSeat(view, bestAffordableStrikeDamage(view))
+          ? 15
+          : 0;
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.pressure + FINISH_CHIP_BONUS + damage + onWeakest,
+        code: 'pressure',
+      };
+    }
+
+    if (!isUpgraded || damage < STRIKE_MIN_DAMAGE) {
+      return {
+        score: HEURISTIC_BAND_WEIGHTS.sustain - 15,
+        code: 'pressure',
+      };
+    }
+
+    const cost = Math.max(1, playCost || 1);
+    const topTarget = ctx.threatOrder[0];
+    const onTop = action.targetPlayerId === topTarget ? 5 : 0;
+    const retaliateBonus = hasAnyIncomingFrom(view, action.targetPlayerId) ? 8 : 0;
+    const knownFinishBonus =
+      knownLives !== null && knownLives <= damage + 2 ? 20 : knownLives !== null ? 8 : 0;
+    const shieldPenalty = view.players.find((p) => p.id === action.targetPlayerId)
+      ?.activeShield
+      ? -2
+      : 0;
+    return {
+      score:
+        HEURISTIC_BAND_WEIGHTS.pressure +
+        damage -
+        cost / PRESSURE_COST_DIVISOR +
+        onTop +
+        retaliateBonus +
+        knownFinishBonus +
+        shieldPenalty,
+      code: 'pressure',
+    };
+  }
+
+  // Tax — farm engine; prefer upgraded; refuse when reserve would break after other spends only.
+  if (cardId === 'tax') {
+    if (view.self.lives > ctx.incomingThreat + TAX_LIFE_BUFFER) {
+      const upgradeBias = isUpgraded ? 25 : 0;
+      // In contest, still Tax but below defense upgrades / Mirror.
+      const contestPenalty = ctx.stance === 'contest' ? -15 : 0;
+      const finishPenalty = ctx.stance === 'finish' ? -40 : 0;
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.invest +
+          TAX_INVEST_BONUS +
+          upgradeBias +
+          contestPenalty +
+          finishPenalty,
+        code: 'invest',
+      };
+    }
+
+    return { score: Number.NEGATIVE_INFINITY, code: 'sustain' };
+  }
+
+  // Other self / utility
+  if (cardId === 'regeneration') {
+    // Soft top-up when lives are low (Imposition drip / post-Tax floor) — ONMMBZ bots
+    // drew to death with Regen in hand.
+    if (view.self.lives <= REGEN_SOFT_LIFE || (isUpgraded && view.self.lives <= REGEN_SOFT_LIFE + 2)) {
+      return {
+        score:
+          HEURISTIC_BAND_WEIGHTS.invest +
+          50 +
+          (action.quantity ?? 0) +
+          (isUpgraded ? 20 : 0),
+        code: 'invest',
+      };
+    }
+
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0) + (isUpgraded ? 5 : 0),
+      code: 'sustain',
+    };
+  }
+
+  if (cardId === 'shield' || cardId === 'mirror') {
+    const contestBias = ctx.stance === 'contest' ? 40 : 0;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain + 2 + contestBias + (isUpgraded ? 10 : 0),
+      code: 'sustain',
+    };
+  }
+
+  // Never rng-tie with draw for an unscored playCard.
+  return {
+    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    code: 'sustain',
+  };
+}
