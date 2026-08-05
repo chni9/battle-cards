@@ -99,6 +99,9 @@ export function redirectPendingAttack(
   }
 
   const previousTargetPlayerId = effect.targetPlayerId;
+  // A redirected attack is an attack from the Mirror user (rules spec §6) — attribution
+  // and mutual pairing use this source, not the original attacker.
+  effect.sourcePlayerId = owner.id;
   effect.targetPlayerId = newTargetPlayerId;
   effect.redirectedBy = 'mirror';
 

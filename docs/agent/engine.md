@@ -137,7 +137,7 @@ server-only; see `protocol.md`) so §10.3 can deep-equal whole states.
 Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
 
 ```
-1. Player P's turn begins — 30s timer starts, deadline computed server side
+1. Player P's turn begins — 60s timer starts, deadline computed server side
 2. P plays their single action
    (Assassin: several attack cards still count as ONE action)
    Timer expires → automatic draw
@@ -207,8 +207,14 @@ Mechanics that rule does not cover:
   stronger remains queued and resolves on its target's turn.
 - A Mirror redirection produces a fully pending attack at its new target, so it can create a new
   mutual pair, and can be redirected again with no chain limit (rules spec §3).
+- **Attribution:** after Mirror / Super Mirror redirect, `sourcePlayerId` becomes the
+  redirector. Mutual pairing and eliminator rewards treat the redirected attack as the
+  Mirror user's (rules spec §6 example; designer 2026-08-05). The original attacker is no
+  longer the contributor when the redirected hit kills.
 - Three-player case with no reciprocity: A and B both attack C. Nothing cancels — mutual means
-  *aimed at each other*, not *equal damage somewhere on the table*.
+  *aimed at each other*, not *equal damage somewhere on the table*. When C Mirrors A's attack
+  onto B, the redirected copy is attributed to C, so B→C and C→B form a mutual pair on C's
+  resolve (equal damage cancels both).
 
 ## Counter rule — distinct from mutual attacks
 
@@ -246,7 +252,7 @@ Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/e
 - The eliminator picks **2 rewards** among: 4 lives (`gainLives` + `lifeLimit`), 8 points, a
   card of the eliminated player's (unused specials included), an upgrade point. Both may match.
 - **2 rewards per eliminated player**, cumulative via a chainable `rewardQueue` (Mirror-shaped
-  pause: no `advanceTurn` / `gameOver` until the queue is empty). 20s sub-choice; expiry →
+  pause: no `advanceTurn` / `gameOver` until the queue is empty). 40s sub-choice; expiry →
   `2 × 4 lives`. Impossible card picks are rejected.
 - **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide
   self-elim, elimination by absence. Cards still go to the pool immediately.
@@ -256,7 +262,7 @@ Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/e
   treats pending revive as still in the match. `isEliminated` is cleared on revive.
 
 Manual two-browser exercise of the reward gate (create/join, Tax-farm, super-attack elim,
-reward pick / 20s default, game over) lives in `docs/agent/frontend.md` § Manual two-browser
+reward pick / 40s default, game over) lives in `docs/agent/frontend.md` § Manual two-browser
 check.
 
 ## Legal-action enumerator and view parity (V3)

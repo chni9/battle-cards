@@ -73,6 +73,8 @@ describe('Super Mirror (L23-02)', () => {
     expect(copies).toHaveLength(6);
     expect(new Set(copies.map((effect) => effect.id)).size).toBe(6);
     expect(copies.every((effect) => effect.redirectedBy === 'super-mirror')).toBe(true);
+    // Redirected copies are attributed to the Super Mirror user (Alice), not the originals.
+    expect(copies.every((effect) => effect.sourcePlayerId === alice.id)).toBe(true);
 
     // Each opponent received both originals.
     for (const opponent of [bob, carol, dan]) {
@@ -212,7 +214,7 @@ describe('Super Mirror (L23-02)', () => {
     ).toBe(true);
 
     expect(bob.pendingEffects).toHaveLength(1);
-    expect(bob.pendingEffects[0]?.sourcePlayerId).toBe(bob.id);
+    expect(bob.pendingEffects[0]?.sourcePlayerId).toBe(alice.id);
     expect(bob.pendingEffects[0]?.targetPlayerId).toBe(bob.id);
 
     state.currentTurnPlayerId = bob.id;

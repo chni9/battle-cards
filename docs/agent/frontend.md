@@ -158,11 +158,11 @@ rules above are unchanged — this section only covers how the client looks.
 - **Sub-choices (L30-03):** one unicast `subChoiceRequired` / `resolveSubChoice` pair
   (`SubChoiceRequiredPayload` discriminated on `kind`). Client stores a single `subChoice`
   and renders `SubChoiceHost` — Mirror, elimination rewards, steal-pick, pool-pick,
-  special-pick, reanimation-kit. Deadline is `SUB_CHOICE_MS` (20s). Clear on confirm /
+  special-pick, reanimation-kit. Deadline is `SUB_CHOICE_MS` (40s). Clear on confirm /
   `turnStarted` / `gameOver`. Lock other table actions while a sub-choice is open. Also lock
   when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
   seat until rewards finish. Reward picks stay opaque in the action log.
-- Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default still 30s.
+- Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default 60s.
   `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.
 
@@ -170,7 +170,7 @@ rules above are unchanged — this section only covers how the client looks.
 
 How agents / developers verified elimination rewards in a real room:
 
-1. `TURN_DURATION_MS=300000 pnpm dev` (long turns; reward sub-choice stays 20s).
+1. `TURN_DURATION_MS=300000 pnpm dev` (long turns; reward sub-choice stays 40s).
 2. Open **two** browser contexts/tabs on `http://localhost:5173/` (Playwright tabs or two windows).
 3. Tab A: nickname → **Create** → note game code. Tab B: nickname + code → **Join**. Host **Start**.
 4. Farm points with **Tax** (uncheck “Include target”), pass the other seat with **Draw**.

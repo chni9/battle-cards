@@ -829,7 +829,7 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 
 | # | Ruling | Recorded in |
 |---|---|---|
-| **#V4-6** | Block chain = **one** lifecycle turn: one 30s timer per Block turn; one timeout **ends the chain** and counts as **one** inactive/absent tick. | `decisions.md`, L25-01 |
+| **#V4-6** | Block chain = **one** lifecycle turn: one turn timer (60s default) per Block turn; one timeout **ends the chain** and counts as **one** inactive/absent tick. | `decisions.md`, L25-01 |
 | **#V4-7** | Block cancels **`pendingEffects` only** (not Poison/Curse/Imposition). | `decisions.md`, L25-01 |
 | **#V4-8** | Turn ledger **resets each** Block turn; Absorber reads the most recent. | `decisions.md`, L25-01 |
 | **#V4-9a** | Invisibility: already-active persistents **stay**; their **ticks skip** while the user is invisible and resume after deactivate. | `decisions.md`, L25-02 |

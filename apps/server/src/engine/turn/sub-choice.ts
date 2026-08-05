@@ -6,14 +6,15 @@
  * `listLegalActions` checked neither. `hasActiveSubChoice` is now the one predicate
  * both `performTurnAction` and `listLegalActions` consult (§10.2's guard test).
  *
- * `SUB_CHOICE_MS` is the one 20s deadline backing both sub-choices. `mirror-choice.ts`
+ * `SUB_CHOICE_MS` is the one deadline backing every sub-choice. Default raised
+ * 20s → 40s with the turn timer 30s → 60s (designer 2026-08-05). `mirror-choice.ts`
  * and `elimination-rewards.ts` re-export it under their historical names
  * (`MIRROR_SUB_CHOICE_MS`, `REWARD_SUB_CHOICE_MS`) so existing call sites and tests
  * keep working unchanged — see `docs/agent/decisions.md` 2026-08-04 (L20-18).
  */
 import type { GameState, SubChoiceKind } from '@card-battle/shared';
 
-export const SUB_CHOICE_MS = 20_000;
+export const SUB_CHOICE_MS = 40_000;
 
 /**
  * True while a sub-choice — Mirror, steal-pick, pool/special pick or elimination
