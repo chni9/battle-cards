@@ -84,14 +84,17 @@ describe('content scope — kits (technical spec v4 §10.5 / L28-03)', () => {
   });
 
   /**
-   * V4's closed kit count is 15. Ghost + Duplicator (Lot 28) are shipped; four Lot 27
-   * kits remain Blocked (upgrader, tactician, prophet, warrior). This assertion is the
-   * ceiling + floor after L28 so a silent 16th kit or a rollback of Ghost/Duplicator fails.
+   * V4 closed kit count is 15 (Lots 27–28). Exhaustive over KIT_IDS / KIT_CATALOG;
+   * client KIT_FILES is asserted in asset-lookup.test.ts (Lot 30 art gate).
    */
-  it('ships Ghost and Duplicator and stays within the V4 15-kit ceiling', () => {
+  it('ships exactly 15 kits including Ghost and Duplicator', () => {
     expect(KIT_IDS).toContain('ghost');
     expect(KIT_IDS).toContain('duplicator');
-    expect(KIT_IDS.length).toBeGreaterThanOrEqual(11);
-    expect(KIT_IDS.length).toBeLessThanOrEqual(15);
+    expect(KIT_IDS).toContain('upgrader');
+    expect(KIT_IDS).toContain('tactician');
+    expect(KIT_IDS).toContain('prophet');
+    expect(KIT_IDS).toContain('warrior');
+    expect(KIT_IDS).toHaveLength(15);
+    expect(Object.keys(KIT_CATALOG)).toHaveLength(15);
   });
 });

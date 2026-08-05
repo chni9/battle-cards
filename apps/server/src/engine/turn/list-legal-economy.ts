@@ -7,12 +7,12 @@
 import {
   getSharedCard,
   SHARED_CARD_IDS,
-  UPGRADE_POINT_ECONOMY,
   type Player,
 } from '@card-battle/shared';
 
 import { SPECIAL_CARD_PURCHASE_COST } from '../economy/buy-special-card';
 import { canAffordCost } from '../economy/transfers';
+import { upgradePointBuyCost } from '../economy/upgrade-points';
 import type { TurnAction } from './perform-action';
 
 export function listLegalEconomyActions(actor: Player): readonly TurnAction[] {
@@ -44,7 +44,8 @@ export function listLegalEconomyActions(actor: Player): readonly TurnAction[] {
     }
   }
 
-  if (actor.points >= UPGRADE_POINT_ECONOMY.buyCostPoints) {
+  // Per-kit buy cost (#V4-28 / L27-01) — re-read kitId every call (Cloning).
+  if (actor.points >= upgradePointBuyCost(actor.kitId)) {
     actions.push({ type: 'buyUpgradePoint' });
   }
 

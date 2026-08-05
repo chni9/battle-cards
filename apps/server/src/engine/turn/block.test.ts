@@ -16,13 +16,18 @@ import { performTurnAction } from './perform-action';
 import { queueEffect } from './queue-effect';
 
 describe('Block (L25-01)', () => {
+  const stableSeats = [
+    { id: 'a', nickname: 'Alice' },
+    { id: 'b', nickname: 'Bob' },
+  ] as const;
+  /** Pin kits — random KIT_IDS assignment shifts when Lot 27 kits land (Tactician = 1 life). */
+  const stableKits = ['untouchable', 'kamikaze'] as const;
+
   it('cancels pending against the user with public blocked outcomes; leaves persistents (#V4-7)', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-cancel',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
     const bob = state.players.find((player) => player.id === 'b');
@@ -84,11 +89,9 @@ describe('Block (L25-01)', () => {
 
   it('grants 7 consecutive turns when upgraded', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-up',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
 
@@ -111,11 +114,9 @@ describe('Block (L25-01)', () => {
 
   it('bans attack play and Assassin multi while ban holds, including last chain turn', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-ban',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
 
@@ -157,11 +158,9 @@ describe('Block (L25-01)', () => {
 
   it('allows buying and upgrading attacks during the Block chain', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-buy',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
 
@@ -192,11 +191,9 @@ describe('Block (L25-01)', () => {
 
   it('timeout-style #V4-6 end clears the chain so the next advance leaves the seat', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-timeout',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
 
@@ -223,11 +220,9 @@ describe('Block (L25-01)', () => {
 
   it('resets the ledger each Block turn so Absorber sees only the latest (#V4-8)', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-ledger',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
     const bob = state.players.find((player) => player.id === 'b');
@@ -271,11 +266,9 @@ describe('Block (L25-01)', () => {
 
   it('clears the attack ban when the chain completes normally', () => {
     const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'Alice' },
-        { id: 'b', nickname: 'Bob' },
-      ],
+      seats: stableSeats,
       seed: 'l25-01-complete',
+      kitAssignment: stableKits,
     });
     const alice = state.players.find((player) => player.id === 'a');
 

@@ -63,6 +63,33 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: true,
     },
   },
+  upgrader: {
+    id: 'upgrader',
+    name: 'Upgrader',
+    startingResources: { lives: 10, points: 0, upgradePoints: 3, draw: 1 },
+    startingCardCounts: { action: 4, attack: 2 },
+    specialCards: ['upgrade-point-thief'],
+    traits: {
+      alwaysUpgraded: [],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+      // #V4-28: buy 5, sell yield stays 7 (designer ruling 2026-08-05).
+      upgradePointBuyCost: 5,
+      upgradePointSellYield: 7,
+    },
+  },
+  tactician: {
+    id: 'tactician',
+    name: 'Tactician',
+    startingResources: { lives: 1, points: 15, upgradePoints: 0, draw: 4 },
+    startingCardCounts: { action: 2, attack: 2 },
+    specialCards: ['block'],
+    traits: {
+      alwaysUpgraded: ['spy', 'thief', 'mirror'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
   indestructible: {
     id: 'indestructible',
     name: 'Indestructible',
@@ -74,6 +101,16 @@ export const KIT_CATALOG = {
       immuneTo: [],
       allowsMultipleAttacksPerTurn: false,
     },
+  },
+  prophet: {
+    id: 'prophet',
+    name: 'Prophet',
+    startingResources: { lives: 10, points: 4, upgradePoints: 2, draw: 1 },
+    startingCardCounts: { action: 5, attack: 2 },
+    // Fixed list empty — deal path draws via randomStartingSpecialCount (#V4-27).
+    specialCards: [],
+    randomStartingSpecialCount: 2,
+    traits: { ...EMPTY_TRAITS },
   },
   specialist: {
     id: 'specialist',
@@ -100,6 +137,19 @@ export const KIT_CATALOG = {
     specialCards: ['reanimation', 'poison'],
     traits: {
       alwaysUpgraded: ['thief'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
+  warrior: {
+    id: 'warrior',
+    name: 'Warrior',
+    startingResources: { lives: 10, points: 0, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 3, attack: 3 },
+    specialCards: ['card-absorber'],
+    traits: {
+      // #V4-37: shared shop attacks only — not mega-attack.
+      alwaysUpgraded: ['basic-attack', 'strong-attack', 'super-attack'],
       immuneTo: [],
       allowsMultipleAttacksPerTurn: false,
     },

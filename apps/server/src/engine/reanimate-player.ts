@@ -11,6 +11,7 @@ import {
   ATTACK_CARD_IDS,
   getKit,
   KIT_IDS,
+  SPECIAL_CARD_IDS,
   type KitId,
   type Player,
 } from '@card-battle/shared';
@@ -25,6 +26,9 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
 /**
  * Deal starting attack/action draws and kit specials (setup steps 3–4).
  * Caller sets resources (step 2) and clears zones first when resetting.
+ *
+ * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from all 20
+ * specials via seeded `rng.pick` with replacement (duplicates OK).
  */
 export function dealStartingLoadout(
   player: Player,
@@ -42,6 +46,16 @@ export function dealStartingLoadout(
   for (let index = 0; index < kit.startingCardCounts.attack; index += 1) {
     const cardId = rng.pick(ATTACK_CARD_IDS);
     acquireCardToHand(player, cardId, `${instancePrefix}:attack:${String(index)}`);
+  }
+
+  const randomCount = kit.randomStartingSpecialCount;
+
+  if (randomCount !== undefined && randomCount > 0) {
+    for (let index = 0; index < randomCount; index += 1) {
+      const specialId = rng.pick(SPECIAL_CARD_IDS);
+      acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
+    }
+    return;
   }
 
   for (const [index, specialId] of kit.specialCards.entries()) {

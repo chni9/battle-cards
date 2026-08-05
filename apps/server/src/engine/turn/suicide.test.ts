@@ -24,7 +24,12 @@ describe('Suicide (L5-03)', () => {
   ] as const;
 
   it('base: eliminates 2 of 3 weak opponents over their turns, then the user', () => {
-    const state = createInitialState({ seats, seed: 'l5-03-base' });
+    const state = createInitialState({
+      seats,
+      seed: 'l5-03-base',
+      // Pin kits — Ghost life-loss credit would refill points after Suicide strip.
+      kitAssignment: ['kamikaze', 'untouchable', 'untouchable', 'untouchable'],
+    });
     const kam = state.players.find((player) => player.id === 'kam');
     const o1 = state.players.find((player) => player.id === 'o1');
     const o2 = state.players.find((player) => player.id === 'o2');
@@ -106,6 +111,7 @@ describe('Suicide (L5-03)', () => {
         { id: 'b', nickname: 'B' },
       ],
       seed: 'l5-03-up',
+      kitAssignment: ['kamikaze', 'untouchable'],
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');

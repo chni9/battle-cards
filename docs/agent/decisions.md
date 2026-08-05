@@ -1611,4 +1611,46 @@ Designer instruction: revert the opaque-immunity UI convention. Action log,
 resolution FX, and spectator-readable state may say "immune" (Untouchable,
 Invisibility, and any future `outcome: 'immune'`).
 
+## 2026-08-05 · [P] #V4-28 Upgrader UP buy/sell (L27-01)
+
+Designer ruling (session):
+
+- **Buy cost:** **5** points (rules spec §4 "instead of 10").
+- **Sell yield:** stays **7** (explicit — not a silent inherit of the global).
+- Round-trip buy-then-sell is therefore **+2**; bare sale of a starting UP is
+  **+7** in one action. Accepted for V4 (no value rebalance).
+
+## 2026-08-05 · [P] #V4-25 Tactician Draw 4 / inactivity auto-draw (L27-02)
+
+Designer ruling (session):
+
+- Inactivity / absence auto-draw grants the kit draw value — **4** for Tactician
+  (same `{ type: 'draw' }` path as a deliberate draw; `performAutoDraw` in
+  game-room).
+- Accepted for V4 (no cap). Reachable exploit: four deliberate timeouts (+16 pts)
+  then one real action resets `consecutiveTimeouts` indefinitely. **Measurement
+  target for L31-02** — do not change the draw value in V4.
+
+## 2026-08-05 · [P] #V4-27 Prophet random specials (L27-04)
+
+Designer ruling (session):
+
+- Draw **2** specials from **all 20** special cards.
+- **Duplicates OK** (`rng.pick` with replacement).
+- Implemented via `Kit.randomStartingSpecialCount` (not a `'random'` sentinel in
+  `specialCards`). Deal path in `dealStartingLoadout` consumes the shared seeded
+  stream — fixed-seed tests that omit `kitAssignment` may need pinning when the
+  roster grows.
+
+## 2026-08-05 · [P] #V4-26 / #V4-37 Warrior alwaysUpgraded (L27-06)
+
+Designer rulings (session):
+
+- **#V4-26:** `alwaysUpgraded` is **acquisition-time only** — Cloning onto Warrior
+  does not retro-upgrade held attacks; Warrior cloning away keeps already-upgraded
+  attacks. Confirmed intended.
+- **#V4-37:** Warrior's list is the **three shared shop attacks**
+  (`basic-attack`, `strong-attack`, `super-attack`) — **not** `mega-attack`.
+  A Warrior who acquires MEGA by any route does not get it upgraded for free.
+
 

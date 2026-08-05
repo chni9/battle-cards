@@ -169,6 +169,22 @@ export function KitInspectDialog({
             </p>
           </TraitSection>
 
+          <TraitSection title="Upgrade-point buy cost">
+            <p className="text-sm text-ink">
+              {traits.upgradePointBuyCost !== undefined
+                ? `${String(traits.upgradePointBuyCost)} points (kit override)`
+                : 'Default (10 points)'}
+            </p>
+          </TraitSection>
+
+          <TraitSection title="Upgrade-point sell yield">
+            <p className="text-sm text-ink">
+              {traits.upgradePointSellYield !== undefined
+                ? `${String(traits.upgradePointSellYield)} points (kit override)`
+                : 'Default (7 points)'}
+            </p>
+          </TraitSection>
+
           {abilityCopy !== undefined && (
             <section>
               <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">

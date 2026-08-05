@@ -41,6 +41,27 @@ describe('KIT_CATALOG', () => {
     expect(getKit('assassin').traits.allowsMultipleAttacksPerTurn).toBe(true);
     expect(getKit('assassin').specialCards).toEqual(['sentence', 'points-generator']);
 
+    expect(getKit('upgrader').startingResources).toEqual({
+      lives: 10,
+      points: 0,
+      upgradePoints: 3,
+      draw: 1,
+    });
+    expect(getKit('upgrader').startingCardCounts).toEqual({ action: 4, attack: 2 });
+    expect(getKit('upgrader').traits.upgradePointBuyCost).toBe(5);
+    expect(getKit('upgrader').traits.upgradePointSellYield).toBe(7);
+    expect(getKit('upgrader').specialCards).toEqual(['upgrade-point-thief']);
+
+    expect(getKit('tactician').startingResources).toEqual({
+      lives: 1,
+      points: 15,
+      upgradePoints: 0,
+      draw: 4,
+    });
+    expect(getKit('tactician').startingCardCounts).toEqual({ action: 2, attack: 2 });
+    expect(getKit('tactician').traits.alwaysUpgraded).toEqual(['spy', 'thief', 'mirror']);
+    expect(getKit('tactician').specialCards).toEqual(['block']);
+
     expect(getKit('indestructible').startingResources).toEqual({
       lives: 18,
       points: 0,
@@ -50,6 +71,16 @@ describe('KIT_CATALOG', () => {
     expect(getKit('indestructible').startingCardCounts).toEqual({ action: 4, attack: 1 });
     expect(getKit('indestructible').traits.alwaysUpgraded).toEqual(['tax', 'regeneration']);
     expect(getKit('indestructible').specialCards).toEqual(['super-regeneration']);
+
+    expect(getKit('prophet').startingResources).toEqual({
+      lives: 10,
+      points: 4,
+      upgradePoints: 2,
+      draw: 1,
+    });
+    expect(getKit('prophet').startingCardCounts).toEqual({ action: 5, attack: 2 });
+    expect(getKit('prophet').specialCards).toEqual([]);
+    expect(getKit('prophet').randomStartingSpecialCount).toBe(2);
 
     expect(getKit('specialist').startingResources).toEqual({
       lives: 8,
@@ -75,6 +106,20 @@ describe('KIT_CATALOG', () => {
     expect(getKit('witch').startingCardCounts).toEqual({ action: 5, attack: 2 });
     expect(getKit('witch').traits.alwaysUpgraded).toEqual(['thief']);
     expect(getKit('witch').specialCards).toEqual(['reanimation', 'poison']);
+
+    expect(getKit('warrior').startingResources).toEqual({
+      lives: 10,
+      points: 0,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('warrior').startingCardCounts).toEqual({ action: 3, attack: 3 });
+    expect(getKit('warrior').traits.alwaysUpgraded).toEqual([
+      'basic-attack',
+      'strong-attack',
+      'super-attack',
+    ]);
+    expect(getKit('warrior').specialCards).toEqual(['card-absorber']);
 
     expect(getKit('wizard').startingResources).toEqual({
       lives: 10,

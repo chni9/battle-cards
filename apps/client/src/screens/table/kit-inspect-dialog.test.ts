@@ -31,9 +31,15 @@ describe('kit inspect trait sections (L30-05)', () => {
   it('covers every KitTraits field exactly once', () => {
     // Compile-time: every key is a KitTraits key (satisfies on the export).
     const keys: readonly (keyof KitTraits)[] = KIT_TRAIT_SECTION_KEYS;
-    expect(keys).toHaveLength(3);
+    expect(keys).toHaveLength(5);
     expect([...keys].sort()).toEqual(
-      (['alwaysUpgraded', 'immuneTo', 'allowsMultipleAttacksPerTurn'] as const)
+      ([
+        'alwaysUpgraded',
+        'immuneTo',
+        'allowsMultipleAttacksPerTurn',
+        'upgradePointBuyCost',
+        'upgradePointSellYield',
+      ] as const)
         .slice()
         .sort(),
     );
@@ -44,14 +50,18 @@ describe('kit inspect trait sections (L30-05)', () => {
       getKit('scientific'),
       getKit('untouchable'),
       getKit('assassin'),
+      getKit('upgrader'),
     ] as const;
     expect(kits[0].traits.alwaysUpgraded.length).toBeGreaterThan(0);
     expect(kits[1].traits.immuneTo.length).toBeGreaterThan(0);
     expect(kits[2].traits.allowsMultipleAttacksPerTurn).toBe(true);
+    expect(kits[3].traits.upgradePointBuyCost).toBe(5);
+    expect(kits[3].traits.upgradePointSellYield).toBe(7);
   });
 
-  it('documents Ghost and Duplicator ability copy', () => {
+  it('documents Ghost, Duplicator and Prophet ability copy', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
+    expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
   });
 });

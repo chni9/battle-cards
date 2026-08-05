@@ -178,6 +178,8 @@ describe('4-bot headless completion (L16-06)', () => {
         { id: 'bot-4', nickname: 'Delta' },
       ],
       seed: 'four-bot-hard-complete',
+      // Pin classic kits so Lot 27 roster growth does not stall this smoke (Tactician 1-life).
+      kitAssignment: ['untouchable', 'kamikaze', 'scientific', 'assassin'],
     });
     const actionLog: ActionLogEntryView[] = [];
     let turns = 0;
