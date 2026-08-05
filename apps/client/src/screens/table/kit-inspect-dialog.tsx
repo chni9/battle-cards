@@ -1,10 +1,14 @@
 /**
  * Kit inspect Dialog — static roster facts from getKit / getCard (rules spec §4).
- * Visual summary only; no rule logic.
+ * Trait sections are keyed off `KitTraits` so a new field fails the L30-05 test.
  */
 
-import { getCard, getKit, type KitId } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import {
+  getCard,
+  getKit,
+  type KitId,
+} from '@card-battle/shared';
+import type { ReactElement, ReactNode } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
@@ -12,11 +16,29 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { getCardArtUrl } from '../../design/asset-lookup';
 import { kitSpecialCardKey } from './kit-special-card-key';
+import { KIT_ABILITY_COPY } from './kit-inspect-traits';
 
 export interface KitInspectDialogProps {
   open: boolean;
   kitId: KitId;
   onClose: () => void;
+}
+
+function TraitSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <section data-trait-section="">
+      <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+        {title}
+      </h3>
+      <div className="mt-1.5">{children}</div>
+    </section>
+  );
 }
 
 export function KitInspectDialog({
@@ -26,6 +48,7 @@ export function KitInspectDialog({
 }: KitInspectDialogProps): ReactElement {
   const kit = getKit(kitId);
   const { startingResources: res, startingCardCounts: counts, traits } = kit;
+  const abilityCopy = KIT_ABILITY_COPY[kitId];
 
   return (
     <Dialog
@@ -100,12 +123,11 @@ export function KitInspectDialog({
             </ul>
           </section>
 
-          {traits.alwaysUpgraded.length > 0 && (
-            <section>
-              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                Always upgraded
-              </h3>
-              <ul className="mt-1.5 flex flex-wrap gap-2">
+          <TraitSection title="Always upgraded">
+            {traits.alwaysUpgraded.length === 0 ? (
+              <p className="text-sm text-ink-muted">None</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
                 {traits.alwaysUpgraded.map((cardId) => {
                   const def = getCard(cardId);
                   return (
@@ -126,51 +148,33 @@ export function KitInspectDialog({
                   );
                 })}
               </ul>
-            </section>
-          )}
+            )}
+          </TraitSection>
 
-          {traits.immuneTo.length > 0 && (
-            <section>
-              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                Immune to
-              </h3>
-              <p className="mt-1 text-sm text-ink">
-                {traits.immuneTo
-                  .map((id) => getCard(id)?.name ?? id)
-                  .join(', ')}
+          <TraitSection title="Immune to">
+            {traits.immuneTo.length === 0 ? (
+              <p className="text-sm text-ink-muted">None</p>
+            ) : (
+              <p className="text-sm text-ink">
+                {traits.immuneTo.map((id) => getCard(id)?.name ?? id).join(', ')}
               </p>
-            </section>
-          )}
+            )}
+          </TraitSection>
 
-          {traits.allowsMultipleAttacksPerTurn && (
-            <p className="rounded-[length:var(--radius-badge)] bg-cta-purple/10 px-2 py-1 text-sm font-medium text-ink">
-              May play several attack cards as one action
+          <TraitSection title="Multiple attacks per turn">
+            <p className="text-sm text-ink">
+              {traits.allowsMultipleAttacksPerTurn
+                ? 'May play several attack cards as one action'
+                : 'No — one attack card per action'}
             </p>
-          )}
+          </TraitSection>
 
-          {kitId === 'ghost' && (
+          {abilityCopy !== undefined && (
             <section>
               <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
                 Ability
               </h3>
-              <p className="mt-1 text-sm text-ink">
-                Every life this player loses (any cause except Cloning&apos;s resource copy)
-                grants 2 points — after shield absorption.
-              </p>
-            </section>
-          )}
-
-          {kitId === 'duplicator' && (
-            <section>
-              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                Ability
-              </h3>
-              <p className="mt-1 text-sm text-ink">
-                Instead of a normal action, activate duplication for the following table
-                round: copy opponents&apos; life, point, and upgrade-point gains (not shield,
-                not Cloning&apos;s resource copy). Renew each turn. Two Duplicators do not
-                loop.
-              </p>
+              <p className="mt-1 text-sm text-ink">{abilityCopy}</p>
             </section>
           )}
         </div>
