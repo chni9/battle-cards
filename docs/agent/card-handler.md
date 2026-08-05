@@ -174,7 +174,8 @@ opponent-queued. `reanimation-kit` remains untyped until Lot 26.
 - ❌ Applying an opponent-targeting effect immediately.
 - ❌ Consuming an already-paid card when a sub-choice times out. The player loses the
   optimisation, never the benefit (technical spec §5.6).
-- ❌ Implementing a card outside the 16, or a kit trait outside the 4 kits.
+- ❌ Implementing a card outside the declared 30-card set, or a kit outside the
+      growing `KIT_IDS` roster (full 15 at L28-03).
 
 ## Checklist
 

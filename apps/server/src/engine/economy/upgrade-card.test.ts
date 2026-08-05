@@ -10,7 +10,11 @@ describe('upgradeCard (rules spec §1, L2-03)', () => {
   ] as const;
 
   it('upgrades only the targeted copy', () => {
-    const state = createInitialState({ seats, seed: 'upgrade-seed' });
+    const state = createInitialState({
+      seats,
+      seed: 'upgrade-seed',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     expect(actorId).not.toBeNull();
@@ -48,7 +52,11 @@ describe('upgradeCard (rules spec §1, L2-03)', () => {
   });
 
   it('rejects when already upgraded or no upgrade points', () => {
-    const state = createInitialState({ seats, seed: 'upgrade-reject' });
+    const state = createInitialState({
+      seats,
+      seed: 'upgrade-reject',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     if (actorId === null) {

@@ -8,8 +8,17 @@
 
 import type { CardId } from './card';
 
-/** The 4 kits in V1 scope (technical spec §2). The other 11 are out of scope (§9). */
-export const KIT_IDS = ['untouchable', 'kamikaze', 'scientific', 'assassin'] as const;
+/**
+ * Growing kit roster (technical spec v4 §8.2). Full 15-kit close is L28-03;
+ * Lot 27 appends data-only kits one task at a time.
+ */
+export const KIT_IDS = [
+  'untouchable',
+  'kamikaze',
+  'scientific',
+  'assassin',
+  'indestructible',
+] as const;
 
 export type KitId = (typeof KIT_IDS)[number];
 

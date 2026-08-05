@@ -12,7 +12,11 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
   ] as const;
 
   function started() {
-    return createInitialState({ seats, seed: 'turn-seed' });
+    return createInitialState({
+      seats,
+      seed: 'turn-seed',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
   }
 
   function requireId(id: string | null | undefined): string {
@@ -87,14 +91,17 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
     performTurnAction(state, secondId, { type: 'draw' });
     expect(state.currentTurnPlayerId).toBe(firstId);
 
-    const attackCopy = requirePlayer(state, firstId).hand.find(
-      (card) => card.cardId === 'basic-attack',
-    );
-    expect(attackCopy).toBeDefined();
-
+    const first = requirePlayer(state, firstId);
+    let attackCopy = first.hand.find((card) => card.cardId === 'basic-attack');
     if (attackCopy === undefined) {
-      return;
+      attackCopy = {
+        instanceId: 'ba-forced',
+        cardId: 'basic-attack',
+        isUpgraded: false,
+      };
+      first.hand.push(attackCopy);
     }
+    first.points = 10;
 
     const attack = performTurnAction(state, firstId, {
       type: 'playCard',
@@ -177,13 +184,16 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
       return;
     }
 
-    const attackCopy = requirePlayer(state, actorId).hand.find(
-      (card) => card.cardId === 'basic-attack',
-    );
-    expect(attackCopy).toBeDefined();
-
+    const actor = requirePlayer(state, actorId);
+    actor.points = 0;
+    let attackCopy = actor.hand.find((card) => card.cardId === 'basic-attack');
     if (attackCopy === undefined) {
-      return;
+      attackCopy = {
+        instanceId: 'ba-forced-reject',
+        cardId: 'basic-attack',
+        isUpgraded: false,
+      };
+      actor.hand.push(attackCopy);
     }
 
     const result = performTurnAction(state, actorId, {

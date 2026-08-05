@@ -1,7 +1,8 @@
 /**
- * Static V1 kit roster — rules spec §4, technical spec §4.1 / §4.5.
+ * Static kit roster — rules spec §4, technical spec v4 §8.2.
  *
- * Special card entries are ids only; definitions and handlers land in Lot 5.
+ * Special card entries are ids only; handlers must exist before a kit is added
+ * (backlog Lot 27 sequencing).
  */
 
 import type { Kit, KitId } from './kit';
@@ -60,6 +61,18 @@ export const KIT_CATALOG = {
       alwaysUpgraded: [],
       immuneTo: [],
       allowsMultipleAttacksPerTurn: true,
+    },
+  },
+  indestructible: {
+    id: 'indestructible',
+    name: 'Indestructible',
+    startingResources: { lives: 18, points: 0, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 4, attack: 1 },
+    specialCards: ['super-regeneration'],
+    traits: {
+      alwaysUpgraded: ['tax', 'regeneration'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
     },
   },
 } as const satisfies Record<KitId, Kit>;

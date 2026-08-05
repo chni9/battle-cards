@@ -4,11 +4,11 @@ import { KIT_IDS } from './kit';
 import { getKit, KIT_CATALOG } from './kit-catalog';
 
 describe('KIT_CATALOG', () => {
-  it('covers every V1 kit id exactly once', () => {
+  it('covers every registered kit id exactly once', () => {
     expect(Object.keys(KIT_CATALOG).sort()).toEqual([...KIT_IDS].sort());
   });
 
-  it('matches the V1 roster resources and card counts (rules spec §4)', () => {
+  it('matches the roster resources and card counts (rules spec §4 / tech v4 §8.2)', () => {
     expect(getKit('untouchable').startingResources).toEqual({
       lives: 10,
       points: 0,
@@ -40,5 +40,15 @@ describe('KIT_CATALOG', () => {
     expect(getKit('assassin').startingCardCounts).toEqual({ action: 4, attack: 4 });
     expect(getKit('assassin').traits.allowsMultipleAttacksPerTurn).toBe(true);
     expect(getKit('assassin').specialCards).toEqual(['sentence', 'points-generator']);
+
+    expect(getKit('indestructible').startingResources).toEqual({
+      lives: 18,
+      points: 0,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('indestructible').startingCardCounts).toEqual({ action: 4, attack: 1 });
+    expect(getKit('indestructible').traits.alwaysUpgraded).toEqual(['tax', 'regeneration']);
+    expect(getKit('indestructible').specialCards).toEqual(['super-regeneration']);
   });
 });

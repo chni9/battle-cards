@@ -15,6 +15,7 @@ import {
   type CardId,
 } from './card';
 import { KIT_IDS } from './kit';
+import { KIT_CATALOG } from './kit-catalog';
 
 const ALL_CARD_IDS: readonly CardId[] = [
   ...ATTACK_CARD_IDS,
@@ -56,7 +57,9 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
     expect(ALL_CARD_IDS.filter((id) => !/^[a-z]+(?:-[a-z]+)*$/.test(id))).toEqual([]);
   });
 
-  it('still holds the 4 kits until Lot 28 closes the kit scope', () => {
-    expect(KIT_IDS).toHaveLength(4);
+  it('grows kit ids with the catalog until L28-03 closes at 15 (Lot 27 interim)', () => {
+    expect(KIT_IDS.length).toBe(Object.keys(KIT_CATALOG).length);
+    expect(KIT_IDS.length).toBeGreaterThanOrEqual(4);
+    expect(KIT_IDS.length).toBeLessThan(15);
   });
 });

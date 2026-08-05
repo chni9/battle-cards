@@ -39,8 +39,15 @@ rules above are unchanged — this section only covers how the client looks.
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08). Art resolution:
-  `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never import out-of-V1 art
-  from `images/`).
+  `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
+  `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
+  `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
+- **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
+  (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG, mid-game `alwaysUpgraded` test. No engine
+  change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` holds an
+  interim lock (`KIT_IDS.length === catalog keys`, `>= 4` and `< 15`); L28-03 closes at 15.
+  Inspect dialog already renders `alwaysUpgraded` / `specialCards`; only duplicate specials
+  need a `${cardId}:${index}` React key (L27-05).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
   focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants. Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No

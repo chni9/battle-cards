@@ -273,6 +273,7 @@ describe('Card Thief (L21-03)', () => {
         { id: 'b', nickname: 'B' },
       ],
       seed: 'l21-03-always',
+      kitAssignment: ['scientific', 'kamikaze'],
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');

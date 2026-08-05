@@ -18,6 +18,7 @@ describe('Turn ledger (tech §4.4, L3-07)', () => {
         { id: 'b', nickname: 'Bob' },
       ],
       seed: 'ledger-spend-theft',
+      kitAssignment: ['assassin', 'assassin'],
     });
 
     state.currentTurnPlayerId = 'a';

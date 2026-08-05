@@ -46,6 +46,10 @@ describe('V1 content scope (technical spec §2)', () => {
 Prefer tests that guard a **boundary or an invariant** over tests that restate a type. `tsc`
 already checks shapes; a test earns its place by catching something the compiler cannot.
 
+**Lot 27 interim kit scope:** `content-scope.test.ts` no longer pins `KIT_IDS.length === 4`.
+Until L28-03, it asserts catalog exhaustiveness and `4 ≤ length < 15`. Each data-only kit task
+extends `KIT_IDS` and proves mid-game `alwaysUpgraded` (Scientific Spy pattern).
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card
