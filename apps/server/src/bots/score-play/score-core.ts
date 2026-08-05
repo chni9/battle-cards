@@ -84,8 +84,9 @@ export function scoreCorePlayCard(
     }
   }
 
-  // Kamikaze: never base Suicide; upgraded only if estimated elim ≥ 1.
-  if (cardId === 'suicide' && view.self.kitId === 'kamikaze') {
+  // Never base Suicide; upgraded only if estimated elim ≥ 1. Kamikaze-native or stolen
+  // (L29-04) — the branch does not gate on kitId, only on holding the card.
+  if (cardId === 'suicide') {
     if (!isUpgraded) {
       return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
     }

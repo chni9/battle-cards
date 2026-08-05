@@ -138,6 +138,54 @@ describe('heuristic decide (L16-04)', () => {
     expect(decide(view, actions, createRng('policy-suicide'))).toEqual({ type: 'draw' });
   });
 
+  it('L29-04: non-Kamikaze plays a stolen upgraded Suicide for a Spy-confirmed elim', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        specialCards: [{ instanceId: 'su-1', cardId: 'suicide', isUpgraded: true }],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'scientific',
+            hand: [],
+            specialCards: [],
+            lives: 5,
+            points: 0,
+            upgradePoints: 0,
+            shield: 0,
+          },
+        }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'su-1' },
+    ];
+    expect(decide(view, actions, createRng('l29-04-suicide-elim'))).toEqual({
+      type: 'playCard',
+      instanceId: 'su-1',
+    });
+  });
+
+  it('L29-04: non-Kamikaze refuses stolen upgraded Suicide without an elim signal', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        specialCards: [{ instanceId: 'su-1', cardId: 'suicide', isUpgraded: true }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'su-1' },
+    ];
+
+    for (const seed of ['l29-04-no-elim-a', 'l29-04-no-elim-b', 'l29-04-no-elim-c']) {
+      expect(decide(view, actions, createRng(seed))).toEqual({ type: 'draw' });
+    }
+  });
+
   it('prefers lethal Spy-confirmed attack over draw', () => {
     const view = baseView({
       self: baseSelf({
