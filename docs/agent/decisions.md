@@ -1373,3 +1373,22 @@ Designer rulings (session):
 - **#V4-24:** Duplicator starting deal is **1 action / 0 attack** as written (not
   a typo).
 
+## 2026-08-05 · [T] Heuristic: kit-aware draw score (L29-02)
+
+`{ type: 'draw' }` scored a hardcoded `HEURISTIC_BAND_WEIGHTS.sustain` (100) for every kit,
+so a Wizard (kit draw 2) drew as reluctantly as an Untouchable (kit draw 1) even though
+drawing is strictly more valuable for the higher-draw kit. Policy-only (#V3-5 tunable,
+not a measured constant):
+
+```ts
+score = HEURISTIC_BAND_WEIGHTS.sustain + DRAW_SCORE_PER_EXTRA_DRAW * max(0, kitDraw - 1)
+```
+
+`DRAW_SCORE_PER_EXTRA_DRAW = 20` lives in `heuristic-weights.ts`. Untouchable (draw 1) stays
+at exactly 100 — no behaviour change for the majority of kits. Read `kitDraw` from
+`getKit(view.self.kitId).startingResources.draw` at scoring time, never hardcoded, so a
+future kit (e.g. Tactician, not yet in `KIT_IDS`) picks up the right score automatically.
+
+Refactored `decideWithReason` to delegate to a new exported `scoreActions(view, actions, rng)`
+— same scoring, now testable per-action without asserting through `decide`'s rng-tie-break.
+

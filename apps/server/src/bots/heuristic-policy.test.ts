@@ -14,7 +14,12 @@ import type {
 
 import { createRng } from '../engine/rng';
 import type { TurnAction } from '../engine/turn/perform-action';
-import { decide, pickEliminationRewards, pickMirrorRedirect } from './heuristic-policy';
+import {
+  decide,
+  pickEliminationRewards,
+  pickMirrorRedirect,
+  scoreActions,
+} from './heuristic-policy';
 
 const CONNECTED: PublicConnectionView = {
   status: 'connected',
@@ -1316,5 +1321,58 @@ describe('heuristic decide (L16-04)', () => {
       createRng('contest-keep-mirror'),
     );
     expect(pick).not.toEqual({ type: 'sellCard', instanceId: 'mirror-1' });
+  });
+
+  it('L29-02: draw score scales with kit draw — Wizard beats Untouchable at equal state', () => {
+    const untouchableView = baseView({ self: baseSelf({ kitId: 'untouchable' }) });
+    const wizardView = baseView({ self: baseSelf({ kitId: 'wizard' }) });
+    const actions: TurnAction[] = [{ type: 'draw' }];
+
+    const untouchableScored = scoreActions(
+      untouchableView,
+      actions,
+      createRng('draw-untouchable'),
+    );
+    const wizardScored = scoreActions(wizardView, actions, createRng('draw-wizard'));
+
+    expect(untouchableScored[0]?.score).toBe(100);
+    expect(wizardScored[0]?.score).toBe(120);
+  });
+
+  it('L29-02: draw score reads getKit live, not a hardcoded draw value', () => {
+    const untouchable = shared.getKit('untouchable');
+    const originalGetKit = shared.getKit;
+    const getKitSpy = vi.spyOn(shared, 'getKit').mockImplementation((kitId) => {
+      if (kitId === 'untouchable') {
+        return {
+          ...untouchable,
+          startingResources: { ...untouchable.startingResources, draw: 4 },
+        };
+      }
+
+      return originalGetKit(kitId);
+    });
+
+    try {
+      const view = baseView({ self: baseSelf({ kitId: 'untouchable' }) });
+      const scored = scoreActions(view, [{ type: 'draw' }], createRng('draw-mocked'));
+      expect(scored[0]?.score).toBe(100 + 20 * 3);
+    } finally {
+      getKitSpy.mockRestore();
+    }
+  });
+
+  it('L29-02: fallthrough play never beats draw, even for a high-draw kit', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'wizard',
+        specialCards: [{ instanceId: 'su-1', cardId: 'suicide', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'su-1' },
+    ];
+    expect(decide(view, actions, createRng('draw-vs-fallthrough'))).toEqual({ type: 'draw' });
   });
 });

@@ -12,6 +12,7 @@
 import {
   attackDamageFor,
   getCard,
+  getKit,
   isAttackCardId,
   isSharedAttackCardId,
   UPGRADE_POINT_ECONOMY,
@@ -30,6 +31,7 @@ import {
   BUY_UPGRADE_POINT_BONUS,
   BURN_COUNTER_BONUS,
   CONTEST_UPGRADE_EXTRA,
+  DRAW_SCORE_PER_EXTRA_DRAW,
   HEURISTIC_BAND_WEIGHTS,
   REGEN_SOFT_LIFE,
   SELL_TO_FUND_BONUS,
@@ -81,7 +83,7 @@ export interface PolicyDecision {
   reason: BotDecisionReason;
 }
 
-interface ScoredAction {
+export interface ScoredAction {
   action: TurnAction;
   score: number;
   code: BotReasonCode;
@@ -104,11 +106,7 @@ export function decideWithReason(
     throw new RangeError('decide received an empty action list');
   }
 
-  const ctx = buildContext(view, rng);
-  const scored: ScoredAction[] = actions.map((action) => {
-    const evaluated = scoreAction(view, action, ctx);
-    return { action, score: evaluated.score, code: evaluated.code };
-  });
+  const scored = scoreActions(view, actions, rng);
 
   let best = scored[0]?.score ?? Number.NEGATIVE_INFINITY;
 
@@ -125,6 +123,19 @@ export function decideWithReason(
     action: pick.action,
     reason: { code: pick.code },
   };
+}
+
+/** Test/diagnostic: score each action under the heuristic (L29-02). */
+export function scoreActions(
+  view: PlayingStateView,
+  actions: readonly TurnAction[],
+  rng: Rng,
+): readonly ScoredAction[] {
+  const ctx = buildContext(view, rng);
+  return actions.map((action) => {
+    const evaluated = scoreAction(view, action, ctx);
+    return { action, score: evaluated.score, code: evaluated.code };
+  });
 }
 
 export function pickMirrorRedirect(
@@ -295,7 +306,11 @@ function scoreAction(
   ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   if (action.type === 'draw') {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain, code: 'sustain' };
+    const kitDraw = getKit(view.self.kitId).startingResources.draw;
+    return {
+      score: HEURISTIC_BAND_WEIGHTS.sustain + DRAW_SCORE_PER_EXTRA_DRAW * Math.max(0, kitDraw - 1),
+      code: 'sustain',
+    };
   }
 
   if (action.type === 'playCard') {

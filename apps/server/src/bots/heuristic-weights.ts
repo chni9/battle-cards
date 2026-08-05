@@ -111,3 +111,6 @@ export const ABSORBER_POINTS_DENY_BONUS = 70;
 export const FINISH_CHIP_BONUS = 80;
 /** Min last-turn livesLost for Absorber life top-up when Regen is held. */
 export const ABSORBER_MIN_LIVES_VS_REGEN = 2;
+
+/** Extra sustain per kit draw above 1 (L29-02). Untouchable stays at sustain=100. Tunable default, not measured. */
+export const DRAW_SCORE_PER_EXTRA_DRAW = 20;
