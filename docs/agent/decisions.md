@@ -1420,3 +1420,26 @@ Every comparison site in `heuristic-policy.ts`, `policy-internals.ts` (`scoreAbs
 directly. `REGEN_SOFT_LIFE` / `TAX_LIFE_BUFFER` themselves are unchanged and still the single
 source the helpers scale from — no second tunable to drift out of sync.
 
+## 2026-08-05 · [T] Heuristic: score economy / theft specials (L29-05)
+
+`score-play/score-economy-theft.ts` moved off the L29-01 stub. Three branches, all tunable
+defaults (#V3-5), none ever tying `draw`:
+
+- **Super Regeneration** — `survive + SUPER_REGEN_SURVIVE_BONUS` (+10 upgraded) under any
+  incoming threat; `invest + SUPER_REGEN_INVEST_BONUS` (+15 upgraded) when `lives` is at or
+  below the kit-scaled `regenSoftLifeForKit` floor (+3 more for upgraded, since its 18-life
+  heal is worth reaching for slightly earlier); otherwise refused outright — a full-health
+  bot must not play it idly just because nothing else scored.
+- **Upgrade Point Thief** — always `deny` with at least one living opponent (mass effect,
+  no target needed): `UPGRADE_POINT_THIEF_DENY_BONUS + livingCount * 15`, plus `+20` per
+  opponent whose Spy relation already shows an upgraded card or spent upgrade points. Refused
+  outright with zero living opponents (never reachable in practice, kept for safety).
+- **Card Thief** — upgraded is target-less (mass steal): `deny + CARD_THIEF_DENY_BONUS +
+  livingCount * 10`. Base needs a target: refused without one; refused against a target
+  `isImmuneTarget` reports immune to (`card-thief` — no shipped kit lists it yet, defensive
+  only); otherwise `deny + CARD_THIEF_DENY_BONUS`, +15 more when the target is spied with at
+  least one known card to aim at.
+
+`score-turn-pool-reversal.ts`, `score-persistents.ts`, `score-attacks-redirect.ts` stay on
+the L29-01 stub pending L29-06..08.
+

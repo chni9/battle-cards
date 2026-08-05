@@ -1483,3 +1483,123 @@ describe('heuristic decide (L16-04)', () => {
     });
   });
 });
+
+describe('L29-05: economy / theft specials', () => {
+  it('Super Regeneration: Survive under threat, Invest at low life, refuses at full health', () => {
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'sr-1' },
+    ];
+
+    const underThreatView = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'sr-1', cardId: 'super-regeneration', isUpgraded: false }],
+      }),
+      pendingEffects: [
+        {
+          id: 'inc-1',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 1,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    expect(decide(underThreatView, actions, createRng('sr-survive'))).toEqual({
+      type: 'playCard',
+      instanceId: 'sr-1',
+    });
+
+    const lowLifeView = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        lives: 3,
+        specialCards: [{ instanceId: 'sr-1', cardId: 'super-regeneration', isUpgraded: false }],
+      }),
+    });
+    expect(decide(lowLifeView, actions, createRng('sr-invest'))).toEqual({
+      type: 'playCard',
+      instanceId: 'sr-1',
+    });
+
+    const fullHealthView = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        lives: 10,
+        specialCards: [{ instanceId: 'sr-1', cardId: 'super-regeneration', isUpgraded: false }],
+      }),
+    });
+    expect(decide(fullHealthView, actions, createRng('sr-refuse'))).toEqual({ type: 'draw' });
+  });
+
+  it('Upgrade Point Thief always beats draw with a living opponent', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [
+          { instanceId: 'upt-1', cardId: 'upgrade-point-thief', isUpgraded: false },
+        ],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'upt-1' }],
+        createRng('upt-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'upt-1' });
+  });
+
+  it('Card Thief base: prefers a spied, card-holding target over draw; refuses without a target', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'ct-1', cardId: 'card-thief', isUpgraded: false }],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          spied: {
+            kitId: 'scientific',
+            hand: [{ instanceId: 'h-1', cardId: 'basic-attack', isUpgraded: false }],
+            specialCards: [],
+          },
+        }),
+      ],
+    });
+    expect(
+      decide(
+        view,
+        [
+          { type: 'draw' },
+          { type: 'playCard', instanceId: 'ct-1', targetPlayerId: 'bot-b' },
+        ],
+        createRng('ct-target'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'ct-1', targetPlayerId: 'bot-b' });
+
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'ct-1' }],
+        createRng('ct-no-target'),
+      ),
+    ).toEqual({ type: 'draw' });
+  });
+
+  it('Card Thief upgraded always beats draw with a living opponent', () => {
+    const view = baseView({
+      self: baseSelf({
+        specialCards: [{ instanceId: 'ct-1', cardId: 'card-thief', isUpgraded: true }],
+      }),
+    });
+    expect(
+      decide(
+        view,
+        [{ type: 'draw' }, { type: 'playCard', instanceId: 'ct-1' }],
+        createRng('ct-up-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'ct-1' });
+  });
+});
