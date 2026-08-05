@@ -11,6 +11,7 @@ import { Dialog } from '../../design/components/dialog';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { getCardArtUrl } from '../../design/asset-lookup';
+import { kitSpecialCardKey } from './kit-special-card-key';
 
 export interface KitInspectDialogProps {
   open: boolean;
@@ -77,11 +78,11 @@ export function KitInspectDialog({
               Special cards
             </h3>
             <ul className="mt-1.5 flex flex-wrap gap-2">
-              {kit.specialCards.map((cardId) => {
+              {kit.specialCards.map((cardId, index) => {
                 const def = getCard(cardId);
                 return (
                   <li
-                    key={cardId}
+                    key={kitSpecialCardKey(cardId, index)}
                     className="w-[5.5rem] rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1"
                   >
                     <img

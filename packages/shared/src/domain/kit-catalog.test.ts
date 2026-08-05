@@ -50,5 +50,20 @@ describe('KIT_CATALOG', () => {
     expect(getKit('indestructible').startingCardCounts).toEqual({ action: 4, attack: 1 });
     expect(getKit('indestructible').traits.alwaysUpgraded).toEqual(['tax', 'regeneration']);
     expect(getKit('indestructible').specialCards).toEqual(['super-regeneration']);
+
+    expect(getKit('specialist').startingResources).toEqual({
+      lives: 8,
+      points: 4,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('specialist').startingCardCounts).toEqual({ action: 3, attack: 2 });
+    expect(getKit('specialist').traits.alwaysUpgraded).toEqual(['absorber']);
+    expect(getKit('specialist').specialCards).toEqual([
+      'card-transformer',
+      'card-transformer',
+      'card-thief',
+      'super-absorber',
+    ]);
   });
 });

@@ -75,6 +75,23 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  specialist: {
+    id: 'specialist',
+    name: 'Specialist',
+    startingResources: { lives: 8, points: 4, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 3, attack: 2 },
+    specialCards: [
+      'card-transformer',
+      'card-transformer',
+      'card-thief',
+      'super-absorber',
+    ],
+    traits: {
+      alwaysUpgraded: ['absorber'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {

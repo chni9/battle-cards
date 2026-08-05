@@ -64,7 +64,11 @@ describe('stealRandomCard (technical spec v4 §4.2)', () => {
   ] as const;
 
   function victim() {
-    const state = createInitialState({ seats, seed: 'steal-random-card' });
+    const state = createInitialState({
+      seats,
+      seed: 'steal-random-card',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const player = state.players[0];
 
     if (player === undefined) {
@@ -76,6 +80,7 @@ describe('stealRandomCard (technical spec v4 §4.2)', () => {
 
   it('draws through the injected rng', () => {
     const target = victim();
+    target.specialCards = [];
     target.hand = [
       { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
       { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
@@ -98,6 +103,7 @@ describe('stealRandomCard (technical spec v4 §4.2)', () => {
   it('is reproducible for the same rng state', () => {
     const run = (): string | undefined => {
       const target = victim();
+      target.specialCards = [];
       target.hand = [
         { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
         { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
@@ -121,6 +127,7 @@ describe('stealRandomCard (technical spec v4 §4.2)', () => {
 
   it('respects an optional filter', () => {
     const target = victim();
+    target.specialCards = [];
     target.hand = [
       { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
       { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
@@ -139,6 +146,7 @@ describe('stealRandomCard (technical spec v4 §4.2)', () => {
 
   it('returns undefined when the filter excludes every card', () => {
     const target = victim();
+    target.specialCards = [];
     target.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     const rng = createRng('steal-no-match');
     const pick = vi.spyOn(rng, 'pick');
