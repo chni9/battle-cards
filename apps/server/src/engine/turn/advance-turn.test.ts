@@ -78,6 +78,7 @@ describe('advanceTurn block chain (L20-16)', () => {
     advanceTurn(state);
     expect(state.currentTurnPlayerId).toBe('bob');
     expect(state.turnSequence).toBe(4);
+    expect(alice.blockAttacksForbidden).toBe(false);
   });
 
   it('exposes remaining count in the view and TurnStarted payload after each advance', () => {

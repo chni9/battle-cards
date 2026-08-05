@@ -58,6 +58,7 @@ export function enumerationStateFromView(
         isEliminated: publicPlayer.isEliminated,
         eliminationSnapshot: null,
         blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
+        blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
         attackBlockCharges: view.self.attackBlockCharges,
       };
     }
@@ -85,6 +86,7 @@ export function enumerationStateFromView(
       isEliminated: publicPlayer.isEliminated,
       eliminationSnapshot: null,
       blockTurnsRemaining: publicPlayer.blockTurnsRemaining,
+      blockAttacksForbidden: publicPlayer.blockAttacksForbidden,
       attackBlockCharges: publicPlayer.activeAttackBlock === true ? 1 : 0,
     };
   });

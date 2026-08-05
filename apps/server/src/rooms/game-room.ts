@@ -84,6 +84,7 @@ import {
 } from '../engine/lifecycle/connection';
 import { createRng } from '../engine/rng';
 import { advanceTurn, findPlayer } from '../engine/turn/advance-turn';
+import { endBlockChain } from '../engine/turn/grant-block-turns';
 import {
   REWARD_SUB_CHOICE_MS,
   eliminateWithoutReward,
@@ -1642,6 +1643,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       shouldElimForInactivity = recordConnectedTimeout(actor);
     }
 
+    // #V4-6: one timeout ends the Block chain (counts as one inactive tick above).
+    if (actor?.blockAttacksForbidden === true) {
+      endBlockChain(actor);
+    }
+
     this.performAutoDraw(expectedPlayerId);
 
     if (!shouldElimForInactivity) {
@@ -2151,6 +2157,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] absent auto-draw for ${playerId}`);
     const shouldElim = recordAbsentAutoTurn(player);
+
+    // #V4-6: one absent auto-draw ends the Block chain (counts as one absent tick above).
+    if (player.blockAttacksForbidden) {
+      endBlockChain(player);
+    }
+
     this.performAutoDraw(playerId);
 
     if (!shouldElim) {

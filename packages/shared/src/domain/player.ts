@@ -93,6 +93,12 @@ export interface Player {
    */
   blockTurnsRemaining: number;
   /**
+   * Attack cards forbidden while a Block chain holds the seat (L25-01).
+   * Distinct from `blockTurnsRemaining`: that counter is already 0 on the last
+   * consecutive turn while this seat is still current.
+   */
+  blockAttacksForbidden: boolean;
+  /**
    * Attack Thief block charges (technical spec v4 §5.1, L23-03). 0 when inactive.
    * Must not live in `PersistentEffect.counter` — `applyDamage` decrements that per
    * life lost. Public presence only; exact count is private on `PrivateSelfView`.

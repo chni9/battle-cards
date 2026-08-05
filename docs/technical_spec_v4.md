@@ -825,3 +825,17 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-16** | Transformer: consumed hand card → pool as-is; special result does not inherit upgrade; duplicates allowed. | `decisions.md`, L24-02 |
 | *(addr.)* | Optional `consumeInstanceId` on play; eligible = hand `SHARED_CARD_IDS` only. `GameState.subChoice` holds `pool-pick` / `special-pick` (Approach B). | `decisions.md`, L24-01/02 |
 
+## 11.6 Ruled in Lot 25 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-6** | Block chain = **one** lifecycle turn: one 30s timer per Block turn; one timeout **ends the chain** and counts as **one** inactive/absent tick. | `decisions.md`, L25-01 |
+| **#V4-7** | Block cancels **`pendingEffects` only** (not Poison/Curse/Imposition). | `decisions.md`, L25-01 |
+| **#V4-8** | Turn ledger **resets each** Block turn; Absorber reads the most recent. | `decisions.md`, L25-01 |
+| **#V4-9a** | Invisibility: already-active persistents **stay**; their **ticks skip** while the user is invisible and resume after deactivate. | `decisions.md`, L25-02 |
+| **#V4-9b** | Invisible user is immune to attacks including MEGA ATTACK. | `decisions.md`, L25-02 |
+| **#V4-9c** | Invisible player is **excluded from Sentence's candidate pool**. | `decisions.md`, L25-02 |
+| **#V4-9d** | Targeting an invisible player is legal and resolves as `'immune'` (not rejected). | `decisions.md`, L25-02 |
+| *(addr.)* | Cloning covered by invisibility immunity; lifecycle elim **not** blocked. Block attack ban = play/use only (buy/upgrade OK). Each Block cancel emits `'blocked'`. | `decisions.md`, L25 |
+| **#V4-10** | Deactivating Invisibility **consumes** the turn's action. | `decisions.md`, L25-02 |
+

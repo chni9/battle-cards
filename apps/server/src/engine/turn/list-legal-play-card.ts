@@ -5,12 +5,13 @@
  */
 
 import type { CardInstance, GameState, Player } from '@card-battle/shared';
-import { SHARED_CARD_IDS } from '@card-battle/shared';
+import { isAttackCardId, SHARED_CARD_IDS } from '@card-battle/shared';
 
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
 import { findPlayer } from './advance-turn';
+import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
 import { canAffordPlayPoints } from './play-cost';
 
@@ -34,6 +35,10 @@ export function listLegalPlayCardActions(
       continue;
     }
 
+    if (attacksForbiddenDuringBlock(actor) && isAttackCardId(instance.cardId)) {
+      continue;
+    }
+
     if (instance.cardId === 'regeneration') {
       for (let quantity = 1; quantity <= MAX_LIVES_PER_USE; quantity += 1) {
         const context = {
@@ -45,6 +50,7 @@ export function listLegalPlayCardActions(
           consumeInstanceId: null,
           rng,
           nowMs: 0,
+          immediateResolved: [],
         };
 
         if (handler.canPlay(context)) {
@@ -78,6 +84,7 @@ export function listLegalPlayCardActions(
           consumeInstanceId: handCard.instanceId,
           rng,
           nowMs: 0,
+          immediateResolved: [],
         };
 
         if (handler.canPlay(context)) {
@@ -103,6 +110,7 @@ export function listLegalPlayCardActions(
         consumeInstanceId: null,
         rng,
         nowMs: 0,
+        immediateResolved: [],
       };
 
       if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {
@@ -120,6 +128,7 @@ export function listLegalPlayCardActions(
         consumeInstanceId: null,
         rng,
         nowMs: 0,
+        immediateResolved: [],
       };
 
       if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {

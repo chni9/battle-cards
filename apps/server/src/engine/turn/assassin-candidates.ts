@@ -16,6 +16,7 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
+import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
 import { playPointsCost } from './play-cost';
 
@@ -37,6 +38,10 @@ export function listAssassinMultiAttackCandidates(
   actor: Player,
 ): readonly TurnAction[] {
   if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
+    return [];
+  }
+
+  if (attacksForbiddenDuringBlock(actor)) {
     return [];
   }
 
@@ -236,6 +241,7 @@ function isAffordableCandidate(
         consumeInstanceId: null,
         rng,
         nowMs: 0,
+        immediateResolved: [],
       })
     ) {
       return false;

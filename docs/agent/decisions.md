@@ -1294,3 +1294,35 @@ Designer rulings (session) — confirm tech-spec §11 recommendations:
 - **Transformer eligibility:** hand only, `SHARED_CARD_IDS` (shared attack + action).
   Not specials, not MEGA ATTACK.
 
+## 2026-08-05 · [P] #V4-6 / #V4-7 / #V4-8 / #V4-9 / #V4-10 Lot 25 turn flow
+
+Designer rulings (session):
+
+- **#V4-6:** During a Block chain the chain counts as **one** lifecycle turn — one
+  30-second timer per Block turn, but a single timeout **ends the chain** and counts
+  as **one** inactive (or absent) tick. Same shape on the absent auto-draw path.
+- **#V4-7:** Block cancels **`pendingEffects` only**. Already-active Poison / Curse /
+  Imposition (and other persistents) keep ticking.
+- **#V4-8:** The turn ledger **resets on each** Block turn (`advanceTurn` already does);
+  Absorber reads the most recent Block turn only.
+- **Block cancel UX:** each cancelled pending emits a public `actionResolved` with
+  `outcome: 'blocked'` (L20-12 primitive).
+- **Block attack ban:** cannot **play/use** attack cards (including MEGA ATTACK and
+  Assassin multi-attack) during the chain; **buying and upgrading** attacks stay legal.
+  Ban is tracked by `Player.blockAttacksForbidden` because `blockTurnsRemaining` is `0`
+  on the last consecutive turn while the seat is still held.
+- **#V4-9a:** Invisibility makes the user immune to **already-active** persistent ticks
+  too — effects stay armed, ticks **skip** while invisible, and resume after deactivate
+  (not a cleanse).
+- **#V4-9b:** Immune to attacks, MEGA ATTACK included (resolve as `'immune'`).
+- **#V4-9c:** Invisible player is **excluded from Sentence's candidate pool**; empty
+  pool → `canPlay` false (Mirror empty-target precedent).
+- **#V4-9d:** Opponent targeting attempts stay legal and resolve as `'immune'` (do not
+  reject as invalid).
+- **Cloning:** covered by invisibility — no kit/resource copy when the target is
+  invisible; outcome `'immune'`.
+- **Lifecycle:** Invisibility does **not** block inactivity / absence / leave
+  elimination.
+- **#V4-10:** Deactivating Invisibility **consumes** the turn's action (new
+  `deactivatePersistent` TurnAction).
+

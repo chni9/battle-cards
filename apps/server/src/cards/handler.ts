@@ -6,7 +6,7 @@
  * (see `docs/agent/decisions.md`, and `docs/agent/card-handler.md` for the workflow).
  */
 
-import type { CardInstance, GameState } from '@card-battle/shared';
+import type { ActionResolutionOutcome, CardId, CardInstance, GameState } from '@card-battle/shared';
 
 import type { Rng } from '../engine/rng';
 
@@ -22,6 +22,17 @@ import type { Rng } from '../engine/rng';
  * handler that needs them, while anything random is *injected* here — a handler reaching
  * for a generator of its own breaks reproducibility (AGENTS golden rule 5).
  */
+export interface ImmediateResolvedEffect {
+  effectId: string;
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  cardId: CardId;
+  isUpgraded: boolean;
+  livesLost: number;
+  shieldAbsorbed: number;
+  outcome: ActionResolutionOutcome;
+}
+
 export interface EffectContext {
   state: GameState;
   /** The player taking the action. Always the player whose turn it is. */
@@ -47,6 +58,11 @@ export interface EffectContext {
    * Handlers must not call `Date.now()` themselves.
    */
   nowMs: number;
+  /**
+   * Play-time resolutions that must reach the room as `actionResolved` (L25-01 Block
+   * `'blocked'` cancels; L25-02 Cloning `'immune'`). Handlers push; play/finish merges.
+   */
+  immediateResolved: ImmediateResolvedEffect[];
 }
 
 export interface CardHandler {

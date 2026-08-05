@@ -84,6 +84,11 @@ export interface PublicPlayerView {
    */
   blockTurnsRemaining: number;
   /**
+   * Block attack ban active (L25-01). Public so opponents know why attacks are illegal.
+   * True on the last chain turn even when `blockTurnsRemaining` is already 0.
+   */
+  blockAttacksForbidden: boolean;
+  /**
    * Attack Thief block armed (`Player.attackBlockCharges > 0`). Exact count stays
    * private on `PrivateSelfView` (technical spec v4 §5.1 / L23-03). `null` when none.
    */

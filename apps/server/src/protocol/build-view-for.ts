@@ -190,6 +190,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       activeShield:
         player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
       blockTurnsRemaining: player.blockTurnsRemaining,
+      blockAttacksForbidden: player.blockAttacksForbidden,
       activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
     };
 
@@ -320,6 +321,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         activeShield:
           player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
         blockTurnsRemaining: player.blockTurnsRemaining,
+        blockAttacksForbidden: player.blockAttacksForbidden,
         activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
       };
 

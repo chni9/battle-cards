@@ -56,6 +56,7 @@ function player(
     activePersistentEffects: [],
     activeShield: null,
     blockTurnsRemaining: 0,
+        blockAttacksForbidden: false,
     activeAttackBlock: null,
     ...extras,
   };

@@ -32,6 +32,7 @@ function baseView(): PlayingStateView {
         activePersistentEffects: [],
         activeShield: null,
         blockTurnsRemaining: 0,
+        blockAttacksForbidden: false,
         activeAttackBlock: null,
       },
       {
@@ -49,6 +50,7 @@ function baseView(): PlayingStateView {
         activePersistentEffects: [],
         activeShield: null,
         blockTurnsRemaining: 0,
+        blockAttacksForbidden: false,
         activeAttackBlock: null,
       },
     ],

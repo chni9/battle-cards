@@ -25,7 +25,7 @@ describe('card handler registry (technical spec §4.1)', () => {
     const accountedFor = [...IMPLEMENTED_CARD_IDS, ...PENDING_CARD_IDS];
 
     expect(accountedFor.slice().sort()).toEqual([...ALL_CARD_IDS].sort());
-    expect(PENDING_CARD_IDS).toHaveLength(3);
+    expect(PENDING_CARD_IDS).toHaveLength(2);
   });
 
   it('never lists a card as both implemented and pending', () => {
@@ -56,7 +56,7 @@ describe('findHandler', () => {
     }
 
     actor.specialCards = [
-      { instanceId: 'pending-1', cardId: 'block', isUpgraded: false },
+      { instanceId: 'pending-1', cardId: 'invisibility', isUpgraded: false },
     ];
     actor.points = 20;
     state.currentTurnPlayerId = actor.id;

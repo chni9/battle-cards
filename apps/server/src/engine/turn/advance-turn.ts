@@ -8,9 +8,12 @@
  * finished still has `blockTurnsRemaining > 0`, decrement it, keep the same
  * `currentTurnPlayerId`, still bump `turnSequence`, and reset the ledger. Both
  * `finishTurnPhases` and `resumeAfterRewards` call here — not either alone.
+ * When the seat finally walks away, clear `blockAttacksForbidden` (L25-01).
  */
 
 import type { GameState, Player } from '@card-battle/shared';
+
+import { endBlockChain } from './grant-block-turns';
 
 export function advanceTurn(state: GameState): void {
   const alive = state.players.filter((player) => !player.isEliminated);
@@ -32,6 +35,10 @@ export function advanceTurn(state: GameState): void {
     state.turnSequence += 1;
     resetLedger(currentPlayer);
     return;
+  }
+
+  if (currentPlayer?.blockAttacksForbidden === true) {
+    endBlockChain(currentPlayer);
   }
 
   const full = state.players;

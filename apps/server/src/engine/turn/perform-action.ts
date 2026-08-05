@@ -5,6 +5,7 @@
 
 import {
   getKit,
+  isAttackCardId,
   isSharedAttackCardId,
   isPersistentSpecialCardId,
   type ActionResolutionOutcome,
@@ -26,6 +27,7 @@ import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
+import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import {
   applyDefaultMirrorRedirect,
   type MirrorRedirectInfo,
@@ -285,6 +287,52 @@ export function performTurnAction(
     }
 
     actionPlayed = playResult.actionPlayed;
+
+    // Mirror / steal-pick / pool-pick start a sub-choice: paid, but resolve/advance wait.
+    if (state.mirrorChoice !== null) {
+      return {
+        ok: true,
+        actionPlayed,
+        resolved: playResult.immediateResolved,
+        winnerPlayerId: null,
+        eliminatedPlayerIds: [],
+        eliminations: [],
+        mirrorChoicePending: true,
+      };
+    }
+
+    if (state.stealChoice !== null) {
+      return {
+        ok: true,
+        actionPlayed,
+        resolved: playResult.immediateResolved,
+        winnerPlayerId: null,
+        eliminatedPlayerIds: [],
+        eliminations: [],
+        stealChoicePending: true,
+      };
+    }
+
+    if (state.subChoice !== null) {
+      return {
+        ok: true,
+        actionPlayed,
+        resolved: playResult.immediateResolved,
+        winnerPlayerId: null,
+        eliminatedPlayerIds: [],
+        eliminations: [],
+        subChoicePending: true,
+      };
+    }
+
+    return finishTurnPhases(
+      state,
+      actorPlayerId,
+      actionPlayed,
+      rng,
+      nowMs,
+      playResult.immediateResolved,
+    );
   }
 
   // Mirror / steal-pick start a sub-choice: paid, but resolve/advance wait.
@@ -736,17 +784,19 @@ function finishTurnPhases(
   actionPlayed: ActionPlayedEvent,
   rng: Rng,
   nowMs: number,
+  immediateResolved: readonly ActionResolvedEvent[] = [],
 ): TurnResult {
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
   const eliminations = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
+  const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
 
   if (hasPendingEliminationRewards(state)) {
     return {
       ok: true,
       actionPlayed,
-      resolved: toResolvedEvents(resolvedEffects),
+      resolved,
       winnerPlayerId: null,
       eliminatedPlayerIds,
       eliminations,
@@ -765,7 +815,7 @@ function finishTurnPhases(
   return {
     ok: true,
     actionPlayed,
-    resolved: toResolvedEvents(resolvedEffects),
+    resolved,
     winnerPlayerId,
     eliminatedPlayerIds,
     eliminations,
@@ -787,6 +837,10 @@ function playMultipleAttacksAction(
 
   if (actor === undefined) {
     return { ok: false, message: 'Unknown player.' };
+  }
+
+  if (attacksForbiddenDuringBlock(actor)) {
+    return { ok: false, message: 'Attack cards are forbidden during Block.' };
   }
 
   if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
@@ -848,6 +902,7 @@ function playMultipleAttacksAction(
       consumeInstanceId: null,
       rng,
       nowMs,
+      immediateResolved: [],
     };
 
     if (!handler.canPlay(context)) {
@@ -890,6 +945,7 @@ function playMultipleAttacksAction(
       consumeInstanceId: null,
       rng,
       nowMs,
+      immediateResolved: [],
     });
 
     publicAttacks.push({
@@ -919,7 +975,11 @@ function playCardAction(
   consumeInstanceId: string | undefined,
   rng: Rng,
   nowMs: number,
-): TurnResult | TurnRejection | { ok: true; actionPlayed: ActionPlayedEvent } {
+): TurnRejection | {
+  ok: true;
+  actionPlayed: ActionPlayedEvent;
+  immediateResolved: ActionResolvedEvent[];
+} {
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
@@ -949,6 +1009,10 @@ function playCardAction(
     return { ok: false, message: 'That card is not playable yet.' };
   }
 
+  if (attacksForbiddenDuringBlock(actor) && isAttackCardId(cardId)) {
+    return { ok: false, message: 'Attack cards are forbidden during Block.' };
+  }
+
   let resolvedTargetId: string | null = null;
 
   if (targetPlayerId !== undefined) {
@@ -961,6 +1025,7 @@ function playCardAction(
     resolvedTargetId = targetPlayerId;
   }
 
+  const immediateResolved: ActionResolvedEvent[] = [];
   const context = {
     state,
     sourcePlayerId: actorPlayerId,
@@ -970,6 +1035,7 @@ function playCardAction(
     consumeInstanceId: consumeInstanceId ?? null,
     rng,
     nowMs,
+    immediateResolved,
   };
 
   if (!handler.canPlay(context)) {
@@ -1012,6 +1078,7 @@ function playCardAction(
       ...(resolvedTargetId !== null ? { targetPlayerId: resolvedTargetId } : {}),
       turnSequence: state.turnSequence,
     },
+    immediateResolved,
   };
 }
 
