@@ -15,7 +15,6 @@ import {
   getKit,
   isAttackCardId,
   isSharedAttackCardId,
-  UPGRADE_POINT_ECONOMY,
   type BotDecisionReason,
   type BotReasonCode,
   type CardInstance,
@@ -26,6 +25,7 @@ import {
 import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
+import { upgradePointBuyCost } from '../engine/economy/upgrade-points';
 import { regenSoftLifeForKit, taxLifeBufferForKit } from './heuristic-life-thresholds';
 import {
   ACTIVATE_DUPLICATION_INVEST_BONUS,
@@ -325,7 +325,9 @@ function scoreAction(
 
   if (action.type === 'buyUpgradePoint' || action.type === 'upgradeCard') {
     if (action.type === 'buyUpgradePoint') {
-      if (violatesPointReserve(view, ctx, view.self.points - UPGRADE_POINT_ECONOMY.buyCostPoints)) {
+      // Per-kit cost (#V4-28 / L27-01) — Upgrader buys at 5, not the global 10.
+      const buyCost = upgradePointBuyCost(view.self.kitId);
+      if (violatesPointReserve(view, ctx, view.self.points - buyCost)) {
         return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
       }
 

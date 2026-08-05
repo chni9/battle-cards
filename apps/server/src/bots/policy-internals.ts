@@ -15,6 +15,7 @@ import {
   type BotReasonCode,
   type CardId,
   type CardInstance,
+  type KitId,
   type PendingEffectView,
   type Player,
   type PlayingStateView,
@@ -23,6 +24,7 @@ import {
 import { isImmuneTo } from '../engine/kits/is-immune-to';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
+import { upgradePointBuyCost } from '../engine/economy/upgrade-points';
 import { regenSoftLifeForKit } from './heuristic-life-thresholds';
 import {
   ABSORBER_MIN_LIVES_VS_REGEN,
@@ -659,7 +661,8 @@ export function lastCompleteTurnSpendByActor(view: PlayingStateView): {
       }
 
       if (entry.action === 'buyUpgradePoint') {
-        spentPoints += UPGRADE_POINT_ECONOMY.buyCostPoints;
+        // Kit is private except self / Spy. Unspied → global 10 (#V4-28).
+        spentPoints += upgradePointBuyCostForActor(view, playerId);
         continue;
       }
 
@@ -690,6 +693,24 @@ export function lastCompleteTurnSpendByActor(view: PlayingStateView): {
   }
 
   return { points, upgradePoints };
+}
+
+/** Resolve actor kit when known (self or Spy); otherwise undefined. */
+function knownKitIdForActor(view: PlayingStateView, playerId: string): KitId | undefined {
+  if (playerId === view.you) {
+    return view.self.kitId;
+  }
+
+  const publicPlayer = view.players.find((entry) => entry.id === playerId);
+  return publicPlayer?.spied?.kitId;
+}
+
+/** Per-kit UP buy cost when kit is known; else global default. */
+function upgradePointBuyCostForActor(view: PlayingStateView, playerId: string): number {
+  const kitId = knownKitIdForActor(view, playerId);
+  return kitId !== undefined
+    ? upgradePointBuyCost(kitId)
+    : UPGRADE_POINT_ECONOMY.buyCostPoints;
 }
 
 export function sumLivesLostByTarget(view: PlayingStateView): Map<string, number> {

@@ -1653,4 +1653,13 @@ Designer rulings (session):
   (`basic-attack`, `strong-attack`, `super-attack`) — **not** `mega-attack`.
   A Warrior who acquires MEGA by any route does not get it upgraded for free.
 
+## 2026-08-05 · [T] Bot UP buy uses per-kit cost (L27-01 follow-up)
+
+L27-01 wired engine + legal-action gate to `KitTraits.upgradePointBuyCost`.
+Heuristic policy still subtracted the global 10 for `buyUpgradePoint` reserve and
+Absorber's last-turn spend proxy. Upgrader bots with 5–9 points refused a legal
+buy under contest reserve; Absorber over-counted unspied buys was unchanged, but
+self / Spy-revealed Upgrader buys now read `upgradePointBuyCost(kitId)`.
+Unspied opponents still fall back to the global 10 (kit is private).
+
 

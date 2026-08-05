@@ -2101,4 +2101,39 @@ describe('L29-08: turn-flow, pool and reversal specials', () => {
       type: 'sellUpgradePoint',
     });
   });
+
+  it('Upgrader buyUpgradePoint uses cost 5 for point-reserve (not global 10)', () => {
+    // Contest + Mirror reserve (6). Points 11: after Upgrader buy (5) → 6 OK;
+    // after global 10 → 1 below reserve → -Infinity.
+    const pending = [
+      {
+        id: 'atk-in',
+        sourcePlayerId: 'bot-b',
+        targetPlayerId: 'bot-a',
+        cardId: 'strong-attack' as const,
+        isUpgraded: true,
+        queuedAt: 1,
+        damageMultiplier: 1,
+        redirectedBy: null,
+      },
+    ];
+    const hand = [{ instanceId: 'mir-1', cardId: 'mirror' as const, isUpgraded: true }];
+    const actions: TurnAction[] = [{ type: 'buyUpgradePoint' }, { type: 'draw' }];
+
+    const upgraderView = baseView({
+      self: baseSelf({ kitId: 'upgrader', points: 11, hand }),
+      pendingEffects: pending,
+    });
+    const [upgraderBuy] = scoreActions(upgraderView, actions, createRng('up-buy-5'));
+    expect(upgraderBuy?.action).toEqual({ type: 'buyUpgradePoint' });
+    expect(upgraderBuy?.score).toBeGreaterThan(Number.NEGATIVE_INFINITY);
+
+    const plainView = baseView({
+      self: baseSelf({ kitId: 'untouchable', points: 11, hand }),
+      pendingEffects: pending,
+    });
+    const [plainBuy] = scoreActions(plainView, actions, createRng('plain-buy-10'));
+    expect(plainBuy?.action).toEqual({ type: 'buyUpgradePoint' });
+    expect(plainBuy?.score).toBe(Number.NEGATIVE_INFINITY);
+  });
 });
