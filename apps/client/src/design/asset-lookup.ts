@@ -1,16 +1,17 @@
 /**
- * Typed art lookup for the V1 asset subset — technical spec v2 §4, L10-03.
+ * Typed art lookup — technical spec v2 §4 / v4 §3.1, L30-01.
  *
  * Source files live under `apps/client/src/assets/` (copied from repo `images/`).
- * Never import out-of-V1 art, `*(dead).png`, `Draw.png`, or `*_button.png`.
+ * Never import `*(dead).png`, `Draw.png`, or `*_button.png`.
  *
- * Activated art for Imposition / Points Generator: pass `activated: true` only for
- * cards currently in `activePersistentEffects` (PROTOCOL_VERSION 19).
+ * Activated art: pass `activated: true` only for cards currently in
+ * `activePersistentEffects` (and Block's consecutive-turn window when surfaced).
  */
 
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
+  SPECIAL_CARD_IDS,
   type CardId,
   type CardType,
   type KitId,
@@ -27,7 +28,7 @@ interface CardArtFiles {
   activatedUpgraded?: string;
 }
 
-/** Filename map — single source of truth matching technical spec v2 §4. */
+/** Filename map — single source of truth matching technical spec v2 §4 / v4. */
 const KIT_FILES = {
   untouchable: 'Untouchable.png',
   kamikaze: 'Kamikaze.png',
@@ -41,16 +42,6 @@ const KIT_FILES = {
   ghost: 'Ghost.png',
   duplicator: 'Duplicator.png',
 } as const satisfies Record<KitId, string>;
-
-type ShippedArtCardId =
-  | (typeof ATTACK_CARD_IDS)[number]
-  | (typeof ACTION_CARD_IDS)[number]
-  | 'suicide'
-  | 'spy-thief'
-  | 'imposition'
-  | 'cloning'
-  | 'sentence'
-  | 'points-generator';
 
 const CARD_FILES = {
   'basic-attack': { base: 'Basic attack.png', upgraded: 'Basic attack +.png' },
@@ -79,9 +70,78 @@ const CARD_FILES = {
     activatedBase: 'Generator (activated).png',
     activatedUpgraded: 'Generator + (activated).png',
   },
-} as const satisfies Record<ShippedArtCardId, CardArtFiles>;
+  'upgrade-point-thief': {
+    base: 'Upgrade Point Thief.png',
+    upgraded: 'Upgrade Point Thief +.png',
+  },
+  block: {
+    base: 'Block.png',
+    upgraded: 'Block +.png',
+    activatedBase: 'Block (activated).png',
+    activatedUpgraded: 'Block + (activated).png',
+  },
+  'super-regeneration': {
+    base: 'Super Regeneration.png',
+    upgraded: 'Super Regeneration +.png',
+  },
+  'card-thief': { base: 'Card Thief.png', upgraded: 'Card Thief +.png' },
+  'card-transformer': {
+    base: 'Card Transformer.png',
+    upgraded: 'Card Transformer +.png',
+  },
+  invisibility: {
+    base: 'Invisibility.png',
+    upgraded: 'Invisibility +.png',
+    activatedBase: 'Invisibility (activated).png',
+    activatedUpgraded: 'Invisibility + (activated).png',
+  },
+  reanimation: {
+    base: 'Reanimation.png',
+    upgraded: 'Reanimation +.png',
+    activatedBase: 'Reanimation (activated).png',
+    activatedUpgraded: 'Reanimation + (activated).png',
+  },
+  'card-absorber': { base: 'Card Absorber.png', upgraded: 'Card Absorber +.png' },
+  'mega-attack': { base: 'MEGA ATTACK.png', upgraded: 'MEGA ATTACK +.png' },
+  'super-mirror': { base: 'Super Mirror.png', upgraded: 'Super Mirror +.png' },
+  'super-absorber': {
+    base: 'Super Absorber.png',
+    upgraded: 'Super Absorber +.png',
+    activatedBase: 'Super Absorber (activated).png',
+    activatedUpgraded: 'Super Absorber + (activated).png',
+  },
+  curse: {
+    base: 'Curse.png',
+    upgraded: 'Curse +.png',
+    activatedBase: 'Curse (activated).png',
+    activatedUpgraded: 'Curse + (activated).png',
+  },
+  poison: {
+    base: 'Poison.png',
+    upgraded: 'Poison +.png',
+    activatedBase: 'Poison (activated).png',
+    activatedUpgraded: 'Poison + (activated).png',
+  },
+  'attack-thief': { base: 'Attack Thief.png', upgraded: 'Attack Thief +.png' },
+} as const satisfies Record<CardId, CardArtFiles>;
 
-type ArtCardId = keyof typeof CARD_FILES;
+/** Every playable card id with shipped art (3 attack + 7 action + 20 special). */
+export const ALL_ART_CARD_IDS: readonly CardId[] = [
+  ...ATTACK_CARD_IDS,
+  ...ACTION_CARD_IDS,
+  ...SPECIAL_CARD_IDS,
+];
+
+const CARDS_WITH_ACTIVATED_ART = [
+  'imposition',
+  'points-generator',
+  'block',
+  'invisibility',
+  'reanimation',
+  'super-absorber',
+  'curse',
+  'poison',
+] as const satisfies readonly CardId[];
 
 const RESOURCE_FILES = {
   life: 'life.png',
@@ -142,11 +202,7 @@ export function getCardArtUrl(
   cardId: CardId,
   opts: { isUpgraded: boolean; activated?: boolean },
 ): string {
-  if (!Object.prototype.hasOwnProperty.call(CARD_FILES, cardId)) {
-    throw new Error(`Card ${cardId} has no art entry yet (L30-01)`);
-  }
-
-  const files = CARD_FILES[cardId as ArtCardId];
+  const files = CARD_FILES[cardId];
   const activated = opts.activated === true;
 
   if (activated) {
@@ -179,16 +235,9 @@ export function getActionLogoUrl(): string {
   return urlFromGlob(backModules, 'action_logo.png', 'backs');
 }
 
-/** Card ids with shipped art — V4 pending specials land in L30-01. */
-export const V1_CARD_IDS: readonly ArtCardId[] = [
-  ...ATTACK_CARD_IDS,
-  ...ACTION_CARD_IDS,
-  'suicide',
-  'spy-thief',
-  'imposition',
-  'cloning',
-  'sentence',
-  'points-generator',
-] as const;
+/** @deprecated Use `ALL_ART_CARD_IDS` — kept for call sites that still name V1. */
+export const V1_CARD_IDS: readonly CardId[] = ALL_ART_CARD_IDS;
+
+export { CARDS_WITH_ACTIVATED_ART };
 
 export type { ResourceKind, CardBackKind };
