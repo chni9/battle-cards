@@ -35,7 +35,7 @@ import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
-import { cardPlayNeedsTarget } from './table/table-helpers';
+import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
 
@@ -335,6 +335,11 @@ function TableScreenInner({
     }
     if (cardPlayNeedsTarget(instance.cardId, instance.isUpgraded)) {
       setDialog({ kind: 'target', instance });
+      return;
+    }
+    // Card Transformer needs a hand card to consume before play (L24-02).
+    if (cardPlayNeedsConsume(instance.cardId)) {
+      setDialog({ kind: 'consume', instance });
       return;
     }
     playCardWithFx(instance.instanceId);

@@ -142,6 +142,11 @@ rules above are unchanged — this section only covers how the client looks.
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
   quantity Dialog. Regen quantity is a free text field; Confirm stays disabled until
   the value is an integer from 1 to 4 (mobile `type="number"` was unusable).
+  **Card Transformer** also needs `consumeInstanceId` (a hand `SHARED_CARD_IDS` card —
+  L24-02 / #V4-16): Use opens a consume Dialog listing transformable hand cards; Confirm
+  sends `playCard` with that id. Omitting it makes the server reject with “not legal”
+  even when points are sufficient. Upgraded Transformer’s special-pick is a post-play
+  `subChoiceRequired`, not this dialog.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.

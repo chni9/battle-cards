@@ -21,7 +21,7 @@ import { Card } from '../../design/components/card';
 import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
-import { cardEffectText } from './table-helpers';
+import { cardEffectText, transformableHandCards } from './table-helpers';
 
 function formatShopCost(cost: CardCost | undefined): string {
   if (cost === undefined) {
@@ -73,6 +73,7 @@ export type TableDialog =
     }
   | { kind: 'target'; instance: CardInstance }
   | { kind: 'quantity'; instance: CardInstance }
+  | { kind: 'consume'; instance: CardInstance }
   | { kind: 'multi' }
   | { kind: 'buy' }
   | { kind: 'pool' }
@@ -95,7 +96,7 @@ export interface CardActionsProps {
   onSellCard: (instanceId: string) => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onBuySpecialCard: () => void;
-  /** Called when Use needs target or quantity — parent already set dialog via setDialog. */
+  /** Called when Use needs target, quantity, or consume — parent sets dialog via setDialog. */
   onBeginUse: (instance: CardInstance) => void;
 }
 
@@ -118,19 +119,21 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onBeginUse,
   } = props;
 
+  const [targetId, setTargetId] = useState('');
+  const [quantityText, setQuantityText] = useState('1');
+  const [consumeInstanceId, setConsumeInstanceId] = useState('');
+  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
+  const [multiIds, setMultiIds] = useState<string[]>([]);
+  const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+
   const close = (): void => {
     setQuantityText('1');
+    setConsumeInstanceId('');
     setDialog(null);
   };
 
   const aliveOpponents = opponents.filter((player) => !player.isEliminated);
   const defaultTarget = aliveOpponents[0]?.id ?? '';
-
-  const [targetId, setTargetId] = useState('');
-  const [quantityText, setQuantityText] = useState('1');
-  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
-  const [multiIds, setMultiIds] = useState<string[]>([]);
-  const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
 
   const resolvedTarget = aliveOpponents.some((p) => p.id === targetId)
     ? targetId
@@ -143,6 +146,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
     Number.isInteger(quantityParsed) &&
     quantityParsed >= 1 &&
     quantityParsed <= 4;
+
+  const consumeCandidates = transformableHandCards(view.self.hand);
+  const resolvedConsumeId =
+    consumeCandidates.some((card) => card.instanceId === consumeInstanceId)
+      ? consumeInstanceId
+      : (consumeCandidates[0]?.instanceId ?? '');
 
   const actionsOpen = dialog?.kind === 'actions';
   const actionInstance = dialog?.kind === 'actions' ? dialog.instance : null;
@@ -168,7 +177,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <>
               <Button
                 variant="purple"
-                disabled={!isMyTurn || actionsLocked}
+                disabled={
+                  !isMyTurn ||
+                  actionsLocked ||
+                  (actionInstance.cardId === 'card-transformer' &&
+                    consumeCandidates.length === 0)
+                }
                 onClick={() => {
                   onBeginUse(actionInstance);
                 }}
@@ -228,7 +242,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
               <p className="text-sm text-ink-muted">
                 {!isMyTurn || actionsLocked
                   ? 'Actions locked — you can still read the card.'
-                  : 'Choose Use, Upgrade, or Sell.'}
+                  : actionInstance.cardId === 'card-transformer' &&
+                      consumeCandidates.length === 0
+                    ? 'Need a shared action or attack in hand to transform.'
+                    : 'Choose Use, Upgrade, or Sell.'}
               </p>
             </div>
           </div>
@@ -379,6 +396,81 @@ export function CardActions(props: CardActionsProps): ReactElement {
             ? 'Enter how many lives to buy.'
             : 'Enter a whole number from 1 to 4 to confirm.'}
         </p>
+      </Dialog>
+
+      <Dialog
+        open={dialog?.kind === 'consume'}
+        title="Choose a card to transform"
+        onClose={close}
+        panelClassName="max-w-3xl"
+        actions={
+          dialog?.kind === 'consume' ? (
+            <>
+              <Button
+                variant="purple"
+                disabled={resolvedConsumeId === ''}
+                onClick={() => {
+                  if (resolvedConsumeId === '') {
+                    return;
+                  }
+                  onPlayCard(dialog.instance.instanceId, {
+                    consumeInstanceId: resolvedConsumeId,
+                  });
+                  close();
+                }}
+              >
+                Confirm
+              </Button>
+              <Button variant="red" onClick={close}>
+                Cancel
+              </Button>
+            </>
+          ) : undefined
+        }
+      >
+        <p className="text-sm text-ink-muted">
+          Pick one action or attack card from your hand. It goes to the shared pool; you
+          receive a special in return.
+        </p>
+        {consumeCandidates.length === 0 ? (
+          <p className="mt-3 text-sm text-cta-red">
+            No transformable card in hand — need a shared action or attack first.
+          </p>
+        ) : (
+          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {consumeCandidates.map((instance) => {
+              const selected = resolvedConsumeId === instance.instanceId;
+              const name = formatCardLabel(instance.cardId, instance.isUpgraded);
+              return (
+                <li key={instance.instanceId}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={name}
+                    onClick={() => {
+                      setConsumeInstanceId(instance.instanceId);
+                    }}
+                    className={[
+                      'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
+                      selected
+                        ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
+                        : 'border-border-soft bg-surface hover:border-border',
+                    ].join(' ')}
+                  >
+                    <Card
+                      instance={instance}
+                      detail="thumb"
+                      className="pointer-events-none w-full max-w-[5.5rem]"
+                    />
+                    <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
+                      {name}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Dialog>
 
       <Dialog

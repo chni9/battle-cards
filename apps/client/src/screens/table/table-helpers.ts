@@ -5,6 +5,7 @@
 
 import {
   ATTACK_CARD_IDS,
+  SHARED_CARD_IDS,
   getCard,
   type CardInstance,
   type PlayingStateView,
@@ -63,8 +64,27 @@ export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean
   );
 }
 
+/**
+ * Cards that Table must send with `consumeInstanceId` (Card Transformer — L24-02 /
+ * decisions.md #V4-16). Eligibility mirrors the server: hand only, `SHARED_CARD_IDS`.
+ */
+export function cardPlayNeedsConsume(cardId: string): boolean {
+  return cardId === 'card-transformer';
+}
+
+/** Hand cards Card Transformer may consume (shared attack + action; not specials / MEGA). */
+export function isTransformableHandCard(cardId: string): boolean {
+  return (SHARED_CARD_IDS as readonly string[]).includes(cardId);
+}
+
+export function transformableHandCards(
+  hand: readonly CardInstance[],
+): readonly CardInstance[] {
+  return hand.filter((card) => isTransformableHandCard(card.cardId));
+}
+
 export function cardIsSelfOnlyPlay(cardId: string, isUpgraded = false): boolean {
-  return !cardPlayNeedsTarget(cardId, isUpgraded);
+  return !cardPlayNeedsTarget(cardId, isUpgraded) && !cardPlayNeedsConsume(cardId);
 }
 
 /** Effect copy for Dialogs when Table `Card detail="face"` omits it. */
