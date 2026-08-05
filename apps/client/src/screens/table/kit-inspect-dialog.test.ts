@@ -59,8 +59,9 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(kits[3].traits.upgradePointSellYield).toBe(7);
   });
 
-  it('documents Ghost and Duplicator ability copy', () => {
+  it('documents Ghost, Duplicator and Prophet ability copy', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
+    expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
   });
 });

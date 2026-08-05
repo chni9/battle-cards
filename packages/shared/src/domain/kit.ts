@@ -20,6 +20,7 @@ export const KIT_IDS = [
   'upgrader',
   'tactician',
   'indestructible',
+  'prophet',
   'specialist',
   'witch',
   'wizard',

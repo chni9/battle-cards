@@ -1631,4 +1631,15 @@ Designer ruling (session):
   then one real action resets `consecutiveTimeouts` indefinitely. **Measurement
   target for L31-02** — do not change the draw value in V4.
 
+## 2026-08-05 · [P] #V4-27 Prophet random specials (L27-04)
+
+Designer ruling (session):
+
+- Draw **2** specials from **all 20** special cards.
+- **Duplicates OK** (`rng.pick` with replacement).
+- Implemented via `Kit.randomStartingSpecialCount` (not a `'random'` sentinel in
+  `specialCards`). Deal path in `dealStartingLoadout` consumes the shared seeded
+  stream — fixed-seed tests that omit `kitAssignment` may need pinning when the
+  roster grows.
+
 

@@ -37,6 +37,7 @@ const KIT_FILES = {
   upgrader: 'Upgrader.png',
   tactician: 'Tactician.png',
   indestructible: 'Indestructible.png',
+  prophet: 'Prophet.png',
   specialist: 'Specialist.png',
   witch: 'Witch.png',
   wizard: 'Magician.png',

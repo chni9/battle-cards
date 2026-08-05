@@ -90,7 +90,7 @@ describe('content scope — kits (technical spec v4 §10.5 / L28-03)', () => {
   it('ships Ghost and Duplicator and stays within the V4 15-kit ceiling', () => {
     expect(KIT_IDS).toContain('ghost');
     expect(KIT_IDS).toContain('duplicator');
-    expect(KIT_IDS.length).toBeGreaterThanOrEqual(13);
+    expect(KIT_IDS.length).toBeGreaterThanOrEqual(14);
     expect(KIT_IDS.length).toBeLessThanOrEqual(15);
   });
 });

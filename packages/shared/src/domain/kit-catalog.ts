@@ -102,6 +102,16 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  prophet: {
+    id: 'prophet',
+    name: 'Prophet',
+    startingResources: { lives: 10, points: 4, upgradePoints: 2, draw: 1 },
+    startingCardCounts: { action: 5, attack: 2 },
+    // Fixed list empty — deal path draws via randomStartingSpecialCount (#V4-27).
+    specialCards: [],
+    randomStartingSpecialCount: 2,
+    traits: { ...EMPTY_TRAITS },
+  },
   specialist: {
     id: 'specialist',
     name: 'Specialist',

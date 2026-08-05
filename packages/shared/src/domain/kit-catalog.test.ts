@@ -72,6 +72,16 @@ describe('KIT_CATALOG', () => {
     expect(getKit('indestructible').traits.alwaysUpgraded).toEqual(['tax', 'regeneration']);
     expect(getKit('indestructible').specialCards).toEqual(['super-regeneration']);
 
+    expect(getKit('prophet').startingResources).toEqual({
+      lives: 10,
+      points: 4,
+      upgradePoints: 2,
+      draw: 1,
+    });
+    expect(getKit('prophet').startingCardCounts).toEqual({ action: 5, attack: 2 });
+    expect(getKit('prophet').specialCards).toEqual([]);
+    expect(getKit('prophet').randomStartingSpecialCount).toBe(2);
+
     expect(getKit('specialist').startingResources).toEqual({
       lives: 8,
       points: 4,
