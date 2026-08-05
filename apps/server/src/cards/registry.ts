@@ -11,10 +11,13 @@ import type { CardId } from '@card-battle/shared';
 import type { CardHandler } from './handler';
 import { absorberHandler } from './handlers/absorber';
 import { basicAttackHandler } from './handlers/basic-attack';
+import { cardThiefHandler } from './handlers/card-thief';
 import { cloningHandler } from './handlers/cloning';
+import { curseHandler } from './handlers/curse';
 import { impositionHandler } from './handlers/imposition';
 import { mirrorHandler } from './handlers/mirror';
 import { pointsGeneratorHandler } from './handlers/points-generator';
+import { poisonHandler } from './handlers/poison';
 import { regenerationHandler } from './handlers/regeneration';
 import { sentenceHandler } from './handlers/sentence';
 import { shieldHandler } from './handlers/shield';
@@ -22,12 +25,12 @@ import { spyHandler } from './handlers/spy';
 import { spyThiefHandler } from './handlers/spy-thief';
 import { strongAttackHandler } from './handlers/strong-attack';
 import { suicideHandler } from './handlers/suicide';
+import { superAbsorberHandler } from './handlers/super-absorber';
 import { superAttackHandler } from './handlers/super-attack';
 import { superRegenerationHandler } from './handlers/super-regeneration';
 import { taxHandler } from './handlers/tax';
 import { thiefHandler } from './handlers/thief';
 import { upgradePointThiefHandler } from './handlers/upgrade-point-thief';
-import { cardThiefHandler } from './handlers/card-thief';
 
 /** Cards with a working handler. Grows by one entry per card task. */
 export const IMPLEMENTED_CARD_IDS = [
@@ -50,6 +53,9 @@ export const IMPLEMENTED_CARD_IDS = [
   'super-regeneration',
   'upgrade-point-thief',
   'card-thief',
+  'poison',
+  'curse',
+  'super-absorber',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -64,9 +70,6 @@ export const PENDING_CARD_IDS = [
   'card-absorber',
   'mega-attack',
   'super-mirror',
-  'super-absorber',
-  'curse',
-  'poison',
   'attack-thief',
 ] as const satisfies readonly PendingCardId[];
 
@@ -90,6 +93,9 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'super-regeneration': superRegenerationHandler,
   'upgrade-point-thief': upgradePointThiefHandler,
   'card-thief': cardThiefHandler,
+  poison: poisonHandler,
+  curse: curseHandler,
+  'super-absorber': superAbsorberHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

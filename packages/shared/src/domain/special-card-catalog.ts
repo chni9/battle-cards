@@ -182,7 +182,13 @@ export const SPECIAL_CARD_CATALOG = {
 } as const satisfies Record<SpecialCardId, Card>;
 
 /** Specials that activate a persistent effect instead of joining the pool on play. */
-export const PERSISTENT_SPECIAL_CARD_IDS = ['imposition', 'points-generator'] as const;
+export const PERSISTENT_SPECIAL_CARD_IDS = [
+  'imposition',
+  'points-generator',
+  'poison',
+  'curse',
+  'super-absorber',
+] as const;
 
 export type PersistentSpecialCardId = (typeof PERSISTENT_SPECIAL_CARD_IDS)[number];
 

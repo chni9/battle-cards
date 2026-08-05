@@ -1237,3 +1237,25 @@ Policy-only (#V3-5 tunables):
 
 No rule change. Re-screen gross-imbalance after verify.
 
+## 2026-08-05 · [P] #V4-20 / #V4-21 Lot 22 persistents (Poison, Curse, Super Absorber)
+
+Designer rulings (session):
+
+- **#V4-20:** Curse threshold is **per turn**, remainder discarded (7 points spent → 2
+  lives). "Points spent" is ledger `pointsSpent` only — not `pointsLostToTheft`. When
+  the victim reaches 1 remaining life the Curse **deactivates and is permanently lost**
+  (rules spec §5 persistent loss).
+- **#V4-21:** Super Absorber absorbs Tax life costs as lives gained; gains clamp at
+  `GameState.lifeLimit` (golden rule 9).
+- **SA lives instrument:** absorb **all** of the current seat's `turnLedger.livesLost`
+  (same channel as V1 Absorber life capture) — not a new `livesSpent` field. Never
+  absorb theft fields.
+- **SA schedule:** on **each opponent's** turn end (after their action), absorb that
+  seat's ledger — Imposition/Poison timing, not owner-turn batch.
+- **Poison attribution:** `recordEliminationContributor` like Imposition when a tick
+  kills via `applyLifeLoss`.
+- **Tick order (implementation, not a rules claim):** inside `applyPersistentEffects`,
+  Points Generator → Super Absorber → Imposition → Poison → Curse. Super Absorber runs
+  before life-ticking persistents so it does not re-absorb lives lost later in the same
+  phase.
+

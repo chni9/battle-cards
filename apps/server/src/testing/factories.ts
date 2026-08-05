@@ -50,6 +50,7 @@ export function makeCounterEffect(overrides: Partial<PersistentEffect> = {}): Pe
     cardId: 'points-generator',
     isUpgraded: false,
     counter: 3,
+    targetPlayerId: null,
     ...overrides,
   };
 }

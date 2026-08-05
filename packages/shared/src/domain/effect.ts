@@ -8,11 +8,19 @@ import type { CardId } from './card';
  * Why a player lost lives outside of an attack — the `reason` argument of
  * `applyLifeLoss` (technical spec §4.2).
  *
- * Holds the V1 non-attack sources of life loss only: Tax's play cost (rules spec §3),
- * buying Tax from the shop (Lot 2 ruling: 2 lives), Suicide and Imposition's ceded life
- * (rules spec §5). Damage never appears here — it goes through `applyDamage`.
+ * Non-attack sources: Tax's play cost (rules spec §3), buying Tax from the shop
+ * (Lot 2 ruling: 2 lives), Suicide, Imposition's ceded life, Poison ticks and
+ * Curse spend ticks (rules spec §5). Damage never appears here — it goes through
+ * `applyDamage`.
  */
-export const LIFE_LOSS_REASONS = ['tax', 'card-buy', 'suicide', 'imposition'] as const;
+export const LIFE_LOSS_REASONS = [
+  'tax',
+  'card-buy',
+  'suicide',
+  'imposition',
+  'poison',
+  'curse',
+] as const;
 
 export type LifeLossReason = (typeof LIFE_LOSS_REASONS)[number];
 
@@ -79,4 +87,10 @@ export interface PersistentEffect {
    * Only `applyDamage` ever decrements it, never `applyLifeLoss`.
    */
   counter: number | null;
+  /**
+   * Chosen victim for single-target persistents (Curse). `null` for owner-scoped
+   * or all-opponents persistents (Imposition, Poison, Points Generator, Super Absorber).
+   * Public via `PersistentEffectView` (tech v4 §5.1 — Curse active on a victim).
+   */
+  targetPlayerId: string | null;
 }

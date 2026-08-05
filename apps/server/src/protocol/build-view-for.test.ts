@@ -246,10 +246,10 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     }
 
     alice.activePersistentEffects = [
-      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 , targetPlayerId: null},
     ];
     bob.activePersistentEffects = [
-      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 , targetPlayerId: null},
     ];
 
     const view = buildPlayingViewFor({
@@ -261,13 +261,13 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     });
 
     expect(view.self.activePersistentEffects).toEqual([
-      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 , targetPlayerId: null},
     ]);
     expect(view.players.find((p) => p.id === 'a')?.activePersistentEffects).toEqual([
-      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 },
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: true, counter: 2 , targetPlayerId: null},
     ]);
     expect(view.players.find((p) => p.id === 'b')?.activePersistentEffects).toEqual([
-      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+      { id: 'pg-b', cardId: 'points-generator', isUpgraded: false, counter: 3 , targetPlayerId: null},
     ]);
   });
 

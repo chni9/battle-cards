@@ -155,6 +155,8 @@ export interface PersistentEffectView {
   cardId: CardId;
   isUpgraded: boolean;
   counter: number | null;
+  /** Chosen victim for Curse; `null` otherwise (tech v4 §5.1). */
+  targetPlayerId: string | null;
 }
 
 export interface PendingEffectView {

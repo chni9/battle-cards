@@ -715,8 +715,8 @@ recommendation is not a default and may not be implemented before it is ruled on
 | **#V4-17** | Upgrade Point Thief strips "all of their currently upgraded cards". Does that include `shieldIsUpgraded` and the `isUpgraded` flag on already-active persistent effects? | Recommendation: **neither**. An active shield is not a card held, and an active persistent has already left `specialCards`. Say it explicitly, because "all upgraded cards" reads broader than the model. | L21-02 |
 | **#V4-18** | Does the user gain an upgrade point for stripping an upgrade that came from a kit trait rather than from a spent upgrade point? | The rules spec says yes, explicitly. Recorded to confirm it is not a drafting accident: it makes Upgrade Point Thief far stronger against Warrior, Tactician, Scientific, Witch, Wizard, Indestructible, Juggernaut and Specialist. | L21-02 |
 | **#V4-19** | Card Thief steals "a random card". Hand only, or hand plus unused special cards? | Attack Thief says "attack card" specifically, and elimination rewards say "including their unused special cards" explicitly. Recommendation: **hand and specials**, matching the elimination-reward vocabulary. | L21-03 |
-| **#V4-20** | Curse: is the 3-points-per-life threshold evaluated per turn or cumulatively? Does "points spent" include points stolen from the victim? Is the card permanently lost when the victim reaches 1 life? | Recommendation: **per turn, remainder discarded** (7 points spent = 2 lives, the leftover 1 does not carry); **spending only, not theft**, reusing the `pointsSpent` / `pointsLostToTheft` distinction the ledger already draws for Absorber; **permanently lost on deactivation**, per rules spec §5's general rule on persistent cards. | L22-02 |
-| **#V4-21** | Super Absorber absorbs everything opponents spend. Does it absorb lives spent as a *cost* (Tax) as lives gained, and does the life cap apply? | Recommendation: **yes, and the cap applies** (golden rule 9). Confirm, because "all lives spent by all opponents" against three Tax-farming opponents is a large sustained gain. | L22-03 |
+| ~~**#V4-20**~~ | ~~Curse threshold / spent vs theft / permanent loss~~ — **ruled in §11.3** | L22-02 |
+| ~~**#V4-21**~~ | ~~Super Absorber Tax lives + life cap~~ — **ruled in §11.3** | L22-03 |
 | **#V4-22** | Ghost gains 2 points per life lost "whatever the cause". Does that include reaching 0 (their own elimination), a self-Sentence, and Cloning a lower-life opponent? | Recommendation: **every typed life loss yes; Cloning's resource copy no** — Cloning assigns rather than loses, and treating a downward copy as a loss would make an upward copy a gain, which cascades into the Duplicator. State it once here rather than deriving it twice. | L28-01 |
 | **#V4-23** | Duplicator copies "all lives, points and upgrade points gained by all opponents, whatever the source". Does a shield gain count? Does Cloning's resource copy count as a gain? Is the copy subject to the life cap? | Recommendation: **shield no** (not one of the three named resources), **Cloning's copy no** (see #V4-22), **cap yes** (golden rule 9). | L28-02 |
 | **#V4-24** | Duplicator starts with 0 attack cards and 1 action card. Intended, or a table typo? | The rules spec table reads 1 action / 0 attack, and the kit's own rebalancing note says "starting action cards from 1 to 2", which corroborates 1. Recommendation: **implement as written**, per the 2026-08-04 ruling. | L28-02 |
@@ -798,4 +798,11 @@ licence to implement.** Anything here that also blocks code has a §11 entry.
 | **#V4-19** | Card Thief steals from **hand + unused specials**. | `decisions.md`, L21-03 |
 | **#V4-34** | Empty victim: play is **legal, resolve no-op**. | `decisions.md`, L21-03 |
 | **#V4-35** | "Spied" means Spy from **the user**, not anyone. | `decisions.md`, L21-03 |
+
+## 11.3 Ruled in Lot 22 (2026-08-05)
+
+| # | Ruling | Recorded in |
+|---|---|---|
+| **#V4-20** | Curse: **per turn**, remainder discarded; `pointsSpent` only; permanently lost at 1 life. | `decisions.md`, L22-02 |
+| **#V4-21** | Super Absorber absorbs Tax (and all `livesLost`) as lives gained; **life cap applies**. | `decisions.md`, L22-03 |
 

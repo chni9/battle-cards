@@ -77,10 +77,10 @@ describe('persistent incoming chips', () => {
     }
 
     alice.activePersistentEffects = [
-      { id: 'pg-1', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+      { id: 'pg-1', cardId: 'points-generator', isUpgraded: false, counter: 3 , targetPlayerId: null},
     ];
     bob.activePersistentEffects = [
-      { id: 'imp-1', cardId: 'imposition', isUpgraded: true, counter: 2 },
+      { id: 'imp-1', cardId: 'imposition', isUpgraded: true, counter: 2 , targetPlayerId: null},
     ];
     // Mirror on self for PrivateSelfView consistency (chips read public seats).
     view.self = {
@@ -106,7 +106,7 @@ describe('persistent incoming chips', () => {
       return;
     }
     alice.activePersistentEffects = [
-      { id: 'imp-a', cardId: 'imposition', isUpgraded: false, counter: 2 },
+      { id: 'imp-a', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
     ];
     view.self = {
       ...view.self,

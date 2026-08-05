@@ -16,6 +16,8 @@ export interface ActivatePersistentInput {
   cardId: CardId;
   isUpgraded: boolean;
   counter: number | null;
+  /** Curse victim; omit or null for all-opponents / self persistents. */
+  targetPlayerId?: string | null;
 }
 
 export function activatePersistentEffect(input: ActivatePersistentInput): PersistentEffect {
@@ -30,6 +32,7 @@ export function activatePersistentEffect(input: ActivatePersistentInput): Persis
     cardId: input.cardId,
     isUpgraded: input.isUpgraded,
     counter: input.counter,
+    targetPlayerId: input.targetPlayerId ?? null,
   };
 
   owner.activePersistentEffects.push(effect);

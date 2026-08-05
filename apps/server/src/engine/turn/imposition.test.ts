@@ -25,7 +25,7 @@ describe('Imposition (L5-05)', () => {
     }
 
     a.activePersistentEffects = [
-      { id: 'imp', cardId: 'imposition', isUpgraded: false, counter: 2 },
+      { id: 'imp', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
     ];
     a.lives = 24;
     b.points = 1;

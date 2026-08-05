@@ -43,6 +43,7 @@ function mapPersistentEffects(
     cardId: effect.cardId,
     isUpgraded: effect.isUpgraded,
     counter: effect.counter,
+    targetPlayerId: effect.targetPlayerId,
   }));
 }
 

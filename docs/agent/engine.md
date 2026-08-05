@@ -37,7 +37,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 
 | | `applyDamage` | `applyLifeLoss` |
 |---|---|---|
-| Used by | Attack cards only | Tax, Suicide, Imposition, every non-attack loss |
+| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, Curse, every non-attack loss |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
 | Card counters | Decrements the hit player's active counters | Never touches them |
 
@@ -51,9 +51,10 @@ function gainLives(target: Player, amount: number, lifeLimit: number): LifeGainO
 ```
 
 The shield absorbs damage only. Tax costs 1 life and the shield never protects against it,
-even at full strength (rules spec §3). Counter cards — Points Generator (3) and Imposition (2)
-in V1 — lose a counter point only when their *user* loses a life to **damage**; the counter
-never protects that user, and `applyLifeLoss` never decrements it (rules spec §5).
+even at full strength (rules spec §3). Counter cards — Points Generator (3), Imposition (2),
+Poison (3), Super Absorber (2) — are independent of the combat shield: they do not protect,
+and they lose a counter point only when their *user* loses a life to **damage**;
+`applyLifeLoss` never decrements them (rules spec §5).
 
 Three properties of the implementation, each decided rather than obvious:
 
@@ -155,9 +156,15 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   single attack still `playCard`.
 - Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
   L5-01.
-- Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02). Imposition
-  taxes the current player from other players' active Impositions; Points Generator ticks on
-  the owner's turn (including the play turn). Deactivated counter cards join the shared pool.
+- Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
+  Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator → Super
+  Absorber → Imposition → Poison → Curse. Super Absorber reads the current seat's ledger
+  (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
+  persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses. Imposition /
+  Poison / Curse act on the current player from other seats' active effects; Points Generator
+  ticks on the owner's turn (including the play turn). Curse has no counter — it stores
+  `targetPlayerId` and exits via `deactivatePersistentEffect` when the victim reaches 1 life
+  (#V4-20). Deactivated counter cards join the shared pool.
 
 ## Mutual attacks — mechanics
 

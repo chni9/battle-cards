@@ -58,7 +58,8 @@ export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean
     cardId === 'spy' ||
     cardId === 'thief' ||
     cardId === 'absorber' ||
-    cardId === 'cloning'
+    cardId === 'cloning' ||
+    cardId === 'curse'
   );
 }
 

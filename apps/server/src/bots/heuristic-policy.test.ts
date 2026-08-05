@@ -700,7 +700,7 @@ describe('heuristic decide (L16-04)', () => {
         player('bot-a', 'Alpha', true),
         player('bot-b', 'Bravo', false, {
           activePersistentEffects: [
-            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
           ],
         }),
         player('bot-c', 'Charlie', false),
@@ -734,7 +734,7 @@ describe('heuristic decide (L16-04)', () => {
         player('bot-a', 'Alpha', true),
         player('bot-b', 'Bravo', false, {
           activePersistentEffects: [
-            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
           ],
         }),
       ],
@@ -766,7 +766,7 @@ describe('heuristic decide (L16-04)', () => {
         player('bot-a', 'Alpha', true),
         player('bot-b', 'Bravo', false, {
           activePersistentEffects: [
-            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 },
+            { id: 'imp-1', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
           ],
         }),
       ],
@@ -870,7 +870,7 @@ describe('heuristic decide (L16-04)', () => {
         kitId: 'untouchable',
         specialCards: [{ instanceId: 'imp-2', cardId: 'imposition', isUpgraded: false }],
         activePersistentEffects: [
-          { id: 'imp-live', cardId: 'imposition', isUpgraded: false, counter: 2 },
+          { id: 'imp-live', cardId: 'imposition', isUpgraded: false, counter: 2 , targetPlayerId: null},
         ],
       }),
     });

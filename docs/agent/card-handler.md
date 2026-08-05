@@ -130,11 +130,15 @@ pending (`PENDING_CARD_IDS`).
 Attack and action cards are **not** consumed on play: the player pays the usage cost each time
 and keeps the copy (infinite reuse while they hold it and can afford the cost). Only specials
 leave the zone on use. Special **Price** is paid on play (`getCard`); persistent specials
-(Imposition, Points Generator) activate `activePersistentEffects` instead of joining the pool
-immediately.
+(Imposition, Points Generator, Poison, Curse, Super Absorber) activate `activePersistentEffects`
+instead of joining the pool immediately. Periodic multi-opponent ticks live in
+`apply-persistent-effects.ts` (shared dispatcher) — adding a new periodic persistent extends
+that file; it does not edit another card's handler (`card-handler.md` golden rule 2 exception
+agreed for Lot 22).
 
-**Counter cards** ("card lives", rules spec §5) in V1: Points Generator 3, Imposition 2. The
-counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
+**Counter cards** ("card lives", rules spec §5): Points Generator 3, Imposition 2, Poison 3,
+Super Absorber 2. Curse has `counter: null` and deactivates when its victim reaches 1 life.
+The counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.
 `applyLifeLoss` must never decrement it.
 

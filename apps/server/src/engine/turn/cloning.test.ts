@@ -29,7 +29,7 @@ describe('Cloning (kit + resources only)', () => {
     ];
     a.hand = [{ instanceId: 'own-hand', cardId: 'basic-attack', isUpgraded: true }];
     a.activePersistentEffects = [
-      { id: 'own-pg', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+      { id: 'own-pg', cardId: 'points-generator', isUpgraded: false, counter: 3 , targetPlayerId: null},
     ];
     a.points = 3;
     a.lives = 5;
@@ -56,7 +56,7 @@ describe('Cloning (kit + resources only)', () => {
     b.hand = [{ instanceId: 'h1', cardId: 'spy', isUpgraded: true }];
     b.specialCards = [{ instanceId: 's1', cardId: 'cloning', isUpgraded: false }];
     b.activePersistentEffects = [
-      { id: 'pg', cardId: 'points-generator', isUpgraded: false, counter: 2 },
+      { id: 'pg', cardId: 'points-generator', isUpgraded: false, counter: 2 , targetPlayerId: null},
     ];
     b.pendingEffects = [
       {
@@ -115,7 +115,7 @@ describe('Cloning (kit + resources only)', () => {
       { instanceId: 'own-special', cardId: 'suicide', isUpgraded: false },
     ]);
     expect(a.activePersistentEffects).toEqual([
-      { id: 'own-pg', cardId: 'points-generator', isUpgraded: false, counter: 3 },
+      { id: 'own-pg', cardId: 'points-generator', isUpgraded: false, counter: 3 , targetPlayerId: null},
     ]);
 
     // Target cards untouched / not copied.

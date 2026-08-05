@@ -1,13 +1,19 @@
 /**
  * Apply persistent effects that act on the current player after their action —
- * technical spec §4.3 step 4, rules spec §5–§6.
+ * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
+ *
+ * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
+ * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
+ * persistents so it does not re-absorb lives lost later in the same phase.
  */
 
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 
 import { gainPoints } from '../economy/gain-points';
+import { gainUpgradePoints } from '../economy/gain-upgrade-points';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { gainLives } from '../life/gain-lives';
+import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
@@ -17,6 +23,10 @@ const IMPOSITION_LIVES_BASE = 1;
 const IMPOSITION_LIVES_UPGRADED = 2;
 const POINTS_GENERATOR_BASE = 2;
 const POINTS_GENERATOR_UPGRADED = 4;
+const POISON_LIVES_BASE = 1;
+const POISON_LIVES_UPGRADED = 2;
+const CURSE_POINTS_PER_LIFE_BASE = 3;
+const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
 
 export function applyPersistentEffects(state: GameState, playerId: string): void {
   const player = findPlayer(state, playerId);
@@ -26,7 +36,10 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(player);
+  applySuperAbsorbersOnVictim(state, player);
   applyImpositionsOnVictim(state, player);
+  applyPoisonsOnVictim(state, player);
+  applyCursesOnVictim(state, player);
 }
 
 function applyPointsGeneratorTicks(owner: Player): void {
@@ -40,6 +53,27 @@ function applyPointsGeneratorTicks(owner: Player): void {
       effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
       'direct',
     );
+  }
+}
+
+function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
+  const ledger = victim.turnLedger;
+
+  for (const owner of state.players) {
+    if (owner.id === victim.id || owner.isEliminated) {
+      continue;
+    }
+
+    for (const effect of owner.activePersistentEffects) {
+      if (effect.cardId !== 'super-absorber' || effect.counter === null || effect.counter <= 0) {
+        continue;
+      }
+
+      const multiplier = effect.isUpgraded ? 2 : 1;
+      gainPoints(owner, ledger.pointsSpent * multiplier, 'direct');
+      gainUpgradePoints(owner, ledger.upgradePointsSpent * multiplier, 'direct');
+      gainLives(owner, ledger.livesLost * multiplier, state.lifeLimit);
+    }
   }
 }
 
@@ -78,4 +112,71 @@ function applyOneImposition(
   victim.turnLedger.livesLost += loss.livesLost;
   gainLives(imposer, loss.livesLost, state.lifeLimit);
   recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
+}
+
+function applyPoisonsOnVictim(state: GameState, victim: Player): void {
+  for (const poisoner of state.players) {
+    if (poisoner.id === victim.id || poisoner.isEliminated) {
+      continue;
+    }
+
+    for (const effect of poisoner.activePersistentEffects) {
+      if (effect.cardId !== 'poison' || effect.counter === null || effect.counter <= 0) {
+        continue;
+      }
+
+      const livesDue = effect.isUpgraded ? POISON_LIVES_UPGRADED : POISON_LIVES_BASE;
+      const loss = applyLifeLoss(victim, livesDue, 'poison');
+      victim.turnLedger.livesLost += loss.livesLost;
+      recordEliminationContributor(state, victim.id, poisoner.id, loss.livesLost);
+    }
+  }
+}
+
+function applyCursesOnVictim(state: GameState, victim: Player): void {
+  for (const caster of state.players) {
+    if (caster.id === victim.id || caster.isEliminated) {
+      continue;
+    }
+
+    // Snapshot ids — deactivate mutates the owner's array mid-loop.
+    const curseEffects = caster.activePersistentEffects.filter(
+      (effect) => effect.cardId === 'curse' && effect.targetPlayerId === victim.id,
+    );
+
+    for (const effect of curseEffects) {
+      applyOneCurse(state, caster, victim, effect);
+    }
+  }
+}
+
+function applyOneCurse(
+  state: GameState,
+  caster: Player,
+  victim: Player,
+  effect: PersistentEffect,
+): void {
+  if (victim.lives <= 1) {
+    deactivatePersistentEffect(state, caster.id, effect.id);
+    return;
+  }
+
+  const divisor = effect.isUpgraded
+    ? CURSE_POINTS_PER_LIFE_UPGRADED
+    : CURSE_POINTS_PER_LIFE_BASE;
+  const livesDue = Math.floor(victim.turnLedger.pointsSpent / divisor);
+
+  if (livesDue <= 0) {
+    return;
+  }
+
+  const maxLoss = victim.lives - 1;
+  const lossAmount = Math.min(livesDue, maxLoss);
+  const loss = applyLifeLoss(victim, lossAmount, 'curse');
+  victim.turnLedger.livesLost += loss.livesLost;
+  recordEliminationContributor(state, victim.id, caster.id, loss.livesLost);
+
+  if (victim.lives <= 1) {
+    deactivatePersistentEffect(state, caster.id, effect.id);
+  }
 }

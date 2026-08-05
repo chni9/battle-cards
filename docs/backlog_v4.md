@@ -133,9 +133,9 @@ Cards that compose Lot 20's primitives and touch nothing else.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L22-01 | `poison`: persistent, counter 3, all opponents lose 1 life per turn (2 upgraded), applied on each victim's turn after their action. Reuses the Imposition tick pattern in `apply-persistent-effects.ts` and the `spy-thief` multi-target pattern. **Acceptance:** the counter decrements only when the *user* loses a life to damage, never on `applyLifeLoss`; at 0 the card deactivates and joins the pool; tests cover 2, 3 and 4 players. | M | Medium | L20-04 | To do |
-| L22-02 | **Blocked on #V4-20 and #V4-33.** `curse`: the chosen victim loses 1 life per 3 points spent on their turn (per 2 upgraded), deactivating when the victim reaches 1 remaining life — it cannot finish them off. Reads `TurnLedger.pointsSpent` and **not** `pointsLostToTheft`. **Acceptance:** a test proves 7 points spent costs 2 lives with the remainder discarded; a test proves a victim at 2 lives spending 6 points ends at 1 life and the Curse is permanently lost. | M | **High** | L20-08, L20-04 | Blocked |
-| L22-03 | **Blocked on #V4-21.** `super-absorber`: persistent, counter 2, absorbs all points, lives and upgrade points spent by all opponents (doubled upgraded). Reads the spend fields of the ledger, never the theft fields. Life gains clamp at `GameState.lifeLimit`. **Acceptance:** tests for base and upgraded; a test proves points *stolen* from an opponent are not absorbed. | M | **High** | L20-08, L20-04 | Blocked |
+| L22-01 | `poison`: persistent, counter 3, all opponents lose 1 life per turn (2 upgraded), applied on each victim's turn after their action. Reuses the Imposition tick pattern in `apply-persistent-effects.ts` and the `spy-thief` multi-target pattern. **Acceptance:** the counter decrements only when the *user* loses a life to damage, never on `applyLifeLoss`; at 0 the card deactivates and joins the pool; tests cover 2, 3 and 4 players. | M | Medium | L20-04 | Done |
+| L22-02 | `curse`: the chosen victim loses 1 life per 3 points spent on their turn (per 2 upgraded), deactivating when the victim reaches 1 remaining life — it cannot finish them off. Reads `TurnLedger.pointsSpent` and **not** `pointsLostToTheft`. **Acceptance:** a test proves 7 points spent costs 2 lives with the remainder discarded; a test proves a victim at 2 lives spending 6 points ends at 1 life and the Curse is permanently lost. (#V4-20 ruled; #V4-33 already Spy/Thief-only.) | M | **High** | L20-08, L20-04 | Done |
+| L22-03 | `super-absorber`: persistent, counter 2, absorbs all points, lives and upgrade points spent by all opponents (doubled upgraded). Reads the spend fields of the ledger (and all `livesLost`), never the theft fields. Life gains clamp at `GameState.lifeLimit`. **Acceptance:** tests for base and upgraded; a test proves points *stolen* from an opponent are not absorbed. (#V4-21 ruled.) | M | **High** | L20-08, L20-04 | Done |
 
 ---
 
@@ -265,7 +265,7 @@ signs off.
 |---|---|---|
 | 20 — Foundations | 19 | 2 |
 | 21 — Economy and theft specials | 3 | 3 |
-| 22 — Persistent and periodic specials | 3 | 2 |
+| 22 — Persistent and periodic specials | 3 | 0 |
 | 23 — Attack and redirection specials | 3 | 3 |
 | 24 — Pool and mutation specials | 2 | 2 |
 | 25 — Turn-flow specials | 2 | 2 |
@@ -275,7 +275,7 @@ signs off.
 | 29 — Bot policy | 8 | 0 |
 | 30 — Client surfaces | 7 | 0 |
 | 31 — Simulation | 4 | 0 |
-| **Total** | **65** | **22** |
+| **Total** | **65** | **20** |
 
 **24 tasks are rated High risk and 10 are rated L complexity** — proportionally far more than V1, V2
 or V3, because V4 is the first version that modifies the turn loop, reverses elimination, and makes
@@ -286,5 +286,5 @@ cards: L21-02 implements two cards (`super-regeneration` and `upgrade-point-thie
 compositions of the same primitive), and `reanimation` is split across two tasks (L26-01 base,
 L26-02 upgraded) because its upgrade needs an interruptible `processEliminations`.
 
-**22 of the 65 tasks cannot start until the designer rules on the 37 open decisions in technical
+**20 of the 65 tasks cannot start until the designer rules on the remaining open decisions in technical
 spec v4 §11.** That is the real critical path, and it is not code.
