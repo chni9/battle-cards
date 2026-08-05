@@ -141,6 +141,19 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  warrior: {
+    id: 'warrior',
+    name: 'Warrior',
+    startingResources: { lives: 10, points: 0, upgradePoints: 0, draw: 1 },
+    startingCardCounts: { action: 3, attack: 3 },
+    specialCards: ['card-absorber'],
+    traits: {
+      // #V4-37: shared shop attacks only — not mega-attack.
+      alwaysUpgraded: ['basic-attack', 'strong-attack', 'super-attack'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
   wizard: {
     id: 'wizard',
     name: 'Wizard',

@@ -107,6 +107,20 @@ describe('KIT_CATALOG', () => {
     expect(getKit('witch').traits.alwaysUpgraded).toEqual(['thief']);
     expect(getKit('witch').specialCards).toEqual(['reanimation', 'poison']);
 
+    expect(getKit('warrior').startingResources).toEqual({
+      lives: 10,
+      points: 0,
+      upgradePoints: 0,
+      draw: 1,
+    });
+    expect(getKit('warrior').startingCardCounts).toEqual({ action: 3, attack: 3 });
+    expect(getKit('warrior').traits.alwaysUpgraded).toEqual([
+      'basic-attack',
+      'strong-attack',
+      'super-attack',
+    ]);
+    expect(getKit('warrior').specialCards).toEqual(['card-absorber']);
+
     expect(getKit('wizard').startingResources).toEqual({
       lives: 10,
       points: 4,

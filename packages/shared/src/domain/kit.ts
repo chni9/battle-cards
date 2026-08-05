@@ -23,6 +23,7 @@ export const KIT_IDS = [
   'prophet',
   'specialist',
   'witch',
+  'warrior',
   'wizard',
   'juggernaut',
   'ghost',

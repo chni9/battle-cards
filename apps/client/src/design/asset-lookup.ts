@@ -40,6 +40,7 @@ const KIT_FILES = {
   prophet: 'Prophet.png',
   specialist: 'Specialist.png',
   witch: 'Witch.png',
+  warrior: 'Warrior.png',
   wizard: 'Magician.png',
   juggernaut: 'Juggernaut.png',
   ghost: 'Ghost.png',

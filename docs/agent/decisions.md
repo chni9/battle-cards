@@ -1642,4 +1642,15 @@ Designer ruling (session):
   stream — fixed-seed tests that omit `kitAssignment` may need pinning when the
   roster grows.
 
+## 2026-08-05 · [P] #V4-26 / #V4-37 Warrior alwaysUpgraded (L27-06)
+
+Designer rulings (session):
+
+- **#V4-26:** `alwaysUpgraded` is **acquisition-time only** — Cloning onto Warrior
+  does not retro-upgrade held attacks; Warrior cloning away keeps already-upgraded
+  attacks. Confirmed intended.
+- **#V4-37:** Warrior's list is the **three shared shop attacks**
+  (`basic-attack`, `strong-attack`, `super-attack`) — **not** `mega-attack`.
+  A Warrior who acquires MEGA by any route does not get it upgraded for free.
+
 
