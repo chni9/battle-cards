@@ -17,7 +17,7 @@ import {
 } from './asset-lookup';
 
 describe('asset-lookup (L10-03)', () => {
-  it('resolves a portrait for every V1 KitId', () => {
+  it('resolves a portrait for every KitId (L28-03)', () => {
     for (const kitId of KIT_IDS) {
       const url = getKitPortraitUrl(kitId);
       expect(url.length).toBeGreaterThan(0);
@@ -25,6 +25,10 @@ describe('asset-lookup (L10-03)', () => {
     }
   });
 
+  it('maps ghost and duplicator portraits (L28-03)', () => {
+    expect(getKitPortraitUrl('ghost')).toMatch(/Ghost\.png/);
+    expect(getKitPortraitUrl('duplicator')).toMatch(/Duplicator\.png/);
+  });
   it('maps wizard to Magician.png (L27-08)', () => {
     expect(getKitPortraitUrl('wizard')).toMatch(/Magician\.png/);
   });

@@ -1,6 +1,5 @@
 /**
- * Content-scope card assertions — technical spec v4 §10.5 / L20-06.
- * Kit-side assertions wait for L28-03.
+ * Content-scope assertions — technical spec v4 §10.5 / L20-06 + L28-03.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -22,6 +21,8 @@ const ALL_CARD_IDS: readonly CardId[] = [
   ...ACTION_CARD_IDS,
   ...SPECIAL_CARD_IDS,
 ];
+
+const DECLARED_CARD_IDS = new Set<string>(ALL_CARD_IDS);
 
 describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
   it('holds 3 shop attack + 7 action + 20 special ids', () => {
@@ -56,10 +57,41 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
   it('uses kebab-case ids so they are stable across the wire and the log', () => {
     expect(ALL_CARD_IDS.filter((id) => !/^[a-z]+(?:-[a-z]+)*$/.test(id))).toEqual([]);
   });
+});
 
-  it('grows kit ids with the catalog until L28-03 closes at 15 (Lot 27 interim)', () => {
-    expect(KIT_IDS.length).toBe(Object.keys(KIT_CATALOG).length);
-    expect(KIT_IDS.length).toBeGreaterThanOrEqual(4);
-    expect(KIT_IDS.length).toBeLessThan(15);
+describe('content scope — kits (technical spec v4 §10.5 / L28-03)', () => {
+  it('keeps KIT_IDS and KIT_CATALOG exhaustive over each other', () => {
+    expect(Object.keys(KIT_CATALOG).sort()).toEqual([...KIT_IDS].sort());
+    expect(new Set(KIT_IDS).size).toBe(KIT_IDS.length);
+  });
+
+  it('uses kebab-case kit ids', () => {
+    expect(KIT_IDS.filter((id) => !/^[a-z]+(?:-[a-z]+)*$/.test(id))).toEqual([]);
+  });
+
+  it('references only declared card ids in every kit specialCards list', () => {
+    const bad: string[] = [];
+
+    for (const kitId of KIT_IDS) {
+      for (const cardId of KIT_CATALOG[kitId].specialCards) {
+        if (!DECLARED_CARD_IDS.has(cardId)) {
+          bad.push(`${kitId}:${cardId}`);
+        }
+      }
+    }
+
+    expect(bad).toEqual([]);
+  });
+
+  /**
+   * V4's closed kit count is 15. Ghost + Duplicator (Lot 28) are shipped; four Lot 27
+   * kits remain Blocked (upgrader, tactician, prophet, warrior). This assertion is the
+   * ceiling + floor after L28 so a silent 16th kit or a rollback of Ghost/Duplicator fails.
+   */
+  it('ships Ghost and Duplicator and stays within the V4 15-kit ceiling', () => {
+    expect(KIT_IDS).toContain('ghost');
+    expect(KIT_IDS).toContain('duplicator');
+    expect(KIT_IDS.length).toBeGreaterThanOrEqual(11);
+    expect(KIT_IDS.length).toBeLessThanOrEqual(15);
   });
 });
