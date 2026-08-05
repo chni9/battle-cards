@@ -85,5 +85,15 @@ describe('KIT_CATALOG', () => {
     expect(getKit('wizard').startingCardCounts).toEqual({ action: 4, attack: 2 });
     expect(getKit('wizard').traits.alwaysUpgraded).toEqual(['thief']);
     expect(getKit('wizard').specialCards).toEqual(['mega-attack']);
+
+    expect(getKit('juggernaut').startingResources).toEqual({
+      lives: 14,
+      points: 4,
+      upgradePoints: 1,
+      draw: 1,
+    });
+    expect(getKit('juggernaut').startingCardCounts).toEqual({ action: 4, attack: 2 });
+    expect(getKit('juggernaut').traits.alwaysUpgraded).toEqual(['shield']);
+    expect(getKit('juggernaut').specialCards).toEqual(['super-mirror']);
   });
 });

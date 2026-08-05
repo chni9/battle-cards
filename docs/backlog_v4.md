@@ -200,7 +200,7 @@ runtime in `urlFromGlob`.
 | L27-06 | **Blocked on #V4-26 and #V4-37.** `warrior`: 3 attack cards, all attacks always upgraded — a data-only trait, since `alwaysUpgraded` is honoured at every acquisition path including shop purchase. What "all attacks" covers after the §4.1 decoupling is #V4-37 and must **not** be decided in this task. **Acceptance:** a test proves a Super attack bought mid-game arrives upgraded and consumes no upgrade point; a test covers a Warrior acquiring a MEGA ATTACK, asserting the #V4-37 ruling; a test documents the ruled Cloning behaviour in both directions. | S | Medium | L23-01, L24-01 | Blocked |
 | L27-07 | `witch`: 1 UP, Thief always upgraded, Reanimation + Poison. **Acceptance:** catalog entry verified; both specials playable. | S | Low | L22-01, L26-01 | Done |
 | L27-08 | `wizard`: draw 2, Thief always upgraded, MEGA ATTACK. Art maps to `Magician.png` — the id-to-filename map is declared, not derived. **Acceptance:** catalog entry verified; the art entry resolves. | S | Low | L23-01 | Done |
-| L27-09 | `juggernaut`: 14 lives, Shield always upgraded, Super Mirror. **Acceptance:** catalog entry verified; upgraded Shield's Thief/Spy block still works for a kit that never spent an upgrade point on it. | S | Low | L23-02 | To do |
+| L27-09 | `juggernaut`: 14 lives, Shield always upgraded, Super Mirror. **Acceptance:** catalog entry verified; upgraded Shield's Thief/Spy block still works for a kit that never spent an upgrade point on it. | S | Low | L23-02 | Done |
 
 ---
 

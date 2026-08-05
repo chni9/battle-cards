@@ -16,7 +16,11 @@ describe('Tax (rules spec §3, L3-01)', () => {
   ] as const;
 
   it('base: loses 1 life ignoring shield and counters, gains 4 points', () => {
-    const state = createInitialState({ seats, seed: 'tax-base' });
+    const state = createInitialState({
+      seats,
+      seed: 'tax-base',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     expect(actorId).not.toBeNull();
@@ -56,7 +60,11 @@ describe('Tax (rules spec §3, L3-01)', () => {
   });
 
   it('upgraded: gains 6 points for the same 1 life', () => {
-    const state = createInitialState({ seats, seed: 'tax-upgraded' });
+    const state = createInitialState({
+      seats,
+      seed: 'tax-upgraded',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     expect(actorId).not.toBeNull();
@@ -88,7 +96,11 @@ describe('Tax (rules spec §3, L3-01)', () => {
   });
 
   it('rejects Tax played with a target', () => {
-    const state = createInitialState({ seats, seed: 'tax-target' });
+    const state = createInitialState({
+      seats,
+      seed: 'tax-target',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     expect(actorId).not.toBeNull();
@@ -108,6 +120,7 @@ describe('Tax (rules spec §3, L3-01)', () => {
     }
 
     actor.lives = 10;
+    actor.points = 0;
     actor.hand = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
 
     const result = performTurnAction(state, actorId, {
@@ -122,7 +135,11 @@ describe('Tax (rules spec §3, L3-01)', () => {
   });
 
   it('a 1-life player reaches 0 lives (elimination without inventing rewards)', () => {
-    const state = createInitialState({ seats, seed: 'tax-self-elim' });
+    const state = createInitialState({
+      seats,
+      seed: 'tax-self-elim',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
     const actorId = state.currentTurnPlayerId;
 
     expect(actorId).not.toBeNull();

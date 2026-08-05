@@ -116,6 +116,18 @@ export const KIT_CATALOG = {
       allowsMultipleAttacksPerTurn: false,
     },
   },
+  juggernaut: {
+    id: 'juggernaut',
+    name: 'Juggernaut',
+    startingResources: { lives: 14, points: 4, upgradePoints: 1, draw: 1 },
+    startingCardCounts: { action: 4, attack: 2 },
+    specialCards: ['super-mirror'],
+    traits: {
+      alwaysUpgraded: ['shield'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
+  },
 } as const satisfies Record<KitId, Kit>;
 
 export function getKit(kitId: KitId): Kit {
