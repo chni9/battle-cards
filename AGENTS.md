@@ -159,6 +159,11 @@ gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md
 change as the code, never a separate cleanup pass. A backlog lagging behind the code is worse
 than none: the next session trusts it and redoes finished work.
 
+**Subagents** (Task / Explore / cavecrew / any delegated agent): spawn **only** with
+**Grok 4.5** or **Composer 2.5** (including their fast variants). Do not use Opus, Sonnet,
+GPT, or any other model for subagents. `inherit` is fine only when the parent is already one
+of those two families.
+
 | Command | Purpose |
 |---|---|
 | `pnpm dev` | Server and client in parallel |
