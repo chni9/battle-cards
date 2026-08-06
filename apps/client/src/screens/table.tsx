@@ -62,6 +62,12 @@ export interface TableScreenProps {
   onLeave: () => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
+  /**
+   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / pool browse.
+   */
+  readOnly?: boolean;
+  /** Reopen game-over stats when `readOnly`. */
+  onShowStats?: () => void;
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -93,6 +99,8 @@ function TableScreenInner({
   onLeave,
   onDeactivatePersistent,
   onActivateDuplication,
+  readOnly = false,
+  onShowStats,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
@@ -228,7 +236,7 @@ function TableScreenInner({
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
   const selfEliminated = selfPublic?.isEliminated === true;
-  const actionsLocked = subChoice !== null || selfEliminated;
+  const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -424,7 +432,14 @@ function TableScreenInner({
           />
         }
         prompts={
-          selfEliminated ? (
+          readOnly ? (
+            <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
+              <h2 className="text-sm font-semibold">Game over</h2>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                Inspect the final board. Open Stats for the recap, or Return home when done.
+              </p>
+            </section>
+          ) : selfEliminated ? (
             <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Eliminated</h2>
               <p className="mt-0.5 text-xs text-ink-muted">
@@ -499,6 +514,12 @@ function TableScreenInner({
               setDialog({ kind: 'pool' });
             }}
             onLeave={onLeave}
+            {...(readOnly
+              ? {
+                  leaveLabel: 'Return home',
+                  ...(onShowStats !== undefined ? { onShowStats } : {}),
+                }
+              : {})}
           />
         }
       />

@@ -116,47 +116,51 @@ describe('shared pool (L20-02 / §10.4)', () => {
   });
 
   it('fills from elimination without an eliminator reward path', () => {
-    const state = createInitialState({ seats, seed: 'pool-elim-seed' });
-    const defenderId = state.currentTurnPlayerId;
+    // Mid-game elim (3p) so rewards still open — game-ending 2p dumps immediately
+    // (designer 2026-08-06).
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'pool-elim-seed',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
 
-    expect(defenderId).not.toBeNull();
-
-    if (defenderId === null) {
+    if (a === undefined || b === undefined || c === undefined) {
       return;
     }
 
-    const attacker = state.players.find((player) => player.id !== defenderId);
-    const defender = state.players.find((player) => player.id === defenderId);
-
-    expect(attacker).toBeDefined();
-    expect(defender).toBeDefined();
-
-    if (attacker === undefined || defender === undefined) {
-      return;
-    }
-
-    const handSize = defender.hand.length;
-    const specialsSize = defender.specialCards.length;
-    defender.lives = 1;
+    a.lives = 10;
+    a.pendingEffects = [];
+    c.lives = 10;
+    c.pendingEffects = [];
+    const handSize = b.hand.length;
+    const specialsSize = b.specialCards.length;
+    b.lives = 1;
     queueEffect({
       state,
-      sourcePlayerId: attacker.id,
-      targetPlayerId: defenderId,
+      sourcePlayerId: a.id,
+      targetPlayerId: b.id,
       cardId: 'basic-attack',
       isUpgraded: false,
     });
 
+    state.currentTurnPlayerId = b.id;
     const before = state.pool.length;
-    const result = performTurnAction(state, defenderId, { type: 'draw' });
+    const result = performTurnAction(state, b.id, { type: 'draw' });
 
     expect(result.ok).toBe(true);
-    expect(defender.isEliminated).toBe(true);
+    expect(b.isEliminated).toBe(true);
     // Cards are held until elimination rewards complete (Lot 6).
     expect(result.ok && result.rewardChoicePending).toBe(true);
     expect(applyDefaultEliminationRewards(state).ok).toBe(true);
     expect(state.pool.length).toBe(before + handSize + specialsSize);
     assertPoolIdsUnique(state.pool);
-    expect(defender.hand).toHaveLength(0);
-    expect(defender.specialCards).toHaveLength(0);
+    expect(b.hand).toHaveLength(0);
+    expect(b.specialCards).toHaveLength(0);
   });
 });

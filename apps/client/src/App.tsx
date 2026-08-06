@@ -61,6 +61,9 @@ export function App() {
     return (
       <EndScreen
         view={view}
+        error={error}
+        statusLabel={STATUS_LABELS[status]}
+        nowMs={nowMs}
         onLeave={() => {
           void leaveGame();
         }}

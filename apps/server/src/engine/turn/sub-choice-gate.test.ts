@@ -68,22 +68,27 @@ describe('sub-choice gate is one gate (§10.2, L20-18)', () => {
   });
 
   it('while an elimination reward is pending, listLegalActions returns nothing and performTurnAction rejects', () => {
+    // Mid-game elim (3p) so rewards still open — designer 2026-08-06.
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
       ],
       seed: 'sub-choice-gate-reward',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
 
-    if (a === undefined || b === undefined) {
+    if (a === undefined || b === undefined || c === undefined) {
       throw new Error('missing seats');
     }
 
     a.lives = 10;
     a.pendingEffects = [];
+    c.lives = 10;
+    c.pendingEffects = [];
     b.lives = 1;
     b.pendingEffects = [
       {

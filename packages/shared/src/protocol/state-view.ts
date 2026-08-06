@@ -396,6 +396,12 @@ export interface FinishedStateView {
   recap: GameRecapView;
   /** Complete before/after turn log + events for Excel download (PROTOCOL 22). */
   exportLog: GameExportLogView;
+  /**
+   * Frozen per-recipient playing snapshot of the finished board (PROTOCOL 24).
+   * Same visibility rules as an in-progress `PlayingStateView`; `turnDeadlineMs` is
+   * always `null`. Lets the client keep the table visible under a closable stats dialog.
+   */
+  finalTable: PlayingStateView;
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

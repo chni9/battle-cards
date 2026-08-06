@@ -302,11 +302,22 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     events: [...actionLog],
   };
 
+  // PROTOCOL 24 — same per-recipient visibility as playing; no turn clock.
+  const finalTable = buildPlayingViewFor({
+    recipientSessionId,
+    gameCode,
+    state,
+    turnDeadlineMs: null,
+    actionLog,
+    ...(botDifficulties !== undefined ? { botDifficulties } : {}),
+  });
+
   return {
     phase: 'finished',
     you: recipientSessionId,
     gameCode,
     winnerPlayerId,
+    finalTable,
     players: state.players.map((player) => {
       const difficulty = botDifficulties?.get(player.id);
       const eliminationReveal = buildEliminationReveal(player);

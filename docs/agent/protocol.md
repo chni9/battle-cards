@@ -102,7 +102,9 @@ under PROTOCOL 21, not a new event; explanatory only.
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
 counts per player + eliminations). PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats
 and `exportLog` (turn before/after snapshots + full event log) for the Excel download — fog of
-war lifted only there.
+war lifted only there. PROTOCOL_VERSION 24 adds `finalTable`: a nested per-recipient
+`PlayingStateView` of the finished board (`turnDeadlineMs: null`) so the client can dismiss
+stats and keep inspecting hands / log / pool under the same visibility rules as playing.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is
