@@ -219,6 +219,22 @@ export function findSoleSurvivorId(state: GameState): string | null {
   return contenders[0]?.id ?? null;
 }
 
+/**
+ * Contenders after `victim` has been marked eliminated (and after
+ * `consumeArmedReanimation`). A pending revive still counts.
+ * Designer 2026-08-06: skip elimination rewards when this would leave one
+ * contender (game-ending elim) unless the victim is reviving.
+ */
+function countContendersAfterElim(state: GameState, victim: Player): number {
+  return state.players.filter((player) => {
+    if (player.id === victim.id) {
+      return victim.pendingReanimation !== null;
+    }
+
+    return !player.isEliminated || player.pendingReanimation !== null;
+  }).length;
+}
+
 function activateRewardHead(state: GameState, nowMs: number): void {
   const head = state.rewardQueue[0];
 
@@ -276,6 +292,17 @@ export function processEliminations(
       dumpCardsToPool(state, player);
       // Defer upgraded kit pick until after the loop so multiple dumps finish first;
       // processPendingReanimations at the end of processEliminations when no rewards.
+      continue;
+    }
+
+    // Game-ending elim (sole survivor left, victim not reviving): skip rewards —
+    // designer 2026-08-06. Cards still dump to the pool.
+    const skipRewardsForGameEnd =
+      player.pendingReanimation === null &&
+      countContendersAfterElim(state, player) === 1;
+
+    if (skipRewardsForGameEnd) {
+      dumpCardsToPool(state, player);
       continue;
     }
 

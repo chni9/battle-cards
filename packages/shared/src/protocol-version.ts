@@ -6,7 +6,11 @@
  * `resolveSubChoice` replace the `mirrorChoiceRequired` / `chooseMirrorTarget` and
  * `rewardChoiceRequired` / `chooseEliminationReward` pairs. Payload shapes are
  * unchanged (each now carries a `kind` discriminant); Mirror and elimination-reward
- * behaviour is unchanged. This is V4's one and only protocol bump — no other V4 task
- * touches this constant (`docs/backlog_v4.md` scope lock).
+ * behaviour is unchanged. That was V4's planned single bump (`docs/backlog_v4.md`).
+ *
+ * 23 → 24 (designer 2026-08-06): `FinishedStateView.finalTable` — a per-recipient
+ * `PlayingStateView` snapshot of the finished board so the client can dismiss the
+ * stats dialog and keep inspecting the table. Exception to the V4 single-bump lock;
+ * see `docs/agent/decisions.md`.
  */
-export const PROTOCOL_VERSION = 23;
+export const PROTOCOL_VERSION = 24;

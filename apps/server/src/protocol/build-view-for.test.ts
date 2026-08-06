@@ -392,6 +392,15 @@ describe('buildFinishedViewFor (L9-03 / L19-02)', () => {
     });
     expect(view.exportLog.events).toHaveLength(3);
     expect(view.exportLog.turns).toEqual([]);
+    expect(view.finalTable.phase).toBe('playing');
+    expect(view.finalTable.you).toBe('a');
+    expect(view.finalTable.gameCode).toBe('ABCDEF');
+    expect(view.finalTable.turnDeadlineMs).toBeNull();
+    expect(view.finalTable.self.kitId).toBeDefined();
+    expect(view.finalTable.players.find((p) => p.id === 'b')?.eliminationReveal).toMatchObject({
+      kitId: bob.kitId,
+      points: 3,
+    });
   });
 });
 

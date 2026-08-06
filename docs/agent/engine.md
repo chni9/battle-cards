@@ -256,6 +256,11 @@ Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/e
   `2 × 4 lives`. Impossible card picks are rejected.
 - **No eliminator, no reward** — Tax's life cost, self-targeted Sentence, non-upgraded Suicide
   self-elim, elimination by absence. Cards still go to the pool immediately.
+- **Game-ending elim skips rewards (designer 2026-08-06):** when the victim has no
+  `pendingReanimation` and eliminating them would leave a sole contender, do **not** open
+  the reward queue — dump cards to the pool and let sole-survivor/`gameOver` fire. Mid-game
+  elims (still ≥2 contenders afterward) still offer rewards. Exception: a pending revive
+  still counts as a contender, so the eliminator is paid before reanimation completes.
 - **Reanimation (L26 / #V4-11):** elimination still happens and the eliminator is paid. The
   armed charge is consumed before cleanup pools persistents; `pendingReanimation` holds through
   the reward window; after dump the seat resets with a full kit loadout (#V4-36). Sole-survivor

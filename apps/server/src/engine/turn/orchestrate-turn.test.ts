@@ -217,19 +217,25 @@ describe('orchestrate-turn equivalence (§10.3 / L18-03)', () => {
   });
 
   it('resolveReward null leaves rewardChoice pending for the caller (human eliminator)', () => {
+    // Mid-game elim (3p) so rewards still open — designer 2026-08-06.
     const state = createInitialState({
       seats: [
         { id: 'human', nickname: 'Human' },
         { id: 'bot', nickname: 'Bot' },
+        { id: 'other', nickname: 'Other' },
       ],
       seed: `${SEED}-defer-reward`,
     });
     const human = state.players.find((player) => player.id === 'human');
     const bot = state.players.find((player) => player.id === 'bot');
+    const other = state.players.find((player) => player.id === 'other');
 
-    if (human === undefined || bot === undefined) {
+    if (human === undefined || bot === undefined || other === undefined) {
       throw new Error('missing seats');
     }
+
+    other.lives = 10;
+    other.pendingEffects = [];
 
     human.points = 1;
     human.hand = [{ instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false }];

@@ -22,7 +22,7 @@ implemented in L12-08).
 | Home | No room — create / join / solo + nickname | `screens/home.tsx` |
 | Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls | `screens/lobby.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — winner, public recap stats, return home | `screens/end.tsx` |
+| End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home | `screens/end.tsx` + `game-over-dialog.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -133,10 +133,13 @@ rules above are unchanged — this section only covers how the client looks.
   `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
   shown. Bot rows may carry optional `botReason` (L17-05); UI exposes a Why control only —
   never feed reasons into play/legal UI.
-- **End screen (L9-03 / L13-01):** `FinishedStateView.recap` — per-player play/buy/sell/upgrade
-  counts + eliminations. No kits, hands, seed, or exact final resources. Home-like branded
-  layout with decorative V1 art only (not player-mapped). Seat list shows nicknames +
-  eliminated marker; no connection badges. Return home via `leaveGame()`.
+- **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
+  `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
+  snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
+  Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
+  economy bar reopens it. Intents are locked (`readOnly`); Pool / inspect / action log stay.
+  Return home via `leaveGame()`. No kits on the finished seat list itself (still private
+  except via `finalTable.self` / Spy / eliminationReveal as in playing).
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
@@ -176,14 +179,18 @@ How agents / developers verified elimination rewards in a real room:
 4. Farm points with **Tax** (uncheck “Include target”), pass the other seat with **Draw**.
 5. Queue **super-attack** (10 pts, 7 dmg) at the opponent; on their turn they **Draw** so it resolves.
    Two hits (or one if they already Taxed lives down to ≤7) eliminate them.
-6. **Eliminator** tab must show **Elimination reward** with a 20s countdown and two pickers
-   (`lives` / `points` / `upgradePoint` / `card` + card list from the held hand/specials).
+6. **Eliminator** tab must show **Elimination reward** with a 40s countdown and two pickers
+   (`lives` / `points` / `upgradePoint` / `card` + card list from the held hand/specials) —
+   **only in mid-game** (still ≥2 contenders after the elim). Use a **3+ player** room for
+   this check, or leave another seat alive. In pure **2p**, a game-ending elim **skips**
+   rewards and goes straight to game over (designer 2026-08-06) unless the victim has
+   reanimation pending.
 7. **Victim** tab must show **Eliminated** / spectator copy and have **Draw disabled** (not only a
-   server error). Confirming rewards (or waiting out the 20s default `2×4 lives`) then emits
+   server error). Confirming rewards (or waiting out the 40s default `2×4 lives`) then emits
    `gameOver` when one seat remains.
-8. Spot-checks already done: card + upgradePoint pick → game over; reward expiry alone → game
-   over; acting as victim during the pause → server `Finish elimination rewards first.` (UI now
-   prevents the click).
+8. Spot-checks: mid-game card + upgradePoint pick keeps the match going; final elim of the
+   penultimate player → **no** reward dialog → game over; acting as victim during a mid-game
+   pause → server `Finish elimination rewards first.` (UI now prevents the click).
 
 ## Manual 4-player check (Lot 6)
 
@@ -202,7 +209,8 @@ Verified 2026-07-31 (Playwright, room `BGZEXW` family):
    advances to the next alive seat; opponents list shows `(eliminated)` on the victim.
 5. Repeat for a second elim (still ≥2 alive afterward). Example: after P3 then P2 died, P1/P4
    still played — `gameOver` stayed false, Active moved on.
-6. Final elim of the penultimate player → rewards → then `gameOver` for the last survivor.
+6. Final elim of the penultimate player → **skips** rewards (game-ending) → `gameOver` for
+   the last survivor. Closable stats dialog over the finished board.
 
 ## Manual Lot 7 lifecycle check (L7-05 / M4)
 

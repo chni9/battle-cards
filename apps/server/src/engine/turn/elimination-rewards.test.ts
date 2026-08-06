@@ -18,17 +18,21 @@ import {
 
 describe('Elimination rewards (Lot 6)', () => {
   it('L6-01: eliminator applies lives + card transfer; remainder goes to pool', () => {
+    // Mid-game elim (3p) so rewards still open — game-ending 2p skips rewards
+    // (designer 2026-08-06).
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
       ],
       seed: 'l6-01-rewards',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
 
-    if (a === undefined || b === undefined) {
+    if (a === undefined || b === undefined || c === undefined) {
       return;
     }
 
@@ -37,6 +41,8 @@ describe('Elimination rewards (Lot 6)', () => {
     a.hand = [];
     a.specialCards = [];
     a.pendingEffects = [];
+    c.lives = 10;
+    c.pendingEffects = [];
     b.lives = 1;
     b.hand = [
       { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
@@ -100,16 +106,16 @@ describe('Elimination rewards (Lot 6)', () => {
     expect(state.pool.some((card) => card.instanceId === 'atk-1')).toBe(true);
     expect(state.pool.some((card) => card.instanceId === 'su-1')).toBe(true);
     expect(state.rewardChoice).toBeNull();
-    expect(applied.ok && applied.winnerPlayerId).toBe(a.id);
+    expect(applied.ok && applied.winnerPlayerId).toBeNull();
   });
 
-  it('L6-01: life reward respects the lifeLimit cap', () => {
+  it('skips rewards when the last opponent is eliminated (game-ending)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l6-01-cap',
+      seed: 'l6-skip-last-rewards',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -118,8 +124,70 @@ describe('Elimination rewards (Lot 6)', () => {
       return;
     }
 
+    a.lives = 10;
+    a.points = 0;
+    a.hand = [];
+    a.specialCards = [];
+    a.pendingEffects = [];
+    b.lives = 1;
+    b.hand = [
+      { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+    ];
+    b.specialCards = [{ instanceId: 'su-1', cardId: 'suicide', isUpgraded: false }];
+    b.pendingEffects = [
+      {
+        id: 'hit-1',
+        cardId: 'basic-attack',
+        sourcePlayerId: a.id,
+        targetPlayerId: b.id,
+        queuedAt: 0,
+        isUpgraded: false,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+
+    state.currentTurnPlayerId = b.id;
+    const turn = performTurnAction(state, b.id, { type: 'draw' });
+
+    expect(turn.ok).toBe(true);
+    if (!turn.ok) {
+      return;
+    }
+
+    expect(b.isEliminated).toBe(true);
+    expect(turn.rewardChoicePending).toBeUndefined();
+    expect(state.rewardChoice).toBeNull();
+    expect(state.rewardQueue).toHaveLength(0);
+    expect(turn.winnerPlayerId).toBe(a.id);
+    expect(state.pool.some((card) => card.instanceId === 'atk-1')).toBe(true);
+    expect(state.pool.some((card) => card.instanceId === 'spy-1')).toBe(true);
+    expect(state.pool.some((card) => card.instanceId === 'su-1')).toBe(true);
+  });
+
+  it('L6-01: life reward respects the lifeLimit cap', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l6-01-cap',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
+
+    if (a === undefined || b === undefined || c === undefined) {
+      return;
+    }
+
     a.lives = 23;
     a.pendingEffects = [];
+    c.lives = 10;
+    c.pendingEffects = [];
     b.lives = 1;
     b.hand = [];
     b.specialCards = [];
@@ -243,18 +311,22 @@ describe('Elimination rewards (Lot 6)', () => {
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
       ],
       seed: 'l6-03-default',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
 
-    if (a === undefined || b === undefined) {
+    if (a === undefined || b === undefined || c === undefined) {
       return;
     }
 
     a.lives = 5;
     a.pendingEffects = [];
+    c.lives = 10;
+    c.pendingEffects = [];
     b.lives = 1;
     b.hand = [{ instanceId: 'x', cardId: 'tax', isUpgraded: false }];
     b.pendingEffects = [

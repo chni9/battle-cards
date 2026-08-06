@@ -20,6 +20,10 @@ export interface EconomyBarProps {
   onOpenBuy: () => void;
   onOpenPool: () => void;
   onLeave: () => void;
+  /** Finished board — reopen the stats dialog (PROTOCOL 24). */
+  onShowStats?: () => void;
+  /** Finished board — Leave becomes Return home. */
+  leaveLabel?: string;
 }
 
 export function EconomyBar({
@@ -34,6 +38,8 @@ export function EconomyBar({
   onOpenBuy,
   onOpenPool,
   onLeave,
+  onShowStats,
+  leaveLabel = 'Leave',
 }: EconomyBarProps): ReactElement {
   const disabled = !isMyTurn || actionsLocked;
 
@@ -62,8 +68,13 @@ export function EconomyBar({
         Pool ({poolCount})
       </Button>
       <span className="mx-1 hidden h-6 w-px bg-border-soft sm:inline-block" aria-hidden />
+      {onShowStats !== undefined && (
+        <Button type="button" variant="purple" onClick={onShowStats}>
+          Stats
+        </Button>
+      )}
       <Button variant="red" onClick={onLeave}>
-        Leave
+        {leaveLabel}
       </Button>
     </section>
   );

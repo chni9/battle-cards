@@ -1679,3 +1679,19 @@ Designer session:
   B→C and C→B (redirected) cancel when equal. Previously broken because source stayed
   the original attacker — fixed by the rewrite above. No change to `resolveMutualAttack`
   reciprocity logic itself.
+
+## 2026-08-06 · [P] Game-ending elim skips rewards; closable end stats
+
+Designer session:
+
+1. **Skip elimination rewards on the last opponent** — when processing an elim that leaves
+   a sole contender and the victim has **no** `pendingReanimation`, do not enqueue
+   `rewardQueue` / open `rewardChoice`; dump cards to the pool and proceed to sole-survivor
+   / `gameOver`. Mid-game elims (still ≥2 contenders) unchanged. **Exception:** pending
+   reanimation still counts as a contender, so the eliminator is paid before revive.
+2. **End UI** — stats are a closable Dialog over the finished board (inspect table after
+   dismiss). PROTOCOL_VERSION **23 → 24** adds `FinishedStateView.finalTable` (nested
+   per-recipient `PlayingStateView`, `turnDeadlineMs: null`). Exception to the V4
+   “bump once” lock in `docs/technical_spec_v4.md` / backlog scope — additive finished-view
+   field only; no rule change.
+

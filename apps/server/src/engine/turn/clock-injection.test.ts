@@ -83,20 +83,26 @@ describe('clock injection (L18-01 / tech §8.1)', () => {
 
   it('two identical Mirror+reward scripts deep-equal including reward deadline', () => {
     const run = (): ReturnType<typeof createInitialState> => {
+      // Mid-game elim (3p) so rewards still open — designer 2026-08-06.
       const state = createInitialState({
         seats: [
           { id: 'a', nickname: 'Alice' },
           { id: 'b', nickname: 'Bob' },
+          { id: 'c', nickname: 'Carol' },
         ],
         seed: 'l18-01-reward-clock',
       });
 
       const alice = state.players.find((player) => player.id === 'a');
       const bob = state.players.find((player) => player.id === 'b');
+      const carol = state.players.find((player) => player.id === 'c');
 
-      if (alice === undefined || bob === undefined) {
+      if (alice === undefined || bob === undefined || carol === undefined) {
         throw new Error('missing seats');
       }
+
+      carol.lives = 10;
+      carol.pendingEffects = [];
 
       // Lethal Super queued, then Bob draws so it resolves and eliminates Bob.
       state.currentTurnPlayerId = 'a';
@@ -152,15 +158,20 @@ describe('clock injection (L18-01 / tech §8.1)', () => {
       seats: [
         { id: 'a', nickname: 'Alice' },
         { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
       ],
       seed: 'l18-01-reward-complete',
     });
     const alice = state.players.find((player) => player.id === 'a');
     const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
 
-    if (alice === undefined || bob === undefined) {
+    if (alice === undefined || bob === undefined || carol === undefined) {
       throw new Error('missing seats');
     }
+
+    carol.lives = 10;
+    carol.pendingEffects = [];
 
     state.currentTurnPlayerId = 'a';
     alice.points = 20;

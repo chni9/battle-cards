@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../create-initial-state';
-import { applyDefaultEliminationRewards } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
 import { queueEffect } from './queue-effect';
 
@@ -289,12 +288,9 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
     }
 
     expect(result.eliminatedPlayerIds).toContain(defender.id);
-    expect(result.rewardChoicePending).toBe(true);
+    // Game-ending elim skips rewards (designer 2026-08-06).
+    expect(result.rewardChoicePending).toBeUndefined();
     expect(defender.isEliminated).toBe(true);
-
-    const settled = applyDefaultEliminationRewards(state);
-
-    expect(settled.ok).toBe(true);
-    expect(settled.ok && settled.winnerPlayerId).toBe(attackerId);
+    expect(result.winnerPlayerId).toBe(attackerId);
   });
 });
