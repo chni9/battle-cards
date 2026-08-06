@@ -1663,3 +1663,19 @@ self / Spy-revealed Upgrader buys now read `upgradePointBuyCost(kitId)`.
 Unspied opponents still fall back to the global 10 (kit is private).
 
 
+
+## 2026-08-05 · [P] Timers + Mirror attribution / mutual
+
+Designer session:
+
+- **Turn timer** default `TURN_DURATION_MS` **30s → 60s** (`game-room.ts`). Env override
+  unchanged (min 5s). Client progress bar already assumed 60s.
+- **Sub-choice** `SUB_CHOICE_MS` **20s → 40s** (Mirror, steal, pool, special, reanimation,
+  rewards). Client `CLIENT_SUB_CHOICE_MS` matches.
+- **Mirror / Super Mirror attribution:** on redirect, `PendingEffect.sourcePlayerId`
+  becomes the redirector. A redirected attack is an attack from the Mirror user
+  (rules spec §6). Eliminator rewards and mutual pairing follow that source.
+- **Mutual with Mirror (rules §6 example):** A and B both attack C; C Mirrors A onto B;
+  B→C and C→B (redirected) cancel when equal. Previously broken because source stayed
+  the original attacker — fixed by the rewrite above. No change to `resolveMutualAttack`
+  reciprocity logic itself.

@@ -42,7 +42,7 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     expect(alice.points).toBe(6);
   });
 
-  it('redirects a pending attack and can form a mutual pair', () => {
+  it('redirects a pending attack; mutual cancel treats it as Mirror user attack (rules §6)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -64,10 +64,10 @@ describe('Mirror (rules spec §3, L3-09)', () => {
       return;
     }
 
-    // A attacks C, B attacks C (same basic). C mirrors A's attack onto B.
+    // A and B both Super-attack C. C Mirrors A's onto B → mutual cancel B↔C.
     state.currentTurnPlayerId = 'a';
-    alice.points = 1;
-    alice.hand = [{ instanceId: 'atk-a', cardId: 'basic-attack', isUpgraded: false }];
+    alice.points = 10;
+    alice.hand = [{ instanceId: 'atk-a', cardId: 'super-attack', isUpgraded: false }];
     performTurnAction(state, 'a', {
       type: 'playCard',
       instanceId: 'atk-a',
@@ -75,8 +75,8 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     });
 
     state.currentTurnPlayerId = 'b';
-    bob.points = 1;
-    bob.hand = [{ instanceId: 'atk-b', cardId: 'basic-attack', isUpgraded: false }];
+    bob.points = 10;
+    bob.hand = [{ instanceId: 'atk-b', cardId: 'super-attack', isUpgraded: false }];
     performTurnAction(state, 'b', {
       type: 'playCard',
       instanceId: 'atk-b',
@@ -85,12 +85,15 @@ describe('Mirror (rules spec §3, L3-09)', () => {
 
     state.currentTurnPlayerId = 'c';
     carol.points = 6;
+    carol.lives = 10;
     carol.hand = [{ instanceId: 'm-1', cardId: 'mirror', isUpgraded: false }];
     const aAttack = carol.pendingEffects.find((e) => e.sourcePlayerId === 'a');
+    const bAttackId = carol.pendingEffects.find((e) => e.sourcePlayerId === 'b')?.id;
 
     expect(aAttack).toBeDefined();
+    expect(bAttackId).toBeDefined();
 
-    if (aAttack === undefined) {
+    if (aAttack === undefined || bAttackId === undefined) {
       return;
     }
 
@@ -106,44 +109,78 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     }
 
     expect(mirrorPlay.mirrorChoicePending).toBe(true);
-    expect(state.mirrorChoice).not.toBeNull();
 
+    const livesBefore = { bob: bob.lives, carol: carol.lives };
     const choice = completeMirrorChoice(state, 'c', aAttack.id, 'b');
 
     expect(choice.ok).toBe(true);
-    // A's attack now targets B; B's attack on C remains. Equal mutual between B and C:
-    // B has attack from A (redirected, source A targeting B) — mutual is B↔C with B's attack on C
-    // and C's redirected? Redirected attack source is still A, target B.
-    // Mutual: B's attack on C vs C having attack on B — C doesn't have an attack on B from C.
-    // Example in rules: C redirects A's attack toward B. B's attack against C and A's attack
-    // (redirected) toward B face off as mutual between B and C.
-    // So we need the redirected effect's source to still be A, but mutual check looks for
-    // retaliation from resolving player. On B's turn when resolving A's redirected attack,
-    // look for B→A? No — the example says mutual between B and C.
-    // Re-read cancelEqualMutualAttack: looks on source's queue for attack from resolvingPlayer
-    // targeting source. Incoming is A→B (source A). Retaliation: on A's queue, attack from B targeting A.
-    // That's not B→C.
-    //
-    // The rules example says B's attack against C and A's redirected toward B cancel as mutual
-    // between B and C. That implies mutual is checked as: incoming attack targeting me, and my
-    // attack targeting the *new* target? Or the person who redirected?
-    //
-    // Looking at existing mutual-attacks implementation and rules example more carefully...
-    // "B's attack against C and A's attack (redirected by C) toward B face off as mutual attacks
-    // between B and C"
-    // So when resolving on... whose turn? On C's turn after redirect, C's pending still has B→C.
-    // When C resolves after Mirror, B→C is still pending on C. The redirected A→B is on B.
-    // On C's resolve of B→C: look for mutual with source B — retaliation would be C→B on B's queue.
-    // After redirect, A→B is on B's queue with source A, not C. So no cancel on C's turn.
-    // On B's turn resolving A→B: look for B→A on A's queue — no.
-    //
-    // So the existing mutual-attack code may not match the Mirror example in the rules!
-    // L2-05 implemented mutual as reciprocal targeting. Mirror example needs:
-    // when resolving B→C on C, find attack on B's queue targeting B that was redirected?
-    // That's a different rule — out of scope to reinvent. For this test, just assert redirect moved.
+    // finishTurnPhases already ran: redirected A→B is attributed to C and mutual-cancelled
+    // against B→C on Carol's resolve.
     expect(carol.pendingEffects.some((e) => e.id === aAttack.id)).toBe(false);
-    expect(bob.pendingEffects.some((e) => e.id === aAttack.id)).toBe(true);
-    expect(bob.pendingEffects.find((e) => e.id === aAttack.id)?.redirectedBy).toBe('mirror');
+    expect(carol.pendingEffects.some((e) => e.id === bAttackId)).toBe(false);
+    expect(bob.pendingEffects.some((e) => e.id === aAttack.id)).toBe(false);
+    expect(bob.lives).toBe(livesBefore.bob);
+    expect(carol.lives).toBe(livesBefore.carol);
+  });
+
+  it('Mirror user is the eliminator when a redirected attack kills', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'mirror-elim-attribution',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
+
+    if (alice === undefined || bob === undefined || carol === undefined) {
+      throw new Error('missing players');
+    }
+
+    state.currentTurnPlayerId = 'a';
+    alice.points = 10;
+    alice.hand = [{ instanceId: 'atk-a', cardId: 'super-attack', isUpgraded: false }];
+    performTurnAction(state, 'a', {
+      type: 'playCard',
+      instanceId: 'atk-a',
+      targetPlayerId: 'c',
+    });
+
+    state.currentTurnPlayerId = 'c';
+    carol.points = 6;
+    carol.hand = [{ instanceId: 'm-1', cardId: 'mirror', isUpgraded: false }];
+    const pending = carol.pendingEffects.find((e) => e.sourcePlayerId === 'a');
+    expect(pending).toBeDefined();
+
+    if (pending === undefined) {
+      return;
+    }
+
+    expect(
+      performTurnAction(state, 'c', { type: 'playCard', instanceId: 'm-1' }).ok,
+    ).toBe(true);
+    bob.lives = 3;
+    bob.shield = 0;
+    expect(completeMirrorChoice(state, 'c', pending.id, 'b').ok).toBe(true);
+
+    // Seat order is seed-shuffled — advance every other seat until Bob resolves.
+    for (let guard = 0; guard < 6 && !bob.isEliminated; guard += 1) {
+      const actorId = state.currentTurnPlayerId;
+      const actor = state.players.find((player) => player.id === actorId);
+
+      if (actor === undefined || actor.isEliminated) {
+        break;
+      }
+
+      actor.points = Math.max(actor.points, 0);
+      expect(performTurnAction(state, actorId, { type: 'draw' }).ok).toBe(true);
+    }
+
+    expect(bob.isEliminated).toBe(true);
+    expect(state.rewardChoice?.eliminatorPlayerId).toBe('c');
   });
 
   it('upgraded Mirror stacks damageMultiplier', () => {
@@ -193,8 +230,9 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     const redirected = bob.pendingEffects.find((e) => e.id === pending.id);
 
     expect(redirected?.damageMultiplier).toBe(2);
+    expect(redirected?.sourcePlayerId).toBe('c');
 
-    // Second upgraded redirect by Bob stacks to 4.
+    // Second upgraded redirect by Bob stacks to 4; source becomes Bob.
     state.currentTurnPlayerId = 'b';
     bob.points = 6;
     bob.hand = [{ instanceId: 'm-2', cardId: 'mirror', isUpgraded: true }];
@@ -204,6 +242,7 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     const again = alice.pendingEffects.find((e) => e.id === pending.id);
 
     expect(again?.damageMultiplier).toBe(4);
+    expect(again?.sourcePlayerId).toBe('b');
   });
 
   it('default on expiry redirects first eligible to a random opponent', () => {
@@ -254,5 +293,10 @@ describe('Mirror (rules spec §3, L3-09)', () => {
           player.id !== 'c' && player.pendingEffects.some((e) => e.id === pendingId),
       ),
     ).toBe(true);
+
+    const redirected = state.players
+      .flatMap((player) => player.pendingEffects)
+      .find((e) => e.id === pendingId);
+    expect(redirected?.sourcePlayerId).toBe('c');
   });
 });

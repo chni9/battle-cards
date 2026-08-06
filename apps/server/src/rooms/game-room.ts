@@ -167,11 +167,11 @@ type GameClient = Client<{ messages: ServerToClientMessages }>;
 const TURN_DURATION_MS = (() => {
   const raw = process.env['TURN_DURATION_MS'];
   if (raw === undefined) {
-    return 30_000;
+    return 60_000;
   }
 
   const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed >= 5_000 ? parsed : 30_000;
+  return Number.isFinite(parsed) && parsed >= 5_000 ? parsed : 60_000;
 })();
 
 export class GameRoom extends Room<{ client: GameClient }> {
@@ -1783,7 +1783,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     if (entry === 'disconnected') {
-      // Grace window: do not start the 30s timer — wait for reconnect or absent.
+      // Grace window: do not start the turn timer — wait for reconnect or absent.
       this.clearTurnTimer();
       this.turnDeadlineMs = null;
       this.pausedTurnRemainingMs = TURN_DURATION_MS;

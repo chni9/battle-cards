@@ -38,6 +38,12 @@ export type PendingEffectRedirectSource = (typeof PENDING_EFFECT_REDIRECT_SOURCE
  */
 export interface PendingEffect {
   id: string;
+  /**
+   * Who the attack is attributed to for mutual pairing, damage resolution and
+   * eliminator rewards. On a direct queue this is the player who played the card.
+   * After Mirror / Super Mirror redirect it becomes the redirector (rules spec §6 —
+   * a redirected attack is an attack from the Mirror user).
+   */
   sourcePlayerId: string;
   targetPlayerId: string;
   cardId: CardId;

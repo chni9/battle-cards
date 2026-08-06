@@ -53,6 +53,7 @@ export const superMirrorHandler: CardHandler = {
           effect,
           opponentId,
           'super-mirror',
+          sourcePlayerId,
         );
         if (card.isUpgraded) {
           duplicate.damageMultiplier *= 2;

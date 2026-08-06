@@ -162,8 +162,8 @@ Technical spec §5.5, §5.6.
 
 | Timer | Duration | On expiry |
 |---|---|---|
-| Turn | 30s | Automatic draw |
-| Sub-choice | 20s | Default action below |
+| Turn | 60s | Automatic draw |
+| Sub-choice (Mirror, steal, pool, special, reanimation, reward) | 40s | Default action below |
 | Reconnection window | 60s | Player becomes absent |
 
 Defaults on sub-choice expiry: **Mirror** redirects the first attack in the queue to a randomly
@@ -171,7 +171,7 @@ drawn opponent (via the seeded generator); **rewards** grant 2 × 4 lives. An al
 is never silently wasted — the player loses the optimisation, not the benefit.
 
 V1 sub-choices are Mirror targeting and reward selection only. Assassin's multi-select is **not**
-a sub-choice: it is their turn action, covered by the 30s.
+a sub-choice: it is their turn action, covered by the 60s turn timer.
 
 ## Disconnection and inactivity
 
@@ -179,9 +179,9 @@ Technical spec §5.7 — two independent mechanisms, deliberately different thre
 
 - **Disconnected:** 60s real-time window from the moment of disconnection, independent of whose
   turn it is. Past it the player is *absent* and draws **immediately** on each of their turns,
-  without waiting the 30s. Eliminated after **3** automatic turns, with no eliminator and so no
+  without waiting the turn timer. Eliminated after **3** automatic turns, with no eliminator and so no
   reward. Any reconnection resets both the window and the counter.
-- **Connected but inactive:** the 30s timer expires and they draw. Eliminated after **5**
+- **Connected but inactive:** the 60s turn timer expires and they draw. Eliminated after **5**
   consecutive expired turns. Reconnect does **not** reset this counter.
 - **Colyseus:** `onDrop` → `allowReconnection(client, "manual")` until elim or game over (so
   reclaim stays possible while *absent*). Own 60s timer only flips status. Consented Leave

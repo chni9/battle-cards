@@ -252,7 +252,7 @@ Every action is fully revalidated server side: card ownership, sufficient resour
 | Sub-choice | 20s | See 5.6 |
 | Reconnection window | 60s | Player becomes absent |
 
-V1 sub-choices: Mirror targeting, elimination reward selection. Assassin's multi-select is not one — it's their turn action, covered by the 30s.
+V1 sub-choices: Mirror targeting, elimination reward selection. Assassin's multi-select is not one — it's their turn action, covered by the 60s.
 
 ### 5.6 Default actions on sub-choice expiry
 

@@ -46,6 +46,17 @@ describe('duplicatePendingEffect (technical spec v4 §4.2, L20-15)', () => {
 
     expect(dupB.redirectedBy).toBe('super-mirror');
     expect(dupC.redirectedBy).toBe('super-mirror');
+    expect(dupB.sourcePlayerId).toBe('a');
+    expect(dupC.sourcePlayerId).toBe('a');
+
+    const overridden = duplicatePendingEffect(
+      state,
+      source,
+      'b',
+      'super-mirror',
+      'c',
+    );
+    expect(overridden.sourcePlayerId).toBe('c');
 
     const bob = state.players.find((player) => player.id === 'b');
     const carol = state.players.find((player) => player.id === 'c');
