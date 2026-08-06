@@ -147,6 +147,42 @@ function buildSpiedView(
   return spied;
 }
 
+/**
+ * `activateDuplication` is Spy-gated (designer 2026-08-06): visible to the actor
+ * and anyone who currently spies them; omitted from everyone else's action log.
+ * Excel `exportLog` keeps the full server log.
+ */
+function filterActionLogForRecipient(
+  actionLog: readonly ActionLogEntryView[],
+  recipientSessionId: string,
+  state: GameState,
+): ActionLogEntryView[] {
+  return actionLog.filter((entry) => {
+    if (entry.kind !== 'actionPlayed' || entry.action !== 'activateDuplication') {
+      return true;
+    }
+
+    if (entry.actorPlayerId === recipientSessionId) {
+      return true;
+    }
+
+    return findSpyRelation(state, recipientSessionId, entry.actorPlayerId) !== undefined;
+  });
+}
+
+/** Duplicator window: self and Spy recipients only (designer 2026-08-06). */
+function duplicationActiveForRecipient(
+  player: GameState['players'][number],
+  recipientSessionId: string,
+  spied: SpiedPlayerView | undefined,
+): boolean {
+  if (player.id === recipientSessionId || spied !== undefined) {
+    return player.duplicationActive;
+  }
+
+  return false;
+}
+
 export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog, botDifficulties } =
     input;
@@ -192,7 +228,11 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       blockTurnsRemaining: player.blockTurnsRemaining,
       blockAttacksForbidden: player.blockAttacksForbidden,
       activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
-      duplicationActive: player.duplicationActive,
+      duplicationActive: duplicationActiveForRecipient(
+        player,
+        recipientSessionId,
+        spied,
+      ),
       pendingReanimation:
         player.pendingReanimation === null
           ? null
@@ -238,7 +278,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     players,
     self,
     pendingEffects,
-    actionLog: [...actionLog],
+    actionLog: filterActionLogForRecipient(actionLog, recipientSessionId, state),
     pool: state.pool.map((card) => ({ ...card })),
   };
 }
@@ -328,7 +368,9 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         blockTurnsRemaining: player.blockTurnsRemaining,
         blockAttacksForbidden: player.blockAttacksForbidden,
         activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
-        duplicationActive: player.duplicationActive,
+        // Finished seats omit `spied`; only the seat itself may see the flag.
+        duplicationActive:
+          player.id === recipientSessionId ? player.duplicationActive : false,
         pendingReanimation:
           player.pendingReanimation === null
             ? null

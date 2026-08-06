@@ -14,6 +14,7 @@ import { listLegalActions } from './list-legal-actions';
 import { performTurnAction } from './perform-action';
 import { decide } from '../../bots/heuristic-policy';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
+import { grantSpy } from '../../protocol/visibility-matrix';
 
 describe('Duplicator kit (L28-02)', () => {
   const seats = [
@@ -264,11 +265,15 @@ describe('Duplicator kit (L28-02)', () => {
     expect(decision.type).not.toBe('sellUpgradePoint');
   });
 
-  it('exposes duplicationActive publicly in the state view', () => {
+  it('Spy-gates duplicationActive: hidden from others, visible to self and Spy', () => {
     const state = createInitialState({
-      seats,
-      seed: 'dup-view',
-      kitAssignment: ['duplicator', 'kamikaze'],
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'dup-view-spy',
+      kitAssignment: ['duplicator', 'kamikaze', 'assassin'],
     });
     const dup = state.players.find((player) => player.kitId === 'duplicator');
     expect(dup).toBeDefined();
@@ -277,14 +282,106 @@ describe('Duplicator kit (L28-02)', () => {
     }
 
     dup.duplicationActive = true;
-    const view = buildPlayingViewFor({
+    grantSpy(state, 'b', dup.id, 'kit-and-cards');
+
+    const viewSelf = buildPlayingViewFor({
+      recipientSessionId: dup.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(viewSelf.players.find((player) => player.id === dup.id)?.duplicationActive).toBe(
+      true,
+    );
+
+    const viewSpy = buildPlayingViewFor({
       recipientSessionId: 'b',
       gameCode: 'TEST',
       state,
       turnDeadlineMs: null,
       actionLog: [],
     });
-    const pub = view.players.find((player) => player.id === dup.id);
-    expect(pub?.duplicationActive).toBe(true);
+    expect(viewSpy.players.find((player) => player.id === dup.id)?.duplicationActive).toBe(
+      true,
+    );
+
+    const viewOther = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(viewOther.players.find((player) => player.id === dup.id)?.duplicationActive).toBe(
+      false,
+    );
+  });
+
+  it('hides activateDuplication from the action log unless self or Spy', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'dup-log-spy',
+      kitAssignment: ['duplicator', 'kamikaze', 'assassin'],
+    });
+    const dup = state.players.find((player) => player.kitId === 'duplicator');
+    expect(dup).toBeDefined();
+    if (dup === undefined) {
+      return;
+    }
+
+    grantSpy(state, 'b', dup.id, 'kit-and-cards');
+    const log = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: dup.id,
+        action: 'activateDuplication' as const,
+        turnSequence: 1,
+      },
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: 'c',
+        action: 'draw' as const,
+        turnSequence: 2,
+      },
+    ];
+
+    const forSelf = buildPlayingViewFor({
+      recipientSessionId: dup.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forSelf.actionLog.some((e) => e.kind === 'actionPlayed' && e.action === 'activateDuplication')).toBe(
+      true,
+    );
+
+    const forSpy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forSpy.actionLog.some((e) => e.kind === 'actionPlayed' && e.action === 'activateDuplication')).toBe(
+      true,
+    );
+
+    const forOther = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forOther.actionLog.some((e) => e.kind === 'actionPlayed' && e.action === 'activateDuplication')).toBe(
+      false,
+    );
+    expect(forOther.actionLog).toHaveLength(1);
   });
 });

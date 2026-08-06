@@ -1679,3 +1679,16 @@ Designer session:
   B→C and C→B (redirected) cancel when equal. Previously broken because source stayed
   the original attacker — fixed by the rewrite above. No change to `resolveMutualAttack`
   reciprocity logic itself.
+
+## 2026-08-06 · [P] Duplicator activation is Spy-gated (not public)
+
+Designer session override of technical spec v4 §5.1 (`Player.duplicationActiveUntil`
+listed **Public** because it “changes what every opponent's gain does”).
+
+- **`duplicationActive` on `PublicPlayerView`:** `true` only for the seat itself
+  (`isYou`) or when the recipient has a Spy relation on that seat; otherwise `false`.
+- **`activateDuplication` action log + live `ACTION_PLAYED`:** same audience (actor +
+  current spies). Room still stores the full log; Excel `exportLog` stays complete.
+- Engine behaviour unchanged — `observeDirectGain` still reads server `Player.duplicationActive`.
+- No `PROTOCOL_VERSION` bump: field shape unchanged; semantics tightened (older clients
+  simply stop seeing the badge / log line when the server gates them).

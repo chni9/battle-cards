@@ -42,6 +42,9 @@ rules above are unchanged — this section only covers how the client looks.
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
+  Source display names may contain spaces / `+`; `vite.config.ts` sanitizes **emitted**
+  hashed asset filenames (and `static-spa` 404s missing `/assets/*`) so proxies and SPA
+  fallback cannot serve `index.html` as a broken card image.
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
   (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG, mid-game `alwaysUpgraded` test. No engine
   change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` locks

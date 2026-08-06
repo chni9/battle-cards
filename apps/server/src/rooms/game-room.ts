@@ -134,6 +134,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
 } from '../protocol/build-view-for';
+import { findSpyRelation } from '../protocol/visibility-matrix';
 import {
   GAME_CODE_PRESENCE_CHANNEL,
   generateGameCodeCandidate,
@@ -1168,7 +1169,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       };
 
       this.actionLog.push({ kind: 'actionPlayed', ...played });
-      this.broadcast(ACTION_PLAYED, played);
+      if (played.action === 'activateDuplication') {
+        // Spy-gated live event (designer 2026-08-06) — actor + current spies only.
+        this.sendActivateDuplicationPlayed(played);
+      } else {
+        this.broadcast(ACTION_PLAYED, played);
+      }
     }
 
     if (result.mirrorRedirects !== undefined) {
@@ -2887,6 +2893,28 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private sendStateToEveryone(): void {
     for (const client of this.clients) {
       this.sendStateTo(client);
+    }
+  }
+
+  /**
+   * `activateDuplication` is not a public action (designer 2026-08-06).
+   * Unicast to the actor and anyone who currently spies them.
+   */
+  private sendActivateDuplicationPlayed(played: ActionPlayedPayload): void {
+    const state = this.gameState;
+
+    for (const client of this.clients) {
+      if (client.sessionId === played.actorPlayerId) {
+        client.send(ACTION_PLAYED, played);
+        continue;
+      }
+
+      if (
+        state !== null &&
+        findSpyRelation(state, client.sessionId, played.actorPlayerId) !== undefined
+      ) {
+        client.send(ACTION_PLAYED, played);
+      }
     }
   }
 

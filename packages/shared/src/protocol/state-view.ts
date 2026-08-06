@@ -96,8 +96,9 @@ export interface PublicPlayerView {
    */
   activeAttackBlock: true | null;
   /**
-   * Duplicator anticipatory window active (rules spec §4 / L28-02). Public —
-   * changes what every opponent's gain does.
+   * Duplicator anticipatory window active (rules spec §4 / L28-02).
+   * Spy-gated (designer 2026-08-06): true only for the seat itself (`isYou`) or when
+   * the recipient spies this player; otherwise always `false`.
    */
   duplicationActive: boolean;
   /**

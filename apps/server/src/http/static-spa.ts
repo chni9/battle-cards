@@ -36,6 +36,14 @@ export function mountStaticSpa(app: Application, staticDir: string): void {
       next();
       return;
     }
+
+    // Missing hashed assets must 404 — SPA fallback would return index.html with
+    // 200 and the browser would "fail to render" the image silently.
+    if (req.path.startsWith('/assets/')) {
+      res.status(404).end();
+      return;
+    }
+
     // Let Colyseus / API handlers win when they already handled the request.
     res.sendFile(path.join(staticDir, 'index.html'), (err: Error | undefined) => {
       if (err !== undefined) next(err);

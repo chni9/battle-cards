@@ -210,6 +210,65 @@ describe('MEGA ATTACK (L23-01)', () => {
     expect(carol.pendingEffects).toHaveLength(0);
   });
 
+  it('two MEGAs cancel in a 2-player mutual pair (equal 20)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l23-01-mutual-mega-2p',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (alice === undefined || bob === undefined) {
+      throw new Error('missing players');
+    }
+
+    alice.lives = 25;
+    bob.lives = 25;
+    alice.points = 16;
+    bob.points = 16;
+    alice.specialCards = [
+      { instanceId: 'mega-a', cardId: 'mega-attack', isUpgraded: false },
+    ];
+    bob.specialCards = [
+      { instanceId: 'mega-b', cardId: 'mega-attack', isUpgraded: true },
+    ];
+    for (const player of state.players) {
+      player.pendingEffects = [];
+    }
+
+    state.currentTurnPlayerId = alice.id;
+    expect(
+      performTurnAction(state, alice.id, { type: 'playCard', instanceId: 'mega-a' }).ok,
+    ).toBe(true);
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, {
+      type: 'playCard',
+      instanceId: 'mega-b',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.resolved).toEqual([
+      expect.objectContaining({
+        cardId: 'mega-attack',
+        sourcePlayerId: 'a',
+        targetPlayerId: 'b',
+        outcome: 'cancelled',
+        livesLost: 0,
+      }),
+    ]);
+    expect(alice.lives).toBe(25);
+    expect(bob.lives).toBe(25);
+    expect(alice.pendingEffects).toHaveLength(0);
+    expect(bob.pendingEffects).toHaveLength(0);
+  });
+
   it('Assassin multi-attack never lists or accepts mega-attack (#V4-32)', () => {
     const state = createInitialState({
       seats: [

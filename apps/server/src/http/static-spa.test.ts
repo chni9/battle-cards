@@ -52,4 +52,23 @@ describe('mountStaticSpa', () => {
     expect(spa.status).toBe(200);
     expect(await spa.text()).toBe('<html>ok</html>');
   });
+
+  it('returns 404 for missing /assets/* instead of SPA index.html', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-spa-assets-'));
+    await writeFile(path.join(dir, 'index.html'), '<html>ok</html>', 'utf8');
+    await mkdir(path.join(dir, 'assets'));
+
+    const app = express();
+    mountStaticSpa(app, dir);
+    const server = createServer(app);
+    servers.push(server);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const addr = server.address();
+    if (addr === null || typeof addr === 'string') throw new Error('expected port');
+    const base = `http://127.0.0.1:${String(addr.port)}`;
+
+    const missing = await fetch(`${base}/assets/Thief_-.png`);
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).not.toContain('<html>');
+  });
 });

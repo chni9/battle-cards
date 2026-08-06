@@ -105,7 +105,8 @@ export interface Player {
    */
   attackBlockCharges: number;
   /**
-   * Duplicator anticipatory window (rules spec §4, L28-02). Public.
+   * Duplicator anticipatory window (rules spec §4, L28-02).
+   * Server-side truth; view builder Spy-gates it (designer 2026-08-06 — not public).
    * Set by `activateDuplication`; cleared at the start of this player's next turn
    * in `advanceTurn` (including Block consecutive turns for this seat).
    */

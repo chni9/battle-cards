@@ -121,4 +121,16 @@ describe('asset-lookup (L30-01)', () => {
       expect(url).not.toMatch(/\(dead\)/);
     }
   });
+
+  it('resolves Thief+ and Strong attack art (space / plus filenames)', () => {
+    expect(decodeURIComponent(getCardArtUrl('thief', { isUpgraded: true }))).toMatch(
+      /Thief \+/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('strong-attack', { isUpgraded: false }))).toMatch(
+      /Strong attack/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('strong-attack', { isUpgraded: true }))).toMatch(
+      /Strong attack \+/,
+    );
+  });
 });
