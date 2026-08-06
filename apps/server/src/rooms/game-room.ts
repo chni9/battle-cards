@@ -134,6 +134,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
 } from '../protocol/build-view-for';
+import { findSpyRelation } from '../protocol/visibility-matrix';
 import {
   GAME_CODE_PRESENCE_CHANNEL,
   generateGameCodeCandidate,
@@ -1168,7 +1169,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       };
 
       this.actionLog.push({ kind: 'actionPlayed', ...played });
-      this.broadcast(ACTION_PLAYED, played);
+      if (played.action === 'activateDuplication') {
+        // Spy-gated live event (designer 2026-08-06) — real to actor + spies;
+        // opaque `draw` to everyone else so the turn still surfaces.
+        this.sendActivateDuplicationPlayed(played);
+      } else {
+        this.broadcast(ACTION_PLAYED, played);
+      }
     }
 
     if (result.mirrorRedirects !== undefined) {
@@ -2887,6 +2894,38 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private sendStateToEveryone(): void {
     for (const client of this.clients) {
       this.sendStateTo(client);
+    }
+  }
+
+  /**
+   * `activateDuplication` is not a public action (designer 2026-08-06).
+   * Unicast the real payload to the actor and current spies; send an opaque
+   * `draw` ACTION_PLAYED to everyone else (matches the per-recipient action log).
+   */
+  private sendActivateDuplicationPlayed(played: ActionPlayedPayload): void {
+    const state = this.gameState;
+    const opaque: ActionPlayedPayload = {
+      actorPlayerId: played.actorPlayerId,
+      action: 'draw',
+      turnSequence: played.turnSequence,
+      ...(played.botReason !== undefined ? { botReason: played.botReason } : {}),
+    };
+
+    for (const client of this.clients) {
+      if (client.sessionId === played.actorPlayerId) {
+        client.send(ACTION_PLAYED, played);
+        continue;
+      }
+
+      if (
+        state !== null &&
+        findSpyRelation(state, client.sessionId, played.actorPlayerId) !== undefined
+      ) {
+        client.send(ACTION_PLAYED, played);
+        continue;
+      }
+
+      client.send(ACTION_PLAYED, opaque);
     }
   }
 

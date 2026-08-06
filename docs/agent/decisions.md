@@ -1692,6 +1692,21 @@ Designer session:
 2. **End UI** — stats are a closable Dialog over the finished board (inspect table after
    dismiss). PROTOCOL_VERSION **23 → 24** adds `FinishedStateView.finalTable` (nested
    per-recipient `PlayingStateView`, `turnDeadlineMs: null`). Exception to the V4
-   “bump once” lock in `docs/technical_spec_v4.md` / backlog scope — additive finished-view
-   field only; no rule change.
+  “bump once” lock in `docs/technical_spec_v4.md` / backlog scope — additive finished-view
+  field only; no rule change.
+
+## 2026-08-06 · [P] Duplicator activation is Spy-gated (not public)
+
+Designer session override of technical spec v4 §5.1 (`Player.duplicationActiveUntil`
+listed **Public** because it “changes what every opponent's gain does”).
+
+- **`duplicationActive` on `PublicPlayerView`:** `true` only for the seat itself
+  (`isYou`) or when the recipient has a Spy relation on that seat; otherwise `false`.
+- **`activateDuplication` action log + live `ACTION_PLAYED`:** actor + current spies see
+  the real action; everyone else gets an opaque `draw` (so the turn still appears). Room
+  still stores the full log; Excel `exportLog` stays complete.
+- **No public seat badge** (“Duplicating”) — visibility is the Spy-gated flag + log line
+  for spies / the private Activate control for the Duplicator seat.
+- Engine behaviour unchanged — `observeDirectGain` still reads server `Player.duplicationActive`.
+- No `PROTOCOL_VERSION` bump: field shape unchanged; semantics tightened.
 

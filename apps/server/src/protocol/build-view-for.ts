@@ -147,6 +147,57 @@ function buildSpiedView(
   return spied;
 }
 
+/**
+ * `activateDuplication` is Spy-gated (designer 2026-08-06): actor + current spies
+ * see the real action; everyone else gets an opaque `draw` so the turn still
+ * appears in the public log. Excel `exportLog` keeps the full server log.
+ */
+function mapActionLogForRecipient(
+  actionLog: readonly ActionLogEntryView[],
+  recipientSessionId: string,
+  state: GameState,
+): ActionLogEntryView[] {
+  return actionLog.map((entry) => {
+    if (entry.kind !== 'actionPlayed' || entry.action !== 'activateDuplication') {
+      return entry;
+    }
+
+    if (entry.actorPlayerId === recipientSessionId) {
+      return entry;
+    }
+
+    if (findSpyRelation(state, recipientSessionId, entry.actorPlayerId) !== undefined) {
+      return entry;
+    }
+
+    const opaque: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: entry.actorPlayerId,
+      action: 'draw',
+      turnSequence: entry.turnSequence,
+    };
+
+    if (entry.botReason !== undefined) {
+      return { ...opaque, botReason: entry.botReason };
+    }
+
+    return opaque;
+  });
+}
+
+/** Duplicator window: self and Spy recipients only (designer 2026-08-06). */
+function duplicationActiveForRecipient(
+  player: GameState['players'][number],
+  recipientSessionId: string,
+  spied: SpiedPlayerView | undefined,
+): boolean {
+  if (player.id === recipientSessionId || spied !== undefined) {
+    return player.duplicationActive;
+  }
+
+  return false;
+}
+
 export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog, botDifficulties } =
     input;
@@ -192,7 +243,11 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       blockTurnsRemaining: player.blockTurnsRemaining,
       blockAttacksForbidden: player.blockAttacksForbidden,
       activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
-      duplicationActive: player.duplicationActive,
+      duplicationActive: duplicationActiveForRecipient(
+        player,
+        recipientSessionId,
+        spied,
+      ),
       pendingReanimation:
         player.pendingReanimation === null
           ? null
@@ -238,7 +293,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     players,
     self,
     pendingEffects,
-    actionLog: [...actionLog],
+    actionLog: mapActionLogForRecipient(actionLog, recipientSessionId, state),
     pool: state.pool.map((card) => ({ ...card })),
   };
 }
@@ -321,6 +376,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     players: state.players.map((player) => {
       const difficulty = botDifficulties?.get(player.id);
       const eliminationReveal = buildEliminationReveal(player);
+      const spied = buildSpiedView(state, recipientSessionId, player);
       const view: PublicPlayerView = {
         id: player.id,
         nickname: player.nickname,
@@ -339,7 +395,11 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         blockTurnsRemaining: player.blockTurnsRemaining,
         blockAttacksForbidden: player.blockAttacksForbidden,
         activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
-        duplicationActive: player.duplicationActive,
+        duplicationActive: duplicationActiveForRecipient(
+          player,
+          recipientSessionId,
+          spied,
+        ),
         pendingReanimation:
           player.pendingReanimation === null
             ? null

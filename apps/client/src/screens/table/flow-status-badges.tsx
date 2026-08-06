@@ -1,5 +1,6 @@
 /**
- * Turn-flow status pills on a seat — Block chain, Invisibility, Duplicator, Reanimation (L30-04).
+ * Turn-flow status pills on a seat — Block chain, Invisibility, Reanimation (L30-04).
+ * Duplicator window is Spy-gated and has no public badge (designer 2026-08-06).
  * Public fields only; zero rule logic.
  */
 
@@ -36,10 +37,6 @@ function badgesForPlayer(player: PublicPlayerView): BadgeSpec[] {
 
   if (player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')) {
     badges.push({ key: 'invisibility', label: 'Invisible', tone: 'accent' });
-  }
-
-  if (player.duplicationActive) {
-    badges.push({ key: 'duplication', label: 'Duplicating', tone: 'accent' });
   }
 
   if (player.pendingReanimation !== null) {

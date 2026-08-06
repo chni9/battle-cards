@@ -85,9 +85,11 @@ run on Cloning's resource copy or elimination bookkeeping that zeros already-0 l
 Routes through `grantPoints` so an active Duplicator can observe.
 
 **Duplicator (#V4-23 / L28-02):** `grantPoints` / `grantUpgradePoints` / `grantLives` wrappers
-observe `origin: 'direct'` via `observeDirectGain`. Public `Player.duplicationActive` is set by
+observe `origin: 'direct'` via `observeDirectGain`. `Player.duplicationActive` is set by
 `activateDuplication` and cleared in `advanceTurn` at the start of that seat's next turn.
-Shield gains and Cloning resource assignment never enter the grant wrappers.
+The flag is **Spy-gated** on the view (designer 2026-08-06); non-spies see the activation as
+an opaque `draw` in the action log. Shield gains and Cloning resource assignment never enter
+the grant wrappers.
 
 | Site | Why not a typed loss or gain |
 |---|---|

@@ -484,7 +484,7 @@ no task defaults it. Includes the two fields that are not card-driven.
 | `GameState` generic `SubChoiceState` slot and queue (§4.4) | **Not in the state view at all** | `mirrorChoice` and `rewardChoice` are already outside `StateView`, delivered unicast as their own events. The generic version keeps that: a sub-choice's payload reaches its owner only. |
 | `Player.blockTurnsRemaining` | **Public** | The whole table is waiting on it; hiding it makes the screen unreadable. |
 | `Player.isInvisible` (or its persistent-effect equivalent) | **Public** | Opponents must know why their action returned `'immune'`. Consistent with `activePersistentEffects` being public since PROTOCOL 19. |
-| `Player.duplicationActiveUntil` (or equivalent) | **Public** | It changes what every opponent's gain does. |
+| `Player.duplicationActiveUntil` (or equivalent) | **Spy-gated** (designer 2026-08-06 override — see `docs/agent/decisions.md`). Self + Spy recipients only; non-spies see activation as opaque `draw` in the action log. |
 | `Player.attackBlockCharges` (Attack Thief) | **Public presence** | Mirrors `activeShield`, public since PROTOCOL 20 as presence-plus-tier with the point count private. |
 | `PendingEffect.redirectedBy` | **Public** | The pending queue is already public. |
 | Reanimation armed on a player | **Public** | Via `activePersistentEffects` (#V4-12b). `pendingReanimation` is also public while revive is queued after elim. |
