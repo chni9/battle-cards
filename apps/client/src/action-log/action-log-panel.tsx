@@ -238,7 +238,7 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
     case 'mirrorRedirected':
       return `${entry.kind}-${entry.turnSequence}-${entry.newTargetPlayerId}-${String(index)}`;
     case 'playerReanimated':
-      return `${entry.kind}-${entry.playerId}-${entry.kitId}-${String(index)}`;
+      return `${entry.kind}-${entry.playerId}-${entry.kitId ?? 'hidden'}-${String(index)}`;
     case 'rewardsClaimed':
       return `${entry.kind}-${entry.eliminatorPlayerId}-${entry.eliminatedPlayerId}-${String(index)}`;
     default: {

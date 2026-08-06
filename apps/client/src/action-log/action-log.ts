@@ -148,6 +148,9 @@ export function formatActionLogEntry(
     }
     case 'playerReanimated': {
       const player = nicknameOf(entry.playerId);
+      if (entry.kitId === undefined) {
+        return `${player} returns`;
+      }
       const kitName = getKit(entry.kitId).name;
       return `${player} returns with ${kitName}`;
     }

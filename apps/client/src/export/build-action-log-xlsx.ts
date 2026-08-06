@@ -230,7 +230,7 @@ export async function buildActionLogWorkbook(
           event.playerId,
           '',
           '',
-          event.kitId,
+          event.kitId ?? '',
         ]);
         break;
       case 'rewardsClaimed':

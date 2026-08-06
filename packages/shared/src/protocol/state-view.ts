@@ -284,11 +284,16 @@ export interface MirrorRedirectedLogEntry {
   botReason?: BotDecisionReason;
 }
 
-/** Player revived via Reanimation — rules spec §5, L26 / L30-06. */
+/** Player revived via Reanimation — rules spec §5, L26 / L30-06.
+ * `kitId` is Spy-gated (designer 2026-08-06): present for the revived seat and
+ * anyone who spies them; omitted from everyone else's public action log.
+ * Excel `exportLog` always carries the kit.
+ */
 export interface PlayerReanimatedLogEntry {
   kind: 'playerReanimated';
   playerId: string;
-  kitId: KitId;
+  /** Omitted when the recipient is neither the revived seat nor a Spy on them. */
+  kitId?: KitId;
   turnSequence: number;
 }
 

@@ -1710,3 +1710,14 @@ listed **Public** because it “changes what every opponent's gain does”).
 - Engine behaviour unchanged — `observeDirectGain` still reads server `Player.duplicationActive`.
 - No `PROTOCOL_VERSION` bump: field shape unchanged; semantics tightened.
 
+## 2026-08-06 · [P] Reanimation kit stays private in the action log
+
+Designer: the kit a player returns with after Reanimation must not be public.
+
+- Server still records `playerReanimated` with `kitId` (needed for Excel `exportLog`).
+- Per-recipient `PlayingStateView.actionLog` omits `kitId` unless the recipient is the
+  revived seat or currently spies them — same Spy gate as kit privacy generally.
+- Client copy: with kit → `X returns with KitName`; without → `X returns`.
+- No `PROTOCOL_VERSION` bump (`kitId` becomes optional on the log entry; older clients that
+  always expected a kit would already be on PROTOCOL 24+ for `finalTable`).
+

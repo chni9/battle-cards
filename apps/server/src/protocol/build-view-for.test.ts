@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../engine/create-initial-state';
 import { buildFinishedViewFor, buildLobbyViewFor, buildPlayingViewFor } from './build-view-for';
+import { grantSpy } from './visibility-matrix';
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
@@ -453,5 +454,68 @@ describe('buildPlayingViewFor (L19-02) — elimination reveal', () => {
       hand: [{ instanceId: 'x1', cardId: 'strong-attack', isUpgraded: false }],
       specialCards: [{ instanceId: 's1', cardId: 'suicide', isUpgraded: false }],
     });
+  });
+});
+
+describe('buildPlayingViewFor — reanimation kit privacy', () => {
+  it('omits playerReanimated.kitId unless self or Spy (designer 2026-08-06)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'reanim-kit-log-spy',
+    });
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+
+    const log = [
+      {
+        kind: 'playerReanimated' as const,
+        playerId: 'a',
+        kitId: 'untouchable' as const,
+        turnSequence: 3,
+      },
+    ];
+
+    const forSelf = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forSelf.actionLog[0]).toMatchObject({
+      kind: 'playerReanimated',
+      playerId: 'a',
+      kitId: 'untouchable',
+    });
+
+    const forSpy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forSpy.actionLog[0]).toMatchObject({
+      kind: 'playerReanimated',
+      playerId: 'a',
+      kitId: 'untouchable',
+    });
+
+    const forOther = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forOther.actionLog[0]).toEqual({
+      kind: 'playerReanimated',
+      playerId: 'a',
+      turnSequence: 3,
+    });
+    expect(forOther.actionLog[0]).not.toHaveProperty('kitId');
   });
 });

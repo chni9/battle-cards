@@ -148,9 +148,10 @@ function buildSpiedView(
 }
 
 /**
- * `activateDuplication` is Spy-gated (designer 2026-08-06): actor + current spies
- * see the real action; everyone else gets an opaque `draw` so the turn still
- * appears in the public log. Excel `exportLog` keeps the full server log.
+ * Per-recipient action-log redaction (designer 2026-08-06):
+ * - `activateDuplication` → opaque `draw` unless self or Spy on the actor
+ * - `playerReanimated.kitId` omitted unless self or Spy on the revived seat
+ * Excel `exportLog` keeps the full server log.
  */
 function mapActionLogForRecipient(
   actionLog: readonly ActionLogEntryView[],
@@ -158,30 +159,46 @@ function mapActionLogForRecipient(
   state: GameState,
 ): ActionLogEntryView[] {
   return actionLog.map((entry) => {
-    if (entry.kind !== 'actionPlayed' || entry.action !== 'activateDuplication') {
-      return entry;
+    if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
+      if (entry.actorPlayerId === recipientSessionId) {
+        return entry;
+      }
+
+      if (findSpyRelation(state, recipientSessionId, entry.actorPlayerId) !== undefined) {
+        return entry;
+      }
+
+      const opaque: ActionLogEntryView = {
+        kind: 'actionPlayed',
+        actorPlayerId: entry.actorPlayerId,
+        action: 'draw',
+        turnSequence: entry.turnSequence,
+      };
+
+      if (entry.botReason !== undefined) {
+        return { ...opaque, botReason: entry.botReason };
+      }
+
+      return opaque;
     }
 
-    if (entry.actorPlayerId === recipientSessionId) {
-      return entry;
+    if (entry.kind === 'playerReanimated') {
+      if (entry.playerId === recipientSessionId) {
+        return entry;
+      }
+
+      if (findSpyRelation(state, recipientSessionId, entry.playerId) !== undefined) {
+        return entry;
+      }
+
+      return {
+        kind: 'playerReanimated',
+        playerId: entry.playerId,
+        turnSequence: entry.turnSequence,
+      };
     }
 
-    if (findSpyRelation(state, recipientSessionId, entry.actorPlayerId) !== undefined) {
-      return entry;
-    }
-
-    const opaque: ActionLogEntryView = {
-      kind: 'actionPlayed',
-      actorPlayerId: entry.actorPlayerId,
-      action: 'draw',
-      turnSequence: entry.turnSequence,
-    };
-
-    if (entry.botReason !== undefined) {
-      return { ...opaque, botReason: entry.botReason };
-    }
-
-    return opaque;
+    return entry;
   });
 }
 

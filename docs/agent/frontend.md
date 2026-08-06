@@ -130,9 +130,10 @@ rules above are unchanged — this section only covers how the client looks.
   Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
-  `playerEliminated`, `mirrorRedirected`, opaque `rewardsClaimed`). Reward picks are never
-  shown. Bot rows may carry optional `botReason` (L17-05); UI exposes a Why control only —
-  never feed reasons into play/legal UI.
+  `playerEliminated`, `mirrorRedirected`, `playerReanimated`, opaque `rewardsClaimed`).
+  Reward picks are never shown. `playerReanimated.kitId` is Spy-gated (designer 2026-08-06):
+  self/spies see `X returns with Kit`; others see `X returns`. Bot rows may carry optional
+  `botReason` (L17-05); UI exposes a Why control only — never feed reasons into play/legal UI.
 - **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable

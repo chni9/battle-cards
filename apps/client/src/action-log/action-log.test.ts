@@ -167,7 +167,7 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice activated duplication');
   });
 
-  it('formats player reanimation with kit name (L30-06)', () => {
+  it('formats player reanimation with kit name when visible (L30-06)', () => {
     expect(
       formatActionLogEntry(
         {
@@ -179,6 +179,19 @@ describe('formatActionLogEntry (L9-02)', () => {
         nick,
       ),
     ).toBe('Bob returns with Untouchable');
+  });
+
+  it('formats player reanimation without kit when Spy-gated', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerReanimated',
+          playerId: 'b',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe('Bob returns');
   });
 
   it('spells out immunity when Spy or Thief fails', () => {

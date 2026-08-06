@@ -36,7 +36,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief. After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat or spies them (designer 2026-08-06); Excel `exportLog` keeps the kit |
 | Lives, shield, points, upgrade points | **Private** without Spy. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
