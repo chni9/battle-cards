@@ -3,6 +3,9 @@
  *
  * Shop prices (`buyCost` / `sellYield`) are always base-cost transfers; upgraded play
  * cost never changes them (Lot 2 ruling). Specials live in `special-card-catalog.ts`.
+ *
+ * `upgradeEffect` is the full player-facing description of the upgraded card (not a
+ * delta). Non-upgraded UI appends it after the base `effect` via `formatCardEffectText`.
  */
 
 import {
@@ -67,8 +70,8 @@ export const SHARED_CARD_CATALOG = {
     'Absorber',
     'action',
     3,
-    "Gain the lives the target lost during their last complete turn.",
-    'Also capture points and upgrade points they actively spent.',
+    'Gain the lives the target lost during their last complete turn.',
+    'Gain the lives the target lost during their last complete turn, and also capture points and upgrade points they actively spent.',
   ),
   spy: pointsCard(
     'spy',
@@ -76,7 +79,7 @@ export const SHARED_CARD_CATALOG = {
     'action',
     4,
     "See the target's kit and cards for the rest of the game.",
-    "Also see all of the target's resources.",
+    "See the target's kit, cards and all resources for the rest of the game.",
   ),
   thief: pointsCard(
     'thief',
@@ -84,7 +87,7 @@ export const SHARED_CARD_CATALOG = {
     'action',
     5,
     'Steal up to 10 points from the target.',
-    'Target loses the stolen amount; you gain double.',
+    'Target loses up to 10 points; you gain double that amount.',
   ),
   mirror: pointsCard(
     'mirror',
@@ -92,7 +95,7 @@ export const SHARED_CARD_CATALOG = {
     'action',
     6,
     'Redirect a non-upgraded attack pending against you.',
-    'Also redirect upgraded attacks and double the redirected damage.',
+    'Redirect any attack pending against you (including upgraded) and double the redirected damage.',
   ),
   shield: pointsCard(
     'shield',
@@ -100,7 +103,7 @@ export const SHARED_CARD_CATALOG = {
     'action',
     7,
     'Gain 4 shield points. Only one shield at a time.',
-    'Gain 7 shield points; blocks Thief and Spy at no shield cost.',
+    'Gain 7 shield points; blocks Thief and Spy at no shield cost. Only one shield at a time.',
   ),
   tax: {
     id: 'tax',
@@ -108,7 +111,7 @@ export const SHARED_CARD_CATALOG = {
     type: 'action',
     cost: { lives: 1 },
     effect: 'Gain 4 points. Always costs 1 life.',
-    upgradeEffect: 'Gain 6 points for the same 1 life.',
+    upgradeEffect: 'Gain 6 points. Always costs 1 life.',
     // Lot 2 ruling: buy = 2× life usage cost; sell = 1× life usage cost.
     buyCost: { lives: 2 },
     sellYield: { lives: 1 },
@@ -119,7 +122,7 @@ export const SHARED_CARD_CATALOG = {
     type: 'action',
     cost: { pointsPerLife: 3 },
     effect: 'Buy up to 4 lives at 3 points each.',
-    upgradeEffect: 'Cost reduced to 2 points per life; cap of 4 unchanged.',
+    upgradeEffect: 'Buy up to 4 lives at 2 points each.',
     // Lot 2 ruling: shop uses 2× / 1× the base one-life usage cost (3 points).
     buyCost: { points: 6 },
     sellYield: { points: 3 },

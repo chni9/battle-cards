@@ -92,6 +92,9 @@ that has become implemented; `registry.test.ts` proves the two lists together ac
 2. Add its static data (name, cost, `buyCost`, `sellYield`, description strings) to
    `SHARED_CARD_CATALOG` when it is a shared card.
    `effect` and `upgradeEffect` are **player-facing text**, never executable data.
+   `upgradeEffect` is the **full** upgraded description (standalone, not a delta).
+   Non-upgraded UI shows both via `formatCardEffectText`; upgraded UI shows only
+   `upgradeEffect`.
 3. Add its handler in its own file under `apps/server/src/cards/handlers/`.
 4. Register it in `cardHandlers` and move its id from `PENDING_CARD_IDS` to
    `IMPLEMENTED_CARD_IDS`. Neither half compiles without the other.

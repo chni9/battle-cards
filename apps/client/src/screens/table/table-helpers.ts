@@ -5,6 +5,7 @@
 
 import {
   ATTACK_CARD_IDS,
+  formatCardEffectText,
   getCard,
   type CardInstance,
   type PlayingStateView,
@@ -73,5 +74,5 @@ export function cardEffectText(instance: CardInstance): string {
   if (definition === undefined) {
     return '';
   }
-  return instance.isUpgraded ? definition.upgradeEffect : definition.effect;
+  return formatCardEffectText(definition, instance.isUpgraded);
 }

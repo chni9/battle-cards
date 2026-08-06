@@ -110,7 +110,10 @@ export interface Card {
   cost: CardCost;
   /** Player-facing description of the base effect. Behaviour lives in the card's handler. */
   effect: string;
-  /** Player-facing description of the upgraded effect. */
+  /**
+   * Full player-facing description of the upgraded card (standalone, not a delta).
+   * Non-upgraded UI appends this after `effect` via `formatCardEffectText`.
+   */
   upgradeEffect: string;
   /**
    * Shop purchase price from infinite stock — always the **base** usage transfer × 2

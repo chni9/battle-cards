@@ -223,7 +223,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <Card instance={actionInstance} detail="face" className="w-24 shrink-0" />
             <div className="min-w-0 space-y-2">
               {actionEffect.length > 0 && (
-                <p className="text-sm leading-snug text-ink">{actionEffect}</p>
+                <p className="whitespace-pre-line text-sm leading-snug text-ink">
+                  {actionEffect}
+                </p>
               )}
               <p className="text-sm text-ink-muted">
                 {!isMyTurn || actionsLocked
@@ -259,7 +261,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
             />
             <div className="min-w-0 space-y-2 text-center sm:text-left">
               {inspectEffect.length > 0 && (
-                <p className="text-sm leading-snug text-ink">{inspectEffect}</p>
+                <p className="whitespace-pre-line text-sm leading-snug text-ink">
+                  {inspectEffect}
+                </p>
               )}
               {dialog.source === 'active' ? (
                 <>

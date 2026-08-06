@@ -4,7 +4,7 @@
  * `activePersistentEffects` (PROTOCOL_VERSION 19).
  */
 
-import { getCard, type CardInstance } from '@card-battle/shared';
+import { formatCardEffectText, getCard, type CardInstance } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { getCardArtUrl } from '../asset-lookup';
@@ -34,9 +34,10 @@ export function Card({
 }: CardProps): ReactElement {
   const definition = getCard(instance.cardId);
   const name = definition?.name ?? instance.cardId;
-  const effect = instance.isUpgraded
-    ? (definition?.upgradeEffect ?? '')
-    : (definition?.effect ?? '');
+  const effect =
+    definition === undefined
+      ? ''
+      : formatCardEffectText(definition, instance.isUpgraded);
   const artUrl = getCardArtUrl(instance.cardId, {
     isUpgraded: instance.isUpgraded,
     ...(activated ? { activated: true } : {}),
@@ -62,7 +63,7 @@ export function Card({
         </span>
       )}
       {detail === 'full' && effect.length > 0 && (
-        <span className="mt-0.5 block shrink-0 text-center text-[10px] leading-snug text-ink-muted">
+        <span className="mt-0.5 block shrink-0 whitespace-pre-line text-center text-[10px] leading-snug text-ink-muted">
           {effect}
         </span>
       )}
