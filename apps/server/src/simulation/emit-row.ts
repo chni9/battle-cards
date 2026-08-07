@@ -29,6 +29,7 @@ export function serializeGameRow(row: SimulationGameRow): string {
           left.localeCompare(right),
         ),
       ),
+      drawCount: player.drawCount,
       buyCount: player.buyCount,
       sellCount: player.sellCount,
       upgradeCount: player.upgradeCount,

@@ -1,0 +1,175 @@
+{
+  "completedGames": 1210,
+  "stalledGames": 190,
+  "winRateByKit": {
+    "kamikaze": {
+      "wins": 186,
+      "games": 679,
+      "rate": 0.27393225331369664
+    },
+    "untouchable": {
+      "wins": 448,
+      "games": 691,
+      "rate": 0.6483357452966715
+    },
+    "scientific": {
+      "wins": 135,
+      "games": 656,
+      "rate": 0.20579268292682926
+    },
+    "assassin": {
+      "wins": 441,
+      "games": 740,
+      "rate": 0.595945945945946
+    }
+  },
+  "winRateByMatchup": {
+    "kamikaze_vs_untouchable": {
+      "kitA": "kamikaze",
+      "kitB": "untouchable",
+      "winsA": 34,
+      "winsB": 140,
+      "games": 174
+    },
+    "scientific_vs_untouchable": {
+      "kitA": "scientific",
+      "kitB": "untouchable",
+      "winsA": 13,
+      "winsB": 138,
+      "games": 151
+    },
+    "assassin_vs_untouchable": {
+      "kitA": "assassin",
+      "kitB": "untouchable",
+      "winsA": 129,
+      "winsB": 64,
+      "games": 193
+    },
+    "kamikaze_vs_scientific": {
+      "kitA": "kamikaze",
+      "kitB": "scientific",
+      "winsA": 70,
+      "winsB": 75,
+      "games": 145
+    },
+    "assassin_vs_kamikaze": {
+      "kitA": "assassin",
+      "kitB": "kamikaze",
+      "winsA": 131,
+      "winsB": 56,
+      "games": 187
+    },
+    "assassin_vs_scientific": {
+      "kitA": "assassin",
+      "kitB": "scientific",
+      "winsA": 160,
+      "winsB": 27,
+      "games": 187
+    }
+  },
+  "turnSequence": {
+    "min": 6,
+    "max": 1372,
+    "mean": 63.48842975206612,
+    "p50": 40
+  },
+  "eliminationReasons": {
+    "combat": 1556
+  },
+  "stallsByKit": {
+    "untouchable": {
+      "stalledGames": 109,
+      "seatedGames": 800
+    },
+    "kamikaze": {
+      "stalledGames": 121,
+      "seatedGames": 800
+    },
+    "scientific": {
+      "stalledGames": 144,
+      "seatedGames": 800
+    },
+    "assassin": {
+      "stalledGames": 60,
+      "seatedGames": 800
+    }
+  },
+  "stallsByMatchup": {
+    "kamikaze_vs_untouchable": {
+      "kitA": "kamikaze",
+      "kitB": "untouchable",
+      "stalledGames": 26,
+      "attemptedGames": 200
+    },
+    "scientific_vs_untouchable": {
+      "kitA": "scientific",
+      "kitB": "untouchable",
+      "stalledGames": 49,
+      "attemptedGames": 200
+    },
+    "assassin_vs_untouchable": {
+      "kitA": "assassin",
+      "kitB": "untouchable",
+      "stalledGames": 7,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_scientific": {
+      "kitA": "kamikaze",
+      "kitB": "scientific",
+      "stalledGames": 55,
+      "attemptedGames": 200
+    },
+    "assassin_vs_kamikaze": {
+      "kitA": "assassin",
+      "kitB": "kamikaze",
+      "stalledGames": 13,
+      "attemptedGames": 200
+    },
+    "assassin_vs_scientific": {
+      "kitA": "assassin",
+      "kitB": "scientific",
+      "stalledGames": 13,
+      "attemptedGames": 200
+    }
+  },
+  "cardAppearances": {
+    "spy": 981,
+    "tax": 1204,
+    "regeneration": 778,
+    "spy-thief": 655,
+    "super-attack": 444,
+    "thief": 629,
+    "strong-attack": 902,
+    "basic-attack": 574,
+    "imposition": 393,
+    "absorber": 281,
+    "shield": 95,
+    "mirror": 65,
+    "cloning": 271,
+    "points-generator": 616,
+    "sentence": 61,
+    "suicide": 1
+  },
+  "drawStatsByKit": {
+    "kamikaze": {
+      "games": 679,
+      "totalDraws": 1486,
+      "meanDrawsPerGame": 2.188512518409426
+    },
+    "untouchable": {
+      "games": 691,
+      "totalDraws": 1887,
+      "meanDrawsPerGame": 2.73082489146165
+    },
+    "scientific": {
+      "games": 656,
+      "totalDraws": 4643,
+      "meanDrawsPerGame": 7.077743902439025
+    },
+    "assassin": {
+      "games": 740,
+      "totalDraws": 3618,
+      "meanDrawsPerGame": 4.889189189189189
+    }
+  }
+}

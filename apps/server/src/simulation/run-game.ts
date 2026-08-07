@@ -67,6 +67,8 @@ export interface SimulationGameRow {
     shieldIsUpgraded: boolean;
     cardsPlayedCount: number;
     cardsPlayedById: Readonly<Record<string, number>>;
+    /** `{ type: 'draw' }` actions — Lot 31 Tactician idle measurement. */
+    drawCount: number;
     buyCount: number;
     sellCount: number;
     upgradeCount: number;
@@ -442,6 +444,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         shieldIsUpgraded: player.shieldIsUpgraded,
         cardsPlayedCount: player.cardsPlayedCount,
         cardsPlayedById: player.cardsPlayedById,
+        drawCount: countDrawsForPlayer(player.playerId, actionLog),
         buyCount: player.buyCount,
         sellCount: player.sellCount,
         upgradeCount: player.upgradeCount,
@@ -451,4 +454,23 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     }),
     eliminations: snapshot.eliminations,
   };
+}
+
+function countDrawsForPlayer(
+  playerId: string,
+  actionLog: readonly ActionLogEntryView[],
+): number {
+  let count = 0;
+
+  for (const entry of actionLog) {
+    if (
+      entry.kind === 'actionPlayed' &&
+      entry.actorPlayerId === playerId &&
+      entry.action === 'draw'
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
 }

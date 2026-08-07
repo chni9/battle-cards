@@ -1,0 +1,49 @@
+{
+  "baseSeed": "gross-imbalance-2026-08-04",
+  "gamesPerCell": 200,
+  "difficulty": "hard",
+  "oneVOneKits": [
+    "untouchable",
+    "kamikaze",
+    "scientific",
+    "assassin"
+  ],
+  "oneVOnePairs": [
+    [
+      "untouchable",
+      "kamikaze"
+    ],
+    [
+      "untouchable",
+      "scientific"
+    ],
+    [
+      "untouchable",
+      "assassin"
+    ],
+    [
+      "kamikaze",
+      "scientific"
+    ],
+    [
+      "kamikaze",
+      "assassin"
+    ],
+    [
+      "scientific",
+      "assassin"
+    ]
+  ],
+  "fourPlayer": {
+    "mode": "fixed",
+    "games": 200,
+    "mix": [
+      "untouchable",
+      "kamikaze",
+      "scientific",
+      "assassin"
+    ]
+  },
+  "undersampledCardThreshold": 100,
+  "coverageNote": "1v1: 6 unordered pairs × 200 games (full matrix; nothing dropped). 4p: 200 games with fixed mix [untouchable, kamikaze, scientific, assassin]. Undersampled card threshold N=100. Difficulty sweeps deferred. Stalls counted separately (never assigned a winner)."
+}
