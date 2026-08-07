@@ -42,6 +42,20 @@ export function buildPersistentIncomingChips(
         });
       }
 
+      // Victim-owned Curse ticks on your turn after you act (L32-01).
+      if (effect.cardId === 'curse' && player.id === view.you) {
+        chips.push({
+          id: `persistent:${effect.id}->${view.you}`,
+          sourcePlayerId: view.you,
+          targetPlayerId: view.you,
+          cardId: effect.cardId,
+          isUpgraded: effect.isUpgraded,
+          queuedAt: SYNTHETIC_QUEUED_AT,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        });
+      }
+
       if (effect.cardId === 'points-generator' && player.id === view.you) {
         chips.push({
           id: `persistent:${effect.id}->${view.you}`,

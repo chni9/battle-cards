@@ -56,7 +56,11 @@ import {
   type EliminationEvent,
 } from './elimination-rewards';
 import { canAffordPlayPoints, playPointsCost } from './play-cost';
-import { resolvePendingEffects, type ResolvedEffect } from './resolve-pending';
+import {
+  resolvePendingEffects,
+  type CurseTransfer,
+  type ResolvedEffect,
+} from './resolve-pending';
 import { hasActiveSubChoice } from './sub-choice';
 
 export type TurnAction =
@@ -144,6 +148,8 @@ export interface TurnResult {
   mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[];
   /** Reanimation revives completed this turn phase (L30-06). */
   playerReanimated?: readonly { playerId: string; kitId: KitId }[];
+  /** Curse instances passed by successful attacks this resolve (L32-01). */
+  curseTransfers?: readonly (CurseTransfer & { turnSequence: number })[];
 }
 
 export interface TurnRejection {
@@ -914,11 +920,17 @@ function finishTurnPhases(
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
+  const curseTransfers = collectCurseTransfers(
+    resolvedEffects,
+    actionPlayed.turnSequence,
+  );
 
   const reanimated =
     playerReanimated.length > 0 ? { playerReanimated } : {};
   const redirects =
     mirrorRedirects !== undefined && mirrorRedirects.length > 0 ? { mirrorRedirects } : {};
+  const transfers =
+    curseTransfers.length > 0 ? { curseTransfers } : {};
 
   if (hasPendingEliminationRewards(state)) {
     return {
@@ -931,6 +943,7 @@ function finishTurnPhases(
       rewardChoicePending: true,
       ...reanimated,
       ...redirects,
+      ...transfers,
     };
   }
 
@@ -945,6 +958,7 @@ function finishTurnPhases(
       subChoicePending: true,
       ...reanimated,
       ...redirects,
+      ...transfers,
     };
   }
 
@@ -965,7 +979,27 @@ function finishTurnPhases(
     eliminations,
     ...reanimated,
     ...redirects,
+    ...transfers,
   };
+}
+
+function collectCurseTransfers(
+  resolved: readonly ResolvedEffect[],
+  turnSequence: number,
+): (CurseTransfer & { turnSequence: number })[] {
+  const transfers: (CurseTransfer & { turnSequence: number })[] = [];
+
+  for (const entry of resolved) {
+    if (entry.curseTransfers === undefined) {
+      continue;
+    }
+
+    for (const transfer of entry.curseTransfers) {
+      transfers.push({ ...transfer, turnSequence });
+    }
+  }
+
+  return transfers;
 }
 
 /**

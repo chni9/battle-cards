@@ -214,6 +214,25 @@ export async function buildActionLogWorkbook(
           `from ${event.previousTargetPlayerId}`,
         ]);
         break;
+      case 'curseTransferred':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          event.fromPlayerId,
+          '',
+          event.toPlayerId,
+          event.cardId,
+          event.isUpgraded,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          event.effectId,
+        ]);
+        break;
       case 'playerReanimated':
         eventsSheet.addRow([
           event.kind,

@@ -1468,12 +1468,12 @@ Three new branches in `score-persistents.ts`:
 - **Poison** — `invest + POISON_INVEST_BONUS` (+`POISON_MULTI_TARGET_BONUS` at 2+ living
   opponents, since it hits every opponent at once); refused with `hasOwnPersistent('poison')`
   already active or zero living opponents.
-- **Curse** — needs a target; refused without one, against an `isImmuneTarget` result, or a
-  seat this bot's own Curse already sits on (one copy per victim). `deny + CURSE_DENY_BONUS
-  + spentLastTurn` when the target's last complete turn spent ≥ `CURSE_HIGH_SPEND_THRESHOLD`
-  points or the target already tops `ctx.threatOrder`; otherwise a smaller
-  `invest + CURSE_INVEST_BONUS` — still worth activating on any living target, the drip pays
-  off over time even with no signal yet.
+- **Curse** — needs a target; refused without one or against an `isImmuneTarget` result.
+  Stacking is legal (L32-01): soft `-2` per existing Curse on the target, not a hard deny.
+  `deny + CURSE_DENY_BONUS + spentLastTurn` when the target's last complete turn spent ≥
+  `CURSE_HIGH_SPEND_THRESHOLD` points or the target already tops `ctx.threatOrder`; otherwise
+  a smaller `invest + CURSE_INVEST_BONUS` — still worth activating on any living target, the
+  drip pays off over time even with no signal yet.
 - **Super Absorber** — refused with `hasOwnPersistent('super-absorber')` already active or
   zero living opponents. Upgraded escalates like Absorber+ (`scoreAbsorber` in
   `policy-internals.ts`): `deny + SUPER_ABSORBER_UP_DENY_BONUS` when any living opponent's
@@ -1763,4 +1763,23 @@ Designer session:
 3. Implementation: `Player.absorbWindowPendingPlayerIds`, helpers in `absorb-window.ts`,
    shared `absorbLedgerFromVictim`, Absorber-only exception in legal targets / `perform-action`,
    public `absorbWindowOpen` on `PublicPlayerView`. **PROTOCOL_VERSION 24 → 25**.
+
+## 2026-08-07 · [P] Curse victim-owned + transfer (L32-01)
+
+Designer session — supersedes L22-02 **placement** and elim attribution only.
+`#V4-20` spend math (per turn, remainder discarded, `pointsSpent` only, floor at 1 life)
+stays.
+
+- Effect lives on the **cursed** player's `activePersistentEffects` (`targetPlayerId: null`),
+  not the caster. Activated card UI follows the cursed seat.
+- Stacking allowed; each copy ticks independently on the same `pointsSpent`.
+- Transfer: after any attack card resolves with **≥1 life lost**, move every Curse on the
+  attacker onto the hit player (same instance, keep upgraded). No transfer when cancelled,
+  blocked, immune, or fully shield-absorbed. Pass-back (including to original caster) is
+  allowed. Multi-attack / MEGA: each successful hit transfers whatever Curse(s) the attacker
+  still holds.
+- End: at 1 remaining life during a tick, or on elimination → permanently to the pool.
+- No `recordEliminationContributor` for Curse ticks (cannot finish a player off).
+- Public action-log kind `curseTransferred`. **PROTOCOL_VERSION 25 → 26**.
+- Bot: drop hard deny on re-curse; soft stack penalty only.
 

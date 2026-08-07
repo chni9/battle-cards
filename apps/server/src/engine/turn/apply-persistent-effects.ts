@@ -161,30 +161,19 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
 }
 
 function applyCursesOnVictim(state: GameState, victim: Player): void {
-  for (const caster of state.players) {
-    if (caster.id === victim.id || caster.isEliminated) {
-      continue;
-    }
+  // Victim-owned (L32-01) — snapshot ids; deactivate mutates the array mid-loop.
+  const curseEffects = victim.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'curse',
+  );
 
-    // Snapshot ids — deactivate mutates the owner's array mid-loop.
-    const curseEffects = caster.activePersistentEffects.filter(
-      (effect) => effect.cardId === 'curse' && effect.targetPlayerId === victim.id,
-    );
-
-    for (const effect of curseEffects) {
-      applyOneCurse(state, caster, victim, effect);
-    }
+  for (const effect of curseEffects) {
+    applyOneCurse(state, victim, effect);
   }
 }
 
-function applyOneCurse(
-  state: GameState,
-  caster: Player,
-  victim: Player,
-  effect: PersistentEffect,
-): void {
+function applyOneCurse(state: GameState, victim: Player, effect: PersistentEffect): void {
   if (victim.lives <= 1) {
-    deactivatePersistentEffect(state, caster.id, effect.id);
+    deactivatePersistentEffect(state, victim.id, effect.id);
     return;
   }
 
@@ -202,9 +191,9 @@ function applyOneCurse(
   const loss = applyLifeLoss(victim, lossAmount, 'curse');
   victim.turnLedger.livesLost += loss.livesLost;
   creditGhostLifeLoss(state, victim, loss.livesLost);
-  recordEliminationContributor(state, victim.id, caster.id, loss.livesLost);
+  // No elimination credit — Curse cannot finish a player off (designer 2026-08-07).
 
   if (victim.lives <= 1) {
-    deactivatePersistentEffect(state, caster.id, effect.id);
+    deactivatePersistentEffect(state, victim.id, effect.id);
   }
 }

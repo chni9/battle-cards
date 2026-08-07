@@ -190,11 +190,16 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Invisibility → (if not invisible) Super Absorber → Imposition → Poison → Curse. Super Absorber
   reads the current seat's ledger
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
-  persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses. Imposition /
-  Poison / Curse act on the current player from other seats' active effects; Points Generator
-  ticks on the owner's turn (including the play turn). Curse has no counter — it stores
-  `targetPlayerId` and exits via `deactivatePersistentEffect` when the victim reaches 1 life
-  (#V4-20). Deactivated counter cards join the shared pool. Invisibility is
+  persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses.   Imposition /
+  Poison act on the current player from other seats' active effects; Curse is
+  **victim-owned** (L32-01) and ticks from the current player's own
+  `activePersistentEffects`. Points Generator ticks on the owner's turn
+  (including the play turn). Curse has no counter — `targetPlayerId` is null —
+  and exits via `deactivatePersistentEffect` when the victim reaches 1 life
+  (#V4-20 spend floor) or on elimination (persistents pooled). A successful
+  attack that deals ≥1 life moves every Curse on the attacker onto the hit
+  player (`transferCursesFromAttacker`, logged as `curseTransferred`).
+  Deactivated counter cards join the shared pool. Invisibility is
   `counter: null` and exits only via the `deactivatePersistent` TurnAction (#V4-10).
 
 ## Mutual attacks — mechanics

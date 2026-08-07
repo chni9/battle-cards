@@ -94,9 +94,9 @@ export interface PersistentEffect {
    */
   counter: number | null;
   /**
-   * Chosen victim for single-target persistents (Curse). `null` for owner-scoped
-   * or all-opponents persistents (Imposition, Poison, Points Generator, Super Absorber).
-   * Public via `PersistentEffectView` (tech v4 §5.1 — Curse active on a victim).
+   * Legacy single-target field. Curse is victim-owned (L32-01) with this null;
+   * other persistents are owner-scoped or all-opponents and also leave it null.
+   * Public via `PersistentEffectView`.
    */
   targetPlayerId: string | null;
 }

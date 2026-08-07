@@ -163,28 +163,26 @@ function scoreCurse(
     return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
   }
 
-  // One Curse per victim — a second copy on an already-cursed seat wastes a card.
-  const alreadyCursedByUs = view.self.activePersistentEffects.some(
-    (effect) => effect.cardId === 'curse' && effect.targetPlayerId === targetId,
-  );
-
-  if (alreadyCursedByUs) {
-    return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
-  }
+  // Stacking is legal (L32-01); prefer uncursed seats when spending is equal.
+  const curseCount = target.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'curse',
+  ).length;
 
   const spentLastTurn = ctx.lastTurnPointsSpent.get(targetId) ?? 0;
   const onTopThreat = targetId === ctx.threatOrder[0];
+  const stackPenalty = curseCount * 2;
 
   if (spentLastTurn >= CURSE_HIGH_SPEND_THRESHOLD || onTopThreat) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + CURSE_DENY_BONUS + spentLastTurn,
+      score:
+        HEURISTIC_BAND_WEIGHTS.deny + CURSE_DENY_BONUS + spentLastTurn - stackPenalty,
       code: 'deny',
     };
   }
 
   // No strong signal yet — still worth activating on a living target (drips over time).
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + CURSE_INVEST_BONUS,
+    score: HEURISTIC_BAND_WEIGHTS.invest + CURSE_INVEST_BONUS - stackPenalty,
     code: 'invest',
   };
 }

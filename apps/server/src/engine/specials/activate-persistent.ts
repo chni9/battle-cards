@@ -16,7 +16,7 @@ export interface ActivatePersistentInput {
   cardId: CardId;
   isUpgraded: boolean;
   counter: number | null;
-  /** Curse victim; omit or null for all-opponents / self persistents. */
+  /** Legacy; Curse is activated on the cursed seat with null (L32-01). */
   targetPlayerId?: string | null;
 }
 

@@ -185,7 +185,10 @@ export interface PersistentEffectView {
   cardId: CardId;
   isUpgraded: boolean;
   counter: number | null;
-  /** Chosen victim for Curse; `null` otherwise (tech v4 §5.1). */
+  /**
+   * Legacy single-target field. Curse is victim-owned (L32-01) so this is
+   * always `null` for Curse; other persistents leave it null too.
+   */
   targetPlayerId: string | null;
 }
 
@@ -289,6 +292,17 @@ export interface MirrorRedirectedLogEntry {
   botReason?: BotDecisionReason;
 }
 
+/** Curse passed by a successful attack (lives lost ≥ 1) — L32-01 / PROTOCOL_VERSION 26. */
+export interface CurseTransferredLogEntry {
+  kind: 'curseTransferred';
+  fromPlayerId: string;
+  toPlayerId: string;
+  cardId: 'curse';
+  isUpgraded: boolean;
+  effectId: string;
+  turnSequence: number;
+}
+
 /** Player revived via Reanimation — rules spec §5, L26 / L30-06.
  * `kitId` is Spy-gated (designer 2026-08-06): present for the revived seat and
  * anyone who spies them; omitted from everyone else's public action log.
@@ -320,6 +334,7 @@ export type ActionLogEntryView =
   | ActionResolvedLogEntry
   | PlayerEliminatedLogEntry
   | MirrorRedirectedLogEntry
+  | CurseTransferredLogEntry
   | PlayerReanimatedLogEntry
   | RewardsClaimedLogEntry;
 

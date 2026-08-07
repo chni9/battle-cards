@@ -488,7 +488,7 @@ no task defaults it. Includes the two fields that are not card-driven.
 | `Player.attackBlockCharges` (Attack Thief) | **Public presence** | Mirrors `activeShield`, public since PROTOCOL 20 as presence-plus-tier with the point count private. |
 | `PendingEffect.redirectedBy` | **Public** | The pending queue is already public. |
 | Reanimation armed on a player | **Public** | Via `activePersistentEffects` (#V4-12b). `pendingReanimation` is also public while revive is queued after elim. |
-| Curse active on a victim | **Public** | Persistent effects are already public per seat. |
+| Curse active on a victim | **Public** | Effect lives on the cursed seat's `activePersistentEffects` (L32-01). |
 | The card stolen by Card Thief | **Private to thief and victim** | Its identity reaches the thief's hand, but `PublicPlayerView` publishes no hand count, so other seats learn nothing. Do **not** put the stolen `cardId` in the public `ActionPlayedLogEntry`, which carries the *played* card. |
 | The special drawn by Card Transformer | **Private to the user** | Same reasoning. The transformation is public, the result is a card in hand. |
 | The 4 cards taken by Card Absorber | **Public** | They leave a public pool; their disappearance is observable anyway. |
@@ -568,7 +568,7 @@ triggers no alert anywhere.
 | `mega-attack` | MEGA ATTACK | 16 pts | — | **Attack card.** 20 damage to every player. Shield applies. Base: only an upgraded Mirror redirects it. Upgraded: never redirectable. |
 | `super-mirror` | Super Mirror | 7 pts | — | Redirects every attack pending on the user to all opponents, each independently. Not re-redirectable by a regular Mirror. Upgraded: doubles the damage. |
 | `super-absorber` | Super Absorber | 8 pts | **2** | On activation, absorbs last-turn spend/lives from all in-window opponents; then absorbs on each living opponent turn while the counter holds. Upgraded: doubles the gains. |
-| `curse` | Curse | 8 pts | — | A chosen opponent loses 1 life per 3 points they spend on their turn (per 2 upgraded). Deactivates when the victim reaches 1 life — it cannot finish them off. |
+| `curse` | Curse | 8 pts | — | Victim-owned: chosen opponent loses 1 life per 3 points spent (per 2 upgraded). Stacks. Successful attack (≥1 life) passes every Curse held to the hit player. Ends at 1 life or on death → pool. |
 | `poison` | Poison | 8 pts | **3** | All opponents lose 1 life per turn (2 upgraded) while the counter holds. |
 | `attack-thief` | Attack Thief | 8 pts | — | Blocks one attack targeting the user, once, and steals a random attack card from each opponent. Upgraded: all attack cards from all opponents. |
 

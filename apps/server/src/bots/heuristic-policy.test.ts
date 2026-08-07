@@ -1664,21 +1664,27 @@ describe('L29-06: persistent specials', () => {
     ).toEqual({ type: 'draw' });
   });
 
-  it('Curse refuses re-cursing an already-cursed target', () => {
+  it('Curse still plays on an already-cursed target (stacking legal)', () => {
     const view = baseView({
       self: baseSelf({
         specialCards: [{ instanceId: 'cur-2', cardId: 'curse', isUpgraded: false }],
-        activePersistentEffects: [
-          {
-            id: 'cur-live',
-            cardId: 'curse',
-            isUpgraded: false,
-            counter: null,
-            targetPlayerId: 'bot-b',
-          },
-        ],
       }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'cur-live',
+              cardId: 'curse',
+              isUpgraded: false,
+              counter: null,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+      ],
     });
+    // Stacking is legal (L32-01); soft stack penalty must not deny below draw.
     expect(
       decide(
         view,
@@ -1686,9 +1692,9 @@ describe('L29-06: persistent specials', () => {
           { type: 'draw' },
           { type: 'playCard', instanceId: 'cur-2', targetPlayerId: 'bot-b' },
         ],
-        createRng('curse-dup'),
+        createRng('curse-stack'),
       ),
-    ).toEqual({ type: 'draw' });
+    ).toEqual({ type: 'playCard', instanceId: 'cur-2', targetPlayerId: 'bot-b' });
   });
 
   it('Super Absorber beats draw with a living opponent; refuses a second activation', () => {

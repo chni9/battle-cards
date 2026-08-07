@@ -145,6 +145,20 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
       turnSequence,
     });
   }
+
+  if (result.curseTransfers !== undefined) {
+    for (const transfer of result.curseTransfers) {
+      log.push({
+        kind: 'curseTransferred',
+        fromPlayerId: transfer.fromPlayerId,
+        toPlayerId: transfer.toPlayerId,
+        cardId: 'curse',
+        isUpgraded: transfer.isUpgraded,
+        effectId: transfer.effectId,
+        turnSequence: transfer.turnSequence,
+      });
+    }
+  }
 }
 
 export function runSimulatedGame(input: RunGameInput): SimulationGameRow {

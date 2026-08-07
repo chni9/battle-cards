@@ -31,17 +31,25 @@ import { applyLifeLoss } from '../life/apply-life-loss';
 import type { Rng } from '../rng';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import {
+  transferCursesFromAttacker,
+  type CurseTransfer,
+} from '../specials/transfer-curses';
 import { findPlayer } from './advance-turn';
 import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = ActionResolutionOutcome;
 
+export type { CurseTransfer };
+
 export interface ResolvedEffect {
   effect: PendingEffect;
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ResolveOutcome;
+  /** Curse instances moved when this attack dealt ≥1 life (L32-01). */
+  curseTransfers?: CurseTransfer[];
 }
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
@@ -395,6 +403,21 @@ export function resolvePendingEffects(
       poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
       recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
       outcome = 'applied';
+
+      // Pass every Curse on the attacker when the hit deals life (L32-01).
+      const curseTransfers =
+        livesLost >= 1
+          ? transferCursesFromAttacker(state, effect.sourcePlayerId, player.id)
+          : [];
+
+      resolved.push({
+        effect,
+        livesLost,
+        shieldAbsorbed,
+        outcome,
+        ...(curseTransfers.length > 0 ? { curseTransfers } : {}),
+      });
+      continue;
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {
         resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });

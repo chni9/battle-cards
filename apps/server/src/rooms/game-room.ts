@@ -1211,6 +1211,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.broadcast(ACTION_RESOLVED, resolved);
     }
 
+    if (result.curseTransfers !== undefined) {
+      for (const transfer of result.curseTransfers) {
+        this.actionLog.push({
+          kind: 'curseTransferred',
+          fromPlayerId: transfer.fromPlayerId,
+          toPlayerId: transfer.toPlayerId,
+          cardId: 'curse',
+          isUpgraded: transfer.isUpgraded,
+          effectId: transfer.effectId,
+          turnSequence: transfer.turnSequence,
+        });
+      }
+    }
+
     for (const playerId of result.eliminatedPlayerIds) {
       const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
       const eliminated = this.gameState?.players.find((player) => player.id === playerId);

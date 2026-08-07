@@ -1,6 +1,7 @@
 /**
- * Curse — rules spec §5, backlog L22-02, #V4-20.
- * Activates a no-counter persistent aimed at one opponent; ticks in apply-persistent-effects.
+ * Curse — rules spec §5, backlog L32-01 (victim-owned; supersedes L22-02 placement).
+ * Activates on the chosen opponent; ticks in apply-persistent-effects; transfers on
+ * successful attack (lives lost ≥ 1).
  */
 
 import { activatePersistentEffect } from '../../engine/specials/activate-persistent';
@@ -22,13 +23,14 @@ export const curseHandler: CardHandler = {
       throw new Error('curse play requires a target');
     }
 
+    // Effect lives on the cursed seat (designer 2026-08-07 / L32-01) — not the caster.
     activatePersistentEffect({
       state: context.state,
-      ownerPlayerId: context.sourcePlayerId,
+      ownerPlayerId: context.targetPlayerId,
       cardId: 'curse',
       isUpgraded: context.card.isUpgraded,
       counter: null,
-      targetPlayerId: context.targetPlayerId,
+      targetPlayerId: null,
     });
   },
 };

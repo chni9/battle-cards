@@ -203,7 +203,9 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: doubles all gains obtained this way.
 
 **Curse** — Price: 8 points
-- Action: the user chooses an opponent to curse; that opponent loses 1 life for every 3 points they spend on their turn. The effect deactivates as soon as the victim drops to 1 remaining life (it cannot finish them off).
+- Action: the user chooses an opponent to curse. The effect lives on that opponent (not the user). While cursed, they lose 1 life for every 3 points they spend on their turn. Multiple Curses on the same player stack — each copy ticks independently on the same spend.
+- Passing the Curse: when a cursed player successfully deals at least 1 life with any attack card, every Curse they hold moves onto the hit player (the upgraded state is kept). Cancelled, blocked, immune, or fully shield-absorbed attacks do not transfer.
+- End: the effect deactivates and is permanently lost to the shared pool as soon as the cursed player drops to 1 remaining life (it cannot finish them off), or when that player is eliminated.
 - Upgrade: 1 life lost per 2 points spent instead of 3.
 
 **Poison** — Price: 8 points

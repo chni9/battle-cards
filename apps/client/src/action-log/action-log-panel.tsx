@@ -59,6 +59,17 @@ const KIND_META: Record<
       </svg>
     ),
   },
+  curseTransferred: {
+    label: 'Curse',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M3 8h4V4h2v4h4v2H9v4H7V10H3V8Z"
+        />
+      </svg>
+    ),
+  },
   playerReanimated: {
     label: 'Reanimated',
     icon: (
@@ -237,6 +248,8 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
       return `${entry.kind}-${entry.playerId}-${entry.reason}-${String(index)}`;
     case 'mirrorRedirected':
       return `${entry.kind}-${entry.turnSequence}-${entry.newTargetPlayerId}-${String(index)}`;
+    case 'curseTransferred':
+      return `${entry.kind}-${entry.effectId}-${entry.fromPlayerId}-${entry.toPlayerId}-${String(index)}`;
     case 'playerReanimated':
       return `${entry.kind}-${entry.playerId}-${entry.kitId ?? 'hidden'}-${String(index)}`;
     case 'rewardsClaimed':

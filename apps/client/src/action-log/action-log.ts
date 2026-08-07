@@ -16,6 +16,7 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'actionResolved',
   'playerEliminated',
   'mirrorRedirected',
+  'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
 ] as const;
@@ -146,6 +147,11 @@ export function formatActionLogEntry(
       const to = nicknameOf(entry.newTargetPlayerId);
       return `${actor} redirects ${formatCardLabel(entry.cardId, false)} from ${from} to ${to}`;
     }
+    case 'curseTransferred': {
+      const from = nicknameOf(entry.fromPlayerId);
+      const to = nicknameOf(entry.toPlayerId);
+      return `${from} passes ${formatCardLabel(entry.cardId, entry.isUpgraded)} to ${to}`;
+    }
     case 'playerReanimated': {
       const player = nicknameOf(entry.playerId);
       if (entry.kitId === undefined) {
@@ -184,6 +190,8 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
         entry.previousTargetPlayerId === playerId ||
         entry.newTargetPlayerId === playerId
       );
+    case 'curseTransferred':
+      return entry.fromPlayerId === playerId || entry.toPlayerId === playerId;
     case 'playerReanimated':
       return entry.playerId === playerId;
     case 'rewardsClaimed':
