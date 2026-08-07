@@ -1721,3 +1721,18 @@ Designer: the kit a player returns with after Reanimation must not be public.
 - No `PROTOCOL_VERSION` bump (`kitId` becomes optional on the log entry; older clients that
   always expected a kit would already be on PROTOCOL 24+ for `finalTable`).
 
+## 2026-08-06 · [P] Eliminated seats fully spectate (upgraded Spy overlay)
+
+Designer session:
+
+1. Vision level = **upgraded Spy** (live lives/points/UP/shield + kit + hands) of **every other
+   seat**, including other dead seats.
+2. Grant as soon as `isEliminated && pendingReanimation === null` (game still in progress).
+3. **No** spectator vision while Reanimation is pending, and none after revive (alive = normal
+   privacy again).
+4. Implementation: **view-time overlay** in `visibility-matrix.ts`
+   (`isEliminatedSpectator`, `recipientSeesPrivateOf`) — does **not** write fake `grantSpy`
+   matrix rows (would linger after revive / pollute Cloning reset). Same helper gates action-log
+   redaction and live `activateDuplication` `ACTION_PLAYED`.
+5. No `PROTOCOL_VERSION` bump: `SpiedPlayerView` shape unchanged; who receives it widens.
+

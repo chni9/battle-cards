@@ -519,3 +519,242 @@ describe('buildPlayingViewFor — reanimation kit privacy', () => {
     expect(forOther.actionLog[0]).not.toHaveProperty('kitId');
   });
 });
+
+describe('buildPlayingViewFor — eliminated spectator (designer 2026-08-06)', () => {
+  it('grants upgraded-Spy vision of every other seat without matrix rows', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'elim-spectator-full',
+      kitAssignment: ['untouchable', 'warrior', 'duplicator'],
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    expect(carol).toBeDefined();
+    if (alice === undefined || bob === undefined || carol === undefined) {
+      return;
+    }
+
+    alice.isEliminated = true;
+    alice.lives = 0;
+    alice.pendingReanimation = null;
+    alice.eliminationSnapshot = {
+      kitId: alice.kitId,
+      hand: alice.hand.map((card) => ({ ...card })),
+      specialCards: alice.specialCards.map((card) => ({ ...card })),
+      lives: 0,
+      points: alice.points,
+      upgradePoints: alice.upgradePoints,
+      shield: alice.shield,
+      shieldIsUpgraded: alice.shieldIsUpgraded,
+      turnSequence: 1,
+    };
+
+    bob.lives = 17;
+    bob.points = 9;
+    bob.upgradePoints = 2;
+    bob.shield = 3;
+    bob.duplicationActive = true;
+
+    carol.isEliminated = true;
+    carol.lives = 0;
+    carol.pendingReanimation = null;
+    carol.eliminationSnapshot = {
+      kitId: carol.kitId,
+      hand: carol.hand.map((card) => ({ ...card })),
+      specialCards: [],
+      lives: 0,
+      points: carol.points,
+      upgradePoints: 0,
+      shield: 0,
+      shieldIsUpgraded: false,
+      turnSequence: 2,
+    };
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(state.visibility).toEqual([]);
+
+    const bobView = view.players.find((player) => player.id === 'b');
+    expect(bobView?.spied).toEqual({
+      kitId: bob.kitId,
+      hand: bob.hand.map((card) => ({ ...card })),
+      specialCards: bob.specialCards.map((card) => ({ ...card })),
+      lives: 17,
+      points: 9,
+      upgradePoints: 2,
+      shield: 3,
+    });
+    expect(bobView?.duplicationActive).toBe(true);
+
+    const carolView = view.players.find((player) => player.id === 'c');
+    expect(carolView?.spied).toMatchObject({
+      kitId: carol.kitId,
+      lives: 0,
+      points: carol.points,
+    });
+  });
+
+  it('does not grant vision while pendingReanimation is set', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'elim-spectator-pending',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    if (alice === undefined || bob === undefined) {
+      return;
+    }
+
+    alice.isEliminated = true;
+    alice.lives = 0;
+    alice.pendingReanimation = { isUpgraded: false };
+    bob.lives = 12;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+  });
+
+  it('drops spectator vision after revive (alive again)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'elim-spectator-revived',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    expect(alice).toBeDefined();
+    if (alice === undefined) {
+      return;
+    }
+
+    alice.isEliminated = false;
+    alice.lives = 5;
+    alice.pendingReanimation = null;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+  });
+
+  it('reveals Spy-gated log lines to eliminated spectators', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'elim-spectator-log',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    expect(alice).toBeDefined();
+    if (alice === undefined) {
+      return;
+    }
+
+    alice.isEliminated = true;
+    alice.lives = 0;
+    alice.pendingReanimation = null;
+    alice.eliminationSnapshot = {
+      kitId: alice.kitId,
+      hand: alice.hand.map((card) => ({ ...card })),
+      specialCards: alice.specialCards.map((card) => ({ ...card })),
+      lives: 0,
+      points: alice.points,
+      upgradePoints: alice.upgradePoints,
+      shield: alice.shield,
+      shieldIsUpgraded: alice.shieldIsUpgraded,
+      turnSequence: 1,
+    };
+
+    const log = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: 'b',
+        action: 'activateDuplication' as const,
+        turnSequence: 4,
+      },
+      {
+        kind: 'playerReanimated' as const,
+        playerId: 'c',
+        kitId: 'ghost' as const,
+        turnSequence: 5,
+      },
+    ];
+
+    const forSpectator = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forSpectator.actionLog[0]).toMatchObject({
+      action: 'activateDuplication',
+    });
+    expect(forSpectator.actionLog[1]).toMatchObject({
+      kind: 'playerReanimated',
+      kitId: 'ghost',
+    });
+
+    const forAlive = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forAlive.actionLog[0]).toMatchObject({ action: 'draw' });
+    // Self still sees own reanimation kit.
+    expect(forAlive.actionLog[1]).toMatchObject({
+      kind: 'playerReanimated',
+      playerId: 'c',
+      kitId: 'ghost',
+    });
+
+    const forOtherAlive = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(forOtherAlive.actionLog[1]).toEqual({
+      kind: 'playerReanimated',
+      playerId: 'c',
+      turnSequence: 5,
+    });
+    expect(forOtherAlive.actionLog[1]).not.toHaveProperty('kitId');
+  });
+});

@@ -24,9 +24,14 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
 2. **Spy is a persistent asymmetric right, not a boolean.** A `who-sees-what-of-whom` matrix in
    its own module, consulted on every view construction. Store it as a relation, never as a flag
    on the spied player — two players can spy the same target independently.
-3. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
+3. **Eliminated spectators** (designer 2026-08-06): when `isEliminated && pendingReanimation === null`,
+   the recipient sees every other seat as **upgraded Spy** at view time via
+   `recipientSeesPrivateOf` / `isEliminatedSpectator` — **no** matrix rows written. Pending
+   Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
+   Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
+4. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
    can be bypassed.
-4. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
+5. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
    it.** Public, private, Spy-gated, or server-only — decided in the same change, never
    defaulted.
 
@@ -36,14 +41,14 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy or Spy Thief. After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat or spies them (designer 2026-08-06); Excel `exportLog` keeps the kit |
-| Lives, shield, points, upgrade points | **Private** without Spy. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy: live values (rules §3) |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat, spies them, or is an eliminated spectator; Excel `exportLog` keeps the kit |
+| Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
-| Duplicator anticipatory window (`duplicationActive`) | **Spy-gated** (designer 2026-08-06): true for self and Spy recipients; `false` for everyone else. `activateDuplication` appears as opaque `draw` in the action log / live `ACTION_PLAYED` for non-spies; actor + spies see the real action. Excel `exportLog` keeps the full server log. No public seat badge |
+| Duplicator anticipatory window (`duplicationActive`) | **Spy-gated** (designer 2026-08-06): true for self, Spy recipients, and **eliminated spectators**; `false` for everyone else. `activateDuplication` appears as opaque `draw` in the action log / live `ACTION_PLAYED` for non-spies; actor + spies + eliminated spectators see the real action. Excel `exportLog` keeps the full server log. No public seat badge |
 | Bot seat flag + difficulty | **Public** as `isBot` / `botDifficulty` (PROTOCOL_VERSION 21) |
 | Elimination status | **Public** |
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |

@@ -33,7 +33,7 @@ import type {
 
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
-import { findSpyRelation } from './visibility-matrix';
+import { findSpyRelation, isEliminatedSpectator, recipientSeesPrivateOf } from './visibility-matrix';
 
 function mapPersistentEffects(
   effects: GameState['players'][number]['activePersistentEffects'],
@@ -116,16 +116,19 @@ export interface PlayingViewInput {
 
 function buildSpiedView(
   state: GameState,
-  recipientSessionId: string,
+  recipient: GameState['players'][number],
   subject: GameState['players'][number],
 ): SpiedPlayerView | undefined {
-  if (subject.id === recipientSessionId) {
+  if (subject.id === recipient.id) {
     return undefined;
   }
 
-  const relation = findSpyRelation(state, recipientSessionId, subject.id);
+  const relation = findSpyRelation(state, recipient.id, subject.id);
+  // Eliminated spectator (no pending Reanimation): upgraded Spy of every other seat
+  // without writing matrix rows (designer 2026-08-06).
+  const spectatorFullVision = isEliminatedSpectator(recipient);
 
-  if (relation === undefined) {
+  if (relation === undefined && !spectatorFullVision) {
     return undefined;
   }
 
@@ -135,12 +138,12 @@ function buildSpiedView(
     specialCards: subject.specialCards.map((card) => ({ ...card })),
   };
 
-  if (relation.level === 'full-resources') {
+  if (spectatorFullVision || relation?.level === 'full-resources') {
     spied.lives = subject.lives;
     spied.points = subject.points;
     spied.upgradePoints = subject.upgradePoints;
     spied.shield = subject.shield;
-  } else if (relation.resourcesSnapshot !== undefined) {
+  } else if (relation?.resourcesSnapshot !== undefined) {
     spied.resourcesSnapshot = { ...relation.resourcesSnapshot };
   }
 
@@ -149,8 +152,8 @@ function buildSpiedView(
 
 /**
  * Per-recipient action-log redaction (designer 2026-08-06):
- * - `activateDuplication` → opaque `draw` unless self or Spy on the actor
- * - `playerReanimated.kitId` omitted unless self or Spy on the revived seat
+ * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
+ * - `playerReanimated.kitId` omitted unless self, Spy, or eliminated spectator
  * Excel `exportLog` keeps the full server log.
  */
 function mapActionLogForRecipient(
@@ -160,11 +163,7 @@ function mapActionLogForRecipient(
 ): ActionLogEntryView[] {
   return actionLog.map((entry) => {
     if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
-      if (entry.actorPlayerId === recipientSessionId) {
-        return entry;
-      }
-
-      if (findSpyRelation(state, recipientSessionId, entry.actorPlayerId) !== undefined) {
+      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId)) {
         return entry;
       }
 
@@ -183,11 +182,7 @@ function mapActionLogForRecipient(
     }
 
     if (entry.kind === 'playerReanimated') {
-      if (entry.playerId === recipientSessionId) {
-        return entry;
-      }
-
-      if (findSpyRelation(state, recipientSessionId, entry.playerId) !== undefined) {
+      if (recipientSeesPrivateOf(state, recipientSessionId, entry.playerId)) {
         return entry;
       }
 
@@ -202,7 +197,7 @@ function mapActionLogForRecipient(
   });
 }
 
-/** Duplicator window: self and Spy recipients only (designer 2026-08-06). */
+/** Duplicator window: self, Spy, or eliminated spectator (designer 2026-08-06). */
 function duplicationActiveForRecipient(
   player: GameState['players'][number],
   recipientSessionId: string,
@@ -238,7 +233,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   );
 
   const players: PublicPlayerView[] = state.players.map((player) => {
-    const spied = buildSpiedView(state, recipientSessionId, player);
+    const spied = buildSpiedView(state, selfPlayer, player);
     const eliminationReveal = buildEliminationReveal(player);
     const difficulty = botDifficulties?.get(player.id);
     const isBot = difficulty !== undefined;
@@ -369,6 +364,12 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
 
+  const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
+
+  if (selfPlayer === undefined) {
+    throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
+  }
+
   const exportLog: GameExportLogView = {
     turns: [...turnHistory],
     events: [...actionLog],
@@ -393,7 +394,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     players: state.players.map((player) => {
       const difficulty = botDifficulties?.get(player.id);
       const eliminationReveal = buildEliminationReveal(player);
-      const spied = buildSpiedView(state, recipientSessionId, player);
+      const spied = buildSpiedView(state, selfPlayer, player);
       const view: PublicPlayerView = {
         id: player.id,
         nickname: player.nickname,

@@ -134,7 +134,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
 } from '../protocol/build-view-for';
-import { findSpyRelation } from '../protocol/visibility-matrix';
+import { recipientSeesPrivateOf } from '../protocol/visibility-matrix';
 import {
   GAME_CODE_PRESENCE_CHANNEL,
   generateGameCodeCandidate,
@@ -2899,8 +2899,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   /**
    * `activateDuplication` is not a public action (designer 2026-08-06).
-   * Unicast the real payload to the actor and current spies; send an opaque
-   * `draw` ACTION_PLAYED to everyone else (matches the per-recipient action log).
+   * Unicast the real payload to the actor, current spies, and eliminated
+   * spectators; send an opaque `draw` ACTION_PLAYED to everyone else.
    */
   private sendActivateDuplicationPlayed(played: ActionPlayedPayload): void {
     const state = this.gameState;
@@ -2919,7 +2919,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       if (
         state !== null &&
-        findSpyRelation(state, client.sessionId, played.actorPlayerId) !== undefined
+        recipientSeesPrivateOf(state, client.sessionId, played.actorPlayerId)
       ) {
         client.send(ACTION_PLAYED, played);
         continue;
