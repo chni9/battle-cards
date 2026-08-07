@@ -6,8 +6,11 @@
 import {
   ATTACK_CARD_IDS,
   SHARED_CARD_IDS,
+  formatCardCost,
   formatCardLabel,
+  formatPlayCost,
   getCard,
+  getKit,
   type CardCost,
   type CardInstance,
   type PlayingStateView,
@@ -28,15 +31,17 @@ function formatShopCost(cost: CardCost | undefined): string {
     return '—';
   }
 
-  if (cost.points !== undefined && cost.points > 0) {
-    return `${String(cost.points)} pts`;
+  const formatted = formatCardCost(cost);
+  return formatted.length > 0 ? formatted : '—';
+}
+
+function playCostLabel(instance: CardInstance): string {
+  const definition = getCard(instance.cardId);
+  if (definition === undefined) {
+    return '';
   }
 
-  if (cost.lives !== undefined && cost.lives > 0) {
-    return `${String(cost.lives)} ${cost.lives === 1 ? 'life' : 'lives'}`;
-  }
-
-  return '—';
+  return formatPlayCost(definition, instance.isUpgraded);
 }
 
 function canAffordSharedBuy(
@@ -149,9 +154,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const fromSpecial = dialog?.kind === 'actions' ? dialog.fromSpecial : false;
   const actionEffect =
     actionInstance !== null ? cardEffectText(actionInstance) : '';
+  const actionPlayCost =
+    actionInstance !== null ? playCostLabel(actionInstance) : '';
   const inspectEffect =
     dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
   const reduceMotion = useReducedMotion();
+  const alwaysUpgradedIds = getKit(view.self.kitId).traits.alwaysUpgraded;
 
   return (
     <>
@@ -173,7 +181,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   onBeginUse(actionInstance);
                 }}
               >
-                Use
+                {actionPlayCost.length > 0 ? `Use (${actionPlayCost})` : 'Use'}
               </Button>
               {!actionInstance.isUpgraded && (
                 <Button
@@ -539,10 +547,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
             const price = formatShopCost(definition?.buyCost);
             const affordable = canAffordSharedBuy(view, id);
             const selected = buyCardId === id;
+            const shopUpgraded = alwaysUpgradedIds.includes(id);
             const shopInstance = {
               instanceId: `shop-${id}`,
               cardId: id,
-              isUpgraded: false,
+              isUpgraded: shopUpgraded,
             } as const;
 
             return (
@@ -551,7 +560,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   type="button"
                   disabled={!isMyTurn || actionsLocked}
                   aria-pressed={selected}
-                  aria-label={`${name}, ${price}${affordable ? '' : ', cannot afford'}`}
+                  aria-label={`${name}${shopUpgraded ? ' upgraded' : ''}, ${price}${affordable ? '' : ', cannot afford'}`}
                   onClick={() => {
                     setBuyCardId(id);
                   }}
@@ -578,6 +587,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   />
                   <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
                     {name}
+                    {shopUpgraded ? ' ↑' : ''}
                   </span>
                   <span
                     className={[

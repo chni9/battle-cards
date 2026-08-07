@@ -100,11 +100,13 @@ rules above are unchanged — this section only covers how the client looks.
   shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
   without overflow; paginates only when even 2 rows at min width cannot hold the pile.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
-  Upgrade / Sell. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
+  Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
+  `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
   Nested Dialog for target, Regen quantity, Assassin multi-attack; self-only Use is one-shot;
   Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
-  intents/payloads as V1.
+  intents/payloads as V1. Buy dialog thumbs use upgraded art when the seat's kit
+  `alwaysUpgraded` covers that card (purchase arrives upgraded).
 - **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
   Landing-page layout rules from design-taste-frontend do **not** apply to
