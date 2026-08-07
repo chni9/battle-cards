@@ -148,7 +148,7 @@ export interface TurnResult {
   mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[];
   /** Reanimation revives completed this turn phase (L30-06). */
   playerReanimated?: readonly { playerId: string; kitId: KitId }[];
-  /** Curse instances passed by successful attacks this resolve (L32-01). */
+  /** Curse instances passed by successful attacks this resolve (designer 2026-08-07). */
   curseTransfers?: readonly (CurseTransfer & { turnSequence: number })[];
 }
 

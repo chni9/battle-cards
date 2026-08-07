@@ -488,7 +488,7 @@ no task defaults it. Includes the two fields that are not card-driven.
 | `Player.attackBlockCharges` (Attack Thief) | **Public presence** | Mirrors `activeShield`, public since PROTOCOL 20 as presence-plus-tier with the point count private. |
 | `PendingEffect.redirectedBy` | **Public** | The pending queue is already public. |
 | Reanimation armed on a player | **Public** | Via `activePersistentEffects` (#V4-12b). `pendingReanimation` is also public while revive is queued after elim. |
-| Curse active on a victim | **Public** | Effect lives on the cursed seat's `activePersistentEffects` (L32-01). |
+| Curse active on a victim | **Public** | Effect lives on the cursed seat's `activePersistentEffects` (designer 2026-08-07). |
 | The card stolen by Card Thief | **Private to thief and victim** | Its identity reaches the thief's hand, but `PublicPlayerView` publishes no hand count, so other seats learn nothing. Do **not** put the stolen `cardId` in the public `ActionPlayedLogEntry`, which carries the *played* card. |
 | The special drawn by Card Transformer | **Private to the user** | Same reasoning. The transformation is public, the result is a card in hand. |
 | The 4 cards taken by Card Absorber | **Public** | They leave a public pool; their disappearance is observable anyway. |

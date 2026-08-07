@@ -186,7 +186,7 @@ export interface PersistentEffectView {
   isUpgraded: boolean;
   counter: number | null;
   /**
-   * Legacy single-target field. Curse is victim-owned (L32-01) so this is
+   * Legacy single-target field. Curse is victim-owned (designer 2026-08-07) so this is
    * always `null` for Curse; other persistents leave it null too.
    */
   targetPlayerId: string | null;
@@ -292,7 +292,7 @@ export interface MirrorRedirectedLogEntry {
   botReason?: BotDecisionReason;
 }
 
-/** Curse passed by a successful attack (lives lost ≥ 1) — L32-01 / PROTOCOL_VERSION 26. */
+/** Curse passed by a successful attack (lives lost ≥ 1) — designer 2026-08-07 / PROTOCOL_VERSION 26. */
 export interface CurseTransferredLogEntry {
   kind: 'curseTransferred';
   fromPlayerId: string;

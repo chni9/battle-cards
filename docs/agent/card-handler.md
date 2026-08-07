@@ -157,7 +157,7 @@ agreed for Lot 22).
 
 **Counter cards** ("card lives", rules spec §5): Points Generator 3, Imposition 2, Poison 3,
 Super Absorber 2. Curse has `counter: null`, lives on the cursed seat, and deactivates when
-that seat reaches 1 life or is eliminated (L32-01). A successful attack (≥1 life lost) passes
+that seat reaches 1 life or is eliminated (designer 2026-08-07). A successful attack (≥1 life lost) passes
 every Curse on the attacker to the hit player.
 The counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.

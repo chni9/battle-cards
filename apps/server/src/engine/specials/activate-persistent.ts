@@ -16,7 +16,7 @@ export interface ActivatePersistentInput {
   cardId: CardId;
   isUpgraded: boolean;
   counter: number | null;
-  /** Legacy; Curse is activated on the cursed seat with null (L32-01). */
+  /** Legacy; Curse is activated on the cursed seat with null (designer 2026-08-07). */
   targetPlayerId?: string | null;
 }
 

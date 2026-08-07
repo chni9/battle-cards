@@ -192,7 +192,7 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses.   Imposition /
   Poison act on the current player from other seats' active effects; Curse is
-  **victim-owned** (L32-01) and ticks from the current player's own
+  **victim-owned** (designer 2026-08-07) and ticks from the current player's own
   `activePersistentEffects`. Points Generator ticks on the owner's turn
   (including the play turn). Curse has no counter — `targetPlayerId` is null —
   and exits via `deactivatePersistentEffect` when the victim reaches 1 life

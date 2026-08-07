@@ -94,7 +94,7 @@ export interface PersistentEffect {
    */
   counter: number | null;
   /**
-   * Legacy single-target field. Curse is victim-owned (L32-01) with this null;
+   * Legacy single-target field. Curse is victim-owned (designer 2026-08-07) with this null;
    * other persistents are owner-scoped or all-opponents and also leave it null.
    * Public via `PersistentEffectView`.
    */

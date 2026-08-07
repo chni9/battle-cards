@@ -1,5 +1,5 @@
 /**
- * Curse — rules spec §5, backlog L32-01 (victim-owned + transfer), #V4-20 spend math.
+ * Curse — rules spec §5, designer 2026-08-07 (victim-owned + transfer), #V4-20 spend math.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -13,7 +13,7 @@ import { eliminateWithoutReward } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
 import { resolvePendingEffects } from './resolve-pending';
 
-describe('Curse (L32-01)', () => {
+describe('Curse (victim-owned + transfer)', () => {
   it('7 points spent costs 2 lives base; remainder discarded', () => {
     const state = createInitialState({
       seats: [

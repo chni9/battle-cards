@@ -1469,7 +1469,7 @@ Three new branches in `score-persistents.ts`:
   opponents, since it hits every opponent at once); refused with `hasOwnPersistent('poison')`
   already active or zero living opponents.
 - **Curse** — needs a target; refused without one or against an `isImmuneTarget` result.
-  Stacking is legal (L32-01): soft `-2` per existing Curse on the target, not a hard deny.
+  Stacking is legal (designer 2026-08-07): soft `-2` per existing Curse on the target, not a hard deny.
   `deny + CURSE_DENY_BONUS + spentLastTurn` when the target's last complete turn spent ≥
   `CURSE_HIGH_SPEND_THRESHOLD` points or the target already tops `ctx.threatOrder`; otherwise
   a smaller `invest + CURSE_INVEST_BONUS` — still worth activating on any living target, the
@@ -1764,7 +1764,7 @@ Designer session:
    shared `absorbLedgerFromVictim`, Absorber-only exception in legal targets / `perform-action`,
    public `absorbWindowOpen` on `PublicPlayerView`. **PROTOCOL_VERSION 24 → 25**.
 
-## 2026-08-07 · [P] Curse victim-owned + transfer (L32-01)
+## 2026-08-07 · [P] Curse victim-owned + transfer
 
 Designer session — supersedes L22-02 **placement** and elim attribution only.
 `#V4-20` spend math (per turn, remainder discarded, `pointsSpent` only, floor at 1 life)

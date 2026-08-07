@@ -42,7 +42,7 @@ export function buildPersistentIncomingChips(
         });
       }
 
-      // Victim-owned Curse ticks on your turn after you act (L32-01).
+      // Victim-owned Curse ticks on your turn after you act (designer 2026-08-07).
       if (effect.cardId === 'curse' && player.id === view.you) {
         chips.push({
           id: `persistent:${effect.id}->${view.you}`,

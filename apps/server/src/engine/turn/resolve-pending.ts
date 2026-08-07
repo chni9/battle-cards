@@ -48,7 +48,7 @@ export interface ResolvedEffect {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ResolveOutcome;
-  /** Curse instances moved when this attack dealt ≥1 life (L32-01). */
+  /** Curse instances moved when this attack dealt ≥1 life (designer 2026-08-07). */
   curseTransfers?: CurseTransfer[];
 }
 
@@ -404,7 +404,7 @@ export function resolvePendingEffects(
       recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
       outcome = 'applied';
 
-      // Pass every Curse on the attacker when the hit deals life (L32-01).
+      // Pass every Curse on the attacker when the hit deals life (designer 2026-08-07).
       const curseTransfers =
         livesLost >= 1
           ? transferCursesFromAttacker(state, effect.sourcePlayerId, player.id)

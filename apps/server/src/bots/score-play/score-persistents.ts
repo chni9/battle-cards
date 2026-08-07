@@ -163,7 +163,7 @@ function scoreCurse(
     return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
   }
 
-  // Stacking is legal (L32-01); prefer uncursed seats when spending is equal.
+  // Stacking is legal (designer 2026-08-07); prefer uncursed seats when spending is equal.
   const curseCount = target.activePersistentEffects.filter(
     (effect) => effect.cardId === 'curse',
   ).length;

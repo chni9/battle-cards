@@ -15,7 +15,7 @@
  *
  * 24 → 25 (designer 2026-08-07): Absorber post-elim window + `absorbWindowOpen`.
  *
- * 25 → 26 (designer 2026-08-07 / L32-01): public `curseTransferred` action-log kind
+ * 25 → 26 (designer 2026-08-07): public `curseTransferred` action-log kind
  * when a successful attack passes Curse; Curse is victim-owned.
  */
 export const PROTOCOL_VERSION = 26;

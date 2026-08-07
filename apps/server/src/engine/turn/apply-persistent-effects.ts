@@ -161,7 +161,7 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
 }
 
 function applyCursesOnVictim(state: GameState, victim: Player): void {
-  // Victim-owned (L32-01) — snapshot ids; deactivate mutates the array mid-loop.
+  // Victim-owned (designer 2026-08-07) — snapshot ids; deactivate mutates the array mid-loop.
   const curseEffects = victim.activePersistentEffects.filter(
     (effect) => effect.cardId === 'curse',
   );

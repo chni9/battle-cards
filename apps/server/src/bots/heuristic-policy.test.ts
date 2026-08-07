@@ -1684,7 +1684,7 @@ describe('L29-06: persistent specials', () => {
         }),
       ],
     });
-    // Stacking is legal (L32-01); soft stack penalty must not deny below draw.
+    // Stacking is legal (designer 2026-08-07); soft stack penalty must not deny below draw.
     expect(
       decide(
         view,

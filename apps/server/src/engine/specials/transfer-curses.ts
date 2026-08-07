@@ -1,5 +1,5 @@
 /**
- * Pass Curse persistents after a successful attack — rules spec §5, L32-01.
+ * Pass Curse persistents after a successful attack — rules spec §5, designer 2026-08-07.
  *
  * When the attacker deals ≥1 life with any attack card, every Curse on the
  * attacker moves onto the hit player (same instance; upgraded flag kept).
