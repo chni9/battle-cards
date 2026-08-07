@@ -66,6 +66,7 @@ function player(
     activeAttackBlock: null,
     duplicationActive: false,
     pendingReanimation: null,
+    absorbWindowOpen: false,
     ...extras,
   };
 }

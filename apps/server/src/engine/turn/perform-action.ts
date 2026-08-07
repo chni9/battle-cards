@@ -26,6 +26,7 @@ import { grantPoints } from '../economy/grant-resources';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
+import { isAbsorberTargetable } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
@@ -1200,8 +1201,14 @@ function playCardAction(
 
   if (targetPlayerId !== undefined) {
     const target = findPlayer(state, targetPlayerId);
+    const absorberCorpseOk =
+      cardId === 'absorber' && target !== undefined && isAbsorberTargetable(target);
 
-    if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
+    if (
+      target === undefined ||
+      target.id === actorPlayerId ||
+      (target.isEliminated && !absorberCorpseOk)
+    ) {
       return { ok: false, message: 'Invalid target.' };
     }
 

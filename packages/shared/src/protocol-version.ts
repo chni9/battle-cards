@@ -13,4 +13,4 @@
  * stats dialog and keep inspecting the table. Exception to the V4 single-bump lock;
  * see `docs/agent/decisions.md`.
  */
-export const PROTOCOL_VERSION = 24;
+export const PROTOCOL_VERSION = 25;

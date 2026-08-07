@@ -36,6 +36,7 @@ function baseView(): PlayingStateView {
         activeAttackBlock: null,
         duplicationActive: false,
         pendingReanimation: null,
+        absorbWindowOpen: false,
       },
       {
         id: 'b',
@@ -56,6 +57,7 @@ function baseView(): PlayingStateView {
         activeAttackBlock: null,
         duplicationActive: false,
         pendingReanimation: null,
+        absorbWindowOpen: false,
       },
     ],
     self: {

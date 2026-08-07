@@ -20,6 +20,7 @@ import { transferCardInstance } from '../kits/acquire-card';
 import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import { createRng, type Rng } from '../rng';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
+import { onPlayerEliminatedForAbsorbWindow } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { beginReanimationKitPick } from './generic-sub-choice';
 import { SUB_CHOICE_MS } from './sub-choice';
@@ -187,13 +188,14 @@ export function eliminateWithoutReward(
     return false;
   }
 
-  consumeArmedReanimation(state, player);
-  captureEliminationSnapshot(player, state.turnSequence);
-  player.isEliminated = true;
-  // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
-  // Not a typed loss: the player may still have lives; this is administrative state only.
-  player.lives = 0;
-  cleanupEliminatedPlayer(state, player);
+    consumeArmedReanimation(state, player);
+    captureEliminationSnapshot(player, state.turnSequence);
+    player.isEliminated = true;
+    // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
+    // Not a typed loss: the player may still have lives; this is administrative state only.
+    player.lives = 0;
+    onPlayerEliminatedForAbsorbWindow(state, player);
+    cleanupEliminatedPlayer(state, player);
   dumpCardsToPool(state, player);
   processPendingReanimations(
     state,
@@ -281,6 +283,7 @@ export function processEliminations(
     // Idempotent normalization — technical spec §4.3 step 5, §4.2.
     // Lives were already 0 from typed primitives or lethal effects; not a new loss event.
     player.lives = 0;
+    onPlayerEliminatedForAbsorbWindow(state, player);
     cleanupEliminatedPlayer(state, player);
 
     const candidates = candidatesForVictim(state, player.id);

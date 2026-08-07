@@ -123,6 +123,12 @@ export interface Player {
    * `null` when no revive is pending.
    */
   pendingReanimation: PendingReanimation | null;
+  /**
+   * Post-elimination Absorber window (designer 2026-08-07): living player ids who
+   * must still begin a turn before this corpse leaves Absorber / Super Absorber
+   * activation targets. `null` when living, window closed, or never opened.
+   */
+  absorbWindowPendingPlayerIds: string[] | null;
 }
 
 /** Queued revive after elim consumed an armed Reanimation — technical spec v4 §11.7. */

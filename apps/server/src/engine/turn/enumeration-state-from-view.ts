@@ -65,6 +65,7 @@ export function enumerationStateFromView(
           publicPlayer.pendingReanimation === null
             ? null
             : { isUpgraded: publicPlayer.pendingReanimation.isUpgraded },
+        absorbWindowPendingPlayerIds: publicPlayer.absorbWindowOpen ? ['_window'] : null,
       };
     }
 
@@ -98,6 +99,7 @@ export function enumerationStateFromView(
         publicPlayer.pendingReanimation === null
           ? null
           : { isUpgraded: publicPlayer.pendingReanimation.isUpgraded },
+      absorbWindowPendingPlayerIds: publicPlayer.absorbWindowOpen ? ['_window'] : null,
     };
   });
 

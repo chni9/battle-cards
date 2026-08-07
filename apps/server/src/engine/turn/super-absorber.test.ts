@@ -211,4 +211,86 @@ describe('Super Absorber (L22-03)', () => {
     expect(a.activePersistentEffects[0]?.counter).toBe(2);
     expect(state.pool.length).toBe(poolBefore);
   });
+
+  it('on activation absorbs last-turn ledgers of living and in-window eliminated opponents', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+        { id: 'd', nickname: 'D' },
+      ],
+      seed: 'sa-activation-snapshot',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
+    const d = state.players.find((player) => player.id === 'd');
+
+    if (a === undefined || b === undefined || c === undefined || d === undefined) {
+      return;
+    }
+
+    a.specialCards = [{ instanceId: 'sa-1', cardId: 'super-absorber', isUpgraded: false }];
+    a.points = 8;
+    a.lives = 10;
+    a.upgradePoints = 0;
+    b.turnLedger.pointsSpent = 3;
+    b.turnLedger.livesLost = 1;
+    c.isEliminated = true;
+    c.turnLedger.upgradePointsSpent = 2;
+    c.turnLedger.livesLost = 4;
+    c.absorbWindowPendingPlayerIds = ['a', 'b', 'd'];
+    d.isEliminated = true;
+    d.turnLedger.pointsSpent = 9;
+    d.absorbWindowPendingPlayerIds = null;
+    state.currentTurnPlayerId = a.id;
+
+    expect(
+      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'sa-1' }).ok,
+    ).toBe(true);
+    // b: 3 pts + 1 life; c: 2 UP + 4 lives; d out of window → ignored
+    expect(a.points).toBe(3);
+    expect(a.upgradePoints).toBe(2);
+    expect(a.lives).toBe(15);
+    expect(a.activePersistentEffects[0]?.cardId).toBe('super-absorber');
+  });
+
+  it('upgraded activation doubles the snapshot and later ticks still absorb', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'sa-activation-upgraded',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      return;
+    }
+
+    a.specialCards = [
+      { instanceId: 'sa-1', cardId: 'super-absorber', isUpgraded: true },
+    ];
+    a.points = 8;
+    a.lives = 10;
+    b.turnLedger.pointsSpent = 2;
+    b.turnLedger.livesLost = 1;
+    state.currentTurnPlayerId = a.id;
+
+    expect(
+      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'sa-1' }).ok,
+    ).toBe(true);
+    expect(a.points).toBe(4);
+    expect(a.lives).toBe(12);
+
+    a.points = 0;
+    a.lives = 10;
+    b.turnLedger.pointsSpent = 5;
+    b.turnLedger.livesLost = 0;
+    applyPersistentEffects(state, b.id);
+    expect(a.points).toBe(10);
+  });
 });

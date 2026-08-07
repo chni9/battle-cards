@@ -10,6 +10,7 @@ import { isAttackCardId, SHARED_CARD_IDS } from '@card-battle/shared';
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
+import { isAbsorberTargetable } from './absorb-window';
 import { findPlayer } from './advance-turn';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
@@ -23,8 +24,11 @@ export function listLegalPlayCardActions(
 ): readonly TurnAction[] {
   const actions: TurnAction[] = [];
   const rng = createRng(`${state.seed}:list-legal-canplay`);
-  const opponents = state.players.filter(
+  const livingOpponents = state.players.filter(
     (player) => player.id !== actor.id && !player.isEliminated,
+  );
+  const absorberOpponents = state.players.filter(
+    (player) => player.id !== actor.id && isAbsorberTargetable(player),
   );
   const held: readonly CardInstance[] = [...actor.hand, ...actor.specialCards];
 
@@ -98,6 +102,8 @@ export function listLegalPlayCardActions(
 
       continue;
     }
+
+    const opponents = instance.cardId === 'absorber' ? absorberOpponents : livingOpponents;
 
     // Self-only attempt (no target).
     {

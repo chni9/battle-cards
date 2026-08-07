@@ -129,6 +129,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
   };
 
   const aliveOpponents = opponents.filter((player) => !player.isEliminated);
+  const absorberOpponents = opponents.filter(
+    (player) => !player.isEliminated || player.absorbWindowOpen,
+  );
   const defaultTarget = aliveOpponents[0]?.id ?? '';
 
   const [targetId, setTargetId] = useState('');
@@ -137,9 +140,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
 
-  const resolvedTarget = aliveOpponents.some((p) => p.id === targetId)
+  const targetDialogOpponents =
+    dialog?.kind === 'target' && dialog.instance.cardId === 'absorber'
+      ? absorberOpponents
+      : aliveOpponents;
+  const targetDialogDefault = targetDialogOpponents[0]?.id ?? '';
+  const resolvedTarget = targetDialogOpponents.some((p) => p.id === targetId)
     ? targetId
-    : defaultTarget;
+    : targetDialogDefault;
 
   const quantityTrimmed = quantityText.trim();
   const quantityParsed = Number(quantityTrimmed);
@@ -317,7 +325,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
         }
       >
         <ul className="space-y-2">
-          {aliveOpponents.map((player) => (
+          {targetDialogOpponents.map((player) => (
             <li key={player.id}>
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input

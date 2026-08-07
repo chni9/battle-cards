@@ -567,7 +567,7 @@ triggers no alert anywhere.
 | `card-absorber` | Card Absorber | 4 pts | — | Recovers 4 random cards from the shared pool. Upgraded: choose them. |
 | `mega-attack` | MEGA ATTACK | 16 pts | — | **Attack card.** 20 damage to every player. Shield applies. Base: only an upgraded Mirror redirects it. Upgraded: never redirectable. |
 | `super-mirror` | Super Mirror | 7 pts | — | Redirects every attack pending on the user to all opponents, each independently. Not re-redirectable by a regular Mirror. Upgraded: doubles the damage. |
-| `super-absorber` | Super Absorber | 8 pts | **2** | Absorbs all points, lives and UP spent by all opponents while the counter holds. Upgraded: doubles the gains. |
+| `super-absorber` | Super Absorber | 8 pts | **2** | On activation, absorbs last-turn spend/lives from all in-window opponents; then absorbs on each living opponent turn while the counter holds. Upgraded: doubles the gains. |
 | `curse` | Curse | 8 pts | — | A chosen opponent loses 1 life per 3 points they spend on their turn (per 2 upgraded). Deactivates when the victim reaches 1 life — it cannot finish them off. |
 | `poison` | Poison | 8 pts | **3** | All opponents lose 1 life per turn (2 upgraded) while the counter holds. |
 | `attack-thief` | Attack Thief | 8 pts | — | Blocks one attack targeting the user, once, and steals a random attack card from each opponent. Upgraded: all attack cards from all opponents. |

@@ -40,6 +40,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
     duplicationActive: false,
     eliminationSnapshot: null,
     pendingReanimation: null,
+    absorbWindowPendingPlayerIds: null,
     ...overrides,
   };
 }

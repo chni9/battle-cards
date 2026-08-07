@@ -146,6 +146,7 @@ function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): 
     duplicationActive: false,
     eliminationSnapshot: null,
     pendingReanimation: null,
+    absorbWindowPendingPlayerIds: null,
   };
 
   dealStartingLoadout(player, kitId, rng, `${seat.id}:start`);

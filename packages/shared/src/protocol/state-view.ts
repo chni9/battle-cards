@@ -106,6 +106,11 @@ export interface PublicPlayerView {
    * the table knows the match is not over. `null` when none.
    */
   pendingReanimation: { isUpgraded: boolean } | null;
+  /**
+   * Eliminated seat still in the Absorber last-turn window (PROTOCOL_VERSION 25).
+   * Always `false` while living.
+   */
+  absorbWindowOpen: boolean;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
   /**

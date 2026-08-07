@@ -12,12 +12,12 @@ import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 import {
   grantLives,
   grantPoints,
-  grantUpgradePoints,
 } from '../economy/grant-resources';
 import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
+import { absorbLedgerFromVictim } from './absorb-ledger';
 import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
@@ -86,8 +86,6 @@ function applyInvisibilityTicks(state: GameState, owner: Player): void {
 }
 
 function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
-  const ledger = victim.turnLedger;
-
   for (const owner of state.players) {
     if (owner.id === victim.id || owner.isEliminated) {
       continue;
@@ -99,9 +97,7 @@ function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
       }
 
       const multiplier = effect.isUpgraded ? 2 : 1;
-      grantPoints(state, owner, ledger.pointsSpent * multiplier, 'direct');
-      grantUpgradePoints(state, owner, ledger.upgradePointsSpent * multiplier, 'direct');
-      grantLives(state, owner, ledger.livesLost * multiplier, 'direct');
+      absorbLedgerFromVictim(state, owner, victim, multiplier);
     }
   }
 }

@@ -169,4 +169,70 @@ describe('Absorber (rules spec §3, L3-08)', () => {
 
     expect(alice.lives).toBe(CLASSIC_LIFE_LIMIT);
   });
+
+  it('can absorb an eliminated player while their absorb window is open', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'absorber-corpse',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
+
+    if (alice === undefined || bob === undefined || carol === undefined) {
+      return;
+    }
+
+    bob.isEliminated = true;
+    bob.turnLedger.livesLost = 3;
+    bob.absorbWindowPendingPlayerIds = ['a', 'c'];
+    alice.lives = 10;
+    alice.points = 3;
+    alice.hand = [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }];
+    state.currentTurnPlayerId = 'a';
+
+    expect(
+      performTurnAction(state, 'a', {
+        type: 'playCard',
+        instanceId: 'abs-1',
+        targetPlayerId: 'b',
+      }).ok,
+    ).toBe(true);
+    expect(alice.lives).toBe(13);
+  });
+
+  it('rejects Absorber on a corpse after the absorb window closes', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'absorber-corpse-closed',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (alice === undefined || bob === undefined) {
+      return;
+    }
+
+    bob.isEliminated = true;
+    bob.turnLedger.livesLost = 5;
+    bob.absorbWindowPendingPlayerIds = null;
+    alice.points = 3;
+    alice.hand = [{ instanceId: 'abs-1', cardId: 'absorber', isUpgraded: false }];
+    state.currentTurnPlayerId = 'a';
+
+    expect(
+      performTurnAction(state, 'a', {
+        type: 'playCard',
+        instanceId: 'abs-1',
+        targetPlayerId: 'b',
+      }).ok,
+    ).toBe(false);
+  });
 });

@@ -16,6 +16,7 @@
 
 import type { GameState, Player } from '@card-battle/shared';
 
+import { tickAbsorbWindowsOnBeginTurn } from './absorb-window';
 import { endBlockChain } from './grant-block-turns';
 
 export function advanceTurn(state: GameState): void {
@@ -35,7 +36,7 @@ export function advanceTurn(state: GameState): void {
     currentPlayer.blockTurnsRemaining > 0
   ) {
     currentPlayer.blockTurnsRemaining -= 1;
-    beginTurnFor(currentPlayer);
+    beginTurnFor(state, currentPlayer);
     state.turnSequence += 1;
     return;
   }
@@ -57,7 +58,7 @@ export function advanceTurn(state: GameState): void {
 
     if (candidate !== undefined && !candidate.isEliminated) {
       state.currentTurnPlayerId = candidate.id;
-      beginTurnFor(candidate);
+      beginTurnFor(state, candidate);
       state.turnSequence += 1;
       return;
     }
@@ -66,9 +67,10 @@ export function advanceTurn(state: GameState): void {
   state.currentTurnPlayerId = null;
 }
 
-function beginTurnFor(player: Player): void {
+function beginTurnFor(state: GameState, player: Player): void {
   player.duplicationActive = false;
   resetLedger(player);
+  tickAbsorbWindowsOnBeginTurn(state, player.id);
 }
 
 function resetLedger(player: Player): void {

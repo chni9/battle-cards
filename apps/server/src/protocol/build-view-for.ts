@@ -33,6 +33,7 @@ import type {
 
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
+import { isAbsorbWindowOpen } from '../engine/turn/absorb-window';
 import { findSpyRelation, isEliminatedSpectator, recipientSeesPrivateOf } from './visibility-matrix';
 
 function mapPersistentEffects(
@@ -264,6 +265,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         player.pendingReanimation === null
           ? null
           : { isUpgraded: player.pendingReanimation.isUpgraded },
+      absorbWindowOpen: isAbsorbWindowOpen(player),
     };
 
     if (difficulty !== undefined) {
@@ -422,6 +424,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
           player.pendingReanimation === null
             ? null
             : { isUpgraded: player.pendingReanimation.isUpgraded },
+        absorbWindowOpen: isAbsorbWindowOpen(player),
       };
 
       if (difficulty !== undefined) {

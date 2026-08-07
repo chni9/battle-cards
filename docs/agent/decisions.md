@@ -1749,3 +1749,18 @@ strangers") for the **Home screen only**:
 - No new screen in the phase router, no protocol/rule change, no new dependency. Solo still
   composes `create` + N× `addBot` + `startGame` (L17-01).
 
+## 2026-08-07 · [P] Absorber post-elim window + Super Absorber activation snapshot
+
+Designer session:
+
+1. **Absorber** may target an eliminated opponent for that opponent's last complete turn.
+   Window = every player who was living at elimination must begin one turn; then the corpse
+   leaves Absorber targets and their turn ledger is cleared for absorb purposes. Mid-window
+   deaths prune the pending set so windows cannot stick forever.
+2. **Super Absorber** on activation immediately absorbs last-turn ledgers of all opponents in
+   that same window (living + in-window eliminated), then keeps ticking on living victims as
+   before (#V4-21 fields, theft excluded, life cap).
+3. Implementation: `Player.absorbWindowPendingPlayerIds`, helpers in `absorb-window.ts`,
+   shared `absorbLedgerFromVictim`, Absorber-only exception in legal targets / `perform-action`,
+   public `absorbWindowOpen` on `PublicPlayerView`. **PROTOCOL_VERSION 24 → 25**.
+

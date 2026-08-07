@@ -94,6 +94,7 @@ export function reanimatePlayer(player: Player, kitId: KitId, rng: Rng): void {
   player.duplicationActive = false;
   player.eliminationSnapshot = null;
   player.pendingReanimation = null;
+  player.absorbWindowPendingPlayerIds = null;
 
   dealStartingLoadout(player, kitId, rng, `${player.id}:reanim`);
 }

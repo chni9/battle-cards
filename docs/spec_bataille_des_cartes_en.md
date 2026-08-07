@@ -61,7 +61,7 @@ The cost/damage ratio is not linear across cards: a high-damage attack is a deli
 Action cards follow the general Card Economy rules (section 1). The Counter Rule (section 1) applies to Spy and Thief; it does not apply to Mirror (which follows its own chain-redirection mechanic, detailed below), nor to Absorber (which targets an opponent but inflicts no effect on them), nor to Shield, Tax and Regeneration (strictly personal effects).
 
 **Absorber** — Price: 3 points
-- Action: the user chooses an opponent; they gain all the lives that opponent lost during their last move — their most recent complete turn, from their action to the end of their resolution phase —, regardless of the cause of that loss. Does not allow absorbing one's own lost lives.
+- Action: the user chooses an opponent; they gain all the lives that opponent lost during their last move — their most recent complete turn, from their action to the end of their resolution phase —, regardless of the cause of that loss. Does not allow absorbing one's own lost lives. An eliminated opponent remains a valid choice until every player who was still alive at that elimination has begun one turn; after that window closes, they can no longer be absorbed.
 - Upgrade: also captures the points and upgrade points actively spent by that opponent during their last move (does not include points stolen by a third party).
 
 **Spy** — Price: 4 points
@@ -199,7 +199,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: doubles the damage of the attacks redirected this way.
 
 **Super Absorber** — Price: 8 points
-- Action: absorbs all points, lives and upgrade points spent by all opponents, as long as the card's dedicated internal counter is not depleted.
+- Action: absorbs all points, lives and upgrade points spent by all opponents. On activation, immediately captures each opponent's last complete turn (including eliminated opponents still inside the Absorber window described in section 3); then continues to absorb on every later opponent turn as long as the card's dedicated internal counter is not depleted.
 - Upgrade: doubles all gains obtained this way.
 
 **Curse** — Price: 8 points

@@ -239,6 +239,13 @@ never sum them into one "points lost".
 The ledger resets at the start of each player's own turn. One ledger per player is enough:
 turn order rotates, so when it is your turn every opponent's last turn is already complete.
 
+**Post-elimination Absorber window (designer 2026-08-07):** eliminated players keep their
+frozen ledger targetable by Absorber (and Super Absorber's activation snapshot) until every
+player who was living at elimination has begun one turn (`absorbWindowPendingPlayerIds`,
+ticked in `beginTurnFor`, opened from elimination). Mid-window deaths prune the pending set.
+When the window closes, the ledger is cleared. Helpers: `absorb-window.ts`. Super Absorber
+activation and ticks share `absorbLedgerFromVictim`.
+
 ## Elimination
 
 Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/elimination-rewards.ts`.
