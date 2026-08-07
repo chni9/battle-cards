@@ -1783,6 +1783,20 @@ stays.
 - Public action-log kind `curseTransferred`. **PROTOCOL_VERSION 25 → 26**.
 - Bot: drop hard deny on re-curse; soft stack penalty only.
 
+## 2026-08-07 · [P] Lot 31 simulation screen: random 4p sample
+
+Designer session (Lot 31 planning):
+
+- **1v1** stays a forced-kit unordered-pair matrix (tech v3 §8 forced assignment for
+  controlled matchups).
+- **4p cell** for the V4 screen uses **random kits with replacement** each game
+  (`kitAssignment` omitted → `rng.pick(KIT_IDS)`), same as production deals — not a fixed
+  quartet and not an exhaustive `C(15,4)` sweep. Config logs coverage explicitly
+  (`fourPlayer.mode: 'random'`, game count).
+- Default V4 sample size: **2000** 4p games; 1v1 stays **200 games/cell** over all 15 kits
+  (105 pairs). Undersampled-card threshold **N = 100** completed games with ≥1 play.
+- Stalls attributed per kit (and per 1v1 matchup); never assigned a winner.
+
 ## 2026-08-09 · [P] Playtest: Transformer consume UI, Duplicator log, Mirror cost/labels
 
 Designer playtest feedback (session):

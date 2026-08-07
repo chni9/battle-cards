@@ -1,0 +1,1630 @@
+{
+  "completedGames": 20378,
+  "stalledGames": 2622,
+  "winRateByKit": {
+    "kamikaze": {
+      "wins": 730,
+      "games": 2851,
+      "rate": 0.256050508593476
+    },
+    "untouchable": {
+      "wins": 1582,
+      "games": 2951,
+      "rate": 0.5360894611995933
+    },
+    "scientific": {
+      "wins": 717,
+      "games": 2756,
+      "rate": 0.2601596516690856
+    },
+    "assassin": {
+      "wins": 1579,
+      "games": 3153,
+      "rate": 0.5007928956549318
+    },
+    "upgrader": {
+      "wins": 1732,
+      "games": 2994,
+      "rate": 0.5784903139612558
+    },
+    "tactician": {
+      "wins": 1335,
+      "games": 3056,
+      "rate": 0.4368455497382199
+    },
+    "indestructible": {
+      "wins": 1152,
+      "games": 2920,
+      "rate": 0.39452054794520547
+    },
+    "prophet": {
+      "wins": 1804,
+      "games": 2969,
+      "rate": 0.6076119905692152
+    },
+    "specialist": {
+      "wins": 1003,
+      "games": 2998,
+      "rate": 0.33455637091394264
+    },
+    "witch": {
+      "wins": 1185,
+      "games": 2903,
+      "rate": 0.4081984154323114
+    },
+    "warrior": {
+      "wins": 2591,
+      "games": 3228,
+      "rate": 0.8026641883519207
+    },
+    "wizard": {
+      "wins": 957,
+      "games": 2994,
+      "rate": 0.3196392785571142
+    },
+    "juggernaut": {
+      "wins": 1679,
+      "games": 2902,
+      "rate": 0.5785665058580289
+    },
+    "ghost": {
+      "wins": 1169,
+      "games": 2703,
+      "rate": 0.43248242693303734
+    },
+    "duplicator": {
+      "wins": 1163,
+      "games": 2990,
+      "rate": 0.38896321070234113
+    }
+  },
+  "winRateByMatchup": {
+    "kamikaze_vs_untouchable": {
+      "kitA": "kamikaze",
+      "kitB": "untouchable",
+      "winsA": 43,
+      "winsB": 130,
+      "games": 173
+    },
+    "scientific_vs_untouchable": {
+      "kitA": "scientific",
+      "kitB": "untouchable",
+      "winsA": 13,
+      "winsB": 150,
+      "games": 163
+    },
+    "assassin_vs_untouchable": {
+      "kitA": "assassin",
+      "kitB": "untouchable",
+      "winsA": 113,
+      "winsB": 82,
+      "games": 195
+    },
+    "untouchable_vs_upgrader": {
+      "kitA": "untouchable",
+      "kitB": "upgrader",
+      "winsA": 76,
+      "winsB": 102,
+      "games": 178
+    },
+    "tactician_vs_untouchable": {
+      "kitA": "tactician",
+      "kitB": "untouchable",
+      "winsA": 62,
+      "winsB": 119,
+      "games": 181
+    },
+    "indestructible_vs_untouchable": {
+      "kitA": "indestructible",
+      "kitB": "untouchable",
+      "winsA": 54,
+      "winsB": 121,
+      "games": 175
+    },
+    "prophet_vs_untouchable": {
+      "kitA": "prophet",
+      "kitB": "untouchable",
+      "winsA": 115,
+      "winsB": 71,
+      "games": 186
+    },
+    "specialist_vs_untouchable": {
+      "kitA": "specialist",
+      "kitB": "untouchable",
+      "winsA": 25,
+      "winsB": 167,
+      "games": 192
+    },
+    "untouchable_vs_witch": {
+      "kitA": "untouchable",
+      "kitB": "witch",
+      "winsA": 113,
+      "winsB": 59,
+      "games": 172
+    },
+    "untouchable_vs_warrior": {
+      "kitA": "untouchable",
+      "kitB": "warrior",
+      "winsA": 16,
+      "winsB": 176,
+      "games": 192
+    },
+    "untouchable_vs_wizard": {
+      "kitA": "untouchable",
+      "kitB": "wizard",
+      "winsA": 107,
+      "winsB": 38,
+      "games": 145
+    },
+    "juggernaut_vs_untouchable": {
+      "kitA": "juggernaut",
+      "kitB": "untouchable",
+      "winsA": 91,
+      "winsB": 83,
+      "games": 174
+    },
+    "ghost_vs_untouchable": {
+      "kitA": "ghost",
+      "kitB": "untouchable",
+      "winsA": 70,
+      "winsB": 89,
+      "games": 159
+    },
+    "duplicator_vs_untouchable": {
+      "kitA": "duplicator",
+      "kitB": "untouchable",
+      "winsA": 60,
+      "winsB": 131,
+      "games": 191
+    },
+    "kamikaze_vs_scientific": {
+      "kitA": "kamikaze",
+      "kitB": "scientific",
+      "winsA": 65,
+      "winsB": 73,
+      "games": 138
+    },
+    "assassin_vs_kamikaze": {
+      "kitA": "assassin",
+      "kitB": "kamikaze",
+      "winsA": 135,
+      "winsB": 54,
+      "games": 189
+    },
+    "kamikaze_vs_upgrader": {
+      "kitA": "kamikaze",
+      "kitB": "upgrader",
+      "winsA": 22,
+      "winsB": 140,
+      "games": 162
+    },
+    "kamikaze_vs_tactician": {
+      "kitA": "kamikaze",
+      "kitB": "tactician",
+      "winsA": 50,
+      "winsB": 137,
+      "games": 187
+    },
+    "indestructible_vs_kamikaze": {
+      "kitA": "indestructible",
+      "kitB": "kamikaze",
+      "winsA": 97,
+      "winsB": 60,
+      "games": 157
+    },
+    "kamikaze_vs_prophet": {
+      "kitA": "kamikaze",
+      "kitB": "prophet",
+      "winsA": 16,
+      "winsB": 161,
+      "games": 177
+    },
+    "kamikaze_vs_specialist": {
+      "kitA": "kamikaze",
+      "kitB": "specialist",
+      "winsA": 56,
+      "winsB": 122,
+      "games": 178
+    },
+    "kamikaze_vs_witch": {
+      "kitA": "kamikaze",
+      "kitB": "witch",
+      "winsA": 53,
+      "winsB": 109,
+      "games": 162
+    },
+    "kamikaze_vs_warrior": {
+      "kitA": "kamikaze",
+      "kitB": "warrior",
+      "winsA": 16,
+      "winsB": 180,
+      "games": 196
+    },
+    "kamikaze_vs_wizard": {
+      "kitA": "kamikaze",
+      "kitB": "wizard",
+      "winsA": 60,
+      "winsB": 102,
+      "games": 162
+    },
+    "juggernaut_vs_kamikaze": {
+      "kitA": "juggernaut",
+      "kitB": "kamikaze",
+      "winsA": 139,
+      "winsB": 30,
+      "games": 169
+    },
+    "ghost_vs_kamikaze": {
+      "kitA": "ghost",
+      "kitB": "kamikaze",
+      "winsA": 85,
+      "winsB": 50,
+      "games": 135
+    },
+    "duplicator_vs_kamikaze": {
+      "kitA": "duplicator",
+      "kitB": "kamikaze",
+      "winsA": 56,
+      "winsB": 118,
+      "games": 174
+    },
+    "assassin_vs_scientific": {
+      "kitA": "assassin",
+      "kitB": "scientific",
+      "winsA": 151,
+      "winsB": 34,
+      "games": 185
+    },
+    "scientific_vs_upgrader": {
+      "kitA": "scientific",
+      "kitB": "upgrader",
+      "winsA": 33,
+      "winsB": 142,
+      "games": 175
+    },
+    "scientific_vs_tactician": {
+      "kitA": "scientific",
+      "kitB": "tactician",
+      "winsA": 90,
+      "winsB": 97,
+      "games": 187
+    },
+    "indestructible_vs_scientific": {
+      "kitA": "indestructible",
+      "kitB": "scientific",
+      "winsA": 120,
+      "winsB": 50,
+      "games": 170
+    },
+    "prophet_vs_scientific": {
+      "kitA": "prophet",
+      "kitB": "scientific",
+      "winsA": 129,
+      "winsB": 30,
+      "games": 159
+    },
+    "scientific_vs_specialist": {
+      "kitA": "scientific",
+      "kitB": "specialist",
+      "winsA": 64,
+      "winsB": 108,
+      "games": 172
+    },
+    "scientific_vs_witch": {
+      "kitA": "scientific",
+      "kitB": "witch",
+      "winsA": 37,
+      "winsB": 107,
+      "games": 144
+    },
+    "scientific_vs_warrior": {
+      "kitA": "scientific",
+      "kitB": "warrior",
+      "winsA": 16,
+      "winsB": 179,
+      "games": 195
+    },
+    "scientific_vs_wizard": {
+      "kitA": "scientific",
+      "kitB": "wizard",
+      "winsA": 69,
+      "winsB": 88,
+      "games": 157
+    },
+    "juggernaut_vs_scientific": {
+      "kitA": "juggernaut",
+      "kitB": "scientific",
+      "winsA": 130,
+      "winsB": 35,
+      "games": 165
+    },
+    "ghost_vs_scientific": {
+      "kitA": "ghost",
+      "kitB": "scientific",
+      "winsA": 84,
+      "winsB": 44,
+      "games": 128
+    },
+    "duplicator_vs_scientific": {
+      "kitA": "duplicator",
+      "kitB": "scientific",
+      "winsA": 94,
+      "winsB": 80,
+      "games": 174
+    },
+    "assassin_vs_upgrader": {
+      "kitA": "assassin",
+      "kitB": "upgrader",
+      "winsA": 81,
+      "winsB": 113,
+      "games": 194
+    },
+    "assassin_vs_tactician": {
+      "kitA": "assassin",
+      "kitB": "tactician",
+      "winsA": 97,
+      "winsB": 98,
+      "games": 195
+    },
+    "assassin_vs_indestructible": {
+      "kitA": "assassin",
+      "kitB": "indestructible",
+      "winsA": 118,
+      "winsB": 77,
+      "games": 195
+    },
+    "assassin_vs_prophet": {
+      "kitA": "assassin",
+      "kitB": "prophet",
+      "winsA": 97,
+      "winsB": 97,
+      "games": 194
+    },
+    "assassin_vs_specialist": {
+      "kitA": "assassin",
+      "kitB": "specialist",
+      "winsA": 177,
+      "winsB": 20,
+      "games": 197
+    },
+    "assassin_vs_witch": {
+      "kitA": "assassin",
+      "kitB": "witch",
+      "winsA": 114,
+      "winsB": 75,
+      "games": 189
+    },
+    "assassin_vs_warrior": {
+      "kitA": "assassin",
+      "kitB": "warrior",
+      "winsA": 10,
+      "winsB": 188,
+      "games": 198
+    },
+    "assassin_vs_wizard": {
+      "kitA": "assassin",
+      "kitB": "wizard",
+      "winsA": 140,
+      "winsB": 56,
+      "games": 196
+    },
+    "assassin_vs_juggernaut": {
+      "kitA": "assassin",
+      "kitB": "juggernaut",
+      "winsA": 93,
+      "winsB": 99,
+      "games": 192
+    },
+    "assassin_vs_ghost": {
+      "kitA": "assassin",
+      "kitB": "ghost",
+      "winsA": 116,
+      "winsB": 65,
+      "games": 181
+    },
+    "assassin_vs_duplicator": {
+      "kitA": "assassin",
+      "kitB": "duplicator",
+      "winsA": 105,
+      "winsB": 89,
+      "games": 194
+    },
+    "tactician_vs_upgrader": {
+      "kitA": "tactician",
+      "kitB": "upgrader",
+      "winsA": 63,
+      "winsB": 116,
+      "games": 179
+    },
+    "indestructible_vs_upgrader": {
+      "kitA": "indestructible",
+      "kitB": "upgrader",
+      "winsA": 61,
+      "winsB": 110,
+      "games": 171
+    },
+    "prophet_vs_upgrader": {
+      "kitA": "prophet",
+      "kitB": "upgrader",
+      "winsA": 75,
+      "winsB": 91,
+      "games": 166
+    },
+    "specialist_vs_upgrader": {
+      "kitA": "specialist",
+      "kitB": "upgrader",
+      "winsA": 47,
+      "winsB": 139,
+      "games": 186
+    },
+    "upgrader_vs_witch": {
+      "kitA": "upgrader",
+      "kitB": "witch",
+      "winsA": 135,
+      "winsB": 46,
+      "games": 181
+    },
+    "upgrader_vs_warrior": {
+      "kitA": "upgrader",
+      "kitB": "warrior",
+      "winsA": 46,
+      "winsB": 151,
+      "games": 197
+    },
+    "upgrader_vs_wizard": {
+      "kitA": "upgrader",
+      "kitB": "wizard",
+      "winsA": 134,
+      "winsB": 56,
+      "games": 190
+    },
+    "juggernaut_vs_upgrader": {
+      "kitA": "juggernaut",
+      "kitB": "upgrader",
+      "winsA": 86,
+      "winsB": 79,
+      "games": 165
+    },
+    "ghost_vs_upgrader": {
+      "kitA": "ghost",
+      "kitB": "upgrader",
+      "winsA": 71,
+      "winsB": 83,
+      "games": 154
+    },
+    "duplicator_vs_upgrader": {
+      "kitA": "duplicator",
+      "kitB": "upgrader",
+      "winsA": 62,
+      "winsB": 123,
+      "games": 185
+    },
+    "indestructible_vs_tactician": {
+      "kitA": "indestructible",
+      "kitB": "tactician",
+      "winsA": 89,
+      "winsB": 87,
+      "games": 176
+    },
+    "prophet_vs_tactician": {
+      "kitA": "prophet",
+      "kitB": "tactician",
+      "winsA": 105,
+      "winsB": 71,
+      "games": 176
+    },
+    "specialist_vs_tactician": {
+      "kitA": "specialist",
+      "kitB": "tactician",
+      "winsA": 69,
+      "winsB": 117,
+      "games": 186
+    },
+    "tactician_vs_witch": {
+      "kitA": "tactician",
+      "kitB": "witch",
+      "winsA": 88,
+      "winsB": 91,
+      "games": 179
+    },
+    "tactician_vs_warrior": {
+      "kitA": "tactician",
+      "kitB": "warrior",
+      "winsA": 54,
+      "winsB": 143,
+      "games": 197
+    },
+    "tactician_vs_wizard": {
+      "kitA": "tactician",
+      "kitB": "wizard",
+      "winsA": 105,
+      "winsB": 89,
+      "games": 194
+    },
+    "juggernaut_vs_tactician": {
+      "kitA": "juggernaut",
+      "kitB": "tactician",
+      "winsA": 126,
+      "winsB": 45,
+      "games": 171
+    },
+    "ghost_vs_tactician": {
+      "kitA": "ghost",
+      "kitB": "tactician",
+      "winsA": 75,
+      "winsB": 90,
+      "games": 165
+    },
+    "duplicator_vs_tactician": {
+      "kitA": "duplicator",
+      "kitB": "tactician",
+      "winsA": 62,
+      "winsB": 115,
+      "games": 177
+    },
+    "indestructible_vs_prophet": {
+      "kitA": "indestructible",
+      "kitB": "prophet",
+      "winsA": 59,
+      "winsB": 115,
+      "games": 174
+    },
+    "indestructible_vs_specialist": {
+      "kitA": "indestructible",
+      "kitB": "specialist",
+      "winsA": 82,
+      "winsB": 88,
+      "games": 170
+    },
+    "indestructible_vs_witch": {
+      "kitA": "indestructible",
+      "kitB": "witch",
+      "winsA": 75,
+      "winsB": 90,
+      "games": 165
+    },
+    "indestructible_vs_warrior": {
+      "kitA": "indestructible",
+      "kitB": "warrior",
+      "winsA": 29,
+      "winsB": 161,
+      "games": 190
+    },
+    "indestructible_vs_wizard": {
+      "kitA": "indestructible",
+      "kitB": "wizard",
+      "winsA": 85,
+      "winsB": 90,
+      "games": 175
+    },
+    "indestructible_vs_juggernaut": {
+      "kitA": "indestructible",
+      "kitB": "juggernaut",
+      "winsA": 52,
+      "winsB": 118,
+      "games": 170
+    },
+    "ghost_vs_indestructible": {
+      "kitA": "ghost",
+      "kitB": "indestructible",
+      "winsA": 79,
+      "winsB": 71,
+      "games": 150
+    },
+    "duplicator_vs_indestructible": {
+      "kitA": "duplicator",
+      "kitB": "indestructible",
+      "winsA": 52,
+      "winsB": 130,
+      "games": 182
+    },
+    "prophet_vs_specialist": {
+      "kitA": "prophet",
+      "kitB": "specialist",
+      "winsA": 140,
+      "winsB": 49,
+      "games": 189
+    },
+    "prophet_vs_witch": {
+      "kitA": "prophet",
+      "kitB": "witch",
+      "winsA": 146,
+      "winsB": 32,
+      "games": 178
+    },
+    "prophet_vs_warrior": {
+      "kitA": "prophet",
+      "kitB": "warrior",
+      "winsA": 51,
+      "winsB": 141,
+      "games": 192
+    },
+    "prophet_vs_wizard": {
+      "kitA": "prophet",
+      "kitB": "wizard",
+      "winsA": 162,
+      "winsB": 28,
+      "games": 190
+    },
+    "juggernaut_vs_prophet": {
+      "kitA": "juggernaut",
+      "kitB": "prophet",
+      "winsA": 86,
+      "winsB": 91,
+      "games": 177
+    },
+    "ghost_vs_prophet": {
+      "kitA": "ghost",
+      "kitB": "prophet",
+      "winsA": 44,
+      "winsB": 107,
+      "games": 151
+    },
+    "duplicator_vs_prophet": {
+      "kitA": "duplicator",
+      "kitB": "prophet",
+      "winsA": 34,
+      "winsB": 152,
+      "games": 186
+    },
+    "specialist_vs_witch": {
+      "kitA": "specialist",
+      "kitB": "witch",
+      "winsA": 70,
+      "winsB": 97,
+      "games": 167
+    },
+    "specialist_vs_warrior": {
+      "kitA": "specialist",
+      "kitB": "warrior",
+      "winsA": 13,
+      "winsB": 185,
+      "games": 198
+    },
+    "specialist_vs_wizard": {
+      "kitA": "specialist",
+      "kitB": "wizard",
+      "winsA": 105,
+      "winsB": 81,
+      "games": 186
+    },
+    "juggernaut_vs_specialist": {
+      "kitA": "juggernaut",
+      "kitB": "specialist",
+      "winsA": 123,
+      "winsB": 54,
+      "games": 177
+    },
+    "ghost_vs_specialist": {
+      "kitA": "ghost",
+      "kitB": "specialist",
+      "winsA": 105,
+      "winsB": 73,
+      "games": 178
+    },
+    "duplicator_vs_specialist": {
+      "kitA": "duplicator",
+      "kitB": "specialist",
+      "winsA": 96,
+      "winsB": 82,
+      "games": 178
+    },
+    "warrior_vs_witch": {
+      "kitA": "warrior",
+      "kitB": "witch",
+      "winsA": 170,
+      "winsB": 22,
+      "games": 192
+    },
+    "witch_vs_wizard": {
+      "kitA": "witch",
+      "kitB": "wizard",
+      "winsA": 110,
+      "winsB": 80,
+      "games": 190
+    },
+    "juggernaut_vs_witch": {
+      "kitA": "juggernaut",
+      "kitB": "witch",
+      "winsA": 124,
+      "winsB": 54,
+      "games": 178
+    },
+    "ghost_vs_witch": {
+      "kitA": "ghost",
+      "kitB": "witch",
+      "winsA": 75,
+      "winsB": 70,
+      "games": 145
+    },
+    "duplicator_vs_witch": {
+      "kitA": "duplicator",
+      "kitB": "witch",
+      "winsA": 74,
+      "winsB": 111,
+      "games": 185
+    },
+    "warrior_vs_wizard": {
+      "kitA": "warrior",
+      "kitB": "wizard",
+      "winsA": 194,
+      "winsB": 6,
+      "games": 200
+    },
+    "juggernaut_vs_warrior": {
+      "kitA": "juggernaut",
+      "kitB": "warrior",
+      "winsA": 83,
+      "winsB": 115,
+      "games": 198
+    },
+    "ghost_vs_warrior": {
+      "kitA": "ghost",
+      "kitB": "warrior",
+      "winsA": 35,
+      "winsB": 154,
+      "games": 189
+    },
+    "duplicator_vs_warrior": {
+      "kitA": "duplicator",
+      "kitB": "warrior",
+      "winsA": 15,
+      "winsB": 183,
+      "games": 198
+    },
+    "juggernaut_vs_wizard": {
+      "kitA": "juggernaut",
+      "kitB": "wizard",
+      "winsA": 142,
+      "winsB": 44,
+      "games": 186
+    },
+    "ghost_vs_wizard": {
+      "kitA": "ghost",
+      "kitB": "wizard",
+      "winsA": 120,
+      "winsB": 45,
+      "games": 165
+    },
+    "duplicator_vs_wizard": {
+      "kitA": "duplicator",
+      "kitB": "wizard",
+      "winsA": 84,
+      "winsB": 47,
+      "games": 131
+    },
+    "ghost_vs_juggernaut": {
+      "kitA": "ghost",
+      "kitB": "juggernaut",
+      "winsA": 69,
+      "winsB": 77,
+      "games": 146
+    },
+    "duplicator_vs_juggernaut": {
+      "kitA": "duplicator",
+      "kitB": "juggernaut",
+      "winsA": 59,
+      "winsB": 124,
+      "games": 183
+    },
+    "duplicator_vs_ghost": {
+      "kitA": "duplicator",
+      "kitB": "ghost",
+      "winsA": 53,
+      "winsB": 117,
+      "games": 170
+    }
+  },
+  "turnSequence": {
+    "min": 3,
+    "max": 2251,
+    "mean": 51.919766414761014,
+    "p50": 32
+  },
+  "eliminationReasons": {
+    "combat": 24214
+  },
+  "stallsByKit": {
+    "untouchable": {
+      "stalledGames": 389,
+      "seatedGames": 3340
+    },
+    "kamikaze": {
+      "stalledGames": 486,
+      "seatedGames": 3337
+    },
+    "scientific": {
+      "stalledGames": 559,
+      "seatedGames": 3315
+    },
+    "assassin": {
+      "stalledGames": 149,
+      "seatedGames": 3302
+    },
+    "upgrader": {
+      "stalledGames": 379,
+      "seatedGames": 3373
+    },
+    "tactician": {
+      "stalledGames": 289,
+      "seatedGames": 3345
+    },
+    "indestructible": {
+      "stalledGames": 435,
+      "seatedGames": 3355
+    },
+    "prophet": {
+      "stalledGames": 358,
+      "seatedGames": 3327
+    },
+    "specialist": {
+      "stalledGames": 299,
+      "seatedGames": 3297
+    },
+    "witch": {
+      "stalledGames": 416,
+      "seatedGames": 3319
+    },
+    "warrior": {
+      "stalledGames": 97,
+      "seatedGames": 3325
+    },
+    "wizard": {
+      "stalledGames": 374,
+      "seatedGames": 3368
+    },
+    "juggernaut": {
+      "stalledGames": 400,
+      "seatedGames": 3302
+    },
+    "ghost": {
+      "stalledGames": 644,
+      "seatedGames": 3347
+    },
+    "duplicator": {
+      "stalledGames": 358,
+      "seatedGames": 3348
+    }
+  },
+  "stallsByMatchup": {
+    "kamikaze_vs_untouchable": {
+      "kitA": "kamikaze",
+      "kitB": "untouchable",
+      "stalledGames": 27,
+      "attemptedGames": 200
+    },
+    "scientific_vs_untouchable": {
+      "kitA": "scientific",
+      "kitB": "untouchable",
+      "stalledGames": 37,
+      "attemptedGames": 200
+    },
+    "assassin_vs_untouchable": {
+      "kitA": "assassin",
+      "kitB": "untouchable",
+      "stalledGames": 5,
+      "attemptedGames": 200
+    },
+    "untouchable_vs_upgrader": {
+      "kitA": "untouchable",
+      "kitB": "upgrader",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "tactician_vs_untouchable": {
+      "kitA": "tactician",
+      "kitB": "untouchable",
+      "stalledGames": 19,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_untouchable": {
+      "kitA": "indestructible",
+      "kitB": "untouchable",
+      "stalledGames": 25,
+      "attemptedGames": 200
+    },
+    "prophet_vs_untouchable": {
+      "kitA": "prophet",
+      "kitB": "untouchable",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "specialist_vs_untouchable": {
+      "kitA": "specialist",
+      "kitB": "untouchable",
+      "stalledGames": 8,
+      "attemptedGames": 200
+    },
+    "untouchable_vs_witch": {
+      "kitA": "untouchable",
+      "kitB": "witch",
+      "stalledGames": 28,
+      "attemptedGames": 200
+    },
+    "untouchable_vs_warrior": {
+      "kitA": "untouchable",
+      "kitB": "warrior",
+      "stalledGames": 8,
+      "attemptedGames": 200
+    },
+    "untouchable_vs_wizard": {
+      "kitA": "untouchable",
+      "kitB": "wizard",
+      "stalledGames": 55,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_untouchable": {
+      "kitA": "juggernaut",
+      "kitB": "untouchable",
+      "stalledGames": 26,
+      "attemptedGames": 200
+    },
+    "ghost_vs_untouchable": {
+      "kitA": "ghost",
+      "kitB": "untouchable",
+      "stalledGames": 41,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_untouchable": {
+      "kitA": "duplicator",
+      "kitB": "untouchable",
+      "stalledGames": 9,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_scientific": {
+      "kitA": "kamikaze",
+      "kitB": "scientific",
+      "stalledGames": 62,
+      "attemptedGames": 200
+    },
+    "assassin_vs_kamikaze": {
+      "kitA": "assassin",
+      "kitB": "kamikaze",
+      "stalledGames": 11,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_upgrader": {
+      "kitA": "kamikaze",
+      "kitB": "upgrader",
+      "stalledGames": 38,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_tactician": {
+      "kitA": "kamikaze",
+      "kitB": "tactician",
+      "stalledGames": 13,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_kamikaze": {
+      "kitA": "indestructible",
+      "kitB": "kamikaze",
+      "stalledGames": 43,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_prophet": {
+      "kitA": "kamikaze",
+      "kitB": "prophet",
+      "stalledGames": 23,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_specialist": {
+      "kitA": "kamikaze",
+      "kitB": "specialist",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_witch": {
+      "kitA": "kamikaze",
+      "kitB": "witch",
+      "stalledGames": 38,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_warrior": {
+      "kitA": "kamikaze",
+      "kitB": "warrior",
+      "stalledGames": 4,
+      "attemptedGames": 200
+    },
+    "kamikaze_vs_wizard": {
+      "kitA": "kamikaze",
+      "kitB": "wizard",
+      "stalledGames": 38,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_kamikaze": {
+      "kitA": "juggernaut",
+      "kitB": "kamikaze",
+      "stalledGames": 31,
+      "attemptedGames": 200
+    },
+    "ghost_vs_kamikaze": {
+      "kitA": "ghost",
+      "kitB": "kamikaze",
+      "stalledGames": 65,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_kamikaze": {
+      "kitA": "duplicator",
+      "kitB": "kamikaze",
+      "stalledGames": 26,
+      "attemptedGames": 200
+    },
+    "assassin_vs_scientific": {
+      "kitA": "assassin",
+      "kitB": "scientific",
+      "stalledGames": 15,
+      "attemptedGames": 200
+    },
+    "scientific_vs_upgrader": {
+      "kitA": "scientific",
+      "kitB": "upgrader",
+      "stalledGames": 25,
+      "attemptedGames": 200
+    },
+    "scientific_vs_tactician": {
+      "kitA": "scientific",
+      "kitB": "tactician",
+      "stalledGames": 13,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_scientific": {
+      "kitA": "indestructible",
+      "kitB": "scientific",
+      "stalledGames": 30,
+      "attemptedGames": 200
+    },
+    "prophet_vs_scientific": {
+      "kitA": "prophet",
+      "kitB": "scientific",
+      "stalledGames": 41,
+      "attemptedGames": 200
+    },
+    "scientific_vs_specialist": {
+      "kitA": "scientific",
+      "kitB": "specialist",
+      "stalledGames": 28,
+      "attemptedGames": 200
+    },
+    "scientific_vs_witch": {
+      "kitA": "scientific",
+      "kitB": "witch",
+      "stalledGames": 56,
+      "attemptedGames": 200
+    },
+    "scientific_vs_warrior": {
+      "kitA": "scientific",
+      "kitB": "warrior",
+      "stalledGames": 5,
+      "attemptedGames": 200
+    },
+    "scientific_vs_wizard": {
+      "kitA": "scientific",
+      "kitB": "wizard",
+      "stalledGames": 43,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_scientific": {
+      "kitA": "juggernaut",
+      "kitB": "scientific",
+      "stalledGames": 35,
+      "attemptedGames": 200
+    },
+    "ghost_vs_scientific": {
+      "kitA": "ghost",
+      "kitB": "scientific",
+      "stalledGames": 72,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_scientific": {
+      "kitA": "duplicator",
+      "kitB": "scientific",
+      "stalledGames": 26,
+      "attemptedGames": 200
+    },
+    "assassin_vs_upgrader": {
+      "kitA": "assassin",
+      "kitB": "upgrader",
+      "stalledGames": 6,
+      "attemptedGames": 200
+    },
+    "assassin_vs_tactician": {
+      "kitA": "assassin",
+      "kitB": "tactician",
+      "stalledGames": 5,
+      "attemptedGames": 200
+    },
+    "assassin_vs_indestructible": {
+      "kitA": "assassin",
+      "kitB": "indestructible",
+      "stalledGames": 5,
+      "attemptedGames": 200
+    },
+    "assassin_vs_prophet": {
+      "kitA": "assassin",
+      "kitB": "prophet",
+      "stalledGames": 6,
+      "attemptedGames": 200
+    },
+    "assassin_vs_specialist": {
+      "kitA": "assassin",
+      "kitB": "specialist",
+      "stalledGames": 3,
+      "attemptedGames": 200
+    },
+    "assassin_vs_witch": {
+      "kitA": "assassin",
+      "kitB": "witch",
+      "stalledGames": 11,
+      "attemptedGames": 200
+    },
+    "assassin_vs_warrior": {
+      "kitA": "assassin",
+      "kitB": "warrior",
+      "stalledGames": 2,
+      "attemptedGames": 200
+    },
+    "assassin_vs_wizard": {
+      "kitA": "assassin",
+      "kitB": "wizard",
+      "stalledGames": 4,
+      "attemptedGames": 200
+    },
+    "assassin_vs_juggernaut": {
+      "kitA": "assassin",
+      "kitB": "juggernaut",
+      "stalledGames": 8,
+      "attemptedGames": 200
+    },
+    "assassin_vs_ghost": {
+      "kitA": "assassin",
+      "kitB": "ghost",
+      "stalledGames": 19,
+      "attemptedGames": 200
+    },
+    "assassin_vs_duplicator": {
+      "kitA": "assassin",
+      "kitB": "duplicator",
+      "stalledGames": 6,
+      "attemptedGames": 200
+    },
+    "tactician_vs_upgrader": {
+      "kitA": "tactician",
+      "kitB": "upgrader",
+      "stalledGames": 21,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_upgrader": {
+      "kitA": "indestructible",
+      "kitB": "upgrader",
+      "stalledGames": 29,
+      "attemptedGames": 200
+    },
+    "prophet_vs_upgrader": {
+      "kitA": "prophet",
+      "kitB": "upgrader",
+      "stalledGames": 34,
+      "attemptedGames": 200
+    },
+    "specialist_vs_upgrader": {
+      "kitA": "specialist",
+      "kitB": "upgrader",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "upgrader_vs_witch": {
+      "kitA": "upgrader",
+      "kitB": "witch",
+      "stalledGames": 19,
+      "attemptedGames": 200
+    },
+    "upgrader_vs_warrior": {
+      "kitA": "upgrader",
+      "kitB": "warrior",
+      "stalledGames": 3,
+      "attemptedGames": 200
+    },
+    "upgrader_vs_wizard": {
+      "kitA": "upgrader",
+      "kitB": "wizard",
+      "stalledGames": 10,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_upgrader": {
+      "kitA": "juggernaut",
+      "kitB": "upgrader",
+      "stalledGames": 35,
+      "attemptedGames": 200
+    },
+    "ghost_vs_upgrader": {
+      "kitA": "ghost",
+      "kitB": "upgrader",
+      "stalledGames": 46,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_upgrader": {
+      "kitA": "duplicator",
+      "kitB": "upgrader",
+      "stalledGames": 15,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_tactician": {
+      "kitA": "indestructible",
+      "kitB": "tactician",
+      "stalledGames": 24,
+      "attemptedGames": 200
+    },
+    "prophet_vs_tactician": {
+      "kitA": "prophet",
+      "kitB": "tactician",
+      "stalledGames": 24,
+      "attemptedGames": 200
+    },
+    "specialist_vs_tactician": {
+      "kitA": "specialist",
+      "kitB": "tactician",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "tactician_vs_witch": {
+      "kitA": "tactician",
+      "kitB": "witch",
+      "stalledGames": 21,
+      "attemptedGames": 200
+    },
+    "tactician_vs_warrior": {
+      "kitA": "tactician",
+      "kitB": "warrior",
+      "stalledGames": 3,
+      "attemptedGames": 200
+    },
+    "tactician_vs_wizard": {
+      "kitA": "tactician",
+      "kitB": "wizard",
+      "stalledGames": 6,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_tactician": {
+      "kitA": "juggernaut",
+      "kitB": "tactician",
+      "stalledGames": 29,
+      "attemptedGames": 200
+    },
+    "ghost_vs_tactician": {
+      "kitA": "ghost",
+      "kitB": "tactician",
+      "stalledGames": 35,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_tactician": {
+      "kitA": "duplicator",
+      "kitB": "tactician",
+      "stalledGames": 23,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_prophet": {
+      "kitA": "indestructible",
+      "kitB": "prophet",
+      "stalledGames": 26,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_specialist": {
+      "kitA": "indestructible",
+      "kitB": "specialist",
+      "stalledGames": 30,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_witch": {
+      "kitA": "indestructible",
+      "kitB": "witch",
+      "stalledGames": 35,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_warrior": {
+      "kitA": "indestructible",
+      "kitB": "warrior",
+      "stalledGames": 10,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_wizard": {
+      "kitA": "indestructible",
+      "kitB": "wizard",
+      "stalledGames": 25,
+      "attemptedGames": 200
+    },
+    "indestructible_vs_juggernaut": {
+      "kitA": "indestructible",
+      "kitB": "juggernaut",
+      "stalledGames": 30,
+      "attemptedGames": 200
+    },
+    "ghost_vs_indestructible": {
+      "kitA": "ghost",
+      "kitB": "indestructible",
+      "stalledGames": 50,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_indestructible": {
+      "kitA": "duplicator",
+      "kitB": "indestructible",
+      "stalledGames": 18,
+      "attemptedGames": 200
+    },
+    "prophet_vs_specialist": {
+      "kitA": "prophet",
+      "kitB": "specialist",
+      "stalledGames": 11,
+      "attemptedGames": 200
+    },
+    "prophet_vs_witch": {
+      "kitA": "prophet",
+      "kitB": "witch",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "prophet_vs_warrior": {
+      "kitA": "prophet",
+      "kitB": "warrior",
+      "stalledGames": 8,
+      "attemptedGames": 200
+    },
+    "prophet_vs_wizard": {
+      "kitA": "prophet",
+      "kitB": "wizard",
+      "stalledGames": 10,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_prophet": {
+      "kitA": "juggernaut",
+      "kitB": "prophet",
+      "stalledGames": 23,
+      "attemptedGames": 200
+    },
+    "ghost_vs_prophet": {
+      "kitA": "ghost",
+      "kitB": "prophet",
+      "stalledGames": 49,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_prophet": {
+      "kitA": "duplicator",
+      "kitB": "prophet",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "specialist_vs_witch": {
+      "kitA": "specialist",
+      "kitB": "witch",
+      "stalledGames": 33,
+      "attemptedGames": 200
+    },
+    "specialist_vs_warrior": {
+      "kitA": "specialist",
+      "kitB": "warrior",
+      "stalledGames": 2,
+      "attemptedGames": 200
+    },
+    "specialist_vs_wizard": {
+      "kitA": "specialist",
+      "kitB": "wizard",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_specialist": {
+      "kitA": "juggernaut",
+      "kitB": "specialist",
+      "stalledGames": 23,
+      "attemptedGames": 200
+    },
+    "ghost_vs_specialist": {
+      "kitA": "ghost",
+      "kitB": "specialist",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_specialist": {
+      "kitA": "duplicator",
+      "kitB": "specialist",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "warrior_vs_witch": {
+      "kitA": "warrior",
+      "kitB": "witch",
+      "stalledGames": 8,
+      "attemptedGames": 200
+    },
+    "witch_vs_wizard": {
+      "kitA": "witch",
+      "kitB": "wizard",
+      "stalledGames": 10,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_witch": {
+      "kitA": "juggernaut",
+      "kitB": "witch",
+      "stalledGames": 22,
+      "attemptedGames": 200
+    },
+    "ghost_vs_witch": {
+      "kitA": "ghost",
+      "kitB": "witch",
+      "stalledGames": 55,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_witch": {
+      "kitA": "duplicator",
+      "kitB": "witch",
+      "stalledGames": 15,
+      "attemptedGames": 200
+    },
+    "warrior_vs_wizard": {
+      "kitA": "warrior",
+      "kitB": "wizard",
+      "stalledGames": 0,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_warrior": {
+      "kitA": "juggernaut",
+      "kitB": "warrior",
+      "stalledGames": 2,
+      "attemptedGames": 200
+    },
+    "ghost_vs_warrior": {
+      "kitA": "ghost",
+      "kitB": "warrior",
+      "stalledGames": 11,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_warrior": {
+      "kitA": "duplicator",
+      "kitB": "warrior",
+      "stalledGames": 2,
+      "attemptedGames": 200
+    },
+    "juggernaut_vs_wizard": {
+      "kitA": "juggernaut",
+      "kitB": "wizard",
+      "stalledGames": 14,
+      "attemptedGames": 200
+    },
+    "ghost_vs_wizard": {
+      "kitA": "ghost",
+      "kitB": "wizard",
+      "stalledGames": 35,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_wizard": {
+      "kitA": "duplicator",
+      "kitB": "wizard",
+      "stalledGames": 69,
+      "attemptedGames": 200
+    },
+    "ghost_vs_juggernaut": {
+      "kitA": "ghost",
+      "kitB": "juggernaut",
+      "stalledGames": 54,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_juggernaut": {
+      "kitA": "duplicator",
+      "kitB": "juggernaut",
+      "stalledGames": 17,
+      "attemptedGames": 200
+    },
+    "duplicator_vs_ghost": {
+      "kitA": "duplicator",
+      "kitB": "ghost",
+      "stalledGames": 30,
+      "attemptedGames": 200
+    }
+  },
+  "cardAppearances": {
+    "thief": 7977,
+    "strong-attack": 13078,
+    "tax": 18110,
+    "regeneration": 11103,
+    "spy": 15684,
+    "spy-thief": 3187,
+    "shield": 2075,
+    "imposition": 4388,
+    "super-attack": 7562,
+    "basic-attack": 4464,
+    "mirror": 661,
+    "absorber": 4078,
+    "cloning": 1695,
+    "points-generator": 2687,
+    "sentence": 280,
+    "upgrade-point-thief": 3098,
+    "block": 2691,
+    "super-regeneration": 1801,
+    "attack-thief": 1986,
+    "super-mirror": 782,
+    "card-thief": 2297,
+    "card-transformer": 2831,
+    "super-absorber": 1437,
+    "curse": 2730,
+    "mega-attack": 958,
+    "invisibility": 157,
+    "reanimation": 357,
+    "card-absorber": 1413,
+    "poison": 565,
+    "suicide": 10
+  },
+  "drawStatsByKit": {
+    "kamikaze": {
+      "games": 2851,
+      "totalDraws": 5243,
+      "meanDrawsPerGame": 1.839003858295335
+    },
+    "untouchable": {
+      "games": 2951,
+      "totalDraws": 5900,
+      "meanDrawsPerGame": 1.9993222636394443
+    },
+    "scientific": {
+      "games": 2756,
+      "totalDraws": 15120,
+      "meanDrawsPerGame": 5.486211901306241
+    },
+    "assassin": {
+      "games": 3153,
+      "totalDraws": 10956,
+      "meanDrawsPerGame": 3.4747859181731684
+    },
+    "upgrader": {
+      "games": 2994,
+      "totalDraws": 12280,
+      "meanDrawsPerGame": 4.101536406145625
+    },
+    "tactician": {
+      "games": 3056,
+      "totalDraws": 11482,
+      "meanDrawsPerGame": 3.7571989528795813
+    },
+    "indestructible": {
+      "games": 2920,
+      "totalDraws": 10016,
+      "meanDrawsPerGame": 3.43013698630137
+    },
+    "prophet": {
+      "games": 2969,
+      "totalDraws": 6137,
+      "meanDrawsPerGame": 2.067025934658134
+    },
+    "specialist": {
+      "games": 2998,
+      "totalDraws": 28226,
+      "meanDrawsPerGame": 9.414943295530353
+    },
+    "witch": {
+      "games": 2903,
+      "totalDraws": 9488,
+      "meanDrawsPerGame": 3.2683430933517053
+    },
+    "warrior": {
+      "games": 3228,
+      "totalDraws": 4296,
+      "meanDrawsPerGame": 1.3308550185873607
+    },
+    "wizard": {
+      "games": 2994,
+      "totalDraws": 21880,
+      "meanDrawsPerGame": 7.307949231796927
+    },
+    "juggernaut": {
+      "games": 2902,
+      "totalDraws": 6523,
+      "meanDrawsPerGame": 2.2477601654031703
+    },
+    "ghost": {
+      "games": 2703,
+      "totalDraws": 11440,
+      "meanDrawsPerGame": 4.232334443211247
+    },
+    "duplicator": {
+      "games": 2990,
+      "totalDraws": 0,
+      "meanDrawsPerGame": 0
+    }
+  }
+}
