@@ -31,8 +31,9 @@ See `config.json` → `coverageNote`.
 |---|---|
 | Attempted | 23 000 (21 000 1v1 + 2000 4p) |
 | Completed | 20 378 |
-| Stalled (`MAX_TURNS` = 2500) | 2622 (~11.4%) — detail in L31-03 |
+| Stalled (`MAX_TURNS` = 2500) | **2622 (~11.4%)** |
 | Median `turnSequence` | 32 |
+| Mean `turnSequence` | 51.9 |
 
 ## Measurement target — Tactician Draw 4 (#V4-25 / L31-02)
 
@@ -54,6 +55,54 @@ timeout, but they can still over-choose draw).
 **Observation (not a balance conclusion):** on this screen Tactician does **not** over-index on
 draws or stalls versus the field. Specialist and Wizard draw more often; Ghost / Scientific /
 Kamikaze stall more often. Draw value **unchanged** in V4.
+
+## Stall rate (L31-03)
+
+Stalls stay **counted, never assigned a winner**.
+
+Overall stall rate: **2622 / 23 000 ≈ 11.4%** (lower than the V3 stance-pass ~16.8% and the
+L31-01 4-kit re-baseline ~13.6%, on a much larger matrix). Median completed-game
+`turnSequence` is **32** (mean 51.9).
+
+### Kits over-represented in stalls (seated-game share)
+
+| Kit | Stalled seats / seated | Share |
+|---|---|---|
+| Ghost | 644 / 3347 | **19.2%** |
+| Scientific | 559 / 3315 | **16.9%** |
+| Kamikaze | 486 / 3337 | **14.6%** |
+| Indestructible | 435 / 3355 | **13.0%** |
+| Witch | 416 / 3319 | **12.5%** |
+| Juggernaut | 400 / 3302 | 12.1% |
+| Untouchable | 389 / 3340 | 11.6% |
+| Upgrader | 379 / 3373 | 11.2% |
+| Wizard | 374 / 3368 | 11.1% |
+| Prophet | 358 / 3327 | 10.8% |
+| Duplicator | 358 / 3348 | 10.7% |
+| Specialist | 299 / 3297 | 9.1% |
+| Tactician | 289 / 3345 | 8.6% |
+| Assassin | 149 / 3302 | 4.5% |
+| Warrior | 97 / 3325 | 2.9% |
+
+Ghost leads stall seats — consistent with a durable / second-life kit family, but this is a
+**hang signal**, not a nerf warrant. Spec v4 §7 flagged Invisibility, Super Regeneration,
+Indestructible and Reanimation as structural stall risk; Ghost (Reanimation + life-loss points)
+and Indestructible appear in the top band; Warrior almost never stalls.
+
+### 1v1 matchups with highest stall rates
+
+| Matchup | Stalled / attempted |
+|---|---|
+| Ghost vs Scientific | 72 / 200 (36%) |
+| Duplicator vs Wizard | 69 / 200 (34%) |
+| Ghost vs Kamikaze | 65 / 200 (32%) |
+| Kamikaze vs Scientific | 62 / 200 (31%) |
+| Scientific vs Witch | 56 / 200 (28%) |
+| Untouchable vs Wizard | 55 / 200 (28%) |
+| Ghost vs Witch | 55 / 200 (28%) |
+| Ghost vs Juggernaut | 54 / 200 (27%) |
+
+No balance inference from stall cells.
 
 ## Reproduction
 
