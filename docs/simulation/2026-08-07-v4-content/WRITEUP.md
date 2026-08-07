@@ -104,6 +104,70 @@ and Indestructible appear in the top band; Warrior almost never stalls.
 
 No balance inference from stall cells.
 
+## Win rate by starting kit (completed) — L31-04
+
+| Kit | Wins / games | Rate | Flag |
+|---|---|---|---|
+| Warrior | 2591 / 3228 | **80.3%** | look here |
+| Prophet | 1804 / 2969 | 60.8% | soft lean |
+| Juggernaut | 1679 / 2902 | 57.9% | soft lean |
+| Upgrader | 1732 / 2994 | 57.8% | soft lean |
+| Untouchable | 1582 / 2951 | 53.6% | noise band |
+| Assassin | 1579 / 3153 | 50.1% | |
+| Tactician | 1335 / 3056 | 43.7% | |
+| Ghost | 1169 / 2703 | 43.2% | |
+| Witch | 1185 / 2903 | 40.8% | |
+| Indestructible | 1152 / 2920 | 39.5% | |
+| Duplicator | 1163 / 2990 | 38.9% | |
+| Specialist | 1003 / 2998 | 33.5% | |
+| Wizard | 957 / 2994 | 32.0% | |
+| Scientific | 717 / 2756 | 26.0% | |
+| Kamikaze | 730 / 2851 | 25.6% | |
+
+**Input to a later rebalancing version (not a recommendation):** Warrior crosses ~70% overall.
+Prophet / Juggernaut / Upgrader sit in the soft-lean band. Kamikaze and Scientific remain at the
+floor among starting kits on this heuristic.
+
+## 1v1 matchups at ~70%+ (look here)
+
+Selected completed cells where one side won ≥70% of finished games (full list in
+`aggregates.json` → `winRateByMatchup`). Extreme examples:
+
+| Matchup | Wins (A–B) / games | Dominant |
+|---|---|---|
+| Warrior vs Wizard | 194–6 / 200 | Warrior 97% |
+| Assassin vs Warrior | 10–188 / 198 | Warrior 95% |
+| Specialist vs Warrior | 13–185 / 198 | Warrior 93% |
+| Scientific vs Untouchable | 13–150 / 163 | Untouchable 92% |
+| Kamikaze vs Prophet | 16–161 / 177 | Prophet 91% |
+| Assassin vs Specialist | 177–20 / 197 | Assassin 90% |
+| Warrior vs Witch | 170–22 / 192 | Warrior 89% |
+| Specialist vs Untouchable | 25–167 / 192 | Untouchable 87% |
+
+Many Warrior matchups clear 70%. Treat as **policy + content** signal for a future pass —
+self-play among one heuristic is not fairness.
+
+## Undersampled cards (N = 100)
+
+Games in which the card appears in any seat’s `cardsPlayedById` at least once.
+Threshold **N = 100** (documented in `config.json`).
+
+| Card | Appearance games |
+|---|---|
+| `suicide` | **10** |
+
+All other declared cards (30 distinct ids observed) appear in ≥100 completed games.
+**Suicide** is effectively unmeasured on this screen (Kamikaze floor + policy reluctance) —
+do not assume its balance from these aggregates.
+
+## What may be policy artefact
+
+- Warrior’s always-upgraded attacks and MEGA access may be overtuned **against this bot**, or
+  the bot may under-defend that line.
+- High stall kits (Ghost, Scientific, Kamikaze) may reflect invest / chip / second-life loops
+  rather than win power (their win rates are mid or low).
+- Random 4p win rates mix into `winRateByKit` and are **not** matchup-controlled.
+
 ## Reproduction
 
 ```bash
