@@ -19,7 +19,7 @@ implemented in L12-08).
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — create / join / solo + nickname | `screens/home.tsx` |
+| Home | No room — hub → online (create/join) or solo; optional How to play | `screens/home.tsx` + `how-to-play-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls | `screens/lobby.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home | `screens/end.tsx` + `game-over-dialog.tsx` |
@@ -58,10 +58,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
   `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-- **Home (L11-01 / L17-01):** branded split — title + forms + decorative V1 kit/card art from the
-  lookup; muted Protocol vN; create / join / **Play solo** (inline opponent count + difficulty,
-  defaults 1 + Normal). Solo composes `create` + N× `addBot` + `startGame`; `soloLaunchPending`
-  skips Lobby flash. Difficulty copy via `formatBotDifficulty` (Easy / Normal / Hard).
+- **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
+  decorative V1 kit/card art, muted Protocol vN. Two mode paths (not stacked forms): **Play
+  online** (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
+  defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
+  Optional **How to play** opens `HowToPlayDialog` from the hub only — never auto-opens and
+  never gates Create / Join / Solo. Solo composes `create` + N× `addBot` + `startGame`;
+  `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
+  (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
   Start / Leave; host-only Add bot / Remove / set difficulty; `BotSeatLabel` on every bot seat
   for all recipients.

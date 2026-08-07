@@ -1736,3 +1736,16 @@ Designer session:
    redaction and live `activateDuplication` `ACTION_PLAYED`.
 5. No `PROTOCOL_VERSION` bump: `SpiedPlayerView` shape unchanged; who receives it widens.
 
+## 2026-08-07 · [P] Home hub + optional How to play for new players
+
+Designer session override of technical spec v2 §6 / §9 ("no onboarding designed for
+strangers") for the **Home screen only**:
+
+- **Hub first:** Play online vs Play solo as separate paths (mode chooser, then dedicated
+  form). Nickname collected inside each path, not on the hub.
+- **Online** keeps both Create and Join under the online path.
+- **How to play** is an opt-in `Dialog` primer (rules §1 / §6 / Classic) opened from the hub.
+  It must **not** auto-open and must **not** gate starting a game.
+- No new screen in the phase router, no protocol/rule change, no new dependency. Solo still
+  composes `create` + N× `addBot` + `startGame` (L17-01).
+
