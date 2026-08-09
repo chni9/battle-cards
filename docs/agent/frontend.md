@@ -103,11 +103,15 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
   `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
-  Nested Dialog for target, Regen quantity, Assassin multi-attack; self-only Use is one-shot;
+  Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
+  action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
   Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
   intents/payloads as V1. Buy dialog thumbs use upgraded art when the seat's kit
   `alwaysUpgraded` covers that card (purchase arrives upgraded).
-- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
+- **Mirror sub-choice labels:** pending attack options show
+  `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
+- **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
+  (playtest 2026-08-09); Spy/self still receive the real action kind on the wire.- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
   Landing-page layout rules from design-taste-frontend do **not** apply to
   Home/Lobby/Table/End.

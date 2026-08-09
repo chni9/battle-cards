@@ -1,4 +1,5 @@
 import {
+  formatCardLabel,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
   type PublicPlayerView,
@@ -59,7 +60,8 @@ export function MirrorPanel({
           >
             {eligibleEffects.map((effect) => (
               <option key={effect.id} value={effect.id}>
-                {effect.cardId} from {nicknameOf(view, effect.sourcePlayerId)}
+                {nicknameOf(view, effect.sourcePlayerId)}&apos;s{' '}
+                {formatCardLabel(effect.cardId, effect.isUpgraded)}
               </option>
             ))}
           </select>

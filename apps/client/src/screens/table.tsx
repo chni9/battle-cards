@@ -35,7 +35,7 @@ import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
-import { cardPlayNeedsTarget } from './table/table-helpers';
+import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
 
@@ -339,6 +339,10 @@ function TableScreenInner({
   function onBeginUse(instance: CardInstance): void {
     if (instance.cardId === 'regeneration') {
       setDialog({ kind: 'quantity', instance });
+      return;
+    }
+    if (cardPlayNeedsConsume(instance.cardId)) {
+      setDialog({ kind: 'consume', instance });
       return;
     }
     if (cardPlayNeedsTarget(instance.cardId, instance.isUpgraded)) {

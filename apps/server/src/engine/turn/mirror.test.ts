@@ -299,4 +299,56 @@ describe('Mirror (rules spec §3, L3-09)', () => {
       .find((e) => e.id === pendingId);
     expect(redirected?.sourcePlayerId).toBe('c');
   });
+
+  it('charges Mirror play cost on sub-choice complete, not on play', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'mirror-defer-cost',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const carol = state.players.find((player) => player.id === 'c');
+
+    expect(alice).toBeDefined();
+    expect(carol).toBeDefined();
+
+    if (alice === undefined || carol === undefined) {
+      return;
+    }
+
+    state.currentTurnPlayerId = 'a';
+    alice.points = 1;
+    alice.hand = [{ instanceId: 'atk-a', cardId: 'basic-attack', isUpgraded: false }];
+    performTurnAction(state, 'a', {
+      type: 'playCard',
+      instanceId: 'atk-a',
+      targetPlayerId: 'c',
+    });
+
+    const pending = carol.pendingEffects[0];
+    expect(pending).toBeDefined();
+
+    if (pending === undefined) {
+      return;
+    }
+
+    state.currentTurnPlayerId = 'c';
+    carol.points = 6;
+    carol.hand = [{ instanceId: 'm-1', cardId: 'mirror', isUpgraded: false }];
+
+    const mirrorPlay = performTurnAction(state, 'c', {
+      type: 'playCard',
+      instanceId: 'm-1',
+    });
+
+    expect(mirrorPlay.ok).toBe(true);
+    expect(mirrorPlay.ok && mirrorPlay.mirrorChoicePending).toBe(true);
+    expect(carol.points).toBe(6);
+
+    expect(completeMirrorChoice(state, 'c', pending.id, 'b').ok).toBe(true);
+    expect(carol.points).toBe(0);
+  });
 });

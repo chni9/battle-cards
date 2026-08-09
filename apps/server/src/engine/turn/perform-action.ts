@@ -13,6 +13,7 @@ import {
   type CardInstance,
   type GameState,
   type KitId,
+  type Player,
   type RewardChoice,
   type SpecialCardId,
 } from '@card-battle/shared';
@@ -427,6 +428,23 @@ export function performTurnAction(
 }
 
 /**
+ * Mirror play cost is deferred until the redirect sub-choice resolves
+ * (playtest 2026-08-09). Affordability was already gated at play time;
+ * callers charge only after a successful redirect.
+ */
+function chargeDeferredMirrorPayment(actor: Player): void {
+  const playPoints = playPointsCost('mirror');
+
+  if (playPoints <= 0) {
+    return;
+  }
+
+  const spent = Math.min(playPoints, actor.points);
+  actor.points -= spent;
+  actor.turnLedger.pointsSpent += spent;
+}
+
+/**
  * Complete a Mirror redirect then finish the Mirror user's turn (resolve + advance).
  */
 export function completeMirrorChoice(
@@ -457,6 +475,10 @@ export function completeMirrorChoice(
     return { ok: false, message: 'Unknown player.' };
   }
 
+  if (!canAffordPlayPoints(actor, 'mirror')) {
+    return { ok: false, message: 'Not enough points.' };
+  }
+
   const redirected = redirectPendingAttack(
     state,
     actor,
@@ -468,6 +490,8 @@ export function completeMirrorChoice(
   if (!redirected.ok) {
     return redirected;
   }
+
+  chargeDeferredMirrorPayment(actor);
 
   const turnSequence = state.turnSequence;
   state.mirrorChoice = null;
@@ -506,11 +530,19 @@ export function expireMirrorChoice(
   }
 
   const actorPlayerId = choice.playerId;
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor === undefined) {
+    return { ok: false, message: 'Unknown player.' };
+  }
+
   const applied = applyDefaultMirrorRedirect(state, rng);
 
   if (!applied.ok) {
     return applied;
   }
+
+  chargeDeferredMirrorPayment(actor);
 
   const turnSequence = state.turnSequence;
   state.mirrorChoice = null;
@@ -1268,12 +1300,14 @@ function playCardAction(
 
   // Play payment: points from catalog (shared or special Price). Life / pointsPerLife
   // play costs land with their handlers (Tax, Regeneration). Shared with listLegalActions
-  // (technical spec v3 §4.3 rule 4).
+  // (technical spec v3 §4.3 rule 4). Mirror charges on sub-choice complete / expiry
+  // (playtest 2026-08-09) so the cost lands with the redirect choice.
   if (!canAffordPlayPoints(actor, cardId)) {
     return { ok: false, message: 'Not enough points.' };
   }
 
-  const playPoints = playPointsCost(cardId);
+  const deferMirrorPayment = cardId === 'mirror';
+  const playPoints = deferMirrorPayment ? 0 : playPointsCost(cardId);
 
   if (playPoints > 0) {
     actor.points -= playPoints;

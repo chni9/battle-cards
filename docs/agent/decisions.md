@@ -1783,3 +1783,20 @@ stays.
 - Public action-log kind `curseTransferred`. **PROTOCOL_VERSION 25 → 26**.
 - Bot: drop hard deny on re-curse; soft stack penalty only.
 
+## 2026-08-09 · [P] Playtest: Transformer consume UI, Duplicator log, Mirror cost/labels
+
+Designer playtest feedback (session):
+
+1. **Card Transformer** — client must open a popup to choose which hand card to
+   consume (`consumeInstanceId`) before `playCard`. Upgraded still raises
+   `special-pick` for the resulting special (already wired). Without the consume
+   dialog the client sent no `consumeInstanceId` and the server rejected with
+   "That play is not legal."
+2. **Duplicator activation log** — format `activateDuplication` as
+   "`{player} draws`" (same copy as a real draw). Protocol still Spy-gates the
+   action kind; only the player-facing string changes.
+3. **Mirror** — sub-choice attack list uses `formatCardLabel` + source nickname
+   (`Alice's Basic Attack`), not raw `cardId`s. Play cost (6 pts) is charged on
+   sub-choice complete / expiry, not when Mirror is first played (affordability
+   still gated at play time).
+

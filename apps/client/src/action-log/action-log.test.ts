@@ -164,7 +164,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice activated duplication');
+    ).toBe('Alice draws');
   });
 
   it('formats player reanimation with kit name when visible (L30-06)', () => {

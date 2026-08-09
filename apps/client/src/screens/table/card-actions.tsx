@@ -78,6 +78,7 @@ export type TableDialog =
     }
   | { kind: 'target'; instance: CardInstance }
   | { kind: 'quantity'; instance: CardInstance }
+  | { kind: 'consume'; instance: CardInstance }
   | { kind: 'multi' }
   | { kind: 'buy' }
   | { kind: 'pool' }
@@ -123,8 +124,16 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onBeginUse,
   } = props;
 
+  const [targetId, setTargetId] = useState('');
+  const [quantityText, setQuantityText] = useState('1');
+  const [consumeInstanceId, setConsumeInstanceId] = useState('');
+  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
+  const [multiIds, setMultiIds] = useState<string[]>([]);
+  const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+
   const close = (): void => {
     setQuantityText('1');
+    setConsumeInstanceId('');
     setDialog(null);
   };
 
@@ -134,11 +143,15 @@ export function CardActions(props: CardActionsProps): ReactElement {
   );
   const defaultTarget = aliveOpponents[0]?.id ?? '';
 
-  const [targetId, setTargetId] = useState('');
-  const [quantityText, setQuantityText] = useState('1');
-  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
-  const [multiIds, setMultiIds] = useState<string[]>([]);
-  const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+  const transformableHand = view.self.hand.filter((card) =>
+    (SHARED_CARD_IDS as readonly string[]).includes(card.cardId),
+  );
+  const consumeDefault = transformableHand[0]?.instanceId ?? '';
+  const resolvedConsumeId = transformableHand.some(
+    (card) => card.instanceId === consumeInstanceId,
+  )
+    ? consumeInstanceId
+    : consumeDefault;
 
   const targetDialogOpponents =
     dialog?.kind === 'target' && dialog.instance.cardId === 'absorber'
@@ -168,6 +181,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
     dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
   const reduceMotion = useReducedMotion();
   const alwaysUpgradedIds = getKit(view.self.kitId).traits.alwaysUpgraded;
+  const transformerUseBlocked =
+    actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
 
   return (
     <>
@@ -184,7 +199,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <>
               <Button
                 variant="purple"
-                disabled={!isMyTurn || actionsLocked}
+                disabled={!isMyTurn || actionsLocked || transformerUseBlocked}
                 onClick={() => {
                   onBeginUse(actionInstance);
                 }}
@@ -341,6 +356,76 @@ export function CardActions(props: CardActionsProps): ReactElement {
             </li>
           ))}
         </ul>
+      </Dialog>
+
+      <Dialog
+        open={dialog?.kind === 'consume'}
+        title="Choose a card to transform"
+        onClose={close}
+        actions={
+          dialog?.kind === 'consume' ? (
+            <>
+              <Button
+                variant="purple"
+                disabled={resolvedConsumeId === ''}
+                onClick={() => {
+                  if (resolvedConsumeId === '') {
+                    return;
+                  }
+                  onPlayCard(dialog.instance.instanceId, {
+                    consumeInstanceId: resolvedConsumeId,
+                  });
+                  close();
+                }}
+              >
+                Transform
+              </Button>
+              <Button variant="red" onClick={close}>
+                Cancel
+              </Button>
+            </>
+          ) : undefined
+        }
+      >
+        {transformableHand.length === 0 ? (
+          <p className="text-sm text-ink-muted">
+            No action or attack card in hand to transform.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {transformableHand.map((card) => {
+              const selected = resolvedConsumeId === card.instanceId;
+              const name = formatCardLabel(card.cardId, card.isUpgraded);
+              return (
+                <li key={card.instanceId}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={name}
+                    onClick={() => {
+                      setConsumeInstanceId(card.instanceId);
+                    }}
+                    className={[
+                      'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
+                      selected
+                        ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
+                        : 'border-border-soft bg-surface hover:border-border',
+                    ].join(' ')}
+                  >
+                    <Card
+                      instance={card}
+                      detail="thumb"
+                      className="pointer-events-none w-full max-w-[5.5rem]"
+                    />
+                    <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
+                      {name}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Dialog>
 
       <Dialog

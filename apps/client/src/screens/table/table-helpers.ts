@@ -64,8 +64,13 @@ export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean
   );
 }
 
+/** Card Transformer needs a hand card to consume (`consumeInstanceId`). */
+export function cardPlayNeedsConsume(cardId: string): boolean {
+  return cardId === 'card-transformer';
+}
+
 export function cardIsSelfOnlyPlay(cardId: string, isUpgraded = false): boolean {
-  return !cardPlayNeedsTarget(cardId, isUpgraded);
+  return !cardPlayNeedsTarget(cardId, isUpgraded) && !cardPlayNeedsConsume(cardId);
 }
 
 /** Effect copy for Dialogs when Table `Card detail="face"` omits it. */

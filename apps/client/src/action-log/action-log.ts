@@ -53,7 +53,9 @@ function formatPlayedAction(
     case 'deactivatePersistent':
       return `${actor} deactivated ${entry.cardId !== undefined ? formatCardLabel(entry.cardId, entry.isUpgraded ?? false) : 'a persistent'}`;
     case 'activateDuplication':
-      return `${actor} activated duplication`;
+      // Playtest: duplication activation reads as a draw in the action log
+      // (designer 2026-08-09). Spy / self still receive the real action kind.
+      return `${actor} draws`;
     case 'playMultipleAttacks': {
       if (entry.attacks === undefined || entry.attacks.length === 0) {
         return `${actor} plays multiple attacks`;
