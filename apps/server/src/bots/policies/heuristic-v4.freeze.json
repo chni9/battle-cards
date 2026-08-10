@@ -1,0 +1,678 @@
+{
+  "weightsHash": "d585586e0c8f7711",
+  "traces": {
+    "untouchable": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:1"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      }
+    ],
+    "kamikaze": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:5"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:5"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "buyUpgradePoint"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:4"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:5"
+        }
+      }
+    ],
+    "scientific": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "buyCard",
+          "cardId": "spy"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      }
+    ],
+    "assassin": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "buyCard",
+          "cardId": "tax"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:0:8"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:0:8"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:2",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      }
+    ],
+    "upgrader": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:attack:1"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:2"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:1",
+          "targetPlayerId": "bot-1"
+        }
+      }
+    ],
+    "tactician": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "buyUpgradePoint"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "draw"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "draw"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "buyCard",
+          "cardId": "spy"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:7:4",
+          "targetPlayerId": "bot-1"
+        }
+      }
+    ],
+    "indestructible": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:2",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "buyCard",
+          "cardId": "tax"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:5:4"
+        }
+      }
+    ],
+    "prophet": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:4"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:1"
+        }
+      }
+    ],
+    "specialist": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:2"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0",
+          "consumeInstanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:1",
+          "consumeInstanceId": "bot-0:start:attack:0"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:2"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:2"
+        }
+      }
+    ],
+    "witch": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      }
+    ],
+    "warrior": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:attack:0"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:2"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      }
+    ],
+    "wizard": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "buyCard",
+          "cardId": "tax"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:0:6"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "buyCard",
+          "cardId": "spy"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "sellCard",
+          "instanceId": "bot-0:start:attack:1"
+        }
+      },
+      {
+        "turnSequence": 8,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:4:7",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 10,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:0:6"
+        }
+      }
+    ],
+    "juggernaut": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:0"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "buyUpgradePoint"
+        }
+      }
+    ],
+    "ghost": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
+        }
+      }
+    ],
+    "duplicator": [
+      {
+        "turnSequence": 0,
+        "action": {
+          "type": "activateDuplication"
+        }
+      },
+      {
+        "turnSequence": 2,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:0"
+        }
+      },
+      {
+        "turnSequence": 4,
+        "action": {
+          "type": "activateDuplication"
+        }
+      }
+    ]
+  }
+}
