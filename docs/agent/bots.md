@@ -36,3 +36,4 @@ update expectations — put the change under a new policy id.
 - Workers: `bots/search/worker/` (L32-08) — payload excludes `GameState`. Fallback:
   sync `heuristic-v4` → draw only if that throws.
 - Forward-model budgets cite L32-05 numbers in `decisions.md`.
+  Run: `pnpm --filter @card-battle/server bench:forward-model`.

@@ -1875,3 +1875,19 @@ Designer confirmation unlocking Lot 32 (technical spec v5 §2.2, §13):
 `AGENTS.md` golden rule 7 and §9 rewritten in the same change so agents sequence from
 `docs/backlog_v5.md` and no longer refuse search work.
 
+## 2026-08-10 · [P] L32-05 forward-model bench numbers
+
+Measured with `pnpm --filter @card-battle/server bench:forward-model` (pinned
+`devEngines` Node via pnpm — never bare `node`). Fixture: 4-player mid-game state
+(`l32-05-bench-midgame`) with populated pool and active persistents.
+
+| Metric | Value |
+|---|---|
+| `structuredClone` | ≈ 29 µs/state · 6567 JSON bytes |
+| `cloneGameState` (`structuredClone` wrapper) | ≈ 27 µs/state |
+| `performAndCompleteTurn` + `SIM_NOW_MS` | ≈ 8.9×10⁴ turns/s (single-threaded) |
+| Truncated playouts (depth 8) | ≈ 2.5×10³ playouts/s (single-threaded) |
+
+Every V5 search budget must cite this entry / L32-05. Machine-local; re-run the
+script when hardware or Node pin changes.
+

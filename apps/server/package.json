@@ -9,7 +9,9 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json",
     "db:migrate": "tsx src/db/migrate.ts",
-    "simulate": "tsx src/simulation/run-batch.ts"
+    "simulate": "tsx src/simulation/run-batch.ts",
+    "bench:forward-model": "tsx src/bots/search/bench-forward-model.ts",
+    "arena": "tsx src/simulation/run-arena.ts"
   },
   "dependencies": {
     "@card-battle/shared": "workspace:*",
