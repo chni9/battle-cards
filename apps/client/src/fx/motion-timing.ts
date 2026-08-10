@@ -26,3 +26,9 @@ export const MOTION_EASE = [0.16, 1, 0.3, 1] as const;
 
 /** Overlay event TTL — keep past the slowest FX so AnimatePresence can exit cleanly. */
 export const FX_TTL_MS = 750;
+
+/** Threat outline + targeting cue TTL — long enough to read Incoming. */
+export const THREAT_FX_TTL_MS = 3800;
+
+/** Visible pulse length for the full-screen threat outline (seconds). */
+export const THREAT_OUTLINE_DURATION_S = 3.2;

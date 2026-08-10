@@ -5,7 +5,7 @@
  * Policy / transport stay outside: callers supply sub-choice hooks.
  */
 
-import type { GameState, KitId, RewardChoice, SpecialCardId } from '@card-battle/shared';
+import type { ActionReject, GameState, KitId, RewardChoice, SpecialCardId } from '@card-battle/shared';
 
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
@@ -126,7 +126,7 @@ export function continuePendingSubChoices(
   hooks: TurnSubChoiceHooks,
   nowMs: number = Date.now(),
   options: Pick<PerformAndCompleteOptions, 'onTurnResult' | 'onRewardResult' | 'rng'> = {},
-): TurnResult | { ok: false; message: string } {
+): TurnResult | ActionReject {
   let result: TurnResult = initial;
   const rng = options.rng ?? createRng(`${state.seed}:turn:${state.turnSequence}`);
 
@@ -259,7 +259,7 @@ export function continuePendingSubChoices(
         );
 
         if (!kitResult.ok) {
-          return { ok: false, message: kitResult.message };
+          return kitResult;
         }
 
         result = {
@@ -294,7 +294,7 @@ export function continuePendingSubChoices(
     );
 
     if (!rewardResult.ok) {
-      return { ok: false, message: rewardResult.message };
+      return rewardResult;
     }
 
     options.onRewardResult?.(rewardResult);

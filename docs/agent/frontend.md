@@ -38,7 +38,8 @@ rules above are unchanged — this section only covers how the client looks.
   verso/opponent slate, resource icons, button PNG *hues*). Colored `*_button.png` files are
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
-  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08). Art resolution:
+  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
+  `CostDisplay` (Lot 39). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
@@ -121,6 +122,31 @@ rules above are unchanged — this section only covers how the client looks.
   travel; not cards from Draw), buy/sell card ghosts, resolution, elim, rewards. Resource
   flash clears after ~1.6s. Shared timing in `fx/motion-timing.ts` (~0.55s). Dialogs animate
   open/close. Intents must never await FX. `useReducedMotion` skips choreography.
+- **Table UX polish (Lot 39 · `docs/backlog_ux.md`):** client readability only — no rule
+  change. Task IDs are **L39-** so they never collide with V5 Lot 32 search work.
+  - **IllegalActionDialog (L39-02):** `error` is `{ code, message }` (PROTOCOL 27). Table
+    parses into `actionReject` and opens `IllegalActionDialog` (title/body from
+    `illegal-action-copy.ts`, Esc / overlay / OK dismiss via `clearActionReject`). Timers
+    strip no longer shows a red reject line. Lobby/home keep the inline alert string.
+    `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read).
+    When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
+    AnimatePresence cannot leave a stuck blocking overlay.
+  - **Seat colors (L39-03):** client-only palette `--color-seat-0…3` (blue / red /
+    green / yellow) indexed by `view.players` array position (`seat-colors.ts`).
+    POV **dock** uses a strong seat wash (`seatZoneStyle({ intensity: 'fill' })`)
+    instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
+    loud glow when active. Colored names in pending queue and action log.
+    No wire field.
+  - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
+    buy / rewards / Sentence expiry). How-to-play, kit lore, and action-log prose stay text
+    via `formatCardCost`.
+  - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
+    (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
+    enqueue `threatOutline` + optional `targetingCue`. Tone via `threatToneFor`: **red**
+    `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
+    otherwise. Flash TTL `THREAT_FX_TTL_MS` (~3.8s) with a matching long outline pulse.
+    Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
+    banner gets a stronger seat tint.
 
 ## Conventions
 
@@ -330,3 +356,19 @@ do not hand off an untested lot.
   trait-section count test.
 - Deeper forced paths (MEGA / Super Mirror / Reanimation / Absorber pool-pick) remain
   engine-tested; re-check in a longer session once Lot 29 bots bias toward those cards.
+
+### Lot 39 verified 2026-08-10 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 27)
+
+- **Solo rooms:** `XZVWJS` (HostA, 2× Normal), `EGIPYR` (HostB, 2× Easy), `DYNMDK`
+  (HostC, 2× Normal). Home shows Protocol v27.
+- **Seat colors:** POV + opponents tinted; log/pending names use seat hue (blue / red /
+  green / yellow).
+- **IllegalActionDialog:** Buy UP / unaffordable Super attack → modal “Not enough points”;
+  timers strip has no red reject line. Modal survives bot `stateUpdate` (fix in
+  `use-room-connection`). OK dismiss works after unmount-on-clear fix (stuck overlay).
+- **CostDisplay:** Use button shows icon+number (`point.png`); Buy shop lists icon costs
+  (Basic 2 / Strong 4 / special 20 pts).
+- **Threat FX:** orange Incoming outline observed for Spy targeting POV (`XZVWJS`). Red
+  attack Incoming not forced this pass (bots did not queue an attack on the human);
+  `threatToneFor` unit tests cover red/orange classification.
+- Living docs: `frontend.md`, `protocol.md` (already PROTOCOL 27), `decisions.md` Lot 39.

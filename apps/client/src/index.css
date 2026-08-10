@@ -39,6 +39,12 @@
   --color-cta-label: #1c1a1f;
   --color-cta-label-on-dark: #f7f4f2;
 
+  /* Seat identity — L39-03; blue / red / green / yellow (seat 3 is vivid yellow, not point-gold) */
+  --color-seat-0: #1d6fd8;
+  --color-seat-1: #d62828;
+  --color-seat-2: #1a9b3c;
+  --color-seat-3: #ffd400;
+
   /* Radius — thin card border language; controls and CTAs slightly softer */
   --radius-card: 0.375rem;
   --radius-control: 0.375rem;
@@ -107,7 +113,8 @@
   }
 
   .table-felt__pending {
-    max-height: 2.75rem;
+    max-height: 6.5rem;
+    min-height: 4.25rem;
   }
 
   .table-felt__opponents {
@@ -131,5 +138,27 @@
 
   [data-zone="card-band"] {
     overflow: hidden;
+  }
+}
+
+/* Incoming chip entrance — L39-05 (only applied to newly mounted chips). */
+@keyframes pending-chip-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pending-chip-enter {
+  animation: pending-chip-enter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending-chip-enter {
+    animation: none;
   }
 }

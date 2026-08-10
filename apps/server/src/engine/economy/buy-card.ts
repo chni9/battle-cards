@@ -4,6 +4,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   getSharedCard,
   isSharedCardId,
   type CardId,
@@ -21,28 +23,25 @@ export interface BuyCardSuccess {
   instance: CardInstance;
 }
 
-export interface BuyCardRejection {
-  ok: false;
-  message: string;
-}
+export type BuyCardRejection = ActionReject;
 
 export type BuyCardResult = BuyCardSuccess | BuyCardRejection;
 
 export function buyCard(state: GameState, actorPlayerId: string, cardId: CardId): BuyCardResult {
   if (!isSharedCardId(cardId)) {
-    return { ok: false, message: 'That card cannot be bought individually.' };
+    return actionReject('card-not-buyable-individually');
   }
 
   const definition = getSharedCard(cardId);
 
   if (definition === undefined) {
-    return { ok: false, message: 'Unknown card.' };
+    return actionReject('unknown-card');
   }
 
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const paid = payCost(state, actor, definition.buyCost);

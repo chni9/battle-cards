@@ -1,6 +1,7 @@
 /**
  * Browsable action log — technical spec §7, L9-02 / L12-05.
  * Round groups, one line each. Bot reason toggle: L17-05 / #V3-2.
+ * L39-03: seat-colored nicknames via segment formatter.
  */
 
 import type {
@@ -9,10 +10,15 @@ import type {
   BotDecisionReason,
   PlayingStateView,
 } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { formatBotReason } from '../bots/format-bot-reason';
-import { formatActionLogEntry, groupByRound } from './action-log';
+import { PlayerName } from '../design/components/player-name';
+import {
+  formatActionLogEntrySegments,
+  groupByRound,
+  type ActionLogSegment,
+} from './action-log';
 
 const KIND_META: Record<
   ActionLogEntryKind,
@@ -162,6 +168,7 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
                   <LogLine
                     key={entryKey(entry, index)}
                     entry={entry}
+                    view={view}
                     nicknameOf={resolveNick}
                   />
                 ))}
@@ -176,14 +183,17 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
 
 function LogLine({
   entry,
+  view,
   nicknameOf: resolve,
 }: {
   entry: ActionLogEntryView;
+  view: PlayingStateView;
   nicknameOf: (playerId: string) => string;
 }): ReactElement {
   const meta = KIND_META[entry.kind];
   const botReason = botReasonOf(entry);
   const [open, setOpen] = useState(false);
+  const segments = formatActionLogEntrySegments(entry, resolve);
 
   return (
     <li className="border-b border-border-soft/60 py-0.5 last:border-b-0">
@@ -196,7 +206,7 @@ function LogLine({
           {meta.icon}
         </span>
         <p className="min-w-0 flex-1 truncate text-xs leading-5 text-ink">
-          {formatActionLogEntry(entry, resolve)}
+          <LogSegments segments={segments} view={view} />
         </p>
         {botReason !== undefined && (
           <button
@@ -223,6 +233,34 @@ function LogLine({
         </p>
       )}
     </li>
+  );
+}
+
+function LogSegments({
+  segments,
+  view,
+}: {
+  segments: readonly ActionLogSegment[];
+  view: PlayingStateView;
+}): ReactElement {
+  return (
+    <>
+      {segments.map((segment, index) => {
+        if (segment.type === 'text') {
+          return <Fragment key={`t-${String(index)}`}>{segment.text}</Fragment>;
+        }
+        return (
+          <PlayerName
+            key={`p-${segment.playerId}-${String(index)}`}
+            nickname={segment.nickname}
+            playerId={segment.playerId}
+            view={view}
+            className="text-xs"
+            possessive={segment.possessive === true}
+          />
+        );
+      })}
+    </>
   );
 }
 

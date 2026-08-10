@@ -18,10 +18,12 @@ export function App() {
     status,
     view,
     error,
+    actionReject,
     soloLaunchPending,
     createGame,
     joinGame,
     leaveGame,
+    clearActionReject,
     startGame,
     startSoloGame,
     addBot,
@@ -61,7 +63,8 @@ export function App() {
     return (
       <EndScreen
         view={view}
-        error={error}
+        actionReject={actionReject}
+        onDismissActionReject={clearActionReject}
         statusLabel={STATUS_LABELS[status]}
         nowMs={nowMs}
         onLeave={() => {
@@ -75,7 +78,8 @@ export function App() {
     return (
       <TableScreen
         view={view}
-        error={error}
+        actionReject={actionReject}
+        onDismissActionReject={clearActionReject}
         statusLabel={STATUS_LABELS[status]}
         nowMs={nowMs}
         deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}

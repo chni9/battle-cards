@@ -33,8 +33,9 @@ export function AnimatedCard({
     <motion.div
       data-instance-id={instance.instanceId}
       className="h-full w-full [perspective:600px]"
+      // Never start at opacity 0 — HMR / interrupted motion left cards invisible (Lot 39).
       initial={
-        reduceMotion === true ? false : { opacity: 0, rotateY: -70, scale: 0.96 }
+        reduceMotion === true ? false : { opacity: 1, rotateY: -28, scale: 0.98 }
       }
       animate={{ opacity: 1, rotateY: 0, scale: 1 }}
       transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
@@ -44,7 +45,7 @@ export function AnimatedCard({
         initial={
           reduceMotion === true || upgradePulse === 0
             ? false
-            : { rotateY: 90, opacity: 0.6 }
+            : { rotateY: 90, opacity: 1 }
         }
         animate={{ rotateY: 0, opacity: 1 }}
         transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}

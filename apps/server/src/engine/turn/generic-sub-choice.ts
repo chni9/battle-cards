@@ -6,6 +6,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   KIT_IDS,
   SPECIAL_CARD_IDS,
   type GameState,
@@ -86,33 +88,30 @@ export function beginPoolPick(
 export function applyPoolPick(
   state: GameState,
   instanceIds: readonly string[],
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'pool-pick') {
-    return { ok: false, message: 'No pool pick pending.' };
+    return actionReject('no-pool-pick-pending');
   }
 
   if (instanceIds.length !== choice.maxCount) {
-    return {
-      ok: false,
-      message: `Choose exactly ${String(choice.maxCount)} card(s) from the pool.`,
-    };
+    return actionReject('pool-pick-wrong-count');
   }
 
   const unique = new Set(instanceIds);
 
   if (unique.size !== instanceIds.length) {
-    return { ok: false, message: 'Duplicate pool picks are not allowed.' };
+    return actionReject('duplicate-pool-picks');
   }
 
   for (const instanceId of instanceIds) {
     if (!choice.eligibleInstanceIds.includes(instanceId)) {
-      return { ok: false, message: 'That card is not available in the pool.' };
+      return actionReject('pool-card-unavailable');
     }
 
     if (!state.pool.some((card) => card.instanceId === instanceId)) {
-      return { ok: false, message: 'That card is no longer in the pool.' };
+      return actionReject('pool-card-gone');
     }
   }
 
@@ -124,11 +123,11 @@ export function applyPoolPick(
 export function applyDefaultPoolPick(
   state: GameState,
   rng: Rng,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'pool-pick') {
-    return { ok: false, message: 'No pool pick pending.' };
+    return actionReject('no-pool-pick-pending');
   }
 
   const picked = pickRandomPoolInstanceIds(
@@ -178,15 +177,15 @@ export function grantTransformedSpecial(
 export function applySpecialPick(
   state: GameState,
   cardId: SpecialCardId,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'special-pick') {
-    return { ok: false, message: 'No special pick pending.' };
+    return actionReject('no-special-pick-pending');
   }
 
   if (!choice.eligibleCardIds.includes(cardId)) {
-    return { ok: false, message: 'That special is not available.' };
+    return actionReject('special-unavailable');
   }
 
   grantTransformedSpecial(state, choice.playerId, cardId);
@@ -197,11 +196,11 @@ export function applySpecialPick(
 export function applyDefaultSpecialPick(
   state: GameState,
   rng: Rng,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'special-pick') {
-    return { ok: false, message: 'No special pick pending.' };
+    return actionReject('no-special-pick-pending');
   }
 
   const cardId = rng.pick(choice.eligibleCardIds);
@@ -229,22 +228,22 @@ export function applyReanimationKitPick(
   state: GameState,
   kitId: KitId,
   rng: Rng,
-): { ok: true; playerReanimated: { playerId: string; kitId: KitId } } | { ok: false; message: string } {
+): { ok: true; playerReanimated: { playerId: string; kitId: KitId } } | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit') {
-    return { ok: false, message: 'No reanimation kit pick pending.' };
+    return actionReject('no-reanimation-kit-pick-pending');
   }
 
   if (!choice.eligibleKitIds.includes(kitId)) {
-    return { ok: false, message: 'That kit is not available.' };
+    return actionReject('kit-unavailable');
   }
 
   const player = findPlayer(state, choice.playerId);
 
   if (player?.pendingReanimation == null) {
     state.subChoice = null;
-    return { ok: false, message: 'No pending reanimation.' };
+    return actionReject('no-pending-reanimation');
   }
 
   state.subChoice = null;
@@ -257,11 +256,11 @@ export function applyDefaultReanimationKitPick(
   rng: Rng,
 ):
   | { ok: true; playerReanimated: { playerId: string; kitId: KitId } }
-  | { ok: false; message: string } {
+  | ActionReject {
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit') {
-    return { ok: false, message: 'No reanimation kit pick pending.' };
+    return actionReject('no-reanimation-kit-pick-pending');
   }
 
   const kitId = pickReanimationKit(rng);

@@ -2,7 +2,13 @@
  * Sell a held card copy into the shared pool — rules spec §1, backlog L2-01.
  */
 
-import { getSharedCard, type CardId, type GameState } from '@card-battle/shared';
+import {
+  actionReject,
+  getSharedCard,
+  type ActionReject,
+  type CardId,
+  type GameState,
+} from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
 import { grantUpgradePoints } from './grant-resources';
@@ -13,10 +19,7 @@ export interface SellCardSuccess {
   cardId: CardId;
 }
 
-export interface SellCardRejection {
-  ok: false;
-  message: string;
-}
+export type SellCardRejection = ActionReject;
 
 export type SellCardResult = SellCardSuccess | SellCardRejection;
 
@@ -28,25 +31,25 @@ export function sellCard(
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const instanceIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
 
   if (instanceIndex < 0) {
-    return { ok: false, message: 'You do not hold that card.' };
+    return actionReject('card-not-held');
   }
 
   const instance = actor.hand[instanceIndex];
 
   if (instance === undefined) {
-    return { ok: false, message: 'You do not hold that card.' };
+    return actionReject('card-not-held');
   }
 
   const definition = getSharedCard(instance.cardId);
 
   if (definition === undefined) {
-    return { ok: false, message: 'That card cannot be sold individually.' };
+    return actionReject('card-not-sellable-individually');
   }
 
   actor.hand.splice(instanceIndex, 1);

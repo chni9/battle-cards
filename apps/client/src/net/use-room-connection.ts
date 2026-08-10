@@ -30,7 +30,9 @@ import {
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
+  isActionRejectCode,
   type ActionPlayedPayload,
+  type ActionRejectCode,
   type ActionResolvedPayload,
   type BotDifficulty,
   type CardId,
@@ -86,10 +88,22 @@ export interface PlayCardOptions {
   consumeInstanceId?: string;
 }
 
+/** Protocol ERROR_MESSAGE payload after L39-01 / PROTOCOL 27. */
+export interface ActionRejectPayload {
+  code: ActionRejectCode;
+  message: string;
+}
+
 export interface RoomConnection {
   status: RoomConnectionStatus;
   view: StateView | null;
+  /** Inline string for home/lobby alerts and connection failures. */
   error: string | null;
+  /**
+   * Last illegal-action reject (L39-02). Table shows IllegalActionDialog;
+   * lobby/home ignore `code` and use `error` / `message`.
+   */
+  actionReject: ActionRejectPayload | null;
   gameCode: string | null;
   lastTurnStarted: TurnStartedPayload | null;
   lastActionPlayed: ActionPlayedPayload | null;
@@ -113,6 +127,7 @@ const INITIAL: RoomConnection = {
   status: 'idle',
   view: null,
   error: null,
+  actionReject: null,
   gameCode: null,
   lastTurnStarted: null,
   lastActionPlayed: null,
@@ -125,6 +140,8 @@ export interface UseRoomConnectionResult extends RoomConnection {
   createGame: (nickname: string) => Promise<void>;
   joinGame: (gameCode: string, nickname: string) => Promise<void>;
   leaveGame: () => Promise<void>;
+  /** Dismiss IllegalActionDialog (clears actionReject + inline error). */
+  clearActionReject: () => void;
   startGame: () => void;
   startSoloGame: (options: StartSoloGameOptions) => Promise<void>;
   addBot: (difficulty: BotDifficulty) => void;
@@ -180,7 +197,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
           ...previous,
           status: 'connected',
           view: payload,
-          error: null,
+          // Keep IllegalActionDialog open until dismiss — bot/peer state sync must not close it.
+          error: previous.actionReject !== null ? previous.error : null,
           gameCode: payload.gameCode,
           soloLaunchPending:
             previous.soloLaunchPending && payload.phase !== 'playing',
@@ -204,11 +222,16 @@ export function useRoomConnection(): UseRoomConnectionResult {
             ...INITIAL,
             status: 'failed',
             error: payload.message,
+            actionReject: payload,
           });
           return;
         }
 
-        setConnection((previous) => ({ ...previous, error: payload.message }));
+        setConnection((previous) => ({
+          ...previous,
+          error: payload.message,
+          actionReject: payload,
+        }));
       }
     });
 
@@ -250,6 +273,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         setConnection((previous) => ({
           ...previous,
           error: null,
+          actionReject: null,
           subChoice: null,
         }));
         void payload;
@@ -261,6 +285,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         ...previous,
         status: 'failed',
         error: message ?? null,
+        actionReject: null,
       }));
     });
 
@@ -273,6 +298,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         ...previous,
         status: 'reconnecting',
         error: null,
+        actionReject: null,
       }));
     });
 
@@ -283,6 +309,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
         ...previous,
         status: 'connected',
         error: null,
+        actionReject: null,
       }));
     });
 
@@ -386,6 +413,14 @@ export function useRoomConnection(): UseRoomConnectionResult {
     }
 
     setConnection(INITIAL);
+  }, []);
+
+  const clearActionReject = useCallback((): void => {
+    setConnection((previous) => ({
+      ...previous,
+      error: null,
+      actionReject: null,
+    }));
   }, []);
 
   const startGame = useCallback((): void => {
@@ -512,6 +547,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     createGame,
     joinGame,
     leaveGame,
+    clearActionReject,
     startGame,
     startSoloGame,
     addBot,
@@ -542,6 +578,7 @@ async function attemptManualReconnect(
     ...previous,
     status: 'reconnecting',
     error: null,
+    actionReject: null,
   }));
 
   const client = new Client(serverUrl());
@@ -604,12 +641,14 @@ function isStateView(payload: unknown): payload is StateView {
   return phase === 'lobby' || phase === 'playing' || phase === 'finished';
 }
 
-function isErrorPayload(payload: unknown): payload is { message: string } {
+function isErrorPayload(payload: unknown): payload is ActionRejectPayload {
   return (
     typeof payload === 'object' &&
     payload !== null &&
     'message' in payload &&
-    typeof payload.message === 'string'
+    typeof payload.message === 'string' &&
+    'code' in payload &&
+    isActionRejectCode(payload.code)
   );
 }
 

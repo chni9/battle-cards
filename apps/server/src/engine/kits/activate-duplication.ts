@@ -5,7 +5,11 @@
  * round (cleared at the start of this player's next turn in `advanceTurn`).
  */
 
-import type { GameState } from '@card-battle/shared';
+import {
+  actionReject,
+  type ActionReject,
+  type GameState,
+} from '@card-battle/shared';
 
 import type { TurnAction } from '../turn/perform-action';
 
@@ -22,15 +26,15 @@ export function listLegalActivateDuplicationActions(
 export function activateDuplicationAction(
   state: GameState,
   actorPlayerId: string,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   const actor = state.players.find((player) => player.id === actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (actor.kitId !== 'duplicator') {
-    return { ok: false, message: 'Only the Duplicator kit can activate duplication.' };
+    return actionReject('duplicator-kit-required');
   }
 
   actor.duplicationActive = true;

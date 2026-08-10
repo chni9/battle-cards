@@ -3,6 +3,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   type CardInstance,
   type GameState,
   type KitId,
@@ -341,13 +343,13 @@ function validateChoice(
   eliminated: Player,
   choice: RewardChoice,
   claimedInstanceIds: Set<string>,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   if (choice.type !== 'card') {
     return { ok: true };
   }
 
   if (claimedInstanceIds.has(choice.instanceId)) {
-    return { ok: false, message: 'That card was already chosen as a reward.' };
+    return actionReject('reward-card-already-chosen');
   }
 
   const inHand = eliminated.hand.some((card) => card.instanceId === choice.instanceId);
@@ -356,7 +358,7 @@ function validateChoice(
   );
 
   if (!inHand && !inSpecials) {
-    return { ok: false, message: 'That card is not available.' };
+    return actionReject('reward-card-unavailable');
   }
 
   claimedInstanceIds.add(choice.instanceId);
@@ -497,7 +499,7 @@ export type ApplyRewardResult =
         eliminatedPlayerId: string;
       };
     }
-  | { ok: false; message: string };
+  | ActionReject;
 
 /**
  * Apply the eliminator's two reward picks for the active job.
@@ -513,24 +515,24 @@ export function applyEliminationRewardChoices(
   const active = state.rewardChoice;
 
   if (active?.eliminationId !== eliminationId) {
-    return { ok: false, message: 'No matching elimination reward pending.' };
+    return actionReject('no-matching-elimination-reward');
   }
 
   if (active.eliminatorPlayerId !== chooserPlayerId) {
-    return { ok: false, message: 'Only the eliminator may choose rewards.' };
+    return actionReject('only-eliminator-chooses-rewards');
   }
 
   const head = state.rewardQueue[0];
 
   if (head?.eliminationId !== eliminationId) {
-    return { ok: false, message: 'No matching elimination reward pending.' };
+    return actionReject('no-matching-elimination-reward');
   }
 
   const eliminator = findPlayer(state, active.eliminatorPlayerId);
   const eliminated = findPlayer(state, active.eliminatedPlayerId);
 
   if (eliminator === undefined || eliminated === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const claimed = new Set<string>();
@@ -569,7 +571,7 @@ export function applyDefaultEliminationRewards(
   const active = state.rewardChoice;
 
   if (active === null) {
-    return { ok: false, message: 'No elimination reward pending.' };
+    return actionReject('no-elimination-reward-pending');
   }
 
   return applyEliminationRewardChoices(

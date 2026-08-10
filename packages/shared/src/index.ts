@@ -13,6 +13,7 @@ export * from './domain/player';
 export * from './domain/sub-choice';
 export * from './domain/upgrade-point-economy';
 export * from './protocol/action-outcome';
+export * from './protocol/action-reject';
 export * from './protocol/messages';
 export * from './protocol/reward-choice';
 export * from './protocol/state-view';

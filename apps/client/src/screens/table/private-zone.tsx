@@ -14,7 +14,9 @@ import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
+import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
+import { seatIndexOf } from '../../design/seat-colors';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
@@ -66,9 +68,17 @@ export function PrivateZone({
     showActivateDuplication ||
     showDuplicationActive;
 
+  const povSeat = seatIndexOf(view, view.you);
+  const isActiveSeat = view.currentTurnPlayerId === view.you;
+  const youLabel = selfPublic?.nickname ?? 'You';
+
   return (
     <section
       data-zone="private-zone"
+      data-player-id={view.you}
+      data-seat={view.you}
+      data-seat-index={povSeat !== null ? String(povSeat) : undefined}
+      data-active-seat={isActiveSeat ? 'true' : undefined}
       className="flex h-full min-h-0 flex-col gap-0.5 overflow-hidden landscape:gap-1"
     >
       <div className="flex shrink-0 items-center justify-between gap-1.5 sm:gap-2">
@@ -80,7 +90,14 @@ export function PrivateZone({
             ariaLabel="Inspect your kit"
           />
           <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
-            <h2 className="text-xs font-semibold text-ink sm:text-sm">You</h2>
+            <h2 className="truncate text-xs sm:text-sm">
+              <PlayerName
+                nickname={youLabel}
+                playerId={view.you}
+                view={view}
+                className="text-xs sm:text-sm"
+              />
+            </h2>
             {selfPublic !== undefined && <ConnectionBadge player={selfPublic} />}
             {selfPublic !== undefined && <FlowStatusBadges player={selfPublic} />}
           </div>
@@ -120,6 +137,7 @@ export function PrivateZone({
             compact
             tone="dock"
             highlightedIds={mirrorHighlightIds}
+            animateEntrance
           />
         </div>
       </div>

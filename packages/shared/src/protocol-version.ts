@@ -17,5 +17,8 @@
  *
  * 25 → 26 (designer 2026-08-07): public `curseTransferred` action-log kind
  * when a successful attack passes Curse; Curse is victim-owned.
+ *
+ * 26 → 27 (L32-01 / table UX polish): `error` payload is
+ * `{ code: ActionRejectCode; message: string }` instead of `{ message: string }`.
  */
-export const PROTOCOL_VERSION = 26;
+export const PROTOCOL_VERSION = 27;

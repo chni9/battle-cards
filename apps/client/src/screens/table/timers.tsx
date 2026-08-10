@@ -1,19 +1,24 @@
 /**
- * Turn / sub-choice timers — L12-07 / L14-05.
+ * Turn / sub-choice timers — L12-07 / L14-05 / L39-05.
  * Cosmetic only: trust server deadlineMs. Motion polish on progress bars.
  * Landscape meta (code · status) lives here — no separate Card Battle header.
+ * Illegal-action rejects use IllegalActionDialog (L39-02), not a strip under timers.
  */
 
 import { motion, useReducedMotion } from 'motion/react';
-import type { ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 
+import { PlayerName } from '../../design/components/player-name';
+import { seatColorVar, seatIndexOf, type SeatPlayersView } from '../../design/seat-colors';
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
 
 export interface TimersProps {
   gameCode: string;
   statusLabel: string;
-  error: string | null;
   activeNickname: string;
+  /** Active seat id for seat-colored turn banner (L39-05). */
+  activePlayerId?: string | null;
+  view?: SeatPlayersView;
   isMyTurn: boolean;
   timerLabel: string;
   /** 0–1 remaining fraction when known; null when paused/unknown. */
@@ -28,8 +33,9 @@ export interface TimersProps {
 export function Timers({
   gameCode,
   statusLabel,
-  error,
   activeNickname,
+  activePlayerId,
+  view,
   isMyTurn,
   timerLabel,
   progressRatio,
@@ -45,10 +51,28 @@ export function Timers({
       ? null
       : Math.round(subChoiceProgressRatio * 100);
 
+  const seat =
+    view !== undefined && activePlayerId !== undefined && activePlayerId !== null
+      ? seatIndexOf(view, activePlayerId)
+      : null;
+
+  const turnTint: CSSProperties | undefined =
+    seat !== null
+      ? {
+          borderColor: seatColorVar(seat),
+          backgroundColor: `color-mix(in srgb, ${seatColorVar(seat)} ${isMyTurn ? '22' : '16'}%, var(--color-surface-raised))`,
+          boxShadow: isMyTurn
+            ? `inset 0 0 0 2px color-mix(in srgb, ${seatColorVar(seat)} 55%, transparent)`
+            : `inset 0 3px 0 0 ${seatColorVar(seat)}`,
+        }
+      : undefined;
+
   return (
     <section
       data-zone="timers"
+      data-my-turn={isMyTurn ? 'true' : undefined}
       className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised px-2 py-1 sm:px-2.5 sm:py-1.5"
+      style={turnTint}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -59,12 +83,24 @@ export function Timers({
             </span>
             {statusLabel}
           </p>
-          <h2 className="text-xs font-semibold text-ink sm:text-sm">
-            Turn:{' '}
-            <span className="font-semibold">
-              {activeNickname}
-              {isMyTurn ? ' (you)' : ''}
-            </span>
+          <h2 className="text-sm font-bold text-ink sm:text-base">
+            {isMyTurn ? (
+              <span className="text-ink">Your turn</span>
+            ) : (
+              <>
+                <PlayerName
+                  nickname={activeNickname}
+                  {...(activePlayerId !== undefined && activePlayerId !== null
+                    ? { playerId: activePlayerId }
+                    : {})}
+                  {...(view !== undefined ? { view } : {})}
+                  {...(seat !== null ? { seatIndex: seat } : {})}
+                  possessive
+                  className="text-sm sm:text-base"
+                />{' '}
+                <span className="font-bold text-ink">turn</span>
+              </>
+            )}
           </h2>
         </div>
         <p
@@ -106,11 +142,6 @@ export function Timers({
           }
         />
       </div>
-      {error !== null && (
-        <p className="mt-1 text-xs font-medium text-cta-red sm:text-sm" role="alert">
-          {error}
-        </p>
-      )}
       {subChoiceLabel !== undefined && (
         <div className="mt-1 sm:mt-1.5">
           <p className="text-[10px] font-medium text-ink-muted sm:text-xs">

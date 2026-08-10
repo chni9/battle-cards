@@ -5,7 +5,13 @@
  * `grantLives` so Tax shop never goes through `applyDamage`.
  */
 
-import type { CardCost, GameState, Player } from '@card-battle/shared';
+import {
+  actionReject,
+  type ActionReject,
+  type CardCost,
+  type GameState,
+  type Player,
+} from '@card-battle/shared';
 
 import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
@@ -38,11 +44,11 @@ export function payCost(
   state: GameState,
   player: Player,
   cost: CardCost,
-): { ok: true } | { ok: false; message: string } {
+): { ok: true } | ActionReject {
   void state;
 
   if (cost.pointsPerLife !== undefined) {
-    return { ok: false, message: 'That cost cannot be paid as a shop transfer.' };
+    return actionReject('cost-not-shop-transfer');
   }
 
   if (!canAffordCost(player, cost)) {
@@ -50,14 +56,14 @@ export function payCost(
     const lives = cost.lives ?? 0;
 
     if (points > 0 && player.points < points) {
-      return { ok: false, message: 'Not enough points.' };
+      return actionReject('not-enough-points');
     }
 
     if (lives > 0 && player.lives < lives) {
-      return { ok: false, message: 'Not enough lives.' };
+      return actionReject('not-enough-lives');
     }
 
-    return { ok: false, message: 'Cannot afford that cost.' };
+    return actionReject('cannot-afford-cost');
   }
 
   const points = cost.points ?? 0;

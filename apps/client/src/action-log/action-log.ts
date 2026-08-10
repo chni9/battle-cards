@@ -1,6 +1,7 @@
 /**
  * Pure helpers for the browsable public action log (technical spec §7, L9-02).
  * No rule logic — formatting and filter only.
+ * L39-03: segment formatter so seat-colored nicknames avoid substring collisions.
  */
 
 import {
@@ -29,65 +30,236 @@ export interface ActionLogFilters {
 
 export type NicknameResolver = (playerId: string) => string;
 
-function formatPlayedAction(
+export interface ActionLogTextSegment {
+  type: 'text';
+  text: string;
+}
+export interface ActionLogPlayerSegment {
+  type: 'player';
+  playerId: string;
+  nickname: string;
+  /** When true, UI appends a literal `'s` after the colored nickname. */
+  possessive?: boolean;
+}
+export type ActionLogSegment = ActionLogTextSegment | ActionLogPlayerSegment;
+
+function text(value: string): ActionLogTextSegment {
+  return { type: 'text', text: value };
+}
+
+function player(
+  playerId: string,
+  nicknameOf: NicknameResolver,
+  possessive = false,
+): ActionLogPlayerSegment {
+  const segment: ActionLogPlayerSegment = {
+    type: 'player',
+    playerId,
+    nickname: nicknameOf(playerId),
+  };
+  if (possessive) {
+    return { ...segment, possessive: true };
+  }
+  return segment;
+}
+
+function joinSegments(segments: readonly ActionLogSegment[]): string {
+  return segments
+    .map((segment) => {
+      if (segment.type === 'text') {
+        return segment.text;
+      }
+      return segment.possessive === true ? `${segment.nickname}'s` : segment.nickname;
+    })
+    .join('');
+}
+
+function formatPlayedActionSegments(
   entry: Extract<ActionLogEntryView, { kind: 'actionPlayed' }>,
   nicknameOf: NicknameResolver,
-): string {
-  const actor = nicknameOf(entry.actorPlayerId);
+): ActionLogSegment[] {
+  const actor = player(entry.actorPlayerId, nicknameOf);
 
   switch (entry.action) {
     case 'draw':
-      return `${actor} draws`;
+      return [actor, text(' draws')];
     case 'buyCard':
-      return `${actor} bought a card`;
+      return [actor, text(' bought a card')];
     case 'sellCard':
-      return `${actor} sold a card`;
+      return [actor, text(' sold a card')];
     case 'upgradeCard':
-      return `${actor} upgraded a card`;
+      return [actor, text(' upgraded a card')];
     case 'buySpecialCard':
-      return `${actor} bought a special card`;
+      return [actor, text(' bought a special card')];
     case 'buyUpgradePoint':
-      return `${actor} bought an upgrade point`;
+      return [actor, text(' bought an upgrade point')];
     case 'sellUpgradePoint':
-      return `${actor} sold an upgrade point`;
+      return [actor, text(' sold an upgrade point')];
     case 'deactivatePersistent':
-      return `${actor} deactivated ${entry.cardId !== undefined ? formatCardLabel(entry.cardId, entry.isUpgraded ?? false) : 'a persistent'}`;
+      return [
+        actor,
+        text(
+          ` deactivated ${entry.cardId !== undefined ? formatCardLabel(entry.cardId, entry.isUpgraded ?? false) : 'a persistent'}`,
+        ),
+      ];
     case 'activateDuplication':
       // Playtest: duplication activation reads as a draw in the action log
       // (designer 2026-08-09). Spy / self still receive the real action kind.
-      return `${actor} draws`;
+      return [actor, text(' draws')];
     case 'playMultipleAttacks': {
       if (entry.attacks === undefined || entry.attacks.length === 0) {
-        return `${actor} plays multiple attacks`;
+        return [actor, text(' plays multiple attacks')];
       }
-      const parts = entry.attacks.map(
-        (attack) =>
-          `${formatCardLabel(attack.cardId, attack.isUpgraded)} against ${nicknameOf(attack.targetPlayerId)}`,
-      );
-      return `${actor} attacks with ${parts.join(', ')}`;
+      const segments: ActionLogSegment[] = [actor, text(' attacks with ')];
+      entry.attacks.forEach((attack, index) => {
+        if (index > 0) {
+          segments.push(text(', '));
+        }
+        segments.push(
+          text(`${formatCardLabel(attack.cardId, attack.isUpgraded)} against `),
+          player(attack.targetPlayerId, nicknameOf),
+        );
+      });
+      return segments;
     }
     case 'playCard': {
       const id = entry.cardId;
       if (id === undefined) {
-        return `${actor} plays a card`;
+        return [actor, text(' plays a card')];
       }
       const name = formatCardLabel(id, entry.isUpgraded === true);
       const targetId = entry.targetPlayerId;
       if (targetId !== undefined) {
-        const target = nicknameOf(targetId);
+        const target = player(targetId, nicknameOf);
         if (isAttackCardId(id)) {
-          return `${actor} attacks ${target} with ${name}`;
+          return [actor, text(' attacks '), target, text(` with ${name}`)];
         }
-        return `${actor} plays ${name} on ${target}`;
+        return [actor, text(` plays ${name} on `), target];
       }
       if (isAttackCardId(id)) {
-        return `${actor} attacks with ${name}`;
+        return [actor, text(` attacks with ${name}`)];
       }
-      return `${actor} plays ${name}`;
+      return [actor, text(` plays ${name}`)];
     }
     default: {
       const _exhaustive: never = entry.action;
-      return _exhaustive;
+      return [text(_exhaustive)];
+    }
+  }
+}
+
+export function formatActionLogEntrySegments(
+  entry: ActionLogEntryView,
+  nicknameOf: NicknameResolver,
+): ActionLogSegment[] {
+  switch (entry.kind) {
+    case 'actionPlayed':
+      return formatPlayedActionSegments(entry, nicknameOf);
+    case 'actionResolved': {
+      const source = player(entry.sourcePlayerId, nicknameOf);
+      const target = player(entry.targetPlayerId, nicknameOf);
+      const name = formatCardLabel(entry.cardId, entry.isUpgraded);
+      switch (entry.outcome) {
+        case 'immune':
+          return [text(`${name} from `), source, text(' resolves on '), target, text(' — immune')];
+        case 'cancelled':
+          return [
+            text(`${name} from `),
+            source,
+            text(' against '),
+            target,
+            text(' is cancelled'),
+          ];
+        case 'blocked':
+          return [
+            text(`${name} from `),
+            source,
+            text(' against '),
+            target,
+            text(' is blocked'),
+          ];
+        case 'applied': {
+          const shield =
+            entry.shieldAbsorbed > 0
+              ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
+              : '';
+          if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
+            return [
+              player(entry.sourcePlayerId, nicknameOf, true),
+              text(` ${name} hits `),
+              target,
+              text(` (−${String(entry.livesLost)} life${shield})`),
+            ];
+          }
+          if (entry.shieldAbsorbed > 0) {
+            return [
+              text(`${name} from `),
+              source,
+              text(' resolves on '),
+              target,
+              text(` (${String(entry.shieldAbsorbed)} absorbed by shield)`),
+            ];
+          }
+          return [text(`${name} from `), source, text(' resolves on '), target];
+        }
+        default: {
+          const _exhaustive: never = entry.outcome;
+          return [text(_exhaustive)];
+        }
+      }
+    }
+    case 'playerEliminated': {
+      const victim = player(entry.playerId, nicknameOf);
+      const reasonLabel: Record<typeof entry.reason, string> = {
+        combat: 'in combat',
+        absence: 'by absence',
+        inactivity: 'by inactivity',
+        leave: 'after leaving',
+      };
+      if (entry.eliminatorPlayerId !== null) {
+        return [
+          victim,
+          text(' is eliminated by '),
+          player(entry.eliminatorPlayerId, nicknameOf),
+          text(` ${reasonLabel[entry.reason]}`),
+        ];
+      }
+      return [victim, text(` is eliminated ${reasonLabel[entry.reason]}`)];
+    }
+    case 'mirrorRedirected': {
+      return [
+        player(entry.actorPlayerId, nicknameOf),
+        text(` redirects ${formatCardLabel(entry.cardId, false)} from `),
+        player(entry.previousTargetPlayerId, nicknameOf),
+        text(' to '),
+        player(entry.newTargetPlayerId, nicknameOf),
+      ];
+    }
+    case 'curseTransferred': {
+      return [
+        player(entry.fromPlayerId, nicknameOf),
+        text(` passes ${formatCardLabel(entry.cardId, entry.isUpgraded)} to `),
+        player(entry.toPlayerId, nicknameOf),
+      ];
+    }
+    case 'playerReanimated': {
+      const reanimated = player(entry.playerId, nicknameOf);
+      if (entry.kitId === undefined) {
+        return [reanimated, text(' returns')];
+      }
+      const kitName = getKit(entry.kitId).name;
+      return [reanimated, text(` returns with ${kitName}`)];
+    }
+    case 'rewardsClaimed': {
+      return [
+        player(entry.eliminatorPlayerId, nicknameOf),
+        text(' claims elimination rewards from '),
+        player(entry.eliminatedPlayerId, nicknameOf),
+      ];
+    }
+    default: {
+      const _exhaustive: never = entry;
+      return [text(_exhaustive)];
     }
   }
 }
@@ -96,82 +268,7 @@ export function formatActionLogEntry(
   entry: ActionLogEntryView,
   nicknameOf: NicknameResolver,
 ): string {
-  switch (entry.kind) {
-    case 'actionPlayed':
-      return formatPlayedAction(entry, nicknameOf);
-    case 'actionResolved': {
-      const source = nicknameOf(entry.sourcePlayerId);
-      const target = nicknameOf(entry.targetPlayerId);
-      const name = formatCardLabel(entry.cardId, entry.isUpgraded);
-      switch (entry.outcome) {
-        case 'immune':
-          return `${name} from ${source} resolves on ${target} — immune`;
-        case 'cancelled':
-          return `${name} from ${source} against ${target} is cancelled`;
-        case 'blocked':
-          return `${name} from ${source} against ${target} is blocked`;
-        case 'applied': {
-          const shield =
-            entry.shieldAbsorbed > 0
-              ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
-              : '';
-          if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
-            return `${source}'s ${name} hits ${target} (−${String(entry.livesLost)} life${shield})`;
-          }
-          if (entry.shieldAbsorbed > 0) {
-            return `${name} from ${source} resolves on ${target} (${String(entry.shieldAbsorbed)} absorbed by shield)`;
-          }
-          return `${name} from ${source} resolves on ${target}`;
-        }
-        default: {
-          const _exhaustive: never = entry.outcome;
-          return _exhaustive;
-        }
-      }
-    }
-    case 'playerEliminated': {
-      const victim = nicknameOf(entry.playerId);
-      const by =
-        entry.eliminatorPlayerId !== null
-          ? ` by ${nicknameOf(entry.eliminatorPlayerId)}`
-          : '';
-      const reasonLabel: Record<typeof entry.reason, string> = {
-        combat: 'in combat',
-        absence: 'by absence',
-        inactivity: 'by inactivity',
-        leave: 'after leaving',
-      };
-      return `${victim} is eliminated${by} ${reasonLabel[entry.reason]}`;
-    }
-    case 'mirrorRedirected': {
-      const actor = nicknameOf(entry.actorPlayerId);
-      const from = nicknameOf(entry.previousTargetPlayerId);
-      const to = nicknameOf(entry.newTargetPlayerId);
-      return `${actor} redirects ${formatCardLabel(entry.cardId, false)} from ${from} to ${to}`;
-    }
-    case 'curseTransferred': {
-      const from = nicknameOf(entry.fromPlayerId);
-      const to = nicknameOf(entry.toPlayerId);
-      return `${from} passes ${formatCardLabel(entry.cardId, entry.isUpgraded)} to ${to}`;
-    }
-    case 'playerReanimated': {
-      const player = nicknameOf(entry.playerId);
-      if (entry.kitId === undefined) {
-        return `${player} returns`;
-      }
-      const kitName = getKit(entry.kitId).name;
-      return `${player} returns with ${kitName}`;
-    }
-    case 'rewardsClaimed': {
-      const eliminator = nicknameOf(entry.eliminatorPlayerId);
-      const eliminated = nicknameOf(entry.eliminatedPlayerId);
-      return `${eliminator} claims elimination rewards from ${eliminated}`;
-    }
-    default: {
-      const _exhaustive: never = entry;
-      return _exhaustive;
-    }
-  }
+  return joinSegments(formatActionLogEntrySegments(entry, nicknameOf));
 }
 
 export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string): boolean {

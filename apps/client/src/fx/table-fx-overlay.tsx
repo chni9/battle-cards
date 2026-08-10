@@ -1,5 +1,5 @@
 /**
- * Absolute overlay for Table FX — pointer-events-none (Lot 14).
+ * Absolute overlay for Table FX — pointer-events-none (Lot 14 / L39-05).
  */
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -7,8 +7,14 @@ import type { ReactElement } from 'react';
 
 import type { ActionResolutionOutcome } from '@card-battle/shared';
 
-import { MOTION_DURATION_S, MOTION_EASE, TOKEN_FLYOUT_DURATION_S } from './motion-timing';
+import {
+  MOTION_DURATION_S,
+  MOTION_EASE,
+  THREAT_OUTLINE_DURATION_S,
+  TOKEN_FLYOUT_DURATION_S,
+} from './motion-timing';
 import { useTableFx } from './table-fx-hooks';
+import type { DomRectLite, ThreatTone } from './table-fx-types';
 
 function outcomeClass(outcome: ActionResolutionOutcome): string {
   if (outcome === 'applied') {
@@ -31,6 +37,10 @@ function outcomeLabel(outcome: ActionResolutionOutcome): string {
     return 'Blocked';
   }
   return 'Immune';
+}
+
+function threatColor(tone: ThreatTone): string {
+  return tone === 'attack' ? 'var(--color-cta-red)' : 'var(--color-cta-orange)';
 }
 
 function FlyoutImage({
@@ -75,6 +85,114 @@ function FlyoutImage({
       transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
       draggable={false}
     />
+  );
+}
+
+function ThreatOutlineFlash({
+  id,
+  tone,
+  reduceMotion,
+}: {
+  id: string;
+  tone: ThreatTone;
+  reduceMotion: boolean | null;
+}): ReactElement {
+  const color = threatColor(tone);
+  // Long readable pulse — TTL is THREAT_FX_TTL_MS; keep the border visible most of that window.
+  const dur = reduceMotion === true ? 0.35 : THREAT_OUTLINE_DURATION_S;
+  return (
+    <motion.div
+      key={id}
+      className="absolute inset-2 rounded-[length:var(--radius-card)] border-[3px] sm:inset-3 sm:border-4"
+      style={{
+        borderColor: color,
+        boxShadow: `inset 0 0 28px color-mix(in srgb, ${color} 40%, transparent), 0 0 22px color-mix(in srgb, ${color} 45%, transparent)`,
+      }}
+      initial={reduceMotion === true ? { opacity: 0.7 } : { opacity: 0 }}
+      animate={
+        reduceMotion === true
+          ? { opacity: [0.7, 0] }
+          : {
+              opacity: [0, 1, 0.85, 1, 0.85, 1, 0.55, 0],
+              scale: [0.994, 1, 1.003, 1, 1.003, 1, 1, 1],
+            }
+      }
+      exit={{ opacity: 0 }}
+      transition={{
+        duration: dur,
+        ease: MOTION_EASE,
+        times:
+          reduceMotion === true
+            ? [0, 1]
+            : [0, 0.08, 0.22, 0.38, 0.54, 0.7, 0.88, 1],
+      }}
+    />
+  );
+}
+
+function TargetingCueLine({
+  id,
+  tone,
+  from,
+  to,
+  reduceMotion,
+}: {
+  id: string;
+  tone: ThreatTone;
+  from: DomRectLite;
+  to: DomRectLite;
+  reduceMotion: boolean | null;
+}): ReactElement | null {
+  if (reduceMotion === true) {
+    return null;
+  }
+  const x1 = from.left + from.width / 2;
+  const y1 = from.top + from.height / 2;
+  const x2 = to.left + to.width / 2;
+  const y2 = to.top + to.height / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy);
+  if (length < 8) {
+    return null;
+  }
+  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const color = threatColor(tone);
+
+  return (
+    <>
+      <motion.div
+        key={`${id}-pulse`}
+        className="absolute rounded-full"
+        style={{
+          left: x1 - 10,
+          top: y1 - 10,
+          width: 20,
+          height: 20,
+          backgroundColor: color,
+        }}
+        initial={{ opacity: 0.9, scale: 0.6 }}
+        animate={{ opacity: [0.9, 0], scale: [0.6, 1.8] }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
+      />
+      <motion.div
+        key={id}
+        className="absolute h-[3px] origin-left rounded-full"
+        style={{
+          left: x1,
+          top: y1 - 1.5,
+          width: length,
+          background: `linear-gradient(90deg, ${color}, color-mix(in srgb, ${color} 20%, transparent))`,
+          transform: `rotate(${String(angleDeg)}deg)`,
+          boxShadow: `0 0 8px color-mix(in srgb, ${color} 55%, transparent)`,
+        }}
+        initial={{ scaleX: 0, opacity: 0 }}
+        animate={{ scaleX: 1, opacity: [0, 1, 0.15] }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: MOTION_DURATION_S * 1.1, ease: MOTION_EASE }}
+      />
+    </>
   );
 }
 
@@ -200,6 +318,30 @@ export function TableFxOverlay(): ReactElement {
                 animate={{ opacity: [0.9, 1, 0.55], scale: [0.95, 1.02, 1] }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: dur, ease: MOTION_EASE }}
+              />
+            );
+          }
+
+          if (event.kind === 'threatOutline') {
+            return (
+              <ThreatOutlineFlash
+                key={event.id}
+                id={event.id}
+                tone={event.tone}
+                reduceMotion={reduceMotion}
+              />
+            );
+          }
+
+          if (event.kind === 'targetingCue') {
+            return (
+              <TargetingCueLine
+                key={event.id}
+                id={event.id}
+                tone={event.tone}
+                from={event.from}
+                to={event.to}
+                reduceMotion={reduceMotion}
               />
             );
           }

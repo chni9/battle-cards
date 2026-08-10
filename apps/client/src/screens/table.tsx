@@ -16,16 +16,28 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { seatColorVar, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
   measureBuySpecialFlyout,
   measurePlayFlyout,
   measureSellCardFlyout,
+  measureTargetingCue,
 } from '../fx/play-flyout';
+import {
+  incomingTargetingYouIds,
+  newIncomingThreats,
+} from '../fx/incoming-threat-diff';
+import { THREAT_FX_TTL_MS } from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx } from '../fx/table-fx-hooks';
-import type { PlayCardOptions } from '../net/use-room-connection';
+import { threatToneFor } from '../fx/threat-tone';
+import type {
+  ActionRejectPayload,
+  PlayCardOptions,
+} from '../net/use-room-connection';
+import { IllegalActionDialog } from './illegal-action-dialog';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
@@ -38,10 +50,13 @@ import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
+import { YourTurnFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {
   view: PlayingStateView;
-  error: string | null;
+  /** Illegal-action reject for modal (L39-02); null when none. */
+  actionReject: ActionRejectPayload | null;
+  onDismissActionReject: () => void;
   statusLabel: string;
   nowMs: number;
   deadlineMs: number | null;
@@ -80,7 +95,8 @@ export function TableScreen(props: TableScreenProps): ReactElement {
 
 function TableScreenInner({
   view,
-  error,
+  actionReject,
+  onDismissActionReject,
   statusLabel,
   nowMs,
   deadlineMs,
@@ -230,11 +246,52 @@ function TableScreenInner({
     });
   }, [subChoice, enqueue]);
 
+  /** Incoming threat FX on queue (not resolve); seed first paint without flash (L39-05). */
+  const seenIncomingIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const current = incomingTargetingYouIds(view.pendingEffects, view.you);
+    const seen = seenIncomingIdsRef.current;
+    if (seen === null) {
+      seenIncomingIdsRef.current = current;
+      return;
+    }
+    const fresh = newIncomingThreats(seen, view.pendingEffects, view.you);
+    seenIncomingIdsRef.current = current;
+    if (fresh.length === 0) {
+      return;
+    }
+    const expiresAt = Date.now() + THREAT_FX_TTL_MS;
+    for (const effect of fresh) {
+      const tone = threatToneFor(effect.cardId);
+      enqueue({ kind: 'threatOutline', tone, expiresAt });
+      const measured = measureTargetingCue(effect.sourcePlayerId, view.you);
+      if (measured !== null) {
+        enqueue({
+          kind: 'targetingCue',
+          fromPlayerId: effect.sourcePlayerId,
+          toPlayerId: view.you,
+          tone,
+          from: measured.from,
+          to: measured.to,
+          expiresAt,
+        });
+      }
+    }
+  }, [view.pendingEffects, view.you, enqueue]);
+
   const mirrorHighlightIds =
     subChoice?.kind === 'mirror' ? subChoice.eligibleEffectIds : [];
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const selfPublic = view.players.find((player) => player.isYou);
+  const povSeat = seatIndexOf(view, view.you);
+  const dockStyle =
+    povSeat !== null
+      ? seatZoneStyle(povSeat, {
+          intensity: 'fill',
+          active: isMyTurn,
+        })
+      : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
@@ -420,13 +477,19 @@ function TableScreenInner({
 
   return (
     <>
+      <YourTurnFlash
+        isMyTurn={isMyTurn && !readOnly && !selfEliminated}
+        {...(povSeat !== null ? { seatColor: seatColorVar(povSeat) } : {})}
+      />
       <TableShell
+        {...(dockStyle !== undefined ? { dockStyle } : {})}
         turn={
           <Timers
             gameCode={view.gameCode}
             statusLabel={statusLabel}
-            error={error}
             activeNickname={activePlayer?.nickname ?? '—'}
+            activePlayerId={view.currentTurnPlayerId}
+            view={view}
             isMyTurn={isMyTurn}
             timerLabel={timerLabel}
             progressRatio={progressRatio}
@@ -455,6 +518,7 @@ function TableScreenInner({
         opponentSeats={opponents.map((player) => (
           <OpponentZone
             key={player.id}
+            view={view}
             player={player}
             onInspectActive={(effectId) => {
               onInspectActive(player.id, effectId);
@@ -592,6 +656,11 @@ function TableScreenInner({
           onResolve={onResolveSubChoice}
         />
       )}
+
+      <IllegalActionDialog
+        reject={actionReject}
+        onClose={onDismissActionReject}
+      />
     </>
   );
 }

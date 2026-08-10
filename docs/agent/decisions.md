@@ -1814,3 +1814,39 @@ Designer playtest feedback (session):
    sub-choice complete / expiry, not when Mirror is first played (affordability
    still gated at play time).
 
+## 2026-08-10 · [P] Typed ERROR_MESSAGE codes (PROTOCOL 27 / L39-01)
+
+Table UX polish (Lot 39, tracked in `docs/backlog_ux.md` — not V5 Lot 32):
+
+- `error` payload is `{ code: ActionRejectCode; message: string }` instead of
+  `{ message: string }` alone.
+- Catalog + `actionReject()` live in `packages/shared/src/protocol/action-reject.ts`.
+- Opaque `handler.canPlay === false` maps to `play-not-legal`.
+- **PROTOCOL_VERSION 26 → 27.** Lobby reason unions stay; their ERROR_MESSAGE path
+  uses the shared codes.
+
+## 2026-08-10 · [P] Lot 39 Table UX polish (client-only after L39-01)
+
+Designer plan (Approach 1) + Lot 39 tasks in `docs/backlog_ux.md`. **Not** V5 search-bot
+sequencing — `docs/backlog_v5.md` Lots 32–38 stay reserved for search / belief / arena;
+Lot 39 IDs avoid colliding with a hypothetical V5 “Lot 32”.
+
+1. **Typed rejects (L39-01 / L39-02)** — see entry above. Client maps `code` to modal copy;
+   timers strip loses the red reject line.
+2. **Seat colors are client-side only (L39-03)** — palette of four CSS tokens keyed by
+   `view.players` index. No protocol field, no server color assignment. Same index drives
+   zone tint, `PlayerName`, pending/log segments, and the active-seat glow / turn banner
+   (L39-05).
+3. **Icon costs on interactive chrome only (L39-04)** — `CostDisplay` for shop / Use /
+   special buy / rewards / Sentence expiry. Prose surfaces keep `formatCardCost` text.
+4. **Threat FX fires on queue, not on resolve (L39-05)** — when a new real Incoming
+   pending targets POV, flash outline + targeting cue. Red = attack cards + Sentence /
+   Mirror / Super Mirror; orange = other. Presentation-only persistent Incoming chips do
+   not trigger. First paint seeds seen ids without flashing. No `PROTOCOL_VERSION` bump
+   after 27 for the rest of the lot.
+5. **IllegalActionDialog survives state sync (L39-06 playtest)** — `stateUpdate` must not
+   clear `actionReject`. Bot/peer sync was closing the modal mid-read; dismiss stays
+   Esc / overlay / OK via `clearActionReject` only (plus leave / gameOver / drop).
+   When `reject` is null, unmount the dialog entirely (do not leave `Dialog` mounted at
+   `open={false}`) so AnimatePresence cannot leave a stuck blocking overlay.
+

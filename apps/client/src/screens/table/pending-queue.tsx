@@ -2,11 +2,15 @@
  * Pending effects strip — L12-04 / self-targeted in private zone.
  * Chips stay fully visible; strip scrolls when many effects queue.
  * L14-04: optional Mirror highlight via highlightedIds.
+ * L39-03: source/target nicknames in seat color.
+ * L39-05: CSS entrance on chip mount when `animateEntrance` (Incoming).
  */
 
 import { formatCardLabel, type PendingEffectView, type PlayingStateView } from '@card-battle/shared';
+import { useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
+import { PlayerName } from '../../design/components/player-name';
 import { nicknameOf } from './table-helpers';
 
 export interface PendingQueueProps {
@@ -20,6 +24,8 @@ export interface PendingQueueProps {
   tone?: 'felt' | 'dock';
   /** Pending effect ids to emphasize (Mirror eligible). */
   highlightedIds?: readonly string[];
+  /** Animate chips on mount (Incoming). Stable keys keep the animation one-shot. */
+  animateEntrance?: boolean;
 }
 
 export function PendingQueue({
@@ -29,7 +35,12 @@ export function PendingQueue({
   compact = false,
   tone = 'felt',
   highlightedIds = [],
+  animateEntrance = false,
 }: PendingQueueProps): ReactElement {
+  const reduceMotion = useReducedMotion();
+  const entranceClass =
+    animateEntrance && reduceMotion !== true ? 'pending-chip-enter' : '';
+
   const titleClass =
     tone === 'felt'
       ? 'text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-soft'
@@ -56,22 +67,44 @@ export function PendingQueue({
         >
           {effects.map((effect) => {
             const label = formatCardLabel(effect.cardId, effect.isUpgraded);
-            const route = `${nicknameOf(view, effect.sourcePlayerId)} → ${nicknameOf(view, effect.targetPlayerId)}`;
+            const sourceNick = nicknameOf(view, effect.sourcePlayerId);
+            const targetNick = nicknameOf(view, effect.targetPlayerId);
+            const routePlain = `${sourceNick} → ${targetNick}`;
             const highlighted = highlightedIds.includes(effect.id);
+            const route = (
+              <>
+                <PlayerName
+                  nickname={sourceNick}
+                  playerId={effect.sourcePlayerId}
+                  view={view}
+                  className="text-[10px]"
+                />
+                <span className="text-ink-muted"> → </span>
+                <PlayerName
+                  nickname={targetNick}
+                  playerId={effect.targetPlayerId}
+                  view={view}
+                  className="text-[10px]"
+                />
+              </>
+            );
             if (compact) {
               return (
                 <li
                   key={effect.id}
                   data-pending-id={effect.id}
-                  title={`${label} · ${route} · queued #${String(effect.queuedAt)}`}
+                  title={`${label} · ${routePlain} · queued #${String(effect.queuedAt)}`}
                   className={[
                     'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                     chipClass,
                     highlighted ? highlightClass : '',
+                    entranceClass,
                   ].join(' ')}
                 >
                   <span className="truncate text-xs font-semibold">{label}</span>
-                  <span className="truncate text-[10px] text-ink-muted">{route}</span>
+                  <span className="inline-flex min-w-0 truncate text-[10px] text-ink-muted">
+                    {route}
+                  </span>
                 </li>
               );
             }
@@ -83,10 +116,13 @@ export function PendingQueue({
                   'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                   chipClass,
                   highlighted ? highlightClass : '',
+                  entranceClass,
                 ].join(' ')}
               >
                 <span className="text-sm font-semibold">{label}</span>
-                <span className="text-[10px] leading-tight text-ink-muted">{route}</span>
+                <span className="inline-flex flex-wrap items-baseline gap-0 text-[10px] leading-tight text-ink-muted">
+                  {route}
+                </span>
                 <span className="text-[10px] tabular-nums text-ink-muted">
                   queued #{effect.queuedAt}
                 </span>

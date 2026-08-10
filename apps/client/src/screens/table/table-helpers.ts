@@ -12,6 +12,8 @@ import {
   type RewardChoice,
 } from '@card-battle/shared';
 
+import type { StructuredCost } from '../../design/components/structured-cost';
+
 export type RewardKind = RewardChoice['type'];
 
 export const REWARD_KINDS: readonly RewardKind[] = [
@@ -21,12 +23,22 @@ export const REWARD_KINDS: readonly RewardKind[] = [
   'card',
 ] as const;
 
-/** Player-facing labels for reward option dropdowns (not wire `type` ids). */
+/**
+ * Spoken labels for reward options (aria / native fallback).
+ * Interactive chrome prefers CostDisplay via REWARD_KIND_COSTS.
+ */
 export const REWARD_KIND_LABELS: Record<RewardKind, string> = {
   lives: '4 lives',
   points: '8 points',
   upgradePoint: '1 upgrade point',
   card: 'A card',
+};
+
+/** Icon costs for elimination reward picks (rules reward amounts). */
+export const REWARD_KIND_COSTS: Partial<Record<RewardKind, StructuredCost>> = {
+  lives: { kind: 'lives', amount: 4 },
+  points: { kind: 'points', amount: 8 },
+  upgradePoint: { kind: 'upgradePoint', amount: 1 },
 };
 
 export function nicknameOf(view: PlayingStateView, playerId: string): string {

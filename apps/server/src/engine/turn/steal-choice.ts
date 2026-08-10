@@ -5,7 +5,12 @@
  * card is consumed, but pending resolve waits for the pick (or timeout default).
  */
 
-import type { GameState, Player } from '@card-battle/shared';
+import {
+  actionReject,
+  type ActionReject,
+  type GameState,
+  type Player,
+} from '@card-battle/shared';
 
 import { findSpyRelation } from '../../protocol/visibility-matrix';
 import type { Rng } from '../rng';
@@ -106,15 +111,15 @@ export function applyStealPick(
   state: GameState,
   instanceId: string,
   nowMs: number,
-): { ok: true; stillPending: boolean } | { ok: false; message: string } {
+): { ok: true; stillPending: boolean } | ActionReject {
   const choice = state.stealChoice;
 
   if (choice === null) {
-    return { ok: false, message: 'No steal choice pending.' };
+    return actionReject('no-steal-choice-pending');
   }
 
   if (!choice.eligibleInstanceIds.includes(instanceId)) {
-    return { ok: false, message: 'That card is not available to steal.' };
+    return actionReject('steal-card-unavailable');
   }
 
   queueEffect({
@@ -140,11 +145,11 @@ export function applyDefaultStealPick(
   state: GameState,
   rng: Rng,
   nowMs: number,
-): { ok: true; stillPending: boolean } | { ok: false; message: string } {
+): { ok: true; stillPending: boolean } | ActionReject {
   const choice = state.stealChoice;
 
   if (choice === null) {
-    return { ok: false, message: 'No steal choice pending.' };
+    return actionReject('no-steal-choice-pending');
   }
 
   if (choice.eligibleInstanceIds.length === 0) {

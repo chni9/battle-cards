@@ -97,6 +97,13 @@ since v19) ·
 replaces the former `mirrorChoiceRequired` / `rewardChoiceRequired` pair ·
 `playerEliminated` · `gameOver` · `error`
 
+`error` (PROTOCOL_VERSION 27 / L39-01): payload is
+`{ code: ActionRejectCode; message: string }` — see
+`packages/shared/src/protocol/action-reject.ts`. `message` is the short English fallback;
+clients may map `code` to richer copy. Lobby start/bot rejects that travel on `error` use
+the same catalog; local lobby reason unions (`not-host`, …) remain for `canStartGame` /
+`canAddBot` gates.
+
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
 `rewardsClaimed` (eliminator + victim only — never the picks). Ephemeral `actionPlayed` /

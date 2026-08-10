@@ -3,6 +3,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   isAttackCardId,
   type CardId,
   type GameState,
@@ -75,27 +77,27 @@ export function redirectPendingAttack(
   effectId: string,
   newTargetPlayerId: string,
   doubleDamage: boolean,
-): { ok: true; redirect: MirrorRedirectInfo } | { ok: false; message: string } {
+): { ok: true; redirect: MirrorRedirectInfo } | ActionReject {
   if (newTargetPlayerId === owner.id) {
-    return { ok: false, message: 'Invalid Mirror target.' };
+    return actionReject('invalid-mirror-target');
   }
 
   const newTarget = findPlayer(state, newTargetPlayerId);
 
   if (newTarget === undefined || newTarget.isEliminated) {
-    return { ok: false, message: 'Invalid Mirror target.' };
+    return actionReject('invalid-mirror-target');
   }
 
   const index = owner.pendingEffects.findIndex((effect) => effect.id === effectId);
 
   if (index < 0) {
-    return { ok: false, message: 'That pending attack is not available.' };
+    return actionReject('pending-attack-unavailable');
   }
 
   const [effect] = owner.pendingEffects.splice(index, 1);
 
   if (effect === undefined || !isAttackCardId(effect.cardId)) {
-    return { ok: false, message: 'That pending attack is not available.' };
+    return actionReject('pending-attack-unavailable');
   }
 
   const previousTargetPlayerId = effect.targetPlayerId;
@@ -124,17 +126,17 @@ export function redirectPendingAttack(
 export function applyDefaultMirrorRedirect(
   state: GameState,
   rng: Rng,
-): { ok: true; redirect: MirrorRedirectInfo } | { ok: false; message: string } {
+): { ok: true; redirect: MirrorRedirectInfo } | ActionReject {
   const choice = state.mirrorChoice;
 
   if (choice === null) {
-    return { ok: false, message: 'No Mirror choice pending.' };
+    return actionReject('no-mirror-choice-pending');
   }
 
   const owner = findPlayer(state, choice.playerId);
 
   if (owner === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const eligible = listEligibleMirrorTargets(owner, choice.isUpgraded).filter((effect) =>
@@ -143,7 +145,7 @@ export function applyDefaultMirrorRedirect(
   const first = eligible[0];
 
   if (first === undefined) {
-    return { ok: false, message: 'Nothing left to redirect.' };
+    return actionReject('nothing-left-to-redirect');
   }
 
   const opponents = state.players.filter(
@@ -151,7 +153,7 @@ export function applyDefaultMirrorRedirect(
   );
 
   if (opponents.length === 0) {
-    return { ok: false, message: 'No opponent to redirect to.' };
+    return actionReject('no-opponent-to-redirect');
   }
 
   const newTarget = rng.pick(opponents);

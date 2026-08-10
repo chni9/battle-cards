@@ -14,6 +14,9 @@ export interface DomRectLite {
 
 export type ResolutionOutcome = ActionResolutionOutcome;
 
+/** Red attack-like vs orange non-attack Incoming threat (L39-05). */
+export type ThreatTone = 'attack' | 'effect';
+
 export type TableFxEvent =
   | {
       id: string;
@@ -51,6 +54,22 @@ export type TableFxEvent =
       kind: 'rewardPulse';
       eliminationId: string;
       expiresAt: number;
+    }
+  | {
+      id: string;
+      kind: 'threatOutline';
+      tone: ThreatTone;
+      expiresAt: number;
+    }
+  | {
+      id: string;
+      kind: 'targetingCue';
+      fromPlayerId: string;
+      toPlayerId: string;
+      tone: ThreatTone;
+      from: DomRectLite;
+      to: DomRectLite;
+      expiresAt: number;
     };
 
-export { FX_TTL_MS } from './motion-timing';
+export { FX_TTL_MS, THREAT_FX_TTL_MS, THREAT_OUTLINE_DURATION_S } from './motion-timing';

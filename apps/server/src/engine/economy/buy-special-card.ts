@@ -4,7 +4,9 @@
  */
 
 import {
+  actionReject,
   SPECIAL_CARD_IDS,
+  type ActionReject,
   type CardInstance,
   type GameState,
 } from '@card-battle/shared';
@@ -17,7 +19,7 @@ export const SPECIAL_CARD_PURCHASE_COST = 20;
 
 export type BuySpecialCardResult =
   | { ok: true; instance: CardInstance }
-  | { ok: false; message: string };
+  | ActionReject;
 
 export function buySpecialCard(
   state: GameState,
@@ -27,11 +29,11 @@ export function buySpecialCard(
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (actor.points < SPECIAL_CARD_PURCHASE_COST) {
-    return { ok: false, message: 'Not enough points.' };
+    return actionReject('not-enough-points');
   }
 
   actor.points -= SPECIAL_CARD_PURCHASE_COST;

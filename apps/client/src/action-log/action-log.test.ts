@@ -5,6 +5,7 @@ import type { ActionLogEntryView } from '@card-battle/shared';
 import {
   filterActionLog,
   formatActionLogEntry,
+  formatActionLogEntrySegments,
   groupByRound,
   groupByTurn,
   roundOfTurn,
@@ -366,5 +367,48 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
       { round: 1, entries: [sample[0]] },
       { round: 2, entries: [sample[1], sample[2]] },
     ]);
+  });
+});
+
+describe('formatActionLogEntrySegments (L39-03)', () => {
+  it('emits player segments by id so nickname substrings never collide', () => {
+    const nickCollision = (id: string): string =>
+      id === 'a' ? 'Ann' : id === 'b' ? 'Anna' : id;
+
+    const play = sample[0];
+    expect(play).toBeDefined();
+    if (play === undefined) {
+      return;
+    }
+
+    const segments = formatActionLogEntrySegments(play, nickCollision);
+    expect(segments).toEqual([
+      { type: 'player', playerId: 'a', nickname: 'Ann' },
+      { type: 'text', text: ' attacks ' },
+      { type: 'player', playerId: 'b', nickname: 'Anna' },
+      { type: 'text', text: ' with Basic attack' },
+    ]);
+    expect(formatActionLogEntry(play, nickCollision)).toBe(
+      'Ann attacks Anna with Basic attack',
+    );
+  });
+
+  it('marks possessives on the player segment, not as text rewrite', () => {
+    const resolved = sample[1];
+    expect(resolved).toBeDefined();
+    if (resolved === undefined) {
+      return;
+    }
+
+    const segments = formatActionLogEntrySegments(resolved, nick);
+    expect(segments[0]).toEqual({
+      type: 'player',
+      playerId: 'a',
+      nickname: 'Alice',
+      possessive: true,
+    });
+    expect(formatActionLogEntry(resolved, nick)).toBe(
+      "Alice's Basic attack hits Bob (−1 life)",
+    );
   });
 });

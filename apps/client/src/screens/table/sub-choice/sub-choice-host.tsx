@@ -4,8 +4,9 @@ import {
   type ResolveSubChoicePayload,
   type SubChoiceRequiredPayload,
 } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
+import { CostDisplay } from '../../../design/components/cost-display';
 import { Dialog } from '../../../design/components/dialog';
 import { MirrorPanel } from './mirror-panel';
 import { PoolPickPanel } from './pool-pick-panel';
@@ -16,7 +17,7 @@ import { StealPickPanel } from './steal-pick-panel';
 
 const SUB_CHOICE_COPY: Record<
   SubChoiceRequiredPayload['kind'],
-  { title: string; expiryHint: string }
+  { title: string; expiryHint: ReactNode }
 > = {
   mirror: {
     title: 'Mirror redirect',
@@ -24,7 +25,12 @@ const SUB_CHOICE_COPY: Record<
   },
   'elimination-reward': {
     title: 'Elimination reward',
-    expiryHint: 'On expiry: 2×4 lives',
+    expiryHint: (
+      <>
+        On expiry:{' '}
+        <CostDisplay cost={{ kind: 'lives', amount: 4 }} multiplier={2} className="align-middle" />
+      </>
+    ),
   },
   'steal-pick': {
     title: 'Steal a card',

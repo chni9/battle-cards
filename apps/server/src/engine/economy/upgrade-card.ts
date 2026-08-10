@@ -4,13 +4,18 @@
  * `alwaysUpgraded` kit trait is applied at acquisition (`acquireCardToHand`), not here.
  */
 
-import type { CardId, GameState } from '@card-battle/shared';
+import {
+  actionReject,
+  type ActionReject,
+  type CardId,
+  type GameState,
+} from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
 
 export type UpgradeCardResult =
   | { ok: true; cardId: CardId }
-  | { ok: false; message: string };
+  | ActionReject;
 
 export function upgradeCard(
   state: GameState,
@@ -20,11 +25,11 @@ export function upgradeCard(
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (actor.upgradePoints < 1) {
-    return { ok: false, message: 'Not enough upgrade points.' };
+    return actionReject('not-enough-upgrade-points');
   }
 
   const instance =
@@ -32,11 +37,11 @@ export function upgradeCard(
     actor.specialCards.find((card) => card.instanceId === instanceId);
 
   if (instance === undefined) {
-    return { ok: false, message: 'You do not hold that card.' };
+    return actionReject('card-not-held');
   }
 
   if (instance.isUpgraded) {
-    return { ok: false, message: 'That copy is already upgraded.' };
+    return actionReject('already-upgraded');
   }
 
   actor.upgradePoints -= 1;

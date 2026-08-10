@@ -6,12 +6,9 @@
 import {
   ATTACK_CARD_IDS,
   SHARED_CARD_IDS,
-  formatCardCost,
   formatCardLabel,
-  formatPlayCost,
   getCard,
   getKit,
-  type CardCost,
   type CardInstance,
   type PlayingStateView,
   type PublicPlayerView,
@@ -21,28 +18,16 @@ import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
+import { CostDisplay } from '../../design/components/cost-display';
+import {
+  costAriaLabel,
+  structuredCostFromCardCost,
+  structuredPlayCost,
+} from '../../design/components/structured-cost';
 import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { cardEffectText } from './table-helpers';
-
-function formatShopCost(cost: CardCost | undefined): string {
-  if (cost === undefined) {
-    return '—';
-  }
-
-  const formatted = formatCardCost(cost);
-  return formatted.length > 0 ? formatted : '—';
-}
-
-function playCostLabel(instance: CardInstance): string {
-  const definition = getCard(instance.cardId);
-  if (definition === undefined) {
-    return '';
-  }
-
-  return formatPlayCost(definition, instance.isUpgraded);
-}
 
 function canAffordSharedBuy(
   view: PlayingStateView,
@@ -176,7 +161,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const actionEffect =
     actionInstance !== null ? cardEffectText(actionInstance) : '';
   const actionPlayCost =
-    actionInstance !== null ? playCostLabel(actionInstance) : '';
+    actionInstance !== null
+      ? (() => {
+          const definition = getCard(actionInstance.cardId);
+          return definition === undefined
+            ? null
+            : structuredPlayCost(definition, actionInstance.isUpgraded);
+        })()
+      : null;
   const inspectEffect =
     dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
   const reduceMotion = useReducedMotion();
@@ -204,7 +196,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   onBeginUse(actionInstance);
                 }}
               >
-                {actionPlayCost.length > 0 ? `Use (${actionPlayCost})` : 'Use'}
+                {actionPlayCost !== null ? (
+                  <>
+                    Use{' '}
+                    <CostDisplay cost={actionPlayCost} className="text-inherit" />
+                  </>
+                ) : (
+                  'Use'
+                )}
               </Button>
               {!actionInstance.isUpgraded && (
                 <Button
@@ -608,7 +607,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 close();
               }}
             >
-              Buy special (20 pts)
+              Buy special{' '}
+              <CostDisplay cost={{ kind: 'points', amount: 20 }} className="text-inherit" />
             </Button>
             <Button
               variant="orange"
@@ -637,7 +637,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
           {SHARED_CARD_IDS.map((id) => {
             const definition = getCard(id);
             const name = definition?.name ?? id;
-            const price = formatShopCost(definition?.buyCost);
+            const shopCost = structuredCostFromCardCost(definition?.buyCost);
+            const priceSpoken = costAriaLabel(shopCost);
             const affordable = canAffordSharedBuy(view, id);
             const selected = buyCardId === id;
             const shopUpgraded = alwaysUpgradedIds.includes(id);
@@ -653,7 +654,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   type="button"
                   disabled={!isMyTurn || actionsLocked}
                   aria-pressed={selected}
-                  aria-label={`${name}${shopUpgraded ? ' upgraded' : ''}, ${price}${affordable ? '' : ', cannot afford'}`}
+                  aria-label={`${name}${shopUpgraded ? ' upgraded' : ''}, ${priceSpoken.length > 0 ? priceSpoken : 'no price'}${affordable ? '' : ', cannot afford'}`}
                   onClick={() => {
                     setBuyCardId(id);
                   }}
@@ -684,11 +685,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   </span>
                   <span
                     className={[
-                      'mt-0.5 text-center text-[11px] font-medium',
+                      'mt-0.5 flex justify-center text-[11px] font-medium',
                       affordable ? 'text-ink' : 'text-ink-muted',
                     ].join(' ')}
                   >
-                    {price}
+                    {shopCost !== null ? <CostDisplay cost={shopCost} /> : '—'}
                   </span>
                 </button>
               </li>

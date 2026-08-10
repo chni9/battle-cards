@@ -8,7 +8,9 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
+import { CostDisplay } from '../../../design/components/cost-display';
 import {
+  REWARD_KIND_COSTS,
   REWARD_KIND_LABELS,
   REWARD_KINDS,
   buildRewardChoice,
@@ -105,25 +107,44 @@ function RewardPick({
   cards: readonly CardInstance[];
 }): ReactElement {
   return (
-    <div className="flex flex-wrap gap-2">
-      <label className="text-sm text-ink">
-        {label}{' '}
-        <select
-          value={kind}
-          onChange={(event) => {
-            onKind(event.target.value as RewardKind);
-          }}
-          className="rounded-[length:var(--radius-control)] border border-border bg-surface px-2 py-1 text-ink"
-        >
-          {REWARD_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {REWARD_KIND_LABELS[k]}
-            </option>
-          ))}
-        </select>
-      </label>
+    <fieldset className="min-w-0">
+      <legend className="text-sm font-medium text-ink">{label}</legend>
+      <div
+        role="radiogroup"
+        aria-label={label}
+        className="mt-1.5 flex flex-wrap gap-1.5"
+      >
+        {REWARD_KINDS.map((k) => {
+          const selected = kind === k;
+          const cost = REWARD_KIND_COSTS[k];
+          return (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={REWARD_KIND_LABELS[k]}
+              onClick={() => {
+                onKind(k);
+              }}
+              className={[
+                'inline-flex min-h-9 items-center gap-1 rounded-[length:var(--radius-control)] border px-2.5 py-1 text-sm transition',
+                selected
+                  ? 'border-cta-green bg-surface ring-2 ring-cta-green/35 text-ink'
+                  : 'border-border bg-surface text-ink hover:border-border',
+              ].join(' ')}
+            >
+              {cost !== undefined ? (
+                <CostDisplay cost={cost} />
+              ) : (
+                <span>{REWARD_KIND_LABELS[k]}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
       {kind === 'card' && (
-        <label className="text-sm text-ink">
+        <label className="mt-2 block text-sm text-ink">
           Card{' '}
           <select
             value={cardId}
@@ -140,6 +161,6 @@ function RewardPick({
           </select>
         </label>
       )}
-    </div>
+    </fieldset>
   );
 }

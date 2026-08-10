@@ -7,12 +7,14 @@
 import type { FinishedStateView } from '@card-battle/shared';
 import { useState, type ReactElement } from 'react';
 
+import type { ActionRejectPayload } from '../net/use-room-connection';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
 
 export interface EndScreenProps {
   view: FinishedStateView;
-  error: string | null;
+  actionReject: ActionRejectPayload | null;
+  onDismissActionReject: () => void;
   statusLabel: string;
   nowMs: number;
   onLeave: () => void;
@@ -24,7 +26,8 @@ const noop = (): void => {
 
 export function EndScreen({
   view,
-  error,
+  actionReject,
+  onDismissActionReject,
   statusLabel,
   nowMs,
   onLeave,
@@ -35,7 +38,8 @@ export function EndScreen({
     <>
       <TableScreen
         view={view.finalTable}
-        error={error}
+        actionReject={actionReject}
+        onDismissActionReject={onDismissActionReject}
         statusLabel={statusLabel}
         nowMs={nowMs}
         deadlineMs={null}

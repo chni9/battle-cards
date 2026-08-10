@@ -4,13 +4,15 @@
  * Active persistents sit beside the kit as tiny thumbs (not a row above).
  */
 
-import type { PublicPlayerView } from '@card-battle/shared';
+import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
 import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
+import { PlayerName } from '../../design/components/player-name';
+import { seatIndexOf, seatZoneStyle } from '../../design/seat-colors';
 import {
   persistentToCardInstance,
   shieldActiveInstance,
@@ -18,6 +20,7 @@ import {
 import { FlowStatusBadges } from './flow-status-badges';
 
 export interface OpponentZoneProps {
+  view: PlayingStateView;
   player: PublicPlayerView;
   onInspectActive?: (effectId: string) => void;
   /** Spy or death reveal — opens the opponent info dialog. */
@@ -68,6 +71,7 @@ function ActiveThumbs({
 }
 
 export function OpponentZone({
+  view,
   player,
   onInspectActive,
   onInspectReveal,
@@ -80,15 +84,31 @@ export function OpponentZone({
   const revealMode =
     reveal !== undefined ? 'elimination' : spied !== undefined ? 'spy' : null;
 
+  const seat = seatIndexOf(view, player.id);
+  const isActiveSeat = view.currentTurnPlayerId === player.id;
+  const zoneStyle =
+    seat !== null
+      ? seatZoneStyle(seat, { active: isActiveSeat, intensity: 'soft' })
+      : undefined;
+
   return (
     <article
       data-zone="opponent-seat"
       data-player-id={player.id}
+      data-seat={player.id}
+      data-seat-index={seat !== null ? String(seat) : undefined}
+      data-active-seat={isActiveSeat ? 'true' : undefined}
       className="flex w-auto max-w-[11rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm landscape:max-w-[14rem] sm:max-w-[20rem] sm:p-2"
+      style={zoneStyle}
     >
       <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-        <h3 className="truncate text-xs font-semibold text-ink sm:text-sm">
-          {player.nickname}
+        <h3 className="truncate text-xs sm:text-sm">
+          <PlayerName
+            nickname={player.nickname}
+            playerId={player.id}
+            view={view}
+            className="text-xs sm:text-sm"
+          />
         </h3>
         {!player.isEliminated && <ConnectionBadge player={player} />}
         {!player.isEliminated && player.isBot && player.botDifficulty !== undefined && (

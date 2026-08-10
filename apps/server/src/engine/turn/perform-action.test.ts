@@ -50,6 +50,11 @@ describe('performTurnAction — turn loop (L1-04, L1-05, L1-07, L1-08)', () => {
     const result = performTurnAction(state, other.id, { type: 'draw' });
 
     expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.code).toBe('not-your-turn');
+    expect(result.message).toBe('It is not your turn.');
   });
 
   it('draw grants placeholder draw points and advances the turn', () => {

@@ -6,6 +6,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   getKit,
   UPGRADE_POINT_ECONOMY,
   type GameState,
@@ -15,7 +17,7 @@ import {
 import { findPlayer } from '../turn/advance-turn';
 import { grantPoints, grantUpgradePoints } from './grant-resources';
 
-export type UpgradePointResult = { ok: true } | { ok: false; message: string };
+export type UpgradePointResult = { ok: true } | ActionReject;
 
 /** Resolve buy cost for the actor's current kit (Upgrader: 5). */
 export function upgradePointBuyCost(kitId: KitId): number {
@@ -31,13 +33,13 @@ export function buyUpgradePoint(state: GameState, actorPlayerId: string): Upgrad
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const cost = upgradePointBuyCost(actor.kitId);
 
   if (actor.points < cost) {
-    return { ok: false, message: 'Not enough points.' };
+    return actionReject('not-enough-points');
   }
 
   actor.points -= cost;
@@ -51,11 +53,11 @@ export function sellUpgradePoint(state: GameState, actorPlayerId: string): Upgra
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (actor.upgradePoints < 1) {
-    return { ok: false, message: 'No upgrade point to sell.' };
+    return actionReject('no-upgrade-point-to-sell');
   }
 
   actor.upgradePoints -= 1;

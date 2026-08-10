@@ -2,7 +2,12 @@
  * Lobby launch rules — technical spec §5.2 startGame, §7 lobby;
  * bot lobby intents — technical spec v3 §4.1, §6 (L15-03).
  * Pure so the reject cases are unit-tested without a Colyseus room.
+ *
+ * Rejection reasons stay as local unions; ERROR_MESSAGE payloads use shared
+ * ActionRejectCode via the *RejectionMessage helpers (L32-01 / PROTOCOL 27).
  */
+
+import { actionReject, type ActionReject } from '@card-battle/shared';
 
 export const MAX_PLAYERS = 4;
 export const MIN_PLAYERS_TO_START = 2;
@@ -47,14 +52,14 @@ export function canStartGame(input: {
   return null;
 }
 
-export function startGameRejectionMessage(reason: StartGameRejection): string {
+export function startGameRejectionMessage(reason: StartGameRejection): ActionReject {
   switch (reason) {
     case 'not-host':
-      return 'Only the host can start the game.';
+      return actionReject('start-not-host');
     case 'already-started':
-      return 'The game has already started.';
+      return actionReject('start-already-started');
     case 'not-enough-players':
-      return `Need at least ${MIN_PLAYERS_TO_START} players to start.`;
+      return actionReject('start-not-enough-players');
   }
 }
 
@@ -79,14 +84,14 @@ export function canAddBot(input: {
   return null;
 }
 
-export function addBotRejectionMessage(reason: AddBotRejection): string {
+export function addBotRejectionMessage(reason: AddBotRejection): ActionReject {
   switch (reason) {
     case 'not-host':
-      return 'Only the host can add a bot.';
+      return actionReject('add-bot-not-host');
     case 'already-started':
-      return 'Cannot add a bot after the game has started.';
+      return actionReject('add-bot-already-started');
     case 'room-full':
-      return `Room is full (${MAX_PLAYERS} seats).`;
+      return actionReject('add-bot-room-full');
   }
 }
 
@@ -116,16 +121,16 @@ export function canRemoveBot(input: {
   return null;
 }
 
-export function removeBotRejectionMessage(reason: RemoveBotRejection): string {
+export function removeBotRejectionMessage(reason: RemoveBotRejection): ActionReject {
   switch (reason) {
     case 'not-host':
-      return 'Only the host can remove a bot.';
+      return actionReject('remove-bot-not-host');
     case 'already-started':
-      return 'Cannot remove a bot after the game has started.';
+      return actionReject('remove-bot-already-started');
     case 'unknown-bot':
-      return 'That bot seat was not found.';
+      return actionReject('remove-bot-unknown');
     case 'target-is-human':
-      return 'That seat is a human player, not a bot.';
+      return actionReject('remove-bot-target-is-human');
   }
 }
 
@@ -155,15 +160,17 @@ export function canSetBotDifficulty(input: {
   return null;
 }
 
-export function setBotDifficultyRejectionMessage(reason: SetBotDifficultyRejection): string {
+export function setBotDifficultyRejectionMessage(
+  reason: SetBotDifficultyRejection,
+): ActionReject {
   switch (reason) {
     case 'not-host':
-      return 'Only the host can change a bot difficulty.';
+      return actionReject('set-bot-difficulty-not-host');
     case 'already-started':
-      return 'Cannot change bot difficulty after the game has started.';
+      return actionReject('set-bot-difficulty-already-started');
     case 'unknown-bot':
-      return 'That bot seat was not found.';
+      return actionReject('set-bot-difficulty-unknown');
     case 'target-is-human':
-      return 'That seat is a human player, not a bot.';
+      return actionReject('set-bot-difficulty-target-is-human');
   }
 }

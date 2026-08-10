@@ -4,7 +4,13 @@
  * Only `invisibility` is deactivatable today; L28-02 may widen the set.
  */
 
-import type { CardId, GameState, Player } from '@card-battle/shared';
+import {
+  actionReject,
+  type ActionReject,
+  type CardId,
+  type GameState,
+  type Player,
+} from '@card-battle/shared';
 
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import type { TurnAction } from '../turn/perform-action';
@@ -35,27 +41,27 @@ export function deactivatePersistentAction(
   state: GameState,
   actorPlayerId: string,
   effectId: string,
-): { ok: true; cardId: CardId } | { ok: false; message: string } {
+): { ok: true; cardId: CardId } | ActionReject {
   const actor = state.players.find((player) => player.id === actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const effect = actor.activePersistentEffects.find((entry) => entry.id === effectId);
 
   if (effect === undefined) {
-    return { ok: false, message: 'That persistent effect is not active.' };
+    return actionReject('persistent-not-active');
   }
 
   if (!isManualDeactivateCardId(effect.cardId)) {
-    return { ok: false, message: 'That persistent cannot be deactivated manually.' };
+    return actionReject('persistent-not-manual');
   }
 
   const cardId = effect.cardId;
 
   if (!deactivatePersistentEffect(state, actorPlayerId, effectId)) {
-    return { ok: false, message: 'That persistent effect is not active.' };
+    return actionReject('persistent-not-active');
   }
 
   return { ok: true, cardId };

@@ -5,7 +5,7 @@
  * Only the action log (and pending strips) scroll — never the page.
  */
 
-import type { ReactElement, ReactNode } from 'react';
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 export interface TableShellProps {
   /** Compact meta + turn strip (no separate Card Battle title). */
@@ -17,6 +17,8 @@ export interface TableShellProps {
   privateZone: ReactNode;
   economy: ReactNode;
   legacyActions?: ReactNode;
+  /** POV seat wash on the dock (replaces fixed surface-kit pink). */
+  dockStyle?: CSSProperties;
 }
 
 export function TableShell({
@@ -28,6 +30,7 @@ export function TableShell({
   privateZone,
   economy,
   legacyActions,
+  dockStyle,
 }: TableShellProps): ReactElement {
   return (
     <main
@@ -72,7 +75,8 @@ export function TableShell({
 
           <div
             data-zone="dock"
-            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-surface-kit p-1.5 text-ink sm:p-2"
+            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
+            style={dockStyle}
           >
             <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
               {privateZone}

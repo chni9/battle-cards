@@ -77,17 +77,17 @@ describe('bot lobby rules (L15-03)', () => {
 
     it('rejects a non-host', () => {
       expect(canAddBot({ ...base, requesterSessionId: 'guest' })).toBe('not-host');
-      expect(addBotRejectionMessage('not-host')).toBe('Only the host can add a bot.');
+      expect(addBotRejectionMessage('not-host').message).toBe('Only the host can add a bot.');
     });
 
     it('rejects once the game has started', () => {
       expect(canAddBot({ ...base, hasStarted: true })).toBe('already-started');
-      expect(addBotRejectionMessage('already-started')).toMatch(/has started/);
+      expect(addBotRejectionMessage('already-started').message).toMatch(/has started/);
     });
 
     it('rejects when the room is full', () => {
       expect(canAddBot({ ...base, seatCount: MAX_PLAYERS })).toBe('room-full');
-      expect(addBotRejectionMessage('room-full')).toMatch(/full/);
+      expect(addBotRejectionMessage('room-full').message).toMatch(/full/);
     });
   });
 
@@ -106,22 +106,22 @@ describe('bot lobby rules (L15-03)', () => {
 
     it('rejects a non-host', () => {
       expect(canRemoveBot({ ...removeBase, requesterSessionId: 'guest' })).toBe('not-host');
-      expect(removeBotRejectionMessage('not-host')).toBe('Only the host can remove a bot.');
+      expect(removeBotRejectionMessage('not-host').message).toBe('Only the host can remove a bot.');
     });
 
     it('rejects once the game has started', () => {
       expect(canRemoveBot({ ...removeBase, hasStarted: true })).toBe('already-started');
-      expect(removeBotRejectionMessage('already-started')).toMatch(/has started/);
+      expect(removeBotRejectionMessage('already-started').message).toMatch(/has started/);
     });
 
     it('rejects an unknown bot id', () => {
       expect(canRemoveBot({ ...removeBase, targetExists: false })).toBe('unknown-bot');
-      expect(removeBotRejectionMessage('unknown-bot')).toMatch(/not found/);
+      expect(removeBotRejectionMessage('unknown-bot').message).toMatch(/not found/);
     });
 
     it('rejects when the target is a human seat', () => {
       expect(canRemoveBot({ ...removeBase, targetIsBot: false })).toBe('target-is-human');
-      expect(removeBotRejectionMessage('target-is-human')).toMatch(/human/);
+      expect(removeBotRejectionMessage('target-is-human').message).toMatch(/human/);
     });
   });
 
@@ -140,22 +140,22 @@ describe('bot lobby rules (L15-03)', () => {
 
     it('rejects a non-host', () => {
       expect(canSetBotDifficulty({ ...setBase, requesterSessionId: 'guest' })).toBe('not-host');
-      expect(setBotDifficultyRejectionMessage('not-host')).toMatch(/host/);
+      expect(setBotDifficultyRejectionMessage('not-host').message).toMatch(/host/);
     });
 
     it('rejects once the game has started', () => {
       expect(canSetBotDifficulty({ ...setBase, hasStarted: true })).toBe('already-started');
-      expect(setBotDifficultyRejectionMessage('already-started')).toMatch(/has started/);
+      expect(setBotDifficultyRejectionMessage('already-started').message).toMatch(/has started/);
     });
 
     it('rejects an unknown bot id', () => {
       expect(canSetBotDifficulty({ ...setBase, targetExists: false })).toBe('unknown-bot');
-      expect(setBotDifficultyRejectionMessage('unknown-bot')).toMatch(/not found/);
+      expect(setBotDifficultyRejectionMessage('unknown-bot').message).toMatch(/not found/);
     });
 
     it('rejects when the target is a human seat', () => {
       expect(canSetBotDifficulty({ ...setBase, targetIsBot: false })).toBe('target-is-human');
-      expect(setBotDifficultyRejectionMessage('target-is-human')).toMatch(/human/);
+      expect(setBotDifficultyRejectionMessage('target-is-human').message).toMatch(/human/);
     });
   });
 });

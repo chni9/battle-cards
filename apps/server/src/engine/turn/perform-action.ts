@@ -4,10 +4,12 @@
  */
 
 import {
+  actionReject,
   getKit,
   isAttackCardId,
   isSharedAttackCardId,
   isPersistentSpecialCardId,
+  type ActionReject,
   type ActionResolutionOutcome,
   type CardId,
   type CardInstance,
@@ -153,12 +155,33 @@ export interface TurnResult {
   curseTransfers?: readonly (CurseTransfer & { turnSequence: number })[];
 }
 
-export interface TurnRejection {
-  ok: false;
-  message: string;
-}
+export type TurnRejection = ActionReject;
 
 export type PerformActionResult = TurnResult | TurnRejection;
+
+function subChoiceGateReject(state: GameState): ActionReject {
+  if (state.mirrorChoice !== null) {
+    return actionReject('finish-mirror-choice');
+  }
+
+  if (state.stealChoice !== null) {
+    return actionReject('finish-steal-choice');
+  }
+
+  if (state.subChoice?.kind === 'pool-pick') {
+    return actionReject('finish-pool-pick');
+  }
+
+  if (state.subChoice?.kind === 'special-pick') {
+    return actionReject('finish-special-pick');
+  }
+
+  if (state.subChoice?.kind === 'reanimation-kit') {
+    return actionReject('finish-reanimation-kit-pick');
+  }
+
+  return actionReject('finish-elimination-rewards');
+}
 
 /**
  * Perform the active player's single action, then resolve their pending queue, then
@@ -173,7 +196,7 @@ export function performTurnAction(
   nowMs: number = Date.now(),
 ): PerformActionResult {
   if (state.currentTurnPlayerId !== actorPlayerId) {
-    return { ok: false, message: 'It is not your turn.' };
+    return actionReject('not-your-turn');
   }
 
   // Single sub-choice gate (technical spec v4 §4.4/§10.2) — Mirror or elimination
@@ -182,25 +205,13 @@ export function performTurnAction(
   // possible, but the enumerator (`listLegalActions`) needs the same predicate, so
   // this function must not be the odd one out.
   if (hasActiveSubChoice(state)) {
-    return {
-      ok: false,
-      message:
-        state.mirrorChoice !== null
-          ? 'Finish your Mirror choice first.'
-          : state.stealChoice !== null
-            ? 'Finish your Card Thief choice first.'
-            : state.subChoice !== null
-              ? state.subChoice.kind === 'pool-pick'
-                ? 'Finish your pool pick first.'
-                : 'Finish your special pick first.'
-              : 'Finish elimination rewards first.',
-    };
+    return subChoiceGateReject(state);
   }
 
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined || actor.isEliminated) {
-    return { ok: false, message: 'You are not an active player.' };
+    return actionReject('not-active-player');
   }
 
   let actionPlayed: ActionPlayedEvent;
@@ -458,25 +469,25 @@ export function completeMirrorChoice(
   const choice = state.mirrorChoice;
 
   if (choice?.playerId !== actorPlayerId) {
-    return { ok: false, message: 'No Mirror choice pending.' };
+    return actionReject('no-mirror-choice-pending');
   }
 
   if (state.currentTurnPlayerId !== actorPlayerId) {
-    return { ok: false, message: 'It is not your turn.' };
+    return actionReject('not-your-turn');
   }
 
   if (!choice.eligibleEffectIds.includes(pendingEffectId)) {
-    return { ok: false, message: 'That pending attack is not available.' };
+    return actionReject('pending-attack-unavailable');
   }
 
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (!canAffordPlayPoints(actor, 'mirror')) {
-    return { ok: false, message: 'Not enough points.' };
+    return actionReject('not-enough-points');
   }
 
   const redirected = redirectPendingAttack(
@@ -526,14 +537,14 @@ export function expireMirrorChoice(
   const choice = state.mirrorChoice;
 
   if (choice === null) {
-    return { ok: false, message: 'No Mirror choice pending.' };
+    return actionReject('no-mirror-choice-pending');
   }
 
   const actorPlayerId = choice.playerId;
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const applied = applyDefaultMirrorRedirect(state, rng);
@@ -579,11 +590,11 @@ export function completeStealChoice(
   const choice = state.stealChoice;
 
   if (choice?.playerId !== actorPlayerId) {
-    return { ok: false, message: 'No steal choice pending.' };
+    return actionReject('no-steal-choice-pending');
   }
 
   if (state.currentTurnPlayerId !== actorPlayerId) {
-    return { ok: false, message: 'It is not your turn.' };
+    return actionReject('not-your-turn');
   }
 
   const applied = applyStealPick(state, instanceId, nowMs);
@@ -635,7 +646,7 @@ export function expireStealChoice(
   const choice = state.stealChoice;
 
   if (choice === null) {
-    return { ok: false, message: 'No steal choice pending.' };
+    return actionReject('no-steal-choice-pending');
   }
 
   const actorPlayerId = choice.playerId;
@@ -689,11 +700,11 @@ export function completePoolPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'pool-pick' || choice.playerId !== actorPlayerId) {
-    return { ok: false, message: 'No pool pick pending.' };
+    return actionReject('no-pool-pick-pending');
   }
 
   if (state.currentTurnPlayerId !== actorPlayerId) {
-    return { ok: false, message: 'It is not your turn.' };
+    return actionReject('not-your-turn');
   }
 
   const applied = applyPoolPick(state, instanceIds);
@@ -727,7 +738,7 @@ export function expirePoolPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'pool-pick') {
-    return { ok: false, message: 'No pool pick pending.' };
+    return actionReject('no-pool-pick-pending');
   }
 
   const actorPlayerId = choice.playerId;
@@ -764,11 +775,11 @@ export function completeSpecialPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'special-pick' || choice.playerId !== actorPlayerId) {
-    return { ok: false, message: 'No special pick pending.' };
+    return actionReject('no-special-pick-pending');
   }
 
   if (state.currentTurnPlayerId !== actorPlayerId) {
-    return { ok: false, message: 'It is not your turn.' };
+    return actionReject('not-your-turn');
   }
 
   const applied = applySpecialPick(state, cardId);
@@ -802,7 +813,7 @@ export function expireSpecialPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'special-pick') {
-    return { ok: false, message: 'No special pick pending.' };
+    return actionReject('no-special-pick-pending');
   }
 
   const actorPlayerId = choice.playerId;
@@ -837,7 +848,7 @@ export type EliminationRewardTurnResult =
         eliminatedPlayerId: string;
       };
     }
-  | { ok: false; message: string };
+  | ActionReject;
 
 /**
  * Apply the eliminator's reward picks, then continue the queue or resume the turn.
@@ -870,7 +881,7 @@ export type ReanimationKitTurnResult =
       winnerPlayerId: string | null;
       playerReanimated?: readonly { playerId: string; kitId: KitId }[];
     }
-  | { ok: false; message: string };
+  | ActionReject;
 
 /**
  * Complete upgraded Reanimation kit pick (#V4-13 / L26-02), then resume.
@@ -885,7 +896,7 @@ export function completeReanimationKitPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit' || choice.playerId !== chooserPlayerId) {
-    return { ok: false, message: 'No reanimation kit pick pending.' };
+    return actionReject('no-reanimation-kit-pick-pending');
   }
 
   const applied = applyReanimationKitPick(state, kitId, rng);
@@ -917,7 +928,7 @@ export function expireReanimationKitPick(
   const choice = state.subChoice;
 
   if (choice?.kind !== 'reanimation-kit') {
-    return { ok: false, message: 'No reanimation kit pick pending.' };
+    return actionReject('no-reanimation-kit-pick-pending');
   }
 
   const applied = applyDefaultReanimationKitPick(state, rng);
@@ -1048,26 +1059,26 @@ function playMultipleAttacksAction(
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   if (attacksForbiddenDuringBlock(actor)) {
-    return { ok: false, message: 'Attack cards are forbidden during Block.' };
+    return actionReject('attacks-forbidden-during-block');
   }
 
   if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
-    return { ok: false, message: 'Your kit cannot play multiple attacks in one turn.' };
+    return actionReject('multi-attack-kit-forbidden');
   }
 
   if (attacks.length < 2) {
-    return { ok: false, message: 'Select at least two attacks.' };
+    return actionReject('multi-attack-need-two');
   }
 
   const seenIds = new Set<string>();
 
   for (const attack of attacks) {
     if (seenIds.has(attack.instanceId)) {
-      return { ok: false, message: 'Duplicate attack selection.' };
+      return actionReject('duplicate-attack-selection');
     }
 
     seenIds.add(attack.instanceId);
@@ -1086,23 +1097,23 @@ function playMultipleAttacksAction(
     const instance = actor.hand.find((card) => card.instanceId === attack.instanceId);
 
     if (instance === undefined) {
-      return { ok: false, message: 'You do not hold that card.' };
+      return actionReject('card-not-held');
     }
 
     if (!isSharedAttackCardId(instance.cardId)) {
-      return { ok: false, message: 'Only attack cards can be multi-played.' };
+      return actionReject('only-attacks-multiplayable');
     }
 
     const target = findPlayer(state, attack.targetPlayerId);
 
     if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
-      return { ok: false, message: 'Invalid target.' };
+      return actionReject('invalid-target');
     }
 
     const handler = findHandler(instance.cardId);
 
     if (handler === undefined) {
-      return { ok: false, message: 'That card is not playable yet.' };
+      return actionReject('card-not-playable-yet');
     }
 
     const context = {
@@ -1118,7 +1129,7 @@ function playMultipleAttacksAction(
     };
 
     if (!handler.canPlay(context)) {
-      return { ok: false, message: 'That play is not legal.' };
+      return actionReject('play-not-legal');
     }
 
     const playPoints = playPointsCost(instance.cardId);
@@ -1131,7 +1142,7 @@ function playMultipleAttacksAction(
   }
 
   if (actor.points < totalCost) {
-    return { ok: false, message: 'Not enough points.' };
+    return actionReject('not-enough-points');
   }
 
   const publicAttacks: { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[] = [];
@@ -1145,7 +1156,7 @@ function playMultipleAttacksAction(
     const handler = findHandler(entry.instance.cardId);
 
     if (handler === undefined) {
-      return { ok: false, message: 'That card is not playable yet.' };
+      return actionReject('card-not-playable-yet');
     }
 
     handler.play({
@@ -1233,7 +1244,7 @@ function playCardAction(
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined) {
-    return { ok: false, message: 'Unknown player.' };
+    return actionReject('unknown-player');
   }
 
   const handIndex = actor.hand.findIndex((card) => card.instanceId === instanceId);
@@ -1241,7 +1252,7 @@ function playCardAction(
   const fromSpecials = handIndex < 0 && specialIndex >= 0;
 
   if (handIndex < 0 && specialIndex < 0) {
-    return { ok: false, message: 'You do not hold that card.' };
+    return actionReject('card-not-held');
   }
 
   const instance = fromSpecials
@@ -1249,18 +1260,18 @@ function playCardAction(
     : actor.hand[handIndex];
 
   if (instance === undefined) {
-    return { ok: false, message: 'You do not hold that card.' };
+    return actionReject('card-not-held');
   }
 
   const cardId = instance.cardId;
   const handler = findHandler(cardId);
 
   if (handler === undefined) {
-    return { ok: false, message: 'That card is not playable yet.' };
+    return actionReject('card-not-playable-yet');
   }
 
   if (attacksForbiddenDuringBlock(actor) && isAttackCardId(cardId)) {
-    return { ok: false, message: 'Attack cards are forbidden during Block.' };
+    return actionReject('attacks-forbidden-during-block');
   }
 
   let resolvedTargetId: string | null = null;
@@ -1275,7 +1286,7 @@ function playCardAction(
       target.id === actorPlayerId ||
       (target.isEliminated && !absorberCorpseOk)
     ) {
-      return { ok: false, message: 'Invalid target.' };
+      return actionReject('invalid-target');
     }
 
     resolvedTargetId = targetPlayerId;
@@ -1295,7 +1306,7 @@ function playCardAction(
   };
 
   if (!handler.canPlay(context)) {
-    return { ok: false, message: 'That play is not legal.' };
+    return actionReject('play-not-legal');
   }
 
   // Play payment: points from catalog (shared or special Price). Life / pointsPerLife
@@ -1303,7 +1314,7 @@ function playCardAction(
   // (technical spec v3 §4.3 rule 4). Mirror charges on sub-choice complete / expiry
   // (playtest 2026-08-09) so the cost lands with the redirect choice.
   if (!canAffordPlayPoints(actor, cardId)) {
-    return { ok: false, message: 'Not enough points.' };
+    return actionReject('not-enough-points');
   }
 
   const deferMirrorPayment = cardId === 'mirror';

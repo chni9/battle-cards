@@ -6,6 +6,8 @@
  */
 
 import {
+  actionReject,
+  type ActionReject,
   ACTION_PLAYED,
   ACTION_RESOLVED,
   ADD_BOT,
@@ -314,7 +316,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const hostSessionId = this.hostSessionId;
 
       if (hostSessionId === null) {
-        client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+        client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
         return;
       }
 
@@ -326,7 +328,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       });
 
       if (rejection !== null) {
-        client.send(ERROR_MESSAGE, { message: startGameRejectionMessage(rejection) });
+        client.send(ERROR_MESSAGE, startGameRejectionMessage(rejection));
         return;
       }
 
@@ -368,7 +370,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readPlayCardPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid playCard payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-play-card-payload'));
         return;
       }
 
@@ -389,7 +391,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readPlayMultipleAttacksPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid playMultipleAttacks payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-play-multiple-attacks-payload'));
         return;
       }
 
@@ -403,7 +405,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readBuyCardPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid buyCard payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-buy-card-payload'));
         return;
       }
 
@@ -414,7 +416,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readSellCardPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid sellCard payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-sell-card-payload'));
         return;
       }
 
@@ -425,7 +427,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readUpgradeCardPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid upgradeCard payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-upgrade-card-payload'));
         return;
       }
 
@@ -448,7 +450,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const parsed = readDeactivatePersistentPayload(payload);
 
       if (parsed === null) {
-        client.send(ERROR_MESSAGE, { message: 'Invalid deactivatePersistent payload.' });
+        client.send(ERROR_MESSAGE, actionReject('invalid-deactivate-persistent-payload'));
         return;
       }
 
@@ -652,14 +654,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const hostSessionId = this.hostSessionId;
 
     if (hostSessionId === null) {
-      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
       return;
     }
 
     const parsed = readAddBotPayload(payload);
 
     if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid addBot payload.' });
+      client.send(ERROR_MESSAGE, actionReject('invalid-add-bot-payload'));
       return;
     }
 
@@ -671,7 +673,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
 
     if (rejection !== null) {
-      client.send(ERROR_MESSAGE, { message: addBotRejectionMessage(rejection) });
+      client.send(ERROR_MESSAGE, addBotRejectionMessage(rejection));
       return;
     }
 
@@ -689,14 +691,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const hostSessionId = this.hostSessionId;
 
     if (hostSessionId === null) {
-      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
       return;
     }
 
     const parsed = readRemoveBotPayload(payload);
 
     if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid removeBot payload.' });
+      client.send(ERROR_MESSAGE, actionReject('invalid-remove-bot-payload'));
       return;
     }
 
@@ -710,7 +712,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
 
     if (rejection !== null) {
-      client.send(ERROR_MESSAGE, { message: removeBotRejectionMessage(rejection) });
+      client.send(ERROR_MESSAGE, removeBotRejectionMessage(rejection));
       return;
     }
 
@@ -728,14 +730,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const hostSessionId = this.hostSessionId;
 
     if (hostSessionId === null) {
-      client.send(ERROR_MESSAGE, { message: 'No host is seated.' });
+      client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
       return;
     }
 
     const parsed = readSetBotDifficultyPayload(payload);
 
     if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid setBotDifficulty payload.' });
+      client.send(ERROR_MESSAGE, actionReject('invalid-set-bot-difficulty-payload'));
       return;
     }
 
@@ -749,7 +751,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
 
     if (rejection !== null) {
-      client.send(ERROR_MESSAGE, { message: setBotDifficultyRejectionMessage(rejection) });
+      client.send(ERROR_MESSAGE, setBotDifficultyRejectionMessage(rejection));
       return;
     }
 
@@ -765,17 +767,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
     if (hasActiveSubChoice(state)) {
-      client.send(ERROR_MESSAGE, { message: subChoiceGateMessage(state) });
+      client.send(ERROR_MESSAGE, subChoiceGateReject(state));
       return;
     }
 
     if (this.actionTakenThisTurn) {
-      client.send(ERROR_MESSAGE, { message: 'You already acted this turn.' });
+      client.send(ERROR_MESSAGE, actionReject('already-acted'));
       return;
     }
 
@@ -789,7 +791,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const result = performTurnAction(state, client.sessionId, action);
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -800,7 +802,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const choice = state.mirrorChoice;
 
       if (choice === null) {
-        client.send(ERROR_MESSAGE, { message: 'Mirror choice missing.' });
+        client.send(ERROR_MESSAGE, actionReject('mirror-choice-missing'));
         return;
       }
 
@@ -813,7 +815,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const choice = state.stealChoice;
 
       if (choice === null) {
-        client.send(ERROR_MESSAGE, { message: 'Steal choice missing.' });
+        client.send(ERROR_MESSAGE, actionReject('steal-choice-missing'));
         return;
       }
 
@@ -826,7 +828,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const choice = state.subChoice;
 
       if (choice === null) {
-        client.send(ERROR_MESSAGE, { message: 'Sub-choice missing.' });
+        client.send(ERROR_MESSAGE, actionReject('sub-choice-missing'));
         return;
       }
 
@@ -873,7 +875,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const parsed = readResolveSubChoicePayload(payload);
 
     if (parsed === null) {
-      client.send(ERROR_MESSAGE, { message: 'Invalid resolveSubChoice payload.' });
+      client.send(ERROR_MESSAGE, actionReject('invalid-resolve-sub-choice-payload'));
       return;
     }
 
@@ -909,7 +911,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
@@ -921,7 +923,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     );
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -947,14 +949,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
     const result = completeStealChoice(state, client.sessionId, parsed.instanceId);
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -991,14 +993,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
     const result = completePoolPick(state, client.sessionId, parsed.instanceIds);
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -1024,14 +1026,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
     const result = completeSpecialPick(state, client.sessionId, parsed.cardId);
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -1060,14 +1062,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
     const result = completeReanimationKitPick(state, client.sessionId, parsed.kitId);
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -1079,7 +1081,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
-      client.send(ERROR_MESSAGE, { message: 'The game is not in progress.' });
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
       return;
     }
 
@@ -1091,7 +1093,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     );
 
     if (!result.ok) {
-      client.send(ERROR_MESSAGE, { message: result.message });
+      client.send(ERROR_MESSAGE, result);
       return;
     }
 
@@ -2051,7 +2053,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       },
     };
 
-    let result: TurnResult | { ok: false; message: string };
+    let result: TurnResult | ActionReject;
 
     try {
       result = performAndCompleteTurn(state, playerId, action, hooks, {
@@ -3333,28 +3335,28 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
   return null;
 }
 
-function subChoiceGateMessage(state: GameState): string {
+function subChoiceGateReject(state: GameState): ReturnType<typeof actionReject> {
   if (state.mirrorChoice !== null) {
-    return 'Finish your Mirror choice first.';
+    return actionReject('finish-mirror-choice');
   }
 
   if (state.stealChoice !== null) {
-    return 'Finish your Steal choice first.';
+    return actionReject('finish-steal-choice');
   }
 
   if (state.subChoice?.kind === 'pool-pick') {
-    return 'Finish your pool pick first.';
+    return actionReject('finish-pool-pick');
   }
 
   if (state.subChoice?.kind === 'special-pick') {
-    return 'Finish your special pick first.';
+    return actionReject('finish-special-pick');
   }
 
   if (state.subChoice?.kind === 'reanimation-kit') {
-    return 'Finish your reanimation kit pick first.';
+    return actionReject('finish-reanimation-kit-pick');
   }
 
-  return 'Finish elimination rewards first.';
+  return actionReject('finish-elimination-rewards');
 }
 
 function readChooseEliminationRewardPayload(

@@ -9,6 +9,7 @@ import type { CardId, SpecialCardId } from '../domain/card';
 import type { KitId } from '../domain/kit';
 import type { ActionResolutionOutcome } from './action-outcome';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
+import type { ActionRejectCode } from './action-reject';
 import type {
   ChooseEliminationRewardPayload,
   RewardChoiceRequiredPayload,
@@ -249,7 +250,8 @@ export interface SetBotDifficultyPayload {
 
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
-  [ERROR_MESSAGE]: { message: string };
+  /** PROTOCOL_VERSION 27 — typed reject code + short English fallback message. */
+  [ERROR_MESSAGE]: { code: ActionRejectCode; message: string };
   [TURN_STARTED]: TurnStartedPayload;
   [ACTION_PLAYED]: ActionPlayedPayload;
   [ACTION_RESOLVED]: ActionResolvedPayload;
