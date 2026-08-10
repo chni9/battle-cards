@@ -1,0 +1,135 @@
+{
+  "baseSeed": "l32-07-v4-validation",
+  "gamesPerOrientation": 80,
+  "seatOrientations": 2,
+  "playerCount": 2,
+  "difficulty": "hard",
+  "kitModes": [
+    "random"
+  ],
+  "policyA": {
+    "id": "heuristic-v4",
+    "weightsHash": "d585586e0c8f7711"
+  },
+  "policyB": {
+    "id": "heuristic-v4",
+    "weightsHash": "d585586e0c8f7711"
+  },
+  "completedGames": 142,
+  "stalledGames": 18,
+  "reports": [
+    {
+      "kitMode": "random",
+      "attemptedGames": 160,
+      "completedGames": 142,
+      "stalledGames": 18,
+      "policyA": {
+        "id": "heuristic-v4",
+        "weightsHash": "d585586e0c8f7711"
+      },
+      "policyB": {
+        "id": "heuristic-v4",
+        "weightsHash": "d585586e0c8f7711"
+      },
+      "policyAWins": 71,
+      "winRate": 0.5,
+      "wilsonInterval": {
+        "lower": 0.418850590194875,
+        "upper": 0.581149409805125,
+        "center": 0.5
+      },
+      "eloDelta": 0,
+      "turnCount": {
+        "mean": 51.90845070422535,
+        "p50": 32
+      },
+      "perKit": {
+        "indestructible": {
+          "games": 14,
+          "policyAWins": 7,
+          "winRate": 0.5
+        },
+        "prophet": {
+          "games": 14,
+          "policyAWins": 7,
+          "winRate": 0.5
+        },
+        "ghost": {
+          "games": 9,
+          "policyAWins": 4.5,
+          "winRate": 0.5
+        },
+        "witch": {
+          "games": 10,
+          "policyAWins": 5,
+          "winRate": 0.5
+        },
+        "kamikaze": {
+          "games": 7,
+          "policyAWins": 3.5,
+          "winRate": 0.5
+        },
+        "wizard": {
+          "games": 7,
+          "policyAWins": 3.5,
+          "winRate": 0.5
+        },
+        "assassin": {
+          "games": 4,
+          "policyAWins": 2,
+          "winRate": 0.5
+        },
+        "duplicator": {
+          "games": 13,
+          "policyAWins": 6.5,
+          "winRate": 0.5
+        },
+        "warrior": {
+          "games": 8,
+          "policyAWins": 4,
+          "winRate": 0.5
+        },
+        "untouchable": {
+          "games": 13,
+          "policyAWins": 6.5,
+          "winRate": 0.5
+        },
+        "juggernaut": {
+          "games": 12,
+          "policyAWins": 6,
+          "winRate": 0.5
+        },
+        "specialist": {
+          "games": 12,
+          "policyAWins": 6,
+          "winRate": 0.5
+        },
+        "upgrader": {
+          "games": 7,
+          "policyAWins": 3.5,
+          "winRate": 0.5
+        },
+        "tactician": {
+          "games": 4,
+          "policyAWins": 2,
+          "winRate": 0.5
+        },
+        "scientific": {
+          "games": 8,
+          "policyAWins": 4,
+          "winRate": 0.5
+        }
+      },
+      "decisionLatency": {
+        "count": 7513,
+        "mean": 1,
+        "p50": 1,
+        "p90": 1,
+        "p99": 1,
+        "histogram": {
+          "1": 7513
+        }
+      }
+    }
+  ]
+}

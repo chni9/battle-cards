@@ -1,0 +1,325 @@
+{
+  "date": "2026-08-10",
+  "task": "L32-07",
+  "v4Screen": "docs/simulation/2026-08-07-v4-content/",
+  "arena": {
+    "baseSeed": "l32-07-v4-validation",
+    "gamesPerOrientation": 80,
+    "seatOrientations": 2,
+    "completed": 142,
+    "stalled": 18,
+    "policy": "heuristic-v4",
+    "difficulty": "hard",
+    "kitMode": "random"
+  },
+  "v4": {
+    "completedGames": 20378,
+    "stalledGames": 2622,
+    "stallRate": 0.114
+  },
+  "arenaStallRate": 0.1125,
+  "comparisons": [
+    {
+      "kitId": "kamikaze",
+      "v4Rate": 0.256050508593476,
+      "v4Games": 2851,
+      "v4Wilson": {
+        "lower": 0.24036510755196014,
+        "upper": 0.2723924478934979,
+        "center": 0.25637877772272905
+      },
+      "arenaRate": 0.5,
+      "arenaGames": 12,
+      "arenaWilson": {
+        "lower": 0.2537781703934222,
+        "upper": 0.7462218296065778,
+        "center": 0.5
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "untouchable",
+      "v4Rate": 0.5360894611995933,
+      "v4Games": 2951,
+      "v4Wilson": {
+        "lower": 0.5180610293913538,
+        "upper": 0.5540240529359018,
+        "center": 0.5360425411636278
+      },
+      "arenaRate": 0.6190476190476191,
+      "arenaGames": 21,
+      "arenaWilson": {
+        "lower": 0.40878295815501514,
+        "upper": 0.7924923220201749,
+        "center": 0.600637640087595
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "scientific",
+      "v4Rate": 0.2601596516690856,
+      "v4Games": 2756,
+      "v4Wilson": {
+        "lower": 0.24412181935809615,
+        "upper": 0.27686518221474765,
+        "center": 0.2604935007864219
+      },
+      "arenaRate": 0.3333333333333333,
+      "arenaGames": 18,
+      "arenaWilson": {
+        "lower": 0.1627855436366286,
+        "upper": 0.5625093065574964,
+        "center": 0.3626474250970625
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "assassin",
+      "v4Rate": 0.5007928956549318,
+      "v4Games": 3153,
+      "v4Wilson": {
+        "lower": 0.48334981620249956,
+        "upper": 0.5182340453380985,
+        "center": 0.500791930770299
+      },
+      "arenaRate": 0.5714285714285714,
+      "arenaGames": 14,
+      "arenaWilson": {
+        "lower": 0.32590266902869364,
+        "upper": 0.7861949006959947,
+        "center": 0.5560487848623442
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "upgrader",
+      "v4Rate": 0.5784903139612558,
+      "v4Games": 2994,
+      "v4Wilson": {
+        "lower": 0.560712649742653,
+        "upper": 0.5960668145225704,
+        "center": 0.5783897321326117
+      },
+      "arenaRate": 0.4375,
+      "arenaGames": 16,
+      "arenaWilson": {
+        "lower": 0.2309836333518552,
+        "upper": 0.6682180439322347,
+        "center": 0.449600838642045
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "tactician",
+      "v4Rate": 0.4368455497382199,
+      "v4Games": 3056,
+      "v4Wilson": {
+        "lower": 0.4193501064600037,
+        "upper": 0.4544995725560603,
+        "center": 0.436924839508032
+      },
+      "arenaRate": 0.25,
+      "arenaGames": 16,
+      "arenaWilson": {
+        "lower": 0.10181901984237346,
+        "upper": 0.49498768929398645,
+        "center": 0.29840335456817996
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "indestructible",
+      "v4Rate": 0.39452054794520547,
+      "v4Games": 2920,
+      "v4Wilson": {
+        "lower": 0.37694267572901713,
+        "upper": 0.41237559650570316,
+        "center": 0.39465913611736014
+      },
+      "arenaRate": 0.3448275862068966,
+      "arenaGames": 29,
+      "arenaWilson": {
+        "lower": 0.19940508749190486,
+        "upper": 0.52655223492844,
+        "center": 0.36297866121017247
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "prophet",
+      "v4Rate": 0.6076119905692152,
+      "v4Games": 2969,
+      "v4Wilson": {
+        "lower": 0.5899197897184566,
+        "upper": 0.625026072180139,
+        "center": 0.6074729309492978
+      },
+      "arenaRate": 0.7307692307692307,
+      "arenaGames": 26,
+      "arenaWilson": {
+        "lower": 0.5391659658023868,
+        "upper": 0.8629572447493261,
+        "center": 0.7010616052758565
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "specialist",
+      "v4Rate": 0.33455637091394264,
+      "v4Games": 2998,
+      "v4Wilson": {
+        "lower": 0.3178875452970949,
+        "upper": 0.35164864875125185,
+        "center": 0.33476809702417337
+      },
+      "arenaRate": 0.21428571428571427,
+      "arenaGames": 14,
+      "arenaWilson": {
+        "lower": 0.0757124833691637,
+        "upper": 0.4758972377320828,
+        "center": 0.27580486055062325
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "witch",
+      "v4Rate": 0.4081984154323114,
+      "v4Games": 2903,
+      "v4Wilson": {
+        "lower": 0.39045160721376204,
+        "upper": 0.42618786842880485,
+        "center": 0.40831973782128345
+      },
+      "arenaRate": 0.55,
+      "arenaGames": 20,
+      "arenaWilson": {
+        "lower": 0.3420820083075997,
+        "upper": 0.7418049791429071,
+        "center": 0.5419434937252534
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "warrior",
+      "v4Rate": 0.8026641883519207,
+      "v4Games": 3228,
+      "v4Wilson": {
+        "lower": 0.7885782249373027,
+        "upper": 0.8160306148028628,
+        "center": 0.8023044198700827
+      },
+      "arenaRate": 0.7619047619047619,
+      "arenaGames": 21,
+      "arenaWilson": {
+        "lower": 0.5490841802765406,
+        "upper": 0.8937214361088773,
+        "center": 0.721402808192709
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "wizard",
+      "v4Rate": 0.3196392785571142,
+      "v4Games": 2994,
+      "v4Wilson": {
+        "lower": 0.3031751484930276,
+        "upper": 0.3365656570251826,
+        "center": 0.3198704027591051
+      },
+      "arenaRate": 0.3125,
+      "arenaGames": 16,
+      "arenaWilson": {
+        "lower": 0.14164435051961052,
+        "upper": 0.5559606813326594,
+        "center": 0.348802515926135
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": true,
+      "agree": true
+    },
+    {
+      "kitId": "juggernaut",
+      "v4Rate": 0.5785665058580289,
+      "v4Games": 2902,
+      "v4Wilson": {
+        "lower": 0.5605083363116516,
+        "upper": 0.5964169413772629,
+        "center": 0.5784626388444573
+      },
+      "arenaRate": 0.6666666666666666,
+      "arenaGames": 21,
+      "arenaWilson": {
+        "lower": 0.45373075657210293,
+        "upper": 0.8280546356731631,
+        "center": 0.640892696122633
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "ghost",
+      "v4Rate": 0.43248242693303734,
+      "v4Games": 2703,
+      "v4Wilson": {
+        "lower": 0.4139142689888849,
+        "upper": 0.4512422292709319,
+        "center": 0.4325782491299084
+      },
+      "arenaRate": 0.6,
+      "arenaGames": 15,
+      "arenaWilson": {
+        "lower": 0.357464427565077,
+        "upper": 0.8017577191740534,
+        "center": 0.5796110733695652
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    },
+    {
+      "kitId": "duplicator",
+      "v4Rate": 0.38896321070234113,
+      "v4Games": 2990,
+      "v4Wilson": {
+        "lower": 0.37164167598976433,
+        "upper": 0.4065697029956837,
+        "center": 0.389105689492724
+      },
+      "arenaRate": 0.44,
+      "arenaGames": 25,
+      "arenaWilson": {
+        "lower": 0.2666537494700257,
+        "upper": 0.6293298298043557,
+        "center": 0.44799178963719066
+      },
+      "v4RateInsideArenaCi": true,
+      "arenaRateInsideV4Ci": false,
+      "agree": true
+    }
+  ],
+  "disagreements": [],
+  "verdict": "agreement"
+}
