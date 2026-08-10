@@ -34,6 +34,7 @@ update expectations — put the change under a new policy id.
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate
   promotes default policy only (#V5-10), not merges.
 - Workers: `bots/search/worker/` (L32-08) — payload excludes `GameState`. Fallback:
-  sync `heuristic-v4` → draw only if that throws.
+  sync `heuristic-v4` → draw only if that throws. Room `BotDriver.decideAndAct` requests
+  the pool asynchronously; Vitest uses `SyncSearchPool` so unit tests do not spawn threads.
 - Forward-model budgets cite L32-05 numbers in `decisions.md`.
   Run: `pnpm --filter @card-battle/server bench:forward-model`.

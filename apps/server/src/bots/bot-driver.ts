@@ -24,6 +24,15 @@ import { createRng } from '../engine/rng';
 import { readBotThinkMs } from './bot-think-ms';
 import { applyDifficultyNoiseWithMeta } from './difficulty-noise';
 import { getDefaultPolicy, getPolicy } from './registry';
+import { decideHeuristicV4Sync } from './search/worker/fallback';
+import {
+  closeSharedSearchPool,
+  getSharedSearchPool,
+  type BotSearchPool,
+} from './search/worker/pool';
+
+export type { BotSearchPool };
+export { closeSharedSearchPool };
 
 export interface BotDriverHost {
   isBotSeat(playerId: string): boolean;
@@ -64,12 +73,15 @@ export interface BotDriverHost {
 export class BotDriver {
   private readonly thinkMs: number;
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
+  private readonly searchPool: BotSearchPool;
 
   constructor(
     private readonly host: BotDriverHost,
     thinkMs: number = readBotThinkMs(),
+    searchPool: BotSearchPool = getSharedSearchPool(),
   ) {
     this.thinkMs = thinkMs;
+    this.searchPool = searchPool;
   }
 
   /** Enter a bot turn via setTimeout — never call decideAndAct synchronously (§4.7). */
@@ -227,17 +239,21 @@ export class BotDriver {
   }
 
   private decideAndAct(botId: string): void {
-    if (this.host.isGameOver() || !this.host.isBotSeat(botId)) {
-      return;
-    }
+    void this.decideAndActAsync(botId);
+  }
 
-    const state = this.host.getGameState();
-
-    if (state?.currentTurnPlayerId !== botId) {
-      return;
-    }
-
+  private async decideAndActAsync(botId: string): Promise<void> {
     try {
+      if (this.host.isGameOver() || !this.host.isBotSeat(botId)) {
+        return;
+      }
+
+      const state = this.host.getGameState();
+
+      if (state?.currentTurnPlayerId !== botId) {
+        return;
+      }
+
       const view = this.host.getPlayingView(botId);
 
       if (view === null) {
@@ -252,10 +268,43 @@ export class BotDriver {
         return;
       }
 
+      const actionLog = this.host.getActionLog();
       const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-      const decision = this.policyFor(botId).decide(view, actions, rng, {
-        actionLog: this.host.getActionLog(),
-      });
+      const policy = this.policyFor(botId);
+      let decision;
+
+      try {
+        const response = await this.searchPool.request({
+          view,
+          actionLog,
+          legalActions: actions,
+          budget: { kind: 'wall-clock', ms: this.thinkMs },
+          policyId: policy.id,
+          weightsProfile: null,
+        });
+
+        const legal = actions.some(
+          (action) => JSON.stringify(action) === JSON.stringify(response.action),
+        );
+
+        if (!legal) {
+          throw new Error('worker returned illegal action');
+        }
+
+        decision = { action: response.action, reason: response.reason };
+      } catch {
+        try {
+          decision = decideHeuristicV4Sync(view, actions, rng, actionLog);
+        } catch {
+          this.host.performBotDraw(botId, { code: 'policy-fallback' });
+          return;
+        }
+      }
+
+      if (this.host.isGameOver() || this.host.getGameState()?.currentTurnPlayerId !== botId) {
+        return;
+      }
+
       const difficulty = this.host.getBotDifficulty(botId);
       const noisy = applyDifficultyNoiseWithMeta(
         decision.action,

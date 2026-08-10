@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PlayingStateView } from '@card-battle/shared';
 
 import { BotDriver, type BotDriverHost } from './bot-driver';
+import { SyncSearchPool } from './search/worker/sync-pool';
 import { readBotThinkMs } from './bot-think-ms';
 import { classifyRewardRoute, classifyTurnEntry } from './turn-entry';
 import type { HumanSeat, BotSeat } from '../rooms/seats';
@@ -195,7 +196,7 @@ describe('BotDriver (L16-06)', () => {
       },
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(performed.length).toBeGreaterThan(0);
@@ -293,7 +294,7 @@ describe('BotDriver (L16-06)', () => {
       failBotReanimationKit: () => undefined,
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(order).toEqual(botIds);
@@ -333,7 +334,7 @@ describe('BotDriver (L16-06)', () => {
       failBotReanimationKit: () => undefined,
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(draws).toEqual(['bot-1']);

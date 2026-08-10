@@ -32,6 +32,13 @@ export const SIM_NOW_MS = 0;
 
 const MAX_TURNS = 2_500;
 
+export interface PolicyDecideTelemetry {
+  policyId: string;
+  seatIndex: number;
+  /** Offline iteration count — 1 for synchronous policies (technical spec v5 §8.2). */
+  iterations: number;
+}
+
 export interface RunGameInput {
   seed: string;
   playerCount: number;
@@ -44,6 +51,8 @@ export interface RunGameInput {
    * Defaults to `heuristic-v4` for every seat.
    */
   policyIds?: readonly string[];
+  /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
+  onPolicyDecide?: (telemetry: PolicyDecideTelemetry) => void;
 }
 
 export interface SimulationGameRow {
@@ -232,8 +241,15 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     });
     const actions = listLegalActions(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-    const top = policy.decide(view, actions, rng, { actionLog }).action;
-    const chosen = applyDifficultyNoise(top, actions, difficulty, rng);
+    const decision = policy.decide(view, actions, rng, { actionLog });
+    const seatIndex = Number.parseInt(botId.replace('bot-', ''), 10);
+
+    input.onPolicyDecide?.({
+      policyId: policy.id,
+      seatIndex: Number.isFinite(seatIndex) ? seatIndex : 0,
+      iterations: 1,
+    });
+    const chosen = applyDifficultyNoise(decision.action, actions, difficulty, rng);
 
     const hooks = {
       resolveMirror: (
