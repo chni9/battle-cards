@@ -11,8 +11,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "simulate": "tsx src/simulation/run-batch.ts",
     "arena": "tsx src/simulation/run-arena.ts",
-    "bench:forward-model": "tsx src/bots/search/bench-forward-model.ts",
-    "arena": "tsx src/simulation/run-arena.ts"
+    "bench:forward-model": "tsx src/bots/search/bench-forward-model.ts"
   },
   "dependencies": {
     "@card-battle/shared": "workspace:*",
