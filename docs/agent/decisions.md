@@ -1850,3 +1850,28 @@ Lot 39 IDs avoid colliding with a hypothetical V5 “Lot 32”.
    When `reject` is null, unmount the dialog entirely (do not leave `Dialog` mounted at
    `open={false}`) so AnimatePresence cannot leave a stuck blocking overlay.
 
+## 2026-08-10 · [P] V5 reopenings (#V5-5, #V5-6, #V5-9, #V5-10) — L32-01
+
+Designer confirmation unlocking Lot 32 (technical spec v5 §2.2, §13):
+
+- **#V5-6** — Reopen `AGENTS.md` golden rule 7 / technical spec v4 §12: search, lookahead,
+  and fitted learning are in scope for V5. Opponent modelling beyond V3 §4.4's derived
+  reads is reopened **bounded**: inference from **public** fields and the **public** action
+  log, within one game only. **Technical spec v3 decision 2 is NOT reopened** — the policy
+  still receives no `GameState`; it constructs worlds from the view (and later
+  `determinizeFromView`).
+- **#V5-9** — `BotPolicy.decide` gains the public action log as a parameter (via
+  `ctx.actionLog`). That grants nothing a human lacks (#V3-2). **Spy nuance:** when the
+  acting seat has Spyed an opponent, Spy-revealed fields on that seat's per-recipient view
+  may be used; without Spy, stick to public view fields + the public log. Still out: any
+  hidden field not already on that seat's view, and the live authoritative `GameState`.
+- **#V5-5** — Minimal reopen of #V3-5: weights become a typed, hash-identified data object
+  whose frozen default is today's module constants (implementation in L33-01). Governance
+  only here; no CLI/env/runtime reload. Module constants remain the default profile.
+- **#V5-10** — The arena's regression gate (p < 0.01 vs incumbent) blocks a **default-policy
+  change only**, not merges. Stochastic gates as merge blockers are unworkable for a solo
+  developer.
+
+`AGENTS.md` golden rule 7 and §9 rewritten in the same change so agents sequence from
+`docs/backlog_v5.md` and no longer refuse search work.
+
