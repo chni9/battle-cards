@@ -183,20 +183,18 @@ export function measureSellCardFlyout(
   };
 }
 
-/** Targeting cue: source opponent seat → POV private zone (L39-05). */
+/** Targeting cue: pulse/highlight the source opponent seat (L39-05). */
 export function measureTargetingCue(
   fromPlayerId: string,
   toPlayerId: string,
 ): { from: DomRectLite; to: DomRectLite } | null {
+  void toPlayerId;
   const from =
     rectOf(document.querySelector(`[data-player-id="${CSS.escape(fromPlayerId)}"]`)) ??
     rectOf(document.querySelector(`[data-seat="${CSS.escape(fromPlayerId)}"]`));
-  const to =
-    rectOf(document.querySelector(`[data-player-id="${CSS.escape(toPlayerId)}"]`)) ??
-    rectOf(document.querySelector('[data-zone="private-zone"]')) ??
-    rectOf(document.querySelector('[data-zone="incoming-pending"]'));
-  if (from === null || to === null) {
+  if (from === null) {
     return null;
   }
-  return { from, to };
+  // `to` kept for the event shape; pulse only uses `from` (opponent seat).
+  return { from, to: from };
 }

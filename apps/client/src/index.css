@@ -39,7 +39,7 @@
   --color-cta-label: #1c1a1f;
   --color-cta-label-on-dark: #f7f4f2;
 
-  /* Seat identity — L39-03; blue / red / green / yellow (seat 3 is vivid yellow, not point-gold) */
+  /* Seat identity — mirrored in seat-colors.ts SEAT_COLORS for mobile-safe inline styles */
   --color-seat-0: #1d6fd8;
   --color-seat-1: #d62828;
   --color-seat-2: #1a9b3c;
@@ -65,6 +65,17 @@
   body {
     margin: 0;
     min-height: 100dvh;
+  }
+
+  /*
+   * Duplicate seat tokens on :root so inline styles / older WebKit always resolve them
+   * even if @theme utilities are tree-shaken (mobile gray names/fills bug).
+   */
+  :root {
+    --color-seat-0: #1d6fd8;
+    --color-seat-1: #d62828;
+    --color-seat-2: #1a9b3c;
+    --color-seat-3: #ffd400;
   }
 }
 

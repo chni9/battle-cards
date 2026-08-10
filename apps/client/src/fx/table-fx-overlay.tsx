@@ -130,67 +130,69 @@ function ThreatOutlineFlash({
   );
 }
 
-function TargetingCueLine({
+function TargetingCuePulse({
   id,
   tone,
   from,
-  to,
   reduceMotion,
 }: {
   id: string;
   tone: ThreatTone;
   from: DomRectLite;
-  to: DomRectLite;
   reduceMotion: boolean | null;
-}): ReactElement | null {
-  if (reduceMotion === true) {
-    return null;
-  }
-  const x1 = from.left + from.width / 2;
-  const y1 = from.top + from.height / 2;
-  const x2 = to.left + to.width / 2;
-  const y2 = to.top + to.height / 2;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.hypot(dx, dy);
-  if (length < 8) {
-    return null;
-  }
-  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+}): ReactElement {
   const color = threatColor(tone);
+  const pad = 6;
+  const dur = reduceMotion === true ? 0.35 : MOTION_DURATION_S * 2.2;
 
   return (
     <>
       <motion.div
-        key={`${id}-pulse`}
-        className="absolute rounded-full"
+        key={`${id}-ring`}
+        className="absolute rounded-[length:var(--radius-card)] border-[3px] sm:border-4"
         style={{
-          left: x1 - 10,
-          top: y1 - 10,
-          width: 20,
-          height: 20,
-          backgroundColor: color,
+          left: from.left - pad,
+          top: from.top - pad,
+          width: from.width + pad * 2,
+          height: from.height + pad * 2,
+          borderColor: color,
+          boxShadow: `0 0 0 2px ${color}, 0 0 24px ${color}`,
         }}
-        initial={{ opacity: 0.9, scale: 0.6 }}
-        animate={{ opacity: [0.9, 0], scale: [0.6, 1.8] }}
+        initial={reduceMotion === true ? { opacity: 0.85, scale: 1 } : { opacity: 0, scale: 0.92 }}
+        animate={
+          reduceMotion === true
+            ? { opacity: [0.85, 0] }
+            : { opacity: [0, 1, 0.75, 1, 0.4, 0], scale: [0.92, 1.04, 1, 1.05, 1, 1] }
+        }
         exit={{ opacity: 0 }}
-        transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
+        transition={{
+          duration: dur,
+          ease: MOTION_EASE,
+          times: reduceMotion === true ? [0, 1] : [0, 0.15, 0.35, 0.55, 0.8, 1],
+        }}
       />
       <motion.div
-        key={id}
-        className="absolute h-[3px] origin-left rounded-full"
+        key={`${id}-fill`}
+        className="absolute rounded-[length:var(--radius-card)]"
         style={{
-          left: x1,
-          top: y1 - 1.5,
-          width: length,
-          background: `linear-gradient(90deg, ${color}, color-mix(in srgb, ${color} 20%, transparent))`,
-          transform: `rotate(${String(angleDeg)}deg)`,
-          boxShadow: `0 0 8px color-mix(in srgb, ${color} 55%, transparent)`,
+          left: from.left,
+          top: from.top,
+          width: from.width,
+          height: from.height,
+          backgroundColor: color,
         }}
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={{ scaleX: 1, opacity: [0, 1, 0.15] }}
+        initial={{ opacity: 0 }}
+        animate={
+          reduceMotion === true
+            ? { opacity: [0.25, 0] }
+            : { opacity: [0, 0.35, 0.15, 0.3, 0] }
+        }
         exit={{ opacity: 0 }}
-        transition={{ duration: MOTION_DURATION_S * 1.1, ease: MOTION_EASE }}
+        transition={{
+          duration: dur,
+          ease: MOTION_EASE,
+          times: reduceMotion === true ? [0, 1] : [0, 0.2, 0.45, 0.7, 1],
+        }}
       />
     </>
   );
@@ -335,12 +337,11 @@ export function TableFxOverlay(): ReactElement {
 
           if (event.kind === 'targetingCue') {
             return (
-              <TargetingCueLine
+              <TargetingCuePulse
                 key={event.id}
                 id={event.id}
                 tone={event.tone}
                 from={event.from}
-                to={event.to}
                 reduceMotion={reduceMotion}
               />
             );

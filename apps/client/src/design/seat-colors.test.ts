@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   clampSeatIndex,
+  seatColorHex,
   seatColorVar,
+  seatColorWash,
   seatIndexOf,
   seatNameStyle,
   seatZoneStyle,
+  SEAT_COLORS,
 } from './seat-colors';
 
 const view = {
@@ -32,32 +35,41 @@ describe('seatIndexOf (L39-03)', () => {
   });
 });
 
-describe('seatColorVar / styles (L39-03)', () => {
+describe('seatColorHex / styles (L39-03)', () => {
+  it('exposes a 4-seat hex palette (blue/red/green/yellow)', () => {
+    expect(SEAT_COLORS).toEqual(['#1d6fd8', '#d62828', '#1a9b3c', '#ffd400']);
+    expect(seatColorHex(3)).toBe('#ffd400');
+    expect(seatColorVar(2)).toBe(SEAT_COLORS[2]);
+  });
+
   it('clamps out-of-range indices into the palette', () => {
     expect(clampSeatIndex(-1)).toBe(0);
     expect(clampSeatIndex(99)).toBe(3);
-    expect(seatColorVar(2)).toBe('var(--color-seat-2)');
   });
 
-  it('builds tint and name styles from CSS vars', () => {
-    expect(seatNameStyle(1)).toEqual({ color: 'var(--color-seat-1)' });
+  it('washes hex over white without color-mix', () => {
+    expect(seatColorWash('#ff0000', 0)).toBe('rgb(255, 255, 255)');
+    expect(seatColorWash('#ff0000', 1)).toBe('rgb(255, 0, 0)');
+  });
+
+  it('builds tint and name styles from hex', () => {
+    expect(seatNameStyle(1)).toEqual({ color: '#d62828' });
     const zone = seatZoneStyle(0);
-    expect(zone.borderColor).toBe('var(--color-seat-0)');
-    expect(zone.backgroundColor).toContain('var(--color-seat-0)');
-    expect(zone.backgroundColor).toContain('22%');
-    expect(zone.boxShadow).toContain('var(--color-seat-0)');
+    expect(zone.borderColor).toBe('#1d6fd8');
+    expect(zone.backgroundColor).toMatch(/^rgb\(/);
+    expect(zone.boxShadow).toContain('#1d6fd8');
     expect(zone.boxShadow).not.toContain('0 0 0 3px');
   });
 
   it('uses a stronger wash for the POV dock fill', () => {
-    const dock = seatZoneStyle(3, { intensity: 'fill' });
-    expect(dock.backgroundColor).toContain('var(--color-seat-3)');
-    expect(dock.backgroundColor).toContain('28%');
+    const soft = seatZoneStyle(3, { intensity: 'soft' }).backgroundColor;
+    const dock = seatZoneStyle(3, { intensity: 'fill' }).backgroundColor;
+    expect(dock).not.toEqual(soft);
+    expect(dock).toMatch(/^rgb\(/);
   });
 
   it('adds seat-colored glow when the seat is active (L39-05)', () => {
     const zone = seatZoneStyle(2, { active: true });
-    expect(zone.boxShadow).toContain('var(--color-seat-2)');
     expect(zone.boxShadow).toContain('0 0 0 3px');
     expect(zone.boxShadow).toContain('0 0 28px');
   });

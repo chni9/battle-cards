@@ -6,18 +6,19 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { MOTION_EASE } from '../../fx/motion-timing';
+import { seatColorAlpha, seatColorWash } from '../../design/seat-colors';
 
 const FLASH_MS = 1600;
 
 export interface YourTurnFlashProps {
   isMyTurn: boolean;
-  /** Seat CSS color for the banner chrome. */
+  /** Seat hex color for the banner chrome. */
   seatColor?: string;
 }
 
 export function YourTurnFlash({
   isMyTurn,
-  seatColor = 'var(--color-cta-yellow)',
+  seatColor = '#f0c419',
 }: YourTurnFlashProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const wasMyTurn = useRef(false);
@@ -66,8 +67,8 @@ export function YourTurnFlash({
             className="rounded-[length:var(--radius-card)] border-4 px-8 py-4 text-2xl font-bold tracking-tight text-ink sm:px-12 sm:py-5 sm:text-3xl"
             style={{
               borderColor: seatColor,
-              backgroundColor: `color-mix(in srgb, ${seatColor} 55%, white)`,
-              boxShadow: `0 0 0 4px color-mix(in srgb, ${seatColor} 35%, transparent), 0 12px 40px rgba(28,26,31,0.35)`,
+              backgroundColor: seatColorWash(seatColor, 0.55),
+              boxShadow: `0 0 0 4px ${seatColorAlpha(seatColor, 0.35)}, 0 12px 40px rgba(28,26,31,0.35)`,
             }}
             initial={
               reduceMotion === true ? false : { scale: 0.85, y: 12 }

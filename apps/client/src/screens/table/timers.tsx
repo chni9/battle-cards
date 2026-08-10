@@ -9,7 +9,13 @@ import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties, ReactElement } from 'react';
 
 import { PlayerName } from '../../design/components/player-name';
-import { seatColorVar, seatIndexOf, type SeatPlayersView } from '../../design/seat-colors';
+import {
+  seatColorAlpha,
+  seatColorHex,
+  seatColorWash,
+  seatIndexOf,
+  type SeatPlayersView,
+} from '../../design/seat-colors';
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
 
 export interface TimersProps {
@@ -59,11 +65,11 @@ export function Timers({
   const turnTint: CSSProperties | undefined =
     seat !== null
       ? {
-          borderColor: seatColorVar(seat),
-          backgroundColor: `color-mix(in srgb, ${seatColorVar(seat)} ${isMyTurn ? '22' : '16'}%, var(--color-surface-raised))`,
+          borderColor: seatColorHex(seat),
+          backgroundColor: seatColorWash(seatColorHex(seat), isMyTurn ? 0.22 : 0.16),
           boxShadow: isMyTurn
-            ? `inset 0 0 0 2px color-mix(in srgb, ${seatColorVar(seat)} 55%, transparent)`
-            : `inset 0 3px 0 0 ${seatColorVar(seat)}`,
+            ? `inset 0 0 0 2px ${seatColorAlpha(seatColorHex(seat), 0.55)}`
+            : `inset 0 3px 0 0 ${seatColorHex(seat)}`,
         }
       : undefined;
 

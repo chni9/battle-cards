@@ -16,7 +16,7 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-import { seatColorVar, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
+import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -479,7 +479,7 @@ function TableScreenInner({
     <>
       <YourTurnFlash
         isMyTurn={isMyTurn && !readOnly && !selfEliminated}
-        {...(povSeat !== null ? { seatColor: seatColorVar(povSeat) } : {})}
+        {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />
       <TableShell
         {...(dockStyle !== undefined ? { dockStyle } : {})}

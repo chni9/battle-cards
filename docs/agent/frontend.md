@@ -142,7 +142,8 @@ rules above are unchanged — this section only covers how the client looks.
     via `formatCardCost`.
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
-    enqueue `threatOutline` + optional `targetingCue`. Tone via `threatToneFor`: **red**
+    enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
+    not a line). Tone via `threatToneFor`: **red**
     `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
     otherwise. Flash TTL `THREAT_FX_TTL_MS` (~3.8s) with a matching long outline pulse.
     Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
