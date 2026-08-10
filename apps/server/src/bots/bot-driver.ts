@@ -1,12 +1,14 @@
 /**
  * Room-side bot lifecycle — technical spec v3 §4.2, §4.6, §4.7 (L16-06).
  * Bot reasons attached for L17-05 / #V3-2.
+ * Policy resolved via registry (L32-02) — room/sim parity.
  *
  * Enumerate → view-only decide → difficulty noise → performBotAction.
  * Sub-choices answered inline; every turn entered via setTimeout.
  */
 
 import type {
+  ActionLogEntryView,
   BotDecisionReason,
   BotDifficulty,
   GameState,
@@ -21,19 +23,17 @@ import type { TurnAction } from '../engine/turn/perform-action';
 import { createRng } from '../engine/rng';
 import { readBotThinkMs } from './bot-think-ms';
 import { applyDifficultyNoiseWithMeta } from './difficulty-noise';
-import {
-  decideWithReason,
-  pickEliminationRewardsWithReason,
-  pickMirrorRedirect,
-} from './heuristic-policy';
-import { pickReanimationKitId, pickStealInstanceId } from './sub-choice-picks';
+import { getDefaultPolicy, getPolicy } from './registry';
 
 export interface BotDriverHost {
   isBotSeat(playerId: string): boolean;
   getGameState(): GameState | null;
   isGameOver(): boolean;
   getPlayingView(botId: string): PlayingStateView | null;
+  getActionLog(): readonly ActionLogEntryView[];
   getBotDifficulty(botId: string): BotDifficulty;
+  /** Policy id for this seat; default `heuristic-v4` when omitted. */
+  getBotPolicyId?(botId: string): string;
   /** Full action path through the room's performTurnAction + routing. */
   performBotAction(botId: string, action: TurnAction, reason?: BotDecisionReason): void;
   /** Unconditionally legal draw — fallback on throw / rejection. */
@@ -98,7 +98,7 @@ export class BotDriver {
     }
 
     const rng = createRng(`${state.seed}:bot:${botId}:mirror:${state.turnSequence}`);
-    const pick = pickMirrorRedirect(
+    const pick = this.policyFor(botId).pickMirrorRedirect(
       view,
       rng,
       state.mirrorChoice?.eligibleEffectIds,
@@ -140,7 +140,7 @@ export class BotDriver {
     const instanceId =
       view === null
         ? rng.pick(choice.eligibleInstanceIds)
-        : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
+        : this.policyFor(botId).pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
 
     try {
       this.host.completeBotSteal(botId, instanceId, { code: 'policy-fallback' });
@@ -172,7 +172,12 @@ export class BotDriver {
     try {
       const available = listAvailableRewardCards(state, choice.eliminatedPlayerId);
       const rng = createRng(`${state.seed}:bot:${botId}:reward:${state.turnSequence}`);
-      const picks = pickEliminationRewardsWithReason(view, available, state.lifeLimit, rng);
+      const picks = this.policyFor(botId).pickEliminationRewards(
+        view,
+        available,
+        state.lifeLimit,
+        rng,
+      );
       this.host.completeBotReward(botId, choice.eliminationId, picks.choices, picks.reason);
     } catch {
       // Do not draw during a pending reward — that leaves rewardChoice set and freezes the room.
@@ -199,7 +204,7 @@ export class BotDriver {
     }
 
     const rng = createRng(`${state.seed}:bot:${botId}:reanim-kit:${state.turnSequence}`);
-    const kitId = pickReanimationKitId(choice.eligibleKitIds, rng);
+    const kitId = this.policyFor(botId).pickReanimationKitId(choice.eligibleKitIds, rng);
 
     try {
       this.host.completeBotReanimationKit(botId, kitId, { code: 'policy-fallback' });
@@ -214,6 +219,11 @@ export class BotDriver {
     }
 
     this.timers.clear();
+  }
+
+  private policyFor(botId: string) {
+    const id = this.host.getBotPolicyId?.(botId);
+    return id === undefined ? getDefaultPolicy() : getPolicy(id);
   }
 
   private decideAndAct(botId: string): void {
@@ -243,7 +253,9 @@ export class BotDriver {
       }
 
       const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-      const decision = decideWithReason(view, actions, rng);
+      const decision = this.policyFor(botId).decide(view, actions, rng, {
+        actionLog: this.host.getActionLog(),
+      });
       const difficulty = this.host.getBotDifficulty(botId);
       const noisy = applyDifficultyNoiseWithMeta(
         decision.action,

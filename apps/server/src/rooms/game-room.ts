@@ -72,16 +72,7 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { BotDriver } from '../bots/bot-driver';
-import {
-  pickEliminationRewardsWithReason,
-  pickMirrorRedirect,
-} from '../bots/heuristic-policy';
-import {
-  pickPoolInstanceIds,
-  pickReanimationKitId,
-  pickSpecialCardId,
-  pickStealInstanceId,
-} from '../bots/sub-choice-picks';
+import { getDefaultPolicy } from '../bots/registry';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
@@ -208,6 +199,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botDifficulties: this.botDifficulties(),
       });
     },
+    getActionLog: () => this.actionLog,
     getBotDifficulty: (botId) => {
       const seat = this.seats.find((entry) => entry.sessionId === botId);
 
@@ -1921,6 +1913,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const before = snapshotPlayersForExport(state);
     let historyRecorded = false;
 
+    const policy = getDefaultPolicy();
     const hooks = {
       resolveMirror: (s: GameState, actorId: string) => {
         const view = this.buildBotPlayingView(actorId);
@@ -1929,7 +1922,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           throw new Error('no view for Mirror');
         }
 
-        const pick = pickMirrorRedirect(
+        const pick = policy.pickMirrorRedirect(
           view,
           createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
           s.mirrorChoice?.eligibleEffectIds,
@@ -1958,7 +1951,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         const instanceId =
           view === null
             ? rng.pick(choice.eligibleInstanceIds)
-            : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
+            : policy.pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { instanceId };
@@ -1971,7 +1964,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${actorId}:pool:${s.turnSequence}`);
-        const instanceIds = pickPoolInstanceIds(
+        const instanceIds = policy.pickPoolInstanceIds(
           s.pool,
           choice.eligibleInstanceIds.filter((id) =>
             s.pool.some((card) => card.instanceId === id),
@@ -1995,7 +1988,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`);
-        const cardId = pickSpecialCardId(choice.eligibleCardIds, rng);
+        const cardId = policy.pickSpecialCardId(choice.eligibleCardIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { cardId };
@@ -2008,7 +2001,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const rng = createRng(`${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`);
-        const kitId = pickReanimationKitId(choice.eligibleKitIds, rng);
+        const kitId = policy.pickReanimationKitId(choice.eligibleKitIds, rng);
 
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { kitId };
@@ -2036,7 +2029,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         const available = listAvailableRewardCards(s, choice.eliminatedPlayerId);
-        const picks = pickEliminationRewardsWithReason(
+        const picks = policy.pickEliminationRewards(
           view,
           available,
           s.lifeLimit,
@@ -2300,7 +2293,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
             ? ''
             : view === null
               ? rng.pick(choice.eligibleInstanceIds)
-              : pickStealInstanceId(view, choice.eligibleInstanceIds, rng);
+              : getDefaultPolicy().pickStealInstanceId(
+                  view,
+                  choice.eligibleInstanceIds,
+                  rng,
+                );
 
         if (nextId.length > 0) {
           this.applyBotStealChoice(botId, nextId, { code: 'policy-fallback' });

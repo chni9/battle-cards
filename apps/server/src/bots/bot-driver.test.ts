@@ -167,6 +167,7 @@ describe('BotDriver (L16-06)', () => {
         }) as never,
       isGameOver: () => false,
       getPlayingView: () => emptyView('bot-1'),
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: (_id, action) => {
         performed.push(action);
@@ -266,6 +267,7 @@ describe('BotDriver (L16-06)', () => {
         }) as never,
       isGameOver: () => turn >= botIds.length,
       getPlayingView: (id) => emptyView(id),
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: (id) => {
         depth += 1;
@@ -315,6 +317,7 @@ describe('BotDriver (L16-06)', () => {
       getPlayingView: () => {
         throw new Error('view boom');
       },
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: () => {
         throw new Error('should not act');

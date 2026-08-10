@@ -12,7 +12,7 @@ import { createInitialState } from '../create-initial-state';
 import { advanceTurn } from './advance-turn';
 import { listLegalActions } from './list-legal-actions';
 import { performTurnAction } from './perform-action';
-import { decide } from '../../bots/heuristic-policy';
+import { getDefaultPolicy } from '../../bots/registry';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { grantSpy } from '../../protocol/visibility-matrix';
 
@@ -261,7 +261,9 @@ describe('Duplicator kit (L28-02)', () => {
       turnDeadlineMs: null,
       actionLog: [],
     });
-    const decision = decide(view, legal, createRng('dup-bot'));
+    const decision = getDefaultPolicy().decide(view, legal, createRng('dup-bot'), {
+      actionLog: [],
+    }).action;
     expect(decision.type).not.toBe('sellUpgradePoint');
   });
 
