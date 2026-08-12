@@ -51,6 +51,18 @@ update expectations — put the change under a new policy id.
 - Off by default. Arena: `--feature-snapshots <path.jsonl>`.
 - Stalled games contribute **zero** rows (throw before label).
 
+## Fitting / optimizer (L33-03…05)
+
+- `(1+λ)-ES` in `simulation/optimize-weights.ts`; fitness vs frozen gauntlet
+  (`simulation/gauntlet.ts`, currently `[heuristic-v4]`).
+- Train/holdout split written before gen 0 (`fit-split.ts`). Report with
+  `report-holdout.ts` (train vs holdout + Wilson CI; gap > CI width → overfitting).
+- Mutate action scalars + `survivalTermWeight` only; band bases stay fixed.
+- Fitness workers: `fitness-pool.ts` / `fitness-worker.ts` — weights + matchups on
+  the wire, never `GameState`. Matchups are chunked across workers.
+- Promotion gate: `gate-tuned-v5.ts` — seat-rotated holdout, p < 0.01 vs
+  `heuristic-v4`, then register `heuristic-tuned-v5`.
+
 ## Arena / workers
 
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate

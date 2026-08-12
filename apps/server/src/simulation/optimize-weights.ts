@@ -13,12 +13,14 @@ import { fileURLToPath } from 'node:url';
 import {
   clonePolicyWeights,
   DEFAULT_POLICY_WEIGHTS,
+  parsePolicyWeights,
   type PolicyWeights,
 } from '../bots/policy-weights';
 import { computePolicyWeightsHash } from '../bots/weights-hash';
 import { createRng } from '../engine/rng';
 import { FROZEN_GAUNTLET_POLICY_IDS } from './gauntlet';
 import { evaluateFitnessAgainstGauntlet } from './fitness-gauntlet';
+import { FitnessWorkerPool } from './fitness-pool';
 import { buildFitSplit, writeFitSplit, type FitSplit } from './fit-split';
 import { mutatePolicyWeights } from './mutate-weights';
 
@@ -115,13 +117,57 @@ function requireArg(args: ReadonlyMap<string, string>, key: string): string {
   return value;
 }
 
+/** Carve train into fit (selection) + valid (anti-overfit gate). Holdout stays untouched. */
+export function carveTrainFitValid(
+  train: FitSplit['train'],
+): { readonly fit: FitSplit['train']; readonly valid: FitSplit['train'] } {
+  if (train.length < 10) {
+    return { fit: train, valid: train };
+  }
+
+  const cut = Math.max(1, Math.floor(train.length * 0.8));
+  return {
+    fit: train.slice(0, cut),
+    valid: train.slice(cut),
+  };
+}
+
+/** Mean win-rate across k folds of `matchups` (deterministic partitions). */
+export async function kFoldFitness(
+  weights: PolicyWeights,
+  matchups: FitSplit['train'],
+  folds: number,
+  evaluate: (weights: PolicyWeights, matchups: FitSplit['train']) => Promise<{ winRate: number }>,
+): Promise<number> {
+  const foldCount = Math.max(2, Math.min(folds, matchups.length));
+  const rates: number[] = [];
+
+  for (let fold = 0; fold < foldCount; fold += 1) {
+    const subset = matchups.filter((_, index) => index % foldCount === fold);
+    if (subset.length === 0) {
+      continue;
+    }
+    const result = await evaluate(weights, subset);
+    rates.push(result.winRate);
+  }
+
+  if (rates.length === 0) {
+    return 0;
+  }
+
+  return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
+}
+
 export function createOnePlusLambdaEs(input: {
   readonly lambda: number;
   readonly sigma: number;
   readonly split: FitSplit;
   readonly seed: string;
   readonly maxTurns?: number;
+  readonly pool?: FitnessWorkerPool;
 }): Optimizer {
+  const { fit, valid } = carveTrainFitValid(input.split.train);
+
   return {
     name: 'one-plus-lambda-es',
     async step(parent, generation) {
@@ -134,33 +180,53 @@ export function createOnePlusLambdaEs(input: {
         );
       }
 
-      // Parallel fitness across the population (L32-08 pool reused conceptually —
-      // fitness creates GameState inside each eval; no GameState on the wire).
+      const options = {
+        ...(input.maxTurns !== undefined ? { maxTurns: input.maxTurns } : {}),
+        difficulty: 'hard' as const,
+      };
+
+      const evaluate = async (weights: PolicyWeights, matchups: FitSplit['train']) =>
+        input.pool !== undefined
+          ? input.pool.evaluate(weights, matchups, options)
+          : evaluateFitnessAgainstGauntlet(weights, matchups, options);
+
+      // Rank on fit; promote only if valid does not regress vs parent (anti-overfit).
       const scored = await Promise.all(
-        candidates.map((weights) => {
-          const fitness = evaluateFitnessAgainstGauntlet(weights, input.split.train, {
-            ...(input.maxTurns !== undefined ? { maxTurns: input.maxTurns } : {}),
-            difficulty: 'hard',
-          });
-          return Promise.resolve({
+        candidates.map(async (weights) => {
+          const fitness = await evaluate(weights, fit);
+          return {
             weights,
             hash: computePolicyWeightsHash(weights),
             fitness: fitness.winRate,
-          });
+          };
         }),
       );
 
       scored.sort((left, right) => right.fitness - left.fitness);
-      const best = scored[0];
 
-      if (best === undefined) {
-        throw new Error('empty ES population');
+      const parentValid = await evaluate(parent, valid);
+      let elite = parent;
+      let eliteFitness = scored.find((entry) => entry.weights === parent)?.fitness ?? 0;
+
+      for (const candidate of scored) {
+        if (candidate.weights === parent) {
+          elite = parent;
+          eliteFitness = candidate.fitness;
+          break;
+        }
+
+        const validResult = await evaluate(candidate.weights, valid);
+        if (validResult.winRate + 1e-9 >= parentValid.winRate) {
+          elite = candidate.weights;
+          eliteFitness = candidate.fitness;
+          break;
+        }
       }
 
       void rng;
       return {
-        elite: best.weights,
-        fitness: best.fitness,
+        elite,
+        fitness: eliteFitness,
         population: scored.map((entry) => ({ hash: entry.hash, fitness: entry.fitness })),
       };
     },
@@ -205,44 +271,62 @@ export async function runOptimize(config: OptimizeConfig): Promise<{
     if (error instanceof Error && error.message.startsWith('Unsupported checkpoint')) {
       throw error;
     }
-    // no usable checkpoint
+    // no usable checkpoint — optional warm-start from elite.json in outDir
+    try {
+      const warm = JSON.parse(
+        readFileSync(path.join(config.outDir, 'elite.json'), 'utf8'),
+      ) as unknown;
+      elite = clonePolicyWeights(parsePolicyWeights(warm));
+    } catch {
+      // keep DEFAULT_POLICY_WEIGHTS
+    }
   }
 
+  // Vitest cannot spawn tsx worker threads reliably — keep fitness in-process.
+  const useWorkers = process.env['VITEST'] === undefined;
+  const pool = useWorkers ? new FitnessWorkerPool() : undefined;
   const optimizer = createOnePlusLambdaEs({
     lambda: config.lambda,
     sigma: config.sigma,
     split,
     seed: config.seed,
+    ...(pool !== undefined ? { pool } : {}),
     ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
   });
 
-  for (let generation = startGeneration; generation < config.generations; generation += 1) {
-    const step = await optimizer.step(elite, generation);
-    elite = step.elite;
-    eliteFitness = step.fitness;
-    curve.push({ generation, fitness: eliteFitness });
+  try {
+    for (let generation = startGeneration; generation < config.generations; generation += 1) {
+      const step = await optimizer.step(elite, generation);
+      elite = step.elite;
+      eliteFitness = step.fitness;
+      curve.push({ generation, fitness: eliteFitness });
 
-    const checkpoint: OptimizeCheckpoint = {
-      version: 1,
-      generation,
-      elite,
-      eliteFitness,
-      sigma: config.sigma,
-      curve,
-      splitHash: split.contentHash,
-      rngSalt: config.seed,
-    };
-    writeFileSync(checkpointPath, `${JSON.stringify(checkpoint, null, 2)}\n`, 'utf8');
-    writeFileSync(
-      path.join(config.outDir, `elite-gen-${String(generation)}.json`),
-      `${JSON.stringify(elite, null, 2)}\n`,
-      'utf8',
-    );
+      const checkpoint: OptimizeCheckpoint = {
+        version: 1,
+        generation,
+        elite,
+        eliteFitness,
+        sigma: config.sigma,
+        curve,
+        splitHash: split.contentHash,
+        rngSalt: config.seed,
+      };
+      writeFileSync(checkpointPath, `${JSON.stringify(checkpoint, null, 2)}\n`, 'utf8');
+      writeFileSync(
+        path.join(config.outDir, `elite-gen-${String(generation)}.json`),
+        `${JSON.stringify(elite, null, 2)}\n`,
+        'utf8',
+      );
 
-    // CLI progress
-    console.log(
-      `gen ${String(generation)} fitness=${eliteFitness.toFixed(4)} hash=${computePolicyWeightsHash(elite)} gauntlet=${FROZEN_GAUNTLET_POLICY_IDS.join(',')}`,
-    );
+      // CLI progress
+      console.log(
+        `gen ${String(generation)} fitness=${eliteFitness.toFixed(4)} hash=${computePolicyWeightsHash(elite)} gauntlet=${FROZEN_GAUNTLET_POLICY_IDS.join(',')}`,
+      );
+    }
+  } finally {
+    if (pool !== undefined) {
+      await pool.close();
+    }
   }
 
   writeFileSync(

@@ -1,0 +1,243 @@
+{
+  "version": 1,
+  "generation": 24,
+  "elite": {
+    "action": {
+      "bands": {
+        "lethalNow": 10000,
+        "survive": 8000,
+        "deny": 4000,
+        "pressure": 2000,
+        "invest": 1000,
+        "sustain": 100
+      },
+      "buySpecialPointsFloor": 40,
+      "taxLifeBuffer": 5.093354276356805,
+      "denyAbsorberMinLivesLost": 3.200638721435947,
+      "pressureCostDivisor": 1.8549655880783549,
+      "strikeMinDamage": 4.219865884508493,
+      "taxInvestBonus": 39.882252055872264,
+      "buyUpgradePointBonus": 45,
+      "upgradeAttackBonus": 67.9125397019291,
+      "spyUnspiedBonus": 80,
+      "spyTopThreatBonus": 13.037881096392852,
+      "sellToFundBonus": 62.685898621968434,
+      "regenSoftLife": 4.1172695264414525,
+      "burnCounterBonus": 153.66867196823384,
+      "mutualCancelBonus": 44.77396425184422,
+      "impositionInvestBonus": 85.70793042397437,
+      "pointsGeneratorInvestBonus": 47.184892676686786,
+      "spyThiefDenyBonus": 110.27835674913354,
+      "unscoredPlayPenalty": 44.126932514906365,
+      "upgradeTaxBonus": 80,
+      "upgradeRegenBonus": 84.37632050174022,
+      "upgradeMirrorBonus": 53.07470300402191,
+      "upgradeShieldBonus": 58.170106430895686,
+      "upgradeAbsorberBonus": 42.58901793545286,
+      "upgradeSentenceBonus": 65.18070788341724,
+      "contestUpgradeExtra": 36.45885075131036,
+      "absorberUpDenyBonus": 108.34957151489449,
+      "absorberPointsDenyBonus": 63.45862715796249,
+      "finishChipBonus": 70.13345044415877,
+      "absorberMinLivesVsRegen": 2,
+      "drawScorePerExtraDraw": 19.218311525712437,
+      "superRegenInvestBonus": 65.92174529843362,
+      "superRegenSurviveBonus": 21.305655657897372,
+      "upgradePointThiefDenyBonus": 100.11818770643245,
+      "cardThiefDenyBonus": 94.33709043101048,
+      "poisonInvestBonus": 64.99260899691741,
+      "poisonMultiTargetBonus": 15,
+      "curseDenyBonus": 46.19484046300484,
+      "curseInvestBonus": 45.86607444706096,
+      "curseHighSpendThreshold": 3.368771624737272,
+      "superAbsorberUpDenyBonus": 107.2116959467041,
+      "superAbsorberPointsDenyBonus": 74.6623499602873,
+      "superAbsorberBaselineDenyBonus": 37.77996594618797,
+      "sentenceUpgradedPerOpponent": 7.47878008728952,
+      "megaAttackPressurePerOpponent": 14.319152175445986,
+      "superMirrorSurviveBonus": 40,
+      "superMirrorUpgradedBonus": 20,
+      "attackThiefSurviveBonus": 31.75469739799487,
+      "attackThiefDenyBonus": 25.295323338758575,
+      "attackThiefIntelBonus": 24.405172716259255,
+      "blockSurviveBonus": 53.00012813697575,
+      "blockInvestBonus": 25.573255246580764,
+      "invisibilityInvestBonus": 65.60889138717503,
+      "cardAbsorberInvestBonus": 65.1808781425731,
+      "cardAbsorberPerCardBonus": 5,
+      "cardAbsorberMaxBonusCards": 3.8031955874060324,
+      "cardTransformerInvestBonus": 34.19720343597521,
+      "reanimationInvestBonus": 33.61909908687607,
+      "reanimationLowLifeFloor": 4.361111803334223,
+      "reanimationLowLifeBonus": 14.90236645801533,
+      "deactivatePersistentInvestBonus": 26.79909981774265,
+      "deactivatePersistentPointsFloor": 12.511921213536539,
+      "activateDuplicationInvestBonus": 41.508932977965884
+    },
+    "lifeThresholds": {
+      "referenceStartingLives": 10
+    },
+    "evaluator": {
+      "survivalTermWeight": 0.1265016705147173,
+      "linearWeights": [
+        3,
+        0.3,
+        0.4,
+        0.8,
+        0.2,
+        -2,
+        1.2,
+        0.5,
+        0.4,
+        0.5,
+        0.3,
+        0.2,
+        -0.3,
+        0.4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -1.5,
+        0,
+        0.6,
+        0.5,
+        0.2,
+        0.4,
+        0,
+        0,
+        0
+      ]
+    },
+    "search": {
+      "explorationConstant": 1.25,
+      "priorTemperature": 1,
+      "depthCapRounds": 2
+    }
+  },
+  "eliteFitness": 0.5802469135802469,
+  "sigma": 1,
+  "curve": [
+    {
+      "generation": 0,
+      "fitness": 0.4961832061068702
+    },
+    {
+      "generation": 1,
+      "fitness": 0.5037878787878788
+    },
+    {
+      "generation": 2,
+      "fitness": 0.5151515151515151
+    },
+    {
+      "generation": 3,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 4,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 5,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 6,
+      "fitness": 0.5347222222222222
+    },
+    {
+      "generation": 7,
+      "fitness": 0.5347222222222222
+    },
+    {
+      "generation": 8,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 9,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 10,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 11,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 12,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 13,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 14,
+      "fitness": 0.5416666666666666
+    },
+    {
+      "generation": 15,
+      "fitness": 0.5416666666666666
+    },
+    {
+      "generation": 16,
+      "fitness": 0.55
+    },
+    {
+      "generation": 17,
+      "fitness": 0.5541666666666667
+    },
+    {
+      "generation": 18,
+      "fitness": 0.5541666666666667
+    },
+    {
+      "generation": 19,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 20,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 21,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 22,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 23,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 24,
+      "fitness": 0.5802469135802469
+    }
+  ],
+  "splitHash": "7a9ddbfe0cd80e66",
+  "rngSalt": "l33-03-fit-v5"
+}

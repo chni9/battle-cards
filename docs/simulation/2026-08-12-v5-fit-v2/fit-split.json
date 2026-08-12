@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "baseSeed": "l33-03-fit-v2",
+  "train": [
+    {
+      "seed": "l33-03-fit-v2:train:0",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:1",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:2",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:3",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:4",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:5",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:6",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:7",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:8",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:9",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:10",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:11",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:12",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:13",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:14",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:15",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:16",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:17",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:18",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:19",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:20",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:21",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:22",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:23",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:24",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:25",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:26",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:27",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:28",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:train:29",
+      "kitMode": "mirrored"
+    }
+  ],
+  "holdout": [
+    {
+      "seed": "l33-03-fit-v2:holdout:0",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:1",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:2",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:3",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:4",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:5",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:6",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:7",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:8",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:9",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:10",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:11",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:12",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:13",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:14",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:15",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:16",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:17",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:18",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:19",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:20",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:21",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:22",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:23",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:24",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:25",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:26",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:27",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:28",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v2:holdout:29",
+      "kitMode": "random"
+    }
+  ],
+  "contentHash": "dcc101a5152ffc4e"
+}

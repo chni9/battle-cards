@@ -80,6 +80,12 @@ export function evaluateFitnessAgainstGauntlet(
             continue;
           }
 
+          // Empty legal-action lists / policy throws count as undecided (not a win).
+          if (error instanceof Error) {
+            stalls += 1;
+            continue;
+          }
+
           throw error;
         }
       }

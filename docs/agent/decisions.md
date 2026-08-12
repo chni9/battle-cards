@@ -1929,3 +1929,29 @@ pnpm --filter @card-battle/server optimize:weights -- \
 Parallelism: in-process `Promise.all` over the λ+1 population (GameState created
 inside each fitness eval). Search worker `SearchRequest` remains free of `GameState`.
 
+
+
+## 2026-08-12 · [T] L33-04 holdout + L33-05 gate blocked
+
+**L33-04.** Train/holdout split is written before gen 0. Canonical writeup:
+`docs/simulation/2026-08-12-v5-fit/HOLDOUT.md` (v8 overfitting flagged; v5 large-N
+probes appended).
+
+**L33-05 blocked.** After (1+λ)-ES on action scalars + `survivalTermWeight`
+(sparse mutation, train-internal valid gate, random-kit and mixed-kit splits,
+grid search on life/strike/burn knobs), no checked-in profile beats
+`heuristic-v4` at **p < 0.01** on a seat-rotated holdout of ≥ 2 000 games.
+
+Largest probe (`l33-05-gate-xl`, 25 000 games, hash `4514e2bfd9f533f1`):
+win rate **0.504** (9 613 / 9 452 / 5 935 stalls), one-sided p ≈ **0.12**.
+Train-set fitness improvements reverse or vanish on holdout (v8 holdout 0.45
+with overfitting flag).
+
+Incumbent weights hash: `d585586e0c8f7711` (`heuristic-v4`). Candidate hashes
+tried include `4514e2bfd9f533f1`, `5686e970ce462b79`, grid `30cca23f085f47f8`.
+
+**Implication:** hand-tuned `heuristic-v4` is near-optimal under weight-only
+search for this action scorer. Promotion of `heuristic-tuned-v5` waits on a
+stronger signal (multi-day CEM/ES with far larger train, structural scoring
+changes, or Lot 35 search) — not on lowering the gate. `DEFAULT_POLICY_ID`
+stays `heuristic-v4`.

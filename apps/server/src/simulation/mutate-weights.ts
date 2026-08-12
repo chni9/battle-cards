@@ -1,40 +1,52 @@
 /**
  * Mutate action-scoring + survival term for (1+λ)-ES — L33-03.
+ *
+ * Band bases stay fixed — mutating lethalNow/survive scale overfits train seeds
+ * (observed on L33-04 holdout). Sparse coordinate noise: high-dim full-vector
+ * noise overfits tiny train sets without moving holdout.
  */
 
 import {
   ACTION_WEIGHT_SCALAR_KEYS,
-  BAND_WEIGHT_KEYS,
   parsePolicyWeights,
   type PolicyActionWeights,
-  type PolicyBandWeights,
   type PolicyWeights,
 } from '../bots/policy-weights';
 import type { Rng } from '../engine/rng';
+
+/** How many action scalars to touch per offspring (plus survival). */
+const SPARSE_ACTION_MUTATIONS = 6;
 
 export function mutatePolicyWeights(
   parent: PolicyWeights,
   rng: Rng,
   sigma: number,
 ): PolicyWeights {
-  const bands = { ...parent.action.bands } as {
-    -readonly [K in keyof PolicyBandWeights]: number;
-  };
-
-  for (const key of BAND_WEIGHT_KEYS) {
-    bands[key] =
-      bands[key] + gaussian(rng) * sigma * Math.max(1, Math.abs(bands[key]) * 0.05);
-  }
-
-  const actionScalars = { ...parent.action } as {
+  const actionScalars = { ...parent.action, bands: { ...parent.action.bands } } as {
     -readonly [K in keyof PolicyActionWeights]: PolicyActionWeights[K];
   };
-  actionScalars.bands = bands;
 
-  for (const key of ACTION_WEIGHT_SCALAR_KEYS) {
+  const keys = [...ACTION_WEIGHT_SCALAR_KEYS];
+  // Fisher–Yates partial shuffle — first K keys are mutated.
+  for (let index = 0; index < Math.min(SPARSE_ACTION_MUTATIONS, keys.length); index += 1) {
+    const swapAt = index + rng.nextInt(keys.length - index);
+    const currentKey = keys[index];
+    const swapKey = keys[swapAt];
+    if (currentKey === undefined || swapKey === undefined) {
+      continue;
+    }
+    keys[index] = swapKey;
+    keys[swapAt] = currentKey;
+  }
+
+  for (let index = 0; index < Math.min(SPARSE_ACTION_MUTATIONS, keys.length); index += 1) {
+    const key = keys[index];
+    if (key === undefined) {
+      continue;
+    }
     const current = actionScalars[key];
     actionScalars[key] =
-      current + gaussian(rng) * sigma * Math.max(0.5, Math.abs(current) * 0.08);
+      current + gaussian(rng) * sigma * Math.max(1, Math.abs(current) * 0.2);
   }
 
   return parsePolicyWeights({
