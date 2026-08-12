@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "baseSeed": "l33-03-fit",
+  "train": [
+    {
+      "seed": "l33-03-fit:train:0",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:train:1",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:train:2",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:train:3",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:train:4",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:train:5",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:train:6",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:train:7",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:train:8",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:train:9",
+      "kitMode": "random"
+    }
+  ],
+  "holdout": [
+    {
+      "seed": "l33-03-fit:holdout:0",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:holdout:1",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:holdout:2",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:holdout:3",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:holdout:4",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:holdout:5",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:holdout:6",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:holdout:7",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit:holdout:8",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit:holdout:9",
+      "kitMode": "mirrored"
+    }
+  ],
+  "contentHash": "a2de1f615613fc16"
+}

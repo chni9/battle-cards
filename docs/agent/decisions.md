@@ -1903,3 +1903,29 @@ Designer ruling (session): accept technical spec v5 §13 recommendation.
 - Belief feature slots are reserved in `FEATURE_LAYOUT_VERSION` 1 and emit **0**
   until Lot 34; #V5-2 does not block Lot 33.
 
+
+## 2026-08-12 · [T] L33-03 (1+λ)-ES fit run
+
+Optimizer: `(1+λ)-ES` behind `Optimizer` (`optimize-weights.ts`). Fitness =
+seat-rotated win rate vs frozen gauntlet `[heuristic-v4]` on the **training**
+split only (never population-only).
+
+Run (pinned Node via pnpm):
+
+```bash
+pnpm --filter @card-battle/server optimize:weights -- \
+  --seed l33-03-fit --out ../../docs/simulation/2026-08-12-v5-fit \
+  --gens 12 --lambda 6 --train 10 --holdout 10 --sigma 1.2
+```
+
+| Field | Value |
+|---|---|
+| Gauntlet | `heuristic-v4` |
+| Split hash | `a2de1f615613fc16` |
+| Elite fitness (train) | ≈ 0.789 |
+| Elite weights hash | `7b0932b8996e5a9f` |
+| Artifacts | `docs/simulation/2026-08-12-v5-fit/` |
+
+Parallelism: in-process `Promise.all` over the λ+1 population (GameState created
+inside each fitness eval). Search worker `SearchRequest` remains free of `GameState`.
+

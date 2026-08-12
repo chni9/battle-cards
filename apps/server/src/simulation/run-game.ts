@@ -58,6 +58,11 @@ export interface RunGameInput {
    */
   policyIds?: readonly string[];
   /**
+   * Per-seat policy instances (L33-03 optimizer). When set, length must match
+   * `playerCount` and takes precedence over `policyIds`.
+   */
+  seatPolicies?: readonly BotPolicy[];
+  /**
    * Optional checked-in weights profile id applied to every seat's decide ctx (L33-01).
    * `null` / omitted → each policy's closed-over weights.
    */
@@ -201,6 +206,15 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     );
   }
 
+  if (
+    input.seatPolicies !== undefined &&
+    input.seatPolicies.length !== input.playerCount
+  ) {
+    throw new Error(
+      `seatPolicies length ${String(input.seatPolicies.length)} !== playerCount ${String(input.playerCount)}`,
+    );
+  }
+
   const difficultiesById = new Map<string, BotDifficulty>();
   const policyByPlayerId = new Map<string, BotPolicy>();
 
@@ -212,8 +226,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     }
 
     difficultiesById.set(seat.id, difficulty);
-    const policyId = input.policyIds?.[index] ?? DEFAULT_POLICY_ID;
-    policyByPlayerId.set(seat.id, getPolicy(policyId));
+    const override = input.seatPolicies?.[index];
+    const policy =
+      override ?? getPolicy(input.policyIds?.[index] ?? DEFAULT_POLICY_ID);
+    policyByPlayerId.set(seat.id, policy);
   }
 
   const state = createInitialState({
