@@ -6,6 +6,7 @@
  */
 
 import { REFERENCE_STARTING_LIVES } from './heuristic-life-thresholds';
+import { defaultEvaluatorLinearWeights } from './eval/features';
 import {
   ABSORBER_MIN_LIVES_VS_REGEN,
   ABSORBER_POINTS_DENY_BONUS,
@@ -343,7 +344,7 @@ export function defaultPolicyWeights(): PolicyWeights {
     },
     evaluator: {
       survivalTermWeight: 0,
-      linearWeights: [],
+      linearWeights: defaultEvaluatorLinearWeights(),
     },
     search: { ...DEFAULT_SEARCH_WEIGHTS },
   };

@@ -1891,3 +1891,15 @@ Measured with `pnpm --filter @card-battle/server bench:forward-model` (pinned
 Every V5 search budget must cite this entry / L32-05. Machine-local; re-run the
 script when hardware or Node pin changes.
 
+
+## 2026-08-12 · [P] Evaluator target is pure win probability (#V5-7) — L33-02
+
+Designer ruling (session): accept technical spec v5 §13 recommendation.
+
+- The Phase A / search evaluator returns a sole-survivor **win-probability** vector
+  over living players (sums to ≈1). Not damage margin.
+- `PolicyWeights.evaluator.survivalTermWeight` exists and defaults to **0**. The
+  L33-03 optimizer may raise it; authors do not hard-code a survival bonus.
+- Belief feature slots are reserved in `FEATURE_LAYOUT_VERSION` 1 and emit **0**
+  until Lot 34; #V5-2 does not block Lot 33.
+

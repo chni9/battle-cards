@@ -40,6 +40,12 @@ update expectations — put the change under a new policy id.
   only via a registered policy that closes over a checked-in profile.
 - Inline score-play magic numbers are **not** in `PolicyWeights` (L33-01 scope).
 
+## State evaluator (L33-02)
+
+- `bots/eval/features.ts` — `extractFeatures(state, playerId)` / `FEATURE_LAYOUT_VERSION`.
+- `bots/eval/evaluate.ts` — `evaluate` / `evaluateFromFeatures` → win-prob vector (#V5-7).
+- Belief slots reserved (zeros). Same feature vector for Lot 37.
+
 ## Arena / workers
 
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate
