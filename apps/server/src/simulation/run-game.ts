@@ -51,6 +51,11 @@ export interface RunGameInput {
    * Defaults to `heuristic-v4` for every seat.
    */
   policyIds?: readonly string[];
+  /**
+   * Optional checked-in weights profile id applied to every seat's decide ctx (L33-01).
+   * `null` / omitted → each policy's closed-over weights.
+   */
+  weightsProfile?: string | null;
   /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
   onPolicyDecide?: (telemetry: PolicyDecideTelemetry) => void;
 }
@@ -241,7 +246,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     });
     const actions = listLegalActions(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-    const decision = policy.decide(view, actions, rng, { actionLog });
+    const decision = policy.decide(view, actions, rng, {
+      actionLog,
+      weightsProfile: input.weightsProfile ?? null,
+    });
     const seatIndex = Number.parseInt(botId.replace('bot-', ''), 10);
 
     input.onPolicyDecide?.({

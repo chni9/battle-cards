@@ -94,6 +94,7 @@ async function main(): Promise<void> {
     difficulty: 'hard',
     kitModes: ['random'],
     outPath,
+    weightsProfile: null,
   });
 
   const arenaKitRates = kitWinRatesFromJsonl(arena.gamesBody);

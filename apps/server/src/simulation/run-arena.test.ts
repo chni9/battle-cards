@@ -95,6 +95,7 @@ describe('simulation arena (L32-06)', () => {
         difficulty: 'easy',
         kitModes: ['mirrored'],
         outPath: path.join(tmpdir(), 'unused-arena-self-play.jsonl'),
+        weightsProfile: null,
       },
       { maxTurns: 2500 },
     );
@@ -123,6 +124,7 @@ describe('simulation arena (L32-06)', () => {
       difficulty: 'easy' as const,
       kitModes: ['mirrored', 'random'] as const,
       outPath: outA,
+      weightsProfile: null,
     };
 
     try {
@@ -158,6 +160,7 @@ describe('simulation arena (L32-06)', () => {
         difficulty: 'easy',
         kitModes: ['random'],
         outPath: out,
+        weightsProfile: null,
       });
 
       expect(result.completed).toBe(6);

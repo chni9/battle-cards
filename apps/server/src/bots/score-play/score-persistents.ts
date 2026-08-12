@@ -9,21 +9,6 @@ import { getKit, type BotReasonCode, type PlayingStateView } from '@card-battle/
 
 import type { TurnAction } from '../../engine/turn/perform-action';
 import {
-  CURSE_DENY_BONUS,
-  CURSE_HIGH_SPEND_THRESHOLD,
-  CURSE_INVEST_BONUS,
-  HEURISTIC_BAND_WEIGHTS,
-  IMPOSITION_INVEST_BONUS,
-  POINTS_GENERATOR_INVEST_BONUS,
-  POISON_INVEST_BONUS,
-  POISON_MULTI_TARGET_BONUS,
-  SENTENCE_UPGRADED_PER_OPPONENT,
-  SPY_THIEF_DENY_BONUS,
-  SUPER_ABSORBER_BASELINE_DENY_BONUS,
-  SUPER_ABSORBER_POINTS_DENY_BONUS,
-  SUPER_ABSORBER_UP_DENY_BONUS,
-} from '../heuristic-weights';
-import {
   findOwnCard,
   hasOwnPersistent,
   isImmuneTarget,
@@ -61,7 +46,7 @@ export function scorePersistentsPlayCard(
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.lethalNow + opponents * SENTENCE_UPGRADED_PER_OPPONENT,
+      score: ctx.weights.action.bands.lethalNow + opponents * ctx.weights.action.sentenceUpgradedPerOpponent,
       code: 'lethal-now',
     };
   }
@@ -73,7 +58,7 @@ export function scorePersistentsPlayCard(
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + IMPOSITION_INVEST_BONUS,
+      score: ctx.weights.action.bands.invest + ctx.weights.action.impositionInvestBonus,
       code: 'invest',
     };
   }
@@ -84,7 +69,7 @@ export function scorePersistentsPlayCard(
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + POINTS_GENERATOR_INVEST_BONUS,
+      score: ctx.weights.action.bands.invest + ctx.weights.action.pointsGeneratorInvestBonus,
       code: 'invest',
     };
   }
@@ -98,8 +83,8 @@ export function scorePersistentsPlayCard(
 
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.deny +
-        SPY_THIEF_DENY_BONUS +
+        ctx.weights.action.bands.deny +
+        ctx.weights.action.spyThiefDenyBonus +
         living.length * 10 +
         unspied * 20,
       code: 'deny',
@@ -107,7 +92,7 @@ export function scorePersistentsPlayCard(
   }
 
   if (cardId === 'poison') {
-    return scorePoison(view);
+    return scorePoison(view, ctx);
   }
 
   if (cardId === 'curse') {
@@ -118,10 +103,10 @@ export function scorePersistentsPlayCard(
     return scoreSuperAbsorber(view, ctx, isUpgraded);
   }
 
-  return unscoredPlayCardFallthrough();
+  return unscoredPlayCardFallthrough(ctx.weights);
 }
 
-function scorePoison(view: PlayingStateView): { score: number; code: BotReasonCode } {
+function scorePoison(view: PlayingStateView, ctx: PolicyContext): { score: number; code: BotReasonCode } {
   if (hasOwnPersistent(view, 'poison')) {
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
   }
@@ -134,10 +119,10 @@ function scorePoison(view: PlayingStateView): { score: number; code: BotReasonCo
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
   }
 
-  const multiTargetBonus = living >= 2 ? POISON_MULTI_TARGET_BONUS : 0;
+  const multiTargetBonus = living >= 2 ? ctx.weights.action.poisonMultiTargetBonus : 0;
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + POISON_INVEST_BONUS + multiTargetBonus,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.poisonInvestBonus + multiTargetBonus,
     code: 'invest',
   };
 }
@@ -172,17 +157,17 @@ function scoreCurse(
   const onTopThreat = targetId === ctx.threatOrder[0];
   const stackPenalty = curseCount * 2;
 
-  if (spentLastTurn >= CURSE_HIGH_SPEND_THRESHOLD || onTopThreat) {
+  if (spentLastTurn >= ctx.weights.action.curseHighSpendThreshold || onTopThreat) {
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.deny + CURSE_DENY_BONUS + spentLastTurn - stackPenalty,
+        ctx.weights.action.bands.deny + ctx.weights.action.curseDenyBonus + spentLastTurn - stackPenalty,
       code: 'deny',
     };
   }
 
   // No strong signal yet — still worth activating on a living target (drips over time).
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + CURSE_INVEST_BONUS - stackPenalty,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.curseInvestBonus - stackPenalty,
     code: 'invest',
   };
 }
@@ -221,21 +206,21 @@ function scoreSuperAbsorber(
 
   if (isUpgraded && bestUpgradeSpend > 0) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + SUPER_ABSORBER_UP_DENY_BONUS + bestUpgradeSpend * 10,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.superAbsorberUpDenyBonus + bestUpgradeSpend * 10,
       code: 'deny',
     };
   }
 
   if (isUpgraded && bestPointsSpend > kitDraw) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + SUPER_ABSORBER_POINTS_DENY_BONUS + bestPointsSpend,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.superAbsorberPointsDenyBonus + bestPointsSpend,
       code: 'deny',
     };
   }
 
   // Passive baseline — it absorbs every opponent's next turn regardless of signal today.
   return {
-    score: HEURISTIC_BAND_WEIGHTS.deny + SUPER_ABSORBER_BASELINE_DENY_BONUS + bestLivesLost * 5,
+    score: ctx.weights.action.bands.deny + ctx.weights.action.superAbsorberBaselineDenyBonus + bestLivesLost * 5,
     code: 'deny',
   };
 }

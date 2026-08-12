@@ -9,6 +9,10 @@ import {
 } from '@card-battle/shared';
 
 import { listPolicyIds } from '../bots/registry';
+import {
+  listWeightsProfileIds,
+  resolveWeightsProfile,
+} from '../bots/profiles/index';
 
 export type ArenaKitMode = 'mirrored' | 'random';
 
@@ -21,6 +25,8 @@ export interface ArenaConfig {
   difficulty: BotDifficulty;
   kitModes: readonly ArenaKitMode[];
   outPath: string;
+  /** Optional checked-in weights profile for both seats (L33-01). */
+  weightsProfile: string | null;
 }
 
 const DEFAULT_KIT_MODES: readonly ArenaKitMode[] = ['mirrored', 'random'];
@@ -85,6 +91,20 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
   }
 
   const kitModes = parseKitModes(kitModesRaw);
+  const weightsProfileRaw = args.get('weights-profile');
+  const weightsProfile =
+    weightsProfileRaw === undefined || weightsProfileRaw === ''
+      ? null
+      : weightsProfileRaw;
+
+  if (weightsProfile !== null) {
+    if (!listWeightsProfileIds().includes(weightsProfile)) {
+      throw new Error(`Unknown --weights-profile: ${weightsProfile}`);
+    }
+
+    // Ensure the JSON parses.
+    resolveWeightsProfile(weightsProfile);
+  }
 
   return {
     games,
@@ -95,6 +115,7 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
     difficulty: difficultyRaw,
     kitModes,
     outPath,
+    weightsProfile,
   };
 }
 

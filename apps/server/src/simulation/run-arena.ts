@@ -118,6 +118,7 @@ export async function runArenaWithConfig(
             playerCount: config.playerCount,
             difficulties: [config.difficulty, config.difficulty],
             policyIds,
+            weightsProfile: config.weightsProfile,
             ...(kitAssignment !== undefined ? { kitAssignment } : {}),
             ...(options.maxTurns !== undefined ? { maxTurns: options.maxTurns } : {}),
             onPolicyDecide: (telemetry) => {

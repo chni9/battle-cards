@@ -16,16 +16,6 @@ import {
 
 import type { TurnAction } from '../../engine/turn/perform-action';
 import {
-  ATTACK_THIEF_DENY_BONUS,
-  ATTACK_THIEF_INTEL_BONUS,
-  ATTACK_THIEF_SURVIVE_BONUS,
-  HEURISTIC_BAND_WEIGHTS,
-  MEGA_ATTACK_PRESSURE_PER_OPPONENT,
-  MUTUAL_CANCEL_BONUS,
-  SUPER_MIRROR_SURVIVE_BONUS,
-  SUPER_MIRROR_UPGRADED_BONUS,
-} from '../heuristic-weights';
-import {
   findOwnCard,
   hasCancelingIncomingFrom,
   knownOpponentLives,
@@ -48,7 +38,7 @@ export function scoreAttacksPlayCard(
   const { cardId, isUpgraded } = instance;
 
   if (cardId === 'mega-attack') {
-    return scoreMegaAttack(view, isUpgraded);
+    return scoreMegaAttack(view, ctx, isUpgraded);
   }
 
   if (cardId === 'super-mirror') {
@@ -59,11 +49,12 @@ export function scoreAttacksPlayCard(
     return scoreAttackThief(view, ctx);
   }
 
-  return unscoredPlayCardFallthrough();
+  return unscoredPlayCardFallthrough(ctx.weights);
 }
 
 function scoreMegaAttack(
   view: PlayingStateView,
+  ctx: PolicyContext,
   isUpgraded: boolean,
 ): { score: number; code: BotReasonCode } {
   const living = view.players.filter(
@@ -80,7 +71,7 @@ function scoreMegaAttack(
   // damage cancels, that alone justifies playing it (mirrors core's per-target rule).
   if (living.some((player) => hasCancelingIncomingFrom(view, player.id, damage))) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS + damage,
+      score: ctx.weights.action.bands.survive + ctx.weights.action.mutualCancelBonus + damage,
       code: 'survive',
     };
   }
@@ -91,13 +82,13 @@ function scoreMegaAttack(
   });
 
   if (anyLethal) {
-    return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damage, code: 'lethal-now' };
+    return { score: ctx.weights.action.bands.lethalNow + damage, code: 'lethal-now' };
   }
 
   return {
     score:
-      HEURISTIC_BAND_WEIGHTS.pressure +
-      living.length * MEGA_ATTACK_PRESSURE_PER_OPPONENT +
+      ctx.weights.action.bands.pressure +
+      living.length * ctx.weights.action.megaAttackPressurePerOpponent +
       damage,
     code: 'pressure',
   };
@@ -122,9 +113,9 @@ function scoreSuperMirror(
 
   return {
     score:
-      HEURISTIC_BAND_WEIGHTS.survive +
-      SUPER_MIRROR_SURVIVE_BONUS +
-      (isUpgraded ? SUPER_MIRROR_UPGRADED_BONUS : 0),
+      ctx.weights.action.bands.survive +
+      ctx.weights.action.superMirrorSurviveBonus +
+      (isUpgraded ? ctx.weights.action.superMirrorUpgradedBonus : 0),
     code: 'survive',
   };
 }
@@ -137,7 +128,7 @@ function scoreAttackThief(
   // under any threat even before the steal resolves.
   if (ctx.incomingThreat > 0) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.survive + ATTACK_THIEF_SURVIVE_BONUS,
+      score: ctx.weights.action.bands.survive + ctx.weights.action.attackThiefSurviveBonus,
       code: 'survive',
     };
   }
@@ -156,9 +147,9 @@ function scoreAttackThief(
 
   return {
     score:
-      HEURISTIC_BAND_WEIGHTS.deny +
-      ATTACK_THIEF_DENY_BONUS +
-      (likelyHoldsSharedAttack ? ATTACK_THIEF_INTEL_BONUS : 0),
+      ctx.weights.action.bands.deny +
+      ctx.weights.action.attackThiefDenyBonus +
+      (likelyHoldsSharedAttack ? ctx.weights.action.attackThiefIntelBonus : 0),
     code: 'deny',
   };
 }

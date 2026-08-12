@@ -1,17 +1,21 @@
 /**
- * Stable content hashes for registered policies — technical spec v5 §7.1 (L32-02).
- * Full `PolicyWeights` objects arrive in L33-01; until then hash today's constants.
+ * Stable content hashes for registered policies — technical spec v5 §7.1 / §5.2 (L33-01).
+ *
+ * `computeHeuristicV4WeightsHash` stays the yardstick hash (module exports only) so
+ * `heuristic-v4`'s freeze fixture remains immovable. Full `PolicyWeights` hashing is
+ * for tunable / candidate profiles.
  */
 
 import { createHash } from 'node:crypto';
 
 import * as lifeThresholds from './heuristic-life-thresholds';
 import * as weights from './heuristic-weights';
+import type { PolicyWeights } from './policy-weights';
 
 /** Sentinel — `random-legal` has no tunable weights. */
 export const RANDOM_LEGAL_WEIGHTS_HASH = 'random-legal:v0';
 
-function stableStringify(value: unknown): string {
+export function stableStringify(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
   }
@@ -44,4 +48,9 @@ export function computeHeuristicV4WeightsHash(): string {
   });
 
   return createHash('sha256').update(payload).digest('hex').slice(0, 16);
+}
+
+/** Content hash of a full `PolicyWeights` object (candidates / tuned profiles). */
+export function computePolicyWeightsHash(policyWeights: PolicyWeights): string {
+  return createHash('sha256').update(stableStringify(policyWeights)).digest('hex').slice(0, 16);
 }

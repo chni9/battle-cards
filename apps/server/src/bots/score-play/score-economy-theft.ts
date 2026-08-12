@@ -7,14 +7,7 @@ import type { BotReasonCode, PlayingStateView } from '@card-battle/shared';
 import { getKit } from '@card-battle/shared';
 
 import type { TurnAction } from '../../engine/turn/perform-action';
-import { regenSoftLifeForKit } from '../heuristic-life-thresholds';
-import {
-  CARD_THIEF_DENY_BONUS,
-  HEURISTIC_BAND_WEIGHTS,
-  SUPER_REGEN_INVEST_BONUS,
-  SUPER_REGEN_SURVIVE_BONUS,
-  UPGRADE_POINT_THIEF_DENY_BONUS,
-} from '../heuristic-weights';
+import { lifeThresholdBasesFromWeights, regenSoftLifeForKit } from '../heuristic-life-thresholds';
 import { findOwnCard, isImmuneTarget, type PolicyContext } from '../policy-internals';
 import { unscoredPlayCardFallthrough } from './fallthrough';
 
@@ -38,14 +31,14 @@ export function scoreEconomyPlayCard(
   }
 
   if (cardId === 'upgrade-point-thief') {
-    return scoreUpgradePointThief(view);
+    return scoreUpgradePointThief(view, ctx);
   }
 
   if (cardId === 'card-thief') {
-    return scoreCardThief(view, action, isUpgraded);
+    return scoreCardThief(view, action, isUpgraded, ctx);
   }
 
-  return unscoredPlayCardFallthrough();
+  return unscoredPlayCardFallthrough(ctx.weights);
 }
 
 function scoreSuperRegeneration(
@@ -56,18 +49,21 @@ function scoreSuperRegeneration(
   if (ctx.incomingThreat > 0) {
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.survive + SUPER_REGEN_SURVIVE_BONUS + (isUpgraded ? 10 : 0),
+        ctx.weights.action.bands.survive + ctx.weights.action.superRegenSurviveBonus + (isUpgraded ? 10 : 0),
       code: 'survive',
     };
   }
 
   const startingLives = getKit(view.self.kitId).startingResources.lives;
-  const soft = regenSoftLifeForKit(startingLives);
+  const soft = regenSoftLifeForKit(
+    startingLives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
 
   if (view.self.lives <= soft || (isUpgraded && view.self.lives <= soft + 3)) {
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.invest + SUPER_REGEN_INVEST_BONUS + (isUpgraded ? 15 : 0),
+        ctx.weights.action.bands.invest + ctx.weights.action.superRegenInvestBonus + (isUpgraded ? 15 : 0),
       code: 'invest',
     };
   }
@@ -78,6 +74,7 @@ function scoreSuperRegeneration(
 
 function scoreUpgradePointThief(
   view: PlayingStateView,
+  ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   const living = view.players.filter(
     (player) => player.id !== view.you && !player.isEliminated,
@@ -109,8 +106,8 @@ function scoreUpgradePointThief(
   // it stays strictly above draw on any table size.
   return {
     score:
-      HEURISTIC_BAND_WEIGHTS.deny +
-      UPGRADE_POINT_THIEF_DENY_BONUS +
+      ctx.weights.action.bands.deny +
+      ctx.weights.action.upgradePointThiefDenyBonus +
       living.length * 15 +
       intelBonus,
     code: 'deny',
@@ -121,6 +118,7 @@ function scoreCardThief(
   view: PlayingStateView,
   action: Extract<TurnAction, { type: 'playCard' }>,
   isUpgraded: boolean,
+  ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   if (isUpgraded) {
     const living = view.players.filter(
@@ -132,7 +130,7 @@ function scoreCardThief(
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + CARD_THIEF_DENY_BONUS + living.length * 10,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.cardThiefDenyBonus + living.length * 10,
       code: 'deny',
     };
   }
@@ -151,7 +149,7 @@ function scoreCardThief(
     spied !== undefined && spied.hand.length + spied.specialCards.length > 0 ? 15 : 0;
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.deny + CARD_THIEF_DENY_BONUS + knownCardsBonus,
+    score: ctx.weights.action.bands.deny + ctx.weights.action.cardThiefDenyBonus + knownCardsBonus,
     code: 'deny',
   };
 }

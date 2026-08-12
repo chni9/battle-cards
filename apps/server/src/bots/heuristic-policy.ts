@@ -26,28 +26,12 @@ import type { TurnAction } from '../engine/turn/perform-action';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
 import { upgradePointBuyCost } from '../engine/economy/upgrade-points';
-import { regenSoftLifeForKit, taxLifeBufferForKit } from './heuristic-life-thresholds';
 import {
-  ACTIVATE_DUPLICATION_INVEST_BONUS,
-  BUY_SPECIAL_POINTS_FLOOR,
-  BUY_UPGRADE_POINT_BONUS,
-  BURN_COUNTER_BONUS,
-  CONTEST_UPGRADE_EXTRA,
-  DEACTIVATE_PERSISTENT_INVEST_BONUS,
-  DEACTIVATE_PERSISTENT_POINTS_FLOOR,
-  DRAW_SCORE_PER_EXTRA_DRAW,
-  HEURISTIC_BAND_WEIGHTS,
-  SELL_TO_FUND_BONUS,
-  STRIKE_MIN_DAMAGE,
-  UNSCORED_PLAY_PENALTY,
-  UPGRADE_ABSORBER_BONUS,
-  UPGRADE_ATTACK_BONUS,
-  UPGRADE_MIRROR_BONUS,
-  UPGRADE_REGEN_BONUS,
-  UPGRADE_SENTENCE_BONUS,
-  UPGRADE_SHIELD_BONUS,
-  UPGRADE_TAX_BONUS,
-} from './heuristic-weights';
+  lifeThresholdBasesFromWeights,
+  regenSoftLifeForKit,
+  taxLifeBufferForKit,
+} from './heuristic-life-thresholds';
+import { DEFAULT_POLICY_WEIGHTS, type PolicyWeights } from './policy-weights';
 import {
   computePointReserve,
   deriveStance,
@@ -95,20 +79,22 @@ export function decide(
   view: PlayingStateView,
   actions: readonly TurnAction[],
   rng: Rng,
+  weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
 ): TurnAction {
-  return decideWithReason(view, actions, rng).action;
+  return decideWithReason(view, actions, rng, weights).action;
 }
 
 export function decideWithReason(
   view: PlayingStateView,
   actions: readonly TurnAction[],
   rng: Rng,
+  weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
 ): PolicyDecision {
   if (actions.length === 0) {
     throw new RangeError('decide received an empty action list');
   }
 
-  const scored = scoreActions(view, actions, rng);
+  const scored = scoreActions(view, actions, rng, weights);
 
   let best = scored[0]?.score ?? Number.NEGATIVE_INFINITY;
 
@@ -132,8 +118,9 @@ export function scoreActions(
   view: PlayingStateView,
   actions: readonly TurnAction[],
   rng: Rng,
+  weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
 ): readonly ScoredAction[] {
-  const ctx = buildContext(view, rng);
+  const ctx = buildContext(view, rng, weights);
   return actions.map((action) => {
     const evaluated = scoreAction(view, action, ctx);
     return { action, score: evaluated.score, code: evaluated.code };
@@ -273,7 +260,11 @@ export function pickEliminationRewardsWithReason(
   };
 }
 
-function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
+function buildContext(
+  view: PlayingStateView,
+  rng: Rng,
+  weights: PolicyWeights,
+): PolicyContext {
   let incomingThreat = 0;
 
   for (const effect of view.pendingEffects) {
@@ -286,7 +277,10 @@ function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
 
   const spend = lastCompleteTurnSpendByActor(view);
   const stance = deriveStance(view, incomingThreat);
-  const pointReserve = stance === 'contest' ? computePointReserve(view) : 0;
+  const pointReserve =
+    stance === 'contest'
+      ? computePointReserve(view, weights.action.strikeMinDamage)
+      : 0;
 
   return {
     incomingThreat,
@@ -299,6 +293,7 @@ function buildContext(view: PlayingStateView, rng: Rng): PolicyContext {
     stance,
     pointReserve,
     rng,
+    weights,
   };
 }
 
@@ -310,7 +305,7 @@ function scoreAction(
   if (action.type === 'draw') {
     const kitDraw = getKit(view.self.kitId).startingResources.draw;
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain + DRAW_SCORE_PER_EXTRA_DRAW * Math.max(0, kitDraw - 1),
+      score: ctx.weights.action.bands.sustain + ctx.weights.action.drawScorePerExtraDraw * Math.max(0, kitDraw - 1),
       code: 'sustain',
     };
   }
@@ -345,8 +340,8 @@ function scoreAction(
 
       return {
         score:
-          HEURISTIC_BAND_WEIGHTS.invest +
-          BUY_UPGRADE_POINT_BONUS +
+          ctx.weights.action.bands.invest +
+          ctx.weights.action.buyUpgradePointBonus +
           (hasPriorityUpgrade ? 20 : 0),
         code: 'invest',
       };
@@ -355,7 +350,7 @@ function scoreAction(
     const bonus = secondaryInvest(view, action, ctx);
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + bonus,
+      score: ctx.weights.action.bands.invest + bonus,
       code: 'invest',
     };
   }
@@ -381,7 +376,10 @@ function scoreAction(
     // Never choose a lethal or buffer-breaking life buy — same safety floor as playing Tax.
     if (lifeCost > 0) {
       const livesAfter = view.self.lives - lifeCost;
-      const taxBuffer = taxLifeBufferForKit(getKit(view.self.kitId).startingResources.lives);
+      const taxBuffer = taxLifeBufferForKit(
+    getKit(view.self.kitId).startingResources.lives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
 
       if (livesAfter <= 0 || livesAfter <= ctx.incomingThreat + taxBuffer) {
         return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
@@ -391,14 +389,14 @@ function scoreAction(
     // Under fire: prefer stocking Regeneration (life buys next turn) over random shop.
     // Still Invest-band — never outranks a same-turn Survive play.
     if (action.cardId === 'regeneration' && ctx.incomingThreat > 0) {
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + 40, code: 'invest' };
+      return { score: ctx.weights.action.bands.invest + 40, code: 'invest' };
     }
 
     if (
       (action.cardId === 'shield' || action.cardId === 'mirror') &&
       (ctx.incomingThreat > 0 || ctx.stance === 'contest')
     ) {
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
+      return { score: ctx.weights.action.bands.invest + 30, code: 'invest' };
     }
 
     // Economy / kill tools / intel before filler shop buys.
@@ -408,22 +406,22 @@ function scoreAction(
         return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
       }
 
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + 35, code: 'invest' };
+      return { score: ctx.weights.action.bands.invest + 35, code: 'invest' };
     }
 
     if (action.cardId === 'spy' && hasSpyableUnspiedOpponent(view)) {
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + 55, code: 'invest' };
+      return { score: ctx.weights.action.bands.invest + 55, code: 'invest' };
     }
 
     if (action.cardId === 'super-attack') {
-      return { score: HEURISTIC_BAND_WEIGHTS.invest + 30, code: 'invest' };
+      return { score: ctx.weights.action.bands.invest + 30, code: 'invest' };
     }
 
-    return { score: HEURISTIC_BAND_WEIGHTS.invest + 10, code: 'invest' };
+    return { score: ctx.weights.action.bands.invest + 10, code: 'invest' };
   }
 
   if (action.type === 'buySpecialCard') {
-    if (view.self.points < BUY_SPECIAL_POINTS_FLOOR) {
+    if (view.self.points < ctx.weights.action.buySpecialPointsFloor) {
       return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
     }
 
@@ -433,7 +431,7 @@ function scoreAction(
       return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
     }
 
-    return { score: HEURISTIC_BAND_WEIGHTS.invest, code: 'invest' };
+    return { score: ctx.weights.action.bands.invest, code: 'invest' };
   }
 
   if (action.type === 'sellCard') {
@@ -449,7 +447,7 @@ function scoreAction(
   }
 
   // sellUpgradePoint
-  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+  return { score: ctx.weights.action.bands.sustain - 20, code: 'sustain' };
 }
 
 function scoreDeactivatePersistent(
@@ -458,7 +456,7 @@ function scoreDeactivatePersistent(
 ): { score: number; code: BotReasonCode } {
   // Under heavy threat, keep Invisibility's immunity — deactivating now is self-harm.
   if (ctx.incomingThreat > 0) {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY, code: 'sustain' };
+    return { score: ctx.weights.action.bands.sustain - ctx.weights.action.unscoredPlayPenalty, code: 'sustain' };
   }
 
   const wantsToAttack =
@@ -466,14 +464,14 @@ function scoreDeactivatePersistent(
     ctx.stance === 'contest' ||
     ownCards(view).some((card) => isAttackCardId(card.cardId));
 
-  if (wantsToAttack || view.self.points >= DEACTIVATE_PERSISTENT_POINTS_FLOOR) {
+  if (wantsToAttack || view.self.points >= ctx.weights.action.deactivatePersistentPointsFloor) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + DEACTIVATE_PERSISTENT_INVEST_BONUS,
+      score: ctx.weights.action.bands.invest + ctx.weights.action.deactivatePersistentInvestBonus,
       code: 'invest',
     };
   }
 
-  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 5, code: 'sustain' };
+  return { score: ctx.weights.action.bands.sustain - 5, code: 'sustain' };
 }
 
 function scoreActivateDuplication(
@@ -495,12 +493,12 @@ function scoreActivateDuplication(
 
   if (living >= 1 && ctx.stance !== 'finish') {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + ACTIVATE_DUPLICATION_INVEST_BONUS,
+      score: ctx.weights.action.bands.invest + ctx.weights.action.activateDuplicationInvestBonus,
       code: 'invest',
     };
   }
 
-  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 8, code: 'sustain' };
+  return { score: ctx.weights.action.bands.sustain - 8, code: 'sustain' };
 }
 
 function scoreSellCard(
@@ -526,28 +524,31 @@ function scoreSellCard(
 
   const yieldPoints = getCard(instance.cardId)?.sellYield.points ?? 0;
   const fundSpy = needsPointsToPlaySpy(view) && ctx.stance === 'build';
-  const fundStrike = needsPointsToPlayReadyStrike(view);
+  const fundStrike = needsPointsToPlayReadyStrike(view, ctx.weights.action.strikeMinDamage);
   const fundRegen =
-    view.self.lives <= regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives) &&
+    view.self.lives <= regenSoftLifeForKit(
+    getKit(view.self.kitId).startingResources.lives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  ) &&
     ownsCardId(view, 'regeneration') &&
     view.self.points < 3;
 
   // Never sell the card we are trying to fund.
   if (fundSpy && instance.cardId === 'spy') {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 30, code: 'sustain' };
+    return { score: ctx.weights.action.bands.sustain - 30, code: 'sustain' };
   }
 
   if (
     fundStrike &&
     isAttackCardId(instance.cardId) &&
     instance.isUpgraded &&
-    attackDamageFor(instance.cardId, true) >= STRIKE_MIN_DAMAGE
+    attackDamageFor(instance.cardId, true) >= ctx.weights.action.strikeMinDamage
   ) {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 30, code: 'sustain' };
+    return { score: ctx.weights.action.bands.sustain - 30, code: 'sustain' };
   }
 
   if (yieldPoints <= 0) {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+    return { score: ctx.weights.action.bands.sustain - 20, code: 'sustain' };
   }
 
   // CBCPXV: never sell attacks while an opponent's Imposition / Points Generator is live —
@@ -561,12 +562,12 @@ function scoreSellCard(
     const duplicateBonus =
       view.self.hand.filter((card) => card.cardId === instance.cardId).length > 1 ? 5 : 0;
     return {
-      score: HEURISTIC_BAND_WEIGHTS.invest + SELL_TO_FUND_BONUS + yieldPoints + duplicateBonus,
+      score: ctx.weights.action.bands.invest + ctx.weights.action.sellToFundBonus + yieldPoints + duplicateBonus,
       code: 'invest',
     };
   }
 
-  return { score: HEURISTIC_BAND_WEIGHTS.sustain - 20, code: 'sustain' };
+  return { score: ctx.weights.action.bands.sustain - 20, code: 'sustain' };
 }
 
 function scoreMultiAttack(
@@ -597,7 +598,7 @@ function scoreMultiAttack(
     const knownLives = knownOpponentLives(view, part.targetPlayerId);
 
     if (knownLives !== null && damageSum >= knownLives) {
-      return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damageSum, code: 'lethal-now' };
+      return { score: ctx.weights.action.bands.lethalNow + damageSum, code: 'lethal-now' };
     }
   }
 
@@ -605,22 +606,22 @@ function scoreMultiAttack(
     const clears = damageSum >= burnNeed ? 40 : 0;
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.deny +
-        BURN_COUNTER_BONUS +
+        ctx.weights.action.bands.deny +
+        ctx.weights.action.burnCounterBonus +
         Math.min(damageSum, burnNeed) * 15 +
         clears,
       code: 'deny',
     };
   }
 
-  if (!allUpgraded || damageSum < STRIKE_MIN_DAMAGE) {
-    return { score: HEURISTIC_BAND_WEIGHTS.sustain - 15, code: 'pressure' };
+  if (!allUpgraded || damageSum < ctx.weights.action.strikeMinDamage) {
+    return { score: ctx.weights.action.bands.sustain - 15, code: 'pressure' };
   }
 
   const topTarget = ctx.threatOrder[0];
   const hitsTop = action.attacks.some((part) => part.targetPlayerId === topTarget) ? 5 : 0;
   return {
-    score: HEURISTIC_BAND_WEIGHTS.pressure + (damageSum - costSum) + hitsTop,
+    score: ctx.weights.action.bands.pressure + (damageSum - costSum) + hitsTop,
     code: 'pressure',
   };
 }
@@ -640,35 +641,35 @@ function secondaryInvest(
     return 0;
   }
 
-  const contestExtra = ctx.stance === 'contest' ? CONTEST_UPGRADE_EXTRA : 0;
+  const contestExtra = ctx.stance === 'contest' ? ctx.weights.action.contestUpgradeExtra : 0;
   const { cardId } = instance;
 
   if (cardId === 'tax') {
-    return UPGRADE_TAX_BONUS;
+    return ctx.weights.action.upgradeTaxBonus;
   }
 
   if (cardId === 'regeneration') {
-    return UPGRADE_REGEN_BONUS;
+    return ctx.weights.action.upgradeRegenBonus;
   }
 
   if (cardId === 'mirror') {
-    return UPGRADE_MIRROR_BONUS + contestExtra;
+    return ctx.weights.action.upgradeMirrorBonus + contestExtra;
   }
 
   if (cardId === 'shield') {
-    return UPGRADE_SHIELD_BONUS + contestExtra;
+    return ctx.weights.action.upgradeShieldBonus + contestExtra;
   }
 
   if (cardId === 'absorber') {
-    return UPGRADE_ABSORBER_BONUS;
+    return ctx.weights.action.upgradeAbsorberBonus;
   }
 
   if (cardId === 'sentence') {
-    return UPGRADE_SENTENCE_BONUS + (ctx.stance === 'finish' ? 20 : 0);
+    return ctx.weights.action.upgradeSentenceBonus + (ctx.stance === 'finish' ? 20 : 0);
   }
 
   if (isAttackCardId(cardId)) {
-    return UPGRADE_ATTACK_BONUS + attackDamageFor(cardId, true) + contestExtra;
+    return ctx.weights.action.upgradeAttackBonus + attackDamageFor(cardId, true) + contestExtra;
   }
 
   return 15;

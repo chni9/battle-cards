@@ -23,9 +23,14 @@ import type {
 
 export type { MirrorPolicyPick, PolicyDecision, RewardPolicyPicks };
 
-/** Extensible decide context — action log now; budget / weights profile later. */
+/** Extensible decide context — action log now; weights profile for L33-01. */
 export interface PolicyDecideContext {
   readonly actionLog: readonly ActionLogEntryView[];
+  /**
+   * Checked-in profile id. `null` / omitted → policy's closed-over weights.
+   * Arena and optimizer only; room path uses registered policy defaults.
+   */
+  readonly weightsProfile?: string | null;
 }
 
 export interface BotPolicy {

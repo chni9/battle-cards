@@ -29,6 +29,17 @@ Screens measure what players face only when that holds.
 `heuristic-v4` is the yardstick (L32-03). If its freeze test fails, **do not**
 update expectations — put the change under a new policy id.
 
+## Weights profiles (L33-01)
+
+- Typed `PolicyWeights` lives in `bots/policy-weights.ts`. Module constants in
+  `heuristic-weights.ts` / life-thresholds remain the frozen default source.
+- Checked-in profiles under `bots/profiles/` resolve by **id** (`default`, later
+  tuned ids). Content hash via `computePolicyWeightsHash`. `heuristic-v4`'s
+  `weightsHash` stays `computeHeuristicV4WeightsHash` (module exports only).
+- Arena CLI: `--weights-profile <id>`. Room path never loads from env/network —
+  only via a registered policy that closes over a checked-in profile.
+- Inline score-play magic numbers are **not** in `PolicyWeights` (L33-01 scope).
+
 ## Arena / workers
 
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate

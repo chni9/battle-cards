@@ -25,16 +25,11 @@ import { isImmuneTo } from '../engine/kits/is-immune-to';
 import type { Rng } from '../engine/rng';
 import { SPECIAL_CARD_PURCHASE_COST } from '../engine/economy/buy-special-card';
 import { upgradePointBuyCost } from '../engine/economy/upgrade-points';
-import { regenSoftLifeForKit } from './heuristic-life-thresholds';
 import {
-  ABSORBER_MIN_LIVES_VS_REGEN,
-  ABSORBER_POINTS_DENY_BONUS,
-  ABSORBER_UP_DENY_BONUS,
-  DENY_ABSORBER_MIN_LIVES_LOST,
-  HEURISTIC_BAND_WEIGHTS,
-  STRIKE_MIN_DAMAGE,
-  UNSCORED_PLAY_PENALTY,
-} from './heuristic-weights';
+  lifeThresholdBasesFromWeights,
+  regenSoftLifeForKit,
+} from './heuristic-life-thresholds';
+import type { PolicyWeights } from './policy-weights';
 
 export type HeuristicStance = 'build' | 'contest' | 'finish';
 
@@ -53,6 +48,8 @@ export interface PolicyContext {
   /** Contest: keep at least this many points for Mirror/Shield/counter. */
   pointReserve: number;
   rng: Rng;
+  /** Injectable scoring weights (L33-01). */
+  weights: PolicyWeights;
 }
 
 export function findOwnCard(
@@ -98,7 +95,10 @@ export function needsPointsToPlaySpy(view: PlayingStateView): boolean {
   return view.self.points < spyPlayCost();
 }
 
-export function needsPointsToPlayReadyStrike(view: PlayingStateView): boolean {
+export function needsPointsToPlayReadyStrike(
+  view: PlayingStateView,
+  strikeMinDamage: number,
+): boolean {
   for (const card of view.self.hand) {
     if (!isAttackCardId(card.cardId) || !card.isUpgraded) {
       continue;
@@ -106,7 +106,7 @@ export function needsPointsToPlayReadyStrike(view: PlayingStateView): boolean {
 
     const damage = attackDamageFor(card.cardId, true);
 
-    if (damage < STRIKE_MIN_DAMAGE) {
+    if (damage < strikeMinDamage) {
       continue;
     }
 
@@ -507,7 +507,10 @@ export function deriveStance(view: PlayingStateView, incomingThreat: number): He
   return 'build';
 }
 
-export function computePointReserve(view: PlayingStateView): number {
+export function computePointReserve(
+  view: PlayingStateView,
+  strikeMinDamage: number,
+): number {
   let reserve = 0;
   const cards = ownCards(view);
 
@@ -524,7 +527,7 @@ export function computePointReserve(view: PlayingStateView): number {
       continue;
     }
 
-    if (attackDamageFor(card.cardId, true) >= STRIKE_MIN_DAMAGE) {
+    if (attackDamageFor(card.cardId, true) >= strikeMinDamage) {
       reserve = Math.max(reserve, getCard(card.cardId)?.cost.points ?? 0);
     }
   }
@@ -560,33 +563,36 @@ export function scoreAbsorber(
   if (isUpgraded && upgradeSpent > 0) {
     // Below lethal-now (10_000); above normal Invest/Tax.
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + ABSORBER_UP_DENY_BONUS + upgradeSpent * 10,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.absorberUpDenyBonus + upgradeSpent * 10,
       code: 'deny',
     };
   }
 
   if (isUpgraded && pointsSpent > absorberCost + kitDraw) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + ABSORBER_POINTS_DENY_BONUS + pointsSpent,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.absorberPointsDenyBonus + pointsSpent,
       code: 'deny',
     };
   }
 
-  const regenSoftLife = regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives);
+  const regenSoftLife = regenSoftLifeForKit(
+    getKit(view.self.kitId).startingResources.lives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
   const usefulLives =
-    lastLoss >= ABSORBER_MIN_LIVES_VS_REGEN ||
-    lastLoss >= DENY_ABSORBER_MIN_LIVES_LOST ||
+    lastLoss >= ctx.weights.action.absorberMinLivesVsRegen ||
+    lastLoss >= ctx.weights.action.denyAbsorberMinLivesLost ||
     (lastLoss >= 1 && !hasRegen && view.self.lives <= regenSoftLife);
 
   if (usefulLives) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + lastLoss + (isUpgraded ? 5 : 0),
+      score: ctx.weights.action.bands.deny + lastLoss + (isUpgraded ? 5 : 0),
       code: 'deny',
     };
   }
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    score: ctx.weights.action.bands.sustain - ctx.weights.action.unscoredPlayPenalty,
     code: 'sustain',
   };
 }
