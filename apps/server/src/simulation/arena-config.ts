@@ -27,6 +27,8 @@ export interface ArenaConfig {
   outPath: string;
   /** Optional checked-in weights profile for both seats (L33-01). */
   weightsProfile: string | null;
+  /** Write feature-snapshot JSONL beside games when set (L33-06). */
+  featureSnapshotsPath: string | null;
 }
 
 const DEFAULT_KIT_MODES: readonly ArenaKitMode[] = ['mirrored', 'random'];
@@ -106,6 +108,8 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
     resolveWeightsProfile(weightsProfile);
   }
 
+  const featureSnapshotsPath = args.get('feature-snapshots') ?? null;
+
   return {
     games,
     playerCount,
@@ -116,6 +120,7 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
     kitModes,
     outPath,
     weightsProfile,
+    featureSnapshotsPath: featureSnapshotsPath === '' ? null : featureSnapshotsPath,
   };
 }
 

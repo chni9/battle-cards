@@ -46,6 +46,11 @@ update expectations — put the change under a new policy id.
 - `bots/eval/evaluate.ts` — `evaluate` / `evaluateFromFeatures` → win-prob vector (#V5-7).
 - Belief slots reserved (zeros). Same feature vector for Lot 37.
 
+## Feature snapshots (L33-06)
+
+- Off by default. Arena: `--feature-snapshots <path.jsonl>`.
+- Stalled games contribute **zero** rows (throw before label).
+
 ## Arena / workers
 
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate

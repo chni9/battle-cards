@@ -26,6 +26,12 @@ import type { TurnResult } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
+import {
+  captureFeatureSnapshot,
+  labelFeatureSnapshots,
+  type FeatureSnapshotRow,
+  type UnlabeledFeatureSnapshot,
+} from './feature-snapshots';
 
 /** Fixed clock for simulator reproducibility (L18-01). */
 export const SIM_NOW_MS = 0;
@@ -56,6 +62,8 @@ export interface RunGameInput {
    * `null` / omitted → each policy's closed-over weights.
    */
   weightsProfile?: string | null;
+  /** When true, attach labeled feature snapshots on a completed game (L33-06). */
+  captureFeatureSnapshots?: boolean;
   /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
   onPolicyDecide?: (telemetry: PolicyDecideTelemetry) => void;
 }
@@ -89,6 +97,8 @@ export interface SimulationGameRow {
     botDifficulty: BotDifficulty;
   }[];
   eliminations: readonly FinishedGameEliminationRecord[];
+  /** Present only when `captureFeatureSnapshots` was set and the game finished. */
+  featureSnapshots?: readonly FeatureSnapshotRow[];
 }
 
 function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
@@ -218,6 +228,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
 
   const actionLog: ActionLogEntryView[] = [];
   const eliminations: FinishedGameEliminationRecord[] = [];
+  const unlabeledSnapshots: UnlabeledFeatureSnapshot[] = [];
   let turns = 0;
 
   const turnCap = input.maxTurns ?? MAX_TURNS;
@@ -250,6 +261,11 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       actionLog,
       weightsProfile: input.weightsProfile ?? null,
     });
+
+    if (input.captureFeatureSnapshots === true) {
+      unlabeledSnapshots.push(captureFeatureSnapshot(state, botId));
+    }
+
     const seatIndex = Number.parseInt(botId.replace('bot-', ''), 10);
 
     input.onPolicyDecide?.({
@@ -526,6 +542,15 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       };
     }),
     eliminations: snapshot.eliminations,
+    ...(input.captureFeatureSnapshots === true
+      ? {
+          featureSnapshots: labelFeatureSnapshots(
+            snapshot.seed,
+            unlabeledSnapshots,
+            snapshot.winnerPlayerId,
+          ),
+        }
+      : {}),
   };
 }
 

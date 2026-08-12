@@ -95,6 +95,7 @@ async function main(): Promise<void> {
     kitModes: ['random'],
     outPath,
     weightsProfile: null,
+        featureSnapshotsPath: null,
   });
 
   const arenaKitRates = kitWinRatesFromJsonl(arena.gamesBody);

@@ -27,6 +27,7 @@ import {
 } from './arena-metrics';
 import { parseArenaArgs, type ArenaConfig, type ArenaKitMode } from './arena-config';
 import { serializeGameRow } from './emit-row';
+import { serializeFeatureSnapshotRow } from './feature-snapshots';
 import { isStallError } from './run-batch';
 import { runSimulatedGame } from './run-game';
 
@@ -85,6 +86,7 @@ export async function runArenaWithConfig(
   };
   const orientations = seatPolicyPermutations(config.policyA, config.policyB);
   const lines: string[] = [];
+  const featureLines: string[] = [];
   const reports: ArenaKitModeReport[] = [];
   let completed = 0;
   let stalled = 0;
@@ -119,6 +121,7 @@ export async function runArenaWithConfig(
             difficulties: [config.difficulty, config.difficulty],
             policyIds,
             weightsProfile: config.weightsProfile,
+            captureFeatureSnapshots: config.featureSnapshotsPath !== null,
             ...(kitAssignment !== undefined ? { kitAssignment } : {}),
             ...(options.maxTurns !== undefined ? { maxTurns: options.maxTurns } : {}),
             onPolicyDecide: (telemetry) => {
@@ -127,6 +130,13 @@ export async function runArenaWithConfig(
           });
 
           lines.push(serializeGameRow(row));
+
+          if (row.featureSnapshots !== undefined) {
+            for (const snapshot of row.featureSnapshots) {
+              featureLines.push(serializeFeatureSnapshotRow(snapshot));
+            }
+          }
+
           completed += 1;
           observations.push({
             policyAWon: policyAWonGame(
@@ -179,6 +189,10 @@ export async function runArenaWithConfig(
 
   await writeFile(config.outPath, gamesBody, 'utf8');
   await writeFile(summaryPathForGames(config.outPath), summaryBody, 'utf8');
+
+  if (config.featureSnapshotsPath !== null) {
+    await writeFile(config.featureSnapshotsPath, featureLines.join(''), 'utf8');
+  }
 
   return {
     gamesBody,
