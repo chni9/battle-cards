@@ -5,7 +5,9 @@
 import type {
   ActionLogEntryView,
   BotDifficulty,
+  GameState,
   KitId,
+  PlayingStateView,
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
@@ -71,6 +73,16 @@ export interface RunGameInput {
   captureFeatureSnapshots?: boolean;
   /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
   onPolicyDecide?: (telemetry: PolicyDecideTelemetry) => void;
+  /**
+   * Ground-truth hook before each decision (L34-06 calibration). The callback
+   * may read `state`; belief APIs must still never take `GameState`.
+   */
+  onBeforeDecide?: (ctx: {
+    state: GameState;
+    view: PlayingStateView;
+    actionLog: readonly ActionLogEntryView[];
+    actingPlayerId: string;
+  }) => void;
 }
 
 export interface SimulationGameRow {
@@ -270,6 +282,12 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       turnDeadlineMs: null,
       actionLog,
       botDifficulties: difficultiesById,
+    });
+    input.onBeforeDecide?.({
+      state,
+      view,
+      actionLog,
+      actingPlayerId: botId,
     });
     const actions = listLegalActions(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);

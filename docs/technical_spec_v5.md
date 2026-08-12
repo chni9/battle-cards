@@ -267,12 +267,9 @@ of that interval *is* the bot's uncertainty, and it is the honest thing to searc
 the inferred kit's `startingCardCounts`; every card publicly played, sold, dumped to the pool, or
 claimed as a reward; and the hand-size accounting from (c).
 
-> **Verification item, blocking (#V5-2):** the belief math for hand *contents* depends on whether
-> the shop supply is finite or unlimited. `buyCard` buys by `cardId` at a price, which suggests an
-> unlimited shop — in which case hands are sampled from a **prior over card ids weighted by observed
-> play frequency**, not from a constrained deal, and the pool constrains nothing about what an
-> opponent *could* hold. This is not stated in the rules spec and must be read out of the code and
-> ruled on before the determinizer is written. Do not assume either reading.
+> **#V5-2 closed (L34-01, 2026-08-12):** shop supply is **unlimited** (rules spec §1; designer
+> ruling). Hands are sampled from kit-anchored accounting plus a pluggable prior over card ids —
+> not a constrained deal. The pool does not constrain what an opponent *could* still hold.
 
 **Guard tests.**
 
@@ -633,7 +630,7 @@ v3 §13, v4 §12:
 | # | Question | Recommendation | Blocks |
 |---|---|---|---|
 | **#V5-1** | ISMCTS with per-iteration re-determinization, or N-tree PIMC? | **ISMCTS** — far better sample efficiency at room-scale budgets, which is exactly the regime a TypeScript forward model lives in. PIMC is the fallback if the information-set bookkeeping measures too expensive. | Lot 34 |
-| **#V5-2** | **Is the card shop supply finite or unlimited?** Read it out of the code, then rule it. | The belief model's hand-sampling math is completely different in each case (constrained deal vs. frequency prior). **Blocking** — the determinizer cannot be written until this is answered. | Lot 33 |
+| **#V5-2** | **Is the card shop supply finite or unlimited?** | **Closed (L34-01):** unlimited. Opponent hands are not constrained by pool outflow; sample via kit accounting + pluggable card-id prior. | — |
 | **#V5-3** | Weaker difficulty tiers: keep uniform random substitution, or softmax over search action values? | **Softmax temperature.** Uniform substitution beside a searching bot reads as erratic, not weak. | Lot 36 |
 | **#V5-4** | Does the public `Why` panel expose search statistics (visits, estimated win probability)? | **No numbers.** The bot's evaluation aggregates its own private hand quality; publishing it to every seat leaks private information through an explainability feature. Keep `botReason` coarse — add `search-best` and `search-fallback` codes only. | Lot 35 |
 | **#V5-5** | Confirm the minimal reopening of #V3-5 (weights as a typed, hash-identified data object with today's constants as the frozen default). | Confirm. Without it §5.2 cannot exist. | Lot 33 |

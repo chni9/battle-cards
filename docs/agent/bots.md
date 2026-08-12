@@ -42,9 +42,10 @@ update expectations — put the change under a new policy id.
 
 ## State evaluator (L33-02)
 
-- `bots/eval/features.ts` — `extractFeatures(state, playerId)` / `FEATURE_LAYOUT_VERSION`.
+- `bots/eval/features.ts` — `extractFeatures(state, playerId, belief?)` / `FEATURE_LAYOUT_VERSION`.
 - `bots/eval/evaluate.ts` — `evaluate` / `evaluateFromFeatures` → win-prob vector (#V5-7).
-- Belief slots reserved (zeros). Same feature vector for Lot 37.
+- Belief slots fill from optional `BeliefSummary` (L34-03). Omitted → zeros. `evaluate` does
+  **not** take belief until Lot 35.
 
 ## Feature snapshots (L33-06)
 
@@ -62,6 +63,91 @@ update expectations — put the change under a new policy id.
   the wire, never `GameState`. Matchups are chunked across workers.
 - Promotion gate: `gate-tuned-v5.ts` — seat-rotated holdout, p < 0.01 vs
   `heuristic-v4`, then register `heuristic-tuned-v5`.
+
+## Belief — kit posterior (L34-02)
+
+- `kitPosteriorForOpponent(opponentPlayerId, view, log): KitPosterior` in
+  `bots/belief/kit-posterior.ts`. Public evidence only; no `GameState`.
+- Spy `view.players[].spied.kitId` is a point mass. Otherwise a uniform prior over
+  `KIT_IDS` is Bayes-updated from the public log.
+- Tells: special `playCard` / `playMultipleAttacks` (catalog owner likelihood 1;
+  Prophet `1-(1-1/20)^2`; impossible → 0); `outcome: 'immune'` only when some kit
+  lists that `cardId` in `immuneTo` (thief/spy → Untouchable). Immune on other
+  cards is Invisibility / Cloning-on-invisible — do not zero the roster.
+  `playMultipleAttacks` → `allowsMultipleAttacksPerTurn`. Upgraded `playCard` with
+  no prior `upgradeCard` / `buyUpgradePoint` → `alwaysUpgraded` when some kit
+  lists that card.
+- `sampleKit(posterior, rng)` weighted-samples a `KitId`.
+- Uniqueness table: `bots/belief/kit-uniqueness.ts` (`UNIQUENESS_GUARANTEED_KIT_IDS`,
+  `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Prophet is never uniqueness-
+  guaranteed from specials alone. `imposition` is shared (Untouchable + Duplicator).
+- **If we add new kits with shared or random specials, update `kit-uniqueness.ts`
+  and this section.**
+
+## Belief — resource reconstruction (L34-03)
+
+- `reconstructOpponentResources(opponentPlayerId, kitId, view, log, lifeLimit)` in
+  `bots/belief/resources.ts`. Public log only; no `GameState`.
+- Unspied: start from `getKit(kitId).startingResources`, then integrate public
+  `actionResolved.livesLost`, shop/play costs from catalogs, draw (`kit.draw`),
+  upgrade-point economy, and `buySpecialCard` (−`SPECIAL_CARD_PURCHASE_COST`).
+  Silent changes (regen quantity 1–4, persistent ticks, theft amounts, opaque
+  `rewardsClaimed`) stay **intervals**.
+- Spied live `lives` / `points` / `upgradePoints` are point intervals (width 0).
+  Prefer those over `resourcesSnapshot`. Views have no `lifeLimit` — pass
+  `CLASSIC_LIFE_LIMIT` (Classic `GameState.lifeLimit` is that constant; do not
+  hardcode 25).
+- `buildBeliefSummary` → `lifeWidthByOpponentOffset` as `(hi-lo)/lifeLimit` for
+  living opponents in seat order relative to perspective (offsets 1..3, missing → 0).
+- `extractFeatures(state, id, belief?)` writes those widths into `BELIEF_FEATURE_INDICES`.
+  `evaluate` still calls `extractFeatures` without belief (zeros) until Lot 35.
+- `sampleFromInterval(interval, rng)` uniform integer in `[lo, hi]` via `rng.next()` in `[0,1)`.
+
+## Belief — hand and special sampling (L34-04)
+
+- `accountOpponentHandSizes` / `sampleOpponentHandAndSpecials` in `bots/belief/hands.ts`.
+  Public log only; no `GameState`. Pluggable `HandPrior` (`hand-prior.ts`); v1 is
+  `uniformZonePrior`.
+- **Shared cards stay in hand when played** (`playCardAction` in `perform-action.ts`).
+  Specials are consumed. `buyCard` / `sellCard` change the matching zone; `draw` does
+  not add cards. Playing a shared card is evidence of holding that id, not a size change.
+- **#V5-2 unlimited shop:** do not forbid a `cardId` because a copy sits in the pool.
+  Hard constraint is instance identity — never mint an `instanceId` from `view.self.hand`,
+  `self.specialCards`, or `view.pool`.
+- Spy-revealed `hand` / `specialCards` are copied as a point. Prophet starting specials
+  have known *count* (`randomStartingSpecialCount`) and unknown ids (sample from
+  `SPECIAL_CARD_IDS`). Kit specials not yet publicly played are preferred, then the prior.
+- Card Thief / Attack Thief / Card Transformer / Card Absorber / opaque rewards **widen
+  intervals** (technical spec v4 §5.1). Do not collapse them to a point.
+
+## Belief — determinize (L34-05)
+
+Pipeline, public evidence only — **no `GameState` in** (technical spec v5 §4.2):
+
+1. `inferBelief(view, log): BeliefState` — per-opponent kit posterior, MAP-conditioned
+   resource and hand-size intervals, and `BeliefSummary` for `view.you`. No sampling.
+   `eliminationReveal.kitId` is a point mass (public death freeze).
+2. `sampleDeterminizedState(belief, view, log, rng): GameState` — public skeleton from
+   `enumerationStateFromView` (seed `determinize:${gameCode}:${you}:${turnSequence}:${rng}`),
+   then per living opponent: `sampleKit` → `reconstructOpponentResources` →
+   `sampleFromInterval` → `accountOpponentHandSizes` + `sampleOpponentHandAndSpecials`
+   (`uniformZonePrior`). Spy slices are already point masses / point-copies.
+3. `determinizeFromView(view, log, rng)` = (1) then (2). Arity 3; never a `GameState`
+   parameter. `visibility` stays `[]` — Spy only via this seat's view slices (#V4-35).
+
+Overlay keeps the enumeration skeleton verbatim (pool, pending, persistents, block,
+charges, reanimation, self). Public `activeShield.isUpgraded` is written onto the
+sampled opponent (enumeration always left `shieldIsUpgraded: false` for unspied seats).
+Eliminated seats take `eliminationReveal` / snapshot; they are not resampled.
+
+`extractFeatures(state, id, belief.summary)` is the evaluator path for life-interval
+widths. `evaluate` still omits belief until Lot 35.
+
+**Calibration gate (L34-06) before Lot 35.** Published:
+`docs/simulation/2026-08-12-v5-belief/` (impossible rate **0**). Re-run:
+`pnpm --filter @card-battle/server bench:determinizer`. Do not start Lot 35
+search until calibration is current after belief changes. An unmeasured
+determinizer is how V5 fails quietly.
 
 ## Arena / workers
 

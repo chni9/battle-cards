@@ -43,6 +43,22 @@ describe('evaluate / features (L33-02)', () => {
     }
   });
 
+  it('fills belief life-width slots when BeliefSummary is passed (L34-03)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l34-03-belief-fill',
+    });
+    const features = extractFeatures(state, 'a', {
+      lifeWidthByOpponentOffset: [0.12, 0, 0],
+    });
+    expect(features[BELIEF_FEATURE_INDICES[0] ?? -1]).toBe(0.12);
+    expect(features[BELIEF_FEATURE_INDICES[1] ?? -1]).toBe(0);
+    expect(features[BELIEF_FEATURE_INDICES[2] ?? -1]).toBe(0);
+  });
+
   it('is monotone in self lives', () => {
     const base = createInitialState({
       seats: [

@@ -1,6 +1,7 @@
 /**
  * State feature vector for Phase A / fitted evaluators — technical spec v5 §5.1 (L33-02).
- * Same layout for Lot 37; Belief slots reserved (always 0 until Lot 34).
+ * Same layout for Lot 37. Belief widths fill from optional `BeliefSummary` (L34-03);
+ * omitted → zeros so Lot 33 tests stay valid. `evaluate` does not take belief until Lot 35.
  */
 
 import {
@@ -13,6 +14,8 @@ import {
   type GameState,
   type Player,
 } from '@card-battle/shared';
+
+import type { BeliefSummary } from '../belief/types';
 
 /** Bump when the feature layout changes — invalidates fitted models. */
 export const FEATURE_LAYOUT_VERSION = 1;
@@ -39,7 +42,7 @@ export const KIT_TRAIT_CARD_IDS: readonly CardId[] = (() => {
 
 /**
  * Named feature layout (self-centric). Length is `FEATURE_DIM`.
- * Belief widths are reserved zeros in Lot 33.
+ * Belief widths come from `BeliefSummary` when provided (L34-03).
  */
 export const FEATURE_NAMES = [
   'selfLivesNorm',
@@ -203,11 +206,12 @@ function mutualCancelPairCount(state: GameState, playerId: string): number {
 
 /**
  * Self-centric feature vector for `perspectivePlayerId`.
- * Belief widths are always 0 in Lot 33.
+ * When `belief` is omitted, life-width slots stay 0 (Lot 33 / `evaluate` until Lot 35).
  */
 export function extractFeatures(
   state: GameState,
   perspectivePlayerId: string,
+  belief?: BeliefSummary,
 ): FeatureVector {
   const self = state.players.find((player) => player.id === perspectivePlayerId);
 
@@ -277,10 +281,9 @@ export function extractFeatures(
     clamp01(self.attackBlockCharges / 2),
     self.duplicationActive ? 1 : 0,
     self.pendingReanimation !== null ? 1 : 0,
-    // Belief reserved
-    0,
-    0,
-    0,
+    belief?.lifeWidthByOpponentOffset[0] ?? 0,
+    belief?.lifeWidthByOpponentOffset[1] ?? 0,
+    belief?.lifeWidthByOpponentOffset[2] ?? 0,
   );
 
   if (values.length !== FEATURE_DIM) {
@@ -292,7 +295,7 @@ export function extractFeatures(
   return Float64Array.from(values);
 }
 
-/** Belief feature indices — always 0 until Lot 34. */
+/** Belief feature indices — filled from `BeliefSummary` when passed to `extractFeatures`. */
 export const BELIEF_FEATURE_INDICES: readonly number[] = [
   FEATURE_NAMES.indexOf('beliefLifeWidthOpp1'),
   FEATURE_NAMES.indexOf('beliefLifeWidthOpp2'),

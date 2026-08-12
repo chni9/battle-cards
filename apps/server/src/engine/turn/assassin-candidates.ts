@@ -105,15 +105,15 @@ function rankAttackCopies(actor: Player): AttackPick[] {
 }
 
 /**
- * Living opponents in seeded shuffle order — view-derivable (alive ids only).
- * Must not read hidden lives: §10.1 / L16-03. Policy threat ranking is separate (§4.4).
+ * Living opponents in stable seat-id order — view-derivable (alive ids only).
+ * Must not read hidden lives: §10.1 / L16-03. Must not use `GameState.seed`
+ * (seed is server-only and absent from the view; L34-05 determinize cannot
+ * recover it). Policy threat ranking is separate (§4.4).
  */
 function rankOpponentTargets(state: GameState, actor: Player): Player[] {
-  const living = state.players.filter(
-    (player) => player.id !== actor.id && !player.isEliminated,
-  );
-  const rng = createRng(`${state.seed}:list-legal-targets:${actor.id}:${state.turnSequence}`);
-  return rng.shuffle(living);
+  return state.players
+    .filter((player) => player.id !== actor.id && !player.isEliminated)
+    .sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function buildRawCandidates(

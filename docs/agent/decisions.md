@@ -1955,3 +1955,47 @@ search for this action scorer. Promotion of `heuristic-tuned-v5` waits on a
 stronger signal (multi-day CEM/ES with far larger train, structural scoring
 changes, or Lot 35 search) — not on lowering the gate. `DEFAULT_POLICY_ID`
 stays `heuristic-v4`.
+
+
+## 2026-08-12 · [P] #V5-2 shop supply is unlimited (L34-01)
+
+Designer ruling (session): **unlimited** shop, matching rules spec §1 and
+`buy-card.ts` (mint by `cardId`, no stock check; pool is discard, not inventory).
+
+**Ruling sentence:** An opponent's possible hand contents are not constrained by
+what has already left the pool; the shop is infinite stock.
+
+**Consequence for L34-04:** hand sampling uses kit-anchored accounting plus a
+pluggable prior over card ids (v1 uniform over zone ids), not a constrained deal
+from remaining copies. Pool / own-hand / publicly consumed instances still
+constrain *specific visible copies*, never global supply.
+
+
+## 2026-08-12 · [T] Assassin multi targets are view-stable (L34-05 / L34-06)
+
+`listAssassinMultiAttackCandidates` ranked living opponents with
+`rng.shuffle` seeded from `GameState.seed`. The seed is server-only and absent
+from `PlayingStateView`, so `determinizeFromView` could not recover it and the
+L34-05 consistency guard failed (~2.5% impossible worlds) whenever the capped
+multi-attack set depended on shuffle order.
+
+**Fix:** rank targets by stable `player.id` ascending. Still view-derivable
+(alive ids only; no hidden lives). Comment in `assassin-candidates.ts` updated.
+`heuristic-v4` freeze and §10.1 view-guard tests still pass.
+
+
+## 2026-08-12 · [T] L34-06 belief calibration published
+
+Harness: `pnpm --filter @card-battle/server bench:determinizer`.
+Artifacts: `docs/simulation/2026-08-12-v5-belief/` (config, aggregates, WRITEUP).
+
+| Metric | Value |
+|---|---|
+| Games | 40 (36 completed / 4 stalled) |
+| K | 8 |
+| Impossible rate | **0** |
+| Kit top-1 (overall) | ≈ 0.80 |
+| Kit top-3 | ≈ 0.88 |
+| Life MAE (interval midpoint) | ≈ 3.66 |
+
+Concludes nothing about balance. Lot 35 may start after #V5-1.
