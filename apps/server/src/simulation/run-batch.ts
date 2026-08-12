@@ -11,6 +11,7 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { DEFAULT_POLICY_ID } from '../bots/registry';
 import { parseBatchArgs } from './batch-config';
 import { serializeGameRow } from './emit-row';
 import { runSimulatedGame } from './run-game';
@@ -33,6 +34,11 @@ export interface BatchRunResult {
 export interface RunBatchOptions {
   /** Test-only: force every game's turn cap (default 2500). */
   maxTurns?: number;
+  /**
+   * Override seat policies. CI determinism tests pin `heuristic-v4` so they stay
+   * fast after L33-05 makes the room default a one-round re-rank.
+   */
+  policyIds?: readonly string[];
 }
 
 export async function runBatch(
@@ -42,6 +48,9 @@ export async function runBatch(
   const config = parseBatchArgs(argv);
   const lines: string[] = [];
   const stalledSeeds: string[] = [];
+  const policyIds =
+    options.policyIds ??
+    Array.from({ length: config.playerCount }, () => DEFAULT_POLICY_ID);
 
   for (let index = 0; index < config.games; index += 1) {
     const seed = gameSeed(config.baseSeed, index);
@@ -51,6 +60,7 @@ export async function runBatch(
         seed,
         playerCount: config.playerCount,
         difficulties: config.difficulties,
+        policyIds,
         ...(config.kitAssignment !== undefined
           ? { kitAssignment: config.kitAssignment }
           : {}),

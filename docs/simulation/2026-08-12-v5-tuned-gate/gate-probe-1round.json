@@ -1,0 +1,22 @@
+{
+  "policyId": "heuristic-tuned-v5",
+  "candidateWeightsHash": "97a31bbdff3971bb",
+  "incumbentPolicyId": "heuristic-v4",
+  "incumbentWeightsHash": "d585586e0c8f7711",
+  "seed": "l33-05-gate-probe-1round",
+  "requestedGames": 400,
+  "matchups": 200,
+  "wins": 195,
+  "losses": 172,
+  "stalls": 33,
+  "gamesPlayed": 400,
+  "decided": 367,
+  "winRate": 0.5313351498637602,
+  "wilson": {
+    "lower": 0.4802196125918131,
+    "upper": 0.5818014767358134,
+    "center": 0.5310105446638133
+  },
+  "pValueOneSided": 0.12540372175827696,
+  "passed": false
+}

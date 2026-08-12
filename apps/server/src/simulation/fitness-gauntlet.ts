@@ -30,6 +30,15 @@ export function evaluateFitnessAgainstGauntlet(
     `candidate:${computePolicyWeightsHash(weights)}`,
     weights,
   );
+  return evaluatePolicyAgainstGauntlet(candidate, matchups, options);
+}
+
+/** Seat-rotated win rate of a registered (or ephemeral) policy vs frozen gauntlet. */
+export function evaluatePolicyAgainstGauntlet(
+  candidate: BotPolicy,
+  matchups: readonly FitMatchup[],
+  options: { readonly maxTurns?: number; readonly difficulty?: 'easy' | 'normal' | 'hard' } = {},
+): FitnessResult {
   const difficulty = options.difficulty ?? 'hard';
   let wins = 0;
   let losses = 0;
@@ -67,7 +76,8 @@ export function evaluateFitnessAgainstGauntlet(
           });
 
           const winnerSeat = row.players.find((player) => player.isWinner);
-          const winnerPolicy = winnerSeat !== undefined ? seatPolicies[winnerSeat.seatIndex] : undefined;
+          const winnerPolicy =
+            winnerSeat !== undefined ? seatPolicies[winnerSeat.seatIndex] : undefined;
 
           if (winnerPolicy === candidate) {
             wins += 1;
@@ -80,7 +90,6 @@ export function evaluateFitnessAgainstGauntlet(
             continue;
           }
 
-          // Empty legal-action lists / policy throws count as undecided (not a win).
           if (error instanceof Error) {
             stalls += 1;
             continue;

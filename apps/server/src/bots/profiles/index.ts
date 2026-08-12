@@ -25,6 +25,7 @@ export const DEFAULT_WEIGHTS_PROFILE_ID = 'default';
 const PROFILE_FILES: Readonly<Record<string, string>> = {
   [DEFAULT_WEIGHTS_PROFILE_ID]: 'default.json',
   'tuned-v5-candidate': 'tuned-v5-candidate.json',
+  'tuned-v5-one-ply': 'tuned-v5-one-ply.json',
 };
 
 export function listWeightsProfileIds(): readonly string[] {

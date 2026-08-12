@@ -1957,6 +1957,33 @@ changes, or Lot 35 search) — not on lowering the gate. `DEFAULT_POLICY_ID`
 stays `heuristic-v4`.
 
 
+## 2026-08-12 · [T] L33-05 structural one-round re-rank still blocked
+
+Designer chose keep-the-gate + structural edge (session). Implemented
+`heuristic-tuned-v5` as default action weights + **one-round Phase A re-rank**:
+`determinizeFromView` (Lot 34) → apply candidate → greedy opponent turns until
+back to self → `evaluate` self win-prob; flip from greedy only when gain ≥
+`FLIP_MARGIN` (0.025). Profile `tuned-v5-one-ply` (byte copy of `default`).
+Gate harness: `simulation/gate-tuned-v5.ts` (by policy id). Artifacts:
+`docs/simulation/2026-08-12-v5-tuned-gate/`.
+
+| Seed | Games | Decided | Win rate | One-sided p | Notes |
+|---|---|---|---|---|---|
+| `l33-05-gate-probe-1ply` | 400 | 329 | 0.502 | ≈ 0.50 | Own-turn only, stub eval state |
+| `l33-05-gate-1round` | 2 000 | 1 835 | 0.506 | ≈ 0.30 | One-round + evaluate |
+| `l33-05-gate-probe-margin` | 800 | 720 | 0.482 | ≈ 0.84 | Life-margin objective (worse) |
+| `l33-05-gate-probe-marginflip` | 600 | 546 | 0.524 | ≈ 0.14 | Lucky small-N |
+| `l33-05-gate-marginflip` | 3 000 | 2 807 | **0.500** | ≈ 0.52 | Thresholded flips; coin flip |
+
+Candidate hash (margin-flip): `e8740ef73aac43f6`. Incumbent: `d585586e0c8f7711`.
+
+**Implication:** shallow lookahead against hand-tuned `heuristic-v4` does not clear
+**p < 0.01**. Small-N probes overstate edge. Code stays registered for Lot 35 to
+reuse (determinize + forward model), but **`DEFAULT_POLICY_ID` remains
+`heuristic-v4`**. Unblock needs Lot 35 search depth (≥ 2 rounds), a designer
+gate ruling, or a different structural change — not more 1-round probes.
+
+
 ## 2026-08-12 · [P] #V5-2 shop supply is unlimited (L34-01)
 
 Designer ruling (session): **unlimited** shop, matching rules spec §1 and

@@ -6,6 +6,10 @@
 
 import type { BotPolicy } from './policy-types';
 import {
+  HEURISTIC_TUNED_V5_POLICY_ID,
+  heuristicTunedV5Policy,
+} from './policies/heuristic-tuned-v5';
+import {
   HEURISTIC_V4_POLICY_ID,
   heuristicV4Policy,
 } from './policies/heuristic-v4';
@@ -14,8 +18,13 @@ import {
   randomLegalPolicy,
 } from './policies/random-legal';
 
-export { HEURISTIC_V4_POLICY_ID, RANDOM_LEGAL_POLICY_ID };
+export {
+  HEURISTIC_TUNED_V5_POLICY_ID,
+  HEURISTIC_V4_POLICY_ID,
+  RANDOM_LEGAL_POLICY_ID,
+};
 
+/** Default room / solo policy — stays `heuristic-v4` until L33-05 gate passes. */
 export const DEFAULT_POLICY_ID = HEURISTIC_V4_POLICY_ID;
 
 const policies = new Map<string, BotPolicy>();
@@ -47,4 +56,5 @@ export function listPolicyIds(): readonly string[] {
 }
 
 registerPolicy(heuristicV4Policy);
+registerPolicy(heuristicTunedV5Policy);
 registerPolicy(randomLegalPolicy);

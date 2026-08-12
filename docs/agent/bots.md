@@ -14,9 +14,10 @@
 - **`decide(view, actions, rng, ctx)`** — no `GameState`. `ctx.actionLog` is the
   public action log (#V5-9). Spy-revealed opponent fields live on the per-recipient
   **view**; use them only for seats this bot has Spyed.
-- Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`) and
-  `random-legal` (uniform legal pick). Later policies (`heuristic-tuned-v5`,
-  `search-v5`) register the same interface — the worker resolves by `policyId`.
+- Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`),
+  `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
+  L33-05 gate), and `random-legal` (uniform legal pick). Later `search-v5`
+  registers the same interface — the worker resolves by `policyId`.
 
 ## Parity
 
@@ -62,7 +63,12 @@ update expectations — put the change under a new policy id.
 - Fitness workers: `fitness-pool.ts` / `fitness-worker.ts` — weights + matchups on
   the wire, never `GameState`. Matchups are chunked across workers.
 - Promotion gate: `gate-tuned-v5.ts` — seat-rotated holdout, p < 0.01 vs
-  `heuristic-v4`, then register `heuristic-tuned-v5`.
+  `heuristic-v4`, then flip `DEFAULT_POLICY_ID` to `heuristic-tuned-v5`.
+- **L33-05 still Blocked** (weight-only and one-round re-rank both fail the
+  gate — see `decisions.md` 2026-08-12). `heuristic-tuned-v5` is registered for
+  experiments (`one-ply-rerank.ts`: determinize → one round → evaluate, margin
+  flip) but is **not** the room default. Do not soften p < 0.01 without a
+  designer ruling.
 
 ## Belief — kit posterior (L34-02)
 
