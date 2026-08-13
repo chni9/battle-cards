@@ -29,7 +29,7 @@ export {
 /**
  * Default room / solo policy.
  * L35-07 flips this to `search-v5` only after the arena gate passes.
- * Until then stay on `heuristic-v4` (L33-05 still Blocked for tuned).
+ * Gate 2026-08-13 failed — stay on `heuristic-v4` (see decisions.md).
  */
 export const DEFAULT_POLICY_ID = HEURISTIC_V4_POLICY_ID;
 

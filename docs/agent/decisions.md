@@ -2069,3 +2069,33 @@ bench; 400 iters made the L35-07 arena gate impractically slow without changing
 sample-efficiency diagnosis. Room wall-clock budgets remain Lot 36. The L35-07
 gate still uses this offline iteration budget — do not raise it to move a failing
 p-value (backlog L35-07 watch point).
+
+## 2026-08-13 · [T] L35-07 search-v5 gate blocked
+
+`search-v5` is registered (ISMCTS, offline budget **64**, depth floor 2 rounds,
+priors/rollouts from `heuristic-v4` while L33-05 is Blocked). Promotion gate vs
+the Lot 33 champion (`heuristic-v4` / frozen gauntlet) **failed**.
+
+| Field | Value |
+|---|---|
+| Seed | `l35-07-gate` |
+| Requested games | 2 000 (seat-rotated) |
+| Decided / stalls | 1 527 / 473 |
+| Wins / losses | 722 / 805 |
+| Win rate | **0.473** (Wilson 0.448–0.498) |
+| One-sided p (H1: >0.5) | ≈ **0.98** |
+| Candidate hash | `d3ab376c6a4ed37f` |
+| Incumbent hash | `d585586e0c8f7711` |
+| Offline iterations | 64 |
+| Wall elapsed | 13 584 171 ms (~3.8 h, 8 worker threads) |
+| Artifacts | `docs/simulation/2026-08-13-v5-search-gate/` |
+
+Probe (`l35-07-gate-probe`, 200 games) was a coin flip (0.503 / p≈0.50); the
+full gate shows a **loss** to `heuristic-v4`, not noise. Stall rate rose to
+~24% under search (vs ~17% heuristic screens) — stalls stay unassigned.
+
+**Implication:** do not raise the iteration budget to chase p < 0.01 (L35-07
+watch). Upstream suspects per backlog: belief calibration (L34-06), evaluator
+(L33-02), or effective depth. **`DEFAULT_POLICY_ID` remains `heuristic-v4`.**
+`search-v5` stays registered for Lot 36 wiring experiments and diagnosis, not
+as the room default.

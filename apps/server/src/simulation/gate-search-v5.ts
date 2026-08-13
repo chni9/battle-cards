@@ -1,5 +1,6 @@
 /**
  * L35-07 promotion gate: seat-rotated holdout, p < 0.01 vs Lot 33 champion.
+ * Champion is `heuristic-v4` while L33-05 is Blocked (frozen gauntlet).
  *
  * Usage:
  *   pnpm --filter @card-battle/server exec tsx src/simulation/gate-search-v5.ts \
@@ -8,8 +9,10 @@
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Worker } from 'node:worker_threads';
 
 import { HEURISTIC_V4_POLICY_ID } from '../bots/policies/heuristic-v4';
 import { SEARCH_V5_POLICY_ID } from '../bots/policies/search-v5';
@@ -17,15 +20,19 @@ import { getPolicy } from '../bots/registry';
 import { OFFLINE_SEARCH_ITERATIONS } from '../bots/search/search-budget';
 import { computeHeuristicV4WeightsHash } from '../bots/weights-hash';
 import { binomialTailPValueGe } from './binomial-test';
-import { evaluatePolicyAgainstGauntlet } from './fitness-gauntlet';
-import { buildFitSplit } from './fit-split';
+import type { FitnessResult } from './fitness-gauntlet';
+import { buildFitSplit, type FitMatchup } from './fit-split';
+import type { PolicyGateInbound, PolicyGateOutbound } from './policy-gate-worker';
 import { wilsonInterval } from './wilson-interval';
+
+const WORKER_PATH = fileURLToPath(new URL('./policy-gate-worker.ts', import.meta.url));
 
 function parseArgs(argv: readonly string[]): {
   readonly policy: string;
   readonly games: number;
   readonly seed: string;
   readonly out: string;
+  readonly workers: number;
 } {
   const args = new Map<string, string>();
 
@@ -51,6 +58,11 @@ function parseArgs(argv: readonly string[]): {
   }
 
   const games = Number.parseInt(args.get('games') ?? '2000', 10);
+  const workersRaw = args.get('workers');
+  const workers =
+    workersRaw !== undefined
+      ? Number.parseInt(workersRaw, 10)
+      : Math.max(1, Math.min(availableParallelism(), 8));
 
   return {
     policy: args.get('policy') ?? SEARCH_V5_POLICY_ID,
@@ -62,10 +74,126 @@ function parseArgs(argv: readonly string[]): {
         path.dirname(fileURLToPath(import.meta.url)),
         '../../../../docs/simulation/2026-08-13-v5-search-gate/gate.json',
       ),
+    workers,
   };
 }
 
-function main(): void {
+function mergeFitness(partials: readonly FitnessResult[]): FitnessResult {
+  let wins = 0;
+  let losses = 0;
+  let stalls = 0;
+  let games = 0;
+
+  for (const partial of partials) {
+    wins += partial.wins;
+    losses += partial.losses;
+    stalls += partial.stalls;
+    games += partial.games;
+  }
+
+  const decided = wins + losses;
+  return {
+    wins,
+    losses,
+    stalls,
+    games,
+    winRate: decided === 0 ? 0 : wins / decided,
+  };
+}
+
+async function evaluatePolicyParallel(
+  policyId: string,
+  matchups: readonly FitMatchup[],
+  workerCount: number,
+  difficulty: 'easy' | 'normal' | 'hard',
+): Promise<FitnessResult> {
+  if (matchups.length === 0) {
+    return { wins: 0, losses: 0, stalls: 0, games: 0, winRate: 0 };
+  }
+
+  const chunkCount = Math.min(workerCount, matchups.length);
+  const chunkSize = Math.ceil(matchups.length / chunkCount);
+  const chunks: FitMatchup[][] = [];
+
+  for (let index = 0; index < matchups.length; index += chunkSize) {
+    chunks.push([...matchups.slice(index, index + chunkSize)]);
+  }
+
+  const workers = chunks.map(
+    () =>
+      new Worker(WORKER_PATH, {
+        execArgv: ['--import', 'tsx'],
+      }),
+  );
+
+  try {
+    const partials = await Promise.all(
+      chunks.map(async (chunk, chunkIndex) => {
+        const worker = workers[chunkIndex];
+
+        if (worker === undefined) {
+          throw new Error('policy-gate worker missing');
+        }
+
+        const id = chunkIndex + 1;
+        const started = Date.now();
+
+        return await new Promise<FitnessResult>((resolve, reject) => {
+          const onMessage = (message: PolicyGateOutbound): void => {
+            if (message.id !== id) return;
+
+            worker.off('message', onMessage);
+            worker.off('error', onError);
+
+            if (message.type === 'error') {
+              reject(new Error(message.message));
+              return;
+            }
+
+            if (message.type === 'result') {
+              console.error(
+                JSON.stringify({
+                  chunk: chunkIndex,
+                  matchups: chunk.length,
+                  elapsedMs: Date.now() - started,
+                  wins: message.result.wins,
+                  losses: message.result.losses,
+                  stalls: message.result.stalls,
+                }),
+              );
+              resolve(message.result);
+              return;
+            }
+          };
+
+          const onError = (error: Error): void => {
+            worker.off('message', onMessage);
+            worker.off('error', onError);
+            reject(error);
+          };
+
+          worker.on('message', onMessage);
+          worker.on('error', onError);
+
+          const message: PolicyGateInbound = {
+            type: 'policy-gate',
+            id,
+            policyId,
+            matchups: chunk,
+            difficulty,
+          };
+          worker.postMessage(message);
+        });
+      }),
+    );
+
+    return mergeFitness(partials);
+  } finally {
+    await Promise.all(workers.map(async (worker) => worker.terminate()));
+  }
+}
+
+async function main(): Promise<void> {
   const config = parseArgs(process.argv.slice(2));
   const matchupCount = Math.ceil(config.games / 2);
   const split = buildFitSplit({
@@ -79,9 +207,22 @@ function main(): void {
   const champion = getPolicy(HEURISTIC_V4_POLICY_ID);
   const v4Hash = computeHeuristicV4WeightsHash();
   const started = Date.now();
-  const result = evaluatePolicyAgainstGauntlet(candidate, split.holdout, {
-    difficulty: 'hard',
-  });
+  console.error(
+    JSON.stringify({
+      phase: 'start',
+      policy: candidate.id,
+      games: config.games,
+      matchups: matchupCount,
+      workers: config.workers,
+      offlineSearchIterations: OFFLINE_SEARCH_ITERATIONS,
+    }),
+  );
+  const result = await evaluatePolicyParallel(
+    candidate.id,
+    split.holdout,
+    config.workers,
+    'hard',
+  );
   const elapsedMs = Date.now() - started;
   const decided = result.wins + result.losses;
   const pValue = binomialTailPValueGe(result.wins, decided, 0.5);
@@ -101,6 +242,7 @@ function main(): void {
     seed: config.seed,
     requestedGames: config.games,
     matchups: matchupCount,
+    workers: config.workers,
     wins: result.wins,
     losses: result.losses,
     stalls: result.stalls,
@@ -125,10 +267,8 @@ function main(): void {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try {
-    main();
-  } catch (error: unknown) {
+  void main().catch((error: unknown) => {
     console.error(error);
     process.exitCode = 1;
-  }
+  });
 }

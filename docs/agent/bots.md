@@ -179,9 +179,10 @@ determinizer is how V5 fails quietly.
 - **L35-06:** `sub-choice-coverage.ts` — `SEARCH_SUB_CHOICE_HANDLERS` must stay
   exhaustive over `SubChoiceKind`.
 - **L35-07:** registered `search-v5` (`policies/search-v5.ts`). Gate script:
-  `simulation/gate-search-v5.ts`. Flip `DEFAULT_POLICY_ID` only after the
-  arena gate passes (vs Lot 33 champion = `heuristic-v4` while L33-05 is
-  Blocked). Sub-choice picks delegate to `heuristic-v4`.
+  `simulation/gate-search-v5.ts` (parallel policy-id workers). **Blocked** —
+  arena gate vs `heuristic-v4` failed (`docs/simulation/2026-08-13-v5-search-gate/`);
+  `DEFAULT_POLICY_ID` stays `heuristic-v4`. Sub-choice picks delegate to
+  `heuristic-v4`.
 - Per decide: `inferBelief` once; per iteration: `sampleDeterminizedState`.
   Eval path: `extractFeatures(..., belief.summary)` + `evaluateFromFeatures`
   (bare `evaluate()` still zeros belief).
