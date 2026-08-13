@@ -308,7 +308,9 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     });
 
     if (input.captureFeatureSnapshots === true) {
-      unlabeledSnapshots.push(captureFeatureSnapshot(state, botId));
+      unlabeledSnapshots.push(
+        captureFeatureSnapshot(state, botId, actionLog, `sim-${input.seed}`),
+      );
     }
 
     const seatIndex = Number.parseInt(botId.replace('bot-', ''), 10);

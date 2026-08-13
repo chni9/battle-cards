@@ -48,10 +48,28 @@ update expectations — put the change under a new policy id.
 - Belief slots fill from optional `BeliefSummary` (L34-03). Omitted → zeros. `evaluate` does
   **not** take belief until Lot 35.
 
-## Feature snapshots (L33-06)
+## Feature snapshots (L33-06 / L37-01)
 
 - Off by default. Arena: `--feature-snapshots <path.jsonl>`.
 - Stalled games contribute **zero** rows (throw before label).
+- **L37-01:** capture is belief-matched — `buildPlayingViewFor` + `inferBelief(view, log)`
+  + `extractFeatures(state, id, belief.summary)`. Belief APIs still take no `GameState`.
+  Pre-L37 snapshots with zero belief widths must not train production models.
+- Assemble: `pnpm --filter @card-battle/server fit:assemble` → seed-split train/val/test
+  (`assemble-fitted-dataset.ts`). Split by **seed**, never by row.
+
+## Fitted evaluator (Lot 37)
+
+- Inference: `bots/eval/fitted.ts` (plain JSON logistic; GBDT reserved).
+- Dispatch: `evaluateFromFeatures` reads `weights.evaluator.kind`
+  (`linear` | `fitted-logistic` | `fitted-gbdt`) + optional `fittedModelId`.
+- Fit: `pnpm --filter @card-battle/server fit:logistic`.
+- Profile: `search-fitted-logistic` → `logistic-v5` model. Default evaluator stays **linear**.
+- Gate: `pnpm --filter @card-battle/server gate:fitted-eval` — search+fitted vs
+  search+linear at the same offline iteration budget. Promote only on p < 0.01 +
+  playtest; do **not** flip `DEFAULT_POLICY_ID` (L35-07).
+- L37-03 GBDT: build only if logistic gate fails or passes thinly.
+- Artifacts: `docs/simulation/2026-08-13-v5-fitted/`.
 
 ## Fitting / optimizer (L33-03…05)
 
