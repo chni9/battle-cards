@@ -155,6 +155,35 @@ widths. `evaluate` still omits belief until Lot 35.
 search until calibration is current after belief changes. An unmeasured
 determinizer is how V5 fails quietly.
 
+## Search — ISMCTS (L35-01…)
+
+- **Algorithm (#V5-1):** ISMCTS with per-iteration re-determinization — ruled from
+  L32-05 throughput (~2.5×10³ truncated playouts/s), not preference. See
+  `decisions.md` 2026-08-13.
+- Scaffold under `bots/search/`: `search-types.ts`, `search-budget.ts`
+  (`OFFLINE_SEARCH_ITERATIONS = 400`, depth floor 2, widening `c=1`/`α=0.5`),
+  `info-set-key.ts`, `list-search-decisions.ts`, `apply-search-decision.ts`,
+  `priors.ts`, `puct.ts`, `ismcts.ts`. Behaviour lands L35-02…07.
+- **L35-02:** `listSearchDecisions` / `applySearchDecision` — one node per
+  main action or sub-choice; elimination-reward owner is the eliminator.
+  Combinatorial pool/reward sets capped at 32. Do not call
+  `performAndCompleteTurn` for tree steps (collapses the chain).
+- **L35-03 / #V5-8:** max^n value vectors; `selectChild` maximizes the owner's
+  component (paranoid rejected). Same policy for all seats. Coalitions = §11 #3
+  accepted limitation.
+- **L35-06:** `sub-choice-coverage.ts` — `SEARCH_SUB_CHOICE_HANDLERS` must stay
+  exhaustive over `SubChoiceKind`.
+- Per decide: `inferBelief` once; per iteration: `sampleDeterminizedState`.
+  Eval path: `extractFeatures(..., belief.summary)` + `evaluateFromFeatures`
+  (bare `evaluate()` still zeros belief).
+- Base heuristic for priors/rollouts/gate: Lot 33 champion — room default
+  `heuristic-v4` while L33-05 is Blocked; `heuristic-tuned-v5` is experimental
+  only. Depth floor ≥2 full rounds is the strength lever (not more one-round
+  probes).
+- Progressive widening constants stay module-level until a later weights schema
+  migration. Assassin multi-attack candidate cap ≤8 stays (L16-02).
+- No `GameState` on `decide` / worker wire. No root-parallel merge inside one tree.
+
 ## Arena / workers
 
 - Arena: `simulation/run-arena.ts` (L32-06) — seat rotation mandatory; gate

@@ -629,14 +629,14 @@ v3 §13, v4 §12:
 
 | # | Question | Recommendation | Blocks |
 |---|---|---|---|
-| **#V5-1** | ISMCTS with per-iteration re-determinization, or N-tree PIMC? | **ISMCTS** — far better sample efficiency at room-scale budgets, which is exactly the regime a TypeScript forward model lives in. PIMC is the fallback if the information-set bookkeeping measures too expensive. | Lot 34 |
+| **#V5-1** | ISMCTS with per-iteration re-determinization, or N-tree PIMC? | **Closed (L35-01):** ISMCTS. Justified by L32-05 (~2.5×10³ truncated playouts/s): enough for a few hundred iterations/decision, but sample efficiency still wins at room budgets. PIMC remains fallback only if info-set bookkeeping measures too costly. | — |
 | **#V5-2** | **Is the card shop supply finite or unlimited?** | **Closed (L34-01):** unlimited. Opponent hands are not constrained by pool outflow; sample via kit accounting + pluggable card-id prior. | — |
 | **#V5-3** | Weaker difficulty tiers: keep uniform random substitution, or softmax over search action values? | **Softmax temperature.** Uniform substitution beside a searching bot reads as erratic, not weak. | Lot 36 |
 | **#V5-4** | Does the public `Why` panel expose search statistics (visits, estimated win probability)? | **No numbers.** The bot's evaluation aggregates its own private hand quality; publishing it to every seat leaks private information through an explainability feature. Keep `botReason` coarse — add `search-best` and `search-fallback` codes only. | Lot 35 |
 | **#V5-5** | Confirm the minimal reopening of #V3-5 (weights as a typed, hash-identified data object with today's constants as the frozen default). | Confirm. Without it §5.2 cannot exist. | Lot 33 |
 | **#V5-6** | Confirm reopening `AGENTS.md` golden rule 7 / v4 §12 — search, lookahead and bounded opponent modelling are in scope for V5. | Confirm **in writing**, and edit `AGENTS.md` in the same change, or every agent session stops and asks. | Lot 32 |
 | **#V5-7** | Evaluator target: pure win probability, or win probability plus a small survival term? | **Pure win probability**, with a survival term available as a tuned parameter initialised at 0. A survival bonus stabilises long games but produces a bot that turtles; let the optimizer decide its weight rather than the author. | Lot 33 |
-| **#V5-8** | Does the search model opponents as playing the same policy (self-play assumption), or as weaker? | **Same policy.** Modelling opponents as weaker is how a search bot walks into a punish it "knew" was unlikely. | Lot 34 |
+| **#V5-8** | Does the search model opponents as playing the same policy (self-play assumption), or as weaker? | **Closed (L35-03):** same policy (self-play / max^n). Paranoid rejected. Coalitions are an accepted §11 limitation. | — |
 | **#V5-9** | The policy signature gains the public action log as a parameter. Confirm. | Confirm — the log is public by #V3-2, so this grants the bot nothing a human lacks, but it is a signature change to the decision-2 contract and should be ruled rather than slipped in. | Lot 32 |
 | **#V5-10** | Does the arena's regression gate block a merge, or only a default-policy change? | **Default-policy change only.** Blocking merges on a stochastic gate makes the repo unworkable for a solo developer. | Lot 32 |
 

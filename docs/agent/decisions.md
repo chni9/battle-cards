@@ -2026,3 +2026,36 @@ Artifacts: `docs/simulation/2026-08-12-v5-belief/` (config, aggregates, WRITEUP)
 | Life MAE (interval midpoint) | ≈ 3.66 |
 
 Concludes nothing about balance. Lot 35 may start after #V5-1.
+
+
+## 2026-08-13 · [P] #V5-1 ISMCTS chosen from L32-05 numbers (L35-01)
+
+Designer ruling (session / Lot 35 plan): accept technical spec v5 §13 recommendation
+**and** justify from the L32-05 bench, not preference.
+
+| Evidence (L32-05 / 2026-08-10) | Value |
+|---|---|
+| Truncated playouts/s (depth 8) | ≈ 2.5×10³ |
+| Turns/s (`performAndCompleteTurn` + `SIM_NOW_MS`) | ≈ 8.9×10⁴ |
+
+At ~2.5k truncated playouts/s, a few hundred iterations per decision fit room-scale
+latency, but sample efficiency still dominates. **ISMCTS with per-iteration
+re-determinization** shares statistics across sampled worlds; N-tree PIMC would
+spend that budget on independent trees. PIMC remains the fallback only if
+information-set bookkeeping measures too expensive later — not the v1 choice.
+
+Default offline iteration budget: `OFFLINE_SEARCH_ITERATIONS = 400`
+(`bots/search/search-budget.ts`) ≈ 160 ms at the L32-05 rate. Wall-clock budgets
+stay Lot 36. Depth floor remains two complete rounds (tech §6.4).
+
+## 2026-08-13 · [P] #V5-8 same-policy opponent modelling (L35-03)
+
+Designer ruling (session / Lot 35 plan): accept technical spec v5 §13 recommendation.
+
+Search models every seat — including opponents and all sub-choice owners — as
+playing the **same policy** under search (self-play / max^n). Modelling opponents
+as weaker walks into punishes the bot "knew" were unlikely. Paranoid ("everyone
+targets me") remains explicitly rejected (tech §6.2).
+
+Accepted limitation (tech §11 #3): max^n assumes no coalitions; coordinated
+humans in 3–4p can exploit this. Out of V5 scope.
