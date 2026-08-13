@@ -1,5 +1,6 @@
 /**
  * Phase A state evaluator — technical spec v5 §5.1 / #V5-7 (L33-02).
+ * Lot 37: fitted logistic/GBDT dispatch via `weights.evaluator.kind`.
  * Sole-survivor win-probability vector over living players (sums to ≈1).
  */
 
@@ -14,6 +15,7 @@ import {
   FEATURE_DIM,
   type FeatureVector,
 } from './features';
+import { loadFittedModel, logitFromFeatures } from './fitted';
 
 const SUM_TOLERANCE = 1e-9;
 
@@ -63,9 +65,8 @@ function dot(features: FeatureVector, weights: readonly number[]): number {
 }
 
 /**
- * Linear combination over extracted features → logits → softmax over living seats.
- * `#V5-7`: optional survival term (default weight 0) adds `survivalTermWeight * lives/lifeLimit`
- * to each living player's logit before softmax.
+ * Linear or fitted logits → softmax over living seats.
+ * `#V5-7`: optional survival term (default weight 0) applies only to `linear` kind.
  */
 export function evaluateFromFeatures(
   state: GameState,
@@ -73,6 +74,37 @@ export function evaluateFromFeatures(
   featureByPlayerId: ReadonlyMap<string, FeatureVector>,
   weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
 ): Float64Array {
+  const kind = weights.evaluator.kind ?? 'linear';
+
+  if (kind === 'fitted-logistic' || kind === 'fitted-gbdt') {
+    const modelId = weights.evaluator.fittedModelId;
+
+    if (modelId === undefined || modelId === '') {
+      throw new Error(`evaluator.kind=${kind} requires fittedModelId`);
+    }
+
+    const model = loadFittedModel(modelId);
+    const expectedKind = kind === 'fitted-logistic' ? 'logistic' : 'gbdt';
+
+    if (model.kind !== expectedKind) {
+      throw new Error(
+        `fittedModelId ${modelId} is ${model.kind}, expected ${expectedKind}`,
+      );
+    }
+
+    const logits = livingPlayerIds.map((playerId) => {
+      const features = featureByPlayerId.get(playerId);
+
+      if (features === undefined) {
+        throw new Error(`Missing features for ${playerId}`);
+      }
+
+      return logitFromFeatures(model, features);
+    });
+
+    return softmax(logits);
+  }
+
   const logits = livingPlayerIds.map((playerId) => {
     const features = featureByPlayerId.get(playerId);
 
@@ -100,6 +132,7 @@ export function evaluateFromFeatures(
 /**
  * Estimated P(player i is sole survivor) for every living player, in seat order
  * of `state.players` filtered to living. Eliminated seats are omitted.
+ * Belief widths stay zero here — search uses `evaluateWithBelief` instead.
  */
 export function evaluate(
   state: GameState,

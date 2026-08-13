@@ -1,0 +1,33 @@
+{
+  "candidate": {
+    "profileId": "search-fitted-logistic",
+    "weightsHash": "6f7d9be071b0e933",
+    "evaluatorKind": "fitted-logistic",
+    "fittedModelId": "logistic-v5"
+  },
+  "incumbent": {
+    "profileId": "search-linear",
+    "weightsHash": "d3ab376c6a4ed37f",
+    "evaluatorKind": "linear"
+  },
+  "offlineSearchIterations": 64,
+  "seed": "l37-04-smoke",
+  "requestedGames": 4,
+  "matchups": 2,
+  "workers": 2,
+  "wins": 0,
+  "losses": 2,
+  "stalls": 2,
+  "gamesPlayed": 4,
+  "decided": 2,
+  "winRate": 0,
+  "wilson": {
+    "lower": 0,
+    "upper": 0.6576280471103807,
+    "center": 0.32881402355519035
+  },
+  "pValueOneSided": 1,
+  "elapsedMs": 249904,
+  "passed": false,
+  "promotionNote": "Promote search-v5 default evaluator only on pass + developer playtest. Do not flip DEFAULT_POLICY_ID (L35-07)."
+}

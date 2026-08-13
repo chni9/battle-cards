@@ -1,0 +1,134 @@
+{
+  "lambda": 0.1,
+  "trainLogLoss": 0.70231796016599,
+  "validationLogLoss": 0.7263606065838434,
+  "testLogLoss": 0.7087860649220209,
+  "testBrier": 0.2576245627682635,
+  "calibrationVal": [
+    {
+      "bin": 0,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 1,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 2,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 3,
+      "count": 1290,
+      "meanPred": 0.37459603706652767,
+      "meanLabel": 0.6682170542635659
+    },
+    {
+      "bin": 4,
+      "count": 1493,
+      "meanPred": 0.41861518080083165,
+      "meanLabel": 0.348292029470864
+    },
+    {
+      "bin": 5,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 6,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 7,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 8,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 9,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    }
+  ],
+  "calibrationTest": [
+    {
+      "bin": 0,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 1,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 2,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 3,
+      "count": 664,
+      "meanPred": 0.3763031078233132,
+      "meanLabel": 0.4397590361445783
+    },
+    {
+      "bin": 4,
+      "count": 1082,
+      "meanPred": 0.4235421428049682,
+      "meanLabel": 0.5258780036968577
+    },
+    {
+      "bin": 5,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 6,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 7,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 8,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    },
+    {
+      "bin": 9,
+      "count": 0,
+      "meanPred": 0,
+      "meanLabel": 0
+    }
+  ],
+  "modelContentHash": "7226f3503a302a90",
+  "featureLayoutVersion": 1,
+  "inferenceParityMaxAbsError": 2.220446049250313e-16
+}

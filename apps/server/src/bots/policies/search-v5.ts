@@ -33,11 +33,13 @@ function resolveWeights(ctx: PolicyDecideContext, fallback: PolicyWeights): Poli
 export function createSearchV5Policy(
   weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
   rolloutPolicy: BotPolicy = heuristicV4Policy,
+  options: { readonly id?: string } = {},
 ): BotPolicy {
   const weightsHash = computePolicyWeightsHash(weights);
+  const id = options.id ?? SEARCH_V5_POLICY_ID;
 
   return {
-    id: SEARCH_V5_POLICY_ID,
+    id,
     weightsHash,
     decide(view, actions, rng, ctx) {
       const active = resolveWeights(ctx, weights);

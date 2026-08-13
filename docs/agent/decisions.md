@@ -2137,3 +2137,29 @@ finishing ISMCTS iteration cannot push past the think envelope.
 **Sign-off:** pending — developer must play one full game at Easy / Normal / Hard
 against `search-v5` and record what looked sharp vs wrong (expect bluff naivety,
 tech §6.6 / §11). L36-05 stays open until that note lands.
+
+## 2026-08-13 · [T] L37-01/02 fitted evaluator pipeline
+
+Belief-matched feature snapshots + seed-split assemble + pure-TS logistic fit
+shipped. Artifacts under `docs/simulation/2026-08-13-v5-fitted/`.
+
+| Field | Value |
+|---|---|
+| Snapshot rows | 13 319 (80×2 arena games, `heuristic-v4` self-play bootstrap) |
+| Manifest hash | `c9de8adb143b51c5` |
+| Model | `logistic-v5` hash `7226f3503a302a90` |
+| Profile | `search-fitted-logistic` (not default) |
+| Test log-loss / Brier | ≈ 0.709 / 0.258 |
+| Inference parity | max abs error ~1e-16 |
+
+**Capture:** `inferBelief(view, log)` then `extractFeatures(..., belief.summary)` —
+no `GameState` into belief. **Default evaluator stays linear.**
+
+**L37-04:** `gate:fitted-eval` script ready. Smoke (`l37-04-smoke`, 4 games) ran
+end-to-end (`gate-smoke.json`); full ≥2 000-game gate + playtest still required
+before promoting fitted inside `search-v5`. Do not flip `DEFAULT_POLICY_ID`
+(L35-07). Bootstrap was heuristic self-play — refit on `search-v5` snapshots
+before trusting the promotion gate.
+
+**L37-03:** not built; wait for L37-04 logistic outcome.
+

@@ -160,10 +160,17 @@ export interface PolicyLifeThresholdWeights {
 /**
  * Phase A linear evaluator + #V5-7 survival term.
  * `linearWeights` length is fixed when `FEATURE_LAYOUT_VERSION` lands (L33-02).
+ * Lot 37: optional `kind` / `fittedModelId` select fitted inference (default linear).
  */
+export type EvaluatorKind = 'linear' | 'fitted-logistic' | 'fitted-gbdt';
+
 export interface PolicyEvaluatorWeights {
+  /** Absent / undefined → linear (Phase A). */
+  readonly kind?: EvaluatorKind;
   readonly survivalTermWeight: number;
   readonly linearWeights: readonly number[];
+  /** Checked-in id under `bots/eval/models/` when kind is fitted-*. */
+  readonly fittedModelId?: string;
 }
 
 /** Search hypers — present for a stable schema; unused until Lot 35. */
@@ -418,9 +425,39 @@ function parseEvaluator(raw: unknown): PolicyEvaluatorWeights {
     throw new Error('PolicyWeights.evaluator.linearWeights must be a number array');
   }
 
+  const kindRaw = raw['kind'];
+  let kind: EvaluatorKind | undefined;
+
+  if (kindRaw !== undefined) {
+    if (
+      kindRaw !== 'linear' &&
+      kindRaw !== 'fitted-logistic' &&
+      kindRaw !== 'fitted-gbdt'
+    ) {
+      throw new Error(
+        `PolicyWeights.evaluator.kind invalid: ${typeof kindRaw === 'string' ? kindRaw : typeof kindRaw}`,
+      );
+    }
+
+    kind = kindRaw;
+  }
+
+  const fittedModelIdRaw = raw['fittedModelId'];
+  let fittedModelId: string | undefined;
+
+  if (fittedModelIdRaw !== undefined) {
+    if (typeof fittedModelIdRaw !== 'string' || fittedModelIdRaw === '') {
+      throw new Error('PolicyWeights.evaluator.fittedModelId must be a non-empty string');
+    }
+
+    fittedModelId = fittedModelIdRaw;
+  }
+
   return {
+    ...(kind !== undefined ? { kind } : {}),
     survivalTermWeight: requireNumber(raw, 'survivalTermWeight', 'evaluator'),
     linearWeights: linearRaw,
+    ...(fittedModelId !== undefined ? { fittedModelId } : {}),
   };
 }
 
