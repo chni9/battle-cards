@@ -13,7 +13,7 @@ import { createRng } from '../../engine/rng';
 import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { makeCounterEffect } from '../../testing/factories';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
-import { getDefaultPolicy } from '../registry';
+import { getDefaultPolicy, getPolicy } from '../registry';
 import { cloneGameState } from './clone-state';
 
 function makePending(overrides: Partial<PendingEffect> = {}): PendingEffect {
@@ -264,6 +264,36 @@ describe('cloneGameState (L32-04)', () => {
     const actions = listLegalActions(state, 'bot-0');
     const rng = createRng(`${state.seed}:bot:bot-0:${state.turnSequence}`);
     getDefaultPolicy().decide(view, actions, rng, { actionLog });
+
+    expect(state).toEqual(before);
+  });
+
+  it('search-v5 decide against a view does not mutate the live GameState', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'bot-0', nickname: 'A' },
+        { id: 'bot-1', nickname: 'B' },
+      ],
+      seed: 'l36-01-live-guard-search',
+      kitAssignment: ['assassin', 'kamikaze'],
+    });
+    state.currentTurnPlayerId = 'bot-0';
+
+    const before = structuredClone(state);
+    const actionLog: ActionLogEntryView[] = [];
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'bot-0',
+      gameCode: 'GUARD',
+      state,
+      turnDeadlineMs: null,
+      actionLog,
+    });
+    const actions = listLegalActions(state, 'bot-0');
+    const rng = createRng(`${state.seed}:bot:bot-0:${state.turnSequence}`);
+    getPolicy('search-v5').decide(view, actions, rng, {
+      actionLog,
+      budget: { kind: 'iterations', n: 8 },
+    });
 
     expect(state).toEqual(before);
   });

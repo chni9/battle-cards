@@ -2099,3 +2099,41 @@ watch). Upstream suspects per backlog: belief calibration (L34-06), evaluator
 (L33-02), or effective depth. **`DEFAULT_POLICY_ID` remains `heuristic-v4`.**
 `search-v5` stays registered for Lot 36 wiring experiments and diagnosis, not
 as the room default.
+
+## 2026-08-13 · [P] #V5-3 difficulty under search (L36-03)
+
+**Ruling:** Softmax temperature for Normal; Easy keeps uniform substitution on
+`heuristic-v4`; Hard is full search with no substitution.
+
+| Tier | Composition |
+|---|---|
+| Hard | Full wall-clock search budget, no substitution |
+| Normal | `floor(thinkMs/8)` + softmax over root visit scores (`NORMAL_SOFTMAX_TEMPERATURE = 1.5`) |
+| Easy | Sync `heuristic-v4`, existing `DIFFICULTY_RANDOM_RATES.easy` uniform noise |
+
+Wire values `easy` / `normal` / `hard` and `formatBotDifficulty` labels unchanged (#V3-4).
+## 2026-08-13 · [P] #V5-4 Why panel under search (L36-04)
+
+**Ruling:** No numbers. Public `botReason` may carry only coarse codes
+`search-best` and `search-fallback`. Visit counts, win-probability estimates, and
+other eval aggregates stay server-side on `SearchStats` / diagnostics and must
+never reach `BotDecisionReason.params` (`assertPublicBotReason`).
+
+`PROTOCOL_VERSION` 27 → **28** (sole V5 bump).
+
+## 2026-08-13 · [T] L36-05 room decision latency (partial)
+
+Measured with `pnpm --filter @card-battle/server bench:room-latency`
+(4 concurrent “rooms”, 8 decisions each, wall-clock budgets, mid-game 4p fixture).
+
+| Tier | budgetMs | n | p50 | p95 | p99 | max | ≤ thinkMs (900) |
+|---|---|---|---|---|---|---|---|
+| Normal | 106 | 32 | 106 | 106.1 | 106.1 | 106.1 | yes |
+| Hard | 850 | 32 | 850 | 850.3 | 851.8 | 851.8 | yes |
+
+Hard search budget is `thinkMs − 50` (`ROOM_SEARCH_BUDGET_MARGIN_MS`) so a
+finishing ISMCTS iteration cannot push past the think envelope.
+
+**Sign-off:** pending — developer must play one full game at Easy / Normal / Hard
+against `search-v5` and record what looked sharp vs wrong (expect bluff naivety,
+tech §6.6 / §11). L36-05 stays open until that note lands.

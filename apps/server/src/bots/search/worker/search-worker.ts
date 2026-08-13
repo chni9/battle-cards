@@ -49,6 +49,12 @@ port.on('message', (message: WorkerInbound) => {
         stats: {
           elapsedMs: Date.now() - started,
           policyId: policy.id,
+          ...(decision.searchDiagnostics !== undefined
+            ? {
+                iterations: decision.searchDiagnostics.iterations,
+                actionScores: decision.searchDiagnostics.actionScores,
+              }
+            : {}),
         },
       },
     };

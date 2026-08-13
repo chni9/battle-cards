@@ -29,9 +29,22 @@ export interface SearchRequest {
   readonly weightsProfile: string | null;
 }
 
+/** Per-root action score for Normal-tier softmax (L36-03). Server-only. */
+export interface SearchActionScore {
+  readonly action: TurnAction;
+  readonly score: number;
+}
+
 export interface SearchStats {
   readonly elapsedMs: number;
   readonly policyId: string;
+  /** Iterations actually run (search-v5). */
+  readonly iterations?: number;
+  /**
+   * Root visit counts — Normal softmax (L36-03). Never copy into
+   * `BotDecisionReason.params` (#V5-4).
+   */
+  readonly actionScores?: readonly SearchActionScore[];
 }
 
 export interface SearchResponse {

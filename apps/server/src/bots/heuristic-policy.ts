@@ -64,9 +64,19 @@ export interface MirrorPolicyPick {
   reason: BotDecisionReason;
 }
 
+/** Optional search diagnostics — search-v5 only; worker copies into SearchStats. */
+export interface PolicySearchDiagnostics {
+  readonly iterations: number;
+  readonly actionScores: readonly {
+    readonly action: TurnAction;
+    readonly score: number;
+  }[];
+}
+
 export interface PolicyDecision {
   action: TurnAction;
   reason: BotDecisionReason;
+  searchDiagnostics?: PolicySearchDiagnostics;
 }
 
 export interface ScoredAction {

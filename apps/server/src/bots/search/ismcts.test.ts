@@ -78,7 +78,59 @@ describe('ISMCTS (L35-05)', () => {
 
     expect(legal).toContainEqual(first.action);
     expect(first.action).toEqual(second.action);
+    expect(first.actionScores.length).toBeGreaterThan(0);
+    expect(first.actionScores).toEqual(second.actionScores);
     expect(state).toEqual(snapshot);
+  });
+
+  it('wall-clock budget stops before the safety iteration cap', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l36-01-wall-clock',
+      kitAssignment: ['assassin', 'kamikaze'],
+    });
+    state.currentTurnPlayerId = 'a';
+    const alice = state.players.find((player) => player.id === 'a');
+
+    if (alice === undefined) {
+      return;
+    }
+
+    alice.points = 25;
+    alice.hand = [
+      { instanceId: 'atk', cardId: 'super-attack', isUpgraded: false },
+      { instanceId: 'tax', cardId: 'tax', isUpgraded: false },
+    ];
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const legal = listLegalActions(state, 'a');
+    const started = Date.now();
+    const result = runIsmcts({
+      view,
+      actionLog: [],
+      legalActions: legal,
+      rng: createRng('l36-01-wc'),
+      weights: DEFAULT_POLICY_WEIGHTS,
+      budget: { kind: 'wall-clock', ms: 5 },
+      rolloutPolicy: heuristicV4Policy,
+      botId: 'a',
+    });
+    const elapsed = Date.now() - started;
+
+    expect(legal).toContainEqual(result.action);
+    expect(result.actionScores.length).toBeGreaterThan(0);
+    // Safety cap for 5ms is 50; a true clock stop should finish well under that.
+    expect(result.iterations).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(2_000);
   });
 
   it('search-v5.decide does not mutate a live GameState snapshot', () => {

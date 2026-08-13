@@ -6,10 +6,14 @@ import { availableParallelism } from 'node:os';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath } from 'node:url';
 
+import { readBotThinkMs } from '../../bot-think-ms';
 import type { BotSearchPool, SearchRequest, SearchResponse, WorkerInbound, WorkerOutbound } from './types';
 import { SyncSearchPool } from './sync-pool';
 
 const WORKER_PATH = fileURLToPath(new URL('./search-worker.ts', import.meta.url));
+
+/** Slack past Hard think envelope so pool timeout is not the search budget. */
+export const SEARCH_POOL_TIMEOUT_SLACK_MS = 250;
 
 export type { BotSearchPool } from './types';
 
@@ -37,7 +41,8 @@ export class SearchWorkerPool implements BotSearchPool {
   constructor(options: SearchPoolOptions = {}) {
     const cores = availableParallelism();
     const configured = options.size ?? Math.max(1, Math.min(cores - 1, 4));
-    this.requestTimeoutMs = options.requestTimeoutMs ?? 5_000;
+    this.requestTimeoutMs =
+      options.requestTimeoutMs ?? readBotThinkMs() + SEARCH_POOL_TIMEOUT_SLACK_MS;
     const factory =
       options.createWorker ??
       (() =>

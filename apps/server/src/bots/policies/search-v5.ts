@@ -54,7 +54,11 @@ export function createSearchV5Policy(
 
       return {
         action: result.action,
-        reason: { code: 'policy-fallback' },
+        reason: { code: 'search-best' },
+        searchDiagnostics: {
+          iterations: result.iterations,
+          actionScores: result.actionScores,
+        },
       };
     },
     pickMirrorRedirect(view, rng, eligibleEffectIds) {

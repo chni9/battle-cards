@@ -24,7 +24,7 @@ import { buildDecisionPriors, widenedPriorSlice } from './priors';
 import { selectChild } from './puct';
 import {
   assertDepthCapRounds,
-  resolveIterationBudget,
+  resolveSearchLoop,
 } from './search-budget';
 import {
   evaluateWithBelief,
@@ -32,11 +32,12 @@ import {
   SIM_NOW_MS,
 } from './search-rollout';
 import type { SearchEdge, SearchNode } from './search-types';
-import type { SearchBudget } from './worker/types';
+import type { SearchActionScore, SearchBudget } from './worker/types';
 
 export interface IsmctsResult {
   readonly action: TurnAction;
   readonly iterations: number;
+  readonly actionScores: readonly SearchActionScore[];
 }
 
 export interface RunIsmctsArgs {
@@ -51,8 +52,21 @@ export interface RunIsmctsArgs {
   readonly uniformPrior?: boolean;
 }
 
+function collectRootActionScores(root: SearchNode): SearchActionScore[] {
+  const scores: SearchActionScore[] = [];
+
+  for (const edge of root.children.values()) {
+    if (edge.decision.kind === 'action') {
+      scores.push({ action: edge.decision.action, score: edge.visits });
+    }
+  }
+
+  return scores;
+}
+
 export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
-  const iterations = resolveIterationBudget(args.budget);
+  const startedMs = Date.now();
+  const loop = resolveSearchLoop(args.budget, startedMs);
   const depthCapRounds = assertDepthCapRounds(args.weights.search.depthCapRounds);
   const exploration = args.weights.search.explorationConstant;
   const belief = inferBelief(args.view, args.actionLog);
@@ -75,7 +89,11 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
       throw new Error('runIsmcts: missing sole action');
     }
 
-    return { action: only.action, iterations: 0 };
+    return {
+      action: only.action,
+      iterations: 0,
+      actionScores: [{ action: only.action, score: 1 }],
+    };
   }
 
   const rootPriors = buildDecisionPriors(
@@ -118,7 +136,16 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
 
   ensureNode(rootKey, rootOwner, 'action', 4);
 
-  for (let iteration = 0; iteration < iterations; iteration += 1) {
+  let iterationsRun = 0;
+  const maxIterations =
+    loop.mode === 'iterations' ? loop.n : loop.safetyMaxIterations;
+
+  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    if (loop.mode === 'wall-clock' && Date.now() >= loop.deadlineMs) {
+      break;
+    }
+
+    iterationsRun += 1;
     const iterRng = createRng(
       `${args.view.gameCode}:bot:${args.botId}:${String(args.view.turnSequence)}:search:${String(iteration)}`,
     );
@@ -269,7 +296,11 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
       throw new Error('runIsmcts: no root children');
     }
 
-    return { action: fallback.action, iterations };
+    return {
+      action: fallback.action,
+      iterations: iterationsRun,
+      actionScores: [{ action: fallback.action, score: 1 }],
+    };
   }
 
   let best: SearchEdge | null = null;
@@ -291,5 +322,9 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
     throw new Error('runIsmcts: best root edge is not an action');
   }
 
-  return { action: best.decision.action, iterations };
+  return {
+    action: best.decision.action,
+    iterations: iterationsRun,
+    actionScores: collectRootActionScores(root),
+  };
 }

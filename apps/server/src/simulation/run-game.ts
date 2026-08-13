@@ -11,11 +11,13 @@ import type {
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
+import { SEARCH_V5_POLICY_ID } from '../bots/policies/search-v5';
 import {
   DEFAULT_POLICY_ID,
   getPolicy,
 } from '../bots/registry';
 import type { BotPolicy } from '../bots/policy-types';
+import { OFFLINE_SEARCH_ITERATIONS } from '../bots/search/search-budget';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import {
@@ -69,6 +71,11 @@ export interface RunGameInput {
    * `null` / omitted → each policy's closed-over weights.
    */
   weightsProfile?: string | null;
+  /**
+   * Iteration budget for `search-v5` seats (L36-01). Never wall-clock in the
+   * simulator — reproducibility DoD. Defaults to `OFFLINE_SEARCH_ITERATIONS`.
+   */
+  searchIterations?: number;
   /** When true, attach labeled feature snapshots on a completed game (L33-06). */
   captureFeatureSnapshots?: boolean;
   /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
@@ -291,9 +298,13 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     });
     const actions = listLegalActions(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
+    const searchIterations = input.searchIterations ?? OFFLINE_SEARCH_ITERATIONS;
     const decision = policy.decide(view, actions, rng, {
       actionLog,
       weightsProfile: input.weightsProfile ?? null,
+      ...(policy.id === SEARCH_V5_POLICY_ID
+        ? { budget: { kind: 'iterations' as const, n: searchIterations } }
+        : {}),
     });
 
     if (input.captureFeatureSnapshots === true) {
@@ -305,7 +316,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     input.onPolicyDecide?.({
       policyId: policy.id,
       seatIndex: Number.isFinite(seatIndex) ? seatIndex : 0,
-      iterations: 1,
+      iterations: decision.searchDiagnostics?.iterations ?? 1,
     });
     const chosen = applyDifficultyNoise(decision.action, actions, difficulty, rng);
 

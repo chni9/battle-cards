@@ -35,7 +35,16 @@ export class SyncSearchPool implements BotSearchPool {
     return Promise.resolve({
       action: decision.action,
       reason: decision.reason,
-      stats: { elapsedMs: 0, policyId: policy.id },
+      stats: {
+        elapsedMs: 0,
+        policyId: policy.id,
+        ...(decision.searchDiagnostics !== undefined
+          ? {
+              iterations: decision.searchDiagnostics.iterations,
+              actionScores: decision.searchDiagnostics.actionScores,
+            }
+          : {}),
+      },
     });
   }
 

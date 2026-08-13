@@ -201,5 +201,22 @@ determinizer is how V5 fails quietly.
 - Workers: `bots/search/worker/` (L32-08) — payload excludes `GameState`. Fallback:
   sync `heuristic-v4` → draw only if that throws. Room `BotDriver.decideAndAct` requests
   the pool asynchronously; Vitest uses `SyncSearchPool` so unit tests do not spawn threads.
+  Fallback stages log `bot.fallback.<stage>` (L36-02): `worker_timeout`, `worker_crash`,
+  `illegal_action`, `heuristic`, `draw` — greppable without a debugger.
 - Forward-model budgets cite L32-05 numbers in `decisions.md`.
   Run: `pnpm --filter @card-battle/server bench:forward-model`.
+
+## Runtime budgets (L36-01)
+
+- **Room:** wall-clock only, capped by `bot-think-ms` (not added to it). Search starts
+  immediately on `scheduleTurn`; after the decision, the driver waits so elapsed ≥
+  `thinkMs` (perceived floor). Pool timeout = `thinkMs + 250ms` slack.
+- **Difficulty (L36-03 / #V5-3):** Hard = full wall-clock `search-v5`, no substitution.
+  Normal = `floor(thinkMs/8)` + softmax over root visit scores. Easy = sync
+  `heuristic-v4` (skips worker) + existing uniform `DIFFICULTY_RANDOM_RATES`.
+  `DEFAULT_POLICY_ID` stays `heuristic-v4` until a future gate passes (L35-07 failed).
+- **Simulator / arena:** iteration budget only (`searchIterations` / offline default
+  64). Never wall-clock — reproducibility DoD.
+- Hard search budget is `thinkMs − ROOM_SEARCH_BUDGET_MARGIN_MS` (50) so a finishing
+  iteration stays inside the think envelope. Bench:
+  `pnpm --filter @card-battle/server bench:room-latency`.

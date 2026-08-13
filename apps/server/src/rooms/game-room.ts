@@ -71,7 +71,8 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
-import { BotDriver } from '../bots/bot-driver';
+import { BotDriver, roomBotPolicyId } from '../bots/bot-driver';
+import { assertPublicBotReason } from '../bots/public-bot-reason';
 import { getDefaultPolicy } from '../bots/registry';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
@@ -208,6 +209,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       return seat.difficulty;
+    },
+    getBotPolicyId: (botId) => {
+      const seat = this.seats.find((entry) => entry.sessionId === botId);
+
+      if (seat === undefined || !isBotSeat(seat)) {
+        return roomBotPolicyId('hard');
+      }
+
+      return roomBotPolicyId(seat.difficulty);
     },
     performBotAction: (botId, action, reason) => {
       this.performBotAction(botId, action, reason);
@@ -1285,7 +1295,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private setPendingBotReason(reason: BotDecisionReason | undefined): void {
-    this.pendingBotReason = reason ?? null;
+    this.pendingBotReason =
+      reason === undefined ? null : assertPublicBotReason(reason);
   }
 
   private beginMirrorTimer(

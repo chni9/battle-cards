@@ -15,7 +15,7 @@ export function isBotDifficulty(value: unknown): value is BotDifficulty {
   );
 }
 
-/** Coarse reason codes — technical spec v3 §11 #V3-2 / L17-05. */
+/** Coarse reason codes — technical spec v3 §11 #V3-2 / L17-05 / L36-04. */
 export const BOT_REASON_CODES = [
   'lethal-now',
   'survive',
@@ -27,6 +27,8 @@ export const BOT_REASON_CODES = [
   'mirror-highest-damage',
   'reward-pick',
   'policy-fallback',
+  'search-best',
+  'search-fallback',
 ] as const;
 
 export type BotReasonCode = (typeof BOT_REASON_CODES)[number];
