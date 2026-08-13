@@ -29,6 +29,7 @@ export class SyncSearchPool implements BotSearchPool {
     const decision = policy.decide(request.view, request.legalActions, rng, {
       actionLog: request.actionLog,
       weightsProfile: request.weightsProfile,
+      budget: request.budget,
     });
 
     return Promise.resolve({

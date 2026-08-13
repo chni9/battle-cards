@@ -16,8 +16,8 @@ import {
 
 describe('search-budget (L35-01)', () => {
   it('defaults offline iterations to the L32-05-cited constant', () => {
-    expect(OFFLINE_SEARCH_ITERATIONS).toBe(400);
-    expect(resolveIterationBudget(undefined)).toBe(400);
+    expect(OFFLINE_SEARCH_ITERATIONS).toBe(64);
+    expect(resolveIterationBudget(undefined)).toBe(64);
     expect(resolveIterationBudget({ kind: 'iterations', n: 50 })).toBe(50);
   });
 

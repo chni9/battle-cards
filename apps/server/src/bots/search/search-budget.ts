@@ -8,7 +8,7 @@
 import type { SearchBudget } from './worker/types';
 
 /** Offline / pre-L36 default — cite L32-05 in decisions.md (#V5-1 / L35-01). */
-export const OFFLINE_SEARCH_ITERATIONS = 400;
+export const OFFLINE_SEARCH_ITERATIONS = 64;
 
 /** Hard floor — delayed resolution needs two full rounds visible (tech §6.4). */
 export const DEPTH_CAP_ROUNDS_FLOOR = 2;

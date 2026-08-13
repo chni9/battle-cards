@@ -2059,3 +2059,13 @@ targets me") remains explicitly rejected (tech §6.2).
 
 Accepted limitation (tech §11 #3): max^n assumes no coalitions; coordinated
 humans in 3–4p can exploit this. Out of V5 scope.
+
+## 2026-08-13 · [P] Offline search budget set to 64 (L35-04…07)
+
+`OFFLINE_SEARCH_ITERATIONS` revised from the L35-01 placeholder **400** to **64**
+in `bots/search/search-budget.ts`. Rationale: full ISMCTS (belief sample + PUCT +
+heuristic rollout to depth floor) is far heavier than the L32-05 truncated-playout
+bench; 400 iters made the L35-07 arena gate impractically slow without changing
+sample-efficiency diagnosis. Room wall-clock budgets remain Lot 36. The L35-07
+gate still uses this offline iteration budget — do not raise it to move a failing
+p-value (backlog L35-07 watch point).

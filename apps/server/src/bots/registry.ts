@@ -17,14 +17,20 @@ import {
   RANDOM_LEGAL_POLICY_ID,
   randomLegalPolicy,
 } from './policies/random-legal';
+import { SEARCH_V5_POLICY_ID, searchV5Policy } from './policies/search-v5';
 
 export {
   HEURISTIC_TUNED_V5_POLICY_ID,
   HEURISTIC_V4_POLICY_ID,
   RANDOM_LEGAL_POLICY_ID,
+  SEARCH_V5_POLICY_ID,
 };
 
-/** Default room / solo policy — stays `heuristic-v4` until L33-05 gate passes. */
+/**
+ * Default room / solo policy.
+ * L35-07 flips this to `search-v5` only after the arena gate passes.
+ * Until then stay on `heuristic-v4` (L33-05 still Blocked for tuned).
+ */
 export const DEFAULT_POLICY_ID = HEURISTIC_V4_POLICY_ID;
 
 const policies = new Map<string, BotPolicy>();
@@ -57,4 +63,5 @@ export function listPolicyIds(): readonly string[] {
 
 registerPolicy(heuristicV4Policy);
 registerPolicy(heuristicTunedV5Policy);
+registerPolicy(searchV5Policy);
 registerPolicy(randomLegalPolicy);

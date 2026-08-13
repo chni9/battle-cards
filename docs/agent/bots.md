@@ -16,8 +16,8 @@
   **view**; use them only for seats this bot has Spyed.
 - Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`),
   `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
-  L33-05 gate), and `random-legal` (uniform legal pick). Later `search-v5`
-  registers the same interface — the worker resolves by `policyId`.
+  L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate), and
+  `random-legal` (uniform legal pick). The worker resolves by `policyId`.
 
 ## Parity
 
@@ -161,9 +161,9 @@ determinizer is how V5 fails quietly.
   L32-05 throughput (~2.5×10³ truncated playouts/s), not preference. See
   `decisions.md` 2026-08-13.
 - Scaffold under `bots/search/`: `search-types.ts`, `search-budget.ts`
-  (`OFFLINE_SEARCH_ITERATIONS = 400`, depth floor 2, widening `c=1`/`α=0.5`),
+  (`OFFLINE_SEARCH_ITERATIONS = 64`, depth floor 2, widening `c=1`/`α=0.5`),
   `info-set-key.ts`, `list-search-decisions.ts`, `apply-search-decision.ts`,
-  `priors.ts`, `puct.ts`, `ismcts.ts`. Behaviour lands L35-02…07.
+  `priors.ts`, `puct.ts`, `ismcts.ts`, `search-rollout.ts`.
 - **L35-02:** `listSearchDecisions` / `applySearchDecision` — one node per
   main action or sub-choice; elimination-reward owner is the eliminator.
   Combinatorial pool/reward sets capped at 32. Do not call
@@ -171,8 +171,17 @@ determinizer is how V5 fails quietly.
 - **L35-03 / #V5-8:** max^n value vectors; `selectChild` maximizes the owner's
   component (paranoid rejected). Same policy for all seats. Coalitions = §11 #3
   accepted limitation.
+- **L35-04:** `buildDecisionPriors` — `softmax(scoreActions / τ)` for main
+  actions; uniform over sub-choice lists; progressive widening via
+  `widenedPriorSlice`.
+- **L35-05:** depth floor ≥2 full rounds; rollouts use base heuristic (never
+  random); backup is belief-aware `evaluateFromFeatures`.
 - **L35-06:** `sub-choice-coverage.ts` — `SEARCH_SUB_CHOICE_HANDLERS` must stay
   exhaustive over `SubChoiceKind`.
+- **L35-07:** registered `search-v5` (`policies/search-v5.ts`). Gate script:
+  `simulation/gate-search-v5.ts`. Flip `DEFAULT_POLICY_ID` only after the
+  arena gate passes (vs Lot 33 champion = `heuristic-v4` while L33-05 is
+  Blocked). Sub-choice picks delegate to `heuristic-v4`.
 - Per decide: `inferBelief` once; per iteration: `sampleDeterminizedState`.
   Eval path: `extractFeatures(..., belief.summary)` + `evaluateFromFeatures`
   (bare `evaluate()` still zeros belief).

@@ -26,9 +26,6 @@ port.on('message', (message: WorkerInbound) => {
 
   try {
     const policy = getPolicy(message.request.policyId);
-    // Budget is reserved for search-v5; heuristic policies ignore it.
-    void message.request.budget;
-
     const rng = createRng(
       `worker:${message.request.policyId}:${String(message.request.view.turnSequence)}:${String(message.id)}`,
     );
@@ -39,6 +36,7 @@ port.on('message', (message: WorkerInbound) => {
       {
         actionLog: message.request.actionLog,
         weightsProfile: message.request.weightsProfile,
+        budget: message.request.budget,
       },
     );
 

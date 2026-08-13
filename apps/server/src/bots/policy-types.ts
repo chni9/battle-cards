@@ -20,6 +20,7 @@ import type {
   PolicyDecision,
   RewardPolicyPicks,
 } from './heuristic-policy';
+import type { SearchBudget } from './search/worker/types';
 
 export type { MirrorPolicyPick, PolicyDecision, RewardPolicyPicks };
 
@@ -31,6 +32,8 @@ export interface PolicyDecideContext {
    * Arena and optimizer only; room path uses registered policy defaults.
    */
   readonly weightsProfile?: string | null;
+  /** Iteration / wall-clock budget — search-v5 (L35); heuristics ignore it. */
+  readonly budget?: SearchBudget;
 }
 
 export interface BotPolicy {
