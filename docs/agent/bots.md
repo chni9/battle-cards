@@ -224,6 +224,21 @@ determinizer is how V5 fails quietly.
 - Forward-model budgets cite L32-05 numbers in `decisions.md`.
   Run: `pnpm --filter @card-battle/server bench:forward-model`.
 
+## Gross-imbalance screen (L38)
+
+- Same instrument as Lot 31: `run-gross-imbalance.ts` → `runScreen`.
+- Flags: `--policy`, `--weights-profile`, `--search-iterations`, `--concurrency`.
+  Omitted `--policy` stays `DEFAULT_POLICY_ID` (`heuristic-v4`). The **V5 published
+  screen** passes `--policy search-v5 --search-iterations 64` (room Hard path;
+  designer 2026-08-15). Do not pass `search-fitted-logistic` unless L37-04 has
+  passed and folded fitted into search.
+- `config.json` records `policyId`, `weightsProfile`, `policyWeightsHash`,
+  `resolvedWeightsHash` (profile hash when set, else the registered hash), and
+  `searchIterations`. A silent matrix cap vs V4 is written to `coverageDroppedVsV4`.
+- Parallelism is **across games** (`screen-worker.ts`); JSONL is **sorted by seed**
+  so completion order cannot leak. Never wall-clock in the simulator.
+- Replay: `verify-screen-determinism.ts --published <dir>` (L38-03).
+
 ## Runtime budgets (L36-01)
 
 - **Room:** wall-clock only, capped by `bot-think-ms` (not added to it). Search starts

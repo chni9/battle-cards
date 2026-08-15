@@ -2163,3 +2163,19 @@ before trusting the promotion gate.
 
 **L37-03:** not built; wait for L37-04 logistic outcome.
 
+## 2026-08-15 · [P] L38 screen measures room Hard `search-v5` (option A)
+
+Designer ruling for Lot 38: the gross-imbalance screen measures **`search-v5` +
+linear evaluator** at `OFFLINE_SEARCH_ITERATIONS` (**64**), no
+`search-fitted-logistic` profile. That is the room **Hard** path
+(`roomBotPolicyId`), not `DEFAULT_POLICY_ID` (still `heuristic-v4` after
+failed L33-05 / L35-07 gates).
+
+**L37-04 dependency waived** for this screen: fitted is not under measurement,
+so the logistic gate need not pass before L38-01. L37-04 stays `To do`.
+
+**L36-05 playtest sign-off waived** to start the screen: latency is already
+recorded (2026-08-13); the missing human playtest note does not change the
+offline iteration-budget instrument. L36-05 stays `In progress` until that
+note lands. The screen still uses iteration budgets only (§8.2).
+
