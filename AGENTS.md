@@ -227,3 +227,27 @@ The files in `docs/agent/` are living documents. You maintain them automatically
 - **The code is the source of truth**: if a `docs/agent/` file contradicts the actual code, fix the doc.
 
 Living docs map: `docs/agent/`.
+
+## Cursor Cloud specific instructions
+
+Standard commands and toolchain rationale live in `README.md` (§ Commands, Toolchain) and §9
+above — read those first. Notes below are only the non-obvious, cloud-specific gotchas.
+
+- **Setup is just `pnpm install`.** It also downloads the lockfile-pinned Node 24.18.0 into
+  `node_modules` (system Node is ignored). The startup update script runs this; you do not need
+  to install Node yourself. Always run commands through `pnpm` — a bare `node`/`npx` gets the
+  wrong runtime.
+- **No database needed for dev or tests.** The server soft-skips the finished-game Postgres
+  write when `DATABASE_URL` is unset (`apps/server/src/db/pool.ts`), so `pnpm dev`, `pnpm test`
+  and `pnpm verify` all run with no Postgres. Only the production Docker image needs it.
+- **Running the app:** `pnpm dev` starts the Colyseus server on `:2567` and the Vite client on
+  `:5173` in parallel. In dev the server logs `STATIC_DIR missing or not found — SPA not served`
+  — that is expected (Vite serves the client; the server only serves the built SPA in prod).
+- **`pnpm install` may warn `Ignored build scripts: msgpackr-extract`.** Harmless — it is an
+  optional native accelerator for Colyseus msgpack; the JS fallback is used. Do not run the
+  interactive `pnpm approve-builds`.
+- **Quickest smoke test is Solo mode** (single browser, no second tab): Home → Play solo →
+  nickname → Start → the Table loads vs a bot; click Draw to log a turn. Multi-player checks
+  need multiple tabs on `:5173` (see `docs/agent/frontend.md`). The VM desktop has an idle
+  screensaver (a spinning cube on black) that can appear during pauses — it is not an app crash.
+- **The gate is `pnpm verify`** (typecheck + lint + test) — the Definition of Done (§9).
