@@ -17,8 +17,9 @@
 - Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`),
   `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
   L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate),
-  `heuristic-v5-engage` / `search-v5-engage` (Lot 40; rooms stay on `search-v5`
-  until L40-05), and `random-legal` (uniform legal pick). The worker resolves by
+  `heuristic-v5-engage` (Lot 40 overlay; experimental), `search-v5-engage`
+  (Lot 40; rooms stay on `search-v5` until L40-05), and `random-legal`
+  (uniform legal pick). The worker resolves by
   `policyId`.
 
 ## Parity
@@ -256,7 +257,10 @@ determinizer is how V5 fails quietly.
 - New policy ids: `heuristic-v5-engage`, `search-v5-engage`. `heuristic-v4` stays frozen.
 - L40-01: `determinizeFromView` reconstructs **this seat’s** Spy rows from
   `view.players[].spied`; ISMCTS depth 0 widens from the real view’s priors.
-- L40-02: engage overlay in `bots/score-engage/` — does not edit `score-play/`.
+- L40-02: engage overlay in `bots/score-engage/` wraps v4 `scoreActions`
+  (unused UP, last-attack sell, buy-Basic-to-sell, finishable pile-on, agro
+  the attacker, hold Mirror/Shield). Does not edit `score-play/`.
+  Policy id `heuristic-v5-engage` is registered experimental.
 - L40-03: `createSearchV5Policy(..., heuristicV5EngagePolicy, { id: 'search-v5-engage' })`.
   Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
   Rooms stay on `search-v5` until L40-05.

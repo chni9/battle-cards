@@ -10,6 +10,10 @@ import {
   heuristicTunedV5Policy,
 } from './policies/heuristic-tuned-v5';
 import {
+  HEURISTIC_V5_ENGAGE_POLICY_ID,
+  heuristicV5EngagePolicy,
+} from './policies/heuristic-v5-engage';
+import {
   HEURISTIC_V4_POLICY_ID,
   heuristicV4Policy,
 } from './policies/heuristic-v4';
@@ -21,6 +25,7 @@ import { SEARCH_V5_POLICY_ID, searchV5Policy } from './policies/search-v5';
 
 export {
   HEURISTIC_TUNED_V5_POLICY_ID,
+  HEURISTIC_V5_ENGAGE_POLICY_ID,
   HEURISTIC_V4_POLICY_ID,
   RANDOM_LEGAL_POLICY_ID,
   SEARCH_V5_POLICY_ID,
@@ -63,5 +68,6 @@ export function listPolicyIds(): readonly string[] {
 
 registerPolicy(heuristicV4Policy);
 registerPolicy(heuristicTunedV5Policy);
+registerPolicy(heuristicV5EngagePolicy);
 registerPolicy(searchV5Policy);
 registerPolicy(randomLegalPolicy);
