@@ -16,8 +16,10 @@
   **view**; use them only for seats this bot has Spyed.
 - Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`),
   `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
-  L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate), and
-  `random-legal` (uniform legal pick). The worker resolves by `policyId`.
+  L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate),
+  `heuristic-v5-engage` / `search-v5-engage` (Lot 40; rooms stay on `search-v5`
+  until L40-05), and `random-legal` (uniform legal pick). The worker resolves by
+  `policyId`.
 
 ## Parity
 
@@ -240,6 +242,20 @@ determinizer is how V5 fails quietly.
   Each 5-game batch gets a **fresh worker** (search-v5 heap otherwise OOMs around
   ~400 games in a long-lived thread).
 - Replay: `verify-screen-determinism.ts --published <dir>` (L38-03).
+- **Paused 2026-08-18 (Lot 40):** do not publish a screen of current `search-v5`.
+  Resume under the promoted engage policy after L40-05, or keep paused on a failed gate.
+
+## Lot 40 — Engage search
+
+- New policy ids: `heuristic-v5-engage`, `search-v5-engage`. `heuristic-v4` stays frozen.
+- L40-01: `determinizeFromView` reconstructs **this seat’s** Spy rows from
+  `view.players[].spied`; ISMCTS depth 0 widens from the real view’s priors.
+- L40-02: engage overlay in `bots/score-engage/` — does not edit `score-play/`.
+- L40-03: `createSearchV5Policy(..., heuristicV5EngagePolicy, { id: 'search-v5-engage' })`.
+  Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
+  Rooms stay on `search-v5` until L40-05.
+- L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
+  weaker seat or the seat attacking you — not a healthy bystander.
 
 ## Runtime budgets (L36-01)
 

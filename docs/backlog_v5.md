@@ -42,6 +42,9 @@ sequencing exists so it does not happen twice.
    effort.
 7. **Screen (Lot 38).** Re-measure the game under the V5 policy and publish beside the V4 screen.
    It concludes nothing about balance and changes no value.
+8. **Engage search (Lot 40).** Designer playtest of room Search: retry prior/rollout (not a
+   budget bump). Lot 38 is paused until this lot’s policy is what we want to measure.
+   **Lot 39 is UX polish** (`docs/backlog_ux.md`), not a V5 lot.
 
 **Execution order**
 
@@ -216,9 +219,28 @@ working search.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L38-01 | Re-run the gross-imbalance screen under **room Hard `search-v5`** (linear evaluator, 64 offline iterations — designer 2026-08-15 option A; not `DEFAULT_POLICY_ID`), at the same games-per-cell figure as the V4 screen so the two are comparable, and log any coverage dropped — a silent cap reads as full coverage. **Acceptance:** the run completes with the stall rate reported and no game assigned an invented winner. **Watch point:** the stall rate may move in either direction under search — better play can end games faster, or find longer stable loops. Report the movement; do not explain it. | M | Medium | L37-04 / L36-05 waived (decisions 2026-08-15) | In progress |
+| L38-01 | Re-run the gross-imbalance screen under **room Hard `search-v5`** (linear evaluator, 64 offline iterations — designer 2026-08-15 option A; not `DEFAULT_POLICY_ID`), at the same games-per-cell figure as the V4 screen so the two are comparable, and log any coverage dropped — a silent cap reads as full coverage. **Acceptance:** the run completes with the stall rate reported and no game assigned an invented winner. **Watch point:** the stall rate may move in either direction under search — better play can end games faster, or find longer stable loops. Report the movement; do not explain it. | M | Medium | L37-04 / L36-05 waived (decisions 2026-08-15) | **Blocked** — paused (Lot 40; decisions 2026-08-18). Do not publish a screen of current `search-v5`. |
 | L38-02 | Publish under `docs/simulation/<date>-v5-search/` with config, aggregates, raw JSONL and a writeup, beside the V4 screen. **It concludes nothing about balance and changes no value.** The writeup states, verbatim and near the top, the technical spec v5 §11 limitations — in particular that a determinized bot **under-reports exploits requiring perfect information**, and that the figures are therefore a floor on how broken something is, never a ceiling. Name every card that appeared in fewer than N games. **Acceptance:** a reader who knows nothing about V5 can tell from the writeup alone what the numbers do and do not license. **Watch point:** this screen will be the input to the rebalancing version. Every hedge omitted here becomes a value changed for the wrong reason later. | S | Medium | L38-01 | To do |
 | L38-03 | Determinism check on the published run: re-execute from the recorded seed, weights hash and iteration budget, and assert byte-identical output. **Acceptance:** the check passes and its command is recorded in the writeup's Reproduction section, as in the V3 and V4 screens. **Watch point:** if it fails, the cause is wall-clock leaking into a budget or thread completion order leaking into a merge (technical spec v5 §8.3) — not a flaky test. The screen is not published until it passes. | S | **High** | L38-01 | To do |
+
+---
+
+## Lot 40 — Engage search (prior/rollout retry)
+
+Not Lot 39 — that id is **table UX polish** in `docs/backlog_ux.md` (`L39-01`…`L39-06`, Done).
+Designer 2026-08-18: farm-to-engage, not Tax-forever; Spy still good but never re-Spy;
+shop loops and unused upgrade points are always wrong. No rule or value change.
+**Retry of the blocked L33-05 / L35-07 path** — new prior/rollout heuristic, then the
+same gates. Do **not** raise `searchIterations` (L35-07 watch point).
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L40-00 | Record Lot 40, pause L38, and the L35-03 vs pile-on-weak targeting resolution in `docs/agent/decisions.md`. **Acceptance:** an agent reading only `backlog_v5.md` and `decisions.md` can tell Lot 39 is UX, L38 is paused, and engage Search must not chip a healthy bystander. | S | Medium | — | Done |
+| L40-01 | Reconstruct **this seat’s** Spy relations from `view.players[].spied` inside `determinizeFromView` (signature still takes no `GameState`). At ISMCTS depth 0, widen from priors on the **real** view, not the sampled world. **Acceptance:** after a resolved Spy, `buildPlayingViewFor` on the sample still shows `spied`; Search’s re-Spy prior is last / ~0 and it does not pick re-Spy when Tax or an attack is legal; L32-04 post-decide equality and L34-05 legal-action consistency still pass. **Watch point:** filling anyone else’s Spy map is cheating (#V4-35). Impossible-world rate stays 0. | M | **High** | L34-05, L35-04 | To do |
+| L40-02 | New policy `heuristic-v5-engage` in **new files** — do not edit `score-play/`, `heuristic-weights.ts`, or `heuristic-life-thresholds.ts`. Overlay: unused upgrade points, never sell the last real attack, never buy-to-sell, attack a finishable weaker seat or the seat attacking you, hold Mirror/Shield under incoming. **Acceptance:** HWZMWI-shaped tests pass; `heuristic-v4.freeze.test.ts` stays green **without** fixture edits. **Watch point:** no magic life number in engine constants; thresholds only on the new profile if needed. | **L** | **High** | L40-00, L32-03 | To do |
+| L40-03 | Register `search-v5-engage` via `createSearchV5Policy` with the engage heuristic as prior, rollout, and sub-choices. `roomBotPolicyId` stays `search-v5`. Keep the L35-03 “let them fight” test on `search-v5`. **Acceptance:** a test proves engage Search uses the engage scorer at the root; room wiring still resolves Normal/Hard to `search-v5`. **Watch point:** L35-04 forbids a second copy of scoring inside the search — inject `scoreActions`, do not fork PUCT. | M | **High** | L40-01, L40-02 | To do |
+| L40-04 | Self-play snapshots of `search-v5-engage`, assemble (drop stalls, split by seed), fit logistic, gate engage-search+fitted vs engage-search+linear at the **same** iteration budget (L37-04). **Acceptance:** p &lt; 0.01 or an honest fail recorded with both hashes; GBDT (L37-03) only if this fails or passes thinly. Do not flip `DEFAULT_POLICY_ID`. **Watch point:** do not bump `FEATURE_LAYOUT_VERSION` unless L40-05 fails with a documented hole the heuristic cannot see. | **L** | Medium | L40-03, L37-02 | To do |
+| L40-05 | Gate `search-v5-engage` vs frozen `heuristic-v4` (L35-07 pattern: seat rotation, ≥ 2 000 games, p &lt; 0.01, offline iteration budget). Designer playtest Easy/Normal/Hard (L36-05). Promote Normal/Hard `roomBotPolicyId` only on pass + sign-off. **Acceptance:** gate result and hashes in `decisions.md`. On fail, do not raise iterations; rooms stay on `search-v5`. | M | **High** | L40-03, L40-04 | To do |
 
 ---
 
@@ -232,17 +254,20 @@ working search.
 | 35 — Search | 7 | 0 |
 | 36 — Runtime | 5 | 0 |
 | 37 — Fitted evaluator | 4 | 0 |
-| 38 — Screen | 3 | 0 |
-| **Total** | **39** | **0** |
+| 38 — Screen | 3 | 1 (L38-01 paused on Lot 40) |
+| 40 — Engage search | 6 | 0 |
+| **Total** | **45** | **1** |
 
-**27 of 39 tasks are rated High risk and 8 are rated L complexity** — a higher proportion than any
-previous version, and it is not inflation. V5's characteristic failure modes are all silent: a
-mutation leaking into live room state, hidden information leaking through a worker payload or a UI
-affordance, a weight set overfitted to its own training seeds, a belief model nobody measured, and
-wall-clock leaking into a budget that was supposed to be reproducible. None of them produce a stack
-trace. Several of them produce a bot that looks fine and a screen that reads clean.
+**Most V5 tasks are still High risk** — silent failure modes did not get cheaper. Lot 40
+adds a prior/rollout retry; it does not reopen a rule. V5's characteristic failure modes are
+all silent: a mutation leaking into live room state, hidden information leaking through a
+worker payload or a UI affordance, a weight set overfitted to its own training seeds, a
+belief model nobody measured, and wall-clock leaking into a budget that was supposed to be
+reproducible. None of them produce a stack trace. Several of them produce a bot that looks
+fine and a screen that reads clean.
 
-**Two tasks remain blocked on failed promotion gates** (L33-05, L35-07) —
+**Two tasks remain blocked on failed promotion gates** (L33-05, L35-07) and L38-01 is
+paused on Lot 40 — `DEFAULT_POLICY_ID` stays `heuristic-v4`.
 `DEFAULT_POLICY_ID` stays `heuristic-v4`. L34-01 / #V5-2, L35-01 / #V5-1, L36-03 / #V5-3 and
 L36-04 / #V5-4 are closed. L32-01 is `Done` — golden rule 7 no longer instructs agents to refuse V5.
 

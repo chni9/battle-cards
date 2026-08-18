@@ -2179,3 +2179,37 @@ recorded (2026-08-13); the missing human playtest note does not change the
 offline iteration-budget instrument. L36-05 stays `In progress` until that
 note lands. The screen still uses iteration budgets only (§8.2).
 
+## 2026-08-18 · [P] Lot 40 engage Search; L38 paused; Lot 39 is UX
+
+Designer playtest HWZMWI: `search-v5` (Normal/Hard) Spy-spammed, bought unused
+upgrade points, and never attacked for ~280 turns. **No rule or value change.**
+
+**Lot 39 is not this work.** `L39-01`…`L39-06` are table UX polish in
+`docs/backlog_ux.md` (Done). V5 continue as **Lot 40**.
+
+**L38 paused, not cancelled.** L38-01 is `Blocked` until Lot 40’s policy is what
+we want to measure. Do not publish a V5 screen of current `search-v5`. Resume
+L38 under the promoted engage policy, or keep it paused if L40-05 fails.
+
+**L35-07 watch point stands:** do not raise `searchIterations`. Lot 40 retries
+the **prior/rollout** (what L33-05 was supposed to give Search) then the same
+gates.
+
+**L35-03 vs pile-on-weak (do not hide).** L35-03 / max^n: Search must not attack
+the weakened seat when two others are fighting. Designer strategy: hit a
+finishable weakest for the elim/reward; agro whoever is attacking you. Lot 40
+resolution: keep max^n; do not switch to paranoid; **keep the L35-03 test on
+`search-v5`**. Engage heuristic piles on a seat you can **reasonably finish this
+cycle** (already under fire, cannot retaliate, weaker than you on the
+public/Spy read) or the seat **attacking you** — not a healthy mid-table
+bystander.
+
+**Spy:** L34-05 already required filling this seat’s Spy relations. Code sampled
+Spy slices then set `visibility = []`, so `scoreActions` treated every opponent
+as unspied. L40-01 reconstructs relations from `view.players[].spied` only
+(#V4-35). Not a new Spy rule.
+
+**Policies:** `heuristic-v4` stays frozen. New ids `heuristic-v5-engage` and
+`search-v5-engage`. `roomBotPolicyId` stays `search-v5` until L40-05 pass +
+playtest. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
+
