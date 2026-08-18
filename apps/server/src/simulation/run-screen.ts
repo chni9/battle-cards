@@ -34,6 +34,56 @@ import {
 
 const WORKER_PATH = fileURLToPath(new URL('./screen-worker.ts', import.meta.url));
 
+/** Fresh worker per batch — long-lived search-v5 workers OOM around ~400 games. */
+const SCREEN_WORKER_MAX_OLD_GENERATION_MB = 4096;
+
+function spawnScreenWorker(): Worker {
+  return new Worker(WORKER_PATH, {
+    execArgv: ['--import', 'tsx'],
+    resourceLimits: { maxOldGenerationSizeMb: SCREEN_WORKER_MAX_OLD_GENERATION_MB },
+  });
+}
+
+function runBatchOnWorker(
+  worker: Worker,
+  id: number,
+  jobs: readonly ScreenGameJob[],
+): Promise<readonly ScreenGameResult[]> {
+  return new Promise((resolve, reject) => {
+    const onMessage = (message: ScreenWorkerOutbound): void => {
+      if (message.id !== id) {
+        return;
+      }
+
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+
+      if (message.type === 'error') {
+        reject(new Error(message.message));
+        return;
+      }
+
+      resolve(message.results);
+    };
+
+    const onError = (error: Error): void => {
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+      reject(error);
+    };
+
+    worker.on('message', onMessage);
+    worker.on('error', onError);
+
+    const inbound: ScreenWorkerInbound = {
+      type: 'screen-chunk',
+      id,
+      jobs,
+    };
+    worker.postMessage(inbound);
+  });
+}
+
 export interface RunScreenOptions {
   /** Test-only: force every game's turn cap (default 2500). */
   maxTurns?: number;
@@ -91,13 +141,6 @@ async function runJobsInWorkers(
   quiet: boolean,
 ): Promise<readonly ScreenGameResult[]> {
   const workerCount = Math.min(concurrency, jobs.length);
-  const workers = Array.from(
-    { length: workerCount },
-    () =>
-      new Worker(WORKER_PATH, {
-        execArgv: ['--import', 'tsx'],
-      }),
-  );
   const slots: (ScreenGameResult | undefined)[] = Array.from({
     length: jobs.length,
   });
@@ -117,68 +160,36 @@ async function runJobsInWorkers(
     return { offset, batch };
   };
 
-  try {
-    await Promise.all(
-      workers.map(async (worker) => {
-        for (;;) {
-          const taken = takeBatch();
+  const runSlot = async (): Promise<void> => {
+    for (;;) {
+      const taken = takeBatch();
 
-          if (taken === null) {
-            return;
-          }
+      if (taken === null) {
+        return;
+      }
 
-          const id = (requestId += 1);
-          const batchResults = await new Promise<readonly ScreenGameResult[]>(
-            (resolve, reject) => {
-              const onMessage = (message: ScreenWorkerOutbound): void => {
-                if (message.id !== id) {
-                  return;
-                }
+      const id = (requestId += 1);
+      const worker = spawnScreenWorker();
 
-                worker.off('message', onMessage);
-                worker.off('error', onError);
+      try {
+        const batchResults = await runBatchOnWorker(worker, id, taken.batch);
 
-                if (message.type === 'error') {
-                  reject(new Error(message.message));
-                  return;
-                }
-
-                resolve(message.results);
-              };
-
-              const onError = (error: Error): void => {
-                worker.off('message', onMessage);
-                worker.off('error', onError);
-                reject(error);
-              };
-
-              worker.on('message', onMessage);
-              worker.on('error', onError);
-
-              const inbound: ScreenWorkerInbound = {
-                type: 'screen-chunk',
-                id,
-                jobs: taken.batch,
-              };
-              worker.postMessage(inbound);
-            },
-          );
-
-          for (const [index, result] of batchResults.entries()) {
-            slots[taken.offset + index] = result;
-          }
-
-          completed += taken.batch.length;
-
-          if (!quiet) {
-            console.log(`screen ${String(completed)}/${String(jobs.length)}`);
-          }
+        for (const [index, result] of batchResults.entries()) {
+          slots[taken.offset + index] = result;
         }
-      }),
-    );
-  } finally {
-    await Promise.all(workers.map(async (worker) => worker.terminate()));
-  }
+
+        completed += taken.batch.length;
+
+        if (!quiet) {
+          console.log(`screen ${String(completed)}/${String(jobs.length)}`);
+        }
+      } finally {
+        await worker.terminate();
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: workerCount }, () => runSlot()));
 
   const results: ScreenGameResult[] = [];
 

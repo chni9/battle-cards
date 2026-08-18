@@ -237,6 +237,8 @@ determinizer is how V5 fails quietly.
   `searchIterations`. A silent matrix cap vs V4 is written to `coverageDroppedVsV4`.
 - Parallelism is **across games** (`screen-worker.ts`); JSONL is **sorted by seed**
   so completion order cannot leak. Never wall-clock in the simulator.
+  Each 5-game batch gets a **fresh worker** (search-v5 heap otherwise OOMs around
+  ~400 games in a long-lived thread).
 - Replay: `verify-screen-determinism.ts --published <dir>` (L38-03).
 
 ## Runtime budgets (L36-01)
