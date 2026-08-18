@@ -20,5 +20,9 @@
  *
  * 26 → 27 (L32-01 / table UX polish): `error` payload is
  * `{ code: ActionRejectCode; message: string }` instead of `{ message: string }`.
+ *
+ * 27 → 28 (L36-04 / #V5-4): `BOT_REASON_CODES` gains `search-best` and
+ * `search-fallback`. Public Why panel stays coarse — no visit counts or
+ * win-probability numbers in `BotDecisionReason.params`.
  */
-export const PROTOCOL_VERSION = 27;
+export const PROTOCOL_VERSION = 28;

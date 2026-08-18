@@ -13,17 +13,12 @@ import { applyDefaultEliminationRewards } from '../engine/turn/elimination-rewar
 import { performAndCompleteTurn, type TurnSubChoiceHooks } from '../engine/turn/orchestrate-turn';
 import { completeReanimationKitPick, performTurnAction } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
-import { decide } from './heuristic-policy';
-import {
-  pickPoolInstanceIds,
-  pickReanimationKitId,
-  pickSpecialCardId,
-  pickStealInstanceId,
-} from './sub-choice-picks';
+import { getDefaultPolicy } from './registry';
 
 const NOW_MS = 0;
 
 function noThrowHooks(seed: string): TurnSubChoiceHooks {
+  const policy = getDefaultPolicy();
   return {
     resolveMirror: () => {
       throw new Error('unexpected Mirror choice');
@@ -44,7 +39,7 @@ function noThrowHooks(seed: string): TurnSubChoiceHooks {
       });
 
       return {
-        instanceId: pickStealInstanceId(
+        instanceId: policy.pickStealInstanceId(
           view,
           choice.eligibleInstanceIds,
           createRng(`${seed}:steal`),
@@ -59,7 +54,7 @@ function noThrowHooks(seed: string): TurnSubChoiceHooks {
       }
 
       return {
-        instanceIds: pickPoolInstanceIds(
+        instanceIds: policy.pickPoolInstanceIds(
           state.pool,
           choice.eligibleInstanceIds,
           choice.maxCount,
@@ -74,7 +69,12 @@ function noThrowHooks(seed: string): TurnSubChoiceHooks {
         return null;
       }
 
-      return { cardId: pickSpecialCardId(choice.eligibleCardIds, createRng(`${seed}:special`)) };
+      return {
+        cardId: policy.pickSpecialCardId(
+          choice.eligibleCardIds,
+          createRng(`${seed}:special`),
+        ),
+      };
     },
     resolveReanimationKit: (state, playerId) => {
       const choice = state.subChoice;
@@ -83,7 +83,12 @@ function noThrowHooks(seed: string): TurnSubChoiceHooks {
         return null;
       }
 
-      return { kitId: pickReanimationKitId(choice.eligibleKitIds, createRng(`${seed}:reanim`)) };
+      return {
+        kitId: policy.pickReanimationKitId(
+          choice.eligibleKitIds,
+          createRng(`${seed}:reanim`),
+        ),
+      };
     },
     resolveReward: () => null,
   };
@@ -116,7 +121,12 @@ describe('L29-08: turn-flow specials never stall the room', () => {
       turnDeadlineMs: null,
       actionLog: [],
     });
-    const decision = decide(view, [{ type: 'playCard', instanceId: 'blk-1' }], createRng('block-decide'));
+    const decision = getDefaultPolicy().decide(
+      view,
+      [{ type: 'playCard', instanceId: 'blk-1' }],
+      createRng('block-decide'),
+      { actionLog: [] },
+    ).action;
     const result = performAndCompleteTurn(state, a.id, decision, noThrowHooks('block'), {
       nowMs: NOW_MS,
     });
@@ -281,7 +291,10 @@ describe('L29-08: turn-flow specials never stall the room', () => {
       throw new Error('reanimation-kit sub-choice not raised');
     }
 
-    const kitId = pickReanimationKitId(choice.eligibleKitIds, createRng('reanim-kit-final'));
+    const kitId = getDefaultPolicy().pickReanimationKitId(
+      choice.eligibleKitIds,
+      createRng('reanim-kit-final'),
+    );
     let completed: ReturnType<typeof completeReanimationKitPick> | undefined;
     expect(() => {
       completed = completeReanimationKitPick(

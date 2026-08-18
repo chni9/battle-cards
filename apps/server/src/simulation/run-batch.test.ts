@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { HEURISTIC_V4_POLICY_ID } from '../bots/policies/heuristic-v4';
 import { parseBatchArgs } from './batch-config';
 import { gameSeed, runBatch } from './run-batch';
 import { runSimulatedGame } from './run-game';
@@ -74,8 +75,12 @@ describe('simulation batch (L18-04)', () => {
     ] as const;
 
     try {
-      const aResult = await runBatch([...argv, outA]);
-      const bResult = await runBatch([...argv, outB]);
+      const aResult = await runBatch([...argv, outA], {
+        policyIds: [HEURISTIC_V4_POLICY_ID, HEURISTIC_V4_POLICY_ID],
+      });
+      const bResult = await runBatch([...argv, outB], {
+        policyIds: [HEURISTIC_V4_POLICY_ID, HEURISTIC_V4_POLICY_ID],
+      });
       const a = await readFile(outA, 'utf8');
       const b = await readFile(outB, 'utf8');
       expect(a).toBe(b);
@@ -107,7 +112,10 @@ describe('simulation batch (L18-04)', () => {
           '--out',
           out,
         ],
-        { maxTurns: 1 },
+        {
+          maxTurns: 1,
+          policyIds: [HEURISTIC_V4_POLICY_ID, HEURISTIC_V4_POLICY_ID],
+        },
       );
 
       expect(result.stalled).toBe(3);
@@ -128,11 +136,20 @@ describe('simulation batch (L18-04)', () => {
   it('smoke: 50 games complete with no throw', () => {
     // Hard self-play can stall (Untouchable / invest loops) — §8.3 hang signal.
     // Easy noise finishes reliably for the CI smoke gate.
+    // Pin heuristic-v4: room default after L33-05 is too slow for this smoke.
+    const policyIds = [
+      HEURISTIC_V4_POLICY_ID,
+      HEURISTIC_V4_POLICY_ID,
+      HEURISTIC_V4_POLICY_ID,
+      HEURISTIC_V4_POLICY_ID,
+    ] as const;
+
     for (let index = 0; index < 50; index += 1) {
       const row = runSimulatedGame({
         seed: gameSeed('l18-04-smoke-easy', index),
         playerCount: 4,
         difficulties: ['easy', 'easy', 'easy', 'easy'],
+        policyIds,
       });
       expect(row.winnerPlayerId).toBeTruthy();
       expect(row.seatCount).toBe(4);

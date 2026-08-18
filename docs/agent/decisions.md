@@ -1850,3 +1850,446 @@ Lot 39 IDs avoid colliding with a hypothetical V5 “Lot 32”.
    When `reject` is null, unmount the dialog entirely (do not leave `Dialog` mounted at
    `open={false}`) so AnimatePresence cannot leave a stuck blocking overlay.
 
+## 2026-08-10 · [P] V5 reopenings (#V5-5, #V5-6, #V5-9, #V5-10) — L32-01
+
+Designer confirmation unlocking Lot 32 (technical spec v5 §2.2, §13):
+
+- **#V5-6** — Reopen `AGENTS.md` golden rule 7 / technical spec v4 §12: search, lookahead,
+  and fitted learning are in scope for V5. Opponent modelling beyond V3 §4.4's derived
+  reads is reopened **bounded**: inference from **public** fields and the **public** action
+  log, within one game only. **Technical spec v3 decision 2 is NOT reopened** — the policy
+  still receives no `GameState`; it constructs worlds from the view (and later
+  `determinizeFromView`).
+- **#V5-9** — `BotPolicy.decide` gains the public action log as a parameter (via
+  `ctx.actionLog`). That grants nothing a human lacks (#V3-2). **Spy nuance:** when the
+  acting seat has Spyed an opponent, Spy-revealed fields on that seat's per-recipient view
+  may be used; without Spy, stick to public view fields + the public log. Still out: any
+  hidden field not already on that seat's view, and the live authoritative `GameState`.
+- **#V5-5** — Minimal reopen of #V3-5: weights become a typed, hash-identified data object
+  whose frozen default is today's module constants (implementation in L33-01). Governance
+  only here; no CLI/env/runtime reload. Module constants remain the default profile.
+- **#V5-10** — The arena's regression gate (p < 0.01 vs incumbent) blocks a **default-policy
+  change only**, not merges. Stochastic gates as merge blockers are unworkable for a solo
+  developer.
+
+`AGENTS.md` golden rule 7 and §9 rewritten in the same change so agents sequence from
+`docs/backlog_v5.md` and no longer refuse search work.
+
+## 2026-08-10 · [P] L32-05 forward-model bench numbers
+
+Measured with `pnpm --filter @card-battle/server bench:forward-model` (pinned
+`devEngines` Node via pnpm — never bare `node`). Fixture: 4-player mid-game state
+(`l32-05-bench-midgame`) with populated pool and active persistents.
+
+| Metric | Value |
+|---|---|
+| `structuredClone` | ≈ 29 µs/state · 6567 JSON bytes |
+| `cloneGameState` (`structuredClone` wrapper) | ≈ 27 µs/state |
+| `performAndCompleteTurn` + `SIM_NOW_MS` | ≈ 8.9×10⁴ turns/s (single-threaded) |
+| Truncated playouts (depth 8) | ≈ 2.5×10³ playouts/s (single-threaded) |
+
+Every V5 search budget must cite this entry / L32-05. Machine-local; re-run the
+script when hardware or Node pin changes.
+
+
+## 2026-08-12 · [P] Evaluator target is pure win probability (#V5-7) — L33-02
+
+Designer ruling (session): accept technical spec v5 §13 recommendation.
+
+- The Phase A / search evaluator returns a sole-survivor **win-probability** vector
+  over living players (sums to ≈1). Not damage margin.
+- `PolicyWeights.evaluator.survivalTermWeight` exists and defaults to **0**. The
+  L33-03 optimizer may raise it; authors do not hard-code a survival bonus.
+- Belief feature slots are reserved in `FEATURE_LAYOUT_VERSION` 1 and emit **0**
+  until Lot 34; #V5-2 does not block Lot 33.
+
+
+## 2026-08-12 · [T] L33-03 (1+λ)-ES fit run
+
+Optimizer: `(1+λ)-ES` behind `Optimizer` (`optimize-weights.ts`). Fitness =
+seat-rotated win rate vs frozen gauntlet `[heuristic-v4]` on the **training**
+split only (never population-only).
+
+Run (pinned Node via pnpm):
+
+```bash
+pnpm --filter @card-battle/server optimize:weights -- \
+  --seed l33-03-fit --out ../../docs/simulation/2026-08-12-v5-fit \
+  --gens 12 --lambda 6 --train 10 --holdout 10 --sigma 1.2
+```
+
+| Field | Value |
+|---|---|
+| Gauntlet | `heuristic-v4` |
+| Split hash | `a2de1f615613fc16` |
+| Elite fitness (train) | ≈ 0.789 |
+| Elite weights hash | `7b0932b8996e5a9f` |
+| Artifacts | `docs/simulation/2026-08-12-v5-fit/` |
+
+Parallelism: in-process `Promise.all` over the λ+1 population (GameState created
+inside each fitness eval). Search worker `SearchRequest` remains free of `GameState`.
+
+
+
+## 2026-08-12 · [T] L33-04 holdout + L33-05 gate blocked
+
+**L33-04.** Train/holdout split is written before gen 0. Canonical writeup:
+`docs/simulation/2026-08-12-v5-fit/HOLDOUT.md` (v8 overfitting flagged; v5 large-N
+probes appended).
+
+**L33-05 blocked.** After (1+λ)-ES on action scalars + `survivalTermWeight`
+(sparse mutation, train-internal valid gate, random-kit and mixed-kit splits,
+grid search on life/strike/burn knobs), no checked-in profile beats
+`heuristic-v4` at **p < 0.01** on a seat-rotated holdout of ≥ 2 000 games.
+
+Largest probe (`l33-05-gate-xl`, 25 000 games, hash `4514e2bfd9f533f1`):
+win rate **0.504** (9 613 / 9 452 / 5 935 stalls), one-sided p ≈ **0.12**.
+Train-set fitness improvements reverse or vanish on holdout (v8 holdout 0.45
+with overfitting flag).
+
+Incumbent weights hash: `d585586e0c8f7711` (`heuristic-v4`). Candidate hashes
+tried include `4514e2bfd9f533f1`, `5686e970ce462b79`, grid `30cca23f085f47f8`.
+
+**Implication:** hand-tuned `heuristic-v4` is near-optimal under weight-only
+search for this action scorer. Promotion of `heuristic-tuned-v5` waits on a
+stronger signal (multi-day CEM/ES with far larger train, structural scoring
+changes, or Lot 35 search) — not on lowering the gate. `DEFAULT_POLICY_ID`
+stays `heuristic-v4`.
+
+
+## 2026-08-12 · [T] L33-05 structural one-round re-rank still blocked
+
+Designer chose keep-the-gate + structural edge (session). Implemented
+`heuristic-tuned-v5` as default action weights + **one-round Phase A re-rank**:
+`determinizeFromView` (Lot 34) → apply candidate → greedy opponent turns until
+back to self → `evaluate` self win-prob; flip from greedy only when gain ≥
+`FLIP_MARGIN` (0.025). Profile `tuned-v5-one-ply` (byte copy of `default`).
+Gate harness: `simulation/gate-tuned-v5.ts` (by policy id). Artifacts:
+`docs/simulation/2026-08-12-v5-tuned-gate/`.
+
+| Seed | Games | Decided | Win rate | One-sided p | Notes |
+|---|---|---|---|---|---|
+| `l33-05-gate-probe-1ply` | 400 | 329 | 0.502 | ≈ 0.50 | Own-turn only, stub eval state |
+| `l33-05-gate-1round` | 2 000 | 1 835 | 0.506 | ≈ 0.30 | One-round + evaluate |
+| `l33-05-gate-probe-margin` | 800 | 720 | 0.482 | ≈ 0.84 | Life-margin objective (worse) |
+| `l33-05-gate-probe-marginflip` | 600 | 546 | 0.524 | ≈ 0.14 | Lucky small-N |
+| `l33-05-gate-marginflip` | 3 000 | 2 807 | **0.500** | ≈ 0.52 | Thresholded flips; coin flip |
+
+Candidate hash (margin-flip): `e8740ef73aac43f6`. Incumbent: `d585586e0c8f7711`.
+
+**Implication:** shallow lookahead against hand-tuned `heuristic-v4` does not clear
+**p < 0.01**. Small-N probes overstate edge. Code stays registered for Lot 35 to
+reuse (determinize + forward model), but **`DEFAULT_POLICY_ID` remains
+`heuristic-v4`**. Unblock needs Lot 35 search depth (≥ 2 rounds), a designer
+gate ruling, or a different structural change — not more 1-round probes.
+
+
+## 2026-08-12 · [P] #V5-2 shop supply is unlimited (L34-01)
+
+Designer ruling (session): **unlimited** shop, matching rules spec §1 and
+`buy-card.ts` (mint by `cardId`, no stock check; pool is discard, not inventory).
+
+**Ruling sentence:** An opponent's possible hand contents are not constrained by
+what has already left the pool; the shop is infinite stock.
+
+**Consequence for L34-04:** hand sampling uses kit-anchored accounting plus a
+pluggable prior over card ids (v1 uniform over zone ids), not a constrained deal
+from remaining copies. Pool / own-hand / publicly consumed instances still
+constrain *specific visible copies*, never global supply.
+
+
+## 2026-08-12 · [T] Assassin multi targets are view-stable (L34-05 / L34-06)
+
+`listAssassinMultiAttackCandidates` ranked living opponents with
+`rng.shuffle` seeded from `GameState.seed`. The seed is server-only and absent
+from `PlayingStateView`, so `determinizeFromView` could not recover it and the
+L34-05 consistency guard failed (~2.5% impossible worlds) whenever the capped
+multi-attack set depended on shuffle order.
+
+**Fix:** rank targets by stable `player.id` ascending. Still view-derivable
+(alive ids only; no hidden lives). Comment in `assassin-candidates.ts` updated.
+`heuristic-v4` freeze and §10.1 view-guard tests still pass.
+
+
+## 2026-08-12 · [T] L34-06 belief calibration published
+
+Harness: `pnpm --filter @card-battle/server bench:determinizer`.
+Artifacts: `docs/simulation/2026-08-12-v5-belief/` (config, aggregates, WRITEUP).
+
+| Metric | Value |
+|---|---|
+| Games | 40 (36 completed / 4 stalled) |
+| K | 8 |
+| Impossible rate | **0** |
+| Kit top-1 (overall) | ≈ 0.80 |
+| Kit top-3 | ≈ 0.88 |
+| Life MAE (interval midpoint) | ≈ 3.66 |
+
+Concludes nothing about balance. Lot 35 may start after #V5-1.
+
+
+## 2026-08-13 · [P] #V5-1 ISMCTS chosen from L32-05 numbers (L35-01)
+
+Designer ruling (session / Lot 35 plan): accept technical spec v5 §13 recommendation
+**and** justify from the L32-05 bench, not preference.
+
+| Evidence (L32-05 / 2026-08-10) | Value |
+|---|---|
+| Truncated playouts/s (depth 8) | ≈ 2.5×10³ |
+| Turns/s (`performAndCompleteTurn` + `SIM_NOW_MS`) | ≈ 8.9×10⁴ |
+
+At ~2.5k truncated playouts/s, a few hundred iterations per decision fit room-scale
+latency, but sample efficiency still dominates. **ISMCTS with per-iteration
+re-determinization** shares statistics across sampled worlds; N-tree PIMC would
+spend that budget on independent trees. PIMC remains the fallback only if
+information-set bookkeeping measures too expensive later — not the v1 choice.
+
+Default offline iteration budget: `OFFLINE_SEARCH_ITERATIONS = 400`
+(`bots/search/search-budget.ts`) ≈ 160 ms at the L32-05 rate. Wall-clock budgets
+stay Lot 36. Depth floor remains two complete rounds (tech §6.4).
+
+## 2026-08-13 · [P] #V5-8 same-policy opponent modelling (L35-03)
+
+Designer ruling (session / Lot 35 plan): accept technical spec v5 §13 recommendation.
+
+Search models every seat — including opponents and all sub-choice owners — as
+playing the **same policy** under search (self-play / max^n). Modelling opponents
+as weaker walks into punishes the bot "knew" were unlikely. Paranoid ("everyone
+targets me") remains explicitly rejected (tech §6.2).
+
+Accepted limitation (tech §11 #3): max^n assumes no coalitions; coordinated
+humans in 3–4p can exploit this. Out of V5 scope.
+
+## 2026-08-13 · [P] Offline search budget set to 64 (L35-04…07)
+
+`OFFLINE_SEARCH_ITERATIONS` revised from the L35-01 placeholder **400** to **64**
+in `bots/search/search-budget.ts`. Rationale: full ISMCTS (belief sample + PUCT +
+heuristic rollout to depth floor) is far heavier than the L32-05 truncated-playout
+bench; 400 iters made the L35-07 arena gate impractically slow without changing
+sample-efficiency diagnosis. Room wall-clock budgets remain Lot 36. The L35-07
+gate still uses this offline iteration budget — do not raise it to move a failing
+p-value (backlog L35-07 watch point).
+
+## 2026-08-13 · [T] L35-07 search-v5 gate blocked
+
+`search-v5` is registered (ISMCTS, offline budget **64**, depth floor 2 rounds,
+priors/rollouts from `heuristic-v4` while L33-05 is Blocked). Promotion gate vs
+the Lot 33 champion (`heuristic-v4` / frozen gauntlet) **failed**.
+
+| Field | Value |
+|---|---|
+| Seed | `l35-07-gate` |
+| Requested games | 2 000 (seat-rotated) |
+| Decided / stalls | 1 527 / 473 |
+| Wins / losses | 722 / 805 |
+| Win rate | **0.473** (Wilson 0.448–0.498) |
+| One-sided p (H1: >0.5) | ≈ **0.98** |
+| Candidate hash | `d3ab376c6a4ed37f` |
+| Incumbent hash | `d585586e0c8f7711` |
+| Offline iterations | 64 |
+| Wall elapsed | 13 584 171 ms (~3.8 h, 8 worker threads) |
+| Artifacts | `docs/simulation/2026-08-13-v5-search-gate/` |
+
+Probe (`l35-07-gate-probe`, 200 games) was a coin flip (0.503 / p≈0.50); the
+full gate shows a **loss** to `heuristic-v4`, not noise. Stall rate rose to
+~24% under search (vs ~17% heuristic screens) — stalls stay unassigned.
+
+**Implication:** do not raise the iteration budget to chase p < 0.01 (L35-07
+watch). Upstream suspects per backlog: belief calibration (L34-06), evaluator
+(L33-02), or effective depth. **`DEFAULT_POLICY_ID` remains `heuristic-v4`.**
+`search-v5` stays registered for Lot 36 wiring experiments and diagnosis, not
+as the room default.
+
+## 2026-08-13 · [P] #V5-3 difficulty under search (L36-03)
+
+**Ruling:** Softmax temperature for Normal; Easy keeps uniform substitution on
+`heuristic-v4`; Hard is full search with no substitution.
+
+| Tier | Composition |
+|---|---|
+| Hard | Full wall-clock search budget, no substitution |
+| Normal | `floor(thinkMs/8)` + softmax over root visit scores (`NORMAL_SOFTMAX_TEMPERATURE = 1.5`) |
+| Easy | Sync `heuristic-v4`, existing `DIFFICULTY_RANDOM_RATES.easy` uniform noise |
+
+Wire values `easy` / `normal` / `hard` and `formatBotDifficulty` labels unchanged (#V3-4).
+## 2026-08-13 · [P] #V5-4 Why panel under search (L36-04)
+
+**Ruling:** No numbers. Public `botReason` may carry only coarse codes
+`search-best` and `search-fallback`. Visit counts, win-probability estimates, and
+other eval aggregates stay server-side on `SearchStats` / diagnostics and must
+never reach `BotDecisionReason.params` (`assertPublicBotReason`).
+
+`PROTOCOL_VERSION` 27 → **28** (sole V5 bump).
+
+## 2026-08-13 · [T] L36-05 room decision latency (partial)
+
+Measured with `pnpm --filter @card-battle/server bench:room-latency`
+(4 concurrent “rooms”, 8 decisions each, wall-clock budgets, mid-game 4p fixture).
+
+| Tier | budgetMs | n | p50 | p95 | p99 | max | ≤ thinkMs (900) |
+|---|---|---|---|---|---|---|---|
+| Normal | 106 | 32 | 106 | 106.1 | 106.1 | 106.1 | yes |
+| Hard | 850 | 32 | 850 | 850.3 | 851.8 | 851.8 | yes |
+
+Hard search budget is `thinkMs − 50` (`ROOM_SEARCH_BUDGET_MARGIN_MS`) so a
+finishing ISMCTS iteration cannot push past the think envelope.
+
+**Sign-off:** pending — developer must play one full game at Easy / Normal / Hard
+against `search-v5` and record what looked sharp vs wrong (expect bluff naivety,
+tech §6.6 / §11). L36-05 stays open until that note lands.
+
+## 2026-08-13 · [T] L37-01/02 fitted evaluator pipeline
+
+Belief-matched feature snapshots + seed-split assemble + pure-TS logistic fit
+shipped. Artifacts under `docs/simulation/2026-08-13-v5-fitted/`.
+
+| Field | Value |
+|---|---|
+| Snapshot rows | 13 319 (80×2 arena games, `heuristic-v4` self-play bootstrap) |
+| Manifest hash | `c9de8adb143b51c5` |
+| Model | `logistic-v5` hash `7226f3503a302a90` |
+| Profile | `search-fitted-logistic` (not default) |
+| Test log-loss / Brier | ≈ 0.709 / 0.258 |
+| Inference parity | max abs error ~1e-16 |
+
+**Capture:** `inferBelief(view, log)` then `extractFeatures(..., belief.summary)` —
+no `GameState` into belief. **Default evaluator stays linear.**
+
+**L37-04:** `gate:fitted-eval` script ready. Smoke (`l37-04-smoke`, 4 games) ran
+end-to-end (`gate-smoke.json`); full ≥2 000-game gate + playtest still required
+before promoting fitted inside `search-v5`. Do not flip `DEFAULT_POLICY_ID`
+(L35-07). Bootstrap was heuristic self-play — refit on `search-v5` snapshots
+before trusting the promotion gate.
+
+**L37-03:** not built; wait for L37-04 logistic outcome.
+
+## 2026-08-15 · [P] L38 screen measures room Hard `search-v5` (option A)
+
+Designer ruling for Lot 38: the gross-imbalance screen measures **`search-v5` +
+linear evaluator** at `OFFLINE_SEARCH_ITERATIONS` (**64**), no
+`search-fitted-logistic` profile. That is the room **Hard** path
+(`roomBotPolicyId`), not `DEFAULT_POLICY_ID` (still `heuristic-v4` after
+failed L33-05 / L35-07 gates).
+
+**L37-04 dependency waived** for this screen: fitted is not under measurement,
+so the logistic gate need not pass before L38-01. L37-04 stays `To do`.
+
+**L36-05 playtest sign-off waived** to start the screen: latency is already
+recorded (2026-08-13); the missing human playtest note does not change the
+offline iteration-budget instrument. L36-05 stays `In progress` until that
+note lands. The screen still uses iteration budgets only (§8.2).
+
+## 2026-08-18 · [P] Lot 40 engage Search; L38 paused; Lot 39 is UX
+
+Designer playtest HWZMWI: `search-v5` (Normal/Hard) Spy-spammed, bought unused
+upgrade points, and never attacked for ~280 turns. **No rule or value change.**
+
+**Lot 39 is not this work.** `L39-01`…`L39-06` are table UX polish in
+`docs/backlog_ux.md` (Done). V5 continue as **Lot 40**.
+
+**L38 paused, not cancelled.** L38-01 is `Blocked` until Lot 40’s policy is what
+we want to measure. Do not publish a V5 screen of current `search-v5`. Resume
+L38 under the promoted engage policy, or keep it paused if L40-05 fails.
+
+**L35-07 watch point stands:** do not raise `searchIterations`. Lot 40 retries
+the **prior/rollout** (what L33-05 was supposed to give Search) then the same
+gates.
+
+**L35-03 vs pile-on-weak (do not hide).** L35-03 / max^n: Search must not attack
+the weakened seat when two others are fighting. Designer strategy: hit a
+finishable weakest for the elim/reward; agro whoever is attacking you. Lot 40
+resolution: keep max^n; do not switch to paranoid; **keep the L35-03 test on
+`search-v5`**. Engage heuristic piles on a seat you can **reasonably finish this
+cycle** (already under fire, cannot retaliate, weaker than you on the
+public/Spy read) or the seat **attacking you** — not a healthy mid-table
+bystander.
+
+**Spy:** L34-05 already required filling this seat’s Spy relations. Code sampled
+Spy slices then set `visibility = []`, so `scoreActions` treated every opponent
+as unspied. L40-01 reconstructs relations from `view.players[].spied` only
+(#V4-35). Not a new Spy rule.
+
+**Policies:** `heuristic-v4` stays frozen. New ids `heuristic-v5-engage` and
+`search-v5-engage`. `roomBotPolicyId` stays `search-v5` until L40-05 pass +
+playtest. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
+
+## 2026-08-18 · [T] L40-04 engage fitted logistic — honest fail
+
+Self-play snapshots of `search-v5-engage` (80×2 mirrored, 64 iterations,
+`--max-turns 200`) → seed-split assemble → `logistic-v5-engage`. Gate vs the
+same search + **linear** evaluator at 64 iterations / 400-turn cap (L37-04
+pattern). `FEATURE_LAYOUT_VERSION` unchanged. `logistic-v5` not overwritten.
+
+| Field | Value |
+|---|---|
+| Snapshot rows | 6 064 (132 completed / 28 stalled) |
+| Manifest hash | `e3e0b23432a75616` |
+| Model | `logistic-v5-engage` hash `b0228a9ba3703da0` |
+| Profile | `search-engage-fitted-logistic` |
+| Test log-loss / Brier | ≈ 0.590 / 0.203 |
+| Gate seed | `l40-04-gate` |
+| Requested / decided / stalls | 2 000 / 1 815 / 185 |
+| Fitted wins / linear wins | 882 / 933 |
+| Win rate | **0.486** (Wilson 0.463–0.509) |
+| One-sided p (H1: >0.5) | ≈ **0.89** |
+| Candidate hash | `a09c0e3fd256e397` |
+| Incumbent hash | `d3ab376c6a4ed37f` |
+| Artifacts | `docs/simulation/2026-08-18-v5-engage-fitted/` |
+
+**passed: false.** Fitted is slightly *worse* than linear, not a thin miss of
+p < 0.01. **L37-03 GBDT not built** — trees would chase a losing leaf eval on
+2p self-play. `search-v5-engage` keeps the linear evaluator.
+`DEFAULT_POLICY_ID` stays `heuristic-v4`.
+
+## 2026-08-18 · [T] L40-05 search-v5-engage vs heuristic-v4 — honest fail
+
+L35-07 pattern: seat-rotated 2 000 games, offline 64 iterations, `--max-turns 400`
+(stall bound; not an iteration bump). Champion still frozen `heuristic-v4`.
+
+| Field | Value |
+|---|---|
+| Seed | `l40-05-gate` |
+| Requested / decided / stalls | 2 000 / 1 828 / 172 |
+| Wins / losses | 954 / 874 |
+| Win rate | **0.522** (Wilson 0.499–0.545) |
+| One-sided p (H1: >0.5) | ≈ **0.032** |
+| Candidate hash | `e8f4d8770b9a280d` |
+| Incumbent hash | `d585586e0c8f7711` |
+| Elapsed | 216 516 ms (~3.6 min, 4 workers) |
+| Artifacts | `docs/simulation/2026-08-18-v5-engage-gate/` |
+
+**passed: false** — positive vs L35-07’s 0.473 / p ≈ 0.98, but not p < 0.01.
+Do **not** raise `searchIterations`. **Rooms stay on `search-v5`.**
+`DEFAULT_POLICY_ID` stays `heuristic-v4`. L38 stays paused.
+
+**Playtest analog (not a room promotion):** 4p self-play mix (8 games × 8 iters,
+max 200 turns): engage mean 72 turns vs `search-v5` 100; fewer `buyUpgradePoint`
+(20 vs 54). HWZMWI baseline was ~280 Tax/Regen turns. n=2 at 64 iters is too
+small to claim a 4p attack-rate win. Easy remains `heuristic-v4`.
+
+**ISMCTS:** 4p mid-tree elim used to throw `owner … not in living seats`. Leaf
+break when the acting owner is absent from the iteration’s living set — not a
+rule change.
+
+## 2026-08-18 · [P] L40-06 JAPMZR — attack sells are not a point farm
+
+Designer playtest JAPMZR (4p, room `search-v5` / v4 prior). Bots sold Super to
+fund Spy, sold Strong for 2 points, and dumped the last attacks down to zero.
+That is illegal as a habit even when v4 `sellToFundBonus` likes it.
+
+**Sell overlay (`farm-to-engage-v2`, view only):**
+
+- Always keep ≥1 attack (`-Infinity` on the last attack), even to fund Sentence.
+- Super / Mega: `-Infinity` unless the seat holds two+ copies of that card, or
+  the sell yield is the last gap to play a **held** Sentence (15), Mega (16),
+  or Card Absorber (4). Spy is not a reason.
+- Basic / Strong: 1–2 points is not worth the card unless that same win-special
+  gap.
+- Selling is for a specific need or a truly useless card — not farming points.
+
+**Rooms:** Normal/Hard `roomBotPolicyId` → `search-v5-engage` so the next local
+game uses this prior. L40-05 arena still **failed** (p ≈ 0.032). This is a
+playtest override, not a gate pass. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
+Do **not** raise `searchIterations`. L38 stays paused. `heuristic-v4` /
+`score-play/` stay frozen.
+

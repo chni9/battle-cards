@@ -16,6 +16,8 @@ const SENTENCES: Record<BotReasonCode, string> = {
   'mirror-highest-damage': 'Mirror redirected the highest-damage attack.',
   'reward-pick': 'Claimed elimination rewards.',
   'policy-fallback': 'Fell back to a safe draw.',
+  'search-best': 'Chose the search’s best action.',
+  'search-fallback': 'Search failed — fell back to the heuristic.',
 };
 
 export function formatBotReason(reason: BotDecisionReason): string {

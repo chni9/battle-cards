@@ -5,7 +5,9 @@
  *   pnpm --filter @card-battle/server exec tsx src/simulation/run-gross-imbalance.ts -- \
  *     --seed … --out … --kits … --games-per-cell 200 \
  *     --four-player-mode fixed|random --four-player-games N \
- *     [--four-player-mix a,b,c,d]
+ *     [--four-player-mix a,b,c,d] \
+ *     [--policy search-v5] [--weights-profile id] [--search-iterations 64] \
+ *     [--concurrency N]
  */
 
 import path from 'node:path';

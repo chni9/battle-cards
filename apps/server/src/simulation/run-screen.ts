@@ -1,12 +1,14 @@
 /**
- * Configurable gross-imbalance screen runner — technical spec v4 §7 / Lot 31.
+ * Configurable gross-imbalance screen runner — technical spec v4 §7 / Lot 31 / v5 L38-01.
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { Worker } from 'node:worker_threads';
 
-import type { KitId } from '@card-battle/shared';
-
-import { createInitialState } from '../engine/create-initial-state';
+import { resolveWeightsProfile } from '../bots/profiles/index';
+import { getPolicy, listPolicyIds } from '../bots/registry';
+import { computePolicyWeightsHash } from '../bots/weights-hash';
 import {
   aggregateRows,
   emptyStallLedger,
@@ -15,8 +17,72 @@ import {
   recordStall,
 } from './aggregate';
 import { serializeGameRow } from './emit-row';
-import { runSimulatedGame, type SimulationGameRow } from './run-game';
-import { unorderedPairs, type ScreenConfig } from './screen-config';
+import type { SimulationGameRow } from './run-game';
+import {
+  buildScreenJobs,
+  runScreenJob,
+  type ScreenGameJob,
+  type ScreenGameResult,
+  type ScreenWorkerInbound,
+  type ScreenWorkerOutbound,
+} from './screen-jobs';
+import {
+  coverageDroppedVsV4,
+  unorderedPairs,
+  type ScreenConfig,
+} from './screen-config';
+
+const WORKER_PATH = fileURLToPath(new URL('./screen-worker.ts', import.meta.url));
+
+/** Fresh worker per batch — long-lived search-v5 workers OOM around ~400 games. */
+const SCREEN_WORKER_MAX_OLD_GENERATION_MB = 4096;
+
+function spawnScreenWorker(): Worker {
+  return new Worker(WORKER_PATH, {
+    execArgv: ['--import', 'tsx'],
+    resourceLimits: { maxOldGenerationSizeMb: SCREEN_WORKER_MAX_OLD_GENERATION_MB },
+  });
+}
+
+function runBatchOnWorker(
+  worker: Worker,
+  id: number,
+  jobs: readonly ScreenGameJob[],
+): Promise<readonly ScreenGameResult[]> {
+  return new Promise((resolve, reject) => {
+    const onMessage = (message: ScreenWorkerOutbound): void => {
+      if (message.id !== id) {
+        return;
+      }
+
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+
+      if (message.type === 'error') {
+        reject(new Error(message.message));
+        return;
+      }
+
+      resolve(message.results);
+    };
+
+    const onError = (error: Error): void => {
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+      reject(error);
+    };
+
+    worker.on('message', onMessage);
+    worker.on('error', onError);
+
+    const inbound: ScreenWorkerInbound = {
+      type: 'screen-chunk',
+      id,
+      jobs,
+    };
+    worker.postMessage(inbound);
+  });
+}
 
 export interface RunScreenOptions {
   /** Test-only: force every game's turn cap (default 2500). */
@@ -32,135 +98,147 @@ export interface ScreenRunResult {
   outDir: string;
 }
 
-function tryRun(
-  input: Parameters<typeof runSimulatedGame>[0],
-): SimulationGameRow | 'stalled' {
-  try {
-    return runSimulatedGame(input);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('MAX_TURNS')) {
-      return 'stalled';
-    }
-
-    throw error;
+function policyIdsOrThrow(policyId: string): void {
+  if (!listPolicyIds().includes(policyId)) {
+    throw new Error(`Unknown bot policy: ${policyId}`);
   }
 }
 
-/**
- * Reproduce the starting-kit deal for a stalled random game so stall
- * attribution does not invent kits. Same path as `runSimulatedGame` without the loop.
- */
-function peekStartingKits(seed: string, playerCount: number): readonly KitId[] {
-  const seats = Array.from({ length: playerCount }, (_, index) => ({
-    id: `bot-${String(index)}`,
-    nickname: `Bot${String(index)}`,
-  }));
-  const state = createInitialState({ seats, seed });
-  return state.players.map((player) => player.kitId);
+function resolvedWeightsHash(config: ScreenConfig): string {
+  if (config.weightsProfile !== null) {
+    return computePolicyWeightsHash(resolveWeightsProfile(config.weightsProfile));
+  }
+
+  return getPolicy(config.policyId).weightsHash;
+}
+
+function applyResultsToLedger(
+  results: readonly ScreenGameResult[],
+  ledger: ReturnType<typeof emptyStallLedger>,
+  rows: SimulationGameRow[],
+): void {
+  for (const result of results) {
+    if (result.matchup !== undefined) {
+      recordAttemptedMatchup(ledger, result.matchup.kitA, result.matchup.kitB);
+    }
+
+    if (result.row === null) {
+      recordStall(
+        ledger,
+        result.seatedKits,
+        result.matchup ?? null,
+      );
+    } else {
+      recordSeatedKits(ledger.seatedByKit, result.seatedKits);
+      rows.push(result.row);
+    }
+  }
+}
+
+async function runJobsInWorkers(
+  jobs: readonly ScreenGameJob[],
+  concurrency: number,
+  quiet: boolean,
+): Promise<readonly ScreenGameResult[]> {
+  const workerCount = Math.min(concurrency, jobs.length);
+  const slots: (ScreenGameResult | undefined)[] = Array.from({
+    length: jobs.length,
+  });
+  const BATCH = 5;
+  let nextOffset = 0;
+  let completed = 0;
+  let requestId = 0;
+
+  const takeBatch = (): { offset: number; batch: ScreenGameJob[] } | null => {
+    if (nextOffset >= jobs.length) {
+      return null;
+    }
+
+    const offset = nextOffset;
+    const batch = [...jobs.slice(offset, offset + BATCH)];
+    nextOffset += batch.length;
+    return { offset, batch };
+  };
+
+  const runSlot = async (): Promise<void> => {
+    for (;;) {
+      const taken = takeBatch();
+
+      if (taken === null) {
+        return;
+      }
+
+      const id = (requestId += 1);
+      const worker = spawnScreenWorker();
+
+      try {
+        const batchResults = await runBatchOnWorker(worker, id, taken.batch);
+
+        for (const [index, result] of batchResults.entries()) {
+          slots[taken.offset + index] = result;
+        }
+
+        completed += taken.batch.length;
+
+        if (!quiet) {
+          console.log(`screen ${String(completed)}/${String(jobs.length)}`);
+        }
+      } finally {
+        await worker.terminate();
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: workerCount }, () => runSlot()));
+
+  const results: ScreenGameResult[] = [];
+
+  for (const [index, entry] of slots.entries()) {
+    if (entry === undefined) {
+      throw new Error(`missing screen result at ${String(index)}`);
+    }
+
+    results.push(entry);
+  }
+
+  return results;
 }
 
 export async function runScreen(
   config: ScreenConfig,
   options: RunScreenOptions = {},
 ): Promise<ScreenRunResult> {
+  policyIdsOrThrow(config.policyId);
   await mkdir(config.outDir, { recursive: true });
+
+  const drop = coverageDroppedVsV4(config);
+
+  if (drop !== null && options.quiet !== true) {
+    console.log(drop);
+  }
+
+  const jobs = buildScreenJobs(config, options.maxTurns);
+  const useWorkers = config.concurrency > 1 && process.env['VITEST'] === undefined;
+
+  if (options.quiet !== true) {
+    console.log(
+      `Screen ${config.policyId} × ${String(jobs.length)} games, searchIterations=${String(config.searchIterations)}, concurrency=${String(useWorkers ? config.concurrency : 1)}`,
+    );
+  }
+  const results = useWorkers
+    ? await runJobsInWorkers(jobs, config.concurrency, options.quiet === true)
+    : jobs.map((job) => runScreenJob(job));
 
   const rows: SimulationGameRow[] = [];
   const ledger = emptyStallLedger();
-  const pairs = unorderedPairs(config.oneVOneKits);
-  const maxTurnsOpt =
-    options.maxTurns !== undefined ? { maxTurns: options.maxTurns } : {};
-
-  for (const [pairIndex, [kitA, kitB]] of pairs.entries()) {
-    if (options.quiet !== true) {
-      console.log(
-        `1v1 cell ${String(pairIndex + 1)}/${String(pairs.length)}: ${kitA} vs ${kitB}`,
-      );
-    }
-
-    for (let index = 0; index < config.gamesPerCell; index += 1) {
-      recordAttemptedMatchup(ledger, kitA, kitB);
-
-      const outcome = tryRun({
-        seed: `${config.baseSeed}:1v1:${kitA}-vs-${kitB}:${String(index)}`,
-        playerCount: 2,
-        difficulties: [config.difficulty, config.difficulty],
-        kitAssignment: [kitA, kitB],
-        ...maxTurnsOpt,
-      });
-
-      if (outcome === 'stalled') {
-        recordStall(ledger, [kitA, kitB], { kitA, kitB });
-      } else {
-        recordSeatedKits(ledger.seatedByKit, [kitA, kitB]);
-        rows.push(outcome);
-      }
-    }
-  }
-
-  if (config.fourPlayer.mode === 'fixed') {
-    const mix = config.fourPlayer.mix;
-
-    if (mix === undefined) {
-      throw new Error('fixed four-player mode requires mix');
-    }
-
-    if (options.quiet !== true) {
-      console.log(`4p fixed mix × ${String(config.fourPlayer.games)}`);
-    }
-
-    for (let index = 0; index < config.fourPlayer.games; index += 1) {
-      const outcome = tryRun({
-        seed: `${config.baseSeed}:4p-one-each:${String(index)}`,
-        playerCount: 4,
-        difficulties: [
-          config.difficulty,
-          config.difficulty,
-          config.difficulty,
-          config.difficulty,
-        ],
-        kitAssignment: mix,
-        ...maxTurnsOpt,
-      });
-
-      if (outcome === 'stalled') {
-        recordStall(ledger, mix, null);
-      } else {
-        recordSeatedKits(ledger.seatedByKit, mix);
-        rows.push(outcome);
-      }
-    }
-  } else {
-    if (options.quiet !== true) {
-      console.log(`4p random × ${String(config.fourPlayer.games)}`);
-    }
-
-    for (let index = 0; index < config.fourPlayer.games; index += 1) {
-      const seed = `${config.baseSeed}:4p-random:${String(index)}`;
-      const outcome = tryRun({
-        seed,
-        playerCount: 4,
-        difficulties: [
-          config.difficulty,
-          config.difficulty,
-          config.difficulty,
-          config.difficulty,
-        ],
-        ...maxTurnsOpt,
-      });
-
-      if (outcome === 'stalled') {
-        recordStall(ledger, peekStartingKits(seed, 4), null);
-      } else {
-        const kits = outcome.players.map((player) => player.startingKitId);
-        recordSeatedKits(ledger.seatedByKit, kits);
-        rows.push(outcome);
-      }
-    }
-  }
+  applyResultsToLedger(results, ledger, rows);
+  rows.sort((left, right) => left.seed.localeCompare(right.seed));
 
   const report = aggregateRows(rows, ledger);
   const jsonl = rows.map((row) => serializeGameRow(row)).join('');
+  const pairs = unorderedPairs(config.oneVOneKits);
+  const policyWeightsHash = getPolicy(config.policyId).weightsHash;
+  const resolvedHash = resolvedWeightsHash(config);
 
   const configPayload = {
     baseSeed: config.baseSeed,
@@ -171,6 +249,13 @@ export async function runScreen(
     fourPlayer: config.fourPlayer,
     undersampledCardThreshold: config.undersampledCardThreshold,
     coverageNote: config.coverageNote,
+    policyId: config.policyId,
+    weightsProfile: config.weightsProfile,
+    policyWeightsHash,
+    resolvedWeightsHash: resolvedHash,
+    searchIterations: config.searchIterations,
+    concurrency: config.concurrency,
+    coverageDroppedVsV4: drop,
   };
 
   await writeFile(

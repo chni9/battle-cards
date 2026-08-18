@@ -1,0 +1,134 @@
+{
+  "lambda": 0.0001,
+  "trainLogLoss": 0.6044716224589093,
+  "validationLogLoss": 0.5950354800848493,
+  "testLogLoss": 0.5895394699954181,
+  "testBrier": 0.20324932244533925,
+  "calibrationVal": [
+    {
+      "bin": 0,
+      "count": 19,
+      "meanPred": 0.049007346016427394,
+      "meanLabel": 0.10526315789473684
+    },
+    {
+      "bin": 1,
+      "count": 25,
+      "meanPred": 0.16327081006389782,
+      "meanLabel": 0
+    },
+    {
+      "bin": 2,
+      "count": 33,
+      "meanPred": 0.2650966711009167,
+      "meanLabel": 0
+    },
+    {
+      "bin": 3,
+      "count": 98,
+      "meanPred": 0.3553074120537001,
+      "meanLabel": 0.21428571428571427
+    },
+    {
+      "bin": 4,
+      "count": 173,
+      "meanPred": 0.4569448682311356,
+      "meanLabel": 0.4046242774566474
+    },
+    {
+      "bin": 5,
+      "count": 210,
+      "meanPred": 0.5469319843479297,
+      "meanLabel": 0.6142857142857143
+    },
+    {
+      "bin": 6,
+      "count": 149,
+      "meanPred": 0.6451937183721737,
+      "meanLabel": 0.5906040268456376
+    },
+    {
+      "bin": 7,
+      "count": 61,
+      "meanPred": 0.7438267897097085,
+      "meanLabel": 0.5901639344262295
+    },
+    {
+      "bin": 8,
+      "count": 38,
+      "meanPred": 0.8407968710683399,
+      "meanLabel": 0.6578947368421053
+    },
+    {
+      "bin": 9,
+      "count": 64,
+      "meanPred": 0.960876317245236,
+      "meanLabel": 0.953125
+    }
+  ],
+  "calibrationTest": [
+    {
+      "bin": 0,
+      "count": 15,
+      "meanPred": 0.04982285433120142,
+      "meanLabel": 0.06666666666666667
+    },
+    {
+      "bin": 1,
+      "count": 23,
+      "meanPred": 0.14964916971718684,
+      "meanLabel": 0.08695652173913043
+    },
+    {
+      "bin": 2,
+      "count": 46,
+      "meanPred": 0.26526139966051304,
+      "meanLabel": 0.2826086956521739
+    },
+    {
+      "bin": 3,
+      "count": 101,
+      "meanPred": 0.3508470714134672,
+      "meanLabel": 0.45544554455445546
+    },
+    {
+      "bin": 4,
+      "count": 157,
+      "meanPred": 0.4480981158682454,
+      "meanLabel": 0.34394904458598724
+    },
+    {
+      "bin": 5,
+      "count": 88,
+      "meanPred": 0.5461749405250867,
+      "meanLabel": 0.5113636363636364
+    },
+    {
+      "bin": 6,
+      "count": 81,
+      "meanPred": 0.6438620281223117,
+      "meanLabel": 0.8271604938271605
+    },
+    {
+      "bin": 7,
+      "count": 30,
+      "meanPred": 0.7357873616058582,
+      "meanLabel": 0.9333333333333333
+    },
+    {
+      "bin": 8,
+      "count": 10,
+      "meanPred": 0.87127913696827,
+      "meanLabel": 0.9
+    },
+    {
+      "bin": 9,
+      "count": 21,
+      "meanPred": 0.9282660391577913,
+      "meanLabel": 0.9523809523809523
+    }
+  ],
+  "modelContentHash": "b0228a9ba3703da0",
+  "featureLayoutVersion": 1,
+  "inferenceParityMaxAbsError": 1.1102230246251565e-15
+}

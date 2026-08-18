@@ -1,0 +1,47 @@
+{
+  "gauntlet": [
+    "heuristic-v4"
+  ],
+  "curve": [
+    {
+      "generation": 0,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 1,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 2,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 3,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 4,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 5,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 6,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 7,
+      "fitness": 0.65
+    },
+    {
+      "generation": 8,
+      "fitness": 0.65
+    },
+    {
+      "generation": 9,
+      "fitness": 0.65
+    }
+  ]
+}

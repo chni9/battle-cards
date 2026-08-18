@@ -20,19 +20,11 @@ import {
 } from '@card-battle/shared';
 
 import type { TurnAction } from '../../engine/turn/perform-action';
-import { regenSoftLifeForKit, taxLifeBufferForKit } from '../heuristic-life-thresholds';
 import {
-  BURN_COUNTER_BONUS,
-  FINISH_CHIP_BONUS,
-  HEURISTIC_BAND_WEIGHTS,
-  MUTUAL_CANCEL_BONUS,
-  PRESSURE_COST_DIVISOR,
-  SPY_TOP_THREAT_BONUS,
-  SPY_UNSPIED_BONUS,
-  STRIKE_MIN_DAMAGE,
-  TAX_INVEST_BONUS,
-  UNSCORED_PLAY_PENALTY,
-} from '../heuristic-weights';
+  lifeThresholdBasesFromWeights,
+  regenSoftLifeForKit,
+  taxLifeBufferForKit,
+} from '../heuristic-life-thresholds';
 import {
   bestAffordableStrikeDamage,
   eligibleMirrorPendingFromView,
@@ -96,7 +88,7 @@ export function scoreCorePlayCard(
       return { score: Number.NEGATIVE_INFINITY, code: 'lethal-now' };
     }
 
-    return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + elims * 10, code: 'lethal-now' };
+    return { score: ctx.weights.action.bands.lethalNow + elims * 10, code: 'lethal-now' };
   }
 
   if (action.targetPlayerId !== undefined && isImmuneTarget(view, action.targetPlayerId, cardId)) {
@@ -109,7 +101,7 @@ export function scoreCorePlayCard(
 
     if (hasCancelingIncomingFrom(view, action.targetPlayerId, damage)) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS + damage,
+        score: ctx.weights.action.bands.survive + ctx.weights.action.mutualCancelBonus + damage,
         code: 'survive',
       };
     }
@@ -122,7 +114,7 @@ export function scoreCorePlayCard(
     hasPendingCardFrom(view, action.targetPlayerId, cardId)
   ) {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.survive + MUTUAL_CANCEL_BONUS,
+      score: ctx.weights.action.bands.survive + ctx.weights.action.mutualCancelBonus,
       code: 'survive',
     };
   }
@@ -133,22 +125,22 @@ export function scoreCorePlayCard(
     // an upgraded or MEGA-ineligible pending attack has nothing to redirect — falling
     // through to the sustain band below instead of a Survive it cannot actually fire.
     if (cardId === 'mirror' && eligibleMirrorPendingFromView(view, isUpgraded).length > 0) {
-      return { score: HEURISTIC_BAND_WEIGHTS.survive + 30, code: 'survive' };
+      return { score: ctx.weights.action.bands.survive + 30, code: 'survive' };
     }
 
     if (cardId === 'shield') {
-      return { score: HEURISTIC_BAND_WEIGHTS.survive + 20, code: 'survive' };
+      return { score: ctx.weights.action.bands.survive + 20, code: 'survive' };
     }
 
     if (cardId === 'regeneration') {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.survive + (action.quantity ?? 0),
+        score: ctx.weights.action.bands.survive + (action.quantity ?? 0),
         code: 'survive',
       };
     }
 
     if (cardId === 'cloning') {
-      return { score: HEURISTIC_BAND_WEIGHTS.survive + 10, code: 'survive' };
+      return { score: ctx.weights.action.bands.survive + 10, code: 'survive' };
     }
   }
 
@@ -160,7 +152,7 @@ export function scoreCorePlayCard(
       const damage = attackDamageFor(cardId, isUpgraded);
 
       if (damage >= knownLives) {
-        return { score: HEURISTIC_BAND_WEIGHTS.lethalNow + damage, code: 'lethal-now' };
+        return { score: ctx.weights.action.bands.lethalNow + damage, code: 'lethal-now' };
       }
     }
   }
@@ -180,8 +172,8 @@ export function scoreCorePlayCard(
       const clears = damage >= need ? 40 : 0;
       return {
         score:
-          HEURISTIC_BAND_WEIGHTS.deny +
-          BURN_COUNTER_BONUS +
+          ctx.weights.action.bands.deny +
+          ctx.weights.action.burnCounterBonus +
           Math.min(damage, need) * 15 +
           clears,
         code: 'deny',
@@ -208,7 +200,7 @@ export function scoreCorePlayCard(
       // Base Spy already on them: only upgraded Spy still adds live resources.
       if (isUpgraded && already.lives === undefined) {
         return {
-          score: HEURISTIC_BAND_WEIGHTS.deny + 25,
+          score: ctx.weights.action.bands.deny + 25,
           code: 'deny',
         };
       }
@@ -216,9 +208,9 @@ export function scoreCorePlayCard(
       return { score: Number.NEGATIVE_INFINITY, code: 'deny' };
     }
 
-    const onTop = action.targetPlayerId === ctx.threatOrder[0] ? SPY_TOP_THREAT_BONUS : 0;
+    const onTop = action.targetPlayerId === ctx.threatOrder[0] ? ctx.weights.action.spyTopThreatBonus : 0;
     return {
-      score: HEURISTIC_BAND_WEIGHTS.deny + SPY_UNSPIED_BONUS + onTop,
+      score: ctx.weights.action.bands.deny + ctx.weights.action.spyUnspiedBonus + onTop,
       code: 'deny',
     };
   }
@@ -235,7 +227,7 @@ export function scoreCorePlayCard(
 
     if (spend === maxSpend && spend > 0) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.deny + spend + (topSpender === action.targetPlayerId ? 1 : 0),
+        score: ctx.weights.action.bands.deny + spend + (topSpender === action.targetPlayerId ? 1 : 0),
         code: 'deny',
       };
     }
@@ -252,7 +244,7 @@ export function scoreCorePlayCard(
     if (spied?.lives !== undefined && spied.lives > view.self.lives + 2) {
       return {
         // Retuned 40 → 50 (2026-08-05, L29-06, decisions.md).
-        score: HEURISTIC_BAND_WEIGHTS.invest + 50 + (isUpgraded ? 15 : 0),
+        score: ctx.weights.action.bands.invest + 50 + (isUpgraded ? 15 : 0),
         code: 'invest',
       };
     }
@@ -260,13 +252,13 @@ export function scoreCorePlayCard(
     if (spied?.points !== undefined && spied.points > view.self.points + 5) {
       return {
         // Retuned 35 → 45 (2026-08-05, L29-06, decisions.md).
-        score: HEURISTIC_BAND_WEIGHTS.invest + 45 + (isUpgraded ? 15 : 0),
+        score: ctx.weights.action.bands.invest + 45 + (isUpgraded ? 15 : 0),
         code: 'invest',
       };
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      score: ctx.weights.action.bands.sustain - ctx.weights.action.unscoredPlayPenalty,
       code: 'sustain',
     };
   }
@@ -274,7 +266,7 @@ export function scoreCorePlayCard(
   // Absorber without a target should not reach here; safety below draw.
   if (cardId === 'absorber') {
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+      score: ctx.weights.action.bands.sustain - ctx.weights.action.unscoredPlayPenalty,
       code: 'sustain',
     };
   }
@@ -298,14 +290,14 @@ export function scoreCorePlayCard(
           ? 15
           : 0;
       return {
-        score: HEURISTIC_BAND_WEIGHTS.pressure + FINISH_CHIP_BONUS + damage + onWeakest,
+        score: ctx.weights.action.bands.pressure + ctx.weights.action.finishChipBonus + damage + onWeakest,
         code: 'pressure',
       };
     }
 
-    if (!isUpgraded || damage < STRIKE_MIN_DAMAGE) {
+    if (!isUpgraded || damage < ctx.weights.action.strikeMinDamage) {
       return {
-        score: HEURISTIC_BAND_WEIGHTS.sustain - 15,
+        score: ctx.weights.action.bands.sustain - 15,
         code: 'pressure',
       };
     }
@@ -322,9 +314,9 @@ export function scoreCorePlayCard(
       : 0;
     return {
       score:
-        HEURISTIC_BAND_WEIGHTS.pressure +
+        ctx.weights.action.bands.pressure +
         damage -
-        cost / PRESSURE_COST_DIVISOR +
+        cost / ctx.weights.action.pressureCostDivisor +
         onTop +
         retaliateBonus +
         knownFinishBonus +
@@ -335,7 +327,10 @@ export function scoreCorePlayCard(
 
   // Tax — farm engine; prefer upgraded; refuse when reserve would break after other spends only.
   if (cardId === 'tax') {
-    const taxBuffer = taxLifeBufferForKit(getKit(view.self.kitId).startingResources.lives);
+    const taxBuffer = taxLifeBufferForKit(
+    getKit(view.self.kitId).startingResources.lives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
 
     if (view.self.lives > ctx.incomingThreat + taxBuffer) {
       const upgradeBias = isUpgraded ? 25 : 0;
@@ -344,8 +339,8 @@ export function scoreCorePlayCard(
       const finishPenalty = ctx.stance === 'finish' ? -40 : 0;
       return {
         score:
-          HEURISTIC_BAND_WEIGHTS.invest +
-          TAX_INVEST_BONUS +
+          ctx.weights.action.bands.invest +
+          ctx.weights.action.taxInvestBonus +
           upgradeBias +
           contestPenalty +
           finishPenalty,
@@ -360,12 +355,15 @@ export function scoreCorePlayCard(
   if (cardId === 'regeneration') {
     // Soft top-up when lives are low (Imposition drip / post-Tax floor) — ONMMBZ bots
     // drew to death with Regen in hand.
-    const regenSoftLife = regenSoftLifeForKit(getKit(view.self.kitId).startingResources.lives);
+    const regenSoftLife = regenSoftLifeForKit(
+    getKit(view.self.kitId).startingResources.lives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
 
     if (view.self.lives <= regenSoftLife || (isUpgraded && view.self.lives <= regenSoftLife + 2)) {
       return {
         score:
-          HEURISTIC_BAND_WEIGHTS.invest +
+          ctx.weights.action.bands.invest +
           50 +
           (action.quantity ?? 0) +
           (isUpgraded ? 20 : 0),
@@ -374,7 +372,7 @@ export function scoreCorePlayCard(
     }
 
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain + (action.quantity ?? 0) + (isUpgraded ? 5 : 0),
+      score: ctx.weights.action.bands.sustain + (action.quantity ?? 0) + (isUpgraded ? 5 : 0),
       code: 'sustain',
     };
   }
@@ -382,14 +380,14 @@ export function scoreCorePlayCard(
   if (cardId === 'shield' || cardId === 'mirror') {
     const contestBias = ctx.stance === 'contest' ? 40 : 0;
     return {
-      score: HEURISTIC_BAND_WEIGHTS.sustain + 2 + contestBias + (isUpgraded ? 10 : 0),
+      score: ctx.weights.action.bands.sustain + 2 + contestBias + (isUpgraded ? 10 : 0),
       code: 'sustain',
     };
   }
 
   // Never rng-tie with draw for an unscored playCard.
   return {
-    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    score: ctx.weights.action.bands.sustain - ctx.weights.action.unscoredPlayPenalty,
     code: 'sustain',
   };
 }

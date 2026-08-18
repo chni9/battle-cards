@@ -1,0 +1,47 @@
+{
+  "note": "Headless 4p self-play mix for L40-05 / L36-05 analog. Rooms were not promoted. HWZMWI baseline was ~280 Tax/Regen turns with almost no attacks.",
+  "iters8_games8_maxTurns200": {
+    "search-v5": {
+      "finished": 6,
+      "stalled": 2,
+      "crashed": 0,
+      "meanTurns": 100,
+      "attacks": 87,
+      "tax": 139,
+      "spy": 41,
+      "regen": 41,
+      "buy": 54,
+      "sell": 72,
+      "attackToTax": 0.626
+    },
+    "search-v5-engage": {
+      "finished": 6,
+      "stalled": 2,
+      "crashed": 0,
+      "meanTurns": 72.3,
+      "attacks": 60,
+      "tax": 92,
+      "spy": 62,
+      "regen": 25,
+      "buy": 20,
+      "sell": 68,
+      "attackToTax": 0.652
+    }
+  },
+  "iters64_games2_maxTurns200": {
+    "search-v5": {
+      "finished": 2,
+      "meanTurns": 65,
+      "attacks": 19,
+      "tax": 19,
+      "buy": 12
+    },
+    "search-v5-engage": {
+      "finished": 2,
+      "meanTurns": 76,
+      "attacks": 14,
+      "tax": 41,
+      "buy": 15
+    }
+  }
+}

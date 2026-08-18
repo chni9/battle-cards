@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "generation": 9,
+  "elite": {
+    "action": {
+      "bands": {
+        "lethalNow": 10000,
+        "survive": 8000,
+        "deny": 4000,
+        "pressure": 2000,
+        "invest": 1000,
+        "sustain": 100
+      },
+      "buySpecialPointsFloor": 31.08513161174761,
+      "taxLifeBuffer": 5.948226570285903,
+      "denyAbsorberMinLivesLost": 2.4632758561015793,
+      "pressureCostDivisor": 1.5267712692517954,
+      "strikeMinDamage": 3.83254813230194,
+      "taxInvestBonus": 40.38282067344443,
+      "buyUpgradePointBonus": 38.554389258078665,
+      "upgradeAttackBonus": 70.33506700773685,
+      "spyUnspiedBonus": 72.4366011775849,
+      "spyTopThreatBonus": 15.397740871329438,
+      "sellToFundBonus": 73.06201096950467,
+      "regenSoftLife": 6.9755630378813684,
+      "burnCounterBonus": 134.83715588082995,
+      "mutualCancelBonus": 29.9506313253844,
+      "impositionInvestBonus": 36.83772632754031,
+      "pointsGeneratorInvestBonus": 51.462841794127414,
+      "spyThiefDenyBonus": 105.24994804059175,
+      "unscoredPlayPenalty": 53.44940069275363,
+      "upgradeTaxBonus": 81.01126005942413,
+      "upgradeRegenBonus": 84.15102187770694,
+      "upgradeMirrorBonus": 54.48717302612132,
+      "upgradeShieldBonus": 45.661690715440415,
+      "upgradeAbsorberBonus": 46.56414233457059,
+      "upgradeSentenceBonus": 63.41985950375038,
+      "contestUpgradeExtra": 28.888808652854173,
+      "absorberUpDenyBonus": 127.92027923067909,
+      "absorberPointsDenyBonus": 54.13535346832175,
+      "finishChipBonus": 75.5566963000014,
+      "absorberMinLivesVsRegen": 1.7242490614213097,
+      "drawScorePerExtraDraw": 18.637771989669787,
+      "superRegenInvestBonus": 61.97396711989358,
+      "superRegenSurviveBonus": 29.61474753396258,
+      "upgradePointThiefDenyBonus": 78.1330836117498,
+      "cardThiefDenyBonus": 69.8825789422446,
+      "poisonInvestBonus": 49.39809347978761,
+      "poisonMultiTargetBonus": 16.096988464887275,
+      "curseDenyBonus": 58.65597680508296,
+      "curseInvestBonus": 42.444631024465124,
+      "curseHighSpendThreshold": 2.7439334839873135,
+      "superAbsorberUpDenyBonus": 164.1990383991731,
+      "superAbsorberPointsDenyBonus": 75.99440991374135,
+      "superAbsorberBaselineDenyBonus": 40.72586747064647,
+      "sentenceUpgradedPerOpponent": 9.220485704718518,
+      "megaAttackPressurePerOpponent": 14.464517996795257,
+      "superMirrorSurviveBonus": 44.05252304010802,
+      "superMirrorUpgradedBonus": 20.79268805342025,
+      "attackThiefSurviveBonus": 27.92972679145436,
+      "attackThiefDenyBonus": 19.405037211785043,
+      "attackThiefIntelBonus": 17.628198358401175,
+      "blockSurviveBonus": 49.087026292161255,
+      "blockInvestBonus": 34.68088314903642,
+      "invisibilityInvestBonus": 85.50359980247748,
+      "cardAbsorberInvestBonus": 61.719993561643705,
+      "cardAbsorberPerCardBonus": 4.411413787355526,
+      "cardAbsorberMaxBonusCards": 2.2306992813471065,
+      "cardTransformerInvestBonus": 47.02513278987269,
+      "reanimationInvestBonus": 40.479260548917686,
+      "reanimationLowLifeFloor": 3.5495496338132653,
+      "reanimationLowLifeBonus": 23.05713161829206,
+      "deactivatePersistentInvestBonus": 42.207828821149334,
+      "deactivatePersistentPointsFloor": 17.26827409159343,
+      "activateDuplicationInvestBonus": 45.715721208006855
+    },
+    "lifeThresholds": {
+      "referenceStartingLives": 10
+    },
+    "evaluator": {
+      "survivalTermWeight": -0.08794120839049269,
+      "linearWeights": [
+        3,
+        0.3,
+        0.4,
+        0.8,
+        0.2,
+        -2,
+        1.2,
+        0.5,
+        0.4,
+        0.5,
+        0.3,
+        0.2,
+        -0.3,
+        0.4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -1.5,
+        0,
+        0.6,
+        0.5,
+        0.2,
+        0.4,
+        0,
+        0,
+        0
+      ]
+    },
+    "search": {
+      "explorationConstant": 1.25,
+      "priorTemperature": 1,
+      "depthCapRounds": 2
+    }
+  },
+  "eliteFitness": 0.65,
+  "sigma": 1,
+  "curve": [
+    {
+      "generation": 0,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 1,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 2,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 3,
+      "fitness": 0.5972222222222222
+    },
+    {
+      "generation": 4,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 5,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 6,
+      "fitness": 0.6229508196721312
+    },
+    {
+      "generation": 7,
+      "fitness": 0.65
+    },
+    {
+      "generation": 8,
+      "fitness": 0.65
+    },
+    {
+      "generation": 9,
+      "fitness": 0.65
+    }
+  ],
+  "splitHash": "23ce923210fc4096",
+  "rngSalt": "l33-03-fit-v3"
+}

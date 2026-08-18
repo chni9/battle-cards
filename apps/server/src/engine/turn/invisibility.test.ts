@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { makeCounterEffect } from '../../testing/factories';
 import { createInitialState } from '../create-initial-state';
 import { createRng } from '../rng';
-import { decide } from '../../bots/heuristic-policy';
+import { getDefaultPolicy } from '../../bots/registry';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { eliminateWithoutReward } from './elimination-rewards';
@@ -298,7 +298,9 @@ describe('Invisibility (L25-02)', () => {
       actionLog: [],
     });
     const actions = listLegalActions(state, a.id);
-    const decision = decide(view, actions, createRng('l25-02-bot'));
+    const decision = getDefaultPolicy().decide(view, actions, createRng('l25-02-bot'), {
+      actionLog: [],
+    }).action;
     expect(decision.type).not.toBe('sellUpgradePoint');
     expect(
       actions.some(

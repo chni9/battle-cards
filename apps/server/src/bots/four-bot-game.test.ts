@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import type { ActionLogEntryView, GameState } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
-import { decide, pickEliminationRewards, pickMirrorRedirect } from '../bots/heuristic-policy';
+import { getDefaultPolicy } from '../bots/registry';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import {
@@ -72,9 +72,10 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
     turnDeadlineMs: null,
     actionLog,
   });
+  const policy = getDefaultPolicy();
   const actions = listLegalActions(state, botId);
   const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-  const top = decide(view, actions, rng);
+  const top = policy.decide(view, actions, rng, { actionLog }).action;
   const chosen = applyDifficultyNoise(top, actions, 'hard', rng);
 
   const hooks = {
@@ -86,7 +87,7 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
         turnDeadlineMs: null,
         actionLog,
       });
-      const pick = pickMirrorRedirect(
+      const pick = policy.pickMirrorRedirect(
         mirrorView,
         createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
         s.mirrorChoice?.eligibleEffectIds,
@@ -130,7 +131,7 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
         actionLog,
       });
       const available = listAvailableRewardCards(s, choice.eliminatedPlayerId);
-      const picks = pickEliminationRewards(
+      const picks = policy.pickEliminationRewards(
         rewardView,
         available,
         s.lifeLimit,
@@ -142,7 +143,7 @@ function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {
       return {
         chooserPlayerId: choice.eliminatorPlayerId,
         eliminationId: choice.eliminationId,
-        choices: picks,
+        choices: picks.choices,
       };
     },
   };

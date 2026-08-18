@@ -1,0 +1,35 @@
+{
+  "candidate": {
+    "profileId": "search-engage-fitted-logistic",
+    "weightsHash": "a09c0e3fd256e397",
+    "evaluatorKind": "fitted-logistic",
+    "fittedModelId": "logistic-v5-engage"
+  },
+  "incumbent": {
+    "profileId": "search-linear",
+    "weightsHash": "d3ab376c6a4ed37f",
+    "evaluatorKind": "linear"
+  },
+  "offlineSearchIterations": 64,
+  "maxTurns": 400,
+  "prior": "engage",
+  "seed": "l40-04-gate-smoke",
+  "requestedGames": 40,
+  "matchups": 20,
+  "workers": 4,
+  "wins": 21,
+  "losses": 17,
+  "stalls": 2,
+  "gamesPlayed": 40,
+  "decided": 38,
+  "winRate": 0.5526315789473685,
+  "wilson": {
+    "lower": 0.3970602917908942,
+    "upper": 0.6985383468844911,
+    "center": 0.5477993193376927
+  },
+  "pValueOneSided": 0.31355128507857444,
+  "elapsedMs": 12403,
+  "passed": false,
+  "promotionNote": "Promote engage-search fitted evaluator only on p < 0.01 + playtest. Do not flip DEFAULT_POLICY_ID (L40-04)."
+}

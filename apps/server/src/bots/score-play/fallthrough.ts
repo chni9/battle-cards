@@ -8,11 +8,13 @@
 
 import type { BotReasonCode } from '@card-battle/shared';
 
-import { HEURISTIC_BAND_WEIGHTS, UNSCORED_PLAY_PENALTY } from '../heuristic-weights';
+import type { PolicyWeights } from '../policy-weights';
 
-export function unscoredPlayCardFallthrough(): { score: number; code: BotReasonCode } {
+export function unscoredPlayCardFallthrough(
+  weights: PolicyWeights,
+): { score: number; code: BotReasonCode } {
   return {
-    score: HEURISTIC_BAND_WEIGHTS.sustain - UNSCORED_PLAY_PENALTY,
+    score: weights.action.bands.sustain - weights.action.unscoredPlayPenalty,
     code: 'sustain',
   };
 }

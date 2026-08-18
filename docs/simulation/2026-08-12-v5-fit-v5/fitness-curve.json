@@ -1,0 +1,107 @@
+{
+  "gauntlet": [
+    "heuristic-v4"
+  ],
+  "curve": [
+    {
+      "generation": 0,
+      "fitness": 0.4961832061068702
+    },
+    {
+      "generation": 1,
+      "fitness": 0.5037878787878788
+    },
+    {
+      "generation": 2,
+      "fitness": 0.5151515151515151
+    },
+    {
+      "generation": 3,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 4,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 5,
+      "fitness": 0.5243445692883895
+    },
+    {
+      "generation": 6,
+      "fitness": 0.5347222222222222
+    },
+    {
+      "generation": 7,
+      "fitness": 0.5347222222222222
+    },
+    {
+      "generation": 8,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 9,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 10,
+      "fitness": 0.5365853658536586
+    },
+    {
+      "generation": 11,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 12,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 13,
+      "fitness": 0.5381944444444444
+    },
+    {
+      "generation": 14,
+      "fitness": 0.5416666666666666
+    },
+    {
+      "generation": 15,
+      "fitness": 0.5416666666666666
+    },
+    {
+      "generation": 16,
+      "fitness": 0.55
+    },
+    {
+      "generation": 17,
+      "fitness": 0.5541666666666667
+    },
+    {
+      "generation": 18,
+      "fitness": 0.5541666666666667
+    },
+    {
+      "generation": 19,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 20,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 21,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 22,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 23,
+      "fitness": 0.5802469135802469
+    },
+    {
+      "generation": 24,
+      "fitness": 0.5802469135802469
+    }
+  ]
+}

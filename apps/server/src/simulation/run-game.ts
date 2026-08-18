@@ -5,21 +5,19 @@
 import type {
   ActionLogEntryView,
   BotDifficulty,
+  GameState,
   KitId,
+  PlayingStateView,
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
+import { usesOfflineSearchBudget } from '../bots/policies/search-v5';
 import {
-  decide,
-  pickEliminationRewards,
-  pickMirrorRedirect,
-} from '../bots/heuristic-policy';
-import {
-  pickPoolInstanceIds,
-  pickReanimationKitId,
-  pickSpecialCardId,
-  pickStealInstanceId,
-} from '../bots/sub-choice-picks';
+  DEFAULT_POLICY_ID,
+  getPolicy,
+} from '../bots/registry';
+import type { BotPolicy } from '../bots/policy-types';
+import { OFFLINE_SEARCH_ITERATIONS } from '../bots/search/search-budget';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import {
@@ -32,11 +30,24 @@ import type { TurnResult } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
+import {
+  captureFeatureSnapshot,
+  labelFeatureSnapshots,
+  type FeatureSnapshotRow,
+  type UnlabeledFeatureSnapshot,
+} from './feature-snapshots';
 
 /** Fixed clock for simulator reproducibility (L18-01). */
 export const SIM_NOW_MS = 0;
 
 const MAX_TURNS = 2_500;
+
+export interface PolicyDecideTelemetry {
+  policyId: string;
+  seatIndex: number;
+  /** Offline iteration count — 1 for synchronous policies (technical spec v5 §8.2). */
+  iterations: number;
+}
 
 export interface RunGameInput {
   seed: string;
@@ -45,6 +56,40 @@ export interface RunGameInput {
   kitAssignment?: readonly KitId[];
   /** Override default 2500 — tests force MAX_TURNS without hunting stall seeds. */
   maxTurns?: number;
+  /**
+   * Per-seat policy ids (L32-02). Length must match `playerCount` when set.
+   * Defaults to `heuristic-v4` for every seat.
+   */
+  policyIds?: readonly string[];
+  /**
+   * Per-seat policy instances (L33-03 optimizer). When set, length must match
+   * `playerCount` and takes precedence over `policyIds`.
+   */
+  seatPolicies?: readonly BotPolicy[];
+  /**
+   * Optional checked-in weights profile id applied to every seat's decide ctx (L33-01).
+   * `null` / omitted → each policy's closed-over weights.
+   */
+  weightsProfile?: string | null;
+  /**
+   * Iteration budget for ISMCTS seats (`search-v5*`, L36-01 / L40-03). Never wall-clock in the
+   * simulator — reproducibility DoD. Defaults to `OFFLINE_SEARCH_ITERATIONS`.
+   */
+  searchIterations?: number;
+  /** When true, attach labeled feature snapshots on a completed game (L33-06). */
+  captureFeatureSnapshots?: boolean;
+  /** Arena instrumentation — called after each synchronous policy decision (L32-06). */
+  onPolicyDecide?: (telemetry: PolicyDecideTelemetry) => void;
+  /**
+   * Ground-truth hook before each decision (L34-06 calibration). The callback
+   * may read `state`; belief APIs must still never take `GameState`.
+   */
+  onBeforeDecide?: (ctx: {
+    state: GameState;
+    view: PlayingStateView;
+    actionLog: readonly ActionLogEntryView[];
+    actingPlayerId: string;
+  }) => void;
 }
 
 export interface SimulationGameRow {
@@ -76,6 +121,8 @@ export interface SimulationGameRow {
     botDifficulty: BotDifficulty;
   }[];
   eliminations: readonly FinishedGameEliminationRecord[];
+  /** Present only when `captureFeatureSnapshots` was set and the game finished. */
+  featureSnapshots?: readonly FeatureSnapshotRow[];
 }
 
 function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
@@ -169,7 +216,26 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     nickname: `Bot${String(index)}`,
   }));
 
+  if (
+    input.policyIds !== undefined &&
+    input.policyIds.length !== input.playerCount
+  ) {
+    throw new Error(
+      `policyIds length ${String(input.policyIds.length)} !== playerCount ${String(input.playerCount)}`,
+    );
+  }
+
+  if (
+    input.seatPolicies !== undefined &&
+    input.seatPolicies.length !== input.playerCount
+  ) {
+    throw new Error(
+      `seatPolicies length ${String(input.seatPolicies.length)} !== playerCount ${String(input.playerCount)}`,
+    );
+  }
+
   const difficultiesById = new Map<string, BotDifficulty>();
+  const policyByPlayerId = new Map<string, BotPolicy>();
 
   for (const [index, seat] of seats.entries()) {
     const difficulty = input.difficulties[index];
@@ -179,6 +245,10 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     }
 
     difficultiesById.set(seat.id, difficulty);
+    const override = input.seatPolicies?.[index];
+    const policy =
+      override ?? getPolicy(input.policyIds?.[index] ?? DEFAULT_POLICY_ID);
+    policyByPlayerId.set(seat.id, policy);
   }
 
   const state = createInitialState({
@@ -193,6 +263,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
 
   const actionLog: ActionLogEntryView[] = [];
   const eliminations: FinishedGameEliminationRecord[] = [];
+  const unlabeledSnapshots: UnlabeledFeatureSnapshot[] = [];
   let turns = 0;
 
   const turnCap = input.maxTurns ?? MAX_TURNS;
@@ -205,6 +276,12 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     }
 
     const difficulty = difficultiesById.get(botId) ?? 'hard';
+    const policy = policyByPlayerId.get(botId);
+
+    if (policy === undefined) {
+      throw new Error(`no policy for seat ${botId}`);
+    }
+
     const view = buildPlayingViewFor({
       recipientSessionId: botId,
       gameCode: `sim-${input.seed}`,
@@ -213,16 +290,49 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       actionLog,
       botDifficulties: difficultiesById,
     });
+    input.onBeforeDecide?.({
+      state,
+      view,
+      actionLog,
+      actingPlayerId: botId,
+    });
     const actions = listLegalActions(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
-    const top = decide(view, actions, rng);
-    const chosen = applyDifficultyNoise(top, actions, difficulty, rng);
+    const searchIterations = input.searchIterations ?? OFFLINE_SEARCH_ITERATIONS;
+    const decision = policy.decide(view, actions, rng, {
+      actionLog,
+      weightsProfile: input.weightsProfile ?? null,
+      ...(usesOfflineSearchBudget(policy.id)
+        ? { budget: { kind: 'iterations' as const, n: searchIterations } }
+        : {}),
+    });
+
+    if (input.captureFeatureSnapshots === true) {
+      unlabeledSnapshots.push(
+        captureFeatureSnapshot(state, botId, actionLog, `sim-${input.seed}`),
+      );
+    }
+
+    const seatIndex = Number.parseInt(botId.replace('bot-', ''), 10);
+
+    input.onPolicyDecide?.({
+      policyId: policy.id,
+      seatIndex: Number.isFinite(seatIndex) ? seatIndex : 0,
+      iterations: decision.searchDiagnostics?.iterations ?? 1,
+    });
+    const chosen = applyDifficultyNoise(decision.action, actions, difficulty, rng);
 
     const hooks = {
       resolveMirror: (
         s: typeof state,
         actorId: string,
       ): { pendingEffectId: string; newTargetPlayerId: string } => {
+        const actorPolicy = policyByPlayerId.get(actorId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${actorId}`);
+        }
+
         const mirrorView = buildPlayingViewFor({
           recipientSessionId: actorId,
           gameCode: `sim-${input.seed}`,
@@ -231,7 +341,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           actionLog,
           botDifficulties: difficultiesById,
         });
-        const pick = pickMirrorRedirect(
+        const pick = actorPolicy.pickMirrorRedirect(
           mirrorView,
           createRng(`${s.seed}:bot:${actorId}:mirror:${s.turnSequence}`),
           s.mirrorChoice?.eligibleEffectIds,
@@ -245,6 +355,11 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       },
       resolveSteal: (s: typeof state, actorId: string) => {
         const choice = s.stealChoice;
+        const actorPolicy = policyByPlayerId.get(actorId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${actorId}`);
+        }
 
         if (choice?.playerId !== actorId) {
           throw new Error('steal pending without stealChoice');
@@ -264,7 +379,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         });
 
         return {
-          instanceId: pickStealInstanceId(
+          instanceId: actorPolicy.pickStealInstanceId(
             stealView,
             choice.eligibleInstanceIds,
             createRng(`${s.seed}:bot:${actorId}:steal:${s.turnSequence}`),
@@ -273,12 +388,17 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       },
       resolvePoolPick: (s: typeof state, actorId: string) => {
         const choice = s.subChoice;
+        const actorPolicy = policyByPlayerId.get(actorId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${actorId}`);
+        }
 
         if (choice?.kind !== 'pool-pick' || choice.playerId !== actorId) {
           throw new Error('pool pick pending without subChoice');
         }
 
-        const instanceIds = pickPoolInstanceIds(
+        const instanceIds = actorPolicy.pickPoolInstanceIds(
           s.pool,
           choice.eligibleInstanceIds.filter((id) =>
             s.pool.some((card) => card.instanceId === id),
@@ -295,13 +415,18 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       },
       resolveSpecialPick: (s: typeof state, actorId: string) => {
         const choice = s.subChoice;
+        const actorPolicy = policyByPlayerId.get(actorId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${actorId}`);
+        }
 
         if (choice?.kind !== 'special-pick' || choice.playerId !== actorId) {
           throw new Error('special pick pending without subChoice');
         }
 
         return {
-          cardId: pickSpecialCardId(
+          cardId: actorPolicy.pickSpecialCardId(
             choice.eligibleCardIds,
             createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`),
           ),
@@ -309,13 +434,18 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       },
       resolveReanimationKit: (s: typeof state, playerId: string) => {
         const choice = s.subChoice;
+        const actorPolicy = policyByPlayerId.get(playerId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${playerId}`);
+        }
 
         if (choice?.kind !== 'reanimation-kit' || choice.playerId !== playerId) {
           throw new Error('reanimation kit pending without subChoice');
         }
 
         return {
-          kitId: pickReanimationKitId(
+          kitId: actorPolicy.pickReanimationKitId(
             choice.eligibleKitIds,
             createRng(`${s.seed}:bot:${playerId}:reanim-kit:${s.turnSequence}`),
           ),
@@ -328,6 +458,12 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           throw new Error('reward pending without rewardChoice');
         }
 
+        const actorPolicy = policyByPlayerId.get(choice.eliminatorPlayerId);
+
+        if (actorPolicy === undefined) {
+          throw new Error(`no policy for seat ${choice.eliminatorPlayerId}`);
+        }
+
         const rewardView = buildPlayingViewFor({
           recipientSessionId: choice.eliminatorPlayerId,
           gameCode: `sim-${input.seed}`,
@@ -337,7 +473,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           botDifficulties: difficultiesById,
         });
         const available = listAvailableRewardCards(s, choice.eliminatedPlayerId);
-        const picks = pickEliminationRewards(
+        const picks = actorPolicy.pickEliminationRewards(
           rewardView,
           available,
           s.lifeLimit,
@@ -349,7 +485,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         return {
           chooserPlayerId: choice.eliminatorPlayerId,
           eliminationId: choice.eliminationId,
-          choices: picks,
+          choices: picks.choices,
         };
       },
     };
@@ -453,6 +589,15 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       };
     }),
     eliminations: snapshot.eliminations,
+    ...(input.captureFeatureSnapshots === true
+      ? {
+          featureSnapshots: labelFeatureSnapshots(
+            snapshot.seed,
+            unlabeledSnapshots,
+            snapshot.winnerPlayerId,
+          ),
+        }
+      : {}),
   };
 }
 

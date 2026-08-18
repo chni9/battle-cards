@@ -1,0 +1,7 @@
+{
+  "games": 40,
+  "samplesPerDecision": 8,
+  "seed": "l34-06-belief-calib",
+  "playerCount": 4,
+  "task": "L34-06"
+}

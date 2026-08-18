@@ -1,11 +1,17 @@
 /**
- * Gross-imbalance screen config — technical spec v4 §7 / Lot 31.
+ * Gross-imbalance screen config — technical spec v4 §7 / Lot 31 / v5 §5.2 (L38-01).
  */
 
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isKitId, KIT_IDS, type KitId } from '@card-battle/shared';
+
+import { usesOfflineSearchBudget } from '../bots/policies/search-v5';
+import { listWeightsProfileIds, resolveWeightsProfile } from '../bots/profiles/index';
+import { DEFAULT_POLICY_ID, listPolicyIds } from '../bots/registry';
+import { OFFLINE_SEARCH_ITERATIONS } from '../bots/search/search-budget';
 
 /** Monorepo root — `pnpm --filter` runs with cwd `apps/server`. */
 export const REPO_ROOT = path.resolve(
@@ -42,7 +48,20 @@ export interface ScreenConfig {
   /** Games in which a card must appear before it counts as measured (L31-04). */
   undersampledCardThreshold: number;
   coverageNote: string;
+  /** Registry policy id for every seat (L38-01). */
+  policyId: string;
+  /** Arena-style profile override; `null` uses the policy's closed-over weights. */
+  weightsProfile: string | null;
+  /** Offline search iterations (tech spec v5 §8.2). `1` for sync policies. */
+  searchIterations: number;
+  /** Parallelism across games only — never inside one search tree (§8.3). */
+  concurrency: number;
 }
+
+/** V4 published matrix — log if a run is smaller (L38-01 silent-cap watch). */
+export const V4_SCREEN_KIT_COUNT = 15;
+export const V4_SCREEN_GAMES_PER_CELL = 200;
+export const V4_SCREEN_FOUR_PLAYER_GAMES = 2000;
 
 const DEFAULT_GAMES_PER_CELL = 200;
 const DEFAULT_FOUR_PLAYER_GAMES = 2000;
@@ -80,18 +99,42 @@ export function matchupId(kitA: KitId, kitB: KitId): string {
   return `${sorted[0]}_vs_${sorted[1]}`;
 }
 
+export function coverageDroppedVsV4(
+  config: Pick<ScreenConfig, 'oneVOneKits' | 'gamesPerCell' | 'fourPlayer'>,
+): string | null {
+  const kitDrop = config.oneVOneKits.length < V4_SCREEN_KIT_COUNT;
+  const cellDrop = config.gamesPerCell < V4_SCREEN_GAMES_PER_CELL;
+  const fourDrop =
+    config.fourPlayer.mode === 'random' &&
+    config.fourPlayer.games < V4_SCREEN_FOUR_PLAYER_GAMES;
+
+  if (!kitDrop && !cellDrop && !fourDrop) {
+    return null;
+  }
+
+  return [
+    'Coverage dropped relative to V4 screen',
+    `(kits ${String(config.oneVOneKits.length)}/${String(V4_SCREEN_KIT_COUNT)},`,
+    `gamesPerCell ${String(config.gamesPerCell)}/${String(V4_SCREEN_GAMES_PER_CELL)},`,
+    `4p ${String(config.fourPlayer.games)}/${String(V4_SCREEN_FOUR_PLAYER_GAMES)}).`,
+  ].join(' ');
+}
+
 export function buildCoverageNote(config: Omit<ScreenConfig, 'coverageNote'>): string {
   const pairCount = unorderedPairs(config.oneVOneKits).length;
   const four =
     config.fourPlayer.mode === 'random'
       ? `4p: ${String(config.fourPlayer.games)} random-with-replacement games (omit kitAssignment; production path). Not exhaustive over C(n,4).`
       : `4p: ${String(config.fourPlayer.games)} games with fixed mix [${(config.fourPlayer.mix ?? []).join(', ')}].`;
+  const drop = coverageDroppedVsV4(config);
 
   return [
     `1v1: ${String(pairCount)} unordered pairs × ${String(config.gamesPerCell)} games (full matrix; nothing dropped).`,
     four,
     `Undersampled card threshold N=${String(config.undersampledCardThreshold)}.`,
+    `Policy ${config.policyId}; searchIterations ${String(config.searchIterations)}.`,
     'Difficulty sweeps deferred. Stalls counted separately (never assigned a winner).',
+    ...(drop !== null ? [drop] : []),
   ].join(' ');
 }
 
@@ -156,6 +199,14 @@ export function parseScreenArgs(argv: readonly string[]): ScreenConfig {
     }
   }
 
+  const policyId = parsePolicyId(args.get('policy'));
+  const weightsProfile = parseWeightsProfile(args.get('weights-profile'));
+  const searchIterations = parseSearchIterations(
+    args.get('search-iterations'),
+    policyId,
+  );
+  const concurrency = parseConcurrency(args.get('concurrency'));
+
   const partial = {
     baseSeed,
     gamesPerCell,
@@ -168,12 +219,60 @@ export function parseScreenArgs(argv: readonly string[]): ScreenConfig {
     },
     outDir,
     undersampledCardThreshold,
+    policyId,
+    weightsProfile,
+    searchIterations,
+    concurrency,
   };
 
   return {
     ...partial,
     coverageNote: buildCoverageNote(partial),
   };
+}
+
+function parsePolicyId(raw: string | undefined): string {
+  const policyId = raw === undefined || raw === '' ? DEFAULT_POLICY_ID : raw;
+  const registered = listPolicyIds();
+
+  if (!registered.includes(policyId)) {
+    throw new Error(`Unknown --policy: ${policyId}`);
+  }
+
+  return policyId;
+}
+
+function parseWeightsProfile(raw: string | undefined): string | null {
+  if (raw === undefined || raw === '') {
+    return null;
+  }
+
+  if (!listWeightsProfileIds().includes(raw)) {
+    throw new Error(`Unknown --weights-profile: ${raw}`);
+  }
+
+  resolveWeightsProfile(raw);
+  return raw;
+}
+
+function parseSearchIterations(raw: string | undefined, policyId: string): number {
+  if (raw === undefined || raw === '') {
+    return usesOfflineSearchBudget(policyId) ? OFFLINE_SEARCH_ITERATIONS : 1;
+  }
+
+  return parsePositiveInt(raw, 'search-iterations');
+}
+
+function parseConcurrency(raw: string | undefined): number {
+  if (raw !== undefined && raw !== '') {
+    return parsePositiveInt(raw, 'concurrency');
+  }
+
+  if (process.env['VITEST'] !== undefined) {
+    return 1;
+  }
+
+  return Math.max(1, Math.min(availableParallelism() - 1, 8));
 }
 
 function parseFourPlayerMode(raw: string): FourPlayerMode {

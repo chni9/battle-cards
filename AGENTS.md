@@ -10,23 +10,22 @@
 *Card Battle* is a turn-based elimination card game for 2 to 4 players, built on hidden
 information and **delayed resolution**: an action aimed at an opponent takes effect on that
 opponent's next turn, after they have played their own action, giving them a chance to react.
-The content slice is still V1's — 16 cards, 4 kits, Classic mode, no accounts — deliberately
-narrow, to prove the engine before content is added. V2 gave it a visual identity; V3 adds
-heuristic bots, a solo mode, and headless simulation on top of the same rules.
-Audience: the designer and his friends.
+V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulation; V4 the
+full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
+bots on the same rules — no value or rule changes. Audience: the designer and his friends.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
-**cards** (16, one isolated handler each) · **kits** (4, with permanent traits) ·
-**protocol and visibility** (per-recipient state, Spy) · **lifecycle** (timers, disconnection,
-inactivity) · **bots** (virtual seats, heuristic policy, simulation).
+**cards** / **kits** (Classic catalog) · **protocol and visibility** (per-recipient state, Spy) ·
+**lifecycle** (timers, disconnection, inactivity) · **bots** (policies, simulation, arena,
+search).
 
 ## 2. Source hierarchy (always follow this order)
 
 1. **Code + lock files** — operational truth.
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
-   `docs/backlog_v3.md` sequences active work (acceptance criteria per task);
-   `docs/backlog_v1.md` and `docs/backlog_v2.md` are closed archives.
+   `docs/backlog_v5.md` sequences active work (acceptance criteria per task);
+   `docs/backlog_v1.md` … `docs/backlog_v4.md` are closed archives.
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -94,15 +93,16 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    point** line do not clearly resolve a case, **stop and ask** — even when the answer looks
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
    #1, #2 and #3 are closed.
-7. **V1 (63/63) and V2 (22/22) are closed; V3 has started.** The 11 other kits,
-   Team/God/Quick modes, accounts, in-progress persistence and monetization are still out
-   (technical spec v1 §9) — not to be implemented "even partially, even to lay groundwork".
-   Two things are no longer out of scope: **art direction** (V2, `docs/technical_spec_v2.md`,
-   Lots 10–14 — a visual layer that changed no rule, flow, or protocol event) and **bots**
-   (V3, `docs/technical_spec_v3.md`, sequenced in `docs/backlog_v3.md`, Lots 15–18: heuristic
-   bots, solo mode, headless simulation). V3 changes **no rule** either; it bumps
-   `PROTOCOL_VERSION` exactly once, in L15-05. A bot playing badly is never grounds for
-   touching a rule. Learning bots, search and lookahead stay out (technical spec v3 §13).
+7. **V1–V4 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
+   `docs/backlog_v5.md`). Team/God/Quick modes, accounts, in-progress persistence and
+   monetization stay out (technical spec v1 §9) — not even partially. V5 changes **no rule
+   and no value**; it adds a policy registry, arena, belief model, search, and fitted
+   evaluation. A bot playing badly is never grounds for touching a rule. **Search,
+   lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
+   the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
+   has Spyed) and the **public** action log is **out** — technical spec v3 decision 2 is
+   **not** reopened: the policy still receives no `GameState`. Opponent modelling is
+   bounded to public fields + that public log within one game (technical spec v5 §2.2).
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.
@@ -138,6 +138,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 | `docs/agent/frontend.md` | Client screens and connection conventions (from L1-12) |
 | `docs/agent/db.md` | Finished-game Postgres log, migrations, end-of-game write |
 | `docs/agent/testing.md` | Writing tests — which are mandatory and what they must prove |
+| `docs/agent/bots.md` | Bot policies, registry, arena, workers (created in L32-02) |
 | `docs/agent/decisions.md` | Checking why something is the way it is, or logging a new decision |
 
 ## 8. Up-to-date docs — use Context7
@@ -148,11 +149,10 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through `docs/backlog_v3.md` **in task-ID order** (Lot 15 onward). V1 and V2 are closed
-(`docs/backlog_v1.md`, `docs/backlog_v2.md`). The sequencing is deliberate: bot foundations
-(Lots 15–16, all provable in Vitest with no UI) before playable surfaces (Lot 17), and
-simulation (Lot 18) depends on Lot 16 only — so the balance instrument still lands if the UI
-work slips.
+Work through `docs/backlog_v5.md` **in task-ID order** (Lot 32 onward). V1–V4 are closed
+archives (`docs/backlog_v1.md` … `docs/backlog_v4.md`). The sequencing is deliberate:
+**Instrument (Lot 32) before Fitting (33), Belief (34), Search (35)** — nothing that cannot
+be measured gets built. See `docs/backlog_v5.md` "How to read this".
 
 **Keep the backlog current.** `In progress` when you start a task, `Done` once it passes the
 gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md`) — in the same

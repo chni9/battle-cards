@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PlayingStateView } from '@card-battle/shared';
 
 import { BotDriver, type BotDriverHost } from './bot-driver';
+import { SyncSearchPool } from './search/worker/sync-pool';
 import { readBotThinkMs } from './bot-think-ms';
 import { classifyRewardRoute, classifyTurnEntry } from './turn-entry';
 import type { HumanSeat, BotSeat } from '../rooms/seats';
@@ -167,6 +168,7 @@ describe('BotDriver (L16-06)', () => {
         }) as never,
       isGameOver: () => false,
       getPlayingView: () => emptyView('bot-1'),
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: (_id, action) => {
         performed.push(action);
@@ -194,7 +196,7 @@ describe('BotDriver (L16-06)', () => {
       },
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(performed.length).toBeGreaterThan(0);
@@ -266,6 +268,7 @@ describe('BotDriver (L16-06)', () => {
         }) as never,
       isGameOver: () => turn >= botIds.length,
       getPlayingView: (id) => emptyView(id),
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: (id) => {
         depth += 1;
@@ -291,7 +294,7 @@ describe('BotDriver (L16-06)', () => {
       failBotReanimationKit: () => undefined,
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(order).toEqual(botIds);
@@ -315,6 +318,7 @@ describe('BotDriver (L16-06)', () => {
       getPlayingView: () => {
         throw new Error('view boom');
       },
+      getActionLog: () => [],
       getBotDifficulty: () => 'hard',
       performBotAction: () => {
         throw new Error('should not act');
@@ -330,7 +334,7 @@ describe('BotDriver (L16-06)', () => {
       failBotReanimationKit: () => undefined,
     };
 
-    const driver = new BotDriver(host, 0);
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
     driver.scheduleTurn('bot-1');
     await vi.waitFor(() => {
       expect(draws).toEqual(['bot-1']);

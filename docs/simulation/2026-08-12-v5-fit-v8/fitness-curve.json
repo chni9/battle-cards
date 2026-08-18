@@ -1,0 +1,167 @@
+{
+  "gauntlet": [
+    "heuristic-v4"
+  ],
+  "curve": [
+    {
+      "generation": 0,
+      "fitness": 0.49002217294900224
+    },
+    {
+      "generation": 1,
+      "fitness": 0.49002217294900224
+    },
+    {
+      "generation": 2,
+      "fitness": 0.4922737306843267
+    },
+    {
+      "generation": 3,
+      "fitness": 0.4922737306843267
+    },
+    {
+      "generation": 4,
+      "fitness": 0.4922737306843267
+    },
+    {
+      "generation": 5,
+      "fitness": 0.4966887417218543
+    },
+    {
+      "generation": 6,
+      "fitness": 0.5099502487562189
+    },
+    {
+      "generation": 7,
+      "fitness": 0.5099502487562189
+    },
+    {
+      "generation": 8,
+      "fitness": 0.513715710723192
+    },
+    {
+      "generation": 9,
+      "fitness": 0.5175
+    },
+    {
+      "generation": 10,
+      "fitness": 0.52
+    },
+    {
+      "generation": 11,
+      "fitness": 0.52
+    },
+    {
+      "generation": 12,
+      "fitness": 0.5213032581453634
+    },
+    {
+      "generation": 13,
+      "fitness": 0.5225
+    },
+    {
+      "generation": 14,
+      "fitness": 0.5236907730673317
+    },
+    {
+      "generation": 15,
+      "fitness": 0.5236907730673317
+    },
+    {
+      "generation": 16,
+      "fitness": 0.5236907730673317
+    },
+    {
+      "generation": 17,
+      "fitness": 0.5236907730673317
+    },
+    {
+      "generation": 18,
+      "fitness": 0.5260545905707196
+    },
+    {
+      "generation": 19,
+      "fitness": 0.5260545905707196
+    },
+    {
+      "generation": 20,
+      "fitness": 0.5260545905707196
+    },
+    {
+      "generation": 21,
+      "fitness": 0.5260545905707196
+    },
+    {
+      "generation": 22,
+      "fitness": 0.5297029702970297
+    },
+    {
+      "generation": 23,
+      "fitness": 0.5402010050251256
+    },
+    {
+      "generation": 24,
+      "fitness": 0.5402010050251256
+    },
+    {
+      "generation": 25,
+      "fitness": 0.5415617128463476
+    },
+    {
+      "generation": 26,
+      "fitness": 0.5415617128463476
+    },
+    {
+      "generation": 27,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 28,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 29,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 30,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 31,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 32,
+      "fitness": 0.542713567839196
+    },
+    {
+      "generation": 33,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 34,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 35,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 36,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 37,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 38,
+      "fitness": 0.543640897755611
+    },
+    {
+      "generation": 39,
+      "fitness": 0.543640897755611
+    }
+  ]
+}

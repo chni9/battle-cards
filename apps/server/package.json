@@ -9,7 +9,15 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json",
     "db:migrate": "tsx src/db/migrate.ts",
-    "simulate": "tsx src/simulation/run-batch.ts"
+    "simulate": "tsx src/simulation/run-batch.ts",
+    "arena": "tsx src/simulation/run-arena.ts",
+    "optimize:weights": "tsx src/simulation/optimize-weights.ts",
+    "fit:assemble": "tsx src/simulation/assemble-fitted-dataset.ts",
+    "fit:logistic": "tsx src/simulation/fit-logistic.ts",
+    "gate:fitted-eval": "tsx src/simulation/gate-fitted-eval.ts",
+    "bench:forward-model": "tsx src/bots/search/bench-forward-model.ts",
+    "bench:room-latency": "tsx src/bots/search/bench-room-latency.ts",
+    "bench:determinizer": "tsx src/bots/belief/bench-determinizer.ts"
   },
   "dependencies": {
     "@card-battle/shared": "workspace:*",

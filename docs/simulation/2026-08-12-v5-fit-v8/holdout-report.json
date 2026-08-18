@@ -1,0 +1,28 @@
+{
+  "weightsHash": "5686e970ce462b79",
+  "splitHash": "2cd7fde7f9431541",
+  "train": {
+    "wins": 283,
+    "losses": 220,
+    "stalls": 97,
+    "winRate": 0.562624254473161,
+    "wilson": {
+      "lower": 0.5189596401436417,
+      "upper": 0.6053395491888834,
+      "center": 0.5621495946662626
+    }
+  },
+  "holdout": {
+    "wins": 223,
+    "losses": 272,
+    "stalls": 105,
+    "winRate": 0.4505050505050505,
+    "wilson": {
+      "lower": 0.4072222680855407,
+      "upper": 0.4945501582718442,
+      "center": 0.45088621317869243
+    }
+  },
+  "gap": 0.11211920396811048,
+  "overfitting": true
+}

@@ -6,20 +6,7 @@
 import { getKit, type BotReasonCode, type PlayingStateView } from '@card-battle/shared';
 
 import type { TurnAction } from '../../engine/turn/perform-action';
-import { regenSoftLifeForKit } from '../heuristic-life-thresholds';
-import {
-  BLOCK_INVEST_BONUS,
-  BLOCK_SURVIVE_BONUS,
-  CARD_ABSORBER_INVEST_BONUS,
-  CARD_ABSORBER_MAX_BONUS_CARDS,
-  CARD_ABSORBER_PER_CARD_BONUS,
-  CARD_TRANSFORMER_INVEST_BONUS,
-  HEURISTIC_BAND_WEIGHTS,
-  INVISIBILITY_INVEST_BONUS,
-  REANIMATION_INVEST_BONUS,
-  REANIMATION_LOW_LIFE_BONUS,
-  REANIMATION_LOW_LIFE_FLOOR,
-} from '../heuristic-weights';
+import { lifeThresholdBasesFromWeights, regenSoftLifeForKit } from '../heuristic-life-thresholds';
 import { findOwnCard, hasOwnPersistent, type PolicyContext } from '../policy-internals';
 import { unscoredPlayCardFallthrough } from './fallthrough';
 
@@ -42,22 +29,22 @@ export function scoreTurnPoolPlayCard(
   }
 
   if (cardId === 'invisibility') {
-    return scoreInvisibility(view);
+    return scoreInvisibility(view, ctx);
   }
 
   if (cardId === 'card-absorber') {
-    return scoreCardAbsorber(view);
+    return scoreCardAbsorber(view, ctx);
   }
 
   if (cardId === 'card-transformer') {
-    return scoreCardTransformer(view, action);
+    return scoreCardTransformer(view, action, ctx);
   }
 
   if (cardId === 'reanimation') {
-    return scoreReanimation(view);
+    return scoreReanimation(view, ctx);
   }
 
-  return unscoredPlayCardFallthrough();
+  return unscoredPlayCardFallthrough(ctx.weights);
 }
 
 function scoreBlock(
@@ -69,33 +56,33 @@ function scoreBlock(
   // Cancels every pending effect on self and grants consecutive turns — never a play
   // to skip: Survive under threat, Invest as a proactive setup otherwise.
   if (ctx.incomingThreat > 0 || hasPendingOnSelf) {
-    return { score: HEURISTIC_BAND_WEIGHTS.survive + BLOCK_SURVIVE_BONUS, code: 'survive' };
+    return { score: ctx.weights.action.bands.survive + ctx.weights.action.blockSurviveBonus, code: 'survive' };
   }
 
-  return { score: HEURISTIC_BAND_WEIGHTS.invest + BLOCK_INVEST_BONUS, code: 'invest' };
+  return { score: ctx.weights.action.bands.invest + ctx.weights.action.blockInvestBonus, code: 'invest' };
 }
 
-function scoreInvisibility(view: PlayingStateView): { score: number; code: BotReasonCode } {
+function scoreInvisibility(view: PlayingStateView, ctx: PolicyContext): { score: number; code: BotReasonCode } {
   if (hasOwnPersistent(view, 'invisibility')) {
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
   }
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + INVISIBILITY_INVEST_BONUS,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.invisibilityInvestBonus,
     code: 'invest',
   };
 }
 
-function scoreCardAbsorber(view: PlayingStateView): { score: number; code: BotReasonCode } {
+function scoreCardAbsorber(view: PlayingStateView, ctx: PolicyContext): { score: number; code: BotReasonCode } {
   if (view.pool.length === 0) {
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
   }
 
   const cardsBonus =
-    Math.min(CARD_ABSORBER_MAX_BONUS_CARDS, view.pool.length) * CARD_ABSORBER_PER_CARD_BONUS;
+    Math.min(ctx.weights.action.cardAbsorberMaxBonusCards, view.pool.length) * ctx.weights.action.cardAbsorberPerCardBonus;
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + CARD_ABSORBER_INVEST_BONUS + cardsBonus,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.cardAbsorberInvestBonus + cardsBonus,
     code: 'invest',
   };
 }
@@ -103,6 +90,7 @@ function scoreCardAbsorber(view: PlayingStateView): { score: number; code: BotRe
 function scoreCardTransformer(
   view: PlayingStateView,
   action: Extract<TurnAction, { type: 'playCard' }>,
+  ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   if (action.consumeInstanceId === undefined) {
     return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
@@ -115,12 +103,12 @@ function scoreCardTransformer(
   }
 
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + CARD_TRANSFORMER_INVEST_BONUS,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.cardTransformerInvestBonus,
     code: 'invest',
   };
 }
 
-function scoreReanimation(view: PlayingStateView): { score: number; code: BotReasonCode } {
+function scoreReanimation(view: PlayingStateView, ctx: PolicyContext): { score: number; code: BotReasonCode } {
   // The engine already gates a second armed charge (reanimationHandler.canPlay), so
   // this action would not be legal a second time — refused defensively regardless.
   if (hasOwnPersistent(view, 'reanimation')) {
@@ -128,16 +116,19 @@ function scoreReanimation(view: PlayingStateView): { score: number; code: BotRea
   }
 
   const startingLives = getKit(view.self.kitId).startingResources.lives;
-  const soft = regenSoftLifeForKit(startingLives);
+  const soft = regenSoftLifeForKit(
+    startingLives,
+    lifeThresholdBasesFromWeights(ctx.weights.action, ctx.weights.lifeThresholds),
+  );
   const lowLifeBonus =
-    view.self.lives <= soft || view.self.lives <= REANIMATION_LOW_LIFE_FLOOR
-      ? REANIMATION_LOW_LIFE_BONUS
+    view.self.lives <= soft || view.self.lives <= ctx.weights.action.reanimationLowLifeFloor
+      ? ctx.weights.action.reanimationLowLifeBonus
       : 0;
 
   // Insurance card: always worth arming once available, more urgently at low life —
   // never left to fall through to draw.
   return {
-    score: HEURISTIC_BAND_WEIGHTS.invest + REANIMATION_INVEST_BONUS + lowLifeBonus,
+    score: ctx.weights.action.bands.invest + ctx.weights.action.reanimationInvestBonus + lowLifeBonus,
     code: 'invest',
   };
 }

@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "baseSeed": "l33-03-fit-v3",
+  "train": [
+    {
+      "seed": "l33-03-fit-v3:train:0",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:1",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:2",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:3",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:4",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:5",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:6",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:7",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:8",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:9",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:10",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:11",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:12",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:13",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:14",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:15",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:16",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:17",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:18",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:19",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:20",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:21",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:22",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:23",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:24",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:25",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:26",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:27",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:28",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:29",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:30",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:31",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:32",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:33",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:34",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:35",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:36",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:37",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:38",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:train:39",
+      "kitMode": "mirrored"
+    }
+  ],
+  "holdout": [
+    {
+      "seed": "l33-03-fit-v3:holdout:0",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:1",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:2",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:3",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:4",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:5",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:6",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:7",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:8",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:9",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:10",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:11",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:12",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:13",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:14",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:15",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:16",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:17",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:18",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:19",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:20",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:21",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:22",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:23",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:24",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:25",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:26",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:27",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:28",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:29",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:30",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:31",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:32",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:33",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:34",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:35",
+      "kitMode": "random"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:36",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:37",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:38",
+      "kitMode": "mirrored"
+    },
+    {
+      "seed": "l33-03-fit-v3:holdout:39",
+      "kitMode": "random"
+    }
+  ],
+  "contentHash": "23ce923210fc4096"
+}
