@@ -22,12 +22,17 @@ import {
   randomLegalPolicy,
 } from './policies/random-legal';
 import { SEARCH_V5_POLICY_ID, searchV5Policy } from './policies/search-v5';
+import {
+  SEARCH_V5_ENGAGE_POLICY_ID,
+  searchV5EngagePolicy,
+} from './policies/search-v5-engage';
 
 export {
   HEURISTIC_TUNED_V5_POLICY_ID,
   HEURISTIC_V5_ENGAGE_POLICY_ID,
   HEURISTIC_V4_POLICY_ID,
   RANDOM_LEGAL_POLICY_ID,
+  SEARCH_V5_ENGAGE_POLICY_ID,
   SEARCH_V5_POLICY_ID,
 };
 
@@ -70,4 +75,5 @@ registerPolicy(heuristicV4Policy);
 registerPolicy(heuristicTunedV5Policy);
 registerPolicy(heuristicV5EngagePolicy);
 registerPolicy(searchV5Policy);
+registerPolicy(searchV5EngagePolicy);
 registerPolicy(randomLegalPolicy);

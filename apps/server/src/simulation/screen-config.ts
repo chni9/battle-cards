@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { isKitId, KIT_IDS, type KitId } from '@card-battle/shared';
 
-import { SEARCH_V5_POLICY_ID } from '../bots/policies/search-v5';
+import { usesOfflineSearchBudget } from '../bots/policies/search-v5';
 import { listWeightsProfileIds, resolveWeightsProfile } from '../bots/profiles/index';
 import { DEFAULT_POLICY_ID, listPolicyIds } from '../bots/registry';
 import { OFFLINE_SEARCH_ITERATIONS } from '../bots/search/search-budget';
@@ -257,7 +257,7 @@ function parseWeightsProfile(raw: string | undefined): string | null {
 
 function parseSearchIterations(raw: string | undefined, policyId: string): number {
   if (raw === undefined || raw === '') {
-    return policyId === SEARCH_V5_POLICY_ID ? OFFLINE_SEARCH_ITERATIONS : 1;
+    return usesOfflineSearchBudget(policyId) ? OFFLINE_SEARCH_ITERATIONS : 1;
   }
 
   return parsePositiveInt(raw, 'search-iterations');

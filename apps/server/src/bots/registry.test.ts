@@ -11,19 +11,21 @@ import {
   HEURISTIC_V5_ENGAGE_POLICY_ID,
   HEURISTIC_V4_POLICY_ID,
   RANDOM_LEGAL_POLICY_ID,
+  SEARCH_V5_ENGAGE_POLICY_ID,
   getDefaultPolicy,
   getPolicy,
   listPolicyIds,
 } from './registry';
 
 describe('policy registry (L32-02 / L33-05)', () => {
-  it('registers heuristic-v4, tuned, engage, search-v5, and random-legal', () => {
+  it('registers heuristic-v4, tuned, engage, search-v5, search-v5-engage, and random-legal', () => {
     expect(listPolicyIds()).toEqual(
       [
         HEURISTIC_TUNED_V5_POLICY_ID,
         HEURISTIC_V5_ENGAGE_POLICY_ID,
         HEURISTIC_V4_POLICY_ID,
         RANDOM_LEGAL_POLICY_ID,
+        SEARCH_V5_ENGAGE_POLICY_ID,
         'search-v5',
       ].sort(),
     );

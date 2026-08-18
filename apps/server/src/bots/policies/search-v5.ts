@@ -13,6 +13,7 @@ import type {
 
 import type { Rng } from '../../engine/rng';
 import { runIsmcts } from '../search/ismcts';
+import type { ActionScorer } from '../search/priors';
 import { OFFLINE_SEARCH_ITERATIONS } from '../search/search-budget';
 import type { BotPolicy, PolicyDecideContext } from '../policy-types';
 import { DEFAULT_POLICY_WEIGHTS, type PolicyWeights } from '../policy-weights';
@@ -21,6 +22,12 @@ import { computePolicyWeightsHash } from '../weights-hash';
 import { heuristicV4Policy } from './heuristic-v4';
 
 export const SEARCH_V5_POLICY_ID = 'search-v5';
+export const SEARCH_V5_ENGAGE_POLICY_ID = 'search-v5-engage';
+
+/** Simulator iteration budget applies to every ISMCTS policy id (L36-01 / L40-03). */
+export function usesOfflineSearchBudget(policyId: string): boolean {
+  return policyId.startsWith('search-v5');
+}
 
 function resolveWeights(ctx: PolicyDecideContext, fallback: PolicyWeights): PolicyWeights {
   if (ctx.weightsProfile !== undefined && ctx.weightsProfile !== null && ctx.weightsProfile !== '') {
@@ -33,10 +40,17 @@ function resolveWeights(ctx: PolicyDecideContext, fallback: PolicyWeights): Poli
 export function createSearchV5Policy(
   weights: PolicyWeights = DEFAULT_POLICY_WEIGHTS,
   rolloutPolicy: BotPolicy = heuristicV4Policy,
-  options: { readonly id?: string } = {},
+  options: {
+    readonly id?: string;
+    readonly scoreActions?: ActionScorer;
+    readonly weightsHash?: string;
+  } = {},
 ): BotPolicy {
-  const weightsHash = computePolicyWeightsHash(weights);
   const id = options.id ?? SEARCH_V5_POLICY_ID;
+  const weightsHash =
+    options.weightsHash ??
+    computePolicyWeightsHash(weights);
+  const scoreActions = options.scoreActions;
 
   return {
     id,
@@ -52,6 +66,7 @@ export function createSearchV5Policy(
         budget: ctx.budget ?? { kind: 'iterations', n: OFFLINE_SEARCH_ITERATIONS },
         rolloutPolicy,
         botId: view.you,
+        ...(scoreActions !== undefined ? { scoreActions } : {}),
       });
 
       return {

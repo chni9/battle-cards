@@ -20,7 +20,7 @@ import {
   livingSeatIds,
   ownerIndex,
 } from './max-n-values';
-import { buildDecisionPriors, widenedPriorSlice } from './priors';
+import { buildDecisionPriors, widenedPriorSlice, type ActionScorer } from './priors';
 import { selectChild } from './puct';
 import {
   assertDepthCapRounds,
@@ -50,6 +50,8 @@ export interface RunIsmctsArgs {
   readonly rolloutPolicy: BotPolicy;
   readonly botId: string;
   readonly uniformPrior?: boolean;
+  /** Default: frozen v4 `scoreActions`. Engage search injects `scoreEngageActions` (L40-03). */
+  readonly scoreActions?: ActionScorer;
 }
 
 function collectRootActionScores(root: SearchNode): SearchActionScore[] {
@@ -96,12 +98,16 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
     };
   }
 
+  const priorOptions = {
+    uniform: args.uniformPrior === true,
+    ...(args.scoreActions !== undefined ? { scoreActions: args.scoreActions } : {}),
+  };
   const rootPriors = buildDecisionPriors(
     rootDecisions,
     args.view,
     args.rng,
     args.weights,
-    { uniform: args.uniformPrior === true },
+    priorOptions,
   );
   const rootKey = infoSetKey(
     rootOwner,
@@ -197,9 +203,7 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
         depth === 0 && owner === rootOwner && decisionKind === 'action';
       const priors = useRootPriors
         ? rootPriors
-        : buildDecisionPriors(decisions, ownerView, iterRng, args.weights, {
-            uniform: args.uniformPrior === true,
-          });
+        : buildDecisionPriors(decisions, ownerView, iterRng, args.weights, priorOptions);
       const key = useRootPriors
         ? rootKey
         : infoSetKey(

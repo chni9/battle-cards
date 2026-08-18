@@ -263,7 +263,8 @@ determinizer is how V5 fails quietly.
   Policy id `heuristic-v5-engage` is registered experimental.
 - L40-03: `createSearchV5Policy(..., heuristicV5EngagePolicy, { id: 'search-v5-engage' })`.
   Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
-  Rooms stay on `search-v5` until L40-05.
+  `usesOfflineSearchBudget` covers every `search-v5*` id so sim iteration
+  overrides apply. Rooms stay on `search-v5` until L40-05.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 

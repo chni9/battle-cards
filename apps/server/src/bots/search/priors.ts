@@ -7,7 +7,7 @@ import type { PlayingStateView } from '@card-battle/shared';
 
 import type { Rng } from '../../engine/rng';
 import type { TurnAction } from '../../engine/turn/perform-action';
-import { scoreActions } from '../heuristic-policy';
+import { scoreActions, type ScoredAction } from '../heuristic-policy';
 import type { PolicyWeights } from '../policy-weights';
 import { searchDecisionKey } from './info-set-key';
 import { maxWidenedChildren } from './search-budget';
@@ -18,6 +18,19 @@ export interface PriorEntry {
   readonly decisionKey: string;
   readonly prior: number;
   readonly score: number;
+}
+
+/** Injected action scorer — default is frozen v4 `scoreActions` (L35-04 / L40-03). */
+export type ActionScorer = (
+  view: PlayingStateView,
+  actions: readonly TurnAction[],
+  rng: Rng,
+  weights: PolicyWeights,
+) => readonly ScoredAction[];
+
+export interface BuildPriorOptions {
+  readonly uniform?: boolean;
+  readonly scoreActions?: ActionScorer;
 }
 
 export function softmaxScores(scores: readonly number[], temperature: number): number[] {
@@ -48,7 +61,7 @@ export function buildDecisionPriors(
   view: PlayingStateView,
   rng: Rng,
   weights: PolicyWeights,
-  options: { readonly uniform?: boolean } = {},
+  options: BuildPriorOptions = {},
 ): readonly PriorEntry[] {
   if (decisions.length === 0) {
     return [];
@@ -73,7 +86,8 @@ export function buildDecisionPriors(
 
   const actions = actionDecisions.map((decision) => decision.action);
 
-  const scored = scoreActions(view, actions, rng, weights);
+  const scorer = options.scoreActions ?? scoreActions;
+  const scored = scorer(view, actions, rng, weights);
   const probs = softmaxScores(
     scored.map((entry) => entry.score),
     weights.search.priorTemperature,
@@ -109,7 +123,7 @@ export function buildActionPriors(
   actions: readonly TurnAction[],
   rng: Rng,
   weights: PolicyWeights,
-  options: { readonly uniform?: boolean } = {},
+  options: BuildPriorOptions = {},
 ): readonly PriorEntry[] {
   return buildDecisionPriors(
     actions.map((action) => ({ kind: 'action' as const, action })),

@@ -11,7 +11,7 @@ import type {
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
-import { SEARCH_V5_POLICY_ID } from '../bots/policies/search-v5';
+import { usesOfflineSearchBudget } from '../bots/policies/search-v5';
 import {
   DEFAULT_POLICY_ID,
   getPolicy,
@@ -72,7 +72,7 @@ export interface RunGameInput {
    */
   weightsProfile?: string | null;
   /**
-   * Iteration budget for `search-v5` seats (L36-01). Never wall-clock in the
+   * Iteration budget for ISMCTS seats (`search-v5*`, L36-01 / L40-03). Never wall-clock in the
    * simulator — reproducibility DoD. Defaults to `OFFLINE_SEARCH_ITERATIONS`.
    */
   searchIterations?: number;
@@ -302,7 +302,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     const decision = policy.decide(view, actions, rng, {
       actionLog,
       weightsProfile: input.weightsProfile ?? null,
-      ...(policy.id === SEARCH_V5_POLICY_ID
+      ...(usesOfflineSearchBudget(policy.id)
         ? { budget: { kind: 'iterations' as const, n: searchIterations } }
         : {}),
     });
