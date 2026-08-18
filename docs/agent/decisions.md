@@ -2213,3 +2213,31 @@ as unspied. L40-01 reconstructs relations from `view.players[].spied` only
 `search-v5-engage`. `roomBotPolicyId` stays `search-v5` until L40-05 pass +
 playtest. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
 
+## 2026-08-18 · [T] L40-04 engage fitted logistic — honest fail
+
+Self-play snapshots of `search-v5-engage` (80×2 mirrored, 64 iterations,
+`--max-turns 200`) → seed-split assemble → `logistic-v5-engage`. Gate vs the
+same search + **linear** evaluator at 64 iterations / 400-turn cap (L37-04
+pattern). `FEATURE_LAYOUT_VERSION` unchanged. `logistic-v5` not overwritten.
+
+| Field | Value |
+|---|---|
+| Snapshot rows | 6 064 (132 completed / 28 stalled) |
+| Manifest hash | `e3e0b23432a75616` |
+| Model | `logistic-v5-engage` hash `b0228a9ba3703da0` |
+| Profile | `search-engage-fitted-logistic` |
+| Test log-loss / Brier | ≈ 0.590 / 0.203 |
+| Gate seed | `l40-04-gate` |
+| Requested / decided / stalls | 2 000 / 1 815 / 185 |
+| Fitted wins / linear wins | 882 / 933 |
+| Win rate | **0.486** (Wilson 0.463–0.509) |
+| One-sided p (H1: >0.5) | ≈ **0.89** |
+| Candidate hash | `a09c0e3fd256e397` |
+| Incumbent hash | `d3ab376c6a4ed37f` |
+| Artifacts | `docs/simulation/2026-08-18-v5-engage-fitted/` |
+
+**passed: false.** Fitted is slightly *worse* than linear, not a thin miss of
+p < 0.01. **L37-03 GBDT not built** — trees would chase a losing leaf eval on
+2p self-play. `search-v5-engage` keeps the linear evaluator.
+`DEFAULT_POLICY_ID` stays `heuristic-v4`.
+

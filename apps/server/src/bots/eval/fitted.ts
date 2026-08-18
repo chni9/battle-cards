@@ -59,6 +59,7 @@ const MODELS_DIR = dirname(fileURLToPath(import.meta.url));
 /** Checked-in model id → filename under `bots/eval/models/`. */
 const MODEL_FILES: Readonly<Record<string, string>> = {
   'logistic-v5': 'logistic-v5.json',
+  'logistic-v5-engage': 'logistic-v5-engage.json',
 };
 
 const modelCache = new Map<string, FittedModel>();

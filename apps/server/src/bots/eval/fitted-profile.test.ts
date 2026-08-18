@@ -43,4 +43,16 @@ describe('fitted profile wiring (L37-02)', () => {
     // Linear default still parses without kind.
     expect(parsePolicyWeights(DEFAULT_POLICY_WEIGHTS).evaluator.kind).toBeUndefined();
   });
+
+  it('loads logistic-v5-engage for the Lot 40 profile (L40-04)', () => {
+    clearFittedModelCache();
+    const model = loadFittedModel('logistic-v5-engage');
+    expect(model.kind).toBe('logistic');
+    expect(model.featureDim).toBe(FEATURE_DIM);
+    expect(model.trainedOn.policyId).toBe('search-v5-engage');
+
+    const weights = resolveWeightsProfile('search-engage-fitted-logistic');
+    expect(weights.evaluator.kind).toBe('fitted-logistic');
+    expect(weights.evaluator.fittedModelId).toBe('logistic-v5-engage');
+  });
 });

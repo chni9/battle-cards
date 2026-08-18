@@ -6,6 +6,10 @@
  *   pnpm --filter @card-battle/server gate:fitted-eval -- \
  *     --games 2000 --seed l37-04-gate \
  *     --out ../../docs/simulation/2026-08-13-v5-fitted/gate.json
+ *
+ * Lot 40 engage prior:
+ *   ... --prior engage --fitted-profile search-engage-fitted-logistic \
+ *     --search-iterations 64 --max-turns 400
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -22,15 +26,19 @@ import { buildFitSplit, type FitMatchup } from './fit-split';
 import {
   FITTED_LINEAR_PROFILE_ID,
   FITTED_LOGISTIC_PROFILE_ID,
+  parseFittedSearchPrior,
   resolveGateWeights,
   type FittedEvalGateInbound,
   type FittedEvalGateOutbound,
+  type FittedSearchPrior,
 } from './fitted-eval-gate-shared';
 import { wilsonInterval } from './wilson-interval';
 
 export {
+  ENGAGE_FITTED_LOGISTIC_PROFILE_ID,
   FITTED_LINEAR_PROFILE_ID,
   FITTED_LOGISTIC_PROFILE_ID,
+  parseFittedSearchPrior,
   resolveGateWeights,
 } from './fitted-eval-gate-shared';
 export type {
@@ -40,13 +48,16 @@ export type {
 
 const WORKER_PATH = fileURLToPath(new URL('./fitted-eval-gate-worker.ts', import.meta.url));
 
-function parseArgs(argv: readonly string[]): {
+export function parseFittedEvalGateArgs(argv: readonly string[]): {
   readonly games: number;
   readonly seed: string;
   readonly out: string;
   readonly workers: number;
   readonly linearProfileId: string;
   readonly fittedProfileId: string;
+  readonly prior: FittedSearchPrior;
+  readonly searchIterations: number;
+  readonly maxTurns?: number;
 } {
   const args = new Map<string, string>();
 
@@ -72,6 +83,25 @@ function parseArgs(argv: readonly string[]): {
     workersRaw !== undefined
       ? Number.parseInt(workersRaw, 10)
       : Math.max(1, Math.min(availableParallelism(), 8));
+  const searchIterationsRaw = args.get('search-iterations');
+  const searchIterations =
+    searchIterationsRaw === undefined || searchIterationsRaw === ''
+      ? OFFLINE_SEARCH_ITERATIONS
+      : Number.parseInt(searchIterationsRaw, 10);
+
+  if (!Number.isFinite(searchIterations) || searchIterations < 1) {
+    throw new Error('--search-iterations must be a positive integer');
+  }
+
+  const maxTurnsRaw = args.get('max-turns');
+  const maxTurns =
+    maxTurnsRaw === undefined || maxTurnsRaw === ''
+      ? undefined
+      : Number.parseInt(maxTurnsRaw, 10);
+
+  if (maxTurns !== undefined && (!Number.isFinite(maxTurns) || maxTurns < 1)) {
+    throw new Error('--max-turns must be a positive integer');
+  }
 
   return {
     games,
@@ -85,6 +115,9 @@ function parseArgs(argv: readonly string[]): {
     workers,
     linearProfileId: args.get('linear-profile') ?? FITTED_LINEAR_PROFILE_ID,
     fittedProfileId: args.get('fitted-profile') ?? FITTED_LOGISTIC_PROFILE_ID,
+    prior: parseFittedSearchPrior(args.get('prior')),
+    searchIterations,
+    ...(maxTurns !== undefined ? { maxTurns } : {}),
   };
 }
 
@@ -116,6 +149,9 @@ async function evaluateParallel(
   workerCount: number,
   linearProfileId: string,
   fittedProfileId: string,
+  searchIterations: number,
+  prior: FittedSearchPrior,
+  maxTurns: number | undefined,
 ): Promise<FitnessResult> {
   if (matchups.length === 0) {
     return { wins: 0, losses: 0, stalls: 0, games: 0, winRate: 0 };
@@ -177,7 +213,9 @@ async function evaluateParallel(
             matchups: chunk,
             linearProfileId,
             fittedProfileId,
-            searchIterations: OFFLINE_SEARCH_ITERATIONS,
+            searchIterations,
+            prior,
+            ...(maxTurns !== undefined ? { maxTurns } : {}),
           };
           worker.postMessage(message);
         });
@@ -191,7 +229,7 @@ async function evaluateParallel(
 }
 
 async function main(): Promise<void> {
-  const config = parseArgs(process.argv.slice(2));
+  const config = parseFittedEvalGateArgs(process.argv.slice(2));
   const matchupCount = Math.ceil(config.games / 2);
   const split = buildFitSplit({
     baseSeed: config.seed,
@@ -209,9 +247,11 @@ async function main(): Promise<void> {
       games: config.games,
       matchups: matchupCount,
       workers: config.workers,
-      offlineSearchIterations: OFFLINE_SEARCH_ITERATIONS,
+      offlineSearchIterations: config.searchIterations,
+      prior: config.prior,
       linearProfileId: config.linearProfileId,
       fittedProfileId: config.fittedProfileId,
+      ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
     }),
   );
 
@@ -220,6 +260,9 @@ async function main(): Promise<void> {
     config.workers,
     config.linearProfileId,
     config.fittedProfileId,
+    config.searchIterations,
+    config.prior,
+    config.maxTurns,
   );
   const elapsedMs = Date.now() - started;
   const decided = result.wins + result.losses;
@@ -243,7 +286,9 @@ async function main(): Promise<void> {
       weightsHash: computePolicyWeightsHash(linearWeights),
       evaluatorKind: linearWeights.evaluator.kind ?? 'linear',
     },
-    offlineSearchIterations: OFFLINE_SEARCH_ITERATIONS,
+    offlineSearchIterations: config.searchIterations,
+    ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
+    prior: config.prior,
     seed: config.seed,
     requestedGames: config.games,
     matchups: matchupCount,
@@ -259,7 +304,9 @@ async function main(): Promise<void> {
     elapsedMs,
     passed,
     promotionNote:
-      'Promote search-v5 default evaluator only on pass + developer playtest. Do not flip DEFAULT_POLICY_ID (L35-07).',
+      config.prior === 'engage'
+        ? 'Promote engage-search fitted evaluator only on p < 0.01 + playtest. Do not flip DEFAULT_POLICY_ID (L40-04).'
+        : 'Promote search-v5 default evaluator only on pass + developer playtest. Do not flip DEFAULT_POLICY_ID (L35-07).',
   };
 
   mkdirSync(path.dirname(path.resolve(config.out)), { recursive: true });

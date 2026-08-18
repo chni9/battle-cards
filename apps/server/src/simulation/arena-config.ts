@@ -29,6 +29,13 @@ export interface ArenaConfig {
   weightsProfile: string | null;
   /** Write feature-snapshot JSONL beside games when set (L33-06). */
   featureSnapshotsPath: string | null;
+  /**
+   * Iteration budget for ISMCTS seats (L36-01 / L40-04). Omitted → policy default
+   * (`OFFLINE_SEARCH_ITERATIONS` for `search-v5*`).
+   */
+  searchIterations?: number;
+  /** Override `MAX_TURNS` (L40-04 snapshot collection). Omitted → 2500. */
+  maxTurns?: number;
 }
 
 const DEFAULT_KIT_MODES: readonly ArenaKitMode[] = ['mirrored', 'random'];
@@ -109,6 +116,25 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
   }
 
   const featureSnapshotsPath = args.get('feature-snapshots') ?? null;
+  const searchIterationsRaw = args.get('search-iterations');
+  const searchIterations =
+    searchIterationsRaw === undefined || searchIterationsRaw === ''
+      ? undefined
+      : Number.parseInt(searchIterationsRaw, 10);
+
+  if (searchIterations !== undefined && (!Number.isFinite(searchIterations) || searchIterations < 1)) {
+    throw new Error('--search-iterations must be a positive integer');
+  }
+
+  const maxTurnsRaw = args.get('max-turns');
+  const maxTurns =
+    maxTurnsRaw === undefined || maxTurnsRaw === ''
+      ? undefined
+      : Number.parseInt(maxTurnsRaw, 10);
+
+  if (maxTurns !== undefined && (!Number.isFinite(maxTurns) || maxTurns < 1)) {
+    throw new Error('--max-turns must be a positive integer');
+  }
 
   return {
     games,
@@ -121,6 +147,8 @@ export function parseArenaArgs(argv: readonly string[]): ArenaConfig {
     outPath,
     weightsProfile,
     featureSnapshotsPath: featureSnapshotsPath === '' ? null : featureSnapshotsPath,
+    ...(searchIterations !== undefined ? { searchIterations } : {}),
+    ...(maxTurns !== undefined ? { maxTurns } : {}),
   };
 }
 

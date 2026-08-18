@@ -4,11 +4,9 @@
 
 import { parentPort } from 'node:worker_threads';
 
-import { heuristicV4Policy } from '../bots/policies/heuristic-v4';
-import { createSearchV5Policy } from '../bots/policies/search-v5';
 import type { BotPolicy } from '../bots/policy-types';
 import {
-  resolveGateWeights,
+  createFittedGatePolicies,
   type FittedEvalGateInbound,
   type FittedEvalGateOutbound,
 } from './fitted-eval-gate-shared';
@@ -29,16 +27,13 @@ function evaluateFittedVsLinear(
   linearProfileId: string,
   fittedProfileId: string,
   searchIterations: number,
+  prior: FittedEvalGateInbound['prior'],
+  maxTurns: number | undefined,
 ): FitnessResult {
-  const linear = createSearchV5Policy(
-    resolveGateWeights(linearProfileId),
-    heuristicV4Policy,
-    { id: 'search-v5-linear' },
-  );
-  const fitted = createSearchV5Policy(
-    resolveGateWeights(fittedProfileId),
-    heuristicV4Policy,
-    { id: 'search-v5-fitted' },
+  const { linear, fitted } = createFittedGatePolicies(
+    linearProfileId,
+    fittedProfileId,
+    prior,
   );
 
   let wins = 0;
@@ -71,6 +66,7 @@ function evaluateFittedVsLinear(
           seatPolicies,
           searchIterations,
           ...(kitAssignment !== undefined ? { kitAssignment } : {}),
+          ...(maxTurns !== undefined ? { maxTurns } : {}),
         });
 
         const winnerSeat = row.players.find((player) => player.isWinner);
@@ -114,6 +110,8 @@ port.on('message', (message: FittedEvalGateInbound | { readonly type: 'ping'; re
       message.linearProfileId,
       message.fittedProfileId,
       message.searchIterations,
+      message.prior,
+      message.maxTurns,
     );
     port.postMessage({
       type: 'result',

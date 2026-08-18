@@ -124,6 +124,10 @@ export async function runArenaWithConfig(
             captureFeatureSnapshots: config.featureSnapshotsPath !== null,
             ...(kitAssignment !== undefined ? { kitAssignment } : {}),
             ...(options.maxTurns !== undefined ? { maxTurns: options.maxTurns } : {}),
+            ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
+            ...(config.searchIterations !== undefined
+              ? { searchIterations: config.searchIterations }
+              : {}),
             onPolicyDecide: (telemetry) => {
               decisionIterations.push(telemetry.iterations);
             },

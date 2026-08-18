@@ -68,11 +68,15 @@ update expectations — put the change under a new policy id.
   (`linear` | `fitted-logistic` | `fitted-gbdt`) + optional `fittedModelId`.
 - Fit: `pnpm --filter @card-battle/server fit:logistic`.
 - Profile: `search-fitted-logistic` → `logistic-v5` model. Default evaluator stays **linear**.
+- Lot 40 profile: `search-engage-fitted-logistic` → `logistic-v5-engage`
+  (search-v5-engage self-play; does not overwrite `logistic-v5`).
 - Gate: `pnpm --filter @card-battle/server gate:fitted-eval` — search+fitted vs
-  search+linear at the same offline iteration budget. Promote only on p < 0.01 +
-  playtest; do **not** flip `DEFAULT_POLICY_ID` (L35-07).
+  search+linear at the same offline iteration budget. `--prior engage` uses the
+  engage prior/rollout. Promote only on p < 0.01 + playtest; do **not** flip
+  `DEFAULT_POLICY_ID` (L35-07 / L40-04).
 - L37-03 GBDT: build only if logistic gate fails or passes thinly.
-- Artifacts: `docs/simulation/2026-08-13-v5-fitted/`.
+- Artifacts: `docs/simulation/2026-08-13-v5-fitted/` (L37),
+  `docs/simulation/2026-08-18-v5-engage-fitted/` (L40-04).
 
 ## Fitting / optimizer (L33-03…05)
 
@@ -265,6 +269,10 @@ determinizer is how V5 fails quietly.
   Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
   `usesOfflineSearchBudget` covers every `search-v5*` id so sim iteration
   overrides apply. Rooms stay on `search-v5` until L40-05.
+- L40-04: snapshots of `search-v5-engage` (64 iters, `--max-turns 200`), seed-split
+  assemble, `logistic-v5-engage`. Gate vs linear at 64 iters / 400-turn cap:
+  **failed** (882–933, p ≈ 0.89). Engage search keeps the linear evaluator.
+  GBDT not built (fitted lost, not a thin miss). `DEFAULT_POLICY_ID` unchanged.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 

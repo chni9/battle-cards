@@ -27,6 +27,7 @@ const PROFILE_FILES: Readonly<Record<string, string>> = {
   'tuned-v5-candidate': 'tuned-v5-candidate.json',
   'tuned-v5-one-ply': 'tuned-v5-one-ply.json',
   'search-fitted-logistic': 'search-fitted-logistic.json',
+  'search-engage-fitted-logistic': 'search-engage-fitted-logistic.json',
 };
 
 export function listWeightsProfileIds(): readonly string[] {
