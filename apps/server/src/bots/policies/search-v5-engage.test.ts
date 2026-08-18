@@ -53,7 +53,7 @@ function finishableSpyState() {
 }
 
 describe('search-v5-engage (L40-03)', () => {
-  it('rooms stay on search-v5 until L40-05', () => {
+  it('rooms stay on search-v5 after L40-05 fail', () => {
     expect(roomBotPolicyId('easy')).toBe(HEURISTIC_V4_POLICY_ID);
     expect(roomBotPolicyId('normal')).toBe(SEARCH_V5_POLICY_ID);
     expect(roomBotPolicyId('hard')).toBe(SEARCH_V5_POLICY_ID);

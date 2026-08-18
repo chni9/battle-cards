@@ -2241,3 +2241,33 @@ p < 0.01. **L37-03 GBDT not built** — trees would chase a losing leaf eval on
 2p self-play. `search-v5-engage` keeps the linear evaluator.
 `DEFAULT_POLICY_ID` stays `heuristic-v4`.
 
+## 2026-08-18 · [T] L40-05 search-v5-engage vs heuristic-v4 — honest fail
+
+L35-07 pattern: seat-rotated 2 000 games, offline 64 iterations, `--max-turns 400`
+(stall bound; not an iteration bump). Champion still frozen `heuristic-v4`.
+
+| Field | Value |
+|---|---|
+| Seed | `l40-05-gate` |
+| Requested / decided / stalls | 2 000 / 1 828 / 172 |
+| Wins / losses | 954 / 874 |
+| Win rate | **0.522** (Wilson 0.499–0.545) |
+| One-sided p (H1: >0.5) | ≈ **0.032** |
+| Candidate hash | `e8f4d8770b9a280d` |
+| Incumbent hash | `d585586e0c8f7711` |
+| Elapsed | 216 516 ms (~3.6 min, 4 workers) |
+| Artifacts | `docs/simulation/2026-08-18-v5-engage-gate/` |
+
+**passed: false** — positive vs L35-07’s 0.473 / p ≈ 0.98, but not p < 0.01.
+Do **not** raise `searchIterations`. **Rooms stay on `search-v5`.**
+`DEFAULT_POLICY_ID` stays `heuristic-v4`. L38 stays paused.
+
+**Playtest analog (not a room promotion):** 4p self-play mix (8 games × 8 iters,
+max 200 turns): engage mean 72 turns vs `search-v5` 100; fewer `buyUpgradePoint`
+(20 vs 54). HWZMWI baseline was ~280 Tax/Regen turns. n=2 at 64 iters is too
+small to claim a 4p attack-rate win. Easy remains `heuristic-v4`.
+
+**ISMCTS:** 4p mid-tree elim used to throw `owner … not in living seats`. Leaf
+break when the acting owner is absent from the iteration’s living set — not a
+rule change.
+

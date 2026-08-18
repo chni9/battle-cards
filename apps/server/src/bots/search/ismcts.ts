@@ -18,7 +18,7 @@ import { listSearchDecisions, searchDecisionOwner } from './list-search-decision
 import {
   backupValueVector,
   livingSeatIds,
-  ownerIndex,
+  livingOwnerIndex,
 } from './max-n-values';
 import { buildDecisionPriors, widenedPriorSlice, type ActionScorer } from './priors';
 import { selectChild } from './puct';
@@ -237,7 +237,14 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
         break;
       }
 
-      const edge = selectChild(node, ownerIndex(living, owner), exploration);
+      const ownerSeat = livingOwnerIndex(living, owner);
+
+      if (ownerSeat === null) {
+        // Sampled world eliminated this seat; back up as a leaf (L40-05).
+        break;
+      }
+
+      const edge = selectChild(node, ownerSeat, exploration);
       pathEdges.push(edge);
 
       const isNew = edge.child === null;

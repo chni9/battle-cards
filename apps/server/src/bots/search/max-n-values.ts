@@ -10,13 +10,25 @@ export function livingSeatIds(
 }
 
 export function ownerIndex(livingIds: readonly string[], ownerPlayerId: string): number {
-  const index = livingIds.indexOf(ownerPlayerId);
+  const index = livingOwnerIndex(livingIds, ownerPlayerId);
 
-  if (index < 0) {
+  if (index === null) {
     throw new Error(`owner ${ownerPlayerId} not in living seats`);
   }
 
   return index;
+}
+
+/**
+ * Null when the acting seat died in this sampled world (4p mid-tree elim).
+ * Callers should treat that ply as a leaf, not throw (L40-05 playtest).
+ */
+export function livingOwnerIndex(
+  livingIds: readonly string[],
+  ownerPlayerId: string,
+): number | null {
+  const index = livingIds.indexOf(ownerPlayerId);
+  return index < 0 ? null : index;
 }
 
 /** Mean of backed-up win-prob for one seat. */

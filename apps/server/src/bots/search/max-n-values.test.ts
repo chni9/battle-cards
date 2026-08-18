@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   backupValueVector,
   livingSeatIds,
+  livingOwnerIndex,
   meanValue,
   ownerIndex,
 } from './max-n-values';
@@ -53,6 +54,7 @@ describe('max^n values (L35-03)', () => {
     ]);
     expect(living).toEqual(['a', 'c']);
     expect(ownerIndex(living, 'c')).toBe(1);
+    expect(livingOwnerIndex(living, 'b')).toBeNull();
 
     const sums = new Float64Array(2);
     backupValueVector(sums, Float64Array.from([0.2, 0.8]));

@@ -6,6 +6,10 @@
  *   pnpm --filter @card-battle/server exec tsx src/simulation/gate-search-v5.ts \
  *     --games 2000 --seed l35-07-gate \
  *     --out ../../docs/simulation/2026-08-13-v5-search-gate/gate.json
+ *
+ * Lot 40:
+ *   ... --policy search-v5-engage --seed l40-05-gate --max-turns 400 \
+ *     --out ../../docs/simulation/2026-08-18-v5-engage-gate/gate.json
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -27,12 +31,13 @@ import { wilsonInterval } from './wilson-interval';
 
 const WORKER_PATH = fileURLToPath(new URL('./policy-gate-worker.ts', import.meta.url));
 
-function parseArgs(argv: readonly string[]): {
+export function parseSearchV5GateArgs(argv: readonly string[]): {
   readonly policy: string;
   readonly games: number;
   readonly seed: string;
   readonly out: string;
   readonly workers: number;
+  readonly maxTurns?: number;
 } {
   const args = new Map<string, string>();
 
@@ -64,8 +69,21 @@ function parseArgs(argv: readonly string[]): {
       ? Number.parseInt(workersRaw, 10)
       : Math.max(1, Math.min(availableParallelism(), 8));
 
+  const maxTurnsRaw = args.get('max-turns');
+  const maxTurns =
+    maxTurnsRaw === undefined || maxTurnsRaw === ''
+      ? undefined
+      : Number.parseInt(maxTurnsRaw, 10);
+
+  if (maxTurns !== undefined && (!Number.isFinite(maxTurns) || maxTurns < 1)) {
+    throw new Error('--max-turns must be a positive integer');
+  }
+
+  const policy = args.get('policy') ?? SEARCH_V5_POLICY_ID;
+  getPolicy(policy);
+
   return {
-    policy: args.get('policy') ?? SEARCH_V5_POLICY_ID,
+    policy,
     games,
     seed: args.get('seed') ?? 'l35-07-gate',
     out:
@@ -75,6 +93,7 @@ function parseArgs(argv: readonly string[]): {
         '../../../../docs/simulation/2026-08-13-v5-search-gate/gate.json',
       ),
     workers,
+    ...(maxTurns !== undefined ? { maxTurns } : {}),
   };
 }
 
@@ -106,6 +125,7 @@ async function evaluatePolicyParallel(
   matchups: readonly FitMatchup[],
   workerCount: number,
   difficulty: 'easy' | 'normal' | 'hard',
+  maxTurns: number | undefined,
 ): Promise<FitnessResult> {
   if (matchups.length === 0) {
     return { wins: 0, losses: 0, stalls: 0, games: 0, winRate: 0 };
@@ -181,6 +201,7 @@ async function evaluatePolicyParallel(
             policyId,
             matchups: chunk,
             difficulty,
+            ...(maxTurns !== undefined ? { maxTurns } : {}),
           };
           worker.postMessage(message);
         });
@@ -194,7 +215,7 @@ async function evaluatePolicyParallel(
 }
 
 async function main(): Promise<void> {
-  const config = parseArgs(process.argv.slice(2));
+  const config = parseSearchV5GateArgs(process.argv.slice(2));
   const matchupCount = Math.ceil(config.games / 2);
   const split = buildFitSplit({
     baseSeed: config.seed,
@@ -215,6 +236,7 @@ async function main(): Promise<void> {
       matchups: matchupCount,
       workers: config.workers,
       offlineSearchIterations: OFFLINE_SEARCH_ITERATIONS,
+      ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
     }),
   );
   const result = await evaluatePolicyParallel(
@@ -222,6 +244,7 @@ async function main(): Promise<void> {
     split.holdout,
     config.workers,
     'hard',
+    config.maxTurns,
   );
   const elapsedMs = Date.now() - started;
   const decided = result.wins + result.losses;
@@ -239,6 +262,7 @@ async function main(): Promise<void> {
     incumbentPolicyId: champion.id,
     incumbentWeightsHash: v4Hash,
     offlineSearchIterations: OFFLINE_SEARCH_ITERATIONS,
+    ...(config.maxTurns !== undefined ? { maxTurns: config.maxTurns } : {}),
     seed: config.seed,
     requestedGames: config.games,
     matchups: matchupCount,

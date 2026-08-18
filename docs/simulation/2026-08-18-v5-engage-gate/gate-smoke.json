@@ -1,0 +1,27 @@
+{
+  "policyId": "search-v5-engage",
+  "candidateWeightsHash": "e8f4d8770b9a280d",
+  "incumbentPolicyId": "heuristic-v4",
+  "incumbentWeightsHash": "d585586e0c8f7711",
+  "offlineSearchIterations": 64,
+  "maxTurns": 400,
+  "seed": "l40-05-gate-smoke",
+  "requestedGames": 40,
+  "matchups": 20,
+  "workers": 4,
+  "wins": 24,
+  "losses": 11,
+  "stalls": 5,
+  "gamesPlayed": 40,
+  "decided": 35,
+  "winRate": 0.6857142857142857,
+  "wilson": {
+    "lower": 0.5201992812074803,
+    "upper": 0.8144934194021753,
+    "center": 0.6673463503048278
+  },
+  "pValueOneSided": 0.020479795755818486,
+  "elapsedMs": 9234,
+  "meanDecisionLatencyNote": "Per-decision latency is embedded in elapsedMs / decisions; room wall-clock is Lot 36.",
+  "passed": false
+}

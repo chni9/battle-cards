@@ -18,7 +18,7 @@
   `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
   L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate),
   `heuristic-v5-engage` (Lot 40 overlay; experimental), `search-v5-engage`
-  (Lot 40; rooms stay on `search-v5` until L40-05), and `random-legal`
+  (Lot 40; rooms stay on `search-v5` after L40-05 fail), and `random-legal`
   (uniform legal pick). The worker resolves by
   `policyId`.
 
@@ -254,7 +254,7 @@ determinizer is how V5 fails quietly.
   ~400 games in a long-lived thread).
 - Replay: `verify-screen-determinism.ts --published <dir>` (L38-03).
 - **Paused 2026-08-18 (Lot 40):** do not publish a screen of current `search-v5`.
-  Resume under the promoted engage policy after L40-05, or keep paused on a failed gate.
+  L40-05 failed; keep paused until a later policy beats `heuristic-v4` at p < 0.01.
 
 ## Lot 40 — Engage search
 
@@ -268,11 +268,14 @@ determinizer is how V5 fails quietly.
 - L40-03: `createSearchV5Policy(..., heuristicV5EngagePolicy, { id: 'search-v5-engage' })`.
   Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
   `usesOfflineSearchBudget` covers every `search-v5*` id so sim iteration
-  overrides apply. Rooms stay on `search-v5` until L40-05.
+  overrides apply. Rooms stay on `search-v5` after L40-05 fail.
 - L40-04: snapshots of `search-v5-engage` (64 iters, `--max-turns 200`), seed-split
   assemble, `logistic-v5-engage`. Gate vs linear at 64 iters / 400-turn cap:
   **failed** (882–933, p ≈ 0.89). Engage search keeps the linear evaluator.
   GBDT not built (fitted lost, not a thin miss). `DEFAULT_POLICY_ID` unchanged.
+- L40-05: `search-v5-engage` vs `heuristic-v4` at 64 iters / 400-turn cap:
+  **failed** (954–874, p ≈ 0.032). Do not raise iterations. Rooms stay on
+  `search-v5`. Mid-tree 4p elim no longer throws in ISMCTS (leaf break).
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 
