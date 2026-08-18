@@ -13,10 +13,11 @@ import type {
 
 import { createInitialState } from '../../engine/create-initial-state';
 import { createRng, type Rng } from '../../engine/rng';
-import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { queueEffect } from '../../engine/turn/queue-effect';
 import type { TurnAction } from '../../engine/turn/perform-action';
+import { buildPlayingViewFor } from '../../protocol/build-view-for';
+import { grantSpy } from '../../protocol/visibility-matrix';
 import {
   determinizeFromView,
   inferBelief,
@@ -49,7 +50,19 @@ function assertDeterminizeConsistency(
   expect(world.pool).toEqual(state.pool);
   expect(world.currentTurnPlayerId).toBe(state.currentTurnPlayerId);
   expect(world.turnSequence).toBe(state.turnSequence);
-  expect(world.visibility).toEqual([]);
+  const spiedSubjects = view.players
+    .filter((player) => player.id !== playerId && player.spied !== undefined)
+    .map((player) => player.id)
+    .sort((left, right) => left.localeCompare(right));
+  const worldSpySubjects = world.visibility
+    .filter((relation) => relation.viewerId === playerId)
+    .map((relation) => relation.subjectId)
+    .sort((left, right) => left.localeCompare(right));
+
+  expect(world.visibility.every((relation) => relation.viewerId === playerId)).toBe(
+    true,
+  );
+  expect(worldSpySubjects).toEqual(spiedSubjects);
 
   for (const publicPlayer of view.players) {
     const worldPlayer = world.players.find((player) => player.id === publicPlayer.id);
@@ -192,6 +205,64 @@ describe('determinizeFromView consistency (L34-05)', () => {
     expect(composed).toEqual(direct);
     expect(inferBelief(view, log).perspectivePlayerId).toBe(view.you);
     expect(inferBelief(view, log).summary.lifeWidthByOpponentOffset).toHaveLength(3);
+  });
+
+  it('reconstructs this seat’s Spy relation so the sample view still has spied (L40-01)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l40-01-spy',
+    });
+    grantSpy(state, 'a', 'b', 'kit-and-cards');
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const bob = view.players.find((player) => player.id === 'b');
+
+    expect(bob?.spied).toBeDefined();
+
+    const world = determinizeFromView(view, view.actionLog, createRng('l40-01-spy'));
+    const sampled = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state: world,
+      turnDeadlineMs: null,
+      actionLog: view.actionLog,
+    });
+    const sampledBob = sampled.players.find((player) => player.id === 'b');
+
+    expect(world.visibility).toEqual([
+      expect.objectContaining({
+        viewerId: 'a',
+        subjectId: 'b',
+        level: 'kit-and-cards',
+      }),
+    ]);
+    expect(sampledBob?.spied).toBeDefined();
+    expect(
+      world.visibility.every((relation) => relation.viewerId === 'a'),
+    ).toBe(true);
+
+    const asBob = determinizeFromView(
+      buildPlayingViewFor({
+        recipientSessionId: 'b',
+        gameCode: 'TEST',
+        state,
+        turnDeadlineMs: null,
+        actionLog: [],
+      }),
+      [],
+      createRng('l40-01-spy-b'),
+    );
+
+    expect(asBob.visibility).toEqual([]);
   });
 });
 

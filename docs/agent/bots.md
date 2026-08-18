@@ -159,7 +159,10 @@ Pipeline, public evidence only — **no `GameState` in** (technical spec v5 §4.
    `sampleFromInterval` → `accountOpponentHandSizes` + `sampleOpponentHandAndSpecials`
    (`uniformZonePrior`). Spy slices are already point masses / point-copies.
 3. `determinizeFromView(view, log, rng)` = (1) then (2). Arity 3; never a `GameState`
-   parameter. `visibility` stays `[]` — Spy only via this seat's view slices (#V4-35).
+   parameter. After sampling, `visibility` is reconstructed from
+   `view.players[].spied` for **this seat only** (`visibilityFromActingView`,
+   L40-01 / #V4-35) so `buildPlayingViewFor` on the sample still exposes those
+   relations. Never copy anyone else’s Spy map.
 
 Overlay keeps the enumeration skeleton verbatim (pool, pending, persistents, block,
 charges, reanimation, self). Public `activeShield.isUpgraded` is written onto the
@@ -193,7 +196,10 @@ determinizer is how V5 fails quietly.
   accepted limitation.
 - **L35-04:** `buildDecisionPriors` — `softmax(scoreActions / τ)` for main
   actions; uniform over sub-choice lists; progressive widening via
-  `widenedPriorSlice`.
+  `widenedPriorSlice`. **L40-01:** at ISMCTS depth 0, `widenedPriorSlice` uses
+  priors from `args.view` (the real recipient view), not from `buildPlayingViewFor`
+  on the sampled world. Deeper plies may use the sample’s view (that world now
+  carries this seat’s Spy rows).
 - **L35-05:** depth floor ≥2 full rounds; rollouts use base heuristic (never
   random); backup is belief-aware `evaluateFromFeatures`.
 - **L35-06:** `sub-choice-coverage.ts` — `SEARCH_SUB_CHOICE_HANDLERS` must stay

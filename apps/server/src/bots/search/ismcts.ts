@@ -193,17 +193,20 @@ export function runIsmcts(args: RunIsmctsArgs): IsmctsResult {
       }
 
       const decisionKind = decisions[0]?.kind ?? 'action';
-      const priors = buildDecisionPriors(decisions, ownerView, iterRng, args.weights, {
-        uniform: args.uniformPrior === true,
-      });
-      const key =
-        depth === 0 && owner === rootOwner && decisionKind === 'action'
-          ? rootKey
-          : infoSetKey(
-              owner,
-              decisionKind,
-              priors.map((entry) => entry.decisionKey),
-            );
+      const useRootPriors =
+        depth === 0 && owner === rootOwner && decisionKind === 'action';
+      const priors = useRootPriors
+        ? rootPriors
+        : buildDecisionPriors(decisions, ownerView, iterRng, args.weights, {
+            uniform: args.uniformPrior === true,
+          });
+      const key = useRootPriors
+        ? rootKey
+        : infoSetKey(
+            owner,
+            decisionKind,
+            priors.map((entry) => entry.decisionKey),
+          );
 
       node = ensureNode(key, owner, decisionKind, living.length);
 

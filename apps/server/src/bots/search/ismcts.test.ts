@@ -8,10 +8,12 @@ import { createInitialState } from '../../engine/create-initial-state';
 import { createRng } from '../../engine/rng';
 import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
+import { grantSpy } from '../../protocol/visibility-matrix';
 import { DEFAULT_POLICY_WEIGHTS } from '../policy-weights';
 import { heuristicV4Policy } from '../policies/heuristic-v4';
 import { searchV5Policy } from '../policies/search-v5';
 import { runIsmcts } from './ismcts';
+import { buildActionPriors } from './priors';
 import { assertDepthCapRounds } from './search-budget';
 import { cloneGameState } from './clone-state';
 
@@ -215,5 +217,76 @@ describe('ISMCTS (L35-05)', () => {
     // Stronger "converges faster" is measured by both completing with a legal pick.
     expect(legal).toContainEqual(withPrior.action);
     expect(legal).toContainEqual(uniform.action);
+  });
+
+  it('does not re-Spy a seat already on the real view (L40-01)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l40-01-respy',
+      kitAssignment: ['assassin', 'kamikaze'],
+    });
+    state.currentTurnPlayerId = 'a';
+    grantSpy(state, 'a', 'b', 'kit-and-cards');
+    const alice = state.players.find((player) => player.id === 'a');
+
+    if (alice === undefined) {
+      throw new Error('missing alice');
+    }
+
+    alice.points = 25;
+    alice.hand = [
+      { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+      { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+    ];
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const legal = listLegalActions(state, 'a');
+    const spyActions = legal.filter(
+      (action) =>
+        action.type === 'playCard' &&
+        action.instanceId === 'spy-1' &&
+        action.targetPlayerId === 'b',
+    );
+
+    expect(spyActions.length).toBeGreaterThan(0);
+
+    const priors = buildActionPriors(view, legal, createRng('l40-01-respy'), DEFAULT_POLICY_WEIGHTS);
+    const spyPrior = priors.find((entry) => {
+      if (entry.decision.kind !== 'action') {
+        return false;
+      }
+
+      const action = entry.decision.action;
+      return (
+        action.type === 'playCard' &&
+        action.instanceId === 'spy-1' &&
+        action.targetPlayerId === 'b'
+      );
+    });
+
+    expect(spyPrior?.score).toBe(Number.NEGATIVE_INFINITY);
+    expect(priors[priors.length - 1]?.decisionKey).toBe(spyPrior?.decisionKey);
+
+    const result = runIsmcts({
+      view,
+      actionLog: [],
+      legalActions: legal,
+      rng: createRng('l40-01-respy-search'),
+      weights: DEFAULT_POLICY_WEIGHTS,
+      budget: { kind: 'iterations', n: 24 },
+      rolloutPolicy: heuristicV4Policy,
+      botId: 'a',
+    });
+
+    expect(result.action).not.toEqual(spyActions[0]);
   });
 });

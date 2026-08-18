@@ -5,7 +5,9 @@
  *
  * `determinizeFromView` = `inferBelief` (posteriors + intervals) then
  * `sampleDeterminizedState` (kit / resources / hand). Spy slices on this
- * recipient's view only (#V4-35); `visibility` stays `[]`.
+ * recipient's view only (#V4-35). `visibility` is reconstructed from
+ * `view.players[].spied` so `buildPlayingViewFor` on the sample still
+ * exposes those relations (L40-01) — never anyone else's Spy map.
  */
 
 import {
@@ -17,6 +19,7 @@ import {
   type Player,
   type PlayingStateView,
   type PublicPlayerView,
+  type SpyRelation,
 } from '@card-battle/shared';
 
 import { enumerationStateFromView } from '../../engine/turn/enumeration-state-from-view';
@@ -201,6 +204,49 @@ export function inferBelief(
 }
 
 /**
+ * This recipient's Spy map only (#V4-35 / L40-01). Built from the view so
+ * `determinizeFromView` still takes no `GameState`.
+ */
+export function visibilityFromActingView(view: PlayingStateView): SpyRelation[] {
+  const relations: SpyRelation[] = [];
+
+  for (const player of view.players) {
+    if (player.id === view.you) {
+      continue;
+    }
+
+    const spied = player.spied;
+
+    if (spied === undefined) {
+      continue;
+    }
+
+    const snapshot = spied.resourcesSnapshot;
+    const liveSnapshot =
+      spied.lives !== undefined
+        ? {
+            lives: spied.lives,
+            points: spied.points ?? 0,
+            upgradePoints: spied.upgradePoints ?? 0,
+            shield: spied.shield ?? 0,
+            turnSequence: view.turnSequence,
+          }
+        : undefined;
+    const resourcesSnapshot = snapshot ?? liveSnapshot;
+    const level = spied.lives !== undefined ? 'full-resources' : 'kit-and-cards';
+
+    relations.push({
+      viewerId: view.you,
+      subjectId: player.id,
+      level,
+      ...(resourcesSnapshot !== undefined ? { resourcesSnapshot } : {}),
+    });
+  }
+
+  return relations;
+}
+
+/**
  * Sample one world from `belief` onto the public skeleton. Spy-revealed
  * kit / hand / resources are point masses and copied as a point.
  */
@@ -262,7 +308,7 @@ export function sampleDeterminizedState(
     overlayPublicShield(player, publicPlayer);
   }
 
-  state.visibility = [];
+  state.visibility = visibilityFromActingView(view);
   return state;
 }
 
