@@ -12,12 +12,13 @@ import { runSimulatedGame } from '../simulation/run-game';
 import { roomBotPolicyId, roomSearchBudgetMs } from './bot-driver';
 import { HEURISTIC_V4_POLICY_ID } from './policies/heuristic-v4';
 import { SEARCH_V5_POLICY_ID, searchV5Policy } from './policies/search-v5';
+import { SEARCH_V5_ENGAGE_POLICY_ID } from './policies/search-v5-engage';
 
 describe('room search wiring (L36-01)', () => {
   it('maps difficulty to policy and wall-clock budget', () => {
     expect(roomBotPolicyId('easy')).toBe(HEURISTIC_V4_POLICY_ID);
-    expect(roomBotPolicyId('normal')).toBe(SEARCH_V5_POLICY_ID);
-    expect(roomBotPolicyId('hard')).toBe(SEARCH_V5_POLICY_ID);
+    expect(roomBotPolicyId('normal')).toBe(SEARCH_V5_ENGAGE_POLICY_ID);
+    expect(roomBotPolicyId('hard')).toBe(SEARCH_V5_ENGAGE_POLICY_ID);
     expect(roomSearchBudgetMs(900, 'hard')).toBe(850);
     expect(roomSearchBudgetMs(900, 'normal')).toBe(106);
     expect(roomSearchBudgetMs(900, 'easy')).toBe(850);

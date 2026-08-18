@@ -392,4 +392,152 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
       instanceId: 'tax-1',
     });
   });
+
+  it('does not sell the only Super to fund Spy (JAPMZR T3)', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 0,
+        hand: [
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+          { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+          { instanceId: 'strong-2', cardId: 'strong-attack', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'super-1' },
+      { type: 'playCard', instanceId: 'strong-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-spy'));
+
+    expect(scoreOf(scored, (action) => action.type === 'sellCard')).toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+    expect(decideEngage(view, actions, createRng('l40-06-spy')).action).not.toEqual({
+      type: 'sellCard',
+      instanceId: 'super-1',
+    });
+  });
+
+  it('does not sell Basic or Strong for 1–2 points (JAPMZR T15)', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 8,
+        hand: [
+          { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'strong-1' },
+      { type: 'sellCard', instanceId: 'basic-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-farm'));
+
+    expect(
+      scoreOf(scored, (action) => action.type === 'sellCard' && action.instanceId === 'strong-1'),
+    ).toBe(Number.NEGATIVE_INFINITY);
+    expect(
+      scoreOf(scored, (action) => action.type === 'sellCard' && action.instanceId === 'basic-1'),
+    ).toBe(Number.NEGATIVE_INFINITY);
+    expect(decideEngage(view, actions, createRng('l40-06-farm')).action.type).not.toBe(
+      'sellCard',
+    );
+  });
+
+  it('allows selling one Super when holding two', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 0,
+        hand: [
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+          { instanceId: 'super-2', cardId: 'super-attack', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'super-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-dup'));
+
+    expect(scoreOf(scored, (action) => action.type === 'sellCard')).not.toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+  });
+
+  it('allows selling Super when that yield funds held Sentence', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 5,
+        hand: [
+          { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+          { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+        ],
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'super-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-sent'));
+
+    expect(scoreOf(scored, (action) => action.type === 'sellCard')).not.toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+  });
+
+  it('still refuses the last attack even to fund Sentence', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 14,
+        hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
+        specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'basic-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-last'));
+
+    expect(scoreOf(scored, (action) => action.type === 'sellCard')).toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+    expect(decideEngage(view, actions, createRng('l40-06-last')).action).not.toEqual({
+      type: 'sellCard',
+      instanceId: 'basic-1',
+    });
+  });
+
+  it('allows selling Basic when that 1 point funds held Card Absorber', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'warrior',
+        points: 3,
+        hand: [
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+        ],
+        specialCards: [
+          { instanceId: 'abs-1', cardId: 'card-absorber', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'sellCard', instanceId: 'basic-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l40-06-abs'));
+
+    expect(scoreOf(scored, (action) => action.type === 'sellCard')).not.toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+  });
 });

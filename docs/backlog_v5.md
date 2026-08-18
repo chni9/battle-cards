@@ -241,6 +241,7 @@ same gates. Do **not** raise `searchIterations` (L35-07 watch point).
 | L40-03 | Register `search-v5-engage` via `createSearchV5Policy` with the engage heuristic as prior, rollout, and sub-choices. `roomBotPolicyId` stays `search-v5`. Keep the L35-03 “let them fight” test on `search-v5`. **Acceptance:** a test proves engage Search uses the engage scorer at the root; room wiring still resolves Normal/Hard to `search-v5`. **Watch point:** L35-04 forbids a second copy of scoring inside the search — inject `scoreActions`, do not fork PUCT. | M | **High** | L40-01, L40-02 | Done |
 | L40-04 | Self-play snapshots of `search-v5-engage`, assemble (drop stalls, split by seed), fit logistic, gate engage-search+fitted vs engage-search+linear at the **same** iteration budget (L37-04). **Acceptance:** p &lt; 0.01 or an honest fail recorded with both hashes; GBDT (L37-03) only if this fails or passes thinly. Do not flip `DEFAULT_POLICY_ID`. **Watch point:** do not bump `FEATURE_LAYOUT_VERSION` unless L40-05 fails with a documented hole the heuristic cannot see. | **L** | Medium | L40-03, L37-02 | Done |
 | L40-05 | Gate `search-v5-engage` vs frozen `heuristic-v4` (L35-07 pattern: seat rotation, ≥ 2 000 games, p &lt; 0.01, offline iteration budget). Designer playtest Easy/Normal/Hard (L36-05). Promote Normal/Hard `roomBotPolicyId` only on pass + sign-off. **Acceptance:** gate result and hashes in `decisions.md`. On fail, do not raise iterations; rooms stay on `search-v5`. | M | **High** | L40-03, L40-04 | Done |
+| L40-06 | JAPMZR playtest: tighten attack-sell overlay (`farm-to-engage-v2`) — keep ≥1 attack; Super/Mega only with duplicates or to fund held Sentence / Mega / Card Absorber; Basic/Strong (1–2 pts) only for that gap. Point Normal/Hard `roomBotPolicyId` at `search-v5-engage` so the room uses this prior. **Acceptance:** JAPMZR-shaped overlay tests; rooms resolve Normal/Hard to `search-v5-engage`; freeze test stays green. **Watch point:** this is a designer playtest override, not an arena-gate pass. Do not raise `searchIterations`. Do not flip `DEFAULT_POLICY_ID`. | M | **High** | L40-02, L40-05 | Done |
 
 ---
 
@@ -255,8 +256,8 @@ same gates. Do **not** raise `searchIterations` (L35-07 watch point).
 | 36 — Runtime | 5 | 0 |
 | 37 — Fitted evaluator | 4 | 0 |
 | 38 — Screen | 3 | 1 (L38-01 paused on Lot 40) |
-| 40 — Engage search | 6 | 0 |
-| **Total** | **45** | **1** |
+| 40 — Engage search | 7 | 0 |
+| **Total** | **46** | **1** |
 
 **Most V5 tasks are still High risk** — silent failure modes did not get cheaper. Lot 40
 adds a prior/rollout retry; it does not reopen a rule. V5's characteristic failure modes are

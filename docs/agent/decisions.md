@@ -2271,3 +2271,25 @@ small to claim a 4p attack-rate win. Easy remains `heuristic-v4`.
 break when the acting owner is absent from the iteration’s living set — not a
 rule change.
 
+## 2026-08-18 · [P] L40-06 JAPMZR — attack sells are not a point farm
+
+Designer playtest JAPMZR (4p, room `search-v5` / v4 prior). Bots sold Super to
+fund Spy, sold Strong for 2 points, and dumped the last attacks down to zero.
+That is illegal as a habit even when v4 `sellToFundBonus` likes it.
+
+**Sell overlay (`farm-to-engage-v2`, view only):**
+
+- Always keep ≥1 attack (`-Infinity` on the last attack), even to fund Sentence.
+- Super / Mega: `-Infinity` unless the seat holds two+ copies of that card, or
+  the sell yield is the last gap to play a **held** Sentence (15), Mega (16),
+  or Card Absorber (4). Spy is not a reason.
+- Basic / Strong: 1–2 points is not worth the card unless that same win-special
+  gap.
+- Selling is for a specific need or a truly useless card — not farming points.
+
+**Rooms:** Normal/Hard `roomBotPolicyId` → `search-v5-engage` so the next local
+game uses this prior. L40-05 arena still **failed** (p ≈ 0.032). This is a
+playtest override, not a gate pass. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
+Do **not** raise `searchIterations`. L38 stays paused. `heuristic-v4` /
+`score-play/` stay frozen.
+

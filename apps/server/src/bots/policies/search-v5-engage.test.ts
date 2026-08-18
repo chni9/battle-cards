@@ -53,14 +53,56 @@ function finishableSpyState() {
 }
 
 describe('search-v5-engage (L40-03)', () => {
-  it('rooms stay on search-v5 after L40-05 fail', () => {
+  it('rooms use search-v5-engage on Normal/Hard (L40-06 playtest)', () => {
     expect(roomBotPolicyId('easy')).toBe(HEURISTIC_V4_POLICY_ID);
-    expect(roomBotPolicyId('normal')).toBe(SEARCH_V5_POLICY_ID);
-    expect(roomBotPolicyId('hard')).toBe(SEARCH_V5_POLICY_ID);
+    expect(roomBotPolicyId('normal')).toBe(SEARCH_V5_ENGAGE_POLICY_ID);
+    expect(roomBotPolicyId('hard')).toBe(SEARCH_V5_ENGAGE_POLICY_ID);
     expect(getPolicy(SEARCH_V5_ENGAGE_POLICY_ID).id).toBe(SEARCH_V5_ENGAGE_POLICY_ID);
     expect(usesOfflineSearchBudget(SEARCH_V5_ENGAGE_POLICY_ID)).toBe(true);
     expect(usesOfflineSearchBudget(SEARCH_V5_POLICY_ID)).toBe(true);
     expect(usesOfflineSearchBudget(HEURISTIC_V4_POLICY_ID)).toBe(false);
+  });
+
+  it('does not sell the only Super to fund Spy at the root', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l40-06-spy-sell',
+      kitAssignment: ['assassin', 'kamikaze'],
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+
+    if (alice === undefined) {
+      throw new Error('missing alice');
+    }
+
+    alice.points = 0;
+    alice.hand = [
+      { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
+      { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
+      { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+    ];
+    state.currentTurnPlayerId = 'a';
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const legal = listLegalActions(state, 'a');
+    const decision = searchV5EngagePolicy.decide(view, legal, createRng('l40-06-spy-sell'), {
+      actionLog: [],
+      budget: { kind: 'iterations', n: 16 },
+    });
+
+    expect(decision.action).not.toEqual({
+      type: 'sellCard',
+      instanceId: 'super-1',
+    });
   });
 
   it('root priors use the engage scorer, not v4', () => {

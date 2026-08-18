@@ -1,7 +1,8 @@
 /**
- * Engage search — backlog L40-03.
+ * Engage search — backlog L40-03 / L40-06.
  * Same ISMCTS as `search-v5`, with `heuristic-v5-engage` as prior, rollout,
- * and sub-choices. Rooms stay on `search-v5` until L40-05.
+ * and sub-choices. Rooms: Normal/Hard use this id after the JAPMZR sell ruling
+ * (arena gate still failed; `DEFAULT_POLICY_ID` stays `heuristic-v4`).
  */
 
 import { createHash } from 'node:crypto';
@@ -9,7 +10,10 @@ import { createHash } from 'node:crypto';
 import { scoreEngageActions } from '../score-engage/score-actions';
 import { DEFAULT_POLICY_WEIGHTS } from '../policy-weights';
 import { computePolicyWeightsHash, stableStringify } from '../weights-hash';
-import { heuristicV5EngagePolicy } from './heuristic-v5-engage';
+import {
+  ENGAGE_OVERLAY_ID,
+  heuristicV5EngagePolicy,
+} from './heuristic-v5-engage';
 import {
   SEARCH_V5_ENGAGE_POLICY_ID,
   createSearchV5Policy,
@@ -23,7 +27,7 @@ function computeEngageSearchWeightsHash(): string {
       stableStringify({
         id: SEARCH_V5_ENGAGE_POLICY_ID,
         rollout: heuristicV5EngagePolicy.id,
-        overlay: 'farm-to-engage-v1',
+        overlay: ENGAGE_OVERLAY_ID,
         weightsHash: computePolicyWeightsHash(DEFAULT_POLICY_WEIGHTS),
       }),
     )

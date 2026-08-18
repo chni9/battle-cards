@@ -26,7 +26,7 @@ import { readBotThinkMs } from './bot-think-ms';
 import { applyDifficultyNoiseWithMeta } from './difficulty-noise';
 import { sampleSoftmaxAction } from './difficulty-softmax';
 import { HEURISTIC_V4_POLICY_ID } from './policies/heuristic-v4';
-import { SEARCH_V5_POLICY_ID } from './policies/search-v5';
+import { SEARCH_V5_ENGAGE_POLICY_ID } from './policies/search-v5-engage';
 import { getDefaultPolicy, getPolicy } from './registry';
 import { decideHeuristicV4Sync } from './search/worker/fallback';
 import {
@@ -396,11 +396,14 @@ export class BotDriver {
   }
 }
 
-/** Room policy for a bot seat — Normal/Hard use search-v5; Easy is sync heuristic-v4. */
+/**
+ * Room policy for a bot seat — Easy is sync heuristic-v4; Normal/Hard use
+ * search-v5-engage (JAPMZR sell ruling / L40-06). Arena gate did not pass.
+ */
 export function roomBotPolicyId(difficulty: BotDifficulty): string {
   if (difficulty === 'easy') {
     return HEURISTIC_V4_POLICY_ID;
   }
 
-  return SEARCH_V5_POLICY_ID;
+  return SEARCH_V5_ENGAGE_POLICY_ID;
 }

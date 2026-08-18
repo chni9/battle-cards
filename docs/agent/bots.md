@@ -17,8 +17,9 @@
 - Registered today: `heuristic-v4` (frozen incumbent, ignores `ctx.actionLog`),
   `heuristic-tuned-v5` (experimental one-round re-rank; **not** room default until
   L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate),
-  `heuristic-v5-engage` (Lot 40 overlay; experimental), `search-v5-engage`
-  (Lot 40; rooms stay on `search-v5` after L40-05 fail), and `random-legal`
+  `heuristic-v5-engage` (Lot 40 overlay), `search-v5-engage`
+  (Lot 40; Normal/Hard rooms after JAPMZR sell ruling — arena gate still
+  failed), and `random-legal`
   (uniform legal pick). The worker resolves by
   `policyId`.
 
@@ -268,14 +269,20 @@ determinizer is how V5 fails quietly.
 - L40-03: `createSearchV5Policy(..., heuristicV5EngagePolicy, { id: 'search-v5-engage' })`.
   Inject engage `scoreActions` into `buildDecisionPriors` (no second PUCT scorer).
   `usesOfflineSearchBudget` covers every `search-v5*` id so sim iteration
-  overrides apply. Rooms stay on `search-v5` after L40-05 fail.
+  overrides apply.
 - L40-04: snapshots of `search-v5-engage` (64 iters, `--max-turns 200`), seed-split
   assemble, `logistic-v5-engage`. Gate vs linear at 64 iters / 400-turn cap:
   **failed** (882–933, p ≈ 0.89). Engage search keeps the linear evaluator.
   GBDT not built (fitted lost, not a thin miss). `DEFAULT_POLICY_ID` unchanged.
 - L40-05: `search-v5-engage` vs `heuristic-v4` at 64 iters / 400-turn cap:
-  **failed** (954–874, p ≈ 0.032). Do not raise iterations. Rooms stay on
-  `search-v5`. Mid-tree 4p elim no longer throws in ISMCTS (leaf break).
+  **failed** (954–874, p ≈ 0.032). Do not raise iterations. Mid-tree 4p elim no
+  longer throws in ISMCTS (leaf break).
+- **L40-06 (JAPMZR):** overlay `farm-to-engage-v2` — selling is not a point farm.
+  Keep ≥1 attack always. Super/Mega sells only with duplicates or to fund a
+  held Sentence / Mega / Card Absorber. Basic/Strong (1–2 pts) only for that
+  same gap. Normal/Hard `roomBotPolicyId` → `search-v5-engage` so the live
+  room uses this prior (v4 Search dumped attacks in JAPMZR). Arena gate still
+  failed; `DEFAULT_POLICY_ID` stays `heuristic-v4`. Do not raise iterations.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 
@@ -284,10 +291,11 @@ determinizer is how V5 fails quietly.
 - **Room:** wall-clock only, capped by `bot-think-ms` (not added to it). Search starts
   immediately on `scheduleTurn`; after the decision, the driver waits so elapsed ≥
   `thinkMs` (perceived floor). Pool timeout = `thinkMs + 250ms` slack.
-- **Difficulty (L36-03 / #V5-3):** Hard = full wall-clock `search-v5`, no substitution.
-  Normal = `floor(thinkMs/8)` + softmax over root visit scores. Easy = sync
-  `heuristic-v4` (skips worker) + existing uniform `DIFFICULTY_RANDOM_RATES`.
-  `DEFAULT_POLICY_ID` stays `heuristic-v4` until a future gate passes (L35-07 failed).
+- **Difficulty (L36-03 / #V5-3):** Hard = full wall-clock `search-v5-engage`, no
+  substitution. Normal = `floor(thinkMs/8)` + softmax over root visit scores.
+  Easy = sync `heuristic-v4` (skips worker) + existing uniform
+  `DIFFICULTY_RANDOM_RATES`. `DEFAULT_POLICY_ID` stays `heuristic-v4` (L35-07 /
+  L40-05 gates failed; L40-06 is a playtest room override, not a gate pass).
 - **Simulator / arena:** iteration budget only (`searchIterations` / offline default
   64). Never wall-clock — reproducibility DoD.
 - Hard search budget is `thinkMs − ROOM_SEARCH_BUDGET_MARGIN_MS` (50) so a finishing
