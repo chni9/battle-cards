@@ -12,7 +12,10 @@ information and **delayed resolution**: an action aimed at an opponent takes eff
 opponent's next turn, after they have played their own action, giving them a chance to react.
 V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulation; V4 the
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
-bots on the same rules — no value or rule changes. Audience: the designer and his friends.
+bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
+beta feedback) is specified in `docs/technical_spec_v6.md` / `docs/backlog_v6.md` — do not
+start Lot 41 until the designer opens that backlog; V5 may continue. Audience: the designer
+and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
 **cards** / **kits** (Classic catalog) · **protocol and visibility** (per-recipient state, Spy) ·
@@ -24,8 +27,9 @@ search).
 1. **Code + lock files** — operational truth.
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
-   `docs/backlog_v5.md` sequences active work (acceptance criteria per task);
-   `docs/backlog_v1.md` … `docs/backlog_v4.md` are closed archives.
+   `docs/backlog_v5.md` sequences V5 (Lots 32–40); `docs/backlog_v6.md` sequences V6
+   (Lots 41+) when the designer opens it; `docs/backlog_v1.md` … `docs/backlog_v4.md`
+   are closed archives.
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -94,10 +98,12 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
    #1, #2 and #3 are closed.
 7. **V1–V4 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
-   `docs/backlog_v5.md`). Team/God/Quick modes, accounts, in-progress persistence and
-   monetization stay out (technical spec v1 §9) — not even partially. V5 changes **no rule
-   and no value**; it adds a policy registry, arena, belief model, search, and fitted
-   evaluation. A bot playing badly is never grounds for touching a rule. **Search,
+ `docs/backlog_v5.md`). **V6 is specified, not started** until Lot 41 (`docs/technical_spec_v6.md`).
+ Team/God/Quick modes, accounts, in-progress persistence and
+ monetization stay out (technical spec v1 §9) — not even partially. V5 and V6 change **no rule
+ and no value**. V5 adds a policy registry, arena, belief model, search, and fitted
+ evaluation. V6 adds teaching, table readability, and in-game feedback (tutorial is Classic
+ with setup overrides, not a new competitive mode). A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
    has Spyed) and the **public** action log is **out** — technical spec v3 decision 2 is
@@ -149,10 +155,12 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through `docs/backlog_v5.md` **in task-ID order** (Lot 32 onward). V1–V4 are closed
-archives (`docs/backlog_v1.md` … `docs/backlog_v4.md`). The sequencing is deliberate:
+Work through the **open** backlog the designer named: `docs/backlog_v5.md` (Lot 32 onward)
+until they open V6, then `docs/backlog_v6.md` (Lot 41 onward). V1–V4 are closed
+archives (`docs/backlog_v1.md` … `docs/backlog_v4.md`). V5 sequencing:
 **Instrument (Lot 32) before Fitting (33), Belief (34), Search (35)** — nothing that cannot
-be measured gets built. See `docs/backlog_v5.md` "How to read this".
+be measured gets built. See `docs/backlog_v5.md` "How to read this". V6 sequencing: protocol
+(41) before tutorial (45); pickers (44) before tutorial; one protocol bump in L41-02.
 
 **Keep the backlog current.** `In progress` when you start a task, `Done` once it passes the
 gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md`) — in the same
