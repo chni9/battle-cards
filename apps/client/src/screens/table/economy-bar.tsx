@@ -1,6 +1,6 @@
 /**
- * Economy action bar — L12-06 / L30-02.
- * Draw / buy-sell UP / Buy / Pool (Dialog entry) / Leave.
+ * Economy action bar — L12-06 / L30-02 / L42-03.
+ * Draw / buy-sell UP / Buy / Pool / How to play / Leave.
  */
 
 import type { ReactElement } from 'react';
@@ -19,6 +19,7 @@ export interface EconomyBarProps {
   onSellUpgradePoint: () => void;
   onOpenBuy: () => void;
   onOpenPool: () => void;
+  onOpenHowToPlay: () => void;
   onLeave: () => void;
   /** Finished board — reopen the stats dialog (PROTOCOL 24). */
   onShowStats?: () => void;
@@ -37,6 +38,7 @@ export function EconomyBar({
   onSellUpgradePoint,
   onOpenBuy,
   onOpenPool,
+  onOpenHowToPlay,
   onLeave,
   onShowStats,
   leaveLabel = 'Leave',
@@ -66,6 +68,9 @@ export function EconomyBar({
       </Button>
       <Button variant="green" onClick={onOpenPool}>
         Pool ({poolCount})
+      </Button>
+      <Button type="button" variant="orange" onClick={onOpenHowToPlay}>
+        How to play
       </Button>
       <span className="mx-1 hidden h-6 w-px bg-border-soft sm:inline-block" aria-hidden />
       {onShowStats !== undefined && (

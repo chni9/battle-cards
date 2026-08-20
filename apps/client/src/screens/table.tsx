@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
+import { markHowToPlaySeen } from '../help/help-storage';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -37,6 +38,7 @@ import type {
   ActionRejectPayload,
   PlayCardOptions,
 } from '../net/use-room-connection';
+import { HowToPlayDialog } from './how-to-play-dialog';
 import { IllegalActionDialog } from './illegal-action-dialog';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
@@ -120,6 +122,7 @@ function TableScreenInner({
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
 
@@ -581,6 +584,9 @@ function TableScreenInner({
             onOpenPool={() => {
               setDialog({ kind: 'pool' });
             }}
+            onOpenHowToPlay={() => {
+              setHowToPlayOpen(true);
+            }}
             onLeave={onLeave}
             {...(readOnly
               ? {
@@ -660,6 +666,16 @@ function TableScreenInner({
       <IllegalActionDialog
         reject={actionReject}
         onClose={onDismissActionReject}
+      />
+
+      <HowToPlayDialog
+        open={howToPlayOpen}
+        onClose={(reason) => {
+          if (reason === 'skip' || reason === 'got-it') {
+            markHowToPlaySeen();
+          }
+          setHowToPlayOpen(false);
+        }}
       />
     </>
   );
