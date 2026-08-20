@@ -35,6 +35,7 @@ export function buildFinishedGameSnapshot(
       events: [...input.actionLog],
     },
     hasBots,
+    isTutorial: input.isTutorial ?? false,
     players: input.gameState.players.map((player, seatIndex) =>
       buildPlayerRecord(player, seatIndex, input.winnerPlayerId, input.actionLog, botDifficulties),
     ),

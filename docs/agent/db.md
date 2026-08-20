@@ -28,12 +28,12 @@
 
 | Table | Role |
 |---|---|
-| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04) |
+| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false) |
 | `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
 
 SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
-`003_finished_game_export_log.sql`.  
+`003_finished_game_export_log.sql`, `004_finished_games_tutorial.sql`.  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
