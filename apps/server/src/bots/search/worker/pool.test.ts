@@ -58,6 +58,8 @@ function emptyView(you: string): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    playKind: 'classic',
+    tutorialIndex: null,
   };
 }
 

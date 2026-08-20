@@ -25,6 +25,7 @@ import type {
   LobbyStateView,
   PendingEffectView,
   PersistentEffectView,
+  PlayKind,
   PlayingStateView,
   PrivateSelfView,
   PublicPlayerView,
@@ -113,6 +114,10 @@ export interface PlayingViewInput {
   actionLog: readonly ActionLogEntryView[];
   /** Bot seat difficulties keyed by player id — from room seats, not GameState. */
   botDifficulties?: ReadonlyMap<string, BotDifficulty>;
+  /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `'classic'`. */
+  playKind?: PlayKind;
+  /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
+  tutorialIndex?: number | null;
 }
 
 function buildSpiedView(
@@ -214,6 +219,8 @@ function duplicationActiveForRecipient(
 export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   const { recipientSessionId, gameCode, state, turnDeadlineMs, actionLog, botDifficulties } =
     input;
+  const playKind = input.playKind ?? 'classic';
+  const tutorialIndex = input.tutorialIndex ?? null;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
   if (selfPlayer === undefined) {
@@ -309,6 +316,8 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     pendingEffects,
     actionLog: mapActionLogForRecipient(actionLog, recipientSessionId, state),
     pool: state.pool.map((card) => ({ ...card })),
+    playKind,
+    tutorialIndex,
   };
 }
 
@@ -322,6 +331,10 @@ export interface FinishedViewInput {
   botDifficulties?: ReadonlyMap<string, BotDifficulty>;
   /** Before/after turn snapshots for Excel — Lot 19. */
   turnHistory?: readonly ExportTurnRowView[];
+  /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `'classic'`. */
+  playKind?: PlayKind;
+  /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
+  tutorialIndex?: number | null;
 }
 
 export function buildGameRecapView(
@@ -361,6 +374,8 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     botDifficulties,
     turnHistory = [],
   } = input;
+  const playKind = input.playKind ?? 'classic';
+  const tutorialIndex = input.tutorialIndex ?? null;
 
   if (!state.players.some((player) => player.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
@@ -384,6 +399,8 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     state,
     turnDeadlineMs: null,
     actionLog,
+    playKind,
+    tutorialIndex,
     ...(botDifficulties !== undefined ? { botDifficulties } : {}),
   });
 
@@ -439,5 +456,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     }),
     recap: buildGameRecapView(state, actionLog, eliminations),
     exportLog,
+    playKind,
+    tutorialIndex,
   };
 }

@@ -308,3 +308,50 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
     });
   });
 });
+
+describe('buildFinishedGameSnapshot (L41-04 / technical spec v6 §7.2)', () => {
+  it('defaults isTutorial to false when omitted', () => {
+    const alice = makePlayer({ id: 'alice', kitId: 'kamikaze' });
+    const bob = makePlayer({ id: 'bob', kitId: 'scientific', isEliminated: true });
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: 'CLASS1',
+      startedAtMs: 0,
+      endedAtMs: 10,
+      winnerPlayerId: 'alice',
+      gameState: {
+        mode: 'classic',
+        seed: 's',
+        turnSequence: 1,
+        players: [alice, bob],
+      },
+      actionLog: [],
+      eliminations: [],
+    });
+
+    expect(snapshot.isTutorial).toBe(false);
+  });
+
+  it('records isTutorial when passed', () => {
+    const alice = makePlayer({ id: 'alice', kitId: 'kamikaze' });
+    const bob = makePlayer({ id: 'bob', kitId: 'scientific', isEliminated: true });
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: 'TUTOR1',
+      startedAtMs: 0,
+      endedAtMs: 10,
+      winnerPlayerId: 'alice',
+      gameState: {
+        mode: 'classic',
+        seed: 's',
+        turnSequence: 1,
+        players: [alice, bob],
+      },
+      actionLog: [],
+      eliminations: [],
+      isTutorial: true,
+    });
+
+    expect(snapshot.isTutorial).toBe(true);
+  });
+});

@@ -55,6 +55,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
 | `GameState.pool` | **Public** in `PlayingStateView` (rules spec §1; tech v4 §4.3 / §5.1) |
+| `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's
@@ -79,6 +80,7 @@ Client → server (technical spec §5.2):
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·
+`forfeit` (PROTOCOL_VERSION 29 / L41-02 — **types only** until L43-06; payload `undefined`) ·
 `resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
 `kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
 (`instanceIds`), `special-pick` (`cardId`). Replaces the former
@@ -102,7 +104,9 @@ replaces the former `mirrorChoiceRequired` / `rewardChoiceRequired` pair ·
 `packages/shared/src/protocol/action-reject.ts`. `message` is the short English fallback;
 clients may map `code` to richer copy. Lobby start/bot rejects that travel on `error` use
 the same catalog; local lobby reason unions (`not-host`, …) remain for `canStartGame` /
-`canAddBot` gates.
+`canAddBot` gates. PROTOCOL_VERSION 29 adds `'tutorial-follow-coach'` and
+`'tutorial-room-closed'`. Join of a second human to a tutorial room throws `ServerError`
+with the latter message (L41-05); it is not an in-game `error` event.
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
@@ -153,7 +157,10 @@ knowing before touching `game-room.ts`:
   `this.clients` when `onLeave` runs.
 - **`onAuth` is the earliest hook with the join options**, and where the protocol version is
   checked: a client on a different contract misreads everything it receives. Throwing
-  `ServerError` there rejects the join with a message the client shows.
+  `ServerError` there rejects the join with a message the client shows. Order (L41-05):
+  protocol version, then `tutorial-room-closed` when `playKind === 'tutorial'` and a human is
+  already seated, then `hasStarted`, then nickname. Honor `tutorial: true` only in `onCreate`;
+  ignore it on `joinById`. Do not put the tutorial reject on `onReconnect`.
 - Options arriving from a client are typed `unknown` and narrowed by hand. Nothing about a
   payload is assumed, on either side of the wire (§5.4).
 

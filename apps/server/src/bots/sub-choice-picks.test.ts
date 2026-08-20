@@ -82,6 +82,8 @@ function view(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    playKind: 'classic',
+    tutorialIndex: null,
     ...overrides,
   };
 }

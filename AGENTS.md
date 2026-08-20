@@ -13,8 +13,8 @@ opponent's next turn, after they have played their own action, giving them a cha
 V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulation; V4 the
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
-beta feedback) is specified in `docs/technical_spec_v6.md` / `docs/backlog_v6.md` — do not
-start Lot 41 until the designer opens that backlog; V5 may continue. Audience: the designer
+beta feedback) is **in progress** from Lot 41 (`docs/technical_spec_v6.md` /
+`docs/backlog_v6.md`); start at L41-01. V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -28,8 +28,7 @@ search).
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
    `docs/backlog_v5.md` sequences V5 (Lots 32–40); `docs/backlog_v6.md` sequences V6
-   (Lots 41+) when the designer opens it; `docs/backlog_v1.md` … `docs/backlog_v4.md`
-   are closed archives.
+   (Lots 41+); `docs/backlog_v1.md` … `docs/backlog_v4.md` are closed archives.
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -98,7 +97,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
    #1, #2 and #3 are closed.
 7. **V1–V4 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
- `docs/backlog_v5.md`). **V6 is specified, not started** until Lot 41 (`docs/technical_spec_v6.md`).
+ `docs/backlog_v5.md`). **V6 is in progress** from Lot 41 (`docs/technical_spec_v6.md`,
+ `docs/backlog_v6.md`).
  Team/God/Quick modes, accounts, in-progress persistence and
  monetization stay out (technical spec v1 §9) — not even partially. V5 and V6 change **no rule
  and no value**. V5 adds a policy registry, arena, belief model, search, and fitted
@@ -155,9 +155,9 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through the **open** backlog the designer named: `docs/backlog_v5.md` (Lot 32 onward)
-until they open V6, then `docs/backlog_v6.md` (Lot 41 onward). V1–V4 are closed
-archives (`docs/backlog_v1.md` … `docs/backlog_v4.md`). V5 sequencing:
+Work through the **open** backlogs: `docs/backlog_v6.md` (Lot 41 onward) and, in
+parallel, `docs/backlog_v5.md` (Lots 32–40). V1–V4 are closed archives
+(`docs/backlog_v1.md` … `docs/backlog_v4.md`). V5 sequencing:
 **Instrument (Lot 32) before Fitting (33), Belief (34), Search (35)** — nothing that cannot
 be measured gets built. See `docs/backlog_v5.md` "How to read this". V6 sequencing: protocol
 (41) before tutorial (45); pickers (44) before tutorial; one protocol bump in L41-02.
@@ -185,8 +185,9 @@ of those two families.
 - [ ] `pnpm verify` green: `tsc` clean, linter clean, all tests passing
 - [ ] No test skipped, disabled, or weakened to pass
 - [ ] Every card or rule touched has its test created or updated
-- [ ] The task's own **Acceptance** line in `docs/backlog_v3.md` is satisfied
-- [ ] That task's status set to `Done` in `docs/backlog_v3.md`
+- [ ] The task's own **Acceptance** line in the open backlog is satisfied
+      (`docs/backlog_v6.md` for V6)
+- [ ] That task's status set to `Done` in the open backlog (`docs/backlog_v6.md` for V6)
 - [ ] **Committed** — Conventional Commit referencing the task ID (see §10). Never leave a
       `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
@@ -204,8 +205,9 @@ Body only when the *why* is not obvious — and always for a rule interpretation
 deviation, or a decision that a future reader would otherwise have to re-derive. No AI
 attribution. A project-local `caveman-commit` skill (`.agents/skills/`) enforces this style.
 
-**Always commit when a backlog task is Done.** Same change as the code and `docs/backlog_v3.md`
-status flip — not a later cleanup. Leaving finished work uncommitted is a process failure.
+**Always commit when a backlog task is Done.** Same change as the code and the open
+backlog status flip — not a later cleanup. Leaving finished work uncommitted is a process
+failure.
 
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
 task alone. Do not bundle several task IDs into one commit unless the developer explicitly

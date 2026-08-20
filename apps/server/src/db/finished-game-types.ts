@@ -64,6 +64,8 @@ export interface FinishedGameSnapshot {
   eliminations: readonly FinishedGameEliminationRecord[];
   /** L17-04 — true when any seat was a bot. */
   hasBots: boolean;
+  /** L41-04 — true when the room overlay was tutorial. */
+  isTutorial: boolean;
 }
 
 export interface BuildFinishedGameSnapshotInput {
@@ -97,4 +99,6 @@ export interface BuildFinishedGameSnapshotInput {
    * Presence means the seat is a bot. Omit or empty → all-human defaults.
    */
   botDifficultiesByPlayerId?: ReadonlyMap<string, BotDifficulty>;
+  /** L41-04 — default false so simulation callers omit it. */
+  isTutorial?: boolean;
 }

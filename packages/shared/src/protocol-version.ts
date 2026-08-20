@@ -24,5 +24,10 @@
  * 27 → 28 (L36-04 / #V5-4): `BOT_REASON_CODES` gains `search-best` and
  * `search-fallback`. Public Why panel stays coarse — no visit counts or
  * win-probability numbers in `BotDecisionReason.params`.
+ *
+ * 28 → 29 (L41-02 / technical spec v6 §8): `playKind` + `tutorialIndex` on
+ * playing and finished views; `RoomJoinOptions.tutorial?: true`; client
+ * `FORFEIT`; reject codes `tutorial-follow-coach` and `tutorial-room-closed`.
+ * Only protocol bump in V6.
  */
-export const PROTOCOL_VERSION = 28;
+export const PROTOCOL_VERSION = 29;

@@ -216,6 +216,13 @@ export interface PendingEffectView {
  * (overrides tech §5.1 table for unspied opponents).
  * Hand **card count** is also private — revealed only via Spy (`spied.hand` / specials).
  */
+
+/**
+ * Teaching overlay on playing / finished views (technical spec v6 §8 / L41-02).
+ * Not a `GameMode` and not on `GameState` (decisions.md 2026-08-20).
+ */
+export type PlayKind = 'classic' | 'tutorial';
+
 export interface PlayingStateView {
   phase: 'playing';
   you: string;
@@ -240,6 +247,15 @@ export interface PlayingStateView {
    * Required so `enumerationStateFromView` can reconstruct pool contents for §10.1.
    */
   pool: readonly CardInstance[];
+  /**
+   * Public teaching overlay (technical spec v6 §8). Classic rooms: `'classic'`.
+   */
+  playKind: PlayKind;
+  /**
+   * Public tutorial cursor, or `null` when `playKind === 'classic'`
+   * (technical spec v6 §8).
+   */
+  tutorialIndex: number | null;
 }
 
 /** Played action — same public fields as `actionPlayed` wire payload. */
@@ -428,6 +444,12 @@ export interface FinishedStateView {
    * always `null`. Lets the client keep the table visible under a closable stats dialog.
    */
   finalTable: PlayingStateView;
+  /**
+   * Public teaching overlay (technical spec v6 §8 / L41-02). Same pair as
+   * `finalTable.playKind` / `finalTable.tutorialIndex`.
+   */
+  playKind: PlayKind;
+  tutorialIndex: number | null;
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

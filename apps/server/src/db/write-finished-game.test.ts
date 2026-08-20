@@ -17,6 +17,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
     actionLog: [],
     exportLog: { turns: [], events: [] },
     hasBots: false,
+    isTutorial: false,
     players: [
       {
         playerId: 'alice',
@@ -152,9 +153,10 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
       ],
     });
 
-    const gameInsert = bound.find((params) => params.length === 11);
+    const gameInsert = bound.find((params) => params.length === 12);
     expect(gameInsert?.[9]).toBe(JSON.stringify(snapshot.exportLog));
     expect(gameInsert?.[10]).toBe(true);
+    expect(gameInsert?.[11]).toBe(false);
 
     const playerInserts = bound.filter((params) => params.length === 20);
     expect(playerInserts).toHaveLength(2);
@@ -162,6 +164,61 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     expect(playerInserts[0]?.[19]).toBeNull();
     expect(playerInserts[1]?.[18]).toBe(true);
     expect(playerInserts[1]?.[19]).toBe('normal');
+  });
+
+  it('inserts is_tutorial (L41-04)', async () => {
+    const queries: string[] = [];
+    const bound: unknown[][] = [];
+    const client = {
+      query: vi.fn((sql: string, params?: unknown[]) => {
+        queries.push(typeof sql === 'string' ? sql : String(sql));
+        if (params !== undefined) {
+          bound.push(params);
+        }
+
+        if (sql.includes('RETURNING id')) {
+          return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      }),
+      release: vi.fn(),
+    };
+    const pool = {
+      connect: vi.fn(() => Promise.resolve(client)),
+    };
+
+    await writeFinishedGame(pool as never, sampleSnapshot());
+
+    expect(queries.some((sql) => sql.includes('is_tutorial'))).toBe(true);
+    const gameInsert = bound.find((params) => params.length === 12);
+    expect(gameInsert?.[11]).toBe(false);
+  });
+
+  it('binds is_tutorial true when the snapshot is a tutorial (L41-04)', async () => {
+    const bound: unknown[][] = [];
+    const client = {
+      query: vi.fn((sql: string, params?: unknown[]) => {
+        if (params !== undefined) {
+          bound.push(params);
+        }
+
+        if (sql.includes('RETURNING id')) {
+          return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      }),
+      release: vi.fn(),
+    };
+    const pool = {
+      connect: vi.fn(() => Promise.resolve(client)),
+    };
+
+    await writeFinishedGame(pool as never, { ...sampleSnapshot(), isTutorial: true });
+
+    const gameInsert = bound.find((params) => params.length === 12);
+    expect(gameInsert?.[11]).toBe(true);
   });
 });
 

@@ -108,6 +108,10 @@ export const ACTION_REJECT_CODES = [
   'set-bot-difficulty-already-started',
   'set-bot-difficulty-unknown',
   'set-bot-difficulty-target-is-human',
+
+  // Tutorial (PROTOCOL_VERSION 29 / L41-02)
+  'tutorial-follow-coach',
+  'tutorial-room-closed',
 ] as const;
 
 export type ActionRejectCode = (typeof ACTION_REJECT_CODES)[number];
@@ -206,6 +210,9 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'set-bot-difficulty-already-started': 'Cannot change bot difficulty after the game has started.',
   'set-bot-difficulty-unknown': 'That bot seat was not found.',
   'set-bot-difficulty-target-is-human': 'That seat is a human player, not a bot.',
+
+  'tutorial-follow-coach': 'This tutorial step asks for a different action.',
+  'tutorial-room-closed': 'This tutorial cannot be joined.',
 };
 
 export interface ActionReject {

@@ -7,6 +7,7 @@
 
 import {
   actionReject,
+  ACTION_REJECT_MESSAGE,
   type ActionReject,
   ACTION_PLAYED,
   ACTION_RESOLVED,
@@ -65,6 +66,7 @@ import {
   type SubChoiceKind,
   type UpgradeCardPayload,
   type ExportTurnRowView,
+  type PlayKind,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
@@ -156,6 +158,7 @@ import {
   shouldUnlockForOccupancy,
   type Seat,
 } from './seats';
+import { readTutorialCreateOption, shouldRejectTutorialJoin } from './tutorial-join';
 
 type GameClient = Client<{ messages: ServerToClientMessages }>;
 
@@ -175,6 +178,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private seats: Seat[] = [];
   private hostSessionId: string | null = null;
   private hasStarted = false;
+  /** Room-owned teaching overlay — not on GameState (technical spec v6 §5.3 / L41-03). */
+  private playKind: PlayKind = 'classic';
+  private tutorialIndex: number | null = null;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
   private readonly botDriver = new BotDriver({
@@ -198,6 +204,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         turnDeadlineMs: this.turnDeadlineMs,
         actionLog: this.actionLog,
         botDifficulties: this.botDifficulties(),
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
       });
     },
     getActionLog: () => this.actionLog,
@@ -272,8 +280,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private pausedTurnRemainingMs: number | null = null;
 
-  override async onCreate(): Promise<void> {
+  override async onCreate(options: unknown): Promise<void> {
     this.roomId = await this.allocateGameCode();
+    if (readTutorialCreateOption(options)) {
+      this.playKind = 'tutorial';
+    }
     console.log(`[${this.roomId}] room created`);
   }
 
@@ -287,10 +298,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   override onAuth(_client: GameClient, options: unknown): boolean {
-    if (this.hasStarted) {
-      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This game has already started.');
-    }
-
     const clientVersion = readProtocolVersion(options);
 
     if (clientVersion !== PROTOCOL_VERSION) {
@@ -300,6 +307,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ErrorCode.APPLICATION_ERROR,
         `Protocol version mismatch: the server speaks v${PROTOCOL_VERSION}, this client sent ${sent}. Reload the page.`,
       );
+    }
+
+    if (shouldRejectTutorialJoin(this.playKind, this.seats.filter(isHumanSeat).length)) {
+      throw new ServerError(
+        ErrorCode.APPLICATION_ERROR,
+        ACTION_REJECT_MESSAGE['tutorial-room-closed'],
+      );
+    }
+
+    if (this.hasStarted) {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This game has already started.');
     }
 
     if (readNickname(options) === null) {
@@ -2227,6 +2245,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       turnDeadlineMs: this.turnDeadlineMs,
       actionLog: this.actionLog,
       botDifficulties: this.botDifficulties(),
+      playKind: this.playKind,
+      tutorialIndex: this.tutorialIndex,
     });
   }
 
@@ -2831,6 +2851,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       turnHistory: this.turnHistory,
       eliminations: this.eliminations,
       botDifficultiesByPlayerId: this.botDifficulties(),
+      isTutorial: this.playKind === 'tutorial',
     });
 
     void persistFinishedGame(snapshot);
@@ -2993,6 +3014,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
           eliminations: this.eliminations,
           botDifficulties: this.botDifficulties(),
           turnHistory: this.turnHistory,
+          playKind: this.playKind,
+          tutorialIndex: this.tutorialIndex,
         }),
       );
       return;
@@ -3007,6 +3030,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         turnDeadlineMs: this.turnDeadlineMs,
         actionLog: this.actionLog,
         botDifficulties: this.botDifficulties(),
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
       }),
     );
   }

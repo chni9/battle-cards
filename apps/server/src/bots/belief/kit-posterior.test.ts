@@ -90,6 +90,8 @@ function view(extras: Partial<PlayingStateView> = {}): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    playKind: 'classic',
+    tutorialIndex: null,
     ...extras,
   };
 }

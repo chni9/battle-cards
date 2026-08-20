@@ -2293,3 +2293,58 @@ playtest override, not a gate pass. `DEFAULT_POLICY_ID` stays `heuristic-v4`.
 Do **not** raise `searchIterations`. L38 stays paused. `heuristic-v4` /
 `score-play/` stay frozen.
 
+## 2026-08-20 · [P] V6 opened — Lot 41 is the start (L41-01)
+
+Designer opened `docs/backlog_v6.md`. Spec: `docs/technical_spec_v6.md` (2026-08-19,
+Approach 1). **Classic rules and values stay frozen.** V5 may continue in parallel
+(`docs/backlog_v5.md`). Coding starts at L41-01. One `PROTOCOL_VERSION` bump for all
+of V6: **28 → 29**, in L41-02 only.
+
+## 2026-08-20 · [P] V6 decisions locked 2026-08-19 (copied from technical spec v6 §2)
+
+Copied so an agent reading only this file + `AGENTS.md` does not re-derive V6. Source:
+technical spec v6 §2.
+
+| # | Decision |
+|---|---|
+| 1 | Teaching is **three layers**: How to play + optional tutorial + first-real-game hints. |
+| 2 | How to play is a **soft gate** on the first Play online / Play solo / Tutorial: the primer opens; **Skip** and **Got it** both continue. After that it is a button on the hub **and** the table. It does not auto-open on later visits. This **reopens** the 2026-08-07 “Home only, never gates start” ruling **for V6**. |
+| 3 | How to play images are **designer-supplied screenshots**. Agents do not generate art. Existing resource / card icons may sit next to copy. Missing files → omit the `<img>`, never a placeholder drawing. |
+| 4 | Tutorial is optional, replayable, Approach 1: same `GameRoom`, `tutorial: true` on create, one scripted bot, real engine. |
+| 5 | Tutorial **must** show, at least: Draw (points, not a card), an **economy card (Tax)**, **upgrade**, **counter an incoming attack** (mutual equal Basics cancel — rules spec §6 / golden rule 1), **Spy**, **sell**, **buy**, **a special**, then **kill**. Spotlight early; after the first queued attack of the kill phase, attack + Draw stay legal until the opponent dies. |
+| 6 | Tutorial opponent starts at **1 life**. That is safe because the counter lesson uses **equal** Basic vs Basic (both cancel). Upgrade and the killing attack come **after** that cancel. **Do not** upgrade Basic before the counter — unequal damage would leave a 3-damage pending and finish the 1-life seat too early. |
+| 7 | Completing the tutorial does **not** dismiss first-real-game hints. The first Solo or Online Classic match still gets them. Skip-all remains. Tutorial itself uses coach copy, not the hint overlay. |
+| 8 | Feedback is always on Home, Table, and Game over. Game over **asks** once per finished match (skippable). |
+| 9 | A report is Bug / Confusion / Idea + message + optional contact. Server attaches game code, nickname, screen, protocol, `playKind`, and a public log tail when in a match. No seed on the client or in the report row. |
+| 10 | Designer inbox is `/inbox` in the same SPA, env password, not linked from the player hub. Postgres table `feedback_reports`. |
+| 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
+| 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
+| 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
+| 14 | Classic frozen. Tutorial-only exceptions are listed in technical spec v6 §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. |
+
+Inference flagged as such in spec §2 (not a separate designer vote, required by the locked beats):
+
+- **Draw** is in the tutorial even though the “at least” list named economy cards rather than Draw. Playtest: strangers think Draw deals a card.
+- **Human kit = Indestructible**, **opponent kit = Ghost**. Indestructible’s only special is Super Regeneration. Ghost is Spy-able (Untouchable is immune to Spy).
+- **Tax is the economy card.** Buy / sell / upgrade are separate beats.
+- **Counter = mutual attacks**, not Mirror and not Block. Equal Basic vs Basic on the retaliating (human) turn cancels both (golden rule 1).
+
+## 2026-08-20 · [P] · [DISCREPANCY] V6 teaching overlay is room-owned, not on GameState
+
+Technical spec v6 §5.3 says `GameState` / views gain `playKind`. Designer 2026-08-20 chose
+**room-owned** `playKind` + `tutorialIndex` on `GameRoom`, copied onto playing and finished
+views. Engine `GameState` stays Classic-only so deal, simulator, and search cannot see a
+tutorial field. Persist reads the room overlay (`finished_games.is_tutorial`).
+
+`FinishedStateView.tutorialIndex` is included (backlog L41-02). Spec §8’s protocol table
+lists `tutorialIndex` only on `PlayingStateView`; finished also carries `playKind`. Nested
+`finalTable` is a `PlayingStateView` and carries the same pair.
+
+## 2026-08-20 · [DISCREPANCY] V6 migration 004 is tutorial-only, not combined with feedback
+
+Technical spec v6 §7.2 names one `004_feedback_and_tutorial.sql` that also creates
+`feedback_reports`. Backlog L41-04 is `004_finished_games_tutorial.sql` (`is_tutorial` only).
+Feedback waits for L47-01 as `005_…`. Split chosen so Lot 41 does not create an unused
+feedback table. Spec already allows the filename to increment.
+

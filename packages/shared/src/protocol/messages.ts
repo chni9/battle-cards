@@ -50,6 +50,8 @@ export const GAME_OVER = 'gameOver';
  */
 export const SUB_CHOICE_REQUIRED = 'subChoiceRequired';
 export const RESOLVE_SUB_CHOICE = 'resolveSubChoice';
+/** PROTOCOL_VERSION 29 / L41-02 — types only until L43-06. Payload `undefined`. */
+export const FORFEIT = 'forfeit';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -263,6 +265,11 @@ export interface ServerToClientMessages {
 export interface RoomJoinOptions {
   protocolVersion: number;
   nickname: string;
+  /**
+   * Create only (technical spec v6 §8). Omit or `true`.
+   * `false` is not in the type (`exactOptionalPropertyTypes`).
+   */
+  tutorial?: true;
 }
 
 export type JoinRoomOptions = RoomJoinOptions;
@@ -285,4 +292,5 @@ export interface ClientToServerMessages {
   [DEACTIVATE_PERSISTENT]: DeactivatePersistentPayload;
   [ACTIVATE_DUPLICATION]: undefined;
   [RESOLVE_SUB_CHOICE]: ResolveSubChoicePayload;
+  [FORFEIT]: undefined;
 }

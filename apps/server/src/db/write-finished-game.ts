@@ -63,8 +63,9 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
   const gameResult = await client.query<{ id: string }>(
     `INSERT INTO finished_games (
       room_id, mode, seed, winner_player_id, turn_sequence,
-      started_at, ended_at, duration_ms, action_log, export_log, has_bots
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      started_at, ended_at, duration_ms, action_log, export_log, has_bots,
+      is_tutorial
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING id`,
     [
       snapshot.roomId,
@@ -78,6 +79,7 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
       JSON.stringify(snapshot.actionLog),
       JSON.stringify(snapshot.exportLog),
       snapshot.hasBots,
+      snapshot.isTutorial,
     ],
   );
 
