@@ -1,71 +1,115 @@
 /**
- * Optional How to play primer for first-time visitors — Home hub only.
- * Copy cites rules §1 / §6 / Classic; never gates Create / Join / Solo.
+ * How to play primer — technical spec v6 §5.1 / L42-01.
+ * Screenshot `<img>` only when the designer file exists. Skip and Got it both close.
  */
 
 import type { ReactElement } from 'react';
 
+import { getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
+import { HOW_TO_PLAY_SECTIONS } from './how-to-play-content';
+import { howToPlayScreenshotUrl } from './how-to-play-screenshots';
+
+export type HowToPlayCloseReason = 'skip' | 'got-it' | 'dismiss';
 
 export interface HowToPlayDialogProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (reason: HowToPlayCloseReason) => void;
 }
 
-const SECTIONS = [
-  {
-    title: 'Goal',
-    body: 'Classic mode: last player alive wins. Lives never go above 25, from any source.',
-  },
-  {
-    title: 'Delayed resolution',
-    body: 'An action aimed at an opponent resolves on their next turn — after they have played their own action. That delay is how you bluff, riposte, heal, or Mirror before the hit lands. You never lose lives or resources outside your own turn.',
-  },
-  {
-    title: 'One action per turn',
-    body: 'Each turn you take a single action: draw, play, buy, sell, upgrade, or use a special. Draw only grants points equal to your kit’s Draw value — it does not deal a card.',
-  },
-  {
-    title: 'Resources',
-    body: 'Lives keep you in the game. Points pay for cards and upgrades. Upgrade points permanently upgrade a card once. Shield absorbs attack damage only — other life loss (Tax, Suicide, and similar) ignores it.',
-  },
-  {
-    title: 'Hidden information',
-    body: 'Your kit, hand, and exact resources stay private. Every action you play is public. Spy and similar effects can reveal what was hidden.',
-  },
-  {
-    title: 'Online vs solo',
-    body: 'Online: create a room or join with a six-letter code; the host starts when ready (bots can fill empty seats in the lobby). Solo: pick opponent count and difficulty, then jump straight into a bot game — no lobby.',
-  },
-] as const;
+const RESOURCE_GLYPHS: readonly { kind: ResourceKind; caption: string }[] = [
+  { kind: 'life', caption: 'Lives' },
+  { kind: 'point', caption: 'Points' },
+  { kind: 'upgradePoint', caption: 'Upgrade points' },
+  { kind: 'shield', caption: 'Shield' },
+];
 
 export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactElement {
   return (
     <Dialog
       open={open}
       title="How to play"
-      onClose={onClose}
+      onClose={() => {
+        onClose('dismiss');
+      }}
       closeOnOverlayClick
-      panelClassName="max-w-lg"
+      panelClassName="max-w-2xl"
       actions={
-        <Button type="button" variant="green" onClick={onClose}>
-          Got it
-        </Button>
+        <>
+          <Button
+            type="button"
+            variant="orange"
+            onClick={() => {
+              onClose('skip');
+            }}
+          >
+            Skip
+          </Button>
+          <Button
+            type="button"
+            variant="green"
+            onClick={() => {
+              onClose('got-it');
+            }}
+          >
+            Got it
+          </Button>
+        </>
       }
     >
       <p className="text-sm leading-relaxed text-ink-muted">
-        Card Battle is a turn-based elimination game built on hidden information and delayed
-        resolution. This is a short primer — not the full rules.
+        This is a short primer — not the full rules.
       </p>
-      <ol className="mt-4 list-none space-y-4 p-0">
-        {SECTIONS.map((section) => (
-          <li key={section.title}>
-            <h3 className="text-sm font-semibold text-ink">{section.title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{section.body}</p>
-          </li>
-        ))}
+      <ol className="mt-4 list-none space-y-5 p-0">
+        {HOW_TO_PLAY_SECTIONS.map((section) => {
+          const shot =
+            section.screenshotFile === null
+              ? null
+              : howToPlayScreenshotUrl(section.screenshotFile);
+          return (
+            <li
+              key={section.id}
+              data-how-to-play-section={section.id}
+              className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,11rem)] sm:items-start"
+            >
+              <div>
+                <h3 className="text-sm font-semibold text-ink">{section.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-muted">{section.body}</p>
+                {section.id === 'resources' ? <ResourceGlyphRow /> : null}
+              </div>
+              {shot !== null ? (
+                <img
+                  src={shot}
+                  alt=""
+                  className="w-full rounded-[length:var(--radius-card)] border border-border object-cover"
+                  draggable={false}
+                />
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
     </Dialog>
+  );
+}
+
+function ResourceGlyphRow(): ReactElement {
+  return (
+    <ul className="mt-2 flex flex-wrap gap-3 p-0">
+      {RESOURCE_GLYPHS.map((item) => (
+        <li key={item.kind} className="inline-flex items-center gap-1.5 text-sm text-ink">
+          <img
+            src={getResourceIconUrl(item.kind)}
+            alt=""
+            width={20}
+            height={20}
+            className="size-5 shrink-0 object-contain"
+            aria-hidden
+          />
+          <span>{item.caption}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
