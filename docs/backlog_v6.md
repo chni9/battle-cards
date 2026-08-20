@@ -60,11 +60,11 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-4 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+5 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 41 · Protocol + governance | 5 | 4 |
+| 41 · Protocol + governance | 5 | 5 |
 | 42 · How to play | 4 | 0 |
 | 43 · Table readability | 6 | 0 |
 | 44 · Visual pickers | 6 | 0 |
@@ -85,7 +85,7 @@ Nothing in Lots 45–46 may start before L41-03. L43-06 needs L41-02 types.
 | L41-02 | `PROTOCOL_VERSION` **28 → 29**. Add `playKind: 'classic' \| 'tutorial'` and `tutorialIndex: number \| null` to `PlayingStateView` and `FinishedStateView`; `RoomJoinOptions.tutorial?: true`; client message `FORFEIT`; `ActionRejectCode` `'tutorial-follow-coach'` and `'tutorial-room-closed'` + `ACTION_REJECT_MESSAGE`. Client copy map for the two codes. **Acceptance:** `pnpm verify` green; classic clients that still send v28 fail the existing mismatch path; exhaustive reject-code test includes the two new codes. **Watch point:** this is the **only** bump in V6. | M | **High** | L41-01 | Done |
 | L41-03 | `build-view-for` emits `playKind: 'classic'` and `tutorialIndex: null` for existing rooms; never `seed`. Tests: classic view shape unchanged aside from the two new fields. **Acceptance:** a fixture playing view from a pre-V6 start includes the defaults; seed still absent. | M | **High** | L41-02 | Done |
 | L41-04 | Migration `004_finished_games_tutorial.sql`: `finished_games.is_tutorial boolean NOT NULL DEFAULT false`. Persist sets it from `playKind`. Arena / balance readers ignore `is_tutorial = true` (document in `db.md` in L48; a unit test on the persist builder is enough here). **Acceptance:** classic persist writes `false`; column default does not break old rows. | S | Medium | L41-02 | Done |
-| L41-05 | Room: reject `joinById` when the room is tutorial (`tutorial-room-closed`). `onCreate` stores `tutorial` from join options. **Acceptance:** second human cannot join a tutorial create; classic create/join unchanged. | S | Medium | L41-02 | To do |
+| L41-05 | Room: reject `joinById` when the room is tutorial (`tutorial-room-closed`). `onCreate` stores `tutorial` from join options. **Acceptance:** second human cannot join a tutorial create; classic create/join unchanged. | S | Medium | L41-02 | Done |
 
 ---
 

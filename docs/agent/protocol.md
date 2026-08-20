@@ -157,7 +157,10 @@ knowing before touching `game-room.ts`:
   `this.clients` when `onLeave` runs.
 - **`onAuth` is the earliest hook with the join options**, and where the protocol version is
   checked: a client on a different contract misreads everything it receives. Throwing
-  `ServerError` there rejects the join with a message the client shows.
+  `ServerError` there rejects the join with a message the client shows. Order (L41-05):
+  protocol version, then `tutorial-room-closed` when `playKind === 'tutorial'` and a human is
+  already seated, then `hasStarted`, then nickname. Honor `tutorial: true` only in `onCreate`;
+  ignore it on `joinById`. Do not put the tutorial reject on `onReconnect`.
 - Options arriving from a client are typed `unknown` and narrowed by hand. Nothing about a
   payload is assumed, on either side of the wire (§5.4).
 
