@@ -309,6 +309,8 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     pendingEffects,
     actionLog: mapActionLogForRecipient(actionLog, recipientSessionId, state),
     pool: state.pool.map((card) => ({ ...card })),
+    playKind: 'classic',
+    tutorialIndex: null,
   };
 }
 
@@ -439,5 +441,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     }),
     recap: buildGameRecapView(state, actionLog, eliminations),
     exportLog,
+    playKind: 'classic',
+    tutorialIndex: null,
   };
 }

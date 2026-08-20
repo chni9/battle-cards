@@ -75,6 +75,8 @@ function baseView(): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    playKind: 'classic',
+    tutorialIndex: null,
   };
 }
 

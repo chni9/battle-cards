@@ -80,6 +80,8 @@ function baseView(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    playKind: 'classic',
+    tutorialIndex: null,
   };
   return { ...base, ...overrides, self: overrides.self ?? base.self };
 }

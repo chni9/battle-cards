@@ -314,6 +314,14 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   'set-bot-difficulty-target-is-human': {
     body: 'That seat is a human player, not a bot. Difficulty only applies to bots.',
   },
+  'tutorial-follow-coach': {
+    title: 'Tutorial step',
+    body: 'This tutorial step asks for a different action.',
+  },
+  'tutorial-room-closed': {
+    title: 'Tutorial closed',
+    body: 'This tutorial cannot be joined.',
+  },
 };
 
 export function resolveIllegalActionCopy(
