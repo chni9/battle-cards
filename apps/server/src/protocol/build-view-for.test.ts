@@ -143,6 +143,7 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     });
 
     expect(JSON.stringify(view)).not.toContain('secret-seed-value');
+    expect(JSON.stringify(view)).not.toContain('nextPoolInstanceSeq');
   });
 
   it('never includes nextPoolInstanceSeq (server-only)', () => {
@@ -756,5 +757,92 @@ describe('buildPlayingViewFor — eliminated spectator (designer 2026-08-06)', (
       turnSequence: 5,
     });
     expect(forOtherAlive.actionLog[1]).not.toHaveProperty('kitId');
+  });
+});
+
+describe('buildPlayingViewFor (L41-03 / technical spec v6 §8)', () => {
+  const seats = [
+    { id: 'a', nickname: 'Alice' },
+    { id: 'b', nickname: 'Bob' },
+  ] as const;
+
+  it('defaults omitted overlay to classic and null (pre-V6 start)', () => {
+    const state = createInitialState({ seats, seed: 'l41-03-default' });
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.playKind).toBe('classic');
+    expect(view.tutorialIndex).toBeNull();
+    expect(view.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+  });
+
+  it('round-trips explicit tutorial overlay on playing and finished views', () => {
+    const state = createInitialState({ seats, seed: 'l41-03-tutorial' });
+    const overlay = { playKind: 'tutorial' as const, tutorialIndex: 0 };
+
+    const playing = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      ...overlay,
+    });
+
+    expect(playing.playKind).toBe('tutorial');
+    expect(playing.tutorialIndex).toBe(0);
+
+    const finished = buildFinishedViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: [],
+      eliminations: [],
+      ...overlay,
+    });
+
+    expect(finished.playKind).toBe('tutorial');
+    expect(finished.tutorialIndex).toBe(0);
+    expect(finished.finalTable.playKind).toBe('tutorial');
+    expect(finished.finalTable.tutorialIndex).toBe(0);
+  });
+
+  it('never includes the game seed or nextPoolInstanceSeq', () => {
+    const state = createInitialState({ seats, seed: 'secret-seed-value' });
+    state.nextPoolInstanceSeq = 42;
+
+    const playing = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      playKind: 'tutorial',
+      tutorialIndex: 0,
+    });
+    const finished = buildFinishedViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: [],
+      eliminations: [],
+      playKind: 'tutorial',
+      tutorialIndex: 0,
+    });
+
+    const playingJson = JSON.stringify(playing);
+    const finishedJson = JSON.stringify(finished);
+
+    expect(playingJson).not.toContain('secret-seed-value');
+    expect(playingJson).not.toContain('nextPoolInstanceSeq');
+    expect(finishedJson).not.toContain('secret-seed-value');
+    expect(finishedJson).not.toContain('nextPoolInstanceSeq');
   });
 });

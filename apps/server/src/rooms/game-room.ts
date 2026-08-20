@@ -65,6 +65,7 @@ import {
   type SubChoiceKind,
   type UpgradeCardPayload,
   type ExportTurnRowView,
+  type PlayKind,
   type ServerToClientMessages,
 } from '@card-battle/shared';
 import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
@@ -175,6 +176,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private seats: Seat[] = [];
   private hostSessionId: string | null = null;
   private hasStarted = false;
+  /** Room-owned teaching overlay — not on GameState (technical spec v6 §5.3 / L41-03). */
+  private playKind: PlayKind = 'classic';
+  private tutorialIndex: number | null = null;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
   private readonly botDriver = new BotDriver({
@@ -198,6 +202,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         turnDeadlineMs: this.turnDeadlineMs,
         actionLog: this.actionLog,
         botDifficulties: this.botDifficulties(),
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
       });
     },
     getActionLog: () => this.actionLog,
@@ -2227,6 +2233,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       turnDeadlineMs: this.turnDeadlineMs,
       actionLog: this.actionLog,
       botDifficulties: this.botDifficulties(),
+      playKind: this.playKind,
+      tutorialIndex: this.tutorialIndex,
     });
   }
 
@@ -2993,6 +3001,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
           eliminations: this.eliminations,
           botDifficulties: this.botDifficulties(),
           turnHistory: this.turnHistory,
+          playKind: this.playKind,
+          tutorialIndex: this.tutorialIndex,
         }),
       );
       return;
@@ -3007,6 +3017,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         turnDeadlineMs: this.turnDeadlineMs,
         actionLog: this.actionLog,
         botDifficulties: this.botDifficulties(),
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
       }),
     );
   }
