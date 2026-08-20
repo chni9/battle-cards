@@ -1,5 +1,5 @@
 /**
- * Home screen — hub → Online / Solo paths; optional How to play (never a start gate).
+ * Home screen — hub → Online / Solo paths; How to play primer + first-play soft gate (L42-02).
  * Intents unchanged: create / join / solo = create + N× addBot + startGame (L17-01).
  */
 
@@ -10,8 +10,14 @@ import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
+import {
+  hasSeenHowToPlay,
+  markHowToPlaySeen,
+  resetHelpStorage,
+  type HowToPlayContinueTarget,
+} from '../help/help-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
-import { HowToPlayDialog } from './how-to-play-dialog';
+import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
 import { STATUS_LABELS } from './status-labels';
 
 export interface HomeScreenProps {
@@ -52,6 +58,7 @@ export function HomeScreen({
 }: HomeScreenProps): ReactElement {
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
   const [soloOpponents, setSoloOpponents] = useState<1 | 2 | 3>(1);
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
 
@@ -86,6 +93,45 @@ export function HomeScreen({
     }
   };
 
+  const continueToTarget = (target: HowToPlayContinueTarget): void => {
+    switch (target) {
+      case 'online':
+        setMode('online');
+        return;
+      case 'solo':
+        setMode('solo');
+        return;
+      case 'tutorial':
+        // Hub Tutorial button is hidden until L45-04.
+        return;
+    }
+  };
+
+  const requestPath = (target: HowToPlayContinueTarget): void => {
+    if (hasSeenHowToPlay()) {
+      continueToTarget(target);
+      return;
+    }
+    setPendingTarget(target);
+    setHowToPlayOpen(true);
+  };
+
+  const onHowToPlayClose = (reason: HowToPlayCloseReason): void => {
+    const gated = pendingTarget !== null;
+    if (gated) {
+      markHowToPlaySeen();
+      const target = pendingTarget;
+      setPendingTarget(null);
+      setHowToPlayOpen(false);
+      continueToTarget(target);
+      return;
+    }
+    if (reason === 'skip' || reason === 'got-it') {
+      markHowToPlaySeen();
+    }
+    setHowToPlayOpen(false);
+  };
+
   return (
     <main className="relative min-h-[100dvh] overflow-hidden bg-surface font-sans text-ink">
       <div
@@ -111,10 +157,13 @@ export function HomeScreen({
                   setHowToPlayOpen(true);
                 }}
                 onChooseOnline={() => {
-                  setMode('online');
+                  requestPath('online');
                 }}
                 onChooseSolo={() => {
-                  setMode('solo');
+                  requestPath('solo');
+                }}
+                onResetHelp={() => {
+                  resetHelpStorage();
                 }}
               />
             ) : null}
@@ -159,12 +208,7 @@ export function HomeScreen({
         <HomeArt />
       </div>
 
-      <HowToPlayDialog
-        open={howToPlayOpen}
-        onClose={() => {
-          setHowToPlayOpen(false);
-        }}
-      />
+      <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
     </main>
   );
 }
@@ -177,6 +221,7 @@ interface HubViewProps {
   onOpenHowToPlay: () => void;
   onChooseOnline: () => void;
   onChooseSolo: () => void;
+  onResetHelp: () => void;
 }
 
 function HubView({
@@ -187,6 +232,7 @@ function HubView({
   onOpenHowToPlay,
   onChooseOnline,
   onChooseSolo,
+  onResetHelp,
 }: HubViewProps): ReactElement {
   return (
     <div>
@@ -222,6 +268,13 @@ function HubView({
       <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
         New here? Open How to play once, then pick Online for friends or Solo against bots.
       </p>
+      <button
+        type="button"
+        className="mt-4 text-xs text-ink-muted underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        onClick={onResetHelp}
+      >
+        Reset help
+      </button>
     </div>
   );
 }

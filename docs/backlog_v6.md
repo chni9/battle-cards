@@ -60,12 +60,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-6 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+7 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 41 · Protocol + governance | 5 | 5 |
-| 42 · How to play | 4 | 1 |
+| 42 · How to play | 4 | 2 |
 | 43 · Table readability | 6 | 0 |
 | 44 · Visual pickers | 6 | 0 |
 | 45 · Tutorial | 7 | 0 |
@@ -94,7 +94,7 @@ Nothing in Lots 45–46 may start before L41-03. L43-06 needs L41-02 types.
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L42-01 | Rewrite `how-to-play-dialog.tsx` to spec §5.1 sections (goal, table, delay, turn, resources, hidden, shop, modes). Screenshot `<img>` only if the file exists under `apps/client/src/assets/how-to-play/` (exact names in spec §5.1). Existing resource icons allowed. **Acceptance:** Skip/Got it still close; no invented PNGs in the repo. **Watch point:** missing files must not break the build — optional imports or a manifest that skips absent paths. | M | Low | — | Done |
-| L42-02 | Soft gate: first Play online / Play solo / Tutorial submit opens How to play if `localStorage['card-battle.v6.howToPlaySeen']` is unset. Skip and Got it both set the key and **then** continue the intended submit. Reset help on the hub clears How to play + hint keys. **Acceptance:** second visit does not auto-open; Reset help makes it open again. | M | Medium | L42-01 | To do |
+| L42-02 | Soft gate: first Play online / Play solo / Tutorial submit opens How to play if `localStorage['card-battle.v6.howToPlaySeen']` is unset. Skip and Got it both set the key and **then** continue the intended submit. Reset help on the hub clears How to play + hint keys. **Acceptance:** second visit does not auto-open; Reset help makes it open again. | M | Medium | L42-01 | Done |
 | L42-03 | Table control (turn strip or economy) opens the same How to play Dialog. Does not gate actions. **Acceptance:** can open mid-game without sending an intent. | S | Low | L42-01 | To do |
 | L42-04 | Hub chrome: visible **Beta** line (spec §5.1); idle hub must not alarm with “Not connected”; protocol version demoted to footer/tooltip. Tutorial button may be present but can no-op until L45-04 if labeled disabled — **prefer** wiring the click in L45-04 and showing the button here as disabled with “Coming in Tutorial lot” **forbidden**. Either hide Tutorial until L45-04 or ship L42-04 + L45-04 together. **Acceptance:** stranger-facing hub copy matches spec; no red idle error. | S | Low | — | To do |
 
