@@ -18,7 +18,7 @@ import {
 } from '../help/help-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
-import { STATUS_LABELS } from './status-labels';
+import { homeStatusCopy } from './status-labels';
 
 export interface HomeScreenProps {
   nickname: string;
@@ -246,7 +246,9 @@ function HubView({
         Bluff and react under delayed resolution — attacks hit on your opponent’s turn, after
         they have played.
       </p>
-      <p className="mt-4 text-xs text-ink-muted">Protocol v{PROTOCOL_VERSION}</p>
+      <p className="mt-4 text-sm font-medium text-ink">
+        Beta — rules are stable. Tell us what is confusing.
+      </p>
       <StatusBlock
         status={status}
         error={error}
@@ -275,6 +277,7 @@ function HubView({
       >
         Reset help
       </button>
+      <p className="mt-8 text-[10px] text-ink-muted">Protocol v{PROTOCOL_VERSION}</p>
     </div>
   );
 }
@@ -531,11 +534,12 @@ interface StatusBlockProps {
 }
 
 function StatusBlock({ status, error, soloLaunchPending }: StatusBlockProps): ReactElement {
+  const copy = homeStatusCopy(status, soloLaunchPending);
   return (
     <>
-      <p className="mt-4 text-sm text-ink-muted">
-        {soloLaunchPending ? 'Starting solo game…' : STATUS_LABELS[status]}
-      </p>
+      {copy !== null && (
+        <p className="mt-4 text-sm text-ink-muted">{copy}</p>
+      )}
       {error !== null && (
         <p className="mt-2 text-sm font-medium text-cta-red" role="alert">
           {error}

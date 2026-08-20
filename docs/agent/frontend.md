@@ -60,11 +60,20 @@ rules above are unchanged — this section only covers how the client looks.
   `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
-  decorative V1 kit/card art, muted Protocol vN. Two mode paths (not stacked forms): **Play
-  online** (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
+  decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
+  (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  Optional **How to play** opens `HowToPlayDialog` from the hub only — never auto-opens and
-  never gates Create / Join / Solo. Solo composes `create` + N× `addBot` + `startGame`;
+  **How to play** (L42): spec §5.1 sections in order; Skip + Got it both close; screenshot
+  `<img>` only when the PNG exists under `src/assets/how-to-play/` (`import.meta.glob`,
+  missing files omit the image). Copy is the §5.1 must-say floor; existing resource icons
+  sit in the Resources section. **Soft gate** on the first hub Play online / Play solo
+  click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
+  all set the key and continue into that path. Manual open: Skip / Got it set the key;
+  Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
+  `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
+  a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
+  until L45-04. Table **How to play** is a full economy-bar `Button` (does not send an
+  intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -83,7 +92,8 @@ rules above are unchanged — this section only covers how the client looks.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
-  UP buy-sell / Buy (Dialog chooser for special + shared) / Leave. Shell is full-bleed
+  UP buy-sell / Buy (Dialog chooser for special + shared) / How to play (L42-03, not an
+  intent) / Pool / Leave. Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
