@@ -399,3 +399,13 @@ do not hand off an untested lot.
   attack Incoming not forced this pass (bots did not queue an attack on the human);
   `threatToneFor` unit tests cover red/orange classification.
 - Living docs: `frontend.md`, `protocol.md` (already PROTOCOL 27), `decisions.md` Lot 39.
+
+### Lot 43 verified 2026-08-21 (browser, `TURN_DURATION_MS=300000`)
+
+- **2p** room `WNM2C6` (HostA vs 1 bot): dock captions Lives / Points / Upgrade points / Shield;
+  **?** opens How to play; **Shop** shows upgrade-point Buy/Sell + cards + pool; flag Stay keeps
+  the table; flag Forfeit → Game over on the same client (`HostA eliminated (leave)`).
+- **3p** room `WA1I2N` (HostA vs 2 bots): Forfeit stays connected as spectator (Eliminated
+  banner; bots keep playing); second flag is **Leave the table?** (not forfeit copy); Leave
+  returns to the hub with no Game over dialog.
+- Phone-width hand pagination remains L48-02.
