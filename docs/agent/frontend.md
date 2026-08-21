@@ -39,7 +39,7 @@ rules above are unchanged — this section only covers how the client looks.
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
-  `CostDisplay` (Lot 39). Art resolution:
+  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
@@ -56,8 +56,8 @@ rules above are unchanged — this section only covers how the client looks.
   extra npm dependency unless separately ruled.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
-- **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
-  `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
+- **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
+  / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
@@ -72,8 +72,8 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
   a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
-  until L45-04. Table **How to play** is a full economy-bar `Button` (does not send an
-  intent). Solo composes `create` + N× `addBot` + `startGame`;
+  until L45-04. Table **How to play** is a compact **?** `IconButton` on the turn strip
+  (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -91,25 +91,40 @@ rules above are unchanged — this section only covers how the client looks.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
-  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
-  UP buy-sell / Buy (Dialog chooser for special + shared) / How to play (L42-03, not an
-  intent) / Pool / Leave. Shell is full-bleed
+  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
+  + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
+  icon) + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
+  public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
+  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
+  `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
+  grid + Buy special, and the pool. Turn strip: **?** (How to play) left of timers, **flag**
+  right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
+  (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
+  (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
+  2026-08-21 follow-up — the flag stays on inspect; Game over **Return home** also stays).
+  Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
+  still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
+  Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
   white seat slab). Pending effects targeting `view.you`
-  render in the private   zone (Incoming); effects on others stay on the felt strip — both strips size to show full
+  render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
+  on others**, L43-03) — both strips size to show full
   chips and scroll internally when many effects queue. Kit
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
-  match action cards; resources sit above the economy bar; `Card detail="face"`; effect
+  match action cards; resources sit above the economy bar with **visible captions**
+  (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
+  kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
   shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
-  without overflow; paginates only when even 2 rows at min width cannot hold the pile.
+  without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
+  Short docks may still shrink below 48 so faces are not cropped.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
   `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
@@ -117,8 +132,11 @@ rules above are unchanged — this section only covers how the client looks.
   Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
   action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
   Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
-  intents/payloads as V1. Buy dialog thumbs use upgraded art when the seat's kit
-  `alwaysUpgraded` covers that card (purchase arrives upgraded).
+  intents/payloads as V1. Shop dialog thumbs use upgraded art when the seat's kit
+  `alwaysUpgraded` covers that card (purchase arrives upgraded). Card dialog **Upgrade**
+  shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
+  green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
+  Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
 - **Mirror sub-choice labels:** pending attack options show
   `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
@@ -148,8 +166,10 @@ rules above are unchanged — this section only covers how the client looks.
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
-    buy / rewards / Sentence expiry). How-to-play, kit lore, and action-log prose stay text
-    via `formatCardCost`.
+    buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
+    How-to-play, kit lore, and action-log prose stay text
+    via `formatCardCost`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
@@ -164,7 +184,8 @@ rules above are unchanged — this section only covers how the client looks.
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
-- Mid-game **Leave** is consented forfeit (disables auto-reconnect). Unexpected drop shows
+- Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
+  and finished-board **Return home** (flag or Game over) call `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
@@ -185,8 +206,10 @@ rules above are unchanged — this section only covers how the client looks.
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
-  economy bar reopens it. Intents are locked (`readOnly`); Pool / inspect / action log stay.
-  Return home via `leaveGame()`. No kits on the finished seat list itself (still private
+  economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
+  Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
+  No kits on the finished seat list
+  itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
@@ -383,3 +406,15 @@ do not hand off an untested lot.
   attack Incoming not forced this pass (bots did not queue an attack on the human);
   `threatToneFor` unit tests cover red/orange classification.
 - Living docs: `frontend.md`, `protocol.md` (already PROTOCOL 27), `decisions.md` Lot 39.
+
+### Lot 43 verified 2026-08-21 (browser, `TURN_DURATION_MS=300000`)
+
+- **2p** room `WNM2C6` (HostA vs 1 bot): dock captions Lives / Points / Upgrade points / Shield;
+  **?** opens How to play; **Shop** shows upgrade-point Buy/Sell + cards + pool; flag Stay keeps
+  the table; flag Forfeit → Game over on the same client (`HostA eliminated (leave)`).
+- **3p** room `WA1I2N` (HostA vs 2 bots): Forfeit stays connected as spectator (Eliminated
+  banner; bots keep playing); second flag is **Leave the table?** (not forfeit copy); Leave
+  returns to the hub with no Game over dialog.
+- Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
+  green; Sell is green; button costs show − / +.
+- Phone-width hand pagination remains L48-02.

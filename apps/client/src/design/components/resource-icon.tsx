@@ -16,6 +16,7 @@ import {
 } from '../../fx/motion-timing';
 import { useTableFxOptional } from '../../fx/table-fx-hooks';
 import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
+import { RESOURCE_CAPTIONS, resourceCaptionMode } from './resource-captions';
 
 export interface ResourceIconProps {
   kind: ResourceKind;
@@ -24,21 +25,20 @@ export interface ResourceIconProps {
   className?: string;
   /** When false, skip enqueueing a token flyout (e.g. opponent seats). Default true. */
   flyToken?: boolean;
+  /**
+   * Dock row (L43-01): show the caption in the layout, not `sr-only` / `title` only.
+   * Kit inspect and opponent reveal stay compact.
+   */
+  captionVisible?: boolean;
 }
-
-const DEFAULT_LABELS: Record<ResourceKind, string> = {
-  life: 'Lives',
-  point: 'Points',
-  shield: 'Shield',
-  upgradePoint: 'Upgrade points',
-};
 
 export function ResourceIcon({
   kind,
   value,
-  label = DEFAULT_LABELS[kind],
+  label = RESOURCE_CAPTIONS[kind],
   className = '',
   flyToken = true,
+  captionVisible,
 }: ResourceIconProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const fx = useTableFxOptional();
@@ -110,8 +110,14 @@ export function ResourceIcon({
           className="size-5 shrink-0 object-contain"
           aria-hidden
         />
-        <span className="relative text-sm font-medium">
+        {resourceCaptionMode(captionVisible) === 'visible' ? (
+          <span className="text-[10px] font-semibold leading-none text-ink-muted sm:text-[11px]">
+            {label}
+          </span>
+        ) : (
           <span className="sr-only">{label} </span>
+        )}
+        <span className="relative text-sm font-medium">
           {value}
           {flash !== null && floatDelta !== 0 && reduceMotion !== true && (
             <motion.span

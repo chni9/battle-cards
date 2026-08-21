@@ -16,6 +16,7 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { markHowToPlaySeen } from '../help/help-storage';
 import { ActionLogPanel } from '../action-log/action-log-panel';
@@ -43,13 +44,28 @@ import { IllegalActionDialog } from './illegal-action-dialog';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
+import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
+import { ShopDialog } from './table/shop-dialog';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
+import {
+  FELT_QUEUE_TITLE,
+  FORFEIT_ARIA_LABEL,
+  HOW_TO_PLAY_ARIA_LABEL,
+  LEAVE_TABLE_ARIA_LABEL,
+  RETURN_HOME_ARIA_LABEL,
+} from './table/table-copy';
+import {
+  tableFlagAriaLabel,
+  tableFlagIntent,
+  type TableFlagIntent,
+} from './table/table-flag-intent';
+import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
 import { YourTurnFlash } from './table/your-turn-flash';
@@ -77,10 +93,12 @@ export interface TableScreenProps {
   onBuySpecialCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
+  /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
+  onForfeit: () => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   /**
-   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / pool browse.
+   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / Shop browse.
    */
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
@@ -115,6 +133,7 @@ function TableScreenInner({
   onBuySpecialCard,
   onSellUpgradePoint,
   onLeave,
+  onForfeit,
   onDeactivatePersistent,
   onActivateDuplication,
   readOnly = false,
@@ -123,6 +142,9 @@ function TableScreenInner({
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
+    null,
+  );
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
 
@@ -296,6 +318,12 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
+  const flagIntent = tableFlagIntent({ readOnly, selfEliminated });
+  const flagAria = tableFlagAriaLabel(flagIntent, {
+    forfeit: FORFEIT_ARIA_LABEL,
+    leaveTable: LEAVE_TABLE_ARIA_LABEL,
+    returnHome: RETURN_HOME_ARIA_LABEL,
+  });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
@@ -487,26 +515,49 @@ function TableScreenInner({
       <TableShell
         {...(dockStyle !== undefined ? { dockStyle } : {})}
         turn={
-          <Timers
-            gameCode={view.gameCode}
-            statusLabel={statusLabel}
-            activeNickname={activePlayer?.nickname ?? '—'}
-            activePlayerId={view.currentTurnPlayerId}
-            view={view}
-            isMyTurn={isMyTurn}
-            timerLabel={timerLabel}
-            progressRatio={progressRatio}
-            {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
-            subChoiceProgressRatio={subChoiceProgressRatio}
-            {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
-          />
+          <div className="flex items-stretch gap-1 p-1 sm:p-1.5">
+            <IconButton
+              aria-label={HOW_TO_PLAY_ARIA_LABEL}
+              onClick={() => {
+                setHowToPlayOpen(true);
+              }}
+            >
+              ?
+            </IconButton>
+            <div className="min-w-0 flex-1">
+              <Timers
+                gameCode={view.gameCode}
+                statusLabel={statusLabel}
+                activeNickname={activePlayer?.nickname ?? '—'}
+                activePlayerId={view.currentTurnPlayerId}
+                view={view}
+                isMyTurn={isMyTurn}
+                timerLabel={timerLabel}
+                progressRatio={progressRatio}
+                {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
+                subChoiceProgressRatio={subChoiceProgressRatio}
+                {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
+              />
+            </div>
+            {flagAria !== null && flagIntent !== 'hidden' ? (
+              <IconButton
+                aria-label={flagAria}
+                onClick={() => {
+                  setLeaveConfirm(flagIntent);
+                }}
+              >
+                <ForfeitFlagIcon />
+              </IconButton>
+            ) : null}
+          </div>
         }
         prompts={
           readOnly ? (
             <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Game over</h2>
               <p className="mt-0.5 text-xs text-ink-muted">
-                Inspect the final board. Open Stats for the recap, or Return home when done.
+                Inspect the final board. Open Stats for the recap, or use the flag to
+                return home.
               </p>
             </section>
           ) : selfEliminated ? (
@@ -540,7 +591,7 @@ function TableScreenInner({
           <PendingQueue
             view={view}
             effects={othersPending}
-            title="Pending on others"
+            title={FELT_QUEUE_TITLE}
             compact
             tone="felt"
             highlightedIds={mirrorHighlightIds}
@@ -573,27 +624,11 @@ function TableScreenInner({
             isMyTurn={isMyTurn}
             actionsLocked={actionsLocked}
             drawValue={drawValue}
-            upgradePoints={view.self.upgradePoints}
-            poolCount={view.pool.length}
             onDraw={drawWithFx}
-            onBuyUpgradePoint={buyUpgradeWithFx}
-            onSellUpgradePoint={sellUpgradeWithFx}
-            onOpenBuy={() => {
-              setDialog({ kind: 'buy' });
+            onOpenShop={() => {
+              setDialog({ kind: 'shop' });
             }}
-            onOpenPool={() => {
-              setDialog({ kind: 'pool' });
-            }}
-            onOpenHowToPlay={() => {
-              setHowToPlayOpen(true);
-            }}
-            onLeave={onLeave}
-            {...(readOnly
-              ? {
-                  leaveLabel: 'Return home',
-                  ...(onShowStats !== undefined ? { onShowStats } : {}),
-                }
-              : {})}
+            {...(readOnly && onShowStats !== undefined ? { onShowStats } : {})}
           />
         }
       />
@@ -648,9 +683,21 @@ function TableScreenInner({
         onPlayMultipleAttacks={playMultipleWithFx}
         onUpgradeCard={onUpgradeCard}
         onSellCard={sellCardWithFx}
+        onBeginUse={onBeginUse}
+      />
+
+      <ShopDialog
+        open={dialog?.kind === 'shop'}
+        view={view}
+        isMyTurn={isMyTurn}
+        actionsLocked={actionsLocked}
+        onClose={() => {
+          setDialog(null);
+        }}
+        onBuyUpgradePoint={buyUpgradeWithFx}
+        onSellUpgradePoint={sellUpgradeWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
-        onBeginUse={onBeginUse}
       />
 
       {subChoice !== null && (
@@ -675,6 +722,22 @@ function TableScreenInner({
             markHowToPlaySeen();
           }
           setHowToPlayOpen(false);
+        }}
+      />
+
+      <TableLeaveConfirm
+        intent={leaveConfirm}
+        onStay={() => {
+          setLeaveConfirm(null);
+        }}
+        onConfirm={() => {
+          const intent = leaveConfirm;
+          setLeaveConfirm(null);
+          if (intent === 'forfeit') {
+            onForfeit();
+            return;
+          }
+          onLeave();
         }}
       />
     </>

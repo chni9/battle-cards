@@ -22,6 +22,9 @@ import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
 
+/** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */
+export const DOCK_RESOURCE_CAPTION_VISIBLE = true;
+
 export interface PrivateZoneProps {
   view: PlayingStateView;
   selfPublic: PublicPlayerView | undefined;
@@ -154,13 +157,29 @@ export function PrivateZone({
         data-zone="resources"
         className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border-soft pt-0.5 sm:gap-2 sm:pt-1"
       >
-        <ResourceIcon kind="life" value={view.self.lives} label="Lives" />
-        <ResourceIcon kind="shield" value={view.self.shield} label="Shield" />
-        <ResourceIcon kind="point" value={view.self.points} label="Points" />
+        <ResourceIcon
+          kind="life"
+          value={view.self.lives}
+          label="Lives"
+          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+        />
+        <ResourceIcon
+          kind="shield"
+          value={view.self.shield}
+          label="Shield"
+          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+        />
+        <ResourceIcon
+          kind="point"
+          value={view.self.points}
+          label="Points"
+          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+        />
         <ResourceIcon
           kind="upgradePoint"
           value={view.self.upgradePoints}
           label="Upgrade points"
+          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
         />
         {view.self.shieldIsUpgraded ? (
           <span className="rounded-[length:var(--radius-badge)] bg-resource-shield/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-resource-shield">

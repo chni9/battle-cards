@@ -15,6 +15,7 @@ import {
   CLIENT_READY,
   DRAW_CARD,
   ERROR_MESSAGE,
+  FORFEIT,
   GAME_OVER,
   GAME_ROOM_NAME,
   SUB_CHOICE_REQUIRED,
@@ -140,6 +141,8 @@ export interface UseRoomConnectionResult extends RoomConnection {
   createGame: (nickname: string) => Promise<void>;
   joinGame: (gameCode: string, nickname: string) => Promise<void>;
   leaveGame: () => Promise<void>;
+  /** Playing forfeit — send FORFEIT, keep the socket (L43-06). */
+  forfeit: () => void;
   /** Dismiss IllegalActionDialog (clears actionReject + inline error). */
   clearActionReject: () => void;
   startGame: () => void;
@@ -415,6 +418,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     setConnection(INITIAL);
   }, []);
 
+  const forfeit = useCallback((): void => {
+    roomRef.current?.send(FORFEIT);
+  }, []);
+
   const clearActionReject = useCallback((): void => {
     setConnection((previous) => ({
       ...previous,
@@ -547,6 +554,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     createGame,
     joinGame,
     leaveGame,
+    forfeit,
     clearActionReject,
     startGame,
     startSoloGame,

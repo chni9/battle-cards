@@ -6,11 +6,11 @@
  */
 
 export const CARD_BAND_GAP_PX = 6;
-/** Preferred minimum when space allows; may shrink below this to avoid cropping. */
-export const CARD_BAND_MIN_W = 40;
+/** Preferred minimum when space allows. Floor is 48 (L43-04 / technical spec v6 §6.2). */
+export const CARD_BAND_MIN_W = 48;
 export const CARD_BAND_MAX_W = 72;
 /** Absolute floor — below this, paginate rather than unreadably tiny faces. */
-export const CARD_BAND_ABS_MIN_W = 24;
+export const CARD_BAND_ABS_MIN_W = 48;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
@@ -41,7 +41,8 @@ export function maxWidthForRowHeight(rowHeight: number): number {
 
 /**
  * Largest card width that fits `count` cards in at most 2 rows without cropping.
- * Shrinks below the preferred min when needed; paginates only under the absolute floor.
+ * Paginate when width would drop below 48px. Height-constrained docks may still
+ * shrink below 48 so faces are not cropped (L43-04).
  */
 export function fitCardBand(
   count: number,

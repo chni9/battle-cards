@@ -6,7 +6,12 @@
 import type { ReactElement } from 'react';
 
 import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
-import { spokenCost, type StructuredCost } from './structured-cost';
+import {
+  costSignGlyph,
+  spokenCost,
+  type CostSign,
+  type StructuredCost,
+} from './structured-cost';
 
 export interface CostDisplayProps {
   cost: StructuredCost;
@@ -15,6 +20,8 @@ export interface CostDisplayProps {
   className?: string;
   /** Icon pixel size; default 14 for compact chrome. */
   iconSize?: number;
+  /** Prefix the amount with − (pay) or + (receive). */
+  signed?: CostSign;
 }
 
 const KIND_TO_RESOURCE: Record<StructuredCost['kind'], ResourceKind> = {
@@ -49,8 +56,11 @@ export function CostDisplay({
   multiplier,
   className = '',
   iconSize = 14,
+  signed,
 }: CostDisplayProps): ReactElement {
-  const spoken = spokenCost(cost, multiplier);
+  const spoken =
+    signed === undefined ? spokenCost(cost, multiplier) : spokenCost(cost, multiplier, signed);
+  const signGlyph = costSignGlyph(signed);
 
   return (
     <span
@@ -66,14 +76,20 @@ export function CostDisplay({
       <span aria-hidden className="inline-flex items-center gap-0.5 font-medium">
         {cost.kind === 'pointsPerLife' ? (
           <>
-            <span>{cost.amount}</span>
+            <span>
+              {signGlyph}
+              {cost.amount}
+            </span>
             <ResourceGlyph kind="point" size={iconSize} />
             <span>/</span>
             <ResourceGlyph kind="life" size={iconSize} />
           </>
         ) : (
           <>
-            <span>{cost.amount}</span>
+            <span>
+              {signGlyph}
+              {cost.amount}
+            </span>
             <ResourceGlyph kind={KIND_TO_RESOURCE[cost.kind]} size={iconSize} />
           </>
         )}

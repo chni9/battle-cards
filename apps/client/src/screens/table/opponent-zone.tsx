@@ -18,6 +18,7 @@ import {
   shieldActiveInstance,
 } from './active-display';
 import { FlowStatusBadges } from './flow-status-badges';
+import { HIDDEN_KIT_LABEL } from './table-copy';
 
 export interface OpponentZoneProps {
   view: PlayingStateView;
@@ -141,7 +142,7 @@ export function OpponentZone({
         />
         {revealMode === null ? (
           <p className="text-[9px] uppercase tracking-wide text-ink-muted sm:text-[10px]">
-            Hidden kit
+            {HIDDEN_KIT_LABEL}
           </p>
         ) : (
           <p className="text-[9px] font-semibold uppercase tracking-wide text-cta-purple sm:text-[10px]">

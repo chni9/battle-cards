@@ -1,17 +1,16 @@
 /**
  * Buy / resell upgrade points — rules spec §1, backlog L2-02 / L27-01.
  *
- * Per-kit overrides (#V4-28): read `getKit(actor.kitId)` at call time — never
- * cache, because Cloning mutates `player.kitId` mid-game.
+ * Per-kit overrides (#V4-28): read `upgradePointBuyCost(actor.kitId)` at call
+ * time — never cache, because Cloning mutates `player.kitId` mid-game.
  */
 
 import {
   actionReject,
   type ActionReject,
-  getKit,
-  UPGRADE_POINT_ECONOMY,
   type GameState,
-  type KitId,
+  upgradePointBuyCost,
+  upgradePointSellYield,
 } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
@@ -19,15 +18,7 @@ import { grantPoints, grantUpgradePoints } from './grant-resources';
 
 export type UpgradePointResult = { ok: true } | ActionReject;
 
-/** Resolve buy cost for the actor's current kit (Upgrader: 5). */
-export function upgradePointBuyCost(kitId: KitId): number {
-  return getKit(kitId).traits.upgradePointBuyCost ?? UPGRADE_POINT_ECONOMY.buyCostPoints;
-}
-
-/** Resolve sell yield for the actor's current kit (Upgrader: 7). */
-export function upgradePointSellYield(kitId: KitId): number {
-  return getKit(kitId).traits.upgradePointSellYield ?? UPGRADE_POINT_ECONOMY.sellYieldPoints;
-}
+export { upgradePointBuyCost, upgradePointSellYield };
 
 export function buyUpgradePoint(state: GameState, actorPlayerId: string): UpgradePointResult {
   const actor = findPlayer(state, actorPlayerId);

@@ -2367,3 +2367,54 @@ Locked for L42-01–04. Does not change Classic rules.
 - **Table How to play:** full `Button` on the economy bar; does not gate actions.
 - **Screenshots** remain designer-owned; missing files omit `<img>`.
 
+## 2026-08-21 · [P] L43-04 hand floor vs short dock height
+
+`CARD_BAND_ABS_MIN_W` is **48**. A 48px-wide face needs ~88px of row height (`faceCardHeight`).
+Designer 2026-08-21: paginate when **width** would shrink below 48; if **height** cannot fit
+a 48px face, still shrink (no crop). Preferred min is also 48. Wide docks still show a
+full hand without a pager. Phone playtest remains L48-02.
+
+## 2026-08-21 · [P] L43-03 no cancel-why copy
+
+`actionResolved.outcome` is `'applied' | 'immune' | 'cancelled' | 'blocked'` (L4-03).
+There is no equal-cancel vs stronger-prevails discriminant on the wire. Designer
+2026-08-21 / spec §12 #7: keep action-log copy **“is cancelled”**. Do not invent why-copy
+and do not add a protocol field (V6 already used its only bump in L41-02). Coach copy at
+tutorial index 3 still explains equal cancel when Lot 45 lands.
+
+## 2026-08-21 · [P] L43-02 Shop option A + shared upgrade-point prices
+
+Designer 2026-08-21: one **Shop** Dialog holds upgrade-point Buy/Sell, the shared-card
+grid, and the pool. Buy/Sell show a points `CostDisplay` of the kit catalog cost/yield
+(option A), not an upgrade-point glyph as the price. Helpers `upgradePointBuyCost` /
+`upgradePointSellYield` live next to `UPGRADE_POINT_ECONOMY` in shared; server and client
+call them at use time (never cache — Cloning mutates `kitId`). No `UP` letters on table
+chrome; action-log prose may still say “upgrade point”. Intents unchanged.
+
+## 2026-08-21 · [P] L43-05 corner chrome + confirm
+
+Designer 2026-08-21: dock is **Draw + Shop** only (Stats when `readOnly`). **?** top-left
+opens How to play (moved off the economy bar). **Flag** top-right is an inline SVG
+`IconButton` (44px, no `Button` min-width): alive → Stay / Forfeit confirm; spectator →
+Stay / Leave (“Leave the table?”). Esc / overlay = Stay. Flag hidden on the finished
+`readOnly` board; Game over Return home unchanged. Lobby Leave still disconnects
+immediately. Until L43-06, confirming Forfeit still calls `leaveGame()`.
+
+## 2026-08-21 · [P] Finished inspect keeps Return home flag
+
+Designer 2026-08-21 follow-up after Lot 43: hiding the flag on the `readOnly` board left no
+way home once Game over was dismissed. Flag on finished inspect is **Return home**
+(`leaveGame()`), not forfeit copy. Game over Return home unchanged. Draw CTA is **green**
+(point icon failed on yellow). Sell CTA is **green** (life / point icons failed on orange).
+Buy / Upgrade stay orange. Interactive `CostDisplay` prefixes **−** (pay) or **+** (receive).
+
+## 2026-08-21 · [P] L43-06 FORFEIT keeps the socket
+
+Designer 2026-08-21 overrides spec §6.3 “stay until Game over Return home” for 3p+
+spectators: after FORFEIT they may `leaveGame()` whenever. 2p FORFEIT still finishes the
+match (`finishIfSoleSurvivor` / `onGameOver`); `rejectReconnection` only kills reconnection
+tokens, not live sockets, so the forfeiter sees Game over on the same client. Consented
+`onLeave` while still alive stays the old disconnect+forfeit path (lobby, Return home,
+old clients). Already-eliminated `onLeave` no-ops elim and drops the socket. No Feedback
+UI in this lot (L47-03).
+
