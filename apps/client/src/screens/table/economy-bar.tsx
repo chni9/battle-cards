@@ -1,6 +1,6 @@
 /**
- * Economy action bar — L12-06 / L30-02 / L42-03 / L43-02.
- * Draw + Shop. How to play + Leave stay until L43-05.
+ * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05.
+ * Draw + Shop. Stats only on a finished board (`readOnly`).
  */
 
 import type { ReactElement } from 'react';
@@ -15,12 +15,8 @@ export interface EconomyBarProps {
   drawValue: number;
   onDraw: () => void;
   onOpenShop: () => void;
-  onOpenHowToPlay: () => void;
-  onLeave: () => void;
   /** Finished board — reopen the stats dialog (PROTOCOL 24). */
   onShowStats?: () => void;
-  /** Finished board — Leave becomes Return home. */
-  leaveLabel?: string;
 }
 
 export function EconomyBar({
@@ -29,10 +25,7 @@ export function EconomyBar({
   drawValue,
   onDraw,
   onOpenShop,
-  onOpenHowToPlay,
-  onLeave,
   onShowStats,
-  leaveLabel = 'Leave',
 }: EconomyBarProps): ReactElement {
   const disabled = !isMyTurn || actionsLocked;
 
@@ -48,18 +41,11 @@ export function EconomyBar({
       <Button variant="orange" onClick={onOpenShop}>
         {SHOP_ACTION_LABEL}
       </Button>
-      <Button type="button" variant="orange" onClick={onOpenHowToPlay}>
-        How to play
-      </Button>
-      <span className="mx-1 hidden h-6 w-px bg-border-soft sm:inline-block" aria-hidden />
       {onShowStats !== undefined && (
         <Button type="button" variant="purple" onClick={onShowStats}>
           Stats
         </Button>
       )}
-      <Button variant="red" onClick={onLeave}>
-        {leaveLabel}
-      </Button>
     </section>
   );
 }

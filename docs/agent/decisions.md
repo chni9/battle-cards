@@ -2391,3 +2391,12 @@ grid, and the pool. Buy/Sell show a points `CostDisplay` of the kit catalog cost
 call them at use time (never cache — Cloning mutates `kitId`). No `UP` letters on table
 chrome; action-log prose may still say “upgrade point”. Intents unchanged.
 
+## 2026-08-21 · [P] L43-05 corner chrome + confirm
+
+Designer 2026-08-21: dock is **Draw + Shop** only (Stats when `readOnly`). **?** top-left
+opens How to play (moved off the economy bar). **Flag** top-right is an inline SVG
+`IconButton` (44px, no `Button` min-width): alive → Stay / Forfeit confirm; spectator →
+Stay / Leave (“Leave the table?”). Esc / overlay = Stay. Flag hidden on the finished
+`readOnly` board; Game over Return home unchanged. Lobby Leave still disconnects
+immediately. Until L43-06, confirming Forfeit still calls `leaveGame()`.
+

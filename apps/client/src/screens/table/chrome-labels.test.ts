@@ -34,6 +34,8 @@ describe('economy chrome labels (L43-02)', () => {
     expect(economy).toContain('DRAW_ACTION_LABEL');
     expect(economy).toContain('SHOP_ACTION_LABEL');
     expect(economy).toContain("kind: 'points'");
+    expect(economy).not.toContain('How to play');
+    expect(economy).not.toContain('onLeave');
     expect(shop).toContain('upgradePointBuyCost');
     expect(shop).toContain('upgradePointSellYield');
     expect(cardDialog).toContain("kind: 'upgradePoint'");

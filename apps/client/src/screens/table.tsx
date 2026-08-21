@@ -16,6 +16,7 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { markHowToPlaySeen } from '../help/help-storage';
 import { ActionLogPanel } from '../action-log/action-log-panel';
@@ -43,6 +44,7 @@ import { IllegalActionDialog } from './illegal-action-dialog';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
+import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { OpponentZone } from './table/opponent-zone';
@@ -51,8 +53,15 @@ import { PrivateZone } from './table/private-zone';
 import { ShopDialog } from './table/shop-dialog';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
+import {
+  FELT_QUEUE_TITLE,
+  FORFEIT_ARIA_LABEL,
+  HOW_TO_PLAY_ARIA_LABEL,
+  LEAVE_TABLE_ARIA_LABEL,
+} from './table/table-copy';
+import { tableFlagIntent, type TableFlagIntent } from './table/table-flag-intent';
+import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
-import { FELT_QUEUE_TITLE } from './table/table-copy';
 import { Timers } from './table/timers';
 import { YourTurnFlash } from './table/your-turn-flash';
 
@@ -125,6 +134,9 @@ function TableScreenInner({
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
+    null,
+  );
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
 
@@ -298,6 +310,7 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
+  const flagIntent = tableFlagIntent({ readOnly, selfEliminated });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
@@ -489,19 +502,43 @@ function TableScreenInner({
       <TableShell
         {...(dockStyle !== undefined ? { dockStyle } : {})}
         turn={
-          <Timers
-            gameCode={view.gameCode}
-            statusLabel={statusLabel}
-            activeNickname={activePlayer?.nickname ?? '—'}
-            activePlayerId={view.currentTurnPlayerId}
-            view={view}
-            isMyTurn={isMyTurn}
-            timerLabel={timerLabel}
-            progressRatio={progressRatio}
-            {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
-            subChoiceProgressRatio={subChoiceProgressRatio}
-            {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
-          />
+          <div className="flex items-stretch gap-1 p-1 sm:p-1.5">
+            <IconButton
+              aria-label={HOW_TO_PLAY_ARIA_LABEL}
+              onClick={() => {
+                setHowToPlayOpen(true);
+              }}
+            >
+              ?
+            </IconButton>
+            <div className="min-w-0 flex-1">
+              <Timers
+                gameCode={view.gameCode}
+                statusLabel={statusLabel}
+                activeNickname={activePlayer?.nickname ?? '—'}
+                activePlayerId={view.currentTurnPlayerId}
+                view={view}
+                isMyTurn={isMyTurn}
+                timerLabel={timerLabel}
+                progressRatio={progressRatio}
+                {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
+                subChoiceProgressRatio={subChoiceProgressRatio}
+                {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
+              />
+            </div>
+            {flagIntent !== 'hidden' ? (
+              <IconButton
+                aria-label={
+                  flagIntent === 'forfeit' ? FORFEIT_ARIA_LABEL : LEAVE_TABLE_ARIA_LABEL
+                }
+                onClick={() => {
+                  setLeaveConfirm(flagIntent);
+                }}
+              >
+                <ForfeitFlagIcon />
+              </IconButton>
+            ) : null}
+          </div>
         }
         prompts={
           readOnly ? (
@@ -579,16 +616,7 @@ function TableScreenInner({
             onOpenShop={() => {
               setDialog({ kind: 'shop' });
             }}
-            onOpenHowToPlay={() => {
-              setHowToPlayOpen(true);
-            }}
-            onLeave={onLeave}
-            {...(readOnly
-              ? {
-                  leaveLabel: 'Return home',
-                  ...(onShowStats !== undefined ? { onShowStats } : {}),
-                }
-              : {})}
+            {...(readOnly && onShowStats !== undefined ? { onShowStats } : {})}
           />
         }
       />
@@ -682,6 +710,17 @@ function TableScreenInner({
             markHowToPlaySeen();
           }
           setHowToPlayOpen(false);
+        }}
+      />
+
+      <TableLeaveConfirm
+        intent={leaveConfirm}
+        onStay={() => {
+          setLeaveConfirm(null);
+        }}
+        onConfirm={() => {
+          setLeaveConfirm(null);
+          onLeave();
         }}
       />
     </>

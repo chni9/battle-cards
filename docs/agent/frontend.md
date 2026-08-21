@@ -39,7 +39,7 @@ rules above are unchanged — this section only covers how the client looks.
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
-  `CostDisplay` (Lot 39). Art resolution:
+  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
@@ -72,8 +72,8 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
   a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
-  until L45-04. Table **How to play** is a full economy-bar `Button` until L43-05
-  (does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
+  until L45-04. Table **How to play** is a compact **?** `IconButton` on the turn strip
+  (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -92,11 +92,16 @@ rules above are unchanged — this section only covers how the client looks.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
-  + point `CostDisplay` + **Shop** (L43-02). Shop Dialog (always openable — pool is public
-  off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
+  + point `CostDisplay` + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
+  public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached), the shared-card
-  grid + Buy special, and the pool. How to play + Leave stay on the economy bar until L43-05.
-  Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`. Shell is full-bleed
+  grid + Buy special, and the pool. Turn strip: **?** (How to play) left of timers, **flag**
+  right (inline SVG, `aria-label` Forfeit / Leave table). Alive flag opens Stay / Forfeit
+  (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
+  (“Leave the table?”). Esc / overlay = Stay. Flag is hidden on the `readOnly` finished board;
+  Game over **Return home** stays. Stats stays on the dock when `readOnly`. Lobby Leave is
+  still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
+  Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
@@ -173,7 +178,8 @@ rules above are unchanged — this section only covers how the client looks.
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
-- Mid-game **Leave** is consented forfeit (disables auto-reconnect). Unexpected drop shows
+- Mid-game **flag Forfeit** confirms then calls `leaveGame()` until L43-06 wires `FORFEIT`.
+  Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
@@ -195,7 +201,8 @@ rules above are unchanged — this section only covers how the client looks.
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
-  Return home via `leaveGame()`. No kits on the finished seat list itself (still private
+  Flag is hidden; Return home via `leaveGame()` on Game over. No kits on the finished seat list
+  itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
