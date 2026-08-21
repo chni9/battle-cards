@@ -104,7 +104,9 @@ rules above are unchanged — this section only covers how the client looks.
   chips and scroll internally when many effects queue. Kit
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
-  match action cards; resources sit above the economy bar; `Card detail="face"`; effect
+  match action cards; resources sit above the economy bar with **visible captions**
+  (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
+  kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
