@@ -56,8 +56,8 @@ rules above are unchanged — this section only covers how the client looks.
   extra npm dependency unless separately ruled.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
-- **Button variants:** `purple` (play), `yellow` (draw), `green` (confirm/Start/Create/Join),
-  `red` (Leave / return home), `orange` (buy/sell/upgrade / Copy). Solid rounded CTAs from
+- **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
+  / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
