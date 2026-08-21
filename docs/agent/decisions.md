@@ -2382,3 +2382,12 @@ There is no equal-cancel vs stronger-prevails discriminant on the wire. Designer
 and do not add a protocol field (V6 already used its only bump in L41-02). Coach copy at
 tutorial index 3 still explains equal cancel when Lot 45 lands.
 
+## 2026-08-21 · [P] L43-02 Shop option A + shared upgrade-point prices
+
+Designer 2026-08-21: one **Shop** Dialog holds upgrade-point Buy/Sell, the shared-card
+grid, and the pool. Buy/Sell show a points `CostDisplay` of the kit catalog cost/yield
+(option A), not an upgrade-point glyph as the price. Helpers `upgradePointBuyCost` /
+`upgradePointSellYield` live next to `UPGRADE_POINT_ECONOMY` in shared; server and client
+call them at use time (never cache — Cloning mutates `kitId`). No `UP` letters on table
+chrome; action-log prose may still say “upgrade point”. Intents unchanged.
+

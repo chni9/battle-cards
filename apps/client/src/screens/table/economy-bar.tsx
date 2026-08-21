@@ -1,24 +1,20 @@
 /**
- * Economy action bar — L12-06 / L30-02 / L42-03.
- * Draw / buy-sell UP / Buy / Pool / How to play / Leave.
+ * Economy action bar — L12-06 / L30-02 / L42-03 / L43-02.
+ * Draw + Shop. How to play + Leave stay until L43-05.
  */
 
 import type { ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
+import { CostDisplay } from '../../design/components/cost-display';
+import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from './chrome-labels';
 
 export interface EconomyBarProps {
   isMyTurn: boolean;
   actionsLocked: boolean;
   drawValue: number;
-  upgradePoints: number;
-  /** Shared pool size — always readable (rules spec §1 / L30-02). */
-  poolCount: number;
   onDraw: () => void;
-  onBuyUpgradePoint: () => void;
-  onSellUpgradePoint: () => void;
-  onOpenBuy: () => void;
-  onOpenPool: () => void;
+  onOpenShop: () => void;
   onOpenHowToPlay: () => void;
   onLeave: () => void;
   /** Finished board — reopen the stats dialog (PROTOCOL 24). */
@@ -31,13 +27,8 @@ export function EconomyBar({
   isMyTurn,
   actionsLocked,
   drawValue,
-  upgradePoints,
-  poolCount,
   onDraw,
-  onBuyUpgradePoint,
-  onSellUpgradePoint,
-  onOpenBuy,
-  onOpenPool,
+  onOpenShop,
   onOpenHowToPlay,
   onLeave,
   onShowStats,
@@ -51,23 +42,11 @@ export function EconomyBar({
       className="flex flex-wrap items-center gap-1 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1 sm:gap-2 sm:p-1.5"
     >
       <Button variant="yellow" disabled={disabled} onClick={onDraw}>
-        Draw (+{drawValue})
+        {DRAW_ACTION_LABEL}{' '}
+        <CostDisplay cost={{ kind: 'points', amount: drawValue }} className="text-inherit" />
       </Button>
-      <Button variant="orange" disabled={disabled} onClick={onBuyUpgradePoint}>
-        Buy UP
-      </Button>
-      <Button
-        variant="orange"
-        disabled={disabled || upgradePoints < 1}
-        onClick={onSellUpgradePoint}
-      >
-        Sell UP
-      </Button>
-      <Button variant="orange" disabled={disabled} onClick={onOpenBuy}>
-        Buy
-      </Button>
-      <Button variant="green" onClick={onOpenPool}>
-        Pool ({poolCount})
+      <Button variant="orange" onClick={onOpenShop}>
+        {SHOP_ACTION_LABEL}
       </Button>
       <Button type="button" variant="orange" onClick={onOpenHowToPlay}>
         How to play

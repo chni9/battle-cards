@@ -8,7 +8,6 @@ import {
   SHARED_CARD_IDS,
   formatCardLabel,
   getCard,
-  getKit,
   type CardInstance,
   type PlayingStateView,
   type PublicPlayerView,
@@ -20,39 +19,15 @@ import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CostDisplay } from '../../design/components/cost-display';
 import {
-  costAriaLabel,
   structuredCostFromCardCost,
   structuredPlayCost,
 } from '../../design/components/structured-cost';
 import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
+import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { cardEffectText } from './table-helpers';
-import { SHOP_PRICE_BLURB } from './table-copy';
 
-function canAffordSharedBuy(
-  view: PlayingStateView,
-  cardId: (typeof SHARED_CARD_IDS)[number],
-): boolean {
-  const cost = getCard(cardId)?.buyCost;
-
-  if (cost === undefined) {
-    return false;
-  }
-
-  const points = cost.points ?? 0;
-  const lives = cost.lives ?? 0;
-
-  if (points > 0 && view.self.points < points) {
-    return false;
-  }
-
-  if (lives > 0 && view.self.lives < lives) {
-    return false;
-  }
-
-  return points > 0 || lives > 0;
-}
 export type TableDialog =
   | { kind: 'actions'; instance: CardInstance; fromSpecial: boolean }
   | {
@@ -66,8 +41,7 @@ export type TableDialog =
   | { kind: 'quantity'; instance: CardInstance }
   | { kind: 'consume'; instance: CardInstance }
   | { kind: 'multi' }
-  | { kind: 'buy' }
-  | { kind: 'pool' }
+  | { kind: 'shop' }
   | null;
 
 export interface CardActionsProps {
@@ -85,8 +59,6 @@ export interface CardActionsProps {
   ) => void;
   onUpgradeCard: (instanceId: string) => void;
   onSellCard: (instanceId: string) => void;
-  onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
-  onBuySpecialCard: () => void;
   /** Called when Use needs target or quantity — parent already set dialog via setDialog. */
   onBeginUse: (instance: CardInstance) => void;
 }
@@ -105,21 +77,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onPlayMultipleAttacks,
     onUpgradeCard,
     onSellCard,
-    onBuyCard,
-    onBuySpecialCard,
     onBeginUse,
   } = props;
 
   const [targetId, setTargetId] = useState('');
   const [quantityText, setQuantityText] = useState('1');
   const [consumeInstanceId, setConsumeInstanceId] = useState('');
-  const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
-  const selectedShopId = (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
-    ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
-    : SHARED_CARD_IDS[0];
-  const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
 
   const close = (): void => {
     setQuantityText('1');
@@ -176,8 +141,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
       : null;
   const inspectEffect =
     dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
+  const actionSellCost =
+    actionInstance !== null
+      ? structuredCostFromCardCost(getCard(actionInstance.cardId)?.sellYield)
+      : null;
   const reduceMotion = useReducedMotion();
-  const alwaysUpgradedIds = getKit(view.self.kitId).traits.alwaysUpgraded;
   const transformerUseBlocked =
     actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
 
@@ -219,7 +187,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
                     close();
                   }}
                 >
-                  Upgrade
+                  {CARD_UPGRADE_LABEL}{' '}
+                  <CostDisplay
+                    cost={{ kind: 'upgradePoint', amount: 1 }}
+                    className="text-inherit"
+                  />
                 </Button>
               )}
               {!fromSpecial && (
@@ -231,7 +203,13 @@ export function CardActions(props: CardActionsProps): ReactElement {
                     close();
                   }}
                 >
-                  Sell
+                  {CARD_SELL_LABEL}
+                  {actionSellCost !== null ? (
+                    <>
+                      {' '}
+                      <CostDisplay cost={actionSellCost} className="text-inherit" />
+                    </>
+                  ) : null}
                 </Button>
               )}
               {allowsMultiAttack &&
@@ -595,158 +573,6 @@ export function CardActions(props: CardActionsProps): ReactElement {
             );
           })}
         </ul>
-      </Dialog>
-
-      <Dialog
-        open={dialog?.kind === 'buy'}
-        title="Buy a card"
-        onClose={close}
-        panelClassName="max-w-3xl"
-        actions={
-          <>
-            <Button
-              variant="orange"
-              disabled={!isMyTurn || actionsLocked || view.self.points < 20}
-              onClick={() => {
-                onBuySpecialCard();
-                close();
-              }}
-            >
-              Buy special{' '}
-              <CostDisplay cost={{ kind: 'points', amount: 20 }} className="text-inherit" />
-            </Button>
-            <Button
-              variant="orange"
-              disabled={
-                !isMyTurn ||
-                actionsLocked ||
-                !canAffordSharedBuy(view, buyCardId as (typeof SHARED_CARD_IDS)[number])
-              }
-              onClick={() => {
-                onBuyCard(buyCardId as (typeof SHARED_CARD_IDS)[number]);
-                close();
-              }}
-            >
-              Buy selected
-            </Button>
-            <Button variant="red" onClick={close}>
-              Cancel
-            </Button>
-          </>
-        }
-      >
-        <p className="flex flex-wrap items-center gap-1 text-sm text-ink-muted">
-          <span>{SHOP_PRICE_BLURB}</span>
-          {shopBlurbCost !== null ? <CostDisplay cost={shopBlurbCost} /> : null}
-        </p>
-        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {SHARED_CARD_IDS.map((id) => {
-            const definition = getCard(id);
-            const name = definition?.name ?? id;
-            const shopCost = structuredCostFromCardCost(definition?.buyCost);
-            const priceSpoken = costAriaLabel(shopCost);
-            const affordable = canAffordSharedBuy(view, id);
-            const selected = buyCardId === id;
-            const shopUpgraded = alwaysUpgradedIds.includes(id);
-            const shopInstance = {
-              instanceId: `shop-${id}`,
-              cardId: id,
-              isUpgraded: shopUpgraded,
-            } as const;
-
-            return (
-              <li key={id}>
-                <button
-                  type="button"
-                  disabled={!isMyTurn || actionsLocked}
-                  aria-pressed={selected}
-                  aria-label={`${name}${shopUpgraded ? ' upgraded' : ''}, ${priceSpoken.length > 0 ? priceSpoken : 'no price'}${affordable ? '' : ', cannot afford'}`}
-                  onClick={() => {
-                    setBuyCardId(id);
-                  }}
-                  onDoubleClick={() => {
-                    if (!isMyTurn || actionsLocked || !affordable) {
-                      return;
-                    }
-                    onBuyCard(id);
-                    close();
-                  }}
-                  className={[
-                    'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
-                    selected
-                      ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                      : 'border-border-soft bg-surface hover:border-border',
-                    !affordable ? 'opacity-55' : '',
-                    (!isMyTurn || actionsLocked) && 'cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  <Card
-                    instance={shopInstance}
-                    detail="thumb"
-                    className="pointer-events-none w-full max-w-[5.5rem]"
-                  />
-                  <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
-                    {name}
-                    {shopUpgraded ? ' ↑' : ''}
-                  </span>
-                  <span
-                    className={[
-                      'mt-0.5 flex justify-center text-[11px] font-medium',
-                      affordable ? 'text-ink' : 'text-ink-muted',
-                    ].join(' ')}
-                  >
-                    {shopCost !== null ? <CostDisplay cost={shopCost} /> : '—'}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </Dialog>
-
-      <Dialog
-        open={dialog?.kind === 'pool'}
-        title={`Shared pool (${String(view.pool.length)})`}
-        onClose={close}
-        panelClassName="max-w-3xl"
-        actions={
-          <Button variant="green" onClick={close}>
-            Close
-          </Button>
-        }
-      >
-        <p className="text-sm text-ink-muted">
-          Cards deactivated or dumped here are visible to every player. This is not a hand.
-        </p>
-        {view.pool.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-muted">The pool is empty.</p>
-        ) : (
-          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {view.pool.map((instance) => {
-              const definition = getCard(instance.cardId);
-              const name = formatCardLabel(instance.cardId, instance.isUpgraded);
-              return (
-                <li key={instance.instanceId}>
-                  <div className="flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border border-border-soft bg-surface p-1.5">
-                    <Card
-                      instance={instance}
-                      detail="thumb"
-                      className="pointer-events-none w-full max-w-[5.5rem]"
-                    />
-                    <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
-                      {name}
-                    </span>
-                    {definition !== undefined && (
-                      <span className="mt-0.5 text-center text-[11px] font-medium text-ink-muted">
-                        {definition.type}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
       </Dialog>
     </>
   );

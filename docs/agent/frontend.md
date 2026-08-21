@@ -72,8 +72,8 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
   a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
-  until L45-04. Table **How to play** is a full economy-bar `Button` (does not send an
-  intent). Solo composes `create` + N× `addBot` + `startGame`;
+  until L45-04. Table **How to play** is a full economy-bar `Button` until L43-05
+  (does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -91,9 +91,12 @@ rules above are unchanged — this section only covers how the client looks.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
-  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: Draw /
-  UP buy-sell / Buy (Dialog chooser for special + shared) / How to play (L42-03, not an
-  intent) / Pool / Leave. Shell is full-bleed
+  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
+  + point `CostDisplay` + **Shop** (L43-02). Shop Dialog (always openable — pool is public
+  off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
+  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached), the shared-card
+  grid + Buy special, and the pool. How to play + Leave stay on the economy bar until L43-05.
+  Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`. Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
@@ -121,8 +124,10 @@ rules above are unchanged — this section only covers how the client looks.
   Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
   action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
   Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
-  intents/payloads as V1. Buy dialog thumbs use upgraded art when the seat's kit
-  `alwaysUpgraded` covers that card (purchase arrives upgraded).
+  intents/payloads as V1. Shop dialog thumbs use upgraded art when the seat's kit
+  `alwaysUpgraded` covers that card (purchase arrives upgraded). Card dialog **Upgrade**
+  shows `CostDisplay { kind: 'upgradePoint', amount: 1 }`; **Sell** shows catalog
+  `sellYield`.
 - **Mirror sub-choice labels:** pending attack options show
   `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
@@ -189,7 +194,7 @@ rules above are unchanged — this section only covers how the client looks.
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
-  economy bar reopens it. Intents are locked (`readOnly`); Pool / inspect / action log stay.
+  economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   Return home via `leaveGame()`. No kits on the finished seat list itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only

@@ -13,10 +13,11 @@
  */
 
 import {
-  UPGRADE_POINT_ECONOMY,
   getCard,
   getKit,
   isSharedCardId,
+  upgradePointBuyCost,
+  upgradePointSellYield,
   type ActionLogEntryView,
   type ActionPlayedLogEntry,
   type ActionResolvedLogEntry,
@@ -146,11 +147,11 @@ function regenPointsPerLife(isUpgraded: boolean): number {
 }
 
 function upgradeBuyCost(kitId: KitId): number {
-  return getKit(kitId).traits.upgradePointBuyCost ?? UPGRADE_POINT_ECONOMY.buyCostPoints;
+  return upgradePointBuyCost(kitId);
 }
 
 function upgradeSellYield(kitId: KitId): number {
-  return getKit(kitId).traits.upgradePointSellYield ?? UPGRADE_POINT_ECONOMY.sellYieldPoints;
+  return upgradePointSellYield(kitId);
 }
 
 function livingCount(view: PlayingStateView): number {

@@ -48,6 +48,7 @@ import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
+import { ShopDialog } from './table/shop-dialog';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
@@ -81,7 +82,7 @@ export interface TableScreenProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   /**
-   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / pool browse.
+   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / Shop browse.
    */
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
@@ -574,16 +575,9 @@ function TableScreenInner({
             isMyTurn={isMyTurn}
             actionsLocked={actionsLocked}
             drawValue={drawValue}
-            upgradePoints={view.self.upgradePoints}
-            poolCount={view.pool.length}
             onDraw={drawWithFx}
-            onBuyUpgradePoint={buyUpgradeWithFx}
-            onSellUpgradePoint={sellUpgradeWithFx}
-            onOpenBuy={() => {
-              setDialog({ kind: 'buy' });
-            }}
-            onOpenPool={() => {
-              setDialog({ kind: 'pool' });
+            onOpenShop={() => {
+              setDialog({ kind: 'shop' });
             }}
             onOpenHowToPlay={() => {
               setHowToPlayOpen(true);
@@ -649,9 +643,21 @@ function TableScreenInner({
         onPlayMultipleAttacks={playMultipleWithFx}
         onUpgradeCard={onUpgradeCard}
         onSellCard={sellCardWithFx}
+        onBeginUse={onBeginUse}
+      />
+
+      <ShopDialog
+        open={dialog?.kind === 'shop'}
+        view={view}
+        isMyTurn={isMyTurn}
+        actionsLocked={actionsLocked}
+        onClose={() => {
+          setDialog(null);
+        }}
+        onBuyUpgradePoint={buyUpgradeWithFx}
+        onSellUpgradePoint={sellUpgradeWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
-        onBeginUse={onBeginUse}
       />
 
       {subChoice !== null && (
