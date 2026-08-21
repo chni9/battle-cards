@@ -23,6 +23,7 @@ export function App() {
     createGame,
     joinGame,
     leaveGame,
+    forfeit,
     clearActionReject,
     startGame,
     startSoloGame,
@@ -100,6 +101,7 @@ export function App() {
         onLeave={() => {
           void leaveGame();
         }}
+        onForfeit={forfeit}
       />
     );
   }

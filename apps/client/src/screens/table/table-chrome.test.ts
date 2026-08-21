@@ -30,6 +30,7 @@ describe('table corner chrome (L43-05)', () => {
     expect(table).toContain('setLeaveConfirm(flagIntent)');
     expect(table).toContain('HOW_TO_PLAY_ARIA_LABEL');
     expect(table).toContain('TableLeaveConfirm');
+    expect(table).toContain('onForfeit()');
     expect(table).not.toMatch(/onClick=\{\(\) => \{\s*onLeave\(\);/);
   });
 });

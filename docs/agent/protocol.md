@@ -80,7 +80,7 @@ Client → server (technical spec §5.2):
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
 `buySpecialCard` ·
-`forfeit` (PROTOCOL_VERSION 29 / L41-02 — **types only** until L43-06; payload `undefined`) ·
+`forfeit` (PROTOCOL_VERSION 29 / L43-06 — payload `undefined`; client stays connected) ·
 `resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
 `kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
 (`instanceIds`), `special-pick` (`cardId`). Replaces the former

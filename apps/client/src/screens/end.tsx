@@ -60,6 +60,7 @@ export function EndScreen({
         onBuySpecialCard={noop}
         onSellUpgradePoint={noop}
         onLeave={onLeave}
+        onForfeit={noop}
       />
       <GameOverDialog
         open={statsOpen}

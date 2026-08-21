@@ -88,6 +88,8 @@ export interface TableScreenProps {
   onBuySpecialCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
+  /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
+  onForfeit: () => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   /**
@@ -126,6 +128,7 @@ function TableScreenInner({
   onBuySpecialCard,
   onSellUpgradePoint,
   onLeave,
+  onForfeit,
   onDeactivatePersistent,
   onActivateDuplication,
   readOnly = false,
@@ -719,7 +722,12 @@ function TableScreenInner({
           setLeaveConfirm(null);
         }}
         onConfirm={() => {
+          const intent = leaveConfirm;
           setLeaveConfirm(null);
+          if (intent === 'forfeit') {
+            onForfeit();
+            return;
+          }
           onLeave();
         }}
       />

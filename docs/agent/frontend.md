@@ -178,8 +178,8 @@ rules above are unchanged — this section only covers how the client looks.
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
-- Mid-game **flag Forfeit** confirms then calls `leaveGame()` until L43-06 wires `FORFEIT`.
-  Unexpected drop shows
+- Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
+  and Game over **Return home** call `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the

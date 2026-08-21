@@ -2400,3 +2400,13 @@ Stay / Leave (“Leave the table?”). Esc / overlay = Stay. Flag hidden on the 
 `readOnly` board; Game over Return home unchanged. Lobby Leave still disconnects
 immediately. Until L43-06, confirming Forfeit still calls `leaveGame()`.
 
+## 2026-08-21 · [P] L43-06 FORFEIT keeps the socket
+
+Designer 2026-08-21 overrides spec §6.3 “stay until Game over Return home” for 3p+
+spectators: after FORFEIT they may `leaveGame()` whenever. 2p FORFEIT still finishes the
+match (`finishIfSoleSurvivor` / `onGameOver`); `rejectReconnection` only kills reconnection
+tokens, not live sockets, so the forfeiter sees Game over on the same client. Consented
+`onLeave` while still alive stays the old disconnect+forfeit path (lobby, Return home,
+old clients). Already-eliminated `onLeave` no-ops elim and drops the socket. No Feedback
+UI in this lot (L47-03).
+

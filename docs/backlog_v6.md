@@ -60,13 +60,13 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-14 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+15 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 41 · Protocol + governance | 5 | 5 |
 | 42 · How to play | 4 | 4 |
-| 43 · Table readability | 6 | 5 |
+| 43 · Table readability | 6 | 6 |
 | 44 · Visual pickers | 6 | 0 |
 | 45 · Tutorial | 7 | 0 |
 | 46 · First-game hints | 3 | 0 |
@@ -109,7 +109,7 @@ Nothing in Lots 45–46 may start before L41-03. L43-06 needs L41-02 types.
 | L43-03 | Copy: opponent unspied label **Hidden kit**; felt queue **Waiting on others**; shop blurb uses “double the play cost” + CostDisplay, not “base play cost”. **Acceptance:** strings updated; How to play §5.1 stays the longer explanation. **Watch point:** if `actionResolved` has no equal-cancel vs stronger-prevails discriminant, do **not** invent cancel-why copy (spec §12 #7) — stop and ask. | S | Low | — | Done |
 | L43-04 | `CARD_BAND_ABS_MIN_W` pagination floor **48**. Update `card-band-fit` tests: a narrow width paginates rather than shrinking to 24. Wide dock still fits a full hand without a pager. **Acceptance:** unit tests on `fitCardBand`; browser check in L48. | M | Medium | — | Done |
 | L43-05 | Turn strip: **?** (How to play) left, **flag** right. Dock is Draw + Shop (Stats when `readOnly`). Alive flag → Stay / Forfeit (“Leave the game? That counts as a forfeit.”). Spectator flag → Stay / Leave (“Leave the table?”). Esc / overlay = Stay. Flag hidden on finished board. **Acceptance:** first flag click does not disconnect. | S | Low | L43-02 | Done |
-| L43-06 | Forfeit sends `FORFEIT`; client **does not** call `leaveGame()` until Game over **Return home**. Server applies existing consented-leave elimination while keeping the forfeiting socket. 2p → `phase: 'finished'` for that client. **Acceptance:** tests: forfeit in 2p yields finished view to the leaver; they can open Feedback; Return home then disconnects. **Watch point:** today’s `leaveGame()` path is the bug — do not reuse it for Forfeit. | M | **High** | L41-02, L43-05 | To do |
+| L43-06 | Forfeit sends `FORFEIT` and **keeps the socket**. Server applies consented-leave elim without `leave` / live-socket reject. 2p → `phase: 'finished'` for the forfeiter. 3p+ spectator may `leaveGame()` whenever (designer override of spec §6.3). Game over Return home still `leaveGame()`. **Acceptance:** helper tests 2p sole survivor / 3p no survivor / already-elim no-op; client alive → forfeit, spectator → leaveGame, readOnly → flag hidden. Do not build Feedback. | M | **High** | L41-02, L43-05 | Done |
 
 ---
 

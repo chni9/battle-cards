@@ -36,6 +36,7 @@ import {
   START_GAME,
   STATE_UPDATE,
   TURN_STARTED,
+  FORFEIT,
   type ActionLogEntryView,
   type ActionPlayedPayload,
   type AddBotPayload,
@@ -150,6 +151,7 @@ import {
   shouldDisposeLobbyWithOnlyBots,
   shouldKeepRoomAlive,
 } from './last-human-leave';
+import { applyPlayingForfeit } from './playing-forfeit';
 import {
   createBotSeat,
   isBotSeat,
@@ -487,6 +489,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     [RESOLVE_SUB_CHOICE]: (client: GameClient, payload: unknown): void => {
       this.handleResolveSubChoice(client, payload);
     },
+
+    [FORFEIT]: (client: GameClient): void => {
+      this.handlePlayingForfeit(client);
+    },
   };
 
   override onJoin(client: GameClient, options: unknown): void {
@@ -658,6 +664,59 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.refreshAutoDispose();
 
     if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
+      this.clearTurnTimer();
+      advanceTurn(state);
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+      return;
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  /**
+   * FORFEIT while playing: same elim as consented leave, keep the live socket
+   * (L43-06 / technical spec v6 §6.3). Do not `leave` or reject the forfeiter.
+   */
+  private handlePlayingForfeit(client: GameClient): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const playerId = client.sessionId;
+    const result = applyPlayingForfeit(state, playerId);
+
+    if (!result.eliminated) {
+      return;
+    }
+
+    console.log(`[${this.roomId}] ${playerId} forfeit — stay connected`);
+    this.clearAbsentTimer(playerId);
+    this.recordElimination({
+      playerId,
+      eliminatorPlayerId: null,
+      reason: 'leave',
+    });
+
+    if (this.finishIfSoleSurvivor(state)) {
+      return;
+    }
+
+    if (state.subChoice?.kind === 'reanimation-kit') {
+      const kitChoice = state.subChoice;
+      const chooser = this.clients.find((entry) => entry.sessionId === kitChoice.playerId);
+      this.beginReanimationKitTimer(kitChoice, chooser);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    this.refreshAutoDispose();
+
+    if (state.currentTurnPlayerId === playerId && !this.actionTakenThisTurn) {
       this.clearTurnTimer();
       advanceTurn(state);
       this.actionTakenThisTurn = false;
