@@ -2348,3 +2348,22 @@ Technical spec v6 §7.2 names one `004_feedback_and_tutorial.sql` that also crea
 Feedback waits for L47-01 as `005_…`. Split chosen so Lot 41 does not create an unused
 feedback table. Spec already allows the filename to increment.
 
+## 2026-08-20 · [P] Lot 42 How to play rulings (designer session)
+
+Locked for L42-01–04. Does not change Classic rules.
+
+- **Tutorial button:** hide until L45-04. Do not show a disabled control or “Coming in
+  Tutorial lot”. Modes copy in How to play still names tutorial (spec §5.1).
+- **Soft gate moment:** first **hub** Play online / Play solo click (before nickname), not
+  Create / Join / Start solo. Skip / Got it then continue into that path. Join stays on the
+  online form after the gate. Tutorial uses the same helper when L45-04 adds the button.
+- **Esc / overlay during a gate:** same as Skip — set `card-battle.v6.howToPlaySeen` and
+  continue. Manual (non-gate) open: Skip / Got it set the key; Esc / overlay only close.
+- **Skip and Got it** both appear on hub, table, and gate opens.
+- **Primer copy:** spec §5.1 must-say only. No extra Mirror / bluff lines.
+- **Idle hub:** do not show “Not connected”; leave idle unlabeled. Connecting / error /
+  “Starting solo game…” unchanged.
+- **Protocol version on the hub:** tiny footer, not a tooltip (touch has no hover).
+- **Table How to play:** full `Button` on the economy bar; does not gate actions.
+- **Screenshots** remain designer-owned; missing files omit `<img>`.
+
