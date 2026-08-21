@@ -92,14 +92,17 @@ rules above are unchanged — this section only covers how the client looks.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
-  + point `CostDisplay` + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
+  + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
+  icon) + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
   public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
-  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached), the shared-card
+  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
+  `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
   grid + Buy special, and the pool. Turn strip: **?** (How to play) left of timers, **flag**
-  right (inline SVG, `aria-label` Forfeit / Leave table). Alive flag opens Stay / Forfeit
+  right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
-  (“Leave the table?”). Esc / overlay = Stay. Flag is hidden on the `readOnly` finished board;
-  Game over **Return home** stays. Stats stays on the dock when `readOnly`. Lobby Leave is
+  (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
+  2026-08-21 follow-up — the flag stays on inspect; Game over **Return home** also stays).
+  Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
@@ -131,8 +134,9 @@ rules above are unchanged — this section only covers how the client looks.
   Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
   intents/payloads as V1. Shop dialog thumbs use upgraded art when the seat's kit
   `alwaysUpgraded` covers that card (purchase arrives upgraded). Card dialog **Upgrade**
-  shows `CostDisplay { kind: 'upgradePoint', amount: 1 }`; **Sell** shows catalog
-  `sellYield`.
+  shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
+  green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
+  Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
 - **Mirror sub-choice labels:** pending attack options show
   `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
@@ -162,8 +166,10 @@ rules above are unchanged — this section only covers how the client looks.
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
-    buy / rewards / Sentence expiry). How-to-play, kit lore, and action-log prose stay text
-    via `formatCardCost`.
+    buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
+    How-to-play, kit lore, and action-log prose stay text
+    via `formatCardCost`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
@@ -179,7 +185,7 @@ rules above are unchanged — this section only covers how the client looks.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
-  and Game over **Return home** call `leaveGame()`. Unexpected drop shows
+  and finished-board **Return home** (flag or Game over) call `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
@@ -201,7 +207,8 @@ rules above are unchanged — this section only covers how the client looks.
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
-  Flag is hidden; Return home via `leaveGame()` on Game over. No kits on the finished seat list
+  Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
+  No kits on the finished seat list
   itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
@@ -408,4 +415,6 @@ do not hand off an untested lot.
 - **3p** room `WA1I2N` (HostA vs 2 bots): Forfeit stays connected as spectator (Eliminated
   banner; bots keep playing); second flag is **Leave the table?** (not forfeit copy); Leave
   returns to the hub with no Game over dialog.
+- Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
+  green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.

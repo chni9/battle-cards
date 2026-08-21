@@ -1,5 +1,5 @@
 /**
- * Stay / Forfeit and spectator Stay / Leave confirms — L43-05.
+ * Stay / Forfeit, spectator Stay / Leave, and finished Stay / Return home confirms.
  * Esc / overlay = Stay. First flag click only opens this dialog.
  */
 
@@ -13,6 +13,9 @@ import {
   FORFEIT_CONFIRM_TITLE,
   LEAVE_TABLE_ACTION_LABEL,
   LEAVE_TABLE_CONFIRM_TITLE,
+  RETURN_HOME_ACTION_LABEL,
+  RETURN_HOME_CONFIRM_BODY,
+  RETURN_HOME_CONFIRM_TITLE,
   STAY_LABEL,
 } from './table-copy';
 import type { TableFlagIntent } from './table-flag-intent';
@@ -21,6 +24,32 @@ export interface TableLeaveConfirmProps {
   intent: Exclude<TableFlagIntent, 'hidden'> | null;
   onStay: () => void;
   onConfirm: () => void;
+}
+
+function confirmChrome(intent: Exclude<TableFlagIntent, 'hidden'>): {
+  title: string;
+  body: string | null;
+  confirm: string;
+} {
+  if (intent === 'forfeit') {
+    return {
+      title: FORFEIT_CONFIRM_TITLE,
+      body: FORFEIT_CONFIRM_BODY,
+      confirm: FORFEIT_ACTION_LABEL,
+    };
+  }
+  if (intent === 'leaveTable') {
+    return {
+      title: LEAVE_TABLE_CONFIRM_TITLE,
+      body: null,
+      confirm: LEAVE_TABLE_ACTION_LABEL,
+    };
+  }
+  return {
+    title: RETURN_HOME_CONFIRM_TITLE,
+    body: RETURN_HOME_CONFIRM_BODY,
+    confirm: RETURN_HOME_ACTION_LABEL,
+  };
 }
 
 export function TableLeaveConfirm({
@@ -32,12 +61,12 @@ export function TableLeaveConfirm({
     return null;
   }
 
-  const isForfeit = intent === 'forfeit';
+  const chrome = confirmChrome(intent);
 
   return (
     <Dialog
       open
-      title={isForfeit ? FORFEIT_CONFIRM_TITLE : LEAVE_TABLE_CONFIRM_TITLE}
+      title={chrome.title}
       onClose={onStay}
       actions={
         <>
@@ -45,15 +74,15 @@ export function TableLeaveConfirm({
             {STAY_LABEL}
           </Button>
           <Button variant="red" onClick={onConfirm}>
-            {isForfeit ? FORFEIT_ACTION_LABEL : LEAVE_TABLE_ACTION_LABEL}
+            {chrome.confirm}
           </Button>
         </>
       }
     >
-      {isForfeit ? (
-        <p className="text-sm text-ink">{FORFEIT_CONFIRM_BODY}</p>
+      {chrome.body !== null ? (
+        <p className="text-sm text-ink">{chrome.body}</p>
       ) : (
-        <p className="sr-only">{LEAVE_TABLE_CONFIRM_TITLE}</p>
+        <p className="sr-only">{chrome.title}</p>
       )}
     </Dialog>
   );

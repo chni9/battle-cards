@@ -15,6 +15,10 @@ import {
   LEAVE_TABLE_ACTION_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
   LEAVE_TABLE_CONFIRM_TITLE,
+  RETURN_HOME_ACTION_LABEL,
+  RETURN_HOME_ARIA_LABEL,
+  RETURN_HOME_CONFIRM_BODY,
+  RETURN_HOME_CONFIRM_TITLE,
   SHOP_PRICE_BLURB,
   STAY_LABEL,
 } from './table-copy';
@@ -39,6 +43,10 @@ describe('table leave chrome copy (L43-05)', () => {
     expect(LEAVE_TABLE_ACTION_LABEL).toBe('Leave');
     expect(FORFEIT_ARIA_LABEL).toBe('Forfeit');
     expect(LEAVE_TABLE_ARIA_LABEL).toBe('Leave table');
+    expect(RETURN_HOME_ARIA_LABEL).toBe('Return home');
+    expect(RETURN_HOME_ACTION_LABEL).toBe('Return home');
+    expect(RETURN_HOME_CONFIRM_TITLE).toBe('Return home?');
+    expect(RETURN_HOME_CONFIRM_BODY).toContain('home screen');
     expect(HOW_TO_PLAY_ARIA_LABEL).toBe('How to play');
   });
 });

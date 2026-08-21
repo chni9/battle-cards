@@ -13,9 +13,14 @@ export const SHOP_PRICE_BLURB =
 export const HOW_TO_PLAY_ARIA_LABEL = 'How to play';
 export const FORFEIT_ARIA_LABEL = 'Forfeit';
 export const LEAVE_TABLE_ARIA_LABEL = 'Leave table';
+export const RETURN_HOME_ARIA_LABEL = 'Return home';
 export const STAY_LABEL = 'Stay';
 export const FORFEIT_ACTION_LABEL = 'Forfeit';
 export const LEAVE_TABLE_ACTION_LABEL = 'Leave';
+export const RETURN_HOME_ACTION_LABEL = 'Return home';
 export const FORFEIT_CONFIRM_TITLE = 'Leave the game?';
 export const FORFEIT_CONFIRM_BODY = 'That counts as a forfeit.';
 export const LEAVE_TABLE_CONFIRM_TITLE = 'Leave the table?';
+export const RETURN_HOME_CONFIRM_TITLE = 'Return home?';
+export const RETURN_HOME_CONFIRM_BODY =
+  'Leave this finished game and go back to the home screen.';

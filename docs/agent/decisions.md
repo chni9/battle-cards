@@ -2400,6 +2400,14 @@ Stay / Leave (“Leave the table?”). Esc / overlay = Stay. Flag hidden on the 
 `readOnly` board; Game over Return home unchanged. Lobby Leave still disconnects
 immediately. Until L43-06, confirming Forfeit still calls `leaveGame()`.
 
+## 2026-08-21 · [P] Finished inspect keeps Return home flag
+
+Designer 2026-08-21 follow-up after Lot 43: hiding the flag on the `readOnly` board left no
+way home once Game over was dismissed. Flag on finished inspect is **Return home**
+(`leaveGame()`), not forfeit copy. Game over Return home unchanged. Draw CTA is **green**
+(point icon failed on yellow). Sell CTA is **green** (life / point icons failed on orange).
+Buy / Upgrade stay orange. Interactive `CostDisplay` prefixes **−** (pay) or **+** (receive).
+
 ## 2026-08-21 · [P] L43-06 FORFEIT keeps the socket
 
 Designer 2026-08-21 overrides spec §6.3 “stay until Game over Return home” for 3p+

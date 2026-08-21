@@ -12,7 +12,24 @@ export type StructuredCost =
   | { kind: 'pointsPerLife'; amount: number }
   | { kind: 'upgradePoint'; amount: number };
 
-export function spokenCost(cost: StructuredCost, multiplier: number | undefined): string {
+/** Pay (`−`) vs receive (`+`) on interactive cost chrome. */
+export type CostSign = 'cost' | 'gain';
+
+export function costSignGlyph(signed: CostSign | undefined): string {
+  if (signed === 'cost') {
+    return '−';
+  }
+  if (signed === 'gain') {
+    return '+';
+  }
+  return '';
+}
+
+export function spokenCost(
+  cost: StructuredCost,
+  multiplier: number | undefined,
+  signed?: CostSign,
+): string {
   const base =
     cost.kind === 'points'
       ? formatCardCost({ points: cost.amount })
@@ -22,10 +39,13 @@ export function spokenCost(cost: StructuredCost, multiplier: number | undefined)
           ? formatCardCost({ pointsPerLife: cost.amount })
           : `${String(cost.amount)} ${cost.amount === 1 ? 'upgrade point' : 'upgrade points'}`;
 
+  const signedBase =
+    signed === 'cost' ? `minus ${base}` : signed === 'gain' ? `plus ${base}` : base;
+
   if (multiplier !== undefined && multiplier !== 1) {
-    return `${String(multiplier)}×${base}`;
+    return `${String(multiplier)}×${signedBase}`;
   }
-  return base;
+  return signedBase;
 }
 
 /** Map a catalog `CardCost` to a structured icon cost, or null when empty. */
@@ -62,9 +82,12 @@ export function structuredPlayCost(card: Card, isUpgraded: boolean): StructuredC
 }
 
 /** Spoken string for aria-label (keeps native control labels textual). */
-export function costAriaLabel(cost: StructuredCost | null): string {
+export function costAriaLabel(cost: StructuredCost | null, signed?: CostSign): string {
   if (cost === null) {
     return '';
   }
-  return spokenCost(cost, undefined);
+  if (signed === undefined) {
+    return spokenCost(cost, undefined);
+  }
+  return spokenCost(cost, undefined, signed);
 }

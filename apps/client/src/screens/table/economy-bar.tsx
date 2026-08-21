@@ -1,6 +1,7 @@
 /**
  * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05.
  * Draw + Shop. Stats only on a finished board (`readOnly`).
+ * Draw is green so the point icon is not yellow-on-yellow.
  */
 
 import type { ReactElement } from 'react';
@@ -34,9 +35,13 @@ export function EconomyBar({
       data-zone="economy-bar"
       className="flex flex-wrap items-center gap-1 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1 sm:gap-2 sm:p-1.5"
     >
-      <Button variant="yellow" disabled={disabled} onClick={onDraw}>
+      <Button variant="green" disabled={disabled} onClick={onDraw}>
         {DRAW_ACTION_LABEL}{' '}
-        <CostDisplay cost={{ kind: 'points', amount: drawValue }} className="text-inherit" />
+        <CostDisplay
+          cost={{ kind: 'points', amount: drawValue }}
+          signed="gain"
+          className="text-inherit"
+        />
       </Button>
       <Button variant="orange" onClick={onOpenShop}>
         {SHOP_ACTION_LABEL}

@@ -58,8 +58,13 @@ import {
   FORFEIT_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
+  RETURN_HOME_ARIA_LABEL,
 } from './table/table-copy';
-import { tableFlagIntent, type TableFlagIntent } from './table/table-flag-intent';
+import {
+  tableFlagAriaLabel,
+  tableFlagIntent,
+  type TableFlagIntent,
+} from './table/table-flag-intent';
 import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
@@ -314,6 +319,11 @@ function TableScreenInner({
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
   const flagIntent = tableFlagIntent({ readOnly, selfEliminated });
+  const flagAria = tableFlagAriaLabel(flagIntent, {
+    forfeit: FORFEIT_ARIA_LABEL,
+    leaveTable: LEAVE_TABLE_ARIA_LABEL,
+    returnHome: RETURN_HOME_ARIA_LABEL,
+  });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
@@ -529,11 +539,9 @@ function TableScreenInner({
                 {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
               />
             </div>
-            {flagIntent !== 'hidden' ? (
+            {flagAria !== null && flagIntent !== 'hidden' ? (
               <IconButton
-                aria-label={
-                  flagIntent === 'forfeit' ? FORFEIT_ARIA_LABEL : LEAVE_TABLE_ARIA_LABEL
-                }
+                aria-label={flagAria}
                 onClick={() => {
                   setLeaveConfirm(flagIntent);
                 }}
@@ -548,7 +556,8 @@ function TableScreenInner({
             <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Game over</h2>
               <p className="mt-0.5 text-xs text-ink-muted">
-                Inspect the final board. Open Stats for the recap, or Return home when done.
+                Inspect the final board. Open Stats for the recap, or use the flag to
+                return home.
               </p>
             </section>
           ) : selfEliminated ? (

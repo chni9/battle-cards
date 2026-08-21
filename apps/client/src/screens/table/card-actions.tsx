@@ -172,7 +172,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 {actionPlayCost !== null ? (
                   <>
                     Use{' '}
-                    <CostDisplay cost={actionPlayCost} className="text-inherit" />
+                    <CostDisplay
+                      cost={actionPlayCost}
+                      signed="cost"
+                      className="text-inherit"
+                    />
                   </>
                 ) : (
                   'Use'
@@ -190,13 +194,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   {CARD_UPGRADE_LABEL}{' '}
                   <CostDisplay
                     cost={{ kind: 'upgradePoint', amount: 1 }}
+                    signed="cost"
                     className="text-inherit"
                   />
                 </Button>
               )}
               {!fromSpecial && (
                 <Button
-                  variant="orange"
+                  variant="green"
                   disabled={!isMyTurn || actionsLocked}
                   onClick={() => {
                     onSellCard(actionInstance.instanceId);
@@ -207,7 +212,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   {actionSellCost !== null ? (
                     <>
                       {' '}
-                      <CostDisplay cost={actionSellCost} className="text-inherit" />
+                      <CostDisplay
+                        cost={actionSellCost}
+                        signed="gain"
+                        className="text-inherit"
+                      />
                     </>
                   ) : null}
                 </Button>

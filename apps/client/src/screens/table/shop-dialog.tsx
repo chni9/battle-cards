@@ -111,7 +111,11 @@ export function ShopDialog({
             }}
           >
             {BUY_SPECIAL_LABEL}{' '}
-            <CostDisplay cost={{ kind: 'points', amount: 20 }} className="text-inherit" />
+            <CostDisplay
+              cost={{ kind: 'points', amount: 20 }}
+              signed="cost"
+              className="text-inherit"
+            />
           </Button>
           <Button
             variant="orange"
@@ -140,17 +144,19 @@ export function ShopDialog({
             {BUY_UPGRADE_POINT_LABEL}{' '}
             <CostDisplay
               cost={{ kind: 'points', amount: buyUpgradeCost }}
+              signed="cost"
               className="text-inherit"
             />
           </Button>
           <Button
-            variant="orange"
+            variant="green"
             disabled={disabled || view.self.upgradePoints < 1}
             onClick={onSellUpgradePoint}
           >
             {SELL_UPGRADE_POINT_LABEL}{' '}
             <CostDisplay
               cost={{ kind: 'points', amount: sellUpgradeYield }}
+              signed="gain"
               className="text-inherit"
             />
           </Button>
@@ -161,14 +167,14 @@ export function ShopDialog({
         <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_CARDS}</h3>
         <p className="mt-1 flex flex-wrap items-center gap-1 text-sm text-ink-muted">
           <span>{SHOP_PRICE_BLURB}</span>
-          {shopBlurbCost !== null ? <CostDisplay cost={shopBlurbCost} /> : null}
+          {shopBlurbCost !== null ? <CostDisplay cost={shopBlurbCost} signed="cost" /> : null}
         </p>
         <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {SHARED_CARD_IDS.map((id) => {
             const definition = getCard(id);
             const name = definition?.name ?? id;
             const shopCost = structuredCostFromCardCost(definition?.buyCost);
-            const priceSpoken = costAriaLabel(shopCost);
+            const priceSpoken = costAriaLabel(shopCost, 'cost');
             const affordable = canAffordSharedBuy(view, id);
             const selected = buyCardId === id;
             const shopUpgraded = alwaysUpgradedIds.includes(id);
@@ -219,7 +225,7 @@ export function ShopDialog({
                       affordable ? 'text-ink' : 'text-ink-muted',
                     ].join(' ')}
                   >
-                    {shopCost !== null ? <CostDisplay cost={shopCost} /> : '—'}
+                    {shopCost !== null ? <CostDisplay cost={shopCost} signed="cost" /> : '—'}
                   </span>
                 </button>
               </li>
