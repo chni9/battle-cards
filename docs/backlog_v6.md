@@ -60,13 +60,13 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-10 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+11 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 41 · Protocol + governance | 5 | 5 |
 | 42 · How to play | 4 | 4 |
-| 43 · Table readability | 6 | 1 |
+| 43 · Table readability | 6 | 2 |
 | 44 · Visual pickers | 6 | 0 |
 | 45 · Tutorial | 7 | 0 |
 | 46 · First-game hints | 3 | 0 |
@@ -107,7 +107,7 @@ Nothing in Lots 45–46 may start before L41-03. L43-06 needs L41-02 types.
 | L43-01 | Resource row: visible captions (Lives, Points, Upgrade points, Shield) next to icons — not `sr-only` / `title` only. **Acceptance:** captions present in the dock DOM (not only `title=`). | S | Low | — | Done |
 | L43-02 | `CostDisplay` on Buy/Sell upgrade-point buttons, card dialog Upgrade and Sell (yield), Buy special. **No `UP` substring** in economy-bar / those button labels (test). Action log may still say “upgrade point”. **Acceptance:** grep/test on those components; play cost already on Use (L39-04) stays. | M | Low | — | To do |
 | L43-03 | Copy: opponent unspied label **Hidden kit**; felt queue **Waiting on others**; shop blurb uses “double the play cost” + CostDisplay, not “base play cost”. **Acceptance:** strings updated; How to play §5.1 stays the longer explanation. **Watch point:** if `actionResolved` has no equal-cancel vs stronger-prevails discriminant, do **not** invent cancel-why copy (spec §12 #7) — stop and ask. | S | Low | — | To do |
-| L43-04 | `CARD_BAND_ABS_MIN_W` pagination floor **48**. Update `card-band-fit` tests: a narrow width paginates rather than shrinking to 24. Wide dock still fits a full hand without a pager. **Acceptance:** unit tests on `fitCardBand`; browser check in L48. | M | Medium | — | To do |
+| L43-04 | `CARD_BAND_ABS_MIN_W` pagination floor **48**. Update `card-band-fit` tests: a narrow width paginates rather than shrinking to 24. Wide dock still fits a full hand without a pager. **Acceptance:** unit tests on `fitCardBand`; browser check in L48. | M | Medium | — | Done |
 | L43-05 | Table Leave → confirm Dialog (“Leave the game? That counts as a forfeit.” Stay / Forfeit). Stay closes the dialog. **Acceptance:** no immediate disconnect on the first Leave click. | S | Low | — | To do |
 | L43-06 | Forfeit sends `FORFEIT`; client **does not** call `leaveGame()` until Game over **Return home**. Server applies existing consented-leave elimination while keeping the forfeiting socket. 2p → `phase: 'finished'` for that client. **Acceptance:** tests: forfeit in 2p yields finished view to the leaver; they can open Feedback; Return home then disconnects. **Watch point:** today’s `leaveGame()` path is the bug — do not reuse it for Forfeit. | M | **High** | L41-02, L43-05 | To do |
 

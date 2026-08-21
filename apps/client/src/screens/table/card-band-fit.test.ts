@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CARD_BAND_ABS_MIN_W,
+  CARD_BAND_MAX_W,
   faceCardHeight,
   fitCardBand,
   maxWidthForRowHeight,
@@ -13,18 +15,25 @@ describe('fitCardBand', () => {
     expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(height + 0.5);
   });
 
-  it('shrinks below preferred min instead of cropping', () => {
+  it('shrinks below 48 when height cannot fit a full face (no crop)', () => {
     const fit = fitCardBand(6, 300, 55);
     expect(fit.pageSize).toBe(6);
-    expect(fit.cardWidth).toBeLessThan(40);
+    expect(fit.cardWidth).toBeLessThan(CARD_BAND_ABS_MIN_W);
     expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(55 + 0.5);
   });
 
-  it('fits a small hand on one row when space allows', () => {
+  it('fits a small hand on one row when the dock is wide', () => {
     const fit = fitCardBand(4, 400, 140);
     expect(fit.pageSize).toBe(4);
-    expect(fit.cardWidth).toBeGreaterThanOrEqual(40);
-    expect(fit.cardWidth).toBeLessThanOrEqual(72);
+    expect(fit.cardWidth).toBeGreaterThanOrEqual(CARD_BAND_ABS_MIN_W);
+    expect(fit.cardWidth).toBeLessThanOrEqual(CARD_BAND_MAX_W);
+  });
+
+  it('paginates a narrow width rather than shrinking toward 24', () => {
+    const fit = fitCardBand(8, 120, 180);
+    expect(fit.pageSize).toBeLessThan(8);
+    expect(fit.cardWidth).toBeGreaterThanOrEqual(CARD_BAND_ABS_MIN_W - 0.01);
+    expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(180 + 0.5);
   });
 
   it('paginates when even tiny faces cannot fit all cards', () => {

@@ -111,7 +111,8 @@ rules above are unchanged — this section only covers how the client looks.
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
   shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
-  without overflow; paginates only when even 2 rows at min width cannot hold the pile.
+  without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
+  Short docks may still shrink below 48 so faces are not cropped.
 - **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
   `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the

@@ -2367,3 +2367,10 @@ Locked for L42-01–04. Does not change Classic rules.
 - **Table How to play:** full `Button` on the economy bar; does not gate actions.
 - **Screenshots** remain designer-owned; missing files omit `<img>`.
 
+## 2026-08-21 · [P] L43-04 hand floor vs short dock height
+
+`CARD_BAND_ABS_MIN_W` is **48**. A 48px-wide face needs ~88px of row height (`faceCardHeight`).
+Designer 2026-08-21: paginate when **width** would shrink below 48; if **height** cannot fit
+a 48px face, still shrink (no crop). Preferred min is also 48. Wide docks still show a
+full hand without a pager. Phone playtest remains L48-02.
+
