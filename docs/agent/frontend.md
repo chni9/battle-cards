@@ -100,7 +100,8 @@ rules above are unchanged — this section only covers how the client looks.
   dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
   white seat slab). Pending effects targeting `view.you`
-  render in the private   zone (Incoming); effects on others stay on the felt strip — both strips size to show full
+  render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
+  on others**, L43-03) — both strips size to show full
   chips and scroll internally when many effects queue. Kit
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials

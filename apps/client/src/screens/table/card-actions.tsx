@@ -28,6 +28,7 @@ import { Dialog } from '../../design/components/dialog';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { cardEffectText } from './table-helpers';
+import { SHOP_PRICE_BLURB } from './table-copy';
 
 function canAffordSharedBuy(
   view: PlayingStateView,
@@ -115,6 +116,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(SHARED_CARD_IDS[0]);
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+  const selectedShopId = (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
+    ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
+    : SHARED_CARD_IDS[0];
+  const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
 
   const close = (): void => {
     setQuantityText('1');
@@ -630,8 +635,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
           </>
         }
       >
-        <p className="text-sm text-ink-muted">
-          Choose a shared card from the shop. Prices are double the base play cost.
+        <p className="flex flex-wrap items-center gap-1 text-sm text-ink-muted">
+          <span>{SHOP_PRICE_BLURB}</span>
+          {shopBlurbCost !== null ? <CostDisplay cost={shopBlurbCost} /> : null}
         </p>
         <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {SHARED_CARD_IDS.map((id) => {

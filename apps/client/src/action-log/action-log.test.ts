@@ -107,6 +107,43 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
+  it('does not invent equal-cancel vs stronger-prevails copy (L43-03)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-cancel',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'cancelled',
+          turnSequence: 2,
+        },
+        nick,
+      ),
+    ).toBe("Basic attack from Alice against Bob is cancelled");
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-cancel',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'cancelled',
+          turnSequence: 2,
+        },
+        nick,
+      ),
+    ).not.toMatch(/equal|stronger|prevail/i);
+  });
+
   it('marks upgraded cards with a + suffix', () => {
     expect(
       formatActionLogEntry(

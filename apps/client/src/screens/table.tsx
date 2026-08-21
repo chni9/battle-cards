@@ -51,6 +51,7 @@ import { PrivateZone } from './table/private-zone';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import { TableShell } from './table/table-shell';
+import { FELT_QUEUE_TITLE } from './table/table-copy';
 import { Timers } from './table/timers';
 import { YourTurnFlash } from './table/your-turn-flash';
 
@@ -540,7 +541,7 @@ function TableScreenInner({
           <PendingQueue
             view={view}
             effects={othersPending}
-            title="Pending on others"
+            title={FELT_QUEUE_TITLE}
             compact
             tone="felt"
             highlightedIds={mirrorHighlightIds}

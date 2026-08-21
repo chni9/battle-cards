@@ -2374,3 +2374,11 @@ Designer 2026-08-21: paginate when **width** would shrink below 48; if **height*
 a 48px face, still shrink (no crop). Preferred min is also 48. Wide docks still show a
 full hand without a pager. Phone playtest remains L48-02.
 
+## 2026-08-21 · [P] L43-03 no cancel-why copy
+
+`actionResolved.outcome` is `'applied' | 'immune' | 'cancelled' | 'blocked'` (L4-03).
+There is no equal-cancel vs stronger-prevails discriminant on the wire. Designer
+2026-08-21 / spec §12 #7: keep action-log copy **“is cancelled”**. Do not invent why-copy
+and do not add a protocol field (V6 already used its only bump in L41-02). Coach copy at
+tutorial index 3 still explains equal cancel when Lot 45 lands.
+
