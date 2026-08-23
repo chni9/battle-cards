@@ -34,7 +34,7 @@ A card that inflicts a direct effect on an opponent — meaning it alters their 
 
 ### Kits
 
-Each kit corresponds to a unique card. 15 kits currently exist: 14 finalized and the Duplicator, in testing. Each player's kit is randomly assigned at the start of the game.
+Each kit corresponds to a unique card. 15 kits currently exist: 14 finalized and the Duplicator, in testing. In the lobby, each player may choose a kit (or keep Random). The choice stays hidden from opponents. Seats that stay on Random receive a kit drawn at random at the start of the game. Duplicate kits across seats are allowed.
 
 ### Number of Players
 
@@ -224,7 +224,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Setup
 
-1. Each player receives a kit, drawn at random (section 4).
+1. Each player receives a kit: the kit they chose in the lobby, or a random draw (section 4) if they kept Random.
 2. Each player receives their kit's starting resources (lives, points, upgrade points).
 3. Each player receives their starting attack and action cards, drawn at random according to their kit's quantities (duplicates possible, section 4).
 4. Each player receives their kit's special cards.

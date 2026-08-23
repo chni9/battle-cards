@@ -52,6 +52,8 @@ export const SUB_CHOICE_REQUIRED = 'subChoiceRequired';
 export const RESOLVE_SUB_CHOICE = 'resolveSubChoice';
 /** PROTOCOL_VERSION 29 / L41-02 — types only until L43-06. Payload `undefined`. */
 export const FORFEIT = 'forfeit';
+/** PROTOCOL_VERSION 30 / L49-01 — lobby kit pick; payload `ChooseKitPayload`. */
+export const CHOOSE_KIT = 'chooseKit';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -250,6 +252,11 @@ export interface SetBotDifficultyPayload {
   difficulty: BotDifficulty;
 }
 
+/** Lobby kit pick — PROTOCOL_VERSION 30 / L49-01. `kitId: 'random'` restores the default. */
+export interface ChooseKitPayload {
+  kitId: KitId | 'random';
+}
+
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
   /** PROTOCOL_VERSION 27 — typed reject code + short English fallback message. */
@@ -280,6 +287,7 @@ export interface ClientToServerMessages {
   [ADD_BOT]: AddBotPayload;
   [REMOVE_BOT]: RemoveBotPayload;
   [SET_BOT_DIFFICULTY]: SetBotDifficultyPayload;
+  [CHOOSE_KIT]: ChooseKitPayload;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
   [PLAY_MULTIPLE_ATTACKS]: PlayMultipleAttacksPayload;

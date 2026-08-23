@@ -9,6 +9,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -38,6 +39,7 @@ import {
   type BotDifficulty,
   type CardId,
   type GameOverPayload,
+  type LobbyKitSelection,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
   type ResolveSubChoicePayload,
@@ -122,6 +124,7 @@ export interface StartSoloGameOptions {
   nickname: string;
   opponentCount: 1 | 2 | 3;
   difficulty: BotDifficulty;
+  kitSelection?: LobbyKitSelection;
 }
 
 const INITIAL: RoomConnection = {
@@ -150,6 +153,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   addBot: (difficulty: BotDifficulty) => void;
   removeBot: (playerId: string) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
+  chooseKit: (selection: LobbyKitSelection) => void;
   drawCard: () => void;
   playCard: (instanceId: string, options?: PlayCardOptions) => void;
   playMultipleAttacks: (
@@ -449,6 +453,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     [],
   );
 
+  const chooseKit = useCallback((selection: LobbyKitSelection): void => {
+    roomRef.current?.send(CHOOSE_KIT, { kitId: selection });
+  }, []);
+
   const startSoloGame = useCallback(
     async (options: StartSoloGameOptions): Promise<void> => {
       intentionalLeaveRef.current = true;
@@ -467,6 +475,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
       try {
         const room = await client.create(GAME_ROOM_NAME, joinOptions);
         attachRoom(room);
+
+        if (options.kitSelection !== undefined && options.kitSelection !== 'random') {
+          room.send(CHOOSE_KIT, { kitId: options.kitSelection });
+        }
 
         for (let index = 0; index < options.opponentCount; index += 1) {
           room.send(ADD_BOT, { difficulty: options.difficulty });
@@ -561,6 +573,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     addBot,
     removeBot,
     setBotDifficulty,
+    chooseKit,
     drawCard,
     playCard,
     playMultipleAttacks,

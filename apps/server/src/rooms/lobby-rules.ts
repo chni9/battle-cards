@@ -7,7 +7,15 @@
  * ActionRejectCode via the *RejectionMessage helpers (L32-01 / PROTOCOL 27).
  */
 
-import { actionReject, type ActionReject } from '@card-battle/shared';
+import {
+  actionReject,
+  isKitId,
+  type ActionReject,
+  type ActionRejectCode,
+  type ChooseKitPayload,
+  type KitId,
+  type LobbyKitSelection,
+} from '@card-battle/shared';
 
 export const MAX_PLAYERS = 4;
 export const MIN_PLAYERS_TO_START = 2;
@@ -30,6 +38,8 @@ export type SetBotDifficultyRejection =
   | 'already-started'
   | 'unknown-bot'
   | 'target-is-human';
+
+export type ChooseKitRejection = 'already-started';
 
 export function canStartGame(input: {
   requesterSessionId: string;
@@ -173,4 +183,65 @@ export function setBotDifficultyRejectionMessage(
     case 'target-is-human':
       return actionReject('set-bot-difficulty-target-is-human');
   }
+}
+
+export function canChooseKit(input: { hasStarted: boolean }): ChooseKitRejection | null {
+  if (input.hasStarted) {
+    return 'already-started';
+  }
+
+  return null;
+}
+
+export function chooseKitRejectionMessage(reason: ChooseKitRejection): ActionReject {
+  const codes = {
+    'already-started': 'choose-kit-already-started',
+  } as const satisfies Record<ChooseKitRejection, ActionRejectCode>;
+  return actionReject(codes[reason]);
+}
+
+/**
+ * Parse `chooseKit` — PROTOCOL_VERSION 30 / L49-01.
+ * Distinguishes a malformed payload from an unknown kit id.
+ */
+export function parseChooseKitPayload(
+  payload: unknown,
+): { ok: true; value: ChooseKitPayload } | { ok: false; code: ActionRejectCode } {
+  if (typeof payload !== 'object' || payload === null || !('kitId' in payload)) {
+    return { ok: false, code: 'invalid-choose-kit-payload' };
+  }
+
+  const { kitId } = payload;
+
+  if (typeof kitId !== 'string') {
+    return { ok: false, code: 'invalid-choose-kit-payload' };
+  }
+
+  if (kitId === 'random') {
+    return { ok: true, value: { kitId: 'random' } };
+  }
+
+  if (!isKitId(kitId)) {
+    return { ok: false, code: 'kit-unavailable' };
+  }
+
+  return { ok: true, value: { kitId } };
+}
+
+/**
+ * Seats that picked a catalog kit. Empty / all-random → `undefined` so
+ * `createInitialState` keeps the seeded random-with-replacement path.
+ */
+export function collectForcedKitsBySeatId(
+  selections: ReadonlyMap<string, LobbyKitSelection>,
+): ReadonlyMap<string, KitId> | undefined {
+  const forced = new Map<string, KitId>();
+
+  for (const [seatId, selection] of selections) {
+    if (selection !== 'random') {
+      forced.set(seatId, selection);
+    }
+  }
+
+  return forced.size === 0 ? undefined : forced;
 }

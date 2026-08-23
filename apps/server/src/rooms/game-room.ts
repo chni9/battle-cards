@@ -15,6 +15,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -57,6 +58,7 @@ import {
   type EliminationReason,
   type GameState,
   type LobbySeatView,
+  type LobbyKitSelection,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
   type RemoveBotPayload,
@@ -139,10 +141,14 @@ import {
 import {
   addBotRejectionMessage,
   canAddBot,
+  canChooseKit,
   canRemoveBot,
   canSetBotDifficulty,
   canStartGame,
+  chooseKitRejectionMessage,
+  collectForcedKitsBySeatId,
   MAX_PLAYERS,
+  parseChooseKitPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
   startGameRejectionMessage,
@@ -180,6 +186,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private seats: Seat[] = [];
   private hostSessionId: string | null = null;
   private hasStarted = false;
+  /** Human lobby kit picks — never copied onto other seats' views (L49-01). */
+  private readonly kitSelections = new Map<string, LobbyKitSelection>();
   /** Room-owned teaching overlay — not on GameState (technical spec v6 §5.3 / L41-03). */
   private playKind: PlayKind = 'classic';
   private tutorialIndex: number | null = null;
@@ -357,9 +365,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.hasStarted = true;
       this.startedAtMs = Date.now();
       this.eliminations = [];
-      this.gameState = createInitialState({
-        seats: this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname })),
-      });
+      const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
+      const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
+      this.gameState = createInitialState(
+        forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
+      );
       this.actionTakenThisTurn = false;
       this.actionLog = [];
       void this.lock();
@@ -382,6 +392,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [SET_BOT_DIFFICULTY]: (client: GameClient, payload: unknown): void => {
       this.handleSetBotDifficulty(client, payload);
+    },
+
+    [CHOOSE_KIT]: (client: GameClient, payload: unknown): void => {
+      this.handleChooseKit(client, payload);
     },
 
     [DRAW_CARD]: (client: GameClient): void => {
@@ -591,6 +605,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
+    this.kitSelections.delete(client.sessionId);
 
     if (this.hostSessionId === client.sessionId) {
       this.hostSessionId = this.seats[0]?.sessionId ?? null;
@@ -840,6 +855,30 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     target.difficulty = parsed.difficulty;
     this.sendStateToEveryone();
+  }
+
+  private handleChooseKit(client: GameClient, payload: unknown): void {
+    const parsed = parseChooseKitPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const rejection = canChooseKit({ hasStarted: this.hasStarted });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, chooseKitRejectionMessage(rejection));
+      return;
+    }
+
+    if (!this.seats.some((seat) => seat.sessionId === client.sessionId && isHumanSeat(seat))) {
+      client.send(ERROR_MESSAGE, actionReject('unknown-player'));
+      return;
+    }
+
+    this.kitSelections.set(client.sessionId, parsed.value.kitId);
+    this.sendStateTo(client);
   }
 
   private handleAction(client: GameClient, action: TurnAction): void {
@@ -3056,6 +3095,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           gameCode: this.roomId,
           hostPlayerId,
           seats: this.seatViews(),
+          yourKitSelection: this.kitSelections.get(client.sessionId) ?? 'random',
         }),
       );
       return;

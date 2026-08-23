@@ -30,6 +30,7 @@ export function App() {
     addBot,
     removeBot,
     setBotDifficulty,
+    chooseKit,
     drawCard,
     playCard,
     playMultipleAttacks,
@@ -119,6 +120,7 @@ export function App() {
         onAddBot={addBot}
         onRemoveBot={removeBot}
         onSetBotDifficulty={setBotDifficulty}
+        onChooseKit={chooseKit}
       />
     );
   }
@@ -138,8 +140,8 @@ export function App() {
       onJoin={() => {
         void joinGame(joinCode, nickname);
       }}
-      onStartSolo={(opponentCount, difficulty) => {
-        void startSoloGame({ nickname, opponentCount, difficulty });
+      onStartSolo={(opponentCount, difficulty, kitSelection) => {
+        void startSoloGame({ nickname, opponentCount, difficulty, kitSelection });
       }}
     />
   );

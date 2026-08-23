@@ -92,6 +92,7 @@ export const ACTION_REJECT_CODES = [
   'invalid-add-bot-payload',
   'invalid-remove-bot-payload',
   'invalid-set-bot-difficulty-payload',
+  'invalid-choose-kit-payload',
 
   // Lobby (still sent on ERROR_MESSAGE)
   'start-not-host',
@@ -108,6 +109,7 @@ export const ACTION_REJECT_CODES = [
   'set-bot-difficulty-already-started',
   'set-bot-difficulty-unknown',
   'set-bot-difficulty-target-is-human',
+  'choose-kit-already-started',
 
   // Tutorial (PROTOCOL_VERSION 29 / L41-02)
   'tutorial-follow-coach',
@@ -195,6 +197,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'invalid-add-bot-payload': 'Invalid addBot payload.',
   'invalid-remove-bot-payload': 'Invalid removeBot payload.',
   'invalid-set-bot-difficulty-payload': 'Invalid setBotDifficulty payload.',
+  'invalid-choose-kit-payload': 'Invalid chooseKit payload.',
 
   'start-not-host': 'Only the host can start the game.',
   'start-already-started': 'The game has already started.',
@@ -210,6 +213,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'set-bot-difficulty-already-started': 'Cannot change bot difficulty after the game has started.',
   'set-bot-difficulty-unknown': 'That bot seat was not found.',
   'set-bot-difficulty-target-is-human': 'That seat is a human player, not a bot.',
+  'choose-kit-already-started': 'Cannot change kit after the game has started.',
 
   'tutorial-follow-coach': 'This tutorial step asks for a different action.',
   'tutorial-room-closed': 'This tutorial cannot be joined.',

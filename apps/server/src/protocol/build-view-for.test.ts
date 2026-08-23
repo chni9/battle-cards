@@ -16,6 +16,7 @@ describe('buildLobbyViewFor (L1-01)', () => {
       gameCode: 'ABCDEF',
       hostPlayerId: 'session-a',
       seats,
+      yourKitSelection: 'random',
     });
 
     expect(view.you).toBe('session-b');
@@ -29,6 +30,7 @@ describe('buildLobbyViewFor (L1-01)', () => {
         gameCode: 'ABCDEF',
         hostPlayerId: 'session-a',
         seats,
+        yourKitSelection: 'random',
       }),
     ).toThrow(/not in the room/);
   });
@@ -49,6 +51,7 @@ describe('buildLobbyViewFor (L1-01)', () => {
       gameCode: 'ABCDEF',
       hostPlayerId: 'session-a',
       seats: withBot,
+      yourKitSelection: 'random',
     });
 
     expect(view.players[1]).toMatchObject({
@@ -56,6 +59,34 @@ describe('buildLobbyViewFor (L1-01)', () => {
       isBot: true,
       botDifficulty: 'hard',
     });
+  });
+
+  it('includes only the recipient kit pick (L49-01)', () => {
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'session-a',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'assassin',
+    });
+
+    expect(view.yourKitSelection).toBe('assassin');
+    expect(view.players.every((seat) => !('kitId' in seat))).toBe(true);
+    expect(JSON.stringify(view.players)).not.toContain('assassin');
+  });
+
+  it('does not leak another seat kit id into the recipient view (L49-01)', () => {
+    const bobView = buildLobbyViewFor({
+      recipientSessionId: 'session-b',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+    });
+
+    expect(bobView.yourKitSelection).toBe('random');
+    expect(JSON.stringify(bobView)).not.toContain('assassin');
+    expect(JSON.stringify(bobView)).not.toContain('ghost');
   });
 });
 

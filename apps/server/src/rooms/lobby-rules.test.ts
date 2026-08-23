@@ -3,11 +3,15 @@ import { describe, expect, it } from 'vitest';
 import {
   addBotRejectionMessage,
   canAddBot,
+  canChooseKit,
   canRemoveBot,
   canSetBotDifficulty,
   canStartGame,
+  chooseKitRejectionMessage,
+  collectForcedKitsBySeatId,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
+  parseChooseKitPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
 } from './lobby-rules';
@@ -156,6 +160,55 @@ describe('bot lobby rules (L15-03)', () => {
     it('rejects when the target is a human seat', () => {
       expect(canSetBotDifficulty({ ...setBase, targetIsBot: false })).toBe('target-is-human');
       expect(setBotDifficultyRejectionMessage('target-is-human').message).toMatch(/human/);
+    });
+  });
+
+  describe('chooseKit (L49-01)', () => {
+    it('allows a pick while the lobby is open', () => {
+      expect(canChooseKit({ hasStarted: false })).toBeNull();
+    });
+
+    it('rejects a pick after start', () => {
+      expect(canChooseKit({ hasStarted: true })).toBe('already-started');
+      expect(chooseKitRejectionMessage('already-started').code).toBe('choose-kit-already-started');
+    });
+
+    it('parses a catalog kit and random', () => {
+      expect(parseChooseKitPayload({ kitId: 'assassin' })).toEqual({
+        ok: true,
+        value: { kitId: 'assassin' },
+      });
+      expect(parseChooseKitPayload({ kitId: 'random' })).toEqual({
+        ok: true,
+        value: { kitId: 'random' },
+      });
+    });
+
+    it('rejects a malformed payload and an unknown kit id', () => {
+      const missing = parseChooseKitPayload(undefined);
+      expect(missing).toEqual({ ok: false, code: 'invalid-choose-kit-payload' });
+      const badType = parseChooseKitPayload({ kitId: 3 });
+      expect(badType).toEqual({ ok: false, code: 'invalid-choose-kit-payload' });
+      expect(parseChooseKitPayload({ kitId: 'not-a-kit' })).toEqual({
+        ok: false,
+        code: 'kit-unavailable',
+      });
+    });
+
+    it('omits forced kits when every seat stayed random', () => {
+      const selections = new Map([
+        ['a', 'random' as const],
+        ['b', 'random' as const],
+      ]);
+      expect(collectForcedKitsBySeatId(selections)).toBeUndefined();
+    });
+
+    it('collects only catalog picks', () => {
+      const selections = new Map([
+        ['a', 'assassin' as const],
+        ['b', 'random' as const],
+      ]);
+      expect(collectForcedKitsBySeatId(selections)).toEqual(new Map([['a', 'assassin']]));
     });
   });
 });

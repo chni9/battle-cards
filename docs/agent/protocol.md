@@ -41,7 +41,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat, spies them, or is an eliminated spectator; Excel `exportLog` keeps the kit |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat, spies them, or is an eliminated spectator; Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
@@ -76,6 +76,8 @@ Client → server (technical spec §5.2):
 
 `createRoom` · `joinRoom` · `startGame` · `addBot` · `removeBot` · `setBotDifficulty`
 (host-only, lobby-only; PROTOCOL_VERSION 21) ·
+`chooseKit` (PROTOCOL_VERSION 30 / L49-01 — payload `{ kitId: KitId | 'random' }`;
+lobby-only; each human sets only their own pick; default `'random'`) ·
 `playCard` · `playMultipleAttacks` (Assassin only,
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
@@ -107,6 +109,8 @@ the same catalog; local lobby reason unions (`not-host`, …) remain for `canSta
 `canAddBot` gates. PROTOCOL_VERSION 29 adds `'tutorial-follow-coach'` and
 `'tutorial-room-closed'`. Join of a second human to a tutorial room throws `ServerError`
 with the latter message (L41-05); it is not an in-game `error` event.
+PROTOCOL_VERSION 30 adds `'choose-kit-already-started'` and `'invalid-choose-kit-payload'`
+(`'kit-unavailable'` covers an unknown catalog id).
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**

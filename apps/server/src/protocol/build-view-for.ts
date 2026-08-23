@@ -21,6 +21,7 @@ import type {
   GameExportLogView,
   GameRecapView,
   GameState,
+  LobbyKitSelection,
   LobbySeatView,
   LobbyStateView,
   PendingEffectView,
@@ -76,10 +77,12 @@ export interface LobbyViewInput {
   gameCode: string;
   hostPlayerId: string;
   seats: readonly LobbySeatView[];
+  /** Recipient's own pick only — never a map of every seat (L49-01). */
+  yourKitSelection: LobbyKitSelection;
 }
 
 export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
-  const { recipientSessionId, gameCode, hostPlayerId, seats } = input;
+  const { recipientSessionId, gameCode, hostPlayerId, seats, yourKitSelection } = input;
 
   if (!seats.some((seat) => seat.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
@@ -90,6 +93,7 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
     you: recipientSessionId,
     gameCode,
     hostPlayerId,
+    yourKitSelection,
     players: seats.map((seat) => {
       const view: LobbySeatView = {
         id: seat.id,

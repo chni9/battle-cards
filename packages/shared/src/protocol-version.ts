@@ -29,5 +29,9 @@
  * playing and finished views; `RoomJoinOptions.tutorial?: true`; client
  * `FORFEIT`; reject codes `tutorial-follow-coach` and `tutorial-room-closed`.
  * Only protocol bump in V6.
+ *
+ * 29 → 30 (L49-01 / designer 2026-08-23): lobby `chooseKit` + per-recipient
+ * `yourKitSelection`. Default remains random. Opponents never receive another
+ * seat's lobby kit. Exception to the V6 single-bump lock; see decisions.md.
  */
-export const PROTOCOL_VERSION = 29;
+export const PROTOCOL_VERSION = 30;

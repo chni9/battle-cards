@@ -6,7 +6,9 @@
  * (AGENTS golden rule 5).
  *
  * Optional `kitAssignment` (L18-02 / tech §8): kits bind to **input** seat index
- * before shuffle; shuffle only reorders turn order.
+ * before shuffle; shuffle only reorders turn order. Optional `forcedKitsBySeatId`
+ * (L49-01): per-seat lobby picks; omitted seats stay random. `kitAssignment` wins
+ * when both are set.
  */
 
 import {
@@ -38,6 +40,11 @@ export interface CreateInitialStateOptions {
    * `seats`. Omitted → random `rng.pick(KIT_IDS)` with replacement.
    */
   kitAssignment?: readonly KitId[];
+  /**
+   * Lobby picks keyed by seat id (PROTOCOL_VERSION 30 / L49-01). Seats absent
+   * from the map stay random. Ignored when `kitAssignment` is set.
+   */
+  forcedKitsBySeatId?: ReadonlyMap<string, KitId>;
 }
 
 export function createInitialState(options: CreateInitialStateOptions): GameState {
@@ -45,7 +52,11 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     throw new RangeError('createInitialState needs at least two seated players');
   }
 
-  const kitBySeatId = buildKitBySeatId(options.seats, options.kitAssignment);
+  const kitBySeatId = buildKitBySeatId(
+    options.seats,
+    options.kitAssignment,
+    options.forcedKitsBySeatId,
+  );
 
   const seed = options.seed ?? createSeed();
   const rng = options.rng ?? createRng(seed);
@@ -83,30 +94,35 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
 function buildKitBySeatId(
   seats: readonly SeatInput[],
   kitAssignment: readonly KitId[] | undefined,
+  forcedKitsBySeatId: ReadonlyMap<string, KitId> | undefined,
 ): ReadonlyMap<string, KitId> | undefined {
-  if (kitAssignment === undefined) {
+  if (kitAssignment !== undefined) {
+    if (kitAssignment.length !== seats.length) {
+      throw new RangeError(
+        `kitAssignment length ${String(kitAssignment.length)} must match seats (${String(seats.length)})`,
+      );
+    }
+
+    const map = new Map<string, KitId>();
+
+    for (const [index, seat] of seats.entries()) {
+      const kitId = kitAssignment[index];
+
+      if (kitId === undefined || !isKitId(kitId)) {
+        throw new RangeError(`kitAssignment[${String(index)}] is not a KitId`);
+      }
+
+      map.set(seat.id, kitId);
+    }
+
+    return map;
+  }
+
+  if (forcedKitsBySeatId === undefined || forcedKitsBySeatId.size === 0) {
     return undefined;
   }
 
-  if (kitAssignment.length !== seats.length) {
-    throw new RangeError(
-      `kitAssignment length ${String(kitAssignment.length)} must match seats (${String(seats.length)})`,
-    );
-  }
-
-  const map = new Map<string, KitId>();
-
-  for (const [index, seat] of seats.entries()) {
-    const kitId = kitAssignment[index];
-
-    if (kitId === undefined || !isKitId(kitId)) {
-      throw new RangeError(`kitAssignment[${String(index)}] is not a KitId`);
-    }
-
-    map.set(seat.id, kitId);
-  }
-
-  return map;
+  return forcedKitsBySeatId;
 }
 
 function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): Player {
