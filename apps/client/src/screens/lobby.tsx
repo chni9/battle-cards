@@ -7,6 +7,7 @@ import {
   BOT_DIFFICULTIES,
   PROTOCOL_VERSION,
   type BotDifficulty,
+  type LobbyKitSelection,
   type LobbyStateView,
 } from '@card-battle/shared';
 import { useCallback, useState, type ReactElement } from 'react';
@@ -15,7 +16,10 @@ import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { BotSeatLabel } from '../design/components/bot-seat-label';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
+import { KitPortrait } from '../design/components/kit-portrait';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
+import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
+import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
@@ -27,6 +31,7 @@ export interface LobbyScreenProps {
   onAddBot: (difficulty: BotDifficulty) => void;
   onRemoveBot: (playerId: string) => void;
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
+  onChooseKit: (selection: LobbyKitSelection) => void;
 }
 
 export function LobbyScreen({
@@ -38,6 +43,7 @@ export function LobbyScreen({
   onAddBot,
   onRemoveBot,
   onSetBotDifficulty,
+  onChooseKit,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
   const canLaunch = isHost && view.players.length >= 2;
@@ -45,6 +51,7 @@ export function LobbyScreen({
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
+  const [kitPickerOpen, setKitPickerOpen] = useState(false);
 
   const closeCopyDialog = useCallback(() => {
     setCopyOpen(false);
@@ -91,6 +98,30 @@ export function LobbyScreen({
           {isHost && (
             <p className="mt-2 text-sm text-ink-muted">You are the host</p>
           )}
+        </section>
+
+        <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
+          <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
+          <p className="mt-1 text-sm text-ink-muted">Hidden from opponents until Spy or death.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <KitPortrait
+              kitId={view.yourKitSelection === 'random' ? null : view.yourKitSelection}
+              nickname="Random kit"
+              className="w-16"
+            />
+            <div className="min-w-0 space-y-2">
+              <p className="font-medium text-ink">{lobbyKitSelectionLabel(view.yourKitSelection)}</p>
+              <Button
+                type="button"
+                variant="orange"
+                onClick={() => {
+                  setKitPickerOpen(true);
+                }}
+              >
+                Choose kit
+              </Button>
+            </div>
+          </div>
         </section>
 
         <section className="mt-6">
@@ -209,6 +240,15 @@ export function LobbyScreen({
           ? `Could not copy automatically. Game code: ${view.gameCode}`
           : `Share this code with friends: ${view.gameCode}`}
       </Dialog>
+
+      <LobbyKitPickerDialog
+        open={kitPickerOpen}
+        current={view.yourKitSelection}
+        onClose={() => {
+          setKitPickerOpen(false);
+        }}
+        onSelect={onChooseKit}
+      />
     </main>
   );
 }

@@ -20,7 +20,7 @@ implemented in L12-08).
 | Screen | When | File |
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; optional How to play | `screens/home.tsx` + `how-to-play-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls | `screens/lobby.tsx` |
+| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home | `screens/end.tsx` + `game-over-dialog.tsx` |
 
@@ -76,9 +76,12 @@ rules above are unchanged — this section only covers how the client looks.
   (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
-- **Lobby (L11-02 / L17-02 / L17-03):** game code + Copy (clipboard); copy result via `Dialog`;
-  Start / Leave; host-only Add bot / Remove / set difficulty; `BotSeatLabel` on every bot seat
-  for all recipients.
+- **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
+  **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
+  click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
+  Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty;
+  `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
+  and sends `chooseKit` before `startGame` when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones; action-log **Why**
   opens `botReason` copy (`formatBotReason`) — explanatory only, never table legality.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when

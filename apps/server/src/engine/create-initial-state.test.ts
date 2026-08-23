@@ -187,3 +187,32 @@ describe('createInitialState kitAssignment (L18-02)', () => {
     ).toThrow(RangeError);
   });
 });
+
+describe('createInitialState forcedKitsBySeatId (L49-01)', () => {
+  const seats = [
+    { id: 'a', nickname: 'Alice' },
+    { id: 'b', nickname: 'Bob' },
+  ] as const;
+
+  it('binds a lobby pick to that seat and leaves the other random', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'lobby-pick-seed',
+      forcedKitsBySeatId: new Map([['a', 'assassin']]),
+    });
+
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(alice?.kitId).toBe('assassin');
+    expect(bob).toBeDefined();
+    expect(KIT_IDS).toContain(bob?.kitId);
+  });
+
+  it('omitting forcedKitsBySeatId matches a fully random deal for a seed', () => {
+    const first = createInitialState({ seats, seed: 'lobby-omit-parity' });
+    const second = createInitialState({ seats, seed: 'lobby-omit-parity' });
+    expect(second.players.map((player) => player.kitId)).toEqual(
+      first.players.map((player) => player.kitId),
+    );
+  });
+});

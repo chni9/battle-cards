@@ -3,13 +3,19 @@
  * Intents unchanged: create / join / solo = create + N× addBot + startGame (L17-01).
  */
 
-import { BOT_DIFFICULTIES, PROTOCOL_VERSION, type BotDifficulty } from '@card-battle/shared';
+import {
+  BOT_DIFFICULTIES,
+  PROTOCOL_VERSION,
+  type BotDifficulty,
+  type LobbyKitSelection,
+} from '@card-battle/shared';
 import { motion } from 'motion/react';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
+import { KitPortrait } from '../design/components/kit-portrait';
 import {
   hasSeenHowToPlay,
   markHowToPlaySeen,
@@ -18,6 +24,8 @@ import {
 } from '../help/help-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
+import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
+import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { homeStatusCopy } from './status-labels';
 
 export interface HomeScreenProps {
@@ -30,7 +38,11 @@ export interface HomeScreenProps {
   onJoinCodeChange: (value: string) => void;
   onCreate: () => void;
   onJoin: () => void;
-  onStartSolo: (opponentCount: 1 | 2 | 3, difficulty: BotDifficulty) => void;
+  onStartSolo: (
+    opponentCount: 1 | 2 | 3,
+    difficulty: BotDifficulty,
+    kitSelection: LobbyKitSelection,
+  ) => void;
 }
 
 type HomeMode = 'hub' | 'online' | 'solo';
@@ -61,6 +73,8 @@ export function HomeScreen({
   const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
   const [soloOpponents, setSoloOpponents] = useState<1 | 2 | 3>(1);
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
+  const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>('random');
+  const [kitPickerOpen, setKitPickerOpen] = useState(false);
 
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;
@@ -83,7 +97,7 @@ export function HomeScreen({
   const onSoloSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartSolo(soloOpponents, soloDifficulty);
+      onStartSolo(soloOpponents, soloDifficulty, soloKitSelection);
     }
   };
 
@@ -195,10 +209,14 @@ export function HomeScreen({
                 canSubmit={canSubmit}
                 soloOpponents={soloOpponents}
                 soloDifficulty={soloDifficulty}
+                soloKitSelection={soloKitSelection}
                 onBack={goHub}
                 onNicknameChange={onNicknameChange}
                 onSoloOpponentsChange={setSoloOpponents}
                 onSoloDifficultyChange={setSoloDifficulty}
+                onOpenKitPicker={() => {
+                  setKitPickerOpen(true);
+                }}
                 onSoloSubmit={onSoloSubmit}
               />
             ) : null}
@@ -209,6 +227,16 @@ export function HomeScreen({
       </div>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
+      <LobbyKitPickerDialog
+        open={kitPickerOpen}
+        current={soloKitSelection}
+        onClose={() => {
+          setKitPickerOpen(false);
+        }}
+        onSelect={(selection) => {
+          setSoloKitSelection(selection);
+        }}
+      />
     </main>
   );
 }
@@ -375,10 +403,12 @@ interface SoloPathProps {
   canSubmit: boolean;
   soloOpponents: 1 | 2 | 3;
   soloDifficulty: BotDifficulty;
+  soloKitSelection: LobbyKitSelection;
   onBack: () => void;
   onNicknameChange: (value: string) => void;
   onSoloOpponentsChange: (count: 1 | 2 | 3) => void;
   onSoloDifficultyChange: (difficulty: BotDifficulty) => void;
+  onOpenKitPicker: () => void;
   onSoloSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
 }
 
@@ -391,10 +421,12 @@ function SoloPath({
   canSubmit,
   soloOpponents,
   soloDifficulty,
+  soloKitSelection,
   onBack,
   onNicknameChange,
   onSoloOpponentsChange,
   onSoloDifficultyChange,
+  onOpenKitPicker,
   onSoloSubmit,
 }: SoloPathProps): ReactElement {
   return (
@@ -453,6 +485,29 @@ function SoloPath({
             ))}
           </div>
         </fieldset>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-ink">Your kit</p>
+          <p className="text-sm text-ink-muted">Hidden from opponents. Random is the default.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <KitPortrait
+              kitId={soloKitSelection === 'random' ? null : soloKitSelection}
+              nickname="Random kit"
+              className="w-16"
+            />
+            <div className="min-w-0 space-y-2">
+              <p className="font-medium text-ink">{lobbyKitSelectionLabel(soloKitSelection)}</p>
+              <Button
+                type="button"
+                variant="orange"
+                disabled={busy}
+                onClick={onOpenKitPicker}
+              >
+                Choose kit
+              </Button>
+            </div>
+          </div>
+        </div>
 
         <Button type="submit" variant="green" disabled={!canSubmit}>
           Start solo game

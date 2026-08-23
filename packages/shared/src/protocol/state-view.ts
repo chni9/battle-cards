@@ -39,6 +39,13 @@ export interface LobbySeatView {
 }
 
 /**
+ * Lobby kit pick (PROTOCOL_VERSION 30 / L49-01). `'random'` is the default and
+ * matches rules spec §4 until the player confirms a catalog kit. Never placed
+ * on `LobbySeatView` — opponents must not see another seat's choice.
+ */
+export type LobbyKitSelection = KitId | 'random';
+
+/**
  * Lobby view (L1-01). No hands or resources: the game has not started.
  */
 export interface LobbyStateView {
@@ -47,6 +54,11 @@ export interface LobbyStateView {
   gameCode: string;
   hostPlayerId: string;
   players: readonly LobbySeatView[];
+  /**
+   * Recipient's own lobby kit pick only (PROTOCOL_VERSION 30).
+   * Other seats' choices are omitted from this view entirely.
+   */
+  yourKitSelection: LobbyKitSelection;
 }
 
 /** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */

@@ -265,6 +265,9 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   'invalid-set-bot-difficulty-payload': {
     body: 'The bot-difficulty request was malformed. Try changing difficulty again from the lobby.',
   },
+  'invalid-choose-kit-payload': {
+    body: 'The kit choice was malformed. Open Choose kit and pick again.',
+  },
 
   'start-not-host': {
     title: 'Host only',
@@ -313,6 +316,10 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   },
   'set-bot-difficulty-target-is-human': {
     body: 'That seat is a human player, not a bot. Difficulty only applies to bots.',
+  },
+  'choose-kit-already-started': {
+    title: 'Game already started',
+    body: 'You cannot change your kit after the host has started the game.',
   },
   'tutorial-follow-coach': {
     title: 'Tutorial step',

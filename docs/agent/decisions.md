@@ -2418,3 +2418,19 @@ tokens, not live sockets, so the forfeiter sees Game over on the same client. Co
 old clients). Already-eliminated `onLeave` no-ops elim and drops the socket. No Feedback
 UI in this lot (L47-03).
 
+## 2026-08-23 · [P] Lobby kit pick, hidden from opponents (L49)
+
+Designer 2026-08-23: before Classic start, each human may pick a kit in the lobby (and on
+the solo form). Default remains **random** (previous rules spec §4 / §6). Duplicate kits
+are allowed. Bots stay random. The pick is **private**: `LobbyStateView.yourKitSelection`
+is built per recipient; `LobbySeatView` has no kit field. Changing the pick after
+`startGame` is rejected.
+
+This is a Classic UX addition, not a V6 lot. `PROTOCOL_VERSION` **29 → 30** is an
+exception to the V6 single-bump lock (same class as 23 → 24). Client message `chooseKit`
+`{ kitId: KitId | 'random' }`. All-random lobbies omit `forcedKitsBySeatId` so seeded
+deals stay bit-for-bit with the previous path.
+
+Tutorial (Lot 45) still forces kits after deal; do not wire this picker into the tutorial
+create path when L45-04 lands.
+

@@ -60,7 +60,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-15 of 38 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+17 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -72,6 +72,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 46 · First-game hints | 3 | 0 |
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
+| 49 · Lobby kit pick | 2 | 2 |
 
 ---
 
@@ -173,6 +174,19 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 
 ---
 
+## Lot 49 — Lobby kit pick (designer 2026-08-23)
+
+Not in the original V6 spec. Optional Classic kit choice in the lobby; default stays
+random. Hidden from opponents. `PROTOCOL_VERSION` 29 → 30 (exception to the V6
+single-bump lock — see `decisions.md`).
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L49-01 | Protocol 29 → 30: client `chooseKit` `{ kitId: KitId \| 'random' }`; `LobbyStateView.yourKitSelection` per recipient only; reject codes `choose-kit-already-started` and `invalid-choose-kit-payload`. Room stores picks; `createInitialState` `forcedKitsBySeatId` for catalog picks; all-random omits the map. **Acceptance:** opponent lobby view JSON has no other seat's kit id; seeded all-random deals match the previous path. | M | **High** | L41-02 | Done |
+| L49-02 | Lobby + solo **Choose kit** Dialog: Random tile + all 15 kit portraits; click opens description then Select. Same Dialog on the solo form; send `chooseKit` before `startGame` when not random. **Acceptance:** player list never shows another seat's kit; Random remains the default label. | M | Low | L49-01 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -185,7 +199,8 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | 46 | 3 |
 | 47 | 5 |
 | 48 | 2 |
-| **Total** | **38** |
+| 49 | 2 |
+| **Total** | **40** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so the 1-life bot dies at index 4; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 
