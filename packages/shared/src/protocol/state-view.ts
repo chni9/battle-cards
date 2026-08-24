@@ -332,14 +332,13 @@ export interface CurseTransferredLogEntry {
 }
 
 /** Player revived via Reanimation — rules spec §5, L26 / L30-06.
- * `kitId` is Spy-gated (designer 2026-08-06): present for the revived seat and
- * anyone who spies them; omitted from everyone else's public action log.
- * Excel `exportLog` always carries the kit.
+ * In-game action log never includes `kitId` (designer 2026-08-24 / L50-03).
+ * Excel `exportLog` still carries the kit.
  */
 export interface PlayerReanimatedLogEntry {
   kind: 'playerReanimated';
   playerId: string;
-  /** Omitted when the recipient is neither the revived seat nor a Spy on them. */
+  /** Omitted from every in-game recipient view (L50-03). */
   kitId?: KitId;
   turnSequence: number;
 }

@@ -202,8 +202,9 @@ rules above are unchanged — this section only covers how the client looks.
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, `playerReanimated`, opaque `rewardsClaimed`).
-  Reward picks are never shown. `playerReanimated.kitId` is Spy-gated (designer 2026-08-06):
-  self/spies see `X returns with Kit`; others see `X returns`. Bot rows may carry optional
+  Reward picks are never shown. In-game `playerReanimated` never includes `kitId`
+  (designer 2026-08-24 / L50-03): copy is always `X returns`. Excel `exportLog` still
+  carries the kit. Bot rows may carry optional
   `botReason` (L17-05); UI exposes a Why control only — never feed reasons into play/legal UI.
 - **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
