@@ -29,16 +29,27 @@ export function choiceTileClassName(options: ChoiceTileChromeOptions): string {
  * `--color-cta-orange` as a concrete hex. Seat wash sets inline `borderColor` /
  * `boxShadow`, which otherwise override the Tailwind selected ring.
  */
-export const CHOICE_SELECTED_ORANGE = '#f0771f';
-
-/** Offset halo — SeatTile wraps with padding so Dialog overflow cannot clip it. */
-export const CHOICE_SELECTED_OUTLINE = `3px solid ${CHOICE_SELECTED_ORANGE}`;
-export const CHOICE_SELECTED_OUTLINE_OFFSET = '3px';
-export const CHOICE_SELECTED_INSET = `inset 0 0 0 2px ${CHOICE_SELECTED_ORANGE}, inset 0 0 18px rgba(240, 119, 31, 0.45)`;
+export const CHOICE_SELECTED_ORANGE = '#ff7a18';
 
 /**
- * SeatTile selected chrome. Offset outline + inner glow; no outer box-shadow
- * (those get clipped by Dialog `overflow-hidden` / `overflow-y-auto`).
+ * Layout ring for selected SeatTiles. Padding *is* the halo — Dialog
+ * `overflow-hidden` / `overflow-y-auto` crop outline and outer box-shadow,
+ * but they cannot crop a box-model frame.
+ * `p-1.5` (6px) matches `--radius-card` so the outer round stays concentric.
+ */
+export const CHOICE_SELECTED_FRAME_CLASS =
+  'rounded-[calc(var(--radius-card)+0.375rem)] p-1.5';
+export const CHOICE_IDLE_FRAME_CLASS = 'p-1.5';
+export const CHOICE_SELECTED_INSET =
+  `inset 0 0 0 2px ${CHOICE_SELECTED_ORANGE}, inset 0 0 16px rgba(255, 122, 24, 0.4)`;
+
+export function choiceTileSelectedFrameStyle(): CSSProperties {
+  return { backgroundColor: CHOICE_SELECTED_ORANGE };
+}
+
+/**
+ * SeatTile selected chrome on the inner button. Keeps the seat wash fill;
+ * inner glow only (no outer shadow).
  */
 export function choiceTileSelectedStyle(
   base: CSSProperties | undefined,
@@ -46,8 +57,6 @@ export function choiceTileSelectedStyle(
   return {
     backgroundColor: base?.backgroundColor,
     borderColor: CHOICE_SELECTED_ORANGE,
-    outline: CHOICE_SELECTED_OUTLINE,
-    outlineOffset: CHOICE_SELECTED_OUTLINE_OFFSET,
     boxShadow: CHOICE_SELECTED_INSET,
   };
 }

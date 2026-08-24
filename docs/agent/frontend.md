@@ -143,8 +143,8 @@ rules above are unchanged — this section only covers how the client looks.
   Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
 - **Visual pickers (L44-01):** `choiceTileClassName` is the shop selected/idle ring.
   `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”;
-  selected uses `choiceTileSelectedStyle` — offset orange outline + inner glow,
-  with padding on the tile so Dialog overflow cannot clip the halo) and
+  selected uses a 6px orange *layout* frame (`choiceTileSelectedFrameStyle`)
+  plus inner glow — Dialog overflow cannot crop a box-model ring) and
   `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
   `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
   the tiles; intents stay unchanged.

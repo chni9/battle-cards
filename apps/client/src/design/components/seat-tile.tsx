@@ -7,7 +7,13 @@ import type { KitId } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { seatIndexOf, seatZoneStyle, type SeatPlayersView } from '../seat-colors';
-import { choiceTileClassName, choiceTileSelectedStyle } from './choice-tile-chrome';
+import {
+  CHOICE_IDLE_FRAME_CLASS,
+  CHOICE_SELECTED_FRAME_CLASS,
+  choiceTileClassName,
+  choiceTileSelectedFrameStyle,
+  choiceTileSelectedStyle,
+} from './choice-tile-chrome';
 import { KitPortrait } from './kit-portrait';
 import { PlayerName } from './player-name';
 
@@ -36,17 +42,17 @@ export function SeatTile({
   const style = selected ? choiceTileSelectedStyle(zoneStyle) : zoneStyle;
 
   return (
-    <div className="p-2">
+    <div
+      className={selected ? CHOICE_SELECTED_FRAME_CLASS : CHOICE_IDLE_FRAME_CLASS}
+      style={selected ? choiceTileSelectedFrameStyle() : undefined}
+    >
       <button
         type="button"
         aria-pressed={selected}
         aria-label={nickname}
         disabled={disabled}
         onClick={onSelect}
-        className={[
-          choiceTileClassName({ selected, disabled }),
-          selected ? 'relative z-[1]' : '',
-        ].join(' ')}
+        className={choiceTileClassName({ selected: false, disabled })}
         style={style}
       >
         <KitPortrait kitId={kitId} nickname={nickname} className="w-full max-w-[5.5rem]" />

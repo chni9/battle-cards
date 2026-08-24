@@ -19,6 +19,9 @@ describe('SeatTile (L44-01)', () => {
     expect(source).toContain('PlayerName');
     expect(source).toContain('choiceTileClassName');
     expect(source).toContain('choiceTileSelectedStyle');
-    expect(source).toContain('p-2');
+    expect(source).toContain('CHOICE_SELECTED_FRAME_CLASS');
+    expect(source).toContain('CHOICE_IDLE_FRAME_CLASS');
+    expect(source).toContain('choiceTileSelectedFrameStyle');
+    expect(source).toContain('selected: false');
   });
 });

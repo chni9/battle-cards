@@ -5,11 +5,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHOICE_IDLE_FRAME_CLASS,
+  CHOICE_SELECTED_FRAME_CLASS,
   CHOICE_SELECTED_INSET,
   CHOICE_SELECTED_ORANGE,
-  CHOICE_SELECTED_OUTLINE,
-  CHOICE_SELECTED_OUTLINE_OFFSET,
   choiceTileClassName,
+  choiceTileSelectedFrameStyle,
   choiceTileSelectedStyle,
 } from './choice-tile-chrome';
 
@@ -34,7 +35,14 @@ describe('choiceTileClassName (L44-01)', () => {
     expect(choiceTileClassName({ selected: false, disabled: true })).toContain('opacity-55');
   });
 
-  it('uses an offset outline and inner glow, not a clipped outer box-shadow', () => {
+  it('uses a layout frame (not outline / outer shadow) so Dialog overflow cannot crop it', () => {
+    expect(CHOICE_SELECTED_FRAME_CLASS).toContain('p-1.5');
+    expect(CHOICE_SELECTED_FRAME_CLASS).toContain('rounded-');
+    expect(CHOICE_IDLE_FRAME_CLASS).toBe('p-1.5');
+    expect(choiceTileSelectedFrameStyle()).toEqual({
+      backgroundColor: CHOICE_SELECTED_ORANGE,
+    });
+
     const style = choiceTileSelectedStyle({
       borderColor: '#1d6fd8',
       backgroundColor: 'rgb(200, 220, 245)',
@@ -42,8 +50,8 @@ describe('choiceTileClassName (L44-01)', () => {
     });
     expect(style.borderColor).toBe(CHOICE_SELECTED_ORANGE);
     expect(style.backgroundColor).toBe('rgb(200, 220, 245)');
-    expect(style.outline).toBe(CHOICE_SELECTED_OUTLINE);
-    expect(style.outlineOffset).toBe(CHOICE_SELECTED_OUTLINE_OFFSET);
     expect(style.boxShadow).toBe(CHOICE_SELECTED_INSET);
+    expect(style).not.toHaveProperty('outline');
+    expect(style).not.toHaveProperty('outlineOffset');
   });
 });
