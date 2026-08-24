@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
-describe('card-actions visual pickers (L44-02 / L44-04)', () => {
+describe('card-actions visual pickers (L44-02 / L44-04 / L44-05)', () => {
   const source = readFileSync(join(dir, 'card-actions.tsx'), 'utf8');
 
   it('picks seats with SeatTile and still sends targetPlayerId (L44-02)', () => {
@@ -26,5 +26,11 @@ describe('card-actions visual pickers (L44-02 / L44-04)', () => {
     expect(source).toContain('onPlayMultipleAttacks');
     expect(source).not.toMatch(/type="checkbox"/);
     expect(source).not.toContain('<select');
+  });
+
+  it('picks Transformer consume cards as CardChoiceTile (L44-05)', () => {
+    expect(source).toContain('consumeInstanceId: resolvedConsumeId');
+    expect(source).toContain('kind === \'consume\'');
+    expect(source).toContain('CardChoiceTile');
   });
 });

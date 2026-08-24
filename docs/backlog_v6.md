@@ -60,7 +60,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-21 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+22 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -124,7 +124,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | L44-02 | Replace target-player radios with `SeatTile` grid. **Acceptance:** `playCard` payload unchanged; 2p and 3p+ still target correctly. | M | Low | L44-01 | Done |
 | L44-03 | Mirror sub-choice: pick pending attack as **card art + source name + seat color** (“→ you”), then `SeatTile` for the new target. **Acceptance:** `resolveSubChoice` `{ kind: 'mirror' }` unchanged; eligible ids only. | M | Medium | L44-01 | Done |
 | L44-04 | Multi-attack prompt: attack **faces** + per-line `SeatTile`, not a raw list. **Acceptance:** `playMultipleAttacks` payload unchanged; Assassin only. | M | Medium | L44-02 | Done |
-| L44-05 | Steal-pick, pool-pick, Transformer consume, special-pick: `CardChoiceTile` grids (backs only where the protocol already hides identity). **Acceptance:** payloads unchanged; unknown steal cards stay unknown. | M | Medium | L44-01 | To do |
+| L44-05 | Steal-pick, pool-pick, Transformer consume, special-pick: `CardChoiceTile` grids (backs only where the protocol already hides identity). **Acceptance:** payloads unchanged; unknown steal cards stay unknown. | M | Medium | L44-01 | Done |
 | L44-06 | Elimination rewards, reanimation-kit, Regeneration quantity: visual rewards / kit portraits; Regen keeps the numeric field but uses the same Dialog chrome + live CostDisplay. **Acceptance:** reward picks still opaque in the action log; quantity 1–4 validation unchanged. | M | Low | L44-01 | To do |
 
 ---

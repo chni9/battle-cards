@@ -1,13 +1,17 @@
+/**
+ * Special pick — L44-05 / technical spec v6 §6.4.
+ */
+
 import {
   getCard,
-  type ResolveSubChoicePayload,
   type SpecialCardId,
+  type ResolveSubChoicePayload,
   type SpecialPickChoiceRequiredPayload,
 } from '@card-battle/shared';
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
-import { Card } from '../../../design/components/card';
+import { CardChoiceTile } from '../../../design/components/card-choice-tile';
 
 export interface SpecialPickPanelProps {
   subChoice: SpecialPickChoiceRequiredPayload;
@@ -40,34 +44,15 @@ export function SpecialPickPanel({ subChoice, onResolve }: SpecialPickPanelProps
 
           return (
             <li key={cardId}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                aria-label={name}
-                onClick={() => {
+              <CardChoiceTile
+                instance={shopInstance}
+                caption={name}
+                selected={selected}
+                ariaLabel={name}
+                onSelect={() => {
                   setSelectedId(cardId);
                 }}
-                className={[
-                  'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
-                  selected
-                    ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                    : 'border-border-soft bg-surface hover:border-border',
-                ].join(' ')}
-              >
-                <Card
-                  instance={shopInstance}
-                  detail="thumb"
-                  className="pointer-events-none w-full max-w-[5.5rem]"
-                />
-                <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
-                  {name}
-                </span>
-                {definition !== undefined && (
-                  <span className="mt-0.5 text-center text-[11px] font-medium text-ink-muted">
-                    {definition.type}
-                  </span>
-                )}
-              </button>
+              />
             </li>
           );
         })}

@@ -149,6 +149,11 @@ rules above are unchanged — this section only covers how the client looks.
 - **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
   source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
   `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
+- **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
+  Unknown steal identities use the attack verso and the fixed “Hidden card”
+  caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
+  Payloads unchanged (`steal-pick` instanceId, `pool-pick` instanceIds,
+  consume `playCard` + `consumeInstanceId`, `special-pick` cardId).
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
   (playtest 2026-08-09); Spy/self still receive the real action kind on the wire.- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).

@@ -390,29 +390,15 @@ export function CardActions(props: CardActionsProps): ReactElement {
               const name = formatCardLabel(card.cardId, card.isUpgraded);
               return (
                 <li key={card.instanceId}>
-                  <button
-                    type="button"
-                    aria-pressed={selected}
-                    aria-label={name}
-                    onClick={() => {
+                  <CardChoiceTile
+                    instance={card}
+                    caption={name}
+                    selected={selected}
+                    ariaLabel={name}
+                    onSelect={() => {
                       setConsumeInstanceId(card.instanceId);
                     }}
-                    className={[
-                      'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
-                      selected
-                        ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                        : 'border-border-soft bg-surface hover:border-border',
-                    ].join(' ')}
-                  >
-                    <Card
-                      instance={card}
-                      detail="thumb"
-                      className="pointer-events-none w-full max-w-[5.5rem]"
-                    />
-                    <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
-                      {name}
-                    </span>
-                  </button>
+                  />
                 </li>
               );
             })}
