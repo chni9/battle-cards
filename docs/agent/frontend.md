@@ -441,3 +441,16 @@ do not hand off an untested lot.
 - Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
   green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.
+
+### Lot 44 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- **Solo** room `KUVIMX` (Lot44Host vs 1× Normal bot Alpha). Shop buy cells still use
+  `choiceTileClassName` (selected orange ring, `CostDisplay`, Buy selected).
+- **Target:** Basic attack / Strong attack / Spy → `SeatTile` grid (hidden kit “?”, nickname
+  Alpha, seat wash). Confirm still sends; no radios.
+- **Regeneration:** four click-to-commit tiles `1 life` … `4 lives` with live `CostDisplay`
+  (−3 / −6 / −9 / −12 pts at base rate). Footer Cancel only. Click `1 life` applied
+  (lives 4→5) and closed the Dialog.
+- Not forced this pass (engine-tested / source-tested): Assassin multi, steal hidden/spied,
+  pool / consume / special-pick, Mirror, elimination rewards, reanimation kit. L48-02 remains
+  the formal first-time gate.
