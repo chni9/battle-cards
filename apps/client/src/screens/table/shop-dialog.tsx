@@ -16,6 +16,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
+import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../design/components/cost-display';
 import { Dialog } from '../../design/components/dialog';
 import {
@@ -201,14 +202,11 @@ export function ShopDialog({
                     onBuyCard(id);
                     onClose();
                   }}
-                  className={[
-                    'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
-                    selected
-                      ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                      : 'border-border-soft bg-surface hover:border-border',
-                    !affordable ? 'opacity-55' : '',
-                    disabled ? 'cursor-not-allowed' : '',
-                  ].join(' ')}
+                  className={choiceTileClassName({
+                    selected,
+                    disabled,
+                    faded: !affordable,
+                  })}
                 >
                   <Card
                     instance={shopInstance}

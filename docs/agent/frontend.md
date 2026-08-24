@@ -39,7 +39,8 @@ rules above are unchanged — this section only covers how the client looks.
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
-  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`). Art resolution:
+  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`), `SeatTile` /
+  `CardChoiceTile` / `choiceTileClassName` (L44-01; shop buy cells use the helper). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
@@ -140,6 +141,11 @@ rules above are unchanged — this section only covers how the client looks.
   shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
   green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
   Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
+- **Visual pickers (L44-01):** `choiceTileClassName` is the shop selected/idle ring.
+  `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”) and
+  `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
+  `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
+  the tiles; intents stay unchanged.
 - **Mirror sub-choice labels:** pending attack options show
   `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
