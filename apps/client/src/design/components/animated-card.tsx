@@ -12,10 +12,13 @@ import { Card, type CardProps } from './card';
 
 export type AnimatedCardProps = CardProps & {
   instance: CardInstance;
+  /** Skip the mount flip — pagination remounts must not blink (L50-05). */
+  skipEntrance?: boolean;
 };
 
 export function AnimatedCard({
   instance,
+  skipEntrance = false,
   ...cardProps
 }: AnimatedCardProps): ReactElement {
   const reduceMotion = useReducedMotion();
@@ -29,13 +32,15 @@ export function AnimatedCard({
     }
   }, [instance.isUpgraded]);
 
+  const skipFlip = skipEntrance || reduceMotion === true;
+
   return (
     <motion.div
       data-instance-id={instance.instanceId}
       className="h-full w-full [perspective:600px]"
       // Never start at opacity 0 — HMR / interrupted motion left cards invisible (Lot 39).
       initial={
-        reduceMotion === true ? false : { opacity: 1, rotateY: -28, scale: 0.98 }
+        skipFlip ? false : { opacity: 1, rotateY: -28, scale: 0.98 }
       }
       animate={{ opacity: 1, rotateY: 0, scale: 1 }}
       transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}

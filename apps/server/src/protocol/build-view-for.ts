@@ -192,10 +192,6 @@ function mapActionLogForRecipient(
     }
 
     if (entry.kind === 'playerReanimated') {
-      if (recipientSeesPrivateOf(state, recipientSessionId, entry.playerId)) {
-        return entry;
-      }
-
       return {
         kind: 'playerReanimated',
         playerId: entry.playerId,

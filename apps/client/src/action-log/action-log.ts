@@ -6,7 +6,6 @@
 
 import {
   formatCardLabel,
-  getKit,
   isAttackCardId,
   type ActionLogEntryKind,
   type ActionLogEntryView,
@@ -243,12 +242,7 @@ export function formatActionLogEntrySegments(
       ];
     }
     case 'playerReanimated': {
-      const reanimated = player(entry.playerId, nicknameOf);
-      if (entry.kitId === undefined) {
-        return [reanimated, text(' returns')];
-      }
-      const kitName = getKit(entry.kitId).name;
-      return [reanimated, text(` returns with ${kitName}`)];
+      return [player(entry.playerId, nicknameOf), text(' returns')];
     }
     case 'rewardsClaimed': {
       return [

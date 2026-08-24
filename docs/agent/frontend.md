@@ -202,8 +202,9 @@ rules above are unchanged — this section only covers how the client looks.
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, `playerReanimated`, opaque `rewardsClaimed`).
-  Reward picks are never shown. `playerReanimated.kitId` is Spy-gated (designer 2026-08-06):
-  self/spies see `X returns with Kit`; others see `X returns`. Bot rows may carry optional
+  Reward picks are never shown. In-game `playerReanimated` never includes `kitId`
+  (designer 2026-08-24 / L50-03): copy is always `X returns`. Excel `exportLog` still
+  carries the kit. Bot rows may carry optional
   `botReason` (L17-05); UI exposes a Why control only — never feed reasons into play/legal UI.
 - **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
@@ -421,3 +422,12 @@ do not hand off an untested lot.
 - Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
   green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.
+
+### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
+  Buy upgrade point closes the Shop. Base Card Transformer (Mirror) granted Imposition;
+  upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
+  nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
+  Room `PPWXUP` on the pager pass.
+

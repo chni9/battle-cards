@@ -131,7 +131,7 @@ export function PrivateZone({
         </div>
         <div
           data-zone="incoming-pending"
-          className="max-h-[3.5rem] max-w-[min(100%,12rem)] shrink-0 overflow-y-auto overscroll-contain landscape:max-h-[5rem] sm:max-h-[5.5rem] sm:max-w-[min(100%,14rem)]"
+          className="max-h-[3.5rem] min-w-0 flex-1 overflow-y-auto overscroll-contain landscape:max-h-[5rem] sm:max-h-[5.5rem]"
         >
           <PendingQueue
             view={view}

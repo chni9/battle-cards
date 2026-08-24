@@ -42,7 +42,7 @@ export function buildPersistentIncomingChips(
         });
       }
 
-      // Victim-owned Curse ticks on your turn after you act (designer 2026-08-07).
+      // Victim-owned Curse: spend-tick plus siphon of lives you actually lose (L50-09).
       if (effect.cardId === 'curse' && player.id === view.you) {
         chips.push({
           id: `persistent:${effect.id}->${view.you}`,

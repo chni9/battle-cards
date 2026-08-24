@@ -139,7 +139,10 @@ export function ShopDialog({
           <Button
             variant="orange"
             disabled={disabled || view.self.points < buyUpgradeCost}
-            onClick={onBuyUpgradePoint}
+            onClick={() => {
+              onBuyUpgradePoint();
+              onClose();
+            }}
           >
             {BUY_UPGRADE_POINT_LABEL}{' '}
             <CostDisplay
@@ -151,7 +154,10 @@ export function ShopDialog({
           <Button
             variant="green"
             disabled={disabled || view.self.upgradePoints < 1}
-            onClick={onSellUpgradePoint}
+            onClick={() => {
+              onSellUpgradePoint();
+              onClose();
+            }}
           >
             {SELL_UPGRADE_POINT_LABEL}{' '}
             <CostDisplay

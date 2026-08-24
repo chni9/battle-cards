@@ -46,6 +46,7 @@ describe('buySpecialCard (L21-01 / #V4-29)', () => {
     expect(actor.specialCards.length).toBe(before + 120);
     expect(drawn.size).toBeGreaterThan(6);
     expect(drawn.has('reanimation')).toBe(true);
+    expect(drawn.has('card-transformer')).toBe(true);
   });
 
   it('rejects when the player cannot afford 20 points', () => {

@@ -1,5 +1,6 @@
 /**
- * Curse — rules spec §5, designer 2026-08-07 (victim-owned + transfer), #V4-20 spend math.
+ * Curse — rules spec §5: spend-tick (#V4-20) plus siphon to original caster
+ * (L50-09). Victim-owned + transfer (designer 2026-08-07) still apply.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -13,19 +14,20 @@ import { eliminateWithoutReward } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
 import { resolvePendingEffects } from './resolve-pending';
 
-describe('Curse (victim-owned + transfer)', () => {
-  it('7 points spent costs 2 lives base; remainder discarded', () => {
+describe('Curse (spend-tick + siphon, L50-09)', () => {
+  it('7 points spent costs 2 lives base; remainder discarded; caster gains those lives', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-7pts',
+      seed: 'l50-09-7pts',
     });
+    const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
-    if (b === undefined) {
-      return;
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
     b.activePersistentEffects = [
@@ -34,30 +36,36 @@ describe('Curse (victim-owned + transfer)', () => {
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
     ];
     b.lives = 10;
+    a.lives = 10;
     b.turnLedger.pointsSpent = 7;
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(8);
+    expect(a.lives).toBe(12);
     expect(b.activePersistentEffects).toHaveLength(1);
   });
 
-  it('upgraded costs 1 life per 2 points spent', () => {
+  it('upgraded costs 1 life per 2 points spent and siphons ×2', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-up',
+      seed: 'l50-09-up-spend',
     });
+    const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
-    if (b === undefined) {
-      return;
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
+    a.lives = 10;
+    b.lives = 10;
     b.activePersistentEffects = [
       makeCounterEffect({
         id: 'curse-1',
@@ -65,35 +73,39 @@ describe('Curse (victim-owned + transfer)', () => {
         isUpgraded: true,
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
     ];
-    b.lives = 10;
     b.turnLedger.pointsSpent = 5;
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(8);
+    expect(a.lives).toBe(14);
   });
 
-  it('theft-only point loss does not trigger Curse', () => {
+  it('theft-only point loss does not trigger Curse spend-tick', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-theft',
+      seed: 'l50-09-theft',
     });
+    const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
-    if (b === undefined) {
-      return;
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
+    a.lives = 10;
     b.activePersistentEffects = [
       makeCounterEffect({
         id: 'curse-1',
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
     ];
     b.lives = 10;
@@ -102,6 +114,7 @@ describe('Curse (victim-owned + transfer)', () => {
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(10);
+    expect(a.lives).toBe(10);
   });
 
   it('two stacked base Curses each tick on the same pointsSpent', () => {
@@ -110,26 +123,30 @@ describe('Curse (victim-owned + transfer)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-stack',
+      seed: 'l50-09-stack-spend',
     });
+    const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
-    if (b === undefined) {
-      return;
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
+    a.lives = 10;
     b.activePersistentEffects = [
       makeCounterEffect({
         id: 'curse-1',
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
       makeCounterEffect({
         id: 'curse-2',
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
     ];
     b.lives = 10;
@@ -147,20 +164,23 @@ describe('Curse (victim-owned + transfer)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-floor',
+      seed: 'l50-09-floor-spend',
     });
+    const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
-    if (b === undefined) {
-      return;
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
+    a.lives = 10;
     b.activePersistentEffects = [
       makeCounterEffect({
         id: 'curse-1',
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: a.id,
       }),
     ];
     b.lives = 2;
@@ -168,8 +188,293 @@ describe('Curse (victim-owned + transfer)', () => {
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(1);
+    expect(a.lives).toBe(11);
     expect(b.activePersistentEffects).toHaveLength(0);
     expect(state.pool.some((card) => card.cardId === 'curse')).toBe(true);
+  });
+
+  it('actual attack lives lost siphon 1:1 to the original caster', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l50-02-atk',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
+
+    if (a === undefined || b === undefined || c === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.lives = 10;
+    b.shield = 0;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.pendingEffects = [];
+    queueEffect({
+      state,
+      sourcePlayerId: c.id,
+      targetPlayerId: b.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+
+    const resolved = resolvePendingEffects(state, b.id, createRng('l50-02-atk'));
+    const lost = resolved[0]?.livesLost ?? 0;
+    expect(lost).toBeGreaterThanOrEqual(1);
+    expect(b.lives).toBe(10 - lost);
+    expect(a.lives).toBe(10 + lost);
+  });
+
+  it('upgraded Curse grants 2 lives per life lost', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-02-up',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    a.specialCards = [];
+    a.pendingEffects = [];
+    b.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        isUpgraded: true,
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    b.points = 0;
+    state.currentTurnPlayerId = b.id;
+
+    expect(
+      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(b.lives).toBe(9);
+    expect(a.lives).toBe(12);
+  });
+
+  it('each stacked copy pays independently', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l50-02-stack',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
+
+    if (a === undefined || b === undefined || c === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    c.lives = 10;
+    b.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+      makeCounterEffect({
+        id: 'curse-2',
+        cardId: 'curse',
+        isUpgraded: true,
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: c.id,
+      }),
+    ];
+    b.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    state.currentTurnPlayerId = b.id;
+
+    expect(
+      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(b.lives).toBe(9);
+    expect(a.lives).toBe(11);
+    expect(c.lives).toBe(12);
+  });
+
+  it('does not siphon when the Curse sits on its original caster', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-02-self',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+
+    if (a === undefined) {
+      throw new Error('missing player');
+    }
+
+    a.lives = 10;
+    a.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    a.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    state.currentTurnPlayerId = a.id;
+
+    expect(
+      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(a.lives).toBe(9);
+  });
+
+  it('skips siphon when the original caster is eliminated', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l50-02-dead',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 5;
+    eliminateWithoutReward(state, a.id);
+    b.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    state.currentTurnPlayerId = b.id;
+
+    expect(
+      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(b.lives).toBe(9);
+    expect(a.lives).toBe(0);
+  });
+
+  it('clamps siphon gains to lifeLimit', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-02-cap',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = state.lifeLimit;
+    b.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        isUpgraded: true,
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    state.currentTurnPlayerId = b.id;
+
+    expect(
+      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(a.lives).toBe(state.lifeLimit);
+  });
+
+  it('full shield absorb siphons nothing', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l50-02-shield',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    const c = state.players.find((player) => player.id === 'c');
+
+    if (a === undefined || b === undefined || c === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.lives = 10;
+    b.shield = 5;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.pendingEffects = [];
+    queueEffect({
+      state,
+      sourcePlayerId: c.id,
+      targetPlayerId: b.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+
+    const resolved = resolvePendingEffects(state, b.id, createRng('l50-02-shield'));
+    expect(resolved[0]?.livesLost).toBe(0);
+    expect(a.lives).toBe(10);
+    expect(b.lives).toBe(10);
   });
 
   it('victim already at 1 deactivates Curse without further loss', () => {
@@ -178,12 +483,12 @@ describe('Curse (victim-owned + transfer)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-at1',
+      seed: 'l50-02-at1',
     });
     const b = state.players.find((player) => player.id === 'b');
 
     if (b === undefined) {
-      return;
+      throw new Error('missing player');
     }
 
     b.activePersistentEffects = [
@@ -192,10 +497,10 @@ describe('Curse (victim-owned + transfer)', () => {
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: 'a',
       }),
     ];
     b.lives = 1;
-    b.turnLedger.pointsSpent = 99;
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(1);
@@ -203,19 +508,57 @@ describe('Curse (victim-owned + transfer)', () => {
     expect(state.pool.some((card) => card.cardId === 'curse')).toBe(true);
   });
 
-  it('activates via playCard on the cursed seat, not the caster', () => {
+  it('dropping to 1 life pools the Curse after siphoning that loss', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-play',
+      seed: 'l50-02-floor',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
     if (a === undefined || b === undefined) {
-      return;
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.lives = 2;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.specialCards = [{ instanceId: 'tax-1', cardId: 'tax', isUpgraded: false }];
+    state.currentTurnPlayerId = b.id;
+
+    expect(
+      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'tax-1' }).ok,
+    ).toBe(true);
+    expect(b.lives).toBe(1);
+    expect(a.lives).toBe(11);
+    expect(b.activePersistentEffects).toHaveLength(0);
+    expect(state.pool.some((card) => card.cardId === 'curse')).toBe(true);
+  });
+
+  it('activates via playCard on the cursed seat and stores the original caster', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-02-play',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
     }
 
     a.specialCards = [{ instanceId: 'curse-1', cardId: 'curse', isUpgraded: false }];
@@ -232,23 +575,23 @@ describe('Curse (victim-owned + transfer)', () => {
     ).toBe(true);
     expect(a.activePersistentEffects).toHaveLength(0);
     expect(b.activePersistentEffects[0]?.cardId).toBe('curse');
-    expect(b.activePersistentEffects[0]?.counter).toBeNull();
+    expect(b.activePersistentEffects[0]?.originalCasterPlayerId).toBe(a.id);
     expect(b.activePersistentEffects[0]?.targetPlayerId).toBeNull();
   });
 
-  it('successful attack dealing life transfers all Curses to the hit player', () => {
+  it('successful attack dealing life transfers all Curses and keeps the original caster', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-xfer',
+      seed: 'l50-02-xfer',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
     if (a === undefined || b === undefined) {
-      return;
+      throw new Error('missing players');
     }
 
     a.activePersistentEffects = [
@@ -257,6 +600,7 @@ describe('Curse (victim-owned + transfer)', () => {
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: 'c',
       }),
       makeCounterEffect({
         id: 'curse-2',
@@ -264,6 +608,7 @@ describe('Curse (victim-owned + transfer)', () => {
         isUpgraded: true,
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: 'c',
       }),
     ];
     b.lives = 10;
@@ -276,16 +621,14 @@ describe('Curse (victim-owned + transfer)', () => {
       isUpgraded: false,
     });
 
-    const resolved = resolvePendingEffects(state, b.id, createRng('l32-01-xfer'));
+    const resolved = resolvePendingEffects(state, b.id, createRng('l50-02-xfer'));
     expect(resolved[0]?.livesLost).toBeGreaterThanOrEqual(1);
     expect(a.activePersistentEffects).toHaveLength(0);
-    expect(b.activePersistentEffects.map((effect) => effect.cardId)).toEqual([
-      'curse',
-      'curse',
+    expect(b.activePersistentEffects.map((effect) => effect.originalCasterPlayerId)).toEqual([
+      'c',
+      'c',
     ]);
     expect(resolved[0]?.curseTransfers).toHaveLength(2);
-    expect(resolved[0]?.curseTransfers?.[0]?.fromPlayerId).toBe('a');
-    expect(resolved[0]?.curseTransfers?.[0]?.toPlayerId).toBe('b');
   });
 
   it('full shield absorb does not transfer Curse', () => {
@@ -294,13 +637,13 @@ describe('Curse (victim-owned + transfer)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-shield',
+      seed: 'l50-02-xfer-shield',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
 
     if (a === undefined || b === undefined) {
-      return;
+      throw new Error('missing players');
     }
 
     a.activePersistentEffects = [
@@ -309,6 +652,7 @@ describe('Curse (victim-owned + transfer)', () => {
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: 'c',
       }),
     ];
     b.lives = 10;
@@ -322,7 +666,7 @@ describe('Curse (victim-owned + transfer)', () => {
       isUpgraded: false,
     });
 
-    const resolved = resolvePendingEffects(state, b.id, createRng('l32-01-shield'));
+    const resolved = resolvePendingEffects(state, b.id, createRng('l50-02-xfer-shield'));
     expect(resolved[0]?.livesLost).toBe(0);
     expect(a.activePersistentEffects).toHaveLength(1);
     expect(b.activePersistentEffects).toHaveLength(0);
@@ -335,12 +679,12 @@ describe('Curse (victim-owned + transfer)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l32-01-elim',
+      seed: 'l50-02-elim',
     });
     const b = state.players.find((player) => player.id === 'b');
 
     if (b === undefined) {
-      return;
+      throw new Error('missing player');
     }
 
     b.activePersistentEffects = [
@@ -349,6 +693,7 @@ describe('Curse (victim-owned + transfer)', () => {
         cardId: 'curse',
         counter: null,
         targetPlayerId: null,
+        originalCasterPlayerId: 'a',
       }),
     ];
     b.lives = 5;

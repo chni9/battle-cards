@@ -12,13 +12,22 @@ import {
 } from 'react';
 
 import { AnimatedCard } from '../../design/components/animated-card';
-import { CARD_BAND_GAP_PX, fitCardBand } from './card-band-fit';
+import { IconButton } from '../../design/components/icon-button';
+import {
+  CARD_BAND_GAP_PX,
+  CARD_BAND_PAGER_SLOT_PX,
+  cardBandPageSizeForWidth,
+  cardBandRowsForHeight,
+  fitCardBand,
+} from './card-band-fit';
 
 export interface CardBandProps {
   hand: readonly CardInstance[];
   specials: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
 }
+
+const PAGE_WIDTH_LOCK_PX = 8;
 
 function CardSection({
   label,
@@ -32,6 +41,8 @@ function CardSection({
   onSelect?: (instanceId: string) => void;
 }): ReactElement {
   const areaRef = useRef<HTMLDivElement>(null);
+  const lockedWidthRef = useRef<number | null>(null);
+  const lockedRowsRef = useRef<1 | 2 | null>(null);
   const [cardWidth, setCardWidth] = useState(40);
   const [pageSize, setPageSize] = useState(Math.max(1, cards.length));
   const [page, setPage] = useState(0);
@@ -48,11 +59,24 @@ function CardSection({
       if (w <= 0 || h <= 0 || cards.length === 0) {
         return;
       }
-      const fit = fitCardBand(cards.length, w, h);
+
+      const widthChanged =
+        lockedWidthRef.current === null ||
+        Math.abs(w - lockedWidthRef.current) >= PAGE_WIDTH_LOCK_PX;
+
+      if (widthChanged || lockedRowsRef.current === null) {
+        lockedWidthRef.current = w;
+        lockedRowsRef.current = cardBandRowsForHeight(h);
+      }
+
+      const rows = lockedRowsRef.current;
+      const stablePageSize = cardBandPageSizeForWidth(cards.length, w, rows);
+      const pagerH = cards.length > stablePageSize ? CARD_BAND_PAGER_SLOT_PX : 0;
+      const fit = fitCardBand(cards.length, w, Math.max(1, h - pagerH));
       setCardWidth((prev) =>
         Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,
       );
-      setPageSize((prev) => (prev === fit.pageSize ? prev : fit.pageSize));
+      setPageSize((prev) => (prev === stablePageSize ? prev : stablePageSize));
     };
 
     measure();
@@ -103,6 +127,7 @@ function CardSection({
             <AnimatedCard
               instance={card}
               detail="face"
+              skipEntrance
               className="w-full max-h-full !p-0.5"
               {...(onSelect !== undefined
                 ? {
@@ -117,28 +142,24 @@ function CardSection({
       </div>
       {needsPager ? (
         <div
-          className="flex shrink-0 items-center gap-2"
+          className="flex h-11 shrink-0 items-center gap-2"
           data-zone={`${zone}-pager`}
         >
-          <button
-            type="button"
-            className="rounded-[length:var(--radius-badge)] bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink disabled:opacity-40"
-            disabled={safePage <= 0}
+          <IconButton
             aria-label={`Previous ${label} page`}
+            disabled={safePage <= 0}
             onClick={() => {
               setPage((p) => Math.max(0, Math.min(p, pageCount - 1) - 1));
             }}
           >
             ‹
-          </button>
-          <span className="text-[10px] tabular-nums text-ink-muted">
+          </IconButton>
+          <span className="min-w-[2.5rem] text-center text-xs tabular-nums text-ink-muted">
             {safePage + 1}/{pageCount}
           </span>
-          <button
-            type="button"
-            className="rounded-[length:var(--radius-badge)] bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink disabled:opacity-40"
-            disabled={safePage >= pageCount - 1}
+          <IconButton
             aria-label={`Next ${label} page`}
+            disabled={safePage >= pageCount - 1}
             onClick={() => {
               setPage((p) =>
                 Math.min(pageCount - 1, Math.min(p, pageCount - 1) + 1),
@@ -146,7 +167,7 @@ function CardSection({
             }}
           >
             ›
-          </button>
+          </IconButton>
         </div>
       ) : null}
     </div>

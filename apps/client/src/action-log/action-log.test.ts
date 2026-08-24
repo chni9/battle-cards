@@ -205,7 +205,7 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice draws');
   });
 
-  it('formats player reanimation with kit name when visible (L30-06)', () => {
+  it('formats player reanimation without the kit (L50-03)', () => {
     expect(
       formatActionLogEntry(
         {
@@ -216,10 +216,10 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Bob returns with Untouchable');
+    ).toBe('Bob returns');
   });
 
-  it('formats player reanimation without kit when Spy-gated', () => {
+  it('formats player reanimation without kit when omitted', () => {
     expect(
       formatActionLogEntry(
         {

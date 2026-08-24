@@ -2434,3 +2434,43 @@ deals stay bit-for-bit with the previous path.
 Tutorial (Lot 45) still forces kits after deal; do not wire this picker into the tutorial
 create path when L45-04 lands.
 
+## 2026-08-24 · [P] Classic rule freeze has an explicit-instruction exception (L50-01)
+
+Designer 2026-08-24: V5/V6 still must not invent Classic rule or value changes. A confused
+tester, a bot playing badly, or an inferred “improvement” is still not grounds. **Exception:**
+when the current session’s developer instructions explicitly change a Classic rule or value,
+that instruction wins. Record it here and update `docs/spec_bataille_des_cartes_en.md` in
+the same change.
+
+This supersedes the blanket “Classic rules and values stay frozen” line from 2026-08-20
+for later lots; it does not reopen V1–V4 archives or Team/God/Quick.
+
+Lot 50 uses the exception for Curse (spend-tick + siphon) and Card Transformer (cannot mint itself).
+
+## 2026-08-24 · [P] Curse siphon replaces spend-tick (L50-02)
+
+Designer 2026-08-24: Curse no longer drains 1 life per 3 (2 upgraded) points spent.
+While cursed, every life the victim **actually loses** (after shield, any cause) is
+granted to the **original caster** of that copy via `grantLives` / `lifeLimit`.
+Upgrade: 1 lost → 2 gained. Each stacked copy pays independently. No siphon when the
+Curse sits on its original caster, or if that caster is missing/eliminated. Transfer
+on ≥1 attack life and end-at-1-life → pool stay. `originalCasterPlayerId` is
+server-only (not on `PersistentEffectView`; search reconstruction therefore cannot
+siphon). Caller-side `observeLifeLoss` — never inside the two loss primitives.
+
+## 2026-08-24 · [P] Curse spend-tick and siphon both apply (L50-09)
+
+Designer 2026-08-24 (correction of L50-02): Curse is **both** mechanics, not a
+replacement. The cursed player still loses 1 life per 3 points spent on their turn
+(per 2 upgraded; `pointsSpent` only; remainder discarded; floor at 1 life — #V4-20).
+Those lost lives — and every other life they actually lose after the shield — are
+granted to the original caster (`grantLives` / `lifeLimit`; upgraded 1 lost → 2
+gained). Each copy ticks and pays independently. No siphon when the Curse sits on
+its original caster, or if that caster is missing/eliminated. Transfer and
+end-at-1-life stay.
+
+## 2026-08-24 · [P] Card Transformer cannot mint itself (L50-08)
+
+Designer 2026-08-24: the special obtained from Card Transformer — random or chosen —
+is never `card-transformer`. Shop 20-point special purchase is unchanged.
+

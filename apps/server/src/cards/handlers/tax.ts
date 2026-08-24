@@ -4,8 +4,8 @@
  */
 
 import { grantPoints } from '../../engine/economy/grant-resources';
-import { creditGhostLifeLoss } from '../../engine/kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../../engine/life/apply-life-loss';
+import { observeLifeLoss } from '../../engine/life/observe-life-loss';
 import { findPlayer } from '../../engine/turn/advance-turn';
 import type { CardHandler, EffectContext } from '../handler';
 
@@ -26,7 +26,7 @@ export const taxHandler: CardHandler = {
 
     const outcome = applyLifeLoss(actor, 1, 'tax');
     actor.turnLedger.livesLost += outcome.livesLost;
-    creditGhostLifeLoss(context.state, actor, outcome.livesLost);
+    observeLifeLoss(context.state, actor, outcome.livesLost);
     grantPoints(
       context.state,
       actor,
