@@ -31,20 +31,19 @@ export function choiceTileClassName(options: ChoiceTileChromeOptions): string {
  */
 export const CHOICE_SELECTED_ORANGE = '#f0771f';
 
-const CHOICE_SELECTED_RING = `0 0 0 2px ${CHOICE_SELECTED_ORANGE}, 0 0 0 6px rgba(240, 119, 31, 0.4)`;
+/** Solid 3px halo + soft glow — replaces seat inset shadow (do not concatenate). */
+export const CHOICE_SELECTED_HALO = `0 0 0 3px ${CHOICE_SELECTED_ORANGE}, 0 0 0 7px rgba(240, 119, 31, 0.5)`;
 
-/** Merge shop selected ring onto an existing inline style (SeatTile wash). */
+/**
+ * Shop selected chrome for SeatTile. Keeps seat wash fill; drops the inset
+ * accent so the orange halo is the only outline and stays fully visible.
+ */
 export function choiceTileSelectedStyle(
   base: CSSProperties | undefined,
 ): CSSProperties {
-  const existing = base?.boxShadow;
-  const boxShadow =
-    typeof existing === 'string' && existing !== ''
-      ? `${existing}, ${CHOICE_SELECTED_RING}`
-      : CHOICE_SELECTED_RING;
   return {
-    ...base,
+    backgroundColor: base?.backgroundColor,
     borderColor: CHOICE_SELECTED_ORANGE,
-    boxShadow,
+    boxShadow: CHOICE_SELECTED_HALO,
   };
 }

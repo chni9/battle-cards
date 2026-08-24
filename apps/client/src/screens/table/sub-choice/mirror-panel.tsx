@@ -93,7 +93,7 @@ export function MirrorPanel({
         })}
       </ul>
       <p className="mt-3 text-sm font-medium text-ink">New target</p>
-      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <ul className="mt-2 grid grid-cols-2 gap-3 p-2 sm:grid-cols-3">
         {aliveOpponents.map((player) => (
           <li key={player.id}>
             <SeatTile

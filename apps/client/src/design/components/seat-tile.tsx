@@ -42,7 +42,10 @@ export function SeatTile({
       aria-label={nickname}
       disabled={disabled}
       onClick={onSelect}
-      className={choiceTileClassName({ selected, disabled })}
+      className={[
+        choiceTileClassName({ selected, disabled }),
+        selected ? 'relative z-[1]' : '',
+      ].join(' ')}
       style={style}
     >
       <KitPortrait kitId={kitId} nickname={nickname} className="w-full max-w-[5.5rem]" />

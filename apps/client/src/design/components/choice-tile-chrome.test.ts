@@ -4,7 +4,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { CHOICE_SELECTED_ORANGE, choiceTileClassName, choiceTileSelectedStyle } from './choice-tile-chrome';
+import {
+  CHOICE_SELECTED_HALO,
+  CHOICE_SELECTED_ORANGE,
+  choiceTileClassName,
+  choiceTileSelectedStyle,
+} from './choice-tile-chrome';
 
 describe('choiceTileClassName (L44-01)', () => {
   it('matches shop selected and idle ring fragments', () => {
@@ -27,13 +32,15 @@ describe('choiceTileClassName (L44-01)', () => {
     expect(choiceTileClassName({ selected: false, disabled: true })).toContain('opacity-55');
   });
 
-  it('paints the selected ring inline so seat wash cannot hide it', () => {
+  it('paints a full orange halo and drops the seat inset shadow', () => {
     const style = choiceTileSelectedStyle({
       borderColor: '#1d6fd8',
+      backgroundColor: 'rgb(200, 220, 245)',
       boxShadow: 'inset 0 3px 0 0 #1d6fd8',
     });
     expect(style.borderColor).toBe(CHOICE_SELECTED_ORANGE);
-    expect(String(style.boxShadow)).toContain(CHOICE_SELECTED_ORANGE);
-    expect(String(style.boxShadow)).toContain('inset 0 3px 0 0 #1d6fd8');
+    expect(style.backgroundColor).toBe('rgb(200, 220, 245)');
+    expect(style.boxShadow).toBe(CHOICE_SELECTED_HALO);
+    expect(String(style.boxShadow)).not.toContain('inset');
   });
 });

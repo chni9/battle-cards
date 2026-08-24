@@ -345,7 +345,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
           ) : undefined
         }
       >
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3">
           {targetDialogOpponents.map((player) => (
             <li key={player.id}>
               <SeatTile
@@ -541,7 +541,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   />
                 </div>
                 {checked ? (
-                  <ul className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+                  <ul className="grid min-w-0 flex-1 grid-cols-2 gap-3 p-2">
                     {aliveOpponents.map((player) => (
                       <li key={player.id}>
                         <SeatTile
