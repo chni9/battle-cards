@@ -7,7 +7,7 @@ import type { KitId } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { seatIndexOf, seatZoneStyle, type SeatPlayersView } from '../seat-colors';
-import { choiceTileClassName } from './choice-tile-chrome';
+import { choiceTileClassName, choiceTileSelectedStyle } from './choice-tile-chrome';
 import { KitPortrait } from './kit-portrait';
 import { PlayerName } from './player-name';
 
@@ -33,6 +33,7 @@ export function SeatTile({
   const seat = seatIndexOf(view, playerId);
   const zoneStyle =
     seat !== null ? seatZoneStyle(seat, { intensity: 'soft' }) : undefined;
+  const style = selected ? choiceTileSelectedStyle(zoneStyle) : zoneStyle;
 
   return (
     <button
@@ -42,7 +43,7 @@ export function SeatTile({
       disabled={disabled}
       onClick={onSelect}
       className={choiceTileClassName({ selected, disabled })}
-      style={zoneStyle}
+      style={style}
     >
       <KitPortrait kitId={kitId} nickname={nickname} className="w-full max-w-[5.5rem]" />
       <PlayerName

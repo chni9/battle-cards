@@ -142,7 +142,9 @@ rules above are unchanged — this section only covers how the client looks.
   green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
   Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
 - **Visual pickers (L44-01):** `choiceTileClassName` is the shop selected/idle ring.
-  `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”) and
+  `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”;
+  selected uses `choiceTileSelectedStyle` so the orange ring wins over inline seat
+  `boxShadow`) and
   `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
   `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
   the tiles; intents stay unchanged.

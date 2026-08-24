@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { choiceTileClassName } from './choice-tile-chrome';
+import { CHOICE_SELECTED_ORANGE, choiceTileClassName, choiceTileSelectedStyle } from './choice-tile-chrome';
 
 describe('choiceTileClassName (L44-01)', () => {
   it('matches shop selected and idle ring fragments', () => {
@@ -25,5 +25,15 @@ describe('choiceTileClassName (L44-01)', () => {
       'cursor-not-allowed',
     );
     expect(choiceTileClassName({ selected: false, disabled: true })).toContain('opacity-55');
+  });
+
+  it('paints the selected ring inline so seat wash cannot hide it', () => {
+    const style = choiceTileSelectedStyle({
+      borderColor: '#1d6fd8',
+      boxShadow: 'inset 0 3px 0 0 #1d6fd8',
+    });
+    expect(style.borderColor).toBe(CHOICE_SELECTED_ORANGE);
+    expect(String(style.boxShadow)).toContain(CHOICE_SELECTED_ORANGE);
+    expect(String(style.boxShadow)).toContain('inset 0 3px 0 0 #1d6fd8');
   });
 });
