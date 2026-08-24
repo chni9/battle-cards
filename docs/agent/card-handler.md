@@ -156,8 +156,10 @@ that file; it does not edit another card's handler (`card-handler.md` golden rul
 agreed for Lot 22).
 
 **Counter cards** ("card lives", rules spec §5): Points Generator 3, Imposition 2, Poison 3,
-Super Absorber 2. Curse has `counter: null`, lives on the cursed seat, and deactivates when
-that seat reaches 1 life or is eliminated (designer 2026-08-07). A successful attack (≥1 life lost) passes
+Super Absorber 2. Curse has `counter: null`, lives on the cursed seat, stores
+`originalCasterPlayerId`, ticks 1 life per 3 points spent (#V4-20) and siphons actual
+life loss to that caster (L50-09: both), and deactivates when
+that seat reaches 1 life or is eliminated. A successful attack (≥1 life lost) passes
 every Curse on the attacker to the hit player.
 The counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.
@@ -166,8 +168,10 @@ the user loses a life **to damage**, and at 0 the card deactivates and is perman
 **Lot 24:** Card Absorber recovers from `state.pool` via `takeFromPool` +
 `transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
 Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
-and mints a special (base: rng; upgraded: `special-pick`). Instant personal effects — not
-opponent-queued. `reanimation-kit` remains untyped until Lot 26.
+and mints a special from `TRANSFORM_RESULT_SPECIAL_IDS` (never `card-transformer`:
+designer 2026-08-24 / L50-08). Base: rng; upgraded: `special-pick`. Shop 20-point
+purchase still uses `SPECIAL_CARD_IDS`. Instant personal effects — not opponent-queued.
+`reanimation-kit` remains untyped until Lot 26.
 
 ## What not to do
 

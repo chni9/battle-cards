@@ -490,7 +490,7 @@ describe('buildPlayingViewFor (L19-02) — elimination reveal', () => {
 });
 
 describe('buildPlayingViewFor — reanimation kit privacy', () => {
-  it('omits playerReanimated.kitId unless self or Spy (designer 2026-08-06)', () => {
+  it('omits playerReanimated.kitId for every recipient (L50-03)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -517,11 +517,12 @@ describe('buildPlayingViewFor — reanimation kit privacy', () => {
       turnDeadlineMs: null,
       actionLog: log,
     });
-    expect(forSelf.actionLog[0]).toMatchObject({
+    expect(forSelf.actionLog[0]).toEqual({
       kind: 'playerReanimated',
       playerId: 'a',
-      kitId: 'untouchable',
+      turnSequence: 3,
     });
+    expect(forSelf.actionLog[0]).not.toHaveProperty('kitId');
 
     const forSpy = buildPlayingViewFor({
       recipientSessionId: 'b',
@@ -530,11 +531,12 @@ describe('buildPlayingViewFor — reanimation kit privacy', () => {
       turnDeadlineMs: null,
       actionLog: log,
     });
-    expect(forSpy.actionLog[0]).toMatchObject({
+    expect(forSpy.actionLog[0]).toEqual({
       kind: 'playerReanimated',
       playerId: 'a',
-      kitId: 'untouchable',
+      turnSequence: 3,
     });
+    expect(forSpy.actionLog[0]).not.toHaveProperty('kitId');
 
     const forOther = buildPlayingViewFor({
       recipientSessionId: 'c',
@@ -755,10 +757,12 @@ describe('buildPlayingViewFor — eliminated spectator (designer 2026-08-06)', (
     expect(forSpectator.actionLog[0]).toMatchObject({
       action: 'activateDuplication',
     });
-    expect(forSpectator.actionLog[1]).toMatchObject({
-      kind: 'playerReanimated',
-      kitId: 'ghost',
-    });
+      expect(forSpectator.actionLog[1]).toMatchObject({
+        kind: 'playerReanimated',
+        playerId: 'c',
+      })
+      expect(forSpectator.actionLog[1]).not.toHaveProperty('kitId');
+    expect(forSpectator.actionLog[1]).not.toHaveProperty('kitId');
 
     const forAlive = buildPlayingViewFor({
       recipientSessionId: 'c',
@@ -768,12 +772,11 @@ describe('buildPlayingViewFor — eliminated spectator (designer 2026-08-06)', (
       actionLog: log,
     });
     expect(forAlive.actionLog[0]).toMatchObject({ action: 'draw' });
-    // Self still sees own reanimation kit.
     expect(forAlive.actionLog[1]).toMatchObject({
       kind: 'playerReanimated',
       playerId: 'c',
-      kitId: 'ghost',
     });
+    expect(forAlive.actionLog[1]).not.toHaveProperty('kitId');
 
     const forOtherAlive = buildPlayingViewFor({
       recipientSessionId: 'b',

@@ -1,6 +1,7 @@
 # Technical spec — Card Battle, version 6 (Readability, stranger onboarding, beta feedback)
 
-> Implementation document for V6. It contains **no Classic rule and no Classic value**.
+> Implementation document for V6. It contains **no Classic rule and no Classic value**,
+> unless the current session's developer instructions explicitly change one (Lot 50).
 > Rules truth stays `docs/spec_bataille_des_cartes_en.md`. Engine, protocol baseline, and
 > Definition of Done stay `docs/technical_spec_v1.md`. Visual language stays
 > `docs/technical_spec_v2.md` plus Lot 39 (`docs/backlog_ux.md`). Bots stay
@@ -38,12 +39,15 @@ What V6 has to prove:
   Draw, Incoming, or Upgrade points are
 - a tester can send Bug / Confusion / Idea from inside the product, and you can open that
   report in the browser the same day
-- Classic play is unchanged: same prices, damage, kits, delay, mutual attacks
+- Classic play is unchanged unless the designer explicitly requests a rule or value
+  change in the current session: same prices, damage, kits, delay, mutual attacks by default
 
 ### Non-objectives
 
-- **No Classic rule change. No Classic value change.** A confused tester is never grounds
-  for changing Tax, delay, kits, or prices. Same clause as V4 / V5.
+- **No Classic rule change. No Classic value change** — unless the current session's
+  developer instructions explicitly change one (record in `decisions.md` + rules spec).
+  A confused tester is never grounds for changing Tax, delay, kits, or prices on inference
+  alone. Same clause as V4 / V5, with that explicit-instruction exception.
 - **No new competitive mode.** Team, God, and Quick stay out (technical spec v1 §9). The
   tutorial is **Classic with setup overrides**, not a fourth mode (`GameMode` stays
   `'classic'`).

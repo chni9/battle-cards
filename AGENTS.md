@@ -95,13 +95,16 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 6. **Never invent a rule.** If the rules spec, the technical spec and the backlog's **Watch
    point** line do not clearly resolve a case, **stop and ask** — even when the answer looks
    obvious. Open decisions #4, #5, #6, #7 are known-unresolved (`docs/agent/decisions.md`);
-   #1, #2 and #3 are closed.
+   #1, #2 and #3 are closed. **Exception:** when the current session's developer instructions
+   explicitly change a Classic rule or value, that instruction wins — record it in
+   `docs/agent/decisions.md` and update the rules spec in the same change.
 7. **V1–V4 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
  `docs/backlog_v5.md`). **V6 is in progress** from Lot 41 (`docs/technical_spec_v6.md`,
  `docs/backlog_v6.md`).
  Team/God/Quick modes, accounts, in-progress persistence and
  monetization stay out (technical spec v1 §9) — not even partially. V5 and V6 change **no rule
- and no value**. V5 adds a policy registry, arena, belief model, search, and fitted
+ and no value**, unless the current session's developer instructions explicitly change a
+ Classic rule or value. V5 adds a policy registry, arena, belief model, search, and fitted
  evaluation. V6 adds teaching, table readability, and in-game feedback (tutorial is Classic
  with setup overrides, not a new competitive mode). A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond

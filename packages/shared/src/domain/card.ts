@@ -42,6 +42,16 @@ export const SPECIAL_CARD_IDS = [
 ] as const;
 
 /**
+ * Card Transformer result pool — never `card-transformer` itself
+ * (designer 2026-08-24 / L50-08). Shop special purchase still uses
+ * `SPECIAL_CARD_IDS`.
+ */
+export const TRANSFORM_RESULT_SPECIAL_IDS = SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<(typeof SPECIAL_CARD_IDS)[number], 'card-transformer'> =>
+    id !== 'card-transformer',
+);
+
+/**
  * Alias of `SPECIAL_CARD_IDS` — L21-01 / #V4-29: the 20-point purchase draws from
  * all 20 specials (pending-handler ids included; play stays rejected until implemented).
  */

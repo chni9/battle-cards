@@ -5,6 +5,8 @@
  * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
  * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
  * persistents so it does not re-absorb lives lost later in the same phase.
+ * Curse still ticks on `pointsSpent` (#V4-20) and siphons those lost lives — and any
+ * other actual life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
 
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
@@ -13,8 +15,8 @@ import {
   grantLives,
   grantPoints,
 } from '../economy/grant-resources';
-import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
+import { observeLifeLoss } from '../life/observe-life-loss';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { absorbLedgerFromVictim } from './absorb-ledger';
@@ -135,7 +137,7 @@ function applyOneImposition(
 
   const loss = applyLifeLoss(victim, livesDue, 'imposition');
   victim.turnLedger.livesLost += loss.livesLost;
-  creditGhostLifeLoss(state, victim, loss.livesLost);
+  observeLifeLoss(state, victim, loss.livesLost);
   grantLives(state, imposer, loss.livesLost, 'direct');
   recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
 }
@@ -154,14 +156,13 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
       const livesDue = effect.isUpgraded ? POISON_LIVES_UPGRADED : POISON_LIVES_BASE;
       const loss = applyLifeLoss(victim, livesDue, 'poison');
       victim.turnLedger.livesLost += loss.livesLost;
-      creditGhostLifeLoss(state, victim, loss.livesLost);
+      observeLifeLoss(state, victim, loss.livesLost);
       recordEliminationContributor(state, victim.id, poisoner.id, loss.livesLost);
     }
   }
 }
 
 function applyCursesOnVictim(state: GameState, victim: Player): void {
-  // Victim-owned (designer 2026-08-07) — snapshot ids; deactivate mutates the array mid-loop.
   const curseEffects = victim.activePersistentEffects.filter(
     (effect) => effect.cardId === 'curse',
   );
@@ -190,7 +191,7 @@ function applyOneCurse(state: GameState, victim: Player, effect: PersistentEffec
   const lossAmount = Math.min(livesDue, maxLoss);
   const loss = applyLifeLoss(victim, lossAmount, 'curse');
   victim.turnLedger.livesLost += loss.livesLost;
-  creditGhostLifeLoss(state, victim, loss.livesLost);
+  observeLifeLoss(state, victim, loss.livesLost);
   // No elimination credit — Curse cannot finish a player off (designer 2026-08-07).
 
   if (victim.lives <= 1) {

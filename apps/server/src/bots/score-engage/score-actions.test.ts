@@ -542,4 +542,60 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
       Number.NEGATIVE_INFINITY,
     );
   });
+
+  it('denies Spy against an upgraded public shield (L50-04)', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        specialCards: [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, { activeShield: { isUpgraded: true } }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l50-04-shield'));
+
+    expect(
+      scoreOf(
+        scored,
+        (action) => action.type === 'playCard' && action.instanceId === 'spy-1',
+      ),
+    ).toBe(Number.NEGATIVE_INFINITY);
+  });
+
+  it('held Reanimation outranks Spy when both are legal (L50-04)', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        specialCards: [
+          { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+          { instanceId: 're-1', cardId: 'reanimation', isUpgraded: false },
+        ],
+      }),
+    });
+    const actions: TurnAction[] = [
+      { type: 'playCard', instanceId: 'spy-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 're-1' },
+      { type: 'draw' },
+    ];
+    const scored = scoreEngageActions(view, actions, createRng('l50-04-reanim'));
+
+    expect(
+      scoreOf(scored, (action) => action.type === 'playCard' && action.instanceId === 're-1'),
+    ).toBeGreaterThan(
+      scoreOf(
+        scored,
+        (action) => action.type === 'playCard' && action.instanceId === 'spy-1',
+      ),
+    );
+    expect(decideEngage(view, actions, createRng('l50-04-reanim')).action).toEqual({
+      type: 'playCard',
+      instanceId: 're-1',
+    });
+  });
 });

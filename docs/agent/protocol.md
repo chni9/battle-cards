@@ -41,7 +41,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — `playerReanimated.kitId` is omitted from the public action log unless the recipient is the revived seat, spies them, or is an eliminated spectator; Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |

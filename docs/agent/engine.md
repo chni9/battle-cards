@@ -37,7 +37,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 
 | | `applyDamage` | `applyLifeLoss` |
 |---|---|---|
-| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, Curse, every non-attack loss |
+| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
 | Card counters | Decrements the hit player's active counters | Never touches them |
 
@@ -190,13 +190,16 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Invisibility → (if not invisible) Super Absorber → Imposition → Poison → Curse. Super Absorber
   reads the current seat's ledger
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
-  persistents so it does not re-absorb same-phase Imposition/Poison/Curse losses.   Imposition /
-  Poison act on the current player from other seats' active effects; Curse is
-  **victim-owned** (designer 2026-08-07) and ticks from the current player's own
-  `activePersistentEffects`. Points Generator ticks on the owner's turn
-  (including the play turn). Curse has no counter — `targetPlayerId` is null —
-  and exits via `deactivatePersistentEffect` when the victim reaches 1 life
-  (#V4-20 spend floor) or on elimination (persistents pooled). A successful
+  persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
+  Poison act on the current player from other seats' active effects. Curse is
+  **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
+  (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**
+  actual lives lost to the original caster (designer 2026-08-24 / L50-09: both, not
+  replace) via `observeLifeLoss`. `originalCasterPlayerId` is server-only. Each copy
+  ticks and pays independently (upgraded spend divisor 2, siphon ×2). No siphon when
+  the holder is the original caster or that caster is eliminated. Ends via
+  `deactivatePersistentEffect` when the victim reaches 1 life or on elimination
+  (persistents pooled). A successful
   attack that deals ≥1 life moves every Curse on the attacker onto the hit
   player (`transferCursesFromAttacker`, logged as `curseTransferred`).
   Deactivated counter cards join the shared pool. Invisibility is

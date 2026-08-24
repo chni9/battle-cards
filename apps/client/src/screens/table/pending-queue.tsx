@@ -95,14 +95,14 @@ export function PendingQueue({
                   data-pending-id={effect.id}
                   title={`${label} · ${routePlain} · queued #${String(effect.queuedAt)}`}
                   className={[
-                    'inline-flex max-w-full items-center gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
+                    'flex max-w-full flex-wrap items-start gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                     chipClass,
                     highlighted ? highlightClass : '',
                     entranceClass,
                   ].join(' ')}
                 >
-                  <span className="truncate text-xs font-semibold">{label}</span>
-                  <span className="inline-flex min-w-0 truncate text-[10px] text-ink-muted">
+                  <span className="whitespace-normal break-words text-xs font-semibold">{label}</span>
+                  <span className="inline-flex min-w-0 whitespace-normal break-words text-[10px] text-ink-muted">
                     {route}
                   </span>
                 </li>

@@ -9,7 +9,7 @@ import {
   actionReject,
   type ActionReject,
   KIT_IDS,
-  SPECIAL_CARD_IDS,
+  TRANSFORM_RESULT_SPECIAL_IDS,
   type GameState,
   type KitId,
   type SpecialCardId,
@@ -151,7 +151,7 @@ export function beginSpecialPick(
   state.subChoice = {
     kind: 'special-pick',
     playerId: input.playerId,
-    eligibleCardIds: [...SPECIAL_CARD_IDS],
+    eligibleCardIds: [...TRANSFORM_RESULT_SPECIAL_IDS],
     deadlineMs: input.nowMs + SPECIAL_SUB_CHOICE_MS,
   };
 }

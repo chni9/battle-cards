@@ -10,6 +10,7 @@ import {
   ATTACK_CARD_IDS,
   SPECIAL_ATTACK_CARD_IDS,
   SPECIAL_CARD_IDS,
+  TRANSFORM_RESULT_SPECIAL_IDS,
   isAttackCardId,
   type CardId,
 } from './card';
@@ -30,6 +31,14 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
     expect(ACTION_CARD_IDS).toHaveLength(7);
     expect(SPECIAL_CARD_IDS).toHaveLength(20);
     expect(ALL_CARD_IDS).toHaveLength(30);
+  });
+
+  it('keeps Card Transformer out of its own result pool (L50-08)', () => {
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(19);
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).not.toContain('card-transformer');
+    expect([...TRANSFORM_RESULT_SPECIAL_IDS].sort()).toEqual(
+      [...SPECIAL_CARD_IDS].filter((id) => id !== 'card-transformer').sort(),
+    );
   });
 
   it('never repeats a card id', () => {
