@@ -13,8 +13,8 @@ import {
   type Player,
 } from '@card-battle/shared';
 
-import { creditGhostLifeLoss } from '../kits/credit-ghost-life-loss';
 import { applyLifeLoss } from '../life/apply-life-loss';
+import { observeLifeLoss } from '../life/observe-life-loss';
 import { grantLives, grantPoints } from './grant-resources';
 
 export function canAffordCost(player: Player, cost: CardCost): boolean {
@@ -77,7 +77,7 @@ export function payCost(
   if (lives > 0) {
     const outcome = applyLifeLoss(player, lives, 'card-buy');
     player.turnLedger.livesLost += outcome.livesLost;
-    creditGhostLifeLoss(state, player, outcome.livesLost);
+    observeLifeLoss(state, player, outcome.livesLost);
   }
 
   return { ok: true };

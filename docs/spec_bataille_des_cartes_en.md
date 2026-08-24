@@ -13,7 +13,7 @@
 
 - **Damage** specifically refers to life loss inflicted by an attack-type card (basic attack cards, and any special card explicitly defined as an attack — e.g. MEGA ATTACK, see Special Cards section).
 - The shield only absorbs damage, before the player's lives. If damage exceeds the remaining shield points, the excess carries over to the player's lives.
-- Any other life loss (a card's cost like Tax, an effect like Suicide, Poison, Curse, etc.) is not an attack: it is not filtered by the shield and applies directly to the player's lives.
+- Any other life loss (a card's cost like Tax, an effect like Suicide, Poison, etc.) is not an attack: it is not filtered by the shield and applies directly to the player's lives.
 
 ### Card Economy (attack and action)
 
@@ -203,10 +203,11 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: doubles all gains obtained this way.
 
 **Curse** — Price: 8 points
-- Action: the user chooses an opponent to curse. The effect lives on that opponent (not the user). While cursed, they lose 1 life for every 3 points they spend on their turn. Multiple Curses on the same player stack — each copy ticks independently on the same spend.
-- Passing the Curse: when a cursed player successfully deals at least 1 life with any attack card, every Curse they hold moves onto the hit player (the upgraded state is kept). Cancelled, blocked, immune, or fully shield-absorbed attacks do not transfer.
-- End: the effect deactivates and is permanently lost to the shared pool as soon as the cursed player drops to 1 remaining life (it cannot finish them off), or when that player is eliminated.
-- Upgrade: 1 life lost per 2 points spent instead of 3.
+- Action: the user chooses an opponent to curse. The effect lives on that opponent (not the user). While cursed, every life that player actually loses (after the shield, from any cause) is granted to the **original user** who played that Curse copy. Multiple Curses on the same player stack — each copy pays independently.
+- The siphon does not apply when the Curse sits on its original user (they do not gain the lives they lost). It also does not apply if that original user is missing or already eliminated.
+- Passing the Curse: when a cursed player successfully deals at least 1 life with any attack card, every Curse they hold moves onto the hit player (the upgraded state and original user are kept). Cancelled, blocked, immune, or fully shield-absorbed attacks do not transfer.
+- End: the effect deactivates and is permanently lost to the shared pool as soon as the cursed player drops to 1 remaining life, or when that player is eliminated.
+- Upgrade: each life the victim loses grants 2 lives to the original user instead of 1.
 
 **Poison** — Price: 8 points
 - Action: all opponents lose 1 life per turn, as long as the card's dedicated internal counter is not depleted.
@@ -240,7 +241,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 - Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
-- Periodic effects targeting an opponent (Poison, Curse, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action.
+- Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse siphons lives the cursed player actually loses, including on that turn after they act.
 
 ### Mutual Attacks
 

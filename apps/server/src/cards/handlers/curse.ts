@@ -1,7 +1,7 @@
 /**
  * Curse — rules spec §5, victim-owned (designer 2026-08-07; supersedes L22-02 placement).
- * Activates on the chosen opponent; ticks in apply-persistent-effects; transfers on
- * successful attack (lives lost ≥ 1).
+ * Activates on the chosen opponent; siphons actual life loss to the original caster
+ * (L50-02); transfers on successful attack (lives lost ≥ 1).
  */
 
 import { activatePersistentEffect } from '../../engine/specials/activate-persistent';
@@ -31,6 +31,7 @@ export const curseHandler: CardHandler = {
       isUpgraded: context.card.isUpgraded,
       counter: null,
       targetPlayerId: null,
+      originalCasterPlayerId: context.sourcePlayerId,
     });
   },
 };

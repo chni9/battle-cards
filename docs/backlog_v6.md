@@ -61,7 +61,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-18 of 48 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+19 of 48 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -74,7 +74,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
-| 50 · Beta feedback | 8 | 1 |
+| 50 · Beta feedback | 8 | 2 |
 
 ---
 
@@ -198,7 +198,7 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L50-01 | Governance: Classic rules stay frozen **unless the current session explicitly changes one**. Update `AGENTS.md` golden rules 6–7, technical spec v6 non-objectives, this file's Scope lock, and append `decisions.md`. **Acceptance:** an agent reading only those files sees the exception and still must not invent a rule. | S | Low | — | Done |
-| L50-02 | Curse siphon: remove spend-tick. Every life the cursed player actually loses is granted to the original caster (`grantLives`, `lifeLimit`). Upgrade 1 lost → 2 gained. Each copy pays. No siphon when the Curse sits on its original caster, or if that caster is missing/eliminated. Transfer and end-at-1-life stay. Store `originalCasterPlayerId` on the engine persistent; omit from `PersistentEffectView`. **Acceptance:** tests for attack + Tax/Poison, shield absorb 0, stacks, self-holder skip, cap, transfer. | **L** | **High** | L50-01 | To do |
+| L50-02 | Curse siphon: remove spend-tick. Every life the cursed player actually loses is granted to the original caster (`grantLives`, `lifeLimit`). Upgrade 1 lost → 2 gained. Each copy pays. No siphon when the Curse sits on its original caster, or if that caster is missing/eliminated. Transfer and end-at-1-life stay. Store `originalCasterPlayerId` on the engine persistent; omit from `PersistentEffectView`. **Acceptance:** tests for attack + Tax/Poison, shield absorb 0, stacks, self-holder skip, cap, transfer. | **L** | **High** | L50-01 | Done |
 | L50-03 | In-game `playerReanimated` never includes `kitId` for any recipient. Copy is always `{nick} returns`. Excel export may still carry `kitId`. **Acceptance:** view + action-log tests; Spy/self no longer see the kit in the table log. | S | Low | — | To do |
 | L50-04 | `score-engage` overlay only: Spy `-Infinity` vs upgraded public shield or known Spy/Thief immune; non-top-threat Spy drops to invest-band; held Reanimation bumped to `deny + 150` unless a finishable lethal attack is available. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` unmodified and green. Easy rooms stay v4. | M | Medium | — | To do |
 | L50-05 | Card-band pager: `IconButton` chrome; lock row count against dock-height jitter; reserve pager height before fitting; `AnimatedCard` in the band skips entrance flip. **Acceptance:** `fitCardBand` tests: same width + shorter height does not change `pageSize` once paginating. | M | Medium | — | To do |

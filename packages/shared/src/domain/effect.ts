@@ -9,9 +9,9 @@ import type { CardId } from './card';
  * `applyLifeLoss` (technical spec §4.2).
  *
  * Non-attack sources: Tax's play cost (rules spec §3), buying Tax from the shop
- * (Lot 2 ruling: 2 lives), Suicide, Imposition's ceded life, Poison ticks and
- * Curse spend ticks (rules spec §5). Damage never appears here — it goes through
- * `applyDamage`.
+ * (Lot 2 ruling: 2 lives), Suicide, Imposition's ceded life, and Poison ticks
+ * (rules spec §5). Curse no longer causes life loss (L50-02 siphon). Damage never
+ * appears here — it goes through `applyDamage`.
  */
 export const LIFE_LOSS_REASONS = [
   'tax',
@@ -99,4 +99,9 @@ export interface PersistentEffect {
    * Public via `PersistentEffectView`.
    */
   targetPlayerId: string | null;
+  /**
+   * Seat that originally played Curse. Survives transfer. Absent/`null` for every
+   * other persistent. Server-only — omitted from `PersistentEffectView` (L50-02).
+   */
+  originalCasterPlayerId?: string | null;
 }

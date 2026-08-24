@@ -18,6 +18,8 @@ export interface ActivatePersistentInput {
   counter: number | null;
   /** Legacy; Curse is activated on the cursed seat with null (designer 2026-08-07). */
   targetPlayerId?: string | null;
+  /** Curse only — original user; omitted/null for every other persistent (L50-02). */
+  originalCasterPlayerId?: string | null;
 }
 
 export function activatePersistentEffect(input: ActivatePersistentInput): PersistentEffect {
@@ -33,6 +35,9 @@ export function activatePersistentEffect(input: ActivatePersistentInput): Persis
     isUpgraded: input.isUpgraded,
     counter: input.counter,
     targetPlayerId: input.targetPlayerId ?? null,
+    ...(input.originalCasterPlayerId !== undefined && input.originalCasterPlayerId !== null
+      ? { originalCasterPlayerId: input.originalCasterPlayerId }
+      : {}),
   };
 
   owner.activePersistentEffects.push(effect);

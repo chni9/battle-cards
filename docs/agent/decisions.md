@@ -2447,3 +2447,14 @@ for later lots; it does not reopen V1–V4 archives or Team/God/Quick.
 
 Lot 50 uses the exception for Curse (siphon) and Card Transformer (cannot mint itself).
 
+## 2026-08-24 · [P] Curse siphon replaces spend-tick (L50-02)
+
+Designer 2026-08-24: Curse no longer drains 1 life per 3 (2 upgraded) points spent.
+While cursed, every life the victim **actually loses** (after shield, any cause) is
+granted to the **original caster** of that copy via `grantLives` / `lifeLimit`.
+Upgrade: 1 lost → 2 gained. Each stacked copy pays independently. No siphon when the
+Curse sits on its original caster, or if that caster is missing/eliminated. Transfer
+on ≥1 attack life and end-at-1-life → pool stay. `originalCasterPlayerId` is
+server-only (not on `PersistentEffectView`; search reconstruction therefore cannot
+siphon). Caller-side `observeLifeLoss` — never inside the two loss primitives.
+

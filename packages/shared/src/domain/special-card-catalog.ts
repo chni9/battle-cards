@@ -165,8 +165,8 @@ export const SPECIAL_CARD_CATALOG = {
     'curse',
     'Curse',
     8,
-    'Curse an opponent: they lose 1 life per 3 points spent on their turn. A successful attack that deals life passes every Curse they hold to the hit player. Ends at 1 life or on death (permanently to the pool). Stacks.',
-    'Curse an opponent: they lose 1 life per 2 points spent on their turn. A successful attack that deals life passes every Curse they hold to the hit player. Ends at 1 life or on death (permanently to the pool). Stacks.',
+    'Curse an opponent: every life they actually lose is granted to you. A successful attack that deals life passes every Curse they hold to the hit player. Ends at 1 life or on death (permanently to the pool). Stacks.',
+    'Curse an opponent: every life they actually lose grants you 2 lives. A successful attack that deals life passes every Curse they hold to the hit player. Ends at 1 life or on death (permanently to the pool). Stacks.',
   ),
   poison: specialCard(
     'poison',
