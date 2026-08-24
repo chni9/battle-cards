@@ -422,3 +422,12 @@ do not hand off an untested lot.
 - Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
   green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.
+
+### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
+  Buy upgrade point closes the Shop. Base Card Transformer (Mirror) granted Imposition;
+  upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
+  nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
+  Room `PPWXUP` on the pager pass.
+
