@@ -1,7 +1,8 @@
 /**
  * Curse — rules spec §5, victim-owned (designer 2026-08-07; supersedes L22-02 placement).
- * Activates on the chosen opponent; siphons actual life loss to the original caster
- * (L50-02); transfers on successful attack (lives lost ≥ 1).
+ * Activates on the chosen opponent; spend-tick (#V4-20) plus siphon of actual
+ * life loss to the original caster (L50-09); transfers on successful attack
+ * (lives lost ≥ 1).
  */
 
 import { activatePersistentEffect } from '../../engine/specials/activate-persistent';

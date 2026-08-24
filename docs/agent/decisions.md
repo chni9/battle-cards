@@ -2445,7 +2445,7 @@ the same change.
 This supersedes the blanket “Classic rules and values stay frozen” line from 2026-08-20
 for later lots; it does not reopen V1–V4 archives or Team/God/Quick.
 
-Lot 50 uses the exception for Curse (siphon) and Card Transformer (cannot mint itself).
+Lot 50 uses the exception for Curse (spend-tick + siphon) and Card Transformer (cannot mint itself).
 
 ## 2026-08-24 · [P] Curse siphon replaces spend-tick (L50-02)
 
@@ -2457,6 +2457,17 @@ Curse sits on its original caster, or if that caster is missing/eliminated. Tran
 on ≥1 attack life and end-at-1-life → pool stay. `originalCasterPlayerId` is
 server-only (not on `PersistentEffectView`; search reconstruction therefore cannot
 siphon). Caller-side `observeLifeLoss` — never inside the two loss primitives.
+
+## 2026-08-24 · [P] Curse spend-tick and siphon both apply (L50-09)
+
+Designer 2026-08-24 (correction of L50-02): Curse is **both** mechanics, not a
+replacement. The cursed player still loses 1 life per 3 points spent on their turn
+(per 2 upgraded; `pointsSpent` only; remainder discarded; floor at 1 life — #V4-20).
+Those lost lives — and every other life they actually lose after the shield — are
+granted to the original caster (`grantLives` / `lifeLimit`; upgraded 1 lost → 2
+gained). Each copy ticks and pays independently. No siphon when the Curse sits on
+its original caster, or if that caster is missing/eliminated. Transfer and
+end-at-1-life stay.
 
 ## 2026-08-24 · [P] Card Transformer cannot mint itself (L50-08)
 

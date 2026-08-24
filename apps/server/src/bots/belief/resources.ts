@@ -74,16 +74,19 @@ const IMPOSITION_LIVES_BASE = 1;
 const IMPOSITION_LIVES_UPGRADED = 2;
 const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
+const CURSE_POINTS_PER_LIFE_BASE = 3;
+const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
 
 /** Two opaque picks per `rewardsClaimed` — rules spec §6. */
 const ELIMINATION_REWARD_PICKS = 2;
 
 /**
- * Conservative caps for "steal all" — not rule maxima.
+ * Conservative caps for "steal all" / curse spend — not rule maxima.
  * Feature normalizers use 40 points / 10 UP (`features.ts`).
  */
 const POINTS_UNCERTAINTY_CAP = 40;
 const UP_UNCERTAINTY_CAP = 10;
+const CURSE_POINTS_SPENT_CAP = 40;
 
 interface MutableInterval {
   lo: number;
@@ -508,6 +511,27 @@ function applyPersistentTicks(
         applyExactLifeLoss(lives, points, livesDue * ticks, kitId);
       }
     }
+  }
+
+  const curseOnOpp = playerView(view, opponentPlayerId)?.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'curse',
+  ) ?? [];
+
+  for (const effect of curseOnOpp) {
+    const play = log.find(
+      (entry): entry is ActionPlayedLogEntry =>
+        entry.kind === 'actionPlayed' &&
+        entry.action === 'playCard' &&
+        entry.cardId === 'curse' &&
+        entry.targetPlayerId === opponentPlayerId,
+    );
+    const from = play?.turnSequence ?? 0;
+    const ticks = countActorTurns(log, opponentPlayerId, from, false);
+    const divisor = effect.isUpgraded
+      ? CURSE_POINTS_PER_LIFE_UPGRADED
+      : CURSE_POINTS_PER_LIFE_BASE;
+    const maxPerTick = Math.floor(CURSE_POINTS_SPENT_CAP / divisor);
+    addRange(lives, -maxPerTick * ticks, 0);
   }
 }
 

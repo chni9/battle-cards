@@ -61,7 +61,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-25 of 48 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+26 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -74,7 +74,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
-| 50 · Beta feedback | 8 | 8 |
+| 50 · Beta feedback | 9 | 9 |
 
 ---
 
@@ -198,13 +198,14 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L50-01 | Governance: Classic rules stay frozen **unless the current session explicitly changes one**. Update `AGENTS.md` golden rules 6–7, technical spec v6 non-objectives, this file's Scope lock, and append `decisions.md`. **Acceptance:** an agent reading only those files sees the exception and still must not invent a rule. | S | Low | — | Done |
-| L50-02 | Curse siphon: remove spend-tick. Every life the cursed player actually loses is granted to the original caster (`grantLives`, `lifeLimit`). Upgrade 1 lost → 2 gained. Each copy pays. No siphon when the Curse sits on its original caster, or if that caster is missing/eliminated. Transfer and end-at-1-life stay. Store `originalCasterPlayerId` on the engine persistent; omit from `PersistentEffectView`. **Acceptance:** tests for attack + Tax/Poison, shield absorb 0, stacks, self-holder skip, cap, transfer. | **L** | **High** | L50-01 | Done |
+| L50-02 | Curse siphon: every life the cursed player actually loses is granted to the original caster (`grantLives`, `lifeLimit`). Upgrade 1 lost → 2 gained. Each copy pays. No siphon when the Curse sits on its original caster, or if that caster is missing/eliminated. Transfer and end-at-1-life stay. Store `originalCasterPlayerId` on the engine persistent; omit from `PersistentEffectView`. **Spend-tick restored in L50-09** (L50-02 had dropped it). **Acceptance:** tests for attack + Tax/Poison, shield absorb 0, stacks, self-holder skip, cap, transfer. | **L** | **High** | L50-01 | Done |
 | L50-03 | In-game `playerReanimated` never includes `kitId` for any recipient. Copy is always `{nick} returns`. Excel export may still carry `kitId`. **Acceptance:** view + action-log tests; Spy/self no longer see the kit in the table log. | S | Low | — | Done |
 | L50-04 | `score-engage` overlay only: Spy `-Infinity` vs upgraded public shield or known Spy/Thief immune; non-top-threat Spy drops to invest-band; held Reanimation bumped to `deny + 150` unless a finishable lethal attack is available. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` unmodified and green. Easy rooms stay v4. | M | Medium | — | Done |
 | L50-05 | Card-band pager: `IconButton` chrome; lock row count against dock-height jitter; reserve pager height before fitting; `AnimatedCard` in the band skips entrance flip. **Acceptance:** `fitCardBand` tests: same width + shorter height does not change `pageSize` once paginating. | M | Medium | — | Done |
 | L50-06 | Shop Dialog: Buy/Sell upgrade point call `onClose` after the intent (same as buy special/card). Grid selection stays open. **Acceptance:** handlers close; selecting a shop tile does not. | S | Low | — | Done |
 | L50-07 | Action log lines, Incoming, and compact pending chips wrap and scroll — no `truncate` on those strings. Seat portrait nicks may stay truncated. **Acceptance:** a long nickname is fully readable by scrolling the log/incoming strip. | S | Low | — | Done |
 | L50-08 | Card Transformer never yields `card-transformer` — random draw and upgraded `special-pick` eligible list both exclude it. Shop special purchase unchanged. **Acceptance:** base never grants it across a fixed seed sweep; upgraded pick of `card-transformer` rejects; eligible list length is 19. | S | Medium | L50-01 | Done |
+| L50-09 | Curse correction: spend-tick **and** siphon. Victim still loses 1 life per 3 points spent (per 2 upgraded, `pointsSpent` only, remainder discarded, floor at 1). Those losses — and every other actual life loss — go to the original caster (`grantLives`, `lifeLimit`; upgraded ×2). **Acceptance:** 7 points → 2 lives lost + caster +2; theft does not tick; attack/Tax siphon tests stay. | M | **High** | L50-02 | Done |
 
 ---
 
@@ -221,8 +222,8 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | 47 | 5 |
 | 48 | 2 |
 | 49 | 2 |
-| 50 | 8 |
-| **Total** | **48** |
+| 50 | 9 |
+| **Total** | **49** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so the 1-life bot dies at index 4; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

@@ -3,10 +3,10 @@
  * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
  *
  * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
- * Super Absorber → Imposition → Poison. Super Absorber runs before life-ticking
+ * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
  * persistents so it does not re-absorb lives lost later in the same phase.
- * Curse no longer ticks on spend (L50-02); it siphons via `observeLifeLoss` and
- * deactivates here if the victim is already at 1 life.
+ * Curse still ticks on `pointsSpent` (#V4-20) and siphons those lost lives — and any
+ * other actual life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
 
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
@@ -17,7 +17,7 @@ import {
 } from '../economy/grant-resources';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { observeLifeLoss } from '../life/observe-life-loss';
-import { deactivateCursesAtLifeFloor } from '../specials/credit-curse-siphons';
+import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { absorbLedgerFromVictim } from './absorb-ledger';
 import { findPlayer } from './advance-turn';
@@ -33,6 +33,8 @@ const INVISIBILITY_POINTS_BASE = 4;
 const INVISIBILITY_POINTS_UPGRADED = 6;
 const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
+const CURSE_POINTS_PER_LIFE_BASE = 3;
+const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
 
 export function applyPersistentEffects(state: GameState, playerId: string): void {
   const player = findPlayer(state, playerId);
@@ -52,7 +54,7 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   applySuperAbsorbersOnVictim(state, player);
   applyImpositionsOnVictim(state, player);
   applyPoisonsOnVictim(state, player);
-  deactivateCursesAtLifeFloor(state, player);
+  applyCursesOnVictim(state, player);
 }
 
 function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
@@ -157,5 +159,42 @@ function applyPoisonsOnVictim(state: GameState, victim: Player): void {
       observeLifeLoss(state, victim, loss.livesLost);
       recordEliminationContributor(state, victim.id, poisoner.id, loss.livesLost);
     }
+  }
+}
+
+function applyCursesOnVictim(state: GameState, victim: Player): void {
+  const curseEffects = victim.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'curse',
+  );
+
+  for (const effect of curseEffects) {
+    applyOneCurse(state, victim, effect);
+  }
+}
+
+function applyOneCurse(state: GameState, victim: Player, effect: PersistentEffect): void {
+  if (victim.lives <= 1) {
+    deactivatePersistentEffect(state, victim.id, effect.id);
+    return;
+  }
+
+  const divisor = effect.isUpgraded
+    ? CURSE_POINTS_PER_LIFE_UPGRADED
+    : CURSE_POINTS_PER_LIFE_BASE;
+  const livesDue = Math.floor(victim.turnLedger.pointsSpent / divisor);
+
+  if (livesDue <= 0) {
+    return;
+  }
+
+  const maxLoss = victim.lives - 1;
+  const lossAmount = Math.min(livesDue, maxLoss);
+  const loss = applyLifeLoss(victim, lossAmount, 'curse');
+  victim.turnLedger.livesLost += loss.livesLost;
+  observeLifeLoss(state, victim, loss.livesLost);
+  // No elimination credit — Curse cannot finish a player off (designer 2026-08-07).
+
+  if (victim.lives <= 1) {
+    deactivatePersistentEffect(state, victim.id, effect.id);
   }
 }

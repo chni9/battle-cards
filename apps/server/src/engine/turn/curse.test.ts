@@ -1,6 +1,6 @@
 /**
- * Curse — rules spec §5, designer 2026-08-24 siphon (L50-02).
- * Victim-owned + transfer (designer 2026-08-07) still apply.
+ * Curse — rules spec §5: spend-tick (#V4-20) plus siphon to original caster
+ * (L50-09). Victim-owned + transfer (designer 2026-08-07) still apply.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -14,14 +14,14 @@ import { eliminateWithoutReward } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
 import { resolvePendingEffects } from './resolve-pending';
 
-describe('Curse (siphon to original caster, L50-02)', () => {
-  it('points spent no longer drain the cursed player', () => {
+describe('Curse (spend-tick + siphon, L50-09)', () => {
+  it('7 points spent costs 2 lives base; remainder discarded; caster gains those lives', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l50-02-no-spend',
+      seed: 'l50-09-7pts',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -41,12 +41,156 @@ describe('Curse (siphon to original caster, L50-02)', () => {
     ];
     b.lives = 10;
     a.lives = 10;
-    b.turnLedger.pointsSpent = 99;
+    b.turnLedger.pointsSpent = 7;
+
+    applyPersistentEffects(state, b.id);
+    expect(b.lives).toBe(8);
+    expect(a.lives).toBe(12);
+    expect(b.activePersistentEffects).toHaveLength(1);
+  });
+
+  it('upgraded costs 1 life per 2 points spent and siphons ×2', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-09-up-spend',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        isUpgraded: true,
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.turnLedger.pointsSpent = 5;
+
+    applyPersistentEffects(state, b.id);
+    expect(b.lives).toBe(8);
+    expect(a.lives).toBe(14);
+  });
+
+  it('theft-only point loss does not trigger Curse spend-tick', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-09-theft',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.lives = 10;
+    b.turnLedger.pointsSpent = 0;
+    b.turnLedger.pointsLostToTheft = 9;
 
     applyPersistentEffects(state, b.id);
     expect(b.lives).toBe(10);
     expect(a.lives).toBe(10);
-    expect(b.activePersistentEffects).toHaveLength(1);
+  });
+
+  it('two stacked base Curses each tick on the same pointsSpent', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-09-stack-spend',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+      makeCounterEffect({
+        id: 'curse-2',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.lives = 10;
+    b.turnLedger.pointsSpent = 6;
+
+    applyPersistentEffects(state, b.id);
+    // Each Curse: floor(6/3) = 2 → 4 lives total.
+    expect(b.lives).toBe(6);
+    expect(b.activePersistentEffects).toHaveLength(2);
+  });
+
+  it('victim at 2 spending 6 ends at 1 and Curse is permanently pooled', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l50-09-floor-spend',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.lives = 10;
+    b.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-1',
+        cardId: 'curse',
+        counter: null,
+        targetPlayerId: null,
+        originalCasterPlayerId: a.id,
+      }),
+    ];
+    b.lives = 2;
+    b.turnLedger.pointsSpent = 6;
+
+    applyPersistentEffects(state, b.id);
+    expect(b.lives).toBe(1);
+    expect(a.lives).toBe(11);
+    expect(b.activePersistentEffects).toHaveLength(0);
+    expect(state.pool.some((card) => card.cardId === 'curse')).toBe(true);
   });
 
   it('actual attack lives lost siphon 1:1 to the original caster', () => {

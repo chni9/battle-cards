@@ -1,10 +1,11 @@
 /**
- * Curse siphon — rules spec §5 (designer 2026-08-24 / L50-02).
+ * Curse siphon — rules spec §5 (designer 2026-08-24 / L50-02 + L50-09).
  *
  * Caller-side only: never enrich `applyDamage` / `applyLifeLoss` (golden rule 2).
  * Each Curse copy independently grants the original caster the lives the victim
- * actually lost (upgraded: ×2). No credit when the Curse sits on its original
- * caster, or when that caster is missing or eliminated. Ends at 1 life → pool.
+ * actually lost (upgraded: ×2), including spend-tick loss (#V4-20). No credit
+ * when the Curse sits on its original caster, or when that caster is missing
+ * or eliminated. Ends at 1 life → pool.
  */
 
 import type { GameState, Player } from '@card-battle/shared';

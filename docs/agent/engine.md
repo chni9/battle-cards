@@ -192,12 +192,14 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
   Poison act on the current player from other seats' active effects. Curse is
-  **victim-owned** (designer 2026-08-07) and **siphons** actual lives lost to the
-  original caster (designer 2026-08-24 / L50-02) via `observeLifeLoss` — it does not
-  tick on points spent. `originalCasterPlayerId` is server-only. Each copy pays
-  independently (upgraded ×2). No siphon when the holder is the original caster or
-  that caster is eliminated. Ends via `deactivatePersistentEffect` when the victim
-  reaches 1 life or on elimination (persistents pooled). A successful
+  **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
+  (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**
+  actual lives lost to the original caster (designer 2026-08-24 / L50-09: both, not
+  replace) via `observeLifeLoss`. `originalCasterPlayerId` is server-only. Each copy
+  ticks and pays independently (upgraded spend divisor 2, siphon ×2). No siphon when
+  the holder is the original caster or that caster is eliminated. Ends via
+  `deactivatePersistentEffect` when the victim reaches 1 life or on elimination
+  (persistents pooled). A successful
   attack that deals ≥1 life moves every Curse on the attacker onto the hit
   player (`transferCursesFromAttacker`, logged as `curseTransferred`).
   Deactivated counter cards join the shared pool. Invisibility is
