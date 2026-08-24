@@ -205,7 +205,7 @@ function LogLine({
         >
           {meta.icon}
         </span>
-        <p className="min-w-0 flex-1 truncate text-xs leading-5 text-ink">
+        <p className="min-w-0 flex-1 whitespace-normal break-words text-xs leading-5 text-ink">
           <LogSegments segments={segments} view={view} />
         </p>
         {botReason !== undefined && (
