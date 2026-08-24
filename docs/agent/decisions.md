@@ -2434,3 +2434,16 @@ deals stay bit-for-bit with the previous path.
 Tutorial (Lot 45) still forces kits after deal; do not wire this picker into the tutorial
 create path when L45-04 lands.
 
+## 2026-08-24 · [P] Classic rule freeze has an explicit-instruction exception (L50-01)
+
+Designer 2026-08-24: V5/V6 still must not invent Classic rule or value changes. A confused
+tester, a bot playing badly, or an inferred “improvement” is still not grounds. **Exception:**
+when the current session’s developer instructions explicitly change a Classic rule or value,
+that instruction wins. Record it here and update `docs/spec_bataille_des_cartes_en.md` in
+the same change.
+
+This supersedes the blanket “Classic rules and values stay frozen” line from 2026-08-20
+for later lots; it does not reopen V1–V4 archives or Team/God/Quick.
+
+Lot 50 uses the exception for Curse (siphon) and Card Transformer (cannot mint itself).
+
