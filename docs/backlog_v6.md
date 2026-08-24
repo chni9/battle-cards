@@ -60,14 +60,14 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-18 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+19 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 41 · Protocol + governance | 5 | 5 |
 | 42 · How to play | 4 | 4 |
 | 43 · Table readability | 6 | 6 |
-| 44 · Visual pickers | 6 | 1 |
+| 44 · Visual pickers | 6 | 2 |
 | 45 · Tutorial | 7 | 0 |
 | 46 · First-game hints | 3 | 0 |
 | 47 · Feedback + inbox | 5 | 0 |
@@ -121,7 +121,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L44-01 | Shared tiles: `SeatTile` (seat color, nickname, kit or hidden art) and `CardChoiceTile` (face art + name). Used by later tasks. **Acceptance:** Story-less unit render tests or table tests; tokens from existing seat colors. | M | Low | L39-03 (already Done) | Done |
-| L44-02 | Replace target-player radios with `SeatTile` grid. **Acceptance:** `playCard` payload unchanged; 2p and 3p+ still target correctly. | M | Low | L44-01 | To do |
+| L44-02 | Replace target-player radios with `SeatTile` grid. **Acceptance:** `playCard` payload unchanged; 2p and 3p+ still target correctly. | M | Low | L44-01 | Done |
 | L44-03 | Mirror sub-choice: pick pending attack as **card art + source name + seat color** (“→ you”), then `SeatTile` for the new target. **Acceptance:** `resolveSubChoice` `{ kind: 'mirror' }` unchanged; eligible ids only. | M | Medium | L44-01 | To do |
 | L44-04 | Multi-attack prompt: attack **faces** + per-line `SeatTile`, not a raw list. **Acceptance:** `playMultipleAttacks` payload unchanged; Assassin only. | M | Medium | L44-02 | To do |
 | L44-05 | Steal-pick, pool-pick, Transformer consume, special-pick: `CardChoiceTile` grids (backs only where the protocol already hides identity). **Acceptance:** payloads unchanged; unknown steal cards stay unknown. | M | Medium | L44-01 | To do |
