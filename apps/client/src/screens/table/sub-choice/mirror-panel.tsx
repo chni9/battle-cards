@@ -1,5 +1,11 @@
+/**
+ * Mirror sub-choice — L44-03 / technical spec v6 §6.4.
+ * Same resolve payload as before.
+ */
+
 import {
   formatCardLabel,
+  type CardInstance,
   type MirrorChoiceRequiredPayload,
   type PlayingStateView,
   type PublicPlayerView,
@@ -8,7 +14,10 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
-import { nicknameOf } from '../table-helpers';
+import { CardChoiceTile } from '../../../design/components/card-choice-tile';
+import { PlayerName } from '../../../design/components/player-name';
+import { SeatTile } from '../../../design/components/seat-tile';
+import { nicknameOf, visibleKitId } from '../table-helpers';
 
 export interface MirrorPanelProps {
   subChoice: MirrorChoiceRequiredPayload;
@@ -48,41 +57,58 @@ export function MirrorPanel({
       <p className="text-sm text-ink-muted">
         Choose which pending attack to redirect and its new target.
       </p>
-      <div className="mt-3 flex flex-col gap-2">
-        <label className="text-sm text-ink">
-          Effect
-          <select
-            value={resolvedEffectId}
-            onChange={(event) => {
-              setEffectId(event.target.value);
-            }}
-            className="mt-1 w-full rounded-[length:var(--radius-control)] border border-border bg-surface px-2 py-1 text-ink"
-          >
-            {eligibleEffects.map((effect) => (
-              <option key={effect.id} value={effect.id}>
-                {nicknameOf(view, effect.sourcePlayerId)}&apos;s{' '}
-                {formatCardLabel(effect.cardId, effect.isUpgraded)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm text-ink">
-          New target
-          <select
-            value={resolvedTargetId}
-            onChange={(event) => {
-              setTargetId(event.target.value);
-            }}
-            className="mt-1 w-full rounded-[length:var(--radius-control)] border border-border bg-surface px-2 py-1 text-ink"
-          >
-            {aliveOpponents.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.nickname}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <p className="mt-3 text-sm font-medium text-ink">Pending attack</p>
+      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {eligibleEffects.map((effect) => {
+          const instance: CardInstance = {
+            instanceId: effect.id,
+            cardId: effect.cardId,
+            isUpgraded: effect.isUpgraded,
+          };
+          const name = formatCardLabel(effect.cardId, effect.isUpgraded);
+          const sourceName = nicknameOf(view, effect.sourcePlayerId);
+          return (
+            <li key={effect.id}>
+              <CardChoiceTile
+                instance={instance}
+                caption={name}
+                selected={resolvedEffectId === effect.id}
+                ariaLabel={`${sourceName}'s ${name} → you`}
+                onSelect={() => {
+                  setEffectId(effect.id);
+                }}
+                meta={
+                  <span className="mt-0.5 w-full truncate text-center text-[11px] font-medium text-ink-muted">
+                    <PlayerName
+                      nickname={sourceName}
+                      playerId={effect.sourcePlayerId}
+                      view={view}
+                    />
+                    {' → you'}
+                  </span>
+                }
+              />
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-sm font-medium text-ink">New target</p>
+      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {aliveOpponents.map((player) => (
+          <li key={player.id}>
+            <SeatTile
+              view={view}
+              playerId={player.id}
+              nickname={player.nickname}
+              kitId={visibleKitId(player)}
+              selected={resolvedTargetId === player.id}
+              onSelect={() => {
+                setTargetId(player.id);
+              }}
+            />
+          </li>
+        ))}
+      </ul>
       <div className="mt-4 flex justify-end">
         <Button
           variant="green"

@@ -146,8 +146,9 @@ rules above are unchanged — this section only covers how the client looks.
   `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
   `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
   the tiles; intents stay unchanged.
-- **Mirror sub-choice labels:** pending attack options show
-  `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
+- **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
+  source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
+  `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
   (playtest 2026-08-09); Spy/self still receive the real action kind on the wire.- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
