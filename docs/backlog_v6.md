@@ -60,14 +60,14 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-22 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+23 of 40 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
 | 41 · Protocol + governance | 5 | 5 |
 | 42 · How to play | 4 | 4 |
 | 43 · Table readability | 6 | 6 |
-| 44 · Visual pickers | 6 | 4 |
+| 44 · Visual pickers | 6 | 6 |
 | 45 · Tutorial | 7 | 0 |
 | 46 · First-game hints | 3 | 0 |
 | 47 · Feedback + inbox | 5 | 0 |
@@ -125,7 +125,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | L44-03 | Mirror sub-choice: pick pending attack as **card art + source name + seat color** (“→ you”), then `SeatTile` for the new target. **Acceptance:** `resolveSubChoice` `{ kind: 'mirror' }` unchanged; eligible ids only. | M | Medium | L44-01 | Done |
 | L44-04 | Multi-attack prompt: attack **faces** + per-line `SeatTile`, not a raw list. **Acceptance:** `playMultipleAttacks` payload unchanged; Assassin only. | M | Medium | L44-02 | Done |
 | L44-05 | Steal-pick, pool-pick, Transformer consume, special-pick: `CardChoiceTile` grids (backs only where the protocol already hides identity). **Acceptance:** payloads unchanged; unknown steal cards stay unknown. | M | Medium | L44-01 | Done |
-| L44-06 | Elimination rewards, reanimation-kit, Regeneration quantity: visual rewards / kit portraits; Regen keeps the numeric field but uses the same Dialog chrome + live CostDisplay. **Acceptance:** reward picks still opaque in the action log; quantity 1–4 validation unchanged. | M | Low | L44-01 | To do |
+| L44-06 | Elimination rewards, reanimation-kit, Regeneration quantity: visual rewards / kit portraits; Regen is four click-to-commit life buttons with live CostDisplay (designer 2026-08-24; not a numeric field). **Acceptance:** reward picks still opaque in the action log; quantity 1–4 validation unchanged (server). | M | Low | L44-01 | Done |
 
 ---
 

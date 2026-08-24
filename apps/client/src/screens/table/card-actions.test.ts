@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
-describe('card-actions visual pickers (L44-02 / L44-04 / L44-05)', () => {
+describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () => {
   const source = readFileSync(join(dir, 'card-actions.tsx'), 'utf8');
 
   it('picks seats with SeatTile and still sends targetPlayerId (L44-02)', () => {
@@ -30,7 +30,18 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05)', () => {
 
   it('picks Transformer consume cards as CardChoiceTile (L44-05)', () => {
     expect(source).toContain('consumeInstanceId: resolvedConsumeId');
-    expect(source).toContain('kind === \'consume\'');
+    expect(source).toContain("kind === 'consume'");
     expect(source).toContain('CardChoiceTile');
+  });
+
+  it('commits Regeneration quantity with four click-to-buy tiles (L44-06)', () => {
+    expect(source).toContain('REGEN_QUANTITIES');
+    expect(source).toContain('1 life');
+    expect(source).toContain('structuredPlayCost');
+    expect(source).toContain("signed=\"cost\"");
+    expect(source).toContain('quantity: lives');
+    expect(source).toContain('choiceTileClassName');
+    expect(source).not.toContain('<input');
+    expect(source).not.toContain('quantityText');
   });
 });

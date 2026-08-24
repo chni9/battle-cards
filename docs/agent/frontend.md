@@ -154,6 +154,14 @@ rules above are unchanged — this section only covers how the client looks.
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
   Payloads unchanged (`steal-pick` instanceId, `pool-pick` instanceIds,
   consume `playCard` + `consumeInstanceId`, `special-pick` cardId).
+- **Rewards / reanimation / Regeneration (L44-06):** reward resource kinds use
+  `choiceTileClassName` + existing `REWARD_KIND_COSTS` `CostDisplay` (4/8/1);
+  card kind is a `CardChoiceTile` grid (Confirm still two choices; log stays
+  opaque). Reanimation wraps `KitPortrait` with the same chrome (not a third
+  primitive). Regeneration is four click-to-commit buttons (`1 life` … `4 lives`);
+  click sends `playCard` `{ quantity: n }` and closes; footer is Cancel only;
+  each button shows `CostDisplay` of `structuredPlayCost` × n as points
+  (`signed="cost"`). No client-side affordability.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
   (playtest 2026-08-09); Spy/self still receive the real action kind on the wire.- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).

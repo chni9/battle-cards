@@ -18,10 +18,12 @@ import { useState, type ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CardChoiceTile } from '../../design/components/card-choice-tile';
+import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../design/components/cost-display';
 import {
   structuredCostFromCardCost,
   structuredPlayCost,
+  type StructuredCost,
 } from '../../design/components/structured-cost';
 import { Dialog } from '../../design/components/dialog';
 import { SeatTile } from '../../design/components/seat-tile';
@@ -29,6 +31,27 @@ import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motio
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { cardEffectText, visibleKitId } from './table-helpers';
+
+const REGEN_QUANTITIES = [1, 2, 3, 4] as const;
+
+function regenerationQuantityLabel(lives: (typeof REGEN_QUANTITIES)[number]): string {
+  return lives === 1 ? '1 life' : `${String(lives)} lives`;
+}
+
+function regenerationTotalCost(
+  instance: CardInstance,
+  lives: (typeof REGEN_QUANTITIES)[number],
+): StructuredCost | null {
+  const definition = getCard('regeneration') ?? getCard(instance.cardId);
+  if (definition === undefined) {
+    return null;
+  }
+  const playCost = structuredPlayCost(definition, instance.isUpgraded);
+  if (playCost?.kind !== 'pointsPerLife') {
+    return null;
+  }
+  return { kind: 'points', amount: playCost.amount * lives };
+}
 
 export type TableDialog =
   | { kind: 'actions'; instance: CardInstance; fromSpecial: boolean }
@@ -83,13 +106,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
   } = props;
 
   const [targetId, setTargetId] = useState('');
-  const [quantityText, setQuantityText] = useState('1');
   const [consumeInstanceId, setConsumeInstanceId] = useState('');
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
 
   const close = (): void => {
-    setQuantityText('1');
     setConsumeInstanceId('');
     setDialog(null);
   };
@@ -118,14 +139,6 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const resolvedTarget = targetDialogOpponents.some((p) => p.id === targetId)
     ? targetId
     : targetDialogDefault;
-
-  const quantityTrimmed = quantityText.trim();
-  const quantityParsed = Number(quantityTrimmed);
-  const quantityValid =
-    quantityTrimmed !== '' &&
-    Number.isInteger(quantityParsed) &&
-    quantityParsed >= 1 &&
-    quantityParsed <= 4;
 
   const actionsOpen = dialog?.kind === 'actions';
   const actionInstance = dialog?.kind === 'actions' ? dialog.instance : null;
@@ -412,56 +425,36 @@ export function CardActions(props: CardActionsProps): ReactElement {
         onClose={close}
         actions={
           dialog?.kind === 'quantity' ? (
-            <>
-              <Button
-                variant="purple"
-                disabled={!quantityValid}
-                onClick={() => {
-                  if (!quantityValid) {
-                    return;
-                  }
-                  onPlayCard(dialog.instance.instanceId, {
-                    quantity: quantityParsed,
-                  });
-                  close();
-                }}
-              >
-                Confirm
-              </Button>
-              <Button variant="red" onClick={close}>
-                Cancel
-              </Button>
-            </>
+            <Button variant="red" onClick={close}>
+              Cancel
+            </Button>
           ) : undefined
         }
       >
-        <label className="block text-sm text-ink">
-          Lives (1–4)
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={quantityText}
-            onChange={(event) => {
-              setQuantityText(event.target.value);
-            }}
-            className="mt-2 block w-full max-w-[8rem] rounded-[length:var(--radius-control)] border border-border bg-surface px-3 py-2 text-base tabular-nums text-ink"
-            aria-invalid={!quantityValid}
-            aria-describedby="regen-quantity-hint"
-          />
-        </label>
-        <p
-          id="regen-quantity-hint"
-          className={[
-            'mt-2 text-xs',
-            quantityValid ? 'text-ink-muted' : 'text-cta-red',
-          ].join(' ')}
-        >
-          {quantityValid
-            ? 'Enter how many lives to buy.'
-            : 'Enter a whole number from 1 to 4 to confirm.'}
-        </p>
+        {dialog?.kind === 'quantity' ? (
+          <ul className="grid grid-cols-2 gap-2">
+            {REGEN_QUANTITIES.map((lives) => {
+              const label = regenerationQuantityLabel(lives);
+              const cost = regenerationTotalCost(dialog.instance, lives);
+              return (
+                <li key={lives}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    onClick={() => {
+                      onPlayCard(dialog.instance.instanceId, { quantity: lives });
+                      close();
+                    }}
+                    className={choiceTileClassName({ selected: false })}
+                  >
+                    <span className="text-sm font-semibold text-ink">{label}</span>
+                    {cost !== null ? <CostDisplay cost={cost} signed="cost" /> : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
       </Dialog>
 
       <Dialog

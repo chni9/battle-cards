@@ -2434,3 +2434,12 @@ deals stay bit-for-bit with the previous path.
 Tutorial (Lot 45) still forces kits after deal; do not wire this picker into the tutorial
 create path when L45-04 lands.
 
+## 2026-08-24 · [P] Regeneration quantity is four click-to-commit buttons (L44-06)
+
+Designer 2026-08-24 overrides technical spec v6 §6.4 “numeric field”: Regeneration
+opens four buttons (`1 life` … `4 lives`). Click sends `playCard` with that `quantity`
+and closes. Footer is Cancel only. Live `CostDisplay` totals `structuredPlayCost` × n
+as `{ kind: 'points', amount }` with `signed="cost"`. No client-side affordability —
+`IllegalActionDialog` already surfaces server rejection. Server still validates 1–4
+and payment. Other Lot 44 pickers stay select-then-Confirm.
+
