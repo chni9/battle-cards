@@ -167,8 +167,10 @@ the user loses a life **to damage**, and at 0 the card deactivates and is perman
 **Lot 24:** Card Absorber recovers from `state.pool` via `takeFromPool` +
 `transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
 Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
-and mints a special (base: rng; upgraded: `special-pick`). Instant personal effects — not
-opponent-queued. `reanimation-kit` remains untyped until Lot 26.
+and mints a special from `TRANSFORM_RESULT_SPECIAL_IDS` (never `card-transformer`:
+designer 2026-08-24 / L50-08). Base: rng; upgraded: `special-pick`. Shop 20-point
+purchase still uses `SPECIAL_CARD_IDS`. Instant personal effects — not opponent-queued.
+`reanimation-kit` remains untyped until Lot 26.
 
 ## What not to do
 

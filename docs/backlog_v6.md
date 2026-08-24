@@ -61,7 +61,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-24 of 48 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+25 of 48 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -74,7 +74,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
-| 50 · Beta feedback | 8 | 7 |
+| 50 · Beta feedback | 8 | 8 |
 
 ---
 
@@ -204,7 +204,7 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | L50-05 | Card-band pager: `IconButton` chrome; lock row count against dock-height jitter; reserve pager height before fitting; `AnimatedCard` in the band skips entrance flip. **Acceptance:** `fitCardBand` tests: same width + shorter height does not change `pageSize` once paginating. | M | Medium | — | Done |
 | L50-06 | Shop Dialog: Buy/Sell upgrade point call `onClose` after the intent (same as buy special/card). Grid selection stays open. **Acceptance:** handlers close; selecting a shop tile does not. | S | Low | — | Done |
 | L50-07 | Action log lines, Incoming, and compact pending chips wrap and scroll — no `truncate` on those strings. Seat portrait nicks may stay truncated. **Acceptance:** a long nickname is fully readable by scrolling the log/incoming strip. | S | Low | — | Done |
-| L50-08 | Card Transformer never yields `card-transformer` — random draw and upgraded `special-pick` eligible list both exclude it. Shop special purchase unchanged. **Acceptance:** base never grants it across a fixed seed sweep; upgraded pick of `card-transformer` rejects; eligible list length is 19. | S | Medium | L50-01 | To do |
+| L50-08 | Card Transformer never yields `card-transformer` — random draw and upgraded `special-pick` eligible list both exclude it. Shop special purchase unchanged. **Acceptance:** base never grants it across a fixed seed sweep; upgraded pick of `card-transformer` rejects; eligible list length is 19. | S | Medium | L50-01 | Done |
 
 ---
 

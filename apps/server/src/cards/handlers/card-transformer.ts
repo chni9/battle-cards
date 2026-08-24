@@ -6,7 +6,7 @@
  * result does not inherit upgrade.
  */
 
-import { SHARED_CARD_IDS, SPECIAL_CARD_IDS, type CardId } from '@card-battle/shared';
+import { SHARED_CARD_IDS, TRANSFORM_RESULT_SPECIAL_IDS, type CardId } from '@card-battle/shared';
 
 import {
   beginSpecialPick,
@@ -71,7 +71,7 @@ export const cardTransformerHandler: CardHandler = {
       return;
     }
 
-    const specialId = rng.pick(SPECIAL_CARD_IDS);
+    const specialId = rng.pick(TRANSFORM_RESULT_SPECIAL_IDS);
     grantTransformedSpecial(state, sourcePlayerId, specialId);
   },
 };

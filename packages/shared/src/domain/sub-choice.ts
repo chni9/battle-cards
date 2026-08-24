@@ -50,7 +50,10 @@ export interface PoolPickSubChoicePayload {
 /** Card Transformer upgraded — choose the special obtained (L24-02). */
 export interface SpecialPickSubChoicePayload {
   playerId: string;
-  /** Always the full `SPECIAL_CARD_IDS` set; duplicates with hand allowed. */
+  /**
+   * `TRANSFORM_RESULT_SPECIAL_IDS` — never `card-transformer` (L50-08).
+   * Duplicates with hand allowed.
+   */
   eligibleCardIds: readonly SpecialCardId[];
 }
 

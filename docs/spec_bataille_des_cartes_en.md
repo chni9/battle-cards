@@ -171,8 +171,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: steals a card from every opponent (same exception if an opponent is spied on).
 
 **Card Transformer** — Price: 2 points
-- Action: the user transforms an action or attack card of their choice, in their possession, into a random special card.
-- Upgrade: allows choosing the special card obtained instead of a random draw.
+- Action: the user transforms an action or attack card of their choice, in their possession, into a random special card. The result is never another Card Transformer.
+- Upgrade: allows choosing the special card obtained instead of a random draw. Card Transformer is not among the choices.
 
 **Cloning** — Price: 3 points
 - Action: the user copies an opponent of choice's kit, lives, points, upgrade points and shield. The user keeps their own hand, special cards and active persistent cards. This action cancels all effects pending against the user; they inherit no effect pending against the cloned player. Any visibility gained through Spy (or equivalent) is reset to zero both ways: what the user held over other players, and what others held over them.

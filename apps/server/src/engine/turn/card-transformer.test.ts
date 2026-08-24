@@ -2,6 +2,7 @@
  * Card Transformer — rules spec §5, backlog L24-02 / #V4-16.
  */
 
+import { TRANSFORM_RESULT_SPECIAL_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
@@ -162,5 +163,74 @@ describe('Card Transformer (L24-02)', () => {
     expect(completeSpecialPick(state, a.id, 'poison').ok).toBe(true);
     expect(a.specialCards.filter((card) => card.cardId === 'poison')).toHaveLength(2);
     expect(state.subChoice).toBeNull();
+  });
+
+  it('base never grants Card Transformer (L50-08)', () => {
+    for (let index = 0; index < 40; index += 1) {
+      const state = createInitialState({
+        seats,
+        seed: `l50-08-base-${String(index)}`,
+      });
+      const a = state.players.find((player) => player.id === 'a');
+
+      if (a === undefined) {
+        throw new Error('missing actor');
+      }
+
+      a.specialCards = [
+        { instanceId: 'ct-1', cardId: 'card-transformer', isUpgraded: false },
+      ];
+      a.hand = [{ instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false }];
+      a.points = 10;
+      state.currentTurnPlayerId = a.id;
+
+      expect(
+        performTurnAction(state, a.id, {
+          type: 'playCard',
+          instanceId: 'ct-1',
+          consumeInstanceId: 'atk-1',
+        }).ok,
+      ).toBe(true);
+      expect(a.specialCards).toHaveLength(1);
+      const grantedId = a.specialCards[0]?.cardId;
+      expect(grantedId).toBeDefined();
+      expect(grantedId).not.toBe('card-transformer');
+      expect((TRANSFORM_RESULT_SPECIAL_IDS as readonly string[]).includes(grantedId ?? '')).toBe(
+        true,
+      );
+    }
+  });
+
+  it('upgraded special-pick excludes Card Transformer (L50-08)', () => {
+    const state = createInitialState({ seats, seed: 'l50-08-pick' });
+    const a = state.players.find((player) => player.id === 'a');
+
+    if (a === undefined) {
+      throw new Error('missing actor');
+    }
+
+    a.specialCards = [
+      { instanceId: 'ct-1', cardId: 'card-transformer', isUpgraded: true },
+    ];
+    a.hand = [{ instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false }];
+    a.points = 10;
+    state.currentTurnPlayerId = a.id;
+
+    expect(
+      performTurnAction(state, a.id, {
+        type: 'playCard',
+        instanceId: 'ct-1',
+        consumeInstanceId: 'atk-1',
+      }).ok,
+    ).toBe(true);
+    expect(state.subChoice?.kind).toBe('special-pick');
+
+    if (state.subChoice?.kind !== 'special-pick') {
+      throw new Error('expected special-pick');
+    }
+
+    expect(state.subChoice.eligibleCardIds).toHaveLength(19);
+    expect(state.subChoice.eligibleCardIds).not.toContain('card-transformer');
+    expect(completeSpecialPick(state, a.id, 'card-transformer').ok).toBe(false);
   });
 });

@@ -133,10 +133,11 @@ function poolPreferenceRank(card: CardInstance): number {
 }
 
 /**
- * Card Transformer upgraded special-pick. `eligibleCardIds` is always the full 20-entry
- * `SPECIAL_CARD_IDS` set (`beginSpecialPick`), so this resolves to the first entry of a
- * fixed high-impact-first preference order; `rng` only breaks a tie that cannot occur
- * today (kept for when the eligible set narrows).
+ * Card Transformer upgraded special-pick. `eligibleCardIds` is the 19-entry
+ * `TRANSFORM_RESULT_SPECIAL_IDS` set (`beginSpecialPick`, L50-08), so this resolves
+ * to the first eligible entry of a fixed high-impact-first preference order;
+ * `rng` only breaks a tie that cannot occur today (kept for when the eligible
+ * set narrows).
  */
 const SPECIAL_PREFERENCE_ORDER: readonly SpecialCardId[] = [
   'mega-attack',

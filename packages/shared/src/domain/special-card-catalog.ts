@@ -116,8 +116,8 @@ export const SPECIAL_CARD_CATALOG = {
     'card-transformer',
     'Card Transformer',
     2,
-    'Transform an owned action or attack card into a random special.',
-    'Transform an owned action or attack card into a special of your choice.',
+    'Transform an owned action or attack card into a random special (never Card Transformer).',
+    'Transform an owned action or attack card into a special of your choice (never Card Transformer).',
   ),
   invisibility: specialCard(
     'invisibility',

@@ -2458,3 +2458,8 @@ on ≥1 attack life and end-at-1-life → pool stay. `originalCasterPlayerId` is
 server-only (not on `PersistentEffectView`; search reconstruction therefore cannot
 siphon). Caller-side `observeLifeLoss` — never inside the two loss primitives.
 
+## 2026-08-24 · [P] Card Transformer cannot mint itself (L50-08)
+
+Designer 2026-08-24: the special obtained from Card Transformer — random or chosen —
+is never `card-transformer`. Shop 20-point special purchase is unchanged.
+
