@@ -17,6 +17,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
+import { CardChoiceTile } from '../../design/components/card-choice-tile';
 import { CostDisplay } from '../../design/components/cost-display';
 import {
   structuredCostFromCardCost,
@@ -520,14 +521,15 @@ export function CardActions(props: CardActionsProps): ReactElement {
         <p className="mb-2 text-sm text-ink-muted">
           Select at least two attack cards and a target each.
         </p>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {attackCards.map((card, index) => {
             const checked = multiIds.includes(card.instanceId);
             const rowTarget = multiTargets[card.instanceId] ?? resolvedTarget;
+            const name = formatCardLabel(card.cardId, card.isUpgraded);
             return (
               <motion.li
                 key={card.instanceId}
-                className="flex flex-wrap items-center gap-2"
+                className="flex flex-col gap-2 sm:flex-row sm:items-start"
                 initial={
                   reduceMotion === true || dialog?.kind !== 'multi'
                     ? false
@@ -540,44 +542,46 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   ease: MOTION_EASE,
                 }}
               >
-                <label className="text-sm">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      if (event.target.checked) {
-                        setMultiIds([...multiIds, card.instanceId]);
-                        setMultiTargets({
-                          ...multiTargets,
-                          [card.instanceId]:
-                            rowTarget !== '' ? rowTarget : defaultTarget,
-                        });
-                      } else {
+                <div className="w-full max-w-[7.5rem]">
+                  <CardChoiceTile
+                    instance={card}
+                    caption={name}
+                    selected={checked}
+                    ariaLabel={name}
+                    onSelect={() => {
+                      if (checked) {
                         setMultiIds(multiIds.filter((id) => id !== card.instanceId));
+                        return;
                       }
-                    }}
-                  />{' '}
-                  {card.cardId}
-                  {card.isUpgraded ? ' ↑' : ''}
-                </label>
-                {checked && (
-                  <select
-                    value={rowTarget}
-                    onChange={(event) => {
+                      setMultiIds([...multiIds, card.instanceId]);
                       setMultiTargets({
                         ...multiTargets,
-                        [card.instanceId]: event.target.value,
+                        [card.instanceId]: rowTarget !== '' ? rowTarget : defaultTarget,
                       });
                     }}
-                    className="rounded-[length:var(--radius-control)] border border-border px-2 py-1 text-sm"
-                  >
+                  />
+                </div>
+                {checked ? (
+                  <ul className="grid min-w-0 flex-1 grid-cols-2 gap-2">
                     {aliveOpponents.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {player.nickname}
-                      </option>
+                      <li key={player.id}>
+                        <SeatTile
+                          view={view}
+                          playerId={player.id}
+                          nickname={player.nickname}
+                          kitId={visibleKitId(player)}
+                          selected={rowTarget === player.id}
+                          onSelect={() => {
+                            setMultiTargets({
+                              ...multiTargets,
+                              [card.instanceId]: player.id,
+                            });
+                          }}
+                        />
+                      </li>
                     ))}
-                  </select>
-                )}
+                  </ul>
+                ) : null}
               </motion.li>
             );
           })}
