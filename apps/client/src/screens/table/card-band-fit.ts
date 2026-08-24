@@ -11,6 +11,8 @@ export const CARD_BAND_MIN_W = 48;
 export const CARD_BAND_MAX_W = 72;
 /** Absolute floor — below this, paginate rather than unreadably tiny faces. */
 export const CARD_BAND_ABS_MIN_W = 48;
+/** Reserved pager strip so mounting arrows does not change `pageSize` (L50-05). */
+export const CARD_BAND_PAGER_SLOT_PX = 44;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
@@ -111,4 +113,32 @@ export function fitCardBand(
     return best;
   }
   return { cardWidth, pageSize };
+}
+
+/**
+ * Cards per page from width + locked row count. Height jitter (log / incoming)
+ * must not change this (L50-05).
+ */
+export function cardBandPageSizeForWidth(
+  count: number,
+  width: number,
+  rows: 1 | 2,
+): number {
+  if (count <= 0 || width <= 0) {
+    return 1;
+  }
+
+  const cols = Math.max(
+    1,
+    Math.floor((width + CARD_BAND_GAP_PX) / (CARD_BAND_ABS_MIN_W + CARD_BAND_GAP_PX)),
+  );
+  const cap = cols * rows;
+  return Math.min(count, Math.max(1, cap));
+}
+
+/** Prefer two rows when the card area can fit two 48px faces plus the pager slot. */
+export function cardBandRowsForHeight(height: number): 1 | 2 {
+  const twoRows =
+    faceCardHeight(CARD_BAND_ABS_MIN_W) * 2 + CARD_BAND_GAP_PX + CARD_BAND_PAGER_SLOT_PX;
+  return height >= twoRows ? 2 : 1;
 }

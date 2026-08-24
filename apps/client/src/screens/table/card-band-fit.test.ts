@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CARD_BAND_ABS_MIN_W,
   CARD_BAND_MAX_W,
+  cardBandPageSizeForWidth,
+  cardBandRowsForHeight,
   faceCardHeight,
   fitCardBand,
   maxWidthForRowHeight,
@@ -40,6 +42,17 @@ describe('fitCardBand', () => {
     const fit = fitCardBand(30, 100, 50);
     expect(fit.pageSize).toBeLessThan(30);
     expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(50 + 0.5);
+  });
+});
+
+describe('cardBandPageSizeForWidth (L50-05)', () => {
+  it('is determined by width and locked rows, not height', () => {
+    const atTwoRows = cardBandPageSizeForWidth(20, 160, 2);
+    expect(cardBandPageSizeForWidth(20, 160, 2)).toBe(atTwoRows);
+    expect(atTwoRows).toBeLessThan(20);
+    expect(cardBandRowsForHeight(80)).toBe(1);
+    expect(cardBandRowsForHeight(400)).toBe(2);
+    expect(cardBandPageSizeForWidth(20, 160, 1)).toBeLessThan(atTwoRows);
   });
 });
 
