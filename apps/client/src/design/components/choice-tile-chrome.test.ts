@@ -5,8 +5,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  CHOICE_SELECTED_HALO,
+  CHOICE_SELECTED_INSET,
   CHOICE_SELECTED_ORANGE,
+  CHOICE_SELECTED_OUTLINE,
+  CHOICE_SELECTED_OUTLINE_OFFSET,
   choiceTileClassName,
   choiceTileSelectedStyle,
 } from './choice-tile-chrome';
@@ -32,7 +34,7 @@ describe('choiceTileClassName (L44-01)', () => {
     expect(choiceTileClassName({ selected: false, disabled: true })).toContain('opacity-55');
   });
 
-  it('paints a full orange halo and drops the seat inset shadow', () => {
+  it('uses an offset outline and inner glow, not a clipped outer box-shadow', () => {
     const style = choiceTileSelectedStyle({
       borderColor: '#1d6fd8',
       backgroundColor: 'rgb(200, 220, 245)',
@@ -40,7 +42,8 @@ describe('choiceTileClassName (L44-01)', () => {
     });
     expect(style.borderColor).toBe(CHOICE_SELECTED_ORANGE);
     expect(style.backgroundColor).toBe('rgb(200, 220, 245)');
-    expect(style.boxShadow).toBe(CHOICE_SELECTED_HALO);
-    expect(String(style.boxShadow)).not.toContain('inset');
+    expect(style.outline).toBe(CHOICE_SELECTED_OUTLINE);
+    expect(style.outlineOffset).toBe(CHOICE_SELECTED_OUTLINE_OFFSET);
+    expect(style.boxShadow).toBe(CHOICE_SELECTED_INSET);
   });
 });

@@ -31,12 +31,14 @@ export function choiceTileClassName(options: ChoiceTileChromeOptions): string {
  */
 export const CHOICE_SELECTED_ORANGE = '#f0771f';
 
-/** Solid 3px halo + soft glow — replaces seat inset shadow (do not concatenate). */
-export const CHOICE_SELECTED_HALO = `0 0 0 3px ${CHOICE_SELECTED_ORANGE}, 0 0 0 7px rgba(240, 119, 31, 0.5)`;
+/** Offset halo — SeatTile wraps with padding so Dialog overflow cannot clip it. */
+export const CHOICE_SELECTED_OUTLINE = `3px solid ${CHOICE_SELECTED_ORANGE}`;
+export const CHOICE_SELECTED_OUTLINE_OFFSET = '3px';
+export const CHOICE_SELECTED_INSET = `inset 0 0 0 2px ${CHOICE_SELECTED_ORANGE}, inset 0 0 18px rgba(240, 119, 31, 0.45)`;
 
 /**
- * Shop selected chrome for SeatTile. Keeps seat wash fill; drops the inset
- * accent so the orange halo is the only outline and stays fully visible.
+ * SeatTile selected chrome. Offset outline + inner glow; no outer box-shadow
+ * (those get clipped by Dialog `overflow-hidden` / `overflow-y-auto`).
  */
 export function choiceTileSelectedStyle(
   base: CSSProperties | undefined,
@@ -44,6 +46,8 @@ export function choiceTileSelectedStyle(
   return {
     backgroundColor: base?.backgroundColor,
     borderColor: CHOICE_SELECTED_ORANGE,
-    boxShadow: CHOICE_SELECTED_HALO,
+    outline: CHOICE_SELECTED_OUTLINE,
+    outlineOffset: CHOICE_SELECTED_OUTLINE_OFFSET,
+    boxShadow: CHOICE_SELECTED_INSET,
   };
 }

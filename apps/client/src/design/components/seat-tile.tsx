@@ -36,25 +36,27 @@ export function SeatTile({
   const style = selected ? choiceTileSelectedStyle(zoneStyle) : zoneStyle;
 
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      aria-label={nickname}
-      disabled={disabled}
-      onClick={onSelect}
-      className={[
-        choiceTileClassName({ selected, disabled }),
-        selected ? 'relative z-[1]' : '',
-      ].join(' ')}
-      style={style}
-    >
-      <KitPortrait kitId={kitId} nickname={nickname} className="w-full max-w-[5.5rem]" />
-      <PlayerName
-        nickname={nickname}
-        playerId={playerId}
-        view={view}
-        className="mt-1 w-full truncate text-center text-xs"
-      />
-    </button>
+    <div className="p-2">
+      <button
+        type="button"
+        aria-pressed={selected}
+        aria-label={nickname}
+        disabled={disabled}
+        onClick={onSelect}
+        className={[
+          choiceTileClassName({ selected, disabled }),
+          selected ? 'relative z-[1]' : '',
+        ].join(' ')}
+        style={style}
+      >
+        <KitPortrait kitId={kitId} nickname={nickname} className="w-full max-w-[5.5rem]" />
+        <PlayerName
+          nickname={nickname}
+          playerId={playerId}
+          view={view}
+          className="mt-1 w-full truncate text-center text-xs"
+        />
+      </button>
+    </div>
   );
 }
