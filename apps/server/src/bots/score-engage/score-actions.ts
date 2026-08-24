@@ -17,7 +17,7 @@ import {
   scoreActions as scoreV4Actions,
   type ScoredAction,
 } from '../heuristic-policy';
-import { findOwnCard, ownCards } from '../policy-internals';
+import { findOwnCard, isSpyThiefImmuneSeat, ownCards } from '../policy-internals';
 import { DEFAULT_POLICY_WEIGHTS, type PolicyWeights } from '../policy-weights';
 import {
   attackDamageOfAction,
@@ -138,6 +138,44 @@ function overlayEntry(
 
   if (action.type === 'buyUpgradePoint' && table.unusedUpgradePoints > 0) {
     return { action, score: Number.NEGATIVE_INFINITY, code: 'invest' };
+  }
+
+  if (action.type === 'playCard') {
+    const instance = findOwnCard(view, action.instanceId);
+
+    if (instance?.cardId === 'spy' && action.targetPlayerId !== undefined) {
+      const target = view.players.find((player) => player.id === action.targetPlayerId);
+      const shielded =
+        target?.activeShield?.isUpgraded === true;
+
+      if (
+        target === undefined ||
+        isSpyThiefImmuneSeat(view, action.targetPlayerId) ||
+        shielded
+      ) {
+        return { action, score: Number.NEGATIVE_INFINITY, code: 'deny' };
+      }
+
+      const isTopThreat =
+        table.attackerIds.has(action.targetPlayerId) ||
+        table.finishableIds.has(action.targetPlayerId);
+
+      if (!isTopThreat) {
+        return { action, score: bands.invest, code: 'deny' };
+      }
+    }
+
+    if (instance?.cardId === 'reanimation') {
+      if (table.finishableIds.size > 0) {
+        return entry;
+      }
+
+      return {
+        action,
+        score: Math.max(entry.score, bands.deny + 150),
+        code: 'invest',
+      };
+    }
   }
 
   if (action.type === 'buyCard' && isAttackCardId(action.cardId)) {
