@@ -37,9 +37,16 @@ export function EconomyBar({
   return (
     <section
       data-zone="economy-bar"
-      className="flex flex-wrap items-center gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1 sm:gap-2 sm:p-1.5"
+      className={[
+        'flex flex-wrap items-center gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 sm:gap-2',
+        spotlight !== undefined ? 'p-2 sm:p-2.5' : 'p-1 sm:p-1.5',
+      ].join(' ')}
     >
-      <TutorialCallout active={spotlight === 'draw'} arrow="top" highlightId="draw">
+      <TutorialCallout
+        active={spotlight === 'draw'}
+        arrow="inset-top"
+        highlightId="draw"
+      >
         <Button variant="green" disabled={disabled} onClick={onDraw}>
           {DRAW_ACTION_LABEL}{' '}
           <CostDisplay
@@ -49,7 +56,11 @@ export function EconomyBar({
           />
         </Button>
       </TutorialCallout>
-      <TutorialCallout active={spotlight === 'shop'} arrow="top" highlightId="shop">
+      <TutorialCallout
+        active={spotlight === 'shop'}
+        arrow="inset-top"
+        highlightId="shop"
+      >
         <Button variant="orange" onClick={onOpenShop}>
           {SHOP_ACTION_LABEL}
         </Button>

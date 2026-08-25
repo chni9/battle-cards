@@ -14,6 +14,7 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
   it('defines a pulse animation and pointing arrows', () => {
     const css = readFileSync(join(here, '../../index.css'), 'utf8');
     expect(css).toContain('@keyframes tutorial-pulse');
+    expect(css).toContain('@keyframes tutorial-ping');
     expect(css).toContain('tutorial-callout-arrow');
     expect(css).toContain('prefers-reduced-motion');
   });
