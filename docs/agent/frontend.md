@@ -239,6 +239,9 @@ rules above are unchanged — this section only covers how the client looks.
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
+  Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
+  (still `onLeave` → hub only). **Download action log** renders only when
+  `import.meta.env.DEV` (every mode).
   No kits on the finished seat list
   itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).

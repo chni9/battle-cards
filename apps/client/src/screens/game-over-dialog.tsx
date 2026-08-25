@@ -12,6 +12,12 @@ import {
   buildActionLogWorkbook,
   downloadWorkbookBuffer,
 } from '../export/build-action-log-xlsx';
+import {
+  DOWNLOAD_ACTION_LOG_LABEL,
+  gameOverLeaveLabel,
+  gameOverTitle,
+  showActionLogDownload,
+} from './game-over-copy';
 
 export interface GameOverDialogProps {
   open: boolean;
@@ -34,6 +40,7 @@ export function GameOverDialog({
   const youWon = view.winnerPlayerId === view.you;
   const [exportBusy, setExportBusy] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const allowExcel = showActionLogDownload(import.meta.env.DEV);
 
   async function onExportLog(): Promise<void> {
     setExportBusy(true);
@@ -52,27 +59,29 @@ export function GameOverDialog({
   return (
     <Dialog
       open={open}
-      title="Game over"
+      title={gameOverTitle(view.playKind)}
       onClose={onClose}
       closeOnOverlayClick
       panelClassName="max-w-lg"
       actions={
         <>
-          <Button
-            type="button"
-            variant="purple"
-            disabled={exportBusy}
-            onClick={() => {
-              void onExportLog();
-            }}
-          >
-            {exportBusy ? 'Building Excel…' : 'Download action log'}
-          </Button>
+          {allowExcel ? (
+            <Button
+              type="button"
+              variant="purple"
+              disabled={exportBusy}
+              onClick={() => {
+                void onExportLog();
+              }}
+            >
+              {exportBusy ? 'Building Excel…' : DOWNLOAD_ACTION_LOG_LABEL}
+            </Button>
+          ) : null}
           <Button type="button" variant="orange" onClick={onClose}>
             View board
           </Button>
           <Button type="button" variant="red" onClick={onLeave}>
-            Return home
+            {gameOverLeaveLabel(view.playKind)}
           </Button>
         </>
       }
