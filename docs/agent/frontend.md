@@ -74,7 +74,11 @@ rules above are unchanged — this section only covers how the client looks.
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
   a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
-  (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
+  (L43-05; does not send an intent). Tutorial table (L45-05): non-dismissible coach in the
+  prompts band (copy from `tutorialStepAt`, last human coach on bot turns except index 8);
+  spotlight ring on the scripted control; Shop is **not** auto-opened; illegal clicks do
+  not send (`tutorial-follow-coach` copy on the coach). Client idle 20s retitles the coach
+  **Play**. Coach **Skip tutorial** uses the same leave-to-hub confirm as the flag. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -83,8 +87,8 @@ rules above are unchanged — this section only covers how the client looks.
   Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty;
   `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
   and sends `chooseKit` before `startGame` when the pick is not random.
-- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones; action-log **Why**
-  opens `botReason` copy (`formatBotReason`) — explanatory only, never table legality.
+- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
+  still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
@@ -227,7 +231,8 @@ rules above are unchanged — this section only covers how the client looks.
   Reward picks are never shown. In-game `playerReanimated` never includes `kitId`
   (designer 2026-08-24 / L50-03): copy is always `X returns`. Excel `exportLog` still
   carries the kit. Bot rows may carry optional
-  `botReason` (L17-05); UI exposes a Why control only — never feed reasons into play/legal UI.
+  `botReason` (L17-05); the Why control is hidden in every mode (L45-05) — never feed
+  reasons into play/legal UI.
 - **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable

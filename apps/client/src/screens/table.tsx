@@ -41,6 +41,7 @@ import type {
 } from '../net/use-room-connection';
 import { HowToPlayDialog } from './how-to-play-dialog';
 import { IllegalActionDialog } from './illegal-action-dialog';
+import { ILLEGAL_ACTION_COPY } from './illegal-action-copy';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
@@ -69,6 +70,19 @@ import {
 import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
+import { TutorialCoach } from './table/tutorial-coach';
+import {
+  resolveTutorialCoach,
+  tutorialCardActionSpotlight,
+  tutorialCoachTitle,
+  tutorialEconomySpotlight,
+  tutorialHighlightAt,
+  tutorialPortraitSpotlight,
+  tutorialSendAllowed,
+  tutorialSpotlightInstanceIds,
+  TUTORIAL_IDLE_MS,
+  type TutorialSendIntent,
+} from './table/tutorial-coach-copy';
 import { YourTurnFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {
@@ -148,13 +162,43 @@ function TableScreenInner({
   );
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
+  const [tutorialIdleIndex, setTutorialIdleIndex] = useState<number | null>(null);
+  const [tutorialIllegalIndex, setTutorialIllegalIndex] = useState<number | null>(null);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
     view.self.specialCards.find((c) => c.instanceId === instanceId);
 
+  const allowTutorialSend = (intent: TutorialSendIntent): boolean => {
+    if (view.playKind !== 'tutorial') {
+      return true;
+    }
+    const index = view.tutorialIndex;
+    if (index === null || !tutorialSendAllowed(index, intent)) {
+      setTutorialIllegalIndex(index);
+      return false;
+    }
+    setTutorialIllegalIndex(null);
+    return true;
+  };
+
   const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
     const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (
+        !allowTutorialSend({
+          kind: 'playCard',
+          cardId: card.cardId,
+          isUpgraded: card.isUpgraded,
+        })
+      ) {
+        return;
+      }
+    }
     onPlayCard(instanceId, options);
     if (card === undefined) {
       return;
@@ -168,6 +212,9 @@ function TableScreenInner({
   const playMultipleWithFx = (
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ): void => {
+    if (!allowTutorialSend({ kind: 'playMultipleAttacks' })) {
+      return;
+    }
     onPlayMultipleAttacks(attacks);
     const first = attacks[0];
     if (first === undefined) {
@@ -184,19 +231,31 @@ function TableScreenInner({
   };
 
   const drawWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'draw' })) {
+      return;
+    }
     // Points Δ → ResourceIcon enqueues log ↔ token chips (avoid double flyout).
     onDraw();
   };
 
   const buyUpgradeWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'buyUpgradePoint' })) {
+      return;
+    }
     onBuyUpgradePoint();
   };
 
   const sellUpgradeWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'sellUpgradePoint' })) {
+      return;
+    }
     onSellUpgradePoint();
   };
 
   const buyCardWithFx = (cardId: (typeof SHARED_CARD_IDS)[number]): void => {
+    if (!allowTutorialSend({ kind: 'buyCard', cardId })) {
+      return;
+    }
     onBuyCard(cardId);
     const measured = measureBuyCardFlyout(cardId);
     if (measured !== null) {
@@ -205,6 +264,9 @@ function TableScreenInner({
   };
 
   const buySpecialWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'buySpecialCard' })) {
+      return;
+    }
     onBuySpecialCard();
     const measured = measureBuySpecialFlyout();
     if (measured !== null) {
@@ -214,6 +276,15 @@ function TableScreenInner({
 
   const sellCardWithFx = (instanceId: string): void => {
     const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (!allowTutorialSend({ kind: 'sellCard', cardId: card.cardId })) {
+        return;
+      }
+    }
     onSellCard(instanceId);
     if (card === undefined) {
       return;
@@ -222,6 +293,20 @@ function TableScreenInner({
     if (measured !== null) {
       enqueue({ kind: 'playFlyout', ...measured });
     }
+  };
+
+  const upgradeCardGuarded = (instanceId: string): void => {
+    const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (!allowTutorialSend({ kind: 'upgradeCard', cardId: card.cardId })) {
+        return;
+      }
+    }
+    onUpgradeCard(instanceId);
   };
 
   const lastResolvedKey = useRef<string | null>(null);
@@ -331,6 +416,48 @@ function TableScreenInner({
     skipTutorial: SKIP_TUTORIAL_ARIA_LABEL,
   });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
+  const tutorialIndex = view.playKind === 'tutorial' ? view.tutorialIndex : null;
+  const tutorialHighlight =
+    tutorialIndex !== null ? tutorialHighlightAt(tutorialIndex) : null;
+  const tutorialCoach =
+    tutorialIndex !== null ? resolveTutorialCoach(tutorialIndex) : undefined;
+  const shopOpen = dialog?.kind === 'shop';
+  const economySpotlight = tutorialEconomySpotlight(tutorialHighlight, shopOpen);
+  const cardActionSpotlight = tutorialCardActionSpotlight(tutorialHighlight);
+  const spotlightIds = tutorialSpotlightInstanceIds(tutorialHighlight, [
+    ...view.self.hand,
+    ...view.self.specialCards,
+  ]);
+  const highlightPortrait = tutorialPortraitSpotlight(tutorialHighlight);
+  const followCoachCopy = ILLEGAL_ACTION_COPY['tutorial-follow-coach'];
+  const tutorialIdle = tutorialIdleIndex !== null && tutorialIdleIndex === tutorialIndex;
+  const tutorialIllegalHint =
+    tutorialIllegalIndex !== null && tutorialIllegalIndex === tutorialIndex;
+  const coachTitle = tutorialIllegalHint
+    ? (followCoachCopy.title ?? 'Tutorial step')
+    : tutorialCoach !== undefined
+      ? tutorialCoachTitle(tutorialCoach, tutorialIdle)
+      : undefined;
+  const coachBody = tutorialIllegalHint ? followCoachCopy.body : tutorialCoach?.body;
+
+  useEffect(() => {
+    if (
+      view.playKind !== 'tutorial' ||
+      !isMyTurn ||
+      readOnly ||
+      selfEliminated ||
+      view.tutorialIndex === null
+    ) {
+      return;
+    }
+    const index = view.tutorialIndex;
+    const handle = window.setTimeout(() => {
+      setTutorialIdleIndex(index);
+    }, TUTORIAL_IDLE_MS);
+    return () => {
+      window.clearTimeout(handle);
+    };
+  }, [view.playKind, view.tutorialIndex, isMyTurn, readOnly, selfEliminated]);
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -431,6 +558,15 @@ function TableScreenInner({
   }
 
   function onBeginUse(instance: CardInstance): void {
+    if (
+      !allowTutorialSend({
+        kind: 'playCard',
+        cardId: instance.cardId,
+        isUpgraded: instance.isUpgraded,
+      })
+    ) {
+      return;
+    }
     if (instance.cardId === 'regeneration') {
       setDialog({ kind: 'quantity', instance });
       return;
@@ -573,6 +709,17 @@ function TableScreenInner({
                 You are a spectator. Actions are locked while rewards (if any) resolve.
               </p>
             </section>
+          ) : tutorialIndex !== null &&
+            coachTitle !== undefined &&
+            coachBody !== undefined ? (
+            <TutorialCoach
+              index={tutorialIndex}
+              title={coachTitle}
+              body={coachBody}
+              onSkip={() => {
+                setLeaveConfirm('skipTutorial');
+              }}
+            />
           ) : null
         }
         opponentSeats={opponents.map((player) => (
@@ -591,6 +738,7 @@ function TableScreenInner({
                   },
                 }
               : {})}
+            {...(highlightPortrait ? { highlightPortrait: true } : {})}
           />
         ))}
         pending={
@@ -620,9 +768,26 @@ function TableScreenInner({
               onInspectActive(view.you, effectId);
             }}
             {...(onDeactivatePersistent !== undefined
-              ? { onDeactivatePersistent }
+              ? {
+                  onDeactivatePersistent: (effectId: string) => {
+                    if (!allowTutorialSend({ kind: 'other' })) {
+                      return;
+                    }
+                    onDeactivatePersistent(effectId);
+                  },
+                }
               : {})}
-            {...(onActivateDuplication !== undefined ? { onActivateDuplication } : {})}
+            {...(onActivateDuplication !== undefined
+              ? {
+                  onActivateDuplication: () => {
+                    if (!allowTutorialSend({ kind: 'other' })) {
+                      return;
+                    }
+                    onActivateDuplication();
+                  },
+                }
+              : {})}
+            {...(spotlightIds.length > 0 ? { highlightedInstanceIds: spotlightIds } : {})}
           />
         }
         economy={
@@ -634,6 +799,7 @@ function TableScreenInner({
             onOpenShop={() => {
               setDialog({ kind: 'shop' });
             }}
+            {...(economySpotlight !== undefined ? { spotlight: economySpotlight } : {})}
             {...(readOnly && onShowStats !== undefined ? { onShowStats } : {})}
           />
         }
@@ -687,9 +853,10 @@ function TableScreenInner({
         attackCards={attackCards}
         onPlayCard={playCardWithFx}
         onPlayMultipleAttacks={playMultipleWithFx}
-        onUpgradeCard={onUpgradeCard}
+        onUpgradeCard={upgradeCardGuarded}
         onSellCard={sellCardWithFx}
         onBeginUse={onBeginUse}
+        {...(cardActionSpotlight !== undefined ? { tutorialAction: cardActionSpotlight } : {})}
       />
 
       <ShopDialog
@@ -704,6 +871,7 @@ function TableScreenInner({
         onSellUpgradePoint={sellUpgradeWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
+        {...(tutorialHighlight !== null ? { tutorialHighlight } : {})}
       />
 
       {subChoice !== null && (

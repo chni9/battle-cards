@@ -11,6 +11,7 @@ import {
   upgradePointBuyCost,
   upgradePointSellYield,
   type PlayingStateView,
+  type TutorialHighlight,
 } from '@card-battle/shared';
 import { useState, type ReactElement } from 'react';
 
@@ -34,6 +35,7 @@ import {
   SHOP_SECTION_UPGRADE_POINTS,
 } from './chrome-labels';
 import { SHOP_PRICE_BLURB } from './table-copy';
+import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
 
 const DEFAULT_SHOP_CARD_ID = SHARED_CARD_IDS[0];
 
@@ -71,6 +73,8 @@ export interface ShopDialogProps {
   onSellUpgradePoint: () => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onBuySpecialCard: () => void;
+  /** Tutorial spotlight (L45-05). Shop is never auto-opened. */
+  tutorialHighlight?: TutorialHighlight;
 }
 
 export function ShopDialog({
@@ -83,6 +87,7 @@ export function ShopDialog({
   onSellUpgradePoint,
   onBuyCard,
   onBuySpecialCard,
+  tutorialHighlight = null,
 }: ShopDialogProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(DEFAULT_SHOP_CARD_ID);
   const disabled = !isMyTurn || actionsLocked;
@@ -90,9 +95,12 @@ export function ShopDialog({
   const buyUpgradeCost = upgradePointBuyCost(kitId);
   const sellUpgradeYield = upgradePointSellYield(kitId);
   const alwaysUpgradedIds = getKit(kitId).traits.alwaysUpgraded;
-  const selectedShopId = (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
-    ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
-    : DEFAULT_SHOP_CARD_ID;
+  const selectedShopId =
+    tutorialHighlight === 'shop-absorber'
+      ? 'absorber'
+      : (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
+        ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
+        : DEFAULT_SHOP_CARD_ID;
   const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
 
   return (
@@ -121,6 +129,11 @@ export function ShopDialog({
           <Button
             variant="orange"
             disabled={disabled || !canAffordSharedBuy(view, selectedShopId)}
+            className={
+              tutorialHighlight === 'shop-absorber' && selectedShopId === 'absorber'
+                ? TUTORIAL_SPOTLIGHT_CLASS
+                : ''
+            }
             onClick={() => {
               onBuyCard(selectedShopId);
               onClose();
@@ -140,6 +153,12 @@ export function ShopDialog({
           <Button
             variant="orange"
             disabled={disabled || view.self.points < buyUpgradeCost}
+            className={
+              tutorialHighlight === 'shop-upgrade-point' ? TUTORIAL_SPOTLIGHT_CLASS : ''
+            }
+            {...(tutorialHighlight === 'shop-upgrade-point'
+              ? { 'data-tutorial-highlight': 'shop-upgrade-point' }
+              : {})}
             onClick={() => {
               onBuyUpgradePoint();
               onClose();
@@ -190,6 +209,7 @@ export function ShopDialog({
               cardId: id,
               isUpgraded: shopUpgraded,
             } as const;
+            const tutorialAbsorber = tutorialHighlight === 'shop-absorber' && id === 'absorber';
 
             return (
               <li key={id}>
@@ -208,11 +228,15 @@ export function ShopDialog({
                     onBuyCard(id);
                     onClose();
                   }}
-                  className={choiceTileClassName({
-                    selected,
-                    disabled,
-                    faded: !affordable,
-                  })}
+                  className={[
+                    choiceTileClassName({
+                      selected,
+                      disabled,
+                      faded: !affordable,
+                    }),
+                    tutorialAbsorber ? TUTORIAL_SPOTLIGHT_CLASS : '',
+                  ].join(' ')}
+                  {...(tutorialAbsorber ? { 'data-tutorial-highlight': 'shop-absorber' } : {})}
                 >
                   <Card
                     instance={shopInstance}

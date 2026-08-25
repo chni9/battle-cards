@@ -37,6 +37,7 @@ export interface PrivateZoneProps {
   onSelectActive?: (instanceId: string) => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
+  highlightedInstanceIds?: readonly string[];
 }
 
 export function PrivateZone({
@@ -51,6 +52,7 @@ export function PrivateZone({
   onSelectActive,
   onDeactivatePersistent,
   onActivateDuplication,
+  highlightedInstanceIds,
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -150,6 +152,7 @@ export function PrivateZone({
           hand={view.self.hand}
           specials={view.self.specialCards}
           {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
+          {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
         />
       </div>
 

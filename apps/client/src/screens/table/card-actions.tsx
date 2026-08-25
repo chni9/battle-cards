@@ -31,6 +31,7 @@ import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motio
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { cardEffectText, visibleKitId } from './table-helpers';
+import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
 
 const REGEN_QUANTITIES = [1, 2, 3, 4] as const;
 
@@ -86,6 +87,8 @@ export interface CardActionsProps {
   onSellCard: (instanceId: string) => void;
   /** Called when Use needs target or quantity — parent already set dialog via setDialog. */
   onBeginUse: (instance: CardInstance) => void;
+  /** Tutorial spotlight on Use / Upgrade / Sell (L45-05). */
+  tutorialAction?: 'use' | 'upgrade' | 'sell';
 }
 
 export function CardActions(props: CardActionsProps): ReactElement {
@@ -103,6 +106,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onUpgradeCard,
     onSellCard,
     onBeginUse,
+    tutorialAction,
   } = props;
 
   const [targetId, setTargetId] = useState('');
@@ -180,6 +184,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
               <Button
                 variant="purple"
                 disabled={!isMyTurn || actionsLocked || transformerUseBlocked}
+                className={tutorialAction === 'use' ? TUTORIAL_SPOTLIGHT_CLASS : ''}
                 onClick={() => {
                   onBeginUse(actionInstance);
                 }}
@@ -201,6 +206,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 <Button
                   variant="orange"
                   disabled={!isMyTurn || actionsLocked || view.self.upgradePoints < 1}
+                  className={tutorialAction === 'upgrade' ? TUTORIAL_SPOTLIGHT_CLASS : ''}
                   onClick={() => {
                     onUpgradeCard(actionInstance.instanceId);
                     close();
@@ -218,6 +224,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 <Button
                   variant="green"
                   disabled={!isMyTurn || actionsLocked}
+                  className={tutorialAction === 'sell' ? TUTORIAL_SPOTLIGHT_CLASS : ''}
                   onClick={() => {
                     onSellCard(actionInstance.instanceId);
                     close();

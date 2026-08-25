@@ -19,6 +19,7 @@ import {
 } from './active-display';
 import { FlowStatusBadges } from './flow-status-badges';
 import { HIDDEN_KIT_LABEL } from './table-copy';
+import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
 
 export interface OpponentZoneProps {
   view: PlayingStateView;
@@ -26,6 +27,8 @@ export interface OpponentZoneProps {
   onInspectActive?: (effectId: string) => void;
   /** Spy or death reveal — opens the opponent info dialog. */
   onInspectReveal?: () => void;
+  /** Tutorial spotlight after Spy (L45-05). */
+  highlightPortrait?: boolean;
 }
 
 function ActiveThumbs({
@@ -76,6 +79,7 @@ export function OpponentZone({
   player,
   onInspectActive,
   onInspectReveal,
+  highlightPortrait = false,
 }: OpponentZoneProps): ReactElement {
   // Death reveal (Lot 19) beats Spy for dead seats — same display shape.
   const reveal = player.eliminationReveal;
@@ -121,21 +125,29 @@ export function OpponentZone({
       )}
 
       <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
-        <KitPortrait
-          kitId={shownKitId}
-          nickname={player.nickname}
-          isEliminated={player.isEliminated}
-          className="w-10 shrink-0 sm:w-14"
-          {...(onInspectReveal !== undefined && revealMode !== null
-            ? {
-                onClick: onInspectReveal,
-                ariaLabel:
-                  revealMode === 'elimination'
-                    ? `Inspect ${player.nickname}'s revealed cards`
-                    : `Inspect ${player.nickname}'s Spy reveal`,
-              }
-            : {})}
-        />
+        <span
+          className="inline-flex"
+          {...(highlightPortrait ? { 'data-tutorial-highlight': 'opponent-portrait' } : {})}
+        >
+          <KitPortrait
+            kitId={shownKitId}
+            nickname={player.nickname}
+            isEliminated={player.isEliminated}
+            className={[
+              'w-10 shrink-0 sm:w-14',
+              highlightPortrait ? TUTORIAL_SPOTLIGHT_CLASS : '',
+            ].join(' ')}
+            {...(onInspectReveal !== undefined && revealMode !== null
+              ? {
+                  onClick: onInspectReveal,
+                  ariaLabel:
+                    revealMode === 'elimination'
+                      ? `Inspect ${player.nickname}'s revealed cards`
+                      : `Inspect ${player.nickname}'s Spy reveal`,
+                }
+              : {})}
+          />
+        </span>
         <ActiveThumbs
           player={player}
           {...(onInspectActive !== undefined ? { onInspectActive } : {})}

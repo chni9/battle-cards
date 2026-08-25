@@ -20,11 +20,13 @@ import {
   cardBandRowsForHeight,
   fitCardBand,
 } from './card-band-fit';
+import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
 
 export interface CardBandProps {
   hand: readonly CardInstance[];
   specials: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
+  highlightedInstanceIds?: readonly string[];
 }
 
 const PAGE_WIDTH_LOCK_PX = 8;
@@ -34,11 +36,13 @@ function CardSection({
   zone,
   cards,
   onSelect,
+  highlightedInstanceIds = [],
 }: {
   label: string;
   zone: string;
   cards: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
+  highlightedInstanceIds?: readonly string[];
 }): ReactElement {
   const areaRef = useRef<HTMLDivElement>(null);
   const lockedWidthRef = useRef<number | null>(null);
@@ -118,27 +122,35 @@ function CardSection({
         className="flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center overflow-hidden"
         style={{ gap: CARD_BAND_GAP_PX }}
       >
-        {visible.map((card) => (
-          <div
-            key={card.instanceId}
-            style={{ width: cardWidth, maxHeight: '100%' }}
-            className="shrink-0 overflow-hidden"
-          >
-            <AnimatedCard
-              instance={card}
-              detail="face"
-              skipEntrance
-              className="w-full max-h-full !p-0.5"
-              {...(onSelect !== undefined
-                ? {
-                    onSelect: () => {
-                      onSelect(card.instanceId);
-                    },
-                  }
-                : {})}
-            />
-          </div>
-        ))}
+        {visible.map((card) => {
+          const highlighted = highlightedInstanceIds.includes(card.instanceId);
+          return (
+            <div
+              key={card.instanceId}
+              style={{ width: cardWidth, maxHeight: '100%' }}
+              className={[
+                'shrink-0 overflow-hidden rounded-[length:var(--radius-card)]',
+                highlighted ? TUTORIAL_SPOTLIGHT_CLASS : '',
+              ].join(' ')}
+              {...(highlighted ? { 'data-tutorial-highlight': card.cardId } : {})}
+            >
+              <AnimatedCard
+                instance={card}
+                detail="face"
+                skipEntrance
+                selected={highlighted}
+                className="w-full max-h-full !p-0.5"
+                {...(onSelect !== undefined
+                  ? {
+                      onSelect: () => {
+                        onSelect(card.instanceId);
+                      },
+                    }
+                  : {})}
+              />
+            </div>
+          );
+        })}
       </div>
       {needsPager ? (
         <div
@@ -174,7 +186,12 @@ function CardSection({
   );
 }
 
-export function CardBand({ hand, specials, onSelect }: CardBandProps): ReactElement {
+export function CardBand({
+  hand,
+  specials,
+  onSelect,
+  highlightedInstanceIds,
+}: CardBandProps): ReactElement {
   return (
     <div
       data-zone="card-band"
@@ -185,12 +202,14 @@ export function CardBand({ hand, specials, onSelect }: CardBandProps): ReactElem
         zone="hand"
         cards={hand}
         {...(onSelect !== undefined ? { onSelect } : {})}
+        {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />
       <CardSection
         label="Specials"
         zone="specials"
         cards={specials}
         {...(onSelect !== undefined ? { onSelect } : {})}
+        {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />
     </div>
   );
