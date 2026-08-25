@@ -343,4 +343,106 @@ describe('BotDriver (L16-06)', () => {
     });
     driver.clear();
   });
+
+  it('short-circuits Easy/search/noise for tutorial-script-v6 and omits Why', async () => {
+    const calls: { action: TurnAction; reason: unknown }[] = [];
+    const base = emptyView('bot-1');
+    const botSeat = base.players[0];
+    if (botSeat === undefined) {
+      throw new Error('emptyView missing seat');
+    }
+    const tutorialView: PlayingStateView = {
+      ...base,
+      playKind: 'tutorial',
+      tutorialIndex: 4,
+      players: [
+        { ...botSeat, id: 'human', isYou: false, isBot: false },
+        { ...botSeat, id: 'bot-1', isYou: true, isBot: true },
+      ],
+    };
+
+    const host: BotDriverHost = {
+      isBotSeat: (id) => id.startsWith('bot-'),
+      getGameState: () =>
+        ({
+          currentTurnPlayerId: 'bot-1',
+          players: [
+            {
+              id: 'bot-1',
+              nickname: 'A',
+              kitId: 'ghost',
+              lives: 4,
+              points: 16,
+              upgradePoints: 0,
+              shield: 0,
+              shieldIsUpgraded: false,
+              hand: [],
+              specialCards: [],
+              pendingEffects: [],
+              activePersistentEffects: [],
+              turnLedger: {
+                livesLost: 0,
+                pointsSpent: 0,
+                upgradePointsSpent: 0,
+                pointsLostToTheft: 0,
+                upgradePointsLostToTheft: 0,
+              },
+              connectionState: {
+                status: 'connected',
+                disconnectedAt: null,
+                automaticTurnsTaken: 0,
+                consecutiveTimeouts: 0,
+              },
+              isEliminated: false,
+              blockTurnsRemaining: 0,
+              blockAttacksForbidden: false,
+              attackBlockCharges: 0,
+              duplicationActive: false,
+              eliminationSnapshot: null,
+              pendingReanimation: null,
+              absorbWindowPendingPlayerIds: null,
+            },
+          ],
+          seed: 'tutorial-driver',
+          turnSequence: 4,
+          mode: 'classic',
+          lifeLimit: 25,
+          pool: [],
+          nextPoolInstanceSeq: 0,
+          visibility: [],
+          mirrorChoice: null,
+          stealChoice: null,
+          subChoice: null,
+          eliminationContributors: [],
+          rewardQueue: [],
+          rewardChoice: null,
+        }) as never,
+      isGameOver: () => false,
+      getPlayingView: () => tutorialView,
+      getActionLog: () => [],
+      getBotDifficulty: () => 'easy',
+      getBotPolicyId: () => 'tutorial-script-v6',
+      performBotAction: (_id, action, reason) => {
+        calls.push({ action, reason });
+      },
+      performBotDraw: () => {
+        calls.push({ action: { type: 'draw' }, reason: 'draw-fallback' });
+      },
+      completeBotMirror: () => undefined,
+      completeBotSteal: () => undefined,
+      completeBotReward: () => undefined,
+      failBotReward: () => undefined,
+      completeBotReanimationKit: () => undefined,
+      failBotReanimationKit: () => undefined,
+    };
+
+    const driver = new BotDriver(host, 0, new SyncSearchPool());
+    driver.scheduleTurn('bot-1');
+    await vi.waitFor(() => {
+      expect(calls.length).toBeGreaterThan(0);
+    });
+    expect(calls[0]?.action).toEqual({ type: 'draw' });
+    expect(calls[0]?.reason).toBeUndefined();
+    driver.clear();
+  });
 });

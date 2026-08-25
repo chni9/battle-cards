@@ -19,9 +19,11 @@
   L33-05 gate), `search-v5` (ISMCTS; **not** room default until L35-07 gate),
   `heuristic-v5-engage` (Lot 40 overlay), `search-v5-engage`
   (Lot 40; Normal/Hard rooms after JAPMZR sell ruling — arena gate still
-  failed), and `random-legal`
-  (uniform legal pick). The worker resolves by
-  `policyId`.
+  failed), `random-legal` (uniform legal pick), and `tutorial-script-v6`
+  (Lot 45; room tutorial only). The worker resolves by `policyId`.
+  `tutorial-script-v6` is view-only; the bot-driver **short-circuits** Easy /
+  search / noise and omits `botReason`. Do **not** seat it from the simulator
+  default path.
 
 ## Parity
 
