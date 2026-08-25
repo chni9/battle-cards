@@ -7,6 +7,7 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
+import { choiceTileClassName } from '../../../design/components/choice-tile-chrome';
 import { KitPortrait } from '../../../design/components/kit-portrait';
 
 export interface ReanimationKitPanelProps {
@@ -44,12 +45,7 @@ export function ReanimationKitPanel({
                 onClick={() => {
                   setSelectedKitId(kitId);
                 }}
-                className={[
-                  'flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border p-1.5 text-left transition',
-                  selected
-                    ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                    : 'border-border-soft bg-surface hover:border-border',
-                ].join(' ')}
+                className={choiceTileClassName({ selected })}
               >
                 <KitPortrait kitId={kitId} className="w-full max-w-[5.5rem]" />
                 <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">

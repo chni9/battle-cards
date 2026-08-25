@@ -8,6 +8,8 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
+import { CardChoiceTile } from '../../../design/components/card-choice-tile';
+import { choiceTileClassName } from '../../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../../design/components/cost-display';
 import {
   REWARD_KIND_COSTS,
@@ -112,7 +114,7 @@ function RewardPick({
       <div
         role="radiogroup"
         aria-label={label}
-        className="mt-1.5 flex flex-wrap gap-1.5"
+        className="mt-1.5 grid grid-cols-2 gap-2 sm:grid-cols-4"
       >
         {REWARD_KINDS.map((k) => {
           const selected = kind === k;
@@ -127,39 +129,37 @@ function RewardPick({
               onClick={() => {
                 onKind(k);
               }}
-              className={[
-                'inline-flex min-h-9 items-center gap-1 rounded-[length:var(--radius-control)] border px-2.5 py-1 text-sm transition',
-                selected
-                  ? 'border-cta-green bg-surface ring-2 ring-cta-green/35 text-ink'
-                  : 'border-border bg-surface text-ink hover:border-border',
-              ].join(' ')}
+              className={choiceTileClassName({ selected })}
             >
               {cost !== undefined ? (
                 <CostDisplay cost={cost} />
               ) : (
-                <span>{REWARD_KIND_LABELS[k]}</span>
+                <span className="text-xs font-semibold text-ink">{REWARD_KIND_LABELS[k]}</span>
               )}
             </button>
           );
         })}
       </div>
       {kind === 'card' && (
-        <label className="mt-2 block text-sm text-ink">
-          Card{' '}
-          <select
-            value={cardId}
-            onChange={(event) => {
-              onCard(event.target.value);
-            }}
-            className="rounded-[length:var(--radius-control)] border border-border bg-surface px-2 py-1 text-ink"
-          >
-            {cards.map((card) => (
-              <option key={card.instanceId} value={card.instanceId}>
-                {formatCardLabel(card.cardId, card.isUpgraded)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {cards.map((card) => {
+            const selected = cardId === card.instanceId;
+            const name = formatCardLabel(card.cardId, card.isUpgraded);
+            return (
+              <li key={card.instanceId}>
+                <CardChoiceTile
+                  instance={card}
+                  caption={name}
+                  selected={selected}
+                  ariaLabel={name}
+                  onSelect={() => {
+                    onCard(card.instanceId);
+                  }}
+                />
+              </li>
+            );
+          })}
+        </ul>
       )}
     </fieldset>
   );

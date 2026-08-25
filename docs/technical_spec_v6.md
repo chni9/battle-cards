@@ -353,7 +353,7 @@ One shared pattern, shop-like (card/seat tiles, not radios). Used by **every** t
 | Steal / pool / consume / special-pick | Card faces (`detail="face"`) |
 | Reanimation kit | Kit portraits + names |
 | Elimination rewards | Icon + number for lives/points/UP; card faces for card picks |
-| Regeneration quantity | Existing numeric field, same Dialog chrome, live `CostDisplay` for pts × lives |
+| Regeneration quantity | Four click-to-commit buttons (1–4 lives), live `CostDisplay` of total points |
 
 Intents and payloads **unchanged** (except `FORFEIT` / tutorial fields in §8). Zero rule
 logic on the client.

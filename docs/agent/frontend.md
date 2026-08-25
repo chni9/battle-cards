@@ -39,7 +39,8 @@ rules above are unchanged — this section only covers how the client looks.
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
 - **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
-  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`). Art resolution:
+  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`), `SeatTile` /
+  `CardChoiceTile` / `choiceTileClassName` (L44-01; shop buy cells use the helper). Art resolution:
   `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
@@ -140,8 +141,29 @@ rules above are unchanged — this section only covers how the client looks.
   shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
   green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
   Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
-- **Mirror sub-choice labels:** pending attack options show
-  `{nickname}'s {formatCardLabel(...)}` — never raw `cardId`s.
+- **Visual pickers (L44-01):** `choiceTileClassName` is the shop selected/idle ring.
+  `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”;
+  selected uses a 6px orange *layout* frame (`choiceTileSelectedFrameStyle`)
+  plus inner glow — Dialog overflow cannot crop a box-model ring) and
+  `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
+  `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
+  the tiles; intents stay unchanged.
+- **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
+  source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
+  `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
+- **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
+  Unknown steal identities use the attack verso and the fixed “Hidden card”
+  caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
+  Payloads unchanged (`steal-pick` instanceId, `pool-pick` instanceIds,
+  consume `playCard` + `consumeInstanceId`, `special-pick` cardId).
+- **Rewards / reanimation / Regeneration (L44-06):** reward resource kinds use
+  `choiceTileClassName` + existing `REWARD_KIND_COSTS` `CostDisplay` (4/8/1);
+  card kind is a `CardChoiceTile` grid (Confirm still two choices; log stays
+  opaque). Reanimation wraps `KitPortrait` with the same chrome (not a third
+  primitive). Regeneration is four click-to-commit buttons (`1 life` … `4 lives`);
+  click sends `playCard` `{ quantity: n }` and closes; footer is Cancel only;
+  each button shows `CostDisplay` of `structuredPlayCost` × n as points
+  (`signed="cost"`). No client-side affordability.
 - **Duplicator action-log copy:** `activateDuplication` formats as "`X draws`"
   (playtest 2026-08-09); Spy/self still receive the real action kind on the wire.- **Skills applied selectively:** product-UI guidance from design / ui-styling / ui-ux-pro-max
   (contrast, touch targets ≥44px, focus rings, form labels, Dialog a11y, reduced-motion).
@@ -423,6 +445,19 @@ do not hand off an untested lot.
   green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.
 
+### Lot 44 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- **Solo** room `KUVIMX` (Lot44Host vs 1× Normal bot Alpha). Shop buy cells still use
+  `choiceTileClassName` (selected orange ring, `CostDisplay`, Buy selected).
+- **Target:** Basic attack / Strong attack / Spy → `SeatTile` grid (hidden kit “?”, nickname
+  Alpha, seat wash). Confirm still sends; no radios.
+- **Regeneration:** four click-to-commit tiles `1 life` … `4 lives` with live `CostDisplay`
+  (−3 / −6 / −9 / −12 pts at base rate). Footer Cancel only. Click `1 life` applied
+  (lives 4→5) and closed the Dialog.
+- Not forced this pass (engine-tested / source-tested): Assassin multi, steal hidden/spied,
+  pool / consume / special-pick, Mirror, elimination rewards, reanimation kit. L48-02 remains
+  the formal first-time gate.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
@@ -430,4 +465,3 @@ do not hand off an untested lot.
   upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
   nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
   Room `PPWXUP` on the pager pass.
-

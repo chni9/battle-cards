@@ -8,7 +8,9 @@ import {
   formatCardEffectText,
   getCard,
   type CardInstance,
+  type KitId,
   type PlayingStateView,
+  type PublicPlayerView,
   type RewardChoice,
 } from '@card-battle/shared';
 
@@ -43,6 +45,17 @@ export const REWARD_KIND_COSTS: Partial<Record<RewardKind, StructuredCost>> = {
 
 export function nicknameOf(view: PlayingStateView, playerId: string): string {
   return view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
+}
+
+/** Kit art the recipient already sees — Spy or death reveal. Matches opponent-zone. */
+export function visibleKitId(player: PublicPlayerView): KitId | null {
+  if (player.eliminationReveal !== undefined) {
+    return player.eliminationReveal.kitId;
+  }
+  if (player.spied !== undefined) {
+    return player.spied.kitId;
+  }
+  return null;
 }
 
 export function buildRewardChoice(
