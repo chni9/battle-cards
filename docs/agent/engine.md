@@ -160,6 +160,14 @@ their own turn, and never before playing their action.** "Drawing" grants no car
 points equal to the kit's `draw` value (rules spec §6), read from
 `getKit(player.kitId).startingResources.draw`.
 
+## Tutorial overlay (Lot 45)
+
+Room-owned `playKind` / `tutorialIndex`. After Classic deal, `applyTutorialSetup` overlays
+seats (never `run-game.ts`). `intersectTutorialLegalActions` filters `listLegalActions`;
+illegal intents get `tutorial-follow-coach` **before** `performTurnAction`. After a success,
+`advanceTutorialCursor` bumps the index and may snap `currentTurnPlayerId` back when the
+next scripted actor is the same seat (Draw then Tax). Handlers stay Classic.
+
 ## Kits and traits (Lot 4)
 
 Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **with replacement**

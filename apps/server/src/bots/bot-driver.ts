@@ -20,6 +20,7 @@ import type {
 } from '@card-battle/shared';
 
 import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { intersectTutorialLegalActions } from '../engine/tutorial/intersect-tutorial-legal';
 import { listAvailableRewardCards } from '../engine/turn/elimination-rewards';
 import type { TurnAction } from '../engine/turn/perform-action';
 import { createRng } from '../engine/rng';
@@ -297,7 +298,10 @@ export class BotDriver {
         return;
       }
 
-      const actions = listLegalActions(state, botId);
+      const actions =
+        view.playKind === 'tutorial' && view.tutorialIndex !== null
+          ? intersectTutorialLegalActions(state, botId, view.tutorialIndex)
+          : listLegalActions(state, botId);
 
       if (actions.length === 0) {
         this.host.performBotDraw(botId, { code: 'policy-fallback' });

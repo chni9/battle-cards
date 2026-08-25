@@ -77,11 +77,18 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { BotDriver, roomBotPolicyId } from '../bots/bot-driver';
+import { TUTORIAL_SCRIPT_V6_POLICY_ID } from '../bots/policies/tutorial-script-v6';
 import { assertPublicBotReason } from '../bots/public-bot-reason';
 import { getDefaultPolicy } from '../bots/registry';
 import { classifyRewardRoute, classifyTurnEntry } from '../bots/turn-entry';
 import { persistFinishedGame } from '../db/write-finished-game';
 import { createInitialState } from '../engine/create-initial-state';
+import { applyTutorialSetup, type TutorialSeatIds } from '../engine/tutorial/apply-tutorial-setup';
+import { advanceTutorialCursor } from '../engine/tutorial/advance-tutorial-cursor';
+import {
+  isTutorialActionAllowed,
+  tutorialFollowCoachReject,
+} from '../engine/tutorial/intersect-tutorial-legal';
 import { buildExportTurnRow, snapshotPlayersForExport } from '../export/turn-history';
 import { RECONNECT_GRACE_MS } from '../engine/lifecycle/constants';
 import {
@@ -229,6 +236,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return seat.difficulty;
     },
     getBotPolicyId: (botId) => {
+      if (this.playKind === 'tutorial') {
+        return TUTORIAL_SCRIPT_V6_POLICY_ID;
+      }
+
       const seat = this.seats.find((entry) => entry.sessionId === botId);
 
       if (seat === undefined || !isBotSeat(seat)) {
@@ -370,6 +381,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.gameState = createInitialState(
         forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
       );
+      if (this.playKind === 'tutorial') {
+        const tutorialSeats = this.tutorialSeatIds();
+
+        if (tutorialSeats !== null) {
+          applyTutorialSetup(this.gameState, tutorialSeats);
+          this.tutorialIndex = 0;
+        }
+      }
       this.actionTakenThisTurn = false;
       this.actionLog = [];
       void this.lock();
@@ -881,6 +900,48 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.sendStateTo(client);
   }
 
+  private tutorialSeatIds(): TutorialSeatIds | null {
+    const human = this.seats.find(isHumanSeat);
+    const bot = this.seats.find(isBotSeat);
+
+    if (human === undefined || bot === undefined) {
+      return null;
+    }
+
+    return { humanId: human.sessionId, botId: bot.sessionId };
+  }
+
+  private rejectTutorialIllegalAction(
+    client: GameClient,
+    state: GameState,
+    action: TurnAction,
+  ): boolean {
+    if (this.playKind !== 'tutorial' || this.tutorialIndex === null) {
+      return false;
+    }
+
+    if (isTutorialActionAllowed(state, client.sessionId, this.tutorialIndex, action)) {
+      return false;
+    }
+
+    client.send(ERROR_MESSAGE, tutorialFollowCoachReject());
+    return true;
+  }
+
+  private noteTutorialActionSuccess(state: GameState): void {
+    if (this.playKind !== 'tutorial' || this.tutorialIndex === null) {
+      return;
+    }
+
+    const seats = this.tutorialSeatIds();
+
+    if (seats === null) {
+      return;
+    }
+
+    this.tutorialIndex = advanceTutorialCursor(state, this.tutorialIndex, seats);
+  }
+
   private handleAction(client: GameClient, action: TurnAction): void {
     const state = this.gameState;
 
@@ -899,6 +960,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    if (this.rejectTutorialIllegalAction(client, state, action)) {
+      return;
+    }
+
     const actor = findPlayer(state, client.sessionId);
 
     if (actor !== undefined) {
@@ -912,6 +977,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       client.send(ERROR_MESSAGE, result);
       return;
     }
+
+    this.noteTutorialActionSuccess(state);
 
     this.recordTurnHistory(before, result);
     this.applyTurnResult(result);
@@ -2036,7 +2103,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.setPendingBotReason(reason);
+    if (
+      this.playKind === 'tutorial' &&
+      this.tutorialIndex !== null &&
+      !isTutorialActionAllowed(state, playerId, this.tutorialIndex, action)
+    ) {
+      return;
+    }
+
+    this.setPendingBotReason(this.playKind === 'tutorial' ? undefined : reason);
     const before = snapshotPlayersForExport(state);
     let historyRecorded = false;
 
@@ -2214,6 +2289,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.recoverStuckBotTurn(playerId);
       return;
     }
+
+    this.noteTutorialActionSuccess(state);
 
     if (result.rewardChoicePending === true) {
       this.beginRewardTimer(state);

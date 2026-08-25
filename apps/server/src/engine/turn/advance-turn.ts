@@ -67,7 +67,7 @@ export function advanceTurn(state: GameState): void {
   state.currentTurnPlayerId = null;
 }
 
-function beginTurnFor(state: GameState, player: Player): void {
+export function beginTurnFor(state: GameState, player: Player): void {
   player.duplicationActive = false;
   resetLedger(player);
   tickAbsorbWindowsOnBeginTurn(state, player.id);
