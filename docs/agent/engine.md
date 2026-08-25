@@ -167,6 +167,7 @@ seats (never `run-game.ts`). `intersectTutorialLegalActions` filters `listLegalA
 illegal intents get `tutorial-follow-coach` **before** `performTurnAction`. After a success,
 `advanceTutorialCursor` bumps the index and may snap `currentTurnPlayerId` back when the
 next scripted actor is the same seat (Draw then Tax). Handlers stay Classic.
+Seeded walk: `tutorial-script-harness.ts` plus `tutorial-script.integration.test.ts` (L45-07).
 
 ## Kits and traits (Lot 4)
 

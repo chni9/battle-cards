@@ -61,7 +61,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-38 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+39 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -69,7 +69,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 42 · How to play | 4 | 4 |
 | 43 · Table readability | 6 | 6 |
 | 44 · Visual pickers | 6 | 6 |
-| 45 · Tutorial | 7 | 6 |
+| 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 0 |
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
@@ -141,7 +141,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | L45-04 | Client `startTutorialGame`: `create({ tutorial: true })` then `startGame` (no `addBot`, no `chooseKit`), skip lobby like solo. Hub **Tutorial** nickname-only. Server auto-seats the scripted bot; reject `ADD_BOT`; no turn timer; Skip tutorial (not Forfeit) leaves to hub. **Acceptance:** one human + one bot; join by code rejected; solo/online unchanged. | M | Medium | L45-03, L42-02, L42-04 | Done |
 | L45-05 | Coach overlay: client copy table spec §5.4 keyed by `tutorialIndex`; highlight the control (index 8 = opponent portrait); idle 20s title **Play**; illegal clicks do not send. Hide **Why** on the table log in **all** games. **Acceptance:** index 0 copy mentions Draw is points; index 1 and 21 mention 4 points; index 3 mentions equal cancel. | M | Low | L45-04 | Done |
 | L45-06 | Finished `playKind === 'tutorial'`: Game over title **Tutorial complete**; CTA **Play a real game** → hub only. **Download action log** only when `import.meta.env.DEV`. Rewards skipped (existing 2p game-ending elim). **Acceptance:** unit on finished view title; Excel button absent unless DEV. | S | Low | L45-04, L41-03 | Done |
-| L45-07 | Seeded integration: drive indices 0–30 to human win. Assert Spy visibility after 8; Spy counter; Shield sold; Absorber bought not dealt; UP bought; second Tax after Regen+Thief (+4); Super Regen from 1 life; Absorber after 4→1; Basic never bought; `lives <= lifeLimit`; human winner. **Acceptance:** one test file; no `Math.random()`. | M | **High** | L45-03 | To do |
+| L45-07 | Seeded integration: drive indices 0–30 to human win. Assert Spy visibility after 8; Spy counter; Shield sold; Absorber bought not dealt; UP bought; second Tax after Regen+Thief (+4); Super Regen from 1 life; Absorber after 4→1; Basic never bought; `lives <= lifeLimit`; human winner. **Acceptance:** one test file; no `Math.random()`. | M | **High** | L45-03 | Done |
 
 ---
 
