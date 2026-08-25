@@ -76,8 +76,8 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 2 | How to play is a **soft gate** on the first Play online / Play solo / Tutorial: the primer opens; **Skip** and **Got it** both continue. After that it is a button on the hub **and** the table. It does not auto-open on later visits. This **reopens** the 2026-08-07 “Home only, never gates start” ruling **for V6**. |
 | 3 | How to play images are **designer-supplied screenshots**. Agents do not generate art. Existing resource / card icons may sit next to copy. Missing files → omit the `<img>`, never a placeholder drawing. |
 | 4 | Tutorial is optional, replayable, Approach 1: same `GameRoom`, `tutorial: true` on create, one scripted bot, real engine. |
-| 5 | Tutorial **must** show, at least: Draw (points, not a card), **Tax twice (base +4)**, **upgrade**, **equal Basic counter**, **Spy** (and Spy counter), **sell**, **buy Absorber**, **buy an upgrade point**, **Super Regeneration**, **Absorber**, **Thief**, then **kill** with Basic+. Spotlight every index 0–30. |
-| 6 | Tutorial seats start at **4 lives** (designer 2026-08-25). The counter lesson is still **equal** Basic vs Basic (both cancel; the bot stays at 4). Kill is **upgraded Basic** (3) after Super Regeneration, Thief, a second base Tax, Absorber, and a Strong counter. **Do not** upgrade Basic before the equal-counter beat. |
+| 5 | Tutorial **must** show, at least: Draw (points, not a card), **Tax twice (base +4)**, **upgrade**, **equal Basic counter**, **Spy** (and Spy counter), **sell**, **buy Absorber**, **buy an upgrade point**, **Shield vs Strong**, **Super Regeneration**, **Absorber**, **Thief**, then **kill** with Basic+. Spotlight every index 0–30. |
+| 6 | Human tutorial seat starts at **2 lives** (designer 2026-08-25). Tax 2→1; Shield vs Strong keeps 1 life for Super Regeneration. The counter lesson is still **equal** Basic vs Basic (both cancel; the bot stays at 4). Kill is **upgraded Basic** (3) after Super Regeneration, Thief, a second base Tax, Absorber, and a Strong counter. **Do not** upgrade Basic before the equal-counter beat. |
 | 7 | Completing the tutorial does **not** dismiss first-real-game hints. The first Solo or Online Classic match still gets them. Skip-all remains. Tutorial itself uses coach copy, not the hint overlay. |
 | 8 | Feedback is always on Home, Table, and Game over. Game over **asks** once per finished match (skippable). |
 | 9 | A report is Bug / Confusion / Idea + message + optional contact. Server attaches game code, nickname, screen, protocol, `playKind`, and a public log tail when in a match. No seed on the client or in the report row. |
@@ -233,21 +233,23 @@ retitles the coach **Play**. Do not set a 300_000 ms server deadline.
 
 | Seat | Kit | Lives | Points | Upgrade points | Shield | Hand (exact instances) | Specials |
 |---|---|---|---|---|---|---|---|
-| Human | `indestructible` | **4** | **30** | **1** | 0 | Tax (**not** upgraded), Spy, **one** Basic, Shield, Shield | Super Regeneration (not upgraded) |
+| Human | `indestructible` | **2** | **38** | **1** | 0 | Tax (**not** upgraded), Spy, **one** Basic, Shield, Shield | Super Regeneration (not upgraded) |
 | Bot | `ghost` | **4** | **16** | 0 | 0 | Basic, Strong, Thief, Spy | none (strip Curse) |
 
 Strip any other cards the Classic deal produced. Bot nickname may stay the usual generator
 (`Alpha`). Human nickname is whatever they typed. No Absorber at deal — they **buy** it.
 Start with 1 upgrade point (for Spy); they **buy** a second from the Shop (cost 10). Sell
-yields **points** (Shield sell 7).
+yields **points** (Shield sell 7). Starting **38** points covers Shield at index 17 after
+skipping that step's former Draw, and still leaves enough after Thief's 10-point steal.
 
 **Tax instance override:** Indestructible `alwaysUpgraded` still includes `tax`. After mint,
 force `isUpgraded = false` so both Tax plays grant **+4 points**, not +6. Do not change the
 kit trait. Tutorial-only; decisions.md 2026-08-25.
 
-**Why 4 lives:** Strong (2) after a Tax (4→3) leaves the human at **1** for Super Regeneration.
-The equal Basic counter cancels; the bot stays at 4 until the upgraded Basic (3) hits. Kill is
-Basic+ vs the bot, then Absorber, then Basic+ vs a reused Strong (3 vs 2 — stronger stays).
+**Why 2 lives:** Tax (2→1) then Shield against Strong keeps the human at **1** for Super
+Regeneration (Shield stops attack damage; Tax does not). The equal Basic counter cancels; the
+bot stays at 4 until the upgraded Basic (3) hits. Kill is Basic+ vs the bot, then Absorber,
+then Basic+ vs a reused Strong (3 vs 2 — stronger stays).
 
 **Why not Assassin:** Sentence can randomly eliminate, including the human. Multi-attack is a
 second lesson. Indestructible’s catalog special **is** Super Regeneration — kit inspect matches
@@ -266,28 +268,28 @@ can be the next action. That skip is tutorial overlay, not a Classic extra actio
 
 | Index | Whose turn | Legal action (server filter) | Coach title / body (client) |
 |---|---|---|---|
-| 0 | Human | `draw` | Draw | Draw gives **points**, not a card. Draw once. |
-| 1 | Human | play **Tax** (base) | Economy | Tax spends **1 life** (shield does not stop it) and gives **4 points**. Play Tax. |
+| 0 | Human | `draw` | Draw | **Points** are spent to play many cards and to buy in the Shop. Draw gives **points**, not a card. Draw once. |
+| 1 | Human | play **Tax** (base) | Tax | **Lives** are health; 0 eliminates. Tax spends **1 life** (Shield does not stop that) and gives **4 points**. Play Tax. |
 | 2 | Bot | play **Basic** → human | — (keep last coach) |
-| 3 | Human | play **Basic** → bot (not upgraded) | Counter | Incoming is delayed. Play Basic attack back at them. **Equal** damage cancels **both** attacks. |
+| 3 | Human | play **Basic** → bot (not upgraded) | Counter | Incoming is delayed until after you act. Incoming Basic is the red highlight. Play Basic back. **Equal** damage cancels **both**. |
 | 4 | Bot | `draw` | — | Mutual equal cancel; bot still at **4** lives. |
-| 5 | Human | **upgrade Spy** | Upgrade | Spend **1 upgrade point** (the icon). Upgrade Spy. |
+| 5 | Human | **upgrade Spy** | Upgrade | An **upgrade point** upgrades one held card. Spend **1 upgrade point** on Spy. |
 | 6 | Bot | `draw` | — |
 | 7 | Human | play **Spy+** → bot | Spy | Spy reveals their kit and cards **when it resolves on their turn**. Play Spy. |
 | 8 | Bot | `draw` | Look | Spy resolved. **Click their portrait** to see kit and cards. Highlight the opponent portrait. |
-| 9 | Human | **sell** one Shield | Sell | Selling yields the play cost in **points**. Sell one Shield. |
+| 9 | Human | **sell** one Shield | Sell | Selling **removes the card from hand** and yields play-cost **points**. Sell **one** Shield, keep the other. |
 | 10 | Bot | play **Spy** → human | — |
-| 11 | Human | play **Spy** → bot (counter) | Counter Spy | Play Spy back at them. The same card aimed at the source **cancels both**. |
+| 11 | Human | play **Spy** → bot (counter) | Counter Spy | Incoming Spy (red). Play Spy back. The same card aimed at the source **cancels both**. |
 | 12 | Bot | `draw` | — |
-| 13 | Human | **buy an upgrade point** | Upgrade point | Open the Shop and **buy an upgrade point**. |
+| 13 | Human | **buy an upgrade point** | Shop | Open the Shop and **buy an upgrade point** (spends **points**, grants another **upgrade point**). |
 | 14 | Bot | `draw` | — |
-| 15 | Human | **buy Absorber** | Buy | Shop price is **double** the play cost. Buy Absorber. Never buy Basic. |
+| 15 | Human | **buy Absorber** | Buy | Buying spends Shop price (**double** the play cost) and puts the card in hand. Buy Absorber. Never buy Basic. |
 | 16 | Bot | play **Strong** → human | — |
-| 17 | Human | `draw` | Incoming | Draw. After you act, their Strong hits — you will be at **1 life**. |
+| 17 | Human | play **Shield** | Shield | Incoming Strong (red). **Shield** stops **attack** damage, not Tax. Play remaining Shield. |
 | 18 | Bot | play **Thief** → human | — |
-| 19 | Human | play **Super Regeneration** at 1 life | Special | You have **1 life**. Play Super Regeneration (gain lives, cap 25). Specials are usually one use. Then Thief steals points. |
+| 19 | Human | play **Super Regeneration** at 1 life | Thief | Incoming Thief (red) steals **points** after you act. Play Super Regeneration (restore **lives**, cap 25). Specials are usually one-use. |
 | 20 | Bot | `draw` | — |
-| 21 | Human | play **Tax** again (same card, still base) | Make points | Thief took points. Tax again — Super Regeneration gave you lives to spend. **+4 points**. |
+| 21 | Human | play **Tax** again (same card, still base) | Tax | Thief took **points**. Tax again — Super Regeneration gave **lives** to spend. **+4 points**. |
 | 22 | Bot | `draw` | — |
 | 23 | Human | **upgrade** the same Basic | Upgrade | Upgrade that Basic. It will deal **3**. |
 | 24 | Bot | `draw` | — |
@@ -299,7 +301,8 @@ can be the next action. That skip is tutorial overlay, not a Classic extra actio
 | 30 | Bot | `draw` | — | Basic+ hits; human wins; 2p skips rewards. |
 
 Must-show beats: Draw, Tax (twice, base +4), upgrade, equal Basic counter, Spy, Spy counter,
-sell, buy Absorber, buy upgrade point, Super Regeneration, Absorber, Thief, kill.
+sell, buy Absorber, buy upgrade point, Shield vs Strong, Super Regeneration, Absorber, Thief,
+kill.
 
 **Spotlight:** every index enables **only** the legal action above (client highlights that
 control; Shop is **not** auto-opened). Server rejects anything else with
@@ -313,12 +316,16 @@ search / noise when this policy is seated. Omit `botReason` on the table log.
 
 **Coach:** hovering dismissible chat (`z-[110]`, above Shop/card dialogs); the table stays
 clickable around it. It **opens on every new title/body** (next index, idle **Play**, illegal
-`tutorial-follow-coach` copy) and can be opened again from a **Coach** pill. Resource words
-in coach copy render as table icons (`CostDisplay` / resource PNGs). Highlight the
-scripted control with a pulsing outline and a pointing arrow **outside** the highlight
-square. Bot turns keep the last coach
-(except index 8, which teaches the portrait). **Skip tutorial** on the flag **and** the open
-coach: `leaveGame()` to hub, **no** Game over, **hide Forfeit**.
+`tutorial-follow-coach` copy) and can be opened again from a compact **?** control (not a
+Coach pill). Resource words in coach copy render as table icons (`CostDisplay` / resource
+PNGs). First mention of a term (points, lives, Incoming, upgrade point, Spy, sell, Shop buy,
+Shield, Thief) uses a full English sentence — not compressed chat style. Highlight the
+scripted control with a pulsing **orange** outline and a pointing arrow **outside** the
+highlight square. Incoming Attack, Spy, and Thief chips on the Incoming strip (not Waiting
+on others) use a pulsing **red** outline. Shop upgrade-point callout keeps in-flow top
+padding so the arrow is not cropped by the Dialog scroller. Bot turns keep the last coach
+(except index 8, which teaches the portrait). **Skip tutorial** on the **flag only**:
+`leaveGame()` to hub, **no** Game over, **hide Forfeit**.
 
 **Rejects:** `'tutorial-follow-coach'` — message: `This tutorial step asks for a different
 action.` Client maps to coach-tinted copy (do not send the illegal intent).
@@ -518,7 +525,8 @@ V1 §8 / AGENTS.md §9 apply. Extra for V6:
 - Classic deal + start **byte-identical** for a fixed seed with `playKind: 'classic'`
   (tutorial setup must not leak).
 - Tutorial script: one test per index 0–30 proving the only legal human/bot action; mutual
-  cancel at 3–4 leaves bot at **4** lives; after index 17 human lives **1**; after 26 bot
+  cancel at 3–4 leaves bot at **4** lives; after index 17 human lives **1** with remaining
+  shield (Strong absorbed); after 26 bot
   lives **1**; after 30 the human wins; Super Regeneration does not exceed `lifeLimit`;
   Absorber is bought not dealt; Basic is never bought.
 - `heuristic-v4.freeze.test.ts` green without fixture edits.

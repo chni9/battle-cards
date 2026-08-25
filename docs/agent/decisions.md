@@ -2555,3 +2555,37 @@ control). Coach body still comes from `tutorialStepAt`; the client inlines table
 icons (`CostDisplay` for quantified points/lives/upgrade points; PNG glyph for bare words
 and shield). Copy strings are unchanged.
 
+## 2026-08-25 · [P] Tutorial 2-life Shield walk; incoming red; coach chrome
+
+Designer 2026-08-25 follow-up. Classic catalog values stay frozen. Tutorial overlay only.
+Player-facing coach copy is full English — compressed chat style is never used for strings
+players read.
+
+**Script / loadout**
+
+- Human starts at **2 lives** (`TUTORIAL_HUMAN_LIVES`) and **38 points**. Tax 2→1, then Shield vs Strong keeps
+  **1 life** (and remaining shield) for Super Regeneration. Extra starting points cover Shield (7)
+  at index 17 so Thief's 10-point steal still leaves enough to finish the walk.
+- Index **17** is `play-shield` (not Draw). Indices stay 0–30; no inserted step.
+- Index **19** coaches incoming **Thief** (steals points when it resolves) and tells the
+  player to play Super Regeneration. Index 18 stays bot-only (`coach: null`).
+
+**Incoming red**
+
+- Tutorial Incoming chips whose `cardId` is an attack, `spy`, or `thief` get a red
+  `TutorialCallout` (`tone: 'threat'`). Scripted controls stay orange. Felt **Waiting on
+  others** is not a threat highlight.
+
+**Coach chrome**
+
+- **Skip tutorial** is flag-only. The chat has no Skip button.
+- Reopen control is a compact **?** (`OPEN_COACH_ARIA_LABEL`), not a Coach pill.
+- First mention of points, lives, Incoming, upgrade point, Spy, sell, Shop buy, Shield, and
+  Thief uses a complete sentence.
+
+**Shop**
+
+- Upgrade-point callout uses in-flow top padding (`pt-12`) plus `scrollIntoView` so the
+  arrow is not cropped by the Dialog scroller.
+
+

@@ -17,17 +17,22 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(css).toContain('@keyframes tutorial-ping');
     expect(css).toContain('tutorial-callout-arrow--top');
     expect(css).not.toContain('inset-top');
-    expect(css).toContain('prefers-reduced-motion');
+    expect(css).toContain('tutorial-callout--threat');
+    expect(css).toContain('--color-cta-red');
   });
 
   it('coach overlay can hide and reopen', () => {
     const src = readFileSync(join(here, 'tutorial-coach.tsx'), 'utf8');
     expect(src).toContain('onHide');
     expect(src).toContain('onShow');
-    expect(src).toContain('OPEN_COACH_LABEL');
+    expect(src).toContain('OPEN_COACH_ARIA_LABEL');
+    expect(src).not.toContain('OPEN_COACH_LABEL');
+    expect(src).not.toContain('onSkip');
+    expect(src).not.toContain('SKIP_TUTORIAL');
     expect(src).toContain('HIDE_COACH_ARIA_LABEL');
     expect(src).toContain('z-[110]');
     expect(src).toContain('CostDisplay');
     expect(src).toContain('parseCoachBody');
+    expect(src).toContain('?');
   });
 });

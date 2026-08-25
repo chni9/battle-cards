@@ -13,7 +13,7 @@ import {
   type PlayingStateView,
   type TutorialHighlight,
 } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
@@ -90,6 +90,7 @@ export function ShopDialog({
   tutorialHighlight = null,
 }: ShopDialogProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(DEFAULT_SHOP_CARD_ID);
+  const upgradePointRef = useRef<HTMLDivElement>(null);
   const disabled = !isMyTurn || actionsLocked;
   const kitId = view.self.kitId;
   const buyUpgradeCost = upgradePointBuyCost(kitId);
@@ -102,6 +103,14 @@ export function ShopDialog({
         ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
         : DEFAULT_SHOP_CARD_ID;
   const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
+  const highlightUpgradePoint = tutorialHighlight === 'shop-upgrade-point';
+
+  useEffect(() => {
+    if (!open || !highlightUpgradePoint) {
+      return;
+    }
+    upgradePointRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, [open, highlightUpgradePoint]);
 
   return (
     <Dialog
@@ -150,9 +159,9 @@ export function ShopDialog({
         </>
       }
     >
-      <section className="space-y-2">
+      <section className={highlightUpgradePoint ? 'space-y-2 overflow-visible pt-12' : 'space-y-2'}>
         <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_UPGRADE_POINTS}</h3>
-        <div className="flex flex-wrap gap-2">
+        <div ref={upgradePointRef} className="flex flex-wrap gap-2 overflow-visible">
           <TutorialCallout
             active={tutorialHighlight === 'shop-upgrade-point'}
             arrow="top"

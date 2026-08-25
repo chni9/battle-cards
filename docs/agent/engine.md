@@ -168,6 +168,7 @@ illegal intents get `tutorial-follow-coach` **before** `performTurnAction`. Afte
 `advanceTutorialCursor` bumps the index and may snap `currentTurnPlayerId` back when the
 next scripted actor is the same seat (Draw then Tax). Handlers stay Classic.
 Seeded walk: `tutorial-script-harness.ts` plus `tutorial-script.integration.test.ts` (L45-07).
+Human overlay starts at **2 lives**; index 17 is Shield vs incoming Strong (lives stay 1).
 
 ## Kits and traits (Lot 4)
 

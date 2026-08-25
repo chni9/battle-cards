@@ -12,6 +12,7 @@ import type { ReactElement } from 'react';
 
 import { PlayerName } from '../../design/components/player-name';
 import { nicknameOf } from './table-helpers';
+import { TutorialCallout } from './tutorial-callout';
 
 export interface PendingQueueProps {
   view: PlayingStateView;
@@ -26,6 +27,8 @@ export interface PendingQueueProps {
   highlightedIds?: readonly string[];
   /** Animate chips on mount (Incoming). Stable keys keep the animation one-shot. */
   animateEntrance?: boolean;
+  /** Tutorial red threat callout (incoming Attack / Spy / Thief). */
+  threatHighlightIds?: readonly string[];
 }
 
 export function PendingQueue({
@@ -36,6 +39,7 @@ export function PendingQueue({
   tone = 'felt',
   highlightedIds = [],
   animateEntrance = false,
+  threatHighlightIds = [],
 }: PendingQueueProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const entranceClass =
@@ -62,7 +66,8 @@ export function PendingQueue({
         <ul
           className={[
             'mt-1 flex min-h-0 gap-1.5',
-            compact ? 'flex-wrap justify-end overflow-y-auto' : 'flex-wrap overflow-y-auto',
+            compact ? 'flex-wrap justify-end' : 'flex-wrap',
+            threatHighlightIds.length > 0 ? 'overflow-visible' : 'overflow-y-auto',
           ].join(' ')}
         >
           {effects.map((effect) => {
@@ -71,6 +76,7 @@ export function PendingQueue({
             const targetNick = nicknameOf(view, effect.targetPlayerId);
             const routePlain = `${sourceNick} → ${targetNick}`;
             const highlighted = highlightedIds.includes(effect.id);
+            const threat = threatHighlightIds.includes(effect.id);
             const route = (
               <>
                 <PlayerName
@@ -89,11 +95,8 @@ export function PendingQueue({
               </>
             );
             if (compact) {
-              return (
-                <li
-                  key={effect.id}
-                  data-pending-id={effect.id}
-                  title={`${label} · ${routePlain} · queued #${String(effect.queuedAt)}`}
+              const chip = (
+                <span
                   className={[
                     'flex max-w-full flex-wrap items-start gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                     chipClass,
@@ -105,6 +108,27 @@ export function PendingQueue({
                   <span className="inline-flex min-w-0 whitespace-normal break-words text-[10px] text-ink-muted">
                     {route}
                   </span>
+                </span>
+              );
+              return (
+                <li
+                  key={effect.id}
+                  data-pending-id={effect.id}
+                  title={`${label} · ${routePlain} · queued #${String(effect.queuedAt)}`}
+                  className={threat ? 'overflow-visible' : ''}
+                >
+                  {threat ? (
+                    <TutorialCallout
+                      active
+                      tone="threat"
+                      arrow="top"
+                      highlightId={`incoming-${effect.cardId}`}
+                    >
+                      {chip}
+                    </TutorialCallout>
+                  ) : (
+                    chip
+                  )}
                 </li>
               );
             }

@@ -81,9 +81,11 @@ describe('tutorial script integration (L45-07 / technical spec v6 §5.4)', () =>
     expect(humanAt().hand.some((card) => card.cardId === 'absorber')).toBe(true);
 
     playTutorialThrough(harness, 16);
-    expect(humanAt().lives).toBeGreaterThan(1);
+    expect(humanAt().lives).toBe(1);
+    expect(humanAt().shield).toBe(0);
     playTutorialIndex(harness);
     expect(humanAt().lives).toBe(1);
+    expect(humanAt().shield).toBeGreaterThan(0);
 
     playTutorialThrough(harness, 18);
     expect(humanAt().lives).toBe(1);

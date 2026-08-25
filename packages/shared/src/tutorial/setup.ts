@@ -9,8 +9,9 @@ import type { KitId } from '../domain/kit';
 export const TUTORIAL_HUMAN_KIT_ID: KitId = 'indestructible';
 export const TUTORIAL_BOT_KIT_ID: KitId = 'ghost';
 
-export const TUTORIAL_HUMAN_LIVES = 4;
-export const TUTORIAL_HUMAN_POINTS = 30;
+export const TUTORIAL_HUMAN_LIVES = 2;
+/** 38 covers Shield (7) at index 17 and still leaves Thief's 10-point steal with enough to finish. */
+export const TUTORIAL_HUMAN_POINTS = 38;
 export const TUTORIAL_HUMAN_UPGRADE_POINTS = 1;
 
 export const TUTORIAL_BOT_LIVES = 4;

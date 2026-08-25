@@ -17,5 +17,7 @@ describe('shop buy cells (L44-01)', () => {
     expect(source).toContain('onDoubleClick');
     expect(source).toContain('CostDisplay');
     expect(source).toContain('CARD_BUY_LABEL');
+    expect(source).toContain('pt-12');
+    expect(source).toContain('scrollIntoView');
   });
 });

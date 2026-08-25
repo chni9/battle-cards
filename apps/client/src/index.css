@@ -261,6 +261,15 @@
   animation: tutorial-ping 1.2s ease-out infinite;
 }
 
+.tutorial-callout--threat {
+  border-color: var(--color-cta-red);
+  background: color-mix(in srgb, var(--color-cta-red) 32%, #fff);
+}
+
+.tutorial-callout--threat::after {
+  border-color: var(--color-cta-red);
+}
+
 .tutorial-callout-arrow {
   position: absolute;
   left: 50%;
@@ -300,6 +309,12 @@
     box-shadow:
       0 0 0 3px #fff,
       0 0 0 8px var(--color-cta-orange);
+  }
+
+  .tutorial-callout--threat {
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 8px var(--color-cta-red);
   }
 
   .tutorial-callout::after {

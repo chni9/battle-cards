@@ -4,6 +4,7 @@
  */
 
 import {
+  isAttackCardId,
   tutorialStepAt,
   type CardInstance,
   type TutorialCoachCopy,
@@ -190,6 +191,8 @@ export function tutorialSpotlightInstanceIds(
       const first = shields[0];
       return first === undefined ? [] : [first];
     }
+    case 'shield':
+      return idsWhere(cards, (card) => card.cardId === 'shield');
     case 'super-regeneration':
       return idsWhere(cards, (card) => card.cardId === 'super-regeneration');
     case 'absorber':
@@ -206,6 +209,7 @@ export function tutorialCardActionSpotlight(
     case 'tax':
     case 'basic':
     case 'spy':
+    case 'shield':
     case 'super-regeneration':
     case 'absorber':
       return 'use';
@@ -286,6 +290,8 @@ function matchesLegalKind(
       return intent.kind === 'buyUpgradePoint';
     case 'buy-absorber':
       return intent.kind === 'buyCard' && intent.cardId === 'absorber';
+    case 'play-shield':
+      return intent.kind === 'playCard' && intent.cardId === 'shield';
     case 'play-super-regeneration':
       return intent.kind === 'playCard' && intent.cardId === 'super-regeneration';
     case 'upgrade-basic':
@@ -299,6 +305,24 @@ function matchesLegalKind(
     case 'bot-play-thief':
       return false;
   }
+}
+
+/** Incoming Attack, Spy, or Thief chips get the red threat callout. */
+export function isTutorialIncomingThreatCard(cardId: string): boolean {
+  return isAttackCardId(cardId) || cardId === 'spy' || cardId === 'thief';
+}
+
+export function tutorialIncomingThreatIds(
+  effects: readonly { readonly id: string; readonly cardId: string }[],
+  tutorial: boolean,
+): readonly string[] {
+  if (!tutorial) {
+    return [];
+  }
+
+  return effects
+    .filter((effect) => isTutorialIncomingThreatCard(effect.cardId))
+    .map((effect) => effect.id);
 }
 
 function idsWhere(

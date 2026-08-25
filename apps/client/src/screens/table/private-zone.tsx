@@ -38,6 +38,8 @@ export interface PrivateZoneProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   highlightedInstanceIds?: readonly string[];
+  /** Tutorial red Incoming chips (Attack / Spy / Thief). */
+  threatHighlightIds?: readonly string[];
 }
 
 export function PrivateZone({
@@ -53,6 +55,7 @@ export function PrivateZone({
   onDeactivatePersistent,
   onActivateDuplication,
   highlightedInstanceIds,
+  threatHighlightIds = [],
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -76,6 +79,7 @@ export function PrivateZone({
   const povSeat = seatIndexOf(view, view.you);
   const isActiveSeat = view.currentTurnPlayerId === view.you;
   const youLabel = selfPublic?.nickname ?? 'You';
+  const incomingThreats = threatHighlightIds.length > 0;
 
   return (
     <section
@@ -84,9 +88,9 @@ export function PrivateZone({
       data-seat={view.you}
       data-seat-index={povSeat !== null ? String(povSeat) : undefined}
       data-active-seat={isActiveSeat ? 'true' : undefined}
-      className="flex h-full min-h-0 flex-col gap-0.5 overflow-hidden landscape:gap-1"
+      className="flex h-full min-h-0 flex-col gap-0.5 overflow-visible landscape:gap-1"
     >
-      <div className="flex shrink-0 items-center justify-between gap-1.5 sm:gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-1.5 overflow-visible sm:gap-2">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <KitPortrait
             kitId={view.self.kitId}
@@ -133,7 +137,12 @@ export function PrivateZone({
         </div>
         <div
           data-zone="incoming-pending"
-          className="max-h-[3.5rem] min-w-0 flex-1 overflow-y-auto overscroll-contain landscape:max-h-[5rem] sm:max-h-[5.5rem]"
+          className={[
+            'min-w-0 flex-1 overscroll-contain',
+            incomingThreats
+              ? 'overflow-visible pt-10'
+              : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
+          ].join(' ')}
         >
           <PendingQueue
             view={view}
@@ -143,6 +152,7 @@ export function PrivateZone({
             tone="dock"
             highlightedIds={mirrorHighlightIds}
             animateEntrance
+            {...(incomingThreats ? { threatHighlightIds } : {})}
           />
         </div>
       </div>

@@ -81,6 +81,8 @@ function actionMatchesTutorialKind(
       return action.type === 'buyUpgradePoint';
     case 'buy-absorber':
       return action.type === 'buyCard' && action.cardId === 'absorber';
+    case 'play-shield':
+      return isPlay(state, playerId, action, 'shield', undefined);
     case 'play-super-regeneration':
       return isPlay(state, playerId, action, 'super-regeneration', undefined);
     case 'upgrade-basic':

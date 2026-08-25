@@ -66,11 +66,12 @@ describe('tutorial script filter (L45-03 / technical spec v6 §5.4)', () => {
     expect(bot?.lives).toBe(4);
   });
 
-  it('leaves the human at 1 life after Strong resolves (index 17)', () => {
+  it('leaves the human at 1 life with remaining shield after Strong (index 17)', () => {
     const harness = bootTutorialHarness('tutorial-strong-hit');
     playTutorialThrough(harness, 17);
     const human = findPlayer(harness.state, harness.seats.humanId);
     expect(human?.lives).toBe(1);
+    expect(human?.shield).toBeGreaterThan(0);
   });
 
   it('grants 4 points from the second base Tax (index 21)', () => {

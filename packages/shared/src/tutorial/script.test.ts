@@ -32,4 +32,19 @@ describe('TUTORIAL_STEPS (technical spec v6 §5.4 / designer 2026-08-25)', () =>
     expect(tutorialStepAt(1)?.coach?.body).toMatch(/4 points/);
     expect(tutorialStepAt(21)?.coach?.body).toMatch(/4 points/);
   });
+
+  it('index 17 plays Shield against incoming Strong', () => {
+    expect(tutorialStepAt(17)?.legalKind).toBe('play-shield');
+    expect(tutorialStepAt(17)?.highlight).toBe('shield');
+    expect(tutorialStepAt(17)?.coach?.body).toMatch(/Shield/);
+    expect(tutorialStepAt(17)?.coach?.body).toMatch(/Strong/);
+  });
+
+  it('index 19 coaches Thief and Super Regeneration', () => {
+    expect(tutorialStepAt(19)?.legalKind).toBe('play-super-regeneration');
+    expect(tutorialStepAt(19)?.coach?.title).toBe('Thief');
+    expect(tutorialStepAt(19)?.coach?.body).toMatch(/Thief/);
+    expect(tutorialStepAt(19)?.coach?.body).toMatch(/Super Regeneration/);
+    expect(tutorialStepAt(19)?.coach?.body).toMatch(/points/);
+  });
 });
