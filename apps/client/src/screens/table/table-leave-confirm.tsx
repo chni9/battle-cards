@@ -16,6 +16,9 @@ import {
   RETURN_HOME_ACTION_LABEL,
   RETURN_HOME_CONFIRM_BODY,
   RETURN_HOME_CONFIRM_TITLE,
+  SKIP_TUTORIAL_ACTION_LABEL,
+  SKIP_TUTORIAL_CONFIRM_BODY,
+  SKIP_TUTORIAL_CONFIRM_TITLE,
   STAY_LABEL,
 } from './table-copy';
 import type { TableFlagIntent } from './table-flag-intent';
@@ -43,6 +46,13 @@ function confirmChrome(intent: Exclude<TableFlagIntent, 'hidden'>): {
       title: LEAVE_TABLE_CONFIRM_TITLE,
       body: null,
       confirm: LEAVE_TABLE_ACTION_LABEL,
+    };
+  }
+  if (intent === 'skipTutorial') {
+    return {
+      title: SKIP_TUTORIAL_CONFIRM_TITLE,
+      body: SKIP_TUTORIAL_CONFIRM_BODY,
+      confirm: SKIP_TUTORIAL_ACTION_LABEL,
     };
   }
   return {

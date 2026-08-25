@@ -43,9 +43,10 @@ export interface HomeScreenProps {
     difficulty: BotDifficulty,
     kitSelection: LobbyKitSelection,
   ) => void;
+  onStartTutorial: () => void;
 }
 
-type HomeMode = 'hub' | 'online' | 'solo';
+type HomeMode = 'hub' | 'online' | 'solo' | 'tutorial';
 
 const inputClassName = [
   'mt-1.5 block w-full min-h-11 rounded-[length:var(--radius-control)]',
@@ -67,6 +68,7 @@ export function HomeScreen({
   onCreate,
   onJoin,
   onStartSolo,
+  onStartTutorial,
 }: HomeScreenProps): ReactElement {
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
@@ -101,6 +103,13 @@ export function HomeScreen({
     }
   };
 
+  const onTutorialSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    if (canSubmit) {
+      onStartTutorial();
+    }
+  };
+
   const goHub = (): void => {
     if (!busy) {
       setMode('hub');
@@ -116,7 +125,7 @@ export function HomeScreen({
         setMode('solo');
         return;
       case 'tutorial':
-        // Hub Tutorial button is hidden until L45-04.
+        setMode('tutorial');
         return;
     }
   };
@@ -176,6 +185,9 @@ export function HomeScreen({
                 onChooseSolo={() => {
                   requestPath('solo');
                 }}
+                onChooseTutorial={() => {
+                  requestPath('tutorial');
+                }}
                 onResetHelp={() => {
                   resetHelpStorage();
                 }}
@@ -220,6 +232,20 @@ export function HomeScreen({
                 onSoloSubmit={onSoloSubmit}
               />
             ) : null}
+
+            {mode === 'tutorial' ? (
+              <TutorialPath
+                nickname={nickname}
+                status={status}
+                error={error}
+                soloLaunchPending={soloLaunchPending}
+                busy={busy}
+                canSubmit={canSubmit}
+                onBack={goHub}
+                onNicknameChange={onNicknameChange}
+                onTutorialSubmit={onTutorialSubmit}
+              />
+            ) : null}
           </motion.div>
         </section>
 
@@ -249,6 +275,7 @@ interface HubViewProps {
   onOpenHowToPlay: () => void;
   onChooseOnline: () => void;
   onChooseSolo: () => void;
+  onChooseTutorial: () => void;
   onResetHelp: () => void;
 }
 
@@ -260,6 +287,7 @@ function HubView({
   onOpenHowToPlay,
   onChooseOnline,
   onChooseSolo,
+  onChooseTutorial,
   onResetHelp,
 }: HubViewProps): ReactElement {
   return (
@@ -290,13 +318,16 @@ function HubView({
         <Button type="button" variant="green" disabled={busy} onClick={onChooseSolo}>
           Play solo
         </Button>
+        <Button type="button" variant="green" disabled={busy} onClick={onChooseTutorial}>
+          Tutorial
+        </Button>
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenHowToPlay}>
           How to play
         </Button>
       </div>
 
       <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
-        New here? Open How to play once, then pick Online for friends or Solo against bots.
+        New here? Open How to play once, then pick Tutorial, Online, or Solo.
       </p>
       <button
         type="button"
@@ -511,6 +542,55 @@ function SoloPath({
 
         <Button type="submit" variant="green" disabled={!canSubmit}>
           Start solo game
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+interface TutorialPathProps {
+  nickname: string;
+  status: RoomConnectionStatus;
+  error: string | null;
+  soloLaunchPending: boolean;
+  busy: boolean;
+  canSubmit: boolean;
+  onBack: () => void;
+  onNicknameChange: (value: string) => void;
+  onTutorialSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
+}
+
+function TutorialPath({
+  nickname,
+  status,
+  error,
+  soloLaunchPending,
+  busy,
+  canSubmit,
+  onBack,
+  onNicknameChange,
+  onTutorialSubmit,
+}: TutorialPathProps): ReactElement {
+  return (
+    <div>
+      <PathHeader
+        title="Tutorial"
+        subtitle="A scripted 1v1 on the real table. Nickname only — kits and bots are chosen for you."
+        status={status}
+        error={error}
+        soloLaunchPending={soloLaunchPending}
+        onBack={onBack}
+        backDisabled={busy}
+      />
+
+      <form onSubmit={onTutorialSubmit} className="mt-8 space-y-6">
+        <NicknameField
+          value={nickname}
+          disabled={busy}
+          onChange={onNicknameChange}
+        />
+        <Button type="submit" variant="green" disabled={!canSubmit}>
+          Start tutorial
         </Button>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readTutorialCreateOption, shouldRejectTutorialJoin } from './tutorial-join';
+import { readTutorialCreateOption, shouldRejectTutorialJoin, shouldRejectTutorialAddBot } from './tutorial-join';
 
 describe('readTutorialCreateOption (L41-05 / technical spec v6 §5.3)', () => {
   it('is true only when tutorial is the boolean true', () => {
@@ -30,5 +30,12 @@ describe('shouldRejectTutorialJoin (L41-05 / technical spec v6 §5.3)', () => {
     expect(shouldRejectTutorialJoin('classic', 0)).toBe(false);
     expect(shouldRejectTutorialJoin('classic', 1)).toBe(false);
     expect(shouldRejectTutorialJoin('classic', 3)).toBe(false);
+  });
+});
+
+describe('shouldRejectTutorialAddBot (L45-04)', () => {
+  it('rejects ADD_BOT on tutorial rooms only', () => {
+    expect(shouldRejectTutorialAddBot('tutorial')).toBe(true);
+    expect(shouldRejectTutorialAddBot('classic')).toBe(false);
   });
 });

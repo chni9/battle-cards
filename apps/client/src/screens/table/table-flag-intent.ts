@@ -6,16 +6,22 @@
  * (overrides the earlier hide-on-readOnly ruling).
  */
 
-export type TableFlagIntent = 'hidden' | 'forfeit' | 'leaveTable' | 'returnHome';
+import type { PlayKind } from '@card-battle/shared';
+
+export type TableFlagIntent = 'hidden' | 'forfeit' | 'leaveTable' | 'returnHome' | 'skipTutorial';
 
 export type TableFlagLeaveAction = 'hidden' | 'forfeit' | 'leaveGame';
 
 export function tableFlagIntent(input: {
   readOnly: boolean;
   selfEliminated: boolean;
+  playKind?: PlayKind;
 }): TableFlagIntent {
   if (input.readOnly) {
     return 'returnHome';
+  }
+  if (input.playKind === 'tutorial') {
+    return 'skipTutorial';
   }
   if (input.selfEliminated) {
     return 'leaveTable';
@@ -23,10 +29,11 @@ export function tableFlagIntent(input: {
   return 'forfeit';
 }
 
-/** Confirm action for the flag: Forfeit keeps the socket; Leave / Return home disconnect. */
+/** Confirm action for the flag: Forfeit keeps the socket; Leave / Return home / Skip disconnect. */
 export function tableFlagLeaveAction(input: {
   readOnly: boolean;
   selfEliminated: boolean;
+  playKind?: PlayKind;
 }): TableFlagLeaveAction {
   const intent = tableFlagIntent(input);
   if (intent === 'hidden') {
@@ -44,6 +51,7 @@ export function tableFlagAriaLabel(
     forfeit: string;
     leaveTable: string;
     returnHome: string;
+    skipTutorial: string;
   },
 ): string | null {
   if (intent === 'hidden') {
@@ -54,6 +62,9 @@ export function tableFlagAriaLabel(
   }
   if (intent === 'leaveTable') {
     return labels.leaveTable;
+  }
+  if (intent === 'skipTutorial') {
+    return labels.skipTutorial;
   }
   return labels.returnHome;
 }

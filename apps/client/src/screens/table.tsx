@@ -59,6 +59,7 @@ import {
   HOW_TO_PLAY_ARIA_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
   RETURN_HOME_ARIA_LABEL,
+  SKIP_TUTORIAL_ARIA_LABEL,
 } from './table/table-copy';
 import {
   tableFlagAriaLabel,
@@ -318,11 +319,16 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
-  const flagIntent = tableFlagIntent({ readOnly, selfEliminated });
+  const flagIntent = tableFlagIntent({
+    readOnly,
+    selfEliminated,
+    playKind: view.playKind,
+  });
   const flagAria = tableFlagAriaLabel(flagIntent, {
     forfeit: FORFEIT_ARIA_LABEL,
     leaveTable: LEAVE_TABLE_ARIA_LABEL,
     returnHome: RETURN_HOME_ARIA_LABEL,
+    skipTutorial: SKIP_TUTORIAL_ARIA_LABEL,
   });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const kit = getKit(view.self.kitId);

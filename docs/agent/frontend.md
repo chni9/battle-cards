@@ -72,8 +72,8 @@ rules above are unchanged — this section only covers how the client looks.
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
   Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
-  a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
-  until L45-04. Table **How to play** is a compact **?** `IconButton` on the turn strip
+  a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
+  (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).

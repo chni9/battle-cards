@@ -173,7 +173,7 @@ import {
   shouldUnlockForOccupancy,
   type Seat,
 } from './seats';
-import { readTutorialCreateOption, shouldRejectTutorialJoin } from './tutorial-join';
+import { readTutorialCreateOption, shouldRejectTutorialJoin, shouldRejectTutorialAddBot } from './tutorial-join';
 
 type GameClient = Client<{ messages: ServerToClientMessages }>;
 
@@ -360,6 +360,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
         return;
       }
+
+      this.ensureTutorialBotSeated();
 
       const rejection = canStartGame({
         requesterSessionId: client.sessionId,
@@ -764,6 +766,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private handleAddBot(client: GameClient, payload: unknown): void {
+    if (shouldRejectTutorialAddBot(this.playKind)) {
+      client.send(ERROR_MESSAGE, actionReject('tutorial-room-closed'));
+      return;
+    }
+
     const hostSessionId = this.hostSessionId;
 
     if (hostSessionId === null) {
@@ -909,6 +916,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     return { humanId: human.sessionId, botId: bot.sessionId };
+  }
+
+  private ensureTutorialBotSeated(): void {
+    if (this.playKind !== 'tutorial' || this.seats.some(isBotSeat)) {
+      return;
+    }
+
+    this.seats.push(createBotSeat(this.seats, 'easy'));
   }
 
   private rejectTutorialIllegalAction(
@@ -1980,6 +1995,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.clearTurnTimer();
       this.turnDeadlineMs = null;
       this.botDriver.scheduleTurn(activePlayerId);
+      return;
+    }
+
+    if (this.playKind === 'tutorial') {
+      this.clearTurnTimer();
+      this.turnDeadlineMs = null;
       return;
     }
 
