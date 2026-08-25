@@ -116,7 +116,10 @@ export function OpponentZone({
           />
         </h3>
         {!player.isEliminated && <ConnectionBadge player={player} />}
-        {!player.isEliminated && player.isBot && player.botDifficulty !== undefined && (
+        {!player.isEliminated &&
+          player.isBot &&
+          player.botDifficulty !== undefined &&
+          view.playKind !== 'tutorial' && (
           <BotSeatLabel difficulty={player.botDifficulty} />
         )}
       </div>

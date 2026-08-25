@@ -466,6 +466,17 @@ do not hand off an untested lot.
   pool / consume / special-pick, Mirror, elimination rewards, reanimation kit. L48-02 remains
   the formal first-time gate.
 
+### Lot 45 verified 2026-08-25 (browser, tutorial no turn timer, PROTOCOL 30)
+
+- Hub **Tutorial** → How to play soft gate (Skip) → nickname-only form (no kit picker, no add-bot).
+  Nick `L45Host` → Start tutorial. Room `EZBIMB`. One bot **Alpha**; difficulty label hidden on the
+  table. Coach **Draw** (points, not a card); Draw spotlight. Shop opens only on click (not
+  auto). Illegal Shield Use → coach **Tutorial step**. Tax coach copy **4 points**. After Tax,
+  coach **Counter** (equal cancel); Basic highlighted; Incoming Basic from Alpha. Action log has
+  no Why. **Skip tutorial** confirm is not a forfeit → hub, no Game over.
+- Engine walk 0–30 is covered by `tutorial-script.integration.test.ts` (L45-07), not the browser
+  pass.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
