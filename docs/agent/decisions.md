@@ -2483,3 +2483,53 @@ as `{ kind: 'points', amount }` with `signed="cost"`. No client-side affordabili
 `IllegalActionDialog` already surfaces server rejection. Server still validates 1–4
 and payment. Other Lot 44 pickers stay select-then-Confirm.
 
+## 2026-08-25 · [P] Lot 45 scripted tutorial (designer session)
+
+Designer 2026-08-25 locks Lot 45. Classic rules and catalog values stay frozen. Tutorial-only
+setup and script in this entry + technical spec v6 §5.3–§5.4 supersede the 2026-08-19 1-life
+bot / Tax-upgraded / buy-Basic / 300_000 ms timer lines.
+
+**Hub / room**
+
+- Nickname-only Tutorial path, then `create({ tutorial: true })` + `startGame`. No kit picker.
+- Client never `addBot`. Server auto-seats exactly one `tutorial-script-v6` bot on `startGame`
+  (before `canStartGame`’s two-seat check). `ADD_BOT` in a tutorial room is rejected with
+  existing `tutorial-room-closed` (no protocol bump).
+- Ignore difficulty: bot-driver short-circuits Easy / search / noise for this policy.
+- No server turn timer (`turnDeadlineMs = null`). Client idle **20s** retitles the coach **Play**.
+
+**Skip / Game over / Excel / Why**
+
+- Hide Forfeit. **Skip tutorial** on the flag and the coach: `leaveGame()` to hub, no Game over.
+- Completing: title **Tutorial complete**; **Play a real game** → hub only.
+- **Download action log** only when `import.meta.env.DEV` (every mode).
+- Hide action-log **Why** in **all** games. Tutorial bot omits `botReason`. No `BOT_REASON_CODES`
+  change, no protocol bump.
+
+**Coach**
+
+- Non-dismissible panel; table stays clickable; highlight the scripted control; Shop not
+  auto-opened. Illegal clicks do not send. After Spy resolves (index 8), highlight the
+  **opponent portrait**. Bot turns keep the last coach.
+
+**Loadout / Tax override**
+
+- Human Indestructible: 4 lives, 30 points, 1 upgrade point, Tax **base**, Spy, **one** Basic,
+  two Shields, Super Regeneration. No Absorber at deal (they buy it). Buy a second upgrade
+  point from the Shop (cost 10). Sell yields points.
+- Bot Ghost: 4 lives, 16 points, Basic, Strong, Thief, Spy; specials none.
+- Indestructible `alwaysUpgraded` still includes `tax`. After `acquireCardToHand`, force
+  `isUpgraded = false` so both Tax plays are **+4 points**. Do not change the kit trait.
+- Attack and action cards stay in hand (rules spec §5); the same Tax / Basic / Spy / Strong
+  are reused. Only specials are one-use.
+
+**Script**
+
+- Human first. Indices **0–30** as technical spec v6 §5.4 (second base Tax after Super
+  Regeneration + Thief; kill with Basic+; Absorber after 4→1; Spy counter at 10–11).
+- Indices 0 and 1 are both human (Draw then Tax). After Draw, `advanceTurn` would seat the
+  bot; the room snaps `currentTurnPlayerId` back to the human for Tax. Tutorial overlay
+  only — Classic one-action-per-turn is unchanged. From index 1 the table alternates.
+- `playKind` / `tutorialIndex` stay room-owned. Never call `applyTutorialSetup` from
+  `run-game.ts`.
+

@@ -76,8 +76,8 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 2 | How to play is a **soft gate** on the first Play online / Play solo / Tutorial: the primer opens; **Skip** and **Got it** both continue. After that it is a button on the hub **and** the table. It does not auto-open on later visits. This **reopens** the 2026-08-07 “Home only, never gates start” ruling **for V6**. |
 | 3 | How to play images are **designer-supplied screenshots**. Agents do not generate art. Existing resource / card icons may sit next to copy. Missing files → omit the `<img>`, never a placeholder drawing. |
 | 4 | Tutorial is optional, replayable, Approach 1: same `GameRoom`, `tutorial: true` on create, one scripted bot, real engine. |
-| 5 | Tutorial **must** show, at least: Draw (points, not a card), an **economy card (Tax)**, **upgrade**, **counter an incoming attack** (mutual equal Basics cancel — rules spec §6 / golden rule 1), **Spy**, **sell**, **buy**, **a special**, then **kill**. Spotlight early; after the first queued attack of the kill phase, attack + Draw stay legal until the opponent dies. |
-| 6 | Tutorial opponent starts at **1 life**. That is safe because the counter lesson uses **equal** Basic vs Basic (both cancel). Upgrade and the killing attack come **after** that cancel. **Do not** upgrade Basic before the counter — unequal damage would leave a 3-damage pending and finish the 1-life seat too early. |
+| 5 | Tutorial **must** show, at least: Draw (points, not a card), **Tax twice (base +4)**, **upgrade**, **equal Basic counter**, **Spy** (and Spy counter), **sell**, **buy Absorber**, **buy an upgrade point**, **Super Regeneration**, **Absorber**, **Thief**, then **kill** with Basic+. Spotlight every index 0–30. |
+| 6 | Tutorial seats start at **4 lives** (designer 2026-08-25). The counter lesson is still **equal** Basic vs Basic (both cancel; the bot stays at 4). Kill is **upgraded Basic** (3) after Super Regeneration, Thief, a second base Tax, Absorber, and a Strong counter. **Do not** upgrade Basic before the equal-counter beat. |
 | 7 | Completing the tutorial does **not** dismiss first-real-game hints. The first Solo or Online Classic match still gets them. Skip-all remains. Tutorial itself uses coach copy, not the hint overlay. |
 | 8 | Feedback is always on Home, Table, and Game over. Game over **asks** once per finished match (skippable). |
 | 9 | A report is Bug / Confusion / Idea + message + optional contact. Server attaches game code, nickname, screen, protocol, `playKind`, and a public log tail when in a match. No seed on the client or in the report row. |
@@ -212,88 +212,126 @@ the existing Your-turn flash, not replace it).
 
 ### 5.3 Tutorial — setup overrides
 
-`GameMode` remains `'classic'`. `GameState` / views gain `playKind: 'classic' | 'tutorial'`
-(default `'classic'`). Tutorial overrides run **once** after the normal start/deal, in
-`applyTutorialSetup(state)` called only from the room when `playKind === 'tutorial'`. Classic
-start tests must stay green **without** fixture edits.
+`GameMode` remains `'classic'`. Views carry `playKind: 'classic' | 'tutorial'` (default
+`'classic'`). The overlay is **room-owned** (decisions.md 2026-08-20), not on `GameState`.
+Tutorial overrides run **once** after the normal start/deal, in
+`applyTutorialSetup(state, { humanId, botId })` called only from the room when
+`playKind === 'tutorial'`. Classic start tests must stay green **without** fixture edits.
+Never call setup from `run-game.ts`.
 
-**Room:** `RoomJoinOptions.tutorial?: true`. Create from Home **Tutorial** (solo-shaped: no
-lobby flash). Server: at most one human; auto-seat one bot on `startGame` if missing; reject
-a second human join (`tutorial-room-closed`). Ignore `addBot` difficulty; the bot policy id
-is `tutorial-script-v6` (registry). **Never** edit `heuristic-v4` or its freeze test.
+**Room:** `RoomJoinOptions.tutorial?: true`. Create from Home **Tutorial** (nickname only; no
+kit picker; no lobby flash). Client never sends `addBot`. Server: at most one human; auto-seat
+exactly one `tutorial-script-v6` bot on `startGame` if missing (needed before `canStartGame`’s
+two-seat check); reject a second human join (`tutorial-room-closed`); **reject `ADD_BOT`** in
+a tutorial room (reuse `tutorial-room-closed` — no protocol bump). Ignore difficulty. **Never**
+edit `heuristic-v4` or its freeze test.
 
-**Turn timer:** 300_000 ms in tutorial rooms regardless of `TURN_DURATION_MS`, so a short
-prod timer cannot fail the lesson.
+**Turn timer:** **none** in tutorial rooms (`turnDeadlineMs = null`). A client idle of **20 s**
+retitles the coach **Play**. Do not set a 300_000 ms server deadline.
 
-**Fixed seats after override:**
+**Fixed seats after override (designer 2026-08-25):**
 
-| Seat | Kit | Lives | Points | Upgrade points | Shield | Draw (kit) | Hand (exact instances) | Specials |
-|---|---|---|---|---|---|---|---|---|
-| Human | `indestructible` | 12 | 10 | 1 | 0 | 1 | Tax **upgraded** (kit `alwaysUpgraded`), Spy, Basic attack, Basic attack, Strong attack | Super Regeneration (not upgraded) |
-| Bot | `ghost` | **1** | 1 | 0 | 0 | 1 | Basic attack | none |
+| Seat | Kit | Lives | Points | Upgrade points | Shield | Hand (exact instances) | Specials |
+|---|---|---|---|---|---|---|---|
+| Human | `indestructible` | **4** | **30** | **1** | 0 | Tax (**not** upgraded), Spy, **one** Basic, Shield, Shield | Super Regeneration (not upgraded) |
+| Bot | `ghost` | **4** | **16** | 0 | 0 | Basic, Strong, Thief, Spy | none (strip Curse) |
 
 Strip any other cards the Classic deal produced. Bot nickname may stay the usual generator
-(`Alpha`). Human nickname is whatever they typed.
+(`Alpha`). Human nickname is whatever they typed. No Absorber at deal — they **buy** it.
+Start with 1 upgrade point (for Spy); they **buy** a second from the Shop (cost 10). Sell
+yields **points** (Shield sell 7).
 
-**Why 1 life works:** the incoming Basic (1) is **cancelled** by the human’s answering Basic
-(1) on the human’s counter turn. No damage lands. Spy / sell / buy / upgrade / Super
-Regeneration do not cut lives. The **kill** Basic (1) then finishes them after they Draw.
+**Tax instance override:** Indestructible `alwaysUpgraded` still includes `tax`. After mint,
+force `isUpgraded = false` so both Tax plays grant **+4 points**, not +6. Do not change the
+kit trait. Tutorial-only; decisions.md 2026-08-25.
 
-**Why not Assassin:** Sentence can randomly eliminate, including the human. Multi-attack is
-a second lesson. Indestructible’s catalog special **is** Super Regeneration — kit inspect
-matches the dock.
+**Why 4 lives:** Strong (2) after a Tax (4→3) leaves the human at **1** for Super Regeneration.
+The equal Basic counter cancels; the bot stays at 4 until the upgraded Basic (3) hits. Kill is
+Basic+ vs the bot, then Absorber, then Basic+ vs a reused Strong (3 vs 2 — stronger stays).
+
+**Why not Assassin:** Sentence can randomly eliminate, including the human. Multi-attack is a
+second lesson. Indestructible’s catalog special **is** Super Regeneration — kit inspect matches
+the dock.
+
+**Reusable cards:** attack and action cards **stay in hand** (rules spec §5). The same Tax,
+Basic, Spy, and Strong are reused. Only specials are one-use.
 
 ### 5.4 Tutorial — script (normative order)
 
 `tutorialIndex` is an integer on the room and on every playing view (public). Coach copy is
-**client-only**, keyed by index — do not put long strings on the wire.
-
-Human is first in `turnOrder`.
+**client-only**, keyed by index — do not put long strings on the wire. Increment the index **only** after a successful scripted action. Indices 0 and 1 are both
+the human (Draw, then Tax): after Draw, the room snaps the turn back to the human so Tax
+can be the next action. That skip is tutorial overlay, not a Classic extra action
+(decisions.md 2026-08-25). From index 1 onward the table alternates.
 
 | Index | Whose turn | Legal action (server filter) | Coach title / body (client) |
 |---|---|---|---|
 | 0 | Human | `draw` | Draw | Draw gives **points**, not a card. Draw once. |
-| 1 | Human | play **Tax** | Economy | Tax spends **1 life** (shield does not stop it) and gives points. Play Tax. |
-| 2 | Bot | play **Basic attack** → human | — (no coach on the bot) |
-| 3 | Human | play **Basic attack** → bot | Counter | Incoming is delayed. Play Basic attack back at them. **Equal** damage cancels **both** attacks. |
-| 4 | Bot | `draw` | — | (queued Basics cancel here as mutual equal — golden rule 1) |
-| 5 | Human | play **Spy** → bot | Spy | Spy reveals their kit and cards **when it resolves on their turn**. Play Spy. |
-| 6 | Bot | `draw` | — | Spy resolves; human may open the opponent portrait |
-| 7 | Human | **sell** Strong attack | Sell | Selling yields the play cost in points. Sell Strong attack. |
-| 8 | Bot | `draw` | — |
-| 9 | Human | **buy** Basic attack from the shop | Buy | Shop price is **double** the play cost. Buy Basic attack. |
-| 10 | Bot | `draw` | — |
-| 11 | Human | **upgrade** the Basic just bought (fallback: any owned non-upgraded Basic) | Upgrade | Spend **1 upgrade point** (the icon). Upgrade that Basic — it will deal 3, but we will not use it to finish them. |
+| 1 | Human | play **Tax** (base) | Economy | Tax spends **1 life** (shield does not stop it) and gives **4 points**. Play Tax. |
+| 2 | Bot | play **Basic** → human | — (keep last coach) |
+| 3 | Human | play **Basic** → bot (not upgraded) | Counter | Incoming is delayed. Play Basic attack back at them. **Equal** damage cancels **both** attacks. |
+| 4 | Bot | `draw` | — | Mutual equal cancel; bot still at **4** lives. |
+| 5 | Human | **upgrade Spy** | Upgrade | Spend **1 upgrade point** (the icon). Upgrade Spy. |
+| 6 | Bot | `draw` | — |
+| 7 | Human | play **Spy+** → bot | Spy | Spy reveals their kit and cards **when it resolves on their turn**. Play Spy. |
+| 8 | Bot | `draw` | Look | Spy resolved. **Click their portrait** to see kit and cards. Highlight the opponent portrait. |
+| 9 | Human | **sell** one Shield | Sell | Selling yields the play cost in **points**. Sell one Shield. |
+| 10 | Bot | play **Spy** → human | — |
+| 11 | Human | play **Spy** → bot (counter) | Counter Spy | Play Spy back at them. The same card aimed at the source **cancels both**. |
 | 12 | Bot | `draw` | — |
-| 13 | Human | play **Super Regeneration** | Special | Specials are kit cards, usually one use. Play Super Regeneration (gain lives, cap 25). |
+| 13 | Human | **buy an upgrade point** | Upgrade point | Open the Shop and **buy an upgrade point**. |
 | 14 | Bot | `draw` | — |
-| 15+ | Human | play a **non-upgraded Basic** → bot, or `draw` if they cannot afford it | Finish | They have 1 life. Queue a Basic attack. It hits **after they play**. |
-| 15+ | Bot | `draw` only | — | Resolve the kill; 2p game-ending elim **skips rewards** (existing ruling). |
+| 15 | Human | **buy Absorber** | Buy | Shop price is **double** the play cost. Buy Absorber. Never buy Basic. |
+| 16 | Bot | play **Strong** → human | — |
+| 17 | Human | `draw` | Incoming | Draw. After you act, their Strong hits — you will be at **1 life**. |
+| 18 | Bot | play **Thief** → human | — |
+| 19 | Human | play **Super Regeneration** at 1 life | Special | You have **1 life**. Play Super Regeneration (gain lives, cap 25). Specials are usually one use. Then Thief steals points. |
+| 20 | Bot | `draw` | — |
+| 21 | Human | play **Tax** again (same card, still base) | Make points | Thief took points. Tax again — Super Regeneration gave you lives to spend. **+4 points**. |
+| 22 | Bot | `draw` | — |
+| 23 | Human | **upgrade** the same Basic | Upgrade | Upgrade that Basic. It will deal **3**. |
+| 24 | Bot | `draw` | — |
+| 25 | Human | play **Basic+** → bot | Attack | Play the upgraded Basic. They have 4 lives — this queues **3** damage. |
+| 26 | Bot | `draw` | — | Bot **4→1**. |
+| 27 | Human | play **Absorber** → bot (immediate) | Absorber | Play Absorber on them. You gain the lives they **lost last turn**. |
+| 28 | Bot | play **Strong** → human (reuse) | — |
+| 29 | Human | play **Basic+** → bot | Finish | Play Basic+ back. **3** vs **2** cancels their Strong; yours stays and will finish them. |
+| 30 | Bot | `draw` | — | Basic+ hits; human wins; 2p skips rewards. |
 
-After index 14, `tutorialIndex` stays at 15 (kill phase) until `phase: 'finished'`.
+Must-show beats: Draw, Tax (twice, base +4), upgrade, equal Basic counter, Spy, Spy counter,
+sell, buy Absorber, buy upgrade point, Super Regeneration, Absorber, Thief, kill.
 
-**Spotlight:** indices 0–14 enable **only** the legal action above (client highlights that
-control; server rejects anything else with `tutorial-follow-coach`). Index 15+ allows any
-legal Basic (not upgraded) at the bot, or Draw. Do **not** allow Super attack / Strong / the
-upgraded Basic for the kill — 3 damage is fine on 1 life but the lesson is “the delayed
-Basic finishes them”; keep it the 1-damage card. If they somehow lack a non-upgraded Basic,
-allow any attack at the bot (watch point: loadout + buy must make this unreachable in tests).
+**Spotlight:** every index enables **only** the legal action above (client highlights that
+control; Shop is **not** auto-opened). Server rejects anything else with
+`tutorial-follow-coach`. Illegal client clicks **do not send**. Upgraded Basic is **not**
+legal at index 3. `buyCard` of `basic-attack` is never legal.
 
 **Bot policy `tutorial-script-v6`:** reads `playKind` + `tutorialIndex` from the **view**
-(still no `GameState` — v3 decision 2). Index 2 → Basic at the human; every other bot turn
-→ Draw. Sub-choices: none expected; if one appears, Draw-equivalent / default hooks already
-on the policy interface.
+(still no `GameState` — v3 decision 2). Map: **2** Basic→human; **10** Spy→human; **16** and
+**28** Strong→human; **18** Thief→human; else Draw. Bot-driver **short-circuits** Easy /
+search / noise when this policy is seated. Omit `botReason` on the table log.
 
-**Rejects:** new `ActionRejectCode` `'tutorial-follow-coach'` — message: `This tutorial step
-asks for a different action.` Client maps to coach-tinted IllegalActionDialog.
+**Coach:** non-dismissible panel; the table stays clickable. Bot turns keep the last coach
+(except index 8, which teaches the portrait). **Skip tutorial** on the flag **and** the coach:
+`leaveGame()` to hub, **no** Game over, **hide Forfeit**.
+
+**Rejects:** `'tutorial-follow-coach'` — message: `This tutorial step asks for a different
+action.` Client maps to coach-tinted copy (do not send the illegal intent).
 
 **Game over:** title **Tutorial complete** when `playKind === 'tutorial'`. Winner line as
-today. Primary CTA: **Play a real game** (leave → hub Solo). Feedback prompt still runs (§7).
+today. Primary CTA: **Play a real game** → hub only (not a Solo create). Feedback prompt still
+runs (§7).
+
+**Excel:** **Download action log** only when `import.meta.env.DEV` (every mode, not tutorial
+only).
+
+**Why:** hide the action-log **Why** control in **all** games (no protocol bump; `botReason`
+may still exist on the wire).
 
 **Replay:** hub Tutorial always available. No localStorage lockout.
 
-**Finished-game log:** persist as today, with `is_tutorial = true` (new column). Balance
-screens and arena **must not** read those rows. Seed stays server-only.
+**Finished-game log:** persist as today, with `is_tutorial = true`. Balance screens and arena
+**must not** read those rows. Seed stays server-only.
 
 ---
 
@@ -474,9 +512,10 @@ V1 §8 / AGENTS.md §9 apply. Extra for V6:
 
 - Classic deal + start **byte-identical** for a fixed seed with `playKind: 'classic'`
   (tutorial setup must not leak).
-- Tutorial script: one test per index 0–15 proving the only legal human/bot action; mutual
-  cancel at 3–4 leaves bot at 1 life; kill at 15+ eliminates; Super Regeneration does not
-  exceed `lifeLimit`.
+- Tutorial script: one test per index 0–30 proving the only legal human/bot action; mutual
+  cancel at 3–4 leaves bot at **4** lives; after index 17 human lives **1**; after 26 bot
+  lives **1**; after 30 the human wins; Super Regeneration does not exceed `lifeLimit`;
+  Absorber is bought not dealt; Basic is never bought.
 - `heuristic-v4.freeze.test.ts` green without fixture edits.
 - Feedback: POST persists; missing DB does not report success; no seed in stored JSON.
 - Inbox: wrong password 401; missing env 404.
@@ -510,11 +549,13 @@ Not even partially, even “to lay groundwork”:
 
 ## 12. Watch points and residual checks
 
-1. **Unequal counter kills the lesson.** Spotlight **must** force a non-upgraded Basic at
-   index 3. Tests assert bot lives === 1 after the cancel.
+1. **Unequal counter wrecks the lesson.** Spotlight **must** force a non-upgraded Basic at
+   index 3. Tests assert bot lives === **4** after the cancel (both still pending until the
+   bot draws at 4, then both cancel).
 2. **Untouchable as victim** would no-op Spy (`immuneTo: spy`). Victim is Ghost.
-3. **Sentence / Suicide / Imposition / MEGA** in the human specials band would wreck a
-   1-life script. Loadout is Super Regeneration only.
+3. **Sentence / Suicide / Imposition / MEGA** in the human specials band would wreck the
+   4-life script. Loadout is Super Regeneration only. Indestructible would mint Tax+;
+   `applyTutorialSetup` must force base Tax.
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
 6. **Protocol bump twice** in V6 is forbidden; put every wire change in L41-02.

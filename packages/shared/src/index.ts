@@ -18,3 +18,5 @@ export * from './protocol/messages';
 export * from './protocol/reward-choice';
 export * from './protocol/state-view';
 export { PROTOCOL_VERSION } from './protocol-version';
+export * from './tutorial/script';
+export * from './tutorial/setup';
