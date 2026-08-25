@@ -53,6 +53,22 @@ export function tutorialCoachTitle(copy: TutorialCoachCopy, idle: boolean): stri
   return idle ? TUTORIAL_IDLE_PLAY_TITLE : copy.title;
 }
 
+/** Stable key so a new title/body (idle Play, illegal hint, next step) reopens the chat. */
+export function tutorialCoachMessageKey(
+  index: number,
+  title: string,
+  body: string,
+): string {
+  return `${String(index)}|${title}|${body}`;
+}
+
+export function isTutorialCoachOpen(
+  coachKey: string | null,
+  dismissedKey: string | null,
+): boolean {
+  return coachKey !== null && dismissedKey !== coachKey;
+}
+
 export function tutorialHighlightAt(index: number): TutorialHighlight {
   return tutorialStepAt(index)?.highlight ?? null;
 }

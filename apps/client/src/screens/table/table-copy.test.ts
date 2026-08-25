@@ -11,10 +11,13 @@ import {
   FORFEIT_CONFIRM_BODY,
   FORFEIT_CONFIRM_TITLE,
   HIDDEN_KIT_LABEL,
+  HIDE_COACH_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
   LEAVE_TABLE_ACTION_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
   LEAVE_TABLE_CONFIRM_TITLE,
+  OPEN_COACH_ARIA_LABEL,
+  OPEN_COACH_LABEL,
   RETURN_HOME_ACTION_LABEL,
   RETURN_HOME_ARIA_LABEL,
   RETURN_HOME_CONFIRM_BODY,
@@ -56,5 +59,8 @@ describe('table leave chrome copy (L43-05)', () => {
     expect(SKIP_TUTORIAL_ACTION_LABEL).toBe('Skip tutorial');
     expect(SKIP_TUTORIAL_CONFIRM_TITLE).toBe('Skip the tutorial?');
     expect(SKIP_TUTORIAL_CONFIRM_BODY).toMatch(/not a forfeit/i);
+    expect(HIDE_COACH_ARIA_LABEL).toBe('Hide coach');
+    expect(OPEN_COACH_LABEL).toBe('Coach');
+    expect(OPEN_COACH_ARIA_LABEL).toBe('Show coach');
   });
 });

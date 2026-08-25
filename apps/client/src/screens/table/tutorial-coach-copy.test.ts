@@ -5,8 +5,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isTutorialCoachOpen,
   resolveTutorialCoach,
   tutorialCardActionSpotlight,
+  tutorialCoachMessageKey,
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
@@ -57,6 +59,31 @@ describe('resolveTutorialCoach (L45-05)', () => {
     }
     expect(tutorialCoachTitle(coach, false)).toBe('Draw');
     expect(tutorialCoachTitle(coach, true)).toBe(TUTORIAL_IDLE_PLAY_TITLE);
+  });
+
+  it('reopens the chat when copy or index changes', () => {
+    const coach = resolveTutorialCoach(0);
+    expect(coach).toBeDefined();
+    if (coach === undefined) {
+      return;
+    }
+    const drawKey = tutorialCoachMessageKey(0, coach.title, coach.body);
+    const idleKey = tutorialCoachMessageKey(
+      0,
+      tutorialCoachTitle(coach, true),
+      coach.body,
+    );
+    expect(isTutorialCoachOpen(drawKey, null)).toBe(true);
+    expect(isTutorialCoachOpen(drawKey, drawKey)).toBe(false);
+    expect(isTutorialCoachOpen(idleKey, drawKey)).toBe(true);
+    expect(isTutorialCoachOpen(null, drawKey)).toBe(false);
+    const tax = resolveTutorialCoach(1);
+    expect(tax).toBeDefined();
+    if (tax === undefined) {
+      return;
+    }
+    const taxKey = tutorialCoachMessageKey(1, tax.title, tax.body);
+    expect(isTutorialCoachOpen(taxKey, drawKey)).toBe(true);
   });
 });
 

@@ -20,7 +20,7 @@ import {
   cardBandRowsForHeight,
   fitCardBand,
 } from './card-band-fit';
-import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
+import { TutorialCallout } from './tutorial-callout';
 
 export interface CardBandProps {
   hand: readonly CardInstance[];
@@ -129,25 +129,31 @@ function CardSection({
               key={card.instanceId}
               style={{ width: cardWidth, maxHeight: '100%' }}
               className={[
-                'shrink-0 overflow-hidden rounded-[length:var(--radius-card)]',
-                highlighted ? TUTORIAL_SPOTLIGHT_CLASS : '',
+                'shrink-0 rounded-[length:var(--radius-card)]',
+                highlighted ? 'overflow-visible' : 'overflow-hidden',
               ].join(' ')}
-              {...(highlighted ? { 'data-tutorial-highlight': card.cardId } : {})}
             >
-              <AnimatedCard
-                instance={card}
-                detail="face"
-                skipEntrance
-                selected={highlighted}
-                className="w-full max-h-full !p-0.5"
-                {...(onSelect !== undefined
-                  ? {
-                      onSelect: () => {
-                        onSelect(card.instanceId);
-                      },
-                    }
-                  : {})}
-              />
+              <TutorialCallout
+                active={highlighted}
+                arrow="inset-top"
+                highlightId={card.cardId}
+                className="w-full"
+              >
+                <AnimatedCard
+                  instance={card}
+                  detail="face"
+                  skipEntrance
+                  selected={highlighted}
+                  className="w-full max-h-full !p-0.5"
+                  {...(onSelect !== undefined
+                    ? {
+                        onSelect: () => {
+                          onSelect(card.instanceId);
+                        },
+                      }
+                    : {})}
+                />
+              </TutorialCallout>
             </div>
           );
         })}

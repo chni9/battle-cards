@@ -72,8 +72,10 @@ import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
 import { TutorialCoach } from './table/tutorial-coach';
 import {
+  isTutorialCoachOpen,
   resolveTutorialCoach,
   tutorialCardActionSpotlight,
+  tutorialCoachMessageKey,
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
@@ -164,6 +166,9 @@ function TableScreenInner({
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
   const [tutorialIdleIndex, setTutorialIdleIndex] = useState<number | null>(null);
   const [tutorialIllegalIndex, setTutorialIllegalIndex] = useState<number | null>(null);
+  const [tutorialCoachDismissedKey, setTutorialCoachDismissedKey] = useState<string | null>(
+    null,
+  );
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -439,6 +444,14 @@ function TableScreenInner({
       ? tutorialCoachTitle(tutorialCoach, tutorialIdle)
       : undefined;
   const coachBody = tutorialIllegalHint ? followCoachCopy.body : tutorialCoach?.body;
+  const tutorialCoachKey =
+    tutorialIndex !== null && coachTitle !== undefined && coachBody !== undefined
+      ? tutorialCoachMessageKey(tutorialIndex, coachTitle, coachBody)
+      : null;
+  const tutorialCoachOpen = isTutorialCoachOpen(
+    tutorialCoachKey,
+    tutorialCoachDismissedKey,
+  );
 
   useEffect(() => {
     if (
@@ -709,17 +722,6 @@ function TableScreenInner({
                 You are a spectator. Actions are locked while rewards (if any) resolve.
               </p>
             </section>
-          ) : tutorialIndex !== null &&
-            coachTitle !== undefined &&
-            coachBody !== undefined ? (
-            <TutorialCoach
-              index={tutorialIndex}
-              title={coachTitle}
-              body={coachBody}
-              onSkip={() => {
-                setLeaveConfirm('skipTutorial');
-              }}
-            />
           ) : null
         }
         opponentSeats={opponents.map((player) => (
@@ -804,6 +806,28 @@ function TableScreenInner({
           />
         }
       />
+
+      {tutorialIndex !== null &&
+      coachTitle !== undefined &&
+      coachBody !== undefined &&
+      tutorialCoachKey !== null ? (
+        <TutorialCoach
+          index={tutorialIndex}
+          title={coachTitle}
+          body={coachBody}
+          messageKey={tutorialCoachKey}
+          open={tutorialCoachOpen}
+          onHide={() => {
+            setTutorialCoachDismissedKey(tutorialCoachKey);
+          }}
+          onShow={() => {
+            setTutorialCoachDismissedKey(null);
+          }}
+          onSkip={() => {
+            setLeaveConfirm('skipTutorial');
+          }}
+        />
+      ) : null}
 
       {inspectKitId !== null && (
         <KitInspectDialog

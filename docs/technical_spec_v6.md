@@ -311,9 +311,12 @@ legal at index 3. `buyCard` of `basic-attack` is never legal.
 **28** Strong→human; **18** Thief→human; else Draw. Bot-driver **short-circuits** Easy /
 search / noise when this policy is seated. Omit `botReason` on the table log.
 
-**Coach:** non-dismissible panel; the table stays clickable. Bot turns keep the last coach
-(except index 8, which teaches the portrait). **Skip tutorial** on the flag **and** the coach:
-`leaveGame()` to hub, **no** Game over, **hide Forfeit**.
+**Coach:** hovering dismissible chat (`z-[110]`, above Shop/card dialogs); the table stays
+clickable around it. It **opens on every new title/body** (next index, idle **Play**, illegal
+`tutorial-follow-coach` copy) and can be opened again from a **Coach** pill. Highlight the
+scripted control with a pulsing outline and a pointing arrow. Bot turns keep the last coach
+(except index 8, which teaches the portrait). **Skip tutorial** on the flag **and** the open
+coach: `leaveGame()` to hub, **no** Game over, **hide Forfeit**.
 
 **Rejects:** `'tutorial-follow-coach'` — message: `This tutorial step asks for a different
 action.` Client maps to coach-tinted copy (do not send the illegal intent).

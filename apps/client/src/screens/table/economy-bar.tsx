@@ -9,7 +9,7 @@ import type { ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
 import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from './chrome-labels';
-import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
+import { TutorialCallout } from './tutorial-callout';
 
 export interface EconomyBarProps {
   isMyTurn: boolean;
@@ -37,30 +37,23 @@ export function EconomyBar({
   return (
     <section
       data-zone="economy-bar"
-      className="flex flex-wrap items-center gap-1 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1 sm:gap-2 sm:p-1.5"
+      className="flex flex-wrap items-center gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 p-1 sm:gap-2 sm:p-1.5"
     >
-      <Button
-        variant="green"
-        disabled={disabled}
-        onClick={onDraw}
-        className={spotlight === 'draw' ? TUTORIAL_SPOTLIGHT_CLASS : ''}
-        {...(spotlight === 'draw' ? { 'data-tutorial-highlight': 'draw' } : {})}
-      >
-        {DRAW_ACTION_LABEL}{' '}
-        <CostDisplay
-          cost={{ kind: 'points', amount: drawValue }}
-          signed="gain"
-          className="text-inherit"
-        />
-      </Button>
-      <Button
-        variant="orange"
-        onClick={onOpenShop}
-        className={spotlight === 'shop' ? TUTORIAL_SPOTLIGHT_CLASS : ''}
-        {...(spotlight === 'shop' ? { 'data-tutorial-highlight': 'shop' } : {})}
-      >
-        {SHOP_ACTION_LABEL}
-      </Button>
+      <TutorialCallout active={spotlight === 'draw'} arrow="top" highlightId="draw">
+        <Button variant="green" disabled={disabled} onClick={onDraw}>
+          {DRAW_ACTION_LABEL}{' '}
+          <CostDisplay
+            cost={{ kind: 'points', amount: drawValue }}
+            signed="gain"
+            className="text-inherit"
+          />
+        </Button>
+      </TutorialCallout>
+      <TutorialCallout active={spotlight === 'shop'} arrow="top" highlightId="shop">
+        <Button variant="orange" onClick={onOpenShop}>
+          {SHOP_ACTION_LABEL}
+        </Button>
+      </TutorialCallout>
       {onShowStats !== undefined && (
         <Button type="button" variant="purple" onClick={onShowStats}>
           Stats

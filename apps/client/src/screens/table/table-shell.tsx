@@ -54,7 +54,7 @@ export function TableShell({
         <div data-zone="felt" className="table-felt min-h-0 flex-1 overflow-hidden">
           <div
             data-zone="opponents"
-            className="table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-hidden overscroll-contain"
+            className="table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-hidden overscroll-contain py-1"
           >
             {opponentSeats}
           </div>
@@ -75,13 +75,13 @@ export function TableShell({
 
           <div
             data-zone="dock"
-            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
+            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
             style={dockStyle}
           >
             <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
               {privateZone}
             </div>
-            <div data-zone="economy" className="shrink-0">
+            <div data-zone="economy" className="relative z-[4] shrink-0 overflow-visible">
               {economy}
             </div>
             {legacyActions !== undefined && (

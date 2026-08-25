@@ -2533,3 +2533,18 @@ bot / Tax-upgraded / buy-Basic / 300_000 ms timer lines.
 - `playKind` / `tutorialIndex` stay room-owned. Never call `applyTutorialSetup` from
   `run-game.ts`.
 
+## 2026-08-25 · [P] Tutorial coach chat + animated callouts
+
+Designer 2026-08-25 follow-up, after Lot 45. Supersedes the Lot 45 “non-dismissible panel in
+the prompts band” coach chrome. Classic rules and catalog values stay frozen.
+
+- **Coach** is a hovering dismissible chat (`z-[110]`, above Dialog `z-[100]`), not a prompts-band
+  panel and not a focus-trapping Dialog. The table stays clickable around the bubble.
+- Dismiss with Hide (×). A compact **Coach** pill in the same corner reopens it.
+- Auto-open whenever title or body changes (next `tutorialIndex`, idle **Play**, illegal
+  `tutorial-follow-coach` copy). Key is `index|title|body`; open iff dismissed key ≠ current.
+- **Skip tutorial** stays on the flag and on the open chat (same leave-to-hub confirm).
+- Scripted control uses a pulsing orange outline plus a pointing arrow (`top` / `bottom` /
+  `inset-top` on overflow-clipped cards). `prefers-reduced-motion: reduce` keeps a static thick
+  outline. Shop is still not auto-opened. Illegal clicks still do not send.
+

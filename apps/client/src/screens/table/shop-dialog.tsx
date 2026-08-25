@@ -35,7 +35,7 @@ import {
   SHOP_SECTION_UPGRADE_POINTS,
 } from './chrome-labels';
 import { SHOP_PRICE_BLURB } from './table-copy';
-import { TUTORIAL_SPOTLIGHT_CLASS } from './tutorial-spotlight';
+import { TutorialCallout } from './tutorial-callout';
 
 const DEFAULT_SHOP_CARD_ID = SHARED_CARD_IDS[0];
 
@@ -126,14 +126,16 @@ export function ShopDialog({
               className="text-inherit"
             />
           </Button>
+          <TutorialCallout
+            active={
+              tutorialHighlight === 'shop-absorber' && selectedShopId === 'absorber'
+            }
+            arrow="top"
+            highlightId="shop-absorber-buy"
+          >
           <Button
             variant="orange"
             disabled={disabled || !canAffordSharedBuy(view, selectedShopId)}
-            className={
-              tutorialHighlight === 'shop-absorber' && selectedShopId === 'absorber'
-                ? TUTORIAL_SPOTLIGHT_CLASS
-                : ''
-            }
             onClick={() => {
               onBuyCard(selectedShopId);
               onClose();
@@ -141,6 +143,7 @@ export function ShopDialog({
           >
             {CARD_BUY_LABEL}
           </Button>
+          </TutorialCallout>
           <Button variant="red" onClick={onClose}>
             Close
           </Button>
@@ -150,15 +153,14 @@ export function ShopDialog({
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_UPGRADE_POINTS}</h3>
         <div className="flex flex-wrap gap-2">
+          <TutorialCallout
+            active={tutorialHighlight === 'shop-upgrade-point'}
+            arrow="top"
+            highlightId="shop-upgrade-point"
+          >
           <Button
             variant="orange"
             disabled={disabled || view.self.points < buyUpgradeCost}
-            className={
-              tutorialHighlight === 'shop-upgrade-point' ? TUTORIAL_SPOTLIGHT_CLASS : ''
-            }
-            {...(tutorialHighlight === 'shop-upgrade-point'
-              ? { 'data-tutorial-highlight': 'shop-upgrade-point' }
-              : {})}
             onClick={() => {
               onBuyUpgradePoint();
               onClose();
@@ -171,6 +173,7 @@ export function ShopDialog({
               className="text-inherit"
             />
           </Button>
+          </TutorialCallout>
           <Button
             variant="green"
             disabled={disabled || view.self.upgradePoints < 1}
@@ -213,6 +216,12 @@ export function ShopDialog({
 
             return (
               <li key={id}>
+                <TutorialCallout
+                  active={tutorialAbsorber}
+                  arrow="inset-top"
+                  highlightId="shop-absorber"
+                  className="w-full"
+                >
                 <button
                   type="button"
                   disabled={disabled}
@@ -228,15 +237,11 @@ export function ShopDialog({
                     onBuyCard(id);
                     onClose();
                   }}
-                  className={[
-                    choiceTileClassName({
-                      selected,
-                      disabled,
-                      faded: !affordable,
-                    }),
-                    tutorialAbsorber ? TUTORIAL_SPOTLIGHT_CLASS : '',
-                  ].join(' ')}
-                  {...(tutorialAbsorber ? { 'data-tutorial-highlight': 'shop-absorber' } : {})}
+                  className={choiceTileClassName({
+                    selected,
+                    disabled,
+                    faded: !affordable,
+                  })}
                 >
                   <Card
                     instance={shopInstance}
@@ -256,6 +261,7 @@ export function ShopDialog({
                     {shopCost !== null ? <CostDisplay cost={shopCost} signed="cost" /> : '—'}
                   </span>
                 </button>
+                </TutorialCallout>
               </li>
             );
           })}
