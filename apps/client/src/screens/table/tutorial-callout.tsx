@@ -45,9 +45,14 @@ export function TutorialCallout({
           <svg
             viewBox="0 0 32 28"
             className="tutorial-callout-arrow__icon"
-            fill="currentColor"
           >
-            <path d="M16 26 1.5 9.5h7.5V1.5h14v8h7.5L16 26z" />
+            <path
+              d="M16 26 1.5 9.5h7.5V1.5h14v8h7.5L16 26z"
+              fill="#f0771f"
+              stroke="#ffffff"
+              strokeWidth="2.25"
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       ) : null}
