@@ -15,7 +15,8 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     const css = readFileSync(join(here, '../../index.css'), 'utf8');
     expect(css).toContain('@keyframes tutorial-pulse');
     expect(css).toContain('@keyframes tutorial-ping');
-    expect(css).toContain('tutorial-callout-arrow');
+    expect(css).toContain('tutorial-callout-arrow--top');
+    expect(css).not.toContain('inset-top');
     expect(css).toContain('prefers-reduced-motion');
   });
 
@@ -26,6 +27,7 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(src).toContain('OPEN_COACH_LABEL');
     expect(src).toContain('HIDE_COACH_ARIA_LABEL');
     expect(src).toContain('z-[110]');
-    expect(src).not.toContain('non-dismissible');
+    expect(src).toContain('CostDisplay');
+    expect(src).toContain('parseCoachBody');
   });
 });

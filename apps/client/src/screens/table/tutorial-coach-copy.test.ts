@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isTutorialCoachOpen,
+  parseCoachBody,
   resolveTutorialCoach,
   tutorialCardActionSpotlight,
   tutorialCoachMessageKey,
@@ -174,5 +175,63 @@ describe('tutorial spotlights (L45-05)', () => {
       { instanceId: 'b1', cardId: 'basic-attack', isUpgraded: false },
     ]);
     expect(ids).toEqual(['t1']);
+  });
+});
+
+describe('parseCoachBody (technical spec v6 §5.4)', () => {
+  it('turns Draw copy into a points icon token', () => {
+    const parts = parseCoachBody('Draw gives **points**, not a card. Draw once.');
+    expect(parts).toContainEqual({
+      kind: 'resource',
+      resource: 'point',
+      amount: null,
+      sign: '',
+      word: 'points',
+      bold: true,
+    });
+  });
+
+  it('turns Tax copy into life, shield, and 4-point tokens', () => {
+    const parts = parseCoachBody(
+      'Tax spends **1 life** (shield does not stop it) and gives **4 points**. Play Tax.',
+    );
+    expect(parts).toContainEqual({
+      kind: 'resource',
+      resource: 'life',
+      amount: 1,
+      sign: '',
+      word: 'life',
+      bold: true,
+    });
+    expect(parts).toContainEqual({
+      kind: 'resource',
+      resource: 'shield',
+      amount: null,
+      sign: '',
+      word: 'shield',
+      bold: false,
+    });
+    expect(parts).toContainEqual({
+      kind: 'resource',
+      resource: 'point',
+      amount: 4,
+      sign: '',
+      word: 'points',
+      bold: true,
+    });
+  });
+
+  it('keeps a + sign on the second Tax yield', () => {
+    const parts = parseCoachBody(
+      'Thief took points. Tax again — Super Regeneration gave you lives to spend. **+4 points**.',
+    );
+    expect(parts).toContainEqual({
+      kind: 'resource',
+      resource: 'point',
+      amount: 4,
+      sign: '+',
+      word: 'points',
+      bold: true,
+    });
   });
 });

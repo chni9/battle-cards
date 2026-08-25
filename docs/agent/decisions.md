@@ -2544,7 +2544,14 @@ the prompts band” coach chrome. Classic rules and catalog values stay frozen.
 - Auto-open whenever title or body changes (next `tutorialIndex`, idle **Play**, illegal
   `tutorial-follow-coach` copy). Key is `index|title|body`; open iff dismissed key ≠ current.
 - **Skip tutorial** stays on the flag and on the open chat (same leave-to-hub confirm).
-- Scripted control uses a pulsing orange outline plus a pointing arrow (`top` / `bottom` /
-  `inset-top` on overflow-clipped cards). `prefers-reduced-motion: reduce` keeps a static thick
+- Scripted control uses a pulsing orange outline plus a pointing arrow **outside** the
+  highlight square (`top` / `bottom`). `prefers-reduced-motion: reduce` keeps a static thick
   outline. Shop is still not auto-opened. Illegal clicks still do not send.
+
+## 2026-08-25 · [P] Tutorial arrows outside the square; coach resource icons
+
+Designer 2026-08-25 follow-up. Arrow sits **over** the highlight frame (not inset on the
+control). Coach body still comes from `tutorialStepAt`; the client inlines table resource
+icons (`CostDisplay` for quantified points/lives/upgrade points; PNG glyph for bare words
+and shield). Copy strings are unchanged.
 

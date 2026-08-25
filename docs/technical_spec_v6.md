@@ -313,8 +313,10 @@ search / noise when this policy is seated. Omit `botReason` on the table log.
 
 **Coach:** hovering dismissible chat (`z-[110]`, above Shop/card dialogs); the table stays
 clickable around it. It **opens on every new title/body** (next index, idle **Play**, illegal
-`tutorial-follow-coach` copy) and can be opened again from a **Coach** pill. Highlight the
-scripted control with a pulsing outline and a pointing arrow. Bot turns keep the last coach
+`tutorial-follow-coach` copy) and can be opened again from a **Coach** pill. Resource words
+in coach copy render as table icons (`CostDisplay` / resource PNGs). Highlight the
+scripted control with a pulsing outline and a pointing arrow **outside** the highlight
+square. Bot turns keep the last coach
 (except index 8, which teaches the portrait). **Skip tutorial** on the flag **and** the open
 coach: `leaveGame()` to hub, **no** Game over, **hide Forfeit**.
 

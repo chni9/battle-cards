@@ -150,6 +150,10 @@
   [data-zone="card-band"] {
     overflow: hidden;
   }
+
+  [data-zone="card-band"]:has([data-tutorial-highlight]) {
+    overflow: visible;
+  }
 }
 
 /* Incoming chip entrance — L39-05 (only applied to newly mounted chips). */
@@ -176,7 +180,7 @@
 
 /*
  * Tutorial callout — thick orange pulse + bouncing pointer (technical spec v6 §5.4).
- * Inset variant keeps the glow inside overflow-clipped card bands.
+ * The arrow sits outside the highlight square, pointing at it.
  */
 @keyframes tutorial-pulse {
   0%,
@@ -191,24 +195,6 @@
       0 0 0 3px #fff,
       0 0 0 10px var(--color-cta-orange),
       0 0 44px 12px color-mix(in srgb, var(--color-cta-orange) 95%, transparent);
-  }
-}
-
-@keyframes tutorial-pulse-inset {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 0 0 4px var(--color-cta-orange),
-      0 0 0 3px #fff,
-      0 0 0 7px var(--color-cta-orange),
-      0 0 22px 4px color-mix(in srgb, var(--color-cta-orange) 80%, transparent);
-  }
-  50% {
-    box-shadow:
-      inset 0 0 0 5px var(--color-cta-orange),
-      0 0 0 3px #fff,
-      0 0 0 10px var(--color-cta-orange),
-      0 0 34px 8px color-mix(in srgb, var(--color-cta-orange) 95%, transparent);
   }
 }
 
@@ -275,12 +261,6 @@
   animation: tutorial-ping 1.2s ease-out infinite;
 }
 
-.tutorial-callout--inset {
-  padding: 3px;
-  border-radius: var(--radius-card);
-  animation: tutorial-pulse-inset 1.05s ease-in-out infinite;
-}
-
 .tutorial-callout-arrow {
   position: absolute;
   left: 50%;
@@ -294,19 +274,14 @@
 }
 
 .tutorial-callout-arrow--top {
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 14px);
   animation: tutorial-arrow-bob 0.8s ease-in-out infinite;
 }
 
 .tutorial-callout-arrow--bottom {
-  top: calc(100% + 8px);
+  top: calc(100% + 14px);
   rotate: 180deg;
   animation: tutorial-arrow-bob-up 0.8s ease-in-out infinite;
-}
-
-.tutorial-callout-arrow--inset-top {
-  top: 2px;
-  animation: tutorial-arrow-bob 0.8s ease-in-out infinite;
 }
 
 .tutorial-callout-arrow__icon {
@@ -315,18 +290,12 @@
   height: 2.15rem;
 }
 
-.tutorial-callout-arrow--inset-top .tutorial-callout-arrow__icon {
-  width: 2rem;
-  height: 1.7rem;
-}
-
 .tutorial-coach-panel {
   animation: tutorial-coach-in 0.22s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tutorial-callout,
-  .tutorial-callout--inset {
+  .tutorial-callout {
     animation: none;
     box-shadow:
       0 0 0 3px #fff,

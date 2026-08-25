@@ -76,8 +76,8 @@ rules above are unchanged — this section only covers how the client looks.
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
   chat (copy from `tutorialStepAt`, last human coach on bot turns except index 8); auto-opens
-  on new copy; **Coach** pill reopens it. Pulsing callout + pointing arrow on the scripted
-  control; Shop is **not** auto-opened; illegal clicks do not send (`tutorial-follow-coach`
+  on new copy; **Coach** pill reopens it. Resource words in coach copy render as table icons.
+  Pulsing callout + pointing arrow **outside** the highlight square; Shop is **not** auto-opened; illegal clicks do not send (`tutorial-follow-coach`
   copy on the coach). Client idle 20s retitles the coach **Play**. Coach **Skip tutorial**
   uses the same leave-to-hub confirm as the flag. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`

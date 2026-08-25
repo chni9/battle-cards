@@ -69,6 +69,89 @@ export function isTutorialCoachOpen(
   return coachKey !== null && dismissedKey !== coachKey;
 }
 
+export type CoachResourceKind = 'point' | 'life' | 'upgradePoint' | 'shield';
+
+export type CoachBodyPart =
+  | { readonly kind: 'text'; readonly text: string; readonly bold: boolean }
+  | {
+      readonly kind: 'resource';
+      readonly resource: CoachResourceKind;
+      readonly amount: number | null;
+      readonly sign: '+' | '';
+      readonly word: string;
+      readonly bold: boolean;
+    };
+
+/**
+ * Split coach copy so the client can drop resource icons inline.
+ * Source strings stay in `tutorialStepAt`; this does not invent words.
+ */
+export function parseCoachBody(text: string): readonly CoachBodyPart[] {
+  const chunks = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts: CoachBodyPart[] = [];
+  for (const chunk of chunks) {
+    if (chunk.length === 0) {
+      continue;
+    }
+    const bold = /^\*\*([^*]+)\*\*$/.exec(chunk);
+    const inner = bold?.[1];
+    if (inner !== undefined) {
+      parts.push(...parseResourceTokens(inner, true));
+    } else {
+      parts.push(...parseResourceTokens(chunk, false));
+    }
+  }
+  return parts;
+}
+
+function parseResourceTokens(text: string, bold: boolean): CoachBodyPart[] {
+  const token =
+    /(\+)?(\d+)\s+(upgrade\s+points?|points?|lives?|life|shield(?:\s+points?)?)|\b(upgrade\s+points?|points?|lives?|life|shield)\b/gi;
+  const parts: CoachBodyPart[] = [];
+  let last = 0;
+  let match = token.exec(text);
+  while (match !== null) {
+    if (match.index > last) {
+      parts.push({ kind: 'text', text: text.slice(last, match.index), bold });
+    }
+    const labeled = match[3] ?? match[4];
+    if (labeled === undefined) {
+      match = token.exec(text);
+      continue;
+    }
+    const amountRaw = match[2];
+    const parsed = amountRaw === undefined ? Number.NaN : Number(amountRaw);
+    parts.push({
+      kind: 'resource',
+      resource: resourceFromLabel(labeled),
+      amount: Number.isFinite(parsed) ? parsed : null,
+      sign: match[1] === '+' ? '+' : '',
+      word: labeled,
+      bold,
+    });
+    last = match.index + match[0].length;
+    match = token.exec(text);
+  }
+  if (last < text.length) {
+    parts.push({ kind: 'text', text: text.slice(last), bold });
+  }
+  return parts;
+}
+
+function resourceFromLabel(label: string): CoachResourceKind {
+  const normalized = label.toLowerCase();
+  if (normalized.startsWith('upgrade')) {
+    return 'upgradePoint';
+  }
+  if (normalized.startsWith('point')) {
+    return 'point';
+  }
+  if (normalized.startsWith('live') || normalized === 'life') {
+    return 'life';
+  }
+  return 'shield';
+}
+
 export function tutorialHighlightAt(index: number): TutorialHighlight {
   return tutorialStepAt(index)?.highlight ?? null;
 }

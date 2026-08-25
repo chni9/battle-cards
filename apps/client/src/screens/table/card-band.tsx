@@ -111,15 +111,25 @@ function CardSection({
     );
   }
 
+  const spotlighted = highlightedInstanceIds.length > 0;
+
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5 overflow-hidden">
+    <div
+      className={[
+        'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
+        spotlighted ? 'overflow-visible' : 'overflow-hidden',
+      ].join(' ')}
+    >
       <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
       </p>
       <div
         ref={areaRef}
         data-zone={zone}
-        className="flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center overflow-hidden"
+        className={[
+          'flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center',
+          spotlighted ? 'overflow-visible' : 'overflow-hidden',
+        ].join(' ')}
         style={{ gap: CARD_BAND_GAP_PX }}
       >
         {visible.map((card) => {
@@ -135,7 +145,7 @@ function CardSection({
             >
               <TutorialCallout
                 active={highlighted}
-                arrow="inset-top"
+                arrow="top"
                 highlightId={card.cardId}
                 className="w-full"
               >
@@ -201,7 +211,12 @@ export function CardBand({
   return (
     <div
       data-zone="card-band"
-      className="flex h-full min-h-0 w-full flex-col justify-end gap-1 overflow-hidden"
+      className={[
+        'flex h-full min-h-0 w-full flex-col justify-end gap-1',
+        highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0
+          ? 'overflow-visible'
+          : 'overflow-hidden',
+      ].join(' ')}
     >
       <CardSection
         label="Hand"

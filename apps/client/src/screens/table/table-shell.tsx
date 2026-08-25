@@ -78,7 +78,7 @@ export function TableShell({
             className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
             style={dockStyle}
           >
-            <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
+            <div data-zone="private" className="min-h-0 flex-1 overflow-visible">
               {privateZone}
             </div>
             <div data-zone="economy" className="relative z-[4] shrink-0 overflow-visible">

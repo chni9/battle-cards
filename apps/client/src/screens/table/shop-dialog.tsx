@@ -218,7 +218,7 @@ export function ShopDialog({
               <li key={id}>
                 <TutorialCallout
                   active={tutorialAbsorber}
-                  arrow="inset-top"
+                  arrow="top"
                   highlightId="shop-absorber"
                   className="w-full"
                 >

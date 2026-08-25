@@ -6,14 +6,22 @@
 
 import { Fragment, type ReactElement } from 'react';
 
+import { getResourceIconUrl, type ResourceKind } from '../../design/asset-lookup';
 import { Button } from '../../design/components/button';
+import { CostDisplay } from '../../design/components/cost-display';
 import { IconButton } from '../../design/components/icon-button';
+import type { StructuredCost } from '../../design/components/structured-cost';
 import {
   HIDE_COACH_ARIA_LABEL,
   OPEN_COACH_ARIA_LABEL,
   OPEN_COACH_LABEL,
   SKIP_TUTORIAL_ACTION_LABEL,
 } from './table-copy';
+import {
+  parseCoachBody,
+  type CoachBodyPart,
+  type CoachResourceKind,
+} from './tutorial-coach-copy';
 
 export interface TutorialCoachProps {
   index: number;
@@ -90,19 +98,83 @@ export function TutorialCoach({
 }
 
 function CoachBody({ text }: { text: string }): ReactElement {
-  const chunks = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = parseCoachBody(text);
 
   return (
     <p className="text-base leading-relaxed text-ink">
-      {chunks.map((chunk, index) => {
-        const bold = /^\*\*([^*]+)\*\*$/.exec(chunk);
-        const inner = bold?.[1];
-        if (inner !== undefined) {
-          return <strong key={`b-${String(index)}`}>{inner}</strong>;
-        }
-
-        return <Fragment key={`t-${String(index)}`}>{chunk}</Fragment>;
-      })}
+      {parts.map((part, index) => (
+        <CoachPart key={`p-${String(index)}`} part={part} />
+      ))}
     </p>
+  );
+}
+
+function CoachPart({ part }: { part: CoachBodyPart }): ReactElement {
+  if (part.kind === 'text') {
+    if (part.bold) {
+      return <strong>{part.text}</strong>;
+    }
+    return <Fragment>{part.text}</Fragment>;
+  }
+
+  const cost = structuredCoachCost(part.resource, part.amount);
+  const inner =
+    cost !== null ? (
+      <CostDisplay
+        cost={cost}
+        iconSize={18}
+        className="mx-0.5 align-middle"
+        {...(part.sign === '+' ? { signed: 'gain' as const } : {})}
+      />
+    ) : (
+      <>
+        {part.amount !== null ? (
+          <span className="tabular-nums">
+            {part.sign}
+            {String(part.amount)}
+          </span>
+        ) : (
+          part.word
+        )}
+        <CoachResourceGlyph kind={part.resource} />
+      </>
+    );
+
+  if (part.bold) {
+    return <strong className="inline-flex items-baseline">{inner}</strong>;
+  }
+  return <span className="inline-flex items-baseline">{inner}</span>;
+}
+
+function structuredCoachCost(
+  resource: CoachResourceKind,
+  amount: number | null,
+): StructuredCost | null {
+  if (amount === null) {
+    return null;
+  }
+  switch (resource) {
+    case 'point':
+      return { kind: 'points', amount };
+    case 'life':
+      return { kind: 'lives', amount };
+    case 'upgradePoint':
+      return { kind: 'upgradePoint', amount };
+    case 'shield':
+      return null;
+  }
+}
+
+function CoachResourceGlyph({ kind }: { kind: CoachResourceKind }): ReactElement {
+  const resource: ResourceKind = kind;
+  return (
+    <img
+      src={getResourceIconUrl(resource)}
+      alt=""
+      width={18}
+      height={18}
+      className="mx-0.5 inline-block size-[1.125rem] shrink-0 object-contain align-text-bottom"
+      aria-hidden
+    />
   );
 }

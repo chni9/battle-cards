@@ -39,12 +39,12 @@ export function EconomyBar({
       data-zone="economy-bar"
       className={[
         'flex flex-wrap items-center gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised/80 sm:gap-2',
-        spotlight !== undefined ? 'p-2 sm:p-2.5' : 'p-1 sm:p-1.5',
+        spotlight !== undefined ? 'px-2 pb-2 pt-9 sm:px-2.5 sm:pb-2.5 sm:pt-10' : 'p-1 sm:p-1.5',
       ].join(' ')}
     >
       <TutorialCallout
         active={spotlight === 'draw'}
-        arrow="inset-top"
+        arrow="top"
         highlightId="draw"
       >
         <Button variant="green" disabled={disabled} onClick={onDraw}>
@@ -58,7 +58,7 @@ export function EconomyBar({
       </TutorialCallout>
       <TutorialCallout
         active={spotlight === 'shop'}
-        arrow="inset-top"
+        arrow="top"
         highlightId="shop"
       >
         <Button variant="orange" onClick={onOpenShop}>
