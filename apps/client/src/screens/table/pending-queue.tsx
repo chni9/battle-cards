@@ -13,7 +13,7 @@ import type { ReactElement } from 'react';
 
 import { PlayerName } from '../../design/components/player-name';
 import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
-import { threatToneFor } from '../../fx/threat-tone';
+import { pendingChipCalloutTone } from './pending-chip-tone';
 import { nicknameOf } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -30,12 +30,6 @@ export interface PendingQueueProps {
   highlightedIds?: readonly string[];
   /** Animate chips on mount (Incoming). Stable keys keep the animation one-shot. */
   animateEntrance?: boolean;
-}
-
-export function pendingChipCalloutTone(
-  cardId: string,
-): 'threat' | 'guide' {
-  return threatToneFor(cardId) === 'attack' ? 'threat' : 'guide';
 }
 
 export function PendingQueue({

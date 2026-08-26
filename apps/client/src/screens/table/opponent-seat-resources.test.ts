@@ -2,12 +2,11 @@
  * Opponent seat resource visibility — L51-08.
  */
 
-import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { KitId } from '@card-battle/shared';
+import { describe, expect, it } from 'vitest';
 
 import {
   opponentHasLiveResourceIcons,
@@ -31,7 +30,7 @@ describe('opponent seat resources (L51-08)', () => {
     expect(
       opponentResourceDisplay({
         spied: {
-          kitId: 'scientific' as KitId,
+          kitId: 'scientific',
           hand: [],
           specialCards: [],
           resourcesSnapshot: snapshot,
@@ -39,7 +38,7 @@ describe('opponent seat resources (L51-08)', () => {
       }),
     ).toEqual({ known: false });
     expect(opponentKitIsVisible({ spied: {
-      kitId: 'scientific' as KitId,
+      kitId: 'scientific',
       hand: [],
       specialCards: [],
       resourcesSnapshot: snapshot,
@@ -51,7 +50,7 @@ describe('opponent seat resources (L51-08)', () => {
     expect(
       opponentResourceDisplay({
         spied: {
-          kitId: 'scientific' as KitId,
+          kitId: 'scientific',
           hand: [],
           specialCards: [],
           lives: 8,
@@ -68,7 +67,7 @@ describe('opponent seat resources (L51-08)', () => {
     expect(
       opponentResourceDisplay({
         eliminationReveal: {
-          kitId: 'kamikaze' as KitId,
+          kitId: 'kamikaze',
           hand: [],
           specialCards: [],
           lives: 0,

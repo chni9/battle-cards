@@ -34,21 +34,19 @@ export function opponentResourceDisplay(
   }
 
   const spied = player.spied;
+  const lives = spied?.lives;
+  const points = spied?.points;
+  const upgradePoints = spied?.upgradePoints;
+  const shield = spied?.shield;
   if (
-    spied !== undefined &&
-    spied.lives !== undefined &&
-    spied.points !== undefined &&
-    spied.upgradePoints !== undefined &&
-    spied.shield !== undefined
+    lives !== undefined &&
+    points !== undefined &&
+    upgradePoints !== undefined &&
+    shield !== undefined
   ) {
     return {
       known: true,
-      values: {
-        lives: spied.lives,
-        points: spied.points,
-        upgradePoints: spied.upgradePoints,
-        shield: spied.shield,
-      },
+      values: { lives, points, upgradePoints, shield },
     };
   }
 

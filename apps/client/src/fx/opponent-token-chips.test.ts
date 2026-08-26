@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { ActionLogEntryView, KitId, PublicPlayerView } from '@card-battle/shared';
+import type { ActionLogEntryView, PublicPlayerView } from '@card-battle/shared';
 
 import { chipsForPublicLogEntry } from './opponent-token-chips';
 
@@ -37,7 +37,7 @@ const hidden = opponent({ id: 'opp' });
 const spied = opponent({
   id: 'spy',
   spied: {
-    kitId: 'scientific' as KitId,
+    kitId: 'scientific',
     hand: [],
     specialCards: [],
     resourcesSnapshot: {
@@ -52,7 +52,7 @@ const spied = opponent({
 const live = opponent({
   id: 'live',
   spied: {
-    kitId: 'scientific' as KitId,
+    kitId: 'scientific',
     hand: [],
     specialCards: [],
     lives: 8,

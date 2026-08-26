@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { pendingChipCalloutTone } from './pending-queue';
+import { pendingChipCalloutTone } from './pending-chip-tone';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
