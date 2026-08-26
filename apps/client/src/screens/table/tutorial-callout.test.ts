@@ -54,5 +54,6 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(table).toContain('setPortraitInspected(true)');
     expect(table).toContain('setTourStep');
     expect(table).toContain('overlayLocksTable');
+    expect(table).toContain('!readOnly');
   });
 });

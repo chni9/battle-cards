@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { TUTORIAL_LAST_INDEX } from './script';
 import {
   isTutorialLookPending,
   isTutorialTourActive,
   TUTORIAL_LOOK_COACH,
+  TUTORIAL_LOOK_INDEX,
   TUTORIAL_SPY_RESOLVE_INDEX,
   TUTORIAL_TOUR_STEPS,
   tutorialTourStepAt,
@@ -40,12 +42,14 @@ describe('tutorial board tour (technical spec v6 §5.4)', () => {
 });
 
 describe('tutorial Look gate (technical spec v6 §5.4)', () => {
-  it('is required after Spy resolves at index 8', () => {
+  it('is required only on the sell step after Spy resolves', () => {
     expect(TUTORIAL_SPY_RESOLVE_INDEX).toBe(8);
+    expect(TUTORIAL_LOOK_INDEX).toBe(9);
     expect(isTutorialLookPending(8, false)).toBe(false);
     expect(isTutorialLookPending(9, false)).toBe(true);
     expect(isTutorialLookPending(9, true)).toBe(false);
-    expect(isTutorialLookPending(11, false)).toBe(true);
+    expect(isTutorialLookPending(11, false)).toBe(false);
+    expect(isTutorialLookPending(TUTORIAL_LAST_INDEX, false)).toBe(false);
   });
 
   it('tells the player they can click the opponent', () => {
