@@ -63,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-40 of 58 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+41 of 58 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -77,7 +77,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
-| 51 · Beta UI feedback | 9 | 1 |
+| 51 · Beta UI feedback | 9 | 2 |
 
 ---
 
@@ -221,7 +221,7 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L51-01 | Governance: append `decisions.md`; rewrite technical spec v6 §5.1 to the first-time primer (no delayed resolution); add this lot; L46-03 no longer assumes a hub Reset help button. **Acceptance:** an agent reading only those files sees Lot 51 is client-only and the primer must-say is the locked bodies. | S | Low | — | Done |
-| L51-02 | Rewrite `how-to-play-content.ts` to spec §5.1 (goal, turn, lives, points, cards, upgrade, kits, specials, shop). Screenshot slots only for existing filenames. Resource icons beside Lives / Points / Upgrade / Shield. **Acceptance:** tests assert the locked must-say; no “double”, “delayed”, or “not a card”. | M | Low | L51-01 | To do |
+| L51-02 | Rewrite `how-to-play-content.ts` to spec §5.1 (goal, turn, lives, points, cards, upgrade, kits, specials, shop). Screenshot slots only for existing filenames. Resource icons beside Lives / Points / Upgrade / Shield. **Acceptance:** tests assert the locked must-say; no “double”, “delayed”, or “not a card”. | M | Low | L51-01 | Done |
 | L51-03 | Hub: drop protocol version (Home + Lobby), Reset help, delayed-resolution pitch, and the Beta paragraph. Small **Beta** card top-right, text Beta only. **Acceptance:** no `Protocol v` in hub/lobby DOM; no Reset help control. | S | Low | L51-01 | To do |
 | L51-04 | Kit inspect: Draw + UP buy/sell as `CostDisplay`; starting hand = action/attack versos + counts; special thumbs show play-cost icons; restyle trait groups. **Acceptance:** no `N action · M attack` prose; costs are icons. | M | Low | L51-01 | To do |
 | L51-05 | `Card.upgradeAdds` on every catalog row (derived deltas). `formatCardEffectText`: no `Cost:` prefix; non-upgraded = effect + Upgrade delta; upgraded = full `upgradeEffect`. Inspect dialogs use `CostDisplay`. **Acceptance:** catalog exhaustiveness; Basic non-upgraded does not repeat “Deal 3 damage to an opponent.” as the upgrade line. | M | Low | L51-01 | To do |

@@ -64,15 +64,15 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **How to play** (L42): spec §5.1 sections in order; Skip + Got it both close; screenshot
-  `<img>` only when the PNG exists under `src/assets/how-to-play/` (`import.meta.glob`,
-  missing files omit the image). Copy is the §5.1 must-say floor; existing resource icons
-  sit in the Resources section. **Soft gate** on the first hub Play online / Play solo
+  **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
+  points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
+  Skip + Got it both close; screenshot `<img>` only when the PNG exists under
+  `src/assets/how-to-play/` (`import.meta.glob`, missing files omit the image).
+  Copy is the §5.1 first-time floor; resource icons sit next to Lives / Points /
+  Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
-  `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
-  a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
+  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
   chat (copy from `tutorialStepAt` / `TUTORIAL_TOUR_STEPS` / `TUTORIAL_LOOK_COACH`; last human
