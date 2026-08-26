@@ -2642,6 +2642,14 @@ still on you); Draw also dismisses `draw`; opening Shop dismisses `shop`; oppone
 dismisses `hidden-kit`; Incoming leaving the view dismisses `incoming`; `resources` is
 manual Got it only. Card is placed next to `data-hint-anchor`. No callout rings.
 
+## 2026-08-26 · [P] Tutorial completion does not skip hints (L46-03)
+
+`startTutorialGame`, Skip tutorial (`onLeave` / not forfeit), and Game over **Play a
+real game** (`onLeave`) never write `card-battle.v6.hints`. Completing or skipping the
+tutorial leaves the blob untouched, so the next Classic Solo/Online still selects from
+an empty `{ dismissed: [], skipAll: false }`. Hub **Reset help** remains the only
+clear path (L42-02). HintOverlay **Skip all** is the only `skipAllHints()` call site.
+
 
 
 

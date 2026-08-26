@@ -89,7 +89,8 @@ rules above are unchanged — this section only covers how the client looks.
   `CoachPanel` chrome as tutorial, `data-zone="first-game-hint"`, Got it / Skip all.
   Selector (L46-02) ranks one undismissed topic from view facts; auto-Got-it on Draw / Shop /
   play / portrait / Incoming clear. Card sits next to `data-hint-anchor` (no rings).
-  `leave` is not a hint id. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
+  `leave` is not a hint id. Completing or skipping the tutorial does **not** set `skipAll`
+  (L46-03); Hub **Reset help** still clears the key. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
