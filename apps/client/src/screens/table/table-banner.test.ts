@@ -2,6 +2,10 @@
  * Table banner trigger helpers — L51-06.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import type { CardId, PendingEffectView } from '@card-battle/shared';
@@ -31,6 +35,16 @@ function pending(
 }
 
 describe('table banners (L51-06)', () => {
+  it('enqueues seed cues synchronously so Strict Mode cannot drop them', () => {
+    const flash = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'your-turn-flash.tsx'),
+      'utf8',
+    );
+    expect(flash).toContain('setQueue((current) => [...current, ...cues])');
+    expect(flash).toContain('Synchronous enqueue');
+    expect(flash).not.toContain('setTimeout(() => {\n      setQueue((current) => [...current, ...cues])');
+  });
+
   it('locks copy including You won! without a space', () => {
     expect(TABLE_BANNER_COPY.turn).toBe('Your turn');
     expect(TABLE_BANNER_COPY.attacked).toBe('You are being attacked');

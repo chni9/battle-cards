@@ -54,14 +54,12 @@ export function TableBannerFlash({
     });
     watch.current = next;
     if (cues.length === 0) {
-      return;
+      return undefined;
     }
-    const showId = window.setTimeout(() => {
-      setQueue((current) => [...current, ...cues]);
-    }, 0);
-    return () => {
-      window.clearTimeout(showId);
-    };
+    // Synchronous enqueue: a 0ms timeout is cleared on React Strict Mode's
+    // immediate remount, which dropped seed cues (You are dead / You won!).
+    setQueue((current) => [...current, ...cues]);
+    return undefined;
   }, [isMyTurn, isEliminated, youWon, pendingEffects, you]);
 
   useEffect(() => {
