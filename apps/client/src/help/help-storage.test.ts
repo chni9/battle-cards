@@ -63,7 +63,7 @@ describe('help storage (technical spec v6 §5.1)', () => {
     expect(hasSeenHowToPlay()).toBe(true);
   });
 
-  it('Reset help clears How to play and hint keys', () => {
+  it('resetHelpStorage clears How to play and hint keys', () => {
     const storage = new MemoryStorage();
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,

@@ -60,7 +60,7 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
   / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-- **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
+- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
@@ -72,7 +72,9 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
+  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
+  pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
   chat (copy from `tutorialStepAt` / `TUTORIAL_TOUR_STEPS` / `TUTORIAL_LOOK_COACH`; last human

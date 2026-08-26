@@ -1,6 +1,6 @@
 /**
  * Client teaching storage — technical spec v6 §5.1 / §5.2, L42-02.
- * How to play seen-flag and hint blob (Lot 46 writes the JSON; Reset help clears both).
+ * How to play seen-flag and hint blob (Lot 46 writes the JSON; `resetHelpStorage` clears both).
  */
 
 export const HOW_TO_PLAY_SEEN_KEY = 'card-battle.v6.howToPlaySeen';
