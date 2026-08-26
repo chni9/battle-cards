@@ -495,6 +495,15 @@ do not hand off an untested lot.
   on the Leave step; Draw after tour. Coach panel slightly transparent. After Spy resolves,
   Look forces a portrait click (no Got it); Spy reveal then Sell.
 
+### Lot 46 verified 2026-08-26 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Hub **Reset help**, then **Tutorial** nick `L46Tut`. Room `RMXLCN`. Board-tour coach **Your zone**
+  with **Got it** only — no first-game hint, no **Skip all**. **Skip tutorial** confirm → hub (not
+  a forfeit). Next Classic still eligible.
+- **Play solo** nick `L46Host`. Room `CVYCNN`. First-game card **Your turn** (“take **one** action”)
+  with **Got it** and **Skip all**, next to the turn strip. **Skip all** hides it. Second solo
+  `OTFTLE` has no hint card. Hub **Reset help** then third solo `MBIXNF` shows **Your turn** again.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
