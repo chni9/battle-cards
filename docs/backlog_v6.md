@@ -29,6 +29,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 6. **Hints (Lot 46).** First Classic match, skippable, still after tutorial.
 7. **Feedback (Lot 47).** Postgres + `/api/feedback` + `/inbox`.
 8. **Gate (Lot 48).** Playbooks + first-time browser playtest.
+9. **Beta UI (Lot 51).** Primer rewrite, hub chrome, inspect restyle, table banners,
+   Spy seat resources, opponent flyouts. Client presentation; no protocol bump.
 
 **Execution order**
 
@@ -61,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-39 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+40 of 58 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -75,6 +77,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
+| 51 · Beta UI feedback | 9 | 1 |
 
 ---
 
@@ -151,7 +154,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 |---|---|---|---|---|---|
 | L46-01 | Hint overlay + `HintId` union from spec §5.2; `localStorage` `card-battle.v6.hints`; Got it / Skip all. **Does not run** when `playKind === 'tutorial'`. **Acceptance:** tutorial match shows coach, not these ids. | M | Low | L41-03, L43-01 | To do |
 | L46-02 | Triggers: `your-turn`, `draw`, `resources` on first Classic dock; `incoming` on first real Incoming to POV (reuse `incoming-threat-diff.ts`, ignore presentation persistents); `hidden-kit`; `shop` when Buy enabled; `leave`. **Acceptance:** unit tests on trigger helpers; Incoming hint is not the persistent chip. | M | Medium | L46-01, L39-05 (Done) | To do |
-| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. Reset help (L42-02) clears hints. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | To do |
+| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. `resetHelpStorage` (L42-02 helper; hub Reset help removed in L51-03) still clears hint keys in tests. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | To do |
 
 ---
 
@@ -209,6 +212,26 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 
 ---
 
+## Lot 51 — Beta UI feedback (designer 2026-08-26)
+
+Designer playtest follow-up. **No Classic rule or value change. No protocol bump.**
+Client presentation + catalog `upgradeAdds` copy derived from existing `effect` /
+`upgradeEffect`. One commit per task. Why stays hidden on the table (already L45-05).
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L51-01 | Governance: append `decisions.md`; rewrite technical spec v6 §5.1 to the first-time primer (no delayed resolution); add this lot; L46-03 no longer assumes a hub Reset help button. **Acceptance:** an agent reading only those files sees Lot 51 is client-only and the primer must-say is the locked bodies. | S | Low | — | Done |
+| L51-02 | Rewrite `how-to-play-content.ts` to spec §5.1 (goal, turn, lives, points, cards, upgrade, kits, specials, shop). Screenshot slots only for existing filenames. Resource icons beside Lives / Points / Upgrade / Shield. **Acceptance:** tests assert the locked must-say; no “double”, “delayed”, or “not a card”. | M | Low | L51-01 | To do |
+| L51-03 | Hub: drop protocol version (Home + Lobby), Reset help, delayed-resolution pitch, and the Beta paragraph. Small **Beta** card top-right, text Beta only. **Acceptance:** no `Protocol v` in hub/lobby DOM; no Reset help control. | S | Low | L51-01 | To do |
+| L51-04 | Kit inspect: Draw + UP buy/sell as `CostDisplay`; starting hand = action/attack versos + counts; special thumbs show play-cost icons; restyle trait groups. **Acceptance:** no `N action · M attack` prose; costs are icons. | M | Low | L51-01 | To do |
+| L51-05 | `Card.upgradeAdds` on every catalog row (derived deltas). `formatCardEffectText`: no `Cost:` prefix; non-upgraded = effect + Upgrade delta; upgraded = full `upgradeEffect`. Inspect dialogs use `CostDisplay`. **Acceptance:** catalog exhaustiveness; Basic non-upgraded does not repeat “Deal 3 damage to an opponent.” as the upgrade line. | M | Low | L51-01 | To do |
+| L51-06 | Table banners: Your turn (existing); **You are being attacked** once per new attack-tone Incoming (flashier, red); **You are dead** on POV elim (flashier, red); **You won!** on POV win. Game over dialog still follows. **Acceptance:** unit on trigger helpers; won and dead never on the same seat. | M | Low | L51-01 | To do |
+| L51-07 | Pending chips (Incoming + Waiting on others): tutorial callout chrome, no arrow; red = `threatToneFor` attack, orange = other real pending; persist until resolve. No ring on presentation persistents. Drop arrowed Incoming threat wrap. **Acceptance:** pending-queue test; tutorial coach arrows stay on scripted controls. | M | Low | L51-01 | To do |
+| L51-08 | Opponent seat: live resource icons when upgraded Spy or death reveal; unspied and base Spy show the same icons with `?`. Wrap to a second line; drop shield on the seat only if still overflowing. Remove Hidden kit / Spied — tap / Revealed — tap. Spy dialog title is nickname only. **Acceptance:** unspied `?` never prints real totals. | M | Medium | L51-01 | To do |
+| L51-09 | Opponent token flyouts from the seat to the action-log center. POV stays dock `ResourceIcon`. Unspied / base Spy: public log amounts only (`livesLost`, `shieldAbsorbed`, catalog play/buy/sell/upgrade). Skip Draw when kit Draw is hidden. Include life, point, upgrade-point, and shield chips. **Acceptance:** `measureTokenFlyout` accepts `playerId`; no invented Draw count. | M | Medium | L51-08 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -223,7 +246,8 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| **Total** | **49** |
+| 51 | 9 |
+| **Total** | **58** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

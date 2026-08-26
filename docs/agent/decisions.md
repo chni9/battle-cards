@@ -2619,5 +2619,53 @@ Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No 
 - Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
 - Got it appears on tour steps only.
 
+## 2026-08-26 · [P] Lot 51 first-time UI (designer session)
+
+Designer 2026-08-26 playtest follow-up. Classic rules and catalog **values** stay frozen.
+No protocol bump. Client presentation + `upgradeAdds` copy derived from existing
+`effect` / `upgradeEffect` (not a new mechanic).
+
+**How to play (spec §5.1 rewrite)**
+
+- Primer is for a player who has never played: turns, lives, points, cards, kill,
+  upgrade, kits, specials, shop. **No delayed resolution** and no other niche rules.
+- Shop copy: buy cards or upgrade points; sell cards you do not need. No double-price
+  formula, no “shared” card.
+- Specials: **one use**, always (not “usually”).
+- Draw: grants points equal to the kit Draw value. Do not write “(not a card)”.
+- Upgrade: spend 1 upgrade point. Do not write “(the icon)”.
+- Points: currency for almost every action.
+- Screenshot slots reuse existing designer filenames only (`one-action`, `resources`,
+  `hidden-kit`, `shop`). `delayed-resolution.png` and `table-overview.png` stay unused.
+
+**Hub**
+
+- Drop protocol version from Home and Lobby (no tooltip).
+- Remove **Reset help**. `resetHelpStorage` remains a helper for tests / Lot 46.
+- No Beta paragraph. A small **Beta** card, top-right, text **Beta** only.
+- Drop the delayed-resolution hub pitch.
+
+**Inspect**
+
+- Always `CostDisplay` icons, never cost-as-text.
+- Kit starting hand: action/attack versos + counts, not “N action · M attack”.
+- Non-upgraded card: base effect + `upgradeAdds` delta. Upgraded card: full current
+  `upgradeEffect` only.
+
+**Table**
+
+- Why stays hidden (L45-05). `botReason` remains on the wire and Excel export.
+- Banners: **You are being attacked** once per new attack-tone Incoming (flashier);
+  **You are dead** on POV elim (flashier); **You won!** (no space) on POV win.
+- Waiting-to-resolve chips: tutorial callout chrome **without arrow**. Red = attack
+  tone (`threatToneFor`); orange = other real pending. Incoming and Waiting on others.
+  Presentation persistents unringed.
+- Spy seat: live numbers when upgraded Spy or death reveal; unspied and base Spy show
+  the same icons with `?`. Remove Spied — tap / Hidden kit / Revealed — tap. Spy dialog
+  title is the nickname only.
+- Opponent resource flyouts from the seat to the action-log center, public log amounts
+  only when numbers are hidden. Skip Draw when kit Draw is unknown. Include every token
+  kind (life, point, upgrade point, shield).
+
 
 

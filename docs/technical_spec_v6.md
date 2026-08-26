@@ -163,26 +163,31 @@ Hints:     localStorage, first Classic playing view only
 as the **soft gate** before the first Online / Solo / Tutorial submit.
 
 **Storage:** `localStorage` key `card-battle.v6.howToPlaySeen` = `'1'` after Skip or Got it.
-Hub **Reset help** clears this and the hint keys (designer retest).
+`resetHelpStorage` still clears this and the hint keys (tests / Lot 46). There is **no**
+hub **Reset help** control (L51-03).
 
-**Copy:** still a primer, not the full rules spec. Must define, in this order, with the
-screenshot slot beside the section when the file exists:
+**Copy:** still a primer, not the full rules spec. First-time floor only — no delayed
+resolution, no mutual-attack, no shop-price formula. Must define, in this order, with the
+screenshot slot beside the section when the file exists. Existing resource icons may sit
+next to Lives / Points / Upgrade / Shield mentions. Do not invent PNG names; unused
+designer files (`delayed-resolution.png`, `table-overview.png`) stay on disk unused.
 
 | Section id | Title | Must say | Screenshot file (designer) |
 |---|---|---|---|
-| `goal` | Goal | Last player alive wins. Lives never exceed 25. | — |
-| `table` | The table | Dock is yours; opponents are hidden until Spy; Incoming is delayed hits on **you**. | `apps/client/src/assets/how-to-play/table-overview.png` |
-| `delay` | Delayed resolution | An action aimed at an opponent resolves on **their** next turn, **after** they have acted. You never lose lives off-turn. That delay is how you counter or heal. | `how-to-play/delayed-resolution.png` |
-| `turn` | One action | Each turn: exactly one of draw, play, buy, sell, upgrade, or use a special. **Draw grants points equal to your kit’s Draw value — it does not deal a card.** | `how-to-play/one-action.png` |
-| `resources` | Resources | Lives, Points, Upgrade points (icon, never “UP”), Shield (attacks only; Tax ignores it). | `how-to-play/resources.png` |
-| `hidden` | Hidden information | Kit, hand, exact resources stay private. Every **action** is public. | `how-to-play/hidden-kit.png` |
-| `shop` | Shop | Buying a shared card costs **double** its play cost. Selling yields the play cost. Upgrade spends 1 upgrade point. | `how-to-play/shop.png` |
-| `modes` | Online, solo, tutorial | Online = code + friends (bots may fill). Solo = bots. Tutorial = optional scripted 1v1. | — |
+| `goal` | Goal | Last player alive wins. This is a turn-based elimination game for 2 to 4 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them. | — |
+| `turn` | Turns | Players act one after another. On your turn you take exactly one action, then play passes on. That action is one of: Draw, play a card from your hand, play a special, buy, sell, or upgrade. | `how-to-play/one-action.png` |
+| `lives` | Lives | Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. | `how-to-play/resources.png` |
+| `points` | Points | Points are the currency for almost every action: playing most cards, buying from the Shop, selling, and buying upgrade points. Draw gives you points equal to your kit's Draw value. | — |
+| `cards` | Cards | Your hand holds attack cards and action cards. Attacks deal damage to a chosen opponent. Action cards do everything else: gain resources, steal, spy, shield, or heal. Tap a card to read it, then Use, Upgrade, or Sell. | — |
+| `upgrade` | Upgrade | You can upgrade a held copy by spending 1 upgrade point. That upgrade is permanent for that copy and makes its effect stronger. The card dialog tells you what the upgrade adds. | — |
+| `kits` | Kits | Each player has a kit. It sets starting lives, points, upgrade points, and Draw, how many random action and attack cards you begin with, which special cards you hold, and sometimes a kit ability. Opponents cannot see your kit until they Spy you, or until you are eliminated. In the lobby you may pick a kit or keep Random. | `how-to-play/hidden-kit.png` |
+| `specials` | Special cards | Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards. | — |
+| `shop` | Shop | Open Shop to buy extra cards or upgrade points, and to sell cards you do not need. | `how-to-play/shop.png` |
 
-Beta line on the hub (replaces the protocol headline): **“Beta — rules are stable. Tell us
-what is confusing.”** Protocol version may stay as a tiny footer or `title` tooltip — not
-the first thing a stranger reads. “Not connected” is not shown as an alarm on the idle hub;
-idle is unlabeled or “Ready”.
+Hub chrome (L51-03): a small **Beta** card, top-right, text **Beta** only — no Beta
+paragraph, no protocol version (not even a tooltip), no Reset help. Delayed-resolution
+pitch is gone. “Not connected” is not shown as an alarm on the idle hub; idle is unlabeled
+or “Ready”.
 
 ### 5.2 First-real-game hints
 
@@ -522,7 +527,8 @@ Tutorial legal filter is **server-side** in the room’s perform path (after
 
 Update `docs/agent/frontend.md` in the lot that lands each surface.
 
-- Hub: Beta badge; Tutorial button; How to play; Reset help (muted, for you).
+- Hub: Beta card (top-right, word **Beta** only); Tutorial button; How to play.
+  No protocol footer. No Reset help control.
 - Soft gate wraps Online / Solo / Tutorial submits.
 - Table: How to play, Feedback, coach (tutorial), hints (first Classic).
 - `leaveGame()` is **not** the forfeit path from a live table.
@@ -611,7 +617,8 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 46 | First-game hints | localStorage, skip all, still after tutorial |
 | 47 | Feedback + inbox | Postgres, HTTP, form, `/inbox` |
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
+| 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
-**48** last.
+**48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
