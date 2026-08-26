@@ -31,6 +31,8 @@ export interface ResourceIconProps {
    * Kit inspect and opponent reveal stay compact.
    */
   captionVisible?: boolean;
+  /** Scope token flyouts to an opponent seat (L51-09). */
+  playerId?: string;
 }
 
 export function ResourceIcon({
@@ -40,6 +42,7 @@ export function ResourceIcon({
   className = '',
   flyToken = true,
   captionVisible,
+  playerId,
 }: ResourceIconProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const fx = useTableFxOptional();
@@ -67,7 +70,7 @@ export function ResourceIcon({
       const direction = nextFlash === 'gain' ? 'gain' : 'loss';
       const count = Math.abs(d);
       for (let i = 0; i < count; i++) {
-        const measured = measureTokenFlyout(kind, direction, i);
+        const measured = measureTokenFlyout(kind, direction, i, playerId);
         if (measured === null) {
           break;
         }
@@ -88,7 +91,7 @@ export function ResourceIcon({
     return () => {
       window.clearTimeout(id);
     };
-  }, [value, kind, flyToken, enqueue, reduceMotion, unknown]);
+  }, [value, kind, flyToken, enqueue, reduceMotion, unknown, playerId]);
 
   const valueClass =
     flash === 'gain' ? 'text-cta-green' : flash === 'loss' ? 'text-cta-red' : 'text-ink';

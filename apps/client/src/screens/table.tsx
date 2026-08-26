@@ -19,6 +19,7 @@ import {
   type TutorialTourHighlight,
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useReducedMotion } from 'motion/react';
 
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
@@ -30,12 +31,17 @@ import {
   measurePlayFlyout,
   measureSellCardFlyout,
   measureTargetingCue,
+  measureTokenFlyout,
 } from '../fx/play-flyout';
+import {
+  actionLogFlyoutKey,
+  chipsForPublicLogEntry,
+} from '../fx/opponent-token-chips';
 import {
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
-import { THREAT_FX_TTL_MS } from '../fx/motion-timing';
+import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
@@ -166,6 +172,7 @@ function TableScreenInner({
   youWon = false,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
+  const reduceMotion = useReducedMotion();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
@@ -362,6 +369,41 @@ function TableScreenInner({
       enqueue({ kind: 'eliminationBeat', playerId: entry.playerId });
     }
   }, [view.actionLog, enqueue]);
+
+  const seenLogFlyoutKeys = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const seen = seenLogFlyoutKeys.current;
+    if (seen === null) {
+      seenLogFlyoutKeys.current = new Set(view.actionLog.map(actionLogFlyoutKey));
+      return;
+    }
+    for (const entry of view.actionLog) {
+      const key = actionLogFlyoutKey(entry);
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      if (reduceMotion === true) {
+        continue;
+      }
+      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
+      for (const chip of chips) {
+        for (let i = 0; i < chip.count; i++) {
+          const measured = measureTokenFlyout(chip.kind, 'loss', i, chip.playerId);
+          if (measured === null) {
+            break;
+          }
+          const delayMs = i * TOKEN_STAGGER_MS;
+          enqueue({
+            kind: 'tokenFlyout',
+            ...measured,
+            delayMs,
+            expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
+          });
+        }
+      }
+    }
+  }, [view.actionLog, view.you, view.players, enqueue, reduceMotion]);
 
   const lastRewardElimId = useRef<string | null>(null);
   useEffect(() => {

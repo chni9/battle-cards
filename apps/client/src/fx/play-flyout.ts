@@ -18,6 +18,13 @@ function rectOf(el: Element | null): DomRectLite | null {
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
 
+function escapeSelector(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 function tokenRect(center: DomRectLite, size = 28): DomRectLite {
   return {
     left: center.left + center.width / 2 - size / 2,
@@ -51,17 +58,34 @@ export function measurePlayFlyout(
 
 /**
  * Token chip flyout — gain: action log → resource; loss: resource → action log.
+ * Optional `playerId` scopes the resource origin to an opponent seat (L51-09).
  * Callers enqueue one event per unit of |Δ| with staggered delayMs.
  */
+export function tokenFlyoutResourceSelector(
+  kind: ResourceKind,
+  playerId?: string,
+): string {
+  if (playerId !== undefined) {
+    return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"] [data-resource-kind="${escapeSelector(kind)}"]`;
+  }
+  return `[data-zone="resources"] [data-resource-kind="${escapeSelector(kind)}"]`;
+}
+
+export function tokenFlyoutSeatSelector(playerId: string): string {
+  return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"]`;
+}
+
 export function measureTokenFlyout(
   kind: ResourceKind,
   direction: 'gain' | 'loss',
   index = 0,
+  playerId?: string,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
   const resourceEl =
-    document.querySelector(
-      `[data-zone="resources"] [data-resource-kind="${CSS.escape(kind)}"]`,
-    ) ?? document.querySelector(`[data-resource-kind="${CSS.escape(kind)}"]`);
+    playerId !== undefined
+      ? (document.querySelector(tokenFlyoutResourceSelector(kind, playerId)) ??
+        document.querySelector(tokenFlyoutSeatSelector(playerId)))
+      : document.querySelector(tokenFlyoutResourceSelector(kind));
   const logEl = document.querySelector('[data-zone="action-log-panel"]');
   const resource = rectOf(resourceEl);
   const log = rectOf(logEl);

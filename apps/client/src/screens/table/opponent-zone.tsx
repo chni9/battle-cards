@@ -121,27 +121,31 @@ function OpponentSeatResourceRow({
       <ResourceIcon
         kind="life"
         value={value(lives)}
-        flyToken={false}
+        flyToken={display.known}
         className="gap-1"
+        {...(display.known ? { playerId: player.id } : {})}
       />
       <ResourceIcon
         kind="point"
         value={value(points)}
-        flyToken={false}
+        flyToken={display.known}
         className="gap-1"
+        {...(display.known ? { playerId: player.id } : {})}
       />
       <ResourceIcon
         kind="upgradePoint"
         value={value(upgradePoints)}
-        flyToken={false}
+        flyToken={display.known}
         className="gap-1"
+        {...(display.known ? { playerId: player.id } : {})}
       />
       {omitShield ? null : (
         <ResourceIcon
           kind="shield"
           value={value(shield)}
-          flyToken={false}
+          flyToken={display.known}
           className="gap-1"
+          {...(display.known ? { playerId: player.id } : {})}
         />
       )}
     </div>

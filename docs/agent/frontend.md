@@ -210,6 +210,13 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
+  - **Opponent token flyouts (L51-09):** POV dock `ResourceIcon` unchanged. Upgraded Spy
+    seats with live numbers use `flyToken` scoped to that seat (`measureTokenFlyout`
+    `playerId`). Unspied / base Spy enqueue from the public log only (`livesLost`,
+    `shieldAbsorbed`, catalog play/buy/sell/upgrade). Origin is the seat icon (or seat
+    rect); destination is the action-log panel. Skip Draw when kit Draw is hidden.
+    Include life, point, upgrade-point, and shield chips. Reduced motion skips
+    choreography.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
