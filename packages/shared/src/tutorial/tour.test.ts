@@ -39,6 +39,12 @@ describe('tutorial board tour (technical spec v6 §5.4)', () => {
   it('first step copy names your zone', () => {
     expect(tutorialTourStepAt(0)?.coach.body).toMatch(/your zone/i);
   });
+
+  it('flag copy is skip tutorial, not a forfeit', () => {
+    const flag = TUTORIAL_TOUR_STEPS.find((step) => step.highlight === 'flag');
+    expect(flag?.coach.body).toMatch(/skip/i);
+    expect(flag?.coach.body).toMatch(/not a forfeit/i);
+  });
 });
 
 describe('tutorial Look gate (technical spec v6 §5.4)', () => {

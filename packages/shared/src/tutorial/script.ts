@@ -160,7 +160,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'spy',
     coach: {
       title: 'Counter Spy',
-      body: 'A Spy is incoming now ! Play Spy back at them. The same card aimed at the source **cancels both**. You do not want your enemies too see your game plan.',
+      body: 'A Spy is incoming now ! Play Spy back at them. The same card aimed at the source **cancels both**. You do not want your enemies to see your game plan.',
     },
   },
   {
@@ -194,7 +194,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'shop-absorber',
     coach: {
       title: 'Buy',
-      body: 'When you need some cards that are not in your hand, you can buy cards in the Shop. Try it and uy Absorber.',
+      body: 'When you need some cards that are not in your hand, you can buy cards in the Shop. Try it and buy Absorber.',
     },
   },
   {
@@ -228,7 +228,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'super-regeneration',
     coach: {
       title: 'Thief',
-      body: 'A Thief is incoming now. This steals up to **10 points** from you. Spend your points so the opponent gets as little as possible. You have currently **1 life** so play Super Regeneration to restore **lives**. Always use your special cards intelligently as they are only one-use.',
+      body: 'A Thief is incoming now. This steals up to **10 points** from you. Spend your points so the opponent gets as little as possible. You currently have **1 life**, so play Super Regeneration to restore **lives**. Always use your special cards intelligently as they are only one-use.',
     },
   },
   {
@@ -245,7 +245,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'tax',
     coach: {
       title: 'Tax',
-      body: 'Thief took some of your **points**. Use Tax again to gain some more points — Super Regeneration gave you **lives** to spend.',
+      body: 'Thief took some of your **points**. Use Tax again to gain **+4 points** — Super Regeneration gave you **lives** to spend.',
     },
   },
   {

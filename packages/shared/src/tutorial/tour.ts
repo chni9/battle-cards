@@ -52,14 +52,14 @@ export const TUTORIAL_TOUR_STEPS: readonly TutorialTourStep[] = [
     highlight: 'hand',
     coach: {
       title: 'Hand',
-      body: 'These are the cards in your **hand**. You get random cards at the start of the game. You can use your cards multiple times as long as your have enough points to use them.',
+      body: 'These are the cards in your **hand**. You get random cards at the start of the game. You can use your cards multiple times as long as you have enough points to use them.',
     },
   },
   {
     highlight: 'specials',
     coach: {
       title: 'Specials',
-      body: '**Special cards** sit in this row. They are kit specific cards and are only one-use. They are stronger than regular cards. Use them wisely.',
+      body: '**Special cards** sit in this row. They are kit-specific cards and are only one-use. They are stronger than regular cards. Use them wisely.',
     },
   },
   {
@@ -115,7 +115,7 @@ export const TUTORIAL_TOUR_STEPS: readonly TutorialTourStep[] = [
     highlight: 'flag',
     coach: {
       title: 'Leave',
-      body: 'The red flag it to forfeit and leave the game.',
+      body: 'The red flag skips the tutorial and returns to the hub. That is not a forfeit.',
     },
   },
 ];
