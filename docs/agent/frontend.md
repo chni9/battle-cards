@@ -273,12 +273,13 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy / death reveal:** keep the opponent seat compact (kit portrait + “Spied — tap” /
-  “Revealed — tap”). Opening the portrait shows `OpponentRevealDialog` with kit name,
-  resources (live or base Spy snapshot), hand, and specials — this replaces
-  `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`. Dead seats: kit
-  portrait “Eliminated” overlay only — no connection “eliminated” badge and no Bot · hard
-  label (they waste space next to the reveal).
+- **Spy / death reveal (L51-08):** opponent seats always show lives / points /
+  upgrade points / shield icons. Unspied and base Spy render `?` (never unspied
+  totals, never the frozen snapshot numbers). Upgraded Spy and death reveal show
+  live / freeze numbers. The row wraps; shield drops on the seat only if it still
+  overflows. Portrait stays tappable when a Spy or death reveal exists. Dialog
+  title is `{nickname}` for Spy and `{nickname} (eliminated)` on death. No Hidden
+  kit / Spied — tap / Revealed — tap labels.
 - **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
   resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog

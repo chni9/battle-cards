@@ -20,7 +20,8 @@ import { RESOURCE_CAPTIONS, resourceCaptionMode } from './resource-captions';
 
 export interface ResourceIconProps {
   kind: ResourceKind;
-  value: number;
+  /** Numeric amount, or `unknown` for unspied / base Spy seats (L51-08). */
+  value: number | 'unknown';
   label?: string;
   className?: string;
   /** When false, skip enqueueing a token flyout (e.g. opponent seats). Default true. */
@@ -46,13 +47,18 @@ export function ResourceIcon({
   const prev = useRef(value);
   const [flash, setFlash] = useState<'gain' | 'loss' | null>(null);
   const [floatDelta, setFloatDelta] = useState(0);
+  const unknown = value === 'unknown';
 
   useEffect(() => {
     if (prev.current === value) {
       return;
     }
-    const d = value - prev.current;
+    const previous = prev.current;
     prev.current = value;
+    if (unknown || previous === 'unknown' || typeof value !== 'number' || typeof previous !== 'number') {
+      return;
+    }
+    const d = value - previous;
     const nextFlash = d > 0 ? 'gain' : 'loss';
     setFlash(nextFlash);
     setFloatDelta(d);
@@ -82,7 +88,7 @@ export function ResourceIcon({
     return () => {
       window.clearTimeout(id);
     };
-  }, [value, kind, flyToken, enqueue, reduceMotion]);
+  }, [value, kind, flyToken, enqueue, reduceMotion, unknown]);
 
   const valueClass =
     flash === 'gain' ? 'text-cta-green' : flash === 'loss' ? 'text-cta-red' : 'text-ink';
@@ -91,7 +97,7 @@ export function ResourceIcon({
     <span
       data-resource-kind={kind}
       className={`inline-flex items-center gap-1.5 font-sans tabular-nums ${valueClass} ${className}`}
-      title={label}
+      title={unknown ? `${label} unknown` : label}
     >
       <motion.span
         className="inline-flex items-center gap-1.5"
@@ -115,10 +121,10 @@ export function ResourceIcon({
             {label}
           </span>
         ) : (
-          <span className="sr-only">{label} </span>
+          <span className="sr-only">{unknown ? `${label} unknown` : `${label} `}</span>
         )}
         <span className="relative text-sm font-medium">
-          {value}
+          {unknown ? '?' : value}
           {flash !== null && floatDelta !== 0 && reduceMotion !== true && (
             <motion.span
               key={`${flash}-${String(floatDelta)}`}

@@ -1,24 +1,30 @@
 /**
  * Opponent seat — hug content, never crop kit portrait.
- * Spy / death reveal stays compact: click the portrait to open the reveal dialog.
- * Active persistents sit beside the kit as tiny thumbs (not a row above).
+ * Spy / death reveal: click the portrait to open the reveal dialog.
+ * Resource icons always render; unspied / base Spy show `?` (L51-08).
  */
 
 import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
 import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
+import { ResourceIcon } from '../../design/components/resource-icon';
 import { seatIndexOf, seatZoneStyle } from '../../design/seat-colors';
 import {
   persistentToCardInstance,
   shieldActiveInstance,
 } from './active-display';
 import { FlowStatusBadges } from './flow-status-badges';
-import { HIDDEN_KIT_LABEL } from './table-copy';
+import { opponentResourceDisplay } from './opponent-seat-resources';
 import { TutorialCallout } from './tutorial-callout';
 
 export interface OpponentZoneProps {
@@ -74,6 +80,74 @@ function ActiveThumbs({
   );
 }
 
+function OpponentSeatResourceRow({
+  player,
+}: {
+  player: PublicPlayerView;
+}): ReactElement {
+  const display = opponentResourceDisplay(player);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [omitShield, setOmitShield] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = rowRef.current;
+    if (el === null) {
+      return undefined;
+    }
+    const measure = (): void => {
+      setOmitShield(el.scrollWidth > el.clientWidth + 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [display]);
+
+  const value = (amount: number): number | 'unknown' =>
+    display.known ? amount : 'unknown';
+  const lives = display.known ? display.values.lives : 0;
+  const points = display.known ? display.values.points : 0;
+  const upgradePoints = display.known ? display.values.upgradePoints : 0;
+  const shield = display.known ? display.values.shield : 0;
+
+  return (
+    <div
+      ref={rowRef}
+      data-zone="opponent-resources"
+      className="flex w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5"
+    >
+      <ResourceIcon
+        kind="life"
+        value={value(lives)}
+        flyToken={false}
+        className="gap-1"
+      />
+      <ResourceIcon
+        kind="point"
+        value={value(points)}
+        flyToken={false}
+        className="gap-1"
+      />
+      <ResourceIcon
+        kind="upgradePoint"
+        value={value(upgradePoints)}
+        flyToken={false}
+        className="gap-1"
+      />
+      {omitShield ? null : (
+        <ResourceIcon
+          kind="shield"
+          value={value(shield)}
+          flyToken={false}
+          className="gap-1"
+        />
+      )}
+    </div>
+  );
+}
+
 export function OpponentZone({
   view,
   player,
@@ -81,7 +155,6 @@ export function OpponentZone({
   onInspectReveal,
   highlightPortrait = false,
 }: OpponentZoneProps): ReactElement {
-  // Death reveal (Lot 19) beats Spy for dead seats — same display shape.
   const reveal = player.eliminationReveal;
   const spied = player.spied;
   const shownKitId =
@@ -127,7 +200,7 @@ export function OpponentZone({
         <FlowStatusBadges player={player} compact />
       )}
 
-      <div className="mt-1 flex items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
+      <div className="mt-1 flex flex-wrap items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
         <TutorialCallout
           active={highlightPortrait}
           arrow="bottom"
@@ -153,15 +226,7 @@ export function OpponentZone({
           player={player}
           {...(onInspectActive !== undefined ? { onInspectActive } : {})}
         />
-        {revealMode === null ? (
-          <p className="text-[9px] uppercase tracking-wide text-ink-muted sm:text-[10px]">
-            {HIDDEN_KIT_LABEL}
-          </p>
-        ) : (
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-cta-purple sm:text-[10px]">
-            {revealMode === 'elimination' ? 'Revealed — tap' : 'Spied — tap'}
-          </p>
-        )}
+        <OpponentSeatResourceRow player={player} />
       </div>
     </article>
   );

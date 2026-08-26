@@ -591,7 +591,6 @@ function TableScreenInner({
             points: inspectOpponent.spied.points,
             upgradePoints: inspectOpponent.spied.upgradePoints,
             shield: inspectOpponent.spied.shield,
-            resourcesSnapshot: inspectOpponent.spied.resourcesSnapshot,
           }
         : null;
 
@@ -970,9 +969,6 @@ function TableScreenInner({
             ? { upgradePoints: inspectReveal.upgradePoints }
             : {})}
           {...(inspectReveal.shield !== undefined ? { shield: inspectReveal.shield } : {})}
-          {...(inspectReveal.mode === 'spy' && inspectReveal.resourcesSnapshot !== undefined
-            ? { resourcesSnapshot: inspectReveal.resourcesSnapshot }
-            : {})}
           onClose={() => {
             setInspectOpponentId(null);
           }}

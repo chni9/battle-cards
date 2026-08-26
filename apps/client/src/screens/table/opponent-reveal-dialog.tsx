@@ -1,6 +1,7 @@
 /**
  * Spy / death reveal — shown on click so the opponent seat stays compact on mobile.
  * Replaces KitInspectDialog for revealed opponents (live hand + resources, not roster).
+ * Base Spy resources stay `?`; upgraded Spy and death reveal show numbers (L51-08).
  */
 
 import { getKit, type CardInstance, type KitId } from '@card-battle/shared';
@@ -23,15 +24,6 @@ export interface OpponentRevealDialogProps {
   points?: number | undefined;
   upgradePoints?: number | undefined;
   shield?: number | undefined;
-  /** Base Spy frozen snapshot when live resources are absent. */
-  resourcesSnapshot?:
-    | {
-        lives: number;
-        points: number;
-        upgradePoints: number;
-        shield: number;
-      }
-    | undefined;
   onClose: () => void;
   onInspectCard?: ((instanceId: string) => void) | undefined;
 }
@@ -47,27 +39,20 @@ export function OpponentRevealDialog({
   points,
   upgradePoints,
   shield,
-  resourcesSnapshot,
   onClose,
   onInspectCard,
 }: OpponentRevealDialogProps): ReactElement {
   const kit = getKit(kitId);
-  const showLives = lives ?? resourcesSnapshot?.lives;
-  const showPoints = points ?? resourcesSnapshot?.points;
-  const showUpgrade = upgradePoints ?? resourcesSnapshot?.upgradePoints;
-  const showShield = shield ?? resourcesSnapshot?.shield;
-  const hasResources =
-    showLives !== undefined ||
-    showPoints !== undefined ||
-    showUpgrade !== undefined ||
-    showShield !== undefined;
-  const snapshotOnly =
-    lives === undefined && resourcesSnapshot !== undefined;
+  const known =
+    lives !== undefined &&
+    points !== undefined &&
+    upgradePoints !== undefined &&
+    shield !== undefined;
 
   return (
     <Dialog
       open={open}
-      title={mode === 'elimination' ? `${nickname} (eliminated)` : `${nickname} — Spy`}
+      title={mode === 'elimination' ? `${nickname} (eliminated)` : nickname}
       onClose={onClose}
       panelClassName="max-w-lg"
       actions={
@@ -81,27 +66,33 @@ export function OpponentRevealDialog({
         <div className="min-w-0 flex-1 space-y-3">
           <p className="text-sm font-semibold text-ink">{kit.name}</p>
 
-          {hasResources && (
-            <section>
-              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                {snapshotOnly ? 'Resources (at Spy)' : 'Resources'}
-              </h3>
-              <div className="mt-1.5 flex flex-wrap gap-2">
-                {showLives !== undefined && (
-                  <ResourceIcon kind="life" value={showLives} flyToken={false} />
-                )}
-                {showPoints !== undefined && (
-                  <ResourceIcon kind="point" value={showPoints} flyToken={false} />
-                )}
-                {showUpgrade !== undefined && (
-                  <ResourceIcon kind="upgradePoint" value={showUpgrade} flyToken={false} />
-                )}
-                {showShield !== undefined && (
-                  <ResourceIcon kind="shield" value={showShield} flyToken={false} />
-                )}
-              </div>
-            </section>
-          )}
+          <section>
+            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+              Resources
+            </h3>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              <ResourceIcon
+                kind="life"
+                value={known ? lives : 'unknown'}
+                flyToken={false}
+              />
+              <ResourceIcon
+                kind="point"
+                value={known ? points : 'unknown'}
+                flyToken={false}
+              />
+              <ResourceIcon
+                kind="upgradePoint"
+                value={known ? upgradePoints : 'unknown'}
+                flyToken={false}
+              />
+              <ResourceIcon
+                kind="shield"
+                value={known ? shield : 'unknown'}
+                flyToken={false}
+              />
+            </div>
+          </section>
 
           <section>
             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
