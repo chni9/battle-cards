@@ -42,63 +42,63 @@ export const TUTORIAL_TOUR_STEPS: readonly TutorialTourStep[] = [
     highlight: 'your-zone',
     coach: {
       title: 'Your zone',
-      body: 'This dock is **your zone**. Your kit, cards, Incoming, and resources live here.',
+      body: 'This dock is **your zone**. Your kit, cards, and resources live here.',
     },
   },
   {
     highlight: 'hand',
     coach: {
       title: 'Hand',
-      body: 'These are the cards in your **hand**. Attack and action cards stay here after you play them.',
+      body: 'These are the cards in your **hand**. You get random cards at the start of the game. You can use your cards multiple times as long as your have enough points to use them.',
     },
   },
   {
     highlight: 'specials',
     coach: {
       title: 'Specials',
-      body: '**Specials** sit in this row. They are usually one-use.',
+      body: '**Special cards** sit in this row. They are kit specific cards and are only one-use. They are stronger than regular cards. Use them wisely.',
     },
   },
   {
     highlight: 'resources',
     coach: {
       title: 'Resources',
-      body: 'This row is your status: **lives**, shield, **points**, and **upgrade points**.',
+      body: 'This row is your status: **lives**, **shield**, **points**, and **upgrade points**.',
     },
   },
   {
     highlight: 'incoming',
     coach: {
       title: 'Incoming',
-      body: '**Incoming** shows delayed effects aimed at you. They wait until after you act. It is empty for now.',
+      body: '**This zone** shows you incoming actions aimed at you from your opponents. It will take effect after you act, giving you time to react. It is empty for now.',
     },
   },
   {
     highlight: 'shop',
     coach: {
       title: 'Shop',
-      body: 'The **Shop** is where you spend **points** to buy cards and **upgrade points**. You will open it later.',
+      body: 'The **Shop** is where you spend **points** to buy cards and **upgrade points**.',
     },
   },
   {
     highlight: 'opponent',
     coach: {
       title: 'Opponent',
-      body: 'That seat is your opponent. Their kit and cards stay hidden until Spy reveals them.',
+      body: 'That seat is your opponent. You can have multiple opponents in the game. Their kit and cards stay hidden until Spy reveals them.',
     },
   },
   {
     highlight: 'action-log',
     coach: {
       title: 'Action log',
-      body: 'The action log lists every public action this game.',
+      body: 'The action log lists every public action this game. This is where you will follow the game and see what your opponents are doing.',
     },
   },
   {
     highlight: 'timer',
     coach: {
       title: 'Turn strip',
-      body: 'This strip shows whose turn it is. The tutorial has no turn countdown.',
+      body: 'This strip shows whose turn it is and how much time is left in your turn. Here in the tutorial we have no turn countdown.',
     },
   },
   {
@@ -112,7 +112,7 @@ export const TUTORIAL_TOUR_STEPS: readonly TutorialTourStep[] = [
     highlight: 'flag',
     coach: {
       title: 'Leave',
-      body: 'The red flag skips the tutorial and returns to the hub. That is not a forfeit.',
+      body: 'The red flag it to forfeit and leave the game.',
     },
   },
 ];

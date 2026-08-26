@@ -194,7 +194,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'shop-absorber',
     coach: {
       title: 'Buy',
-      body: 'Buying a card spends its Shop price — **double** the play cost — and puts that card into your hand. Buy Absorber.',
+      body: 'When you need some cards that are not in your hand, you can buy cards in the Shop. Try it and uy Absorber.',
     },
   },
   {
@@ -228,7 +228,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'super-regeneration',
     coach: {
       title: 'Thief',
-      body: 'A Thief is incoming now. When it resolves after you act, it steals up to **10 points** from you. Spend your points so the opponent gets as little as possible. You have **1 life**. Play Super Regeneration to restore **lives**. Special cards are only one-use.',
+      body: 'A Thief is incoming now. This steals up to **10 points** from you. Spend your points so the opponent gets as little as possible. You have currently **1 life** so play Super Regeneration to restore **lives**. Always use your special cards intelligently as they are only one-use.',
     },
   },
   {
@@ -245,7 +245,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'tax',
     coach: {
       title: 'Tax',
-      body: 'Thief took some of your **points**. Use Tax again — Super Regeneration gave you **lives** to spend. **+4 points**.',
+      body: 'Thief took some of your **points**. Use Tax again to gain some more points — Super Regeneration gave you **lives** to spend.',
     },
   },
   {
@@ -296,7 +296,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'absorber',
     coach: {
       title: 'Absorber',
-      body: 'Play Absorber on them. Absorber makes you gain the **lives** they **lost on their last turn**.',
+      body: 'Your opponent just lost **3 lives** ! Play Absorber on them. Absorber makes you gain the **lives** they **lost on their last turn**.',
     },
   },
   {
@@ -313,7 +313,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Finish',
-      body: 'You are being attacked by a Strong attack ! Play your upgraded Basic attack back. **3** versus **2** cancels their weaker Strong; yours stays active and will kill them on their turn (they have **1 life** left).',
+      body: 'You are being attacked by a Strong attack ! Play your upgraded Basic attack back. Your stronger upgraded Basic attack cancels their weaker Strong; yours stays active and will kill them on their turn (they have only **1 life** left).',
     },
   },
   {
