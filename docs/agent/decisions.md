@@ -2629,6 +2629,20 @@ Storage stays `card-battle.v6.hints` `{ dismissed, skipAll }`. Corrupt JSON is e
 Got it / Skip all write the blob; Hide is session-only. Completing the tutorial still
 does not set `skipAll` (L46-03). Best-action selector lands in L46-02.
 
+## 2026-08-26 · [P] First-game hint selector and auto-Got-it (L46-02)
+
+Designer 2026-08-26. Client has zero rule logic: the selector only ranks teaching topics
+from view facts.
+
+**On your turn:** real Incoming to POV → `your-turn` → `draw` → `shop` → `resources` →
+`hidden-kit` (unspied living opponent). **Off your turn:** Incoming → hidden-kit, else none.
+
+**Auto-Got-it:** playing intent dismisses `your-turn` (and `incoming` if that Incoming is
+still on you); Draw also dismisses `draw`; opening Shop dismisses `shop`; opponent portrait
+dismisses `hidden-kit`; Incoming leaving the view dismisses `incoming`; `resources` is
+manual Got it only. Card is placed next to `data-hint-anchor`. No callout rings.
+
+
 
 
 

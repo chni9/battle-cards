@@ -1,5 +1,5 @@
 /**
- * First-real-game hint selector — technical spec v6 §5.2 / L46.
+ * First-real-game hint selector — technical spec v6 §5.2 / L46-02.
  * View facts only. Never recommends a legal card.
  */
 
@@ -29,15 +29,67 @@ function isOpen(dismissed: readonly HintId[], id: HintId): boolean {
 }
 
 /**
- * L46-01 stub: Classic alive + your turn → `your-turn`.
- * L46-02 replaces this with the locked best-action table.
+ * Locked 2026-08-26: one undismissed topic, highest first.
+ * On turn: incoming → your-turn → draw → shop → resources → hidden-kit.
+ * Off turn: incoming → hidden-kit.
  */
 export function selectHint(input: SelectHintInput): HintId | null {
   if (!shouldShowFirstGameHints(input) || input.skipAll) {
     return null;
   }
-  if (input.isMyTurn && isOpen(input.dismissed, 'your-turn')) {
+
+  if (input.hasRealIncoming && isOpen(input.dismissed, 'incoming')) {
+    return 'incoming';
+  }
+
+  if (!input.isMyTurn) {
+    if (input.hasUnspiedLivingOpponent && isOpen(input.dismissed, 'hidden-kit')) {
+      return 'hidden-kit';
+    }
+    return null;
+  }
+
+  if (isOpen(input.dismissed, 'your-turn')) {
     return 'your-turn';
   }
+  if (isOpen(input.dismissed, 'draw')) {
+    return 'draw';
+  }
+  if (isOpen(input.dismissed, 'shop')) {
+    return 'shop';
+  }
+  if (isOpen(input.dismissed, 'resources')) {
+    return 'resources';
+  }
+  if (input.hasUnspiedLivingOpponent && isOpen(input.dismissed, 'hidden-kit')) {
+    return 'hidden-kit';
+  }
   return null;
+}
+
+export type HintDismissCause =
+  | 'playing-intent'
+  | 'draw'
+  | 'open-shop'
+  | 'inspect-opponent'
+  | 'incoming-cleared';
+
+export function hintIdsDismissedBy(
+  cause: HintDismissCause,
+  ctx: { hasRealIncoming: boolean },
+): readonly HintId[] {
+  switch (cause) {
+    case 'playing-intent':
+      return ctx.hasRealIncoming ? ['your-turn', 'incoming'] : ['your-turn'];
+    case 'draw':
+      return ctx.hasRealIncoming
+        ? ['your-turn', 'draw', 'incoming']
+        : ['your-turn', 'draw'];
+    case 'open-shop':
+      return ['shop'];
+    case 'inspect-opponent':
+      return ['hidden-kit'];
+    case 'incoming-cleared':
+      return ['incoming'];
+  }
 }

@@ -210,7 +210,16 @@ Controls: **Got it** (dismiss this id) · **Skip all**. Table **How to play** st
 Do not block the turn timer; do not require dismissing to act (the overlay is pointer-events
 on the coach card only, not a full-screen trap — except the first `your-turn` may sit beside
 the existing Your-turn flash, not replace it). Tutorial matches use the L45 coach, never these
-ids. Selector table and auto-Got-it: L46-02.
+ids.
+
+**Selector (designer 2026-08-26):** one undismissed card. Not a legal-action recommender.
+On your turn: `incoming` (real Incoming to POV, ignore `persistent:`) → `your-turn` →
+`draw` → `shop` → `resources` → `hidden-kit` (unspied living opponent). Off your turn:
+`incoming` → `hidden-kit`, else none. Card sits next to `data-hint-anchor`; no rings.
+
+**Auto-Got-it** (plus the Got it button): `your-turn` on any playing intent; `draw` on Draw;
+`shop` when Shop opens; `incoming` on a playing intent while it still targets you, or when
+it leaves the view; `hidden-kit` when an opponent portrait opens; `resources` is Got it only.
 
 ### 5.3 Tutorial — setup overrides
 

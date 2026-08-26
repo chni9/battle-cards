@@ -25,11 +25,16 @@ import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors'
 import { HintOverlay } from '../help/hint-overlay';
 import {
   dismissHint,
+  dismissHints,
   markHowToPlaySeen,
   readHintState,
   skipAllHints,
 } from '../help/help-storage';
-import { selectHint } from '../help/select-hint';
+import {
+  hintIdsDismissedBy,
+  selectHint,
+  type HintDismissCause,
+} from '../help/select-hint';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -209,6 +214,15 @@ function TableScreenInner({
     return true;
   };
 
+  const noteHintCause = (cause: HintDismissCause): void => {
+    if (view.playKind === 'tutorial') {
+      return;
+    }
+    const hasRealIncoming =
+      incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    setHintState(dismissHints(hintIdsDismissedBy(cause, { hasRealIncoming })));
+  };
+
   const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
     const card = findOwnCard(instanceId);
     if (view.playKind === 'tutorial') {
@@ -226,6 +240,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onPlayCard(instanceId, options);
     if (card === undefined) {
       return;
@@ -242,6 +257,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'playMultipleAttacks' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onPlayMultipleAttacks(attacks);
     const first = attacks[0];
     if (first === undefined) {
@@ -261,6 +277,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'draw' })) {
       return;
     }
+    noteHintCause('draw');
     // Points Δ → ResourceIcon enqueues log ↔ token chips (avoid double flyout).
     onDraw();
   };
@@ -269,6 +286,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buyUpgradePoint' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuyUpgradePoint();
   };
 
@@ -276,6 +294,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'sellUpgradePoint' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onSellUpgradePoint();
   };
 
@@ -283,6 +302,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buyCard', cardId })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuyCard(cardId);
     const measured = measureBuyCardFlyout(cardId);
     if (measured !== null) {
@@ -294,6 +314,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buySpecialCard' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuySpecialCard();
     const measured = measureBuySpecialFlyout();
     if (measured !== null) {
@@ -312,6 +333,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onSellCard(instanceId);
     if (card === undefined) {
       return;
@@ -333,6 +355,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onUpgradeCard(instanceId);
   };
 
@@ -416,6 +439,21 @@ function TableScreenInner({
       }
     }
   }, [view.pendingEffects, view.you, enqueue]);
+
+  const hadRealIncomingRef = useRef(false);
+  useEffect(() => {
+    const now = incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    if (view.playKind === 'tutorial') {
+      hadRealIncomingRef.current = now;
+      return;
+    }
+    if (hadRealIncomingRef.current && !now) {
+      setHintState(
+        dismissHints(hintIdsDismissedBy('incoming-cleared', { hasRealIncoming: false })),
+      );
+    }
+    hadRealIncomingRef.current = now;
+  }, [view.pendingEffects, view.you, view.playKind]);
 
   const mirrorHighlightIds =
     subChoice?.kind === 'mirror' ? subChoice.eligibleEffectIds : [];
@@ -581,6 +619,8 @@ function TableScreenInner({
       player.spied === undefined &&
       player.eliminationReveal === undefined,
   );
+  const hasRealIncoming =
+    incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
   const currentHint = selectHint({
     playKind: view.playKind,
     readOnly,
@@ -588,7 +628,7 @@ function TableScreenInner({
     isMyTurn: isMyTurn && !readOnly && !selfEliminated,
     skipAll: hintState.skipAll,
     dismissed: hintState.dismissed,
-    hasRealIncoming: incomingTargetingYouIds(view.pendingEffects, view.you).size > 0,
+    hasRealIncoming,
     hasUnspiedLivingOpponent,
   });
   const hintDialogOpen =
@@ -852,6 +892,7 @@ function TableScreenInner({
                       if (view.playKind === 'tutorial') {
                         setPortraitInspected(true);
                       }
+                      noteHintCause('inspect-opponent');
                       setInspectKitId(null);
                       setInspectOpponentId(player.id);
                     },
@@ -942,6 +983,7 @@ function TableScreenInner({
               if (overlayLocksTable) {
                 return;
               }
+              noteHintCause('open-shop');
               setDialog({ kind: 'shop' });
             }}
             {...(economySpotlight !== undefined ? { spotlight: economySpotlight } : {})}

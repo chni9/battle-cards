@@ -87,6 +87,8 @@ rules above are unchanged — this section only covers how the client looks.
   copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
   **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
   `CoachPanel` chrome as tutorial, `data-zone="first-game-hint"`, Got it / Skip all.
+  Selector (L46-02) ranks one undismissed topic from view facts; auto-Got-it on Draw / Shop /
+  play / portrait / Incoming clear. Card sits next to `data-hint-anchor` (no rings).
   `leave` is not a hint id. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).

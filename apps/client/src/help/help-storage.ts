@@ -110,6 +110,21 @@ export function skipAllHints(): HintStorageState {
   return next;
 }
 
+export function dismissHints(ids: readonly HintId[]): HintStorageState {
+  let current = readHintState();
+  for (const id of ids) {
+    if (current.skipAll || current.dismissed.includes(id)) {
+      continue;
+    }
+    current = {
+      dismissed: [...current.dismissed, id],
+      skipAll: current.skipAll,
+    };
+  }
+  writeHintState(current);
+  return current;
+}
+
 function normalizeHintState(value: unknown): HintStorageState {
   if (typeof value !== 'object' || value === null) {
     return EMPTY_HINT_STATE;

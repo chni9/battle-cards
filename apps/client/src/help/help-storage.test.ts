@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   dismissHint,
+  dismissHints,
   EMPTY_HINT_STATE,
   hasSeenHowToPlay,
   HINTS_STORAGE_KEY,
@@ -117,5 +118,13 @@ describe('hint storage blob (technical spec v6 §5.2 / L46-01)', () => {
       skipAll: true,
     });
     expect(readHintState().skipAll).toBe(true);
+  });
+
+  it('dismissHints writes several ids in one blob', () => {
+    withStorage();
+    expect(dismissHints(['your-turn', 'draw'])).toEqual({
+      dismissed: ['your-turn', 'draw'],
+      skipAll: false,
+    });
   });
 });

@@ -1,9 +1,9 @@
 /**
- * Hovering first-game hint — technical spec v6 §5.2 / L46-01.
- * Not a Dialog. Hide is session-only; Got it / Skip all write localStorage.
+ * Hovering first-game hint — technical spec v6 §5.2 / L46-02.
+ * Not a Dialog. Anchored next to `data-hint-anchor`; no rings.
  */
 
-import { useState, type ReactElement } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from 'react';
 
 import { CoachPanel } from '../design/components/coach-panel';
 import { Button } from '../design/components/button';
@@ -16,6 +16,7 @@ import {
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
 import type { HintId } from './hint-ids';
+import { placeHintCard } from './place-hint-card';
 
 export interface HintOverlayProps {
   hintId: HintId;
@@ -32,16 +33,51 @@ export function HintOverlay({
   onSkipAll,
 }: HintOverlayProps): ReactElement | null {
   const [hiddenKey, setHiddenKey] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const copy = HINT_COPY[hintId];
   const open = hiddenKey !== hintId;
+
+  useLayoutEffect(() => {
+    const slot = cardRef.current;
+    if (slot === null || dialogOpen || !open) {
+      return;
+    }
+    const node = document.querySelector(`[data-hint-anchor="${hintId}"]`);
+    if (!(node instanceof HTMLElement)) {
+      slot.style.top = '';
+      slot.style.left = '0.5rem';
+      slot.style.bottom = '7.5rem';
+      return;
+    }
+    const anchor = node.getBoundingClientRect();
+    const placed = placeHintCard(
+      {
+        top: anchor.top,
+        left: anchor.left,
+        width: anchor.width,
+        height: anchor.height,
+      },
+      { width: slot.offsetWidth, height: slot.offsetHeight },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    slot.style.top = `${String(placed.top)}px`;
+    slot.style.left = `${String(placed.left)}px`;
+    slot.style.bottom = 'auto';
+  }, [hintId, dialogOpen, open]);
 
   if (dialogOpen) {
     return null;
   }
 
+  const slotStyle: CSSProperties = { bottom: '7.5rem', left: '0.5rem' };
+
   return (
     <div className="pointer-events-none fixed inset-0 z-[105]">
-      <div className="pointer-events-auto absolute bottom-[7.5rem] left-2 w-[min(22rem,calc(100vw-1rem))] sm:bottom-[8.5rem]">
+      <div
+        ref={cardRef}
+        className="pointer-events-auto absolute w-[min(22rem,calc(100vw-1rem))]"
+        style={slotStyle}
+      >
         {open ? (
           <CoachPanel
             key={hintId}
