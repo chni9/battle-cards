@@ -338,8 +338,10 @@ Reconnects with `tutorialIndex !== 0` skip the tour. Until Got it finishes, game
 **Look gate (client-only, after Spy resolves):** Spy is played at index 7 and resolves after
 the bot acts at index 8. Before the human sell at index 9, the coach tells them they can
 **click the opponent** to see kit and cards. That click is a forced table action (no Got it).
-Sell and other sends stay blocked until the Spy reveal dialog opens. After one successful
-inspect, the gate does not block again.
+Index 9 sends stay blocked until the Spy reveal dialog opens. The Look overlay is **only**
+index 9 — it must not return on later indices or on the finished board. After one successful
+inspect, the gate does not block again. The hovering coach is hidden when the table is
+`readOnly` (Tutorial complete).
 
 **Rejects:** `'tutorial-follow-coach'` — message: `This tutorial step asks for a different
 action.` Client maps to coach-tinted copy (do not send the illegal intent).

@@ -437,7 +437,8 @@ function TableScreenInner({
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
   const tutorialIndex = view.playKind === 'tutorial' ? view.tutorialIndex : null;
   const tourActive = isTutorialTourActive(tutorialIndex, tourStep);
-  const lookPending = isTutorialLookPending(tutorialIndex, portraitInspected);
+  const lookPending =
+    !readOnly && isTutorialLookPending(tutorialIndex, portraitInspected);
   const tourHighlight: TutorialTourHighlight | undefined = tourActive
     ? tutorialTourStepAt(tourStep)?.highlight
     : undefined;
@@ -918,6 +919,7 @@ function TableScreenInner({
       />
 
       {tutorialIndex !== null &&
+      !readOnly &&
       coachTitle !== undefined &&
       coachBody !== undefined &&
       tutorialCoachKey !== null ? (

@@ -87,6 +87,13 @@ describe('resolveTutorialCoach (L45-05)', () => {
     expect(afterLook?.copy.title).toBe('Sell');
   });
 
+  it('does not replay Look copy at the end of the tutorial', () => {
+    expect(isTutorialLookPending(30, false)).toBe(false);
+    const end = resolveTutorialPresentationCoach(30, TUTORIAL_TOUR_STEPS.length, false);
+    expect(end?.copy.body).not.toMatch(/Spy has resolved/i);
+    expect(end?.copy.title).not.toBe('Look');
+  });
+
   it('index 19 coaches Thief then Super Regeneration', () => {
     const coach = resolveTutorialCoach(19);
     expect(coach?.title).toBe('Thief');

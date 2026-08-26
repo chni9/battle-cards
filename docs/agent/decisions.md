@@ -2609,8 +2609,10 @@ Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No 
 - Index 8 has no Look coach on the script row (bot draw; keep last Spy copy).
 - After index 8, a client gate requires clicking the opponent portrait to open the Spy
   reveal. Coach: they can now click to see opponent info. No Got it — the click is the action.
-- Sell (index 9) and later sends stay blocked until that inspect. After one successful
-  inspect, never block again.
+- The gate is **index 9 only**. Later indices (including 30 / Tutorial complete) must not
+  replay Look. Sell at 9 stays blocked until that inspect. After one successful inspect,
+  never block again.
+- Hovering coach is hidden on a `readOnly` finished table.
 
 **Coach chrome**
 

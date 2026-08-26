@@ -28,9 +28,12 @@ export interface TutorialTourStep {
 
 /**
  * Spy queued at 7 resolves after the bot acts at this index.
- * Look is required before the next human send (index 9 sell).
+ * Look is required only on the next human send (index 9 sell), not later.
  */
 export const TUTORIAL_SPY_RESOLVE_INDEX = 8;
+
+/** First human index after Spy resolves — the Look gate lives here only. */
+export const TUTORIAL_LOOK_INDEX = TUTORIAL_SPY_RESOLVE_INDEX + 1;
 
 export const TUTORIAL_LOOK_COACH: TutorialCoachCopy = {
   title: 'Look',
@@ -136,9 +139,5 @@ export function isTutorialLookPending(
   tutorialIndex: number | null,
   portraitInspected: boolean,
 ): boolean {
-  return (
-    tutorialIndex !== null &&
-    tutorialIndex > TUTORIAL_SPY_RESOLVE_INDEX &&
-    !portraitInspected
-  );
+  return tutorialIndex === TUTORIAL_LOOK_INDEX && !portraitInspected;
 }
