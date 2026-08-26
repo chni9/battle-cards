@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SHARED_CARD_CATALOG } from './card-catalog';
+import { getCard, SHARED_CARD_CATALOG } from './card-catalog';
 import {
   formatCardCost,
   formatCardEffectText,
@@ -8,6 +8,7 @@ import {
   formatPlayCost,
 } from './card-label';
 import { SPECIAL_CARD_CATALOG } from './special-card-catalog';
+import { SHARED_CARD_IDS, SPECIAL_CARD_IDS } from './card';
 
 describe('formatCardLabel', () => {
   it('appends + for upgraded copies', () => {
@@ -32,29 +33,59 @@ describe('formatCardCost / formatPlayCost', () => {
   });
 });
 
-describe('formatCardEffectText', () => {
-  it('prefixes play cost and shows base effect plus upgrade preview when not upgraded', () => {
+describe('formatCardEffectText (L51-05)', () => {
+  it('shows base effect plus upgradeAdds when not upgraded, with no Cost prefix', () => {
     const card = SHARED_CARD_CATALOG['basic-attack'];
     expect(formatCardEffectText(card, false)).toBe(
-      `Cost: 1 pt\n\n${card.effect}\n\nUpgrade: ${card.upgradeEffect}`,
+      `${card.effect}\n\nUpgrade: ${card.upgradeAdds}`,
     );
+    expect(formatCardEffectText(card, false)).not.toMatch(/^Cost:/);
+    expect(formatCardEffectText(card, false)).not.toContain('Deal 3 damage to an opponent.');
   });
 
-  it('prefixes play cost and shows only the upgraded description when upgraded', () => {
+  it('shows only the upgraded description when upgraded', () => {
     const card = SHARED_CARD_CATALOG.absorber;
-    expect(formatCardEffectText(card, true)).toBe(
-      `Cost: 3 pts\n\n${card.upgradeEffect}`,
-    );
+    expect(formatCardEffectText(card, true)).toBe(card.upgradeEffect);
     expect(formatCardEffectText(card, true)).not.toContain('Upgrade:');
     expect(formatCardEffectText(card, true)).not.toContain(card.effect);
+    expect(formatCardEffectText(card, true)).not.toMatch(/^Cost:/);
   });
 
   it('keeps upgradeEffect as a standalone upgraded description for specials', () => {
     const card = SPECIAL_CARD_CATALOG.block;
     expect(card.upgradeEffect).toContain('7 consecutive turns');
-    expect(formatCardEffectText(card, true)).toContain(card.upgradeEffect);
-    expect(formatCardEffectText(card, true)).toContain('Cost:');
+    expect(formatCardEffectText(card, true)).toBe(card.upgradeEffect);
     expect(formatCardEffectText(card, false)).toContain(card.effect);
-    expect(formatCardEffectText(card, false)).toContain('Upgrade:');
+    expect(formatCardEffectText(card, false)).toContain(card.upgradeAdds);
+    expect(formatCardEffectText(card, false)).not.toBe(card.upgradeEffect);
+  });
+
+  it('has upgradeAdds on every catalog card', () => {
+    const ids = [...SHARED_CARD_IDS, ...SPECIAL_CARD_IDS];
+    for (const id of ids) {
+      const card = getCard(id);
+      expect(card?.upgradeAdds.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('locks derived upgradeAdds copy (L51-05)', () => {
+    expect(SHARED_CARD_CATALOG['basic-attack'].upgradeAdds).toBe(
+      'Deal 3 damage instead of 1.',
+    );
+    expect(SHARED_CARD_CATALOG['strong-attack'].upgradeAdds).toBe(
+      'Deal 4 damage instead of 2.',
+    );
+    expect(SHARED_CARD_CATALOG['super-attack'].upgradeAdds).toBe(
+      'Deal 10 damage instead of 7.',
+    );
+    expect(SHARED_CARD_CATALOG.spy.upgradeAdds).toBe(
+      'Also see live lives, points, upgrade points, and shield.',
+    );
+    expect(SPECIAL_CARD_CATALOG.sentence.upgradeAdds).toBe(
+      'The random draw never picks you.',
+    );
+    expect(SPECIAL_CARD_CATALOG['mega-attack'].upgradeAdds).toBe(
+      'Cannot be redirected.',
+    );
   });
 });

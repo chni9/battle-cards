@@ -30,7 +30,8 @@ import { SeatTile } from '../../design/components/seat-tile';
 import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motion-timing';
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
-import { cardEffectText, visibleKitId } from './table-helpers';
+import { CardEffectCopy } from '../../design/components/card-effect-copy';
+import { visibleKitId } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
 const REGEN_QUANTITIES = [1, 2, 3, 4] as const;
@@ -146,27 +147,23 @@ export function CardActions(props: CardActionsProps): ReactElement {
 
   const actionsOpen = dialog?.kind === 'actions';
   const actionInstance = dialog?.kind === 'actions' ? dialog.instance : null;
+  const actionDefinition =
+    actionInstance !== null ? getCard(actionInstance.cardId) : undefined;
   const fromSpecial = dialog?.kind === 'actions' ? dialog.fromSpecial : false;
-  const actionEffect =
-    actionInstance !== null ? cardEffectText(actionInstance) : '';
   const actionPlayCost =
-    actionInstance !== null
-      ? (() => {
-          const definition = getCard(actionInstance.cardId);
-          return definition === undefined
-            ? null
-            : structuredPlayCost(definition, actionInstance.isUpgraded);
-        })()
+    actionInstance !== null && actionDefinition !== undefined
+      ? structuredPlayCost(actionDefinition, actionInstance.isUpgraded)
       : null;
-  const inspectEffect =
-    dialog?.kind === 'inspect' ? cardEffectText(dialog.instance) : '';
   const actionSellCost =
-    actionInstance !== null
-      ? structuredCostFromCardCost(getCard(actionInstance.cardId)?.sellYield)
+    actionDefinition !== undefined
+      ? structuredCostFromCardCost(actionDefinition.sellYield)
       : null;
   const reduceMotion = useReducedMotion();
   const transformerUseBlocked =
     actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
+  const inspectInstance = dialog?.kind === 'inspect' ? dialog.instance : null;
+  const inspectDefinition =
+    inspectInstance !== null ? getCard(inspectInstance.cardId) : undefined;
 
   return (
     <>
@@ -281,11 +278,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
           <div className="flex gap-3">
             <Card instance={actionInstance} detail="face" className="w-24 shrink-0" />
             <div className="min-w-0 space-y-2">
-              {actionEffect.length > 0 && (
-                <p className="whitespace-pre-line text-sm leading-snug text-ink">
-                  {actionEffect}
-                </p>
-              )}
+              {actionDefinition !== undefined ? (
+                <CardEffectCopy
+                  card={actionDefinition}
+                  isUpgraded={actionInstance.isUpgraded}
+                />
+              ) : null}
               <p className="text-sm text-ink-muted">
                 {!isMyTurn || actionsLocked
                   ? 'Actions locked — you can still read the card.'
@@ -319,11 +317,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
               className="w-28 shrink-0"
             />
             <div className="min-w-0 space-y-2 text-center sm:text-left">
-              {inspectEffect.length > 0 && (
-                <p className="whitespace-pre-line text-sm leading-snug text-ink">
-                  {inspectEffect}
-                </p>
-              )}
+              {inspectDefinition !== undefined && inspectInstance !== null ? (
+                <CardEffectCopy
+                  card={inspectDefinition}
+                  isUpgraded={inspectInstance.isUpgraded}
+                />
+              ) : null}
               {dialog.source === 'active' ? (
                 <>
                   <p className="text-sm font-semibold text-ink">Active</p>

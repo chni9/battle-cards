@@ -144,9 +144,11 @@ rules above are unchanged — this section only covers how the client looks.
   shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
   without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
   Short docks may still shrink below 48 so faces are not cropped.
-- **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
-  Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
-  `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
+- **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
+  Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
+  show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
+  `upgradeEffect`. `formatCardEffectText` matches that copy (no `Cost:` prefix) for
+  non-dialog surfaces. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
   Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
   action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
@@ -207,8 +209,8 @@ rules above are unchanged — this section only covers how the client looks.
     No wire field.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
-    How-to-play, kit lore, and action-log prose stay text
-    via `formatCardCost`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
+    card inspect use `CostDisplay`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
