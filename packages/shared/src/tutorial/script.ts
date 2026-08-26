@@ -65,7 +65,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'draw',
     coach: {
       title: 'Draw',
-      body: 'Your **points** are what you spend to play many cards and to buy things in the Shop. Draw gives **points**, not a card. Draw once.',
+      body: 'Your **points** are what you spend to play many cards and to buy things in the Shop. Draw gives **points**. Draw once.',
     },
   },
   {
@@ -75,7 +75,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'tax',
     coach: {
       title: 'Tax',
-      body: 'Your **lives** are your health. If they reach 0, you are eliminated. Tax spends **1 life** (a Shield does not stop that) and gives you **4 points**. Play Tax.',
+      body: 'Your **lives** are your health. If they reach 0, you are eliminated. Tax spends **1 life** and gives you **4 points** in return. Try it.',
     },
   },
   {
@@ -92,7 +92,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Counter',
-      body: 'Incoming is the delayed effects aimed at you. They wait until after you play your own action, so you can still react. A Basic attack is incoming now — that is the red highlight. Play your Basic attack back at them. **Equal** damage cancels **both** attacks.',
+      body: 'Incoming attack ! It is aimed at you. It will take effect after you play your own action, so you can still react. A Basic attack is incoming now — that is the red highlight. Play your Basic attack back at them. **Equal** damage cancels **both** attacks.',
     },
   },
   {
@@ -126,7 +126,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'spy',
     coach: {
       title: 'Spy',
-      body: 'Spy reveals their kit and the cards they hold when it resolves on their next turn — not instantly. Play Spy.',
+      body: 'Spy reveals their kit, the cards they hold and their lives, points, etc. when it resolves on their next turn — not instantly. Play Spy now.',
     },
   },
   {
@@ -136,7 +136,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'opponent-portrait',
     coach: {
       title: 'Look',
-      body: 'Spy resolved. **Click their portrait** to see their kit and cards.',
+      body: 'Spy resolved. **Click on their portrait** to see their kit and cards.',
     },
   },
   {
@@ -146,7 +146,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'sell-shield',
     coach: {
       title: 'Sell',
-      body: 'Your cards sit in your hand, not in a separate deck. Selling a card **removes it from your hand** and gives you its play cost back in **points**. Sell **one** Shield and keep the other.',
+      body: 'Your cards sit in your hand, not in a separate deck. Selling a card **removes it from your hand** and gives you its play cost back in **points**. Sell **one** Shield and keep the other. You can sell as many cards as you want.',
     },
   },
   {
@@ -163,7 +163,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'spy',
     coach: {
       title: 'Counter Spy',
-      body: 'A Spy is incoming now — that is the red highlight. Play Spy back at them. The same card aimed at the source **cancels both**.',
+      body: 'A Spy is incoming now ! Play Spy back at them. The same card aimed at the source **cancels both**. You do not want your enemies too see your game plan.',
     },
   },
   {
@@ -197,7 +197,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'shop-absorber',
     coach: {
       title: 'Buy',
-      body: 'Buying a card spends its Shop price — **double** the play cost — and puts that card into your hand. Buy Absorber. Never buy Basic: attack cards stay in your hand after you play them, so you already have the one you need.',
+      body: 'Buying a card spends its Shop price — **double** the play cost — and puts that card into your hand. Buy Absorber.',
     },
   },
   {
@@ -214,7 +214,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'shield',
     coach: {
       title: 'Shield',
-      body: 'A Strong attack is incoming now — that is the red highlight. **Shield** stops **attack** damage; it does not stop Tax. Play your remaining Shield. After you act, their Strong resolves and the Shield absorbs it.',
+      body: 'A Strong attack is incoming now ! Shield stops **attack** damage by giving you **shield** points. Play Shield now. After you act, their Strong attack resolves and the Shield absorbs it. You can play Shield at any time, not only when getting attacked.',
     },
   },
   {
@@ -231,7 +231,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'super-regeneration',
     coach: {
       title: 'Thief',
-      body: 'A Thief is incoming now — that is the red highlight. When it resolves after you act, it steals **points** from you. You have **1 life**. Play Super Regeneration to restore **lives** (the cap is 25). Specials are usually one-use.',
+      body: 'A Thief is incoming now. When it resolves after you act, it steals up to **10 points** from you. Spend your points so the opponent gets as little as possible. You have **1 life**. Play Super Regeneration to restore **lives**. Special cards are only one-use.',
     },
   },
   {
@@ -248,7 +248,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'tax',
     coach: {
       title: 'Tax',
-      body: 'Thief took some of your **points**. Tax again — Super Regeneration gave you **lives** to spend. **+4 points**.',
+      body: 'Thief took some of your **points**. Use Tax again — Super Regeneration gave you **lives** to spend. **+4 points**.',
     },
   },
   {
@@ -265,7 +265,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'upgrade-basic',
     coach: {
       title: 'Upgrade',
-      body: 'Upgrade that Basic. An upgraded Basic deals **3** damage instead of 1.',
+      body: 'Upgrade that Basic attack. An upgraded Basic deals **3** damage instead of 1. With this, you will have a stronger attack than your opponent.',
     },
   },
   {
@@ -282,7 +282,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Attack',
-      body: 'Play the upgraded Basic. They have 4 lives — this queues **3** damage, which will resolve on their turn.',
+      body: 'Play the upgraded Basic attack. They have 4 lives, this will deal **3** damage.',
     },
   },
   {
@@ -299,7 +299,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'absorber',
     coach: {
       title: 'Absorber',
-      body: 'Play Absorber on them. You immediately gain the **lives** they **lost last turn**.',
+      body: 'Play Absorber on them. Absorber makes you gain the **lives** they **lost on their last turn**.',
     },
   },
   {
@@ -316,7 +316,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Finish',
-      body: 'Play your upgraded Basic back. **3** versus **2** cancels their weaker Strong; yours stays pending and will finish them on their turn.',
+      body: 'You are being attacked by a Strong attack ! Play your upgraded Basic attack back. **3** versus **2** cancels their weaker Strong; yours stays active and will kill them on their turn (they have **1 life** left).',
     },
   },
   {
