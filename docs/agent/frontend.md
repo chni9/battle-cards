@@ -75,13 +75,16 @@ rules above are unchanged — this section only covers how the client looks.
   a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
-  chat (copy from `tutorialStepAt`, last human coach on bot turns except index 8); auto-opens
+  chat (copy from `tutorialStepAt` / `TUTORIAL_TOUR_STEPS` / `TUTORIAL_LOOK_COACH`; last human
+  coach on bot turns). Client-only **board tour** at index 0 (Got it; no `tutorialIndex` bump)
+  then Draw. After Spy resolves (end of index 8), a **Look** gate forces a portrait click
+  before sell. Coach panel is slightly transparent. Auto-opens
   on new copy; compact **?** reopens it (not a Coach pill). Skip tutorial is **flag only**.
   Resource words in coach copy render as table icons.
   Pulsing orange callout + pointing arrow **outside** the highlight square; incoming Attack /
   Spy / Thief chips are a red callout on Incoming (not Waiting on others). Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
-  copy on the coach). Client idle 20s retitles the coach **Play**. Solo composes `create` + N× `addBot` + `startGame`;
+  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;

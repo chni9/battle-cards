@@ -1,16 +1,21 @@
 /**
  * Hovering tutorial coach chat — technical spec v6 §5.4.
  * Not a Dialog: the table stays clickable. Dismissible; reopens on new copy.
- * Skip stays on the table flag only.
+ * Skip stays on the table flag only. Tour steps add Got it; Look does not.
  */
 
 import { Fragment, type ReactElement } from 'react';
 
 import { getResourceIconUrl, type ResourceKind } from '../../design/asset-lookup';
+import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
 import { IconButton } from '../../design/components/icon-button';
 import type { StructuredCost } from '../../design/components/structured-cost';
-import { HIDE_COACH_ARIA_LABEL, OPEN_COACH_ARIA_LABEL } from './table-copy';
+import {
+  GOT_IT_ACTION_LABEL,
+  HIDE_COACH_ARIA_LABEL,
+  OPEN_COACH_ARIA_LABEL,
+} from './table-copy';
 import {
   parseCoachBody,
   type CoachBodyPart,
@@ -25,6 +30,8 @@ export interface TutorialCoachProps {
   open: boolean;
   onHide: () => void;
   onShow: () => void;
+  onAck?: () => void;
+  ackLabel?: string;
 }
 
 export function TutorialCoach({
@@ -35,6 +42,8 @@ export function TutorialCoach({
   open,
   onHide,
   onShow,
+  onAck,
+  ackLabel = GOT_IT_ACTION_LABEL,
 }: TutorialCoachProps): ReactElement {
   return (
     <div className="pointer-events-none fixed inset-0 z-[110]">
@@ -45,7 +54,7 @@ export function TutorialCoach({
             data-zone="tutorial-coach"
             data-tutorial-index={String(index)}
             data-tutorial-coach-open="true"
-            className="tutorial-coach-panel flex max-h-[min(52vh,28rem)] flex-col overflow-hidden rounded-[length:var(--radius-card)] border-2 border-cta-orange bg-surface-raised text-ink shadow-[0_16px_40px_rgba(28,26,31,0.38)]"
+            className="tutorial-coach-panel flex max-h-[min(52vh,28rem)] flex-col overflow-hidden rounded-[length:var(--radius-card)] border-2 border-cta-orange text-ink shadow-[0_16px_40px_rgba(28,26,31,0.38)]"
           >
             <div className="flex shrink-0 items-start gap-2 border-b border-cta-orange/40 bg-cta-orange/15 px-3 py-2">
               <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-ink">
@@ -62,6 +71,18 @@ export function TutorialCoach({
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
               <CoachBody text={body} />
             </div>
+            {onAck !== undefined ? (
+              <div className="shrink-0 border-t border-cta-orange/40 px-3 py-2">
+                <Button
+                  variant="green"
+                  className="w-full"
+                  data-tutorial-ack="got-it"
+                  onClick={onAck}
+                >
+                  {ackLabel}
+                </Button>
+              </div>
+            ) : null}
           </aside>
         ) : (
           <IconButton

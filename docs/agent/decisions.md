@@ -2588,4 +2588,34 @@ players read.
 - Upgrade-point callout uses in-flow top padding (`pt-12`) plus `scrollIntoView` so the
   arrow is not cropped by the Dialog scroller.
 
+## 2026-08-26 · [P] Tutorial board tour, Look gate, translucent coach
+
+Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No protocol bump.
+`tutorialIndex` 0–30 is unchanged. Tour and Look are **client overlays**.
+
+**Board tour**
+
+- Before the first Draw (`tutorialIndex === 0`), present the board one region at a time:
+  your zone, hand, specials, resources, Incoming, Shop, opponent, action log, timer, kit, flag.
+- Each step highlights that region with the orange callout. The human clicks **Got it** on
+  the coach. Got it does **not** increment `tutorialIndex`.
+- Until the tour finishes, block Draw, card sends, and Shop open. Do **not** swap in
+  `tutorial-follow-coach`. Flag and How to play stay available.
+- Reconnect with `tutorialIndex !== 0` skips the tour.
+
+**Look after Spy**
+
+- Spy plays at index 7 and resolves after the bot acts at index 8 (golden rule 3).
+- Index 8 has no Look coach on the script row (bot draw; keep last Spy copy).
+- After index 8, a client gate requires clicking the opponent portrait to open the Spy
+  reveal. Coach: they can now click to see opponent info. No Got it — the click is the action.
+- Sell (index 9) and later sends stay blocked until that inspect. After one successful
+  inspect, never block again.
+
+**Coach chrome**
+
+- Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
+- Got it appears on tour steps only.
+
+
 

@@ -5,9 +5,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isTutorialLookPending,
+  TUTORIAL_LOOK_COACH,
+  TUTORIAL_TOUR_STEPS,
+} from '@card-battle/shared';
+
+import {
   isTutorialCoachOpen,
   parseCoachBody,
   resolveTutorialCoach,
+  resolveTutorialPresentationCoach,
   tutorialCardActionSpotlight,
   tutorialCoachMessageKey,
   tutorialCoachTitle,
@@ -26,7 +33,7 @@ describe('resolveTutorialCoach (L45-05)', () => {
     const coach = resolveTutorialCoach(0);
     expect(coach?.title).toBe('Draw');
     expect(coach?.body).toMatch(/points/i);
-    expect(coach?.body).toMatch(/not a card/i);
+    expect(coach?.body).toMatch(/Draw/i);
   });
 
   it('index 1 and 21 Tax copy mention 4 points', () => {
@@ -45,12 +52,39 @@ describe('resolveTutorialCoach (L45-05)', () => {
     expect(resolveTutorialCoach(4)?.title).toBe('Counter');
   });
 
-  it('index 8 uses the portrait coach', () => {
+  it('index 8 keeps the Spy coach (Look is a client overlay)', () => {
     const coach = resolveTutorialCoach(8);
-    expect(coach?.title).toBe('Look');
-    expect(coach?.body).toMatch(/portrait/i);
-    expect(tutorialHighlightAt(8)).toBe('opponent-portrait');
-    expect(tutorialPortraitSpotlight(tutorialHighlightAt(8))).toBe(true);
+    expect(coach?.title).toBe('Spy');
+    expect(tutorialHighlightAt(8)).toBeNull();
+    expect(tutorialPortraitSpotlight(tutorialHighlightAt(8))).toBe(false);
+  });
+
+  it('board tour copy wins at index 0 until Got it finishes', () => {
+    const first = resolveTutorialPresentationCoach(0, 0, false);
+    expect(first?.copy.title).toBe('Your zone');
+    expect(first?.showAck).toBe(true);
+    const afterTour = resolveTutorialPresentationCoach(
+      0,
+      TUTORIAL_TOUR_STEPS.length,
+      false,
+    );
+    expect(afterTour?.copy.title).toBe('Draw');
+    expect(afterTour?.showAck).toBe(false);
+  });
+
+  it('Look copy is required after Spy resolves until the portrait is opened', () => {
+    expect(isTutorialLookPending(9, false)).toBe(true);
+    const look = resolveTutorialPresentationCoach(9, TUTORIAL_TOUR_STEPS.length, false);
+    expect(look?.copy).toEqual(TUTORIAL_LOOK_COACH);
+    expect(look?.showAck).toBe(false);
+    expect(look?.copy.body).toMatch(/click/i);
+    expect(look?.copy.body).toMatch(/opponent/i);
+    const afterLook = resolveTutorialPresentationCoach(
+      9,
+      TUTORIAL_TOUR_STEPS.length,
+      true,
+    );
+    expect(afterLook?.copy.title).toBe('Sell');
   });
 
   it('index 19 coaches Thief then Super Regeneration', () => {

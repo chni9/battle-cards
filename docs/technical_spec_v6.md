@@ -268,7 +268,7 @@ can be the next action. That skip is tutorial overlay, not a Classic extra actio
 
 | Index | Whose turn | Legal action (server filter) | Coach title / body (client) |
 |---|---|---|---|
-| 0 | Human | `draw` | Draw | **Points** are spent to play many cards and to buy in the Shop. Draw gives **points**, not a card. Draw once. |
+| 0 | Human | `draw` | Draw | **Points** are spent to play many cards and to buy in the Shop. Draw gives **points**. Draw once. |
 | 1 | Human | play **Tax** (base) | Tax | **Lives** are health; 0 eliminates. Tax spends **1 life** (Shield does not stop that) and gives **4 points**. Play Tax. |
 | 2 | Bot | play **Basic** → human | — (keep last coach) |
 | 3 | Human | play **Basic** → bot (not upgraded) | Counter | Incoming is delayed until after you act. Incoming Basic is the red highlight. Play Basic back. **Equal** damage cancels **both**. |
@@ -276,7 +276,7 @@ can be the next action. That skip is tutorial overlay, not a Classic extra actio
 | 5 | Human | **upgrade Spy** | Upgrade | An **upgrade point** upgrades one held card. Spend **1 upgrade point** on Spy. |
 | 6 | Bot | `draw` | — |
 | 7 | Human | play **Spy+** → bot | Spy | Spy reveals their kit and cards **when it resolves on their turn**. Play Spy. |
-| 8 | Bot | `draw` | Look | Spy resolved. **Click their portrait** to see kit and cards. Highlight the opponent portrait. |
+| 8 | Bot | `draw` | — (keep last coach) | Spy resolves after this draw. Look is a **client overlay** before index 9, not this row. |
 | 9 | Human | **sell** one Shield | Sell | Selling **removes the card from hand** and yields play-cost **points**. Sell **one** Shield, keep the other. |
 | 10 | Bot | play **Spy** → human | — |
 | 11 | Human | play **Spy** → bot (counter) | Counter Spy | Incoming Spy (red). Play Spy back. The same card aimed at the source **cancels both**. |
@@ -315,17 +315,31 @@ legal at index 3. `buyCard` of `basic-attack` is never legal.
 search / noise when this policy is seated. Omit `botReason` on the table log.
 
 **Coach:** hovering dismissible chat (`z-[110]`, above Shop/card dialogs); the table stays
-clickable around it. It **opens on every new title/body** (next index, idle **Play**, illegal
-`tutorial-follow-coach` copy) and can be opened again from a compact **?** control (not a
-Coach pill). Resource words in coach copy render as table icons (`CostDisplay` / resource
-PNGs). First mention of a term (points, lives, Incoming, upgrade point, Spy, sell, Shop buy,
-Shield, Thief) uses a full English sentence — not compressed chat style. Highlight the
+clickable around it. The panel is slightly transparent (`color-mix` on `--color-surface-raised`
+plus backdrop blur). It **opens on every new title/body** (next index, idle **Play**, illegal
+`tutorial-follow-coach` copy, tour step, Look gate) and can be opened again from a compact **?**
+control (not a Coach pill). Resource words in coach copy render as table icons (`CostDisplay` /
+resource PNGs). First mention of a term (points, lives, Incoming, upgrade point, Spy, sell, Shop
+buy, Shield, Thief) uses a full English sentence — not compressed chat style. Highlight the
 scripted control with a pulsing **orange** outline and a pointing arrow **outside** the
 highlight square. Incoming Attack, Spy, and Thief chips on the Incoming strip (not Waiting
 on others) use a pulsing **red** outline. Shop upgrade-point callout keeps in-flow top
-padding so the arrow is not cropped by the Dialog scroller. Bot turns keep the last coach
-(except index 8, which teaches the portrait). **Skip tutorial** on the **flag only**:
+padding so the arrow is not cropped by the Dialog scroller. Bot turns keep the last coach.
+**Skip tutorial** on the **flag only**:
 `leaveGame()` to hub, **no** Game over, **hide Forfeit**.
+
+**Board tour (client-only, before index 0 Draw):** while `tutorialIndex === 0` and the tour is
+unfinished, the coach presents each region in order (your zone, hand, specials, resources,
+Incoming, Shop, opponent, action log, timer, kit, flag). Each step highlights that region.
+The human advances with **Got it** on the chat. These steps do **not** bump `tutorialIndex`.
+Reconnects with `tutorialIndex !== 0` skip the tour. Until Got it finishes, game sends
+(Draw, cards, Shop) are blocked and must not swap in `tutorial-follow-coach`.
+
+**Look gate (client-only, after Spy resolves):** Spy is played at index 7 and resolves after
+the bot acts at index 8. Before the human sell at index 9, the coach tells them they can
+**click the opponent** to see kit and cards. That click is a forced table action (no Got it).
+Sell and other sends stay blocked until the Spy reveal dialog opens. After one successful
+inspect, the gate does not block again.
 
 **Rejects:** `'tutorial-follow-coach'` — message: `This tutorial step asks for a different
 action.` Client maps to coach-tinted copy (do not send the illegal intent).

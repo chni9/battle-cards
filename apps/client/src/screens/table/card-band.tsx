@@ -27,6 +27,8 @@ export interface CardBandProps {
   specials: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
   highlightedInstanceIds?: readonly string[];
+  /** Board-tour section pulse (hand vs specials). */
+  highlightedSection?: 'hand' | 'specials';
 }
 
 const PAGE_WIDTH_LOCK_PX = 8;
@@ -37,12 +39,14 @@ function CardSection({
   cards,
   onSelect,
   highlightedInstanceIds = [],
+  spotlightSection = false,
 }: {
   label: string;
   zone: string;
   cards: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
   highlightedInstanceIds?: readonly string[];
+  spotlightSection?: boolean;
 }): ReactElement {
   const areaRef = useRef<HTMLDivElement>(null);
   const lockedWidthRef = useRef<number | null>(null);
@@ -99,21 +103,25 @@ function CardSection({
   const needsPager = cards.length > pageSize;
 
   if (cards.length === 0) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-col items-center gap-0.5">
+    return wrapSection(
+      spotlightSection,
+      zone,
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5">
         <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
         <p className="text-xs text-ink-muted" data-zone={zone}>
           {zone === 'hand' ? 'Empty' : 'None'}
         </p>
-      </div>
+      </div>,
     );
   }
 
-  const spotlighted = highlightedInstanceIds.length > 0;
+  const spotlighted = highlightedInstanceIds.length > 0 || spotlightSection;
 
-  return (
+  return wrapSection(
+    spotlightSection,
+    zone,
     <div
       className={[
         'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
@@ -198,7 +206,29 @@ function CardSection({
           </IconButton>
         </div>
       ) : null}
-    </div>
+    </div>,
+  );
+}
+
+function wrapSection(
+  spotlightSection: boolean,
+  zone: string,
+  body: ReactElement,
+): ReactElement {
+  if (!spotlightSection) {
+    return body;
+  }
+
+  return (
+    <TutorialCallout
+      active
+      layout="stretch"
+      arrow="top"
+      highlightId={zone}
+      className="min-h-0 w-full flex-1 overflow-visible pt-10"
+    >
+      {body}
+    </TutorialCallout>
   );
 }
 
@@ -207,13 +237,17 @@ export function CardBand({
   specials,
   onSelect,
   highlightedInstanceIds,
+  highlightedSection,
 }: CardBandProps): ReactElement {
+  const sectionLit = highlightedSection !== undefined;
+
   return (
     <div
       data-zone="card-band"
       className={[
         'flex h-full min-h-0 w-full flex-col justify-end gap-1',
-        highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0
+        (highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0) ||
+        sectionLit
           ? 'overflow-visible'
           : 'overflow-hidden',
       ].join(' ')}
@@ -222,6 +256,7 @@ export function CardBand({
         label="Hand"
         zone="hand"
         cards={hand}
+        spotlightSection={highlightedSection === 'hand'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />
@@ -229,6 +264,7 @@ export function CardBand({
         label="Specials"
         zone="specials"
         cards={specials}
+        spotlightSection={highlightedSection === 'specials'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />

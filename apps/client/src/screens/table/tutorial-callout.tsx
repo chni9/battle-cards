@@ -17,6 +17,8 @@ export interface TutorialCalloutProps {
   arrow?: TutorialArrowSide;
   /** Orange scripted control (default) vs red incoming threat. */
   tone?: TutorialCalloutTone;
+  /** `stretch` wraps a block zone without becoming an inline span. */
+  layout?: 'inline' | 'stretch';
   highlightId?: string;
   className?: string;
   children: ReactNode;
@@ -26,16 +28,19 @@ export function TutorialCallout({
   active,
   arrow = 'top',
   tone = 'guide',
+  layout = 'inline',
   highlightId,
   className = '',
   children,
 }: TutorialCalloutProps): ReactElement {
   const fill = tone === 'threat' ? '#d62828' : '#f0771f';
+  const Tag = layout === 'stretch' ? 'div' : 'span';
 
   return (
-    <span
+    <Tag
       className={[
-        'relative inline-flex max-w-full',
+        'relative max-w-full',
+        layout === 'stretch' ? 'flex min-h-0 w-full flex-col' : 'inline-flex',
         active ? 'tutorial-callout' : '',
         active && tone === 'threat' ? 'tutorial-callout--threat' : '',
         className,
@@ -61,6 +66,6 @@ export function TutorialCallout({
         </span>
       ) : null}
       {children}
-    </span>
+    </Tag>
   );
 }

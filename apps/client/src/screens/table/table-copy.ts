@@ -30,3 +30,4 @@ export const SKIP_TUTORIAL_CONFIRM_TITLE = 'Skip the tutorial?';
 export const SKIP_TUTORIAL_CONFIRM_BODY = 'You will return to the hub. This is not a forfeit.';
 export const HIDE_COACH_ARIA_LABEL = 'Hide coach';
 export const OPEN_COACH_ARIA_LABEL = 'Show coach';
+export const GOT_IT_ACTION_LABEL = 'Got it';

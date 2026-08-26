@@ -20,7 +20,7 @@ describe('TUTORIAL_STEPS (technical spec v6 §5.4 / designer 2026-08-25)', () =>
 
   it('index 0 copy mentions Draw is points', () => {
     expect(tutorialStepAt(0)?.coach?.body).toMatch(/points/i);
-    expect(tutorialStepAt(0)?.coach?.body).toMatch(/not a card/i);
+    expect(tutorialStepAt(0)?.coach?.body).toMatch(/Draw/i);
   });
 
   it('index 3 copy mentions equal cancel', () => {
@@ -38,6 +38,12 @@ describe('TUTORIAL_STEPS (technical spec v6 §5.4 / designer 2026-08-25)', () =>
     expect(tutorialStepAt(17)?.highlight).toBe('shield');
     expect(tutorialStepAt(17)?.coach?.body).toMatch(/Shield/);
     expect(tutorialStepAt(17)?.coach?.body).toMatch(/Strong/);
+  });
+
+  it('index 8 is a silent bot draw (Look is a client overlay)', () => {
+    expect(tutorialStepAt(8)?.actor).toBe('bot');
+    expect(tutorialStepAt(8)?.coach).toBeNull();
+    expect(tutorialStepAt(8)?.highlight).toBeNull();
   });
 
   it('index 19 coaches Thief and Super Regeneration', () => {

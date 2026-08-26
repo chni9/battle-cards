@@ -7,6 +7,7 @@ import type {
   PendingEffectView,
   PlayingStateView,
   PublicPlayerView,
+  TutorialTourHighlight,
 } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
@@ -21,6 +22,7 @@ import { persistentToCardInstance, shieldActiveInstance } from './active-display
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
+import { TutorialCallout } from './tutorial-callout';
 
 /** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */
 export const DOCK_RESOURCE_CAPTION_VISIBLE = true;
@@ -40,6 +42,8 @@ export interface PrivateZoneProps {
   highlightedInstanceIds?: readonly string[];
   /** Tutorial red Incoming chips (Attack / Spy / Thief). */
   threatHighlightIds?: readonly string[];
+  /** Board-tour region (client overlay; not a script highlight). */
+  zoneHighlight?: TutorialTourHighlight;
 }
 
 export function PrivateZone({
@@ -56,6 +60,7 @@ export function PrivateZone({
   onActivateDuplication,
   highlightedInstanceIds,
   threatHighlightIds = [],
+  zoneHighlight,
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -80,6 +85,11 @@ export function PrivateZone({
   const isActiveSeat = view.currentTurnPlayerId === view.you;
   const youLabel = selfPublic?.nickname ?? 'You';
   const incomingThreats = threatHighlightIds.length > 0;
+  const highlightIncoming = zoneHighlight === 'incoming';
+  const highlightResources = zoneHighlight === 'resources';
+  const highlightKit = zoneHighlight === 'kit';
+  const highlightedSection =
+    zoneHighlight === 'hand' || zoneHighlight === 'specials' ? zoneHighlight : undefined;
 
   return (
     <section
@@ -92,12 +102,18 @@ export function PrivateZone({
     >
       <div className="flex shrink-0 items-center justify-between gap-1.5 overflow-visible sm:gap-2">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <KitPortrait
-            kitId={view.self.kitId}
-            className="w-10 shrink-0 landscape:w-12 sm:w-14"
-            onClick={onInspectKit}
-            ariaLabel="Inspect your kit"
-          />
+          <TutorialCallout
+            active={highlightKit}
+            arrow="top"
+            highlightId="kit"
+          >
+            <KitPortrait
+              kitId={view.self.kitId}
+              className="w-10 shrink-0 landscape:w-12 sm:w-14"
+              onClick={onInspectKit}
+              ariaLabel="Inspect your kit"
+            />
+          </TutorialCallout>
           <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
             <h2 className="truncate text-xs sm:text-sm">
               <PlayerName
@@ -139,21 +155,28 @@ export function PrivateZone({
           data-zone="incoming-pending"
           className={[
             'min-w-0 flex-1 overscroll-contain',
-            incomingThreats
+            incomingThreats || highlightIncoming
               ? 'overflow-visible pt-10'
               : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
           ].join(' ')}
         >
-          <PendingQueue
-            view={view}
-            effects={incomingEffects}
-            title="Incoming"
-            compact
-            tone="dock"
-            highlightedIds={mirrorHighlightIds}
-            animateEntrance
-            {...(incomingThreats ? { threatHighlightIds } : {})}
-          />
+          <TutorialCallout
+            active={highlightIncoming}
+            layout="stretch"
+            arrow="top"
+            highlightId="incoming"
+          >
+            <PendingQueue
+              view={view}
+              effects={incomingEffects}
+              title="Incoming"
+              compact
+              tone="dock"
+              highlightedIds={mirrorHighlightIds}
+              animateEntrance
+              {...(incomingThreats ? { threatHighlightIds } : {})}
+            />
+          </TutorialCallout>
         </div>
       </div>
 
@@ -163,43 +186,55 @@ export function PrivateZone({
           specials={view.self.specialCards}
           {...(onSelectOwnCard !== undefined ? { onSelect: onSelectOwnCard } : {})}
           {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
+          {...(highlightedSection !== undefined ? { highlightedSection } : {})}
         />
       </div>
 
-      <div
-        data-zone="resources"
-        className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border-soft pt-0.5 sm:gap-2 sm:pt-1"
+      <TutorialCallout
+        active={highlightResources}
+        layout="stretch"
+        arrow="top"
+        highlightId="resources"
+        className="shrink-0"
       >
-        <ResourceIcon
-          kind="life"
-          value={view.self.lives}
-          label="Lives"
-          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
-        />
-        <ResourceIcon
-          kind="shield"
-          value={view.self.shield}
-          label="Shield"
-          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
-        />
-        <ResourceIcon
-          kind="point"
-          value={view.self.points}
-          label="Points"
-          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
-        />
-        <ResourceIcon
-          kind="upgradePoint"
-          value={view.self.upgradePoints}
-          label="Upgrade points"
-          captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
-        />
-        {view.self.shieldIsUpgraded ? (
-          <span className="rounded-[length:var(--radius-badge)] bg-resource-shield/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-resource-shield">
-            Shield ↑
-          </span>
-        ) : null}
-      </div>
+        <div
+          data-zone="resources"
+          className={[
+            'flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border-soft sm:gap-2',
+            highlightResources ? 'overflow-visible pt-10' : 'pt-0.5 sm:pt-1',
+          ].join(' ')}
+        >
+          <ResourceIcon
+            kind="life"
+            value={view.self.lives}
+            label="Lives"
+            captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+          />
+          <ResourceIcon
+            kind="shield"
+            value={view.self.shield}
+            label="Shield"
+            captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+          />
+          <ResourceIcon
+            kind="point"
+            value={view.self.points}
+            label="Points"
+            captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+          />
+          <ResourceIcon
+            kind="upgradePoint"
+            value={view.self.upgradePoints}
+            label="Upgrade points"
+            captionVisible={DOCK_RESOURCE_CAPTION_VISIBLE}
+          />
+          {view.self.shieldIsUpgraded ? (
+            <span className="rounded-[length:var(--radius-badge)] bg-resource-shield/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-resource-shield">
+              Shield ↑
+            </span>
+          ) : null}
+        </div>
+      </TutorialCallout>
       {showTurnFlowControls && (
         <div
           data-zone="turn-flow-controls"

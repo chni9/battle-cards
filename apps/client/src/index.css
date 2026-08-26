@@ -301,6 +301,8 @@
 
 .tutorial-coach-panel {
   animation: tutorial-coach-in 0.22s ease-out;
+  background: color-mix(in srgb, var(--color-surface-raised) 78%, transparent);
+  backdrop-filter: blur(6px);
 }
 
 @media (prefers-reduced-motion: reduce) {

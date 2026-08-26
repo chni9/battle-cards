@@ -133,11 +133,8 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     index: 8,
     actor: 'bot',
     legalKind: 'bot-draw',
-    highlight: 'opponent-portrait',
-    coach: {
-      title: 'Look',
-      body: 'Spy resolved. **Click on their portrait** to see their kit and cards.',
-    },
+    highlight: null,
+    coach: null,
   },
   {
     index: 9,

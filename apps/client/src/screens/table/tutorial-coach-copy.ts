@@ -5,7 +5,11 @@
 
 import {
   isAttackCardId,
+  isTutorialLookPending,
+  isTutorialTourActive,
   tutorialStepAt,
+  tutorialTourStepAt,
+  TUTORIAL_LOOK_COACH,
   type CardInstance,
   type TutorialCoachCopy,
   type TutorialHighlight,
@@ -36,8 +40,8 @@ export type TutorialEconomySpotlight = 'draw' | 'shop';
 export type TutorialShopSpotlight = 'upgrade-point' | 'absorber';
 
 /**
- * Last non-null coach walking backward. Bot turns keep that copy;
- * index 8 has its own (portrait).
+ * Last non-null coach walking backward. Bot turns keep that copy.
+ * Look after Spy is a client overlay (`TUTORIAL_LOOK_COACH`), not index 8.
  */
 export function resolveTutorialCoach(index: number): TutorialCoachCopy | undefined {
   for (let cursor = index; cursor >= 0; cursor -= 1) {
@@ -48,6 +52,34 @@ export function resolveTutorialCoach(index: number): TutorialCoachCopy | undefin
   }
 
   return undefined;
+}
+
+/**
+ * Visible coach: board tour, then Look gate, then the script table.
+ * Tour uses Got it (`showAck`); Look is a forced portrait click.
+ */
+export function resolveTutorialPresentationCoach(
+  tutorialIndex: number,
+  tourStep: number,
+  portraitInspected: boolean,
+): { readonly copy: TutorialCoachCopy; readonly showAck: boolean } | undefined {
+  if (isTutorialTourActive(tutorialIndex, tourStep)) {
+    const step = tutorialTourStepAt(tourStep);
+    if (step === undefined) {
+      return undefined;
+    }
+    return { copy: step.coach, showAck: true };
+  }
+
+  if (isTutorialLookPending(tutorialIndex, portraitInspected)) {
+    return { copy: TUTORIAL_LOOK_COACH, showAck: false };
+  }
+
+  const copy = resolveTutorialCoach(tutorialIndex);
+  if (copy === undefined) {
+    return undefined;
+  }
+  return { copy, showAck: false };
 }
 
 export function tutorialCoachTitle(copy: TutorialCoachCopy, idle: boolean): string {

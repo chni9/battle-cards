@@ -10,6 +10,7 @@ import {
   FORFEIT_ARIA_LABEL,
   FORFEIT_CONFIRM_BODY,
   FORFEIT_CONFIRM_TITLE,
+  GOT_IT_ACTION_LABEL,
   HIDDEN_KIT_LABEL,
   HIDE_COACH_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
@@ -60,5 +61,6 @@ describe('table leave chrome copy (L43-05)', () => {
     expect(SKIP_TUTORIAL_CONFIRM_BODY).toMatch(/not a forfeit/i);
     expect(HIDE_COACH_ARIA_LABEL).toBe('Hide coach');
     expect(OPEN_COACH_ARIA_LABEL).toBe('Show coach');
+    expect(GOT_IT_ACTION_LABEL).toBe('Got it');
   });
 });

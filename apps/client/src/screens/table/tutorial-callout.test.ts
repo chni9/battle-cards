@@ -34,5 +34,25 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(src).toContain('CostDisplay');
     expect(src).toContain('parseCoachBody');
     expect(src).toContain('?');
+    expect(src).toContain('onAck');
+    expect(src).toContain('GOT_IT_ACTION_LABEL');
+    expect(src).not.toContain('bg-surface-raised');
+  });
+
+  it('coach panel is slightly transparent', () => {
+    const css = readFileSync(join(here, '../../index.css'), 'utf8');
+    expect(css).toContain(
+      'color-mix(in srgb, var(--color-surface-raised) 78%, transparent)',
+    );
+    expect(css).toContain('backdrop-filter');
+  });
+
+  it('table wires the board tour and Look gate', () => {
+    const table = readFileSync(join(here, '../table.tsx'), 'utf8');
+    expect(table).toContain('isTutorialTourActive');
+    expect(table).toContain('isTutorialLookPending');
+    expect(table).toContain('setPortraitInspected(true)');
+    expect(table).toContain('setTourStep');
+    expect(table).toContain('overlayLocksTable');
   });
 });
