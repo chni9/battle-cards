@@ -74,7 +74,7 @@ describe('table banners (L51-06)', () => {
     expect(cues).not.toContain('dead');
   });
 
-  it('skips dead on first paint when already eliminated', () => {
+  it('flashes You are dead on first finished paint when you lost', () => {
     const { cues } = nextTableBannerCues(emptyTableBannerWatch(), {
       isMyTurn: false,
       isEliminated: true,
@@ -82,7 +82,8 @@ describe('table banners (L51-06)', () => {
       pendingEffects: [],
       you: 'me',
     });
-    expect(cues).toEqual([]);
+    expect(cues).toEqual(['dead']);
+    expect(cues).not.toContain('won');
   });
 
   it('flashes attacked once per new attack-tone Incoming id', () => {

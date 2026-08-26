@@ -82,8 +82,10 @@ export function nextTableBannerCues(
     const cues: TableBannerCue[] = [];
     if (input.youWon) {
       cues.push('won');
-    }
-    if (!input.youWon && input.isMyTurn && !input.isEliminated) {
+    } else if (input.isEliminated) {
+      // EndScreen remounts the table on finish; first paint is the death cue.
+      cues.push('dead');
+    } else if (input.isMyTurn) {
       cues.push('turn');
     }
     return {
