@@ -130,7 +130,10 @@ rules above are unchanged — this section only covers how the client looks.
   render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
   on others**, L43-03) — both strips size to show full
   chips and scroll internally when many effects queue. Kit
-  portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
+  portrait opens a visual inspect Dialog from `getKit` / `getCard` only (L51-04:
+  starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
+  cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
+  prose). **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
   match action cards; resources sit above the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);

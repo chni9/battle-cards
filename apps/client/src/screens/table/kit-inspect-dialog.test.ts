@@ -65,3 +65,18 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
   });
 });
+
+describe('kit inspect starting hand (L51-04)', () => {
+  it('uses action and attack versos instead of action · attack prose', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { dirname, join } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'kit-inspect-details.tsx'),
+      'utf8',
+    );
+    expect(source).toContain('getCardBackUrl');
+    expect(source).not.toMatch(/action · .*attack/);
+    expect(source).toContain('CostDisplay');
+  });
+});

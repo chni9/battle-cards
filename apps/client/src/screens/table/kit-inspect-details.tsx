@@ -1,13 +1,23 @@
 /**
- * Shared kit roster details — rules spec §4. Used by inspect Dialog and lobby picker.
+ * Shared kit roster details — rules spec §4 / L51-04.
+ * Used by inspect Dialog and lobby picker.
  */
 
-import { getCard, getKit, type KitId } from '@card-battle/shared';
+import {
+  getCard,
+  getKit,
+  upgradePointBuyCost,
+  upgradePointSellYield,
+  type CardId,
+  type KitId,
+} from '@card-battle/shared';
 import type { ReactElement, ReactNode } from 'react';
 
-import { getCardArtUrl } from '../../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl } from '../../design/asset-lookup';
+import { CostDisplay } from '../../design/components/cost-display';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
+import { structuredCostFromCardCost } from '../../design/components/structured-cost';
 import { KIT_ABILITY_COPY } from './kit-inspect-traits';
 import { kitSpecialCardKey } from './kit-special-card-key';
 
@@ -15,20 +25,77 @@ export interface KitInspectDetailsProps {
   kitId: KitId;
 }
 
-function TraitSection({
+function Group({
   title,
+  trait = false,
   children,
 }: {
   title: string;
+  trait?: boolean;
   children: ReactNode;
 }): ReactElement {
   return (
-    <section data-trait-section="">
-      <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-        {title}
-      </h3>
-      <div className="mt-1.5">{children}</div>
+    <section
+      {...(trait ? { 'data-trait-section': '' } : {})}
+      className="rounded-[length:var(--radius-card)] border border-border-soft bg-surface px-3 py-2.5"
+    >
+      <h3 className="text-xs font-semibold tracking-wide text-ink">{title}</h3>
+      <div className="mt-2">{children}</div>
     </section>
+  );
+}
+
+function VersoCount({
+  type,
+  count,
+  label,
+}: {
+  type: 'action' | 'attack';
+  count: number;
+  label: string;
+}): ReactElement {
+  return (
+    <li className="flex items-center gap-2 rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5">
+      <img
+        src={getCardBackUrl(type)}
+        alt=""
+        className="h-14 w-10 object-contain"
+        draggable={false}
+      />
+      <div>
+        <p className="text-xs font-semibold text-ink">{label}</p>
+        <p className="text-sm font-semibold tabular-nums text-ink">×{count}</p>
+      </div>
+    </li>
+  );
+}
+
+function CardThumb({
+  cardId,
+  isUpgraded,
+  caption,
+  cost,
+}: {
+  cardId: CardId;
+  isUpgraded: boolean;
+  caption: string;
+  cost?: ReactNode;
+}): ReactElement {
+  return (
+    <li className="w-[5.5rem] rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1">
+      <img
+        src={getCardArtUrl(cardId, { isUpgraded })}
+        alt=""
+        className="aspect-[2/3] w-full object-contain"
+        draggable={false}
+      />
+      <p className="mt-0.5 text-center text-[10px] font-semibold leading-tight text-ink">
+        {caption}
+      </p>
+      {cost !== undefined ? (
+        <div className="mt-0.5 flex justify-center text-[10px] text-ink">{cost}</div>
+      ) : null}
+    </li>
   );
 }
 
@@ -36,16 +103,15 @@ export function KitInspectDetails({ kitId }: KitInspectDetailsProps): ReactEleme
   const kit = getKit(kitId);
   const { startingResources: res, startingCardCounts: counts, traits } = kit;
   const abilityCopy = KIT_ABILITY_COPY[kitId];
+  const buyCost = upgradePointBuyCost(kitId);
+  const sellYield = upgradePointSellYield(kitId);
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
       <KitPortrait kitId={kitId} className="mx-auto w-24 shrink-0 sm:mx-0" />
-      <div className="min-w-0 flex-1 space-y-3">
-        <section>
-          <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Starting resources
-          </h3>
-          <div className="mt-1.5 flex flex-wrap gap-2">
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <Group title="Starting resources">
+          <div className="flex flex-wrap items-center gap-2">
             <ResourceIcon kind="life" value={res.lives} label="Lives" flyToken={false} />
             <ResourceIcon kind="point" value={res.points} label="Points" flyToken={false} />
             <ResourceIcon
@@ -55,51 +121,52 @@ export function KitInspectDetails({ kitId }: KitInspectDetailsProps): ReactEleme
               flyToken={false}
             />
             <span
-              className="inline-flex items-center gap-1 rounded-[length:var(--radius-badge)] border border-border-soft bg-surface px-2 py-1 text-xs font-semibold tabular-nums text-ink"
+              className="inline-flex items-center gap-1 rounded-[length:var(--radius-badge)] border border-border-soft bg-surface-raised px-2 py-1 text-xs font-semibold text-ink"
               title="Draw action points"
             >
-              Draw +{res.draw}
+              Draw{' '}
+              <CostDisplay
+                cost={{ kind: 'points', amount: res.draw }}
+                signed="gain"
+                className="text-inherit"
+              />
             </span>
           </div>
-        </section>
+        </Group>
 
-        <section>
-          <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Starting hand (random draws)
-          </h3>
-          <p className="mt-1 text-sm text-ink">
-            {counts.action} action · {counts.attack} attack
+        <Group title="Starting hand">
+          <p className="mb-2 text-[11px] leading-snug text-ink-muted">
+            Random draws from action and attack cards. Duplicates are possible.
           </p>
-        </section>
+          <ul className="flex flex-wrap gap-2">
+            <VersoCount type="action" count={counts.action} label="Action" />
+            <VersoCount type="attack" count={counts.attack} label="Attack" />
+          </ul>
+        </Group>
 
-        <section>
-          <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Special cards
-          </h3>
-          <ul className="mt-1.5 flex flex-wrap gap-2">
+        <Group title="Special cards">
+          <ul className="flex flex-wrap gap-2">
             {kit.specialCards.map((cardId, index) => {
               const def = getCard(cardId);
+              const playCost = structuredCostFromCardCost(def?.cost);
               return (
-                <li
+                <CardThumb
                   key={kitSpecialCardKey(cardId, index)}
-                  className="w-[5.5rem] rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1"
-                >
-                  <img
-                    src={getCardArtUrl(cardId, { isUpgraded: false })}
-                    alt=""
-                    className="aspect-[2/3] w-full object-contain"
-                    draggable={false}
-                  />
-                  <p className="mt-0.5 text-center text-[10px] font-semibold leading-tight text-ink">
-                    {def?.name ?? cardId}
-                  </p>
-                </li>
+                  cardId={cardId}
+                  isUpgraded={false}
+                  caption={def?.name ?? cardId}
+                  {...(playCost !== null
+                    ? {
+                        cost: <CostDisplay cost={playCost} signed="cost" />,
+                      }
+                    : {})}
+                />
               );
             })}
           </ul>
-        </section>
+        </Group>
 
-        <TraitSection title="Always upgraded">
+        <Group title="Always upgraded" trait>
           {traits.alwaysUpgraded.length === 0 ? (
             <p className="text-sm text-ink-muted">None</p>
           ) : (
@@ -107,67 +174,71 @@ export function KitInspectDetails({ kitId }: KitInspectDetailsProps): ReactEleme
               {traits.alwaysUpgraded.map((cardId) => {
                 const def = getCard(cardId);
                 return (
-                  <li
+                  <CardThumb
                     key={cardId}
-                    className="w-[5.5rem] rounded-[length:var(--radius-card)] border border-cta-purple/40 bg-surface-raised p-1"
-                  >
-                    <img
-                      src={getCardArtUrl(cardId, { isUpgraded: true })}
-                      alt=""
-                      className="aspect-[2/3] w-full object-contain"
-                      draggable={false}
-                    />
-                    <p className="mt-0.5 text-center text-[10px] font-semibold leading-tight text-ink">
-                      {def?.name ?? cardId} ↑
-                    </p>
-                  </li>
+                    cardId={cardId}
+                    isUpgraded
+                    caption={`${def?.name ?? cardId} ↑`}
+                  />
                 );
               })}
             </ul>
           )}
-        </TraitSection>
+        </Group>
 
-        <TraitSection title="Immune to">
+        <Group title="Immune to" trait>
           {traits.immuneTo.length === 0 ? (
             <p className="text-sm text-ink-muted">None</p>
           ) : (
-            <p className="text-sm text-ink">
-              {traits.immuneTo.map((id) => getCard(id)?.name ?? id).join(', ')}
-            </p>
+            <ul className="flex flex-wrap gap-2">
+              {traits.immuneTo.map((cardId) => {
+                const def = getCard(cardId);
+                return (
+                  <CardThumb
+                    key={cardId}
+                    cardId={cardId}
+                    isUpgraded={false}
+                    caption={def?.name ?? cardId}
+                  />
+                );
+              })}
+            </ul>
           )}
-        </TraitSection>
+        </Group>
 
-        <TraitSection title="Multiple attacks per turn">
-          <p className="text-sm text-ink">
+        <Group title="Attacks per turn" trait>
+          <p className="text-sm leading-snug text-ink">
             {traits.allowsMultipleAttacksPerTurn
               ? 'May play several attack cards as one action'
-              : 'No — one attack card per action'}
+              : 'One attack card per action'}
           </p>
-        </TraitSection>
+        </Group>
 
-        <TraitSection title="Upgrade-point buy cost">
-          <p className="text-sm text-ink">
-            {traits.upgradePointBuyCost !== undefined
-              ? `${String(traits.upgradePointBuyCost)} points (kit override)`
-              : 'Default (10 points)'}
-          </p>
-        </TraitSection>
-
-        <TraitSection title="Upgrade-point sell yield">
-          <p className="text-sm text-ink">
-            {traits.upgradePointSellYield !== undefined
-              ? `${String(traits.upgradePointSellYield)} points (kit override)`
-              : 'Default (7 points)'}
-          </p>
-        </TraitSection>
+        <Group title="Upgrade points" trait>
+          <div className="flex flex-wrap gap-3 text-sm text-ink">
+            <span className="inline-flex items-center gap-1">
+              Buy{' '}
+              <CostDisplay
+                cost={{ kind: 'points', amount: buyCost }}
+                signed="cost"
+                className="text-inherit"
+              />
+            </span>
+            <span className="inline-flex items-center gap-1">
+              Sell{' '}
+              <CostDisplay
+                cost={{ kind: 'points', amount: sellYield }}
+                signed="gain"
+                className="text-inherit"
+              />
+            </span>
+          </div>
+        </Group>
 
         {abilityCopy !== undefined && (
-          <section>
-            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-              Ability
-            </h3>
-            <p className="mt-1 text-sm text-ink">{abilityCopy}</p>
-          </section>
+          <Group title="Ability">
+            <p className="text-sm leading-snug text-ink">{abilityCopy}</p>
+          </Group>
         )}
       </div>
     </div>
