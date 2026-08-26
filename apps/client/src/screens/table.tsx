@@ -91,7 +91,8 @@ import {
   TUTORIAL_IDLE_MS,
   type TutorialSendIntent,
 } from './table/tutorial-coach-copy';
-import { YourTurnFlash } from './table/your-turn-flash';
+import { povHasWon } from './table/table-banner';
+import { TableBannerFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {
   view: PlayingStateView;
@@ -126,6 +127,8 @@ export interface TableScreenProps {
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
   onShowStats?: () => void;
+  /** Finished-board winner for the POV (L51-06). */
+  youWon?: boolean;
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -161,6 +164,7 @@ function TableScreenInner({
   onActivateDuplication,
   readOnly = false,
   onShowStats,
+  youWon = false,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const [dialog, setDialog] = useState<TableDialog>(null);
@@ -423,6 +427,7 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
+  const povWon = povHasWon(view.players, view.you, youWon);
   const flagIntent = tableFlagIntent({
     readOnly,
     selfEliminated,
@@ -717,8 +722,12 @@ function TableScreenInner({
 
   return (
     <>
-      <YourTurnFlash
-        isMyTurn={isMyTurn && !readOnly && !selfEliminated}
+      <TableBannerFlash
+        isMyTurn={isMyTurn && !readOnly && !selfEliminated && !povWon}
+        isEliminated={selfEliminated}
+        youWon={povWon}
+        pendingEffects={view.pendingEffects}
+        you={view.you}
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />
       <TableShell

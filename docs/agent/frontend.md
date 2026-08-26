@@ -219,7 +219,8 @@ rules above are unchanged — this section only covers how the client looks.
     `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
     otherwise. Flash TTL `THREAT_FX_TTL_MS` (~3.8s) with a matching long outline pulse.
     Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
-    banner gets a stronger seat tint.
+    banner gets a stronger seat tint. Table banners reuse the same flash duration (~1.6s,
+    `pointer-events-none`): attacked / dead are flashier red; win copy is `You won!`.
 
 ## Conventions
 
@@ -253,7 +254,10 @@ rules above are unchanged — this section only covers how the client looks.
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
   Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
-  (still `onLeave` → hub only). **Download action log** renders only when
+  (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
+  **You are being attacked** once per new attack-tone Incoming (flashier, red);
+  **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
+  win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
   `import.meta.env.DEV` (every mode).
   No kits on the finished seat list
   itself (still private
