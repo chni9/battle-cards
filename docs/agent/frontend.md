@@ -518,3 +518,21 @@ do not hand off an untested lot.
   upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
   nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
   Room `PPWXUP` on the pager pass.
+
+### Lot 51 verified 2026-08-26 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- **Hub:** top-right **Beta** card (word Beta only). No `Protocol v` footer, no Reset help,
+  no delayed-resolution pitch. How to play: Goal → Turns → Lives → Points → Cards → Upgrade
+  → Kits → Special cards → Shop; resource glyphs beside Lives / Points / Upgrade / Shield;
+  Skip / Got it. No “delayed”, “double”, or “(not a card)”.
+- **Kit inspect** (Scientific on Play solo): starting-hand action/attack versos with counts;
+  Draw and special play cost use `CostDisplay`; traits grouped (Always upgraded).
+- Room `ZYGXYI` (Scientific vs 1× Normal): unspied opponent four icons with `?`; no Hidden kit
+  / Spied — tap; Incoming Strong attack chip ringed, **no arrow**; center **You are being
+  attacked** then **Your turn**.
+- Room `ZOVGTV` (Tactician nick `L51Spy`): Shop-buy Spy (always-upgraded); after resolve,
+  opponent live numbers (not `?`); Super attack dialog CostDisplay + Upgrade delta; token
+  chips from the seat toward the action log.
+- Room `BRXKPO` (nick `L51Dead`, forfeit): center **You are dead** (~1.6s) then Game over
+  (Protocol v30 stays on that dialog). **You won!** not forced this pass — same first-paint
+  seed as dead (`table-banner.test.ts`).
