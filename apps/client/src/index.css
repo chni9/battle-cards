@@ -150,6 +150,10 @@
   [data-zone="card-band"] {
     overflow: hidden;
   }
+
+  [data-zone="card-band"]:has([data-tutorial-highlight]) {
+    overflow: visible;
+  }
 }
 
 /* Incoming chip entrance — L39-05 (only applied to newly mounted chips). */
@@ -170,6 +174,161 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pending-chip-enter {
+    animation: none;
+  }
+}
+
+/*
+ * Tutorial callout — thick orange pulse + bouncing pointer (technical spec v6 §5.4).
+ * The arrow sits outside the highlight square, pointing at it.
+ */
+@keyframes tutorial-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 7px var(--color-cta-orange),
+      0 0 28px 6px color-mix(in srgb, var(--color-cta-orange) 80%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 10px var(--color-cta-orange),
+      0 0 44px 12px color-mix(in srgb, var(--color-cta-orange) 95%, transparent);
+  }
+}
+
+@keyframes tutorial-ping {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes tutorial-arrow-bob {
+  0%,
+  100% {
+    translate: -50% 0;
+  }
+  50% {
+    translate: -50% 8px;
+  }
+}
+
+@keyframes tutorial-arrow-bob-up {
+  0%,
+  100% {
+    translate: -50% 0;
+  }
+  50% {
+    translate: -50% -8px;
+  }
+}
+
+@keyframes tutorial-coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tutorial-callout {
+  z-index: 40;
+  padding: 4px;
+  border: 4px solid var(--color-cta-orange);
+  border-radius: var(--radius-button);
+  background: color-mix(in srgb, var(--color-cta-orange) 32%, #fff);
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  animation: tutorial-pulse 1.05s ease-in-out infinite;
+}
+
+.tutorial-callout::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border: 3px solid var(--color-cta-orange);
+  border-radius: calc(var(--radius-button) + 10px);
+  pointer-events: none;
+  animation: tutorial-ping 1.2s ease-out infinite;
+}
+
+.tutorial-callout--threat {
+  border-color: var(--color-cta-red);
+  background: color-mix(in srgb, var(--color-cta-red) 32%, #fff);
+}
+
+.tutorial-callout--threat::after {
+  border-color: var(--color-cta-red);
+}
+
+.tutorial-callout-arrow {
+  position: absolute;
+  left: 50%;
+  z-index: 5;
+  pointer-events: none;
+  color: #f0771f;
+  filter:
+    drop-shadow(0 0 1px #fff)
+    drop-shadow(0 0 3px #fff)
+    drop-shadow(0 1px 2px rgb(28 26 31 / 0.55));
+}
+
+.tutorial-callout-arrow--top {
+  bottom: calc(100% + 14px);
+  animation: tutorial-arrow-bob 0.8s ease-in-out infinite;
+}
+
+.tutorial-callout-arrow--bottom {
+  top: calc(100% + 14px);
+  rotate: 180deg;
+  animation: tutorial-arrow-bob-up 0.8s ease-in-out infinite;
+}
+
+.tutorial-callout-arrow__icon {
+  display: block;
+  width: 2.5rem;
+  height: 2.15rem;
+}
+
+.tutorial-coach-panel {
+  animation: tutorial-coach-in 0.22s ease-out;
+  background: color-mix(in srgb, var(--color-surface-raised) 78%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-callout {
+    animation: none;
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 8px var(--color-cta-orange);
+  }
+
+  .tutorial-callout--threat {
+    box-shadow:
+      0 0 0 3px #fff,
+      0 0 0 8px var(--color-cta-red);
+  }
+
+  .tutorial-callout::after {
+    animation: none;
+    display: none;
+  }
+
+  .tutorial-callout-arrow {
+    animation: none;
+  }
+
+  .tutorial-coach-panel {
     animation: none;
   }
 }

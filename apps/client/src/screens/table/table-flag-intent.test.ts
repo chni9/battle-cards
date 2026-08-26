@@ -21,6 +21,15 @@ describe('tableFlagIntent (L43-05)', () => {
     expect(tableFlagIntent({ readOnly: false, selfEliminated: false })).toBe('forfeit');
     expect(tableFlagIntent({ readOnly: false, selfEliminated: true })).toBe('leaveTable');
   });
+
+  it('uses Skip tutorial instead of Forfeit during a tutorial match (L45-04)', () => {
+    expect(
+      tableFlagIntent({ readOnly: false, selfEliminated: false, playKind: 'tutorial' }),
+    ).toBe('skipTutorial');
+    expect(tableFlagLeaveAction({ readOnly: false, selfEliminated: false, playKind: 'tutorial' })).toBe(
+      'leaveGame',
+    );
+  });
 });
 
 describe('tableFlagLeaveAction (L43-06)', () => {
@@ -36,10 +45,12 @@ describe('tableFlagAriaLabel', () => {
     forfeit: 'Forfeit',
     leaveTable: 'Leave table',
     returnHome: 'Return home',
+    skipTutorial: 'Skip tutorial',
   };
 
   it('hides no control for finished inspect', () => {
     expect(tableFlagAriaLabel('returnHome', labels)).toBe('Return home');
+    expect(tableFlagAriaLabel('skipTutorial', labels)).toBe('Skip tutorial');
     expect(tableFlagAriaLabel('hidden', labels)).toBeNull();
   });
 });

@@ -24,3 +24,10 @@ export const LEAVE_TABLE_CONFIRM_TITLE = 'Leave the table?';
 export const RETURN_HOME_CONFIRM_TITLE = 'Return home?';
 export const RETURN_HOME_CONFIRM_BODY =
   'Leave this finished game and go back to the home screen.';
+export const SKIP_TUTORIAL_ARIA_LABEL = 'Skip tutorial';
+export const SKIP_TUTORIAL_ACTION_LABEL = 'Skip tutorial';
+export const SKIP_TUTORIAL_CONFIRM_TITLE = 'Skip the tutorial?';
+export const SKIP_TUTORIAL_CONFIRM_BODY = 'You will return to the hub. This is not a forfeit.';
+export const HIDE_COACH_ARIA_LABEL = 'Hide coach';
+export const OPEN_COACH_ARIA_LABEL = 'Show coach';
+export const GOT_IT_ACTION_LABEL = 'Got it';

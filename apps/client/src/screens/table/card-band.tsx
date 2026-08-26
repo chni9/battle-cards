@@ -20,11 +20,15 @@ import {
   cardBandRowsForHeight,
   fitCardBand,
 } from './card-band-fit';
+import { TutorialCallout } from './tutorial-callout';
 
 export interface CardBandProps {
   hand: readonly CardInstance[];
   specials: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
+  highlightedInstanceIds?: readonly string[];
+  /** Board-tour section pulse (hand vs specials). */
+  highlightedSection?: 'hand' | 'specials';
 }
 
 const PAGE_WIDTH_LOCK_PX = 8;
@@ -34,11 +38,15 @@ function CardSection({
   zone,
   cards,
   onSelect,
+  highlightedInstanceIds = [],
+  spotlightSection = false,
 }: {
   label: string;
   zone: string;
   cards: readonly CardInstance[];
   onSelect?: (instanceId: string) => void;
+  highlightedInstanceIds?: readonly string[];
+  spotlightSection?: boolean;
 }): ReactElement {
   const areaRef = useRef<HTMLDivElement>(null);
   const lockedWidthRef = useRef<number | null>(null);
@@ -95,50 +103,78 @@ function CardSection({
   const needsPager = cards.length > pageSize;
 
   if (cards.length === 0) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-col items-center gap-0.5">
+    return wrapSection(
+      spotlightSection,
+      zone,
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5">
         <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
         <p className="text-xs text-ink-muted" data-zone={zone}>
           {zone === 'hand' ? 'Empty' : 'None'}
         </p>
-      </div>
+      </div>,
     );
   }
 
-  return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5 overflow-hidden">
+  const spotlighted = highlightedInstanceIds.length > 0 || spotlightSection;
+
+  return wrapSection(
+    spotlightSection,
+    zone,
+    <div
+      className={[
+        'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
+        spotlighted ? 'overflow-visible' : 'overflow-hidden',
+      ].join(' ')}
+    >
       <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
       </p>
       <div
         ref={areaRef}
         data-zone={zone}
-        className="flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center overflow-hidden"
+        className={[
+          'flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center',
+          spotlighted ? 'overflow-visible' : 'overflow-hidden',
+        ].join(' ')}
         style={{ gap: CARD_BAND_GAP_PX }}
       >
-        {visible.map((card) => (
-          <div
-            key={card.instanceId}
-            style={{ width: cardWidth, maxHeight: '100%' }}
-            className="shrink-0 overflow-hidden"
-          >
-            <AnimatedCard
-              instance={card}
-              detail="face"
-              skipEntrance
-              className="w-full max-h-full !p-0.5"
-              {...(onSelect !== undefined
-                ? {
-                    onSelect: () => {
-                      onSelect(card.instanceId);
-                    },
-                  }
-                : {})}
-            />
-          </div>
-        ))}
+        {visible.map((card) => {
+          const highlighted = highlightedInstanceIds.includes(card.instanceId);
+          return (
+            <div
+              key={card.instanceId}
+              style={{ width: cardWidth, maxHeight: '100%' }}
+              className={[
+                'shrink-0 rounded-[length:var(--radius-card)]',
+                highlighted ? 'overflow-visible' : 'overflow-hidden',
+              ].join(' ')}
+            >
+              <TutorialCallout
+                active={highlighted}
+                arrow="top"
+                highlightId={card.cardId}
+                className="w-full"
+              >
+                <AnimatedCard
+                  instance={card}
+                  detail="face"
+                  skipEntrance
+                  selected={highlighted}
+                  className="w-full max-h-full !p-0.5"
+                  {...(onSelect !== undefined
+                    ? {
+                        onSelect: () => {
+                          onSelect(card.instanceId);
+                        },
+                      }
+                    : {})}
+                />
+              </TutorialCallout>
+            </div>
+          );
+        })}
       </div>
       {needsPager ? (
         <div
@@ -170,27 +206,67 @@ function CardSection({
           </IconButton>
         </div>
       ) : null}
-    </div>
+    </div>,
   );
 }
 
-export function CardBand({ hand, specials, onSelect }: CardBandProps): ReactElement {
+function wrapSection(
+  spotlightSection: boolean,
+  zone: string,
+  body: ReactElement,
+): ReactElement {
+  if (!spotlightSection) {
+    return body;
+  }
+
+  return (
+    <TutorialCallout
+      active
+      layout="stretch"
+      arrow="top"
+      highlightId={zone}
+      className="min-h-0 w-full flex-1 overflow-visible pt-10"
+    >
+      {body}
+    </TutorialCallout>
+  );
+}
+
+export function CardBand({
+  hand,
+  specials,
+  onSelect,
+  highlightedInstanceIds,
+  highlightedSection,
+}: CardBandProps): ReactElement {
+  const sectionLit = highlightedSection !== undefined;
+
   return (
     <div
       data-zone="card-band"
-      className="flex h-full min-h-0 w-full flex-col justify-end gap-1 overflow-hidden"
+      className={[
+        'flex h-full min-h-0 w-full flex-col justify-end gap-1',
+        (highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0) ||
+        sectionLit
+          ? 'overflow-visible'
+          : 'overflow-hidden',
+      ].join(' ')}
     >
       <CardSection
         label="Hand"
         zone="hand"
         cards={hand}
+        spotlightSection={highlightedSection === 'hand'}
         {...(onSelect !== undefined ? { onSelect } : {})}
+        {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />
       <CardSection
         label="Specials"
         zone="specials"
         cards={specials}
+        spotlightSection={highlightedSection === 'specials'}
         {...(onSelect !== undefined ? { onSelect } : {})}
+        {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
       />
     </div>
   );

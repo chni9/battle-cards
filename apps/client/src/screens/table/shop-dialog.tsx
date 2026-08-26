@@ -11,8 +11,9 @@ import {
   upgradePointBuyCost,
   upgradePointSellYield,
   type PlayingStateView,
+  type TutorialHighlight,
 } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
@@ -34,6 +35,7 @@ import {
   SHOP_SECTION_UPGRADE_POINTS,
 } from './chrome-labels';
 import { SHOP_PRICE_BLURB } from './table-copy';
+import { TutorialCallout } from './tutorial-callout';
 
 const DEFAULT_SHOP_CARD_ID = SHARED_CARD_IDS[0];
 
@@ -71,6 +73,8 @@ export interface ShopDialogProps {
   onSellUpgradePoint: () => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onBuySpecialCard: () => void;
+  /** Tutorial spotlight (L45-05). Shop is never auto-opened. */
+  tutorialHighlight?: TutorialHighlight;
 }
 
 export function ShopDialog({
@@ -83,17 +87,30 @@ export function ShopDialog({
   onSellUpgradePoint,
   onBuyCard,
   onBuySpecialCard,
+  tutorialHighlight = null,
 }: ShopDialogProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(DEFAULT_SHOP_CARD_ID);
+  const upgradePointRef = useRef<HTMLDivElement>(null);
   const disabled = !isMyTurn || actionsLocked;
   const kitId = view.self.kitId;
   const buyUpgradeCost = upgradePointBuyCost(kitId);
   const sellUpgradeYield = upgradePointSellYield(kitId);
   const alwaysUpgradedIds = getKit(kitId).traits.alwaysUpgraded;
-  const selectedShopId = (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
-    ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
-    : DEFAULT_SHOP_CARD_ID;
+  const selectedShopId =
+    tutorialHighlight === 'shop-absorber'
+      ? 'absorber'
+      : (SHARED_CARD_IDS as readonly string[]).includes(buyCardId)
+        ? (buyCardId as (typeof SHARED_CARD_IDS)[number])
+        : DEFAULT_SHOP_CARD_ID;
   const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
+  const highlightUpgradePoint = tutorialHighlight === 'shop-upgrade-point';
+
+  useEffect(() => {
+    if (!open || !highlightUpgradePoint) {
+      return;
+    }
+    upgradePointRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, [open, highlightUpgradePoint]);
 
   return (
     <Dialog
@@ -118,6 +135,13 @@ export function ShopDialog({
               className="text-inherit"
             />
           </Button>
+          <TutorialCallout
+            active={
+              tutorialHighlight === 'shop-absorber' && selectedShopId === 'absorber'
+            }
+            arrow="top"
+            highlightId="shop-absorber-buy"
+          >
           <Button
             variant="orange"
             disabled={disabled || !canAffordSharedBuy(view, selectedShopId)}
@@ -128,15 +152,21 @@ export function ShopDialog({
           >
             {CARD_BUY_LABEL}
           </Button>
+          </TutorialCallout>
           <Button variant="red" onClick={onClose}>
             Close
           </Button>
         </>
       }
     >
-      <section className="space-y-2">
+      <section className={highlightUpgradePoint ? 'space-y-2 overflow-visible pt-12' : 'space-y-2'}>
         <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_UPGRADE_POINTS}</h3>
-        <div className="flex flex-wrap gap-2">
+        <div ref={upgradePointRef} className="flex flex-wrap gap-2 overflow-visible">
+          <TutorialCallout
+            active={tutorialHighlight === 'shop-upgrade-point'}
+            arrow="top"
+            highlightId="shop-upgrade-point"
+          >
           <Button
             variant="orange"
             disabled={disabled || view.self.points < buyUpgradeCost}
@@ -152,6 +182,7 @@ export function ShopDialog({
               className="text-inherit"
             />
           </Button>
+          </TutorialCallout>
           <Button
             variant="green"
             disabled={disabled || view.self.upgradePoints < 1}
@@ -190,9 +221,16 @@ export function ShopDialog({
               cardId: id,
               isUpgraded: shopUpgraded,
             } as const;
+            const tutorialAbsorber = tutorialHighlight === 'shop-absorber' && id === 'absorber';
 
             return (
               <li key={id}>
+                <TutorialCallout
+                  active={tutorialAbsorber}
+                  arrow="top"
+                  highlightId="shop-absorber"
+                  className="w-full"
+                >
                 <button
                   type="button"
                   disabled={disabled}
@@ -232,6 +270,7 @@ export function ShopDialog({
                     {shopCost !== null ? <CostDisplay cost={shopCost} signed="cost" /> : '—'}
                   </span>
                 </button>
+                </TutorialCallout>
               </li>
             );
           })}

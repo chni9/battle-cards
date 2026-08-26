@@ -5,14 +5,18 @@
 
 import {
   isSharedAttackCardId,
+  isTutorialLookPending,
+  isTutorialTourActive,
   SHARED_CARD_IDS,
   getKit,
+  tutorialTourStepAt,
   type ActionResolvedPayload,
   type CardInstance,
   type KitId,
   type PlayingStateView,
   type ResolveSubChoicePayload,
   type SubChoiceRequiredPayload,
+  type TutorialTourHighlight,
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
@@ -41,6 +45,7 @@ import type {
 } from '../net/use-room-connection';
 import { HowToPlayDialog } from './how-to-play-dialog';
 import { IllegalActionDialog } from './illegal-action-dialog';
+import { ILLEGAL_ACTION_COPY } from './illegal-action-copy';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
@@ -59,6 +64,7 @@ import {
   HOW_TO_PLAY_ARIA_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
   RETURN_HOME_ARIA_LABEL,
+  SKIP_TUTORIAL_ARIA_LABEL,
 } from './table/table-copy';
 import {
   tableFlagAriaLabel,
@@ -68,6 +74,23 @@ import {
 import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
+import { TutorialCallout } from './table/tutorial-callout';
+import { TutorialCoach } from './table/tutorial-coach';
+import {
+  isTutorialCoachOpen,
+  resolveTutorialPresentationCoach,
+  tutorialCardActionSpotlight,
+  tutorialCoachMessageKey,
+  tutorialCoachTitle,
+  tutorialEconomySpotlight,
+  tutorialHighlightAt,
+  tutorialIncomingThreatIds,
+  tutorialPortraitSpotlight,
+  tutorialSendAllowed,
+  tutorialSpotlightInstanceIds,
+  TUTORIAL_IDLE_MS,
+  type TutorialSendIntent,
+} from './table/tutorial-coach-copy';
 import { YourTurnFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {
@@ -147,13 +170,54 @@ function TableScreenInner({
   );
   const [inspectKitId, setInspectKitId] = useState<KitId | null>(null);
   const [inspectOpponentId, setInspectOpponentId] = useState<string | null>(null);
+  const [tutorialIdleIndex, setTutorialIdleIndex] = useState<number | null>(null);
+  const [tutorialIllegalIndex, setTutorialIllegalIndex] = useState<number | null>(null);
+  const [tutorialCoachDismissedKey, setTutorialCoachDismissedKey] = useState<string | null>(
+    null,
+  );
+  const [tourStep, setTourStep] = useState(0);
+  const [portraitInspected, setPortraitInspected] = useState(false);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
     view.self.specialCards.find((c) => c.instanceId === instanceId);
 
+  const allowTutorialSend = (intent: TutorialSendIntent): boolean => {
+    if (view.playKind !== 'tutorial') {
+      return true;
+    }
+    const index = view.tutorialIndex;
+    if (
+      isTutorialTourActive(index, tourStep) ||
+      isTutorialLookPending(index, portraitInspected)
+    ) {
+      return false;
+    }
+    if (index === null || !tutorialSendAllowed(index, intent)) {
+      setTutorialIllegalIndex(index);
+      return false;
+    }
+    setTutorialIllegalIndex(null);
+    return true;
+  };
+
   const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
     const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (
+        !allowTutorialSend({
+          kind: 'playCard',
+          cardId: card.cardId,
+          isUpgraded: card.isUpgraded,
+        })
+      ) {
+        return;
+      }
+    }
     onPlayCard(instanceId, options);
     if (card === undefined) {
       return;
@@ -167,6 +231,9 @@ function TableScreenInner({
   const playMultipleWithFx = (
     attacks: readonly { instanceId: string; targetPlayerId: string }[],
   ): void => {
+    if (!allowTutorialSend({ kind: 'playMultipleAttacks' })) {
+      return;
+    }
     onPlayMultipleAttacks(attacks);
     const first = attacks[0];
     if (first === undefined) {
@@ -183,19 +250,31 @@ function TableScreenInner({
   };
 
   const drawWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'draw' })) {
+      return;
+    }
     // Points Δ → ResourceIcon enqueues log ↔ token chips (avoid double flyout).
     onDraw();
   };
 
   const buyUpgradeWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'buyUpgradePoint' })) {
+      return;
+    }
     onBuyUpgradePoint();
   };
 
   const sellUpgradeWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'sellUpgradePoint' })) {
+      return;
+    }
     onSellUpgradePoint();
   };
 
   const buyCardWithFx = (cardId: (typeof SHARED_CARD_IDS)[number]): void => {
+    if (!allowTutorialSend({ kind: 'buyCard', cardId })) {
+      return;
+    }
     onBuyCard(cardId);
     const measured = measureBuyCardFlyout(cardId);
     if (measured !== null) {
@@ -204,6 +283,9 @@ function TableScreenInner({
   };
 
   const buySpecialWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'buySpecialCard' })) {
+      return;
+    }
     onBuySpecialCard();
     const measured = measureBuySpecialFlyout();
     if (measured !== null) {
@@ -213,6 +295,15 @@ function TableScreenInner({
 
   const sellCardWithFx = (instanceId: string): void => {
     const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (!allowTutorialSend({ kind: 'sellCard', cardId: card.cardId })) {
+        return;
+      }
+    }
     onSellCard(instanceId);
     if (card === undefined) {
       return;
@@ -221,6 +312,20 @@ function TableScreenInner({
     if (measured !== null) {
       enqueue({ kind: 'playFlyout', ...measured });
     }
+  };
+
+  const upgradeCardGuarded = (instanceId: string): void => {
+    const card = findOwnCard(instanceId);
+    if (view.playKind === 'tutorial') {
+      if (card === undefined) {
+        setTutorialIllegalIndex(view.tutorialIndex);
+        return;
+      }
+      if (!allowTutorialSend({ kind: 'upgradeCard', cardId: card.cardId })) {
+        return;
+      }
+    }
+    onUpgradeCard(instanceId);
   };
 
   const lastResolvedKey = useRef<string | null>(null);
@@ -318,13 +423,104 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
-  const flagIntent = tableFlagIntent({ readOnly, selfEliminated });
+  const flagIntent = tableFlagIntent({
+    readOnly,
+    selfEliminated,
+    playKind: view.playKind,
+  });
   const flagAria = tableFlagAriaLabel(flagIntent, {
     forfeit: FORFEIT_ARIA_LABEL,
     leaveTable: LEAVE_TABLE_ARIA_LABEL,
     returnHome: RETURN_HOME_ARIA_LABEL,
+    skipTutorial: SKIP_TUTORIAL_ARIA_LABEL,
   });
   const actionsLocked = readOnly || subChoice !== null || selfEliminated;
+  const tutorialIndex = view.playKind === 'tutorial' ? view.tutorialIndex : null;
+  const tourActive = isTutorialTourActive(tutorialIndex, tourStep);
+  const lookPending =
+    !readOnly && isTutorialLookPending(tutorialIndex, portraitInspected);
+  const tourHighlight: TutorialTourHighlight | undefined = tourActive
+    ? tutorialTourStepAt(tourStep)?.highlight
+    : undefined;
+  const overlayLocksTable = tourActive || lookPending;
+  const tutorialHighlight =
+    overlayLocksTable || tutorialIndex === null
+      ? null
+      : tutorialHighlightAt(tutorialIndex);
+  const presentationCoach =
+    tutorialIndex !== null
+      ? resolveTutorialPresentationCoach(tutorialIndex, tourStep, portraitInspected)
+      : undefined;
+  const shopOpen = dialog?.kind === 'shop';
+  const economySpotlight =
+    tourHighlight === 'shop'
+      ? 'shop'
+      : tutorialEconomySpotlight(tutorialHighlight, shopOpen);
+  const cardActionSpotlight = tutorialCardActionSpotlight(tutorialHighlight);
+  const spotlightIds = tutorialSpotlightInstanceIds(tutorialHighlight, [
+    ...view.self.hand,
+    ...view.self.specialCards,
+  ]);
+  const highlightPortrait =
+    lookPending || tutorialPortraitSpotlight(tutorialHighlight);
+  const followCoachCopy = ILLEGAL_ACTION_COPY['tutorial-follow-coach'];
+  const tutorialIdle =
+    !overlayLocksTable &&
+    tutorialIdleIndex !== null &&
+    tutorialIdleIndex === tutorialIndex;
+  const tutorialIllegalHint =
+    !overlayLocksTable &&
+    tutorialIllegalIndex !== null &&
+    tutorialIllegalIndex === tutorialIndex;
+  const coachTitle = overlayLocksTable
+    ? presentationCoach?.copy.title
+    : tutorialIllegalHint
+      ? (followCoachCopy.title ?? 'Tutorial step')
+      : presentationCoach !== undefined
+        ? tutorialCoachTitle(presentationCoach.copy, tutorialIdle)
+        : undefined;
+  const coachBody = overlayLocksTable
+    ? presentationCoach?.copy.body
+    : tutorialIllegalHint
+      ? followCoachCopy.body
+      : presentationCoach?.copy.body;
+  const tutorialCoachKey =
+    tutorialIndex !== null && coachTitle !== undefined && coachBody !== undefined
+      ? `${tourActive ? `tour:${String(tourStep)}` : lookPending ? 'look' : 'script'}|${tutorialCoachMessageKey(tutorialIndex, coachTitle, coachBody)}`
+      : null;
+  const tutorialCoachOpen = isTutorialCoachOpen(
+    tutorialCoachKey,
+    tutorialCoachDismissedKey,
+  );
+
+  useEffect(() => {
+    if (
+      view.playKind !== 'tutorial' ||
+      !isMyTurn ||
+      readOnly ||
+      selfEliminated ||
+      view.tutorialIndex === null ||
+      isTutorialTourActive(view.tutorialIndex, tourStep) ||
+      isTutorialLookPending(view.tutorialIndex, portraitInspected)
+    ) {
+      return;
+    }
+    const index = view.tutorialIndex;
+    const handle = window.setTimeout(() => {
+      setTutorialIdleIndex(index);
+    }, TUTORIAL_IDLE_MS);
+    return () => {
+      window.clearTimeout(handle);
+    };
+  }, [
+    view.playKind,
+    view.tutorialIndex,
+    isMyTurn,
+    readOnly,
+    selfEliminated,
+    tourStep,
+    portraitInspected,
+  ]);
   const kit = getKit(view.self.kitId);
   const drawValue = kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
@@ -363,6 +559,10 @@ function TableScreenInner({
   const opponents = view.players.filter((player) => !player.isYou);
   const incomingEffects = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId === view.you,
+  );
+  const incomingThreatIds = tutorialIncomingThreatIds(
+    incomingEffects,
+    tutorialIndex !== null,
   );
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
@@ -425,6 +625,15 @@ function TableScreenInner({
   }
 
   function onBeginUse(instance: CardInstance): void {
+    if (
+      !allowTutorialSend({
+        kind: 'playCard',
+        cardId: instance.cardId,
+        isUpgraded: instance.isUpgraded,
+      })
+    ) {
+      return;
+    }
     if (instance.cardId === 'regeneration') {
       setDialog({ kind: 'quantity', instance });
       return;
@@ -514,8 +723,17 @@ function TableScreenInner({
       />
       <TableShell
         {...(dockStyle !== undefined ? { dockStyle } : {})}
+        {...(tourHighlight === 'timer' || tourHighlight === 'flag'
+          ? { turnClassName: 'pb-10' }
+          : {})}
+        {...(tourHighlight === 'opponent' || lookPending
+          ? { opponentsClassName: 'pb-10' }
+          : {})}
+        {...(tourHighlight === 'action-log'
+          ? { logClassName: 'overflow-visible pb-10' }
+          : {})}
         turn={
-          <div className="flex items-stretch gap-1 p-1 sm:p-1.5">
+          <div className="flex items-stretch gap-1 overflow-visible p-1 sm:p-1.5">
             <IconButton
               aria-label={HOW_TO_PLAY_ARIA_LABEL}
               onClick={() => {
@@ -524,30 +742,43 @@ function TableScreenInner({
             >
               ?
             </IconButton>
-            <div className="min-w-0 flex-1">
-              <Timers
-                gameCode={view.gameCode}
-                statusLabel={statusLabel}
-                activeNickname={activePlayer?.nickname ?? '—'}
-                activePlayerId={view.currentTurnPlayerId}
-                view={view}
-                isMyTurn={isMyTurn}
-                timerLabel={timerLabel}
-                progressRatio={progressRatio}
-                {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
-                subChoiceProgressRatio={subChoiceProgressRatio}
-                {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
-              />
+            <div className="min-w-0 flex-1 overflow-visible">
+              <TutorialZoneCallout
+                active={tourHighlight === 'timer'}
+                highlightId="timer"
+                arrow="bottom"
+                className="min-w-0"
+              >
+                <Timers
+                  gameCode={view.gameCode}
+                  statusLabel={statusLabel}
+                  activeNickname={activePlayer?.nickname ?? '—'}
+                  activePlayerId={view.currentTurnPlayerId}
+                  view={view}
+                  isMyTurn={isMyTurn}
+                  timerLabel={timerLabel}
+                  progressRatio={progressRatio}
+                  {...(subChoiceLabel !== undefined ? { subChoiceLabel } : {})}
+                  subChoiceProgressRatio={subChoiceProgressRatio}
+                  {...(blockStatusLabel !== undefined ? { blockStatusLabel } : {})}
+                />
+              </TutorialZoneCallout>
             </div>
             {flagAria !== null && flagIntent !== 'hidden' ? (
-              <IconButton
-                aria-label={flagAria}
-                onClick={() => {
-                  setLeaveConfirm(flagIntent);
-                }}
+              <TutorialCallout
+                active={tourHighlight === 'flag'}
+                arrow="bottom"
+                highlightId="flag"
               >
-                <ForfeitFlagIcon />
-              </IconButton>
+                <IconButton
+                  aria-label={flagAria}
+                  onClick={() => {
+                    setLeaveConfirm(flagIntent);
+                  }}
+                >
+                  <ForfeitFlagIcon />
+                </IconButton>
+              </TutorialCallout>
             ) : null}
           </div>
         }
@@ -570,22 +801,33 @@ function TableScreenInner({
           ) : null
         }
         opponentSeats={opponents.map((player) => (
-          <OpponentZone
+          <TutorialZoneCallout
             key={player.id}
-            view={view}
-            player={player}
-            onInspectActive={(effectId) => {
-              onInspectActive(player.id, effectId);
-            }}
-            {...(player.eliminationReveal !== undefined || player.spied !== undefined
-              ? {
-                  onInspectReveal: () => {
-                    setInspectKitId(null);
-                    setInspectOpponentId(player.id);
-                  },
-                }
-              : {})}
-          />
+            active={tourHighlight === 'opponent'}
+            highlightId="opponent"
+            arrow="bottom"
+            className="w-fit max-w-full"
+          >
+            <OpponentZone
+              view={view}
+              player={player}
+              onInspectActive={(effectId) => {
+                onInspectActive(player.id, effectId);
+              }}
+              {...(player.eliminationReveal !== undefined || player.spied !== undefined
+                ? {
+                    onInspectReveal: () => {
+                      if (view.playKind === 'tutorial') {
+                        setPortraitInspected(true);
+                      }
+                      setInspectKitId(null);
+                      setInspectOpponentId(player.id);
+                    },
+                  }
+                : {})}
+              {...(highlightPortrait ? { highlightPortrait: true } : {})}
+            />
+          </TutorialZoneCallout>
         ))}
         pending={
           <PendingQueue
@@ -597,27 +839,66 @@ function TableScreenInner({
             highlightedIds={mirrorHighlightIds}
           />
         }
-        actionLog={<ActionLogPanel view={view} />}
+        actionLog={
+          <TutorialZoneCallout
+            active={tourHighlight === 'action-log'}
+            highlightId="action-log"
+            arrow="bottom"
+            className="h-full min-h-0"
+          >
+            <ActionLogPanel view={view} />
+          </TutorialZoneCallout>
+        }
         privateZone={
-          <PrivateZone
-            view={view}
-            selfPublic={selfPublic}
-            incomingEffects={incomingEffects}
-            mirrorHighlightIds={mirrorHighlightIds}
-            isMyTurn={isMyTurn}
-            actionsLocked={actionsLocked}
-            onInspectKit={() => {
-              setInspectKitId(view.self.kitId);
-            }}
-            onSelectOwnCard={onSelectOwnCard}
-            onSelectActive={(effectId) => {
-              onInspectActive(view.you, effectId);
-            }}
-            {...(onDeactivatePersistent !== undefined
-              ? { onDeactivatePersistent }
-              : {})}
-            {...(onActivateDuplication !== undefined ? { onActivateDuplication } : {})}
-          />
+          <TutorialZoneCallout
+            active={tourHighlight === 'your-zone'}
+            highlightId="your-zone"
+            arrow="top"
+            className="h-full min-h-0 overflow-visible pt-10"
+          >
+            <PrivateZone
+              view={view}
+              selfPublic={selfPublic}
+              incomingEffects={incomingEffects}
+              mirrorHighlightIds={mirrorHighlightIds}
+              isMyTurn={isMyTurn}
+              actionsLocked={actionsLocked}
+              onInspectKit={() => {
+                setInspectKitId(view.self.kitId);
+              }}
+              {...(overlayLocksTable ? {} : { onSelectOwnCard })}
+              onSelectActive={(effectId) => {
+                onInspectActive(view.you, effectId);
+              }}
+              {...(onDeactivatePersistent !== undefined
+                ? {
+                    onDeactivatePersistent: (effectId: string) => {
+                      if (!allowTutorialSend({ kind: 'other' })) {
+                        return;
+                      }
+                      onDeactivatePersistent(effectId);
+                    },
+                  }
+                : {})}
+              {...(onActivateDuplication !== undefined
+                ? {
+                    onActivateDuplication: () => {
+                      if (!allowTutorialSend({ kind: 'other' })) {
+                        return;
+                      }
+                      onActivateDuplication();
+                    },
+                  }
+                : {})}
+              {...(spotlightIds.length > 0 ? { highlightedInstanceIds: spotlightIds } : {})}
+              {...(incomingThreatIds.length > 0
+                ? { threatHighlightIds: incomingThreatIds }
+                : {})}
+              {...(tourHighlight !== undefined && tourHighlight !== 'your-zone'
+                ? { zoneHighlight: tourHighlight }
+                : {})}
+            />
+          </TutorialZoneCallout>
         }
         economy={
           <EconomyBar
@@ -626,12 +907,43 @@ function TableScreenInner({
             drawValue={drawValue}
             onDraw={drawWithFx}
             onOpenShop={() => {
+              if (overlayLocksTable) {
+                return;
+              }
               setDialog({ kind: 'shop' });
             }}
+            {...(economySpotlight !== undefined ? { spotlight: economySpotlight } : {})}
             {...(readOnly && onShowStats !== undefined ? { onShowStats } : {})}
           />
         }
       />
+
+      {tutorialIndex !== null &&
+      !readOnly &&
+      coachTitle !== undefined &&
+      coachBody !== undefined &&
+      tutorialCoachKey !== null ? (
+        <TutorialCoach
+          index={tutorialIndex}
+          title={coachTitle}
+          body={coachBody}
+          messageKey={tutorialCoachKey}
+          open={tutorialCoachOpen}
+          onHide={() => {
+            setTutorialCoachDismissedKey(tutorialCoachKey);
+          }}
+          onShow={() => {
+            setTutorialCoachDismissedKey(null);
+          }}
+          {...(presentationCoach?.showAck === true
+            ? {
+                onAck: () => {
+                  setTourStep((step) => step + 1);
+                },
+              }
+            : {})}
+        />
+      ) : null}
 
       {inspectKitId !== null && (
         <KitInspectDialog
@@ -681,9 +993,10 @@ function TableScreenInner({
         attackCards={attackCards}
         onPlayCard={playCardWithFx}
         onPlayMultipleAttacks={playMultipleWithFx}
-        onUpgradeCard={onUpgradeCard}
+        onUpgradeCard={upgradeCardGuarded}
         onSellCard={sellCardWithFx}
         onBeginUse={onBeginUse}
+        {...(cardActionSpotlight !== undefined ? { tutorialAction: cardActionSpotlight } : {})}
       />
 
       <ShopDialog
@@ -698,6 +1011,7 @@ function TableScreenInner({
         onSellUpgradePoint={sellUpgradeWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
+        {...(tutorialHighlight !== null ? { tutorialHighlight } : {})}
       />
 
       {subChoice !== null && (
@@ -741,5 +1055,35 @@ function TableScreenInner({
         }}
       />
     </>
+  );
+}
+
+function TutorialZoneCallout({
+  active,
+  highlightId,
+  arrow,
+  className,
+  children,
+}: {
+  active: boolean;
+  highlightId: string;
+  arrow: 'top' | 'bottom';
+  className?: string;
+  children: ReactElement;
+}): ReactElement {
+  if (!active) {
+    return children;
+  }
+
+  return (
+    <TutorialCallout
+      active
+      layout="stretch"
+      arrow={arrow}
+      highlightId={highlightId}
+      {...(className !== undefined ? { className } : {})}
+    >
+      {children}
+    </TutorialCallout>
   );
 }

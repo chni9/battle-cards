@@ -2483,3 +2483,141 @@ as `{ kind: 'points', amount }` with `signed="cost"`. No client-side affordabili
 `IllegalActionDialog` already surfaces server rejection. Server still validates 1–4
 and payment. Other Lot 44 pickers stay select-then-Confirm.
 
+## 2026-08-25 · [P] Lot 45 scripted tutorial (designer session)
+
+Designer 2026-08-25 locks Lot 45. Classic rules and catalog values stay frozen. Tutorial-only
+setup and script in this entry + technical spec v6 §5.3–§5.4 supersede the 2026-08-19 1-life
+bot / Tax-upgraded / buy-Basic / 300_000 ms timer lines.
+
+**Hub / room**
+
+- Nickname-only Tutorial path, then `create({ tutorial: true })` + `startGame`. No kit picker.
+- Client never `addBot`. Server auto-seats exactly one `tutorial-script-v6` bot on `startGame`
+  (before `canStartGame`’s two-seat check). `ADD_BOT` in a tutorial room is rejected with
+  existing `tutorial-room-closed` (no protocol bump).
+- Ignore difficulty: bot-driver short-circuits Easy / search / noise for this policy.
+- No server turn timer (`turnDeadlineMs = null`). Client idle **20s** retitles the coach **Play**.
+
+**Skip / Game over / Excel / Why**
+
+- Hide Forfeit. **Skip tutorial** on the flag and the coach: `leaveGame()` to hub, no Game over.
+- Completing: title **Tutorial complete**; **Play a real game** → hub only.
+- **Download action log** only when `import.meta.env.DEV` (every mode).
+- Hide action-log **Why** in **all** games. Tutorial bot omits `botReason`. No `BOT_REASON_CODES`
+  change, no protocol bump.
+
+**Coach**
+
+- Non-dismissible panel; table stays clickable; highlight the scripted control; Shop not
+  auto-opened. Illegal clicks do not send. After Spy resolves (index 8), highlight the
+  **opponent portrait**. Bot turns keep the last coach.
+
+**Loadout / Tax override**
+
+- Human Indestructible: 4 lives, 30 points, 1 upgrade point, Tax **base**, Spy, **one** Basic,
+  two Shields, Super Regeneration. No Absorber at deal (they buy it). Buy a second upgrade
+  point from the Shop (cost 10). Sell yields points.
+- Bot Ghost: 4 lives, 16 points, Basic, Strong, Thief, Spy; specials none.
+- Indestructible `alwaysUpgraded` still includes `tax`. After `acquireCardToHand`, force
+  `isUpgraded = false` so both Tax plays are **+4 points**. Do not change the kit trait.
+- Attack and action cards stay in hand (rules spec §5); the same Tax / Basic / Spy / Strong
+  are reused. Only specials are one-use.
+
+**Script**
+
+- Human first. Indices **0–30** as technical spec v6 §5.4 (second base Tax after Super
+  Regeneration + Thief; kill with Basic+; Absorber after 4→1; Spy counter at 10–11).
+- Indices 0 and 1 are both human (Draw then Tax). After Draw, `advanceTurn` would seat the
+  bot; the room snaps `currentTurnPlayerId` back to the human for Tax. Tutorial overlay
+  only — Classic one-action-per-turn is unchanged. From index 1 the table alternates.
+- `playKind` / `tutorialIndex` stay room-owned. Never call `applyTutorialSetup` from
+  `run-game.ts`.
+
+## 2026-08-25 · [P] Tutorial coach chat + animated callouts
+
+Designer 2026-08-25 follow-up, after Lot 45. Supersedes the Lot 45 “non-dismissible panel in
+the prompts band” coach chrome. Classic rules and catalog values stay frozen.
+
+- **Coach** is a hovering dismissible chat (`z-[110]`, above Dialog `z-[100]`), not a prompts-band
+  panel and not a focus-trapping Dialog. The table stays clickable around the bubble.
+- Dismiss with Hide (×). A compact **Coach** pill in the same corner reopens it.
+- Auto-open whenever title or body changes (next `tutorialIndex`, idle **Play**, illegal
+  `tutorial-follow-coach` copy). Key is `index|title|body`; open iff dismissed key ≠ current.
+- **Skip tutorial** stays on the flag and on the open chat (same leave-to-hub confirm).
+- Scripted control uses a pulsing orange outline plus a pointing arrow **outside** the
+  highlight square (`top` / `bottom`). `prefers-reduced-motion: reduce` keeps a static thick
+  outline. Shop is still not auto-opened. Illegal clicks still do not send.
+
+## 2026-08-25 · [P] Tutorial arrows outside the square; coach resource icons
+
+Designer 2026-08-25 follow-up. Arrow sits **over** the highlight frame (not inset on the
+control). Coach body still comes from `tutorialStepAt`; the client inlines table resource
+icons (`CostDisplay` for quantified points/lives/upgrade points; PNG glyph for bare words
+and shield). Copy strings are unchanged.
+
+## 2026-08-25 · [P] Tutorial 2-life Shield walk; incoming red; coach chrome
+
+Designer 2026-08-25 follow-up. Classic catalog values stay frozen. Tutorial overlay only.
+Player-facing coach copy is full English — compressed chat style is never used for strings
+players read.
+
+**Script / loadout**
+
+- Human starts at **2 lives** (`TUTORIAL_HUMAN_LIVES`) and **38 points**. Tax 2→1, then Shield vs Strong keeps
+  **1 life** (and remaining shield) for Super Regeneration. Extra starting points cover Shield (7)
+  at index 17 so Thief's 10-point steal still leaves enough to finish the walk.
+- Index **17** is `play-shield` (not Draw). Indices stay 0–30; no inserted step.
+- Index **19** coaches incoming **Thief** (steals points when it resolves) and tells the
+  player to play Super Regeneration. Index 18 stays bot-only (`coach: null`).
+
+**Incoming red**
+
+- Tutorial Incoming chips whose `cardId` is an attack, `spy`, or `thief` get a red
+  `TutorialCallout` (`tone: 'threat'`). Scripted controls stay orange. Felt **Waiting on
+  others** is not a threat highlight.
+
+**Coach chrome**
+
+- **Skip tutorial** is flag-only. The chat has no Skip button.
+- Reopen control is a compact **?** (`OPEN_COACH_ARIA_LABEL`), not a Coach pill.
+- First mention of points, lives, Incoming, upgrade point, Spy, sell, Shop buy, Shield, and
+  Thief uses a complete sentence.
+
+**Shop**
+
+- Upgrade-point callout uses in-flow top padding (`pt-12`) plus `scrollIntoView` so the
+  arrow is not cropped by the Dialog scroller.
+
+## 2026-08-26 · [P] Tutorial board tour, Look gate, translucent coach
+
+Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No protocol bump.
+`tutorialIndex` 0–30 is unchanged. Tour and Look are **client overlays**.
+
+**Board tour**
+
+- Before the first Draw (`tutorialIndex === 0`), present the board one region at a time:
+  your zone, hand, specials, resources, Incoming, Shop, opponent, action log, timer, kit, flag.
+- Each step highlights that region with the orange callout. The human clicks **Got it** on
+  the coach. Got it does **not** increment `tutorialIndex`.
+- Until the tour finishes, block Draw, card sends, and Shop open. Do **not** swap in
+  `tutorial-follow-coach`. Flag and How to play stay available.
+- Reconnect with `tutorialIndex !== 0` skips the tour.
+
+**Look after Spy**
+
+- Spy plays at index 7 and resolves after the bot acts at index 8 (golden rule 3).
+- Index 8 has no Look coach on the script row (bot draw; keep last Spy copy).
+- After index 8, a client gate requires clicking the opponent portrait to open the Spy
+  reveal. Coach: they can now click to see opponent info. No Got it — the click is the action.
+- The gate is **index 9 only**. Later indices (including 30 / Tutorial complete) must not
+  replay Look. Sell at 9 stays blocked until that inspect. After one successful inspect,
+  never block again.
+- Hovering coach is hidden on a `readOnly` finished table.
+
+**Coach chrome**
+
+- Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
+- Got it appears on tour steps only.
+
+
+

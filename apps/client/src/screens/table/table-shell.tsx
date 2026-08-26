@@ -19,6 +19,9 @@ export interface TableShellProps {
   legacyActions?: ReactNode;
   /** POV seat wash on the dock (replaces fixed surface-kit pink). */
   dockStyle?: CSSProperties;
+  turnClassName?: string;
+  opponentsClassName?: string;
+  logClassName?: string;
 }
 
 export function TableShell({
@@ -31,6 +34,9 @@ export function TableShell({
   economy,
   legacyActions,
   dockStyle,
+  turnClassName,
+  opponentsClassName,
+  logClassName,
 }: TableShellProps): ReactElement {
   return (
     <main
@@ -40,7 +46,10 @@ export function TableShell({
       <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5">
         <div
           data-zone="turn"
-          className="shrink-0 rounded-[length:var(--radius-card)] bg-surface text-ink"
+          className={[
+            'shrink-0 overflow-visible rounded-[length:var(--radius-card)] bg-surface text-ink',
+            turnClassName ?? '',
+          ].join(' ')}
         >
           {turn}
         </div>
@@ -54,7 +63,10 @@ export function TableShell({
         <div data-zone="felt" className="table-felt min-h-0 flex-1 overflow-hidden">
           <div
             data-zone="opponents"
-            className="table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-hidden overscroll-contain"
+            className={[
+              'table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-visible overscroll-contain py-1',
+              opponentsClassName ?? '',
+            ].join(' ')}
           >
             {opponentSeats}
           </div>
@@ -68,20 +80,23 @@ export function TableShell({
 
           <div
             data-zone="action-log"
-            className="table-felt__log flex min-h-0 flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1 text-ink sm:p-1.5"
+            className={[
+              'table-felt__log flex min-h-0 flex-col rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1 text-ink sm:p-1.5',
+              logClassName ?? 'overflow-hidden',
+            ].join(' ')}
           >
             {actionLog}
           </div>
 
           <div
             data-zone="dock"
-            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-hidden rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
+            className="table-felt__dock flex min-h-0 flex-col gap-1 overflow-visible rounded-[length:var(--radius-card)] border border-border-soft p-1.5 text-ink sm:p-2"
             style={dockStyle}
           >
-            <div data-zone="private" className="min-h-0 flex-1 overflow-hidden">
+            <div data-zone="private" className="min-h-0 flex-1 overflow-visible">
               {privateZone}
             </div>
-            <div data-zone="economy" className="shrink-0">
+            <div data-zone="economy" className="relative z-[4] shrink-0 overflow-visible">
               {economy}
             </div>
             {legacyActions !== undefined && (

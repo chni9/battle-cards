@@ -150,6 +150,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   clearActionReject: () => void;
   startGame: () => void;
   startSoloGame: (options: StartSoloGameOptions) => Promise<void>;
+  startTutorialGame: (nickname: string) => Promise<void>;
   addBot: (difficulty: BotDifficulty) => void;
   removeBot: (playerId: string) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
@@ -498,6 +499,39 @@ export function useRoomConnection(): UseRoomConnectionResult {
     [attachRoom],
   );
 
+  const startTutorialGame = useCallback(
+    async (nickname: string): Promise<void> => {
+      intentionalLeaveRef.current = true;
+      await leaveCurrent(roomRef);
+      intentionalLeaveRef.current = false;
+      clearToken();
+      soloLaunchPendingRef.current = true;
+      setConnection({ ...INITIAL, status: 'connecting', soloLaunchPending: true });
+
+      const client = new Client(serverUrl());
+      const joinOptions: RoomJoinOptions = {
+        protocolVersion: PROTOCOL_VERSION,
+        nickname: nickname.trim(),
+        tutorial: true,
+      };
+
+      try {
+        const room = await client.create(GAME_ROOM_NAME, joinOptions);
+        attachRoom(room);
+        room.send(START_GAME);
+      } catch (error) {
+        soloLaunchPendingRef.current = false;
+        setConnection({
+          ...INITIAL,
+          status: 'failed',
+          error: describe(error),
+          soloLaunchPending: false,
+        });
+      }
+    },
+    [attachRoom],
+  );
+
   const drawCard = useCallback((): void => {
     roomRef.current?.send(DRAW_CARD);
   }, []);
@@ -570,6 +604,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     clearActionReject,
     startGame,
     startSoloGame,
+    startTutorialGame,
     addBot,
     removeBot,
     setBotDifficulty,

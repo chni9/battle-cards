@@ -24,3 +24,8 @@ export function shouldRejectTutorialJoin(
 ): boolean {
   return playKind === 'tutorial' && seatedHumanCount >= 1;
 }
+
+/** Client never addBot; reject ADD_BOT in tutorial rooms (designer 2026-08-25). */
+export function shouldRejectTutorialAddBot(playKind: PlayKind): boolean {
+  return playKind === 'tutorial';
+}

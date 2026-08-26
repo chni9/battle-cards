@@ -5,6 +5,7 @@
  * Think envelope + wall-clock search budget (L36-01).
  *
  * Enumerate → view-only decide → difficulty noise → performBotAction.
+ * `tutorial-script-v6` short-circuits Easy / search / noise and omits Why (L45-02).
  * Sub-choices answered inline; every turn entered via setTimeout(0).
  */
 
@@ -19,6 +20,7 @@ import type {
 } from '@card-battle/shared';
 
 import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { intersectTutorialLegalActions } from '../engine/tutorial/intersect-tutorial-legal';
 import { listAvailableRewardCards } from '../engine/turn/elimination-rewards';
 import type { TurnAction } from '../engine/turn/perform-action';
 import { createRng } from '../engine/rng';
@@ -28,6 +30,7 @@ import { sampleSoftmaxAction } from './difficulty-softmax';
 import { HEURISTIC_V4_POLICY_ID } from './policies/heuristic-v4';
 import { SEARCH_V5_ENGAGE_POLICY_ID } from './policies/search-v5-engage';
 import { getDefaultPolicy, getPolicy } from './registry';
+import { TUTORIAL_SCRIPT_V6_POLICY_ID } from './policies/tutorial-script-v6';
 import { decideHeuristicV4Sync } from './search/worker/fallback';
 import {
   classifyWorkerFailure,
@@ -295,7 +298,10 @@ export class BotDriver {
         return;
       }
 
-      const actions = listLegalActions(state, botId);
+      const actions =
+        view.playKind === 'tutorial' && view.tutorialIndex !== null
+          ? intersectTutorialLegalActions(state, botId, view.tutorialIndex)
+          : listLegalActions(state, botId);
 
       if (actions.length === 0) {
         this.host.performBotDraw(botId, { code: 'policy-fallback' });
@@ -305,6 +311,13 @@ export class BotDriver {
       const actionLog = this.host.getActionLog();
       const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
       const policy = this.policyFor(botId);
+
+      if (policy.id === TUTORIAL_SCRIPT_V6_POLICY_ID) {
+        const scripted = policy.decide(view, actions, rng, { actionLog });
+        this.host.performBotAction(botId, scripted.action);
+        return;
+      }
+
       const difficulty = this.host.getBotDifficulty(botId);
       let decision: { action: TurnAction; reason: BotDecisionReason };
       let actionScores: readonly SearchActionScore[] | undefined;

@@ -72,9 +72,19 @@ rules above are unchanged — this section only covers how the client looks.
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
   Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
   `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
-  a tiny footer. Idle hub is unlabeled (not “Not connected”). **Tutorial** button is hidden
-  until L45-04. Table **How to play** is a compact **?** `IconButton` on the turn strip
-  (L43-05; does not send an intent). Solo composes `create` + N× `addBot` + `startGame`;
+  a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
+  (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
+  (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
+  chat (copy from `tutorialStepAt` / `TUTORIAL_TOUR_STEPS` / `TUTORIAL_LOOK_COACH`; last human
+  coach on bot turns). Client-only **board tour** at index 0 (Got it; no `tutorialIndex` bump)
+  then Draw. After Spy resolves (end of index 8), a **Look** gate forces a portrait click
+  before sell. Coach panel is slightly transparent. Auto-opens
+  on new copy; compact **?** reopens it (not a Coach pill). Skip tutorial is **flag only**.
+  Resource words in coach copy render as table icons.
+  Pulsing orange callout + pointing arrow **outside** the highlight square; incoming Attack /
+  Spy / Thief chips are a red callout on Incoming (not Waiting on others). Shop is **not**
+  auto-opened; illegal clicks do not send (`tutorial-follow-coach`
+  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -83,8 +93,8 @@ rules above are unchanged — this section only covers how the client looks.
   Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty;
   `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
   and sends `chooseKit` before `startGame` when the pick is not random.
-- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones; action-log **Why**
-  opens `botReason` copy (`formatBotReason`) — explanatory only, never table legality.
+- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
+  still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
@@ -227,13 +237,17 @@ rules above are unchanged — this section only covers how the client looks.
   Reward picks are never shown. In-game `playerReanimated` never includes `kitId`
   (designer 2026-08-24 / L50-03): copy is always `X returns`. Excel `exportLog` still
   carries the kit. Bot rows may carry optional
-  `botReason` (L17-05); UI exposes a Why control only — never feed reasons into play/legal UI.
+  `botReason` (L17-05); the Why control is hidden in every mode (L45-05) — never feed
+  reasons into play/legal UI.
 - **End screen (L9-03 / L13-01 / designer 2026-08-06):** `FinishedStateView` keeps public
   `recap` + `exportLog`. PROTOCOL 24 adds `finalTable` (per-recipient `PlayingStateView`
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
+  Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
+  (still `onLeave` → hub only). **Download action log** renders only when
+  `import.meta.env.DEV` (every mode).
   No kits on the finished seat list
   itself (still private
   except via `finalTable.self` / Spy / eliminationReveal as in playing).
@@ -457,6 +471,23 @@ do not hand off an untested lot.
 - Not forced this pass (engine-tested / source-tested): Assassin multi, steal hidden/spied,
   pool / consume / special-pick, Mirror, elimination rewards, reanimation kit. L48-02 remains
   the formal first-time gate.
+
+### Lot 45 verified 2026-08-25 (browser, tutorial no turn timer, PROTOCOL 30)
+
+- Hub **Tutorial** → How to play soft gate (Skip) → nickname-only form (no kit picker, no add-bot).
+  Nick `L45Host` → Start tutorial. Room `EZBIMB`. One bot **Alpha**; difficulty label hidden on the
+  table. Coach **Draw** (points, not a card); Draw spotlight. Shop opens only on click (not
+  auto). Illegal Shield Use → coach **Tutorial step**. Tax coach copy **4 points**. After Tax,
+  coach **Counter** (equal cancel); Basic highlighted; Incoming Basic from Alpha. Action log has
+  no Why. **Skip tutorial** confirm is not a forfeit → hub, no Game over.
+- Engine walk 0–30 is covered by `tutorial-script.integration.test.ts` (L45-07), not the browser
+  pass.
+
+### Lot 45 follow-up verified 2026-08-26 (browser, board tour + Look gate)
+
+- Nick `TourHost`, room `GMFBAP`. Client-only 11-step tour before Draw (Got it); Draw blocked
+  on the Leave step; Draw after tour. Coach panel slightly transparent. After Spy resolves,
+  Look forces a portrait click (no Got it); Spy reveal then Sell.
 
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 

@@ -18,7 +18,7 @@ import {
 } from './registry';
 
 describe('policy registry (L32-02 / L33-05)', () => {
-  it('registers heuristic-v4, tuned, engage, search-v5, search-v5-engage, and random-legal', () => {
+  it('registers heuristic-v4, tuned, engage, search-v5, search-v5-engage, random-legal, and tutorial-script-v6', () => {
     expect(listPolicyIds()).toEqual(
       [
         HEURISTIC_TUNED_V5_POLICY_ID,
@@ -27,6 +27,7 @@ describe('policy registry (L32-02 / L33-05)', () => {
         RANDOM_LEGAL_POLICY_ID,
         SEARCH_V5_ENGAGE_POLICY_ID,
         'search-v5',
+        'tutorial-script-v6',
       ].sort(),
     );
     expect(DEFAULT_POLICY_ID).toBe(HEURISTIC_V4_POLICY_ID);

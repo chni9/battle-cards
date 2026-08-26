@@ -61,7 +61,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-32 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+39 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -69,7 +69,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 42 · How to play | 4 | 4 |
 | 43 · Table readability | 6 | 6 |
 | 44 · Visual pickers | 6 | 6 |
-| 45 · Tutorial | 7 | 0 |
+| 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 0 |
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
@@ -135,13 +135,13 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L45-01 | `applyTutorialSetup(state)` after Classic deal when `playKind === 'tutorial'`. Loadout **exactly** spec §5.3 (Indestructible vs Ghost, 1-life bot, hands/specials/resources). **Acceptance:** fixed-seed classic start **without** `playKind` tutorial is unchanged; tutorial state matches the table; Tax instance `isUpgraded === true`. **Watch point:** do not call this from the simulator default path. | L | **High** | L41-03, L41-05 | To do |
-| L45-02 | Policy `tutorial-script-v6` in the registry: view-only; index 2 plays Basic → human; every other bot turn Draws. No `GameState`. **Acceptance:** registry test; `heuristic-v4.freeze.test.ts` unmodified and green. | M | **High** | L32-02 (Done), L41-03 | To do |
-| L45-03 | Room advances `tutorialIndex` per spec §5.4; intersects `listLegalActions` with the script; `'tutorial-follow-coach'` otherwise. Index 15+ : non-upgraded Basic → bot or Draw. Track bought Basic instance for index 11. **Acceptance:** one test per index 0–14; after index 3–4 bot `lives === 1`; upgraded Basic is **not** legal at index 3. | L | **High** | L45-01, L45-02 | To do |
-| L45-04 | Client `startTutorialGame`: `create({ tutorial: true })`, add one bot, `startGame`, skip lobby like solo. Hub **Tutorial** button. Server auto-seats the scripted bot and ignores difficulty. Turn deadline 300_000 ms. **Acceptance:** one human + one bot; join by code rejected; solo/online unchanged. | M | Medium | L45-03, L42-02, L42-04 | To do |
-| L45-05 | Coach overlay: client copy table spec §5.4 keyed by `tutorialIndex`; highlight the control; does not replace server filter. **Acceptance:** index 0 copy mentions Draw is points; index 3 mentions equal cancel. | M | Low | L45-04 | To do |
-| L45-06 | Finished `playKind === 'tutorial'`: Game over title **Tutorial complete**; CTA **Play a real game** → hub. Rewards skipped (existing 2p game-ending elim). **Acceptance:** browser/unit on finished view title. | S | Low | L45-04, L41-03 | To do |
-| L45-07 | Scripted integration test: drive indices 0–15+ to bot elimination; assert Spy relation after index 6; Strong sold; Basic bought; one upgrade; Super Regeneration played; winner is the human. **Acceptance:** one test file; no `Math.random()`. **Watch point:** if Super Regeneration would hit the cap, lives still `<= lifeLimit`. | M | **High** | L45-03 | To do |
+| L45-01 | `applyTutorialSetup` after Classic deal when `playKind === 'tutorial'`. Loadout **exactly** spec §5.3 (4-life seats, base Tax, one Basic, two Shields, no Absorber at deal, bot Ghost with Basic/Strong/Thief/Spy). **Acceptance:** fixed-seed classic start **without** the overlay is unchanged; Tax instance `isUpgraded === false`; simulator does not import setup. **Watch point:** Indestructible `alwaysUpgraded` still includes `tax` — force the instance, do not change the trait. | L | **High** | L41-03, L41-05 | Done |
+| L45-02 | Policy `tutorial-script-v6` in the registry: view-only; map 2 Basic→human, 10 Spy→human, 16/28 Strong→human, 18 Thief→human, else Draw. Bot-driver short-circuits Easy/search/noise. No `botReason`. **Acceptance:** registry test; `heuristic-v4.freeze.test.ts` unmodified and green. | M | **High** | L32-02 (Done), L41-03 | Done |
+| L45-03 | Room advances `tutorialIndex` per spec §5.4 (0–30); intersects `listLegalActions` with the script; `'tutorial-follow-coach'` otherwise. **Acceptance:** one test per index 0–30; after 3–4 bot `lives === 4`; after 17 human `lives === 1`; after 21 Tax granted **4** points; after 26 bot `lives === 1`; after 30 human winner; upgraded Basic is **not** legal at index 3; no `buyCard` of `basic-attack`. | L | **High** | L45-01, L45-02 | Done |
+| L45-04 | Client `startTutorialGame`: `create({ tutorial: true })` then `startGame` (no `addBot`, no `chooseKit`), skip lobby like solo. Hub **Tutorial** nickname-only. Server auto-seats the scripted bot; reject `ADD_BOT`; no turn timer; Skip tutorial (not Forfeit) leaves to hub. **Acceptance:** one human + one bot; join by code rejected; solo/online unchanged. | M | Medium | L45-03, L42-02, L42-04 | Done |
+| L45-05 | Coach overlay: client copy table spec §5.4 keyed by `tutorialIndex`; highlight the control (index 8 = opponent portrait); idle 20s title **Play**; illegal clicks do not send. Hide **Why** on the table log in **all** games. **Acceptance:** index 0 copy mentions Draw is points; index 1 and 21 mention 4 points; index 3 mentions equal cancel. | M | Low | L45-04 | Done |
+| L45-06 | Finished `playKind === 'tutorial'`: Game over title **Tutorial complete**; CTA **Play a real game** → hub only. **Download action log** only when `import.meta.env.DEV`. Rewards skipped (existing 2p game-ending elim). **Acceptance:** unit on finished view title; Excel button absent unless DEV. | S | Low | L45-04, L41-03 | Done |
+| L45-07 | Seeded integration: drive indices 0–30 to human win. Assert Spy visibility after 8; Spy counter; Shield sold; Absorber bought not dealt; UP bought; second Tax after Regen+Thief (+4); Super Regen from 1 life; Absorber after 4→1; Basic never bought; `lives <= lifeLimit`; human winner. **Acceptance:** one test file; no `Math.random()`. | M | **High** | L45-03 | Done |
 
 ---
 
@@ -225,7 +225,7 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | 50 | 9 |
 | **Total** | **49** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so the 1-life bot dies at index 4; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 

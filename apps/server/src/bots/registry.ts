@@ -23,6 +23,10 @@ import {
 } from './policies/random-legal';
 import { SEARCH_V5_POLICY_ID, searchV5Policy } from './policies/search-v5';
 import {
+  TUTORIAL_SCRIPT_V6_POLICY_ID,
+  tutorialScriptV6Policy,
+} from './policies/tutorial-script-v6';
+import {
   SEARCH_V5_ENGAGE_POLICY_ID,
   searchV5EngagePolicy,
 } from './policies/search-v5-engage';
@@ -34,6 +38,7 @@ export {
   RANDOM_LEGAL_POLICY_ID,
   SEARCH_V5_ENGAGE_POLICY_ID,
   SEARCH_V5_POLICY_ID,
+  TUTORIAL_SCRIPT_V6_POLICY_ID,
 };
 
 /**
@@ -77,3 +82,4 @@ registerPolicy(heuristicV5EngagePolicy);
 registerPolicy(searchV5Policy);
 registerPolicy(searchV5EngagePolicy);
 registerPolicy(randomLegalPolicy);
+registerPolicy(tutorialScriptV6Policy);

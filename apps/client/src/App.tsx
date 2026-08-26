@@ -27,6 +27,7 @@ export function App() {
     clearActionReject,
     startGame,
     startSoloGame,
+    startTutorialGame,
     addBot,
     removeBot,
     setBotDifficulty,
@@ -142,6 +143,9 @@ export function App() {
       }}
       onStartSolo={(opponentCount, difficulty, kitSelection) => {
         void startSoloGame({ nickname, opponentCount, difficulty, kitSelection });
+      }}
+      onStartTutorial={() => {
+        void startTutorialGame(nickname);
       }}
     />
   );
