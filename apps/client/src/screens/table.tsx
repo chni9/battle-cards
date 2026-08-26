@@ -22,7 +22,14 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
-import { markHowToPlaySeen } from '../help/help-storage';
+import { HintOverlay } from '../help/hint-overlay';
+import {
+  dismissHint,
+  markHowToPlaySeen,
+  readHintState,
+  skipAllHints,
+} from '../help/help-storage';
+import { selectHint } from '../help/select-hint';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -177,6 +184,7 @@ function TableScreenInner({
   );
   const [tourStep, setTourStep] = useState(0);
   const [portraitInspected, setPortraitInspected] = useState(false);
+  const [hintState, setHintState] = useState(readHintState);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -567,6 +575,30 @@ function TableScreenInner({
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
+  const hasUnspiedLivingOpponent = opponents.some(
+    (player) =>
+      !player.isEliminated &&
+      player.spied === undefined &&
+      player.eliminationReveal === undefined,
+  );
+  const currentHint = selectHint({
+    playKind: view.playKind,
+    readOnly,
+    selfEliminated,
+    isMyTurn: isMyTurn && !readOnly && !selfEliminated,
+    skipAll: hintState.skipAll,
+    dismissed: hintState.dismissed,
+    hasRealIncoming: incomingTargetingYouIds(view.pendingEffects, view.you).size > 0,
+    hasUnspiedLivingOpponent,
+  });
+  const hintDialogOpen =
+    dialog !== null ||
+    howToPlayOpen ||
+    leaveConfirm !== null ||
+    inspectKitId !== null ||
+    inspectOpponentId !== null ||
+    actionReject !== null ||
+    subChoice !== null;
 
   const inspectOpponent = opponents.find((entry) => entry.id === inspectOpponentId);
   const inspectReveal =
@@ -917,6 +949,19 @@ function TableScreenInner({
           />
         }
       />
+
+      {currentHint !== null ? (
+        <HintOverlay
+          hintId={currentHint}
+          dialogOpen={hintDialogOpen}
+          onGotIt={() => {
+            setHintState(dismissHint(currentHint));
+          }}
+          onSkipAll={() => {
+            setHintState(skipAllHints());
+          }}
+        />
+      ) : null}
 
       {tutorialIndex !== null &&
       !readOnly &&

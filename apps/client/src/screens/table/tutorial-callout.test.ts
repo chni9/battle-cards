@@ -23,6 +23,10 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
 
   it('coach overlay can hide and reopen', () => {
     const src = readFileSync(join(here, 'tutorial-coach.tsx'), 'utf8');
+    const panel = readFileSync(
+      join(here, '../../design/components/coach-panel.tsx'),
+      'utf8',
+    );
     expect(src).toContain('onHide');
     expect(src).toContain('onShow');
     expect(src).toContain('OPEN_COACH_ARIA_LABEL');
@@ -31,8 +35,10 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(src).not.toContain('SKIP_TUTORIAL');
     expect(src).toContain('HIDE_COACH_ARIA_LABEL');
     expect(src).toContain('z-[110]');
-    expect(src).toContain('CostDisplay');
-    expect(src).toContain('parseCoachBody');
+    expect(src).toContain('CoachPanel');
+    expect(src).toContain('zone="tutorial-coach"');
+    expect(panel).toContain('CostDisplay');
+    expect(panel).toContain('parseCoachBody');
     expect(src).toContain('?');
     expect(src).toContain('onAck');
     expect(src).toContain('GOT_IT_ACTION_LABEL');

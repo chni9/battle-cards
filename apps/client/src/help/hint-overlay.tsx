@@ -1,0 +1,92 @@
+/**
+ * Hovering first-game hint — technical spec v6 §5.2 / L46-01.
+ * Not a Dialog. Hide is session-only; Got it / Skip all write localStorage.
+ */
+
+import { useState, type ReactElement } from 'react';
+
+import { CoachPanel } from '../design/components/coach-panel';
+import { Button } from '../design/components/button';
+import { IconButton } from '../design/components/icon-button';
+import {
+  GOT_IT_ACTION_LABEL,
+  HIDE_COACH_ARIA_LABEL,
+  OPEN_COACH_ARIA_LABEL,
+} from '../screens/table/table-copy';
+
+import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
+import type { HintId } from './hint-ids';
+
+export interface HintOverlayProps {
+  hintId: HintId;
+  /** Hide while a table Dialog is open (Shop, inspect, leave, How to play). */
+  dialogOpen: boolean;
+  onGotIt: () => void;
+  onSkipAll: () => void;
+}
+
+export function HintOverlay({
+  hintId,
+  dialogOpen,
+  onGotIt,
+  onSkipAll,
+}: HintOverlayProps): ReactElement | null {
+  const [hiddenKey, setHiddenKey] = useState<string | null>(null);
+  const copy = HINT_COPY[hintId];
+  const open = hiddenKey !== hintId;
+
+  if (dialogOpen) {
+    return null;
+  }
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[105]">
+      <div className="pointer-events-auto absolute bottom-[7.5rem] left-2 w-[min(22rem,calc(100vw-1rem))] sm:bottom-[8.5rem]">
+        {open ? (
+          <CoachPanel
+            key={hintId}
+            title={copy.title}
+            body={copy.body}
+            zone="first-game-hint"
+            extraAttrs={{ 'data-hint-id': hintId }}
+            onHide={() => {
+              setHiddenKey(hintId);
+            }}
+            hideAriaLabel={HIDE_COACH_ARIA_LABEL}
+            footer={
+              <>
+                <Button
+                  variant="green"
+                  className="w-full"
+                  data-hint-ack="got-it"
+                  onClick={onGotIt}
+                >
+                  {GOT_IT_ACTION_LABEL}
+                </Button>
+                <Button
+                  variant="orange"
+                  className="w-full"
+                  data-hint-ack="skip-all"
+                  onClick={onSkipAll}
+                >
+                  {SKIP_ALL_HINTS_LABEL}
+                </Button>
+              </>
+            }
+          />
+        ) : (
+          <IconButton
+            data-zone="first-game-hint-toggle"
+            aria-label={OPEN_COACH_ARIA_LABEL}
+            className="border-2 border-cta-orange bg-cta-orange/20 text-lg font-bold shadow-[0_8px_24px_rgba(28,26,31,0.28)]"
+            onClick={() => {
+              setHiddenKey(null);
+            }}
+          >
+            ?
+          </IconButton>
+        )}
+      </div>
+    </div>
+  );
+}

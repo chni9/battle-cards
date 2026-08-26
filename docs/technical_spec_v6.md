@@ -202,13 +202,15 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 | `resources` | Same | Heart lives · diamond points · upgrade-point icon · shield (attacks only). |
 | `incoming` | First **real** Incoming targeting POV (not presentation persistents) | This hits **after you act** on your next turn. You can attack back, Shield, or Mirror. |
 | `hidden-kit` | First time an unspied opponent is visible | You cannot see their kit until Spy (or death). |
-| `shop` | First time Buy is enabled on your turn | Shop prices are double the play cost. |
-| `leave` | First time Leave is visible | Leave is a **forfeit**. |
+| `shop` | Current best remaining economy lesson on your turn (L46-02) | Shop prices are double the play cost. |
+
+`leave` is **not** a first-game hint (designer 2026-08-26). The Forfeit flag keeps its own confirm copy.
 
 Controls: **Got it** (dismiss this id) · **Skip all**. Table **How to play** stays available.
 Do not block the turn timer; do not require dismissing to act (the overlay is pointer-events
 on the coach card only, not a full-screen trap — except the first `your-turn` may sit beside
-the existing Your-turn flash, not replace it).
+the existing Your-turn flash, not replace it). Tutorial matches use the L45 coach, never these
+ids. Selector table and auto-Got-it: L46-02.
 
 ### 5.3 Tutorial — setup overrides
 

@@ -84,7 +84,10 @@ rules above are unchanged — this section only covers how the client looks.
   Pulsing orange callout + pointing arrow **outside** the highlight square; incoming Attack /
   Spy / Thief chips are a red callout on Incoming (not Waiting on others). Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
-  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look). Solo composes `create` + N× `addBot` + `startGame`;
+  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
+  **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
+  `CoachPanel` chrome as tutorial, `data-zone="first-game-hint"`, Got it / Skip all.
+  `leave` is not a hint id. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;

@@ -47,7 +47,12 @@ export function EconomyBar({
         arrow="top"
         highlightId="draw"
       >
-        <Button variant="green" disabled={disabled} onClick={onDraw}>
+        <Button
+          variant="green"
+          disabled={disabled}
+          onClick={onDraw}
+          data-hint-anchor="draw"
+        >
           {DRAW_ACTION_LABEL}{' '}
           <CostDisplay
             cost={{ kind: 'points', amount: drawValue }}
@@ -61,7 +66,7 @@ export function EconomyBar({
         arrow="top"
         highlightId="shop"
       >
-        <Button variant="orange" onClick={onOpenShop}>
+        <Button variant="orange" onClick={onOpenShop} data-hint-anchor="shop">
           {SHOP_ACTION_LABEL}
         </Button>
       </TutorialCallout>

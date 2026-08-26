@@ -2619,5 +2619,16 @@ Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No 
 - Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
 - Got it appears on tour steps only.
 
+## 2026-08-26 · [P] First-game hints omit leave (L46-01)
+
+Designer 2026-08-26: first-Classic hints are a single contextual coach card on a live
+Classic table. **Leave / Forfeit is not a hint** — the flag already explains forfeit.
+`HintId` is `your-turn` · `draw` · `resources` · `incoming` · `hidden-kit` · `shop`.
+Tutorial (`playKind === 'tutorial'`) keeps `TutorialCoach`; it never mounts these ids.
+Storage stays `card-battle.v6.hints` `{ dismissed, skipAll }`. Corrupt JSON is empty.
+Got it / Skip all write the blob; Hide is session-only. Completing the tutorial still
+does not set `skipAll` (L46-03). Best-action selector lands in L46-02.
+
+
 
 
