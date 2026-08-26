@@ -83,8 +83,11 @@ rules above are unchanged — this section only covers how the client looks.
   before sell. Coach panel is slightly transparent. Auto-opens
   on new copy; compact **?** reopens it (not a Coach pill). Skip tutorial is **flag only**.
   Resource words in coach copy render as table icons.
-  Pulsing orange callout + pointing arrow **outside** the highlight square; incoming Attack /
-  Spy / Thief chips are a red callout on Incoming (not Waiting on others). Shop is **not**
+  Pulsing orange callout + pointing arrow **outside** the highlight square on scripted
+  controls (Draw, cards, Shop). Real pending chips (Incoming **and** Waiting on others)
+  get the same callout chrome **without** an arrow: red when `threatToneFor` is attack,
+  orange otherwise, until the chip leaves the queue. Presentation persistents are not
+  ringed. Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
   copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look). Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`

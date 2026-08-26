@@ -21,6 +21,12 @@ describe('tutorial callout chrome (technical spec v6 §5.4)', () => {
     expect(css).toContain('--color-cta-red');
   });
 
+  it('can omit the pointing arrow (L51-07)', () => {
+    const src = readFileSync(join(here, 'tutorial-callout.tsx'), 'utf8');
+    expect(src).toContain('arrow !== false');
+    expect(src).toContain('TutorialArrowSide | false');
+  });
+
   it('coach overlay can hide and reopen', () => {
     const src = readFileSync(join(here, 'tutorial-coach.tsx'), 'utf8');
     expect(src).toContain('onHide');

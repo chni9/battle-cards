@@ -84,7 +84,6 @@ import {
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
-  tutorialIncomingThreatIds,
   tutorialPortraitSpotlight,
   tutorialSendAllowed,
   tutorialSpotlightInstanceIds,
@@ -565,10 +564,6 @@ function TableScreenInner({
   const incomingEffects = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId === view.you,
   );
-  const incomingThreatIds = tutorialIncomingThreatIds(
-    incomingEffects,
-    tutorialIndex !== null,
-  );
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
@@ -900,9 +895,6 @@ function TableScreenInner({
                   }
                 : {})}
               {...(spotlightIds.length > 0 ? { highlightedInstanceIds: spotlightIds } : {})}
-              {...(incomingThreatIds.length > 0
-                ? { threatHighlightIds: incomingThreatIds }
-                : {})}
               {...(tourHighlight !== undefined && tourHighlight !== 'your-zone'
                 ? { zoneHighlight: tourHighlight }
                 : {})}
