@@ -483,6 +483,12 @@ do not hand off an untested lot.
 - Engine walk 0–30 is covered by `tutorial-script.integration.test.ts` (L45-07), not the browser
   pass.
 
+### Lot 45 follow-up verified 2026-08-26 (browser, board tour + Look gate)
+
+- Nick `TourHost`, room `GMFBAP`. Client-only 11-step tour before Draw (Got it); Draw blocked
+  on the Leave step; Draw after tour. Coach panel slightly transparent. After Spy resolves,
+  Look forces a portrait click (no Got it); Spy reveal then Sell.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
