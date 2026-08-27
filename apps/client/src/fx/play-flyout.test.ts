@@ -43,7 +43,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
   it('enqueues opponent sold-card ghosts as playFlyout from the seat (L51-11)', () => {
     const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
     expect(table).toContain('enqueueSellCardGhost');
-    expect(table).toContain("kind: 'playFlyout'");
+    expect(table).toContain("kind: 'tokenFlyout'");
     expect(table).toContain('skipFlyoutsForChips');
   });
 });

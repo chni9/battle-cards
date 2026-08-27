@@ -247,28 +247,33 @@ export function TableFxOverlay(): ReactElement {
               return null;
             }
             const { from, to, artUrl, id, delayMs = 0 } = event;
+            const isCard = from.width >= 64;
             return (
               <motion.img
                 key={id}
                 src={artUrl}
                 alt=""
-                data-fx="token-flyout"
-                className="absolute z-10 object-contain drop-shadow-md"
+                data-fx={isCard ? 'card-flyout' : 'token-flyout'}
+                className={
+                  isCard
+                    ? 'absolute z-20 rounded-[length:var(--radius-card)] border-2 border-border bg-surface-raised object-contain shadow-lg'
+                    : 'absolute z-10 object-contain drop-shadow-md'
+                }
                 initial={{
                   left: from.left,
                   top: from.top,
                   width: from.width,
                   height: from.height,
-                  opacity: 0,
-                  scale: 1.15,
+                  opacity: isCard ? 1 : 0,
+                  scale: isCard ? 1 : 1.15,
                 }}
                 animate={{
                   left: to.left,
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: [0, 1, 1, 0.35],
-                  scale: [1.15, 1.05, 1, 0.9],
+                  opacity: isCard ? 1 : [0, 1, 1, 0.35],
+                  scale: isCard ? 1 : [1.15, 1.05, 1, 0.9],
                 }}
                 exit={{ opacity: 0 }}
                 transition={{
@@ -296,13 +301,13 @@ export function TableFxOverlay(): ReactElement {
                     duration: TOKEN_FLYOUT_DURATION_S,
                     ease: 'linear',
                     delay: delayMs / 1000,
-                    times: [0, 0.12, 0.7, 1],
+                    ...(isCard ? {} : { times: [0, 0.12, 0.7, 1] }),
                   },
                   scale: {
                     duration: TOKEN_FLYOUT_DURATION_S,
                     ease: 'linear',
                     delay: delayMs / 1000,
-                    times: [0, 0.12, 0.7, 1],
+                    ...(isCard ? {} : { times: [0, 0.12, 0.7, 1] }),
                   },
                 }}
                 draggable={false}
