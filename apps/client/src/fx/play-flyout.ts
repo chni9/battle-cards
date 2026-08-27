@@ -75,21 +75,30 @@ export function tokenFlyoutSeatSelector(playerId: string): string {
   return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"]`;
 }
 
+/** POV dock root — `data-zone="private"` is a wrapper without `data-player-id`. */
+export function tokenFlyoutPovSelector(playerId: string): string {
+  return `[data-zone="private-zone"][data-player-id="${escapeSelector(playerId)}"]`;
+}
+
 function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLite | null {
   const opponentResource = document.querySelector(
     tokenFlyoutResourceSelector(kind, playerId),
   );
-  const opponentSeat = document.querySelector(tokenFlyoutSeatSelector(playerId));
-  if (opponentResource !== null || opponentSeat !== null) {
-    return rectOf(opponentResource) ?? rectOf(opponentSeat);
+  if (opponentResource !== null) {
+    return rectOf(opponentResource);
   }
-  const selfResource = document.querySelector(
-    `[data-zone="private"][data-player-id="${escapeSelector(playerId)}"] [data-resource-kind="${escapeSelector(kind)}"]`,
+  const opponentSeat = document.querySelector(tokenFlyoutSeatSelector(playerId));
+  if (opponentSeat !== null) {
+    return rectOf(opponentSeat);
+  }
+  const selfRoot = document.querySelector(tokenFlyoutPovSelector(playerId));
+  if (selfRoot === null) {
+    return null;
+  }
+  return (
+    rectOf(selfRoot.querySelector(`[data-resource-kind="${escapeSelector(kind)}"]`)) ??
+    rectOf(selfRoot)
   );
-  const selfZone = document.querySelector(
-    `[data-zone="private"][data-player-id="${escapeSelector(playerId)}"]`,
-  );
-  return rectOf(selfResource) ?? rectOf(selfZone);
 }
 
 function rectForEndpoint(
@@ -133,8 +142,8 @@ export function measureDirectedTokenFlyout(
   if (fromRect === null || toRect === null) {
     return null;
   }
-  const fromSize = from === 'log' ? 32 : 24;
-  const toSize = to === 'log' ? 32 : 24;
+  const fromSize = from === 'log' ? 40 : 32;
+  const toSize = to === 'log' ? 40 : 32;
   return {
     artUrl: getResourceIconUrl(kind),
     from: fannedChip(fromRect, index, fromSize, 1),
@@ -165,8 +174,8 @@ export function measureTokenFlyout(
   }
   const fromBase = direction === 'gain' ? log : resourceRect;
   const toBase = direction === 'gain' ? resourceRect : log;
-  const fromSize = direction === 'gain' ? 32 : 24;
-  const toSize = direction === 'gain' ? 24 : 32;
+  const fromSize = direction === 'gain' ? 40 : 32;
+  const toSize = direction === 'gain' ? 32 : 40;
   return {
     artUrl: getResourceIconUrl(kind),
     from: fannedChip(fromBase, index, fromSize, 1),
@@ -179,7 +188,14 @@ export function measureOpponentCardLogFlyout(
   playerId: string,
   artUrl: string,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from = rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId)));
+  const from =
+    rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId))) ??
+    rectOf(
+      document.querySelector(
+        `${tokenFlyoutSeatSelector(playerId)} [data-zone="opponent-portrait"]`,
+      ),
+    ) ??
+    rectOf(document.querySelector('[data-zone="opponents"]'));
   const log = rectOf(document.querySelector('[data-zone="action-log-panel"]'));
   if (from === null || log === null) {
     return null;
@@ -187,16 +203,16 @@ export function measureOpponentCardLogFlyout(
   return {
     artUrl,
     from: {
-      left: from.left + from.width / 2 - 36,
-      top: from.top + from.height / 2 - 54,
-      width: 72,
-      height: 108,
+      left: from.left + from.width / 2 - 48,
+      top: from.top + from.height / 2 - 72,
+      width: 96,
+      height: 144,
     },
     to: {
-      left: log.left + log.width / 2 - 32,
-      top: log.top + 12,
-      width: 64,
-      height: 96,
+      left: log.left + log.width / 2 - 40,
+      top: log.top + 8,
+      width: 80,
+      height: 120,
     },
   };
 }

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+  tokenFlyoutPovSelector,
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
 } from './play-flyout';
@@ -26,13 +27,23 @@ describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
     expect(tokenFlyoutSeatSelector('p2')).toBe(
       '[data-zone="opponent-seat"][data-player-id="p2"]',
     );
+    expect(tokenFlyoutPovSelector('me')).toBe(
+      '[data-zone="private-zone"][data-player-id="me"]',
+    );
     expect(tokenFlyoutResourceSelector('point')).not.toContain('opponent-seat');
   });
 
   it('sizes opponent sold-card ghosts large enough to read (L51-11)', () => {
     const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
     expect(source).toContain('measureOpponentCardLogFlyout');
-    expect(source).toContain('width: 72');
-    expect(source).toContain('height: 108');
+    expect(source).toContain('width: 96');
+    expect(source).toContain('height: 144');
+  });
+
+  it('enqueues opponent sold-card ghosts as playFlyout from the seat (L51-11)', () => {
+    const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
+    expect(table).toContain('enqueueSellCardGhost');
+    expect(table).toContain("kind: 'playFlyout'");
+    expect(table).toContain('skipFlyoutsForChips');
   });
 });

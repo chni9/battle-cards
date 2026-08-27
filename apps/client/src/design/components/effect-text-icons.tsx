@@ -31,17 +31,17 @@ function InlineAmount({
 }): ReactElement {
   const structured = structuredFromKind(kind, amount);
   if (structured !== null) {
-    return <CostDisplay cost={structured} iconSize={14} className="align-middle" />;
+    return <CostDisplay cost={structured} iconSize={16} className="align-middle" />;
   }
   return (
-    <span className="inline-flex items-center gap-0.5 align-middle font-medium">
+    <span className="inline-flex items-center gap-0.5 align-middle font-medium whitespace-nowrap">
       <span>{String(amount)}</span>
       <img
         src={getResourceIconUrl('shield')}
         alt=""
-        width={14}
-        height={14}
-        className="size-3.5 object-contain"
+        width={16}
+        height={16}
+        className="size-4 object-contain"
         aria-hidden
       />
     </span>
@@ -61,7 +61,7 @@ export function EffectTextWithIcons({ text }: { text: string }): ReactElement {
       nodes.push(text.slice(cursor, span.start));
     }
     nodes.push(
-      <span key={`res-${String(index)}`} className="inline-flex items-center gap-0.5">
+      <span key={`res-${String(index)}`} className="inline-flex items-center gap-0.5 whitespace-nowrap">
         {span.insteadOf ? <span>instead of </span> : null}
         <InlineAmount kind={span.kind} amount={span.amount} />
       </span>,

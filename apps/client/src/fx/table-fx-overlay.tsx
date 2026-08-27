@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import type { ActionResolutionOutcome } from '@card-battle/shared';
 
 import {
+  FLYOUT_TRAVEL_EASE,
   MOTION_DURATION_S,
   MOTION_EASE,
   THREAT_OUTLINE_DURATION_S,
@@ -64,25 +65,44 @@ function FlyoutImage({
       key={id}
       src={artUrl}
       alt=""
+      data-fx="card-flyout"
       className="absolute rounded-[length:var(--radius-card)] border border-border object-contain shadow-lg"
       initial={{
         left: from.left,
         top: from.top,
         width: from.width,
         height: from.height,
-        opacity: 0.95,
+        opacity: 0,
         rotate: -4,
+        scale: 1,
       }}
       animate={{
         left: to.left,
         top: to.top,
         width: to.width,
         height: to.height,
-        opacity: 0,
+        opacity: [0, 1, 1, 0.35],
         rotate: 6,
+        scale: [1, 1.04, 1, 0.92],
       }}
       exit={{ opacity: 0 }}
-      transition={{ duration: TOKEN_FLYOUT_DURATION_S, ease: MOTION_EASE }}
+      transition={{
+        left: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        top: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        width: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        height: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        rotate: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        opacity: {
+          duration: TOKEN_FLYOUT_DURATION_S,
+          ease: 'linear',
+          times: [0, 0.12, 0.72, 1],
+        },
+        scale: {
+          duration: TOKEN_FLYOUT_DURATION_S,
+          ease: 'linear',
+          times: [0, 0.12, 0.72, 1],
+        },
+      }}
       draggable={false}
     />
   );
@@ -234,6 +254,7 @@ export function TableFxOverlay(): ReactElement {
                 key={id}
                 src={artUrl}
                 alt=""
+                data-fx="token-flyout"
                 className="absolute object-contain drop-shadow-md"
                 initial={{
                   left: from.left,
@@ -248,14 +269,43 @@ export function TableFxOverlay(): ReactElement {
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: [0, 1, 0.15],
-                  scale: 0.9,
+                  opacity: [0, 1, 1, 0.35],
+                  scale: [1.15, 1.05, 1, 0.9],
                 }}
                 exit={{ opacity: 0 }}
                 transition={{
-                  duration: TOKEN_FLYOUT_DURATION_S,
-                  ease: MOTION_EASE,
-                  delay: delayMs / 1000,
+                  left: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  top: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  width: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  height: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  opacity: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: 'linear',
+                    delay: delayMs / 1000,
+                    times: [0, 0.12, 0.7, 1],
+                  },
+                  scale: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: 'linear',
+                    delay: delayMs / 1000,
+                    times: [0, 0.12, 0.7, 1],
+                  },
                 }}
                 draggable={false}
               />

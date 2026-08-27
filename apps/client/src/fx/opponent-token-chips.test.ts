@@ -123,20 +123,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ]);
   });
 
-  it('does not invent chips for POV or live Spy seats', () => {
-    expect(
-      chipsForPublicLogEntry(
-        {
-          kind: 'actionPlayed',
-          actorPlayerId: 'me',
-          action: 'playCard',
-          cardId: 'tax',
-          turnSequence: 5,
-        },
-        'me',
-        [you, hidden],
-      ),
-    ).toEqual([]);
+  it('does not invent chips for live Spy seats', () => {
     expect(
       chipsForPublicLogEntry(
         {
@@ -150,6 +137,42 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         [you, live],
       ),
     ).toEqual([]);
+  });
+
+  it('flies POV catalog spends so Shop-covered ResourceIcon is not the only path', () => {
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'me',
+          action: 'buyUpgradePoint',
+          turnSequence: 5,
+        },
+        'me',
+        [you, hidden],
+      ),
+    ).toEqual([
+      {
+        kind: 'point',
+        count: UPGRADE_POINT_ECONOMY.buyCostPoints,
+        from: { playerId: 'me' },
+        to: 'log',
+      },
+      { kind: 'upgradePoint', count: 1, from: 'log', to: { playerId: 'me' } },
+    ]);
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'me',
+          action: 'playCard',
+          cardId: 'tax',
+          turnSequence: 5,
+        },
+        'me',
+        [you, hidden],
+      ),
+    ).toEqual([{ kind: 'life', count: 1, from: { playerId: 'me' }, to: 'log' }]);
   });
 
   it('skips Regeneration quantity (pointsPerLife) instead of inventing a count', () => {
@@ -228,6 +251,16 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ).toEqual({
       playerId: 'opp',
       artUrl: getCardArtUrl('thief', { isUpgraded: false }),
+    });
+    const hiddenId: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'sellCard',
+      turnSequence: 10,
+    };
+    expect(sellCardGhostForPublicLogEntry(hiddenId, 'me', [you, hidden])).toEqual({
+      playerId: 'opp',
+      artUrl: getCardBackUrl('action'),
     });
   });
 

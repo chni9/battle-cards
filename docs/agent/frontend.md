@@ -215,11 +215,13 @@ rules above are unchanged — this section only covers how the client looks.
     numbers use `flyToken` scoped to that seat. Unspied / base Spy enqueue
     **directed** chips (`from` / `to` log or player): play/buy/upgrade spends
     seat→log; sell yield log→seat; buy upgrade point spends Classic 10 when kit
-    is hidden. Sold-card ghost flies seat→log (action verso when unspied, face
-    when Spyed). Thief / Spy Thief / Upgrade Point Thief live Δ flies
-    victim→thief (extra upgraded gain from the log) and skips `ResourceIcon` for
-    that kind. No invented Draw or thief count. Overlay is `z-[110]` so chips
-    stay visible over Shop. Reduced motion skips choreography.
+    is hidden (POV catalog spends use the same path so Shop cannot hide them).
+    Sold-card ghost is a `playFlyout` seat→log (action verso when unspied, face
+    when Spyed), sized ~96×144, linear travel, opaque mid-flight. Thief / Spy
+    Thief / Upgrade Point Thief live Δ flies victim→thief (extra upgraded gain
+    from the log) including POV dock (`private-zone` + `data-player-id`).
+    Overlay is `z-[110]` so chips stay visible over Shop. Reduced motion skips
+    choreography. Do not invent Draw or thief counts.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and

@@ -145,7 +145,8 @@ export interface TableScreenProps {
 function enqueueDirectedTokenChips(
   enqueue: (event: TableFxInput) => void,
   chips: readonly DirectedTokenChip[],
-): void {
+): boolean {
+  let landed = false;
   for (const chip of chips) {
     for (let i = 0; i < chip.count; i++) {
       const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
@@ -157,14 +158,60 @@ function enqueueDirectedTokenChips(
         kind: 'tokenFlyout',
         ...measured,
         delayMs,
-        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
+        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 400,
       });
+      landed = true;
+    }
+  }
+  return landed;
+}
+
+function skipFlyoutsForChips(
+  chips: readonly DirectedTokenChip[],
+  you: string,
+): void {
+  for (const chip of chips) {
+    if (chip.from !== 'log') {
+      skipResourceIconFlyout(flyoutSkipId(chip.from.playerId, you), chip.kind);
+    }
+    if (chip.to !== 'log') {
+      skipResourceIconFlyout(flyoutSkipId(chip.to.playerId, you), chip.kind);
     }
   }
 }
 
 function flyoutSkipId(playerId: string, you: string): string {
   return playerId === you ? 'self' : playerId;
+}
+
+function enqueueSellCardGhost(
+  enqueue: (event: TableFxInput) => void,
+  playerId: string,
+  artUrl: string,
+): void {
+  const tryEnqueue = (): boolean => {
+    const measured = measureOpponentCardLogFlyout(playerId, artUrl);
+    if (measured === null) {
+      return false;
+    }
+    enqueue({
+      kind: 'playFlyout',
+      ...measured,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 400,
+    });
+    return true;
+  };
+  if (tryEnqueue()) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    if (tryEnqueue()) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      tryEnqueue();
+    });
+  });
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -434,19 +481,14 @@ function TableScreenInner({
           skipResourceIconFlyout(flyoutSkipId(skip.playerId, view.you), skip.kind);
         }
       }
+      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
+      if (enqueueDirectedTokenChips(enqueue, chips)) {
+        skipFlyoutsForChips(chips, view.you);
+      }
       const ghost = sellCardGhostForPublicLogEntry(entry, view.you, view.players);
       if (ghost !== null) {
-        const measured = measureOpponentCardLogFlyout(ghost.playerId, ghost.artUrl);
-        if (measured !== null) {
-          enqueue({
-            kind: 'tokenFlyout',
-            ...measured,
-            expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 200,
-          });
-        }
+        enqueueSellCardGhost(enqueue, ghost.playerId, ghost.artUrl);
       }
-      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
-      enqueueDirectedTokenChips(enqueue, chips);
     }
   }, [view.actionLog, view.you, view.players, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
 

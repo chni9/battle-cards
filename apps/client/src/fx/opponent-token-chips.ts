@@ -133,11 +133,14 @@ function shouldSkipActor(
   you: string,
   players: readonly PublicPlayerView[],
 ): boolean {
-  if (actorId === you) {
+  const actor = playerById(players, actorId);
+  if (actor === undefined) {
     return true;
   }
-  const actor = playerById(players, actorId);
-  return actor === undefined || opponentHasLiveResourceIcons(actor);
+  if (actorId === you) {
+    return false;
+  }
+  return opponentHasLiveResourceIcons(actor);
 }
 
 function upgradeBuyCost(actor: PublicPlayerView): number {
@@ -328,16 +331,27 @@ export function sellCardGhostForPublicLogEntry(
     return null;
   }
   const cardId = entry.cardId;
-  if (opponentKitIsVisible(actor) && cardId !== undefined) {
+  try {
+    if (opponentKitIsVisible(actor) && cardId !== undefined) {
+      return {
+        playerId: entry.actorPlayerId,
+        artUrl: getCardArtUrl(cardId, { isUpgraded: entry.isUpgraded === true }),
+      };
+    }
     return {
       playerId: entry.actorPlayerId,
-      artUrl: getCardArtUrl(cardId, { isUpgraded: entry.isUpgraded === true }),
+      artUrl: getCardBackUrl('action'),
     };
+  } catch {
+    try {
+      return {
+        playerId: entry.actorPlayerId,
+        artUrl: getCardBackUrl('action'),
+      };
+    } catch {
+      return null;
+    }
   }
-  return {
-    playerId: entry.actorPlayerId,
-    artUrl: getCardBackUrl('action'),
-  };
 }
 
 export function isStealResolve(entry: ActionLogEntryView): boolean {
