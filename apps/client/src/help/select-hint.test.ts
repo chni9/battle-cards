@@ -5,7 +5,10 @@
 import type { PendingEffectView } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
-import { incomingTargetingYouIds } from '../fx/incoming-threat-diff';
+import {
+  incomingAttackTargetingYouIds,
+  incomingTargetingYouIds,
+} from '../fx/incoming-threat-diff';
 
 import {
   hintIdsDismissedBy,
@@ -22,7 +25,7 @@ function input(partial: Partial<SelectHintInput> = {}): SelectHintInput {
     isMyTurn: true,
     skipAll: false,
     dismissed: [],
-    hasRealIncoming: false,
+    hasIncomingAttack: false,
     hasUnspiedLivingOpponent: true,
     ...partial,
   };
@@ -60,7 +63,7 @@ describe('selectHint (L46-02)', () => {
   });
 
   it('on-turn order is incoming > your-turn > draw > shop > resources > hidden-kit', () => {
-    expect(selectHint(input({ hasRealIncoming: true }))).toBe('incoming');
+    expect(selectHint(input({ hasIncomingAttack: true }))).toBe('incoming');
     expect(selectHint(input())).toBe('your-turn');
     expect(selectHint(input({ dismissed: ['your-turn'] }))).toBe('draw');
     expect(selectHint(input({ dismissed: ['your-turn', 'draw'] }))).toBe('shop');
@@ -75,7 +78,7 @@ describe('selectHint (L46-02)', () => {
   });
 
   it('off-turn only offers incoming then hidden-kit', () => {
-    expect(selectHint(input({ isMyTurn: false, hasRealIncoming: true }))).toBe(
+    expect(selectHint(input({ isMyTurn: false, hasIncomingAttack: true }))).toBe(
       'incoming',
     );
     expect(selectHint(input({ isMyTurn: false }))).toBe('hidden-kit');
@@ -91,7 +94,7 @@ describe('selectHint (L46-02)', () => {
     expect(selectHint(input({ isMyTurn: false, dismissed: ['hidden-kit'] }))).toBeNull();
   });
 
-  it('Incoming hint is not a persistent presentation chip', () => {
+  it('Incoming hint is not Spy, Thief, or a persistent chip', () => {
     const effects = [
       pending({
         id: 'persistent:imp->you',
@@ -100,36 +103,78 @@ describe('selectHint (L46-02)', () => {
         cardId: 'imposition',
       }),
       pending({
-        id: 'real',
+        id: 'spy',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'spy',
+      }),
+      pending({
+        id: 'thief',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'thief',
+      }),
+      pending({
+        id: 'attack',
         sourcePlayerId: 'bob',
         targetPlayerId: 'you',
         cardId: 'basic-attack',
       }),
     ];
-    expect(incomingTargetingYouIds(effects, 'you').has('persistent:imp->you')).toBe(
+    expect(incomingTargetingYouIds(effects, 'you').has('spy')).toBe(true);
+    expect(incomingAttackTargetingYouIds(effects, 'you').has('spy')).toBe(false);
+    expect(incomingAttackTargetingYouIds(effects, 'you').has('thief')).toBe(false);
+    expect(incomingAttackTargetingYouIds(effects, 'you').has('persistent:imp->you')).toBe(
       false,
     );
-    expect(incomingTargetingYouIds(effects, 'you').has('real')).toBe(true);
+    expect(incomingAttackTargetingYouIds(effects, 'you').has('attack')).toBe(true);
     expect(
       selectHint(
         input({
-          hasRealIncoming: incomingTargetingYouIds(
-            effects.filter((effect) => effect.id.startsWith('persistent:')),
+          isMyTurn: false,
+          hasIncomingAttack: incomingAttackTargetingYouIds(
+            effects.filter((effect) => effect.cardId === 'spy' || effect.cardId === 'thief'),
             'you',
           ).size > 0,
         }),
       ),
-    ).toBe('your-turn');
+    ).toBe('hidden-kit');
+    expect(
+      selectHint(
+        input({
+          hasIncomingAttack: incomingAttackTargetingYouIds(effects, 'you').size > 0,
+        }),
+      ),
+    ).toBe('incoming');
+  });
+
+  it('Got it on hidden-kit does not reselect it later', () => {
+    expect(
+      selectHint(
+        input({
+          isMyTurn: false,
+          dismissed: ['hidden-kit'],
+          hasIncomingAttack: false,
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      selectHint(
+        input({
+          dismissed: ['your-turn', 'draw', 'shop', 'resources', 'hidden-kit'],
+        }),
+      ),
+    ).toBeNull();
   });
 });
 
 describe('hintIdsDismissedBy (L46-02)', () => {
   it('Draw is a playing intent and also dismisses draw', () => {
-    expect(hintIdsDismissedBy('draw', { hasRealIncoming: false })).toEqual([
+    expect(hintIdsDismissedBy('draw', { hasIncomingAttack: false })).toEqual([
       'your-turn',
       'draw',
     ]);
-    expect(hintIdsDismissedBy('draw', { hasRealIncoming: true })).toEqual([
+    expect(hintIdsDismissedBy('draw', { hasIncomingAttack: true })).toEqual([
       'your-turn',
       'draw',
       'incoming',
@@ -137,11 +182,11 @@ describe('hintIdsDismissedBy (L46-02)', () => {
   });
 
   it('opening Shop or an opponent portrait dismisses only that id', () => {
-    expect(hintIdsDismissedBy('open-shop', { hasRealIncoming: true })).toEqual([
+    expect(hintIdsDismissedBy('open-shop', { hasIncomingAttack: true })).toEqual([
       'shop',
     ]);
     expect(
-      hintIdsDismissedBy('inspect-opponent', { hasRealIncoming: false }),
+      hintIdsDismissedBy('inspect-opponent', { hasIncomingAttack: false }),
     ).toEqual(['hidden-kit']);
   });
 });

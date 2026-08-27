@@ -20,6 +20,9 @@ describe('hint overlay chrome (L46-01)', () => {
     expect(src).toContain('data-hint-id');
     expect(src).toContain('placeHintCard');
     expect(src).toContain('data-hint-anchor');
+    expect(src).toContain('compact');
+    expect(src).toContain('onHide={onGotIt}');
+    expect(src).not.toContain('first-game-hint-toggle');
     expect(src).not.toContain('TutorialCallout');
     expect(src).not.toContain('role="dialog"');
   });
@@ -33,7 +36,7 @@ describe('hint overlay chrome (L46-01)', () => {
     expect(table).toContain('HintOverlay');
     expect(table).toContain('selectHint');
     expect(table).toContain('noteHintCause');
-    expect(table).toContain('incomingTargetingYouIds');
+    expect(table).toContain('incomingAttackTargetingYouIds');
     expect(table).toContain('view.playKind');
     expect(tutorialCoach).toContain('zone="tutorial-coach"');
     expect(table).toContain('TutorialCoach');

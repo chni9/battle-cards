@@ -37,8 +37,10 @@ describe('tutorial does not skip first-game hints (L46-03)', () => {
     expect(leave).not.toContain('help-storage');
     expect(home).not.toContain('skipAllHints');
     expect(table).toContain("if (view.playKind === 'tutorial')");
-    expect(table).toContain('skipAllHints');
-    expect(table).toMatch(/onSkipAll=\{\(\) => \{\s*setHintState\(skipAllHints\(\)\);/);
+    expect(table).toContain('applyHintPatch');
+    expect(table).toMatch(
+      /onSkipAll=\{\(\) => \{\s*setHintState\(\(prev\) => applyHintPatch\(prev, \{ skipAll: true \}\)\);/,
+    );
     expect(table).toMatch(/onConfirm=\{\(\) => \{[\s\S]*onLeave\(\);[\s\S]*\}\}/);
     expect(table).not.toMatch(/onConfirm=\{\(\) => \{[\s\S]*skipAllHints/);
   });
@@ -53,7 +55,7 @@ describe('tutorial does not skip first-game hints (L46-03)', () => {
         isMyTurn: true,
         skipAll: false,
         dismissed: [],
-        hasRealIncoming: false,
+        hasIncomingAttack: false,
         hasUnspiedLivingOpponent: true,
       }),
     ).toBe('your-turn');

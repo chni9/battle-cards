@@ -305,6 +305,11 @@
   backdrop-filter: blur(6px);
 }
 
+.tutorial-coach-panel--compact {
+  background: color-mix(in srgb, var(--color-surface-raised) 46%, transparent);
+  backdrop-filter: blur(10px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tutorial-callout {
     animation: none;

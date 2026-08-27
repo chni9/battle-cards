@@ -5,6 +5,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  applyHintPatch,
   dismissHint,
   dismissHints,
   EMPTY_HINT_STATE,
@@ -126,5 +127,15 @@ describe('hint storage blob (technical spec v6 §5.2 / L46-01)', () => {
       dismissed: ['your-turn', 'draw'],
       skipAll: false,
     });
+  });
+
+  it('applyHintPatch keeps earlier ids when a later dismiss merges', () => {
+    withStorage();
+    const afterHidden = applyHintPatch(EMPTY_HINT_STATE, { ids: ['hidden-kit'] });
+    expect(afterHidden.dismissed).toEqual(['hidden-kit']);
+    expect(applyHintPatch(afterHidden, { ids: ['incoming'] }).dismissed).toEqual([
+      'hidden-kit',
+      'incoming',
+    ]);
   });
 });

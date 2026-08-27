@@ -2650,6 +2650,22 @@ tutorial leaves the blob untouched, so the next Classic Solo/Online still select
 an empty `{ dismissed: [], skipAll: false }`. Hub **Reset help** remains the only
 clear path (L42-02). HintOverlay **Skip all** is the only `skipAllHints()` call site.
 
+## 2026-08-27 · [P] First-game hint chrome, attacks-only Incoming, sticky Got it
+
+Designer 2026-08-27. The first-game card was too large. Hints use `CoachPanel` `compact`:
+narrower, smaller type, more transparent (`color-mix` ~46%). Tutorial coach is unchanged.
+
+The `incoming` hint copy is Shield / Mirror / attack-back, so it fires only on **attack**
+Incoming (`isAttackCardId`). Spy and Thief still appear on the Incoming strip and still
+drive threat FX; they must not swap the teaching card. That swap also made **Hidden kit**
+look like it returned after Got it (selector jumped to Incoming, Got it dismissed Incoming,
+then Hidden kit was still undismissed).
+
+Got it and × both persist that `HintId`. Dismissals merge onto the previous React blob
+(`applyHintPatch`) so a later write cannot drop an id. Skip all now uses that helper
+from the overlay (no separate `skipAllHints()` call site on the table).
+
+
 
 
 

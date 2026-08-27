@@ -1,22 +1,24 @@
 /**
  * Hovering first-game hint — technical spec v6 §5.2 / L46-02.
  * Not a Dialog. Anchored next to `data-hint-anchor`; no rings.
+ * Compact + transparent so the table stays readable. × dismisses like Got it.
  */
 
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from 'react';
+import { useLayoutEffect, useRef, type CSSProperties, type ReactElement } from 'react';
 
 import { CoachPanel } from '../design/components/coach-panel';
 import { Button } from '../design/components/button';
-import { IconButton } from '../design/components/icon-button';
 import {
   GOT_IT_ACTION_LABEL,
   HIDE_COACH_ARIA_LABEL,
-  OPEN_COACH_ARIA_LABEL,
 } from '../screens/table/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
 import type { HintId } from './hint-ids';
 import { placeHintCard } from './place-hint-card';
+
+const COMPACT_HINT_BUTTON =
+  '!min-h-8 !min-w-0 flex-1 px-2 py-1 text-xs font-semibold';
 
 export interface HintOverlayProps {
   hintId: HintId;
@@ -32,14 +34,12 @@ export function HintOverlay({
   onGotIt,
   onSkipAll,
 }: HintOverlayProps): ReactElement | null {
-  const [hiddenKey, setHiddenKey] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const copy = HINT_COPY[hintId];
-  const open = hiddenKey !== hintId;
 
   useLayoutEffect(() => {
     const slot = cardRef.current;
-    if (slot === null || dialogOpen || !open) {
+    if (slot === null || dialogOpen) {
       return;
     }
     const node = document.querySelector(`[data-hint-anchor="${hintId}"]`);
@@ -63,7 +63,7 @@ export function HintOverlay({
     slot.style.top = `${String(placed.top)}px`;
     slot.style.left = `${String(placed.left)}px`;
     slot.style.bottom = 'auto';
-  }, [hintId, dialogOpen, open]);
+  }, [hintId, dialogOpen]);
 
   if (dialogOpen) {
     return null;
@@ -75,53 +75,39 @@ export function HintOverlay({
     <div className="pointer-events-none fixed inset-0 z-[105]">
       <div
         ref={cardRef}
-        className="pointer-events-auto absolute w-[min(22rem,calc(100vw-1rem))]"
+        className="pointer-events-auto absolute w-[min(15.5rem,calc(100vw-1rem))]"
         style={slotStyle}
       >
-        {open ? (
-          <CoachPanel
-            key={hintId}
-            title={copy.title}
-            body={copy.body}
-            zone="first-game-hint"
-            extraAttrs={{ 'data-hint-id': hintId }}
-            onHide={() => {
-              setHiddenKey(hintId);
-            }}
-            hideAriaLabel={HIDE_COACH_ARIA_LABEL}
-            footer={
-              <>
-                <Button
-                  variant="green"
-                  className="w-full"
-                  data-hint-ack="got-it"
-                  onClick={onGotIt}
-                >
-                  {GOT_IT_ACTION_LABEL}
-                </Button>
-                <Button
-                  variant="orange"
-                  className="w-full"
-                  data-hint-ack="skip-all"
-                  onClick={onSkipAll}
-                >
-                  {SKIP_ALL_HINTS_LABEL}
-                </Button>
-              </>
-            }
-          />
-        ) : (
-          <IconButton
-            data-zone="first-game-hint-toggle"
-            aria-label={OPEN_COACH_ARIA_LABEL}
-            className="border-2 border-cta-orange bg-cta-orange/20 text-lg font-bold shadow-[0_8px_24px_rgba(28,26,31,0.28)]"
-            onClick={() => {
-              setHiddenKey(null);
-            }}
-          >
-            ?
-          </IconButton>
-        )}
+        <CoachPanel
+          key={hintId}
+          compact
+          title={copy.title}
+          body={copy.body}
+          zone="first-game-hint"
+          extraAttrs={{ 'data-hint-id': hintId }}
+          onHide={onGotIt}
+          hideAriaLabel={HIDE_COACH_ARIA_LABEL}
+          footer={
+            <>
+              <Button
+                variant="green"
+                className={COMPACT_HINT_BUTTON}
+                data-hint-ack="got-it"
+                onClick={onGotIt}
+              >
+                {GOT_IT_ACTION_LABEL}
+              </Button>
+              <Button
+                variant="orange"
+                className={COMPACT_HINT_BUTTON}
+                data-hint-ack="skip-all"
+                onClick={onSkipAll}
+              >
+                {SKIP_ALL_HINTS_LABEL}
+              </Button>
+            </>
+          }
+        />
       </div>
     </div>
   );

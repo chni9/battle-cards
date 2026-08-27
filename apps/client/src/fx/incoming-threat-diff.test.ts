@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { PendingEffectView } from '@card-battle/shared';
 
 import {
+  incomingAttackTargetingYouIds,
   incomingTargetingYouIds,
   isPersistentPresentationId,
   newIncomingThreats,
@@ -75,5 +76,30 @@ describe('incoming threat diff (L39-05)', () => {
       }),
     ];
     expect([...incomingTargetingYouIds(pending, 'you')]).toEqual(['a']);
+  });
+
+  it('incoming-attack helper ignores Spy and Thief', () => {
+    const pending = [
+      effect({
+        id: 'spy',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'spy',
+      }),
+      effect({
+        id: 'thief',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'thief',
+      }),
+      effect({
+        id: 'strong',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'strong-attack',
+      }),
+    ];
+    expect([...incomingTargetingYouIds(pending, 'you')]).toEqual(['spy', 'thief', 'strong']);
+    expect([...incomingAttackTargetingYouIds(pending, 'you')]).toEqual(['strong']);
   });
 });

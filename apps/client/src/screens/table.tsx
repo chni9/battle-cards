@@ -24,11 +24,9 @@ import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
 import {
-  dismissHint,
-  dismissHints,
+  applyHintPatch,
   markHowToPlaySeen,
   readHintState,
-  skipAllHints,
 } from '../help/help-storage';
 import {
   hintIdsDismissedBy,
@@ -44,6 +42,7 @@ import {
   measureTargetingCue,
 } from '../fx/play-flyout';
 import {
+  incomingAttackTargetingYouIds,
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
@@ -218,9 +217,13 @@ function TableScreenInner({
     if (view.playKind === 'tutorial') {
       return;
     }
-    const hasRealIncoming =
-      incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
-    setHintState(dismissHints(hintIdsDismissedBy(cause, { hasRealIncoming })));
+    const hasIncomingAttack =
+      incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    setHintState((prev) =>
+      applyHintPatch(prev, {
+        ids: hintIdsDismissedBy(cause, { hasIncomingAttack }),
+      }),
+    );
   };
 
   const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
@@ -440,19 +443,21 @@ function TableScreenInner({
     }
   }, [view.pendingEffects, view.you, enqueue]);
 
-  const hadRealIncomingRef = useRef(false);
+  const hadIncomingAttackRef = useRef(false);
   useEffect(() => {
-    const now = incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const now = incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
     if (view.playKind === 'tutorial') {
-      hadRealIncomingRef.current = now;
+      hadIncomingAttackRef.current = now;
       return;
     }
-    if (hadRealIncomingRef.current && !now) {
-      setHintState(
-        dismissHints(hintIdsDismissedBy('incoming-cleared', { hasRealIncoming: false })),
+    if (hadIncomingAttackRef.current && !now) {
+      setHintState((prev) =>
+        applyHintPatch(prev, {
+          ids: hintIdsDismissedBy('incoming-cleared', { hasIncomingAttack: false }),
+        }),
       );
     }
-    hadRealIncomingRef.current = now;
+    hadIncomingAttackRef.current = now;
   }, [view.pendingEffects, view.you, view.playKind]);
 
   const mirrorHighlightIds =
@@ -619,8 +624,8 @@ function TableScreenInner({
       player.spied === undefined &&
       player.eliminationReveal === undefined,
   );
-  const hasRealIncoming =
-    incomingTargetingYouIds(view.pendingEffects, view.you).size > 0;
+  const hasIncomingAttack =
+    incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
   const currentHint = selectHint({
     playKind: view.playKind,
     readOnly,
@@ -628,7 +633,7 @@ function TableScreenInner({
     isMyTurn: isMyTurn && !readOnly && !selfEliminated,
     skipAll: hintState.skipAll,
     dismissed: hintState.dismissed,
-    hasRealIncoming,
+    hasIncomingAttack,
     hasUnspiedLivingOpponent,
   });
   const hintDialogOpen =
@@ -997,10 +1002,10 @@ function TableScreenInner({
           hintId={currentHint}
           dialogOpen={hintDialogOpen}
           onGotIt={() => {
-            setHintState(dismissHint(currentHint));
+            setHintState((prev) => applyHintPatch(prev, { ids: [currentHint] }));
           }}
           onSkipAll={() => {
-            setHintState(skipAllHints());
+            setHintState((prev) => applyHintPatch(prev, { skipAll: true }));
           }}
         />
       ) : null}

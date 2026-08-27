@@ -88,41 +88,39 @@ export function writeHintState(state: HintStorageState): void {
 }
 
 export function dismissHint(id: HintId): HintStorageState {
-  const current = readHintState();
-  if (current.skipAll || current.dismissed.includes(id)) {
-    return current;
-  }
-  const next: HintStorageState = {
-    dismissed: [...current.dismissed, id],
-    skipAll: current.skipAll,
-  };
-  writeHintState(next);
-  return next;
+  return applyHintPatch(readHintState(), { ids: [id] });
 }
 
 export function skipAllHints(): HintStorageState {
-  const current = readHintState();
-  const next: HintStorageState = {
-    dismissed: current.dismissed,
-    skipAll: true,
-  };
-  writeHintState(next);
-  return next;
+  return applyHintPatch(readHintState(), { skipAll: true });
 }
 
 export function dismissHints(ids: readonly HintId[]): HintStorageState {
-  let current = readHintState();
-  for (const id of ids) {
-    if (current.skipAll || current.dismissed.includes(id)) {
-      continue;
+  return applyHintPatch(readHintState(), { ids });
+}
+
+/**
+ * Merge dismissals onto the previous React blob so a later write cannot drop
+ * an id that Got it already recorded (L46 follow-up).
+ */
+export function applyHintPatch(
+  prev: HintStorageState,
+  patch: { readonly ids?: readonly HintId[]; readonly skipAll?: boolean },
+): HintStorageState {
+  const skipAll = prev.skipAll || patch.skipAll === true;
+  let dismissed = prev.dismissed;
+  if (!prev.skipAll && patch.ids !== undefined) {
+    const extra = patch.ids.filter((id) => !dismissed.includes(id));
+    if (extra.length > 0) {
+      dismissed = [...dismissed, ...extra];
     }
-    current = {
-      dismissed: [...current.dismissed, id],
-      skipAll: current.skipAll,
-    };
   }
-  writeHintState(current);
-  return current;
+  if (skipAll === prev.skipAll && dismissed === prev.dismissed) {
+    return prev;
+  }
+  const next: HintStorageState = { dismissed, skipAll };
+  writeHintState(next);
+  return next;
 }
 
 function normalizeHintState(value: unknown): HintStorageState {

@@ -14,7 +14,8 @@ export interface SelectHintInput {
   readonly isMyTurn: boolean;
   readonly skipAll: boolean;
   readonly dismissed: readonly HintId[];
-  readonly hasRealIncoming: boolean;
+  /** True only for attack Incoming (not Spy / Thief / persistents). */
+  readonly hasIncomingAttack: boolean;
   readonly hasUnspiedLivingOpponent: boolean;
 }
 
@@ -30,15 +31,15 @@ function isOpen(dismissed: readonly HintId[], id: HintId): boolean {
 
 /**
  * Locked 2026-08-26: one undismissed topic, highest first.
- * On turn: incoming → your-turn → draw → shop → resources → hidden-kit.
- * Off turn: incoming → hidden-kit.
+ * On turn: incoming (attacks only) → your-turn → draw → shop → resources → hidden-kit.
+ * Off turn: incoming (attacks only) → hidden-kit.
  */
 export function selectHint(input: SelectHintInput): HintId | null {
   if (!shouldShowFirstGameHints(input) || input.skipAll) {
     return null;
   }
 
-  if (input.hasRealIncoming && isOpen(input.dismissed, 'incoming')) {
+  if (input.hasIncomingAttack && isOpen(input.dismissed, 'incoming')) {
     return 'incoming';
   }
 
@@ -76,13 +77,13 @@ export type HintDismissCause =
 
 export function hintIdsDismissedBy(
   cause: HintDismissCause,
-  ctx: { hasRealIncoming: boolean },
+  ctx: { hasIncomingAttack: boolean },
 ): readonly HintId[] {
   switch (cause) {
     case 'playing-intent':
-      return ctx.hasRealIncoming ? ['your-turn', 'incoming'] : ['your-turn'];
+      return ctx.hasIncomingAttack ? ['your-turn', 'incoming'] : ['your-turn'];
     case 'draw':
-      return ctx.hasRealIncoming
+      return ctx.hasIncomingAttack
         ? ['your-turn', 'draw', 'incoming']
         : ['your-turn', 'draw'];
     case 'open-shop':

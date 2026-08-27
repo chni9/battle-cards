@@ -23,6 +23,8 @@ export interface CoachPanelProps {
   hideAriaLabel: string;
   footer?: ReactNode;
   extraAttrs?: Record<string, string>;
+  /** First-game hints: smaller, more transparent. Tutorial keeps the default. */
+  compact?: boolean;
 }
 
 export function CoachPanel({
@@ -33,30 +35,56 @@ export function CoachPanel({
   hideAriaLabel,
   footer,
   extraAttrs,
+  compact = false,
 }: CoachPanelProps): ReactElement {
   return (
     <aside
       data-zone={zone}
-      className="tutorial-coach-panel flex max-h-[min(52vh,28rem)] flex-col overflow-hidden rounded-[length:var(--radius-card)] border-2 border-cta-orange text-ink shadow-[0_16px_40px_rgba(28,26,31,0.38)]"
+      className={[
+        'tutorial-coach-panel flex flex-col overflow-hidden rounded-[length:var(--radius-card)] border-cta-orange text-ink',
+        compact
+          ? 'tutorial-coach-panel--compact max-h-[min(32vh,12rem)] border shadow-[0_8px_20px_rgba(28,26,31,0.2)]'
+          : 'max-h-[min(52vh,28rem)] border-2 shadow-[0_16px_40px_rgba(28,26,31,0.38)]',
+      ].join(' ')}
       {...(extraAttrs ?? {})}
     >
-      <div className="flex shrink-0 items-start gap-2 border-b border-cta-orange/40 bg-cta-orange/15 px-3 py-2">
-        <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-ink">
+      <div
+        className={[
+          'flex shrink-0 items-start border-b border-cta-orange/40 bg-cta-orange/15',
+          compact ? 'gap-1 px-2 py-1' : 'gap-2 px-3 py-2',
+        ].join(' ')}
+      >
+        <h2
+          className={[
+            'min-w-0 flex-1 font-semibold tracking-tight text-ink',
+            compact ? 'text-sm' : 'text-base',
+          ].join(' ')}
+        >
           {title}
         </h2>
         <IconButton
           aria-label={hideAriaLabel}
-          className="h-11 w-11 shrink-0"
+          className={compact ? '!h-8 !w-8 shrink-0 text-sm' : 'h-11 w-11 shrink-0'}
           onClick={onHide}
         >
           ×
         </IconButton>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-        <CoachBody text={body} />
+      <div
+        className={[
+          'min-h-0 flex-1 overflow-y-auto',
+          compact ? 'px-2 py-1.5' : 'px-3 py-2',
+        ].join(' ')}
+      >
+        <CoachBody text={body} compact={compact} />
       </div>
       {footer !== undefined ? (
-        <div className="flex shrink-0 flex-col gap-2 border-t border-cta-orange/40 px-3 py-2">
+        <div
+          className={[
+            'flex shrink-0 border-t border-cta-orange/40',
+            compact ? 'flex-row gap-1.5 px-2 py-1.5' : 'flex-col gap-2 px-3 py-2',
+          ].join(' ')}
+        >
           {footer}
         </div>
       ) : null}
@@ -64,11 +92,17 @@ export function CoachPanel({
   );
 }
 
-function CoachBody({ text }: { text: string }): ReactElement {
+function CoachBody({
+  text,
+  compact,
+}: {
+  text: string;
+  compact: boolean;
+}): ReactElement {
   const parts = parseCoachBody(text);
 
   return (
-    <p className="text-base leading-relaxed text-ink">
+    <p className={compact ? 'text-sm leading-snug text-ink' : 'text-base leading-relaxed text-ink'}>
       {parts.map((part, index) => (
         <CoachPart key={`p-${String(index)}`} part={part} />
       ))}

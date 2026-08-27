@@ -200,7 +200,7 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 | `your-turn` | POV becomes active the first time | Your turn — take **one** action. |
 | `draw` | First time the dock is shown | **Draw** gives points, not a card. |
 | `resources` | Same | Heart lives · diamond points · upgrade-point icon · shield (attacks only). |
-| `incoming` | First **real** Incoming targeting POV (not presentation persistents) | This hits **after you act** on your next turn. You can attack back, Shield, or Mirror. |
+| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | This hits **after you act** on your next turn. You can attack back, Shield, or Mirror. |
 | `hidden-kit` | First time an unspied opponent is visible | You cannot see their kit until Spy (or death). |
 | `shop` | Current best remaining economy lesson on your turn (L46-02) | Shop prices are double the play cost. |
 
@@ -213,13 +213,14 @@ the existing Your-turn flash, not replace it). Tutorial matches use the L45 coac
 ids.
 
 **Selector (designer 2026-08-26):** one undismissed card. Not a legal-action recommender.
-On your turn: `incoming` (real Incoming to POV, ignore `persistent:`) → `your-turn` →
+On your turn: `incoming` (**attack** Incoming to POV — not Spy/Thief, ignore `persistent:`) → `your-turn` →
 `draw` → `shop` → `resources` → `hidden-kit` (unspied living opponent). Off your turn:
 `incoming` → `hidden-kit`, else none. Card sits next to `data-hint-anchor`; no rings.
 
 **Auto-Got-it** (plus the Got it button): `your-turn` on any playing intent; `draw` on Draw;
-`shop` when Shop opens; `incoming` on a playing intent while it still targets you, or when
-it leaves the view; `hidden-kit` when an opponent portrait opens; `resources` is Got it only.
+`shop` when Shop opens; `incoming` on a playing intent while an **attack** still targets you, or when
+that attack leaves the view; `hidden-kit` when an opponent portrait opens; `resources` is Got it only.
+Got it and × both dismiss that id (it must not return later in the same browser).
 
 ### 5.3 Tutorial — setup overrides
 
