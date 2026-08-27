@@ -547,3 +547,14 @@ do not hand off an untested lot.
 - Room `BRXKPO` (nick `L51Dead`, forfeit): center **You are dead** (~1.6s) then Game over
   (Protocol v30 stays on that dialog). **You won!** not forced this pass — same first-paint
   seed as dead (`table-banner.test.ts`).
+
+### Lot 51 follow-up verified 2026-08-27 (browser, PROTOCOL 30)
+
+- Room `A1HICW` (nick `L51Fx`, Kamikaze vs 1× Normal): opponent resources are a vertical
+  column of four `?` icons beside the portrait; Regeneration inspect is **Cost** + coin/heart
+  glyphs, no “Choose Use, Upgrade, or Sell.”; buy-upgrade spend coins dock → log.
+- Room `UYHZH` (nick `L51Ghost`): sell yield coins log → Alpha (gain). Action-verso ghost
+  enqueued seat/portrait → log (96×144, tokenFlyout). Landscape opponents strip `40dvh` so
+  the seat is not clipped.
+- Thief seat-to-seat chips remain unit-tested (`stealTransferChips`); not forced in this
+  browser pass (hands rarely held Thief).
