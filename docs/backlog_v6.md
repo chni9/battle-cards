@@ -63,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-48 of 58 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+49 of 61 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -77,7 +77,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
-| 51 · Beta UI feedback | 9 | 9 |
+| 51 · Beta UI feedback | 12 | 10 |
 
 ---
 
@@ -229,6 +229,9 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | L51-07 | Pending chips (Incoming + Waiting on others): tutorial callout chrome, no arrow; red = `threatToneFor` attack, orange = other real pending; persist until resolve. No ring on presentation persistents. Drop arrowed Incoming threat wrap. **Acceptance:** pending-queue test; tutorial coach arrows stay on scripted controls. | M | Low | L51-01 | Done |
 | L51-08 | Opponent seat: live resource icons when upgraded Spy or death reveal; unspied and base Spy show the same icons with `?`. Wrap to a second line; drop shield on the seat only if still overflowing. Remove Hidden kit / Spied — tap / Revealed — tap. Spy dialog title is nickname only. **Acceptance:** unspied `?` never prints real totals. | M | Medium | L51-01 | Done |
 | L51-09 | Opponent token flyouts from the seat to the action-log center. POV stays dock `ResourceIcon`. Unspied / base Spy: public log amounts only (`livesLost`, `shieldAbsorbed`, catalog play/buy/sell/upgrade). Skip Draw when kit Draw is hidden. Include life, point, upgrade-point, and shield chips. **Acceptance:** `measureTokenFlyout` accepts `playerId`; no invented Draw count. | M | Medium | L51-08 | Done |
+| L51-10 | Opponent seat layout: resource icons stack vertically beside the portrait; activated cards sit under the portrait. Drop wrap-row + omit-shield. **Acceptance:** seats no longer overflow from a wrapping resource row; shield always stays on the seat. | S | Low | L51-08 | Done |
+| L51-11 | Directed token/card flyouts: sell yield log→seat plus card ghost (verso unspied, face when Spyed); buy/sell upgrade-point uses default 10/7 when kit hidden; thief/spy-thief/UPT live Δ flies victim→thief; every catalog chip has from/to. **Acceptance:** no invented Draw/thief counts; sell points never seat→log. | M | Medium | L51-09 | To do |
+| L51-12 | Card inspect: drop “Choose Use, Upgrade, or Sell.”; label play cost **Cost** then icons; inline resource glyphs in effect / upgradeAdds prose. **Acceptance:** Regeneration copy shows life/point icons; no Choose-Use helper. | S | Low | L51-05 | To do |
 
 ---
 
@@ -246,8 +249,8 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| 51 | 9 |
-| **Total** | **58** |
+| 51 | 12 |
+| **Total** | **61** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

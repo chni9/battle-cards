@@ -2,15 +2,11 @@
  * Opponent seat — hug content, never crop kit portrait.
  * Spy / death reveal: click the portrait to open the reveal dialog.
  * Resource icons always render; unspied / base Spy show `?` (L51-08).
+ * Resources stack beside the portrait; activated cards sit under it (L51-10).
  */
 
 import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactElement,
-} from 'react';
+import type { ReactElement } from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
 import { Card } from '../../design/components/card';
@@ -57,7 +53,7 @@ function ActiveThumbs({
   return (
     <div
       data-zone="opponent-actives"
-      className="flex shrink-0 items-center gap-0.5"
+      className="flex max-w-full flex-wrap items-center gap-0.5"
       title="Active cards"
     >
       {actives.map((instance) => (
@@ -80,30 +76,12 @@ function ActiveThumbs({
   );
 }
 
-function OpponentSeatResourceRow({
+function OpponentSeatResourceColumn({
   player,
 }: {
   player: PublicPlayerView;
 }): ReactElement {
   const display = opponentResourceDisplay(player);
-  const rowRef = useRef<HTMLDivElement>(null);
-  const [omitShield, setOmitShield] = useState(false);
-
-  useLayoutEffect(() => {
-    const el = rowRef.current;
-    if (el === null) {
-      return undefined;
-    }
-    const measure = (): void => {
-      setOmitShield(el.scrollWidth > el.clientWidth + 1);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-    };
-  }, [display]);
 
   const value = (amount: number): number | 'unknown' =>
     display.known ? amount : 'unknown';
@@ -114,9 +92,8 @@ function OpponentSeatResourceRow({
 
   return (
     <div
-      ref={rowRef}
       data-zone="opponent-resources"
-      className="flex w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5"
+      className="flex shrink-0 flex-col items-start gap-0.5"
     >
       <ResourceIcon
         kind="life"
@@ -139,15 +116,13 @@ function OpponentSeatResourceRow({
         className="gap-1"
         {...(display.known ? { playerId: player.id } : {})}
       />
-      {omitShield ? null : (
-        <ResourceIcon
-          kind="shield"
-          value={value(shield)}
-          flyToken={display.known}
-          className="gap-1"
-          {...(display.known ? { playerId: player.id } : {})}
-        />
-      )}
+      <ResourceIcon
+        kind="shield"
+        value={value(shield)}
+        flyToken={display.known}
+        className="gap-1"
+        {...(display.known ? { playerId: player.id } : {})}
+      />
     </div>
   );
 }
@@ -180,7 +155,7 @@ export function OpponentZone({
       data-seat={player.id}
       data-seat-index={seat !== null ? String(seat) : undefined}
       data-active-seat={isActiveSeat ? 'true' : undefined}
-      className="flex w-auto max-w-[11rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm landscape:max-w-[14rem] sm:max-w-[20rem] sm:p-2"
+      className="flex w-auto max-w-[8.5rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm sm:max-w-[11rem] sm:p-2"
       style={zoneStyle}
     >
       <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
@@ -204,33 +179,37 @@ export function OpponentZone({
         <FlowStatusBadges player={player} compact />
       )}
 
-      <div className="mt-1 flex flex-wrap items-center gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
-        <TutorialCallout
-          active={highlightPortrait}
-          arrow="bottom"
-          highlightId="opponent-portrait"
-        >
-          <KitPortrait
-            kitId={shownKitId}
-            nickname={player.nickname}
-            isEliminated={player.isEliminated}
-            className="w-10 shrink-0 sm:w-14"
-            {...(onInspectReveal !== undefined && revealMode !== null
-              ? {
-                  onClick: onInspectReveal,
-                  ariaLabel:
-                    revealMode === 'elimination'
-                      ? `Inspect ${player.nickname}'s revealed cards`
-                      : `Inspect ${player.nickname}'s Spy reveal`,
-                }
-              : {})}
+      <div className="mt-1 flex items-start gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <TutorialCallout
+            active={highlightPortrait}
+            arrow="bottom"
+            highlightId="opponent-portrait"
+          >
+            <div data-zone="opponent-portrait">
+              <KitPortrait
+                kitId={shownKitId}
+                nickname={player.nickname}
+                isEliminated={player.isEliminated}
+                className="w-10 shrink-0 sm:w-14"
+                {...(onInspectReveal !== undefined && revealMode !== null
+                  ? {
+                      onClick: onInspectReveal,
+                      ariaLabel:
+                        revealMode === 'elimination'
+                          ? `Inspect ${player.nickname}'s revealed cards`
+                          : `Inspect ${player.nickname}'s Spy reveal`,
+                    }
+                  : {})}
+              />
+            </div>
+          </TutorialCallout>
+          <ActiveThumbs
+            player={player}
+            {...(onInspectActive !== undefined ? { onInspectActive } : {})}
           />
-        </TutorialCallout>
-        <ActiveThumbs
-          player={player}
-          {...(onInspectActive !== undefined ? { onInspectActive } : {})}
-        />
-        <OpponentSeatResourceRow player={player} />
+        </div>
+        <OpponentSeatResourceColumn player={player} />
       </div>
     </article>
   );

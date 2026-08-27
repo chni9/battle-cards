@@ -280,11 +280,12 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy / death reveal (L51-08):** opponent seats always show lives / points /
-  upgrade points / shield icons. Unspied and base Spy render `?` (never unspied
-  totals, never the frozen snapshot numbers). Upgraded Spy and death reveal show
-  live / freeze numbers. The row wraps; shield drops on the seat only if it still
-  overflows. Portrait stays tappable when a Spy or death reveal exists. Dialog
+- **Spy / death reveal (L51-08 / L51-10):** opponent seats always show lives /
+  points / upgrade points / shield icons. Unspied and base Spy render `?` (never
+  unspied totals, never the frozen snapshot numbers). Upgraded Spy and death
+  reveal show live / freeze numbers. Icons stack vertically beside the portrait;
+  activated cards sit under the portrait. Shield stays on the seat (no omit-on-
+  overflow). Portrait stays tappable when a Spy or death reveal exists. Dialog
   title is `{nickname}` for Spy and `{nickname} (eliminated)` on death. No Hidden
   kit / Spied — tap / Revealed — tap labels.
 - **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and

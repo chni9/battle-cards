@@ -93,4 +93,18 @@ describe('opponent seat resources (L51-08)', () => {
     expect(dialog).not.toContain('resourcesSnapshot');
     expect(zone).toContain("'unknown'");
   });
+
+  it('stacks resources beside the portrait and actives under it (L51-10)', () => {
+    const zone = readFileSync(join(dir, 'opponent-zone.tsx'), 'utf8');
+    expect(zone).toContain('data-zone="opponent-resources"');
+    expect(zone).toContain('flex shrink-0 flex-col items-start gap-0.5');
+    expect(zone).toContain('data-zone="opponent-portrait"');
+    expect(zone).toContain('data-zone="opponent-actives"');
+    expect(zone).not.toContain('omitShield');
+    expect(zone).not.toContain('ResizeObserver');
+    expect(zone).not.toContain('flex-wrap items-center gap-x-1');
+    expect(zone).toMatch(
+      /data-zone="opponent-portrait"[\s\S]*<ActiveThumbs[\s\S]*<OpponentSeatResourceColumn/,
+    );
+  });
 });
