@@ -188,33 +188,30 @@ export function measureOpponentCardLogFlyout(
   playerId: string,
   artUrl: string,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from =
-    rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId))) ??
-    rectOf(
-      document.querySelector(
-        `${tokenFlyoutSeatSelector(playerId)} [data-zone="opponent-portrait"]`,
-      ),
-    ) ??
-    rectOf(document.querySelector('[data-zone="opponents"]'));
+  const seat = document.querySelector(tokenFlyoutSeatSelector(playerId));
+  const portrait = seat?.querySelector('[data-zone="opponent-portrait"]') ?? null;
+  const origin = rectOf(portrait) ?? rectOf(seat);
   const log = rectOf(document.querySelector('[data-zone="action-log-panel"]'));
-  if (from === null || log === null) {
+  if (origin === null || log === null) {
     return null;
   }
-  return {
-    artUrl,
-    from: {
-      left: from.left + from.width / 2 - 48,
-      top: from.top + from.height / 2 - 72,
-      width: 96,
-      height: 144,
-    },
-    to: {
-      left: log.left + log.width / 2 - 40,
-      top: log.top + 8,
-      width: 80,
-      height: 120,
-    },
+  const from: DomRectLite = {
+    left: origin.left + origin.width / 2 - 48,
+    top: origin.top + origin.height / 2 - 72,
+    width: 96,
+    height: 144,
   };
+  const to: DomRectLite = {
+    left: log.left + 16,
+    top: log.top + 8,
+    width: 80,
+    height: 120,
+  };
+  // If origin collapsed onto the log, drop in from above so travel is readable.
+  if (Math.abs(from.top - to.top) < 96) {
+    from.top = to.top - 200;
+  }
+  return { artUrl, from, to };
 }
 
 /** Buy card: from Buy control toward hand. */

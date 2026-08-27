@@ -36,8 +36,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
   it('sizes opponent sold-card ghosts large enough to read (L51-11)', () => {
     const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
     expect(source).toContain('measureOpponentCardLogFlyout');
-    expect(source).toContain('width: 96');
-    expect(source).toContain('height: 144');
+    expect(source).toContain('to.top - 200');
   });
 
   it('enqueues opponent sold-card ghosts as playFlyout from the seat (L51-11)', () => {

@@ -209,7 +209,8 @@ function enqueueSellCardGhost(
     enqueue({
       kind: 'tokenFlyout',
       ...measured,
-      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 400,
+      delayMs: 80,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 500,
     });
     return true;
   };
