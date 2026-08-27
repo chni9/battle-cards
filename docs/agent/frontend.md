@@ -223,7 +223,10 @@ rules above are unchanged — this section only covers how the client looks.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
-    card inspect use `CostDisplay`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    card inspect use `CostDisplay`. Card inspect prefixes the play-cost row with
+    **Cost** and inlines resource glyphs in effect / `upgradeAdds` copy
+    (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
+    Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),

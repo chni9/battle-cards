@@ -284,11 +284,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   isUpgraded={actionInstance.isUpgraded}
                 />
               ) : null}
-              <p className="text-sm text-ink-muted">
-                {!isMyTurn || actionsLocked
-                  ? 'Actions locked — you can still read the card.'
-                  : 'Choose Use, Upgrade, or Sell.'}
-              </p>
+              {!isMyTurn || actionsLocked ? (
+                <p className="text-sm text-ink-muted">
+                  Actions locked — you can still read the card.
+                </p>
+              ) : null}
             </div>
           </div>
         )}
