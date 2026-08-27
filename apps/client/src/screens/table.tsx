@@ -434,15 +434,19 @@ function TableScreenInner({
           skipResourceIconFlyout(flyoutSkipId(skip.playerId, view.you), skip.kind);
         }
       }
-      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
-      enqueueDirectedTokenChips(enqueue, chips);
       const ghost = sellCardGhostForPublicLogEntry(entry, view.you, view.players);
       if (ghost !== null) {
         const measured = measureOpponentCardLogFlyout(ghost.playerId, ghost.artUrl);
         if (measured !== null) {
-          enqueue({ kind: 'playFlyout', ...measured });
+          enqueue({
+            kind: 'playFlyout',
+            ...measured,
+            expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 200,
+          });
         }
       }
+      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
+      enqueueDirectedTokenChips(enqueue, chips);
     }
   }, [view.actionLog, view.you, view.players, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
 

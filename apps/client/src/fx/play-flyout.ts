@@ -191,12 +191,17 @@ export function measureOpponentCardLogFlyout(
   }
   return {
     artUrl,
-    from,
+    from: {
+      left: from.left + from.width / 2 - 36,
+      top: from.top + from.height / 2 - 54,
+      width: 72,
+      height: 108,
+    },
     to: {
-      left: log.left + log.width / 2 - 28,
-      top: log.top + 8,
-      width: 56,
-      height: 84,
+      left: log.left + log.width / 2 - 32,
+      top: log.top + 12,
+      width: 64,
+      height: 96,
     },
   };
 }

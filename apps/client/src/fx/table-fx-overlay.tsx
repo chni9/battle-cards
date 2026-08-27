@@ -82,7 +82,7 @@ function FlyoutImage({
         rotate: 6,
       }}
       exit={{ opacity: 0 }}
-      transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
+      transition={{ duration: TOKEN_FLYOUT_DURATION_S, ease: MOTION_EASE }}
       draggable={false}
     />
   );
