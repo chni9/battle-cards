@@ -439,7 +439,7 @@ function TableScreenInner({
         const measured = measureOpponentCardLogFlyout(ghost.playerId, ghost.artUrl);
         if (measured !== null) {
           enqueue({
-            kind: 'playFlyout',
+            kind: 'tokenFlyout',
             ...measured,
             expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 200,
           });
