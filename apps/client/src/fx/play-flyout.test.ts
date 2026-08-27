@@ -9,7 +9,7 @@ import {
   tokenFlyoutSeatSelector,
 } from './play-flyout';
 
-describe('measureTokenFlyout playerId (L51-09)', () => {
+describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
   it('scopes opponent resources to the seat and POV to the dock', () => {
     expect(tokenFlyoutResourceSelector('point')).toBe(
       '[data-zone="resources"] [data-resource-kind="point"]',

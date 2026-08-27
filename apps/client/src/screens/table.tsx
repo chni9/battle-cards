@@ -18,7 +18,7 @@ import {
   type SubChoiceRequiredPayload,
   type TutorialTourHighlight,
 } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { useReducedMotion } from 'motion/react';
 
 import { IconButton } from '../design/components/icon-button';
@@ -28,22 +28,27 @@ import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
   measureBuySpecialFlyout,
+  measureDirectedTokenFlyout,
+  measureOpponentCardLogFlyout,
   measurePlayFlyout,
   measureSellCardFlyout,
   measureTargetingCue,
-  measureTokenFlyout,
 } from '../fx/play-flyout';
 import {
   actionLogFlyoutKey,
   chipsForPublicLogEntry,
+  sellCardGhostForPublicLogEntry,
+  stealTransferChips,
+  type DirectedTokenChip,
 } from '../fx/opponent-token-chips';
+import { skipResourceIconFlyout } from '../fx/token-flyout-skip';
 import {
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
 import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
-import { useTableFx } from '../fx/table-fx-hooks';
+import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
 import type {
   ActionRejectPayload,
@@ -58,6 +63,7 @@ import { EconomyBar } from './table/economy-bar';
 import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
+import { collectLiveResourceSnaps, type OpponentLiveResources } from './table/opponent-seat-resources';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
@@ -134,6 +140,31 @@ export interface TableScreenProps {
   onShowStats?: () => void;
   /** Finished-board winner for the POV (L51-06). */
   youWon?: boolean;
+}
+
+function enqueueDirectedTokenChips(
+  enqueue: (event: TableFxInput) => void,
+  chips: readonly DirectedTokenChip[],
+): void {
+  for (const chip of chips) {
+    for (let i = 0; i < chip.count; i++) {
+      const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
+      if (measured === null) {
+        break;
+      }
+      const delayMs = i * TOKEN_STAGGER_MS;
+      enqueue({
+        kind: 'tokenFlyout',
+        ...measured,
+        delayMs,
+        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
+      });
+    }
+  }
+}
+
+function flyoutSkipId(playerId: string, you: string): string {
+  return playerId === you ? 'self' : playerId;
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -371,7 +402,17 @@ function TableScreenInner({
   }, [view.actionLog, enqueue]);
 
   const seenLogFlyoutKeys = useRef<Set<string> | null>(null);
-  useEffect(() => {
+  const liveResourceSnaps = useRef<Map<string, OpponentLiveResources> | null>(null);
+  useLayoutEffect(() => {
+    const nextSnaps = collectLiveResourceSnaps(view.you, {
+      lives: view.self.lives,
+      points: view.self.points,
+      upgradePoints: view.self.upgradePoints,
+      shield: view.self.shield,
+    }, view.players);
+    const prevSnaps = liveResourceSnaps.current;
+    liveResourceSnaps.current = nextSnaps;
+
     const seen = seenLogFlyoutKeys.current;
     if (seen === null) {
       seenLogFlyoutKeys.current = new Set(view.actionLog.map(actionLogFlyoutKey));
@@ -386,24 +427,24 @@ function TableScreenInner({
       if (reduceMotion === true) {
         continue;
       }
+      if (prevSnaps !== null) {
+        const steal = stealTransferChips(entry, prevSnaps, nextSnaps);
+        enqueueDirectedTokenChips(enqueue, steal.chips);
+        for (const skip of steal.skips) {
+          skipResourceIconFlyout(flyoutSkipId(skip.playerId, view.you), skip.kind);
+        }
+      }
       const chips = chipsForPublicLogEntry(entry, view.you, view.players);
-      for (const chip of chips) {
-        for (let i = 0; i < chip.count; i++) {
-          const measured = measureTokenFlyout(chip.kind, 'loss', i, chip.playerId);
-          if (measured === null) {
-            break;
-          }
-          const delayMs = i * TOKEN_STAGGER_MS;
-          enqueue({
-            kind: 'tokenFlyout',
-            ...measured,
-            delayMs,
-            expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
-          });
+      enqueueDirectedTokenChips(enqueue, chips);
+      const ghost = sellCardGhostForPublicLogEntry(entry, view.you, view.players);
+      if (ghost !== null) {
+        const measured = measureOpponentCardLogFlyout(ghost.playerId, ghost.artUrl);
+        if (measured !== null) {
+          enqueue({ kind: 'playFlyout', ...measured });
         }
       }
     }
-  }, [view.actionLog, view.you, view.players, enqueue, reduceMotion]);
+  }, [view.actionLog, view.you, view.players, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
 
   const lastRewardElimId = useRef<string | null>(null);
   useEffect(() => {

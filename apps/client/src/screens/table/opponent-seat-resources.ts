@@ -65,3 +65,23 @@ export function opponentHasLiveResourceIcons(
 ): boolean {
   return opponentResourceDisplay(player).known;
 }
+
+/** POV + upgraded Spy / death-reveal seats that expose live totals (L51-11). */
+export function collectLiveResourceSnaps(
+  you: string,
+  self: OpponentLiveResources,
+  players: readonly PublicPlayerView[],
+): Map<string, OpponentLiveResources> {
+  const snaps = new Map<string, OpponentLiveResources>();
+  snaps.set(you, self);
+  for (const player of players) {
+    if (player.id === you) {
+      continue;
+    }
+    const display = opponentResourceDisplay(player);
+    if (display.known) {
+      snaps.set(player.id, display.values);
+    }
+  }
+  return snaps;
+}

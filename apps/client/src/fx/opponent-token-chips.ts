@@ -1,31 +1,52 @@
 /**
- * Public-log token chips for unspied / base Spy seats — L51-09.
- * Live upgraded Spy / death numbers fly via ResourceIcon. POV stays dock icons.
+ * Public-log token chips — L51-09 / L51-11.
+ * Live upgraded Spy / death numbers fly via ResourceIcon except steal transfers.
+ * POV dock ResourceIcon handles own Δ. Unspied / base Spy: catalog + public log.
  */
 
 import {
   getCard,
   getKit,
+  UPGRADE_POINT_ECONOMY,
   upgradePointBuyCost,
   upgradePointSellYield,
   type ActionLogEntryView,
   type CardCost,
+  type CardId,
   type KitId,
   type PublicPlayerView,
 } from '@card-battle/shared';
 
-import type { ResourceKind } from '../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl, type ResourceKind } from '../design/asset-lookup';
 import { structuredPlayCost } from '../design/components/structured-cost';
 import {
   opponentHasLiveResourceIcons,
   opponentKitIsVisible,
+  type OpponentLiveResources,
 } from '../screens/table/opponent-seat-resources';
+import type { TokenFlyoutEndpoint } from './table-fx-types';
 
-export interface OpponentTokenChip {
-  playerId: string;
+export interface DirectedTokenChip {
   kind: ResourceKind;
   count: number;
+  from: TokenFlyoutEndpoint;
+  to: TokenFlyoutEndpoint;
 }
+
+export interface SellCardGhost {
+  playerId: string;
+  artUrl: string;
+}
+
+export type LiveResourceSnap = OpponentLiveResources;
+
+const POINT_STEAL_CARD_IDS: ReadonlySet<CardId> = new Set<CardId>([
+  'thief',
+  'spy-thief',
+  'upgrade-point-thief',
+]);
+
+const STEAL_RESOURCE_KINDS: readonly ResourceKind[] = ['point', 'upgradePoint'];
 
 function playerById(
   players: readonly PublicPlayerView[],
@@ -39,32 +60,70 @@ function visibleKitId(player: PublicPlayerView): KitId | undefined {
 }
 
 function pushChip(
-  chips: OpponentTokenChip[],
-  playerId: string,
-  kind: ResourceKind,
-  count: number,
+  chips: DirectedTokenChip[],
+  chip: DirectedTokenChip,
 ): void {
-  if (count > 0) {
-    chips.push({ playerId, kind, count });
+  if (chip.count > 0) {
+    chips.push(chip);
   }
 }
 
-function chipsFromCardCost(
+function lossChips(
   playerId: string,
   cost: CardCost | undefined,
-): OpponentTokenChip[] {
+): DirectedTokenChip[] {
   if (cost === undefined) {
     return [];
   }
   if (cost.pointsPerLife !== undefined && cost.pointsPerLife > 0) {
     return [];
   }
-  const chips: OpponentTokenChip[] = [];
+  const chips: DirectedTokenChip[] = [];
   if (cost.points !== undefined && cost.points > 0) {
-    pushChip(chips, playerId, 'point', cost.points);
+    pushChip(chips, {
+      kind: 'point',
+      count: cost.points,
+      from: { playerId },
+      to: 'log',
+    });
   }
   if (cost.lives !== undefined && cost.lives > 0) {
-    pushChip(chips, playerId, 'life', cost.lives);
+    pushChip(chips, {
+      kind: 'life',
+      count: cost.lives,
+      from: { playerId },
+      to: 'log',
+    });
+  }
+  return chips;
+}
+
+function yieldChips(
+  playerId: string,
+  cost: CardCost | undefined,
+): DirectedTokenChip[] {
+  if (cost === undefined) {
+    return [];
+  }
+  if (cost.pointsPerLife !== undefined && cost.pointsPerLife > 0) {
+    return [];
+  }
+  const chips: DirectedTokenChip[] = [];
+  if (cost.points !== undefined && cost.points > 0) {
+    pushChip(chips, {
+      kind: 'point',
+      count: cost.points,
+      from: 'log',
+      to: { playerId },
+    });
+  }
+  if (cost.lives !== undefined && cost.lives > 0) {
+    pushChip(chips, {
+      kind: 'life',
+      count: cost.lives,
+      from: 'log',
+      to: { playerId },
+    });
   }
   return chips;
 }
@@ -81,11 +140,25 @@ function shouldSkipActor(
   return actor === undefined || opponentHasLiveResourceIcons(actor);
 }
 
+function upgradeBuyCost(actor: PublicPlayerView): number {
+  const kitId = visibleKitId(actor);
+  return kitId === undefined
+    ? UPGRADE_POINT_ECONOMY.buyCostPoints
+    : upgradePointBuyCost(kitId);
+}
+
+function upgradeSellYield(actor: PublicPlayerView): number {
+  const kitId = visibleKitId(actor);
+  return kitId === undefined
+    ? UPGRADE_POINT_ECONOMY.sellYieldPoints
+    : upgradePointSellYield(kitId);
+}
+
 export function chipsForPublicLogEntry(
   entry: ActionLogEntryView,
   you: string,
   players: readonly PublicPlayerView[],
-): OpponentTokenChip[] {
+): DirectedTokenChip[] {
   if (entry.kind === 'actionResolved') {
     if (entry.targetPlayerId === you) {
       return [];
@@ -94,9 +167,22 @@ export function chipsForPublicLogEntry(
     if (target === undefined || opponentHasLiveResourceIcons(target)) {
       return [];
     }
-    const chips: OpponentTokenChip[] = [];
-    pushChip(chips, entry.targetPlayerId, 'life', entry.livesLost);
-    pushChip(chips, entry.targetPlayerId, 'shield', entry.shieldAbsorbed);
+    if (isStealResolve(entry)) {
+      return [];
+    }
+    const chips: DirectedTokenChip[] = [];
+    pushChip(chips, {
+      kind: 'life',
+      count: entry.livesLost,
+      from: { playerId: entry.targetPlayerId },
+      to: 'log',
+    });
+    pushChip(chips, {
+      kind: 'shield',
+      count: entry.shieldAbsorbed,
+      from: { playerId: entry.targetPlayerId },
+      to: 'log',
+    });
     return chips;
   }
 
@@ -123,9 +209,17 @@ export function chipsForPublicLogEntry(
       if (kitId === undefined) {
         return [];
       }
-      return chipsFromCardCost(actorId, {
-        points: getKit(kitId).startingResources.draw,
-      });
+      const count = getKit(kitId).startingResources.draw;
+      if (count <= 0) {
+        return [];
+      }
+      const chip: DirectedTokenChip = {
+        kind: 'point',
+        count,
+        from: 'log',
+        to: { playerId: actorId },
+      };
+      return [chip];
     }
     case 'playCard': {
       if (entry.cardId === undefined) {
@@ -140,54 +234,73 @@ export function chipsForPublicLogEntry(
         return [];
       }
       if (play.kind === 'points') {
-        return [{ playerId: actorId, kind: 'point', count: play.amount }];
+        return [{ kind: 'point', count: play.amount, from: { playerId: actorId }, to: 'log' }];
       }
       if (play.kind === 'lives') {
-        return [{ playerId: actorId, kind: 'life', count: play.amount }];
+        return [{ kind: 'life', count: play.amount, from: { playerId: actorId }, to: 'log' }];
       }
-      return [{ playerId: actorId, kind: 'upgradePoint', count: play.amount }];
+      return [
+        { kind: 'upgradePoint', count: play.amount, from: { playerId: actorId }, to: 'log' },
+      ];
     }
     case 'playMultipleAttacks': {
-      const chips: OpponentTokenChip[] = [];
+      const chips: DirectedTokenChip[] = [];
       for (const attack of entry.attacks ?? []) {
         const card = getCard(attack.cardId);
         if (card === undefined) {
           continue;
         }
-        chips.push(...chipsFromCardCost(actorId, card.cost));
+        chips.push(...lossChips(actorId, card.cost));
       }
       return chips;
     }
     case 'buyCard':
       return entry.cardId === undefined
         ? []
-        : chipsFromCardCost(actorId, getCard(entry.cardId)?.buyCost);
+        : lossChips(actorId, getCard(entry.cardId)?.buyCost);
     case 'sellCard':
       return entry.cardId === undefined
         ? []
-        : chipsFromCardCost(actorId, getCard(entry.cardId)?.sellYield);
+        : yieldChips(actorId, getCard(entry.cardId)?.sellYield);
     case 'upgradeCard':
-      return [{ playerId: actorId, kind: 'upgradePoint', count: 1 }];
-    case 'buyUpgradePoint': {
-      const kitId = visibleKitId(actor);
-      if (kitId === undefined) {
-        return [];
-      }
       return [
-        { playerId: actorId, kind: 'point', count: upgradePointBuyCost(kitId) },
-        { playerId: actorId, kind: 'upgradePoint', count: 1 },
+        {
+          kind: 'upgradePoint',
+          count: 1,
+          from: { playerId: actorId },
+          to: 'log',
+        },
       ];
-    }
-    case 'sellUpgradePoint': {
-      const kitId = visibleKitId(actor);
-      if (kitId === undefined) {
-        return [];
-      }
+    case 'buyUpgradePoint':
       return [
-        { playerId: actorId, kind: 'upgradePoint', count: 1 },
-        { playerId: actorId, kind: 'point', count: upgradePointSellYield(kitId) },
+        {
+          kind: 'point',
+          count: upgradeBuyCost(actor),
+          from: { playerId: actorId },
+          to: 'log',
+        },
+        {
+          kind: 'upgradePoint',
+          count: 1,
+          from: 'log',
+          to: { playerId: actorId },
+        },
       ];
-    }
+    case 'sellUpgradePoint':
+      return [
+        {
+          kind: 'upgradePoint',
+          count: 1,
+          from: { playerId: actorId },
+          to: 'log',
+        },
+        {
+          kind: 'point',
+          count: upgradeSellYield(actor),
+          from: 'log',
+          to: { playerId: actorId },
+        },
+      ];
     case 'buySpecialCard':
     case 'deactivatePersistent':
     case 'activateDuplication':
@@ -197,6 +310,151 @@ export function chipsForPublicLogEntry(
       return _exhaustive;
     }
   }
+}
+
+export function sellCardGhostForPublicLogEntry(
+  entry: ActionLogEntryView,
+  you: string,
+  players: readonly PublicPlayerView[],
+): SellCardGhost | null {
+  if (entry.kind !== 'actionPlayed' || entry.action !== 'sellCard') {
+    return null;
+  }
+  if (entry.actorPlayerId === you) {
+    return null;
+  }
+  const actor = playerById(players, entry.actorPlayerId);
+  if (actor === undefined) {
+    return null;
+  }
+  const cardId = entry.cardId;
+  if (opponentKitIsVisible(actor) && cardId !== undefined) {
+    return {
+      playerId: entry.actorPlayerId,
+      artUrl: getCardArtUrl(cardId, { isUpgraded: entry.isUpgraded === true }),
+    };
+  }
+  return {
+    playerId: entry.actorPlayerId,
+    artUrl: getCardBackUrl('action'),
+  };
+}
+
+export function isStealResolve(entry: ActionLogEntryView): boolean {
+  return (
+    entry.kind === 'actionResolved' &&
+    entry.outcome === 'applied' &&
+    POINT_STEAL_CARD_IDS.has(entry.cardId)
+  );
+}
+
+function snapField(snap: LiveResourceSnap, kind: ResourceKind): number {
+  switch (kind) {
+    case 'life':
+      return snap.lives;
+    case 'point':
+      return snap.points;
+    case 'upgradePoint':
+      return snap.upgradePoints;
+    case 'shield':
+      return snap.shield;
+  }
+}
+
+export interface StealTransferResult {
+  chips: DirectedTokenChip[];
+  skips: readonly { playerId: string; kind: ResourceKind }[];
+}
+
+/**
+ * Seat-to-seat steal chips from live resource Δ only. Never invents an amount
+ * when both seats are `?` (L51-11). Extra upgraded gain flies log → thief.
+ */
+export function stealTransferChips(
+  entry: ActionLogEntryView,
+  prev: ReadonlyMap<string, LiveResourceSnap>,
+  next: ReadonlyMap<string, LiveResourceSnap>,
+): StealTransferResult {
+  if (entry.kind !== 'actionResolved' || !isStealResolve(entry)) {
+    return { chips: [], skips: [] };
+  }
+
+  const victimId = entry.targetPlayerId;
+  const thiefId = entry.sourcePlayerId;
+  const chips: DirectedTokenChip[] = [];
+  const skips: { playerId: string; kind: ResourceKind }[] = [];
+
+  for (const kind of STEAL_RESOURCE_KINDS) {
+    const victimPrev = prev.get(victimId);
+    const victimNext = next.get(victimId);
+    const thiefPrev = prev.get(thiefId);
+    const thiefNext = next.get(thiefId);
+    const victimDelta =
+      victimPrev !== undefined && victimNext !== undefined
+        ? snapField(victimNext, kind) - snapField(victimPrev, kind)
+        : null;
+    const thiefDelta =
+      thiefPrev !== undefined && thiefNext !== undefined
+        ? snapField(thiefNext, kind) - snapField(thiefPrev, kind)
+        : null;
+    const victimLoss = victimDelta !== null && victimDelta < 0 ? -victimDelta : null;
+    const thiefGain = thiefDelta !== null && thiefDelta > 0 ? thiefDelta : null;
+
+    if (victimLoss === null && thiefGain === null) {
+      continue;
+    }
+
+    if (victimLoss !== null && thiefGain !== null) {
+      const shared = Math.min(victimLoss, thiefGain);
+      pushChip(chips, {
+        kind,
+        count: shared,
+        from: { playerId: victimId },
+        to: { playerId: thiefId },
+      });
+      if (thiefGain > shared) {
+        pushChip(chips, {
+          kind,
+          count: thiefGain - shared,
+          from: 'log',
+          to: { playerId: thiefId },
+        });
+      }
+      if (victimLoss > shared) {
+        pushChip(chips, {
+          kind,
+          count: victimLoss - shared,
+          from: { playerId: victimId },
+          to: 'log',
+        });
+      }
+      skips.push({ playerId: victimId, kind }, { playerId: thiefId, kind });
+      continue;
+    }
+
+    if (victimLoss !== null) {
+      pushChip(chips, {
+        kind,
+        count: victimLoss,
+        from: { playerId: victimId },
+        to: { playerId: thiefId },
+      });
+      skips.push({ playerId: victimId, kind });
+      continue;
+    }
+
+    if (thiefGain !== null) {
+      pushChip(chips, {
+        kind,
+        count: thiefGain,
+        from: { playerId: victimId },
+        to: { playerId: thiefId },
+      });
+      skips.push({ playerId: thiefId, kind });
+    }
+  }
+
+  return { chips, skips };
 }
 
 export function actionLogFlyoutKey(entry: ActionLogEntryView): string {

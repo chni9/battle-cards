@@ -1,12 +1,18 @@
 /**
- * Opponent public-log token chips — L51-09.
+ * Opponent public-log token chips — L51-09 / L51-11.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import type { ActionLogEntryView, PublicPlayerView } from '@card-battle/shared';
+import { UPGRADE_POINT_ECONOMY } from '@card-battle/shared';
 
-import { chipsForPublicLogEntry } from './opponent-token-chips';
+import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
+import {
+  chipsForPublicLogEntry,
+  sellCardGhostForPublicLogEntry,
+  stealTransferChips,
+} from './opponent-token-chips';
 
 function opponent(partial: Partial<PublicPlayerView> & Pick<PublicPlayerView, 'id'>): PublicPlayerView {
   return {
@@ -62,8 +68,8 @@ const live = opponent({
   },
 });
 
-describe('opponent public-log token chips (L51-09)', () => {
-  it('skips Draw when kit Draw is hidden', () => {
+describe('opponent public-log token chips (L51-09 / L51-11)', () => {
+  it('skips Draw when kit Draw is hidden, and draws toward the seat when visible', () => {
     const entry: ActionLogEntryView = {
       kind: 'actionPlayed',
       actorPlayerId: 'opp',
@@ -72,11 +78,11 @@ describe('opponent public-log token chips (L51-09)', () => {
     };
     expect(chipsForPublicLogEntry(entry, 'me', [you, hidden])).toEqual([]);
     expect(chipsForPublicLogEntry(entry, 'me', [you, { ...spied, id: 'opp' }])).toEqual([
-      { playerId: 'opp', kind: 'point', count: 1 },
+      { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
     ]);
   });
 
-  it('uses catalog play cost and public resolve amounts for unspied seats', () => {
+  it('uses catalog play cost as a seat→log spend for unspied seats', () => {
     expect(
       chipsForPublicLogEntry(
         {
@@ -90,7 +96,9 @@ describe('opponent public-log token chips (L51-09)', () => {
         'me',
         [you, hidden],
       ),
-    ).toEqual([{ playerId: 'opp', kind: 'point', count: 1 }]);
+    ).toEqual([
+      { kind: 'point', count: 1, from: { playerId: 'opp' }, to: 'log' },
+    ]);
 
     expect(
       chipsForPublicLogEntry(
@@ -110,8 +118,8 @@ describe('opponent public-log token chips (L51-09)', () => {
         [you, hidden],
       ),
     ).toEqual([
-      { playerId: 'opp', kind: 'life', count: 2 },
-      { playerId: 'opp', kind: 'shield', count: 1 },
+      { kind: 'life', count: 2, from: { playerId: 'opp' }, to: 'log' },
+      { kind: 'shield', count: 1, from: { playerId: 'opp' }, to: 'log' },
     ]);
   });
 
@@ -159,5 +167,143 @@ describe('opponent public-log token chips (L51-09)', () => {
         [you, hidden],
       ),
     ).toEqual([]);
+  });
+
+  it('sells as a log→seat gain, not a seat→log spend', () => {
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'opp',
+          action: 'sellCard',
+          cardId: 'basic-attack',
+          turnSequence: 8,
+        },
+        'me',
+        [you, hidden],
+      ),
+    ).toEqual([
+      { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
+    ]);
+  });
+
+  it('buys an upgrade point with the Classic 10-point spend when kit is hidden', () => {
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'opp',
+          action: 'buyUpgradePoint',
+          turnSequence: 9,
+        },
+        'me',
+        [you, hidden],
+      ),
+    ).toEqual([
+      {
+        kind: 'point',
+        count: UPGRADE_POINT_ECONOMY.buyCostPoints,
+        from: { playerId: 'opp' },
+        to: 'log',
+      },
+      { kind: 'upgradePoint', count: 1, from: 'log', to: { playerId: 'opp' } },
+    ]);
+  });
+
+  it('flies a sold-card verso when unspied and the face when Spyed', () => {
+    const sell: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'sellCard',
+      cardId: 'thief',
+      isUpgraded: false,
+      turnSequence: 10,
+    };
+    expect(sellCardGhostForPublicLogEntry(sell, 'me', [you, hidden])).toEqual({
+      playerId: 'opp',
+      artUrl: getCardBackUrl('action'),
+    });
+    expect(
+      sellCardGhostForPublicLogEntry(sell, 'me', [you, { ...spied, id: 'opp' }]),
+    ).toEqual({
+      playerId: 'opp',
+      artUrl: getCardArtUrl('thief', { isUpgraded: false }),
+    });
+  });
+
+  it('pairs live thief deltas victim→thief and does not invent an unspied amount', () => {
+    const entry: ActionLogEntryView = {
+      kind: 'actionResolved',
+      effectId: 'thief-1',
+      sourcePlayerId: 'thief',
+      targetPlayerId: 'victim',
+      cardId: 'thief',
+      isUpgraded: false,
+      livesLost: 0,
+      shieldAbsorbed: 0,
+      outcome: 'applied',
+      turnSequence: 11,
+    };
+    const prev = new Map([
+      ['victim', { lives: 10, points: 8, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 2, upgradePoints: 1, shield: 0 }],
+    ]);
+    const next = new Map([
+      ['victim', { lives: 10, points: 0, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 10, upgradePoints: 1, shield: 0 }],
+    ]);
+    expect(stealTransferChips(entry, prev, next)).toEqual({
+      chips: [
+        {
+          kind: 'point',
+          count: 8,
+          from: { playerId: 'victim' },
+          to: { playerId: 'thief' },
+        },
+      ],
+      skips: [
+        { playerId: 'victim', kind: 'point' },
+        { playerId: 'thief', kind: 'point' },
+      ],
+    });
+    expect(stealTransferChips(entry, new Map(), new Map())).toEqual({
+      chips: [],
+      skips: [],
+    });
+    expect(
+      chipsForPublicLogEntry(entry, 'me', [you, hidden, opponent({ id: 'thief' })]),
+    ).toEqual([]);
+  });
+
+  it('sends upgraded-thief extra gain from the log, not from the victim', () => {
+    const entry: ActionLogEntryView = {
+      kind: 'actionResolved',
+      effectId: 'thief-2',
+      sourcePlayerId: 'thief',
+      targetPlayerId: 'victim',
+      cardId: 'thief',
+      isUpgraded: true,
+      livesLost: 0,
+      shieldAbsorbed: 0,
+      outcome: 'applied',
+      turnSequence: 12,
+    };
+    const prev = new Map([
+      ['victim', { lives: 10, points: 10, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 0, upgradePoints: 0, shield: 0 }],
+    ]);
+    const next = new Map([
+      ['victim', { lives: 10, points: 0, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 20, upgradePoints: 0, shield: 0 }],
+    ]);
+    expect(stealTransferChips(entry, prev, next).chips).toEqual([
+      {
+        kind: 'point',
+        count: 10,
+        from: { playerId: 'victim' },
+        to: { playerId: 'thief' },
+      },
+      { kind: 'point', count: 10, from: 'log', to: { playerId: 'thief' } },
+    ]);
   });
 });

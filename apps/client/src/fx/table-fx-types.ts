@@ -12,6 +12,9 @@ export interface DomRectLite {
   height: number;
 }
 
+/** Token chip travel endpoints (L51-11). `{ playerId }` is the dock when it is `you`. */
+export type TokenFlyoutEndpoint = 'log' | { playerId: string };
+
 export type ResolutionOutcome = ActionResolutionOutcome;
 
 /** Red attack-like vs orange non-attack Incoming threat (L39-05). */

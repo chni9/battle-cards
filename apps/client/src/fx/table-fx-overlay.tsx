@@ -205,7 +205,7 @@ export function TableFxOverlay(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[80] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[110] overflow-hidden"
       aria-hidden
       data-zone="table-fx"
     >

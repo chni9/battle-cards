@@ -210,13 +210,16 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
-  - **Opponent token flyouts (L51-09):** POV dock `ResourceIcon` unchanged. Upgraded Spy
-    seats with live numbers use `flyToken` scoped to that seat (`measureTokenFlyout`
-    `playerId`). Unspied / base Spy enqueue from the public log only (`livesLost`,
-    `shieldAbsorbed`, catalog play/buy/sell/upgrade). Origin is the seat icon (or seat
-    rect); destination is the action-log panel. Skip Draw when kit Draw is hidden.
-    Include life, point, upgrade-point, and shield chips. Reduced motion skips
-    choreography.
+  - **Opponent token flyouts (L51-09 / L51-11):** POV dock `ResourceIcon` still
+    handles live dock Δ except steal transfers. Upgraded Spy seats with live
+    numbers use `flyToken` scoped to that seat. Unspied / base Spy enqueue
+    **directed** chips (`from` / `to` log or player): play/buy/upgrade spends
+    seat→log; sell yield log→seat; buy upgrade point spends Classic 10 when kit
+    is hidden. Sold-card ghost flies seat→log (action verso when unspied, face
+    when Spyed). Thief / Spy Thief / Upgrade Point Thief live Δ flies
+    victim→thief (extra upgraded gain from the log) and skips `ResourceIcon` for
+    that kind. No invented Draw or thief count. Overlay is `z-[110]` so chips
+    stay visible over Shop. Reduced motion skips choreography.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and

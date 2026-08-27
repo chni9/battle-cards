@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { measureTokenFlyout } from '../../fx/play-flyout';
+import { shouldSkipResourceIconFlyout } from '../../fx/token-flyout-skip';
 import {
   MOTION_EASE,
   MOTION_PULSE_S,
@@ -67,20 +68,23 @@ export function ResourceIcon({
     setFloatDelta(d);
 
     if (flyToken && enqueue !== undefined && reduceMotion !== true) {
-      const direction = nextFlash === 'gain' ? 'gain' : 'loss';
-      const count = Math.abs(d);
-      for (let i = 0; i < count; i++) {
-        const measured = measureTokenFlyout(kind, direction, i, playerId);
-        if (measured === null) {
-          break;
+      const skipId = playerId ?? 'self';
+      if (!shouldSkipResourceIconFlyout(skipId, kind)) {
+        const direction = nextFlash === 'gain' ? 'gain' : 'loss';
+        const count = Math.abs(d);
+        for (let i = 0; i < count; i++) {
+          const measured = measureTokenFlyout(kind, direction, i, playerId);
+          if (measured === null) {
+            break;
+          }
+          const delayMs = i * TOKEN_STAGGER_MS;
+          enqueue({
+            kind: 'tokenFlyout',
+            ...measured,
+            delayMs,
+            expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
+          });
         }
-        const delayMs = i * TOKEN_STAGGER_MS;
-        enqueue({
-          kind: 'tokenFlyout',
-          ...measured,
-          delayMs,
-          expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 120,
-        });
       }
     }
 

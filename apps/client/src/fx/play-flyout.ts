@@ -5,7 +5,7 @@
 import type { CardId } from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
-import type { DomRectLite } from './table-fx-types';
+import type { DomRectLite, TokenFlyoutEndpoint } from './table-fx-types';
 
 function rectOf(el: Element | null): DomRectLite | null {
   if (el === null) {
@@ -75,43 +75,128 @@ export function tokenFlyoutSeatSelector(playerId: string): string {
   return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"]`;
 }
 
+function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLite | null {
+  const opponentResource = document.querySelector(
+    tokenFlyoutResourceSelector(kind, playerId),
+  );
+  const opponentSeat = document.querySelector(tokenFlyoutSeatSelector(playerId));
+  if (opponentResource !== null || opponentSeat !== null) {
+    return rectOf(opponentResource) ?? rectOf(opponentSeat);
+  }
+  const selfResource = document.querySelector(
+    `[data-zone="private"][data-player-id="${escapeSelector(playerId)}"] [data-resource-kind="${escapeSelector(kind)}"]`,
+  );
+  const selfZone = document.querySelector(
+    `[data-zone="private"][data-player-id="${escapeSelector(playerId)}"]`,
+  );
+  return rectOf(selfResource) ?? rectOf(selfZone);
+}
+
+function rectForEndpoint(
+  endpoint: TokenFlyoutEndpoint,
+  kind: ResourceKind,
+): DomRectLite | null {
+  if (endpoint === 'log') {
+    return rectOf(document.querySelector('[data-zone="action-log-panel"]'));
+  }
+  return rectForPlayerResource(kind, endpoint.playerId);
+}
+
+function fannedChip(
+  base: DomRectLite,
+  index: number,
+  size: number,
+  fanScale: number,
+): DomRectLite {
+  const fanX = (index % 3) * 5 - 5;
+  const fanY = Math.floor(index / 3) * 4;
+  const chip = tokenRect(base, size);
+  return {
+    left: chip.left + fanX * fanScale,
+    top: chip.top + fanY * fanScale,
+    width: chip.width,
+    height: chip.height,
+  };
+}
+
+/**
+ * Directed token chip (L51-11). Endpoints are the action log or a seat/dock.
+ */
+export function measureDirectedTokenFlyout(
+  kind: ResourceKind,
+  from: TokenFlyoutEndpoint,
+  to: TokenFlyoutEndpoint,
+  index = 0,
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const fromRect = rectForEndpoint(from, kind);
+  const toRect = rectForEndpoint(to, kind);
+  if (fromRect === null || toRect === null) {
+    return null;
+  }
+  const fromSize = from === 'log' ? 32 : 24;
+  const toSize = to === 'log' ? 32 : 24;
+  return {
+    artUrl: getResourceIconUrl(kind),
+    from: fannedChip(fromRect, index, fromSize, 1),
+    to: fannedChip(toRect, index, toSize, 0.4),
+  };
+}
+
 export function measureTokenFlyout(
   kind: ResourceKind,
   direction: 'gain' | 'loss',
   index = 0,
   playerId?: string,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const resourceEl =
-    playerId !== undefined
-      ? (document.querySelector(tokenFlyoutResourceSelector(kind, playerId)) ??
-        document.querySelector(tokenFlyoutSeatSelector(playerId)))
-      : document.querySelector(tokenFlyoutResourceSelector(kind));
+  if (playerId !== undefined) {
+    return measureDirectedTokenFlyout(
+      kind,
+      direction === 'gain' ? 'log' : { playerId },
+      direction === 'gain' ? { playerId } : 'log',
+      index,
+    );
+  }
+  const resourceEl = document.querySelector(tokenFlyoutResourceSelector(kind));
   const logEl = document.querySelector('[data-zone="action-log-panel"]');
-  const resource = rectOf(resourceEl);
+  const resourceRect = rectOf(resourceEl);
   const log = rectOf(logEl);
-  if (resource === null || log === null) {
+  if (resourceRect === null || log === null) {
     return null;
   }
-  // Slight fan so stacked chips are readable before/while staggering.
-  const fanX = (index % 3) * 5 - 5;
-  const fanY = Math.floor(index / 3) * 4;
-  const logChip = tokenRect(log, 32);
-  const resourceChip = tokenRect(resource, 24);
-  const fromBase = direction === 'gain' ? logChip : resourceChip;
-  const toBase = direction === 'gain' ? resourceChip : logChip;
+  const fromBase = direction === 'gain' ? log : resourceRect;
+  const toBase = direction === 'gain' ? resourceRect : log;
+  const fromSize = direction === 'gain' ? 32 : 24;
+  const toSize = direction === 'gain' ? 24 : 32;
   return {
     artUrl: getResourceIconUrl(kind),
-    from: {
-      left: fromBase.left + fanX,
-      top: fromBase.top + fanY,
-      width: fromBase.width,
-      height: fromBase.height,
-    },
+    from: fannedChip(fromBase, index, fromSize, 1),
+    to: fannedChip(toBase, index, toSize, 0.4),
+  };
+}
+
+/** Opponent sold-card ghost: seat portrait → action log (L51-11). */
+export function measureOpponentCardLogFlyout(
+  playerId: string,
+  artUrl: string,
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const from =
+    rectOf(
+      document.querySelector(
+        `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"] [data-zone="opponent-portrait"]`,
+      ),
+    ) ?? rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId)));
+  const log = rectOf(document.querySelector('[data-zone="action-log-panel"]'));
+  if (from === null || log === null) {
+    return null;
+  }
+  return {
+    artUrl,
+    from,
     to: {
-      left: toBase.left + fanX * 0.4,
-      top: toBase.top + fanY * 0.4,
-      width: toBase.width,
-      height: toBase.height,
+      left: log.left + log.width / 2 - 28,
+      top: log.top + 8,
+      width: 56,
+      height: 84,
     },
   };
 }
