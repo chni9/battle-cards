@@ -129,7 +129,9 @@
   }
 
   .table-felt__opponents {
-    max-height: 26dvh;
+    max-height: 40dvh;
+    overflow-x: auto;
+    overflow-y: auto;
   }
 
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */

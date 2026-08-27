@@ -97,7 +97,7 @@ describe('opponent seat resources (L51-08)', () => {
   it('stacks resources beside the portrait and actives under it (L51-10)', () => {
     const zone = readFileSync(join(dir, 'opponent-zone.tsx'), 'utf8');
     expect(zone).toContain('data-zone="opponent-resources"');
-    expect(zone).toContain('flex shrink-0 flex-col items-start gap-0.5');
+    expect(zone).toContain('flex shrink-0 flex-col items-start gap-0');
     expect(zone).toContain('data-zone="opponent-portrait"');
     expect(zone).toContain('data-zone="opponent-actives"');
     expect(zone).not.toContain('omitShield');
@@ -106,5 +106,7 @@ describe('opponent seat resources (L51-08)', () => {
     expect(zone).toMatch(
       /data-zone="opponent-portrait"[\s\S]*<ActiveThumbs[\s\S]*<OpponentSeatResourceColumn/,
     );
+    const css = readFileSync(join(dir, '../../index.css'), 'utf8');
+    expect(css).toContain('max-height: 40dvh');
   });
 });

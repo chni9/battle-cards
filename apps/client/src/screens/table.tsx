@@ -22,6 +22,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 
 import { useReducedMotion } from 'motion/react';
 
 import { IconButton } from '../design/components/icon-button';
+import type { ResourceKind } from '../design/asset-lookup';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { markHowToPlaySeen } from '../help/help-storage';
 import { ActionLogPanel } from '../action-log/action-log-panel';
@@ -145,22 +146,29 @@ export interface TableScreenProps {
 function enqueueDirectedTokenChips(
   enqueue: (event: TableFxInput) => void,
   chips: readonly DirectedTokenChip[],
-): boolean {
-  let landed = false;
+): ReadonlySet<ResourceKind> {
+  const landed = new Set<ResourceKind>();
+  let seq = 0;
   for (const chip of chips) {
+    let chipLanded = false;
     for (let i = 0; i < chip.count; i++) {
       const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
       if (measured === null) {
         break;
       }
-      const delayMs = i * TOKEN_STAGGER_MS;
+      const delayMs = seq * TOKEN_STAGGER_MS;
       enqueue({
         kind: 'tokenFlyout',
         ...measured,
         delayMs,
         expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 400,
       });
-      landed = true;
+      seq += 1;
+      chipLanded = true;
+    }
+    if (chipLanded) {
+      landed.add(chip.kind);
+      seq += 3;
     }
   }
   return landed;
@@ -168,9 +176,13 @@ function enqueueDirectedTokenChips(
 
 function skipFlyoutsForChips(
   chips: readonly DirectedTokenChip[],
+  landedKinds: ReadonlySet<ResourceKind>,
   you: string,
 ): void {
   for (const chip of chips) {
+    if (!landedKinds.has(chip.kind)) {
+      continue;
+    }
     if (chip.from !== 'log') {
       skipResourceIconFlyout(flyoutSkipId(chip.from.playerId, you), chip.kind);
     }
@@ -482,9 +494,8 @@ function TableScreenInner({
         }
       }
       const chips = chipsForPublicLogEntry(entry, view.you, view.players);
-      if (enqueueDirectedTokenChips(enqueue, chips)) {
-        skipFlyoutsForChips(chips, view.you);
-      }
+      const landedKinds = enqueueDirectedTokenChips(enqueue, chips);
+      skipFlyoutsForChips(chips, landedKinds, view.you);
       const ghost = sellCardGhostForPublicLogEntry(entry, view.you, view.players);
       if (ghost !== null) {
         enqueueSellCardGhost(enqueue, ghost.playerId, ghost.artUrl);

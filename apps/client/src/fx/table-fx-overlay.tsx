@@ -66,13 +66,13 @@ function FlyoutImage({
       src={artUrl}
       alt=""
       data-fx="card-flyout"
-      className="absolute rounded-[length:var(--radius-card)] border border-border object-contain shadow-lg"
+      className="absolute z-20 rounded-[length:var(--radius-card)] border-2 border-border bg-surface-raised object-contain shadow-lg"
       initial={{
         left: from.left,
         top: from.top,
         width: from.width,
         height: from.height,
-        opacity: 0,
+        opacity: 1,
         rotate: -4,
         scale: 1,
       }}
@@ -81,28 +81,16 @@ function FlyoutImage({
         top: to.top,
         width: to.width,
         height: to.height,
-        opacity: [0, 1, 1, 0.35],
+        opacity: 1,
         rotate: 6,
-        scale: [1, 1.04, 1, 0.92],
+        scale: 1.02,
       }}
       exit={{ opacity: 0 }}
       transition={{
-        left: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
-        top: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
-        width: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
-        height: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
-        rotate: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
-        opacity: {
-          duration: TOKEN_FLYOUT_DURATION_S,
-          ease: 'linear',
-          times: [0, 0.12, 0.72, 1],
-        },
-        scale: {
-          duration: TOKEN_FLYOUT_DURATION_S,
-          ease: 'linear',
-          times: [0, 0.12, 0.72, 1],
-        },
+        duration: TOKEN_FLYOUT_DURATION_S,
+        ease: FLYOUT_TRAVEL_EASE,
       }}
+      style={{ zIndex: 20 }}
       draggable={false}
     />
   );
@@ -225,12 +213,22 @@ export function TableFxOverlay(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[110] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[110] overflow-visible"
       aria-hidden
       data-zone="table-fx"
     >
       <AnimatePresence>
-        {events.map((event) => {
+        {[...events]
+          .sort((a, b) => {
+            if (a.kind === 'playFlyout' && b.kind !== 'playFlyout') {
+              return 1;
+            }
+            if (b.kind === 'playFlyout' && a.kind !== 'playFlyout') {
+              return -1;
+            }
+            return 0;
+          })
+          .map((event) => {
           if (event.kind === 'playFlyout') {
             return (
               <FlyoutImage
@@ -255,7 +253,7 @@ export function TableFxOverlay(): ReactElement {
                 src={artUrl}
                 alt=""
                 data-fx="token-flyout"
-                className="absolute object-contain drop-shadow-md"
+                className="absolute z-10 object-contain drop-shadow-md"
                 initial={{
                   left: from.left,
                   top: from.top,

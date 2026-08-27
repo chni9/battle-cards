@@ -93,7 +93,7 @@ function OpponentSeatResourceColumn({
   return (
     <div
       data-zone="opponent-resources"
-      className="flex shrink-0 flex-col items-start gap-0.5"
+      className="flex shrink-0 flex-col items-start gap-0"
     >
       <ResourceIcon
         kind="life"
@@ -155,7 +155,7 @@ export function OpponentZone({
       data-seat={player.id}
       data-seat-index={seat !== null ? String(seat) : undefined}
       data-active-seat={isActiveSeat ? 'true' : undefined}
-      className="flex w-auto max-w-[8.5rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm sm:max-w-[11rem] sm:p-2"
+      className="flex w-auto max-w-[7.75rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm sm:max-w-[10rem] sm:p-1.5"
       style={zoneStyle}
     >
       <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
@@ -191,7 +191,7 @@ export function OpponentZone({
                 kitId={shownKitId}
                 nickname={player.nickname}
                 isEliminated={player.isEliminated}
-                className="w-10 shrink-0 sm:w-14"
+                className="w-8 shrink-0 sm:w-11"
                 {...(onInspectReveal !== undefined && revealMode !== null
                   ? {
                       onClick: onInspectReveal,
