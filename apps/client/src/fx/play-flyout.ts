@@ -179,12 +179,7 @@ export function measureOpponentCardLogFlyout(
   playerId: string,
   artUrl: string,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from =
-    rectOf(
-      document.querySelector(
-        `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"] [data-zone="opponent-portrait"]`,
-      ),
-    ) ?? rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId)));
+  const from = rectOf(document.querySelector(tokenFlyoutSeatSelector(playerId)));
   const log = rectOf(document.querySelector('[data-zone="action-log-panel"]'));
   if (from === null || log === null) {
     return null;
