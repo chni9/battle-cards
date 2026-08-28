@@ -1,7 +1,8 @@
 /**
- * Public-log token chips — L51-09 / L51-11.
- * Live upgraded Spy / death numbers fly via ResourceIcon except steal transfers.
- * POV dock ResourceIcon handles own Δ. Unspied / base Spy: catalog + public log.
+ * Public-log token chips — L51-09 / L51-11 / L51-13.
+ * Live upgraded Spy / death numbers fly via ResourceIcon except steal / Regen.
+ * POV dock ResourceIcon handles own Δ unless those transfers already ran.
+ * Unspied / base Spy: catalog + public log. Regen quantity is never invented.
  */
 
 import {
@@ -33,9 +34,10 @@ export interface DirectedTokenChip {
   to: TokenFlyoutEndpoint;
 }
 
-export interface SellCardGhost {
+export interface DeckCardGhost {
   playerId: string;
   artUrl: string;
+  direction: 'buy' | 'sell';
 }
 
 export type LiveResourceSnap = OpponentLiveResources;
@@ -234,6 +236,7 @@ export function chipsForPublicLogEntry(
       }
       const play = structuredPlayCost(card, entry.isUpgraded === true);
       if (play === null || play.kind === 'pointsPerLife') {
+        // Quantity is not on the public log — regenFlowChips owns this action.
         return [];
       }
       if (play.kind === 'points') {
@@ -315,15 +318,24 @@ export function chipsForPublicLogEntry(
   }
 }
 
-export function sellCardGhostForPublicLogEntry(
+export function deckCardGhostForPublicLogEntry(
   entry: ActionLogEntryView,
   you: string,
   players: readonly PublicPlayerView[],
-): SellCardGhost | null {
-  if (entry.kind !== 'actionPlayed' || entry.action !== 'sellCard') {
+): DeckCardGhost | null {
+  if (entry.kind !== 'actionPlayed') {
     return null;
   }
   if (entry.actorPlayerId === you) {
+    return null;
+  }
+  const direction =
+    entry.action === 'sellCard'
+      ? 'sell'
+      : entry.action === 'buyCard' || entry.action === 'buySpecialCard'
+        ? 'buy'
+        : null;
+  if (direction === null) {
     return null;
   }
   const actor = playerById(players, entry.actorPlayerId);
@@ -332,21 +344,31 @@ export function sellCardGhostForPublicLogEntry(
   }
   const cardId = entry.cardId;
   try {
+    if (entry.action === 'buySpecialCard') {
+      return {
+        playerId: entry.actorPlayerId,
+        artUrl: getCardBackUrl('special'),
+        direction,
+      };
+    }
     if (opponentKitIsVisible(actor) && cardId !== undefined) {
       return {
         playerId: entry.actorPlayerId,
         artUrl: getCardArtUrl(cardId, { isUpgraded: entry.isUpgraded === true }),
+        direction,
       };
     }
     return {
       playerId: entry.actorPlayerId,
       artUrl: getCardBackUrl('action'),
+      direction,
     };
   } catch {
     try {
       return {
         playerId: entry.actorPlayerId,
-        artUrl: getCardBackUrl('action'),
+        artUrl: getCardBackUrl(entry.action === 'buySpecialCard' ? 'special' : 'action'),
+        direction,
       };
     } catch {
       return null;
@@ -381,8 +403,9 @@ export interface StealTransferResult {
 }
 
 /**
- * Seat-to-seat steal chips from live resource Δ only. Never invents an amount
- * when both seats are `?` (L51-11). Extra upgraded gain flies log → thief.
+ * Seat-to-seat steal chips from live resource Δ. When both seats are `?`,
+ * one directional chip shows victim→thief without claiming a total (L51-13).
+ * Extra upgraded gain flies log → thief.
  */
 export function stealTransferChips(
   entry: ActionLogEntryView,
@@ -468,6 +491,93 @@ export function stealTransferChips(
     }
   }
 
+  if (chips.length === 0) {
+    // Both seats `?`: public log has no steal total. One directional chip is a
+    // transfer beat, not a claimed amount (L51-13).
+    const kind: ResourceKind =
+      entry.cardId === 'upgrade-point-thief' ? 'upgradePoint' : 'point';
+    pushChip(chips, {
+      kind,
+      count: 1,
+      from: { playerId: victimId },
+      to: { playerId: thiefId },
+    });
+  }
+
+  return { chips, skips };
+}
+
+/**
+ * Regeneration spends points and grants lives on play (rules spec §3).
+ * Live Δ when the actor's numbers are on the view; otherwise the catalog
+ * per-life unit (rate + 1 life) so the action still animates without inventing
+ * the chosen quantity (L51-13).
+ */
+export function regenFlowChips(
+  entry: ActionLogEntryView,
+  prev: ReadonlyMap<string, LiveResourceSnap>,
+  next: ReadonlyMap<string, LiveResourceSnap>,
+): StealTransferResult {
+  if (
+    entry.kind !== 'actionPlayed' ||
+    entry.action !== 'playCard' ||
+    entry.cardId !== 'regeneration'
+  ) {
+    return { chips: [], skips: [] };
+  }
+
+  const actorId = entry.actorPlayerId;
+  const chips: DirectedTokenChip[] = [];
+  const skips: { playerId: string; kind: ResourceKind }[] = [];
+  const actorPrev = prev.get(actorId);
+  const actorNext = next.get(actorId);
+
+  if (actorPrev !== undefined && actorNext !== undefined) {
+    const pointLoss = actorPrev.points - actorNext.points;
+    const lifeGain = actorNext.lives - actorPrev.lives;
+    if (pointLoss > 0) {
+      pushChip(chips, {
+        kind: 'point',
+        count: pointLoss,
+        from: { playerId: actorId },
+        to: 'log',
+      });
+      skips.push({ playerId: actorId, kind: 'point' });
+    }
+    if (lifeGain > 0) {
+      pushChip(chips, {
+        kind: 'life',
+        count: lifeGain,
+        from: 'log',
+        to: { playerId: actorId },
+      });
+      skips.push({ playerId: actorId, kind: 'life' });
+    }
+    if (chips.length > 0) {
+      return { chips, skips };
+    }
+  }
+
+  const card = getCard('regeneration');
+  if (card === undefined) {
+    return { chips: [], skips: [] };
+  }
+  const play = structuredPlayCost(card, entry.isUpgraded === true);
+  const rate = play?.kind === 'pointsPerLife' ? play.amount : 0;
+  if (rate > 0) {
+    pushChip(chips, {
+      kind: 'point',
+      count: rate,
+      from: { playerId: actorId },
+      to: 'log',
+    });
+    pushChip(chips, {
+      kind: 'life',
+      count: 1,
+      from: 'log',
+      to: { playerId: actorId },
+    });
+  }
   return { chips, skips };
 }
 

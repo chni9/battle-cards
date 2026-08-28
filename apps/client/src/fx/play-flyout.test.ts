@@ -1,5 +1,5 @@
 /**
- * Token flyout measurement selectors — L51-09 / L51-11.
+ * Token flyout measurement selectors — L51-09 / L51-13.
  */
 
 import { readFileSync } from 'node:fs';
@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+  DECK_CARD_FLYOUT_HEIGHT,
+  DECK_CARD_FLYOUT_WIDTH,
   tokenFlyoutPovSelector,
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
@@ -16,7 +18,7 @@ import {
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
-describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
+describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
   it('scopes opponent resources to the seat and POV to the dock', () => {
     expect(tokenFlyoutResourceSelector('point')).toBe(
       '[data-zone="resources"] [data-resource-kind="point"]',
@@ -33,16 +35,21 @@ describe('measureTokenFlyout playerId (L51-09 / L51-11)', () => {
     expect(tokenFlyoutResourceSelector('point')).not.toContain('opponent-seat');
   });
 
-  it('sizes opponent sold-card ghosts large enough to read (L51-11)', () => {
+  it('sizes buy/sell card ghosts toward the felt center (L51-13)', () => {
     const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
-    expect(source).toContain('measureOpponentCardLogFlyout');
-    expect(source).toContain('to.top - 200');
+    expect(source).toContain('measureDeckCardFlyout');
+    expect(source).toContain('[data-zone="pending"]');
+    expect(source).not.toContain('measureOpponentCardLogFlyout');
+    expect(DECK_CARD_FLYOUT_WIDTH).toBe(48);
+    expect(DECK_CARD_FLYOUT_HEIGHT).toBe(72);
   });
 
-  it('enqueues opponent sold-card ghosts as playFlyout from the seat (L51-11)', () => {
+  it('enqueues opponent buy/sell ghosts as small cards, not playCard flyouts (L51-13)', () => {
     const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
-    expect(table).toContain('enqueueSellCardGhost');
-    expect(table).toContain("kind: 'tokenFlyout'");
-    expect(table).toContain('skipFlyoutsForChips');
+    expect(table).toContain('enqueueDeckCardGhost');
+    expect(table).toContain('regenFlowChips');
+    expect(table).toContain("asCard: true");
+    expect(table).not.toContain('measurePlayFlyout');
+    expect(table).not.toContain('enqueueSellCardGhost');
   });
 });

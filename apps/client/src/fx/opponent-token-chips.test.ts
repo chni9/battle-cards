@@ -10,7 +10,8 @@ import { UPGRADE_POINT_ECONOMY } from '@card-battle/shared';
 import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import {
   chipsForPublicLogEntry,
-  sellCardGhostForPublicLogEntry,
+  deckCardGhostForPublicLogEntry,
+  regenFlowChips,
   stealTransferChips,
 } from './opponent-token-chips';
 
@@ -175,21 +176,26 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ).toEqual([{ kind: 'life', count: 1, from: { playerId: 'me' }, to: 'log' }]);
   });
 
-  it('skips Regeneration quantity (pointsPerLife) instead of inventing a count', () => {
-    expect(
-      chipsForPublicLogEntry(
-        {
-          kind: 'actionPlayed',
-          actorPlayerId: 'opp',
-          action: 'playCard',
-          cardId: 'regeneration',
-          isUpgraded: false,
-          turnSequence: 7,
-        },
-        'me',
-        [you, hidden],
-      ),
-    ).toEqual([]);
+  it('flies Regeneration live Δ when known, else the catalog unit (L51-13)', () => {
+    const play: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'playCard',
+      cardId: 'regeneration',
+      isUpgraded: true,
+      turnSequence: 7,
+    };
+    expect(chipsForPublicLogEntry(play, 'me', [you, hidden])).toEqual([]);
+    expect(regenFlowChips(play, new Map(), new Map()).chips).toEqual([
+      { kind: 'point', count: 2, from: { playerId: 'opp' }, to: 'log' },
+      { kind: 'life', count: 1, from: 'log', to: { playerId: 'opp' } },
+    ]);
+    const prev = new Map([['opp', { lives: 10, points: 12, upgradePoints: 0, shield: 0 }]]);
+    const next = new Map([['opp', { lives: 13, points: 6, upgradePoints: 0, shield: 0 }]]);
+    expect(regenFlowChips(play, prev, next).chips).toEqual([
+      { kind: 'point', count: 6, from: { playerId: 'opp' }, to: 'log' },
+      { kind: 'life', count: 3, from: 'log', to: { playerId: 'opp' } },
+    ]);
   });
 
   it('sells as a log→seat gain, not a seat→log spend', () => {
@@ -233,7 +239,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ]);
   });
 
-  it('flies a sold-card verso when unspied and the face when Spyed', () => {
+  it('flies a buy/sell card verso when unspied and the face when Spyed', () => {
     const sell: ActionLogEntryView = {
       kind: 'actionPlayed',
       actorPlayerId: 'opp',
@@ -242,15 +248,29 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       isUpgraded: false,
       turnSequence: 10,
     };
-    expect(sellCardGhostForPublicLogEntry(sell, 'me', [you, hidden])).toEqual({
+    expect(deckCardGhostForPublicLogEntry(sell, 'me', [you, hidden])).toEqual({
       playerId: 'opp',
       artUrl: getCardBackUrl('action'),
+      direction: 'sell',
     });
     expect(
-      sellCardGhostForPublicLogEntry(sell, 'me', [you, { ...spied, id: 'opp' }]),
+      deckCardGhostForPublicLogEntry(sell, 'me', [you, { ...spied, id: 'opp' }]),
     ).toEqual({
       playerId: 'opp',
       artUrl: getCardArtUrl('thief', { isUpgraded: false }),
+      direction: 'sell',
+    });
+    const buy: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'buyCard',
+      cardId: 'basic-attack',
+      turnSequence: 10,
+    };
+    expect(deckCardGhostForPublicLogEntry(buy, 'me', [you, hidden])).toEqual({
+      playerId: 'opp',
+      artUrl: getCardBackUrl('action'),
+      direction: 'buy',
     });
     const hiddenId: ActionLogEntryView = {
       kind: 'actionPlayed',
@@ -258,10 +278,24 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       action: 'sellCard',
       turnSequence: 10,
     };
-    expect(sellCardGhostForPublicLogEntry(hiddenId, 'me', [you, hidden])).toEqual({
+    expect(deckCardGhostForPublicLogEntry(hiddenId, 'me', [you, hidden])).toEqual({
       playerId: 'opp',
       artUrl: getCardBackUrl('action'),
+      direction: 'sell',
     });
+    expect(
+      deckCardGhostForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'me',
+          action: 'sellCard',
+          cardId: 'thief',
+          turnSequence: 10,
+        },
+        'me',
+        [you, hidden],
+      ),
+    ).toBeNull();
   });
 
   it('pairs live thief deltas victim→thief and does not invent an unspied amount', () => {
@@ -300,7 +334,14 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       ],
     });
     expect(stealTransferChips(entry, new Map(), new Map())).toEqual({
-      chips: [],
+      chips: [
+        {
+          kind: 'point',
+          count: 1,
+          from: { playerId: 'victim' },
+          to: { playerId: 'thief' },
+        },
+      ],
       skips: [],
     });
     expect(

@@ -37,6 +37,8 @@ export type TableFxEvent =
       to: DomRectLite;
       /** Delay before this chip starts moving (multi-token stagger). */
       delayMs?: number;
+      /** Buy/sell card ghost — card chrome + fade, not a token chip (L51-13). */
+      asCard?: boolean;
       expiresAt: number;
     }
   | {

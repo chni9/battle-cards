@@ -210,20 +210,19 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
-  - **Opponent token flyouts (L51-09 / L51-11):** POV dock `ResourceIcon` still
-    handles live dock Δ except steal transfers. Upgraded Spy seats with live
-    numbers use `flyToken` scoped to that seat. Unspied / base Spy enqueue
-    **directed** chips (`from` / `to` log or player): play/buy/upgrade spends
-    seat→log; sell yield log→seat; buy upgrade point spends Classic 10 when kit
-    is hidden (POV catalog spends use the same path so Shop cannot hide them).
-    Sold-card ghost is a `playFlyout` seat→log (action verso when unspied, face
-    when Spyed), sized ~96×144, opaque for the whole trip, painted above token
-    chips. Landscape opponent strip is `max-height: 40dvh` so the seat (and the
-    ghost origin) is not clipped. Thief / Spy Thief / Upgrade Point Thief live
-    Δ flies victim→thief (extra upgraded gain from the log) including POV dock
-    (`private-zone` + `data-player-id`). Overlay is `z-[110]` so chips stay
-    visible over Shop. Reduced motion skips choreography. Do not invent Draw or
-    thief counts.
+  - **Opponent token flyouts (L51-09 / L51-11 / L51-13):** POV dock `ResourceIcon`
+    still handles live dock Δ except steal / Regen transfers already choreographed.
+    Unspied / base Spy enqueue **directed** chips (`from` / `to` log or player):
+    play/buy/upgrade spends seat→log; sell yield log→seat; buy upgrade point spends
+    Classic 10 when kit is hidden. **Card ghosts only on buy/sell** (felt pending
+    center, ~48×72, fade on arrival) — verso when unspied, face when Spyed; special
+    buy uses the special verso. Playing a card does **not** fly art to the center.
+    Regeneration: live Δ when numbers are known, otherwise the catalog per-life
+    unit (rate + 1 life) so the action still animates; quantity is not on the
+    public log. Thief / Spy Thief / Upgrade Point Thief: live Δ victim→thief
+    (extra upgraded gain from the log); both `?` → one directional chip, never an
+    invented total. Overlay `z-[110]`. Travel ~0.42s. Reduced motion skips
+    choreography. Do not invent Draw totals.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and

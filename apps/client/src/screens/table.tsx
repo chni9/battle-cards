@@ -29,16 +29,16 @@ import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
   measureBuySpecialFlyout,
+  measureDeckCardFlyout,
   measureDirectedTokenFlyout,
-  measureOpponentCardLogFlyout,
-  measurePlayFlyout,
   measureSellCardFlyout,
   measureTargetingCue,
 } from '../fx/play-flyout';
 import {
   actionLogFlyoutKey,
   chipsForPublicLogEntry,
-  sellCardGhostForPublicLogEntry,
+  deckCardGhostForPublicLogEntry,
+  regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
 } from '../fx/opponent-token-chips';
@@ -161,14 +161,14 @@ function enqueueDirectedTokenChips(
         kind: 'tokenFlyout',
         ...measured,
         delayMs,
-        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 400,
+        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
       });
       seq += 1;
       chipLanded = true;
     }
     if (chipLanded) {
       landed.add(chip.kind);
-      seq += 3;
+      seq += 1;
     }
   }
   return landed;
@@ -196,21 +196,23 @@ function flyoutSkipId(playerId: string, you: string): string {
   return playerId === you ? 'self' : playerId;
 }
 
-function enqueueSellCardGhost(
+function enqueueDeckCardGhost(
   enqueue: (event: TableFxInput) => void,
   playerId: string,
   artUrl: string,
+  direction: 'buy' | 'sell',
 ): void {
   const tryEnqueue = (): boolean => {
-    const measured = measureOpponentCardLogFlyout(playerId, artUrl);
+    const measured = measureDeckCardFlyout(playerId, artUrl, direction);
     if (measured === null) {
       return false;
     }
     enqueue({
       kind: 'tokenFlyout',
       ...measured,
-      delayMs: 80,
-      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 500,
+      delayMs: 30,
+      asCard: true,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
     });
     return true;
   };
@@ -320,13 +322,6 @@ function TableScreenInner({
       }
     }
     onPlayCard(instanceId, options);
-    if (card === undefined) {
-      return;
-    }
-    const measured = measurePlayFlyout(instanceId, card.cardId, card.isUpgraded);
-    if (measured !== null) {
-      enqueue({ kind: 'playFlyout', ...measured });
-    }
   };
 
   const playMultipleWithFx = (
@@ -336,18 +331,6 @@ function TableScreenInner({
       return;
     }
     onPlayMultipleAttacks(attacks);
-    const first = attacks[0];
-    if (first === undefined) {
-      return;
-    }
-    const card = findOwnCard(first.instanceId);
-    if (card === undefined) {
-      return;
-    }
-    const measured = measurePlayFlyout(first.instanceId, card.cardId, card.isUpgraded);
-    if (measured !== null) {
-      enqueue({ kind: 'playFlyout', ...measured });
-    }
   };
 
   const drawWithFx = (): void => {
@@ -487,19 +470,25 @@ function TableScreenInner({
       if (reduceMotion === true) {
         continue;
       }
-      if (prevSnaps !== null) {
-        const steal = stealTransferChips(entry, prevSnaps, nextSnaps);
-        enqueueDirectedTokenChips(enqueue, steal.chips);
-        for (const skip of steal.skips) {
-          skipResourceIconFlyout(flyoutSkipId(skip.playerId, view.you), skip.kind);
-        }
-      }
+      const snapPrev = prevSnaps ?? new Map<string, OpponentLiveResources>();
+      const steal = stealTransferChips(entry, snapPrev, nextSnaps);
+      skipFlyoutsForChips(
+        steal.chips,
+        enqueueDirectedTokenChips(enqueue, steal.chips),
+        view.you,
+      );
+      const regen = regenFlowChips(entry, snapPrev, nextSnaps);
+      skipFlyoutsForChips(
+        regen.chips,
+        enqueueDirectedTokenChips(enqueue, regen.chips),
+        view.you,
+      );
       const chips = chipsForPublicLogEntry(entry, view.you, view.players);
       const landedKinds = enqueueDirectedTokenChips(enqueue, chips);
       skipFlyoutsForChips(chips, landedKinds, view.you);
-      const ghost = sellCardGhostForPublicLogEntry(entry, view.you, view.players);
+      const ghost = deckCardGhostForPublicLogEntry(entry, view.you, view.players);
       if (ghost !== null) {
-        enqueueSellCardGhost(enqueue, ghost.playerId, ghost.artUrl);
+        enqueueDeckCardGhost(enqueue, ghost.playerId, ghost.artUrl, ghost.direction);
       }
     }
   }, [view.actionLog, view.you, view.players, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);

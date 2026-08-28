@@ -232,6 +232,7 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | L51-10 | Opponent seat layout: resource icons stack vertically beside the portrait; activated cards sit under the portrait. Drop wrap-row + omit-shield. **Acceptance:** seats no longer overflow from a wrapping resource row; shield always stays on the seat. | S | Low | L51-08 | Done |
 | L51-11 | Directed token/card flyouts: sell yield log→seat plus card ghost (verso unspied, face when Spyed); buy/sell upgrade-point uses default 10/7 when kit hidden; thief/spy-thief/UPT live Δ flies victim→thief; every catalog chip has from/to. **Acceptance:** no invented Draw/thief counts; sell points never seat→log. | M | Medium | L51-09 | Done |
 | L51-12 | Card inspect: drop “Choose Use, Upgrade, or Sell.”; label play cost **Cost** then icons; inline resource glyphs in effect / upgradeAdds prose. **Acceptance:** Regeneration copy shows life/point icons; no Choose-Use helper. | S | Low | L51-05 | Done |
+| L51-13 | Flyout correction: card ghosts only on buy/sell (felt center, ~48×72, fast fade); no play-to-center card; resource chips on every action including Regen+ (live Δ, else catalog unit); thief victim→thief even when both `?` (1 directional chip, never an invented total); faster travel. **Acceptance:** playCard does not enqueue a card flyout; opponent buy/sell card is small and aimed at pending, not the log. | M | Medium | L51-11 | Done |
 
 ---
 
@@ -249,8 +250,8 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| 51 | 12 |
-| **Total** | **61** |
+| 51 | 13 |
+| **Total** | **62** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

@@ -34,28 +34,6 @@ function tokenRect(center: DomRectLite, size = 28): DomRectLite {
   };
 }
 
-export function measurePlayFlyout(
-  instanceId: string,
-  cardId: CardId,
-  isUpgraded: boolean,
-): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from =
-    rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`)) ??
-    rectOf(document.querySelector('[data-zone="hand"]')) ??
-    rectOf(document.querySelector('[data-zone="dock"]'));
-  const to =
-    rectOf(document.querySelector('[data-zone="pending"]')) ??
-    rectOf(document.querySelector('[data-zone="felt"]'));
-  if (from === null || to === null) {
-    return null;
-  }
-  return {
-    artUrl: getCardArtUrl(cardId, { isUpgraded }),
-    from,
-    to,
-  };
-}
-
 /**
  * Token chip flyout — gain: action log → resource; loss: resource → action log.
  * Optional `playerId` scopes the resource origin to an opponent seat (L51-09).
@@ -128,6 +106,73 @@ function fannedChip(
   };
 }
 
+/** Buy/sell card ghost size — small enough to read, not a full hand face (L51-13). */
+export const DECK_CARD_FLYOUT_WIDTH = 48;
+export const DECK_CARD_FLYOUT_HEIGHT = 72;
+
+function sizedRect(center: DomRectLite, width: number, height: number): DomRectLite {
+  return {
+    left: center.left + center.width / 2 - width / 2,
+    top: center.top + center.height / 2 - height / 2,
+    width,
+    height,
+  };
+}
+
+/**
+ * Felt play-area center (pending strip). Buy/sell cards travel here — not the
+ * action log, not a play-to-pending ghost (L51-13).
+ */
+export function measureFeltCenterRect(): DomRectLite | null {
+  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
+  const felt = rectOf(document.querySelector('[data-zone="felt"]'));
+  const base = pending ?? felt;
+  if (base === null) {
+    return null;
+  }
+  return sizedRect(base, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+}
+
+function rectForPlayerSeat(playerId: string): DomRectLite | null {
+  const opponentPortrait = document.querySelector(
+    `${tokenFlyoutSeatSelector(playerId)} [data-zone="opponent-portrait"]`,
+  );
+  const opponentSeat = document.querySelector(tokenFlyoutSeatSelector(playerId));
+  const opponent = rectOf(opponentPortrait) ?? rectOf(opponentSeat);
+  if (opponent !== null) {
+    return sizedRect(opponent, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  }
+  const hand =
+    rectOf(document.querySelector('[data-zone="hand"]')) ??
+    rectOf(document.querySelector('[data-zone="card-band"]'));
+  const dock = document.querySelector(tokenFlyoutPovSelector(playerId));
+  const self = hand ?? rectOf(dock);
+  if (self === null) {
+    return null;
+  }
+  return sizedRect(self, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+}
+
+/**
+ * Buy: felt center → seat. Sell: seat → felt center.
+ * Unspied art is a verso supplied by the caller (L51-13).
+ */
+export function measureDeckCardFlyout(
+  playerId: string,
+  artUrl: string,
+  direction: 'buy' | 'sell',
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const center = measureFeltCenterRect();
+  const seat = rectForPlayerSeat(playerId);
+  if (center === null || seat === null) {
+    return null;
+  }
+  if (direction === 'buy') {
+    return { artUrl, from: center, to: seat };
+  }
+  return { artUrl, from: seat, to: center };
+}
+
 /**
  * Directed token chip (L51-11). Endpoints are the action log or a seat/dock.
  */
@@ -183,125 +228,63 @@ export function measureTokenFlyout(
   };
 }
 
-/** Opponent sold-card ghost: seat portrait → action log (L51-11). */
-export function measureOpponentCardLogFlyout(
-  playerId: string,
-  artUrl: string,
-): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const seat = document.querySelector(tokenFlyoutSeatSelector(playerId));
-  const portrait = seat?.querySelector('[data-zone="opponent-portrait"]') ?? null;
-  const origin = rectOf(portrait) ?? rectOf(seat);
-  const log = rectOf(document.querySelector('[data-zone="action-log-panel"]'));
-  if (origin === null || log === null) {
-    return null;
-  }
-  const from: DomRectLite = {
-    left: origin.left + origin.width / 2 - 48,
-    top: origin.top + origin.height / 2 - 72,
-    width: 96,
-    height: 144,
-  };
-  const to: DomRectLite = {
-    left: log.left + 16,
-    top: log.top + 8,
-    width: 80,
-    height: 120,
-  };
-  // If origin collapsed onto the log, drop in from above so travel is readable.
-  if (Math.abs(from.top - to.top) < 96) {
-    from.top = to.top - 200;
-  }
-  return { artUrl, from, to };
-}
-
-/** Buy card: from Buy control toward hand. */
+/** Buy card: felt center → hand (L51-13). */
 export function measureBuyCardFlyout(
   cardId: CardId,
   isUpgraded = false,
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from =
-    rectOf(document.querySelector('[data-zone="economy-bar"]')) ??
-    rectOf(document.querySelector('[data-zone="economy"]'));
-  const to =
+  const from = measureFeltCenterRect();
+  const hand =
     rectOf(document.querySelector('[data-zone="hand"]')) ??
     rectOf(document.querySelector('[data-zone="card-band"]'));
-  if (from === null || to === null) {
-    return null;
-  }
-  return {
-    artUrl: getCardArtUrl(cardId, { isUpgraded }),
-    from: {
-      left: from.left + from.width / 2 - 36,
-      top: from.top - 12,
-      width: 72,
-      height: 108,
-    },
-    to: {
-      left: to.left + to.width / 2 - 40,
-      top: to.top + 8,
-      width: 80,
-      height: 120,
-    },
-  };
-}
-
-/** Buy special (unknown id until state arrives): verso special → hand. */
-export function measureBuySpecialFlyout(): {
-  artUrl: string;
-  from: DomRectLite;
-  to: DomRectLite;
-} | null {
-  const from =
-    rectOf(document.querySelector('[data-zone="economy-bar"]')) ??
-    rectOf(document.querySelector('[data-zone="economy"]'));
-  const to =
-    rectOf(document.querySelector('[data-zone="specials"]')) ??
-    rectOf(document.querySelector('[data-zone="card-band"]')) ??
-    rectOf(document.querySelector('[data-zone="hand"]'));
-  if (from === null || to === null) {
-    return null;
-  }
-  return {
-    artUrl: getCardBackUrl('special'),
-    from: {
-      left: from.left + from.width / 2 - 36,
-      top: from.top - 12,
-      width: 72,
-      height: 108,
-    },
-    to: {
-      left: to.left + to.width / 2 - 40,
-      top: to.top + 8,
-      width: 80,
-      height: 120,
-    },
-  };
-}
-
-/** Sell card: from held instance toward economy. */
-export function measureSellCardFlyout(
-  instanceId: string,
-  cardId: CardId,
-  isUpgraded: boolean,
-): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const from =
-    rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`)) ??
-    rectOf(document.querySelector('[data-zone="hand"]'));
-  const to =
-    rectOf(document.querySelector('[data-zone="economy-bar"]')) ??
-    rectOf(document.querySelector('[data-zone="economy"]'));
-  if (from === null || to === null) {
+  if (from === null || hand === null) {
     return null;
   }
   return {
     artUrl: getCardArtUrl(cardId, { isUpgraded }),
     from,
-    to: {
-      left: to.left + to.width / 2 - 28,
-      top: to.top - 8,
-      width: 56,
-      height: 84,
-    },
+    to: sizedRect(hand, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT),
+  };
+}
+
+/** Buy special (unknown id until state arrives): verso special, center → specials. */
+export function measureBuySpecialFlyout(): {
+  artUrl: string;
+  from: DomRectLite;
+  to: DomRectLite;
+} | null {
+  const from = measureFeltCenterRect();
+  const dest =
+    rectOf(document.querySelector('[data-zone="specials"]')) ??
+    rectOf(document.querySelector('[data-zone="card-band"]')) ??
+    rectOf(document.querySelector('[data-zone="hand"]'));
+  if (from === null || dest === null) {
+    return null;
+  }
+  return {
+    artUrl: getCardBackUrl('special'),
+    from,
+    to: sizedRect(dest, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT),
+  };
+}
+
+/** Sell card: held instance → felt center (L51-13). */
+export function measureSellCardFlyout(
+  instanceId: string,
+  cardId: CardId,
+  isUpgraded: boolean,
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const origin =
+    rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`)) ??
+    rectOf(document.querySelector('[data-zone="hand"]'));
+  const to = measureFeltCenterRect();
+  if (origin === null || to === null) {
+    return null;
+  }
+  return {
+    artUrl: getCardArtUrl(cardId, { isUpgraded }),
+    from: sizedRect(origin, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT),
+    to,
   };
 }
 

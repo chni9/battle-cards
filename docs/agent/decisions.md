@@ -2667,5 +2667,20 @@ No protocol bump. Client presentation + `upgradeAdds` copy derived from existing
   only when numbers are hidden. Skip Draw when kit Draw is unknown. Include every token
   kind (life, point, upgrade point, shield).
 
+## 2026-08-28 · [P] Lot 51 flyout correction (L51-13)
+
+Designer follow-up on the L51-11 card/token pass. Client presentation only.
+
+- **Card ghosts only when a card enters or leaves a deck** (buy / sell / buy special).
+  Destination is the felt pending center, not the action log. Playing a card does not
+  fly art. Ghost size ~48×72; fade during the second half of a ~0.42s trip.
+- **Resource chips on every action**, including Regeneration+. Public log has no
+  quantity; use live Δ when the actor's numbers are on the view, otherwise the
+  catalog per-life unit (rate points + 1 life). That unit is not a claimed total.
+- **Thief** (and Spy Thief / Upgrade Point Thief): live Δ still flies victim→thief.
+  When both seats are `?`, one directional chip shows the transfer without inventing
+  the stolen total.
+- Draw totals stay skipped when kit Draw is hidden.
+
 
 

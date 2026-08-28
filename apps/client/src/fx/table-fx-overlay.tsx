@@ -66,7 +66,7 @@ function FlyoutImage({
       src={artUrl}
       alt=""
       data-fx="card-flyout"
-      className="absolute z-20 rounded-[length:var(--radius-card)] border-2 border-border bg-surface-raised object-contain shadow-lg"
+      className="absolute z-20 rounded-[length:var(--radius-card)] border border-border bg-surface-raised object-contain shadow-md"
       initial={{
         left: from.left,
         top: from.top,
@@ -81,14 +81,19 @@ function FlyoutImage({
         top: to.top,
         width: to.width,
         height: to.height,
-        opacity: 1,
+        opacity: [1, 1, 0],
         rotate: 6,
-        scale: 1.02,
+        scale: 1,
       }}
       exit={{ opacity: 0 }}
       transition={{
-        duration: TOKEN_FLYOUT_DURATION_S,
-        ease: FLYOUT_TRAVEL_EASE,
+        left: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        top: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        width: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        height: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        rotate: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        scale: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        opacity: { duration: TOKEN_FLYOUT_DURATION_S, ease: 'linear', times: [0, 0.45, 1] },
       }}
       style={{ zIndex: 20 }}
       draggable={false}
@@ -247,7 +252,7 @@ export function TableFxOverlay(): ReactElement {
               return null;
             }
             const { from, to, artUrl, id, delayMs = 0 } = event;
-            const isCard = from.width >= 64;
+            const isCard = event.asCard === true || from.width >= 40;
             return (
               <motion.img
                 key={id}
@@ -256,7 +261,7 @@ export function TableFxOverlay(): ReactElement {
                 data-fx={isCard ? 'card-flyout' : 'token-flyout'}
                 className={
                   isCard
-                    ? 'absolute z-20 rounded-[length:var(--radius-card)] border-2 border-border bg-surface-raised object-contain shadow-lg'
+                    ? 'absolute z-20 rounded-[length:var(--radius-card)] border border-border bg-surface-raised object-contain shadow-md'
                     : 'absolute z-10 object-contain drop-shadow-md'
                 }
                 initial={{
@@ -272,7 +277,7 @@ export function TableFxOverlay(): ReactElement {
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: isCard ? 1 : [0, 1, 1, 0.35],
+                  opacity: isCard ? [1, 1, 0] : [0, 1, 1, 0],
                   scale: isCard ? 1 : [1.15, 1.05, 1, 0.9],
                 }}
                 exit={{ opacity: 0 }}
@@ -301,13 +306,13 @@ export function TableFxOverlay(): ReactElement {
                     duration: TOKEN_FLYOUT_DURATION_S,
                     ease: 'linear',
                     delay: delayMs / 1000,
-                    ...(isCard ? {} : { times: [0, 0.12, 0.7, 1] }),
+                    times: isCard ? [0, 0.45, 1] : [0, 0.12, 0.65, 1],
                   },
                   scale: {
                     duration: TOKEN_FLYOUT_DURATION_S,
                     ease: 'linear',
                     delay: delayMs / 1000,
-                    ...(isCard ? {} : { times: [0, 0.12, 0.7, 1] }),
+                    ...(isCard ? {} : { times: [0, 0.12, 0.65, 1] }),
                   },
                 }}
                 draggable={false}
