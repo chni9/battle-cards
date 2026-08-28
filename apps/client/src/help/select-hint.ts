@@ -16,6 +16,10 @@ export interface SelectHintInput {
   readonly dismissed: readonly HintId[];
   /** True only for attack Incoming (not Spy / Thief / persistents). */
   readonly hasIncomingAttack: boolean;
+  /** True for action Thief or a special `*-thief` Incoming (not Spy). */
+  readonly hasIncomingThief: boolean;
+  /** POV is choosing an elimination reward (sub-choice). */
+  readonly hasRewardChoice: boolean;
   readonly hasUnspiedLivingOpponent: boolean;
 }
 
@@ -30,17 +34,25 @@ function isOpen(dismissed: readonly HintId[], id: HintId): boolean {
 }
 
 /**
- * Locked 2026-08-26: one undismissed topic, highest first.
- * On turn: incoming (attacks only) → your-turn → draw → shop → resources → hidden-kit.
- * Off turn: incoming (attacks only) → hidden-kit.
+ * Locked 2026-08-26, extended 2026-08-28: one undismissed topic, highest first.
+ * Reward (while POV is choosing) → incoming attack → incoming thief → (on turn)
+ * your-turn → draw → hand → specials → shop → resources → hidden-kit.
+ * Off turn after threats: hidden-kit.
  */
 export function selectHint(input: SelectHintInput): HintId | null {
   if (!shouldShowFirstGameHints(input) || input.skipAll) {
     return null;
   }
 
+  if (input.hasRewardChoice && isOpen(input.dismissed, 'reward')) {
+    return 'reward';
+  }
+
   if (input.hasIncomingAttack && isOpen(input.dismissed, 'incoming')) {
     return 'incoming';
+  }
+  if (input.hasIncomingThief && isOpen(input.dismissed, 'incoming-thief')) {
+    return 'incoming-thief';
   }
 
   if (!input.isMyTurn) {
@@ -55,6 +67,12 @@ export function selectHint(input: SelectHintInput): HintId | null {
   }
   if (isOpen(input.dismissed, 'draw')) {
     return 'draw';
+  }
+  if (isOpen(input.dismissed, 'hand')) {
+    return 'hand';
+  }
+  if (isOpen(input.dismissed, 'specials')) {
+    return 'specials';
   }
   if (isOpen(input.dismissed, 'shop')) {
     return 'shop';
@@ -73,24 +91,50 @@ export type HintDismissCause =
   | 'draw'
   | 'open-shop'
   | 'inspect-opponent'
-  | 'incoming-cleared';
+  | 'inspect-hand'
+  | 'inspect-special'
+  | 'incoming-cleared'
+  | 'incoming-thief-cleared'
+  | 'confirm-reward';
+
+export interface HintDismissContext {
+  readonly hasIncomingAttack: boolean;
+  readonly hasIncomingThief: boolean;
+}
+
+function actingIds(ctx: HintDismissContext): HintId[] {
+  const ids: HintId[] = ['your-turn'];
+  if (ctx.hasIncomingAttack) {
+    ids.push('incoming');
+  }
+  if (ctx.hasIncomingThief) {
+    ids.push('incoming-thief');
+  }
+  return ids;
+}
 
 export function hintIdsDismissedBy(
   cause: HintDismissCause,
-  ctx: { hasIncomingAttack: boolean },
+  ctx: HintDismissContext,
 ): readonly HintId[] {
   switch (cause) {
     case 'playing-intent':
-      return ctx.hasIncomingAttack ? ['your-turn', 'incoming'] : ['your-turn'];
+      return actingIds(ctx);
     case 'draw':
-      return ctx.hasIncomingAttack
-        ? ['your-turn', 'draw', 'incoming']
-        : ['your-turn', 'draw'];
+      return [...actingIds(ctx), 'draw'];
     case 'open-shop':
       return ['shop'];
     case 'inspect-opponent':
       return ['hidden-kit'];
+    case 'inspect-hand':
+      return ['hand'];
+    case 'inspect-special':
+      return ['specials'];
     case 'incoming-cleared':
       return ['incoming'];
+    case 'incoming-thief-cleared':
+      return ['incoming-thief'];
+    case 'confirm-reward':
+      return ['reward'];
   }
 }

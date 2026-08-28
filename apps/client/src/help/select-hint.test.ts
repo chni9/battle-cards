@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   incomingAttackTargetingYouIds,
   incomingTargetingYouIds,
+  incomingThiefTargetingYouIds,
 } from '../fx/incoming-threat-diff';
 
 import {
@@ -26,6 +27,8 @@ function input(partial: Partial<SelectHintInput> = {}): SelectHintInput {
     skipAll: false,
     dismissed: [],
     hasIncomingAttack: false,
+    hasIncomingThief: false,
+    hasRewardChoice: false,
     hasUnspiedLivingOpponent: true,
     ...partial,
   };
@@ -62,24 +65,41 @@ describe('selectHint (L46-02)', () => {
     expect(selectHint(input({ selfEliminated: true }))).toBeNull();
   });
 
-  it('on-turn order is incoming > your-turn > draw > shop > resources > hidden-kit', () => {
+  it('on-turn order is threats then dock lessons', () => {
     expect(selectHint(input({ hasIncomingAttack: true }))).toBe('incoming');
+    expect(selectHint(input({ hasIncomingThief: true }))).toBe('incoming-thief');
+    expect(
+      selectHint(input({ hasIncomingAttack: true, hasIncomingThief: true })),
+    ).toBe('incoming');
     expect(selectHint(input())).toBe('your-turn');
     expect(selectHint(input({ dismissed: ['your-turn'] }))).toBe('draw');
-    expect(selectHint(input({ dismissed: ['your-turn', 'draw'] }))).toBe('shop');
+    expect(selectHint(input({ dismissed: ['your-turn', 'draw'] }))).toBe('hand');
     expect(
-      selectHint(input({ dismissed: ['your-turn', 'draw', 'shop'] })),
+      selectHint(input({ dismissed: ['your-turn', 'draw', 'hand'] })),
+    ).toBe('specials');
+    expect(
+      selectHint(input({ dismissed: ['your-turn', 'draw', 'hand', 'specials'] })),
+    ).toBe('shop');
+    expect(
+      selectHint(
+        input({ dismissed: ['your-turn', 'draw', 'hand', 'specials', 'shop'] }),
+      ),
     ).toBe('resources');
     expect(
       selectHint(
-        input({ dismissed: ['your-turn', 'draw', 'shop', 'resources'] }),
+        input({
+          dismissed: ['your-turn', 'draw', 'hand', 'specials', 'shop', 'resources'],
+        }),
       ),
     ).toBe('hidden-kit');
   });
 
-  it('off-turn only offers incoming then hidden-kit', () => {
+  it('off-turn only offers threats then hidden-kit', () => {
     expect(selectHint(input({ isMyTurn: false, hasIncomingAttack: true }))).toBe(
       'incoming',
+    );
+    expect(selectHint(input({ isMyTurn: false, hasIncomingThief: true }))).toBe(
+      'incoming-thief',
     );
     expect(selectHint(input({ isMyTurn: false }))).toBe('hidden-kit');
     expect(
@@ -87,14 +107,36 @@ describe('selectHint (L46-02)', () => {
         input({
           isMyTurn: false,
           hasUnspiedLivingOpponent: false,
-          dismissed: ['incoming'],
+          dismissed: ['incoming', 'incoming-thief'],
         }),
       ),
     ).toBeNull();
     expect(selectHint(input({ isMyTurn: false, dismissed: ['hidden-kit'] }))).toBeNull();
   });
 
-  it('Incoming hint is not Spy, Thief, or a persistent chip', () => {
+  it('reward outranks threats while POV is choosing', () => {
+    expect(
+      selectHint(
+        input({
+          hasRewardChoice: true,
+          hasIncomingAttack: true,
+          hasIncomingThief: true,
+          isMyTurn: false,
+        }),
+      ),
+    ).toBe('reward');
+    expect(
+      selectHint(
+        input({
+          hasRewardChoice: true,
+          dismissed: ['reward'],
+          hasIncomingAttack: true,
+        }),
+      ),
+    ).toBe('incoming');
+  });
+
+  it('Incoming attack hint is not Spy, Thief, or a persistent chip', () => {
     const effects = [
       pending({
         id: 'persistent:imp->you',
@@ -136,6 +178,10 @@ describe('selectHint (L46-02)', () => {
             effects.filter((effect) => effect.cardId === 'spy' || effect.cardId === 'thief'),
             'you',
           ).size > 0,
+          hasIncomingThief: incomingThiefTargetingYouIds(
+            effects.filter((effect) => effect.cardId === 'spy'),
+            'you',
+          ).size > 0,
         }),
       ),
     ).toBe('hidden-kit');
@@ -146,6 +192,41 @@ describe('selectHint (L46-02)', () => {
         }),
       ),
     ).toBe('incoming');
+  });
+
+  it('Incoming thief is not Spy, an attack, or a persistent chip', () => {
+    const effects = [
+      pending({
+        id: 'spy',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'spy',
+      }),
+      pending({
+        id: 'attack',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'basic-attack',
+      }),
+      pending({
+        id: 'upt',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'upgrade-point-thief',
+      }),
+    ];
+    expect(incomingThiefTargetingYouIds(effects, 'you').has('spy')).toBe(false);
+    expect(incomingThiefTargetingYouIds(effects, 'you').has('attack')).toBe(false);
+    expect(incomingThiefTargetingYouIds(effects, 'you').has('upt')).toBe(true);
+    expect(
+      selectHint(
+        input({
+          isMyTurn: false,
+          dismissed: ['incoming'],
+          hasIncomingThief: incomingThiefTargetingYouIds(effects, 'you').size > 0,
+        }),
+      ),
+    ).toBe('incoming-thief');
   });
 
   it('Got it on hidden-kit does not reselect it later', () => {
@@ -161,7 +242,15 @@ describe('selectHint (L46-02)', () => {
     expect(
       selectHint(
         input({
-          dismissed: ['your-turn', 'draw', 'shop', 'resources', 'hidden-kit'],
+          dismissed: [
+            'your-turn',
+            'draw',
+            'hand',
+            'specials',
+            'shop',
+            'resources',
+            'hidden-kit',
+          ],
         }),
       ),
     ).toBeNull();
@@ -169,24 +258,26 @@ describe('selectHint (L46-02)', () => {
 });
 
 describe('hintIdsDismissedBy (L46-02)', () => {
+  const idle = { hasIncomingAttack: false, hasIncomingThief: false };
+
   it('Draw is a playing intent and also dismisses draw', () => {
-    expect(hintIdsDismissedBy('draw', { hasIncomingAttack: false })).toEqual([
-      'your-turn',
-      'draw',
-    ]);
-    expect(hintIdsDismissedBy('draw', { hasIncomingAttack: true })).toEqual([
-      'your-turn',
-      'draw',
-      'incoming',
-    ]);
+    expect(hintIdsDismissedBy('draw', idle)).toEqual(['your-turn', 'draw']);
+    expect(
+      hintIdsDismissedBy('draw', { hasIncomingAttack: true, hasIncomingThief: false }),
+    ).toEqual(['your-turn', 'incoming', 'draw']);
+    expect(
+      hintIdsDismissedBy('draw', { hasIncomingAttack: false, hasIncomingThief: true }),
+    ).toEqual(['your-turn', 'incoming-thief', 'draw']);
   });
 
-  it('opening Shop or an opponent portrait dismisses only that id', () => {
-    expect(hintIdsDismissedBy('open-shop', { hasIncomingAttack: true })).toEqual([
-      'shop',
-    ]);
+  it('opening Shop, a portrait, or a dock card dismisses only that id', () => {
     expect(
-      hintIdsDismissedBy('inspect-opponent', { hasIncomingAttack: false }),
-    ).toEqual(['hidden-kit']);
+      hintIdsDismissedBy('open-shop', { hasIncomingAttack: true, hasIncomingThief: true }),
+    ).toEqual(['shop']);
+    expect(hintIdsDismissedBy('inspect-opponent', idle)).toEqual(['hidden-kit']);
+    expect(hintIdsDismissedBy('inspect-hand', idle)).toEqual(['hand']);
+    expect(hintIdsDismissedBy('inspect-special', idle)).toEqual(['specials']);
+    expect(hintIdsDismissedBy('confirm-reward', idle)).toEqual(['reward']);
+    expect(hintIdsDismissedBy('incoming-thief-cleared', idle)).toEqual(['incoming-thief']);
   });
 });

@@ -56,6 +56,8 @@ describe('tutorial does not skip first-game hints (L46-03)', () => {
         skipAll: false,
         dismissed: [],
         hasIncomingAttack: false,
+        hasIncomingThief: false,
+        hasRewardChoice: false,
         hasUnspiedLivingOpponent: true,
       }),
     ).toBe('your-turn');

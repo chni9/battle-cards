@@ -153,6 +153,9 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 | L46-02 | One-card selector (incoming > your-turn > draw > shop > resources > hidden-kit on turn; incoming / hidden-kit off turn). Auto-Got-it per L46 decisions. Reuse `incoming-threat-diff.ts` (ignore persistents). No `leave`. **Acceptance:** unit tests on trigger helpers; Incoming hint is not the persistent chip. | M | Medium | L46-01, L39-05 (Done) | Done |
 | L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. Reset help (L42-02) clears hints. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | Done |
 
+Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, `specials`,
+`reward`; incoming attack copy asks the player to react. Spec §5.2 / `decisions.md`.
+
 ---
 
 ## Lot 47 — Feedback + inbox

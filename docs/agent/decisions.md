@@ -2665,8 +2665,31 @@ Got it and × both persist that `HintId`. Dismissals merge onto the previous Rea
 (`applyHintPatch`) so a later write cannot drop an id. Skip all now uses that helper
 from the overlay (no separate `skipAllHints()` call site on the table).
 
+## 2026-08-28 · [P] First-game hints: thief, hand, specials, reward
 
+Designer 2026-08-28. Extra first-Classic cards, still client-only, still not a legal-action
+recommender, still never shown when `playKind === 'tutorial'`.
 
+- **`incoming`** copy now says there is an incoming **attack** and they should **do
+  something** (attack back, Shield, or Mirror). Still `isAttackCardId` only.
+- **`incoming-thief`** is a separate id. Fires on action `thief` and specials whose id
+  ends with `-thief` (`upgrade-point-thief`, `spy-thief`, `card-thief`, `attack-thief`).
+  Spy is not a Thief. Reuses the Incoming strip `data-hint-anchor`. Attack outranks thief
+  when both are pending.
+- **`hand`** and **`specials`** fire the first time the dock is shown, after `your-turn`
+  and `draw` (same start-of-game window as Draw). Hand: use / upgrade / sell for points.
+  Specials: usually one-use; using one is the turn's action.
+- **`reward`** fires the first time POV has an `elimination-reward` sub-choice. The hint
+  overlay stays up over that Dialog (other Dialogs still hide hints). 2p game-ending
+  elims skip rewards, so this needs 3+ living seats.
+
+**Auto-Got-it:** inspect hand → `hand`; inspect special → `specials`; confirm rewards →
+`reward`; playing intent / Draw also dismiss `incoming-thief` while a Thief still
+targets you; Thief Incoming leaving the view dismisses `incoming-thief`.
+
+Selector: `reward` → `incoming` → `incoming-thief` → (on turn) `your-turn` → `draw` →
+`hand` → `specials` → `shop` → `resources` → `hidden-kit`. Off turn after threats:
+`hidden-kit`.
 
 
 

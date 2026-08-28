@@ -37,8 +37,22 @@ describe('hint overlay chrome (L46-01)', () => {
     expect(table).toContain('selectHint');
     expect(table).toContain('noteHintCause');
     expect(table).toContain('incomingAttackTargetingYouIds');
+    expect(table).toContain('incomingThiefTargetingYouIds');
     expect(table).toContain('view.playKind');
+    expect(table).toContain("subChoice?.kind === 'elimination-reward'");
     expect(tutorialCoach).toContain('zone="tutorial-coach"');
     expect(table).toContain('TutorialCoach');
+  });
+
+  it('anchors Hand, Specials, Incoming, and the reward Dialog', () => {
+    const overlay = readFileSync(join(here, 'hint-overlay.tsx'), 'utf8');
+    const band = readFileSync(join(here, '../screens/table/card-band.tsx'), 'utf8');
+    const host = readFileSync(
+      join(here, '../screens/table/sub-choice/sub-choice-host.tsx'),
+      'utf8',
+    );
+    expect(overlay).toContain('hintAnchorId');
+    expect(band).toContain('data-hint-anchor={zone}');
+    expect(host).toContain("hintAnchor: 'reward'");
   });
 });

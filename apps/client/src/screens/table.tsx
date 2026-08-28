@@ -43,6 +43,7 @@ import {
 } from '../fx/play-flyout';
 import {
   incomingAttackTargetingYouIds,
+  incomingThiefTargetingYouIds,
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
@@ -219,9 +220,11 @@ function TableScreenInner({
     }
     const hasIncomingAttack =
       incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const hasIncomingThief =
+      incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
     setHintState((prev) =>
       applyHintPatch(prev, {
-        ids: hintIdsDismissedBy(cause, { hasIncomingAttack }),
+        ids: hintIdsDismissedBy(cause, { hasIncomingAttack, hasIncomingThief }),
       }),
     );
   };
@@ -444,20 +447,36 @@ function TableScreenInner({
   }, [view.pendingEffects, view.you, enqueue]);
 
   const hadIncomingAttackRef = useRef(false);
+  const hadIncomingThiefRef = useRef(false);
   useEffect(() => {
-    const now = incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const attackNow =
+      incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const thiefNow =
+      incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
     if (view.playKind === 'tutorial') {
-      hadIncomingAttackRef.current = now;
+      hadIncomingAttackRef.current = attackNow;
+      hadIncomingThiefRef.current = thiefNow;
       return;
     }
-    if (hadIncomingAttackRef.current && !now) {
-      setHintState((prev) =>
-        applyHintPatch(prev, {
-          ids: hintIdsDismissedBy('incoming-cleared', { hasIncomingAttack: false }),
-        }),
-      );
+    const ids = [
+      ...(hadIncomingAttackRef.current && !attackNow
+        ? hintIdsDismissedBy('incoming-cleared', {
+            hasIncomingAttack: false,
+            hasIncomingThief: false,
+          })
+        : []),
+      ...(hadIncomingThiefRef.current && !thiefNow
+        ? hintIdsDismissedBy('incoming-thief-cleared', {
+            hasIncomingAttack: false,
+            hasIncomingThief: false,
+          })
+        : []),
+    ];
+    if (ids.length > 0) {
+      setHintState((prev) => applyHintPatch(prev, { ids }));
     }
-    hadIncomingAttackRef.current = now;
+    hadIncomingAttackRef.current = attackNow;
+    hadIncomingThiefRef.current = thiefNow;
   }, [view.pendingEffects, view.you, view.playKind]);
 
   const mirrorHighlightIds =
@@ -626,6 +645,9 @@ function TableScreenInner({
   );
   const hasIncomingAttack =
     incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+  const hasIncomingThief =
+    incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
+  const hasRewardChoice = subChoice?.kind === 'elimination-reward';
   const currentHint = selectHint({
     playKind: view.playKind,
     readOnly,
@@ -634,8 +656,11 @@ function TableScreenInner({
     skipAll: hintState.skipAll,
     dismissed: hintState.dismissed,
     hasIncomingAttack,
+    hasIncomingThief,
+    hasRewardChoice,
     hasUnspiedLivingOpponent,
   });
+  const rewardHintVisible = hasRewardChoice && currentHint === 'reward';
   const hintDialogOpen =
     dialog !== null ||
     howToPlayOpen ||
@@ -643,7 +668,7 @@ function TableScreenInner({
     inspectKitId !== null ||
     inspectOpponentId !== null ||
     actionReject !== null ||
-    subChoice !== null;
+    (subChoice !== null && !rewardHintVisible);
 
   const inspectOpponent = opponents.find((entry) => entry.id === inspectOpponentId);
   const inspectReveal =
@@ -698,6 +723,7 @@ function TableScreenInner({
     if (instance === undefined) {
       return;
     }
+    noteHintCause(fromSpecial ? 'inspect-special' : 'inspect-hand');
     setDialog({ kind: 'actions', instance, fromSpecial });
   }
 
@@ -1112,7 +1138,12 @@ function TableScreenInner({
           view={view}
           opponents={opponents}
           nowMs={nowMs}
-          onResolve={onResolveSubChoice}
+          onResolve={(payload) => {
+            if (payload.kind === 'elimination-reward') {
+              noteHintCause('confirm-reward');
+            }
+            onResolveSubChoice(payload);
+          }}
         />
       )}
 

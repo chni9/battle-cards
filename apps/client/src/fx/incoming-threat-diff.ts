@@ -76,3 +76,31 @@ export function incomingAttackTargetingYouIds(
   }
   return ids;
 }
+
+/**
+ * Action Thief plus special Thief cards (`upgrade-point-thief`, `spy-thief`, …).
+ * First-game `incoming-thief` hint. Spy is not a Thief.
+ */
+export function isIncomingThiefCardId(cardId: string): boolean {
+  return cardId === 'thief' || cardId.endsWith('-thief');
+}
+
+export function incomingThiefTargetingYouIds(
+  pendingEffects: readonly PendingEffectView[],
+  you: string,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const effect of pendingEffects) {
+    if (effect.targetPlayerId !== you) {
+      continue;
+    }
+    if (isPersistentPresentationId(effect.id)) {
+      continue;
+    }
+    if (!isIncomingThiefCardId(effect.cardId)) {
+      continue;
+    }
+    ids.add(effect.id);
+  }
+  return ids;
+}

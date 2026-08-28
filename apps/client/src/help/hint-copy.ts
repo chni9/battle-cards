@@ -21,13 +21,25 @@ export const HINT_COPY: Record<HintId, HintCopy> = {
     title: 'Draw',
     body: '**Draw** gives points, not a card.',
   },
+  hand: {
+    title: 'Hand',
+    body: 'Click a card to **use**, **upgrade**, or **sell** it for points.',
+  },
+  specials: {
+    title: 'Specials',
+    body: '**Specials** are usually one-use. Using one **is** your action for the turn.',
+  },
   resources: {
     title: 'Resources',
     body: 'Heart lives · diamond points · upgrade-point icon · shield (attacks only).',
   },
   incoming: {
     title: 'Incoming',
-    body: 'This hits **after you act** on your next turn. You can attack back, Shield, or Mirror.',
+    body: 'There is an incoming **attack**. It hits **after you act**. Do something this turn: attack back, Shield, or Mirror.',
+  },
+  'incoming-thief': {
+    title: 'Incoming',
+    body: 'There is an incoming **Thief**. It hits **after you act**. Counter with Thief, or act before it resolves.',
   },
   'hidden-kit': {
     title: 'Hidden kit',
@@ -36,5 +48,9 @@ export const HINT_COPY: Record<HintId, HintCopy> = {
   shop: {
     title: 'Shop',
     body: 'Shop prices are double the play cost.',
+  },
+  reward: {
+    title: 'Elimination reward',
+    body: 'You eliminated them — pick **two** rewards: 4 lives, 8 points, a card from them, or an upgrade point. Same choice twice is allowed.',
   },
 };

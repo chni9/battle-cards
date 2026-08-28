@@ -14,7 +14,7 @@ import {
 } from '../screens/table/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
-import type { HintId } from './hint-ids';
+import { hintAnchorId, type HintId } from './hint-ids';
 import { placeHintCard } from './place-hint-card';
 
 const COMPACT_HINT_BUTTON =
@@ -42,7 +42,9 @@ export function HintOverlay({
     if (slot === null || dialogOpen) {
       return;
     }
-    const node = document.querySelector(`[data-hint-anchor="${hintId}"]`);
+    const node = document.querySelector(
+      `[data-hint-anchor="${hintAnchorId(hintId)}"]`,
+    );
     if (!(node instanceof HTMLElement)) {
       slot.style.top = '';
       slot.style.left = '0.5rem';

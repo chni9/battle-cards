@@ -106,7 +106,10 @@ function CardSection({
     return wrapSection(
       spotlightSection,
       zone,
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5">
+      <div
+        className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5"
+        data-hint-anchor={zone}
+      >
         <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
@@ -127,6 +130,7 @@ function CardSection({
         'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
         spotlighted ? 'overflow-visible' : 'overflow-hidden',
       ].join(' ')}
+      data-hint-anchor={zone}
     >
       <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
