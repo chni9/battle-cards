@@ -557,3 +557,12 @@ do not hand off an untested lot.
   the seat is not clipped.
 - Thief seat-to-seat chips remain unit-tested (`stealTransferChips`); not forced in this
   browser pass (hands rarely held Thief).
+
+### Lot 51-13 verified 2026-08-28 (browser, PROTOCOL 30)
+
+- Room `GDYM1C` (nick `L51Fx13`, Indestructible): Draw coin chips log↔dock; Regeneration+
+  (1 life / 2 points) flies two coins dock→log and one heart log→dock. Playing
+  Regeneration does not fly a card to the center.
+- Buy/sell card ghosts are ~48×72 and fade in ~0.5s (no lingering full-size log card).
+  Destination is the pending/card-band midpoint on the felt. Thief live Δ still flies
+  victim→thief (1 directional chip when both `?`; same-tick sell yield fills a net-0 Δ).
