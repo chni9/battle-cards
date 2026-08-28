@@ -168,15 +168,31 @@ function sizedRect(center: DomRectLite, width: number, height: number): DomRectL
 }
 
 /**
- * Visual table center — the felt bounding box, not the pending strip (that
- * sits on the log column in landscape) and not the action log (L51-13).
+ * Visual table center — midpoint of the pending strip and the card band so the
+ * ghost sits on the felt, not on the action-log column (L51-13).
  */
 export function measureFeltCenterRect(): DomRectLite | null {
+  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
+  const hand =
+    rectOf(document.querySelector('[data-zone="card-band"]')) ??
+    rectOf(document.querySelector('[data-zone="hand"]')) ??
+    rectOf(document.querySelector('[data-zone="dock"]'));
+  if (pending !== null && hand !== null) {
+    const cx =
+      (pending.left + pending.width / 2 + hand.left + hand.width / 2) / 2;
+    const cy =
+      (pending.top + pending.height / 2 + hand.top + hand.height / 2) / 2;
+    return {
+      left: cx - DECK_CARD_FLYOUT_WIDTH / 2,
+      top: cy - DECK_CARD_FLYOUT_HEIGHT / 2,
+      width: DECK_CARD_FLYOUT_WIDTH,
+      height: DECK_CARD_FLYOUT_HEIGHT,
+    };
+  }
   const felt = rectOf(document.querySelector('[data-zone="felt"]'));
   if (felt !== null) {
     return sizedRect(felt, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
   }
-  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
   if (pending === null) {
     return null;
   }
