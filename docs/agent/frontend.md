@@ -508,6 +508,17 @@ do not hand off an untested lot.
   with **Got it** and **Skip all**, next to the turn strip. **Skip all** hides it. Second solo
   `OTFTLE` has no hint card. Hub **Reset help** then third solo `MBIXNF` shows **Your turn** again.
 
+### Lot 46 follow-up verified 2026-08-28 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Hub **Reset help**, **Play solo** nick `L46Hints`, 1× Normal bot. Room `WONXYS`.
+  After **Your turn** and **Draw**, **Hand** (“use / upgrade / sell”) then **Specials**
+  (usually one-use). Shop / Resources / Hidden kit still follow.
+- Same room: Alpha **Card Thief** → Incoming hint “incoming **Thief**” (not Shield/Mirror).
+  Later Alpha **Strong attack** → Incoming hint “incoming **attack**” / do something
+  (attack back, Shield, or Mirror). The two bodies are distinct.
+- First POV **elimination reward** hint is unit-tested (selector + Dialog anchor). Not forced
+  in this 2p solo (game-ending elim skips rewards).
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
