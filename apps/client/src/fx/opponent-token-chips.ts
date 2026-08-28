@@ -508,6 +508,35 @@ export function stealTransferChips(
 }
 
 /**
+ * Same-tick sell+steal nets to 0 live Δ, which would hide the transfer.
+ * If a public-log point yield just landed on the victim, use that count
+ * instead of the 1-chip fallback (L51-13).
+ */
+export function boostStealChipsWithRecentYield(
+  entry: ActionLogEntryView,
+  chips: readonly DirectedTokenChip[],
+  pointYields: ReadonlyMap<string, number>,
+): DirectedTokenChip[] {
+  if (entry.kind !== 'actionResolved' || !isStealResolve(entry)) {
+    return [...chips];
+  }
+  const first = chips[0];
+  if (
+    first === undefined ||
+    chips.length !== 1 ||
+    first.count !== 1 ||
+    first.kind !== 'point'
+  ) {
+    return [...chips];
+  }
+  const hinted = pointYields.get(entry.targetPlayerId);
+  if (hinted === undefined || hinted <= 1) {
+    return [...chips];
+  }
+  return [{ ...first, count: hinted }];
+}
+
+/**
  * Regeneration spends points and grants lives on play (rules spec §3).
  * Live Δ when the actor's numbers are on the view; otherwise the catalog
  * per-life unit (rate + 1 life) so the action still animates without inventing

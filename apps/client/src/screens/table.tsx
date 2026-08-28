@@ -36,6 +36,7 @@ import {
 } from '../fx/play-flyout';
 import {
   actionLogFlyoutKey,
+  boostStealChipsWithRecentYield,
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
   regenFlowChips,
@@ -461,6 +462,8 @@ function TableScreenInner({
       seenLogFlyoutKeys.current = new Set(view.actionLog.map(actionLogFlyoutKey));
       return;
     }
+    const snapPrev = prevSnaps ?? new Map<string, OpponentLiveResources>();
+    const pointYields = new Map<string, number>();
     for (const entry of view.actionLog) {
       const key = actionLogFlyoutKey(entry);
       if (seen.has(key)) {
@@ -470,11 +473,11 @@ function TableScreenInner({
       if (reduceMotion === true) {
         continue;
       }
-      const snapPrev = prevSnaps ?? new Map<string, OpponentLiveResources>();
       const steal = stealTransferChips(entry, snapPrev, nextSnaps);
+      const stealChips = boostStealChipsWithRecentYield(entry, steal.chips, pointYields);
       skipFlyoutsForChips(
-        steal.chips,
-        enqueueDirectedTokenChips(enqueue, steal.chips),
+        stealChips,
+        enqueueDirectedTokenChips(enqueue, stealChips),
         view.you,
       );
       const regen = regenFlowChips(entry, snapPrev, nextSnaps);
@@ -486,6 +489,11 @@ function TableScreenInner({
       const chips = chipsForPublicLogEntry(entry, view.you, view.players);
       const landedKinds = enqueueDirectedTokenChips(enqueue, chips);
       skipFlyoutsForChips(chips, landedKinds, view.you);
+      for (const chip of chips) {
+        if (chip.to !== 'log' && chip.kind === 'point') {
+          pointYields.set(chip.to.playerId, chip.count);
+        }
+      }
       const ghost = deckCardGhostForPublicLogEntry(entry, view.you, view.players);
       if (ghost !== null) {
         enqueueDeckCardGhost(enqueue, ghost.playerId, ghost.artUrl, ghost.direction);

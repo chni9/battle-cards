@@ -9,10 +9,12 @@ import { UPGRADE_POINT_ECONOMY } from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import {
+  boostStealChipsWithRecentYield,
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
   regenFlowChips,
   stealTransferChips,
+  type DirectedTokenChip,
 } from './opponent-token-chips';
 
 function opponent(partial: Partial<PublicPlayerView> & Pick<PublicPlayerView, 'id'>): PublicPlayerView {
@@ -347,6 +349,39 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     expect(
       chipsForPublicLogEntry(entry, 'me', [you, hidden, opponent({ id: 'thief' })]),
     ).toEqual([]);
+  });
+
+  it('boosts a 1-chip steal fallback with a same-tick sell yield', () => {
+    const entry: ActionLogEntryView = {
+      kind: 'actionResolved',
+      effectId: 'thief-1',
+      sourcePlayerId: 'thief',
+      targetPlayerId: 'victim',
+      cardId: 'thief',
+      isUpgraded: false,
+      livesLost: 0,
+      shieldAbsorbed: 0,
+      outcome: 'applied',
+      turnSequence: 11,
+    };
+    const fallback: DirectedTokenChip[] = [
+      {
+        kind: 'point',
+        count: 1,
+        from: { playerId: 'victim' },
+        to: { playerId: 'thief' },
+      },
+    ];
+    expect(
+      boostStealChipsWithRecentYield(entry, fallback, new Map([['victim', 7]])),
+    ).toEqual([
+      {
+        kind: 'point',
+        count: 7,
+        from: { playerId: 'victim' },
+        to: { playerId: 'thief' },
+      },
+    ]);
   });
 
   it('sends upgraded-thief extra gain from the log, not from the victim', () => {

@@ -79,14 +79,62 @@ function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLit
   );
 }
 
+function rectForPlayerSeatOrPortrait(playerId: string): DomRectLite | null {
+  const opponentPortrait = document.querySelector(
+    `${tokenFlyoutSeatSelector(playerId)} [data-zone="opponent-portrait"]`,
+  );
+  const opponentSeat = document.querySelector(tokenFlyoutSeatSelector(playerId));
+  const opponent = rectOf(opponentPortrait) ?? rectOf(opponentSeat);
+  if (opponent !== null) {
+    return opponent;
+  }
+  const dock = document.querySelector(tokenFlyoutPovSelector(playerId));
+  return (
+    rectOf(dock?.querySelector('[data-zone="kit-portrait"]') ?? null) ??
+    rectOf(dock)
+  );
+}
+
 function rectForEndpoint(
   endpoint: TokenFlyoutEndpoint,
   kind: ResourceKind,
+  preferSeat: boolean,
 ): DomRectLite | null {
   if (endpoint === 'log') {
     return rectOf(document.querySelector('[data-zone="action-log-panel"]'));
   }
+  if (preferSeat) {
+    return (
+      rectForPlayerSeatOrPortrait(endpoint.playerId) ??
+      rectForPlayerResource(kind, endpoint.playerId)
+    );
+  }
   return rectForPlayerResource(kind, endpoint.playerId);
+}
+
+/**
+ * Directed token chip (L51-11). Endpoints are the action log or a seat/dock.
+ * Seat-to-seat (thief) aims at portraits so the path is readable (L51-13).
+ */
+export function measureDirectedTokenFlyout(
+  kind: ResourceKind,
+  from: TokenFlyoutEndpoint,
+  to: TokenFlyoutEndpoint,
+  index = 0,
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const seatToSeat = from !== 'log' && to !== 'log';
+  const fromRect = rectForEndpoint(from, kind, seatToSeat);
+  const toRect = rectForEndpoint(to, kind, seatToSeat);
+  if (fromRect === null || toRect === null) {
+    return null;
+  }
+  const fromSize = from === 'log' ? 40 : 32;
+  const toSize = to === 'log' ? 40 : 32;
+  return {
+    artUrl: getResourceIconUrl(kind),
+    from: fannedChip(fromRect, index, fromSize, 1),
+    to: fannedChip(toRect, index, toSize, 0.4),
+  };
 }
 
 function fannedChip(
@@ -120,17 +168,19 @@ function sizedRect(center: DomRectLite, width: number, height: number): DomRectL
 }
 
 /**
- * Felt play-area center (pending strip). Buy/sell cards travel here — not the
- * action log, not a play-to-pending ghost (L51-13).
+ * Visual table center — the felt bounding box, not the pending strip (that
+ * sits on the log column in landscape) and not the action log (L51-13).
  */
 export function measureFeltCenterRect(): DomRectLite | null {
-  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
   const felt = rectOf(document.querySelector('[data-zone="felt"]'));
-  const base = pending ?? felt;
-  if (base === null) {
+  if (felt !== null) {
+    return sizedRect(felt, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  }
+  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
+  if (pending === null) {
     return null;
   }
-  return sizedRect(base, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  return sizedRect(pending, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
 }
 
 function rectForPlayerSeat(playerId: string): DomRectLite | null {
@@ -171,29 +221,6 @@ export function measureDeckCardFlyout(
     return { artUrl, from: center, to: seat };
   }
   return { artUrl, from: seat, to: center };
-}
-
-/**
- * Directed token chip (L51-11). Endpoints are the action log or a seat/dock.
- */
-export function measureDirectedTokenFlyout(
-  kind: ResourceKind,
-  from: TokenFlyoutEndpoint,
-  to: TokenFlyoutEndpoint,
-  index = 0,
-): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const fromRect = rectForEndpoint(from, kind);
-  const toRect = rectForEndpoint(to, kind);
-  if (fromRect === null || toRect === null) {
-    return null;
-  }
-  const fromSize = from === 'log' ? 40 : 32;
-  const toSize = to === 'log' ? 40 : 32;
-  return {
-    artUrl: getResourceIconUrl(kind),
-    from: fannedChip(fromRect, index, fromSize, 1),
-    to: fannedChip(toRect, index, toSize, 0.4),
-  };
 }
 
 export function measureTokenFlyout(

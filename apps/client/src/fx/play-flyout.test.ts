@@ -38,7 +38,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
   it('sizes buy/sell card ghosts toward the felt center (L51-13)', () => {
     const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
     expect(source).toContain('measureDeckCardFlyout');
-    expect(source).toContain('[data-zone="pending"]');
+    expect(source).toContain('[data-zone="felt"]');
     expect(source).not.toContain('measureOpponentCardLogFlyout');
     expect(DECK_CARD_FLYOUT_WIDTH).toBe(48);
     expect(DECK_CARD_FLYOUT_HEIGHT).toBe(72);
