@@ -146,7 +146,7 @@ function CardSection({
         <div
           data-hint-anchor={zone}
           className={[
-            'flex w-fit max-w-full flex-wrap content-center items-center justify-center',
+            'inline-flex max-w-full flex-wrap content-center items-center justify-center',
             spotlighted ? 'overflow-visible' : 'overflow-hidden',
           ].join(' ')}
           style={{ gap: CARD_BAND_GAP_PX }}

@@ -91,7 +91,7 @@ function besidePoint(
   card: Pick<HintBox, 'width' | 'height'>,
   viewport: Pick<HintBox, 'width' | 'height'>,
 ): HintPoint | null {
-  const top = anchor.top + (anchor.height - card.height) / 2;
+  const top = anchor.top;
   const right = anchor.left + anchor.width + GAP;
   const left = anchor.left - card.width - GAP;
   const rightFits = right + card.width <= viewport.width - GAP;
@@ -99,12 +99,10 @@ function besidePoint(
   if (!rightFits && !leftFits) {
     return null;
   }
-  if (rightFits && leftFits) {
-    const spaceRight = viewport.width - (anchor.left + anchor.width);
-    const spaceLeft = anchor.left;
-    return { top, left: spaceRight >= spaceLeft ? right : left };
+  if (leftFits) {
+    return { top, left };
   }
-  return { top, left: rightFits ? right : left };
+  return { top, left: right };
 }
 
 function clampPoint(

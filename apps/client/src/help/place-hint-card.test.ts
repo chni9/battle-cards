@@ -46,8 +46,7 @@ describe('placeHintCard (L46-02)', () => {
       { width: 900, height: 700 },
       { prefer: 'beside' },
     );
-    const belowTop = cards.top + cards.height + 8;
-    expect(placed.top).toBeLessThan(belowTop);
+    expect(placed.top).toBe(cards.top);
     expect(placed.left).toBe(cards.left - 248 - 8);
   });
 

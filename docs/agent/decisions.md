@@ -2698,8 +2698,8 @@ Designer 2026-08-29: the new card-row hints were not next to the cards. Anchorin
 the whole dock column as the box — below covered the other row; side placement
 clamped to the felt's left edge.
 
-Fix: the anchor is a `w-fit` wrap around the visible cards (or the Empty / None
-caption). Hand / Specials use `prefer: 'beside'` (vertically centered, left or
-right of the cluster). Draw / Shop / Incoming stay `below` on their small chrome.
+Fix: the anchor is an `inline-flex` wrap around the visible cards (or the Empty / None
+caption). Hand / Specials use `prefer: 'beside'` (top-aligned, left of the cluster when
+that fits). Draw / Shop / Incoming stay `below` on their small chrome.
 
 

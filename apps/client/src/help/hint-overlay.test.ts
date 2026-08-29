@@ -54,7 +54,7 @@ describe('hint overlay chrome (L46-01)', () => {
     expect(overlay).toContain('hintAnchorId');
     expect(overlay).toContain('hintPlacePrefer');
     expect(band).toContain('data-hint-anchor={zone}');
-    expect(band).toContain('w-fit max-w-full');
+    expect(band).toContain('inline-flex max-w-full');
     expect(host).toContain("hintAnchor: 'reward'");
   });
 });

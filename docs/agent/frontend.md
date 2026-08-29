@@ -93,9 +93,9 @@ rules above are unchanged — this section only covers how the client looks.
   Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
   thief-Incoming clear / confirm reward. × dismisses the same as Got it.
   Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming.
-  Hand / Specials anchors are the **card cluster** (`w-fit`), not the flex-1 section;
-  those two cards prefer **beside** the cluster so they are not dumped on the felt's
-  left edge or over the other row. `leave` is not a hint id.
+  Hand / Specials anchors are the **card cluster** (`inline-flex`), not the flex-1 section;
+  those two cards sit **beside** the cluster (top-aligned, left when it fits) so they are
+  not dumped on the felt's left edge or over the other row. `leave` is not a hint id.
   Completing or skipping the tutorial does **not** set `skipAll`
   (L46-03); Hub **Reset help** still clears the key. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
