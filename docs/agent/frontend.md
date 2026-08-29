@@ -133,8 +133,9 @@ rules above are unchanged — this section only covers how the client looks.
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay a
-  horizontal arc (`overflow-x-auto`); 4+ opponents use compact seat chrome so six-player
-  tables remain readable. **Dock is primary**
+  wrapping arc (`flex-wrap`, scroll if needed); 4+ opponents use compact seat chrome so
+  six-player tables remain readable. Lobby player list scrolls (`max-h` + overflow) so
+  six seats do not cover Start / Add bot. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate

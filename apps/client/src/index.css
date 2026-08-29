@@ -141,6 +141,11 @@
     max-height: 26dvh;
   }
 
+  .table-felt__opponents[data-opponent-count="4"],
+  .table-felt__opponents[data-opponent-count="5"] {
+    max-height: 42dvh;
+  }
+
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */
   [data-zone="economy-bar"] button {
     min-height: 2rem;
