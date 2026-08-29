@@ -113,7 +113,9 @@ These are the spots where a plausible implementation is wrong and silent:
   white tiles (L51-14).
 - Same-tick spend+gain of one resource (Absorber pay 3 / absorb 10) must fly
   both legs, not the net. Opponent `livesLost` on `actionResolved` must fly
-  even when the seat has live Spy numbers (L51-15).
+  even when the seat has live Spy numbers (L51-15). Overlay chips stay opaque
+  until arrival; unspied `?` seats flash public signed Δ (L51-16). Play-card
+  ghosts use `measurePlayCardGhost`, not the removed `measurePlayFlyout`.
 
 ## What not to do
 

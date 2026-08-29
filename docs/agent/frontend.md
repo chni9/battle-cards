@@ -211,21 +211,24 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
-  - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14):** POV dock
-    `ResourceIcon` still handles live dock Δ except steal / Regen transfers
-    already choreographed. Unspied / base Spy enqueue **directed** chips
+  - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14 / L51-15 / L51-16):** POV dock
+    `ResourceIcon` still handles live dock Δ except overlay-landed transfers
+    (skip only after chips measure). Unspied / base Spy enqueue **directed** chips
     (`from` / `to` log or player): play/buy/upgrade spends seat→log; sell yield
     log→seat; buy upgrade point spends Classic 10 when kit is hidden. **Resource
     chips are icon-only** (`object-contain` + drop shadow, no `bg-surface-raised`,
     no card radius, no border). Overlay card chrome is **`asCard === true` only**
-    — never `from.width`. Log-origin chips are 40×40 for readability; that size
-    must not promote them to tiles (L51-14). **Card ghosts only on buy/sell**
-    (felt pending + card-band midpoint, ~48×72, fade on arrival, `asCard: true`)
-    — verso when unspied, face when Spyed; special buy uses the special verso.
-    Playing a card does **not** fly art to the center. **Every resource
+    — never `from.width`. Token chips are 40×40 both ends (L51-16); that size
+    must not promote them to tiles (L51-14). **Card ghosts on buy/sell and play**
+    (felt pending + card-band midpoint, ~48×72, `asCard: true`) — buy/sell verso
+    when unspied, face when Spyed; play uses public `cardId` face art. Special
+    buy uses the special verso. **Every resource
     transaction flies both legs when both exist** (L51-15): catalog spend/yield
     plus `leftoverLiveFlowChips` for live Δ the catalog did not explain
     (Absorber spend 3 + absorb 10 → 3 out and 10 in, not the net +7).
+    Overlay opacity holds through ~88% of travel so the gain leg is still
+    visible at the dock (L51-16). Public chip amounts flash on the seat icon
+    even when the printed value is `?` (`emitResourceFlowFlash`).
     `actionResolved` `livesLost` / `shieldAbsorbed` fly from the target
     (POV, unspied, and live Spy) — do not skip seats with live icons.
     Regeneration: live Δ when numbers are known, otherwise the catalog per-life

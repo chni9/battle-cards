@@ -13,6 +13,7 @@ import {
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
   leftoverLiveFlowChips,
+  playCardGhostsForPublicLogEntry,
   regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
@@ -504,5 +505,27 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ).toEqual([
       { kind: 'point', count: 20, from: { playerId: 'opp' }, to: 'log' },
     ]);
+  });
+
+  it('flies a play-card ghost from an opponent seat, not from POV (L51-16)', () => {
+    const play: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'playCard',
+      cardId: 'basic-attack',
+      isUpgraded: false,
+      targetPlayerId: 'me',
+      turnSequence: 3,
+    };
+    expect(playCardGhostsForPublicLogEntry(play, 'me')).toEqual([
+      {
+        playerId: 'opp',
+        artUrl: getCardArtUrl('basic-attack', { isUpgraded: false }),
+        direction: 'sell',
+      },
+    ]);
+    expect(playCardGhostsForPublicLogEntry({ ...play, actorPlayerId: 'me' }, 'me')).toEqual(
+      [],
+    );
   });
 });

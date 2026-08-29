@@ -2704,5 +2704,20 @@ both legs; opponent attack life loss must fly.
 - Unspied Draw / absorb totals stay uninvented. Card play still does not fly
   art (L51-13); buy/sell ghosts stay.
 
+## 2026-08-29 · [P] Make every resource/card flow readable (L51-16)
+
+Designer: two-way ticks still looked like spend-only; opponent life loss on
+`?` seats had no flash; every resource and card transfer must animate.
+
+- Token chips start opaque and hold until ~88% of travel so the gain leg is
+  still visible when it reaches the dock. Seat and log chips are both 40px.
+- Skip `ResourceIcon` net-fly only after overlay chips land. Public chip
+  amounts emit a signed flash (`emitResourceFlowFlash`) so unspied `?` seats
+  show `livesLost` / spend without printing hidden totals. Two-way ticks can
+  show −N and +M together.
+- Play-card ghosts (hand/seat → felt pending center, ~48×72, `asCard`) restore
+  the card transfer L51-13 removed as an oversized log flyout. Buy/sell ghosts
+  stay. Do not invent unspied Draw/absorb totals.
+
 
 

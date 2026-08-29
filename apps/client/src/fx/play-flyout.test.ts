@@ -38,6 +38,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
 
   it('sizes buy/sell card ghosts toward the felt center (L51-13)', () => {
     const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
+    expect(source).toContain('measurePlayCardGhost');
     expect(source).toContain('measureDeckCardFlyout');
     expect(source).toContain('[data-zone="card-band"]');
     expect(source).not.toContain('measureOpponentCardLogFlyout');
@@ -49,6 +50,9 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
     expect(table).toContain('enqueueDeckCardGhost');
     expect(table).toContain('leftoverLiveFlowChips');
+    expect(table).toContain('playCardGhostsForPublicLogEntry');
+    expect(table).toContain('measurePlayCardGhost');
+    expect(table).toContain('emitResourceFlowFlash');
     expect(table).toContain("asCard: true");
     expect(table).not.toContain('measurePlayFlyout');
     expect(table).not.toContain('enqueueSellCardGhost');
@@ -59,6 +63,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     expect(tokenFlyoutUsesCardChrome({})).toBe(false);
     const overlay = readFileSync(join(dir, 'table-fx-overlay.tsx'), 'utf8');
     expect(overlay).toContain('tokenFlyoutUsesCardChrome');
+    expect(overlay).toContain('0.88');
     expect(overlay).not.toMatch(/from\.width\s*>=\s*40/);
     expect(overlay).not.toMatch(/from\.width\s*>=\s*64/);
   });

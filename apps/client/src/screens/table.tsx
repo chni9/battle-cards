@@ -22,6 +22,7 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { useReducedMotion } from 'motion/react';
 
+import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { markHowToPlaySeen } from '../help/help-storage';
@@ -31,6 +32,7 @@ import {
   measureBuySpecialFlyout,
   measureDeckCardFlyout,
   measureDirectedTokenFlyout,
+  measurePlayCardGhost,
   measureSellCardFlyout,
   measureTargetingCue,
 } from '../fx/play-flyout';
@@ -40,10 +42,12 @@ import {
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
   leftoverLiveFlowChips,
+  playCardGhostsForPublicLogEntry,
   regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
 } from '../fx/opponent-token-chips';
+import { emitResourceFlowFlash } from '../fx/resource-flow-flash';
 import { skipResourceIconFlyout } from '../fx/token-flyout-skip';
 import {
   incomingTargetingYouIds,
@@ -148,6 +152,7 @@ export interface TableScreenProps {
 function enqueueDirectedTokenChips(
   enqueue: (event: TableFxInput) => void,
   chips: readonly DirectedTokenChip[],
+  you: string,
 ): void {
   let seq = 0;
   const tryChip = (chip: DirectedTokenChip, startSeq: number): number | null => {
@@ -168,9 +173,19 @@ function enqueueDirectedTokenChips(
     }
     return nextSeq + 1;
   };
+  const land = (chip: DirectedTokenChip, startSeq: number): number | null => {
+    const nextSeq = tryChip(chip, startSeq);
+    if (nextSeq === null) {
+      return null;
+    }
+    // Skip ResourceIcon net-fly only after overlay chips actually landed (L51-16).
+    skipFlyoutsForChips([chip], you);
+    emitFlashesForChip(chip, you);
+    return nextSeq;
+  };
   const failed: DirectedTokenChip[] = [];
   for (const chip of chips) {
-    const nextSeq = tryChip(chip, seq);
+    const nextSeq = land(chip, seq);
     if (nextSeq === null) {
       failed.push(chip);
       continue;
@@ -186,7 +201,7 @@ function enqueueDirectedTokenChips(
     }
     const still: DirectedTokenChip[] = [];
     for (const chip of remaining) {
-      const nextSeq = tryChip(chip, seq);
+      const nextSeq = land(chip, seq);
       if (nextSeq === null) {
         still.push(chip);
         continue;
@@ -215,6 +230,15 @@ function skipFlyoutsForChips(chips: readonly DirectedTokenChip[], you: string): 
   }
 }
 
+function emitFlashesForChip(chip: DirectedTokenChip, you: string): void {
+  if (chip.from !== 'log') {
+    emitResourceFlowFlash(flyoutSkipId(chip.from.playerId, you), chip.kind, -chip.count);
+  }
+  if (chip.to !== 'log') {
+    emitResourceFlowFlash(flyoutSkipId(chip.to.playerId, you), chip.kind, chip.count);
+  }
+}
+
 function flyoutSkipId(playerId: string, you: string): string {
   return playerId === you ? 'self' : playerId;
 }
@@ -234,6 +258,39 @@ function enqueueDeckCardGhost(
       kind: 'tokenFlyout',
       ...measured,
       delayMs: 30,
+      asCard: true,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
+    });
+    return true;
+  };
+  if (tryEnqueue()) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    if (tryEnqueue()) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      tryEnqueue();
+    });
+  });
+}
+
+function enqueuePlayCardGhost(
+  enqueue: (event: TableFxInput) => void,
+  playerId: string,
+  artUrl: string,
+  instanceId?: string,
+): void {
+  const tryEnqueue = (): boolean => {
+    const measured = measurePlayCardGhost(playerId, artUrl, instanceId);
+    if (measured === null) {
+      return false;
+    }
+    enqueue({
+      kind: 'tokenFlyout',
+      ...measured,
+      delayMs: 20,
       asCard: true,
       expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
     });
@@ -345,6 +402,19 @@ function TableScreenInner({
       }
     }
     onPlayCard(instanceId, options);
+    if (reduceMotion === true || card === undefined) {
+      return;
+    }
+    try {
+      enqueuePlayCardGhost(
+        enqueue,
+        view.you,
+        getCardArtUrl(card.cardId, { isUpgraded: card.isUpgraded }),
+        instanceId,
+      );
+    } catch {
+      enqueuePlayCardGhost(enqueue, view.you, getCardBackUrl('action'), instanceId);
+    }
   };
 
   const playMultipleWithFx = (
@@ -354,6 +424,25 @@ function TableScreenInner({
       return;
     }
     onPlayMultipleAttacks(attacks);
+    if (reduceMotion === true) {
+      return;
+    }
+    for (const attack of attacks) {
+      const card = findOwnCard(attack.instanceId);
+      if (card === undefined) {
+        continue;
+      }
+      try {
+        enqueuePlayCardGhost(
+          enqueue,
+          view.you,
+          getCardArtUrl(card.cardId, { isUpgraded: card.isUpgraded }),
+          attack.instanceId,
+        );
+      } catch {
+        enqueuePlayCardGhost(enqueue, view.you, getCardBackUrl('attack'), attack.instanceId);
+      }
+    }
   };
 
   const drawWithFx = (): void => {
@@ -502,8 +591,7 @@ function TableScreenInner({
     for (const entry of newEntries) {
       const steal = stealTransferChips(entry, snapPrev, nextSnaps);
       const stealChips = boostStealChipsWithRecentYield(entry, steal.chips, pointYields);
-      skipFlyoutsForChips(stealChips, view.you);
-      enqueueDirectedTokenChips(enqueue, stealChips);
+      enqueueDirectedTokenChips(enqueue, stealChips, view.you);
       accounted.push(...stealChips);
       const regenActor =
         entry.kind === 'actionPlayed' && entry.action === 'playCard' ? entry.actorPlayerId : null;
@@ -512,8 +600,7 @@ function TableScreenInner({
         (!snapPrev.has(regenActor) || !nextSnaps.has(regenActor));
       if (regenNeedsUnit) {
         const regen = regenFlowChips(entry, snapPrev, nextSnaps);
-        skipFlyoutsForChips(regen.chips, view.you);
-        enqueueDirectedTokenChips(enqueue, regen.chips);
+        enqueueDirectedTokenChips(enqueue, regen.chips, view.you);
         accounted.push(...regen.chips);
       }
       const chips = chipsForPublicLogEntry(
@@ -522,8 +609,7 @@ function TableScreenInner({
         view.players,
         view.self.kitId,
       );
-      skipFlyoutsForChips(chips, view.you);
-      enqueueDirectedTokenChips(enqueue, chips);
+      enqueueDirectedTokenChips(enqueue, chips, view.you);
       accounted.push(...chips);
       for (const chip of chips) {
         if (chip.to !== 'log' && chip.kind === 'point') {
@@ -534,10 +620,12 @@ function TableScreenInner({
       if (ghost !== null) {
         enqueueDeckCardGhost(enqueue, ghost.playerId, ghost.artUrl, ghost.direction);
       }
+      for (const playGhost of playCardGhostsForPublicLogEntry(entry, view.you)) {
+        enqueuePlayCardGhost(enqueue, playGhost.playerId, playGhost.artUrl);
+      }
     }
     const leftover = leftoverLiveFlowChips(accounted, snapPrev, nextSnaps);
-    skipFlyoutsForChips(leftover, view.you);
-    enqueueDirectedTokenChips(enqueue, leftover);
+    enqueueDirectedTokenChips(enqueue, leftover, view.you);
   }, [view.actionLog, view.you, view.players, view.self.kitId, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
 
   const lastRewardElimId = useRef<string | null>(null);

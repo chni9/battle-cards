@@ -130,8 +130,9 @@ export function measureDirectedTokenFlyout(
   }
   // Log-origin chips are 40px for readability. Overlay chrome is asCard-only
   // (L51-14) — this size must not paint a white tile around the icon.
-  const fromSize = from === 'log' ? 40 : 32;
-  const toSize = to === 'log' ? 40 : 32;
+  // Same size both ends so spend and gain stay readable mid-crossing (L51-16).
+  const fromSize = 40;
+  const toSize = 40;
   return {
     artUrl: getResourceIconUrl(kind),
     from: fannedChip(fromRect, index, fromSize, 1),
@@ -264,13 +265,38 @@ export function measureTokenFlyout(
   }
   const fromBase = direction === 'gain' ? log : resourceRect;
   const toBase = direction === 'gain' ? resourceRect : log;
-  const fromSize = direction === 'gain' ? 40 : 32;
-  const toSize = direction === 'gain' ? 32 : 40;
+  const fromSize = 40;
+  const toSize = 40;
   return {
     artUrl: getResourceIconUrl(kind),
     from: fannedChip(fromBase, index, fromSize, 1),
     to: fannedChip(toBase, index, toSize, 0.4),
   };
+}
+
+/**
+ * Played card: hand/seat → felt pending center (L51-16).
+ * Same destination as buy/sell ghosts. Playing is a card leaving the hand;
+ * L51-13 dropped the oversized log flyout, not the transfer itself.
+ */
+export function measurePlayCardGhost(
+  playerId: string,
+  artUrl: string,
+  instanceId?: string,
+): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  const instanceRect =
+    instanceId === undefined
+      ? null
+      : rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`));
+  const from =
+    instanceRect !== null
+      ? sizedRect(instanceRect, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT)
+      : rectForPlayerSeat(playerId);
+  const to = measureFeltCenterRect();
+  if (from === null || to === null) {
+    return null;
+  }
+  return { artUrl, from, to };
 }
 
 /** Buy card: felt center → hand (L51-13). */

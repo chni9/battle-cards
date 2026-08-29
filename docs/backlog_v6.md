@@ -63,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-54 of 64 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+55 of 65 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -235,6 +235,7 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | L51-13 | Flyout correction: card ghosts only on buy/sell (felt pending + card-band midpoint, ~48×72, fast fade); no play-to-center card; resource chips on every action including Regen+ (live Δ, else catalog unit); thief victim→thief even when both `?` (1 directional chip, never an invented total); faster travel. **Acceptance:** playCard does not enqueue a card flyout; opponent buy/sell card is small and aimed at pending, not the log. | M | Medium | L51-11 | Done |
 | L51-14 | Resource token chips must stay icon-only: overlay card chrome (`bg-surface-raised` + border + card radius) is `asCard === true` only. Do not classify chips by `from.width` (log-origin tokens are 40px). Buy/sell ghosts keep `asCard`. **Acceptance:** Draw / Regen / spend chips have no white tile; buy/sell ghosts still use card chrome. Update `frontend.md` + `decisions.md` in the same change. | S | Low | L51-13 | Done |
 | L51-15 | Every resource flow is animated both ways: catalog spend/yield plus leftover live Δ (Absorber 3 out + 10 in, not net +7). `actionResolved` lives/shield fly from every target including POV and live Spy. No invented Draw/absorb totals. **Acceptance:** leftover test for spend+gain; resolved livesLost for you and live Spy; playbooks updated. | M | Medium | L51-14 | Done |
+| L51-16 | Make two-way and opponent-loss flows readable: chips stay opaque through travel; public `livesLost` flashes on `?` seats; skip ResourceIcon only after overlay lands; play-card ghosts to felt center. **Acceptance:** leftover two-way stays; overlay holds opacity to ~88%; unknown-seat flash helper; playCard ghost from opponent log, not POV. | M | Medium | L51-15 | Done |
 
 ---
 
@@ -252,8 +253,8 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| 51 | 15 |
-| **Total** | **64** |
+| 51 | 16 |
+| **Total** | **65** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

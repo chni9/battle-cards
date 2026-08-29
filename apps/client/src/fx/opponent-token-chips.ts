@@ -1,10 +1,11 @@
 /**
- * Public-log token chips — L51-09 / L51-11 / L51-13 / L51-15.
+ * Public-log token chips — L51-09 / L51-11 / L51-13 / L51-15 / L51-16.
  * Catalog + public `livesLost` cover the known legs of a transaction.
  * `leftoverLiveFlowChips` flies the other leg when live numbers disagree
  * with that catalog net (spend 3 + absorb 10 → both directions).
  * Unspied seats never invent Draw / absorb totals. Regen quantity is never
  * invented: live Δ, else the catalog per-life unit.
+ * Play-card ghosts: public `cardId` face, seat → felt center (not the log).
  */
 
 import {
@@ -365,6 +366,49 @@ export function deckCardGhostForPublicLogEntry(
       return null;
     }
   }
+}
+
+/**
+ * Played-card ghosts for everyone except POV (POV measures the hand instance).
+ * Card identity is public on the log — face art, never a verso guess (L51-16).
+ */
+export function playCardGhostsForPublicLogEntry(
+  entry: ActionLogEntryView,
+  you: string,
+): DeckCardGhost[] {
+  if (entry.kind !== 'actionPlayed' || entry.actorPlayerId === you) {
+    return [];
+  }
+  const ghosts: DeckCardGhost[] = [];
+  const pushFace = (cardId: CardId, isUpgraded: boolean): void => {
+    try {
+      ghosts.push({
+        playerId: entry.actorPlayerId,
+        artUrl: getCardArtUrl(cardId, { isUpgraded }),
+        direction: 'sell',
+      });
+    } catch {
+      try {
+        ghosts.push({
+          playerId: entry.actorPlayerId,
+          artUrl: getCardBackUrl('action'),
+          direction: 'sell',
+        });
+      } catch {
+        // Art missing — skip rather than invent a transfer.
+      }
+    }
+  };
+  if (entry.action === 'playCard' && entry.cardId !== undefined) {
+    pushFace(entry.cardId, entry.isUpgraded === true);
+    return ghosts;
+  }
+  if (entry.action === 'playMultipleAttacks') {
+    for (const attack of entry.attacks ?? []) {
+      pushFace(attack.cardId, attack.isUpgraded);
+    }
+  }
+  return ghosts;
 }
 
 export function isStealResolve(entry: ActionLogEntryView): boolean {

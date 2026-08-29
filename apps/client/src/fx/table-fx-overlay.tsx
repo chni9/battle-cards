@@ -269,7 +269,7 @@ export function TableFxOverlay(): ReactElement {
                   top: from.top,
                   width: from.width,
                   height: from.height,
-                  opacity: isCard ? 1 : 0,
+                  opacity: 1,
                   scale: isCard ? 1 : 1.15,
                 }}
                 animate={{
@@ -277,7 +277,9 @@ export function TableFxOverlay(): ReactElement {
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: isCard ? [1, 1, 0] : [0, 1, 1, 0],
+                  // Hold opaque until arrival so the gain leg is still visible
+                  // at the dock (L51-16). Old 0.65 fade hid log→seat chips.
+                  opacity: [1, 1, 1, 0],
                   scale: isCard ? 1 : [1.15, 1.05, 1, 0.9],
                 }}
                 exit={{ opacity: 0 }}
@@ -306,7 +308,7 @@ export function TableFxOverlay(): ReactElement {
                     duration: TOKEN_FLYOUT_DURATION_S,
                     ease: 'linear',
                     delay: delayMs / 1000,
-                    times: isCard ? [0, 0.45, 1] : [0, 0.12, 0.65, 1],
+                    times: [0, 0.12, 0.88, 1],
                   },
                   scale: {
                     duration: TOKEN_FLYOUT_DURATION_S,
