@@ -155,6 +155,9 @@ export function OpponentZone({
       data-seat={player.id}
       data-seat-index={seat !== null ? String(seat) : undefined}
       data-active-seat={isActiveSeat ? 'true' : undefined}
+      {...(revealMode === null && !player.isEliminated
+        ? { 'data-hint-anchor': 'hidden-kit' }
+        : {})}
       className="flex w-auto max-w-[7.75rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm sm:max-w-[10rem] sm:p-1.5"
       style={zoneStyle}
     >

@@ -3,7 +3,7 @@
  * Presentation-only persistent chips (`persistent:…`) never trigger outline/cue.
  */
 
-import type { PendingEffectView } from '@card-battle/shared';
+import { isAttackCardId, type PendingEffectView } from '@card-battle/shared';
 
 /** Synthetic ids from `persistent-incoming.ts` — not engine queue entries. */
 export function isPersistentPresentationId(effectId: string): boolean {
@@ -46,6 +46,58 @@ export function incomingTargetingYouIds(
       continue;
     }
     if (isPersistentPresentationId(effect.id)) {
+      continue;
+    }
+    ids.add(effect.id);
+  }
+  return ids;
+}
+
+/**
+ * Attack Incoming only — first-game `incoming` hint (Shield / Mirror copy).
+ * Spy, Thief, Tax, and persistents must not steal that card (designer 2026-08-27).
+ */
+export function incomingAttackTargetingYouIds(
+  pendingEffects: readonly PendingEffectView[],
+  you: string,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const effect of pendingEffects) {
+    if (effect.targetPlayerId !== you) {
+      continue;
+    }
+    if (isPersistentPresentationId(effect.id)) {
+      continue;
+    }
+    if (!isAttackCardId(effect.cardId)) {
+      continue;
+    }
+    ids.add(effect.id);
+  }
+  return ids;
+}
+
+/**
+ * Action Thief plus special Thief cards (`upgrade-point-thief`, `spy-thief`, …).
+ * First-game `incoming-thief` hint. Spy is not a Thief.
+ */
+export function isIncomingThiefCardId(cardId: string): boolean {
+  return cardId === 'thief' || cardId.endsWith('-thief');
+}
+
+export function incomingThiefTargetingYouIds(
+  pendingEffects: readonly PendingEffectView[],
+  you: string,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const effect of pendingEffects) {
+    if (effect.targetPlayerId !== you) {
+      continue;
+    }
+    if (isPersistentPresentationId(effect.id)) {
+      continue;
+    }
+    if (!isIncomingThiefCardId(effect.cardId)) {
       continue;
     }
     ids.add(effect.id);

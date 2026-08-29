@@ -63,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-55 of 65 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+58 of 65 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -72,12 +72,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 43 · Table readability | 6 | 6 |
 | 44 · Visual pickers | 6 | 6 |
 | 45 · Tutorial | 7 | 7 |
-| 46 · First-game hints | 3 | 0 |
+| 46 · First-game hints | 3 | 3 |
 | 47 · Feedback + inbox | 5 | 0 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
-| 51 · Beta UI feedback | 15 | 15 |
+| 51 · Beta UI feedback | 16 | 16 |
 
 ---
 
@@ -152,9 +152,12 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L46-01 | Hint overlay + `HintId` union from spec §5.2; `localStorage` `card-battle.v6.hints`; Got it / Skip all. **Does not run** when `playKind === 'tutorial'`. **Acceptance:** tutorial match shows coach, not these ids. | M | Low | L41-03, L43-01 | To do |
-| L46-02 | Triggers: `your-turn`, `draw`, `resources` on first Classic dock; `incoming` on first real Incoming to POV (reuse `incoming-threat-diff.ts`, ignore presentation persistents); `hidden-kit`; `shop` when Buy enabled; `leave`. **Acceptance:** unit tests on trigger helpers; Incoming hint is not the persistent chip. | M | Medium | L46-01, L39-05 (Done) | To do |
-| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. `resetHelpStorage` (L42-02 helper; hub Reset help removed in L51-03) still clears hint keys in tests. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | To do |
+| L46-01 | Hint overlay + `HintId` union from spec §5.2 (**no `leave`**); `localStorage` `card-battle.v6.hints`; Got it / Skip all. **Does not run** when `playKind === 'tutorial'`. **Acceptance:** tutorial match shows coach, not these ids. | M | Low | L41-03, L43-01 | Done |
+| L46-02 | One-card selector (incoming > your-turn > draw > shop > resources > hidden-kit on turn; incoming / hidden-kit off turn). Auto-Got-it per L46 decisions. Reuse `incoming-threat-diff.ts` (ignore persistents). No `leave`. **Acceptance:** unit tests on trigger helpers; Incoming hint is not the persistent chip. | M | Medium | L46-01, L39-05 (Done) | Done |
+| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. `resetHelpStorage` (L42-02 helper; hub Reset help removed in L51-03) still clears hint keys in tests. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | Done |
+
+Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, `specials`,
+`reward`; incoming attack copy asks the player to react. Spec §5.2 / `decisions.md`.
 
 ---
 

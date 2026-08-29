@@ -204,16 +204,38 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 |---|---|---|
 | `your-turn` | POV becomes active the first time | Your turn — take **one** action. |
 | `draw` | First time the dock is shown | **Draw** gives points, not a card. |
+| `hand` | First time the dock is shown (after Draw) | Click a card to **use**, **upgrade**, or **sell** it for points. |
+| `specials` | First time the dock is shown (after Hand) | **Specials** are usually one-use. Using one **is** your action for the turn. |
 | `resources` | Same | Heart lives · diamond points · upgrade-point icon · shield (attacks only). |
-| `incoming` | First **real** Incoming targeting POV (not presentation persistents) | This hits **after you act** on your next turn. You can attack back, Shield, or Mirror. |
+| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**. It hits **after you act**. Do something this turn: attack back, Shield, or Mirror. |
+| `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | There is an incoming **Thief**. It hits **after you act**. Counter with Thief, or act before it resolves. |
 | `hidden-kit` | First time an unspied opponent is visible | You cannot see their kit until Spy (or death). |
-| `shop` | First time Buy is enabled on your turn | Shop prices are double the play cost. |
-| `leave` | First time Leave is visible | Leave is a **forfeit**. |
+| `shop` | Current best remaining economy lesson on your turn (L46-02) | Shop prices are double the play cost. |
+| `reward` | First elimination-reward sub-choice for POV | You eliminated them — pick **two** rewards: 4 lives, 8 points, a card from them, or an upgrade point. Same choice twice is allowed. |
+
+`leave` is **not** a first-game hint (designer 2026-08-26). The Forfeit flag keeps its own confirm copy.
 
 Controls: **Got it** (dismiss this id) · **Skip all**. Table **How to play** stays available.
 Do not block the turn timer; do not require dismissing to act (the overlay is pointer-events
 on the coach card only, not a full-screen trap — except the first `your-turn` may sit beside
-the existing Your-turn flash, not replace it).
+the existing Your-turn flash, not replace it). Tutorial matches use the L45 coach, never these
+ids.
+
+**Selector (designer 2026-08-26, extended 2026-08-28):** one undismissed card. Not a legal-action recommender.
+While POV is choosing an elimination reward: `reward` first (the overlay stays up over that Dialog
+until Got it). Then: `incoming` (**attack** Incoming to POV — not Spy/Thief, ignore `persistent:`) →
+`incoming-thief` (`thief` or `*-thief`). On your turn after threats: `your-turn` → `draw` → `hand` →
+`specials` → `shop` → `resources` → `hidden-kit` (unspied living opponent). Off your turn after threats:
+`hidden-kit`, else none. Card sits next to `data-hint-anchor` (`incoming-thief` reuses Incoming); no rings.
+Hand / Specials use a shrink-wrapped card-cluster anchor and sit **beside** that cluster
+(top-aligned, left when it fits — not the full dock section).
+
+**Auto-Got-it** (plus the Got it button): `your-turn` on any playing intent; `draw` on Draw;
+`shop` when Shop opens; `incoming` on a playing intent while an **attack** still targets you, or when
+that attack leaves the view; `incoming-thief` likewise for Thief Incoming; `hand` when a hand card
+opens; `specials` when a special opens; `reward` when rewards are confirmed; `hidden-kit` when an
+opponent portrait opens; `resources` is Got it only.
+Got it and × both dismiss that id (it must not return later in the same browser).
 
 ### 5.3 Tutorial — setup overrides
 

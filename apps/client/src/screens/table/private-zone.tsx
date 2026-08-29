@@ -153,6 +153,7 @@ export function PrivateZone({
         </div>
         <div
           data-zone="incoming-pending"
+          data-hint-anchor="incoming"
           className={[
             'min-w-0 flex-1 overscroll-contain',
             incomingThreats || highlightIncoming
@@ -198,6 +199,7 @@ export function PrivateZone({
       >
         <div
           data-zone="resources"
+          data-hint-anchor="resources"
           className={[
             'flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border-soft sm:gap-2',
             highlightResources ? 'overflow-visible pt-10' : 'pt-0.5 sm:pt-1',

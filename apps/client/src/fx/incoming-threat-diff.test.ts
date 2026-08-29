@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import type { PendingEffectView } from '@card-battle/shared';
 
 import {
+  incomingAttackTargetingYouIds,
   incomingTargetingYouIds,
+  incomingThiefTargetingYouIds,
   isPersistentPresentationId,
   newIncomingThreats,
 } from './incoming-threat-diff';
@@ -75,5 +77,66 @@ describe('incoming threat diff (L39-05)', () => {
       }),
     ];
     expect([...incomingTargetingYouIds(pending, 'you')]).toEqual(['a']);
+  });
+
+  it('incoming-attack helper ignores Spy and Thief', () => {
+    const pending = [
+      effect({
+        id: 'spy',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'spy',
+      }),
+      effect({
+        id: 'thief',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'thief',
+      }),
+      effect({
+        id: 'strong',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'strong-attack',
+      }),
+    ];
+    expect([...incomingTargetingYouIds(pending, 'you')]).toEqual(['spy', 'thief', 'strong']);
+    expect([...incomingAttackTargetingYouIds(pending, 'you')]).toEqual(['strong']);
+  });
+
+  it('incoming-thief helper matches thief cards only', () => {
+    const pending = [
+      effect({
+        id: 'spy',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'spy',
+      }),
+      effect({
+        id: 'thief',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'thief',
+      }),
+      effect({
+        id: 'upt',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'upgrade-point-thief',
+      }),
+      effect({
+        id: 'strong',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'strong-attack',
+      }),
+      effect({
+        id: 'persistent:imp->you',
+        sourcePlayerId: 'bob',
+        targetPlayerId: 'you',
+        cardId: 'imposition',
+      }),
+    ];
+    expect([...incomingThiefTargetingYouIds(pending, 'you')]).toEqual(['thief', 'upt']);
   });
 });

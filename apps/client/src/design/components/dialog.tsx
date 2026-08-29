@@ -27,6 +27,8 @@ export interface DialogProps {
   closeOnOverlayClick?: boolean;
   /** Extra classes on the dialog panel (e.g. wider kit inspect). */
   panelClassName?: string;
+  /** First-game hint anchor on the panel (elimination reward). */
+  hintAnchor?: string;
 }
 
 const FOCUSABLE =
@@ -40,6 +42,7 @@ export function Dialog({
   onClose,
   closeOnOverlayClick = true,
   panelClassName = '',
+  hintAnchor,
 }: DialogProps): ReactElement {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -159,6 +162,9 @@ export function Dialog({
               'outline-none',
               panelClassName,
             ].join(' ')}
+            {...(hintAnchor !== undefined
+              ? { 'data-hint-anchor': hintAnchor }
+              : {})}
             initial={
               reduceMotion === true
                 ? false

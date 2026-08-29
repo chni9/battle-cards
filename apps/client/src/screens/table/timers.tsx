@@ -76,6 +76,7 @@ export function Timers({
   return (
     <section
       data-zone="timers"
+      data-hint-anchor="your-turn"
       data-my-turn={isMyTurn ? 'true' : undefined}
       className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised px-2 py-1 sm:px-2.5 sm:py-1.5"
       style={turnTint}

@@ -113,6 +113,9 @@ export function SubChoiceHost(props: SubChoiceHostProps): ReactElement {
       onClose={() => undefined}
       closeOnOverlayClick={false}
       panelClassName="max-w-3xl"
+      {...(subChoice.kind === 'elimination-reward'
+        ? { hintAnchor: 'reward' }
+        : {})}
     >
       <p className="text-sm text-ink-muted">
         {copy.expiryHint} · {String(secondsLeft)}s left

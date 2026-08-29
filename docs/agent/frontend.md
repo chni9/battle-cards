@@ -90,7 +90,20 @@ rules above are unchanged — this section only covers how the client looks.
   orange otherwise, until the chip leaves the queue. Presentation persistents are not
   ringed. Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
-  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look). Solo composes `create` + N× `addBot` + `startGame`;
+  copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
+  **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
+  `CoachPanel` chrome as tutorial but **compact and more transparent**, `data-zone="first-game-hint"`, Got it / Skip all.
+  Selector ranks one undismissed topic from view facts: reward (while POV is choosing) →
+  **attack** Incoming → **Thief** Incoming → (on turn) your-turn → draw → hand → specials →
+  shop → resources → hidden-kit. Spy stays on the Incoming strip without a hint card.
+  Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
+  thief-Incoming clear / confirm reward. × dismisses the same as Got it.
+  Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming.
+  Hand / Specials anchors are the **card cluster** (`inline-flex`), not the flex-1 section;
+  those two cards sit **beside** the cluster (top-aligned, left when it fits) so they are
+  not dumped on the felt's left edge or over the other row. `leave` is not a hint id.
+  Completing or skipping the tutorial does **not** set `skipAll`
+  (L46-03); Hub **Reset help** still clears the key. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -536,6 +549,32 @@ do not hand off an untested lot.
 - Nick `TourHost`, room `GMFBAP`. Client-only 11-step tour before Draw (Got it); Draw blocked
   on the Leave step; Draw after tour. Coach panel slightly transparent. After Spy resolves,
   Look forces a portrait click (no Got it); Spy reveal then Sell.
+
+### Lot 46 verified 2026-08-26 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Hub **Reset help**, then **Tutorial** nick `L46Tut`. Room `RMXLCN`. Board-tour coach **Your zone**
+  with **Got it** only — no first-game hint, no **Skip all**. **Skip tutorial** confirm → hub (not
+  a forfeit). Next Classic still eligible.
+- **Play solo** nick `L46Host`. Room `CVYCNN`. First-game card **Your turn** (“take **one** action”)
+  with **Got it** and **Skip all**, next to the turn strip. **Skip all** hides it. Second solo
+  `OTFTLE` has no hint card. Hub **Reset help** then third solo `MBIXNF` shows **Your turn** again.
+
+### Lot 46 follow-up verified 2026-08-28 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- Hub **Reset help**, **Play solo** nick `L46Hints`, 1× Normal bot. Room `WONXYS`.
+  After **Your turn** and **Draw**, **Hand** (“use / upgrade / sell”) then **Specials**
+  (usually one-use). Shop / Resources / Hidden kit still follow.
+- Same room: Alpha **Card Thief** → Incoming hint “incoming **Thief**” (not Shield/Mirror).
+  Later Alpha **Strong attack** → Incoming hint “incoming **attack**” / do something
+  (attack back, Shield, or Mirror). The two bodies are distinct.
+- First POV **elimination reward** hint is unit-tested (selector + Dialog anchor). Not forced
+  in this 2p solo (game-ending elim skips rewards).
+
+### Lot 46 placement fix verified 2026-08-29 (browser, `TURN_DURATION_MS=300000`)
+
+- Solo nick `L46Beside`, room `MAEVCV`. After Your turn / Draw, **Hand** sits in the HAND
+  row immediately left of the cards; **Specials** sits in the SPECIALS row immediately
+  left of Super Mirror — not on the far left of the felt.
 
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
