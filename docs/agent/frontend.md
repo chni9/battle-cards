@@ -227,7 +227,9 @@ rules above are unchanged — this section only covers how the client looks.
     action still animates; quantity is not on the public log. Thief / Spy Thief /
     Upgrade Point Thief: live Δ victim→thief (extra upgraded gain from the log);
     both `?` → one directional chip, never an invented total. Overlay `z-[110]`.
-    Travel ~0.42s. Reduced motion skips choreography. Do not invent Draw totals.
+    Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
+    (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
+    Reduced motion skips choreography. Do not invent Draw totals.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
