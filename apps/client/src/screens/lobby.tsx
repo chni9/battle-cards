@@ -7,7 +7,6 @@ import {
   BOT_DIFFICULTIES,
   MAX_PLAYERS,
   MIN_PLAYERS,
-  PROTOCOL_VERSION,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
@@ -79,7 +78,6 @@ export function LobbyScreen({
           Lobby
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Card Battle</h1>
-        <p className="mt-2 text-xs text-ink-muted">Protocol v{PROTOCOL_VERSION}</p>
         <p className="mt-1 text-sm text-ink-muted">{STATUS_LABELS[status]}</p>
         {error !== null && (
           <p className="mt-2 text-sm font-medium text-cta-red" role="alert">

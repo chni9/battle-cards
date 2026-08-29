@@ -1,5 +1,5 @@
 /**
- * How to play primer — technical spec v6 §5.1 / L42-01.
+ * How to play primer — technical spec v6 §5.1 / L51-02.
  * Screenshot `<img>` only when the designer file exists. Skip and Got it both close.
  */
 
@@ -8,7 +8,10 @@ import type { ReactElement } from 'react';
 import { getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
-import { HOW_TO_PLAY_SECTIONS } from './how-to-play-content';
+import {
+  HOW_TO_PLAY_SECTIONS,
+  type HowToPlaySectionId,
+} from './how-to-play-content';
 import { howToPlayScreenshotUrl } from './how-to-play-screenshots';
 
 export type HowToPlayCloseReason = 'skip' | 'got-it' | 'dismiss';
@@ -18,12 +21,16 @@ export interface HowToPlayDialogProps {
   onClose: (reason: HowToPlayCloseReason) => void;
 }
 
-const RESOURCE_GLYPHS: readonly { kind: ResourceKind; caption: string }[] = [
-  { kind: 'life', caption: 'Lives' },
-  { kind: 'point', caption: 'Points' },
-  { kind: 'upgradePoint', caption: 'Upgrade points' },
-  { kind: 'shield', caption: 'Shield' },
-];
+const SECTION_GLYPHS: Partial<
+  Record<HowToPlaySectionId, readonly { kind: ResourceKind; caption: string }[]>
+> = {
+  lives: [
+    { kind: 'life', caption: 'Lives' },
+    { kind: 'shield', caption: 'Shield' },
+  ],
+  points: [{ kind: 'point', caption: 'Points' }],
+  upgrade: [{ kind: 'upgradePoint', caption: 'Upgrade points' }],
+};
 
 export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactElement {
   return (
@@ -67,6 +74,7 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
             section.screenshotFile === null
               ? null
               : howToPlayScreenshotUrl(section.screenshotFile);
+          const glyphs = SECTION_GLYPHS[section.id];
           return (
             <li
               key={section.id}
@@ -76,7 +84,7 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
               <div>
                 <h3 className="text-sm font-semibold text-ink">{section.title}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-ink-muted">{section.body}</p>
-                {section.id === 'resources' ? <ResourceGlyphRow /> : null}
+                {glyphs !== undefined ? <ResourceGlyphRow glyphs={glyphs} /> : null}
               </div>
               {shot !== null ? (
                 <img
@@ -94,10 +102,14 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
   );
 }
 
-function ResourceGlyphRow(): ReactElement {
+function ResourceGlyphRow({
+  glyphs,
+}: {
+  glyphs: readonly { kind: ResourceKind; caption: string }[];
+}): ReactElement {
   return (
     <ul className="mt-2 flex flex-wrap gap-3 p-0">
-      {RESOURCE_GLYPHS.map((item) => (
+      {glyphs.map((item) => (
         <li key={item.kind} className="inline-flex items-center gap-1.5 text-sm text-ink">
           <img
             src={getResourceIconUrl(item.kind)}

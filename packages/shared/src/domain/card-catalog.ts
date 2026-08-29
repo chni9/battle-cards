@@ -5,7 +5,7 @@
  * cost never changes them (Lot 2 ruling). Specials live in `special-card-catalog.ts`.
  *
  * `upgradeEffect` is the full player-facing description of the upgraded card (not a
- * delta). Non-upgraded UI appends it after the base `effect` via `formatCardEffectText`.
+ * delta). Non-upgraded UI appends `upgradeAdds` after the base `effect`.
  */
 
 import {
@@ -23,6 +23,7 @@ function pointsCard(
   playPoints: number,
   effect: string,
   upgradeEffect: string,
+  upgradeAdds: string,
 ): Card {
   return {
     id,
@@ -31,6 +32,7 @@ function pointsCard(
     cost: { points: playPoints },
     effect,
     upgradeEffect,
+    upgradeAdds,
     buyCost: { points: playPoints * 2 },
     sellYield: { points: playPoints },
   };
@@ -48,6 +50,7 @@ export const SHARED_CARD_CATALOG = {
     1,
     'Deal 1 damage to an opponent.',
     'Deal 3 damage to an opponent.',
+    'Deal 3 damage instead of 1.',
   ),
   'strong-attack': pointsCard(
     'strong-attack',
@@ -56,6 +59,7 @@ export const SHARED_CARD_CATALOG = {
     2,
     'Deal 2 damage to an opponent.',
     'Deal 4 damage to an opponent.',
+    'Deal 4 damage instead of 2.',
   ),
   'super-attack': pointsCard(
     'super-attack',
@@ -64,6 +68,7 @@ export const SHARED_CARD_CATALOG = {
     10,
     'Deal 7 damage to an opponent.',
     'Deal 10 damage to an opponent.',
+    'Deal 10 damage instead of 7.',
   ),
   absorber: pointsCard(
     'absorber',
@@ -72,6 +77,7 @@ export const SHARED_CARD_CATALOG = {
     3,
     'Gain the lives the target lost during their last complete turn.',
     'Gain the lives the target lost during their last complete turn, and also capture points and upgrade points they actively spent.',
+    'Also capture points and upgrade points they actively spent.',
   ),
   spy: pointsCard(
     'spy',
@@ -80,6 +86,7 @@ export const SHARED_CARD_CATALOG = {
     4,
     "See the target's kit and cards for the rest of the game.",
     "See the target's kit, cards and all resources for the rest of the game.",
+    'Also see live lives, points, upgrade points, and shield.',
   ),
   thief: pointsCard(
     'thief',
@@ -88,6 +95,7 @@ export const SHARED_CARD_CATALOG = {
     5,
     'Steal up to 10 points from the target.',
     'Target loses up to 10 points; you gain double that amount.',
+    'You gain double the points the target loses.',
   ),
   mirror: pointsCard(
     'mirror',
@@ -96,6 +104,7 @@ export const SHARED_CARD_CATALOG = {
     6,
     'Redirect a non-upgraded attack pending against you.',
     'Redirect any attack pending against you (including upgraded) and double the redirected damage.',
+    'Redirect upgraded attacks too, and double the redirected damage.',
   ),
   shield: pointsCard(
     'shield',
@@ -104,6 +113,7 @@ export const SHARED_CARD_CATALOG = {
     7,
     'Gain 4 shield points. Only one shield at a time.',
     'Gain 7 shield points; blocks Thief and Spy at no shield cost. Only one shield at a time.',
+    'Gain 7 shield instead of 4; also blocks Thief and Spy at no shield cost.',
   ),
   tax: {
     id: 'tax',
@@ -112,6 +122,7 @@ export const SHARED_CARD_CATALOG = {
     cost: { lives: 1 },
     effect: 'Gain 4 points. Always costs 1 life.',
     upgradeEffect: 'Gain 6 points. Always costs 1 life.',
+    upgradeAdds: 'Gain 6 points instead of 4.',
     // Lot 2 ruling: buy = 2× life usage cost; sell = 1× life usage cost.
     buyCost: { lives: 2 },
     sellYield: { lives: 1 },
@@ -123,6 +134,7 @@ export const SHARED_CARD_CATALOG = {
     cost: { pointsPerLife: 3 },
     effect: 'Buy up to 4 lives at 3 points each.',
     upgradeEffect: 'Buy up to 4 lives at 2 points each.',
+    upgradeAdds: 'Lives cost 2 points each instead of 3.',
     // Lot 2 ruling: shop uses 2× / 1× the base one-life usage cost (3 points).
     buyCost: { points: 6 },
     sellYield: { points: 3 },

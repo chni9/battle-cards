@@ -15,20 +15,28 @@ describe('hint copy (technical spec v6 §5.2)', () => {
     for (const id of HINT_IDS) {
       expect(HINT_COPY[id].body.length).toBeGreaterThan(0);
     }
-    expect(HINT_COPY['your-turn'].body).toContain('**one** action');
-    expect(HINT_COPY.draw.body).toContain('**Draw**');
-    expect(HINT_COPY.draw.body).toContain('points');
+    expect(HINT_COPY['your-turn'].body).toBe(
+      'It is your turn you have to take **one** action.',
+    );
+    expect(HINT_COPY.draw.body).toBe(
+      '**Draw** gives you points. The number of points you can draw depends on you kit.',
+    );
     expect(HINT_COPY.hand.body).toContain('**use**');
     expect(HINT_COPY.hand.body).toContain('**upgrade**');
     expect(HINT_COPY.hand.body).toContain('**sell**');
     expect(HINT_COPY.specials.body).toContain('one-use');
     expect(HINT_COPY.resources.body).toContain('lives');
+    expect(HINT_COPY.resources.body).toContain('points');
+    expect(HINT_COPY.resources.body).toContain('upgrade points');
+    expect(HINT_COPY.resources.body).toContain('shield');
     expect(HINT_COPY.incoming.body).toContain('incoming **attack**');
-    expect(HINT_COPY.incoming.body).toContain('after you act');
+    expect(HINT_COPY.incoming.body).toContain('Shield');
+    expect(HINT_COPY.incoming.body).toContain('Mirror');
     expect(HINT_COPY['incoming-thief'].body).toContain('**Thief**');
     expect(HINT_COPY['incoming-thief'].body).not.toContain('Shield');
     expect(HINT_COPY['hidden-kit'].body).toContain('Spy');
-    expect(HINT_COPY.shop.body).toContain('shop');
+    expect(HINT_COPY.shop.body).toContain('buy cards');
+    expect(HINT_COPY.shop.body).not.toContain('double the play cost');
     expect(HINT_COPY.reward.body).toContain('**two** rewards');
     expect(HINT_COPY.reward.body).toContain('4 lives');
     expect(SKIP_ALL_HINTS_LABEL).toBe('Skip all');

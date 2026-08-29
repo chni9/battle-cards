@@ -2619,6 +2619,54 @@ Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No 
 - Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
 - Got it appears on tour steps only.
 
+## 2026-08-26 · [P] Lot 51 first-time UI (designer session)
+
+Designer 2026-08-26 playtest follow-up. Classic rules and catalog **values** stay frozen.
+No protocol bump. Client presentation + `upgradeAdds` copy derived from existing
+`effect` / `upgradeEffect` (not a new mechanic).
+
+**How to play (spec §5.1 rewrite)**
+
+- Primer is for a player who has never played: turns, lives, points, cards, kill,
+  upgrade, kits, specials, shop. **No delayed resolution** and no other niche rules.
+- Shop copy: buy cards or upgrade points; sell cards you do not need. No double-price
+  formula, no “shared” card.
+- Specials: **one use**, always (not “usually”).
+- Draw: grants points equal to the kit Draw value. Do not write “(not a card)”.
+- Upgrade: spend 1 upgrade point. Do not write “(the icon)”.
+- Points: currency for almost every action.
+- Screenshot slots reuse existing designer filenames only (`one-action`, `resources`,
+  `hidden-kit`, `shop`). `delayed-resolution.png` and `table-overview.png` stay unused.
+
+**Hub**
+
+- Drop protocol version from Home and Lobby (no tooltip).
+- Remove **Reset help**. `resetHelpStorage` remains a helper for tests / Lot 46.
+- No Beta paragraph. A small **Beta** card, top-right, text **Beta** only.
+- Drop the delayed-resolution hub pitch.
+
+**Inspect**
+
+- Always `CostDisplay` icons, never cost-as-text.
+- Kit starting hand: action/attack versos + counts, not “N action · M attack”.
+- Non-upgraded card: base effect + `upgradeAdds` delta. Upgraded card: full current
+  `upgradeEffect` only.
+
+**Table**
+
+- Why stays hidden (L45-05). `botReason` remains on the wire and Excel export.
+- Banners: **You are being attacked** once per new attack-tone Incoming (flashier);
+  **You are dead** on POV elim (flashier); **You won!** (no space) on POV win.
+- Waiting-to-resolve chips: tutorial callout chrome **without arrow**. Red = attack
+  tone (`threatToneFor`); orange = other real pending. Incoming and Waiting on others.
+  Presentation persistents unringed.
+- Spy seat: live numbers when upgraded Spy or death reveal; unspied and base Spy show
+  the same icons with `?`. Remove Spied — tap / Hidden kit / Revealed — tap. Spy dialog
+  title is the nickname only.
+- Opponent resource flyouts from the seat to the action-log center, public log amounts
+  only when numbers are hidden. Skip Draw when kit Draw is unknown. Include every token
+  kind (life, point, upgrade point, shield).
+
 ## 2026-08-26 · [P] First-game hints omit leave (L46-01)
 
 Designer 2026-08-26: first-Classic hints are a single contextual coach card on a live
@@ -2665,6 +2713,21 @@ Got it and × both persist that `HintId`. Dismissals merge onto the previous Rea
 (`applyHintPatch`) so a later write cannot drop an id. Skip all now uses that helper
 from the overlay (no separate `skipAllHints()` call site on the table).
 
+## 2026-08-28 · [P] Lot 51 flyout correction (L51-13)
+
+Designer follow-up on the L51-11 card/token pass. Client presentation only.
+
+- **Card ghosts only when a card enters or leaves a deck** (buy / sell / buy special).
+  Destination is the felt pending center, not the action log. Playing a card does not
+  fly art. Ghost size ~48×72; fade during the second half of a ~0.42s trip.
+- **Resource chips on every action**, including Regeneration+. Public log has no
+  quantity; use live Δ when the actor's numbers are on the view, otherwise the
+  catalog per-life unit (rate points + 1 life). That unit is not a claimed total.
+- **Thief** (and Spy Thief / Upgrade Point Thief): live Δ still flies victim→thief.
+  When both seats are `?`, one directional chip shows the transfer without inventing
+  the stolen total.
+- Draw totals stay skipped when kit Draw is hidden.
+
 ## 2026-08-28 · [P] First-game hints: thief, hand, specials, reward
 
 Designer 2026-08-28. Extra first-Classic cards, still client-only, still not a legal-action
@@ -2691,6 +2754,43 @@ Selector: `reward` → `incoming` → `incoming-thief` → (on turn) `your-turn`
 `hand` → `specials` → `shop` → `resources` → `hidden-kit`. Off turn after threats:
 `hidden-kit`.
 
+## 2026-08-29 · [P] Token chips are icon-only (L51-14)
+
+Designer: resource flyouts (points, lives, etc.) must not sit in a white square.
+
+- Overlay card chrome is **`asCard === true` only**. Buy/sell ghosts pass that flag.
+- L51-13 used `from.width >= 40` after shrinking card ghosts to 48×72. Log-origin
+  resource chips are already 40×40, so every token picked up the raised-surface
+  tile. Width must not classify chips as cards.
+- Playbooks (`frontend.md`, `testing.md`) record the invariant in the same change.
+
+## 2026-08-29 · [P] Every resource flow is two-way (L51-15)
+
+Designer: spend+gain on the same tick (Absorber: pay 3, absorb 10) must show
+both legs; opponent attack life loss must fly.
+
+- Catalog chips are the known spend/yield. `leftoverLiveFlowChips` flies live Δ
+  that the catalog net does not explain — never the collapsed net alone.
+- `actionResolved` `livesLost` / `shieldAbsorbed` fly from every target (POV,
+  unspied, live Spy). Live-icon seats are not skipped.
+- Unspied Draw / absorb totals stay uninvented. Card play still does not fly
+  art (L51-13); buy/sell ghosts stay.
+
+## 2026-08-29 · [P] Make every resource/card flow readable (L51-16)
+
+Designer: two-way ticks still looked like spend-only; opponent life loss on
+`?` seats had no flash; every resource and card transfer must animate.
+
+- Token chips start opaque and hold until ~88% of travel so the gain leg is
+  still visible when it reaches the dock. Seat and log chips are both 40px.
+- Skip `ResourceIcon` net-fly only after overlay chips land. Public chip
+  amounts emit a signed flash (`emitResourceFlowFlash`) so unspied `?` seats
+  show `livesLost` / spend without printing hidden totals. Two-way ticks can
+  show −N and +M together.
+- Play-card ghosts (hand/seat → felt pending center, ~48×72, `asCard`) restore
+  the card transfer L51-13 removed as an oversized log flyout. Buy/sell ghosts
+  stay. Do not invent unspied Draw/absorb totals.
+
 ## 2026-08-29 · [P] Hand / Specials hints sit beside the card cluster
 
 Designer 2026-08-29: the new card-row hints were not next to the cards. Anchoring
@@ -2702,10 +2802,18 @@ Fix: the anchor is an `inline-flex` wrap around the visible cards (or the Empty 
 caption). Hand / Specials use `prefer: 'beside'` (top-aligned, left of the cluster when
 that fits). Draw / Shop / Incoming stay `below` on their small chrome.
 
+## 2026-08-29 · [P] First-game hint copy rewrite (main)
+
+Designer 2026-08-29 (`394b3b5`) replaced the short §5.2 one-liners with longer table copy
+in `hint-copy.ts` (Draw no longer says “not a card”; Shop no longer quotes double price).
+Merging that main into Lot 51 made the old copy test fail. Spec §5.2 and `hint-copy.test.ts`
+now lock the shipped bodies. Selectors, auto-Got-it, and `HintId`s are unchanged.
+
 ## 2026-08-29 · [P] Classic occupancy is 2–6 (supersedes #V4-30)
 
 Designer instruction (this session): Classic rooms seat **2 to 6** players, not 2 to 4.
-Not God/Team/Quick. No card value, delay, or mutual-attack change.
+Not God/Team/Quick. No card value, delay, or mutual-attack change. Lot 51 on main is
+Beta UI, so this occupancy work is **Lot 52 / L52-01**.
 
 Single source: `packages/shared/src/domain/player-count.ts` (`MIN_PLAYERS` / `MAX_PLAYERS`).
 Lobby occupancy, `game-room.maxClients`, solo opponent picker, seat palette, batch
@@ -2713,6 +2821,7 @@ Lobby occupancy, `game-room.maxClients`, solo opponent picker, seat palette, bat
 stays **1** (dim 46); `livingOpponentCountNorm` now divides by 5. Belief width features
 remain three opponent-offset slots — a 6-player table does not add fitted dimensions.
 
-Rules spec §1 Number of Players updated in the same change.
+Rules spec §1 Number of Players updated in the same change. How to play primer Goal
+copy matches (2 to 6).
 
 

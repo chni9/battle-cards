@@ -8,13 +8,14 @@ import type { ReactElement } from 'react';
 import type { ActionResolutionOutcome } from '@card-battle/shared';
 
 import {
+  FLYOUT_TRAVEL_EASE,
   MOTION_DURATION_S,
   MOTION_EASE,
   THREAT_OUTLINE_DURATION_S,
   TOKEN_FLYOUT_DURATION_S,
 } from './motion-timing';
 import { useTableFx } from './table-fx-hooks';
-import type { DomRectLite, ThreatTone } from './table-fx-types';
+import { tokenFlyoutUsesCardChrome, type DomRectLite, type ThreatTone } from './table-fx-types';
 
 function outcomeClass(outcome: ActionResolutionOutcome): string {
   if (outcome === 'applied') {
@@ -64,25 +65,37 @@ function FlyoutImage({
       key={id}
       src={artUrl}
       alt=""
-      className="absolute rounded-[length:var(--radius-card)] border border-border object-contain shadow-lg"
+      data-fx="card-flyout"
+      className="absolute z-20 rounded-[length:var(--radius-card)] border border-border bg-surface-raised object-contain shadow-md"
       initial={{
         left: from.left,
         top: from.top,
         width: from.width,
         height: from.height,
-        opacity: 0.95,
+        opacity: 1,
         rotate: -4,
+        scale: 1,
       }}
       animate={{
         left: to.left,
         top: to.top,
         width: to.width,
         height: to.height,
-        opacity: 0,
+        opacity: [1, 1, 0],
         rotate: 6,
+        scale: 1,
       }}
       exit={{ opacity: 0 }}
-      transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
+      transition={{
+        left: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        top: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        width: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        height: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        rotate: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        scale: { duration: TOKEN_FLYOUT_DURATION_S, ease: FLYOUT_TRAVEL_EASE },
+        opacity: { duration: TOKEN_FLYOUT_DURATION_S, ease: 'linear', times: [0, 0.45, 1] },
+      }}
+      style={{ zIndex: 20 }}
       draggable={false}
     />
   );
@@ -205,12 +218,22 @@ export function TableFxOverlay(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[80] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[110] overflow-visible"
       aria-hidden
       data-zone="table-fx"
     >
       <AnimatePresence>
-        {events.map((event) => {
+        {[...events]
+          .sort((a, b) => {
+            if (a.kind === 'playFlyout' && b.kind !== 'playFlyout') {
+              return 1;
+            }
+            if (b.kind === 'playFlyout' && a.kind !== 'playFlyout') {
+              return -1;
+            }
+            return 0;
+          })
+          .map((event) => {
           if (event.kind === 'playFlyout') {
             return (
               <FlyoutImage
@@ -229,33 +252,70 @@ export function TableFxOverlay(): ReactElement {
               return null;
             }
             const { from, to, artUrl, id, delayMs = 0 } = event;
+            const isCard = tokenFlyoutUsesCardChrome(event);
             return (
               <motion.img
                 key={id}
                 src={artUrl}
                 alt=""
-                className="absolute object-contain drop-shadow-md"
+                data-fx={isCard ? 'card-flyout' : 'token-flyout'}
+                className={
+                  isCard
+                    ? 'absolute z-20 rounded-[length:var(--radius-card)] border border-border bg-surface-raised object-contain shadow-md'
+                    : 'absolute z-10 object-contain drop-shadow-md'
+                }
                 initial={{
                   left: from.left,
                   top: from.top,
                   width: from.width,
                   height: from.height,
-                  opacity: 0,
-                  scale: 1.15,
+                  opacity: 1,
+                  scale: isCard ? 1 : 1.15,
                 }}
                 animate={{
                   left: to.left,
                   top: to.top,
                   width: to.width,
                   height: to.height,
-                  opacity: [0, 1, 0.15],
-                  scale: 0.9,
+                  // Hold opaque until arrival so the gain leg is still visible
+                  // at the dock (L51-16). Old 0.65 fade hid log→seat chips.
+                  opacity: [1, 1, 1, 0],
+                  scale: isCard ? 1 : [1.15, 1.05, 1, 0.9],
                 }}
                 exit={{ opacity: 0 }}
                 transition={{
-                  duration: TOKEN_FLYOUT_DURATION_S,
-                  ease: MOTION_EASE,
-                  delay: delayMs / 1000,
+                  left: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  top: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  width: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  height: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: FLYOUT_TRAVEL_EASE,
+                    delay: delayMs / 1000,
+                  },
+                  opacity: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: 'linear',
+                    delay: delayMs / 1000,
+                    times: [0, 0.12, 0.88, 1],
+                  },
+                  scale: {
+                    duration: TOKEN_FLYOUT_DURATION_S,
+                    ease: 'linear',
+                    delay: delayMs / 1000,
+                    ...(isCard ? {} : { times: [0, 0.12, 0.65, 1] }),
+                  },
                 }}
                 draggable={false}
               />

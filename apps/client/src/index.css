@@ -138,7 +138,9 @@
   }
 
   .table-felt__opponents {
-    max-height: 26dvh;
+    max-height: 40dvh;
+    overflow-x: auto;
+    overflow-y: auto;
   }
 
   .table-felt__opponents[data-opponent-count="4"],

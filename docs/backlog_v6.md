@@ -29,6 +29,9 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 6. **Hints (Lot 46).** First Classic match, skippable, still after tutorial.
 7. **Feedback (Lot 47).** Postgres + `/api/feedback` + `/inbox`.
 8. **Gate (Lot 48).** Playbooks + first-time browser playtest.
+9. **Beta UI (Lot 51).** Primer rewrite, hub chrome, inspect restyle, table banners,
+   Spy seat resources, opponent flyouts. Client presentation; no protocol bump.
+10. **Six-player Classic (Lot 52).** Occupancy 2–6. No protocol bump.
 
 **Execution order**
 
@@ -62,7 +65,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-43 of 50 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+59 of 66 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -76,7 +79,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
-| 51 · Six-player Classic | 1 | 1 |
+| 51 · Beta UI feedback | 16 | 16 |
+| 52 · Six-player Classic | 1 | 1 |
 
 ---
 
@@ -153,7 +157,7 @@ Same intents as today. Shop buy grid is the visual reference (do not regress it)
 |---|---|---|---|---|---|
 | L46-01 | Hint overlay + `HintId` union from spec §5.2 (**no `leave`**); `localStorage` `card-battle.v6.hints`; Got it / Skip all. **Does not run** when `playKind === 'tutorial'`. **Acceptance:** tutorial match shows coach, not these ids. | M | Low | L41-03, L43-01 | Done |
 | L46-02 | One-card selector (incoming > your-turn > draw > shop > resources > hidden-kit on turn; incoming / hidden-kit off turn). Auto-Got-it per L46 decisions. Reuse `incoming-threat-diff.ts` (ignore persistents). No `leave`. **Acceptance:** unit tests on trigger helpers; Incoming hint is not the persistent chip. | M | Medium | L46-01, L39-05 (Done) | Done |
-| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. Reset help (L42-02) clears hints. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | Done |
+| L46-03 | Completing tutorial does **not** set skipAll. Next Classic Solo/Online still shows hints. `resetHelpStorage` (L42-02 helper; hub Reset help removed in L51-03) still clears hint keys in tests. **Acceptance:** storage keys independent of tutorial completion. | S | Medium | L46-01, L45-04 | Done |
 
 Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, `specials`,
 `reward`; incoming attack copy asks the player to react. Spec §5.2 / `decisions.md`.
@@ -214,14 +218,42 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 
 ---
 
-## Lot 51 — Six-player Classic (designer 2026-08-29)
+## Lot 51 — Beta UI feedback (designer 2026-08-26)
 
-Explicit session instruction: Classic occupancy **2–6**. Not God mode. No protocol bump.
-One commit.
+Designer playtest follow-up. **No Classic rule or value change. No protocol bump.**
+Client presentation + catalog `upgradeAdds` copy derived from existing `effect` /
+`upgradeEffect`. One commit per task. Why stays hidden on the table (already L45-05).
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L51-01 | Raise Classic max seats 4 → 6. Shared `MAX_PLAYERS`; lobby/solo/Colyseus/`createInitialState`/batch/seat palette; compact opponent arc at 4+ foes; MEGA/Poison/legal-action tests at 6. Fitted layout version unchanged. **Acceptance:** 6th seat joins; 7th rejected; solo 5 opponents; `pnpm verify` green. | L | Medium | — | Done |
+| L51-01 | Governance: append `decisions.md`; rewrite technical spec v6 §5.1 to the first-time primer (no delayed resolution); add this lot; L46-03 no longer assumes a hub Reset help button. **Acceptance:** an agent reading only those files sees Lot 51 is client-only and the primer must-say is the locked bodies. | S | Low | — | Done |
+| L51-02 | Rewrite `how-to-play-content.ts` to spec §5.1 (goal, turn, lives, points, cards, upgrade, kits, specials, shop). Screenshot slots only for existing filenames. Resource icons beside Lives / Points / Upgrade / Shield. **Acceptance:** tests assert the locked must-say; no “double”, “delayed”, or “not a card”. | M | Low | L51-01 | Done |
+| L51-03 | Hub: drop protocol version (Home + Lobby), Reset help, delayed-resolution pitch, and the Beta paragraph. Small **Beta** card top-right, text Beta only. **Acceptance:** no `Protocol v` in hub/lobby DOM; no Reset help control. | S | Low | L51-01 | Done |
+| L51-04 | Kit inspect: Draw + UP buy/sell as `CostDisplay`; starting hand = action/attack versos + counts; special thumbs show play-cost icons; restyle trait groups. **Acceptance:** no `N action · M attack` prose; costs are icons. | M | Low | L51-01 | Done |
+| L51-05 | `Card.upgradeAdds` on every catalog row (derived deltas). `formatCardEffectText`: no `Cost:` prefix; non-upgraded = effect + Upgrade delta; upgraded = full `upgradeEffect`. Inspect dialogs use `CostDisplay`. **Acceptance:** catalog exhaustiveness; Basic non-upgraded does not repeat “Deal 3 damage to an opponent.” as the upgrade line. | M | Low | L51-01 | Done |
+| L51-06 | Table banners: Your turn (existing); **You are being attacked** once per new attack-tone Incoming (flashier, red); **You are dead** on POV elim (flashier, red); **You won!** on POV win. Game over dialog still follows. **Acceptance:** unit on trigger helpers; won and dead never on the same seat. | M | Low | L51-01 | Done |
+| L51-07 | Pending chips (Incoming + Waiting on others): tutorial callout chrome, no arrow; red = `threatToneFor` attack, orange = other real pending; persist until resolve. No ring on presentation persistents. Drop arrowed Incoming threat wrap. **Acceptance:** pending-queue test; tutorial coach arrows stay on scripted controls. | M | Low | L51-01 | Done |
+| L51-08 | Opponent seat: live resource icons when upgraded Spy or death reveal; unspied and base Spy show the same icons with `?`. Wrap to a second line; drop shield on the seat only if still overflowing. Remove Hidden kit / Spied — tap / Revealed — tap. Spy dialog title is nickname only. **Acceptance:** unspied `?` never prints real totals. | M | Medium | L51-01 | Done |
+| L51-09 | Opponent token flyouts from the seat to the action-log center. POV stays dock `ResourceIcon`. Unspied / base Spy: public log amounts only (`livesLost`, `shieldAbsorbed`, catalog play/buy/sell/upgrade). Skip Draw when kit Draw is hidden. Include life, point, upgrade-point, and shield chips. **Acceptance:** `measureTokenFlyout` accepts `playerId`; no invented Draw count. | M | Medium | L51-08 | Done |
+| L51-10 | Opponent seat layout: resource icons stack vertically beside the portrait; activated cards sit under the portrait. Drop wrap-row + omit-shield. **Acceptance:** seats no longer overflow from a wrapping resource row; shield always stays on the seat. | S | Low | L51-08 | Done |
+| L51-11 | Directed token/card flyouts: sell yield log→seat plus card ghost (verso unspied, face when Spyed); buy/sell upgrade-point uses default 10/7 when kit hidden; thief/spy-thief/UPT live Δ flies victim→thief; every catalog chip has from/to. **Acceptance:** no invented Draw/thief counts; sell points never seat→log. | M | Medium | L51-09 | Done |
+| L51-12 | Card inspect: drop “Choose Use, Upgrade, or Sell.”; label play cost **Cost** then icons; inline resource glyphs in effect / upgradeAdds prose. **Acceptance:** Regeneration copy shows life/point icons; no Choose-Use helper. | S | Low | L51-05 | Done |
+| L51-13 | Flyout correction: card ghosts only on buy/sell (felt pending + card-band midpoint, ~48×72, fast fade); no play-to-center card; resource chips on every action including Regen+ (live Δ, else catalog unit); thief victim→thief even when both `?` (1 directional chip, never an invented total); faster travel. **Acceptance:** playCard does not enqueue a card flyout; opponent buy/sell card is small and aimed at pending, not the log. | M | Medium | L51-11 | Done |
+| L51-14 | Resource token chips must stay icon-only: overlay card chrome (`bg-surface-raised` + border + card radius) is `asCard === true` only. Do not classify chips by `from.width` (log-origin tokens are 40px). Buy/sell ghosts keep `asCard`. **Acceptance:** Draw / Regen / spend chips have no white tile; buy/sell ghosts still use card chrome. Update `frontend.md` + `decisions.md` in the same change. | S | Low | L51-13 | Done |
+| L51-15 | Every resource flow is animated both ways: catalog spend/yield plus leftover live Δ (Absorber 3 out + 10 in, not net +7). `actionResolved` lives/shield fly from every target including POV and live Spy. No invented Draw/absorb totals. **Acceptance:** leftover test for spend+gain; resolved livesLost for you and live Spy; playbooks updated. | M | Medium | L51-14 | Done |
+| L51-16 | Make two-way and opponent-loss flows readable: chips stay opaque through travel; public `livesLost` flashes on `?` seats; skip ResourceIcon only after overlay lands; play-card ghosts to felt center. **Acceptance:** leftover two-way stays; overlay holds opacity to ~88%; unknown-seat flash helper; playCard ghost from opponent log, not POV. | M | Medium | L51-15 | Done |
+
+---
+
+## Lot 52 — Six-player Classic (designer 2026-08-29)
+
+Explicit session instruction: Classic occupancy **2–6**. Not God mode. No protocol bump.
+Lot 51 on main is Beta UI, so occupancy is this lot. One commit.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L52-01 | Raise Classic max seats 4 → 6. Shared `MAX_PLAYERS`; lobby/solo/Colyseus/`createInitialState`/batch/seat palette; compact opponent arc at 4+ foes; MEGA/Poison/legal-action tests at 6. Fitted layout version unchanged. **Acceptance:** 6th seat joins; 7th rejected; solo 5 opponents; `pnpm verify` green. | L | Medium | — | Done |
+
 
 ---
 
@@ -239,8 +271,9 @@ One commit.
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| 51 | 1 |
-| **Total** | **50** |
+| 51 | 16 |
+| 52 | 1 |
+| **Total** | **66** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

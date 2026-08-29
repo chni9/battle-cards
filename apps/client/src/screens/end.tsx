@@ -1,15 +1,16 @@
 /**
  * Finished phase — closable stats over the frozen board (designer 2026-08-06).
- * Stats dialog defaults open; Esc / overlay / View board dismiss so players can
- * inspect the final table. PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
+ * Game over Dialog opens after the L51-06 win/death banner (~1.6s).
+ * PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
  */
 
 import type { FinishedStateView } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import type { ActionRejectPayload } from '../net/use-room-connection';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
+import { TABLE_BANNER_MS } from './table/table-banner';
 
 export interface EndScreenProps {
   view: FinishedStateView;
@@ -32,7 +33,17 @@ export function EndScreen({
   nowMs,
   onLeave,
 }: EndScreenProps): ReactElement {
-  const [statsOpen, setStatsOpen] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const youWon = view.winnerPlayerId === view.finalTable.you;
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setStatsOpen(true);
+    }, TABLE_BANNER_MS);
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, []);
 
   return (
     <>
@@ -46,6 +57,7 @@ export function EndScreen({
         lastActionResolved={null}
         subChoice={null}
         readOnly
+        youWon={youWon}
         onShowStats={() => {
           setStatsOpen(true);
         }}

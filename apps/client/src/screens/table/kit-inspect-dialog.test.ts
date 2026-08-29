@@ -2,6 +2,10 @@
  * Kit inspect — L27-05 special keys + L30-05 trait section coverage.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { getKit, type KitTraits } from '@card-battle/shared';
@@ -11,6 +15,8 @@ import {
   KIT_TRAIT_SECTION_KEYS,
 } from './kit-inspect-traits';
 import { kitSpecialCardKey } from './kit-special-card-key';
+
+const dir = dirname(fileURLToPath(import.meta.url));
 
 describe('kitSpecialCardKey (L27-05)', () => {
   it('disambiguates duplicate special card ids for Specialist', () => {
@@ -63,5 +69,14 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
     expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
+  });
+});
+
+describe('kit inspect starting hand (L51-04)', () => {
+  it('uses action and attack versos instead of action · attack prose', () => {
+    const source = readFileSync(join(dir, 'kit-inspect-details.tsx'), 'utf8');
+    expect(source).toContain('getCardBackUrl');
+    expect(source).not.toMatch(/action · .*attack/);
+    expect(source).toContain('CostDisplay');
   });
 });

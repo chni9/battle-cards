@@ -122,9 +122,15 @@ export interface Card {
   effect: string;
   /**
    * Full player-facing description of the upgraded card (standalone, not a delta).
-   * Non-upgraded UI appends this after `effect` via `formatCardEffectText`.
+   * Upgraded UI shows this via `formatCardEffectText`.
    */
   upgradeEffect: string;
+  /**
+   * What the upgrade adds relative to the base `effect` (L51-05).
+   * Non-upgraded UI appends this after `effect`. Derived from `effect` /
+   * `upgradeEffect` — not a new mechanic.
+   */
+  upgradeAdds: string;
   /**
    * Shop purchase price from infinite stock — always the **base** usage transfer × 2
    * (or the ruled exception for Tax/Regeneration). Never follows an upgraded play cost.

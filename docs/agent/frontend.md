@@ -11,9 +11,10 @@ V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is
 (`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
 router; Home, Lobby, Table, and End live under `apps/client/src/screens/` (Lots 11–13).
 Update this file's examples in place as V2 components land; don't fork a second frontend
-playbook. Intents, payloads, and visibility rules are unchanged by V2 (except the Table
-**control pattern** in technical spec v2 §6.1 — same payloads, different chrome;
-implemented in L12-08).
+playbook. **Keep it current with every client convention change** (AGENTS.md §12) — same
+commit as the code, never a later cleanup. Intents, payloads, and visibility rules are
+unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
+payloads, different chrome; implemented in L12-08).
 
 ## Screens
 
@@ -60,19 +61,21 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
   / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-- **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
+- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–5 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **How to play** (L42): spec §5.1 sections in order; Skip + Got it both close; screenshot
-  `<img>` only when the PNG exists under `src/assets/how-to-play/` (`import.meta.glob`,
-  missing files omit the image). Copy is the §5.1 must-say floor; existing resource icons
-  sit in the Resources section. **Soft gate** on the first hub Play online / Play solo
+  **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
+  points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
+  Skip + Got it both close; screenshot `<img>` only when the PNG exists under
+  `src/assets/how-to-play/` (`import.meta.glob`, missing files omit the image).
+  Copy is the §5.1 first-time floor; resource icons sit next to Lives / Points /
+  Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Hub **Reset help** (muted) clears How to play +
-  `card-battle.v6.hints`. **Beta** line replaces the protocol headline; protocol version is
-  a tiny footer.   Idle hub is unlabeled (not “Not connected”). **Tutorial** opens a nickname-only path
+  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
+  pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
   (L43-05; does not send an intent). Tutorial table (L45-05): hovering dismissible coach
   chat (copy from `tutorialStepAt` / `TUTORIAL_TOUR_STEPS` / `TUTORIAL_LOOK_COACH`; last human
@@ -81,8 +84,11 @@ rules above are unchanged — this section only covers how the client looks.
   before sell. Coach panel is slightly transparent. Auto-opens
   on new copy; compact **?** reopens it (not a Coach pill). Skip tutorial is **flag only**.
   Resource words in coach copy render as table icons.
-  Pulsing orange callout + pointing arrow **outside** the highlight square; incoming Attack /
-  Spy / Thief chips are a red callout on Incoming (not Waiting on others). Shop is **not**
+  Pulsing orange callout + pointing arrow **outside** the highlight square on scripted
+  controls (Draw, cards, Shop). Real pending chips (Incoming **and** Waiting on others)
+  get the same callout chrome **without** an arrow: red when `threatToneFor` is attack,
+  orange otherwise, until the chip leaves the queue. Presentation persistents are not
+  ringed. Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
   copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
   **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
@@ -133,9 +139,9 @@ rules above are unchanged — this section only covers how the client looks.
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
   `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay a
-  wrapping arc (`flex-wrap`, scroll if needed); 4+ opponents use compact seat chrome so
-  six-player tables remain readable. Lobby player list scrolls (`max-h` + overflow) so
-  six seats do not cover Start / Add bot. **Dock is primary**
+  wrapping arc (`flex-wrap`, `overflow-y-visible` so token flyouts are not clipped);
+  4+ opponents use compact seat chrome so six-player tables remain readable. Lobby
+  player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
@@ -144,7 +150,10 @@ rules above are unchanged — this section only covers how the client looks.
   render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
   on others**, L43-03) — both strips size to show full
   chips and scroll internally when many effects queue. Kit
-  portrait opens a visual inspect Dialog from `getKit` / `getCard` only. **Private zone:**
+  portrait opens a visual inspect Dialog from `getKit` / `getCard` only (L51-04:
+  starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
+  cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
+  prose). **Private zone:**
   `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
   match action cards; resources sit above the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
@@ -155,9 +164,11 @@ rules above are unchanged — this section only covers how the client looks.
   shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
   without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
   Short docks may still shrink below 48 so faces are not cropped.
-- **Table card-first (L12-08):** click own hand/specials → Dialog with effect text + Use /
-  Upgrade / Sell. Effect copy and the Use label include the play cost (`formatPlayCost` /
-  `formatCardEffectText`). Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
+- **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
+  Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
+  show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
+  `upgradeEffect`. `formatCardEffectText` matches that copy (no `Cost:` prefix) for
+  non-dialog surfaces. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
   player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
   Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
   action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
@@ -216,10 +227,41 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
+  - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14 / L51-15 / L51-16):** POV dock
+    `ResourceIcon` still handles live dock Δ except overlay-landed transfers
+    (skip only after chips measure). Unspied / base Spy enqueue **directed** chips
+    (`from` / `to` log or player): play/buy/upgrade spends seat→log; sell yield
+    log→seat; buy upgrade point spends Classic 10 when kit is hidden. **Resource
+    chips are icon-only** (`object-contain` + drop shadow, no `bg-surface-raised`,
+    no card radius, no border). Overlay card chrome is **`asCard === true` only**
+    — never `from.width`. Token chips are 40×40 both ends (L51-16); that size
+    must not promote them to tiles (L51-14). **Card ghosts on buy/sell and play**
+    (felt pending + card-band midpoint, ~48×72, `asCard: true`) — buy/sell verso
+    when unspied, face when Spyed; play uses public `cardId` face art. Special
+    buy uses the special verso. **Every resource
+    transaction flies both legs when both exist** (L51-15): catalog spend/yield
+    plus `leftoverLiveFlowChips` for live Δ the catalog did not explain
+    (Absorber spend 3 + absorb 10 → 3 out and 10 in, not the net +7).
+    Overlay opacity holds through ~88% of travel so the gain leg is still
+    visible at the dock (L51-16). Public chip amounts flash on the seat icon
+    even when the printed value is `?` (`emitResourceFlowFlash`).
+    `actionResolved` `livesLost` / `shieldAbsorbed` fly from the target
+    (POV, unspied, and live Spy) — do not skip seats with live icons.
+    Regeneration: live Δ when numbers are known, otherwise the catalog per-life
+    unit (rate + 1 life) so the action still animates; quantity is not on the
+    public log. Thief / Spy Thief / Upgrade Point Thief: live Δ victim→thief
+    (extra upgraded gain from the log); both `?` → one directional chip, never an
+    invented total. Overlay `z-[110]`.
+    Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
+    (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
+    Reduced motion skips choreography. Do not invent Draw totals.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
-    How-to-play, kit lore, and action-log prose stay text
-    via `formatCardCost`. Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
+    card inspect use `CostDisplay`. Card inspect prefixes the play-cost row with
+    **Cost** and inlines resource glyphs in effect / `upgradeAdds` copy
+    (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
+    Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
@@ -228,7 +270,8 @@ rules above are unchanged — this section only covers how the client looks.
     `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
     otherwise. Flash TTL `THREAT_FX_TTL_MS` (~3.8s) with a matching long outline pulse.
     Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
-    banner gets a stronger seat tint.
+    banner gets a stronger seat tint. Table banners reuse the same flash duration (~1.6s,
+    `pointer-events-none`): attacked / dead are flashier red; win copy is `You won!`.
 
 ## Conventions
 
@@ -262,7 +305,10 @@ rules above are unchanged — this section only covers how the client looks.
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
   Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
-  (still `onLeave` → hub only). **Download action log** renders only when
+  (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
+  **You are being attacked** once per new attack-tone Incoming (flashier, red);
+  **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
+  win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
   `import.meta.env.DEV` (every mode).
   No kits on the finished seat list
   itself (still private
@@ -275,12 +321,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy / death reveal:** keep the opponent seat compact (kit portrait + “Spied — tap” /
-  “Revealed — tap”). Opening the portrait shows `OpponentRevealDialog` with kit name,
-  resources (live or base Spy snapshot), hand, and specials — this replaces
-  `KitInspectDialog` for opponents. Own kit still uses `KitInspectDialog`. Dead seats: kit
-  portrait “Eliminated” overlay only — no connection “eliminated” badge and no Bot · hard
-  label (they waste space next to the reveal).
+- **Spy / death reveal (L51-08 / L51-10):** opponent seats always show lives /
+  points / upgrade points / shield icons. Unspied and base Spy render `?` (never
+  unspied totals, never the frozen snapshot numbers). Upgraded Spy and death
+  reveal show live / freeze numbers. Icons stack vertically beside the portrait;
+  activated cards sit under the portrait. Shield stays on the seat (no omit-on-
+  overflow). Portrait stays tappable when a Spy or death reveal exists. Dialog
+  title is `{nickname}` for Spy and `{nickname} (eliminated)` on death. No Hidden
+  kit / Spied — tap / Revealed — tap labels.
 - **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
   resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).
 - **Elimination reward Dialog:** option labels use natural names (`4 lives`, card catalog
@@ -531,6 +579,12 @@ do not hand off an untested lot.
   row immediately left of the cards; **Specials** sits in the SPECIALS row immediately
   left of Super Mirror — not on the far left of the felt.
 
+### Lot 46 copy rewrite (main 2026-08-29)
+
+- Designer replaced the short §5.2 one-liners with longer `HINT_COPY` bodies (Draw depends
+  on kit; Shop buy cards / specials / upgrade points; Incoming attack vs Thief still
+  distinct). Spec + copy test lock those strings. Placement and selector unchanged.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
@@ -538,3 +592,61 @@ do not hand off an untested lot.
   upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
   nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
   Room `PPWXUP` on the pager pass.
+
+### Lot 51 verified 2026-08-26 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+- **Hub:** top-right **Beta** card (word Beta only). No `Protocol v` footer, no Reset help,
+  no delayed-resolution pitch. How to play: Goal → Turns → Lives → Points → Cards → Upgrade
+  → Kits → Special cards → Shop; resource glyphs beside Lives / Points / Upgrade / Shield;
+  Skip / Got it. No “delayed”, “double”, or “(not a card)”.
+- **Kit inspect** (Scientific on Play solo): starting-hand action/attack versos with counts;
+  Draw and special play cost use `CostDisplay`; traits grouped (Always upgraded).
+- Room `ZYGXYI` (Scientific vs 1× Normal): unspied opponent four icons with `?`; no Hidden kit
+  / Spied — tap; Incoming Strong attack chip ringed, **no arrow**; center **You are being
+  attacked** then **Your turn**.
+- Room `ZOVGTV` (Tactician nick `L51Spy`): Shop-buy Spy (always-upgraded); after resolve,
+  opponent live numbers (not `?`); Super attack dialog CostDisplay + Upgrade delta; token
+  chips from the seat toward the action log.
+- Room `BRXKPO` (nick `L51Dead`, forfeit): center **You are dead** (~1.6s) then Game over
+  (Protocol v30 stays on that dialog). **You won!** not forced this pass — same first-paint
+  seed as dead (`table-banner.test.ts`).
+
+### Lot 51 follow-up verified 2026-08-27 (browser, PROTOCOL 30)
+
+- Room `A1HICW` (nick `L51Fx`, Kamikaze vs 1× Normal): opponent resources are a vertical
+  column of four `?` icons beside the portrait; Regeneration inspect is **Cost** + coin/heart
+  glyphs, no “Choose Use, Upgrade, or Sell.”; buy-upgrade spend coins dock → log.
+- Room `UYHZH` (nick `L51Ghost`): sell yield coins log → Alpha (gain). Action-verso ghost
+  enqueued seat/portrait → log (96×144, tokenFlyout). Landscape opponents strip `40dvh` so
+  the seat is not clipped.
+- Thief seat-to-seat chips remain unit-tested (`stealTransferChips`); not forced in this
+  browser pass (hands rarely held Thief).
+
+### Lot 51-13 verified 2026-08-28 (browser, PROTOCOL 30)
+
+- Room `GDYM1C` (nick `L51Fx13`, Indestructible): Draw coin chips log↔dock; Regeneration+
+  (1 life / 2 points) flies two coins dock→log and one heart log→dock. Playing
+  Regeneration does not fly a card to the center.
+- Buy/sell card ghosts are ~48×72 and fade in ~0.5s (no lingering full-size log card).
+  Destination is the pending/card-band midpoint on the felt. Thief live Δ still flies
+  victim→thief (1 directional chip when both `?`; same-tick sell yield fills a net-0 Δ).
+
+### Lot 51-14 verified 2026-08-29 (browser, PROTOCOL 30)
+
+- Room `NOJYLL` (nick `L51Chip`, Indestructible): Draw +1. Flying point chip is
+  **icon-only** over the felt — no raised-surface tile, no card border. Still at
+  t=1.05s: coin center gold `(185, 152, 17)`; 22px corners match felt pink
+  `~(244, 193, 194)`, not log/raised white `~(245, 243, 241)`.
+- Overlay chrome stays `asCard === true` only (buy/sell ghosts). Resource
+  `tokenFlyout` uses `object-contain` + drop shadow. Playbooks updated in the
+  same change (`frontend.md`, `testing.md`, `decisions.md`).
+
+### Lot 51-16 verified 2026-08-29 (browser, PROTOCOL 30)
+
+- Room `DOMKYZD` / table nick `L51Fx16`, Specialist vs 1× Normal (Alpha).
+- Absorber+ (cost 3) on Alpha while Strong attack was pending on POV: small
+  Absorber ghost hand → felt center; gold coins in flight at the same time as
+  hearts (Strong resolve −2 life). Coins visible both near the log and arriving
+  on the Points dock — spend and gain legs, not a single net chip.
+- Mutual equal/weaker attack vs Alpha's Strong still cancels (Round 2 log);
+  cancelled attacks correctly fly no `livesLost` chips from the `?` seat.

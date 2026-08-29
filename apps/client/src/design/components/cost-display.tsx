@@ -1,6 +1,7 @@
 /**
- * Icon + number costs for interactive Table chrome (L32-04).
- * Leaves how-to-play / kit lore / action-log prose as text via formatCardCost.
+ * Icon + number costs for interactive Table chrome (L32-04 / L51-04 / L51-05).
+ * Action-log prose stays text via formatCardCost. Kit inspect and card inspect
+ * use CostDisplay for prices.
  */
 
 import type { ReactElement } from 'react';

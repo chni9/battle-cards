@@ -4,6 +4,7 @@
  * L14-04: optional Mirror highlight via highlightedIds.
  * L39-03: source/target nicknames in seat color.
  * L39-05: CSS entrance on chip mount when `animateEntrance` (Incoming).
+ * L51-07: real pending chips use tutorial callout chrome, no arrow.
  */
 
 import { formatCardLabel, type PendingEffectView, type PlayingStateView } from '@card-battle/shared';
@@ -11,6 +12,8 @@ import { useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
 import { PlayerName } from '../../design/components/player-name';
+import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
+import { pendingChipCalloutTone } from './pending-chip-tone';
 import { nicknameOf } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -27,8 +30,6 @@ export interface PendingQueueProps {
   highlightedIds?: readonly string[];
   /** Animate chips on mount (Incoming). Stable keys keep the animation one-shot. */
   animateEntrance?: boolean;
-  /** Tutorial red threat callout (incoming Attack / Spy / Thief). */
-  threatHighlightIds?: readonly string[];
 }
 
 export function PendingQueue({
@@ -39,7 +40,6 @@ export function PendingQueue({
   tone = 'felt',
   highlightedIds = [],
   animateEntrance = false,
-  threatHighlightIds = [],
 }: PendingQueueProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const entranceClass =
@@ -56,6 +56,9 @@ export function PendingQueue({
       ? 'border-slate-soft/50 bg-surface-raised text-ink'
       : 'border-border-soft bg-surface-raised text-ink';
   const highlightClass = 'ring-2 ring-cta-purple border-cta-purple shadow-md';
+  const hasRealPending = effects.some(
+    (effect) => !isPersistentPresentationId(effect.id),
+  );
 
   return (
     <section data-zone="pending-queue" className="flex min-h-0 flex-col">
@@ -67,7 +70,7 @@ export function PendingQueue({
           className={[
             'mt-1 flex min-h-0 gap-1.5',
             compact ? 'flex-wrap justify-end' : 'flex-wrap',
-            threatHighlightIds.length > 0 ? 'overflow-visible' : 'overflow-y-auto',
+            hasRealPending ? 'overflow-visible' : 'overflow-y-auto',
           ].join(' ')}
         >
           {effects.map((effect) => {
@@ -76,7 +79,7 @@ export function PendingQueue({
             const targetNick = nicknameOf(view, effect.targetPlayerId);
             const routePlain = `${sourceNick} → ${targetNick}`;
             const highlighted = highlightedIds.includes(effect.id);
-            const threat = threatHighlightIds.includes(effect.id);
+            const ringPending = !isPersistentPresentationId(effect.id);
             const route = (
               <>
                 <PlayerName
@@ -94,48 +97,22 @@ export function PendingQueue({
                 />
               </>
             );
-            if (compact) {
-              const chip = (
-                <span
-                  className={[
-                    'flex max-w-full flex-wrap items-start gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
-                    chipClass,
-                    highlighted ? highlightClass : '',
-                    entranceClass,
-                  ].join(' ')}
-                >
-                  <span className="whitespace-normal break-words text-xs font-semibold">{label}</span>
-                  <span className="inline-flex min-w-0 whitespace-normal break-words text-[10px] text-ink-muted">
-                    {route}
-                  </span>
+            const chip = compact ? (
+              <span
+                className={[
+                  'flex max-w-full flex-wrap items-start gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
+                  chipClass,
+                  highlighted ? highlightClass : '',
+                  entranceClass,
+                ].join(' ')}
+              >
+                <span className="whitespace-normal break-words text-xs font-semibold">{label}</span>
+                <span className="inline-flex min-w-0 whitespace-normal break-words text-[10px] text-ink-muted">
+                  {route}
                 </span>
-              );
-              return (
-                <li
-                  key={effect.id}
-                  data-pending-id={effect.id}
-                  title={`${label} · ${routePlain} · queued #${String(effect.queuedAt)}`}
-                  className={threat ? 'overflow-visible' : ''}
-                >
-                  {threat ? (
-                    <TutorialCallout
-                      active
-                      tone="threat"
-                      arrow="top"
-                      highlightId={`incoming-${effect.cardId}`}
-                    >
-                      {chip}
-                    </TutorialCallout>
-                  ) : (
-                    chip
-                  )}
-                </li>
-              );
-            }
-            return (
-              <li
-                key={effect.id}
-                data-pending-id={effect.id}
+              </span>
+            ) : (
+              <span
                 className={[
                   'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                   chipClass,
@@ -150,6 +127,26 @@ export function PendingQueue({
                 <span className="text-[10px] tabular-nums text-ink-muted">
                   queued #{effect.queuedAt}
                 </span>
+              </span>
+            );
+            return (
+              <li
+                key={effect.id}
+                data-pending-id={effect.id}
+                title={compact ? `${label} · ${routePlain} · queued #${String(effect.queuedAt)}` : undefined}
+                className={ringPending ? 'overflow-visible' : undefined}
+              >
+                {ringPending ? (
+                  <TutorialCallout
+                    active
+                    arrow={false}
+                    tone={pendingChipCalloutTone(effect.cardId)}
+                  >
+                    {chip}
+                  </TutorialCallout>
+                ) : (
+                  chip
+                )}
               </li>
             );
           })}
