@@ -15,42 +15,42 @@ export interface HintCopy {
 export const HINT_COPY: Record<HintId, HintCopy> = {
   'your-turn': {
     title: 'Your turn',
-    body: 'Your turn — take **one** action.',
+    body: 'It is your turn you have to take **one** action.',
   },
   draw: {
     title: 'Draw',
-    body: '**Draw** gives points, not a card.',
+    body: '**Draw** gives you points. The number of points you can draw depends on you kit.',
   },
   hand: {
     title: 'Hand',
-    body: 'Click a card to **use**, **upgrade**, or **sell** it for points.',
+    body: 'This is you hand where you have all the cards you can use. Click a card to **use**, **upgrade**, or **sell** it for points.',
   },
   specials: {
     title: 'Specials',
-    body: '**Specials** are usually one-use. Using one **is** your action for the turn.',
+    body: '**Specials** are one-use cards. They are stronger that normal cards. Use them wisely. Special cards you start with depend on your kit.',
   },
   resources: {
     title: 'Resources',
-    body: 'Heart lives · diamond points · upgrade-point icon · shield (attacks only).',
+    body: 'Here you will find lives, points, upgrade points and shield. They are your ressources that you have to manage during the game. If your number of lives atteign 0, you are eliminated.',
   },
   incoming: {
     title: 'Incoming',
-    body: 'There is an incoming **attack**. It hits **after you act**. Do something this turn: attack back, Shield, or Mirror.',
+    body: 'There is an incoming **attack**! It will take effect **after you act**. In general, you can: attack back with a equal or stronger attack, use Shield, or use Mirror.',
   },
   'incoming-thief': {
     title: 'Incoming',
-    body: 'There is an incoming **Thief**. It hits **after you act**. Counter with Thief, or act before it resolves.',
+    body: 'An opponent used **Thief** on you! It will take effect **after you act**. This will steal uo to 10 points from you. You can counter it with Thief, or spend your points before it resolves.',
   },
   'hidden-kit': {
     title: 'Hidden kit',
-    body: 'You cannot see their kit until Spy (or death).',
+    body: 'Here are your opponents. You cannot see their kit until you use Spy to reveal it.',
   },
   shop: {
     title: 'Shop',
-    body: 'Shop prices are double the play cost.',
+    body: 'This is the shop. You can buy cards, special cards and upgrade points from here.',
   },
   reward: {
     title: 'Elimination reward',
-    body: 'You eliminated them — pick **two** rewards: 4 lives, 8 points, a card from them, or an upgrade point. Same choice twice is allowed.',
+    body: 'You eliminated an opponent ! You can pick **two** rewards: 4 lives, 8 points, a card from their hand, or an upgrade point.',
   },
 };
