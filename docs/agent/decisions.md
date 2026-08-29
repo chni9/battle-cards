@@ -2802,4 +2802,11 @@ Fix: the anchor is an `inline-flex` wrap around the visible cards (or the Empty 
 caption). Hand / Specials use `prefer: 'beside'` (top-aligned, left of the cluster when
 that fits). Draw / Shop / Incoming stay `below` on their small chrome.
 
+## 2026-08-29 · [P] First-game hint copy rewrite (main)
+
+Designer 2026-08-29 (`394b3b5`) replaced the short §5.2 one-liners with longer table copy
+in `hint-copy.ts` (Draw no longer says “not a card”; Shop no longer quotes double price).
+Merging that main into Lot 51 made the old copy test fail. Spec §5.2 and `hint-copy.test.ts`
+now lock the shipped bodies. Selectors, auto-Got-it, and `HintId`s are unchanged.
+
 

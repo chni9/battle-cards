@@ -200,18 +200,18 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 { dismissed: HintId[]; skipAll: boolean }
 ```
 
-| `HintId` | When it fires | One-line copy (normative) |
+| `HintId` | When it fires | Copy (normative; `HINT_COPY`) |
 |---|---|---|
-| `your-turn` | POV becomes active the first time | Your turn — take **one** action. |
-| `draw` | First time the dock is shown | **Draw** gives points, not a card. |
-| `hand` | First time the dock is shown (after Draw) | Click a card to **use**, **upgrade**, or **sell** it for points. |
-| `specials` | First time the dock is shown (after Hand) | **Specials** are usually one-use. Using one **is** your action for the turn. |
-| `resources` | Same | Heart lives · diamond points · upgrade-point icon · shield (attacks only). |
-| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**. It hits **after you act**. Do something this turn: attack back, Shield, or Mirror. |
-| `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | There is an incoming **Thief**. It hits **after you act**. Counter with Thief, or act before it resolves. |
-| `hidden-kit` | First time an unspied opponent is visible | You cannot see their kit until Spy (or death). |
-| `shop` | Current best remaining economy lesson on your turn (L46-02) | Shop prices are double the play cost. |
-| `reward` | First elimination-reward sub-choice for POV | You eliminated them — pick **two** rewards: 4 lives, 8 points, a card from them, or an upgrade point. Same choice twice is allowed. |
+| `your-turn` | POV becomes active the first time | It is your turn you have to take **one** action. |
+| `draw` | First time the dock is shown | **Draw** gives you points. The number of points you can draw depends on you kit. |
+| `hand` | First time the dock is shown (after Draw) | This is you hand where you have all the cards you can use. Click a card to **use**, **upgrade**, or **sell** it for points. |
+| `specials` | First time the dock is shown (after Hand) | **Specials** are one-use cards. They are stronger that normal cards. Use them wisely. Special cards you start with depend on your kit. |
+| `resources` | Same | Here you will find lives, points, upgrade points and shield. They are your ressources that you have to manage during the game. If your number of lives atteign 0, you are eliminated. |
+| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**! It will take effect **after you act**. In general, you can: attack back with a equal or stronger attack, use Shield, or use Mirror. |
+| `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | An opponent used **Thief** on you! It will take effect **after you act**. This will steal uo to 10 points from you. You can counter it with Thief, or spend your points before it resolves. |
+| `hidden-kit` | First time an unspied opponent is visible | Here are your opponents. You cannot see their kit until you use Spy to reveal it. |
+| `shop` | Current best remaining economy lesson on your turn (L46-02) | This is the shop. You can buy cards, special cards and upgrade points from here. |
+| `reward` | First elimination-reward sub-choice for POV | You eliminated an opponent ! You can pick **two** rewards: 4 lives, 8 points, a card from their hand, or an upgrade point. |
 
 `leave` is **not** a first-game hint (designer 2026-08-26). The Forfeit flag keeps its own confirm copy.
 

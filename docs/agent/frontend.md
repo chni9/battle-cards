@@ -576,6 +576,12 @@ do not hand off an untested lot.
   row immediately left of the cards; **Specials** sits in the SPECIALS row immediately
   left of Super Mirror — not on the far left of the felt.
 
+### Lot 46 copy rewrite (main 2026-08-29)
+
+- Designer replaced the short §5.2 one-liners with longer `HINT_COPY` bodies (Draw depends
+  on kit; Shop buy cards / specials / upgrade points; Incoming attack vs Thief still
+  distinct). Spec + copy test lock those strings. Placement and selector unchanged.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
