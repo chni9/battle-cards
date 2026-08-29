@@ -188,6 +188,7 @@ const TURN_DURATION_MS = (() => {
 })();
 
 export class GameRoom extends Room<{ client: GameClient }> {
+  /** Socket cap = Classic occupancy (`MAX_PLAYERS`). Bots are seats, not clients. */
   override maxClients = MAX_PLAYERS;
 
   private seats: Seat[] = [];

@@ -38,7 +38,7 @@ Each kit corresponds to a unique card. 15 kits currently exist: 14 finalized and
 
 ### Number of Players
 
-No limit defined at this stage.
+Classic mode: 2 to 6 players. Team, God and Quick modes stay out of this implementation.
 
 ### Victory Conditions
 

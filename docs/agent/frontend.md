@@ -62,7 +62,7 @@ rules above are unchanged — this section only covers how the client looks.
   token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01 / L17-01 + hub rework):** branded hub first — title, delayed-resolution pitch,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
-  (nickname + create / join) and **Play solo** (nickname + opponent count + difficulty,
+  (nickname + create / join) and **Play solo** (nickname + opponent count 1–5 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
   **How to play** (L42): spec §5.1 sections in order; Skip + Got it both close; screenshot
   `<img>` only when the PNG exists under `src/assets/how-to-play/` (`import.meta.glob`,
@@ -103,8 +103,8 @@ rules above are unchanged — this section only covers how the client looks.
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
-  Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty;
-  `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
+  Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty
+  while `players.length < MAX_PLAYERS` (2–6); `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
   and sends `chooseKit` before `startGame` when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
@@ -132,7 +132,9 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
-  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). **Dock is primary**
+  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay a
+  horizontal arc (`overflow-x-auto`); 4+ opponents use compact seat chrome so six-player
+  tables remain readable. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
   region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate

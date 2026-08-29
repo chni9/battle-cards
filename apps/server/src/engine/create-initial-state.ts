@@ -16,6 +16,8 @@ import {
   getKit,
   isKitId,
   KIT_IDS,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   type GameState,
   type KitId,
   type Player,
@@ -48,8 +50,16 @@ export interface CreateInitialStateOptions {
 }
 
 export function createInitialState(options: CreateInitialStateOptions): GameState {
-  if (options.seats.length < 2) {
-    throw new RangeError('createInitialState needs at least two seated players');
+  if (options.seats.length < MIN_PLAYERS) {
+    throw new RangeError(
+      `createInitialState needs at least ${String(MIN_PLAYERS)} seated players`,
+    );
+  }
+
+  if (options.seats.length > MAX_PLAYERS) {
+    throw new RangeError(
+      `createInitialState supports at most ${String(MAX_PLAYERS)} seated players`,
+    );
   }
 
   const kitBySeatId = buildKitBySeatId(

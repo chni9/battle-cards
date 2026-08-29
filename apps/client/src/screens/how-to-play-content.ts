@@ -80,7 +80,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'modes',
     title: 'Online, solo, tutorial',
-    body: 'Online = code + friends (bots may fill). Solo = bots. Tutorial = optional scripted 1v1.',
+    body: 'Online = code + friends (bots may fill), up to 6 seats. Solo = bots. Tutorial = optional scripted 1v1.',
     screenshotFile: null,
   },
 ];

@@ -6,6 +6,8 @@ import {
   BOT_DIFFICULTIES,
   isBotDifficulty,
   isKitId,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   type BotDifficulty,
   type KitId,
 } from '@card-battle/shared';
@@ -57,8 +59,12 @@ export function parseBatchArgs(argv: readonly string[]): BatchConfig {
     throw new Error('--games must be a positive integer');
   }
 
-  if (!Number.isFinite(playerCount) || playerCount < 2 || playerCount > 4) {
-    throw new Error('--players must be 2–4');
+  if (
+    !Number.isFinite(playerCount) ||
+    playerCount < MIN_PLAYERS ||
+    playerCount > MAX_PLAYERS
+  ) {
+    throw new Error(`--players must be ${String(MIN_PLAYERS)}–${String(MAX_PLAYERS)}`);
   }
 
   if (difficultiesRaw.length !== playerCount) {

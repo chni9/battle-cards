@@ -44,6 +44,8 @@
   --color-seat-1: #d62828;
   --color-seat-2: #1a9b3c;
   --color-seat-3: #ffd400;
+  --color-seat-4: #7c3aed;
+  --color-seat-5: #ea580c;
 
   /* Radius — thin card border language; controls and CTAs slightly softer */
   --radius-card: 0.375rem;
@@ -76,6 +78,8 @@
     --color-seat-1: #d62828;
     --color-seat-2: #1a9b3c;
     --color-seat-3: #ffd400;
+    --color-seat-4: #7c3aed;
+    --color-seat-5: #ea580c;
   }
 }
 
@@ -98,6 +102,11 @@
 
 .table-felt__opponents {
   grid-area: opponents;
+}
+
+.table-felt__opponents[data-opponent-count="4"],
+.table-felt__opponents[data-opponent-count="5"] {
+  gap: 0.15rem;
 }
 
 .table-felt__pending {

@@ -30,9 +30,11 @@ export interface HandSizeBelief {
 
 export interface BeliefSummary {
   /**
-   * Normalized life-interval widths for opponent seat offsets 1..3 (living
-   * opponents in seat order relative to perspective). Missing → 0.
-   */
+ * Normalized life-interval widths for opponent seat offsets 1..3 (living
+ * opponents in seat order relative to perspective). Missing → 0.
+ * Fitted layout v1 reserved three slots (Classic was 2–4); a 6-player table
+ * still fills only the first three offsets.
+ */
   readonly lifeWidthByOpponentOffset: readonly [number, number, number];
 }
 

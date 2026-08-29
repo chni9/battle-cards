@@ -6,8 +6,10 @@
 import {
   BOT_DIFFICULTIES,
   PROTOCOL_VERSION,
+  SOLO_OPPONENT_COUNTS,
   type BotDifficulty,
   type LobbyKitSelection,
+  type SoloOpponentCount,
 } from '@card-battle/shared';
 import { motion } from 'motion/react';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
@@ -39,7 +41,7 @@ export interface HomeScreenProps {
   onCreate: () => void;
   onJoin: () => void;
   onStartSolo: (
-    opponentCount: 1 | 2 | 3,
+    opponentCount: SoloOpponentCount,
     difficulty: BotDifficulty,
     kitSelection: LobbyKitSelection,
   ) => void;
@@ -55,7 +57,7 @@ const inputClassName = [
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
 ].join(' ');
 
-const OPPONENT_COUNTS = [1, 2, 3] as const;
+const OPPONENT_COUNTS = SOLO_OPPONENT_COUNTS;
 
 export function HomeScreen({
   nickname,
@@ -73,7 +75,7 @@ export function HomeScreen({
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
-  const [soloOpponents, setSoloOpponents] = useState<1 | 2 | 3>(1);
+  const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(1);
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
   const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>('random');
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
@@ -432,12 +434,12 @@ interface SoloPathProps {
   soloLaunchPending: boolean;
   busy: boolean;
   canSubmit: boolean;
-  soloOpponents: 1 | 2 | 3;
+  soloOpponents: SoloOpponentCount;
   soloDifficulty: BotDifficulty;
   soloKitSelection: LobbyKitSelection;
   onBack: () => void;
   onNicknameChange: (value: string) => void;
-  onSoloOpponentsChange: (count: 1 | 2 | 3) => void;
+  onSoloOpponentsChange: (count: SoloOpponentCount) => void;
   onSoloDifficultyChange: (difficulty: BotDifficulty) => void;
   onOpenKitPicker: () => void;
   onSoloSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;

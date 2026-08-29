@@ -56,6 +56,36 @@ describe('simulation batch (L18-04)', () => {
     expect(config.baseSeed).toBe('pnpm-sep');
   });
 
+  it('accepts --players 6 and rejects 7', () => {
+    const six = parseBatchArgs([
+      '--games',
+      '1',
+      '--players',
+      '6',
+      '--difficulties',
+      'easy,easy,easy,easy,easy,easy',
+      '--seed',
+      'six',
+      '--out',
+      '/tmp/out.jsonl',
+    ]);
+    expect(six.playerCount).toBe(6);
+    expect(() =>
+      parseBatchArgs([
+        '--games',
+        '1',
+        '--players',
+        '7',
+        '--difficulties',
+        'easy,easy,easy,easy,easy,easy,easy',
+        '--seed',
+        'seven',
+        '--out',
+        '/tmp/out.jsonl',
+      ]),
+    ).toThrow(/2–6/);
+  });
+
   it('same base seed and config → byte-identical JSONL', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-sim-'));
     const outA = path.join(dir, 'a.jsonl');

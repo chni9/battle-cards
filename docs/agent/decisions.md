@@ -2702,4 +2702,17 @@ Fix: the anchor is an `inline-flex` wrap around the visible cards (or the Empty 
 caption). Hand / Specials use `prefer: 'beside'` (top-aligned, left of the cluster when
 that fits). Draw / Shop / Incoming stay `below` on their small chrome.
 
+## 2026-08-29 · [P] Classic occupancy is 2–6 (supersedes #V4-30)
+
+Designer instruction (this session): Classic rooms seat **2 to 6** players, not 2 to 4.
+Not God/Team/Quick. No card value, delay, or mutual-attack change.
+
+Single source: `packages/shared/src/domain/player-count.ts` (`MIN_PLAYERS` / `MAX_PLAYERS`).
+Lobby occupancy, `game-room.maxClients`, solo opponent picker, seat palette, batch
+`--players`, and `createInitialState` all read that constant. `FEATURE_LAYOUT_VERSION`
+stays **1** (dim 46); `livingOpponentCountNorm` now divides by 5. Belief width features
+remain three opponent-offset slots — a 6-player table does not add fitted dimensions.
+
+Rules spec §1 Number of Players updated in the same change.
+
 

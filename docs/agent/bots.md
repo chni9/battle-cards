@@ -50,6 +50,8 @@ update expectations — put the change under a new policy id.
 ## State evaluator (L33-02)
 
 - `bots/eval/features.ts` — `extractFeatures(state, playerId, belief?)` / `FEATURE_LAYOUT_VERSION`.
+  `FEATURE_MAX_PLAYERS` follows Classic `MAX_PLAYERS` (6). Layout version stays 1; belief
+  width slots remain three opponent offsets.
 - `bots/eval/evaluate.ts` — `evaluate` / `evaluateFromFeatures` → win-prob vector (#V5-7).
 - Belief slots fill from optional `BeliefSummary` (L34-03). Omitted → zeros. `evaluate` does
   **not** take belief until Lot 35.

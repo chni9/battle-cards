@@ -29,6 +29,8 @@ export interface OpponentZoneProps {
   onInspectReveal?: () => void;
   /** Tutorial spotlight after Spy (L45-05). */
   highlightPortrait?: boolean;
+  /** Shrink chrome when 4+ opponents share the arc. */
+  compact?: boolean;
 }
 
 function ActiveThumbs({
@@ -80,6 +82,7 @@ export function OpponentZone({
   onInspectActive,
   onInspectReveal,
   highlightPortrait = false,
+  compact = false,
 }: OpponentZoneProps): ReactElement {
   // Death reveal (Lot 19) beats Spy for dead seats — same display shape.
   const reveal = player.eliminationReveal;
@@ -106,7 +109,11 @@ export function OpponentZone({
       {...(revealMode === null && !player.isEliminated
         ? { 'data-hint-anchor': 'hidden-kit' }
         : {})}
-      className="flex w-auto max-w-[11rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm landscape:max-w-[14rem] sm:max-w-[20rem] sm:p-2"
+      className={
+        compact
+          ? 'flex w-auto max-w-[8rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm landscape:max-w-[9.5rem] sm:max-w-[12rem] sm:p-1.5'
+          : 'flex w-auto max-w-[11rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1.5 text-ink shadow-sm landscape:max-w-[14rem] sm:max-w-[20rem] sm:p-2'
+      }
       style={zoneStyle}
     >
       <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
@@ -140,7 +147,7 @@ export function OpponentZone({
             kitId={shownKitId}
             nickname={player.nickname}
             isEliminated={player.isEliminated}
-            className="w-10 shrink-0 sm:w-14"
+            className={compact ? 'w-8 shrink-0 sm:w-11' : 'w-10 shrink-0 sm:w-14'}
             {...(onInspectReveal !== undefined && revealMode !== null
               ? {
                   onClick: onInspectReveal,

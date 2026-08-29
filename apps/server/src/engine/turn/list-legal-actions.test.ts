@@ -179,4 +179,19 @@ describe('listLegalActions §10.2 (L16-01)', () => {
 
     expect(listLegalActions(state, actor.id)).toEqual([]);
   });
+
+  it('accepts every enumerated action on a fresh 6-player game', () => {
+    const state = createInitialState({
+      seats: Array.from({ length: 6 }, (_, index) => ({
+        id: String.fromCodePoint(97 + index),
+        nickname: `P${String(index)}`,
+      })),
+      seed: 'list-legal-10-2-six',
+    });
+
+    expect(state.players).toHaveLength(6);
+    for (const player of state.players) {
+      assertAllAccepted(state, player.id);
+    }
+  });
 });

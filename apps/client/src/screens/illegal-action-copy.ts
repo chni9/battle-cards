@@ -4,6 +4,7 @@
  */
 
 import {
+  MAX_PLAYERS,
   type ActionRejectCode,
 } from '@card-battle/shared';
 
@@ -289,7 +290,7 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   },
   'add-bot-room-full': {
     title: 'Room full',
-    body: 'All four seats are taken. Remove a bot or leave a seat free before adding another.',
+    body: `All ${String(MAX_PLAYERS)} seats are taken. Remove a bot or leave a seat free before adding another.`,
   },
   'remove-bot-not-host': {
     title: 'Host only',

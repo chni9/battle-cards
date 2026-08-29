@@ -56,6 +56,7 @@ describe('How to play content (technical spec v6 §5.1)', () => {
     expect(byId['hidden']?.body).toMatch(/action is public/i);
     expect(byId['shop']?.body).toMatch(/double its play cost/i);
     expect(byId['modes']?.body).toMatch(/Tutorial/);
+    expect(byId['modes']?.body).toMatch(/6 seats/);
   });
 
   it('omits screenshot urls when designer files are absent', () => {

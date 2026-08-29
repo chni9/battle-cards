@@ -7,7 +7,7 @@
 
 ## 1. Project snapshot
 
-*Card Battle* is a turn-based elimination card game for 2 to 4 players, built on hidden
+*Card Battle* is a turn-based elimination card game for 2 to 6 players, built on hidden
 information and **delayed resolution**: an action aimed at an opponent takes effect on that
 opponent's next turn, after they have played their own action, giving them a chance to react.
 V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulation; V4 the

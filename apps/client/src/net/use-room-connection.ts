@@ -40,6 +40,7 @@ import {
   type CardId,
   type GameOverPayload,
   type LobbyKitSelection,
+  type SoloOpponentCount,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
   type ResolveSubChoicePayload,
@@ -122,7 +123,7 @@ export interface RoomConnection {
 
 export interface StartSoloGameOptions {
   nickname: string;
-  opponentCount: 1 | 2 | 3;
+  opponentCount: SoloOpponentCount;
   difficulty: BotDifficulty;
   kitSelection?: LobbyKitSelection;
 }

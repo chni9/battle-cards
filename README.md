@@ -1,6 +1,6 @@
 # Card Battle
 
-Turn-based elimination card game, 2 to 4 players, hidden information, delayed resolution.
+Turn-based elimination card game, 2 to 6 players, hidden information, delayed resolution.
 **V1** (this repo's engine and protocol) is complete: a narrow slice of the full game, built to
 validate it before content is added — 63/63 backlog tasks done. **V2**, in progress, gives the
 existing client a real design system, the game's illustrations, and animation, with no change

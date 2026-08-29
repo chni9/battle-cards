@@ -74,6 +74,34 @@ describe('Poison (L22-01)', () => {
     expect(a.activePersistentEffects[0]?.counter).toBe(3);
   });
 
+  it('ticks each of 5 opponents independently (6-player table)', () => {
+    const seats = Array.from({ length: 6 }, (_, index) => ({
+      id: String.fromCodePoint(97 + index),
+      nickname: `P${String(index)}`,
+    }));
+    const state = createInitialState({
+      seats,
+      seed: 'l22-01-6p',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const others = state.players.filter((player) => player.id !== 'a');
+
+    if (a === undefined) {
+      return;
+    }
+
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'poi', cardId: 'poison', counter: 3 }),
+    ];
+
+    expect(others).toHaveLength(5);
+    for (const victim of others) {
+      victim.lives = 10;
+      applyPersistentEffects(state, victim.id);
+      expect(victim.lives).toBe(9);
+    }
+  });
+
   it('ticks each of 2 opponents on a 3-player table', () => {
     const state = createInitialState({
       seats: [

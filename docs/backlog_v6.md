@@ -48,8 +48,9 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 **Scope lock**
 
-- **No Classic rule or value change** unless the current session's developer instructions
-  explicitly change one (Lot 50). Tutorial-only exceptions remain spec §5.3–§5.4.
+- **Classic frozen.** Tutorial-only exceptions remain spec §5.3–§5.4.
+  Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4). No other Classic value
+  change.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**.
 - **Do not edit `heuristic-v4` or its freeze test.**
@@ -61,7 +62,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-42 of 49 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+43 of 50 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -75,6 +76,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
+| 51 · Six-player Classic | 1 | 1 |
 
 ---
 
@@ -212,6 +214,17 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 
 ---
 
+## Lot 51 — Six-player Classic (designer 2026-08-29)
+
+Explicit session instruction: Classic occupancy **2–6**. Not God mode. No protocol bump.
+One commit.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L51-01 | Raise Classic max seats 4 → 6. Shared `MAX_PLAYERS`; lobby/solo/Colyseus/`createInitialState`/batch/seat palette; compact opponent arc at 4+ foes; MEGA/Poison/legal-action tests at 6. Fitted layout version unchanged. **Acceptance:** 6th seat joins; 7th rejected; solo 5 opponents; `pnpm verify` green. | L | Medium | — | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -226,7 +239,8 @@ instructions** (L50-01 exception). One commit per task. Do not edit `heuristic-v
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| **Total** | **49** |
+| 51 | 1 |
+| **Total** | **50** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 
