@@ -571,3 +571,13 @@ do not hand off an untested lot.
 - Buy/sell card ghosts are ~48×72 and fade in ~0.5s (no lingering full-size log card).
   Destination is the pending/card-band midpoint on the felt. Thief live Δ still flies
   victim→thief (1 directional chip when both `?`; same-tick sell yield fills a net-0 Δ).
+
+### Lot 51-14 verified 2026-08-29 (browser, PROTOCOL 30)
+
+- Room `NOJYLL` (nick `L51Chip`, Indestructible): Draw +1. Flying point chip is
+  **icon-only** over the felt — no raised-surface tile, no card border. Still at
+  t=1.05s: coin center gold `(185, 152, 17)`; 22px corners match felt pink
+  `~(244, 193, 194)`, not log/raised white `~(245, 243, 241)`.
+- Overlay chrome stays `asCard === true` only (buy/sell ghosts). Resource
+  `tokenFlyout` uses `object-contain` + drop shadow. Playbooks updated in the
+  same change (`frontend.md`, `testing.md`, `decisions.md`).
