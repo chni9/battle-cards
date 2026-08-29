@@ -2692,5 +2692,17 @@ Designer: resource flyouts (points, lives, etc.) must not sit in a white square.
   tile. Width must not classify chips as cards.
 - Playbooks (`frontend.md`, `testing.md`) record the invariant in the same change.
 
+## 2026-08-29 · [P] Every resource flow is two-way (L51-15)
+
+Designer: spend+gain on the same tick (Absorber: pay 3, absorb 10) must show
+both legs; opponent attack life loss must fly.
+
+- Catalog chips are the known spend/yield. `leftoverLiveFlowChips` flies live Δ
+  that the catalog net does not explain — never the collapsed net alone.
+- `actionResolved` `livesLost` / `shieldAbsorbed` fly from every target (POV,
+  unspied, live Spy). Live-icon seats are not skipped.
+- Unspied Draw / absorb totals stay uninvented. Card play still does not fly
+  art (L51-13); buy/sell ghosts stay.
+
 
 

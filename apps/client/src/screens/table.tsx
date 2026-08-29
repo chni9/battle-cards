@@ -10,6 +10,7 @@ import {
   SHARED_CARD_IDS,
   getKit,
   tutorialTourStepAt,
+  type ActionLogEntryView,
   type ActionResolvedPayload,
   type CardInstance,
   type KitId,
@@ -22,7 +23,6 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 
 import { useReducedMotion } from 'motion/react';
 
 import { IconButton } from '../design/components/icon-button';
-import type { ResourceKind } from '../design/asset-lookup';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { markHowToPlaySeen } from '../help/help-storage';
 import { ActionLogPanel } from '../action-log/action-log-panel';
@@ -39,6 +39,7 @@ import {
   boostStealChipsWithRecentYield,
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
+  leftoverLiveFlowChips,
   regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
@@ -147,43 +148,64 @@ export interface TableScreenProps {
 function enqueueDirectedTokenChips(
   enqueue: (event: TableFxInput) => void,
   chips: readonly DirectedTokenChip[],
-): ReadonlySet<ResourceKind> {
-  const landed = new Set<ResourceKind>();
+): void {
   let seq = 0;
-  for (const chip of chips) {
-    let chipLanded = false;
+  const tryChip = (chip: DirectedTokenChip, startSeq: number): number | null => {
+    let nextSeq = startSeq;
     for (let i = 0; i < chip.count; i++) {
       const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
       if (measured === null) {
-        break;
+        return null;
       }
-      const delayMs = seq * TOKEN_STAGGER_MS;
+      const delayMs = nextSeq * TOKEN_STAGGER_MS;
       enqueue({
         kind: 'tokenFlyout',
         ...measured,
         delayMs,
         expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
       });
-      seq += 1;
-      chipLanded = true;
+      nextSeq += 1;
     }
-    if (chipLanded) {
-      landed.add(chip.kind);
-      seq += 1;
-    }
-  }
-  return landed;
-}
-
-function skipFlyoutsForChips(
-  chips: readonly DirectedTokenChip[],
-  landedKinds: ReadonlySet<ResourceKind>,
-  you: string,
-): void {
+    return nextSeq + 1;
+  };
+  const failed: DirectedTokenChip[] = [];
   for (const chip of chips) {
-    if (!landedKinds.has(chip.kind)) {
+    const nextSeq = tryChip(chip, seq);
+    if (nextSeq === null) {
+      failed.push(chip);
       continue;
     }
+    seq = nextSeq;
+  }
+  if (failed.length === 0) {
+    return;
+  }
+  const retry = (remaining: readonly DirectedTokenChip[], attempts: number): void => {
+    if (attempts > 2) {
+      return;
+    }
+    const still: DirectedTokenChip[] = [];
+    for (const chip of remaining) {
+      const nextSeq = tryChip(chip, seq);
+      if (nextSeq === null) {
+        still.push(chip);
+        continue;
+      }
+      seq = nextSeq;
+    }
+    if (still.length > 0) {
+      window.requestAnimationFrame(() => {
+        retry(still, attempts + 1);
+      });
+    }
+  };
+  window.requestAnimationFrame(() => {
+    retry(failed, 0);
+  });
+}
+
+function skipFlyoutsForChips(chips: readonly DirectedTokenChip[], you: string): void {
+  for (const chip of chips) {
     if (chip.from !== 'log') {
       skipResourceIconFlyout(flyoutSkipId(chip.from.playerId, you), chip.kind);
     }
@@ -463,32 +485,46 @@ function TableScreenInner({
       return;
     }
     const snapPrev = prevSnaps ?? new Map<string, OpponentLiveResources>();
-    const pointYields = new Map<string, number>();
+    const newEntries: ActionLogEntryView[] = [];
     for (const entry of view.actionLog) {
       const key = actionLogFlyoutKey(entry);
       if (seen.has(key)) {
         continue;
       }
       seen.add(key);
-      if (reduceMotion === true) {
-        continue;
-      }
+      newEntries.push(entry);
+    }
+    if (reduceMotion === true) {
+      return;
+    }
+    const pointYields = new Map<string, number>();
+    const accounted: DirectedTokenChip[] = [];
+    for (const entry of newEntries) {
       const steal = stealTransferChips(entry, snapPrev, nextSnaps);
       const stealChips = boostStealChipsWithRecentYield(entry, steal.chips, pointYields);
-      skipFlyoutsForChips(
-        stealChips,
-        enqueueDirectedTokenChips(enqueue, stealChips),
+      skipFlyoutsForChips(stealChips, view.you);
+      enqueueDirectedTokenChips(enqueue, stealChips);
+      accounted.push(...stealChips);
+      const regenActor =
+        entry.kind === 'actionPlayed' && entry.action === 'playCard' ? entry.actorPlayerId : null;
+      const regenNeedsUnit =
+        regenActor !== null &&
+        (!snapPrev.has(regenActor) || !nextSnaps.has(regenActor));
+      if (regenNeedsUnit) {
+        const regen = regenFlowChips(entry, snapPrev, nextSnaps);
+        skipFlyoutsForChips(regen.chips, view.you);
+        enqueueDirectedTokenChips(enqueue, regen.chips);
+        accounted.push(...regen.chips);
+      }
+      const chips = chipsForPublicLogEntry(
+        entry,
         view.you,
+        view.players,
+        view.self.kitId,
       );
-      const regen = regenFlowChips(entry, snapPrev, nextSnaps);
-      skipFlyoutsForChips(
-        regen.chips,
-        enqueueDirectedTokenChips(enqueue, regen.chips),
-        view.you,
-      );
-      const chips = chipsForPublicLogEntry(entry, view.you, view.players);
-      const landedKinds = enqueueDirectedTokenChips(enqueue, chips);
-      skipFlyoutsForChips(chips, landedKinds, view.you);
+      skipFlyoutsForChips(chips, view.you);
+      enqueueDirectedTokenChips(enqueue, chips);
+      accounted.push(...chips);
       for (const chip of chips) {
         if (chip.to !== 'log' && chip.kind === 'point') {
           pointYields.set(chip.to.playerId, chip.count);
@@ -499,7 +535,10 @@ function TableScreenInner({
         enqueueDeckCardGhost(enqueue, ghost.playerId, ghost.artUrl, ghost.direction);
       }
     }
-  }, [view.actionLog, view.you, view.players, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
+    const leftover = leftoverLiveFlowChips(accounted, snapPrev, nextSnaps);
+    skipFlyoutsForChips(leftover, view.you);
+    enqueueDirectedTokenChips(enqueue, leftover);
+  }, [view.actionLog, view.you, view.players, view.self.kitId, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
 
   const lastRewardElimId = useRef<string | null>(null);
   useEffect(() => {

@@ -99,29 +99,29 @@ function OpponentSeatResourceColumn({
         kind="life"
         value={value(lives)}
         flyToken={display.known}
+        playerId={player.id}
         className="gap-1"
-        {...(display.known ? { playerId: player.id } : {})}
       />
       <ResourceIcon
         kind="point"
         value={value(points)}
         flyToken={display.known}
+        playerId={player.id}
         className="gap-1"
-        {...(display.known ? { playerId: player.id } : {})}
       />
       <ResourceIcon
         kind="upgradePoint"
         value={value(upgradePoints)}
         flyToken={display.known}
+        playerId={player.id}
         className="gap-1"
-        {...(display.known ? { playerId: player.id } : {})}
       />
       <ResourceIcon
         kind="shield"
         value={value(shield)}
         flyToken={display.known}
+        playerId={player.id}
         className="gap-1"
-        {...(display.known ? { playerId: player.id } : {})}
       />
     </div>
   );

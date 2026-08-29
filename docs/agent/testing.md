@@ -111,6 +111,9 @@ These are the spots where a plausible implementation is wrong and silent:
 - Table token flyouts: resource icons stay chrome-free unless `asCard === true`
   (buy/sell ghosts). A `from.width` threshold paints 40px log-origin chips as
   white tiles (L51-14).
+- Same-tick spend+gain of one resource (Absorber pay 3 / absorb 10) must fly
+  both legs, not the net. Opponent `livesLost` on `actionResolved` must fly
+  even when the seat has live Spy numbers (L51-15).
 
 ## What not to do
 

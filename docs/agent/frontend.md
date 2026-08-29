@@ -222,11 +222,17 @@ rules above are unchanged — this section only covers how the client looks.
     must not promote them to tiles (L51-14). **Card ghosts only on buy/sell**
     (felt pending + card-band midpoint, ~48×72, fade on arrival, `asCard: true`)
     — verso when unspied, face when Spyed; special buy uses the special verso.
-    Playing a card does **not** fly art to the center. Regeneration: live Δ when
-    numbers are known, otherwise the catalog per-life unit (rate + 1 life) so the
-    action still animates; quantity is not on the public log. Thief / Spy Thief /
-    Upgrade Point Thief: live Δ victim→thief (extra upgraded gain from the log);
-    both `?` → one directional chip, never an invented total. Overlay `z-[110]`.
+    Playing a card does **not** fly art to the center. **Every resource
+    transaction flies both legs when both exist** (L51-15): catalog spend/yield
+    plus `leftoverLiveFlowChips` for live Δ the catalog did not explain
+    (Absorber spend 3 + absorb 10 → 3 out and 10 in, not the net +7).
+    `actionResolved` `livesLost` / `shieldAbsorbed` fly from the target
+    (POV, unspied, and live Spy) — do not skip seats with live icons.
+    Regeneration: live Δ when numbers are known, otherwise the catalog per-life
+    unit (rate + 1 life) so the action still animates; quantity is not on the
+    public log. Thief / Spy Thief / Upgrade Point Thief: live Δ victim→thief
+    (extra upgraded gain from the log); both `?` → one directional chip, never an
+    invented total. Overlay `z-[110]`.
     Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
     (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
     Reduced motion skips choreography. Do not invent Draw totals.

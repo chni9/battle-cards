@@ -12,6 +12,7 @@ import {
   boostStealChipsWithRecentYield,
   chipsForPublicLogEntry,
   deckCardGhostForPublicLogEntry,
+  leftoverLiveFlowChips,
   regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
@@ -79,8 +80,8 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       action: 'draw',
       turnSequence: 2,
     };
-    expect(chipsForPublicLogEntry(entry, 'me', [you, hidden])).toEqual([]);
-    expect(chipsForPublicLogEntry(entry, 'me', [you, { ...spied, id: 'opp' }])).toEqual([
+    expect(chipsForPublicLogEntry(entry, 'me', [you, hidden], 'indestructible')).toEqual([]);
+    expect(chipsForPublicLogEntry(entry, 'me', [you, { ...spied, id: 'opp' }], 'indestructible')).toEqual([
       { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
     ]);
   });
@@ -98,6 +99,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([
       { kind: 'point', count: 1, from: { playerId: 'opp' }, to: 'log' },
@@ -119,6 +121,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([
       { kind: 'life', count: 2, from: { playerId: 'opp' }, to: 'log' },
@@ -126,7 +129,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ]);
   });
 
-  it('does not invent chips for live Spy seats', () => {
+  it('still catalogs a live Spy spend so leftover can split two-way flows (L51-15)', () => {
     expect(
       chipsForPublicLogEntry(
         {
@@ -138,8 +141,11 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, live],
+        'indestructible',
       ),
-    ).toEqual([]);
+    ).toEqual([
+      { kind: 'upgradePoint', count: 1, from: { playerId: 'live' }, to: 'log' },
+    ]);
   });
 
   it('flies POV catalog spends so Shop-covered ResourceIcon is not the only path', () => {
@@ -153,6 +159,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([
       {
@@ -174,6 +181,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([{ kind: 'life', count: 1, from: { playerId: 'me' }, to: 'log' }]);
   });
@@ -187,7 +195,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       isUpgraded: true,
       turnSequence: 7,
     };
-    expect(chipsForPublicLogEntry(play, 'me', [you, hidden])).toEqual([]);
+    expect(chipsForPublicLogEntry(play, 'me', [you, hidden], 'indestructible')).toEqual([]);
     expect(regenFlowChips(play, new Map(), new Map()).chips).toEqual([
       { kind: 'point', count: 2, from: { playerId: 'opp' }, to: 'log' },
       { kind: 'life', count: 1, from: 'log', to: { playerId: 'opp' } },
@@ -212,6 +220,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([
       { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
@@ -229,6 +238,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         },
         'me',
         [you, hidden],
+        'indestructible',
       ),
     ).toEqual([
       {
@@ -347,7 +357,7 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       skips: [],
     });
     expect(
-      chipsForPublicLogEntry(entry, 'me', [you, hidden, opponent({ id: 'thief' })]),
+      chipsForPublicLogEntry(entry, 'me', [you, hidden, opponent({ id: 'thief' })], 'indestructible'),
     ).toEqual([]);
   });
 
@@ -413,6 +423,86 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
         to: { playerId: 'thief' },
       },
       { kind: 'point', count: 10, from: 'log', to: { playerId: 'thief' } },
+    ]);
+  });
+
+  it('splits a same-kind spend+gain (Absorber) into both directions (L51-15)', () => {
+    const accounted: DirectedTokenChip[] = [
+      { kind: 'point', count: 3, from: { playerId: 'me' }, to: 'log' },
+    ];
+    const prev = new Map([['me', { lives: 10, points: 8, upgradePoints: 0, shield: 0 }]]);
+    const next = new Map([['me', { lives: 20, points: 15, upgradePoints: 0, shield: 0 }]]);
+    expect(leftoverLiveFlowChips(accounted, prev, next)).toEqual([
+      { kind: 'life', count: 10, from: 'log', to: { playerId: 'me' } },
+      { kind: 'point', count: 10, from: 'log', to: { playerId: 'me' } },
+    ]);
+  });
+
+  it('flies resolved livesLost off every target, including POV and live Spy (L51-15)', () => {
+    const resolved = {
+      kind: 'actionResolved' as const,
+      effectId: 'atk-1',
+      sourcePlayerId: 'me',
+      targetPlayerId: 'me',
+      cardId: 'basic-attack' as const,
+      isUpgraded: false,
+      livesLost: 3,
+      shieldAbsorbed: 1,
+      outcome: 'applied' as const,
+      turnSequence: 20,
+    };
+    expect(chipsForPublicLogEntry(resolved, 'me', [you, hidden], 'indestructible')).toEqual([
+      { kind: 'life', count: 3, from: { playerId: 'me' }, to: 'log' },
+      { kind: 'shield', count: 1, from: { playerId: 'me' }, to: 'log' },
+    ]);
+    expect(
+      chipsForPublicLogEntry(
+        { ...resolved, targetPlayerId: 'live' },
+        'me',
+        [you, live],
+        'indestructible',
+      ),
+    ).toEqual([
+      { kind: 'life', count: 3, from: { playerId: 'live' }, to: 'log' },
+      { kind: 'shield', count: 1, from: { playerId: 'live' }, to: 'log' },
+    ]);
+  });
+
+  it('does not re-fly a steal that live Δ already accounted (L51-15)', () => {
+    const accounted: DirectedTokenChip[] = [
+      {
+        kind: 'point',
+        count: 8,
+        from: { playerId: 'victim' },
+        to: { playerId: 'thief' },
+      },
+    ];
+    const prev = new Map([
+      ['victim', { lives: 10, points: 8, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 2, upgradePoints: 0, shield: 0 }],
+    ]);
+    const next = new Map([
+      ['victim', { lives: 10, points: 0, upgradePoints: 0, shield: 0 }],
+      ['thief', { lives: 12, points: 10, upgradePoints: 0, shield: 0 }],
+    ]);
+    expect(leftoverLiveFlowChips(accounted, prev, next)).toEqual([]);
+  });
+
+  it('flies the 20-point special purchase (rules spec §5 / L51-15)', () => {
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'opp',
+          action: 'buySpecialCard',
+          turnSequence: 21,
+        },
+        'me',
+        [you, hidden],
+        'indestructible',
+      ),
+    ).toEqual([
+      { kind: 'point', count: 20, from: { playerId: 'opp' }, to: 'log' },
     ]);
   });
 });

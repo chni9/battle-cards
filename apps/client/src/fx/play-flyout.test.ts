@@ -48,7 +48,7 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
   it('enqueues opponent buy/sell ghosts as small cards, not playCard flyouts (L51-13)', () => {
     const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
     expect(table).toContain('enqueueDeckCardGhost');
-    expect(table).toContain('regenFlowChips');
+    expect(table).toContain('leftoverLiveFlowChips');
     expect(table).toContain("asCard: true");
     expect(table).not.toContain('measurePlayFlyout');
     expect(table).not.toContain('enqueueSellCardGhost');

@@ -1,8 +1,10 @@
 /**
- * Public-log token chips — L51-09 / L51-11 / L51-13.
- * Live upgraded Spy / death numbers fly via ResourceIcon except steal / Regen.
- * POV dock ResourceIcon handles own Δ unless those transfers already ran.
- * Unspied / base Spy: catalog + public log. Regen quantity is never invented.
+ * Public-log token chips — L51-09 / L51-11 / L51-13 / L51-15.
+ * Catalog + public `livesLost` cover the known legs of a transaction.
+ * `leftoverLiveFlowChips` flies the other leg when live numbers disagree
+ * with that catalog net (spend 3 + absorb 10 → both directions).
+ * Unspied seats never invent Draw / absorb totals. Regen quantity is never
+ * invented: live Δ, else the catalog per-life unit.
  */
 
 import {
@@ -21,7 +23,6 @@ import {
 import { getCardArtUrl, getCardBackUrl, type ResourceKind } from '../design/asset-lookup';
 import { structuredPlayCost } from '../design/components/structured-cost';
 import {
-  opponentHasLiveResourceIcons,
   opponentKitIsVisible,
   type OpponentLiveResources,
 } from '../screens/table/opponent-seat-resources';
@@ -49,6 +50,16 @@ const POINT_STEAL_CARD_IDS: ReadonlySet<CardId> = new Set<CardId>([
 ]);
 
 const STEAL_RESOURCE_KINDS: readonly ResourceKind[] = ['point', 'upgradePoint'];
+
+const LIVE_RESOURCE_KINDS: readonly ResourceKind[] = [
+  'life',
+  'point',
+  'upgradePoint',
+  'shield',
+];
+
+/** Random special purchase — rules spec §5. Shop chrome uses the same amount. */
+const SPECIAL_CARD_PURCHASE_POINTS = 20;
 
 function playerById(
   players: readonly PublicPlayerView[],
@@ -130,21 +141,6 @@ function yieldChips(
   return chips;
 }
 
-function shouldSkipActor(
-  actorId: string,
-  you: string,
-  players: readonly PublicPlayerView[],
-): boolean {
-  const actor = playerById(players, actorId);
-  if (actor === undefined) {
-    return true;
-  }
-  if (actorId === you) {
-    return false;
-  }
-  return opponentHasLiveResourceIcons(actor);
-}
-
 function upgradeBuyCost(actor: PublicPlayerView): number {
   const kitId = visibleKitId(actor);
   return kitId === undefined
@@ -163,15 +159,9 @@ export function chipsForPublicLogEntry(
   entry: ActionLogEntryView,
   you: string,
   players: readonly PublicPlayerView[],
+  selfKitId: KitId,
 ): DirectedTokenChip[] {
   if (entry.kind === 'actionResolved') {
-    if (entry.targetPlayerId === you) {
-      return [];
-    }
-    const target = playerById(players, entry.targetPlayerId);
-    if (target === undefined || opponentHasLiveResourceIcons(target)) {
-      return [];
-    }
     if (isStealResolve(entry)) {
       return [];
     }
@@ -195,10 +185,6 @@ export function chipsForPublicLogEntry(
     return [];
   }
 
-  if (shouldSkipActor(entry.actorPlayerId, you, players)) {
-    return [];
-  }
-
   const actor = playerById(players, entry.actorPlayerId);
   if (actor === undefined) {
     return [];
@@ -207,10 +193,7 @@ export function chipsForPublicLogEntry(
 
   switch (entry.action) {
     case 'draw': {
-      if (!opponentKitIsVisible(actor)) {
-        return [];
-      }
-      const kitId = visibleKitId(actor);
+      const kitId = actorId === you ? selfKitId : visibleKitId(actor);
       if (kitId === undefined) {
         return [];
       }
@@ -308,6 +291,14 @@ export function chipsForPublicLogEntry(
         },
       ];
     case 'buySpecialCard':
+      return [
+        {
+          kind: 'point',
+          count: SPECIAL_CARD_PURCHASE_POINTS,
+          from: { playerId: actorId },
+          to: 'log',
+        },
+      ];
     case 'deactivatePersistent':
     case 'activateDuplication':
       return [];
@@ -395,6 +386,65 @@ function snapField(snap: LiveResourceSnap, kind: ResourceKind): number {
     case 'shield':
       return snap.shield;
   }
+}
+
+function chipNetForSeat(
+  chips: readonly DirectedTokenChip[],
+  playerId: string,
+  kind: ResourceKind,
+): number {
+  let net = 0;
+  for (const chip of chips) {
+    if (chip.kind !== kind) {
+      continue;
+    }
+    if (chip.from !== 'log' && chip.from.playerId === playerId) {
+      net -= chip.count;
+    }
+    if (chip.to !== 'log' && chip.to.playerId === playerId) {
+      net += chip.count;
+    }
+  }
+  return net;
+}
+
+/**
+ * Live Δ that catalog / steal chips did not already explain (L51-15).
+ * Spend 3 + absorb 10 nets +7: catalog flies the 3, this flies the 10.
+ * Spy reveal (no previous snap) is not a transaction — skip.
+ */
+export function leftoverLiveFlowChips(
+  accounted: readonly DirectedTokenChip[],
+  prev: ReadonlyMap<string, LiveResourceSnap>,
+  next: ReadonlyMap<string, LiveResourceSnap>,
+): DirectedTokenChip[] {
+  const chips: DirectedTokenChip[] = [];
+  for (const [playerId, nextSnap] of next) {
+    const prevSnap = prev.get(playerId);
+    if (prevSnap === undefined) {
+      continue;
+    }
+    for (const kind of LIVE_RESOURCE_KINDS) {
+      const liveDelta = snapField(nextSnap, kind) - snapField(prevSnap, kind);
+      const unexplained = liveDelta - chipNetForSeat(accounted, playerId, kind);
+      if (unexplained > 0) {
+        pushChip(chips, {
+          kind,
+          count: unexplained,
+          from: 'log',
+          to: { playerId },
+        });
+      } else if (unexplained < 0) {
+        pushChip(chips, {
+          kind,
+          count: -unexplained,
+          from: { playerId },
+          to: 'log',
+        });
+      }
+    }
+  }
+  return chips;
 }
 
 export interface StealTransferResult {
