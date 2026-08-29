@@ -2691,5 +2691,15 @@ Selector: `reward` → `incoming` → `incoming-thief` → (on turn) `your-turn`
 `hand` → `specials` → `shop` → `resources` → `hidden-kit`. Off turn after threats:
 `hidden-kit`.
 
+## 2026-08-29 · [P] Hand / Specials hints sit beside the card cluster
+
+Designer 2026-08-29: the new card-row hints were not next to the cards. Anchoring
+`data-hint-anchor` on the flex-1 Hand / Specials section made `placeHintCard` treat
+the whole dock column as the box — below covered the other row; side placement
+clamped to the felt's left edge.
+
+Fix: the anchor is a `w-fit` wrap around the visible cards (or the Empty / None
+caption). Hand / Specials use `prefer: 'beside'` (vertically centered, left or
+right of the cluster). Draw / Shop / Incoming stay `below` on their small chrome.
 
 

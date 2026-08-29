@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { HINT_IDS, hintAnchorId, isHintId } from './hint-ids';
+import { HINT_IDS, hintAnchorId, hintPlacePrefer, isHintId } from './hint-ids';
 
 describe('hint ids (technical spec v6 §5.2 / L46-01)', () => {
   it('omits leave — forfeit is not a first-game hint', () => {
@@ -31,5 +31,12 @@ describe('hint ids (technical spec v6 §5.2 / L46-01)', () => {
     expect(hintAnchorId('incoming')).toBe('incoming');
     expect(hintAnchorId('hand')).toBe('hand');
     expect(hintAnchorId('reward')).toBe('reward');
+  });
+
+  it('places Hand and Specials beside the card cluster', () => {
+    expect(hintPlacePrefer('hand')).toBe('beside');
+    expect(hintPlacePrefer('specials')).toBe('beside');
+    expect(hintPlacePrefer('draw')).toBe('below');
+    expect(hintPlacePrefer('incoming')).toBe('below');
   });
 });

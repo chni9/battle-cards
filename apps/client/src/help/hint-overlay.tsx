@@ -14,7 +14,7 @@ import {
 } from '../screens/table/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
-import { hintAnchorId, type HintId } from './hint-ids';
+import { hintAnchorId, hintPlacePrefer, type HintId } from './hint-ids';
 import { placeHintCard } from './place-hint-card';
 
 const COMPACT_HINT_BUTTON =
@@ -42,29 +42,48 @@ export function HintOverlay({
     if (slot === null || dialogOpen) {
       return;
     }
+
+    const place = (): void => {
+      const node = document.querySelector(
+        `[data-hint-anchor="${hintAnchorId(hintId)}"]`,
+      );
+      if (!(node instanceof HTMLElement)) {
+        slot.style.top = '';
+        slot.style.left = '0.5rem';
+        slot.style.bottom = '7.5rem';
+        return;
+      }
+      const anchor = node.getBoundingClientRect();
+      const placed = placeHintCard(
+        {
+          top: anchor.top,
+          left: anchor.left,
+          width: anchor.width,
+          height: anchor.height,
+        },
+        { width: slot.offsetWidth, height: slot.offsetHeight },
+        { width: window.innerWidth, height: window.innerHeight },
+        { prefer: hintPlacePrefer(hintId) },
+      );
+      slot.style.top = `${String(placed.top)}px`;
+      slot.style.left = `${String(placed.left)}px`;
+      slot.style.bottom = 'auto';
+    };
+
+    place();
     const node = document.querySelector(
       `[data-hint-anchor="${hintAnchorId(hintId)}"]`,
     );
-    if (!(node instanceof HTMLElement)) {
-      slot.style.top = '';
-      slot.style.left = '0.5rem';
-      slot.style.bottom = '7.5rem';
-      return;
+    let observer: ResizeObserver | null = null;
+    if (node instanceof HTMLElement) {
+      observer = new ResizeObserver(place);
+      observer.observe(node);
     }
-    const anchor = node.getBoundingClientRect();
-    const placed = placeHintCard(
-      {
-        top: anchor.top,
-        left: anchor.left,
-        width: anchor.width,
-        height: anchor.height,
-      },
-      { width: slot.offsetWidth, height: slot.offsetHeight },
-      { width: window.innerWidth, height: window.innerHeight },
-    );
-    slot.style.top = `${String(placed.top)}px`;
-    slot.style.left = `${String(placed.left)}px`;
-    slot.style.bottom = 'auto';
+    window.addEventListener('resize', place);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', place);
+    };
   }, [hintId, dialogOpen]);
 
   if (dialogOpen) {

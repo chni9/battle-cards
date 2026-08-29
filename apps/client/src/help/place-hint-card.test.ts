@@ -37,4 +37,28 @@ describe('placeHintCard (L46-02)', () => {
     expect(placed.left).toBeGreaterThanOrEqual(8);
     expect(placed.left + 300).toBeLessThanOrEqual(312);
   });
+
+  it('sits beside a card cluster instead of covering the other row', () => {
+    const cards = { top: 220, left: 420, width: 72, height: 96 };
+    const placed = placeHintCard(
+      cards,
+      { width: 248, height: 140 },
+      { width: 900, height: 700 },
+      { prefer: 'beside' },
+    );
+    const belowTop = cards.top + cards.height + 8;
+    expect(placed.top).toBeLessThan(belowTop);
+    expect(placed.left).toBe(cards.left - 248 - 8);
+  });
+
+  it('does not treat a full-width dock section as a beside target', () => {
+    const section = { top: 180, left: 16, width: 760, height: 280 };
+    const placed = placeHintCard(
+      section,
+      { width: 248, height: 140 },
+      { width: 800, height: 700 },
+      { prefer: 'beside' },
+    );
+    expect(placed.top).toBe(section.top - 140 - 8);
+  });
 });

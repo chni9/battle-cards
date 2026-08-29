@@ -26,3 +26,14 @@ export function isHintId(value: unknown): value is HintId {
 export function hintAnchorId(id: HintId): string {
   return id === 'incoming-thief' ? 'incoming' : id;
 }
+
+/**
+ * Hand / Specials sit beside the card cluster. Below a flex-1 dock section
+ * landed on the other row or the far left of the felt (designer 2026-08-29).
+ */
+export function hintPlacePrefer(id: HintId): 'below' | 'above' | 'beside' {
+  if (id === 'hand' || id === 'specials') {
+    return 'beside';
+  }
+  return 'below';
+}

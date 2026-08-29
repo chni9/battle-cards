@@ -106,14 +106,15 @@ function CardSection({
     return wrapSection(
       spotlightSection,
       zone,
-      <div
-        className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5"
-        data-hint-anchor={zone}
-      >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5">
         <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
-        <p className="text-xs text-ink-muted" data-zone={zone}>
+        <p
+          className="text-xs text-ink-muted"
+          data-zone={zone}
+          data-hint-anchor={zone}
+        >
           {zone === 'hand' ? 'Empty' : 'None'}
         </p>
       </div>,
@@ -130,7 +131,6 @@ function CardSection({
         'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
         spotlighted ? 'overflow-visible' : 'overflow-hidden',
       ].join(' ')}
-      data-hint-anchor={zone}
     >
       <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
@@ -139,46 +139,54 @@ function CardSection({
         ref={areaRef}
         data-zone={zone}
         className={[
-          'flex min-h-0 w-full flex-1 flex-wrap content-center items-center justify-center',
+          'flex min-h-0 w-full flex-1 content-center items-center justify-center',
           spotlighted ? 'overflow-visible' : 'overflow-hidden',
         ].join(' ')}
-        style={{ gap: CARD_BAND_GAP_PX }}
       >
-        {visible.map((card) => {
-          const highlighted = highlightedInstanceIds.includes(card.instanceId);
-          return (
-            <div
-              key={card.instanceId}
-              style={{ width: cardWidth, maxHeight: '100%' }}
-              className={[
-                'shrink-0 rounded-[length:var(--radius-card)]',
-                highlighted ? 'overflow-visible' : 'overflow-hidden',
-              ].join(' ')}
-            >
-              <TutorialCallout
-                active={highlighted}
-                arrow="top"
-                highlightId={card.cardId}
-                className="w-full"
+        <div
+          data-hint-anchor={zone}
+          className={[
+            'flex w-fit max-w-full flex-wrap content-center items-center justify-center',
+            spotlighted ? 'overflow-visible' : 'overflow-hidden',
+          ].join(' ')}
+          style={{ gap: CARD_BAND_GAP_PX }}
+        >
+          {visible.map((card) => {
+            const highlighted = highlightedInstanceIds.includes(card.instanceId);
+            return (
+              <div
+                key={card.instanceId}
+                style={{ width: cardWidth, maxHeight: '100%' }}
+                className={[
+                  'shrink-0 rounded-[length:var(--radius-card)]',
+                  highlighted ? 'overflow-visible' : 'overflow-hidden',
+                ].join(' ')}
               >
-                <AnimatedCard
-                  instance={card}
-                  detail="face"
-                  skipEntrance
-                  selected={highlighted}
-                  className="w-full max-h-full !p-0.5"
-                  {...(onSelect !== undefined
-                    ? {
-                        onSelect: () => {
-                          onSelect(card.instanceId);
-                        },
-                      }
-                    : {})}
-                />
-              </TutorialCallout>
-            </div>
-          );
-        })}
+                <TutorialCallout
+                  active={highlighted}
+                  arrow="top"
+                  highlightId={card.cardId}
+                  className="w-full"
+                >
+                  <AnimatedCard
+                    instance={card}
+                    detail="face"
+                    skipEntrance
+                    selected={highlighted}
+                    className="w-full max-h-full !p-0.5"
+                    {...(onSelect !== undefined
+                      ? {
+                          onSelect: () => {
+                            onSelect(card.instanceId);
+                          },
+                        }
+                      : {})}
+                  />
+                </TutorialCallout>
+              </div>
+            );
+          })}
+        </div>
       </div>
       {needsPager ? (
         <div

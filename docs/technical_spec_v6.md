@@ -222,6 +222,8 @@ until Got it). Then: `incoming` (**attack** Incoming to POV — not Spy/Thief, i
 `incoming-thief` (`thief` or `*-thief`). On your turn after threats: `your-turn` → `draw` → `hand` →
 `specials` → `shop` → `resources` → `hidden-kit` (unspied living opponent). Off your turn after threats:
 `hidden-kit`, else none. Card sits next to `data-hint-anchor` (`incoming-thief` reuses Incoming); no rings.
+Hand / Specials use a shrink-wrapped card-cluster anchor and sit **beside** that cluster (not
+the full dock section).
 
 **Auto-Got-it** (plus the Got it button): `your-turn` on any playing intent; `draw` on Draw;
 `shop` when Shop opens; `incoming` on a playing intent while an **attack** still targets you, or when
