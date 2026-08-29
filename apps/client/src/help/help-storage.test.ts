@@ -5,11 +5,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  applyHintPatch,
+  dismissHint,
+  dismissHints,
+  EMPTY_HINT_STATE,
   hasSeenHowToPlay,
   HINTS_STORAGE_KEY,
   HOW_TO_PLAY_SEEN_KEY,
   markHowToPlaySeen,
+  readHintState,
   resetHelpStorage,
+  skipAllHints,
 } from './help-storage';
 
 class MemoryStorage implements Storage {
@@ -75,5 +81,61 @@ describe('help storage (technical spec v6 §5.1)', () => {
     expect(hasSeenHowToPlay()).toBe(false);
     expect(storage.getItem(HOW_TO_PLAY_SEEN_KEY)).toBeNull();
     expect(storage.getItem(HINTS_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('hint storage blob (technical spec v6 §5.2 / L46-01)', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, 'localStorage');
+  });
+
+  function withStorage(): MemoryStorage {
+    const storage = new MemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: storage,
+    });
+    return storage;
+  }
+
+  it('treats a missing or corrupt blob as empty', () => {
+    const storage = withStorage();
+    expect(readHintState()).toEqual(EMPTY_HINT_STATE);
+    storage.setItem(HINTS_STORAGE_KEY, '{not-json');
+    expect(readHintState()).toEqual(EMPTY_HINT_STATE);
+    storage.setItem(HINTS_STORAGE_KEY, '{"dismissed":["leave"],"skipAll":false}');
+    expect(readHintState()).toEqual(EMPTY_HINT_STATE);
+  });
+
+  it('Got it appends an id and Skip all sets skipAll', () => {
+    withStorage();
+    expect(dismissHint('your-turn')).toEqual({
+      dismissed: ['your-turn'],
+      skipAll: false,
+    });
+    expect(dismissHint('your-turn').dismissed).toEqual(['your-turn']);
+    expect(skipAllHints()).toEqual({
+      dismissed: ['your-turn'],
+      skipAll: true,
+    });
+    expect(readHintState().skipAll).toBe(true);
+  });
+
+  it('dismissHints writes several ids in one blob', () => {
+    withStorage();
+    expect(dismissHints(['your-turn', 'draw'])).toEqual({
+      dismissed: ['your-turn', 'draw'],
+      skipAll: false,
+    });
+  });
+
+  it('applyHintPatch keeps earlier ids when a later dismiss merges', () => {
+    withStorage();
+    const afterHidden = applyHintPatch(EMPTY_HINT_STATE, { ids: ['hidden-kit'] });
+    expect(afterHidden.dismissed).toEqual(['hidden-kit']);
+    expect(applyHintPatch(afterHidden, { ids: ['incoming'] }).dismissed).toEqual([
+      'hidden-kit',
+      'incoming',
+    ]);
   });
 });

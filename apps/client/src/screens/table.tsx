@@ -22,7 +22,17 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
-import { markHowToPlaySeen } from '../help/help-storage';
+import { HintOverlay } from '../help/hint-overlay';
+import {
+  applyHintPatch,
+  markHowToPlaySeen,
+  readHintState,
+} from '../help/help-storage';
+import {
+  hintIdsDismissedBy,
+  selectHint,
+  type HintDismissCause,
+} from '../help/select-hint';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -32,6 +42,8 @@ import {
   measureTargetingCue,
 } from '../fx/play-flyout';
 import {
+  incomingAttackTargetingYouIds,
+  incomingThiefTargetingYouIds,
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
@@ -177,6 +189,7 @@ function TableScreenInner({
   );
   const [tourStep, setTourStep] = useState(0);
   const [portraitInspected, setPortraitInspected] = useState(false);
+  const [hintState, setHintState] = useState(readHintState);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -201,6 +214,21 @@ function TableScreenInner({
     return true;
   };
 
+  const noteHintCause = (cause: HintDismissCause): void => {
+    if (view.playKind === 'tutorial') {
+      return;
+    }
+    const hasIncomingAttack =
+      incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const hasIncomingThief =
+      incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    setHintState((prev) =>
+      applyHintPatch(prev, {
+        ids: hintIdsDismissedBy(cause, { hasIncomingAttack, hasIncomingThief }),
+      }),
+    );
+  };
+
   const playCardWithFx = (instanceId: string, options?: PlayCardOptions): void => {
     const card = findOwnCard(instanceId);
     if (view.playKind === 'tutorial') {
@@ -218,6 +246,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onPlayCard(instanceId, options);
     if (card === undefined) {
       return;
@@ -234,6 +263,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'playMultipleAttacks' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onPlayMultipleAttacks(attacks);
     const first = attacks[0];
     if (first === undefined) {
@@ -253,6 +283,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'draw' })) {
       return;
     }
+    noteHintCause('draw');
     // Points Δ → ResourceIcon enqueues log ↔ token chips (avoid double flyout).
     onDraw();
   };
@@ -261,6 +292,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buyUpgradePoint' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuyUpgradePoint();
   };
 
@@ -268,6 +300,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'sellUpgradePoint' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onSellUpgradePoint();
   };
 
@@ -275,6 +308,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buyCard', cardId })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuyCard(cardId);
     const measured = measureBuyCardFlyout(cardId);
     if (measured !== null) {
@@ -286,6 +320,7 @@ function TableScreenInner({
     if (!allowTutorialSend({ kind: 'buySpecialCard' })) {
       return;
     }
+    noteHintCause('playing-intent');
     onBuySpecialCard();
     const measured = measureBuySpecialFlyout();
     if (measured !== null) {
@@ -304,6 +339,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onSellCard(instanceId);
     if (card === undefined) {
       return;
@@ -325,6 +361,7 @@ function TableScreenInner({
         return;
       }
     }
+    noteHintCause('playing-intent');
     onUpgradeCard(instanceId);
   };
 
@@ -408,6 +445,39 @@ function TableScreenInner({
       }
     }
   }, [view.pendingEffects, view.you, enqueue]);
+
+  const hadIncomingAttackRef = useRef(false);
+  const hadIncomingThiefRef = useRef(false);
+  useEffect(() => {
+    const attackNow =
+      incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    const thiefNow =
+      incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
+    if (view.playKind === 'tutorial') {
+      hadIncomingAttackRef.current = attackNow;
+      hadIncomingThiefRef.current = thiefNow;
+      return;
+    }
+    const ids = [
+      ...(hadIncomingAttackRef.current && !attackNow
+        ? hintIdsDismissedBy('incoming-cleared', {
+            hasIncomingAttack: false,
+            hasIncomingThief: false,
+          })
+        : []),
+      ...(hadIncomingThiefRef.current && !thiefNow
+        ? hintIdsDismissedBy('incoming-thief-cleared', {
+            hasIncomingAttack: false,
+            hasIncomingThief: false,
+          })
+        : []),
+    ];
+    if (ids.length > 0) {
+      setHintState((prev) => applyHintPatch(prev, { ids }));
+    }
+    hadIncomingAttackRef.current = attackNow;
+    hadIncomingThiefRef.current = thiefNow;
+  }, [view.pendingEffects, view.you, view.playKind]);
 
   const mirrorHighlightIds =
     subChoice?.kind === 'mirror' ? subChoice.eligibleEffectIds : [];
@@ -567,6 +637,38 @@ function TableScreenInner({
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
+  const hasUnspiedLivingOpponent = opponents.some(
+    (player) =>
+      !player.isEliminated &&
+      player.spied === undefined &&
+      player.eliminationReveal === undefined,
+  );
+  const hasIncomingAttack =
+    incomingAttackTargetingYouIds(view.pendingEffects, view.you).size > 0;
+  const hasIncomingThief =
+    incomingThiefTargetingYouIds(view.pendingEffects, view.you).size > 0;
+  const hasRewardChoice = subChoice?.kind === 'elimination-reward';
+  const currentHint = selectHint({
+    playKind: view.playKind,
+    readOnly,
+    selfEliminated,
+    isMyTurn: isMyTurn && !readOnly && !selfEliminated,
+    skipAll: hintState.skipAll,
+    dismissed: hintState.dismissed,
+    hasIncomingAttack,
+    hasIncomingThief,
+    hasRewardChoice,
+    hasUnspiedLivingOpponent,
+  });
+  const rewardHintVisible = hasRewardChoice && currentHint === 'reward';
+  const hintDialogOpen =
+    dialog !== null ||
+    howToPlayOpen ||
+    leaveConfirm !== null ||
+    inspectKitId !== null ||
+    inspectOpponentId !== null ||
+    actionReject !== null ||
+    (subChoice !== null && !rewardHintVisible);
 
   const inspectOpponent = opponents.find((entry) => entry.id === inspectOpponentId);
   const inspectReveal =
@@ -621,6 +723,7 @@ function TableScreenInner({
     if (instance === undefined) {
       return;
     }
+    noteHintCause(fromSpecial ? 'inspect-special' : 'inspect-hand');
     setDialog({ kind: 'actions', instance, fromSpecial });
   }
 
@@ -820,6 +923,7 @@ function TableScreenInner({
                       if (view.playKind === 'tutorial') {
                         setPortraitInspected(true);
                       }
+                      noteHintCause('inspect-opponent');
                       setInspectKitId(null);
                       setInspectOpponentId(player.id);
                     },
@@ -910,6 +1014,7 @@ function TableScreenInner({
               if (overlayLocksTable) {
                 return;
               }
+              noteHintCause('open-shop');
               setDialog({ kind: 'shop' });
             }}
             {...(economySpotlight !== undefined ? { spotlight: economySpotlight } : {})}
@@ -917,6 +1022,19 @@ function TableScreenInner({
           />
         }
       />
+
+      {currentHint !== null ? (
+        <HintOverlay
+          hintId={currentHint}
+          dialogOpen={hintDialogOpen}
+          onGotIt={() => {
+            setHintState((prev) => applyHintPatch(prev, { ids: [currentHint] }));
+          }}
+          onSkipAll={() => {
+            setHintState((prev) => applyHintPatch(prev, { skipAll: true }));
+          }}
+        />
+      ) : null}
 
       {tutorialIndex !== null &&
       !readOnly &&
@@ -1020,7 +1138,12 @@ function TableScreenInner({
           view={view}
           opponents={opponents}
           nowMs={nowMs}
-          onResolve={onResolveSubChoice}
+          onResolve={(payload) => {
+            if (payload.kind === 'elimination-reward') {
+              noteHintCause('confirm-reward');
+            }
+            onResolveSubChoice(payload);
+          }}
         />
       )}
 

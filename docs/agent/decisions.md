@@ -2619,5 +2619,87 @@ Designer 2026-08-26 follow-up. Classic rules and catalog values stay frozen. No 
 - Panel is slightly transparent (`color-mix` ~78% surface plus backdrop blur).
 - Got it appears on tour steps only.
 
+## 2026-08-26 · [P] First-game hints omit leave (L46-01)
+
+Designer 2026-08-26: first-Classic hints are a single contextual coach card on a live
+Classic table. **Leave / Forfeit is not a hint** — the flag already explains forfeit.
+`HintId` is `your-turn` · `draw` · `resources` · `incoming` · `hidden-kit` · `shop`.
+Tutorial (`playKind === 'tutorial'`) keeps `TutorialCoach`; it never mounts these ids.
+Storage stays `card-battle.v6.hints` `{ dismissed, skipAll }`. Corrupt JSON is empty.
+Got it / Skip all write the blob; Hide is session-only. Completing the tutorial still
+does not set `skipAll` (L46-03). Best-action selector lands in L46-02.
+
+## 2026-08-26 · [P] First-game hint selector and auto-Got-it (L46-02)
+
+Designer 2026-08-26. Client has zero rule logic: the selector only ranks teaching topics
+from view facts.
+
+**On your turn:** real Incoming to POV → `your-turn` → `draw` → `shop` → `resources` →
+`hidden-kit` (unspied living opponent). **Off your turn:** Incoming → hidden-kit, else none.
+
+**Auto-Got-it:** playing intent dismisses `your-turn` (and `incoming` if that Incoming is
+still on you); Draw also dismisses `draw`; opening Shop dismisses `shop`; opponent portrait
+dismisses `hidden-kit`; Incoming leaving the view dismisses `incoming`; `resources` is
+manual Got it only. Card is placed next to `data-hint-anchor`. No callout rings.
+
+## 2026-08-26 · [P] Tutorial completion does not skip hints (L46-03)
+
+`startTutorialGame`, Skip tutorial (`onLeave` / not forfeit), and Game over **Play a
+real game** (`onLeave`) never write `card-battle.v6.hints`. Completing or skipping the
+tutorial leaves the blob untouched, so the next Classic Solo/Online still selects from
+an empty `{ dismissed: [], skipAll: false }`. Hub **Reset help** remains the only
+clear path (L42-02). HintOverlay **Skip all** is the only `skipAllHints()` call site.
+
+## 2026-08-27 · [P] First-game hint chrome, attacks-only Incoming, sticky Got it
+
+Designer 2026-08-27. The first-game card was too large. Hints use `CoachPanel` `compact`:
+narrower, smaller type, more transparent (`color-mix` ~46%). Tutorial coach is unchanged.
+
+The `incoming` hint copy is Shield / Mirror / attack-back, so it fires only on **attack**
+Incoming (`isAttackCardId`). Spy and Thief still appear on the Incoming strip and still
+drive threat FX; they must not swap the teaching card. That swap also made **Hidden kit**
+look like it returned after Got it (selector jumped to Incoming, Got it dismissed Incoming,
+then Hidden kit was still undismissed).
+
+Got it and × both persist that `HintId`. Dismissals merge onto the previous React blob
+(`applyHintPatch`) so a later write cannot drop an id. Skip all now uses that helper
+from the overlay (no separate `skipAllHints()` call site on the table).
+
+## 2026-08-28 · [P] First-game hints: thief, hand, specials, reward
+
+Designer 2026-08-28. Extra first-Classic cards, still client-only, still not a legal-action
+recommender, still never shown when `playKind === 'tutorial'`.
+
+- **`incoming`** copy now says there is an incoming **attack** and they should **do
+  something** (attack back, Shield, or Mirror). Still `isAttackCardId` only.
+- **`incoming-thief`** is a separate id. Fires on action `thief` and specials whose id
+  ends with `-thief` (`upgrade-point-thief`, `spy-thief`, `card-thief`, `attack-thief`).
+  Spy is not a Thief. Reuses the Incoming strip `data-hint-anchor`. Attack outranks thief
+  when both are pending.
+- **`hand`** and **`specials`** fire the first time the dock is shown, after `your-turn`
+  and `draw` (same start-of-game window as Draw). Hand: use / upgrade / sell for points.
+  Specials: usually one-use; using one is the turn's action.
+- **`reward`** fires the first time POV has an `elimination-reward` sub-choice. The hint
+  overlay stays up over that Dialog (other Dialogs still hide hints). 2p game-ending
+  elims skip rewards, so this needs 3+ living seats.
+
+**Auto-Got-it:** inspect hand → `hand`; inspect special → `specials`; confirm rewards →
+`reward`; playing intent / Draw also dismiss `incoming-thief` while a Thief still
+targets you; Thief Incoming leaving the view dismisses `incoming-thief`.
+
+Selector: `reward` → `incoming` → `incoming-thief` → (on turn) `your-turn` → `draw` →
+`hand` → `specials` → `shop` → `resources` → `hidden-kit`. Off turn after threats:
+`hidden-kit`.
+
+## 2026-08-29 · [P] Hand / Specials hints sit beside the card cluster
+
+Designer 2026-08-29: the new card-row hints were not next to the cards. Anchoring
+`data-hint-anchor` on the flex-1 Hand / Specials section made `placeHintCard` treat
+the whole dock column as the box — below covered the other row; side placement
+clamped to the felt's left edge.
+
+Fix: the anchor is an `inline-flex` wrap around the visible cards (or the Empty / None
+caption). Hand / Specials use `prefer: 'beside'` (top-aligned, left of the cluster when
+that fits). Draw / Shop / Incoming stay `below` on their small chrome.
 
 
