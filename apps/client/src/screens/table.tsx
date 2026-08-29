@@ -10,6 +10,7 @@ import {
   SHARED_CARD_IDS,
   getKit,
   tutorialTourStepAt,
+  type ActionLogEntryView,
   type ActionResolvedPayload,
   type CardInstance,
   type KitId,
@@ -18,8 +19,10 @@ import {
   type SubChoiceRequiredPayload,
   type TutorialTourHighlight,
 } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
+import { useReducedMotion } from 'motion/react';
 
+import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
@@ -37,19 +40,34 @@ import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
   measureBuySpecialFlyout,
-  measurePlayFlyout,
+  measureDeckCardFlyout,
+  measureDirectedTokenFlyout,
+  measurePlayCardGhost,
   measureSellCardFlyout,
   measureTargetingCue,
 } from '../fx/play-flyout';
+import {
+  actionLogFlyoutKey,
+  boostStealChipsWithRecentYield,
+  chipsForPublicLogEntry,
+  deckCardGhostForPublicLogEntry,
+  leftoverLiveFlowChips,
+  playCardGhostsForPublicLogEntry,
+  regenFlowChips,
+  stealTransferChips,
+  type DirectedTokenChip,
+} from '../fx/opponent-token-chips';
+import { emitResourceFlowFlash } from '../fx/resource-flow-flash';
+import { skipResourceIconFlyout } from '../fx/token-flyout-skip';
 import {
   incomingAttackTargetingYouIds,
   incomingThiefTargetingYouIds,
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
-import { THREAT_FX_TTL_MS } from '../fx/motion-timing';
+import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
-import { useTableFx } from '../fx/table-fx-hooks';
+import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
 import type {
   ActionRejectPayload,
@@ -64,6 +82,7 @@ import { EconomyBar } from './table/economy-bar';
 import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
+import { collectLiveResourceSnaps, type OpponentLiveResources } from './table/opponent-seat-resources';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
@@ -96,14 +115,14 @@ import {
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
-  tutorialIncomingThreatIds,
   tutorialPortraitSpotlight,
   tutorialSendAllowed,
   tutorialSpotlightInstanceIds,
   TUTORIAL_IDLE_MS,
   type TutorialSendIntent,
 } from './table/tutorial-coach-copy';
-import { YourTurnFlash } from './table/your-turn-flash';
+import { povHasWon } from './table/table-banner';
+import { TableBannerFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {
   view: PlayingStateView;
@@ -138,6 +157,168 @@ export interface TableScreenProps {
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
   onShowStats?: () => void;
+  /** Finished-board winner for the POV (L51-06). */
+  youWon?: boolean;
+}
+
+function enqueueDirectedTokenChips(
+  enqueue: (event: TableFxInput) => void,
+  chips: readonly DirectedTokenChip[],
+  you: string,
+): void {
+  let seq = 0;
+  const tryChip = (chip: DirectedTokenChip, startSeq: number): number | null => {
+    let nextSeq = startSeq;
+    for (let i = 0; i < chip.count; i++) {
+      const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
+      if (measured === null) {
+        return null;
+      }
+      const delayMs = nextSeq * TOKEN_STAGGER_MS;
+      enqueue({
+        kind: 'tokenFlyout',
+        ...measured,
+        delayMs,
+        expiresAt: Date.now() + delayMs + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
+      });
+      nextSeq += 1;
+    }
+    return nextSeq + 1;
+  };
+  const land = (chip: DirectedTokenChip, startSeq: number): number | null => {
+    const nextSeq = tryChip(chip, startSeq);
+    if (nextSeq === null) {
+      return null;
+    }
+    // Skip ResourceIcon net-fly only after overlay chips actually landed (L51-16).
+    skipFlyoutsForChips([chip], you);
+    emitFlashesForChip(chip, you);
+    return nextSeq;
+  };
+  const failed: DirectedTokenChip[] = [];
+  for (const chip of chips) {
+    const nextSeq = land(chip, seq);
+    if (nextSeq === null) {
+      failed.push(chip);
+      continue;
+    }
+    seq = nextSeq;
+  }
+  if (failed.length === 0) {
+    return;
+  }
+  const retry = (remaining: readonly DirectedTokenChip[], attempts: number): void => {
+    if (attempts > 2) {
+      return;
+    }
+    const still: DirectedTokenChip[] = [];
+    for (const chip of remaining) {
+      const nextSeq = land(chip, seq);
+      if (nextSeq === null) {
+        still.push(chip);
+        continue;
+      }
+      seq = nextSeq;
+    }
+    if (still.length > 0) {
+      window.requestAnimationFrame(() => {
+        retry(still, attempts + 1);
+      });
+    }
+  };
+  window.requestAnimationFrame(() => {
+    retry(failed, 0);
+  });
+}
+
+function skipFlyoutsForChips(chips: readonly DirectedTokenChip[], you: string): void {
+  for (const chip of chips) {
+    if (chip.from !== 'log') {
+      skipResourceIconFlyout(flyoutSkipId(chip.from.playerId, you), chip.kind);
+    }
+    if (chip.to !== 'log') {
+      skipResourceIconFlyout(flyoutSkipId(chip.to.playerId, you), chip.kind);
+    }
+  }
+}
+
+function emitFlashesForChip(chip: DirectedTokenChip, you: string): void {
+  if (chip.from !== 'log') {
+    emitResourceFlowFlash(flyoutSkipId(chip.from.playerId, you), chip.kind, -chip.count);
+  }
+  if (chip.to !== 'log') {
+    emitResourceFlowFlash(flyoutSkipId(chip.to.playerId, you), chip.kind, chip.count);
+  }
+}
+
+function flyoutSkipId(playerId: string, you: string): string {
+  return playerId === you ? 'self' : playerId;
+}
+
+function enqueueDeckCardGhost(
+  enqueue: (event: TableFxInput) => void,
+  playerId: string,
+  artUrl: string,
+  direction: 'buy' | 'sell',
+): void {
+  const tryEnqueue = (): boolean => {
+    const measured = measureDeckCardFlyout(playerId, artUrl, direction);
+    if (measured === null) {
+      return false;
+    }
+    enqueue({
+      kind: 'tokenFlyout',
+      ...measured,
+      delayMs: 30,
+      asCard: true,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
+    });
+    return true;
+  };
+  if (tryEnqueue()) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    if (tryEnqueue()) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      tryEnqueue();
+    });
+  });
+}
+
+function enqueuePlayCardGhost(
+  enqueue: (event: TableFxInput) => void,
+  playerId: string,
+  artUrl: string,
+  instanceId?: string,
+): void {
+  const tryEnqueue = (): boolean => {
+    const measured = measurePlayCardGhost(playerId, artUrl, instanceId);
+    if (measured === null) {
+      return false;
+    }
+    enqueue({
+      kind: 'tokenFlyout',
+      ...measured,
+      delayMs: 20,
+      asCard: true,
+      expiresAt: Date.now() + TOKEN_FLYOUT_DURATION_S * 1000 + 80,
+    });
+    return true;
+  };
+  if (tryEnqueue()) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    if (tryEnqueue()) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      tryEnqueue();
+    });
+  });
 }
 
 export function TableScreen(props: TableScreenProps): ReactElement {
@@ -173,8 +354,10 @@ function TableScreenInner({
   onActivateDuplication,
   readOnly = false,
   onShowStats,
+  youWon = false,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
+  const reduceMotion = useReducedMotion();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
@@ -248,12 +431,18 @@ function TableScreenInner({
     }
     noteHintCause('playing-intent');
     onPlayCard(instanceId, options);
-    if (card === undefined) {
+    if (reduceMotion === true || card === undefined) {
       return;
     }
-    const measured = measurePlayFlyout(instanceId, card.cardId, card.isUpgraded);
-    if (measured !== null) {
-      enqueue({ kind: 'playFlyout', ...measured });
+    try {
+      enqueuePlayCardGhost(
+        enqueue,
+        view.you,
+        getCardArtUrl(card.cardId, { isUpgraded: card.isUpgraded }),
+        instanceId,
+      );
+    } catch {
+      enqueuePlayCardGhost(enqueue, view.you, getCardBackUrl('action'), instanceId);
     }
   };
 
@@ -265,17 +454,24 @@ function TableScreenInner({
     }
     noteHintCause('playing-intent');
     onPlayMultipleAttacks(attacks);
-    const first = attacks[0];
-    if (first === undefined) {
+    if (reduceMotion === true) {
       return;
     }
-    const card = findOwnCard(first.instanceId);
-    if (card === undefined) {
-      return;
-    }
-    const measured = measurePlayFlyout(first.instanceId, card.cardId, card.isUpgraded);
-    if (measured !== null) {
-      enqueue({ kind: 'playFlyout', ...measured });
+    for (const attack of attacks) {
+      const card = findOwnCard(attack.instanceId);
+      if (card === undefined) {
+        continue;
+      }
+      try {
+        enqueuePlayCardGhost(
+          enqueue,
+          view.you,
+          getCardArtUrl(card.cardId, { isUpgraded: card.isUpgraded }),
+          attack.instanceId,
+        );
+      } catch {
+        enqueuePlayCardGhost(enqueue, view.you, getCardBackUrl('attack'), attack.instanceId);
+      }
     }
   };
 
@@ -397,6 +593,78 @@ function TableScreenInner({
     }
   }, [view.actionLog, enqueue]);
 
+  const seenLogFlyoutKeys = useRef<Set<string> | null>(null);
+  const liveResourceSnaps = useRef<Map<string, OpponentLiveResources> | null>(null);
+  useLayoutEffect(() => {
+    const nextSnaps = collectLiveResourceSnaps(view.you, {
+      lives: view.self.lives,
+      points: view.self.points,
+      upgradePoints: view.self.upgradePoints,
+      shield: view.self.shield,
+    }, view.players);
+    const prevSnaps = liveResourceSnaps.current;
+    liveResourceSnaps.current = nextSnaps;
+
+    const seen = seenLogFlyoutKeys.current;
+    if (seen === null) {
+      seenLogFlyoutKeys.current = new Set(view.actionLog.map(actionLogFlyoutKey));
+      return;
+    }
+    const snapPrev = prevSnaps ?? new Map<string, OpponentLiveResources>();
+    const newEntries: ActionLogEntryView[] = [];
+    for (const entry of view.actionLog) {
+      const key = actionLogFlyoutKey(entry);
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      newEntries.push(entry);
+    }
+    if (reduceMotion === true) {
+      return;
+    }
+    const pointYields = new Map<string, number>();
+    const accounted: DirectedTokenChip[] = [];
+    for (const entry of newEntries) {
+      const steal = stealTransferChips(entry, snapPrev, nextSnaps);
+      const stealChips = boostStealChipsWithRecentYield(entry, steal.chips, pointYields);
+      enqueueDirectedTokenChips(enqueue, stealChips, view.you);
+      accounted.push(...stealChips);
+      const regenActor =
+        entry.kind === 'actionPlayed' && entry.action === 'playCard' ? entry.actorPlayerId : null;
+      const regenNeedsUnit =
+        regenActor !== null &&
+        (!snapPrev.has(regenActor) || !nextSnaps.has(regenActor));
+      if (regenNeedsUnit) {
+        const regen = regenFlowChips(entry, snapPrev, nextSnaps);
+        enqueueDirectedTokenChips(enqueue, regen.chips, view.you);
+        accounted.push(...regen.chips);
+      }
+      const chips = chipsForPublicLogEntry(
+        entry,
+        view.you,
+        view.players,
+        view.self.kitId,
+      );
+      enqueueDirectedTokenChips(enqueue, chips, view.you);
+      accounted.push(...chips);
+      for (const chip of chips) {
+        if (chip.to !== 'log' && chip.kind === 'point') {
+          pointYields.set(chip.to.playerId, chip.count);
+        }
+      }
+      const ghost = deckCardGhostForPublicLogEntry(entry, view.you, view.players);
+      if (ghost !== null) {
+        enqueueDeckCardGhost(enqueue, ghost.playerId, ghost.artUrl, ghost.direction);
+      }
+      for (const playGhost of playCardGhostsForPublicLogEntry(entry, view.you)) {
+        enqueuePlayCardGhost(enqueue, playGhost.playerId, playGhost.artUrl);
+      }
+    }
+    const leftover = leftoverLiveFlowChips(accounted, snapPrev, nextSnaps);
+    enqueueDirectedTokenChips(enqueue, leftover, view.you);
+  }, [view.actionLog, view.you, view.players, view.self.kitId, view.self.lives, view.self.points, view.self.upgradePoints, view.self.shield, enqueue, reduceMotion]);
+
   const lastRewardElimId = useRef<string | null>(null);
   useEffect(() => {
     if (subChoice?.kind !== 'elimination-reward') {
@@ -493,6 +761,7 @@ function TableScreenInner({
         })
       : undefined;
   const selfEliminated = selfPublic?.isEliminated === true;
+  const povWon = povHasWon(view.players, view.you, youWon);
   const flagIntent = tableFlagIntent({
     readOnly,
     selfEliminated,
@@ -630,10 +899,6 @@ function TableScreenInner({
   const incomingEffects = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId === view.you,
   );
-  const incomingThreatIds = tutorialIncomingThreatIds(
-    incomingEffects,
-    tutorialIndex !== null,
-  );
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
@@ -693,7 +958,6 @@ function TableScreenInner({
             points: inspectOpponent.spied.points,
             upgradePoints: inspectOpponent.spied.upgradePoints,
             shield: inspectOpponent.spied.shield,
-            resourcesSnapshot: inspectOpponent.spied.resourcesSnapshot,
           }
         : null;
 
@@ -820,8 +1084,12 @@ function TableScreenInner({
 
   return (
     <>
-      <YourTurnFlash
-        isMyTurn={isMyTurn && !readOnly && !selfEliminated}
+      <TableBannerFlash
+        isMyTurn={isMyTurn && !readOnly && !selfEliminated && !povWon}
+        isEliminated={selfEliminated}
+        youWon={povWon}
+        pendingEffects={view.pendingEffects}
+        you={view.you}
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />
       <TableShell
@@ -995,9 +1263,6 @@ function TableScreenInner({
                   }
                 : {})}
               {...(spotlightIds.length > 0 ? { highlightedInstanceIds: spotlightIds } : {})}
-              {...(incomingThreatIds.length > 0
-                ? { threatHighlightIds: incomingThreatIds }
-                : {})}
               {...(tourHighlight !== undefined && tourHighlight !== 'your-zone'
                 ? { zoneHighlight: tourHighlight }
                 : {})}
@@ -1087,9 +1352,6 @@ function TableScreenInner({
             ? { upgradePoints: inspectReveal.upgradePoints }
             : {})}
           {...(inspectReveal.shield !== undefined ? { shield: inspectReveal.shield } : {})}
-          {...(inspectReveal.mode === 'spy' && inspectReveal.resourcesSnapshot !== undefined
-            ? { resourcesSnapshot: inspectReveal.resourcesSnapshot }
-            : {})}
           onClose={() => {
             setInspectOpponentId(null);
           }}

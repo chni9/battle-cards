@@ -13,8 +13,8 @@ export type TutorialCalloutTone = 'guide' | 'threat';
 
 export interface TutorialCalloutProps {
   active: boolean;
-  /** `top` sits above (points down); `bottom` below (points up). */
-  arrow?: TutorialArrowSide;
+  /** `top` sits above (points down); `bottom` below (points up). `false` omits the arrow (L51-07). */
+  arrow?: TutorialArrowSide | false;
   /** Orange scripted control (default) vs red incoming threat. */
   tone?: TutorialCalloutTone;
   /** `stretch` wraps a block zone without becoming an inline span. */
@@ -35,6 +35,7 @@ export function TutorialCallout({
 }: TutorialCalloutProps): ReactElement {
   const fill = tone === 'threat' ? '#d62828' : '#f0771f';
   const Tag = layout === 'stretch' ? 'div' : 'span';
+  const showArrow = active && arrow !== false;
 
   return (
     <Tag
@@ -49,7 +50,7 @@ export function TutorialCallout({
         ? { 'data-tutorial-highlight': highlightId }
         : {})}
     >
-      {active ? (
+      {showArrow ? (
         <span
           className={`tutorial-callout-arrow tutorial-callout-arrow--${arrow}${tone === 'threat' ? ' tutorial-callout-arrow--threat' : ''}`}
           aria-hidden

@@ -34,6 +34,16 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).toContain('CardChoiceTile');
   });
 
+  it('inspects cards with CostDisplay and upgradeAdds, not Cost: prose (L51-05)', () => {
+    expect(source).toContain('CardEffectCopy');
+    expect(source).not.toContain('Cost:');
+    expect(source).not.toContain('formatCardEffectText');
+  });
+
+  it('does not prompt Choose Use, Upgrade, or Sell (L51-12)', () => {
+    expect(source).not.toContain('Choose Use, Upgrade, or Sell.');
+  });
+
   it('commits Regeneration quantity with four click-to-buy tiles (L44-06)', () => {
     expect(source).toContain('REGEN_QUANTITIES');
     expect(source).toContain('1 life');

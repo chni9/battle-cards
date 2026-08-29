@@ -18,6 +18,7 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { seatIndexOf } from '../../design/seat-colors';
+import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
@@ -40,8 +41,6 @@ export interface PrivateZoneProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   highlightedInstanceIds?: readonly string[];
-  /** Tutorial red Incoming chips (Attack / Spy / Thief). */
-  threatHighlightIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
 }
@@ -59,7 +58,6 @@ export function PrivateZone({
   onDeactivatePersistent,
   onActivateDuplication,
   highlightedInstanceIds,
-  threatHighlightIds = [],
   zoneHighlight,
 }: PrivateZoneProps): ReactElement {
   const actives = [
@@ -84,7 +82,9 @@ export function PrivateZone({
   const povSeat = seatIndexOf(view, view.you);
   const isActiveSeat = view.currentTurnPlayerId === view.you;
   const youLabel = selfPublic?.nickname ?? 'You';
-  const incomingThreats = threatHighlightIds.length > 0;
+  const incomingThreats = incomingEffects.some(
+    (effect) => !isPersistentPresentationId(effect.id),
+  );
   const highlightIncoming = zoneHighlight === 'incoming';
   const highlightResources = zoneHighlight === 'resources';
   const highlightKit = zoneHighlight === 'kit';
@@ -175,7 +175,6 @@ export function PrivateZone({
               tone="dock"
               highlightedIds={mirrorHighlightIds}
               animateEntrance
-              {...(incomingThreats ? { threatHighlightIds } : {})}
             />
           </TutorialCallout>
         </div>

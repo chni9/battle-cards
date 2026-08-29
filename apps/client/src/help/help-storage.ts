@@ -1,6 +1,6 @@
 /**
  * Client teaching storage — technical spec v6 §5.1 / §5.2, L42-02 / L46-01.
- * How to play seen-flag and hint blob. Reset help clears both.
+ * How to play seen-flag and hint blob. `resetHelpStorage` clears both.
  */
 
 import { isHintId, type HintId } from './hint-ids';

@@ -5,7 +5,6 @@
 
 import {
   BOT_DIFFICULTIES,
-  PROTOCOL_VERSION,
   type BotDifficulty,
   type LobbyKitSelection,
 } from '@card-battle/shared';
@@ -19,7 +18,6 @@ import { KitPortrait } from '../design/components/kit-portrait';
 import {
   hasSeenHowToPlay,
   markHowToPlaySeen,
-  resetHelpStorage,
   type HowToPlayContinueTarget,
 } from '../help/help-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
@@ -162,6 +160,8 @@ export function HomeScreen({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,var(--color-surface-kit)_0%,transparent_55%),radial-gradient(ellipse_at_90%_20%,var(--color-slate-soft)_0%,transparent_45%)]"
       />
 
+      <BetaCard />
+
       <div className="relative mx-auto grid min-h-[100dvh] max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
         <section className="order-2 md:order-1">
           <motion.div
@@ -187,9 +187,6 @@ export function HomeScreen({
                 }}
                 onChooseTutorial={() => {
                   requestPath('tutorial');
-                }}
-                onResetHelp={() => {
-                  resetHelpStorage();
                 }}
               />
             ) : null}
@@ -276,7 +273,6 @@ interface HubViewProps {
   onChooseOnline: () => void;
   onChooseSolo: () => void;
   onChooseTutorial: () => void;
-  onResetHelp: () => void;
 }
 
 function HubView({
@@ -288,7 +284,6 @@ function HubView({
   onChooseOnline,
   onChooseSolo,
   onChooseTutorial,
-  onResetHelp,
 }: HubViewProps): ReactElement {
   return (
     <div>
@@ -298,13 +293,6 @@ function HubView({
       <h1 className="mt-2 font-sans text-4xl font-semibold tracking-tight text-ink md:text-5xl">
         Card Battle
       </h1>
-      <p className="mt-3 max-w-[40ch] text-base leading-relaxed text-ink-muted">
-        Bluff and react under delayed resolution — attacks hit on your opponent’s turn, after
-        they have played.
-      </p>
-      <p className="mt-4 text-sm font-medium text-ink">
-        Beta — rules are stable. Tell us what is confusing.
-      </p>
       <StatusBlock
         status={status}
         error={error}
@@ -329,14 +317,6 @@ function HubView({
       <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
         New here? Open How to play once, then pick Tutorial, Online, or Solo.
       </p>
-      <button
-        type="button"
-        className="mt-4 text-xs text-ink-muted underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        onClick={onResetHelp}
-      >
-        Reset help
-      </button>
-      <p className="mt-8 text-[10px] text-ink-muted">Protocol v{PROTOCOL_VERSION}</p>
     </div>
   );
 }
@@ -681,6 +661,19 @@ function StatusBlock({ status, error, soloLaunchPending }: StatusBlockProps): Re
         </p>
       )}
     </>
+  );
+}
+
+function BetaCard(): ReactElement {
+  return (
+    <aside
+      data-zone="beta-card"
+      className="absolute right-4 top-4 z-10 w-[4.25rem] rounded-[length:var(--radius-card)] border border-border bg-surface-raised px-2 py-3 text-center shadow-sm sm:right-8 sm:top-6 sm:w-20 sm:py-4"
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink sm:text-xs">
+        Beta
+      </p>
+    </aside>
   );
 }
 
