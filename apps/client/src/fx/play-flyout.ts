@@ -128,6 +128,8 @@ export function measureDirectedTokenFlyout(
   if (fromRect === null || toRect === null) {
     return null;
   }
+  // Log-origin chips are 40px for readability. Overlay chrome is asCard-only
+  // (L51-14) — this size must not paint a white tile around the icon.
   const fromSize = from === 'log' ? 40 : 32;
   const toSize = to === 'log' ? 40 : 32;
   return {

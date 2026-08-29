@@ -37,7 +37,11 @@ export type TableFxEvent =
       to: DomRectLite;
       /** Delay before this chip starts moving (multi-token stagger). */
       delayMs?: number;
-      /** Buy/sell card ghost — card chrome + fade, not a token chip (L51-13). */
+      /**
+       * Buy/sell card ghost — card chrome + fade.
+       * Resource chips must omit this (or leave it false): a width heuristic
+       * would paint 40px log-origin icons as white tiles (L51-14).
+       */
       asCard?: boolean;
       expiresAt: number;
     }
@@ -76,5 +80,14 @@ export type TableFxEvent =
       to: DomRectLite;
       expiresAt: number;
     };
+
+/**
+ * Card chrome (border + raised surface) is opt-in via `asCard`.
+ * Log-origin resource chips are 40×40; width must not classify them as cards.
+ * L51-14 / designer 2026-08-29.
+ */
+export function tokenFlyoutUsesCardChrome(event: { asCard?: boolean }): boolean {
+  return event.asCard === true;
+}
 
 export { FX_TTL_MS, THREAT_FX_TTL_MS, THREAT_OUTLINE_DURATION_S } from './motion-timing';

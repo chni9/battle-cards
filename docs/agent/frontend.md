@@ -11,9 +11,10 @@ V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is
 (`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
 router; Home, Lobby, Table, and End live under `apps/client/src/screens/` (Lots 11–13).
 Update this file's examples in place as V2 components land; don't fork a second frontend
-playbook. Intents, payloads, and visibility rules are unchanged by V2 (except the Table
-**control pattern** in technical spec v2 §6.1 — same payloads, different chrome;
-implemented in L12-08).
+playbook. **Keep it current with every client convention change** (AGENTS.md §12) — same
+commit as the code, never a later cleanup. Intents, payloads, and visibility rules are
+unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
+payloads, different chrome; implemented in L12-08).
 
 ## Screens
 
@@ -210,19 +211,23 @@ rules above are unchanged — this section only covers how the client looks.
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
     No wire field.
-  - **Opponent token flyouts (L51-09 / L51-11 / L51-13):** POV dock `ResourceIcon`
-    still handles live dock Δ except steal / Regen transfers already choreographed.
-    Unspied / base Spy enqueue **directed** chips (`from` / `to` log or player):
-    play/buy/upgrade spends seat→log; sell yield log→seat; buy upgrade point spends
-    Classic 10 when kit is hidden. **Card ghosts only on buy/sell** (felt pending
-    center, ~48×72, fade on arrival) — verso when unspied, face when Spyed; special
-    buy uses the special verso. Playing a card does **not** fly art to the center.
-    Regeneration: live Δ when numbers are known, otherwise the catalog per-life
-    unit (rate + 1 life) so the action still animates; quantity is not on the
-    public log. Thief / Spy Thief / Upgrade Point Thief: live Δ victim→thief
-    (extra upgraded gain from the log); both `?` → one directional chip, never an
-    invented total. Overlay `z-[110]`. Travel ~0.42s. Reduced motion skips
-    choreography. Do not invent Draw totals.
+  - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14):** POV dock
+    `ResourceIcon` still handles live dock Δ except steal / Regen transfers
+    already choreographed. Unspied / base Spy enqueue **directed** chips
+    (`from` / `to` log or player): play/buy/upgrade spends seat→log; sell yield
+    log→seat; buy upgrade point spends Classic 10 when kit is hidden. **Resource
+    chips are icon-only** (`object-contain` + drop shadow, no `bg-surface-raised`,
+    no card radius, no border). Overlay card chrome is **`asCard === true` only**
+    — never `from.width`. Log-origin chips are 40×40 for readability; that size
+    must not promote them to tiles (L51-14). **Card ghosts only on buy/sell**
+    (felt pending + card-band midpoint, ~48×72, fade on arrival, `asCard: true`)
+    — verso when unspied, face when Spyed; special buy uses the special verso.
+    Playing a card does **not** fly art to the center. Regeneration: live Δ when
+    numbers are known, otherwise the catalog per-life unit (rate + 1 life) so the
+    action still animates; quantity is not on the public log. Thief / Spy Thief /
+    Upgrade Point Thief: live Δ victim→thief (extra upgraded gain from the log);
+    both `?` → one directional chip, never an invented total. Overlay `z-[110]`.
+    Travel ~0.42s. Reduced motion skips choreography. Do not invent Draw totals.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and

@@ -63,7 +63,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-51 of 61 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+53 of 63 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -77,7 +77,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
-| 51 · Beta UI feedback | 12 | 12 |
+| 51 · Beta UI feedback | 14 | 14 |
 
 ---
 
@@ -232,7 +232,8 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | L51-10 | Opponent seat layout: resource icons stack vertically beside the portrait; activated cards sit under the portrait. Drop wrap-row + omit-shield. **Acceptance:** seats no longer overflow from a wrapping resource row; shield always stays on the seat. | S | Low | L51-08 | Done |
 | L51-11 | Directed token/card flyouts: sell yield log→seat plus card ghost (verso unspied, face when Spyed); buy/sell upgrade-point uses default 10/7 when kit hidden; thief/spy-thief/UPT live Δ flies victim→thief; every catalog chip has from/to. **Acceptance:** no invented Draw/thief counts; sell points never seat→log. | M | Medium | L51-09 | Done |
 | L51-12 | Card inspect: drop “Choose Use, Upgrade, or Sell.”; label play cost **Cost** then icons; inline resource glyphs in effect / upgradeAdds prose. **Acceptance:** Regeneration copy shows life/point icons; no Choose-Use helper. | S | Low | L51-05 | Done |
-| L51-13 | Flyout correction: card ghosts only on buy/sell (felt center, ~48×72, fast fade); no play-to-center card; resource chips on every action including Regen+ (live Δ, else catalog unit); thief victim→thief even when both `?` (1 directional chip, never an invented total); faster travel. **Acceptance:** playCard does not enqueue a card flyout; opponent buy/sell card is small and aimed at pending, not the log. | M | Medium | L51-11 | Done |
+| L51-13 | Flyout correction: card ghosts only on buy/sell (felt pending + card-band midpoint, ~48×72, fast fade); no play-to-center card; resource chips on every action including Regen+ (live Δ, else catalog unit); thief victim→thief even when both `?` (1 directional chip, never an invented total); faster travel. **Acceptance:** playCard does not enqueue a card flyout; opponent buy/sell card is small and aimed at pending, not the log. | M | Medium | L51-11 | Done |
+| L51-14 | Resource token chips must stay icon-only: overlay card chrome (`bg-surface-raised` + border + card radius) is `asCard === true` only. Do not classify chips by `from.width` (log-origin tokens are 40px). Buy/sell ghosts keep `asCard`. **Acceptance:** Draw / Regen / spend chips have no white tile; buy/sell ghosts still use card chrome. Update `frontend.md` + `decisions.md` in the same change. | S | Low | L51-13 | Done |
 
 ---
 
@@ -250,8 +251,8 @@ Client presentation + catalog `upgradeAdds` copy derived from existing `effect` 
 | 48 | 2 |
 | 49 | 2 |
 | 50 | 9 |
-| 51 | 13 |
-| **Total** | **62** |
+| 51 | 14 |
+| **Total** | **63** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

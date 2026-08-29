@@ -15,6 +15,7 @@ import {
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
 } from './play-flyout';
+import { tokenFlyoutUsesCardChrome } from './table-fx-types';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
@@ -51,5 +52,14 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     expect(table).toContain("asCard: true");
     expect(table).not.toContain('measurePlayFlyout');
     expect(table).not.toContain('enqueueSellCardGhost');
+  });
+
+  it('token chip chrome is asCard-only — width must not promote resource icons (L51-14)', () => {
+    expect(tokenFlyoutUsesCardChrome({ asCard: true })).toBe(true);
+    expect(tokenFlyoutUsesCardChrome({})).toBe(false);
+    const overlay = readFileSync(join(dir, 'table-fx-overlay.tsx'), 'utf8');
+    expect(overlay).toContain('tokenFlyoutUsesCardChrome');
+    expect(overlay).not.toMatch(/from\.width\s*>=\s*40/);
+    expect(overlay).not.toMatch(/from\.width\s*>=\s*64/);
   });
 });

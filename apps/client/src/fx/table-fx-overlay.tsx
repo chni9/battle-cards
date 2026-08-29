@@ -15,7 +15,7 @@ import {
   TOKEN_FLYOUT_DURATION_S,
 } from './motion-timing';
 import { useTableFx } from './table-fx-hooks';
-import type { DomRectLite, ThreatTone } from './table-fx-types';
+import { tokenFlyoutUsesCardChrome, type DomRectLite, type ThreatTone } from './table-fx-types';
 
 function outcomeClass(outcome: ActionResolutionOutcome): string {
   if (outcome === 'applied') {
@@ -252,7 +252,7 @@ export function TableFxOverlay(): ReactElement {
               return null;
             }
             const { from, to, artUrl, id, delayMs = 0 } = event;
-            const isCard = event.asCard === true || from.width >= 40;
+            const isCard = tokenFlyoutUsesCardChrome(event);
             return (
               <motion.img
                 key={id}

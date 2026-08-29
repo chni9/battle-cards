@@ -4,8 +4,8 @@
 > Transverse rules → `/AGENTS.md`. Domain specifics → `engine.md`, `card-handler.md`, `protocol.md`.
 >
 > Sources: technical spec §8 (Definition of Done), §5.5–§5.7 (thresholds), §6.2 (rulings) ·
-> `../backlog_v2.md` (active; "How to read this" and each task's **Acceptance** line) ·
-> `../backlog_v1.md` (V1 archive, for citing finished V1 acceptance only) ·
+> `../backlog_v6.md` (active V6) · `../backlog_v5.md` (V5 parallel) ·
+> `../backlog_v1.md` … `../backlog_v4.md` (archives, for citing finished acceptance only) ·
 > config in `vitest.config.ts`, example in `packages/shared/src/domain/v1-scope.test.ts`.
 
 ## Golden rules
@@ -28,9 +28,10 @@ is how to satisfy it.
 ## Layout
 
 Tests sit beside the code: `src/**/*.test.ts`. Vitest projects are declared in the root
-`vitest.config.ts` (`shared`, `server`). `pnpm test` runs all of them once; `pnpm verify` is the
-full gate. There is no client test project yet — it arrives with the interface work in lot 1,
-which is when jsdom becomes a justified dependency.
+`vitest.config.ts` (`shared`, `server`, `client`). The client project extends
+`apps/client/vite.config.ts` so PNG `import.meta.glob` resolves; environment is
+`node` (source-read / helper tests — not a full jsdom table). `pnpm test` runs all
+projects once; `pnpm verify` is the full gate.
 
 Name the test after the rule and cite its source, so a failure points at a spec section:
 
@@ -107,6 +108,9 @@ These are the spots where a plausible implementation is wrong and silent:
 - A card acquired *after* the game started, on a kit with `alwaysUpgraded` → arrives upgraded.
 - A gain that would exceed 25 lives → clamped, excess lost, from every source.
 - The same counter card played while its user takes damage from several attacks in one turn.
+- Table token flyouts: resource icons stay chrome-free unless `asCard === true`
+  (buy/sell ghosts). A `from.width` threshold paints 40px log-origin chips as
+  white tiles (L51-14).
 
 ## What not to do
 

@@ -2682,5 +2682,15 @@ Designer follow-up on the L51-11 card/token pass. Client presentation only.
   the stolen total.
 - Draw totals stay skipped when kit Draw is hidden.
 
+## 2026-08-29 · [P] Token chips are icon-only (L51-14)
+
+Designer: resource flyouts (points, lives, etc.) must not sit in a white square.
+
+- Overlay card chrome is **`asCard === true` only**. Buy/sell ghosts pass that flag.
+- L51-13 used `from.width >= 40` after shrinking card ghosts to 48×72. Log-origin
+  resource chips are already 40×40, so every token picked up the raised-surface
+  tile. Width must not classify chips as cards.
+- Playbooks (`frontend.md`, `testing.md`) record the invariant in the same change.
+
 
 
