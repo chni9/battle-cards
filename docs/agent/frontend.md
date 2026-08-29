@@ -592,3 +592,13 @@ do not hand off an untested lot.
 - Overlay chrome stays `asCard === true` only (buy/sell ghosts). Resource
   `tokenFlyout` uses `object-contain` + drop shadow. Playbooks updated in the
   same change (`frontend.md`, `testing.md`, `decisions.md`).
+
+### Lot 51-16 verified 2026-08-29 (browser, PROTOCOL 30)
+
+- Room `DOMKYZD` / table nick `L51Fx16`, Specialist vs 1× Normal (Alpha).
+- Absorber+ (cost 3) on Alpha while Strong attack was pending on POV: small
+  Absorber ghost hand → felt center; gold coins in flight at the same time as
+  hearts (Strong resolve −2 life). Coins visible both near the log and arriving
+  on the Points dock — spend and gain legs, not a single net chip.
+- Mutual equal/weaker attack vs Alpha's Strong still cancels (Round 2 log);
+  cancelled attacks correctly fly no `livesLost` chips from the `?` seat.
