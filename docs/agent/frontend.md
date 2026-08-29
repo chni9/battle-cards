@@ -522,6 +522,12 @@ do not hand off an untested lot.
 - First POV **elimination reward** hint is unit-tested (selector + Dialog anchor). Not forced
   in this 2p solo (game-ending elim skips rewards).
 
+### Lot 46 placement fix verified 2026-08-29 (browser, `TURN_DURATION_MS=300000`)
+
+- Solo nick `L46Beside`, room `MAEVCV`. After Your turn / Draw, **Hand** sits in the HAND
+  row immediately left of the cards; **Specials** sits in the SPECIALS row immediately
+  left of Super Mirror — not on the far left of the felt.
+
 ### Lot 50 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
 - Solo Specialist vs 1 bot, nick `SupercalifragilisticNick`. Shop tile select stays open;
