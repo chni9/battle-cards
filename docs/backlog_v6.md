@@ -67,7 +67,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-59 of 72 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+60 of 72 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 50 · Beta feedback | 9 | 9 |
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
-| 53 · Table crowding | 6 | 0 |
+| 53 · Table crowding | 6 | 1 |
 
 ---
 
@@ -266,7 +266,7 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L53-01 | Lock the layout contract in `decisions.md` + spec v6 §6.2: 64px floor, wrap+vertical scroll, no pager, one-row opponents, collapse Incoming → log → opponents. **Acceptance:** an agent reading only those files knows L43-04 shrink and L52-01 wrap are superseded. | S | Low | — | In progress |
+| L53-01 | Lock the layout contract in `decisions.md` + spec v6 §6.2: 64px floor, wrap+vertical scroll, no pager, one-row opponents, collapse Incoming → log → opponents. **Acceptance:** an agent reading only those files knows L43-04 shrink and L52-01 wrap are superseded. | S | Low | — | Done |
 | L53-02 | Dialog panel width: honor `panelClassName` `max-w-*` (Shop / kit picker / How to play / sub-choices must not stay 448px). Compact dialog action buttons so Use/Upgrade/Sell/Cancel fit. **Acceptance:** unit test on the width helper; Shop `max-w-3xl` is the computed max-width class. | S | Low | — | To do |
 | L53-03 | `CardBand`: `CARD_BAND_ABS_MIN_W = 64`, max 96; wrap + overflow-y; remove pager / `fitCardBand` height-shrink. Hand fills leftover; Specials size to content (max ~50%). Empty Specials do not take `flex-1`. **Acceptance:** `fitCardBand` never returns width &lt; 64; no pager tests; short height still ≥ 64. | M | Medium | L53-01 | To do |
 | L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | To do |
