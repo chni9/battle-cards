@@ -425,9 +425,14 @@ Client-only except Leave/forfeit (§8).
 
 ### 6.2 Phone hand
 
-`CARD_BAND_ABS_MIN_W` is 24 today — unreadably small. Raise the **pagination floor** so
-faces do not shrink below **48 px** width; paginate earlier. Preferred min may stay 40–72.
-Desktop must not regress to a single-card pager when the dock is wide.
+Faces keep a **hard 64px width floor** (Lot 53; supersedes the 48px pager floor in L43-04).
+They wrap, then the band **scrolls vertically**. No pager arrows. Height must not shrink
+width below that floor. Desktop may grow faces up to 96px when the dock is wide.
+
+Hand is more important than Incoming, the action log, and opponent seats. If the felt
+cannot fit one 64px hand row, those regions collapse into a button + Dialog in this
+order: Incoming (including Waiting on others) → action log → opponents. Opponents on
+the table stay **one horizontally scrollable row** (Lot 53; supersedes L52-01 wrap).
 
 ### 6.3 Leave
 

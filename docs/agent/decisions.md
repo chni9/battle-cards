@@ -2824,4 +2824,28 @@ remain three opponent-offset slots — a 6-player table does not add fitted dime
 Rules spec §1 Number of Players updated in the same change. How to play primer Goal
 copy matches (2 to 6).
 
+## 2026-08-31 · [P] Table crowding — cards first, collapse chrome (Lot 53)
+
+Designer session: crowded tables (especially **mobile**, including 6-player) were
+unplayable because faces shrank to a line. This **supersedes** the 2026-08-21 L43-04
+ruling that a short dock may shrink below 48px to avoid cropping, and it supersedes
+L52-01 wrapping the opponent arc onto extra rows.
+
+Layout contract (client presentation only — no rule or value change):
+
+- **Cards never shrink below 64px width.** 2/3 art plus the name line. Overflow **wraps
+  then scrolls vertically**. No hand/specials pager arrows.
+- Hand and Specials are **not** a 50/50 split. Specials size to content (cap ~half the
+  card area, then scroll). Empty Specials / empty Incoming / empty Waiting do not take
+  flex space.
+- **Opponents stay one horizontal row** (`flex-nowrap` + overflow-x). Never wrap to a
+  second line. 5 foes on a phone scroll sideways.
+- When the felt still cannot fit one 64px hand row after that, chrome collapses into a
+  button that opens a Dialog, in this order: **1. Incoming** (dock Incoming + felt
+  Waiting on others), **2. Action log**, **3. Opponents**. Cards, Draw, and Shop stay
+  on the table.
+- Mobile is the primary viewport. Desktop may grow faces up to a higher max (96px).
+- Dialog `panelClassName` width overrides must actually apply (`max-w-3xl` for Shop /
+  kit picker / sub-choices). The previous `max-w-md` + override pair resolved to 448px.
+
 
