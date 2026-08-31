@@ -679,11 +679,12 @@ Re-checked the playtest screenshots: wrap+vertical scroll cropped names, Special
 on their own, 844×390 Dialogs/buttons sat off-screen. Contract is now one shared width,
 one row, horizontal scroll, height-fit (never crop).
 
-- Room `SRZZQU` (nick `L53Fix2`), Specialist vs 5 Easy bots.
-- Portrait **390×844** (screenshot 780×1688 @2x): Hand and Specials both **73px** wide
-  (`overflow-x: auto`, `overflow-y: hidden`, `flex-wrap: nowrap`). Names not clipped.
-  Hand `scrollWidth` 391 > `clientWidth` 368.
-- Landscape **844×390** (screenshot 1688×780 @2x): cards **71px** both, side-by-side
-  Hand | Specials. Action log + Opponents collapsed; Dialogs fit in the 390px viewport
-  (`closeVisible`, Action log top 67 / bottom 324; Opponents top 55 / bottom 336).
-- `pnpm verify` green (1141 tests).
+- Room `MUMAMB` (nick `L53Look`), Specialist vs 5 Easy bots. Headless Chrome, exact
+  390×844 / 844×390 viewports at deviceScaleFactor 2 (not a 1280×800 desktop shot).
+- Portrait: Hand and Specials both **81×133**, `overflow-x: auto`, `overflow-y: hidden`,
+  `flex-wrap: nowrap`. Names not clipped. Hand `scrollWidth` 431 > `clientWidth` 368.
+- Landscape: cards **71×118** both, **same y**, `data-side-by-side=true`. Left column
+  hugs (Opponents 44px, Action log 50px — no empty white 1fr slab). Shop / card /
+  Opponents / Action log Dialogs: `inViewport` and Close/Cancel fully on-screen
+  (Shop Close bottom 374 in 390; Opponents seats `headerH` 20, `iconClipped: false`).
+- `pnpm verify` green (1143 tests).
