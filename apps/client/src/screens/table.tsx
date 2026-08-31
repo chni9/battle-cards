@@ -1426,7 +1426,7 @@ function TableScreenInner({
           </Button>
         }
       >
-        <ActionLogPanel view={view} />
+        <ActionLogPanel view={view} embedded />
       </Dialog>
 
       <Dialog
@@ -1450,7 +1450,7 @@ function TableScreenInner({
       >
         <div
           data-zone="opponents-dialog-row"
-          className="flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1"
+          className="flex w-full min-w-0 flex-nowrap gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1"
         >
           {opponents.map((player) => (
             <OpponentZone

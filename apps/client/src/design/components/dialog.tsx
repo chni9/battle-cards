@@ -15,7 +15,7 @@ import {
 } from 'react';
 
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
-import { dialogPanelClassName } from './dialog-width';
+import { dialogPanelClassName, dialogPreferredMaxWidth } from './dialog-width';
 
 export interface DialogProps {
   open: boolean;
@@ -141,7 +141,8 @@ export function Dialog({
       {open ? (
         <motion.div
           key="dialog-overlay"
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-ink/45 p-2"
+          data-zone="dialog-overlay"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-x-hidden overflow-y-auto overscroll-contain bg-ink/45 p-2"
           role="presentation"
           onClick={onOverlayClick}
           initial={reduceMotion === true ? false : { opacity: 0 }}
@@ -157,16 +158,16 @@ export function Dialog({
             tabIndex={-1}
             onKeyDown={onPanelKeyDown}
             className={dialogPanelClassName(panelClassName)}
+            style={{
+              maxWidth: `min(${dialogPreferredMaxWidth(panelClassName)}, 100%)`,
+              maxHeight: '100%',
+            }}
             {...(hintAnchor !== undefined
               ? { 'data-hint-anchor': hintAnchor }
               : {})}
-            initial={
-              reduceMotion === true
-                ? false
-                : { opacity: 0, y: 28, scale: 0.96 }
-            }
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            initial={reduceMotion === true ? false : { opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             transition={{
               duration: reduceMotion === true ? 0 : MOTION_DURATION_S,
               ease: MOTION_EASE,
@@ -175,14 +176,20 @@ export function Dialog({
               event.stopPropagation();
             }}
           >
-            <h2 id={titleId} className="shrink-0 text-base font-semibold leading-tight tracking-tight text-ink sm:text-lg">
+            <h2 id={titleId} className="shrink-0 text-base font-semibold leading-tight tracking-tight text-ink">
               {title}
             </h2>
-            <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto text-sm text-ink-muted">
+            <div
+              data-zone="dialog-body"
+              className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto text-sm text-ink-muted"
+            >
               {children}
             </div>
             {actions !== undefined && (
-              <div className="mt-3 flex shrink-0 flex-wrap items-center justify-end gap-3 sm:mt-5">
+              <div
+                data-zone="dialog-actions"
+                className="mt-2 flex w-full min-w-0 shrink-0 flex-wrap items-center justify-end gap-2"
+              >
                 {actions}
               </div>
             )}

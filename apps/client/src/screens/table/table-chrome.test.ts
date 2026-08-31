@@ -56,7 +56,7 @@ describe('opponents collapse Dialog (L53-07)', () => {
   it('keeps seats on one nowrap row so the panel does not grow off-screen', () => {
     const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
     expect(table).toContain('opponents-dialog-row');
-    expect(table).toContain('flex-nowrap gap-2 overflow-x-auto');
+    expect(table).toContain('w-full min-w-0 flex-nowrap gap-2 overflow-x-auto');
     const seat = source('opponent-zone.tsx');
     expect(seat).toContain('flex-nowrap');
     expect(seat).toContain('overflow-hidden');

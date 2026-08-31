@@ -100,13 +100,18 @@ const KIND_META: Record<
 
 export interface ActionLogPanelProps {
   view: PlayingStateView;
+  /** Dialog already titles the panel — skip the inner heading and do not stretch. */
+  embedded?: boolean;
 }
 
 function nicknameOf(view: PlayingStateView, playerId: string): string {
   return view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
 }
 
-export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
+export function ActionLogPanel({
+  view,
+  embedded = false,
+}: ActionLogPanelProps): ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
   const previousLengthRef = useRef(0);
@@ -138,13 +143,20 @@ export function ActionLogPanel({ view }: ActionLogPanelProps): ReactElement {
   return (
     <section
       data-zone="action-log-panel"
-      className="flex h-full min-h-0 flex-col overflow-hidden font-sans text-ink"
+      className={[
+        'flex min-h-0 flex-col overflow-hidden font-sans text-ink',
+        embedded ? '' : 'h-full',
+      ].join(' ')}
     >
-      <h2 className="shrink-0 text-xs font-semibold tracking-tight sm:text-sm">
-        Action log
-      </h2>
+      {embedded ? null : (
+        <h2 className="shrink-0 text-xs font-semibold tracking-tight sm:text-sm">
+          Action log
+        </h2>
+      )}
       {view.actionLog.length === 0 ? (
-        <p className="mt-1 text-xs text-ink-muted">No actions yet</p>
+        <p className={embedded ? 'text-xs text-ink-muted' : 'mt-1 text-xs text-ink-muted'}>
+          No actions yet
+        </p>
       ) : (
         <div
           ref={listRef}

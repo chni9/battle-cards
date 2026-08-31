@@ -19,3 +19,16 @@ describe('ActionLogPanel Why (L45-05)', () => {
     expect(source).not.toContain('Show bot reason');
   });
 });
+
+describe('ActionLogPanel Dialog embed (L53-07)', () => {
+  it('does not stretch to full height or duplicate the Dialog title', () => {
+    const source = readFileSync(join(dir, 'action-log-panel.tsx'), 'utf8');
+    expect(source).toContain('embedded');
+    expect(source).toContain("embedded ? '' : 'h-full'");
+    const table = readFileSync(
+      join(dir, '../screens/table.tsx'),
+      'utf8',
+    );
+    expect(table).toContain('<ActionLogPanel view={view} embedded />');
+  });
+});

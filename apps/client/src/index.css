@@ -211,10 +211,28 @@
   }
 }
 
-/* Short phone heights — sm:p-5 on a 390px-tall landscape panel ate Close. */
+/* Dialog must fit the overlay (`fixed inset-0`), not 100dvh of a taller desktop
+ * window behind DevTools device mode. min-width:auto was clipping Cancel.
+ * Overlay is items-start so a tall panel is not vertically centered off-screen. */
+[data-zone="dialog-overlay"] {
+  align-items: flex-start;
+}
+
+[role="dialog"] {
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: 100%;
+}
+
+[data-zone="opponents-dialog-row"] {
+  min-width: 0;
+  width: 100%;
+}
+
 @media (max-height: 500px) {
   [role="dialog"] {
     padding: 0.5rem !important;
+    max-height: 100% !important;
   }
 }
 

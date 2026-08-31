@@ -2871,9 +2871,13 @@ above. Still client presentation only — no rule or value change.
 - Felt chrome still collapses Incoming → log → opponents. On **short viewports**
   (innerHeight ≤ 500px, including 844×390) collapse all three so the left column is
   buttons that actually fit. Landscape left column has a **nonzero min width**.
-- Dialog overlay is **centered** with tight padding. Panel `max-height` is
-  `calc(100dvh − 1rem)` so title, body, and Close stay on-screen; body scrolls inside.
-  On viewports ≤ 500px tall, panel padding is 0.5rem (sm width must not restore p-5).
+- Dialog overlay is `items-start` with tight padding (not `items-center` — that
+  clips the title of a tall panel). Panel `max-height` is **100% of the overlay**,
+  not `100dvh` (DevTools device mode can report desktop `dvh` while the game frame
+  is 390px). `my-auto` centers a short panel. Width is `min(preferred, 100%)` of
+  the overlay so 448px `max-w-md` cannot beat a 390px phone. Body scrolls inside;
+  footer wraps. On viewports ≤ 500px tall, panel padding is 0.5rem (sm width
+  must not restore p-5).
 - Collapse Dialogs keep opponent seats on **one nowrap row** (overflow-x). Seat
   headers do not wrap — a two-line BOT badge was cropping the resource column.
 - Landscape collapsed log / opponents **hug** the button. They do not take the

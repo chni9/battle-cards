@@ -54,8 +54,10 @@ rules above are unchanged — this section only covers how the client looks.
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
   focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants (`compact` on
-  phone dialogs). `panelClassName` `max-w-*` overrides the default `max-w-md` via
-  `dialogPanelClassName` (L53-02). Prefer this
+  phone dialogs). Overlay is `items-start` + panel `my-auto` / `max-h-full` of
+  `fixed inset-0` (never `100dvh`, never `items-center` — that clips the title).
+  `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
+  `dialogPanelClassName` (L53-02 / L53-07). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
   extra npm dependency unless separately ruled.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
@@ -173,9 +175,14 @@ rules above are unchanged — this section only covers how the client looks.
   shown) with one line per action. Hand/specials are **one row each** and **scroll
   horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
   height so the name line stays on-screen.
-- **Dialog width (L53-02):** `dialogPanelClassName` omits the default `max-w-md` when the
-  caller already passes a `max-w-*` (Shop / kit picker / How to play / sub-choices). Dialog
-  footer `Button`s use `compact` so Use / Upgrade / Sell / Cancel fit on a 390px phone.
+- **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
+  `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
+  Panel is `min-w-0 max-h-full` of the `fixed inset-0` overlay so 390×844 never clips
+  Cancel off the right and 844×390 never clips Close off the bottom. Overlay is
+  `items-start` (not `items-center`, which clips the title of a tall panel); `my-auto`
+  still centers a short panel. Footer `Button`s use `compact` and wrap. Collapse
+  Opponents seats sit on a `min-w-0` nowrap row; Action log Dialog uses `embedded` so
+  the empty state is not a full-height white slab.
 - **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
   show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
