@@ -35,3 +35,16 @@ describe('table corner chrome (L43-05)', () => {
     expect(table).not.toMatch(/onClick=\{\(\) => \{\s*onLeave\(\);/);
   });
 });
+
+describe('opponent row (L53-04)', () => {
+  it('keeps opponents on one nowrap row without wrapping extra foes', () => {
+    const shell = source('table-shell.tsx');
+    expect(shell).toContain('flex-nowrap');
+    expect(shell.replaceAll('flex-nowrap', '')).not.toMatch(
+      /table-felt__opponents[\s\S]{0,280}flex-wrap/,
+    );
+    const css = readFileSync(join(dir, '../../index.css'), 'utf8');
+    expect(css).not.toContain('data-opponent-count="4"');
+    expect(css).toContain('overflow-y: hidden');
+  });
+});

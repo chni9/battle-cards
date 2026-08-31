@@ -102,11 +102,7 @@
 
 .table-felt__opponents {
   grid-area: opponents;
-}
-
-.table-felt__opponents[data-opponent-count="4"],
-.table-felt__opponents[data-opponent-count="5"] {
-  gap: 0.15rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-felt__pending {
@@ -114,8 +110,16 @@
   max-height: 5.5rem;
 }
 
+.table-felt__pending[data-empty="true"] {
+  display: none;
+}
+
 .table-felt__log {
   grid-area: log;
+}
+
+.table-felt[data-collapse-log="true"] {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
 .table-felt__dock {
@@ -137,15 +141,20 @@
     min-height: 4.25rem;
   }
 
-  .table-felt__opponents {
-    max-height: 40dvh;
-    overflow-x: auto;
-    overflow-y: auto;
+  .table-felt__pending[data-empty="true"] {
+    display: none;
+    min-height: 0;
   }
 
-  .table-felt__opponents[data-opponent-count="4"],
-  .table-felt__opponents[data-opponent-count="5"] {
-    max-height: 42dvh;
+  .table-felt__opponents {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-felt[data-collapse-log="true"] {
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */

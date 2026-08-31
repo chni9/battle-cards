@@ -107,6 +107,7 @@ describe('opponent seat resources (L51-08)', () => {
       /data-zone="opponent-portrait"[\s\S]*<ActiveThumbs[\s\S]*<OpponentSeatResourceColumn/,
     );
     const css = readFileSync(join(dir, '../../index.css'), 'utf8');
-    expect(css).toContain('max-height: 40dvh');
+    expect(css).toContain('overflow-y: hidden');
+    expect(css).not.toContain('max-height: 40dvh');
   });
 });
