@@ -132,15 +132,15 @@
 
 [data-card-row] {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap !important;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
 }
 
 @media (orientation: landscape) {
   .table-felt {
-    grid-template-columns: minmax(8rem, 0.38fr) minmax(0, 1.62fr);
+    grid-template-columns: minmax(8.5rem, 10.5rem) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
       "opponents dock"
@@ -168,7 +168,7 @@
   }
 
   .table-felt[data-collapse-log="true"] {
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
   }
 
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */
@@ -203,8 +203,18 @@
 
   .table-felt[data-collapse-opponents="true"] .table-felt__opponents,
   .table-felt[data-collapse-log="true"] .table-felt__log {
+    align-self: start;
     min-width: 0;
+    min-height: 0;
+    width: 100%;
     overflow: visible;
+  }
+}
+
+/* Short phone heights — sm:p-5 on a 390px-tall landscape panel ate Close. */
+@media (max-height: 500px) {
+  [role="dialog"] {
+    padding: 0.5rem !important;
   }
 }
 

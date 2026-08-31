@@ -1448,7 +1448,10 @@ function TableScreenInner({
           </Button>
         }
       >
-        <div className="flex flex-wrap gap-2">
+        <div
+          data-zone="opponents-dialog-row"
+          className="flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1"
+        >
           {opponents.map((player) => (
             <OpponentZone
               key={player.id}

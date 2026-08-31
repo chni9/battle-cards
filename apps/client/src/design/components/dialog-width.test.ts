@@ -29,6 +29,16 @@ describe('dialogPanelClassName (L53-02)', () => {
     expect(panel).not.toContain('90dvh');
   });
 
+  it('drops sm padding on short viewports so Close stays in 390px height', () => {
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../../index.css'),
+      'utf8',
+    );
+    expect(css).toContain('max-height: 500px');
+    expect(css).toContain('[role="dialog"]');
+    expect(css).toContain('padding: 0.5rem !important');
+  });
+
   it('centers the overlay instead of pinning it to the bottom', () => {
     const src = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), 'dialog.tsx'),

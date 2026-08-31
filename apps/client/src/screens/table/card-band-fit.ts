@@ -10,14 +10,16 @@ export const CARD_BAND_MIN_W = 40;
 export const CARD_BAND_MAX_W = 88;
 /** Preferred floor used by collapse budgeting when height is unknown. */
 export const CARD_BAND_ABS_MIN_W = 40;
+/** Below this stacked-row width, Hand and Specials sit side by side. */
+export const CARD_BAND_COMFORT_W = 56;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
  */
 export const CARD_BAND_IMAGE_ASPECT = 2 / 3;
-/** 10px name + mt-0.5 + truncate slack — keep this ≥ the rendered name line. */
-const FACE_LABEL_PX = 16;
-const FACE_PAD_PX = 6;
+/** 10px name + mt-0.5 + border/line-box slack — keep this ≥ the rendered name line. */
+const FACE_LABEL_PX = 20;
+const FACE_PAD_PX = 12;
 /** Hand + Specials labels in the band. */
 export const CARD_BAND_LABEL_PX = 18;
 export const CARD_BAND_SECTION_GAP_PX = 4;
@@ -52,6 +54,31 @@ export function cardBandRowHeight(
     1,
     Math.floor((bandHeight - labels - emptySpecials - CARD_BAND_SECTION_GAP_PX) / rows),
   );
+}
+
+/**
+ * Stacked Hand-over-Specials would make faces unreadably thin. Use one shared
+ * row height (sections sit side by side) instead.
+ */
+export function cardBandSideBySide(
+  bandHeight: number,
+  specialsCount: number,
+): boolean {
+  if (specialsCount === 0 || bandHeight <= 0) {
+    return false;
+  }
+  const split = cardBandRowHeight(bandHeight, specialsCount);
+  return maxWidthForRowHeight(split) < CARD_BAND_COMFORT_W;
+}
+
+export function cardBandFitRowHeight(
+  bandHeight: number,
+  specialsCount: number,
+): number {
+  if (cardBandSideBySide(bandHeight, specialsCount)) {
+    return Math.max(1, bandHeight - CARD_BAND_LABEL_PX - CARD_BAND_SECTION_GAP_PX);
+  }
+  return cardBandRowHeight(bandHeight, specialsCount);
 }
 
 /**

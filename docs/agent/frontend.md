@@ -668,12 +668,22 @@ do not hand off an untested lot.
 Phone-first crowding pass after the six-player Classic merge. Specialist / mixed kits vs
 **5 Easy bots**. Skip How to play / Skip all hints.
 
-- Room `OGPSGK` (nick `L53Phone`): portrait **390×844**. Hand faces measured **68–69px**
-  (never below 64). No Hand/Specials pager. Opponents `flex-wrap: nowrap`,
-  `scrollWidth` 555 > `clientWidth` 382 (five seats, one row that scrolls sideways).
-- Room `LKFOCS` / `LK47DCS` (nick `L53Mobile`): landscape **844×390**. Felt height ~311px
-  collapses **Action log** then **Opponents** to orange buttons; Incoming stays on the table
-  when empty. **Action log** and **Opponents (5)** Dialogs open from those buttons and Close.
-  Hand still ≥ 64px and the dock card band scrolls vertically.
-- Dialog `max-w-3xl` (Shop / kit picker) is no longer stuck at 448px. Card dialog
-  Use / Upgrade / Sell / Cancel use compact CTAs on the 390px width.
+- Room `OGPSGK` (nick `L53Phone`): first pass used wrap + vertical scroll (superseded by
+  L53-07).
+- Room `LKFOCS` / `LK47DCS` (nick `L53Mobile`): landscape collapse Dialogs were cropped
+  (`items-end` + `90dvh`) — superseded by L53-07.
+
+### Lot 53-07 verified 2026-08-31 (headless Chrome, exact viewports, PROTOCOL 30)
+
+Re-checked the playtest screenshots: wrap+vertical scroll cropped names, Specials grew
+on their own, 844×390 Dialogs/buttons sat off-screen. Contract is now one shared width,
+one row, horizontal scroll, height-fit (never crop).
+
+- Room `SRZZQU` (nick `L53Fix2`), Specialist vs 5 Easy bots.
+- Portrait **390×844** (screenshot 780×1688 @2x): Hand and Specials both **73px** wide
+  (`overflow-x: auto`, `overflow-y: hidden`, `flex-wrap: nowrap`). Names not clipped.
+  Hand `scrollWidth` 391 > `clientWidth` 368.
+- Landscape **844×390** (screenshot 1688×780 @2x): cards **71px** both, side-by-side
+  Hand | Specials. Action log + Opponents collapsed; Dialogs fit in the 390px viewport
+  (`closeVisible`, Action log top 67 / bottom 324; Opponents top 55 / bottom 336).
+- `pnpm verify` green (1141 tests).

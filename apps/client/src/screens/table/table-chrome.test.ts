@@ -47,6 +47,19 @@ describe('opponent row (L53-04)', () => {
     expect(css).not.toContain('data-opponent-count="4"');
     expect(css).toContain('overflow-y: hidden');
     expect(css).toContain('flex-wrap: nowrap');
+    expect(css).not.toContain('0.38fr');
+    expect(css).toContain('grid-template-rows: auto auto auto');
+  });
+});
+
+describe('opponents collapse Dialog (L53-07)', () => {
+  it('keeps seats on one nowrap row so the panel does not grow off-screen', () => {
+    const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
+    expect(table).toContain('opponents-dialog-row');
+    expect(table).toContain('flex-nowrap gap-2 overflow-x-auto');
+    const seat = source('opponent-zone.tsx');
+    expect(seat).toContain('flex-nowrap');
+    expect(seat).toContain('overflow-hidden');
   });
 });
 

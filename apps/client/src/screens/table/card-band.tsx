@@ -15,7 +15,8 @@ import { AnimatedCard } from '../../design/components/animated-card';
 import {
   CARD_BAND_ABS_MIN_W,
   CARD_BAND_GAP_PX,
-  cardBandRowHeight,
+  cardBandFitRowHeight,
+  cardBandSideBySide,
   fitCardBand,
 } from './card-band-fit';
 import { TutorialCallout } from './tutorial-callout';
@@ -33,8 +34,8 @@ function CardSection({
   label,
   zone,
   cards,
-  fill,
   cardWidth,
+  grow,
   onSelect,
   highlightedInstanceIds = [],
   spotlightSection = false,
@@ -42,8 +43,8 @@ function CardSection({
   label: string;
   zone: string;
   cards: readonly CardInstance[];
-  fill: boolean;
   cardWidth: number;
+  grow: boolean;
   onSelect?: (instanceId: string) => void;
   highlightedInstanceIds?: readonly string[];
   spotlightSection?: boolean;
@@ -74,9 +75,8 @@ function CardSection({
     zone,
     <div
       className={[
-        'flex min-h-0 min-w-0 flex-col items-stretch gap-0.5',
-        fill ? 'flex-1' : 'shrink-0',
-        spotlighted ? 'overflow-visible' : 'overflow-hidden',
+        'flex min-h-0 min-w-0 flex-col items-stretch gap-0.5 overflow-hidden',
+        grow ? 'flex-1' : 'shrink-0',
       ].join(' ')}
     >
       <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
@@ -88,7 +88,6 @@ function CardSection({
         data-hint-anchor={zone}
         className={[
           'inline-flex max-w-full min-h-0 w-full flex-nowrap items-start justify-start',
-          fill ? 'flex-1' : '',
           spotlighted ? 'overflow-visible' : 'overflow-x-auto overflow-y-hidden',
         ].join(' ')}
         style={{ gap: CARD_BAND_GAP_PX }}
@@ -99,13 +98,11 @@ function CardSection({
             <div
               key={card.instanceId}
               style={{ width: cardWidth }}
-              className={[
-                'h-auto shrink-0 rounded-[length:var(--radius-card)]',
-                highlighted ? 'overflow-visible' : 'overflow-hidden',
-              ].join(' ')}
+              className="h-auto shrink-0 overflow-visible rounded-[length:var(--radius-card)]"
             >
               <TutorialCallout
                 active={highlighted}
+                layout="stretch"
                 arrow="top"
                 highlightId={card.cardId}
                 className="w-full"
@@ -115,7 +112,7 @@ function CardSection({
                   detail="face"
                   skipEntrance
                   selected={highlighted}
-                  className="w-full !max-h-none !p-0.5"
+                  className="w-full !p-0.5"
                   {...(onSelect !== undefined
                     ? {
                         onSelect: () => {
@@ -148,7 +145,7 @@ function wrapSection(
       layout="stretch"
       arrow="top"
       highlightId={zone}
-      className="min-h-0 w-full flex-1 overflow-visible pt-10"
+      className="min-h-0 w-full shrink-0 overflow-visible pt-10"
     >
       {body}
     </TutorialCallout>
@@ -164,6 +161,7 @@ export function CardBand({
 }: CardBandProps): ReactElement {
   const bandRef = useRef<HTMLDivElement>(null);
   const [cardWidth, setCardWidth] = useState(CARD_BAND_ABS_MIN_W);
+  const [sideBySide, setSideBySide] = useState(false);
   const sectionLit = highlightedSection !== undefined;
 
   useLayoutEffect(() => {
@@ -178,7 +176,9 @@ export function CardBand({
       if (w <= 0 || h <= 0) {
         return;
       }
-      const rowHeight = cardBandRowHeight(h, specials.length);
+      const side = cardBandSideBySide(h, specials.length);
+      setSideBySide((prev) => (prev === side ? prev : side));
+      const rowHeight = cardBandFitRowHeight(h, specials.length);
       const fit = fitCardBand(Math.max(hand.length, 1), w, rowHeight);
       setCardWidth((prev) =>
         Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,
@@ -186,7 +186,10 @@ export function CardBand({
     };
 
     measure();
-    requestAnimationFrame(measure);
+    requestAnimationFrame(() => {
+      measure();
+      requestAnimationFrame(measure);
+    });
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => {
@@ -198,8 +201,11 @@ export function CardBand({
     <div
       ref={bandRef}
       data-zone="card-band"
+      data-card-width={String(Math.round(cardWidth))}
+      data-side-by-side={sideBySide ? 'true' : 'false'}
       className={[
-        'flex h-full min-h-0 w-full flex-col justify-end gap-1',
+        'flex h-full min-h-0 w-full gap-1',
+        sideBySide ? 'flex-row items-stretch' : 'flex-col justify-end',
         (highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0) ||
         sectionLit
           ? 'overflow-visible'
@@ -210,8 +216,8 @@ export function CardBand({
         label="Hand"
         zone="hand"
         cards={hand}
-        fill
         cardWidth={cardWidth}
+        grow={sideBySide}
         spotlightSection={highlightedSection === 'hand'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
@@ -220,8 +226,8 @@ export function CardBand({
         label="Specials"
         zone="specials"
         cards={specials}
-        fill={false}
         cardWidth={cardWidth}
+        grow={sideBySide}
         spotlightSection={highlightedSection === 'specials'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}

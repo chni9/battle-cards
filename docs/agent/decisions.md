@@ -2873,5 +2873,11 @@ above. Still client presentation only — no rule or value change.
   buttons that actually fit. Landscape left column has a **nonzero min width**.
 - Dialog overlay is **centered** with tight padding. Panel `max-height` is
   `calc(100dvh − 1rem)` so title, body, and Close stay on-screen; body scrolls inside.
+  On viewports ≤ 500px tall, panel padding is 0.5rem (sm width must not restore p-5).
+- Collapse Dialogs keep opponent seats on **one nowrap row** (overflow-x). Seat
+  headers do not wrap — a two-line BOT badge was cropping the resource column.
+- Landscape collapsed log / opponents **hug** the button. They do not take the
+  leftover 1fr (that painted a tall empty white slab). Left column is ~10.5rem
+  so the dock keeps the card band.
 
 

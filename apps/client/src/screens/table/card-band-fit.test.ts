@@ -8,6 +8,7 @@ import {
   CARD_BAND_ABS_MIN_W,
   CARD_BAND_MAX_W,
   cardBandRowHeight,
+  cardBandSideBySide,
   faceCardHeight,
   fitCardBand,
   maxWidthForRowHeight,
@@ -50,6 +51,14 @@ describe('cardBandRowHeight', () => {
   });
 });
 
+describe('cardBandSideBySide (L53-07)', () => {
+  it('sits Hand and Specials side by side when stacked rows would go below the comfort width', () => {
+    expect(cardBandSideBySide(80, 2)).toBe(true);
+    expect(cardBandSideBySide(400, 2)).toBe(false);
+    expect(cardBandSideBySide(80, 0)).toBe(false);
+  });
+});
+
 describe('CardBand source (L53-07)', () => {
   it('scrolls horizontally in one row instead of wrapping vertically', () => {
     const src = readFileSync(
@@ -62,6 +71,7 @@ describe('CardBand source (L53-07)', () => {
     expect(src).not.toContain('IconButton');
     expect(src).not.toContain('pageSize');
     expect(src).not.toContain('max-h-[50%]');
+    expect(src).toContain('cardBandSideBySide');
   });
 });
 

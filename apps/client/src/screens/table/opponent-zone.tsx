@@ -163,13 +163,13 @@ export function OpponentZone({
         : {})}
       className={
         compact
-          ? 'flex w-auto max-w-[6.75rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm landscape:max-w-[8rem] sm:max-w-[9rem] sm:p-1.5'
+          ? 'flex w-auto min-w-[6.5rem] max-w-[6.75rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm landscape:max-w-[8rem] sm:max-w-[9rem] sm:p-1.5'
           : 'flex w-auto max-w-[7.75rem] shrink-0 flex-col rounded-[length:var(--radius-card)] border border-border-soft bg-surface-raised p-1 text-ink shadow-sm sm:max-w-[10rem] sm:p-1.5'
       }
       style={zoneStyle}
     >
-      <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-        <h3 className="truncate text-xs sm:text-sm">
+      <div className="flex min-w-0 flex-nowrap items-center gap-0.5 overflow-hidden">
+        <h3 className="min-w-0 flex-1 truncate text-xs sm:text-sm">
           <PlayerName
             nickname={player.nickname}
             playerId={player.id}
@@ -177,12 +177,17 @@ export function OpponentZone({
             className="text-xs sm:text-sm"
           />
         </h3>
-        {!player.isEliminated && <ConnectionBadge player={player} />}
+        {!player.isEliminated && (
+          <ConnectionBadge player={player} className="shrink-0" />
+        )}
         {!player.isEliminated &&
           player.isBot &&
           player.botDifficulty !== undefined &&
           view.playKind !== 'tutorial' && (
-          <BotSeatLabel difficulty={player.botDifficulty} />
+          <BotSeatLabel
+            difficulty={player.botDifficulty}
+            className="shrink-0 !px-1 !py-0"
+          />
         )}
       </div>
       {!player.isEliminated && (
