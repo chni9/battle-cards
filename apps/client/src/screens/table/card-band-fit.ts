@@ -1,18 +1,14 @@
 /**
- * Pure layout math for CardBand — keep React refresh clean on the component file.
- *
- * Face cards use `aspect-[2/3]` art plus a name line (`Card detail="face"`), so height
- * is not a pure aspect ratio — always reserve label chrome or faces crop.
+ * Pure layout math for CardBand — wrap + vertical scroll, never shrink below 64px.
+ * Height no longer shrinks width (Lot 53 / technical spec v6 §6.2).
  */
 
 export const CARD_BAND_GAP_PX = 6;
-/** Preferred minimum when space allows. Floor is 48 (L43-04 / technical spec v6 §6.2). */
-export const CARD_BAND_MIN_W = 48;
-export const CARD_BAND_MAX_W = 72;
-/** Absolute floor — below this, paginate rather than unreadably tiny faces. */
-export const CARD_BAND_ABS_MIN_W = 48;
-/** Reserved pager strip so mounting arrows does not change `pageSize` (L50-05). */
-export const CARD_BAND_PAGER_SLOT_PX = 44;
+/** Preferred minimum when space allows. Floor is 64 (Lot 53). */
+export const CARD_BAND_MIN_W = 64;
+export const CARD_BAND_MAX_W = 96;
+/** Absolute floor — wrap and scroll rather than unreadably tiny faces. */
+export const CARD_BAND_ABS_MIN_W = 64;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
@@ -23,8 +19,6 @@ const FACE_PAD_PX = 4;
 
 export interface CardBandFit {
   cardWidth: number;
-  /** Max cards visible at once (all of them, or one page). */
-  pageSize: number;
 }
 
 /** Total pixel height of one face card at the given width. */
@@ -42,103 +36,24 @@ export function maxWidthForRowHeight(rowHeight: number): number {
 }
 
 /**
- * Largest card width that fits `count` cards in at most 2 rows without cropping.
- * Paginate when width would drop below 48px. Height-constrained docks may still
- * shrink below 48 so faces are not cropped (L43-04).
+ * Card width that fits as many columns as possible at ≥ 64px, growing toward 96
+ * when the band is wide. Height is ignored — the band scrolls instead of shrinking.
  */
-export function fitCardBand(
-  count: number,
-  width: number,
-  height: number,
-): CardBandFit {
-  if (count <= 0 || width <= 0 || height <= 0) {
-    return { cardWidth: CARD_BAND_ABS_MIN_W, pageSize: 1 };
-  }
-
-  let best: CardBandFit | null = null;
-
-  for (const rows of [1, 2] as const) {
-    const rowGaps = CARD_BAND_GAP_PX * (rows - 1);
-    const rowHeight = (height - rowGaps) / rows;
-    if (rowHeight <= 0) {
-      continue;
-    }
-    const fromHeight = maxWidthForRowHeight(rowHeight);
-    if (fromHeight < 1) {
-      continue;
-    }
-    const cols = Math.ceil(count / rows);
-    const colGaps = CARD_BAND_GAP_PX * Math.max(0, cols - 1);
-    const fromWidth = (width - colGaps) / cols;
-    const cardWidth = Math.min(CARD_BAND_MAX_W, fromHeight, fromWidth);
-    if (cardWidth < 1) {
-      continue;
-    }
-    /* Prefer keeping all cards visible whenever width stays readable. */
-    if (cardWidth < CARD_BAND_ABS_MIN_W - 0.01 && count > 1) {
-      /* Still a valid no-crop fit — keep as candidate; pagination may beat it. */
-    }
-    const candidate: CardBandFit = { cardWidth, pageSize: count };
-    if (
-      best === null ||
-      candidate.cardWidth > best.cardWidth ||
-      (Math.abs(candidate.cardWidth - best.cardWidth) < 0.01 && rows === 1)
-    ) {
-      best = candidate;
-    }
-  }
-
-  if (best !== null && best.cardWidth >= CARD_BAND_ABS_MIN_W - 0.01) {
-    return best;
-  }
-
-  /* Paginate at a width that still fully fits in two rows (or one if shorter). */
-  const rowsForPage: 1 | 2 = height >= faceCardHeight(CARD_BAND_ABS_MIN_W) * 2 + CARD_BAND_GAP_PX ? 2 : 1;
-  const rowGaps = CARD_BAND_GAP_PX * (rowsForPage - 1);
-  const rowHeight = (height - rowGaps) / rowsForPage;
-  const cardWidth = Math.min(
-    CARD_BAND_MAX_W,
-    Math.max(1, maxWidthForRowHeight(rowHeight)),
-    width,
-  );
-  const cols = Math.max(
-    1,
-    Math.floor((width + CARD_BAND_GAP_PX) / (cardWidth + CARD_BAND_GAP_PX)),
-  );
-  const pageSize = Math.max(1, cols * rowsForPage);
-
-  /* If a non-paginated tiny fit shows more cards than one page, prefer pagination
-     only when it actually reduces overflow pressure (pageSize < count). */
-  if (best !== null && pageSize >= count) {
-    return best;
-  }
-  return { cardWidth, pageSize };
-}
-
-/**
- * Cards per page from width + locked row count. Height jitter (log / incoming)
- * must not change this (L50-05).
- */
-export function cardBandPageSizeForWidth(
-  count: number,
-  width: number,
-  rows: 1 | 2,
-): number {
+export function fitCardBand(count: number, width: number): CardBandFit {
   if (count <= 0 || width <= 0) {
-    return 1;
+    return { cardWidth: CARD_BAND_ABS_MIN_W };
   }
 
   const cols = Math.max(
     1,
     Math.floor((width + CARD_BAND_GAP_PX) / (CARD_BAND_ABS_MIN_W + CARD_BAND_GAP_PX)),
   );
-  const cap = cols * rows;
-  return Math.min(count, Math.max(1, cap));
-}
-
-/** Prefer two rows when the card area can fit two 48px faces plus the pager slot. */
-export function cardBandRowsForHeight(height: number): 1 | 2 {
-  const twoRows =
-    faceCardHeight(CARD_BAND_ABS_MIN_W) * 2 + CARD_BAND_GAP_PX + CARD_BAND_PAGER_SLOT_PX;
-  return height >= twoRows ? 2 : 1;
+  const usedCols = Math.min(count, cols);
+  const colGaps = CARD_BAND_GAP_PX * Math.max(0, usedCols - 1);
+  const fromWidth = (width - colGaps) / usedCols;
+  const cardWidth = Math.min(
+    CARD_BAND_MAX_W,
+    Math.max(CARD_BAND_ABS_MIN_W, fromWidth),
+  );
+  return { cardWidth };
 }
