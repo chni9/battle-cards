@@ -22,6 +22,11 @@ function isDialogMaxWToken(token: string): token is DialogMaxWToken {
   return Object.hasOwn(DIALOG_MAX_W, token);
 }
 
+function findMaxWToken(panelClassName: string): string | undefined {
+  const match = /\s(max-w-\S+)/.exec(` ${panelClassName}`);
+  return match?.[1];
+}
+
 /** Height is 100% of the `fixed inset-0` overlay — not 100dvh, which can be the
  *  desktop window in DevTools device mode while the game frame is 390px tall.
  *  `my-auto` centers a short panel; with `items-start` on the overlay a tall
@@ -30,8 +35,7 @@ export const DIALOG_PANEL_BASE_CLASS =
   'my-auto flex max-h-full min-h-0 min-w-0 w-full flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2 font-sans text-ink shadow-[0_12px_40px_rgba(28,26,31,0.28)] outline-none sm:p-3';
 
 export function dialogPreferredMaxWidth(panelClassName: string): string {
-  const match = ` ${panelClassName}`.match(/\s(max-w-\S+)/);
-  const token = match?.[1];
+  const token = findMaxWToken(panelClassName);
   if (token !== undefined && isDialogMaxWToken(token)) {
     return DIALOG_MAX_W[token];
   }
@@ -40,8 +44,7 @@ export function dialogPreferredMaxWidth(panelClassName: string): string {
 
 /** Default 28rem, or the caller's `max-w-*`, always capped to the overlay. */
 export function dialogPanelClassName(panelClassName: string): string {
-  const match = ` ${panelClassName}`.match(/\s(max-w-\S+)/);
-  const token = match?.[1];
+  const token = findMaxWToken(panelClassName);
   const abs = dialogPreferredMaxWidth(panelClassName);
   const rest =
     token !== undefined
