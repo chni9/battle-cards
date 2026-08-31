@@ -184,6 +184,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 highlightId="use"
               >
               <Button
+                compact
                 variant="purple"
                 disabled={!isMyTurn || actionsLocked || transformerUseBlocked}
                 onClick={() => {
@@ -211,6 +212,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   highlightId="upgrade"
                 >
                 <Button
+                  compact
                   variant="orange"
                   disabled={!isMyTurn || actionsLocked || view.self.upgradePoints < 1}
                   onClick={() => {
@@ -234,6 +236,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   highlightId="sell"
                 >
                 <Button
+                  compact
                   variant="green"
                   disabled={!isMyTurn || actionsLocked}
                   onClick={() => {
@@ -258,6 +261,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
               {allowsMultiAttack &&
                 (ATTACK_CARD_IDS as readonly string[]).includes(actionInstance.cardId) && (
                   <Button
+                    compact
                     variant="purple"
                     disabled={!isMyTurn || actionsLocked}
                     onClick={() => {
@@ -267,7 +271,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                     Multi-attack
                   </Button>
                 )}
-              <Button variant="red" onClick={close}>
+              <Button compact variant="red" onClick={close}>
                 Cancel
               </Button>
             </>
@@ -303,7 +307,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
         }
         onClose={close}
         actions={
-          <Button variant="green" onClick={close}>
+          <Button compact variant="green" onClick={close}>
             Close
           </Button>
         }
@@ -348,6 +352,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
           dialog?.kind === 'target' ? (
             <>
               <Button
+                compact
                 variant="purple"
                 disabled={resolvedTarget === ''}
                 onClick={() => {
@@ -359,7 +364,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
               >
                 Confirm
               </Button>
-              <Button variant="red" onClick={close}>
+              <Button compact variant="red" onClick={close}>
                 Cancel
               </Button>
             </>
@@ -392,6 +397,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
           dialog?.kind === 'consume' ? (
             <>
               <Button
+                compact
                 variant="purple"
                 disabled={resolvedConsumeId === ''}
                 onClick={() => {
@@ -406,7 +412,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
               >
                 Transform
               </Button>
-              <Button variant="red" onClick={close}>
+              <Button compact variant="red" onClick={close}>
                 Cancel
               </Button>
             </>
@@ -446,7 +452,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
         onClose={close}
         actions={
           dialog?.kind === 'quantity' ? (
-            <Button variant="red" onClick={close}>
+            <Button compact variant="red" onClick={close}>
               Cancel
             </Button>
           ) : undefined
@@ -485,6 +491,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
         actions={
           <>
             <Button
+              compact
               variant="purple"
               disabled={
                 multiIds.length < 2 ||
@@ -512,7 +519,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
             >
               Play {multiIds.length} attacks
             </Button>
-            <Button variant="red" onClick={close}>
+            <Button compact variant="red" onClick={close}>
               Cancel
             </Button>
           </>

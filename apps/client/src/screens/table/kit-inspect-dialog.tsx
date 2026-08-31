@@ -30,7 +30,7 @@ export function KitInspectDialog({
       onClose={onClose}
       panelClassName="max-w-lg"
       actions={
-        <Button variant="green" onClick={onClose}>
+        <Button compact variant="green" onClick={onClose}>
           Close
         </Button>
       }

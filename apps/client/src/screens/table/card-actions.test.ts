@@ -44,6 +44,11 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).not.toContain('Choose Use, Upgrade, or Sell.');
   });
 
+  it('uses compact dialog CTAs so Use/Upgrade/Sell/Cancel fit (L53-02)', () => {
+    expect(source).toContain('compact');
+    expect(source).toContain('<Button compact variant="red" onClick={close}>');
+  });
+
   it('commits Regeneration quantity with four click-to-buy tiles (L44-06)', () => {
     expect(source).toContain('REGEN_QUANTITIES');
     expect(source).toContain('1 life');

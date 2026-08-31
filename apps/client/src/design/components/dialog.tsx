@@ -15,6 +15,7 @@ import {
 } from 'react';
 
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
+import { dialogPanelClassName } from './dialog-width';
 
 export interface DialogProps {
   open: boolean;
@@ -155,13 +156,7 @@ export function Dialog({
             aria-labelledby={titleId}
             tabIndex={-1}
             onKeyDown={onPanelKeyDown}
-            className={[
-              'flex max-h-[min(90dvh,40rem)] w-full max-w-md flex-col overflow-hidden',
-              'rounded-[length:var(--radius-card)] border border-border',
-              'bg-surface-raised p-5 font-sans text-ink shadow-[0_12px_40px_rgba(28,26,31,0.28)]',
-              'outline-none',
-              panelClassName,
-            ].join(' ')}
+            className={dialogPanelClassName(panelClassName)}
             {...(hintAnchor !== undefined
               ? { 'data-hint-anchor': hintAnchor }
               : {})}

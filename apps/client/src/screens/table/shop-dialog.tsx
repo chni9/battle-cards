@@ -121,6 +121,7 @@ export function ShopDialog({
       actions={
         <>
           <Button
+            compact
             variant="orange"
             disabled={disabled || view.self.points < 20}
             onClick={() => {
@@ -143,6 +144,7 @@ export function ShopDialog({
             highlightId="shop-absorber-buy"
           >
           <Button
+            compact
             variant="orange"
             disabled={disabled || !canAffordSharedBuy(view, selectedShopId)}
             onClick={() => {
@@ -153,7 +155,7 @@ export function ShopDialog({
             {CARD_BUY_LABEL}
           </Button>
           </TutorialCallout>
-          <Button variant="red" onClick={onClose}>
+          <Button compact variant="red" onClick={onClose}>
             Close
           </Button>
         </>
@@ -168,6 +170,7 @@ export function ShopDialog({
             highlightId="shop-upgrade-point"
           >
           <Button
+            compact
             variant="orange"
             disabled={disabled || view.self.points < buyUpgradeCost}
             onClick={() => {
@@ -184,6 +187,7 @@ export function ShopDialog({
           </Button>
           </TutorialCallout>
           <Button
+            compact
             variant="green"
             disabled={disabled || view.self.upgradePoints < 1}
             onClick={() => {
