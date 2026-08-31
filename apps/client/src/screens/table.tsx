@@ -23,6 +23,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 
 import { useReducedMotion } from 'motion/react';
 
 import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
+import { Button } from '../design/components/button';
+import { Dialog } from '../design/components/dialog';
 import { IconButton } from '../design/components/icon-button';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
@@ -79,6 +81,7 @@ import { ILLEGAL_ACTION_COPY } from './illegal-action-copy';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
+import { feltCollapseFromCounts } from './table/felt-collapse';
 import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
@@ -90,10 +93,13 @@ import { ShopDialog } from './table/shop-dialog';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
 import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
 import {
+  ACTION_LOG_OPEN_LABEL,
   FELT_QUEUE_TITLE,
   FORFEIT_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
+  INCOMING_OPEN_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
+  OPPONENTS_OPEN_LABEL,
   RETURN_HOME_ARIA_LABEL,
   SKIP_TUTORIAL_ARIA_LABEL,
 } from './table/table-copy';
@@ -373,6 +379,28 @@ function TableScreenInner({
   const [tourStep, setTourStep] = useState(0);
   const [portraitInspected, setPortraitInspected] = useState(false);
   const [hintState, setHintState] = useState(readHintState);
+  const feltRef = useRef<HTMLDivElement>(null);
+  const [feltHeight, setFeltHeight] = useState(0);
+  const [chromeOpen, setChromeOpen] = useState<
+    'incoming' | 'log' | 'opponents' | null
+  >(null);
+
+  useLayoutEffect(() => {
+    const el = feltRef.current;
+    if (el === null) {
+      return;
+    }
+    const measure = (): void => {
+      const next = el.clientHeight;
+      setFeltHeight((prev) => (Math.abs(prev - next) < 0.5 ? prev : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const findOwnCard = (instanceId: string): CardInstance | undefined =>
     view.self.hand.find((c) => c.instanceId === instanceId) ??
@@ -902,6 +930,31 @@ function TableScreenInner({
   const othersPending = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId !== view.you,
   );
+  const collapse = feltCollapseFromCounts({
+    feltHeight,
+    opponentCount: opponents.length,
+    incomingCount: incomingEffects.length,
+    waitingCount: othersPending.length,
+    specialsCount: view.self.specialCards.length,
+  });
+  const otherModalOpen =
+    dialog !== null ||
+    howToPlayOpen ||
+    leaveConfirm !== null ||
+    inspectKitId !== null ||
+    inspectOpponentId !== null ||
+    actionReject !== null ||
+    subChoice !== null;
+  const chromeVisible =
+    otherModalOpen || chromeOpen === null
+      ? null
+      : chromeOpen === 'incoming' && collapse.incoming
+        ? 'incoming'
+        : chromeOpen === 'log' && collapse.actionLog
+          ? 'log'
+          : chromeOpen === 'opponents' && collapse.opponents
+            ? 'opponents'
+            : null;
   const hasUnspiedLivingOpponent = opponents.some(
     (player) =>
       !player.isEliminated &&
@@ -933,6 +986,7 @@ function TableScreenInner({
     inspectKitId !== null ||
     inspectOpponentId !== null ||
     actionReject !== null ||
+    chromeVisible !== null ||
     (subChoice !== null && !rewardHintVisible);
 
   const inspectOpponent = opponents.find((entry) => entry.id === inspectOpponentId);
@@ -1093,6 +1147,15 @@ function TableScreenInner({
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />
       <TableShell
+        feltRef={feltRef}
+        collapse={collapse}
+        waitingCount={othersPending.length}
+        onOpenLog={() => {
+          setChromeOpen('log');
+        }}
+        onOpenOpponents={() => {
+          setChromeOpen('opponents');
+        }}
         {...(dockStyle !== undefined ? { dockStyle } : {})}
         {...(tourHighlight === 'timer' || tourHighlight === 'flag'
           ? { turnClassName: 'pb-10' }
@@ -1177,7 +1240,7 @@ function TableScreenInner({
             active={tourHighlight === 'opponent'}
             highlightId="opponent"
             arrow="bottom"
-            className="w-fit max-w-full"
+            className="w-fit shrink-0"
           >
             <OpponentZone
               view={view}
@@ -1267,6 +1330,11 @@ function TableScreenInner({
               {...(tourHighlight !== undefined && tourHighlight !== 'your-zone'
                 ? { zoneHighlight: tourHighlight }
                 : {})}
+              collapseIncoming={collapse.incoming}
+              waitingCount={othersPending.length}
+              onOpenIncoming={() => {
+                setChromeOpen('incoming');
+              }}
             />
           </TutorialZoneCallout>
         }
@@ -1288,6 +1356,118 @@ function TableScreenInner({
           />
         }
       />
+
+      <Dialog
+        open={chromeVisible === 'incoming'}
+        title={
+          incomingEffects.length > 0 ? INCOMING_OPEN_LABEL : FELT_QUEUE_TITLE
+        }
+        panelClassName="max-w-lg"
+        onClose={() => {
+          setChromeOpen(null);
+        }}
+        actions={
+          <Button
+            compact
+            variant="green"
+            onClick={() => {
+              setChromeOpen(null);
+            }}
+          >
+            Close
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          {incomingEffects.length > 0 ? (
+            <PendingQueue
+              view={view}
+              effects={incomingEffects}
+              title={INCOMING_OPEN_LABEL}
+              tone="dock"
+              highlightedIds={mirrorHighlightIds}
+            />
+          ) : null}
+          {othersPending.length > 0 ? (
+            <PendingQueue
+              view={view}
+              effects={othersPending}
+              title={FELT_QUEUE_TITLE}
+              tone="dock"
+              highlightedIds={mirrorHighlightIds}
+            />
+          ) : null}
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={chromeVisible === 'log'}
+        title={ACTION_LOG_OPEN_LABEL}
+        panelClassName="max-w-2xl"
+        onClose={() => {
+          setChromeOpen(null);
+        }}
+        actions={
+          <Button
+            compact
+            variant="green"
+            onClick={() => {
+              setChromeOpen(null);
+            }}
+          >
+            Close
+          </Button>
+        }
+      >
+        <ActionLogPanel view={view} />
+      </Dialog>
+
+      <Dialog
+        open={chromeVisible === 'opponents'}
+        title={`${OPPONENTS_OPEN_LABEL} (${String(opponents.length)})`}
+        panelClassName="max-w-3xl"
+        onClose={() => {
+          setChromeOpen(null);
+        }}
+        actions={
+          <Button
+            compact
+            variant="green"
+            onClick={() => {
+              setChromeOpen(null);
+            }}
+          >
+            Close
+          </Button>
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {opponents.map((player) => (
+            <OpponentZone
+              key={player.id}
+              view={view}
+              player={player}
+              compact={opponents.length >= 4}
+              onInspectActive={(effectId) => {
+                setChromeOpen(null);
+                onInspectActive(player.id, effectId);
+              }}
+              {...(player.eliminationReveal !== undefined || player.spied !== undefined
+                ? {
+                    onInspectReveal: () => {
+                      if (view.playKind === 'tutorial') {
+                        setPortraitInspected(true);
+                      }
+                      noteHintCause('inspect-opponent');
+                      setInspectKitId(null);
+                      setInspectOpponentId(player.id);
+                    },
+                  }
+                : {})}
+            />
+          ))}
+        </div>
+      </Dialog>
 
       {currentHint !== null ? (
         <HintOverlay

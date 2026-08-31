@@ -67,7 +67,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-63 of 72 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+64 of 72 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 50 · Beta feedback | 9 | 9 |
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
-| 53 · Table crowding | 6 | 3 |
+| 53 · Table crowding | 6 | 4 |
 
 ---
 
@@ -269,7 +269,7 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | L53-01 | Lock the layout contract in `decisions.md` + spec v6 §6.2: 64px floor, wrap+vertical scroll, no pager, one-row opponents, collapse Incoming → log → opponents. **Acceptance:** an agent reading only those files knows L43-04 shrink and L52-01 wrap are superseded. | S | Low | — | Done |
 | L53-02 | Dialog panel width: honor `panelClassName` `max-w-*` (Shop / kit picker / How to play / sub-choices must not stay 448px). Compact dialog action buttons so Use/Upgrade/Sell/Cancel fit. **Acceptance:** unit test on the width helper; Shop `max-w-3xl` is the computed max-width class. | S | Low | — | Done |
 | L53-03 | `CardBand`: `CARD_BAND_ABS_MIN_W = 64`, max 96; wrap + overflow-y; remove pager / `fitCardBand` height-shrink. Hand fills leftover; Specials size to content (max ~50%). Empty Specials do not take `flex-1`. **Acceptance:** `fitCardBand` never returns width &lt; 64; no pager tests; short height still ≥ 64. | M | Medium | L53-01 | Done |
-| L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | To do |
+| L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | Done |
 | L53-05 | Felt collapse planner: when dock min-height (64px hand) does not fit, hide Incoming (and Waiting) then log then opponents behind a button + Dialog, in that order. Empty Incoming/Waiting take no space even before collapse. **Acceptance:** `planFeltCollapse` tests for the three steps; 6p short felt collapses opponents last. | M | Medium | L53-03, L53-04 | To do |
 | L53-06 | Update `frontend.md`. Browser: phone 390×844 + landscape 844×390, Specialist + 5 Easy bots; crowded hand still tappable; opponents one row that scrolls; collapse buttons open Dialogs. Record room codes. **Acceptance:** notes in `frontend.md`; `pnpm verify` green. | L | Medium | L53-02–05 | To do |
 

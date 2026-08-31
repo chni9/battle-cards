@@ -23,6 +23,7 @@ import { persistentToCardInstance, shieldActiveInstance } from './active-display
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
+import { INCOMING_OPEN_LABEL, WAITING_OPEN_LABEL } from './table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
 /** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */
@@ -43,6 +44,10 @@ export interface PrivateZoneProps {
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
+  /** Hide Incoming (and Waiting) behind a dock button (Lot 53). */
+  collapseIncoming?: boolean;
+  waitingCount?: number;
+  onOpenIncoming?: () => void;
 }
 
 export function PrivateZone({
@@ -59,6 +64,9 @@ export function PrivateZone({
   onActivateDuplication,
   highlightedInstanceIds,
   zoneHighlight,
+  collapseIncoming = false,
+  waitingCount = 0,
+  onOpenIncoming,
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -90,6 +98,15 @@ export function PrivateZone({
   const highlightKit = zoneHighlight === 'kit';
   const highlightedSection =
     zoneHighlight === 'hand' || zoneHighlight === 'specials' ? zoneHighlight : undefined;
+  const incomingCount = incomingEffects.length;
+  const showIncomingButton =
+    collapseIncoming &&
+    onOpenIncoming !== undefined &&
+    (incomingCount > 0 || waitingCount > 0);
+  const incomingButtonLabel =
+    incomingCount > 0
+      ? `${INCOMING_OPEN_LABEL} (${String(incomingCount)})`
+      : `${WAITING_OPEN_LABEL} (${String(waitingCount)})`;
 
   return (
     <section
@@ -151,33 +168,53 @@ export function PrivateZone({
             </div>
           )}
         </div>
-        <div
-          data-zone="incoming-pending"
-          data-hint-anchor="incoming"
-          className={[
-            'min-w-0 flex-1 overscroll-contain',
-            incomingThreats || highlightIncoming
-              ? 'overflow-visible pt-10'
-              : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
-          ].join(' ')}
-        >
-          <TutorialCallout
-            active={highlightIncoming}
-            layout="stretch"
-            arrow="top"
-            highlightId="incoming"
+        {showIncomingButton ? (
+          <div data-zone="incoming-collapsed" className="shrink-0">
+            <TutorialCallout
+              active={highlightIncoming}
+              arrow="top"
+              highlightId="incoming"
+            >
+              <Button
+                compact
+                type="button"
+                variant="orange"
+                data-hint-anchor="incoming"
+                onClick={onOpenIncoming}
+              >
+                {incomingButtonLabel}
+              </Button>
+            </TutorialCallout>
+          </div>
+        ) : incomingCount > 0 ? (
+          <div
+            data-zone="incoming-pending"
+            data-hint-anchor="incoming"
+            className={[
+              'min-w-0 flex-1 overscroll-contain',
+              incomingThreats || highlightIncoming
+                ? 'overflow-visible pt-10'
+                : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
+            ].join(' ')}
           >
-            <PendingQueue
-              view={view}
-              effects={incomingEffects}
-              title="Incoming"
-              compact
-              tone="dock"
-              highlightedIds={mirrorHighlightIds}
-              animateEntrance
-            />
-          </TutorialCallout>
-        </div>
+            <TutorialCallout
+              active={highlightIncoming}
+              layout="stretch"
+              arrow="top"
+              highlightId="incoming"
+            >
+              <PendingQueue
+                view={view}
+                effects={incomingEffects}
+                title={INCOMING_OPEN_LABEL}
+                compact
+                tone="dock"
+                highlightedIds={mirrorHighlightIds}
+                animateEntrance
+              />
+            </TutorialCallout>
+          </div>
+        ) : null}
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">

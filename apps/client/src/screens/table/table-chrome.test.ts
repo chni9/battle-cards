@@ -48,3 +48,16 @@ describe('opponent row (L53-04)', () => {
     expect(css).toContain('overflow-y: hidden');
   });
 });
+
+describe('felt chrome collapse wiring (L53-05)', () => {
+  it('opens Incoming, log, and opponents from collapsed buttons', () => {
+    const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
+    expect(table).toContain('feltCollapseFromCounts');
+    expect(table).toContain("setChromeOpen('incoming')");
+    expect(table).toContain("setChromeOpen('log')");
+    expect(table).toContain("setChromeOpen('opponents')");
+    expect(source('private-zone.tsx')).toContain('incoming-collapsed');
+    expect(source('table-shell.tsx')).toContain('log-collapsed');
+    expect(source('table-shell.tsx')).toContain('opponents-collapsed');
+  });
+});
