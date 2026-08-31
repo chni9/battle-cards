@@ -53,7 +53,9 @@ rules above are unchanged — this section only covers how the client looks.
   only duplicate specials need a `${cardId}:${index}` React key (L27-05). New `KitTraits`
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
-  focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants. Prefer this
+  focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants (`compact` on
+  phone dialogs). `panelClassName` `max-w-*` overrides the default `max-w-md` via
+  `dialogPanelClassName` (L53-02). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
   extra npm dependency unless separately ruled.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
@@ -138,13 +140,16 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
-  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay a
-  wrapping arc (`flex-wrap`, `overflow-y-visible` so token flyouts are not clipped);
-  4+ opponents use compact seat chrome so six-player tables remain readable. Lobby
-  player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
-  (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
-  region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
-  dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
+  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay **one
+  horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
+  six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
+  Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
+  (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
+  too short. **Landscape:** two-column felt — left opponents + pending + log, right
+  dock (hand/economy) — so short phone heights keep the hand fully on-screen. If one 64px
+  hand row still cannot fit, chrome collapses into a button + Dialog in this order:
+  **Incoming** (dock Incoming + felt Waiting on others) → **action log** → **opponents**.
+  Empty Incoming / Waiting / Specials take no flex space. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
   white seat slab). Pending effects targeting `view.you`
   render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
@@ -154,16 +159,19 @@ rules above are unchanged — this section only covers how the client looks.
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
   prose). **Private zone:**
-  `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
-  match action cards; resources sit above the economy bar with **visible captions**
+  `CardBand` — hand and specials share one face width (floor **64px**, max 96px); specials
+  size to content (cap ~half the card area); Hand fills leftover height. Resources sit above
+  the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
   kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
-  shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
-  without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
-  Short docks may still shrink below 48 so faces are not cropped.
+  shown) with one line per action. Hand/specials wrap then **scroll vertically** (Lot 53;
+  no pager arrows). Height must not shrink width below 64px.
+- **Dialog width (L53-02):** `dialogPanelClassName` omits the default `max-w-md` when the
+  caller already passes a `max-w-*` (Shop / kit picker / How to play / sub-choices). Dialog
+  footer `Button`s use `compact` so Use / Upgrade / Sell / Cancel fit on a 390px phone.
 - **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
   show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
@@ -650,3 +658,18 @@ do not hand off an untested lot.
   on the Points dock — spend and gain legs, not a single net chip.
 - Mutual equal/weaker attack vs Alpha's Strong still cancels (Round 2 log);
   cancelled attacks correctly fly no `livesLost` chips from the `?` seat.
+
+### Lot 53 verified 2026-08-31 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Phone-first crowding pass after the six-player Classic merge. Specialist / mixed kits vs
+**5 Easy bots**. Skip How to play / Skip all hints.
+
+- Room `OGPSGK` (nick `L53Phone`): portrait **390×844**. Hand faces measured **68–69px**
+  (never below 64). No Hand/Specials pager. Opponents `flex-wrap: nowrap`,
+  `scrollWidth` 555 > `clientWidth` 382 (five seats, one row that scrolls sideways).
+- Room `LKFOCS` / `LK47DCS` (nick `L53Mobile`): landscape **844×390**. Felt height ~311px
+  collapses **Action log** then **Opponents** to orange buttons; Incoming stays on the table
+  when empty. **Action log** and **Opponents (5)** Dialogs open from those buttons and Close.
+  Hand still ≥ 64px and the dock card band scrolls vertically.
+- Dialog `max-w-3xl` (Shop / kit picker) is no longer stuck at 448px. Card dialog
+  Use / Upgrade / Sell / Cancel use compact CTAs on the 390px width.
