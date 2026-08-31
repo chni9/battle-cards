@@ -60,9 +60,12 @@ describe('dialogPanelClassName (L53-02)', () => {
     expect(src).toContain('overflow-x-hidden');
     expect(src).toContain("maxHeight: '100%'");
     expect(src).toContain('dialogPreferredMaxWidth');
+    expect(src).toContain('readVisualViewportBox');
+    expect(src).toContain('visualViewport');
     expect(src).not.toContain('items-end');
     expect(src).not.toContain('items-center justify-center');
     expect(src).not.toContain('safe_center');
     expect(src).not.toContain('y: 28');
+    expect(src).not.toContain('inset-0');
   });
 });

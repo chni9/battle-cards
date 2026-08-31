@@ -54,8 +54,9 @@ rules above are unchanged — this section only covers how the client looks.
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
   focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants (`compact` on
-  phone dialogs). Overlay is `items-start` + panel `my-auto` / `max-h-full` of
-  `fixed inset-0` (never `100dvh`, never `items-center` — that clips the title).
+  phone dialogs). Overlay is sized to `visualViewport` (not `100dvh` / `fixed inset-0`,
+  which can be the desktop window in DevTools device mode) and `items-start`; panel is
+  `my-auto` / `max-h-full` of that overlay (never `items-center` — that clips the title).
   `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
   `dialogPanelClassName` (L53-02 / L53-07). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
@@ -177,12 +178,12 @@ rules above are unchanged — this section only covers how the client looks.
   height so the name line stays on-screen.
 - **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
   `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
-  Panel is `min-w-0 max-h-full` of the `fixed inset-0` overlay so 390×844 never clips
+  Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips
   Cancel off the right and 844×390 never clips Close off the bottom. Overlay is
-  `items-start` (not `items-center`, which clips the title of a tall panel); `my-auto`
-  still centers a short panel. Footer `Button`s use `compact` and wrap. Collapse
-  Opponents seats sit on a `min-w-0` nowrap row; Action log Dialog uses `embedded` so
-  the empty state is not a full-height white slab.
+  sized to `visualViewport` and `items-start` (not `items-center`, which clips the
+  title of a tall panel); `my-auto` still centers a short panel. Footer `Button`s use
+  `compact` and wrap. Collapse Opponents seats sit on a `min-w-0` nowrap row; Action
+  log Dialog uses `embedded` so the empty state is not a full-height white slab.
 - **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
   show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
@@ -697,8 +698,8 @@ one row, horizontal scroll, height-fit (never crop).
 - `pnpm verify` green (1144 tests).
 
 Designer follow-up: the L53-07 recording still cropped Thief **Cancel**, Opponents
-off the left, and the Action log title (empty white slab). Overlay is now
-`items-start` with panel `max-h-full` / `min(preferred, 100%)` of the overlay, not
-`100dvh`. Room `OEDLPQ` (nick `L53Crop`): portrait 390×844 Thief dialog Cancel
-right 373 ≤ 390 (Sell + Cancel wrap); landscape 844×390 Action log title + body +
-Close in view; Opponents first seat left 47, Close in view.
+off the left, and the Action log title (empty white slab). Overlay is sized to
+`visualViewport` (not `100dvh` / `fixed inset-0`) with panel `max-h-full` /
+`min(preferred, 100%)`. Room `OEDLPQ` (nick `L53Crop`): portrait 390×844 Thief
+dialog Cancel right 373 ≤ 390 (Sell + Cancel wrap); landscape 844×390 Action log
+title + body + Close in view; Opponents first seat left 47, Close in view.
