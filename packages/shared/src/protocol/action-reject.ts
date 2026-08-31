@@ -3,6 +3,8 @@
  * `message` stays a short English fallback; clients may map `code` to richer copy.
  */
 
+import { MAX_PLAYERS } from '../domain/player-count';
+
 export const ACTION_REJECT_CODES = [
   // Turn / gate
   'not-your-turn',
@@ -204,7 +206,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'start-not-enough-players': 'Need at least 2 players to start.',
   'add-bot-not-host': 'Only the host can add a bot.',
   'add-bot-already-started': 'Cannot add a bot after the game has started.',
-  'add-bot-room-full': 'Room is full (4 seats).',
+  'add-bot-room-full': `Room is full (${String(MAX_PLAYERS)} seats).`,
   'remove-bot-not-host': 'Only the host can remove a bot.',
   'remove-bot-already-started': 'Cannot remove a bot after the game has started.',
   'remove-bot-unknown': 'That bot seat was not found.',

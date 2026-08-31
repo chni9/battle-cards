@@ -10,6 +10,8 @@
 import {
   actionReject,
   isKitId,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   type ActionReject,
   type ActionRejectCode,
   type ChooseKitPayload,
@@ -17,8 +19,8 @@ import {
   type LobbyKitSelection,
 } from '@card-battle/shared';
 
-export const MAX_PLAYERS = 4;
-export const MIN_PLAYERS_TO_START = 2;
+export { MAX_PLAYERS };
+export const MIN_PLAYERS_TO_START = MIN_PLAYERS;
 
 export type StartGameRejection =
   | 'not-host'

@@ -57,14 +57,16 @@ describe('seats (L15-02)', () => {
     expect(shouldUnlockForOccupancy(MAX_PLAYERS)).toBe(false);
   });
 
-  it('1 human + 3 bots is full, startable, and unlocks when a bot is removed', () => {
+  it('1 human + 5 bots is full, startable, and unlocks when a bot is removed', () => {
     const seats: Seat[] = [human('host', 'Host')];
     seats.push(createBotSeat(seats, 'easy'));
     seats.push(createBotSeat(seats, 'normal'));
     seats.push(createBotSeat(seats, 'hard'));
+    seats.push(createBotSeat(seats, 'easy'));
+    seats.push(createBotSeat(seats, 'normal'));
 
-    expect(seats).toHaveLength(4);
-    expect(seats.filter(isBotSeat)).toHaveLength(3);
+    expect(seats).toHaveLength(MAX_PLAYERS);
+    expect(seats.filter(isBotSeat)).toHaveLength(MAX_PLAYERS - 1);
     expect(shouldLockForOccupancy(seats.length)).toBe(true);
     expect(
       canStartGame({
@@ -76,7 +78,7 @@ describe('seats (L15-02)', () => {
     ).toBeNull();
 
     const nicknames = new Set(seats.map((seat) => seat.nickname.toLowerCase()));
-    expect(nicknames.size).toBe(4);
+    expect(nicknames.size).toBe(MAX_PLAYERS);
 
     seats.pop();
     expect(shouldUnlockForOccupancy(seats.length)).toBe(true);

@@ -41,7 +41,7 @@ describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
     const byId = Object.fromEntries(HOW_TO_PLAY_SECTIONS.map((section) => [section.id, section]));
     expect(byId['goal']?.body).toMatch(/last player alive/i);
     expect(byId['goal']?.body).toMatch(/25/);
-    expect(byId['goal']?.body).toMatch(/2 to 4/);
+    expect(byId['goal']?.body).toMatch(/2 to 6/);
     expect(byId['turn']?.body).toMatch(/exactly one action/i);
     expect(byId['turn']?.body).toMatch(/Draw/);
     expect(byId['lives']?.body).toMatch(/0 lives/i);

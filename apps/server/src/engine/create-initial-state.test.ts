@@ -3,6 +3,7 @@ import {
   ATTACK_CARD_IDS,
   getKit,
   KIT_IDS,
+  MAX_PLAYERS,
   type CardId,
 } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
@@ -94,6 +95,20 @@ describe('createInitialState (L4-02)', () => {
     expect(() => createInitialState({ seats: [{ id: 'a', nickname: 'Solo' }] })).toThrow(
       RangeError,
     );
+  });
+
+  it('accepts MAX_PLAYERS seats and rejects one more', () => {
+    const six = Array.from({ length: MAX_PLAYERS }, (_, index) => ({
+      id: String.fromCodePoint(97 + index),
+      nickname: `P${String(index)}`,
+    }));
+    expect(() => createInitialState({ seats: six, seed: 'six-ok' })).not.toThrow();
+    expect(() =>
+      createInitialState({
+        seats: [...six, { id: 'g', nickname: 'P6' }],
+        seed: 'seven-no',
+      }),
+    ).toThrow(RangeError);
   });
 
   it('Scientific starting Spies arrive already upgraded', () => {

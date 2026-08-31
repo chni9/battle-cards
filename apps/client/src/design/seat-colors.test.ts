@@ -12,7 +12,7 @@ import {
 } from './seat-colors';
 
 const view = {
-  players: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+  players: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }, { id: 'f' }],
 };
 
 describe('seatIndexOf (L39-03)', () => {
@@ -21,30 +21,48 @@ describe('seatIndexOf (L39-03)', () => {
     expect(seatIndexOf(view, 'b')).toBe(1);
     expect(seatIndexOf(view, 'c')).toBe(2);
     expect(seatIndexOf(view, 'd')).toBe(3);
+    expect(seatIndexOf(view, 'e')).toBe(4);
+    expect(seatIndexOf(view, 'f')).toBe(5);
   });
 
   it('returns null for unknown ids', () => {
     expect(seatIndexOf(view, 'missing')).toBeNull();
   });
 
-  it('returns null when index would exceed the 4-seat palette', () => {
-    const five = {
-      players: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }],
+  it('returns null when index would exceed the 6-seat palette', () => {
+    const seven = {
+      players: [
+        { id: 'a' },
+        { id: 'b' },
+        { id: 'c' },
+        { id: 'd' },
+        { id: 'e' },
+        { id: 'f' },
+        { id: 'g' },
+      ],
     };
-    expect(seatIndexOf(five, 'e')).toBeNull();
+    expect(seatIndexOf(seven, 'g')).toBeNull();
   });
 });
 
 describe('seatColorHex / styles (L39-03)', () => {
-  it('exposes a 4-seat hex palette (blue/red/green/yellow)', () => {
-    expect(SEAT_COLORS).toEqual(['#1d6fd8', '#d62828', '#1a9b3c', '#ffd400']);
+  it('exposes a 6-seat hex palette (blue/red/green/yellow/violet/orange)', () => {
+    expect(SEAT_COLORS).toEqual([
+      '#1d6fd8',
+      '#d62828',
+      '#1a9b3c',
+      '#ffd400',
+      '#7c3aed',
+      '#ea580c',
+    ]);
     expect(seatColorHex(3)).toBe('#ffd400');
+    expect(seatColorHex(5)).toBe('#ea580c');
     expect(seatColorVar(2)).toBe(SEAT_COLORS[2]);
   });
 
   it('clamps out-of-range indices into the palette', () => {
     expect(clampSeatIndex(-1)).toBe(0);
-    expect(clampSeatIndex(99)).toBe(3);
+    expect(clampSeatIndex(99)).toBe(5);
   });
 
   it('washes hex over white without color-mix', () => {

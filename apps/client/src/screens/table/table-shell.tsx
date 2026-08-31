@@ -64,9 +64,10 @@ export function TableShell({
           <div
             data-zone="opponents"
             className={[
-              'table-felt__opponents flex min-h-0 items-start justify-center gap-1 overflow-x-auto overflow-y-visible overscroll-contain py-1',
+              'table-felt__opponents flex min-h-0 flex-wrap items-start justify-center gap-1 overflow-x-auto overflow-y-visible overscroll-contain py-1',
               opponentsClassName ?? '',
             ].join(' ')}
+            data-opponent-count={String(opponentSeats.length)}
           >
             {opponentSeats}
           </div>

@@ -1182,6 +1182,7 @@ function TableScreenInner({
             <OpponentZone
               view={view}
               player={player}
+              compact={opponents.length >= 4}
               onInspectActive={(effectId) => {
                 onInspectActive(player.id, effectId);
               }}

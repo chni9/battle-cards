@@ -5,6 +5,8 @@
 
 import {
   BOT_DIFFICULTIES,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
@@ -45,8 +47,8 @@ export function LobbyScreen({
   onChooseKit,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
-  const canLaunch = isHost && view.players.length >= 2;
-  const canAddBot = isHost && view.players.length < 4;
+  const canLaunch = isHost && view.players.length >= MIN_PLAYERS;
+  const canAddBot = isHost && view.players.length < MAX_PLAYERS;
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
@@ -124,9 +126,9 @@ export function LobbyScreen({
 
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-ink">
-            Players ({view.players.length}/4)
+            Players ({view.players.length}/{MAX_PLAYERS})
           </h2>
-          <ul className="mt-3 divide-y divide-border-soft rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
+          <ul className="mt-3 max-h-[min(28rem,52vh)] divide-y divide-border-soft overflow-y-auto rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
             {view.players.map((player) => (
               <li
                 key={player.id}

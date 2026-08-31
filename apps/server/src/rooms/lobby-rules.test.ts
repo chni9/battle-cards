@@ -18,7 +18,7 @@ import {
 
 describe('lobby rules (L1-02)', () => {
   it(`caps the room at ${MAX_PLAYERS} players`, () => {
-    expect(MAX_PLAYERS).toBe(4);
+    expect(MAX_PLAYERS).toBe(6);
   });
 
   it(`requires ${MIN_PLAYERS_TO_START} players to start`, () => {
@@ -92,6 +92,11 @@ describe('bot lobby rules (L15-03)', () => {
     it('rejects when the room is full', () => {
       expect(canAddBot({ ...base, seatCount: MAX_PLAYERS })).toBe('room-full');
       expect(addBotRejectionMessage('room-full').message).toMatch(/full/);
+      expect(addBotRejectionMessage('room-full').message).toMatch(String(MAX_PLAYERS));
+    });
+
+    it('still allows a bot at MAX_PLAYERS − 1', () => {
+      expect(canAddBot({ ...base, seatCount: MAX_PLAYERS - 1 })).toBeNull();
     });
   });
 

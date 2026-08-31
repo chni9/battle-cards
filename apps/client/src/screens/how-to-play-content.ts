@@ -37,7 +37,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'goal',
     title: 'Goal',
-    body: "Last player alive wins. This is a turn-based elimination game for 2 to 4 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them.",
+    body: "Last player alive wins. This is a turn-based elimination game for 2 to 6 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them.",
     screenshotFile: null,
   },
   {

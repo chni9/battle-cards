@@ -15,8 +15,8 @@ import { listEligibleMirrorTargets } from './mirror-choice';
 import { performTurnAction } from './perform-action';
 
 describe('MEGA ATTACK (L23-01)', () => {
-  it('queues one pending attack per alive opponent for 2, 3 and 4 players (#V4-1)', () => {
-    for (const seatCount of [2, 3, 4] as const) {
+  it('queues one pending attack per alive opponent for 2–6 players (#V4-1)', () => {
+    for (const seatCount of [2, 3, 4, 5, 6] as const) {
       const seats = Array.from({ length: seatCount }, (_, index) => ({
         id: String.fromCodePoint(97 + index),
         nickname: `P${String(index)}`,

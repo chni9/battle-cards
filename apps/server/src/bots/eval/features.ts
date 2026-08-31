@@ -10,6 +10,7 @@ import {
   getKit,
   isAttackCardId,
   KIT_CATALOG,
+  MAX_PLAYERS,
   type CardId,
   type GameState,
   type Player,
@@ -20,8 +21,8 @@ import type { BeliefSummary } from '../belief/types';
 /** Bump when the feature layout changes — invalidates fitted models. */
 export const FEATURE_LAYOUT_VERSION = 1;
 
-/** Max seats in Classic (technical spec v1). */
-export const FEATURE_MAX_PLAYERS = 4;
+/** Max seats in Classic (rules spec §1). */
+export const FEATURE_MAX_PLAYERS = MAX_PLAYERS;
 
 /** Card ids that appear in any kit's `immuneTo` or `alwaysUpgraded` (stable sort). */
 export const KIT_TRAIT_CARD_IDS: readonly CardId[] = (() => {
@@ -70,7 +71,9 @@ export const FEATURE_NAMES = [
   'attackBlockChargesNorm',
   'duplicationActive',
   'pendingReanimationArmed',
-  // Belief (Lot 34) — one width slot per possible opponent seat offset 1..3
+  // Belief (Lot 34) — one width slot per opponent seat offset 1..3.
+  // Fitted layout v1 reserved three slots when Classic was 2–4; extra living
+  // opponents at 5–6 seats have no dedicated width feature (zeros).
   'beliefLifeWidthOpp1',
   'beliefLifeWidthOpp2',
   'beliefLifeWidthOpp3',

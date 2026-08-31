@@ -40,14 +40,16 @@ What V6 has to prove:
 - a tester can send Bug / Confusion / Idea from inside the product, and you can open that
   report in the browser the same day
 - Classic play is unchanged unless the designer explicitly requests a rule or value
-  change in the current session: same prices, damage, kits, delay, mutual attacks by default
+  change in the current session: same prices, damage, kits, delay, mutual attacks by default.
+  **2026-08-29:** Classic occupancy is **2 to 6** (was 2 to 4).
 
 ### Non-objectives
 
 - **No Classic rule change. No Classic value change** — unless the current session's
   developer instructions explicitly change one (record in `decisions.md` + rules spec).
-  A confused tester is never grounds for changing Tax, delay, kits, or prices on inference
-  alone. Same clause as V4 / V5, with that explicit-instruction exception.
+  **2026-08-29 exception:** Classic occupancy is 2–6. A confused tester is never grounds
+  for changing Tax, delay, kits, or prices on inference alone. Same clause as V4 / V5,
+  with that explicit-instruction exception.
 - **No new competitive mode.** Team, God, and Quick stay out (technical spec v1 §9). The
   tutorial is **Classic with setup overrides**, not a fourth mode (`GameMode` stays
   `'classic'`).
@@ -87,6 +89,12 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
 | 14 | Classic frozen. Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
 | 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. |
+
+### 2.1 Session 2026-08-29 — Classic occupancy
+
+Classic rooms seat **2 to 6** players (was 2–4 through #V4-30). Not Team/God/Quick.
+Card values, delay, and mutual attacks are unchanged. Single source:
+`packages/shared/src/domain/player-count.ts`.
 
 Inference flagged as such (not a separate designer vote, required by the locked beats):
 
@@ -174,7 +182,7 @@ designer files (`delayed-resolution.png`, `table-overview.png`) stay on disk unu
 
 | Section id | Title | Must say | Screenshot file (designer) |
 |---|---|---|---|
-| `goal` | Goal | Last player alive wins. This is a turn-based elimination game for 2 to 4 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them. | — |
+| `goal` | Goal | Last player alive wins. This is a turn-based elimination game for 2 to 6 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them. | — |
 | `turn` | Turns | Players act one after another. On your turn you take exactly one action, then play passes on. That action is one of: Draw, play a card from your hand, play a special, buy, sell, or upgrade. | `how-to-play/one-action.png` |
 | `lives` | Lives | Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. | `how-to-play/resources.png` |
 | `points` | Points | Points are the currency for almost every action: playing most cards, buying from the Shop, selling, and buying upgrade points. Draw gives you points equal to your kit's Draw value. | — |
