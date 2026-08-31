@@ -6,47 +6,62 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CARD_BAND_ABS_MIN_W,
-  CARD_BAND_GAP_PX,
   CARD_BAND_MAX_W,
+  cardBandRowHeight,
   faceCardHeight,
   fitCardBand,
   maxWidthForRowHeight,
 } from './card-band-fit';
 
-describe('fitCardBand (L53-03)', () => {
-  it('never returns a width below 64, even when the band is short', () => {
-    const fit = fitCardBand(6, 300);
-    expect(fit.cardWidth).toBeGreaterThanOrEqual(CARD_BAND_ABS_MIN_W);
-    expect(fit.cardWidth).toBeLessThanOrEqual(CARD_BAND_MAX_W);
+describe('fitCardBand (L53-07)', () => {
+  it('never returns a width whose face is taller than the row', () => {
+    for (const rowHeight of [48, 64, 80, 120, 200]) {
+      const fit = fitCardBand(8, 120, rowHeight);
+      expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(rowHeight + 0.01);
+      expect(fit.cardWidth).toBeLessThanOrEqual(CARD_BAND_MAX_W);
+    }
   });
 
-  it('grows toward the max on a wide dock with a small hand', () => {
-    const fit = fitCardBand(4, 500);
+  it('shrinks below the preferred min rather than crop a short row', () => {
+    const rowHeight = 50;
+    const fit = fitCardBand(6, 360, rowHeight);
+    expect(fit.cardWidth).toBeLessThan(CARD_BAND_ABS_MIN_W);
+    expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(rowHeight + 0.01);
+  });
+
+  it('caps at MAX on a tall wide dock', () => {
+    const fit = fitCardBand(4, 500, 400);
     expect(fit.cardWidth).toBe(CARD_BAND_MAX_W);
   });
 
-  it('stays at or above 64 on a narrow width rather than shrinking toward 24', () => {
-    const fit = fitCardBand(8, 120);
-    expect(fit.cardWidth).toBeGreaterThanOrEqual(CARD_BAND_ABS_MIN_W);
-    expect(fit.cardWidth).toBeLessThanOrEqual(CARD_BAND_MAX_W);
-  });
-
-  it('packs at 64 when two floor-width columns fill the band', () => {
-    const fit = fitCardBand(10, CARD_BAND_ABS_MIN_W * 2 + CARD_BAND_GAP_PX);
-    expect(fit.cardWidth).toBe(CARD_BAND_ABS_MIN_W);
+  it('keeps one width even when cards cannot all fit in the band', () => {
+    const fit = fitCardBand(10, 120, 160);
+    expect(fit.cardWidth).toBeGreaterThan(1);
+    expect(faceCardHeight(fit.cardWidth)).toBeLessThanOrEqual(160 + 0.01);
   });
 });
 
-describe('CardBand source (L53-03)', () => {
-  it('wraps and scrolls instead of paginating', () => {
+describe('cardBandRowHeight', () => {
+  it('splits the band into two face rows when specials are present', () => {
+    const withSpecials = cardBandRowHeight(200, 2);
+    const emptySpecials = cardBandRowHeight(200, 0);
+    expect(emptySpecials).toBeGreaterThan(withSpecials);
+    expect(withSpecials).toBeGreaterThan(0);
+  });
+});
+
+describe('CardBand source (L53-07)', () => {
+  it('scrolls horizontally in one row instead of wrapping vertically', () => {
     const src = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), 'card-band.tsx'),
       'utf8',
     );
-    expect(src).toContain('flex-wrap');
-    expect(src).toContain('overflow-y-auto');
+    expect(src).toContain('flex-nowrap');
+    expect(src).toContain('overflow-x-auto');
+    expect(src).not.toContain('overflow-y-auto');
     expect(src).not.toContain('IconButton');
     expect(src).not.toContain('pageSize');
+    expect(src).not.toContain('max-h-[50%]');
   });
 });
 

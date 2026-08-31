@@ -2848,4 +2848,30 @@ Layout contract (client presentation only — no rule or value change):
 - Dialog `panelClassName` width overrides must actually apply (`max-w-3xl` for Shop /
   kit picker / sub-choices). The previous `max-w-md` + override pair resolved to 448px.
 
+## 2026-08-31 · [P] Table crowding playtest — horizontal cards, uncropped dialogs (L53-07)
+
+Designer follow-up on Lot 53 recordings (`l53-mobile-6p-collapse.mp4`, portrait
+390×844, landscape 844×390). The 64px wrap-then-vertical-scroll contract **cropped**
+faces (name line off-screen until you scrolled down), sized Specials independently so
+one Cloning face dwarfed the hand, and landscape Dialogs / collapse buttons sat partly
+off-screen (`items-end` + `max-h: 90dvh` + `p-4` on a 390px-tall viewport). Collapse
+existed but failed its purpose.
+
+This **supersedes** the wrap + vertical-scroll + hard 64px floor in the Lot 53 entry
+above. Still client presentation only — no rule or value change.
+
+- **One shared face width** for Hand and Specials. Specials never measure or grow on
+  their own.
+- **One row per section**, `flex-nowrap`, **horizontal** overflow. No wrap, no vertical
+  card scroll, no pager.
+- Size from **row height** so art + name stay fully visible. Preferred min ~40px when
+  height allows; **shrink below that rather than crop**. Grow toward ~88px when the
+  row is tall and wide. Extra cards scroll sideways at that width — do not wrap, do not
+  pack by shrinking.
+- Felt chrome still collapses Incoming → log → opponents. On **short viewports**
+  (innerHeight ≤ 500px, including 844×390) collapse all three so the left column is
+  buttons that actually fit. Landscape left column has a **nonzero min width**.
+- Dialog overlay is **centered** with tight padding. Panel `max-height` is
+  `calc(100dvh − 1rem)` so title, body, and Close stay on-screen; body scrolls inside.
+
 

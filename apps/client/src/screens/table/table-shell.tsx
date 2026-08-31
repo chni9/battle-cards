@@ -105,7 +105,7 @@ export function TableShell({
                 compact
                 type="button"
                 variant="orange"
-                className="mx-auto"
+                className="w-full min-w-0 max-w-full"
                 data-zone="opponents-collapsed"
                 onClick={() => {
                   onOpenOpponents?.();
@@ -138,6 +138,7 @@ export function TableShell({
                 compact
                 type="button"
                 variant="orange"
+                className="w-full min-w-0 max-w-full"
                 data-zone="log-collapsed"
                 onClick={() => {
                   onOpenLog?.();

@@ -381,6 +381,7 @@ function TableScreenInner({
   const [hintState, setHintState] = useState(readHintState);
   const feltRef = useRef<HTMLDivElement>(null);
   const [feltHeight, setFeltHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
   const [chromeOpen, setChromeOpen] = useState<
     'incoming' | 'log' | 'opponents' | null
   >(null);
@@ -393,12 +394,17 @@ function TableScreenInner({
     const measure = (): void => {
       const next = el.clientHeight;
       setFeltHeight((prev) => (Math.abs(prev - next) < 0.5 ? prev : next));
+      setViewportHeight((prev) =>
+        Math.abs(prev - window.innerHeight) < 0.5 ? prev : window.innerHeight,
+      );
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
+    window.addEventListener('resize', measure);
     return () => {
       observer.disconnect();
+      window.removeEventListener('resize', measure);
     };
   }, []);
 
@@ -936,6 +942,7 @@ function TableScreenInner({
     incomingCount: incomingEffects.length,
     waitingCount: othersPending.length,
     specialsCount: view.self.specialCards.length,
+    viewportHeight,
   });
   const otherModalOpen =
     dialog !== null ||

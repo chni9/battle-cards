@@ -18,7 +18,6 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { seatIndexOf } from '../../design/seat-colors';
-import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
@@ -90,9 +89,6 @@ export function PrivateZone({
   const povSeat = seatIndexOf(view, view.you);
   const isActiveSeat = view.currentTurnPlayerId === view.you;
   const youLabel = selfPublic?.nickname ?? 'You';
-  const incomingThreats = incomingEffects.some(
-    (effect) => !isPersistentPresentationId(effect.id),
-  );
   const highlightIncoming = zoneHighlight === 'incoming';
   const highlightResources = zoneHighlight === 'resources';
   const highlightKit = zoneHighlight === 'kit';
@@ -192,9 +188,9 @@ export function PrivateZone({
             data-hint-anchor="incoming"
             className={[
               'min-w-0 flex-1 overscroll-contain',
-              incomingThreats || highlightIncoming
+              highlightIncoming
                 ? 'overflow-visible pt-10'
-                : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
+                : 'max-h-9 overflow-x-auto overflow-y-hidden',
             ].join(' ')}
           >
             <TutorialCallout

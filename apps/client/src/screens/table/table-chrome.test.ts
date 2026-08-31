@@ -54,6 +54,7 @@ describe('felt chrome collapse wiring (L53-05)', () => {
   it('opens Incoming, log, and opponents from collapsed buttons', () => {
     const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
     expect(table).toContain('feltCollapseFromCounts');
+    expect(table).toContain('viewportHeight');
     expect(table).toContain("setChromeOpen('incoming')");
     expect(table).toContain("setChromeOpen('log')");
     expect(table).toContain("setChromeOpen('opponents')");

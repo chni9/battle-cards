@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { dialogPanelClassName } from './dialog-width';
@@ -17,5 +21,20 @@ describe('dialogPanelClassName (L53-02)', () => {
   it('honors max-w-2xl and max-w-lg the same way', () => {
     expect(dialogPanelClassName('max-w-2xl')).not.toMatch(/(?:^|\s)max-w-md(?:\s|$)/);
     expect(dialogPanelClassName('max-w-lg')).toContain('max-w-lg');
+  });
+
+  it('keeps the panel inside the viewport on short screens (L53-07)', () => {
+    const panel = dialogPanelClassName('');
+    expect(panel).toContain('max-h-[calc(100dvh-1rem)]');
+    expect(panel).not.toContain('90dvh');
+  });
+
+  it('centers the overlay instead of pinning it to the bottom', () => {
+    const src = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'dialog.tsx'),
+      'utf8',
+    );
+    expect(src).toContain('items-center');
+    expect(src).not.toContain('items-end');
   });
 });

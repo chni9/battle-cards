@@ -93,8 +93,28 @@ describe('feltCollapseFromCounts (L53-05)', () => {
 });
 
 describe('dockMinHeightPx', () => {
-  it('is at least one 64px hand row plus dock chrome', () => {
+  it('is at least one uncropped hand row plus dock chrome', () => {
     expect(dockMinHeightPx(0)).toBeGreaterThan(FELT_LOG_MIN_PX);
     expect(dockMinHeightPx(4)).toBeGreaterThan(dockMinHeightPx(0));
+  });
+});
+
+describe('short viewport collapse (L53-07)', () => {
+  it('collapses Incoming, log, and opponents on a 390px-tall landscape', () => {
+    const next = planFeltCollapse({
+      opponentRowHeight: FELT_OPPONENT_ROW_PX,
+      pendingHeight: FELT_PENDING_NONEMPTY_PX,
+      logHeight: 80,
+      dockMinHeight: 300,
+      incomingDockHeight: 64,
+      buttonHeight: FELT_COLLAPSE_BUTTON_PX,
+      feltHeight: 900,
+      viewportHeight: 390,
+    });
+    expect(next).toEqual({
+      incoming: true,
+      actionLog: true,
+      opponents: true,
+    });
   });
 });

@@ -32,8 +32,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 9. **Beta UI (Lot 51).** Primer rewrite, hub chrome, inspect restyle, table banners,
    Spy seat resources, opponent flyouts. Client presentation; no protocol bump.
 10. **Six-player Classic (Lot 52).** Occupancy 2–6. No protocol bump.
-11. **Table crowding (Lot 53).** 64px hand floor, wrap+scroll, collapse chrome on
-    short (especially mobile) tables. No protocol bump.
+11. **Table crowding (Lot 53).** Shared-size hand/specials, horizontal card scroll,
+    collapse chrome on short (especially mobile) tables. No protocol bump.
 
 **Execution order**
 
@@ -67,7 +67,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-65 of 72 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+65 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 50 · Beta feedback | 9 | 9 |
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
-| 53 · Table crowding | 6 | 6 |
+| 53 · Table crowding | 7 | 6 |
 
 ---
 
@@ -272,6 +272,7 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | Done |
 | L53-05 | Felt collapse planner: when dock min-height (64px hand) does not fit, hide Incoming (and Waiting) then log then opponents behind a button + Dialog, in that order. Empty Incoming/Waiting take no space even before collapse. **Acceptance:** `planFeltCollapse` tests for the three steps; 6p short felt collapses opponents last. | M | Medium | L53-03, L53-04 | Done |
 | L53-06 | Update `frontend.md`. Browser: phone 390×844 + landscape 844×390, Specialist + 5 Easy bots; crowded hand still tappable; opponents one row that scrolls; collapse buttons open Dialogs. Record room codes. **Acceptance:** notes in `frontend.md`; `pnpm verify` green. | L | Medium | L53-02–05 | Done |
+| L53-07 | Playtest fix: shared card size, **horizontal** scroll (no wrap/vertical), height-fit so faces are not cropped (min may drop below 64), Specials match Hand, Dialogs + collapse buttons fully on-screen at 390×844 and 844×390. **Acceptance:** `fitCardBand` never returns a width whose face is taller than the row; source has `flex-nowrap` + `overflow-x-auto` and no card `overflow-y-auto`; Dialog overlay is centered with `max-h` ≤ `100dvh`; browser shots show full names, matching specials, and uncropped Close. `pnpm verify` green. | M | Medium | L53-06 | In progress |
 
 ---
 
@@ -291,8 +292,8 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | 50 | 9 |
 | 51 | 16 |
 | 52 | 1 |
-| 53 | 6 |
-| **Total** | **72** |
+| 53 | 7 |
+| **Total** | **73** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

@@ -146,10 +146,12 @@ rules above are unchanged — this section only covers how the client looks.
   Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
   too short. **Landscape:** two-column felt — left opponents + pending + log, right
-  dock (hand/economy) — so short phone heights keep the hand fully on-screen. If one 64px
-  hand row still cannot fit, chrome collapses into a button + Dialog in this order:
+  dock (hand/economy) — so short phone heights keep the hand fully on-screen. If one
+  uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
   **Incoming** (dock Incoming + felt Waiting on others) → **action log** → **opponents**.
-  Empty Incoming / Waiting / Specials take no flex space. No separate
+  Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Collapse Dialogs must
+  fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex
+  space. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
   white seat slab). Pending effects targeting `view.you`
   render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
@@ -159,16 +161,18 @@ rules above are unchanged — this section only covers how the client looks.
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
   prose). **Private zone:**
-  `CardBand` — hand and specials share one face width (floor **64px**, max 96px); specials
-  size to content (cap ~half the card area); Hand fills leftover height. Resources sit above
+  `CardBand` — Hand and Specials share **one** face width (preferred min **40px**, max
+  88px; shrink further rather than crop). Specials do not size independently. Resources sit
+  above
   the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
   kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
-  shown) with one line per action. Hand/specials wrap then **scroll vertically** (Lot 53;
-  no pager arrows). Height must not shrink width below 64px.
+  shown) with one line per action. Hand/specials are **one row each** and **scroll
+  horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
+  height so the name line stays on-screen.
 - **Dialog width (L53-02):** `dialogPanelClassName` omits the default `max-w-md` when the
   caller already passes a `max-w-*` (Shop / kit picker / How to play / sub-choices). Dialog
   footer `Button`s use `compact` so Use / Upgrade / Sell / Cancel fit on a 390px phone.

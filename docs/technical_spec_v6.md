@@ -425,14 +425,18 @@ Client-only except Leave/forfeit (§8).
 
 ### 6.2 Phone hand
 
-Faces keep a **hard 64px width floor** (Lot 53; supersedes the 48px pager floor in L43-04).
-They wrap, then the band **scrolls vertically**. No pager arrows. Height must not shrink
-width below that floor. Desktop may grow faces up to 96px when the dock is wide.
+Hand and Specials share **one** face width. Each section is **one row** that **scrolls
+horizontally** (Lot 53 / L53-07; supersedes wrap + vertical scroll and the 64px floor).
+No pager arrows. Width comes from the row height so the full face (2/3 art + name) is
+visible — shrink below the preferred ~40px min rather than crop. Desktop may grow faces
+up to ~88px when the dock is tall and wide. Extra cards scroll sideways at that size.
 
 Hand is more important than Incoming, the action log, and opponent seats. If the felt
-cannot fit one 64px hand row, those regions collapse into a button + Dialog in this
-order: Incoming (including Waiting on others) → action log → opponents. Opponents on
-the table stay **one horizontally scrollable row** (Lot 53; supersedes L52-01 wrap).
+cannot fit one uncropped hand row, those regions collapse into a button + Dialog in this
+order: Incoming (including Waiting on others) → action log → opponents. On short
+viewports (innerHeight ≤ 500px) collapse all three. Opponents on the table stay **one
+horizontally scrollable row** (Lot 53; supersedes L52-01 wrap). Collapse Dialogs must
+fit entirely in the viewport (Close included); the body scrolls inside the panel.
 
 ### 6.3 Leave
 

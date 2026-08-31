@@ -1,6 +1,7 @@
 /**
- * Felt chrome collapse — Lot 53 / technical spec v6 §6.2.
- * When the dock cannot keep a 64px hand, hide Incoming then log then opponents.
+ * Felt chrome collapse — Lot 53 / technical spec v6 §6.2 / L53-07.
+ * When the dock cannot keep an uncropped hand row, hide Incoming then log
+ * then opponents. Short viewports collapse all three so Dialogs are usable.
  */
 
 import { CARD_BAND_ABS_MIN_W, faceCardHeight } from './card-band-fit';
@@ -14,6 +15,8 @@ export const DOCK_INCOMING_PX = 64;
 export const DOCK_RESOURCES_PX = 40;
 export const DOCK_ECONOMY_PX = 48;
 export const DOCK_GAP_PX = 8;
+/** 844×390 and other short phone heights — force all chrome into Dialogs. */
+export const SHORT_VIEWPORT_COLLAPSE_PX = 500;
 
 export interface FeltCollapse {
   incoming: boolean;
@@ -29,6 +32,7 @@ export interface FeltCollapseInput {
   dockMinHeight: number;
   incomingDockHeight: number;
   buttonHeight: number;
+  viewportHeight?: number;
 }
 
 export function dockMinHeightPx(specialsCount: number): number {
@@ -45,6 +49,15 @@ export function dockMinHeightPx(specialsCount: number): number {
 }
 
 export function planFeltCollapse(input: FeltCollapseInput): FeltCollapse {
+  const viewportHeight = input.viewportHeight ?? 0;
+  if (viewportHeight > 0 && viewportHeight <= SHORT_VIEWPORT_COLLAPSE_PX) {
+    return {
+      incoming: true,
+      actionLog: true,
+      opponents: true,
+    };
+  }
+
   const result: FeltCollapse = {
     incoming: false,
     actionLog: false,
@@ -92,6 +105,7 @@ export function feltCollapseFromCounts(input: {
   incomingCount: number;
   waitingCount: number;
   specialsCount: number;
+  viewportHeight?: number;
 }): FeltCollapse {
   const pendingHeight =
     input.waitingCount === 0 ? 0 : FELT_PENDING_NONEMPTY_PX;
@@ -108,5 +122,8 @@ export function feltCollapseFromCounts(input: {
     dockMinHeight: dockMinHeightPx(input.specialsCount),
     incomingDockHeight,
     buttonHeight: FELT_COLLAPSE_BUTTON_PX,
+    ...(input.viewportHeight !== undefined
+      ? { viewportHeight: input.viewportHeight }
+      : {}),
   });
 }

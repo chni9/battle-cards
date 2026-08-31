@@ -69,8 +69,10 @@ export function PendingQueue({
         <ul
           className={[
             'mt-1 flex min-h-0 gap-1.5',
-            compact ? 'flex-wrap justify-end' : 'flex-wrap',
-            hasRealPending ? 'overflow-visible' : 'overflow-y-auto',
+            compact
+              ? 'flex-nowrap overflow-x-auto overflow-y-hidden'
+              : 'flex-wrap',
+            !compact && hasRealPending ? 'overflow-visible' : '',
           ].join(' ')}
         >
           {effects.map((effect) => {
@@ -100,14 +102,14 @@ export function PendingQueue({
             const chip = compact ? (
               <span
                 className={[
-                  'flex max-w-full flex-wrap items-start gap-1 rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
+                  'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                   chipClass,
                   highlighted ? highlightClass : '',
                   entranceClass,
                 ].join(' ')}
               >
-                <span className="whitespace-normal break-words text-xs font-semibold">{label}</span>
-                <span className="inline-flex min-w-0 whitespace-normal break-words text-[10px] text-ink-muted">
+                <span className="whitespace-nowrap text-xs font-semibold">{label}</span>
+                <span className="inline-flex shrink-0 whitespace-nowrap text-[10px] text-ink-muted">
                   {route}
                 </span>
               </span>
@@ -134,7 +136,12 @@ export function PendingQueue({
                 key={effect.id}
                 data-pending-id={effect.id}
                 title={compact ? `${label} · ${routePlain} · queued #${String(effect.queuedAt)}` : undefined}
-                className={ringPending ? 'overflow-visible' : undefined}
+                className={[
+                  'shrink-0',
+                  ringPending ? 'overflow-visible' : undefined,
+                ]
+                  .filter((part) => part !== undefined)
+                  .join(' ')}
               >
                 {ringPending ? (
                   <TutorialCallout

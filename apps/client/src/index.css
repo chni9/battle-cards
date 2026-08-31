@@ -130,9 +130,17 @@
   grid-area: dock;
 }
 
+[data-card-row] {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (orientation: landscape) {
   .table-felt {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
+    grid-template-columns: minmax(8rem, 0.38fr) minmax(0, 1.62fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
       "opponents dock"
@@ -183,6 +191,19 @@
   }
 
   [data-zone="card-band"]:has([data-tutorial-highlight]) {
+    overflow: visible;
+  }
+
+  [data-card-row] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-felt[data-collapse-opponents="true"] .table-felt__opponents,
+  .table-felt[data-collapse-log="true"] .table-felt__log {
+    min-width: 0;
     overflow: visible;
   }
 }

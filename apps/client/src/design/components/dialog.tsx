@@ -141,7 +141,7 @@ export function Dialog({
       {open ? (
         <motion.div
           key="dialog-overlay"
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-4 sm:items-center"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-ink/45 p-2"
           role="presentation"
           onClick={onOverlayClick}
           initial={reduceMotion === true ? false : { opacity: 0 }}
@@ -175,14 +175,14 @@ export function Dialog({
               event.stopPropagation();
             }}
           >
-            <h2 id={titleId} className="shrink-0 text-lg font-semibold tracking-tight text-ink">
+            <h2 id={titleId} className="shrink-0 text-base font-semibold leading-tight tracking-tight text-ink sm:text-lg">
               {title}
             </h2>
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto text-sm text-ink-muted">
+            <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto text-sm text-ink-muted">
               {children}
             </div>
             {actions !== undefined && (
-              <div className="mt-5 flex shrink-0 flex-wrap items-center justify-end gap-3">
+              <div className="mt-3 flex shrink-0 flex-wrap items-center justify-end gap-3 sm:mt-5">
                 {actions}
               </div>
             )}

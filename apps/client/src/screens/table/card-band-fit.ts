@@ -1,21 +1,26 @@
 /**
- * Pure layout math for CardBand — wrap + vertical scroll, never shrink below 64px.
- * Height no longer shrinks width (Lot 53 / technical spec v6 §6.2).
+ * Pure layout math for CardBand — one shared size, one row, horizontal scroll.
+ * Width follows row height so the full face (art + name) stays visible (L53-07 /
+ * technical spec v6 §6.2).
  */
 
 export const CARD_BAND_GAP_PX = 6;
-/** Preferred minimum when space allows. Floor is 64 (Lot 53). */
-export const CARD_BAND_MIN_W = 64;
-export const CARD_BAND_MAX_W = 96;
-/** Absolute floor — wrap and scroll rather than unreadably tiny faces. */
-export const CARD_BAND_ABS_MIN_W = 64;
+/** Preferred minimum when the row is tall enough. Shrink below rather than crop. */
+export const CARD_BAND_MIN_W = 40;
+export const CARD_BAND_MAX_W = 88;
+/** Preferred floor used by collapse budgeting when height is unknown. */
+export const CARD_BAND_ABS_MIN_W = 40;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
  */
 export const CARD_BAND_IMAGE_ASPECT = 2 / 3;
-const FACE_LABEL_PX = 12;
-const FACE_PAD_PX = 4;
+/** 10px name + mt-0.5 + truncate slack — keep this ≥ the rendered name line. */
+const FACE_LABEL_PX = 16;
+const FACE_PAD_PX = 6;
+/** Hand + Specials labels in the band. */
+export const CARD_BAND_LABEL_PX = 18;
+export const CARD_BAND_SECTION_GAP_PX = 4;
 
 export interface CardBandFit {
   cardWidth: number;
@@ -35,15 +40,36 @@ export function maxWidthForRowHeight(rowHeight: number): number {
   return forArt * CARD_BAND_IMAGE_ASPECT;
 }
 
+/** Height available for one card row inside a CardBand of `bandHeight`. */
+export function cardBandRowHeight(
+  bandHeight: number,
+  specialsCount: number,
+): number {
+  const labels = CARD_BAND_LABEL_PX * 2;
+  const emptySpecials = specialsCount === 0 ? CARD_BAND_LABEL_PX : 0;
+  const rows = specialsCount > 0 ? 2 : 1;
+  return Math.max(
+    1,
+    Math.floor((bandHeight - labels - emptySpecials - CARD_BAND_SECTION_GAP_PX) / rows),
+  );
+}
+
 /**
- * Card width that fits as many columns as possible at ≥ 64px, growing toward 96
- * when the band is wide. Height is ignored — the band scrolls instead of shrinking.
+ * Shared card width: never taller than `rowHeight`, never above MAX.
+ * Extra cards overflow horizontally — this helper does not wrap or paginate.
  */
-export function fitCardBand(count: number, width: number): CardBandFit {
+export function fitCardBand(
+  count: number,
+  width: number,
+  rowHeight = 0,
+): CardBandFit {
+  if (rowHeight > 0) {
+    const noCrop = maxWidthForRowHeight(rowHeight);
+    return { cardWidth: Math.max(1, Math.min(CARD_BAND_MAX_W, noCrop)) };
+  }
   if (count <= 0 || width <= 0) {
     return { cardWidth: CARD_BAND_ABS_MIN_W };
   }
-
   const cols = Math.max(
     1,
     Math.floor((width + CARD_BAND_GAP_PX) / (CARD_BAND_ABS_MIN_W + CARD_BAND_GAP_PX)),
