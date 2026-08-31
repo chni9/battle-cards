@@ -46,6 +46,7 @@ describe('opponent row (L53-04)', () => {
     const css = readFileSync(join(dir, '../../index.css'), 'utf8');
     expect(css).not.toContain('data-opponent-count="4"');
     expect(css).toContain('overflow-y: hidden');
+    expect(css).toContain('flex-wrap: nowrap');
   });
 });
 

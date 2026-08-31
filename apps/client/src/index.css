@@ -102,6 +102,10 @@
 
 .table-felt__opponents {
   grid-area: opponents;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -148,6 +152,8 @@
 
   .table-felt__opponents {
     max-height: none;
+    display: flex;
+    flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
