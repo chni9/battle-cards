@@ -694,4 +694,11 @@ one row, horizontal scroll, height-fit (never crop).
   hugs (Opponents 44px, Action log 50px — no empty white 1fr slab). Shop / card /
   Opponents / Action log Dialogs: `inViewport` and Close/Cancel fully on-screen
   (Shop Close bottom 374 in 390; Opponents seats `headerH` 20, `iconClipped: false`).
-- `pnpm verify` green (1143 tests).
+- `pnpm verify` green (1144 tests).
+
+Designer follow-up: the L53-07 recording still cropped Thief **Cancel**, Opponents
+off the left, and the Action log title (empty white slab). Overlay is now
+`items-start` with panel `max-h-full` / `min(preferred, 100%)` of the overlay, not
+`100dvh`. Room `OEDLPQ` (nick `L53Crop`): portrait 390×844 Thief dialog Cancel
+right 373 ≤ 390 (Sell + Cancel wrap); landscape 844×390 Action log title + body +
+Close in view; Opponents first seat left 47, Close in view.
