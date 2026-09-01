@@ -53,7 +53,12 @@ rules above are unchanged — this section only covers how the client looks.
   only duplicate specials need a `${cardId}:${index}` React key (L27-05). New `KitTraits`
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
 - **Dialog:** controlled `open` / `onClose`; `role="dialog"` + `aria-modal` + labelled title;
-  focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants. Prefer this
+  focus trap; Esc and overlay dismiss; action slot uses shared `Button` variants (`compact` on
+  phone dialogs). Overlay is sized to `visualViewport` (not `100dvh` / `fixed inset-0`,
+  which can be the desktop window in DevTools device mode) and `items-start`; panel is
+  `my-auto` / `max-h-full` of that overlay (never `items-center` — that clips the title).
+  `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
+  `dialogPanelClassName` (L53-02 / L53-07). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
   extra npm dependency unless separately ruled.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
@@ -116,7 +121,7 @@ rules above are unchanged — this section only covers how the client looks.
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
-  Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
+  Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
   including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
   Opponent actives sit beside the kit portrait (`activeShield` + persistents). Imposition / Points Generator also get
   presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
@@ -138,13 +143,32 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
-  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay a
-  wrapping arc (`flex-wrap`, `overflow-y-visible` so token flyouts are not clipped);
-  4+ opponents use compact seat chrome so six-player tables remain readable. Lobby
-  player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
-  (hand fills remaining height); action log is capped (~15vh portrait) and is the only scroll
-  region with the page. **Landscape:** two-column felt — left opponents + pending + log, right
-  dock (hand/economy) — so short phone heights keep the hand fully on-screen. No separate
+  (`h-full` of `#root`; `html` / `body` / `#root` are `width/height: 100%`
+  with overflow hidden — not `100dvh`, which can stay stale after a resize
+  and leave the table as a small box on the html surface). Home and lobby
+  scroll **inside** `#root` (`overflow-y-auto`); the table shell does not
+  page-scroll. No `max-w` gutters. Opponents stay **one
+  horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
+  six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
+  Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
+  (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
+  too short. **Landscape:** two-column felt — left opponents + pending + log, right
+  dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
+  so one uncropped hand row still fits. Tall landscape (`min-height: 560px`,
+  desktop / tablet) uses `minmax(16rem, 38%)` so opponents and the action log
+  take empty width instead of a 168px strip. Shell is `w-full` / `h-full` of
+  `#root` (no `w-screen` / `100vw` / `100dvh` gutters). If one
+  uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
+  **Incoming** (dock Incoming + felt Waiting on others) → **opponents** → **action log**.
+  Viewports with `innerHeight` ≤ 500px collapse Incoming and opponents; the action log
+  stays on the felt unless leftover chrome still overflows (L53-07). Landscape `used()`
+  ignores dock min-height (dock is beside chrome). When opponents collapse, leftover
+  left-column height is the log (`minmax(0, 1fr)`), not two buttons with an empty slate.
+  Flyouts aim at the
+  collapsed buttons (`log-collapsed` / `opponents-collapsed` / `incoming-collapsed`) so
+  chips and pulses still play when the panel is unmounted. Collapse Dialogs must
+  fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex
+  space. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
   white seat slab). Pending effects targeting `view.you`
   render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
@@ -154,16 +178,30 @@ rules above are unchanged — this section only covers how the client looks.
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
   prose). **Private zone:**
-  `FluidCardRow` / `CardBand` — hand and specials share one capped face width so specials
-  match action cards; resources sit above the economy bar with **visible captions**
+  Incoming is a **full-width chip row** under the identity header (title + chips on
+  one line). It is not squeezed beside the kit/name and has no `max-h-9` clip.
+  `CardBand` — Hand and Specials share **one** face width (preferred min **40px**, max
+  88px; shrink further rather than crop). Specials do not size independently. A short
+  Hand or Specials row packs to `w-max` and **centers** with `mx-auto` (do not
+  `justify-center` the overflow row — that clips both sides). Resources sit
+  above
+  the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
   kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
   copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
   grouped under a sticky **Round N** header
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
-  shown) with one line per action. Hand/specials: `CardBand` sizes faces to fit 1–2 rows
-  without overflow; paginates when a **48px** width floor cannot hold the pile (L43-04).
-  Short docks may still shrink below 48 so faces are not cropped.
+  shown) with one line per action. Hand/specials are **one row each** and **scroll
+  horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
+  height so the name line stays on-screen.
+- **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
+  `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
+  Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips
+  Cancel off the right and 844×390 never clips Close off the bottom. Overlay is
+  sized to `visualViewport` and `items-start` (not `items-center`, which clips the
+  title of a tall panel); `my-auto` still centers a short panel. Footer `Button`s use
+  `compact` and wrap. Collapse Opponents seats sit on a `min-w-0` nowrap row; Action
+  log Dialog uses `embedded` so the empty state is not a full-height white slab.
 - **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
   Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
   show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
@@ -255,6 +293,10 @@ rules above are unchanged — this section only covers how the client looks.
     Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
     (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
     Reduced motion skips choreography. Do not invent Draw totals.
+    **Collapsed chrome (L53-07):** measure against `action-log-panel` **or**
+    `log-collapsed`, opponent seats **or** `opponents-collapsed`, Incoming strip
+    **or** `incoming-collapsed`. Overlay flashes use the same anchors so chips
+    and pulses still play when the panel is a button.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
@@ -650,3 +692,90 @@ do not hand off an untested lot.
   on the Points dock — spend and gain legs, not a single net chip.
 - Mutual equal/weaker attack vs Alpha's Strong still cancels (Round 2 log);
   cancelled attacks correctly fly no `livesLost` chips from the `?` seat.
+
+### Lot 53 verified 2026-08-31 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Phone-first crowding pass after the six-player Classic merge. Specialist / mixed kits vs
+**5 Easy bots**. Skip How to play / Skip all hints.
+
+- Room `OGPSGK` (nick `L53Phone`): first pass used wrap + vertical scroll (superseded by
+  L53-07).
+- Room `LKFOCS` / `LK47DCS` (nick `L53Mobile`): landscape collapse Dialogs were cropped
+  (`items-end` + `90dvh`) — superseded by L53-07.
+
+### Lot 53-07 verified 2026-08-31 (headless Chrome, exact viewports, PROTOCOL 30)
+
+Re-checked the playtest screenshots: wrap+vertical scroll cropped names, Specials grew
+on their own, 844×390 Dialogs/buttons sat off-screen. Contract is now one shared width,
+one row, horizontal scroll, height-fit (never crop).
+
+- Room `MUMAMB` (nick `L53Look`), Specialist vs 5 Easy bots. Headless Chrome, exact
+  390×844 / 844×390 viewports at deviceScaleFactor 2 (not a 1280×800 desktop shot).
+- Portrait: Hand and Specials both **81×133**, `overflow-x: auto`, `overflow-y: hidden`,
+  `flex-wrap: nowrap`. Names not clipped. Hand `scrollWidth` 431 > `clientWidth` 368.
+- Landscape: cards **71×118** both, **same y**, `data-side-by-side=true`. Left column
+  hugs (Opponents 44px, Action log 50px — no empty white 1fr slab). Shop / card /
+  Opponents / Action log Dialogs: `inViewport` and Close/Cancel fully on-screen
+  (Shop Close bottom 374 in 390; Opponents seats `headerH` 20, `iconClipped: false`).
+- `pnpm verify` green (1144 tests).
+
+Designer follow-up: the L53-07 recording still cropped Thief **Cancel**, Opponents
+off the left, and the Action log title (empty white slab). Overlay is sized to
+`visualViewport` (not `100dvh` / `fixed inset-0`) with panel `max-h-full` /
+`min(preferred, 100%)`. Room `OEDLPQ` (nick `L53Crop`): portrait 390×844 Thief
+dialog Cancel right 373 ≤ 390 (Sell + Cancel wrap); landscape 844×390 Action log
+title + body + Close in view; Opponents first seat left 47, Close in view.
+
+Designer follow-up: Incoming chips were a sliver on every viewport (`max-h-9` on
+the identity row) and Hand / Specials sat flush left. Incoming is a full-width
+chip row; short card rows pack to `w-max` and center with `mx-auto`.
+
+- Room `DELQZF` (nicks `L53DockA` / `L53DockB`), Specialist vs Specialist, guest
+  Basic attack → host Incoming. Headless Chrome; `pnpm verify` 1147 tests.
+- **1280×800:** Hand left/right gap **307/307**, Specials **354/354**. Incoming
+  chip **42×207**, row **62px** tall, in dock (not a sliver).
+- **390×844:** Incoming chip still **42px** tall in dock. Five 88px hand cards
+  overflow and scroll from the start (`mx-auto` collapses).
+- **768×1024:** Hand **207/207**, Specials **240/240**, Incoming chip **42px**.
+
+Designer follow-up: desktop landscape starved opponents and the log in a
+10.5rem strip. Room `AQJXJW` (nick `L53Desk`, Specialist vs 5 Easy). Headless
+Chrome **1280×800:** table **1280×800** (full viewport); opponents column
+**482px** (~38% of the felt); action log **482×578**; dock **782px**; **5**
+seats on the row. **844×390** keeps the **168px** (10.5rem) column so the hand
+fits (chrome collapsed as specified for height ≤ 500px). `pnpm verify` 1149
+tests.
+
+Designer follow-up: opponents collapse before the action log, and flyouts
+keep playing toward the leftover buttons. Room `RBWXPX` (nick `L53Foes`,
+Specialist vs 1 Easy). Headless Chrome; `pnpm verify` 1150 tests.
+
+- **844×560:** opponents **collapsed**, action log **on the felt**
+  (panel **302×415**). Token chips still fly to `opponents-collapsed`.
+- **390×530:** same order (Opponents button, log stays).
+- **844×390:** Incoming / opponents / log all collapsed. Draw paints a
+  point chip onto `log-collapsed` (chip at **62,328** vs button **13,333**).
+
+Designer follow-up: the table must fill the window at every size. Room
+`NOGGDW` (nick `L53Fill`). Headless Chrome; table `getBoundingClientRect`
+matches `innerWidth`×`innerHeight` (origin 0,0) at **390×844**, after a
+grow to **1100×800**, **844×390**, and **1280×800**. `pnpm verify` 1151
+tests.
+
+Designer follow-up: the hub/menu could not scroll after the full-bleed
+`overflow: hidden` lock, and landscape collapsed the action log into a
+bottom button with empty slate after opponents. Home (and lobby) scroll
+inside `#root`; the table does not page-scroll. Short viewports collapse
+Incoming and opponents; leftover left-column height stays on the log.
+
+- Room `EYPXBT` (nick `L53Log`), Specialist vs 5 Easy. Headless Chrome;
+  trust `innerWidth`/`innerHeight` and `getBoundingClientRect`. `pnpm verify`
+  **1156** tests.
+- Home Play solo **844×390:** `main` `overflow-y: auto`, `scrollHeight` 845 >
+  `clientHeight` 390; `scrollTop` 0 → 455.
+- Home Play solo **390×500:** `scrollHeight` 1123 > 500.
+- Table **844×390:** table **844×390**; opponents collapsed (**44px**);
+  action log **on the felt** **168×259** (grid rows `44px 0px 259px`);
+  `data-collapse-log=false`. No document page-scroll.
+- Table **390×844:** table fills; Incoming / opponents / log stay expanded.
+

@@ -1,6 +1,7 @@
 /**
- * Private zone — kit + actives + incoming on one header row; hand/specials below.
- * Activating a card must not steal vertical space from the card band.
+ * Private zone — kit + actives on the identity row; Incoming on its own
+ * full-width chip row; hand/specials below. Activating a card must not steal
+ * vertical space from the card band.
  */
 
 import type {
@@ -18,11 +19,11 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { seatIndexOf } from '../../design/seat-colors';
-import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
+import { INCOMING_OPEN_LABEL, WAITING_OPEN_LABEL } from './table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
 /** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */
@@ -43,6 +44,10 @@ export interface PrivateZoneProps {
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
+  /** Hide Incoming (and Waiting) behind a dock button (Lot 53). */
+  collapseIncoming?: boolean;
+  waitingCount?: number;
+  onOpenIncoming?: () => void;
 }
 
 export function PrivateZone({
@@ -59,6 +64,9 @@ export function PrivateZone({
   onActivateDuplication,
   highlightedInstanceIds,
   zoneHighlight,
+  collapseIncoming = false,
+  waitingCount = 0,
+  onOpenIncoming,
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
@@ -82,14 +90,20 @@ export function PrivateZone({
   const povSeat = seatIndexOf(view, view.you);
   const isActiveSeat = view.currentTurnPlayerId === view.you;
   const youLabel = selfPublic?.nickname ?? 'You';
-  const incomingThreats = incomingEffects.some(
-    (effect) => !isPersistentPresentationId(effect.id),
-  );
   const highlightIncoming = zoneHighlight === 'incoming';
   const highlightResources = zoneHighlight === 'resources';
   const highlightKit = zoneHighlight === 'kit';
   const highlightedSection =
     zoneHighlight === 'hand' || zoneHighlight === 'specials' ? zoneHighlight : undefined;
+  const incomingCount = incomingEffects.length;
+  const showIncomingButton =
+    collapseIncoming &&
+    onOpenIncoming !== undefined &&
+    (incomingCount > 0 || waitingCount > 0);
+  const incomingButtonLabel =
+    incomingCount > 0
+      ? `${INCOMING_OPEN_LABEL} (${String(incomingCount)})`
+      : `${WAITING_OPEN_LABEL} (${String(waitingCount)})`;
 
   return (
     <section
@@ -101,7 +115,7 @@ export function PrivateZone({
       className="flex h-full min-h-0 flex-col gap-0.5 overflow-visible landscape:gap-1"
     >
       <div className="flex shrink-0 items-center justify-between gap-1.5 overflow-visible sm:gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
           <TutorialCallout
             active={highlightKit}
             arrow="top"
@@ -151,14 +165,33 @@ export function PrivateZone({
             </div>
           )}
         </div>
+        {showIncomingButton ? (
+          <div data-zone="incoming-collapsed" className="shrink-0">
+            <TutorialCallout
+              active={highlightIncoming}
+              arrow="top"
+              highlightId="incoming"
+            >
+              <Button
+                compact
+                type="button"
+                variant="orange"
+                data-hint-anchor="incoming"
+                onClick={onOpenIncoming}
+              >
+                {incomingButtonLabel}
+              </Button>
+            </TutorialCallout>
+          </div>
+        ) : null}
+      </div>
+      {!showIncomingButton && incomingCount > 0 ? (
         <div
           data-zone="incoming-pending"
           data-hint-anchor="incoming"
           className={[
-            'min-w-0 flex-1 overscroll-contain',
-            incomingThreats || highlightIncoming
-              ? 'overflow-visible pt-10'
-              : 'max-h-[3.5rem] overflow-y-auto landscape:max-h-[5rem] sm:max-h-[5.5rem]',
+            'min-w-0 w-full shrink-0 overflow-visible py-1 overscroll-x-contain',
+            highlightIncoming ? 'pt-10' : '',
           ].join(' ')}
         >
           <TutorialCallout
@@ -170,7 +203,7 @@ export function PrivateZone({
             <PendingQueue
               view={view}
               effects={incomingEffects}
-              title="Incoming"
+              title={INCOMING_OPEN_LABEL}
               compact
               tone="dock"
               highlightedIds={mirrorHighlightIds}
@@ -178,7 +211,7 @@ export function PrivateZone({
             />
           </TutorialCallout>
         </div>
-      </div>
+      ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden">
         <CardBand

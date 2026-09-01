@@ -425,9 +425,23 @@ Client-only except Leave/forfeit (§8).
 
 ### 6.2 Phone hand
 
-`CARD_BAND_ABS_MIN_W` is 24 today — unreadably small. Raise the **pagination floor** so
-faces do not shrink below **48 px** width; paginate earlier. Preferred min may stay 40–72.
-Desktop must not regress to a single-card pager when the dock is wide.
+Hand and Specials share **one** face width. Each section is **one row** that **scrolls
+horizontally** (Lot 53 / L53-07; supersedes wrap + vertical scroll and the 64px floor).
+No pager arrows. Width comes from the row height so the full face (2/3 art + name) is
+visible — shrink below the preferred ~40px min rather than crop. Desktop may grow faces
+up to ~88px when the dock is tall and wide. Extra cards scroll sideways at that size.
+
+Hand is more important than Incoming, the action log, and opponent seats. If the felt
+cannot fit one uncropped hand row, those regions collapse into a button + Dialog in this
+order: Incoming (including Waiting on others) → opponents → action log. On short
+viewports (innerHeight ≤ 500px) collapse Incoming and opponents; keep the action log
+on the felt unless leftover chrome still overflows. Landscape dock sits beside chrome, so
+collapsing the left column does not free hand height — leftover column height after
+opponents collapse belongs to the log, not an empty slate. Flyouts still aim at the
+collapsed buttons so token chips, card ghosts, and targeting pulses keep playing.
+Opponents on the table stay **one
+horizontally scrollable row** (Lot 53; supersedes L52-01 wrap). Collapse Dialogs must
+fit entirely in the viewport (Close included); the body scrolls inside the panel.
 
 ### 6.3 Leave
 

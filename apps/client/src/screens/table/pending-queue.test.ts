@@ -36,3 +36,11 @@ describe('pending queue callouts (L51-07)', () => {
     expect(table).not.toContain('tutorialIncomingThreatIds');
   });
 });
+
+describe('pending queue compact strip (L53-07)', () => {
+  it('keeps the compact title on the same row as the chips', () => {
+    const source = readFileSync(join(dir, 'pending-queue.tsx'), 'utf8');
+    expect(source).toContain('flex-row items-center');
+    expect(source).toContain('flex-1 flex-nowrap');
+  });
+});

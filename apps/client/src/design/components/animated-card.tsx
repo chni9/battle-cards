@@ -37,7 +37,7 @@ export function AnimatedCard({
   return (
     <motion.div
       data-instance-id={instance.instanceId}
-      className="h-full w-full [perspective:600px]"
+      className="h-auto w-full [perspective:600px]"
       // Never start at opacity 0 — HMR / interrupted motion left cards invisible (Lot 39).
       initial={
         skipFlip ? false : { opacity: 1, rotateY: -28, scale: 0.98 }
@@ -54,7 +54,7 @@ export function AnimatedCard({
         }
         animate={{ rotateY: 0, opacity: 1 }}
         transition={{ duration: MOTION_DURATION_S, ease: MOTION_EASE }}
-        className="h-full w-full"
+        className="h-auto w-full"
         style={{ transformStyle: 'preserve-3d' }}
       >
         <Card instance={instance} {...cardProps} />

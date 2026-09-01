@@ -45,7 +45,7 @@ export function Card({
       <img
         src={artUrl}
         alt=""
-        className="aspect-[2/3] max-h-full w-full object-contain"
+        className="aspect-[2/3] w-full object-contain"
         draggable={false}
       />
       {detail !== 'thumb' && (
@@ -83,7 +83,7 @@ export function Card({
         aria-label={label}
         title={label}
         className={[
-          'flex max-h-full flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised',
+          'flex flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised',
           'text-left font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
           selected ? 'ring-2 ring-cta-purple' : '',
           className.includes('p-') ? '' : 'p-1',
@@ -99,7 +99,7 @@ export function Card({
   return (
     <article
       className={[
-        'flex max-h-full flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised font-sans',
+        'flex flex-col overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised font-sans',
         className.includes('p-') ? '' : 'p-1',
         className.includes('w-') ? '' : 'w-28',
         className,

@@ -62,11 +62,23 @@
     font-family: var(--font-sans);
     color: var(--color-ink);
     background-color: var(--color-surface);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
     margin: 0;
-    min-height: 100dvh;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   /*
@@ -102,11 +114,11 @@
 
 .table-felt__opponents {
   grid-area: opponents;
-}
-
-.table-felt__opponents[data-opponent-count="4"],
-.table-felt__opponents[data-opponent-count="5"] {
-  gap: 0.15rem;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-felt__pending {
@@ -114,17 +126,31 @@
   max-height: 5.5rem;
 }
 
+.table-felt__pending[data-empty="true"] {
+  display: none;
+}
+
 .table-felt__log {
   grid-area: log;
+}
+
+.table-felt[data-collapse-log="true"] {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
 .table-felt__dock {
   grid-area: dock;
 }
 
+[data-card-row] {
+  display: flex;
+  flex-wrap: nowrap !important;
+  /* Overflow lives on the outer band so `w-max` + `mx-auto` can center. */
+}
+
 @media (orientation: landscape) {
   .table-felt {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
+    grid-template-columns: minmax(8.5rem, 10.5rem) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
       "opponents dock"
@@ -137,15 +163,18 @@
     min-height: 4.25rem;
   }
 
-  .table-felt__opponents {
-    max-height: 40dvh;
-    overflow-x: auto;
-    overflow-y: auto;
+  .table-felt__pending[data-empty="true"] {
+    display: none;
+    min-height: 0;
   }
 
-  .table-felt__opponents[data-opponent-count="4"],
-  .table-felt__opponents[data-opponent-count="5"] {
-    max-height: 42dvh;
+  .table-felt__opponents {
+    max-height: none;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */
@@ -169,6 +198,67 @@
 
   [data-zone="card-band"]:has([data-tutorial-highlight]) {
     overflow: visible;
+  }
+
+  [data-card-row] {
+    flex-wrap: nowrap;
+  }
+
+  .table-felt[data-collapse-opponents="true"] .table-felt__opponents {
+    align-self: start;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  /*
+   * Collapsed log hugs the button. Expanded log keeps minmax(0, 1fr) so
+   * leftover column height after opponents collapse is the log, not slate.
+   */
+  .table-felt[data-collapse-log="true"] .table-felt__log {
+    align-self: start;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    overflow: visible;
+  }
+}
+
+/*
+ * Tall landscape (desktop / tablet). Phone landscape (844×390) keeps the
+ * 10.5rem column so one uncropped hand row still fits (L53-07). Designer
+ * 2026-09-01: on desktop the dock was empty pink while opponents and the
+ * log were a 168px strip.
+ */
+@media (orientation: landscape) and (min-height: 560px) {
+  .table-felt {
+    grid-template-columns: minmax(16rem, 38%) minmax(22rem, 1fr);
+  }
+}
+
+/* Dialog must fit the overlay (`fixed inset-0`), not 100dvh of a taller desktop
+ * window behind DevTools device mode. min-width:auto was clipping Cancel.
+ * Overlay is items-start so a tall panel is not vertically centered off-screen. */
+[data-zone="dialog-overlay"] {
+  align-items: flex-start;
+}
+
+[role="dialog"] {
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: 100%;
+}
+
+[data-zone="opponents-dialog-row"] {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-height: 500px) {
+  [role="dialog"] {
+    padding: 0.5rem !important;
+    max-height: 100% !important;
   }
 }
 

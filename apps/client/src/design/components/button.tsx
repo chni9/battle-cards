@@ -24,6 +24,8 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   variant?: ButtonVariant;
   children: ReactNode;
   className?: string;
+  /** Drop the 7rem min-width so dialog footers can wrap on a phone. */
+  compact?: boolean;
 }
 
 export function Button({
@@ -31,6 +33,7 @@ export function Button({
   children,
   disabled,
   className = '',
+  compact = false,
   type = 'button',
   ...rest
 }: ButtonProps): ReactElement {
@@ -41,7 +44,9 @@ export function Button({
       type={type}
       disabled={disabled}
       className={[
-        'inline-flex min-h-11 min-w-[7rem] items-center justify-center gap-2 px-5 py-2.5',
+        compact
+          ? 'inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 px-3 py-1.5'
+          : 'inline-flex min-h-11 min-w-[7rem] items-center justify-center gap-2 px-5 py-2.5',
         'rounded-[length:var(--radius-button)] border border-transparent',
         'font-sans text-sm font-semibold tracking-tight',
         'shadow-[0_1px_2px_rgba(28,26,31,0.12),0_4px_12px_rgba(28,26,31,0.08)]',

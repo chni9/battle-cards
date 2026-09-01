@@ -14,6 +14,11 @@ import {
   THREAT_OUTLINE_DURATION_S,
   TOKEN_FLYOUT_DURATION_S,
 } from './motion-timing';
+import {
+  queryPendingFlashAnchor,
+  queryPlayerFxAnchor,
+  visibleClientRect,
+} from './play-flyout';
 import { useTableFx } from './table-fx-hooks';
 import { tokenFlyoutUsesCardChrome, type DomRectLite, type ThreatTone } from './table-fx-types';
 
@@ -323,13 +328,9 @@ export function TableFxOverlay(): ReactElement {
           }
 
           if (event.kind === 'resolutionFlash') {
-            const pending = document.querySelector(
-              `[data-pending-id="${CSS.escape(event.effectId)}"]`,
-            );
-            const felt = document.querySelector('[data-zone="pending"]');
-            const target = pending ?? felt;
-            const rect = target?.getBoundingClientRect();
-            if (rect === undefined) {
+            const target = queryPendingFlashAnchor(event.effectId);
+            const rect = visibleClientRect(target);
+            if (rect === null) {
               return null;
             }
             return (
@@ -359,11 +360,9 @@ export function TableFxOverlay(): ReactElement {
           }
 
           if (event.kind === 'eliminationBeat') {
-            const seat = document.querySelector(
-              `[data-player-id="${CSS.escape(event.playerId)}"]`,
-            );
-            const rect = seat?.getBoundingClientRect();
-            if (rect === undefined) {
+            const seat = queryPlayerFxAnchor(event.playerId);
+            const rect = visibleClientRect(seat);
+            if (rect === null) {
               return null;
             }
             return (

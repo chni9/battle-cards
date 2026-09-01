@@ -7,7 +7,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
+  useState,
   type KeyboardEvent,
   type MouseEvent,
   type ReactElement,
@@ -15,6 +17,8 @@ import {
 } from 'react';
 
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
+import { dialogPanelClassName, dialogPreferredMaxWidth } from './dialog-width';
+import { readVisualViewportBox, type VisualViewportBox } from './visual-viewport';
 
 export interface DialogProps {
   open: boolean;
@@ -34,6 +38,33 @@ export interface DialogProps {
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+function useOverlayViewportBox(active: boolean): VisualViewportBox {
+  const [box, setBox] = useState(readVisualViewportBox);
+
+  useLayoutEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const sync = (): void => {
+      setBox(readVisualViewportBox());
+    };
+    sync();
+
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', sync);
+    vv?.addEventListener('scroll', sync);
+    window.addEventListener('resize', sync);
+    return () => {
+      vv?.removeEventListener('resize', sync);
+      vv?.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, [active]);
+
+  return box;
+}
+
 export function Dialog({
   open,
   title,
@@ -48,6 +79,7 @@ export function Dialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const reduceMotion = useReducedMotion();
+  const overlayBox = useOverlayViewportBox(open);
 
   useEffect(() => {
     if (!open) {
@@ -140,9 +172,17 @@ export function Dialog({
       {open ? (
         <motion.div
           key="dialog-overlay"
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-4 sm:items-center"
+          data-zone="dialog-overlay"
+          className="z-[100] flex items-start justify-center overflow-x-hidden overflow-y-auto overscroll-contain bg-ink/45 p-2"
           role="presentation"
           onClick={onOverlayClick}
+          style={{
+            position: 'fixed',
+            top: overlayBox.offsetTop,
+            left: overlayBox.offsetLeft,
+            width: overlayBox.width,
+            height: overlayBox.height,
+          }}
           initial={reduceMotion === true ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -155,23 +195,17 @@ export function Dialog({
             aria-labelledby={titleId}
             tabIndex={-1}
             onKeyDown={onPanelKeyDown}
-            className={[
-              'flex max-h-[min(90dvh,40rem)] w-full max-w-md flex-col overflow-hidden',
-              'rounded-[length:var(--radius-card)] border border-border',
-              'bg-surface-raised p-5 font-sans text-ink shadow-[0_12px_40px_rgba(28,26,31,0.28)]',
-              'outline-none',
-              panelClassName,
-            ].join(' ')}
+            className={dialogPanelClassName(panelClassName)}
+            style={{
+              maxWidth: `min(${dialogPreferredMaxWidth(panelClassName)}, 100%)`,
+              maxHeight: '100%',
+            }}
             {...(hintAnchor !== undefined
               ? { 'data-hint-anchor': hintAnchor }
               : {})}
-            initial={
-              reduceMotion === true
-                ? false
-                : { opacity: 0, y: 28, scale: 0.96 }
-            }
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            initial={reduceMotion === true ? false : { opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             transition={{
               duration: reduceMotion === true ? 0 : MOTION_DURATION_S,
               ease: MOTION_EASE,
@@ -180,14 +214,20 @@ export function Dialog({
               event.stopPropagation();
             }}
           >
-            <h2 id={titleId} className="shrink-0 text-lg font-semibold tracking-tight text-ink">
+            <h2 id={titleId} className="shrink-0 text-base font-semibold leading-tight tracking-tight text-ink">
               {title}
             </h2>
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto text-sm text-ink-muted">
+            <div
+              data-zone="dialog-body"
+              className="mt-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto text-sm text-ink-muted"
+            >
               {children}
             </div>
             {actions !== undefined && (
-              <div className="mt-5 flex shrink-0 flex-wrap items-center justify-end gap-3">
+              <div
+                data-zone="dialog-actions"
+                className="mt-2 flex w-full min-w-0 shrink-0 flex-wrap items-center justify-end gap-2"
+              >
                 {actions}
               </div>
             )}

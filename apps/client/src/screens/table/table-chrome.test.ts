@@ -35,3 +35,79 @@ describe('table corner chrome (L43-05)', () => {
     expect(table).not.toMatch(/onClick=\{\(\) => \{\s*onLeave\(\);/);
   });
 });
+
+describe('opponent row (L53-04)', () => {
+  it('keeps opponents on one nowrap row without wrapping extra foes', () => {
+    const shell = source('table-shell.tsx');
+    expect(shell).toContain('flex-nowrap');
+    expect(shell.replaceAll('flex-nowrap', '')).not.toMatch(
+      /table-felt__opponents[\s\S]{0,280}flex-wrap/,
+    );
+    const css = readFileSync(join(dir, '../../index.css'), 'utf8');
+    expect(css).not.toContain('data-opponent-count="4"');
+    expect(css).toContain('overflow-y: hidden');
+    expect(css).toContain('flex-wrap: nowrap');
+    expect(css).not.toContain('0.38fr');
+    expect(css).toContain('grid-template-rows: auto auto auto minmax(0, 1fr)');
+    expect(css).toContain(
+      '.table-felt[data-collapse-opponents="true"] .table-felt__opponents {',
+    );
+    expect(css).toContain(
+      '.table-felt[data-collapse-log="true"] .table-felt__log {',
+    );
+    expect(css).not.toContain(
+      '.table-felt[data-collapse-opponents="true"] .table-felt__opponents,',
+    );
+  });
+});
+
+describe('tall landscape felt (L53-07)', () => {
+  it('keeps the 10.5rem chrome column on short phone landscape', () => {
+    const css = readFileSync(
+      join(dir, '../../index.css'),
+      'utf8',
+    );
+    expect(css).toContain('minmax(8.5rem, 10.5rem)');
+  });
+
+  it('widens opponents and the log when the landscape viewport is tall', () => {
+    const css = readFileSync(
+      join(dir, '../../index.css'),
+      'utf8',
+    );
+    expect(css).toContain('min-height: 560px');
+    expect(css).toContain('minmax(16rem, 38%)');
+    expect(css).toContain('minmax(22rem, 1fr)');
+    const shell = source('table-shell.tsx');
+    expect(shell).toContain('w-full min-w-0');
+    expect(shell).not.toContain('w-screen');
+    expect(shell).not.toContain('100dvh');
+    expect(shell).toContain('h-full max-h-full');
+  });
+});
+
+describe('opponents collapse Dialog (L53-07)', () => {
+  it('keeps seats on one nowrap row so the panel does not grow off-screen', () => {
+    const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
+    expect(table).toContain('opponents-dialog-row');
+    expect(table).toContain('w-full min-w-0 flex-nowrap gap-2 overflow-x-auto');
+    const seat = source('opponent-zone.tsx');
+    expect(seat).toContain('flex-nowrap');
+    expect(seat).toContain('overflow-hidden');
+  });
+});
+
+describe('felt chrome collapse wiring (L53-05)', () => {
+  it('opens Incoming, log, and opponents from collapsed buttons', () => {
+    const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
+    expect(table).toContain('feltCollapseFromCounts');
+    expect(table).toContain('viewportHeight');
+    expect(table).toContain('viewportWidth');
+    expect(table).toContain("setChromeOpen('incoming')");
+    expect(table).toContain("setChromeOpen('log')");
+    expect(table).toContain("setChromeOpen('opponents')");
+    expect(source('private-zone.tsx')).toContain('incoming-collapsed');
+    expect(source('table-shell.tsx')).toContain('log-collapsed');
+    expect(source('table-shell.tsx')).toContain('opponents-collapsed');
+  });
+});

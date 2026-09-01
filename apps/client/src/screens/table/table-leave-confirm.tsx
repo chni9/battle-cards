@@ -80,10 +80,10 @@ export function TableLeaveConfirm({
       onClose={onStay}
       actions={
         <>
-          <Button variant="green" onClick={onStay}>
+          <Button compact variant="green" onClick={onStay}>
             {STAY_LABEL}
           </Button>
-          <Button variant="red" onClick={onConfirm}>
+          <Button compact variant="red" onClick={onConfirm}>
             {chrome.confirm}
           </Button>
         </>

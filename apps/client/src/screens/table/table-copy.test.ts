@@ -28,6 +28,10 @@ import {
   SKIP_TUTORIAL_CONFIRM_BODY,
   SKIP_TUTORIAL_CONFIRM_TITLE,
   STAY_LABEL,
+  ACTION_LOG_OPEN_LABEL,
+  INCOMING_OPEN_LABEL,
+  OPPONENTS_OPEN_LABEL,
+  WAITING_OPEN_LABEL,
 } from './table-copy';
 
 describe('table copy (L43-03 / technical spec v6 §6.1)', () => {
@@ -62,5 +66,14 @@ describe('table leave chrome copy (L43-05)', () => {
     expect(HIDE_COACH_ARIA_LABEL).toBe('Hide coach');
     expect(OPEN_COACH_ARIA_LABEL).toBe('Show coach');
     expect(GOT_IT_ACTION_LABEL).toBe('Got it');
+  });
+});
+
+describe('felt chrome collapse copy (L53-05)', () => {
+  it('names Incoming, Waiting, Action log, and Opponents buttons', () => {
+    expect(INCOMING_OPEN_LABEL).toBe('Incoming');
+    expect(WAITING_OPEN_LABEL).toBe('Waiting');
+    expect(ACTION_LOG_OPEN_LABEL).toBe('Action log');
+    expect(OPPONENTS_OPEN_LABEL).toBe('Opponents');
   });
 });

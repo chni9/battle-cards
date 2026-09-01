@@ -32,6 +32,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 9. **Beta UI (Lot 51).** Primer rewrite, hub chrome, inspect restyle, table banners,
    Spy seat resources, opponent flyouts. Client presentation; no protocol bump.
 10. **Six-player Classic (Lot 52).** Occupancy 2–6. No protocol bump.
+11. **Table crowding (Lot 53).** Shared-size hand/specials, horizontal card scroll,
+    collapse chrome on short (especially mobile) tables. No protocol bump.
 
 **Execution order**
 
@@ -65,7 +67,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-59 of 66 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+66 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -81,6 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 50 · Beta feedback | 9 | 9 |
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
+| 53 · Table crowding | 7 | 7 |
 
 ---
 
@@ -254,6 +257,22 @@ Lot 51 on main is Beta UI, so occupancy is this lot. One commit.
 |---|---|---|---|---|---|
 | L52-01 | Raise Classic max seats 4 → 6. Shared `MAX_PLAYERS`; lobby/solo/Colyseus/`createInitialState`/batch/seat palette; compact opponent arc at 4+ foes; MEGA/Poison/legal-action tests at 6. Fitted layout version unchanged. **Acceptance:** 6th seat joins; 7th rejected; solo 5 opponents; `pnpm verify` green. | L | Medium | — | Done |
 
+---
+
+## Lot 53 — Table crowding (designer 2026-08-31)
+
+Client presentation only. Mobile-first. Classic 2–6. No protocol bump, no rule change.
+Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L53-01 | Lock the layout contract in `decisions.md` + spec v6 §6.2: 64px floor, wrap+vertical scroll, no pager, one-row opponents, collapse Incoming → opponents → action log. **Acceptance:** an agent reading only those files knows L43-04 shrink and L52-01 wrap are superseded. | S | Low | — | Done |
+| L53-02 | Dialog panel width: honor `panelClassName` `max-w-*` (Shop / kit picker / How to play / sub-choices must not stay 448px). Compact dialog action buttons so Use/Upgrade/Sell/Cancel fit. **Acceptance:** unit test on the width helper; Shop `max-w-3xl` is the computed max-width class. | S | Low | — | Done |
+| L53-03 | `CardBand`: `CARD_BAND_ABS_MIN_W = 64`, max 96; wrap + overflow-y; remove pager / `fitCardBand` height-shrink. Hand fills leftover; Specials size to content (max ~50%). Empty Specials do not take `flex-1`. **Acceptance:** `fitCardBand` never returns width &lt; 64; no pager tests; short height still ≥ 64. | M | Medium | L53-01 | Done |
+| L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | Done |
+| L53-05 | Felt collapse planner: when dock min-height (64px hand) does not fit, hide Incoming (and Waiting) then opponents then the action log behind a button + Dialog, in that order. Empty Incoming/Waiting take no space even before collapse. Landscape leftover after opponents collapse stays on the log (dock is beside chrome). **Acceptance:** `planFeltCollapse` tests for the three steps; 6p short portrait felt collapses the log last; short landscape keeps the log. | M | Medium | L53-03, L53-04 | Done |
+| L53-06 | Update `frontend.md`. Browser: phone 390×844 + landscape 844×390, Specialist + 5 Easy bots; crowded hand still tappable; opponents one row that scrolls; collapse buttons open Dialogs. Record room codes. **Acceptance:** notes in `frontend.md`; `pnpm verify` green. | L | Medium | L53-02–05 | Done |
+| L53-07 | Playtest fix: shared card size, **horizontal** scroll (no wrap/vertical), height-fit so faces are not cropped (min may drop below 64), Specials match Hand, Dialogs + collapse buttons fully on-screen at 390×844 and 844×390. **Acceptance:** `fitCardBand` never returns a width whose face is taller than the row; source has `flex-nowrap` + `overflow-x-auto` and no card `overflow-y-auto`; Dialog overlay is `items-start` with panel `max-h-full` of the overlay (not `100dvh`); Cancel / Close / Action log body / Opponents seats stay inside the viewport. `pnpm verify` green. | M | Medium | L53-06 | Done |
 
 ---
 
@@ -273,7 +292,8 @@ Lot 51 on main is Beta UI, so occupancy is this lot. One commit.
 | 50 | 9 |
 | 51 | 16 |
 | 52 | 1 |
-| **Total** | **66** |
+| 53 | 7 |
+| **Total** | **73** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

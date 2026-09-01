@@ -1,6 +1,6 @@
 /**
- * Shared-size card band — hand + specials never overflow or crop.
- * Each section measures its own area; cards shrink to fit 1–2 rows, then paginate.
+ * Shared-size card band — one row each for hand and specials, horizontal scroll.
+ * Width is measured once on the parent so Specials cannot outgrow Hand (L53-07).
  */
 
 import { type CardInstance } from '@card-battle/shared';
@@ -12,12 +12,11 @@ import {
 } from 'react';
 
 import { AnimatedCard } from '../../design/components/animated-card';
-import { IconButton } from '../../design/components/icon-button';
 import {
+  CARD_BAND_ABS_MIN_W,
   CARD_BAND_GAP_PX,
-  CARD_BAND_PAGER_SLOT_PX,
-  cardBandPageSizeForWidth,
-  cardBandRowsForHeight,
+  cardBandFitRowHeight,
+  cardBandSideBySide,
   fitCardBand,
 } from './card-band-fit';
 import { TutorialCallout } from './tutorial-callout';
@@ -31,12 +30,12 @@ export interface CardBandProps {
   highlightedSection?: 'hand' | 'specials';
 }
 
-const PAGE_WIDTH_LOCK_PX = 8;
-
 function CardSection({
   label,
   zone,
   cards,
+  cardWidth,
+  grow,
   onSelect,
   highlightedInstanceIds = [],
   spotlightSection = false,
@@ -44,69 +43,17 @@ function CardSection({
   label: string;
   zone: string;
   cards: readonly CardInstance[];
+  cardWidth: number;
+  grow: boolean;
   onSelect?: (instanceId: string) => void;
   highlightedInstanceIds?: readonly string[];
   spotlightSection?: boolean;
 }): ReactElement {
-  const areaRef = useRef<HTMLDivElement>(null);
-  const lockedWidthRef = useRef<number | null>(null);
-  const lockedRowsRef = useRef<1 | 2 | null>(null);
-  const [cardWidth, setCardWidth] = useState(40);
-  const [pageSize, setPageSize] = useState(Math.max(1, cards.length));
-  const [page, setPage] = useState(0);
-
-  useLayoutEffect(() => {
-    const el = areaRef.current;
-    if (el === null) {
-      return;
-    }
-
-    const measure = (): void => {
-      const w = el.clientWidth;
-      const h = el.clientHeight;
-      if (w <= 0 || h <= 0 || cards.length === 0) {
-        return;
-      }
-
-      const widthChanged =
-        lockedWidthRef.current === null ||
-        Math.abs(w - lockedWidthRef.current) >= PAGE_WIDTH_LOCK_PX;
-
-      if (widthChanged || lockedRowsRef.current === null) {
-        lockedWidthRef.current = w;
-        lockedRowsRef.current = cardBandRowsForHeight(h);
-      }
-
-      const rows = lockedRowsRef.current;
-      const stablePageSize = cardBandPageSizeForWidth(cards.length, w, rows);
-      const pagerH = cards.length > stablePageSize ? CARD_BAND_PAGER_SLOT_PX : 0;
-      const fit = fitCardBand(cards.length, w, Math.max(1, h - pagerH));
-      setCardWidth((prev) =>
-        Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,
-      );
-      setPageSize((prev) => (prev === stablePageSize ? prev : stablePageSize));
-    };
-
-    measure();
-    requestAnimationFrame(measure);
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-    };
-  }, [cards.length]);
-
-  const pageCount = Math.max(1, Math.ceil(cards.length / Math.max(1, pageSize)));
-  const safePage = Math.min(page, pageCount - 1);
-  const start = safePage * pageSize;
-  const visible = cards.slice(start, start + pageSize);
-  const needsPager = cards.length > pageSize;
-
   if (cards.length === 0) {
     return wrapSection(
       spotlightSection,
       zone,
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5">
+      <div className="flex min-h-0 min-w-0 shrink-0 flex-col items-center gap-0.5">
         <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
           {label}
         </p>
@@ -128,96 +75,61 @@ function CardSection({
     zone,
     <div
       className={[
-        'flex min-h-0 min-w-0 flex-1 flex-col items-center gap-0.5',
-        spotlighted ? 'overflow-visible' : 'overflow-hidden',
+        'flex min-h-0 min-w-0 w-full flex-col items-center gap-0.5 overflow-hidden',
+        grow ? 'flex-1' : 'shrink-0',
       ].join(' ')}
     >
-      <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
+      <p className="shrink-0 text-center text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
       </p>
       <div
-        ref={areaRef}
         data-zone={zone}
         className={[
-          'flex min-h-0 w-full flex-1 content-center items-center justify-center',
-          spotlighted ? 'overflow-visible' : 'overflow-hidden',
+          'min-h-0 min-w-0 w-full',
+          spotlighted ? 'overflow-visible' : 'overflow-x-auto overflow-y-hidden',
         ].join(' ')}
       >
         <div
+          data-card-row
           data-hint-anchor={zone}
-          className={[
-            'inline-flex max-w-full flex-wrap content-center items-center justify-center',
-            spotlighted ? 'overflow-visible' : 'overflow-hidden',
-          ].join(' ')}
+          className="mx-auto flex w-max flex-nowrap items-start overflow-visible"
           style={{ gap: CARD_BAND_GAP_PX }}
         >
-          {visible.map((card) => {
-            const highlighted = highlightedInstanceIds.includes(card.instanceId);
-            return (
-              <div
-                key={card.instanceId}
-                style={{ width: cardWidth, maxHeight: '100%' }}
-                className={[
-                  'shrink-0 rounded-[length:var(--radius-card)]',
-                  highlighted ? 'overflow-visible' : 'overflow-hidden',
-                ].join(' ')}
+        {cards.map((card) => {
+          const highlighted = highlightedInstanceIds.includes(card.instanceId);
+          return (
+            <div
+              key={card.instanceId}
+              style={{ width: cardWidth }}
+              className="h-auto shrink-0 overflow-visible rounded-[length:var(--radius-card)]"
+            >
+              <TutorialCallout
+                active={highlighted}
+                layout="stretch"
+                arrow="top"
+                highlightId={card.cardId}
+                className="w-full"
               >
-                <TutorialCallout
-                  active={highlighted}
-                  arrow="top"
-                  highlightId={card.cardId}
-                  className="w-full"
-                >
-                  <AnimatedCard
-                    instance={card}
-                    detail="face"
-                    skipEntrance
-                    selected={highlighted}
-                    className="w-full max-h-full !p-0.5"
-                    {...(onSelect !== undefined
-                      ? {
-                          onSelect: () => {
-                            onSelect(card.instanceId);
-                          },
-                        }
-                      : {})}
-                  />
-                </TutorialCallout>
-              </div>
-            );
-          })}
+                <AnimatedCard
+                  instance={card}
+                  detail="face"
+                  skipEntrance
+                  selected={highlighted}
+                  className="w-full !p-0.5"
+                  {...(onSelect !== undefined
+                    ? {
+                        onSelect: () => {
+                          onSelect(card.instanceId);
+                        },
+                      }
+                    : {})}
+                />
+              </TutorialCallout>
+            </div>
+          );
+        })}
         </div>
       </div>
-      {needsPager ? (
-        <div
-          className="flex h-11 shrink-0 items-center gap-2"
-          data-zone={`${zone}-pager`}
-        >
-          <IconButton
-            aria-label={`Previous ${label} page`}
-            disabled={safePage <= 0}
-            onClick={() => {
-              setPage((p) => Math.max(0, Math.min(p, pageCount - 1) - 1));
-            }}
-          >
-            ‹
-          </IconButton>
-          <span className="min-w-[2.5rem] text-center text-xs tabular-nums text-ink-muted">
-            {safePage + 1}/{pageCount}
-          </span>
-          <IconButton
-            aria-label={`Next ${label} page`}
-            disabled={safePage >= pageCount - 1}
-            onClick={() => {
-              setPage((p) =>
-                Math.min(pageCount - 1, Math.min(p, pageCount - 1) + 1),
-              );
-            }}
-          >
-            ›
-          </IconButton>
-        </div>
-      ) : null}
     </div>,
   );
 }
@@ -237,7 +149,7 @@ function wrapSection(
       layout="stretch"
       arrow="top"
       highlightId={zone}
-      className="min-h-0 w-full flex-1 overflow-visible pt-10"
+      className="min-h-0 w-full shrink-0 overflow-visible pt-10"
     >
       {body}
     </TutorialCallout>
@@ -251,13 +163,53 @@ export function CardBand({
   highlightedInstanceIds,
   highlightedSection,
 }: CardBandProps): ReactElement {
+  const bandRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState(CARD_BAND_ABS_MIN_W);
+  const [sideBySide, setSideBySide] = useState(false);
   const sectionLit = highlightedSection !== undefined;
+
+  useLayoutEffect(() => {
+    const el = bandRef.current;
+    if (el === null) {
+      return;
+    }
+
+    const measure = (): void => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
+      const side = cardBandSideBySide(h, specials.length);
+      setSideBySide((prev) => (prev === side ? prev : side));
+      const rowHeight = cardBandFitRowHeight(h, specials.length);
+      const fit = fitCardBand(Math.max(hand.length, 1), w, rowHeight);
+      setCardWidth((prev) =>
+        Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,
+      );
+    };
+
+    measure();
+    requestAnimationFrame(() => {
+      measure();
+      requestAnimationFrame(measure);
+    });
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hand.length, specials.length]);
 
   return (
     <div
+      ref={bandRef}
       data-zone="card-band"
+      data-card-width={String(Math.round(cardWidth))}
+      data-side-by-side={sideBySide ? 'true' : 'false'}
       className={[
-        'flex h-full min-h-0 w-full flex-col justify-end gap-1',
+        'flex h-full min-h-0 w-full gap-1',
+        sideBySide ? 'flex-row items-stretch' : 'flex-col justify-end',
         (highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0) ||
         sectionLit
           ? 'overflow-visible'
@@ -268,6 +220,8 @@ export function CardBand({
         label="Hand"
         zone="hand"
         cards={hand}
+        cardWidth={cardWidth}
+        grow={sideBySide}
         spotlightSection={highlightedSection === 'hand'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}
@@ -276,6 +230,8 @@ export function CardBand({
         label="Specials"
         zone="specials"
         cards={specials}
+        cardWidth={cardWidth}
+        grow={sideBySide}
         spotlightSection={highlightedSection === 'specials'}
         {...(onSelect !== undefined ? { onSelect } : {})}
         {...(highlightedInstanceIds !== undefined ? { highlightedInstanceIds } : {})}

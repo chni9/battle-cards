@@ -2824,4 +2824,156 @@ remain three opponent-offset slots — a 6-player table does not add fitted dime
 Rules spec §1 Number of Players updated in the same change. How to play primer Goal
 copy matches (2 to 6).
 
+## 2026-08-31 · [P] Table crowding — cards first, collapse chrome (Lot 53)
+
+Designer session: crowded tables (especially **mobile**, including 6-player) were
+unplayable because faces shrank to a line. This **supersedes** the 2026-08-21 L43-04
+ruling that a short dock may shrink below 48px to avoid cropping, and it supersedes
+L52-01 wrapping the opponent arc onto extra rows.
+
+Layout contract (client presentation only — no rule or value change):
+
+- **Cards never shrink below 64px width.** 2/3 art plus the name line. Overflow **wraps
+  then scrolls vertically**. No hand/specials pager arrows.
+- Hand and Specials are **not** a 50/50 split. Specials size to content (cap ~half the
+  card area, then scroll). Empty Specials / empty Incoming / empty Waiting do not take
+  flex space.
+- **Opponents stay one horizontal row** (`flex-nowrap` + overflow-x). Never wrap to a
+  second line. 5 foes on a phone scroll sideways.
+- When the felt still cannot fit one 64px hand row after that, chrome collapses into a
+  button that opens a Dialog, in this order: **1. Incoming** (dock Incoming + felt
+  Waiting on others), **2. Action log**, **3. Opponents**. Cards, Draw, and Shop stay
+  on the table.
+- Mobile is the primary viewport. Desktop may grow faces up to a higher max (96px).
+- Dialog `panelClassName` width overrides must actually apply (`max-w-3xl` for Shop /
+  kit picker / sub-choices). The previous `max-w-md` + override pair resolved to 448px.
+
+## 2026-08-31 · [P] Table crowding playtest — horizontal cards, uncropped dialogs (L53-07)
+
+Designer follow-up on Lot 53 recordings (`l53-mobile-6p-collapse.mp4`, portrait
+390×844, landscape 844×390). The 64px wrap-then-vertical-scroll contract **cropped**
+faces (name line off-screen until you scrolled down), sized Specials independently so
+one Cloning face dwarfed the hand, and landscape Dialogs / collapse buttons sat partly
+off-screen (`items-end` + `max-h: 90dvh` + `p-4` on a 390px-tall viewport). Collapse
+existed but failed its purpose.
+
+This **supersedes** the wrap + vertical-scroll + hard 64px floor in the Lot 53 entry
+above. Still client presentation only — no rule or value change.
+
+- **One shared face width** for Hand and Specials. Specials never measure or grow on
+  their own.
+- **One row per section**, `flex-nowrap`, **horizontal** overflow. No wrap, no vertical
+  card scroll, no pager.
+- Size from **row height** so art + name stay fully visible. Preferred min ~40px when
+  height allows; **shrink below that rather than crop**. Grow toward ~88px when the
+  row is tall and wide. Extra cards scroll sideways at that width — do not wrap, do not
+  pack by shrinking.
+- Felt chrome still collapses Incoming → log → opponents. On **short viewports**
+  (innerHeight ≤ 500px, including 844×390) collapse all three so the left column is
+  buttons that actually fit. Landscape left column has a **nonzero min width**.
+- Dialog overlay is sized to `visualViewport` (not `fixed inset-0` / `100dvh` —
+  DevTools device mode can report desktop `dvh` while the game frame is 390px)
+  and `items-start`. Panel `max-height` is **100% of that overlay**. `my-auto`
+  centers a short panel. Width is `min(preferred, 100%)` of
+  the overlay so 448px `max-w-md` cannot beat a 390px phone. Body scrolls inside;
+  footer wraps. On viewports ≤ 500px tall, panel padding is 0.5rem (sm width
+  must not restore p-5).
+- Collapse Dialogs keep opponent seats on **one nowrap row** (overflow-x). Seat
+  headers do not wrap — a two-line BOT badge was cropping the resource column.
+- Landscape collapsed log / opponents **hug** the button. They do not take the
+  leftover 1fr (that painted a tall empty white slab). Left column is ~10.5rem
+  so the dock keeps the card band.
+
+## 2026-09-01 · [P] Dock Incoming crop + left-aligned cards (L53-07)
+
+Designer follow-up on the live table: Incoming chips were a sliver on every
+viewport, and Hand / Specials sat flush left with empty dock to the right.
+
+- Incoming on the identity row used `max-h-9` (36px) plus a stacked title-above-
+  chips compact strip. Tutorial callout chrome on real pending (L51-07) is
+  taller than 36px, so the chip was always clipped. Incoming is now its own
+  full-width row; compact title and chips share one line; no 36px cap.
+- Card rows used `justify-start` on a full-width flex. Pack to `w-max` and
+  center with `mx-auto`. Do not `justify-center` an overflowing row (clips both
+  sides). `[data-card-row]` only locks nowrap; overflow stays on the outer wrap.
+
+Still client presentation only — no rule or value change.
+
+## 2026-09-01 · [P] Desktop felt: stop starving opponents and the log (L53-07)
+
+Designer: on desktop the dock was a huge empty pink field while opponents and
+the action log sat in a ~10.5rem strip (one seat clipped, log unreadably
+narrow). That 10.5rem cap is for **phone landscape** (844×390) so the hand
+still fits — it must not apply to tall landscape.
+
+- Short landscape keeps `minmax(8.5rem, 10.5rem)`.
+- Tall landscape (`min-height: 560px`) uses `minmax(16rem, 38%)` /
+  `minmax(22rem, 1fr)` so chrome uses leftover width; the dock still has
+  room for 88px faces.
+- Table shell is `w-full` / `h-[100dvh]`; `html, body, #root` are 100% wide
+  (no `w-screen` / `100vw` pillarbox).
+
+Still client presentation only — no rule or value change.
+
+## 2026-09-01 · [P] Collapse opponents before the action log (L53-07)
+
+Designer: when chrome must leave the felt, **opponents collapse into a Dialog
+before the action log**. Incoming still goes first. New order: Incoming
+(including Waiting on others) → opponents → action log. Short viewports
+(innerHeight ≤ 500px) still collapse all three.
+
+Collapsed chrome must still play table FX. Token chips, card ghosts, targeting
+pulses, resolution flashes, and elimination beats aim at the remaining button
+(`opponents-collapsed` / `log-collapsed` / `incoming-collapsed`) when the seat,
+log panel, or Incoming strip is unmounted. Do not skip the animation because
+the expanded region is gone.
+
+This supersedes the Incoming → log → opponents order in the 2026-08-31 Lot 53
+and L53-07 entries above. Still client presentation only — no rule or value
+change.
+
+## 2026-09-01 · [P] Table always fills the visible screen (L53-07)
+
+Designer: on some sizes the table sat as a small box in the top-left with
+empty surface around it. `100dvh` / `min-height: 100%` can be a stale or
+outer-window size (Chrome DevTools device mode, resize, mobile chrome).
+The table must fill **the rectangle the player sees** at every size.
+
+- `#root` is `position: fixed` to `--vv-*` pixels from `visualViewport`
+  (fallback `innerWidth` / `innerHeight`), updated on resize / orientation.
+- Table shell is `h-full` of that root — never `100dvh`.
+- Home / lobby fill the same root (`h-full`); lobby scrolls inside it.
+- FX overlay uses the same `--vv-*` box as dialogs.
+
+Still client presentation only — no rule or value change.
+
+## 2026-09-01 · [P] Full-bleed is a 100% chain (L53-07)
+
+Playtest: pinning `#root` to pixel `visualViewport` **froze the first size**
+(390×844 stayed after the window grew to 1100×800). `html`, `body`, and
+`#root` are `width` / `height: 100%` with `overflow: hidden`. The table is
+`h-full` of that root. No `100dvh`. Dialogs still measure live
+`visualViewport` so they do not paint outside the visible frame.
+
+This supersedes the pixel `--vv-*` lock in the entry above. Still client
+presentation only — no rule or value change.
+
+## 2026-09-01 · [P] Home menu scrolls; landscape log keeps leftover (L53-07)
+
+Designer: the hub/menu could not scroll after the full-bleed `overflow: hidden`
+lock on `html` / `body` / `#root`. Home (and lobby) must scroll **inside**
+`#root`; the table shell stays non-scrolling.
+
+Designer: on landscape the action log collapsed into a bottom button while
+opponents were already a top button, leaving an empty slate in the left
+column. Short viewports (`innerHeight` ≤ 500px) collapse **Incoming and
+opponents only**. The log stays on the felt unless leftover chrome still
+overflows. Landscape `used()` does not add dock min-height — the dock is
+beside chrome, so collapsing the left column cannot free hand height.
+Expanded log keeps `minmax(0, 1fr)`; collapsed log hugs the button.
+
+This supersedes “collapse all three on innerHeight ≤ 500” in the Lot 53
+and L53-07 entries above. Still client presentation only — no rule or
+value change.
+
 

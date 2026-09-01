@@ -2,10 +2,18 @@
  * Felt-table layout shell — full-bleed viewport, dock-first.
  * Portrait: opponents → pending → log → dock (vertical).
  * Landscape: left column (opponents + pending + log) | right dock.
- * Only the action log (and pending strips) scroll — never the page.
+ * Opponents stay one horizontally scrollable row (Lot 53).
+ * Incoming / log / opponents may collapse to a button + Dialog.
  */
 
-import type { CSSProperties, ReactElement, ReactNode } from 'react';
+import type { CSSProperties, ReactElement, ReactNode, Ref } from 'react';
+
+import { Button } from '../../design/components/button';
+import {
+  ACTION_LOG_OPEN_LABEL,
+  OPPONENTS_OPEN_LABEL,
+} from './table-copy';
+import type { FeltCollapse } from './felt-collapse';
 
 export interface TableShellProps {
   /** Compact meta + turn strip (no separate Card Battle title). */
@@ -22,6 +30,11 @@ export interface TableShellProps {
   turnClassName?: string;
   opponentsClassName?: string;
   logClassName?: string;
+  feltRef?: Ref<HTMLDivElement>;
+  collapse?: FeltCollapse;
+  waitingCount?: number;
+  onOpenLog?: () => void;
+  onOpenOpponents?: () => void;
 }
 
 export function TableShell({
@@ -37,10 +50,18 @@ export function TableShell({
   turnClassName,
   opponentsClassName,
   logClassName,
+  feltRef,
+  collapse = { incoming: false, actionLog: false, opponents: false },
+  waitingCount = 0,
+  onOpenLog,
+  onOpenOpponents,
 }: TableShellProps): ReactElement {
+  const pendingEmpty = waitingCount === 0;
+  const hidePending = collapse.incoming || pendingEmpty;
+
   return (
     <main
-      className="table-shell flex h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
+      className="table-shell flex h-full max-h-full w-full min-w-0 flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
       data-zone="table"
     >
       <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5">
@@ -60,33 +81,74 @@ export function TableShell({
           </div>
         ) : null}
 
-        <div data-zone="felt" className="table-felt min-h-0 flex-1 overflow-hidden">
+        <div
+          ref={feltRef}
+          data-zone="felt"
+          className="table-felt min-h-0 flex-1 overflow-hidden"
+          data-collapse-incoming={collapse.incoming ? 'true' : 'false'}
+          data-collapse-log={collapse.actionLog ? 'true' : 'false'}
+          data-collapse-opponents={collapse.opponents ? 'true' : 'false'}
+        >
           <div
             data-zone="opponents"
+            data-opponent-count={String(opponentSeats.length)}
             className={[
-              'table-felt__opponents flex min-h-0 flex-wrap items-start justify-center gap-1 overflow-x-auto overflow-y-visible overscroll-contain py-1',
+              'table-felt__opponents flex min-h-0 flex-nowrap',
+              collapse.opponents
+                ? 'items-center justify-center overflow-visible py-1'
+                : 'items-start justify-start gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain py-1 touch-pan-x',
               opponentsClassName ?? '',
             ].join(' ')}
-            data-opponent-count={String(opponentSeats.length)}
           >
-            {opponentSeats}
+            {collapse.opponents ? (
+              <Button
+                compact
+                type="button"
+                variant="orange"
+                className="w-full min-w-0 max-w-full"
+                data-zone="opponents-collapsed"
+                onClick={() => {
+                  onOpenOpponents?.();
+                }}
+              >
+                {OPPONENTS_OPEN_LABEL} ({String(opponentSeats.length)})
+              </Button>
+            ) : (
+              opponentSeats
+            )}
           </div>
 
           <div
             data-zone="pending"
+            data-empty={hidePending ? 'true' : 'false'}
             className="table-felt__pending min-h-0 overflow-y-auto overscroll-contain rounded-[length:var(--radius-card)] border border-slate-soft/40 bg-slate/80 px-2 py-1"
           >
-            {pending}
+            {hidePending ? null : pending}
           </div>
 
           <div
             data-zone="action-log"
             className={[
               'table-felt__log flex min-h-0 flex-col rounded-[length:var(--radius-card)] border border-slate-soft/50 bg-surface-raised p-1 text-ink sm:p-1.5',
-              logClassName ?? 'overflow-hidden',
+              collapse.actionLog ? 'overflow-visible' : (logClassName ?? 'overflow-hidden'),
             ].join(' ')}
           >
-            {actionLog}
+            {collapse.actionLog ? (
+              <Button
+                compact
+                type="button"
+                variant="orange"
+                className="w-full min-w-0 max-w-full"
+                data-zone="log-collapsed"
+                onClick={() => {
+                  onOpenLog?.();
+                }}
+              >
+                {ACTION_LOG_OPEN_LABEL}
+              </Button>
+            ) : (
+              actionLog
+            )}
           </div>
 
           <div

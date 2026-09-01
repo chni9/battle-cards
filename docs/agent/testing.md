@@ -116,6 +116,10 @@ These are the spots where a plausible implementation is wrong and silent:
   even when the seat has live Spy numbers (L51-15). Overlay chips stay opaque
   until arrival; unspied `?` seats flash public signed Δ (L51-16). Play-card
   ghosts use `measurePlayCardGhost`, not the removed `measurePlayFlyout`.
+- Collapsed felt chrome still animates: flyouts and overlay flashes must resolve
+  `log-collapsed` / `opponents-collapsed` / `incoming-collapsed` when the
+  expanded panel is unmounted (L53-07). A null measure because the seat or log
+  is a button fails the gate.
 
 ## What not to do
 

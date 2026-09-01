@@ -57,12 +57,13 @@ export function LobbyKitPickerDialog({
       panelClassName="max-w-3xl"
       actions={
         preview === null ? (
-          <Button type="button" variant="green" onClick={closePicker}>
+          <Button compact type="button" variant="green" onClick={closePicker}>
             Close
           </Button>
         ) : (
           <>
             <Button
+              compact
               type="button"
               variant="orange"
               onClick={() => {
@@ -72,6 +73,7 @@ export function LobbyKitPickerDialog({
               Back
             </Button>
             <Button
+              compact
               type="button"
               variant="green"
               onClick={() => {

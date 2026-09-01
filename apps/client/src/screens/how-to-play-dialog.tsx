@@ -45,6 +45,7 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
       actions={
         <>
           <Button
+            compact
             type="button"
             variant="orange"
             onClick={() => {
@@ -54,6 +55,7 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
             Skip
           </Button>
           <Button
+            compact
             type="button"
             variant="green"
             onClick={() => {
