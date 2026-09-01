@@ -779,3 +779,10 @@ Incoming and opponents; leftover left-column height stays on the log.
   `data-collapse-log=false`. No document page-scroll.
 - Table **390×844:** table fills; Incoming / opponents / log stay expanded.
 
+### Lot 54 verified 2026-09-01 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Classic Spy price in the live Shop: play cost **2** on the card face, buy **4**
+(double). Room `ZIDABK` (nick `SpyPrice`, Solo vs 1 Normal). Mutual / volley /
+overlay covered by engine and `score-engage` unit tests; `pnpm verify` **1166**
+tests.
+
