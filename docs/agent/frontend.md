@@ -24,6 +24,7 @@ payloads, different chrome; implemented in L12-08).
 | Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home; ask-once Feedback | `screens/end.tsx` + `game-over-dialog.tsx` |
+| Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -73,6 +74,10 @@ rules above are unchanged — this section only covers how the client looks.
   **Feedback** (L47-03): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
   omits `gameCode` / `logTail`. No Inbox link on the hub.
+  **Inbox (L47-05):** `App` pathname `/inbox` before game phases (no Colyseus). Password
+  field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
+  kind filter is client-side; row click opens full message / contact / log tail /
+  user agent / protocol. No edit or delete.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under

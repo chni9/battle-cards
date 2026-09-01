@@ -67,7 +67,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-70 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+71 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -77,7 +77,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 44 · Visual pickers | 6 | 6 |
 | 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 3 |
-| 47 · Feedback + inbox | 5 | 4 |
+| 47 · Feedback + inbox | 5 | 5 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
@@ -175,7 +175,7 @@ Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, 
 | L47-02 | Express `POST /api/feedback` mounted **before** static catch-all. CORS for the Vite origin in dev. Rate limit 10 / 10 min / IP. Unset `DATABASE_URL`: client-visible failure, **not** 200 OK. Never write `seed`. **Acceptance:** tests with mocked db; production-shaped 503 vs local message per spec §7.1. | M | **High** | L47-01 | Done |
 | L47-03 | Feedback Dialog on Home, Table, Game over. Game over **asks** once per finished `gameCode` (Skip). Fields: kind, message, optional contact. Attach nickname, code, screen, protocol, playKind, log tail from view. **Acceptance:** Home submit works with no room; table submit includes log tail; no seed in the JSON body. Forfeit→recap→prompt is proven in L43-06 + L48-02. | M | Medium | L47-02 | Done |
 | L47-04 | `GET /api/inbox` with `X-Inbox-Password` vs `INBOX_PASSWORD` (timing-safe). Missing env → 404. Wrong password → 401. | S | **High** | L47-01 | Done |
-| L47-05 | SPA `/inbox`: list + kind filter + detail. Not linked from the hub. `App.tsx` pathname branch. **Acceptance:** player hub has no Inbox button; opening `/inbox` without password cannot read rows. | M | Medium | L47-04 | To do |
+| L47-05 | SPA `/inbox`: list + kind filter + detail. Not linked from the hub. `App.tsx` pathname branch. **Acceptance:** player hub has no Inbox button; opening `/inbox` without password cannot read rows. | M | Medium | L47-04 | Done |
 
 ---
 
