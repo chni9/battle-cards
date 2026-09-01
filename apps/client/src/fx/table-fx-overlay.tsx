@@ -223,9 +223,15 @@ export function TableFxOverlay(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[110] overflow-visible"
+      className="pointer-events-none fixed z-[110] overflow-visible"
       aria-hidden
       data-zone="table-fx"
+      style={{
+        top: 'var(--vv-top)',
+        left: 'var(--vv-left)',
+        width: 'var(--vv-width)',
+        height: 'var(--vv-height)',
+      }}
     >
       <AnimatePresence>
         {[...events]

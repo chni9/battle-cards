@@ -143,7 +143,9 @@ rules above are unchanged — this section only covers how the client looks.
   Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
   still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
   Shell is full-bleed
-  `h-[100dvh] overflow-hidden` (no page scroll, no `max-w` gutters). Opponents stay **one
+  (`h-full` of `#root`, which is pinned to `visualViewport` — not `100dvh`,
+  which can stay stale after a resize and leave the table as a small box on
+  the html surface). No page scroll, no `max-w` gutters. Opponents stay **one
   horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
   six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
   Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
@@ -152,8 +154,8 @@ rules above are unchanged — this section only covers how the client looks.
   dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
   so one uncropped hand row still fits. Tall landscape (`min-height: 560px`,
   desktop / tablet) uses `minmax(16rem, 38%)` so opponents and the action log
-  take empty width instead of a 168px strip. Shell is `w-full` / `h-[100dvh]`
-  (no `w-screen` / `100vw` gutters). If one
+  take empty width instead of a 168px strip. Shell is `w-full` / `h-full` of
+  the visual-viewport `#root` (no `w-screen` / `100vw` / `100dvh` gutters). If one
   uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
   **Incoming** (dock Incoming + felt Waiting on others) → **opponents** → **action log**.
   Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Flyouts aim at the

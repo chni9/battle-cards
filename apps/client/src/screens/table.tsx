@@ -26,6 +26,7 @@ import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { IconButton } from '../design/components/icon-button';
+import { readVisualViewportBox } from '../design/components/visual-viewport';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
 import {
@@ -393,19 +394,23 @@ function TableScreenInner({
       return;
     }
     const measure = (): void => {
+      const box = readVisualViewportBox();
       const next = el.clientHeight;
       setFeltHeight((prev) => (Math.abs(prev - next) < 0.5 ? prev : next));
       setViewportHeight((prev) =>
-        Math.abs(prev - window.innerHeight) < 0.5 ? prev : window.innerHeight,
+        Math.abs(prev - box.height) < 0.5 ? prev : box.height,
       );
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     window.addEventListener('resize', measure);
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', measure);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', measure);
+      vv?.removeEventListener('resize', measure);
     };
   }, []);
 

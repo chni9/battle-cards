@@ -72,6 +72,8 @@ describe('tall landscape felt (L53-07)', () => {
     const shell = source('table-shell.tsx');
     expect(shell).toContain('w-full min-w-0');
     expect(shell).not.toContain('w-screen');
+    expect(shell).not.toContain('100dvh');
+    expect(shell).toContain('h-full max-h-full');
   });
 });
 

@@ -59,22 +59,33 @@
 
 @layer base {
   html {
+    /* Fallback before JS writes pixel --vv-* (L53-07 full-bleed). */
+    --vv-width: 100%;
+    --vv-height: 100%;
+    --vv-top: 0px;
+    --vv-left: 0px;
     font-family: var(--font-sans);
     color: var(--color-ink);
     background-color: var(--color-surface);
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
 
   body {
     margin: 0;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   #root {
-    width: 100%;
-    min-height: 100%;
+    position: fixed;
+    top: var(--vv-top);
+    left: var(--vv-left);
+    width: var(--vv-width);
+    height: var(--vv-height);
+    overflow: hidden;
   }
 
   /*

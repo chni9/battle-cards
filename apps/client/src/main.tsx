@@ -5,7 +5,14 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
+import {
+  applyVisualViewportCssVars,
+  subscribeVisualViewport,
+} from './design/components/visual-viewport';
 import './index.css';
+
+applyVisualViewportCssVars();
+subscribeVisualViewport(applyVisualViewportCssVars);
 
 const container = document.getElementById('root');
 if (!container) {

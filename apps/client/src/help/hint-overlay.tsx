@@ -6,8 +6,9 @@
 
 import { useLayoutEffect, useRef, type CSSProperties, type ReactElement } from 'react';
 
-import { CoachPanel } from '../design/components/coach-panel';
 import { Button } from '../design/components/button';
+import { CoachPanel } from '../design/components/coach-panel';
+import { readVisualViewportBox } from '../design/components/visual-viewport';
 import {
   GOT_IT_ACTION_LABEL,
   HIDE_COACH_ARIA_LABEL,
@@ -62,7 +63,7 @@ export function HintOverlay({
           height: anchor.height,
         },
         { width: slot.offsetWidth, height: slot.offsetHeight },
-        { width: window.innerWidth, height: window.innerHeight },
+        { width: readVisualViewportBox().width, height: readVisualViewportBox().height },
         { prefer: hintPlacePrefer(hintId) },
       );
       slot.style.top = `${String(placed.top)}px`;
@@ -80,9 +81,12 @@ export function HintOverlay({
       observer.observe(node);
     }
     window.addEventListener('resize', place);
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', place);
     return () => {
       observer?.disconnect();
       window.removeEventListener('resize', place);
+      vv?.removeEventListener('resize', place);
     };
   }, [hintId, dialogOpen]);
 

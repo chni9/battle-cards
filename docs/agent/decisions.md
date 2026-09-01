@@ -2932,4 +2932,19 @@ This supersedes the Incoming → log → opponents order in the 2026-08-31 Lot 5
 and L53-07 entries above. Still client presentation only — no rule or value
 change.
 
+## 2026-09-01 · [P] Table always fills the visible screen (L53-07)
+
+Designer: on some sizes the table sat as a small box in the top-left with
+empty surface around it. `100dvh` / `min-height: 100%` can be a stale or
+outer-window size (Chrome DevTools device mode, resize, mobile chrome).
+The table must fill **the rectangle the player sees** at every size.
+
+- `#root` is `position: fixed` to `--vv-*` pixels from `visualViewport`
+  (fallback `innerWidth` / `innerHeight`), updated on resize / orientation.
+- Table shell is `h-full` of that root — never `100dvh`.
+- Home / lobby fill the same root (`h-full`); lobby scrolls inside it.
+- FX overlay uses the same `--vv-*` box as dialogs.
+
+Still client presentation only — no rule or value change.
+
 

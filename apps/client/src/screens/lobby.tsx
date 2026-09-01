@@ -72,7 +72,7 @@ export function LobbyScreen({
   }, [view.gameCode]);
 
   return (
-    <main className="min-h-[100dvh] bg-surface font-sans text-ink">
+    <main className="h-full overflow-y-auto bg-surface font-sans text-ink">
       <div className="mx-auto max-w-lg px-4 py-8 md:px-6">
         <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
           Lobby
