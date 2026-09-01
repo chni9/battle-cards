@@ -20,7 +20,7 @@ import { createHeuristicPolicy } from './create-heuristic-policy';
 export const HEURISTIC_V5_ENGAGE_POLICY_ID = 'heuristic-v5-engage';
 
 /** Overlay identity — bump if the engage rules change, not the frozen v4 weights. */
-export const ENGAGE_OVERLAY_ID = 'farm-to-engage-v2';
+export const ENGAGE_OVERLAY_ID = 'farm-to-engage-v3';
 
 function computeEngageWeightsHash(weights: PolicyWeights): string {
   return createHash('sha256')

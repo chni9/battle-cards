@@ -70,7 +70,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-68 of 76 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+69 of 76 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -87,7 +87,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
 | 53 · Table crowding | 7 | 7 |
-| 54 · Designer Classic tweaks | 3 | 2 |
+| 54 · Designer Classic tweaks | 3 | 3 |
 
 ---
 
@@ -291,7 +291,7 @@ record why in `decisions.md`.
 |---|---|---|---|---|---|
 | L54-01 | Spy play cost **4 → 2** (shop 8 → 4, sell 2). Catalog `pointsCard`; rules spec §3; tests that seed exactly 4/8 for Spy. **Acceptance:** `SHARED_CARD_CATALOG.spy.cost.points === 2` and `buyCost.points === 4`; Scientific mid-game buy still upgraded. | S | Medium | — | Done |
 | L54-02 | Mutual: weaker *answer* stays pending while incoming still resolves; stronger answer still cancels weaker incoming; equals cancel both. Assassin same-target same-`queuedAt` hits sum as one volley for cancel only. Mirror still one effect. **Acceptance:** Super vs Basic keeps the Basic; 4 basics cancel upgraded Strong; 20 basics beat Super; `pnpm verify` green. | **L** | **High** | — | Done |
-| L54-03 | `score-engage` overlay only: use Mirror more vs uncancellable incoming (not above equal-cancel); burn Imposition/Poison/Super Absorber always; skip Points Generator unless it funds a real threat. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` green; Easy stays v4. | M | Medium | L54-02 | To do |
+| L54-03 | `score-engage` overlay only: use Mirror more vs uncancellable incoming (not above equal-cancel); burn Imposition/Poison/Super Absorber always; skip Points Generator unless it funds a real threat. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` green; Easy stays v4. | M | Medium | L54-02 | Done |
 
 ---
 

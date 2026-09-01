@@ -3001,3 +3001,17 @@ pending effect (`chooseMirrorTarget`). Grouping uses `queuedAt` (no protocol bum
 `duplicatePendingEffect` keeps `queuedAt` but a redirected copy has a new target
 so it does not join the original volley.
 
+## 2026-09-01 · [P] Engage overlay — Mirror vs big hits; hostile-only burn (L54-03)
+
+Room Normal/Hard (`search-v5-engage` / `heuristic-v5-engage`) only. Overlay id
+`farm-to-engage-v3`. Do not edit `score-play/` or `heuristic-v4`. Easy stays v4.
+
+- Mirror: if incoming volley damage exceeds every held attack, score
+  `survive + 55 + incoming` so Mirror beats a useless weaker riposte but still
+  loses to an equal-cancel Basic.
+- `playMultipleAttacks`: sum aimed at a source vs that source's incoming volley;
+  equal-or-greater gets the Survive mutual-cancel band.
+- Burn: Imposition / Poison / Super Absorber stay Deny. Points Generator is not
+  burned unless it funds a threat (known points ≥ 10, last opponent, or that
+  seat is already attacking / finishable).
+
