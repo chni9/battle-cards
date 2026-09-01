@@ -33,14 +33,14 @@ describe('planFeltCollapse (L53-05)', () => {
     expect(next.opponents).toBe(false);
   });
 
-  it('collapses Incoming then the action log', () => {
+  it('collapses Incoming then opponents before the action log', () => {
     const next = planFeltCollapse({ ...base, feltHeight: 480 });
     expect(next.incoming).toBe(true);
-    expect(next.actionLog).toBe(true);
-    expect(next.opponents).toBe(false);
+    expect(next.opponents).toBe(true);
+    expect(next.actionLog).toBe(false);
   });
 
-  it('collapses opponents last', () => {
+  it('collapses the action log last', () => {
     const next = planFeltCollapse({ ...base, feltHeight: 340 });
     expect(next).toEqual({
       incoming: true,
@@ -57,13 +57,13 @@ describe('planFeltCollapse (L53-05)', () => {
       feltHeight: 480,
     });
     expect(next.incoming).toBe(false);
-    expect(next.actionLog).toBe(true);
-    expect(next.opponents).toBe(false);
+    expect(next.opponents).toBe(true);
+    expect(next.actionLog).toBe(false);
   });
 });
 
 describe('feltCollapseFromCounts (L53-05)', () => {
-  it('collapses opponents last on a short 6-player felt', () => {
+  it('collapses all three on a short 6-player felt', () => {
     const next = feltCollapseFromCounts({
       feltHeight: 320,
       opponentCount: 5,

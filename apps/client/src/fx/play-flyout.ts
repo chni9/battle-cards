@@ -7,7 +7,8 @@ import type { CardId } from '@card-battle/shared';
 import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
 import type { DomRectLite, TokenFlyoutEndpoint } from './table-fx-types';
 
-function rectOf(el: Element | null): DomRectLite | null {
+/** Skip `display:none` / unmounted chrome — zero-size rects are not destinations. */
+export function visibleClientRect(el: Element | null): DomRectLite | null {
   if (el === null) {
     return null;
   }
@@ -18,11 +19,43 @@ function rectOf(el: Element | null): DomRectLite | null {
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
 
+function rectOf(el: Element | null): DomRectLite | null {
+  return visibleClientRect(el);
+}
+
 function escapeSelector(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(value);
   }
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/**
+ * Collapsed felt chrome still mounts a button (L53-07). Flyouts aim at that
+ * button when the panel / seat / Incoming strip is unmounted.
+ */
+export const ACTION_LOG_PANEL_ZONE = 'action-log-panel';
+export const LOG_COLLAPSED_ZONE = 'log-collapsed';
+export const OPPONENTS_COLLAPSED_ZONE = 'opponents-collapsed';
+export const INCOMING_PENDING_ZONE = 'incoming-pending';
+export const INCOMING_COLLAPSED_ZONE = 'incoming-collapsed';
+
+export function queryActionLogAnchor(): Element | null {
+  return (
+    document.querySelector(`[data-zone="${ACTION_LOG_PANEL_ZONE}"]`) ??
+    document.querySelector(`[data-zone="${LOG_COLLAPSED_ZONE}"]`)
+  );
+}
+
+export function queryOpponentsCollapsedAnchor(): Element | null {
+  return document.querySelector(`[data-zone="${OPPONENTS_COLLAPSED_ZONE}"]`);
+}
+
+export function queryIncomingAnchor(): Element | null {
+  return (
+    document.querySelector(`[data-zone="${INCOMING_PENDING_ZONE}"]`) ??
+    document.querySelector(`[data-zone="${INCOMING_COLLAPSED_ZONE}"]`)
+  );
 }
 
 function tokenRect(center: DomRectLite, size = 28): DomRectLite {
@@ -58,6 +91,32 @@ export function tokenFlyoutPovSelector(playerId: string): string {
   return `[data-zone="private-zone"][data-player-id="${escapeSelector(playerId)}"]`;
 }
 
+/** Seat, POV dock, or the Opponents collapsed button. */
+export function queryPlayerFxAnchor(playerId: string): Element | null {
+  return (
+    document.querySelector(tokenFlyoutSeatSelector(playerId)) ??
+    document.querySelector(tokenFlyoutPovSelector(playerId)) ??
+    document.querySelector(`[data-player-id="${escapeSelector(playerId)}"]`) ??
+    document.querySelector(`[data-seat="${escapeSelector(playerId)}"]`) ??
+    queryOpponentsCollapsedAnchor()
+  );
+}
+
+/** Resolution flash: live chip, visible Waiting strip, else Incoming button. */
+export function queryPendingFlashAnchor(effectId: string): Element | null {
+  const chip = document.querySelector(
+    `[data-pending-id="${escapeSelector(effectId)}"]`,
+  );
+  if (rectOf(chip) !== null) {
+    return chip;
+  }
+  const pending = document.querySelector('[data-zone="pending"]');
+  if (rectOf(pending) !== null) {
+    return pending;
+  }
+  return queryIncomingAnchor();
+}
+
 function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLite | null {
   const opponentResource = document.querySelector(
     tokenFlyoutResourceSelector(kind, playerId),
@@ -70,13 +129,13 @@ function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLit
     return rectOf(opponentSeat);
   }
   const selfRoot = document.querySelector(tokenFlyoutPovSelector(playerId));
-  if (selfRoot === null) {
-    return null;
+  if (selfRoot !== null) {
+    return (
+      rectOf(selfRoot.querySelector(`[data-resource-kind="${escapeSelector(kind)}"]`)) ??
+      rectOf(selfRoot)
+    );
   }
-  return (
-    rectOf(selfRoot.querySelector(`[data-resource-kind="${escapeSelector(kind)}"]`)) ??
-    rectOf(selfRoot)
-  );
+  return rectOf(queryOpponentsCollapsedAnchor());
 }
 
 function rectForPlayerSeatOrPortrait(playerId: string): DomRectLite | null {
@@ -89,10 +148,13 @@ function rectForPlayerSeatOrPortrait(playerId: string): DomRectLite | null {
     return opponent;
   }
   const dock = document.querySelector(tokenFlyoutPovSelector(playerId));
-  return (
+  const self =
     rectOf(dock?.querySelector('[data-zone="kit-portrait"]') ?? null) ??
-    rectOf(dock)
-  );
+    rectOf(dock);
+  if (self !== null) {
+    return self;
+  }
+  return rectOf(queryOpponentsCollapsedAnchor());
 }
 
 function rectForEndpoint(
@@ -101,7 +163,7 @@ function rectForEndpoint(
   preferSeat: boolean,
 ): DomRectLite | null {
   if (endpoint === 'log') {
-    return rectOf(document.querySelector('[data-zone="action-log-panel"]'));
+    return rectOf(queryActionLogAnchor());
   }
   if (preferSeat) {
     return (
@@ -211,15 +273,21 @@ function rectForPlayerSeat(playerId: string): DomRectLite | null {
   if (opponent !== null) {
     return sizedRect(opponent, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
   }
-  const hand =
-    rectOf(document.querySelector('[data-zone="hand"]')) ??
-    rectOf(document.querySelector('[data-zone="card-band"]'));
   const dock = document.querySelector(tokenFlyoutPovSelector(playerId));
-  const self = hand ?? rectOf(dock);
-  if (self === null) {
+  if (dock !== null) {
+    const self =
+      rectOf(document.querySelector('[data-zone="hand"]')) ??
+      rectOf(document.querySelector('[data-zone="card-band"]')) ??
+      rectOf(dock);
+    if (self !== null) {
+      return sizedRect(self, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+    }
+  }
+  const collapsed = rectOf(queryOpponentsCollapsedAnchor());
+  if (collapsed === null) {
     return null;
   }
-  return sizedRect(self, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  return sizedRect(collapsed, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
 }
 
 /**
@@ -257,9 +325,8 @@ export function measureTokenFlyout(
     );
   }
   const resourceEl = document.querySelector(tokenFlyoutResourceSelector(kind));
-  const logEl = document.querySelector('[data-zone="action-log-panel"]');
   const resourceRect = rectOf(resourceEl);
-  const log = rectOf(logEl);
+  const log = rectOf(queryActionLogAnchor());
   if (resourceRect === null || log === null) {
     return null;
   }
@@ -359,18 +426,20 @@ export function measureSellCardFlyout(
   };
 }
 
-/** Targeting cue: pulse/highlight the source opponent seat (L39-05). */
+/** Targeting cue: pulse the source seat, or the Opponents button when collapsed (L39-05 / L53-07). */
+export function measureIncomingCollapsedCue(): DomRectLite | null {
+  return rectOf(document.querySelector(`[data-zone="${INCOMING_COLLAPSED_ZONE}"]`));
+}
+
 export function measureTargetingCue(
   fromPlayerId: string,
   toPlayerId: string,
 ): { from: DomRectLite; to: DomRectLite } | null {
   void toPlayerId;
-  const from =
-    rectOf(document.querySelector(`[data-player-id="${CSS.escape(fromPlayerId)}"]`)) ??
-    rectOf(document.querySelector(`[data-seat="${CSS.escape(fromPlayerId)}"]`));
+  const from = rectOf(queryPlayerFxAnchor(fromPlayerId));
   if (from === null) {
     return null;
   }
-  // `to` kept for the event shape; pulse only uses `from` (opponent seat).
+  // `to` kept for the event shape; pulse only uses `from` (seat or collapsed button).
   return { from, to: from };
 }

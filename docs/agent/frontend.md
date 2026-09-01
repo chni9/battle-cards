@@ -155,8 +155,10 @@ rules above are unchanged — this section only covers how the client looks.
   take empty width instead of a 168px strip. Shell is `w-full` / `h-[100dvh]`
   (no `w-screen` / `100vw` gutters). If one
   uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
-  **Incoming** (dock Incoming + felt Waiting on others) → **action log** → **opponents**.
-  Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Collapse Dialogs must
+  **Incoming** (dock Incoming + felt Waiting on others) → **opponents** → **action log**.
+  Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Flyouts aim at the
+  collapsed buttons (`log-collapsed` / `opponents-collapsed` / `incoming-collapsed`) so
+  chips and pulses still play when the panel is unmounted. Collapse Dialogs must
   fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex
   space. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
@@ -283,6 +285,10 @@ rules above are unchanged — this section only covers how the client looks.
     Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
     (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
     Reduced motion skips choreography. Do not invent Draw totals.
+    **Collapsed chrome (L53-07):** measure against `action-log-panel` **or**
+    `log-collapsed`, opponent seats **or** `opponents-collapsed`, Incoming strip
+    **or** `incoming-collapsed`. Overlay flashes use the same anchors so chips
+    and pulses still play when the panel is a button.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and

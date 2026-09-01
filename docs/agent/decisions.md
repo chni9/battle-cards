@@ -2915,4 +2915,21 @@ still fits — it must not apply to tall landscape.
 
 Still client presentation only — no rule or value change.
 
+## 2026-09-01 · [P] Collapse opponents before the action log (L53-07)
+
+Designer: when chrome must leave the felt, **opponents collapse into a Dialog
+before the action log**. Incoming still goes first. New order: Incoming
+(including Waiting on others) → opponents → action log. Short viewports
+(innerHeight ≤ 500px) still collapse all three.
+
+Collapsed chrome must still play table FX. Token chips, card ghosts, targeting
+pulses, resolution flashes, and elimination beats aim at the remaining button
+(`opponents-collapsed` / `log-collapsed` / `incoming-collapsed`) when the seat,
+log panel, or Incoming strip is unmounted. Do not skip the animation because
+the expanded region is gone.
+
+This supersedes the Incoming → log → opponents order in the 2026-08-31 Lot 53
+and L53-07 entries above. Still client presentation only — no rule or value
+change.
+
 

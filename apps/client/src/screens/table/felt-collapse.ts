@@ -1,7 +1,8 @@
 /**
  * Felt chrome collapse — Lot 53 / technical spec v6 §6.2 / L53-07.
- * When the dock cannot keep an uncropped hand row, hide Incoming then log
- * then opponents. Short viewports collapse all three so Dialogs are usable.
+ * When the dock cannot keep an uncropped hand row, hide Incoming then
+ * opponents then the action log. Short viewports collapse all three so
+ * Dialogs are usable.
  */
 
 import { CARD_BAND_ABS_MIN_W, faceCardHeight } from './card-band-fit';
@@ -86,12 +87,12 @@ export function planFeltCollapse(input: FeltCollapseInput): FeltCollapse {
       result.incoming = true;
       continue;
     }
-    if (!result.actionLog) {
-      result.actionLog = true;
-      continue;
-    }
     if (!result.opponents && input.opponentRowHeight > 0) {
       result.opponents = true;
+      continue;
+    }
+    if (!result.actionLog) {
+      result.actionLog = true;
       continue;
     }
     break;

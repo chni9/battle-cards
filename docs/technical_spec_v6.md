@@ -433,8 +433,10 @@ up to ~88px when the dock is tall and wide. Extra cards scroll sideways at that 
 
 Hand is more important than Incoming, the action log, and opponent seats. If the felt
 cannot fit one uncropped hand row, those regions collapse into a button + Dialog in this
-order: Incoming (including Waiting on others) → action log → opponents. On short
-viewports (innerHeight ≤ 500px) collapse all three. Opponents on the table stay **one
+order: Incoming (including Waiting on others) → opponents → action log. On short
+viewports (innerHeight ≤ 500px) collapse all three. Flyouts still aim at the
+collapsed buttons so token chips, card ghosts, and targeting pulses keep playing.
+Opponents on the table stay **one
 horizontally scrollable row** (Lot 53; supersedes L52-01 wrap). Collapse Dialogs must
 fit entirely in the viewport (Close included); the body scrolls inside the panel.
 

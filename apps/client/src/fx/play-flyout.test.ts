@@ -11,6 +11,9 @@ import { describe, expect, it } from 'vitest';
 import {
   DECK_CARD_FLYOUT_HEIGHT,
   DECK_CARD_FLYOUT_WIDTH,
+  INCOMING_COLLAPSED_ZONE,
+  LOG_COLLAPSED_ZONE,
+  OPPONENTS_COLLAPSED_ZONE,
   tokenFlyoutPovSelector,
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
@@ -66,5 +69,25 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     expect(overlay).toContain('0.88');
     expect(overlay).not.toMatch(/from\.width\s*>=\s*40/);
     expect(overlay).not.toMatch(/from\.width\s*>=\s*64/);
+  });
+
+  it('aims flyouts at collapsed chrome when the panel is unmounted (L53-07)', () => {
+    expect(LOG_COLLAPSED_ZONE).toBe('log-collapsed');
+    expect(OPPONENTS_COLLAPSED_ZONE).toBe('opponents-collapsed');
+    expect(INCOMING_COLLAPSED_ZONE).toBe('incoming-collapsed');
+    const source = readFileSync(join(dir, 'play-flyout.ts'), 'utf8');
+    expect(source).toContain('queryActionLogAnchor');
+    expect(source).toContain('queryOpponentsCollapsedAnchor');
+    expect(source).toContain('queryPlayerFxAnchor');
+    expect(source).toContain('queryPendingFlashAnchor');
+    expect(source).toContain('measureIncomingCollapsedCue');
+    expect(source).toContain('LOG_COLLAPSED_ZONE');
+    expect(source).toContain('OPPONENTS_COLLAPSED_ZONE');
+    const overlay = readFileSync(join(dir, 'table-fx-overlay.tsx'), 'utf8');
+    expect(overlay).toContain('queryPendingFlashAnchor');
+    expect(overlay).toContain('queryPlayerFxAnchor');
+    expect(overlay).toContain('visibleClientRect');
+    const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
+    expect(table).toContain('measureIncomingCollapsedCue');
   });
 });
