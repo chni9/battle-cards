@@ -3011,7 +3011,15 @@ Room Normal/Hard (`search-v5-engage` / `heuristic-v5-engage`) only. Overlay id
   loses to an equal-cancel Basic.
 - `playMultipleAttacks`: sum aimed at a source vs that source's incoming volley;
   equal-or-greater gets the Survive mutual-cancel band.
-- Burn: Imposition / Poison / Super Absorber stay Deny. Points Generator is not
+- Burn: Imposition / Poison stay Deny. Points Generator is not
   burned unless it funds a threat (known points ≥ 10, last opponent, or that
-  seat is already attacking / finishable).
+  seat is already attacking / finishable). Super Absorber was on this Deny
+  list until L54-04.
+
+## 2026-09-01 · [P] Super Absorber is selfish, not hostile (L54-04)
+
+Designer follow-up: Super Absorber does not pose a direct threat. Overlay
+`farm-to-engage-v4` treats it like Points Generator — skip the burn unless
+the seat funds a threat (1v1, already attacking / finishable, or known
+points ≥ 10). Imposition and Poison stay Deny. Easy stays v4.
 

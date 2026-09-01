@@ -1,5 +1,5 @@
 /**
- * Engage overlay on frozen v4 `scoreActions` — backlog L40-02 / L40-06 / L54-03.
+ * Engage overlay on frozen v4 `scoreActions` — backlog L40-02 / L40-06 / L54-03 / L54-04.
  * New files only; `score-play/` stays untouched (L32-03).
  */
 
@@ -44,7 +44,11 @@ function isWinSpecialId(cardId: string): boolean {
   return (WIN_SPECIAL_IDS as readonly string[]).includes(cardId);
 }
 
-const HOSTILE_COUNTER_IDS = new Set(['imposition', 'poison', 'super-absorber']);
+/** Direct damage to other seats — always burn. Super Absorber is selfish (L54-04). */
+const HOSTILE_COUNTER_IDS = new Set(['imposition', 'poison']);
+
+/** Economy persistents that do not hit other seats — same skip-unless-threat as PG. */
+const SELFISH_COUNTER_IDS = new Set(['points-generator', 'super-absorber']);
 
 /** Mirror survive bump vs uncancellable incoming — stays below equal-cancel (+40 + dmg). */
 const MIRROR_UNCANCELLABLE_BONUS = 55;
@@ -150,11 +154,11 @@ function targetHasOnlySelfishCounter(view: PlayingStateView, opponentId: string)
   }
 
   return player.activePersistentEffects.some(
-    (effect) => effect.counter !== null && effect.cardId === 'points-generator',
+    (effect) => effect.counter !== null && SELFISH_COUNTER_IDS.has(effect.cardId),
   );
 }
 
-function pointsGeneratorIsThreat(
+function selfishPersistentIsThreat(
   view: PlayingStateView,
   opponentId: string,
   table: EngageTable,
@@ -413,7 +417,8 @@ function overlayEntry(
   if (targets.length > 0) {
     const hitsHostile = targets.some((id) => targetHasHostileCounter(view, id));
     const hitsSelfishOnly = targets.some(
-      (id) => targetHasOnlySelfishCounter(view, id) && !pointsGeneratorIsThreat(view, id, table),
+      (id) =>
+        targetHasOnlySelfishCounter(view, id) && !selfishPersistentIsThreat(view, id, table),
     );
 
     if (hitsHostile) {

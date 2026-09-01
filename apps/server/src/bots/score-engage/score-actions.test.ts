@@ -747,6 +747,45 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
     });
   });
 
+  it('L54-04: does not burn a Super Absorber user when Tax is legal', () => {
+    const view = baseView({
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        hand: [
+          { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'sa-1',
+              cardId: 'super-absorber',
+              isUpgraded: false,
+              counter: 2,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+        player('bot-c', 'Charlie', false),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-04-sa')).action).not.toEqual({
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
   it('L54-03: still burns Imposition over Tax', () => {
     const view = baseView({
       self: baseSelf({
