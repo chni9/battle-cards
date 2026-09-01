@@ -20,7 +20,7 @@ describe('alwaysUpgraded on acquisition (L4-01)', () => {
     }
 
     buyer.kitId = 'scientific';
-    buyer.points = 8;
+    buyer.points = 4;
     buyer.upgradePoints = 2;
     const handBefore = buyer.hand.length;
 
@@ -53,7 +53,7 @@ describe('alwaysUpgraded on acquisition (L4-01)', () => {
     }
 
     buyer.kitId = 'kamikaze';
-    buyer.points = 8;
+    buyer.points = 4;
 
     const result = buyCard(state, buyer.id, 'spy');
 

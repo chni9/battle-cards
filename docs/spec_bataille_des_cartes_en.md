@@ -64,7 +64,7 @@ Action cards follow the general Card Economy rules (section 1). The Counter Rule
 - Action: the user chooses an opponent; they gain all the lives that opponent lost during their last move — their most recent complete turn, from their action to the end of their resolution phase —, regardless of the cause of that loss. Does not allow absorbing one's own lost lives. An eliminated opponent remains a valid choice until every player who was still alive at that elimination has begun one turn; after that window closes, they can no longer be absorbed.
 - Upgrade: also captures the points and upgrade points actively spent by that opponent during their last move (does not include points stolen by a third party).
 
-**Spy** — Price: 4 points
+**Spy** — Price: 2 points
 - Action: allows you to see the opponent's kit and cards for the rest of the game. Can be countered by another Spy.
 - Upgrade: also allows you to see all of the opponent's resources.
 

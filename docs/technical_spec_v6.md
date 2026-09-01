@@ -87,7 +87,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
-| 14 | Classic frozen. Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
+| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
 | 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
@@ -620,6 +620,7 @@ Not even partially, even “to lay groundwork”:
 - French UI / i18n framework
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
+  (except designer 2026-09-01 Lot 54)
 - A second Colyseus room type
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games

@@ -83,7 +83,7 @@ export const SHARED_CARD_CATALOG = {
     'spy',
     'Spy',
     'action',
-    4,
+    2,
     "See the target's kit and cards for the rest of the game.",
     "See the target's kit, cards and all resources for the rest of the game.",
     'Also see live lives, points, upgrade points, and shield.',

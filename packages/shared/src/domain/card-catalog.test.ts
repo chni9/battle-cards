@@ -14,6 +14,9 @@ describe('SHARED_CARD_CATALOG (rules spec §1–§3, Lot 2 shop rulings)', () =>
     expect(SHARED_CARD_CATALOG['strong-attack'].buyCost).toEqual({ points: 4 });
     expect(SHARED_CARD_CATALOG['super-attack'].buyCost).toEqual({ points: 20 });
     expect(SHARED_CARD_CATALOG.absorber.buyCost).toEqual({ points: 6 });
+    expect(SHARED_CARD_CATALOG.spy.cost).toEqual({ points: 2 });
+    expect(SHARED_CARD_CATALOG.spy.buyCost).toEqual({ points: 4 });
+    expect(SHARED_CARD_CATALOG.spy.sellYield).toEqual({ points: 2 });
   });
 
   it('prices Tax and Regeneration per Lot 2 ruling', () => {

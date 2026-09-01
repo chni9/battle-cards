@@ -2976,4 +2976,13 @@ This supersedes “collapse all three on innerHeight ≤ 500” in the Lot 53
 and L53-07 entries above. Still client presentation only — no rule or
 value change.
 
+## 2026-09-01 · [P] Spy play cost 4 → 2 (L54-01)
+
+Designer session instruction. Spy usage cost is **2 points**; shop buy remains
+double (**4**); sell yield is 2. Visibility, counter, Scientific `alwaysUpgraded`,
+and upgraded resource reveal are unchanged.
+
+`heuristic-v4.freeze.json` traces were refreshed: cheaper Spy changes what the
+**same** policy can afford in the 12-step yardstick. `weightsHash` is unchanged.
+
 

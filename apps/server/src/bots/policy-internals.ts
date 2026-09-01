@@ -74,7 +74,7 @@ export function ownsCardId(view: PlayingStateView, cardId: CardId): boolean {
 }
 
 export function spyPlayCost(): number {
-  return getCard('spy')?.cost.points ?? 4;
+  return getCard('spy')?.cost.points ?? 2;
 }
 
 export function hasSpyableUnspiedOpponent(view: PlayingStateView): boolean {

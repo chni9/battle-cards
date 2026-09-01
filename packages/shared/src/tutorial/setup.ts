@@ -15,7 +15,7 @@ export const TUTORIAL_HUMAN_POINTS = 38;
 export const TUTORIAL_HUMAN_UPGRADE_POINTS = 1;
 
 export const TUTORIAL_BOT_LIVES = 4;
-/** Spy 4 + Thief 5 + Strong 2 + Strong 2 + Basic 1, with a small remainder. */
+/** Spy 2 + Thief 5 + Strong 2 + Strong 2 + Basic 1, with a small remainder. */
 export const TUTORIAL_BOT_POINTS = 16;
 export const TUTORIAL_BOT_UPGRADE_POINTS = 0;
 

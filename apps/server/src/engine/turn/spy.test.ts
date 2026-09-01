@@ -45,7 +45,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
       return;
     }
 
-    spy.points = 4;
+    spy.points = 2;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     target.points = 9;
     target.lives = 11;
@@ -129,7 +129,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
       return;
     }
 
-    spy.points = 4;
+    spy.points = 2;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: true }];
     target.kitId = 'kamikaze';
     target.points = 12;
@@ -187,7 +187,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
       return;
     }
 
-    spy.points = 4;
+    spy.points = 2;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     target.kitId = 'assassin';
     target.points = 5;
@@ -254,7 +254,7 @@ describe('Spy (rules spec §3, L3-05)', () => {
       return;
     }
 
-    spy.points = 4;
+    spy.points = 2;
     spy.hand = [{ instanceId: 'spy-1', cardId: 'spy', isUpgraded: false }];
     target.shield = 7;
     target.shieldIsUpgraded = true;

@@ -34,7 +34,10 @@ Screens measure what players face only when that holds.
 ## Freeze
 
 `heuristic-v4` is the yardstick (L32-03). If its freeze test fails, **do not**
-update expectations — put the change under a new policy id.
+update expectations — put the change under a new policy id. **Exception (L54-01):**
+a Classic catalog price change can shift recorded traces because the same policy
+faces different legal costs; refresh the fixture only for that reason and log it
+in `decisions.md`.
 
 ## Weights profiles (L33-01)
 

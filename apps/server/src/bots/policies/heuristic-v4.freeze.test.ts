@@ -1,9 +1,10 @@
 /**
  * Frozen `heuristic-v4` yardstick — technical spec v5 §7.1 / backlog L32-03.
  *
- * If this test fails, do **not** update the expectations. Move the behaviour
- * change into a new policy id. Updating this fixture moves the yardstick and
- * makes every prior arena measurement uninterpretable.
+ * If this test fails after a **policy** change, do **not** update the expectations.
+ * Move the behaviour change into a new policy id.
+ * L54-01: Spy cost 4→2 is a catalog change, not a policy change — traces were
+ * refreshed for affordability only (`weightsHash` unchanged).
  */
 
 import { readFileSync } from 'node:fs';
