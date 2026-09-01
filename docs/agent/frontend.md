@@ -707,3 +707,16 @@ off the left, and the Action log title (empty white slab). Overlay is sized to
 `min(preferred, 100%)`. Room `OEDLPQ` (nick `L53Crop`): portrait 390×844 Thief
 dialog Cancel right 373 ≤ 390 (Sell + Cancel wrap); landscape 844×390 Action log
 title + body + Close in view; Opponents first seat left 47, Close in view.
+
+Designer follow-up: Incoming chips were a sliver on every viewport (`max-h-9` on
+the identity row) and Hand / Specials sat flush left. Incoming is a full-width
+chip row; short card rows pack to `w-max` and center with `mx-auto`.
+
+- Room `DELQZF` (nicks `L53DockA` / `L53DockB`), Specialist vs Specialist, guest
+  Basic attack → host Incoming. Headless Chrome; `pnpm verify` 1147 tests.
+- **1280×800:** Hand left/right gap **307/307**, Specials **354/354**. Incoming
+  chip **42×207**, row **62px** tall, in dock (not a sliver).
+- **390×844:** Incoming chip still **42px** tall in dock. Five 88px hand cards
+  overflow and scroll from the start (`mx-auto` collapses).
+- **768×1024:** Hand **207/207**, Specials **240/240**, Incoming chip **42px**.
+
