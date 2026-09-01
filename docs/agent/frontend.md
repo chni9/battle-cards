@@ -738,3 +738,13 @@ seats on the row. **844×390** keeps the **168px** (10.5rem) column so the hand
 fits (chrome collapsed as specified for height ≤ 500px). `pnpm verify` 1149
 tests.
 
+Designer follow-up: opponents collapse before the action log, and flyouts
+keep playing toward the leftover buttons. Room `RBWXPX` (nick `L53Foes`,
+Specialist vs 1 Easy). Headless Chrome; `pnpm verify` 1150 tests.
+
+- **844×560:** opponents **collapsed**, action log **on the felt**
+  (panel **302×415**). Token chips still fly to `opponents-collapsed`.
+- **390×530:** same order (Opponents button, log stays).
+- **844×390:** Incoming / opponents / log all collapsed. Draw paints a
+  point chip onto `log-collapsed` (chip at **62,328** vs button **13,333**).
+
