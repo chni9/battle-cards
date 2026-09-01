@@ -2976,4 +2976,40 @@ This supersedes “collapse all three on innerHeight ≤ 500” in the Lot 53
 and L53-07 entries above. Still client presentation only — no rule or
 value change.
 
+## 2026-09-01 · [P] Lot 47 feedback schema and session rulings (L47-01)
+
+Designer session for Lot 47. Classic rules unchanged. HTTP + Postgres only.
+
+**Schema:** `005_feedback_reports.sql` creates `feedback_reports` as technical spec
+v6 §7.2 (CHECK on `kind` ∈ `bug` / `confusion` / `idea`). No seed column. Split
+from 004 is the 2026-08-20 discrepancy (tutorial `is_tutorial` already shipped).
+`screen` and `play_kind` stay TypeScript unions, not SQL CHECKs, so they can grow
+without a migration.
+
+**Unset `DATABASE_URL` (POST /api/feedback):** never HTTP 200. Always **503**.
+Local copy: “Not saved (no database)”. Production, and any real insert failure:
+“Could not save — try again”. Finished-game persist stays a silent skip.
+
+**Enrichment:** if `gameCode` matches a live `GameRoom`, overwrite room-level
+fields only (`gameCode`, `playKind`, `protocolVersion`, last 30 public
+`actionLog` entries) via a seed-free in-process registry — not Colyseus
+`matchMaker`. Else `SELECT room_id, is_tutorial, action_log FROM finished_games
+WHERE room_id = $1 ORDER BY ended_at DESC LIMIT 1` — never `seed`. Nickname and
+`screen` always come from the client (no accounts; HTTP has no seat identity).
+Home with no code stays client-allowlisted.
+
+**Game over ask:** `localStorage['card-battle.v6.feedbackAsked.' + gameCode] =
+'1'` after Skip or a successful submit (tutorial included). Failed submit does
+not mark asked. Manual Feedback stays. Do not stack Dialogs: on first close of
+Game over stats, open Feedback in ask-mode.
+
+**Chrome:** Home **Feedback** next to How to play; Lobby next to Leave; table
+turn-strip `IconButton` `!` (aria-label Feedback). Dock stays Draw + Shop
+(L43-05 / Lot 53). `screen`: `home` / `lobby` / `table` / `tutorial` (live
+tutorial) / `end`.
+
+**Inbox:** `/inbox` password field; `sessionStorage` after success; one GET
+returns all rows newest first; kind filter is client-side. Missing
+`INBOX_PASSWORD` → API 404. Wrong password → 401. No hub link.
+
 
