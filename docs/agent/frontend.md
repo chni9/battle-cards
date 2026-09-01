@@ -750,3 +750,9 @@ Specialist vs 1 Easy). Headless Chrome; `pnpm verify` 1150 tests.
 - **844×390:** Incoming / opponents / log all collapsed. Draw paints a
   point chip onto `log-collapsed` (chip at **62,328** vs button **13,333**).
 
+Designer follow-up: the table must fill the window at every size. Room
+`NOGGDW` (nick `L53Fill`). Headless Chrome; table `getBoundingClientRect`
+matches `innerWidth`×`innerHeight` (origin 0,0) at **390×844**, after a
+grow to **1100×800**, **844×390**, and **1280×800**. `pnpm verify` 1151
+tests.
+
