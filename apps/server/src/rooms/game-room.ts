@@ -76,6 +76,11 @@ import { CloseCode, ErrorCode, Room, ServerError, type Client } from 'colyseus';
 
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
+import {
+  liveFeedbackContextFrom,
+  registerLiveFeedbackRoom,
+  unregisterLiveFeedbackRoom,
+} from '../http/live-feedback-registry';
 import { BotDriver, roomBotPolicyId } from '../bots/bot-driver';
 import { TUTORIAL_SCRIPT_V6_POLICY_ID } from '../bots/policies/tutorial-script-v6';
 import { assertPublicBotReason } from '../bots/public-bot-reason';
@@ -307,10 +312,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (readTutorialCreateOption(options)) {
       this.playKind = 'tutorial';
     }
+    registerLiveFeedbackRoom(this.roomId, () =>
+      liveFeedbackContextFrom(this.roomId, this.playKind, this.actionLog),
+    );
     console.log(`[${this.roomId}] room created`);
   }
 
   override async onDispose(): Promise<void> {
+    unregisterLiveFeedbackRoom(this.roomId);
     this.clearTurnTimer();
     this.clearAllSubChoiceTimers();
     this.clearAllAbsentTimers();

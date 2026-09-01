@@ -7,7 +7,12 @@
 
 import { GAME_ROOM_NAME, PROTOCOL_VERSION } from '@card-battle/shared';
 import { defineRoom, defineServer } from 'colyseus';
+import express from 'express';
 
+import {
+  defaultFeedbackApiDeps,
+  mountFeedbackApi,
+} from './http/feedback-http';
 import { mountStaticSpa, resolveStaticDir } from './http/static-spa';
 import { GameRoom } from './rooms/game-room';
 
@@ -18,6 +23,13 @@ const server = defineServer({
     [GAME_ROOM_NAME]: defineRoom(GameRoom),
   },
   express: (app) => {
+    if (process.env['NODE_ENV'] === 'production') {
+      app.set('trust proxy', 1);
+    }
+    // /api must mount even when STATIC_DIR is missing (local tsx without a client build).
+    app.use('/api', express.json({ limit: '64kb' }));
+    mountFeedbackApi(app, defaultFeedbackApiDeps());
+
     const staticDir = resolveStaticDir();
     if (staticDir === undefined) {
       console.warn('STATIC_DIR missing or not found — SPA not served');
