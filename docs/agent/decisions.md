@@ -2899,4 +2899,20 @@ viewport, and Hand / Specials sat flush left with empty dock to the right.
 
 Still client presentation only — no rule or value change.
 
+## 2026-09-01 · [P] Desktop felt: stop starving opponents and the log (L53-07)
+
+Designer: on desktop the dock was a huge empty pink field while opponents and
+the action log sat in a ~10.5rem strip (one seat clipped, log unreadably
+narrow). That 10.5rem cap is for **phone landscape** (844×390) so the hand
+still fits — it must not apply to tall landscape.
+
+- Short landscape keeps `minmax(8.5rem, 10.5rem)`.
+- Tall landscape (`min-height: 560px`) uses `minmax(16rem, 38%)` /
+  `minmax(22rem, 1fr)` so chrome uses leftover width; the dock still has
+  room for 88px faces.
+- Table shell is `w-full` / `h-[100dvh]`; `html, body, #root` are 100% wide
+  (no `w-screen` / `100vw` pillarbox).
+
+Still client presentation only — no rule or value change.
+
 

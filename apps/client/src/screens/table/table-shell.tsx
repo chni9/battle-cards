@@ -61,7 +61,7 @@ export function TableShell({
 
   return (
     <main
-      className="table-shell flex h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
+      className="table-shell flex h-[100dvh] max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-slate font-sans text-cta-label-on-dark"
       data-zone="table"
     >
       <div className="flex min-h-0 w-full flex-1 flex-col gap-1 p-1 sm:p-1.5">

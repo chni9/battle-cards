@@ -62,11 +62,19 @@
     font-family: var(--font-sans);
     color: var(--color-ink);
     background-color: var(--color-surface);
+    width: 100%;
+    height: 100%;
   }
 
   body {
     margin: 0;
-    min-height: 100dvh;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100%;
   }
 
   /*
@@ -203,6 +211,18 @@
     min-height: 0;
     width: 100%;
     overflow: visible;
+  }
+}
+
+/*
+ * Tall landscape (desktop / tablet). Phone landscape (844×390) keeps the
+ * 10.5rem column so one uncropped hand row still fits (L53-07). Designer
+ * 2026-09-01: on desktop the dock was empty pink while opponents and the
+ * log were a 168px strip.
+ */
+@media (orientation: landscape) and (min-height: 560px) {
+  .table-felt {
+    grid-template-columns: minmax(16rem, 38%) minmax(22rem, 1fr);
   }
 }
 

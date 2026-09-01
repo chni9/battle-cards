@@ -52,6 +52,29 @@ describe('opponent row (L53-04)', () => {
   });
 });
 
+describe('tall landscape felt (L53-07)', () => {
+  it('keeps the 10.5rem chrome column on short phone landscape', () => {
+    const css = readFileSync(
+      join(dir, '../../index.css'),
+      'utf8',
+    );
+    expect(css).toContain('minmax(8.5rem, 10.5rem)');
+  });
+
+  it('widens opponents and the log when the landscape viewport is tall', () => {
+    const css = readFileSync(
+      join(dir, '../../index.css'),
+      'utf8',
+    );
+    expect(css).toContain('min-height: 560px');
+    expect(css).toContain('minmax(16rem, 38%)');
+    expect(css).toContain('minmax(22rem, 1fr)');
+    const shell = source('table-shell.tsx');
+    expect(shell).toContain('w-full min-w-0');
+    expect(shell).not.toContain('w-screen');
+  });
+});
+
 describe('opponents collapse Dialog (L53-07)', () => {
   it('keeps seats on one nowrap row so the panel does not grow off-screen', () => {
     const table = readFileSync(join(dir, '../table.tsx'), 'utf8');

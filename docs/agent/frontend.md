@@ -149,7 +149,11 @@ rules above are unchanged — this section only covers how the client looks.
   Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
   too short. **Landscape:** two-column felt — left opponents + pending + log, right
-  dock (hand/economy) — so short phone heights keep the hand fully on-screen. If one
+  dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
+  so one uncropped hand row still fits. Tall landscape (`min-height: 560px`,
+  desktop / tablet) uses `minmax(16rem, 38%)` so opponents and the action log
+  take empty width instead of a 168px strip. Shell is `w-full` / `h-[100dvh]`
+  (no `w-screen` / `100vw` gutters). If one
   uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
   **Incoming** (dock Incoming + felt Waiting on others) → **action log** → **opponents**.
   Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Collapse Dialogs must
