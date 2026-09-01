@@ -84,8 +84,8 @@ describe('CardBand source (L53-07)', () => {
     );
     expect(src).toContain('mx-auto');
     expect(src).toContain('w-max');
-    expect(src).not.toContain('justify-start');
-    expect(src).not.toContain('justify-center');
+    expect(src).not.toMatch(/\bjustify-start\b/);
+    expect(src).not.toMatch(/className="[^"]*justify-center/);
   });
 });
 

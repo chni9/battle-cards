@@ -84,7 +84,6 @@ function CardSection({
       </p>
       <div
         data-zone={zone}
-        data-hint-anchor={zone}
         className={[
           'min-h-0 min-w-0 w-full',
           spotlighted ? 'overflow-visible' : 'overflow-x-auto overflow-y-hidden',
@@ -92,7 +91,7 @@ function CardSection({
       >
         <div
           data-card-row
-          // Pack then center. `justify-center` on overflow clips both sides.
+          data-hint-anchor={zone}
           className="mx-auto flex w-max flex-nowrap items-start overflow-visible"
           style={{ gap: CARD_BAND_GAP_PX }}
         >
