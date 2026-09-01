@@ -2884,4 +2884,19 @@ above. Still client presentation only — no rule or value change.
   leftover 1fr (that painted a tall empty white slab). Left column is ~10.5rem
   so the dock keeps the card band.
 
+## 2026-09-01 · [P] Dock Incoming crop + left-aligned cards (L53-07)
+
+Designer follow-up on the live table: Incoming chips were a sliver on every
+viewport, and Hand / Specials sat flush left with empty dock to the right.
+
+- Incoming on the identity row used `max-h-9` (36px) plus a stacked title-above-
+  chips compact strip. Tutorial callout chrome on real pending (L51-07) is
+  taller than 36px, so the chip was always clipped. Incoming is now its own
+  full-width row; compact title and chips share one line; no 36px cap.
+- Card rows used `justify-start` on a full-width flex. Pack to `w-max` and
+  center with `mx-auto`. Do not `justify-center` an overflowing row (clips both
+  sides). `[data-card-row]` only locks nowrap; overflow stays on the outer wrap.
+
+Still client presentation only — no rule or value change.
+
 

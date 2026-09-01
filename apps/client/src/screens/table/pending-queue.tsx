@@ -61,17 +61,24 @@ export function PendingQueue({
   );
 
   return (
-    <section data-zone="pending-queue" className="flex min-h-0 flex-col">
+    <section
+      data-zone="pending-queue"
+      className={
+        compact
+          ? 'flex min-h-0 min-w-0 flex-row items-center gap-2'
+          : 'flex min-h-0 flex-col'
+      }
+    >
       <h2 className={`shrink-0 ${titleClass}`}>{title}</h2>
       {effects.length === 0 ? (
         <p className={`mt-0.5 shrink-0 ${emptyClass}`}>None</p>
       ) : (
         <ul
           className={[
-            'mt-1 flex min-h-0 gap-1.5',
+            'flex min-h-0 min-w-0 gap-1.5',
             compact
-              ? 'flex-nowrap overflow-x-auto overflow-y-hidden'
-              : 'flex-wrap',
+              ? 'flex-1 flex-nowrap items-center overflow-x-auto py-1.5'
+              : 'mt-1 flex-wrap',
             !compact && hasRealPending ? 'overflow-visible' : '',
           ].join(' ')}
         >

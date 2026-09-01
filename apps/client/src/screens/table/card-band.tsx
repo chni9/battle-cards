@@ -75,23 +75,27 @@ function CardSection({
     zone,
     <div
       className={[
-        'flex min-h-0 min-w-0 flex-col items-stretch gap-0.5 overflow-hidden',
+        'flex min-h-0 min-w-0 w-full flex-col items-center gap-0.5 overflow-hidden',
         grow ? 'flex-1' : 'shrink-0',
       ].join(' ')}
     >
-      <p className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
+      <p className="shrink-0 text-center text-[9px] font-semibold uppercase tracking-wide text-ink-muted sm:text-[10px]">
         {label}
       </p>
       <div
         data-zone={zone}
-        data-card-row
         data-hint-anchor={zone}
         className={[
-          'inline-flex max-w-full min-h-0 w-full flex-nowrap items-start justify-start',
+          'min-h-0 min-w-0 w-full',
           spotlighted ? 'overflow-visible' : 'overflow-x-auto overflow-y-hidden',
         ].join(' ')}
-        style={{ gap: CARD_BAND_GAP_PX }}
       >
+        <div
+          data-card-row
+          // Pack then center. `justify-center` on overflow clips both sides.
+          className="mx-auto flex w-max flex-nowrap items-start overflow-visible"
+          style={{ gap: CARD_BAND_GAP_PX }}
+        >
         {cards.map((card) => {
           const highlighted = highlightedInstanceIds.includes(card.instanceId);
           return (
@@ -125,6 +129,7 @@ function CardSection({
             </div>
           );
         })}
+        </div>
       </div>
     </div>,
   );

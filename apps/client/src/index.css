@@ -133,9 +133,7 @@
 [data-card-row] {
   display: flex;
   flex-wrap: nowrap !important;
-  overflow-x: auto;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
+  /* Overflow lives on the outer band so `w-max` + `mx-auto` can center. */
 }
 
 @media (orientation: landscape) {
@@ -196,9 +194,6 @@
 
   [data-card-row] {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
   }
 
   .table-felt[data-collapse-opponents="true"] .table-felt__opponents,

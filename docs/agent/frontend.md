@@ -121,7 +121,7 @@ rules above are unchanged — this section only covers how the client looks.
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
-  Own actives sit on the kit/Incoming header row as tiny thumbs (not a CardBand row),
+  Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
   including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
   Opponent actives sit beside the kit portrait (`activeShield` + persistents). Imposition / Points Generator also get
   presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
@@ -164,8 +164,12 @@ rules above are unchanged — this section only covers how the client looks.
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
   prose). **Private zone:**
+  Incoming is a **full-width chip row** under the identity header (title + chips on
+  one line). It is not squeezed beside the kit/name and has no `max-h-9` clip.
   `CardBand` — Hand and Specials share **one** face width (preferred min **40px**, max
-  88px; shrink further rather than crop). Specials do not size independently. Resources sit
+  88px; shrink further rather than crop). Specials do not size independently. A short
+  Hand or Specials row packs to `w-max` and **centers** with `mx-auto` (do not
+  `justify-center` the overflow row — that clips both sides). Resources sit
   above
   the economy bar with **visible captions**
   (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);

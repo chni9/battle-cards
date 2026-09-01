@@ -73,6 +73,20 @@ describe('CardBand source (L53-07)', () => {
     expect(src).not.toContain('max-h-[50%]');
     expect(src).toContain('cardBandSideBySide');
   });
+
+  it('centers a short packed row (mx-auto + w-max, not justify-start)', () => {
+    // `justify-center` on an overflowing flex row clips both sides. Pack to
+    // intrinsic width, then `mx-auto` centers; overflow auto-margins collapse
+    // and the row scrolls from the start.
+    const src = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'card-band.tsx'),
+      'utf8',
+    );
+    expect(src).toContain('mx-auto');
+    expect(src).toContain('w-max');
+    expect(src).not.toContain('justify-start');
+    expect(src).not.toContain('justify-center');
+  });
 });
 
 describe('maxWidthForRowHeight', () => {

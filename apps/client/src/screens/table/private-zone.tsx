@@ -1,6 +1,7 @@
 /**
- * Private zone — kit + actives + incoming on one header row; hand/specials below.
- * Activating a card must not steal vertical space from the card band.
+ * Private zone — kit + actives on the identity row; Incoming on its own
+ * full-width chip row; hand/specials below. Activating a card must not steal
+ * vertical space from the card band.
  */
 
 import type {
@@ -114,7 +115,7 @@ export function PrivateZone({
       className="flex h-full min-h-0 flex-col gap-0.5 overflow-visible landscape:gap-1"
     >
       <div className="flex shrink-0 items-center justify-between gap-1.5 overflow-visible sm:gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
           <TutorialCallout
             active={highlightKit}
             arrow="top"
@@ -182,36 +183,35 @@ export function PrivateZone({
               </Button>
             </TutorialCallout>
           </div>
-        ) : incomingCount > 0 ? (
-          <div
-            data-zone="incoming-pending"
-            data-hint-anchor="incoming"
-            className={[
-              'min-w-0 flex-1 overscroll-contain',
-              highlightIncoming
-                ? 'overflow-visible pt-10'
-                : 'max-h-9 overflow-x-auto overflow-y-hidden',
-            ].join(' ')}
-          >
-            <TutorialCallout
-              active={highlightIncoming}
-              layout="stretch"
-              arrow="top"
-              highlightId="incoming"
-            >
-              <PendingQueue
-                view={view}
-                effects={incomingEffects}
-                title={INCOMING_OPEN_LABEL}
-                compact
-                tone="dock"
-                highlightedIds={mirrorHighlightIds}
-                animateEntrance
-              />
-            </TutorialCallout>
-          </div>
         ) : null}
       </div>
+      {!showIncomingButton && incomingCount > 0 ? (
+        <div
+          data-zone="incoming-pending"
+          data-hint-anchor="incoming"
+          className={[
+            'min-w-0 w-full shrink-0 overflow-visible py-1 overscroll-x-contain',
+            highlightIncoming ? 'pt-10' : '',
+          ].join(' ')}
+        >
+          <TutorialCallout
+            active={highlightIncoming}
+            layout="stretch"
+            arrow="top"
+            highlightId="incoming"
+          >
+            <PendingQueue
+              view={view}
+              effects={incomingEffects}
+              title={INCOMING_OPEN_LABEL}
+              compact
+              tone="dock"
+              highlightedIds={mirrorHighlightIds}
+              animateEntrance
+            />
+          </TutorialCallout>
+        </div>
+      ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden">
         <CardBand
