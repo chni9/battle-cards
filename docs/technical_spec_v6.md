@@ -428,8 +428,12 @@ Client-only except Leave/forfeit (§8).
 Hand and Specials share **one** face width. Each section is **one row** that **scrolls
 horizontally** (Lot 53 / L53-07; supersedes wrap + vertical scroll and the 64px floor).
 No pager arrows. Width comes from the row height so the full face (2/3 art + name) is
-visible — shrink below the preferred ~40px min rather than crop. Desktop may grow faces
-up to ~88px when the dock is tall and wide. Extra cards scroll sideways at that size.
+visible — shrink below the preferred ~22px min rather than crop. Desktop may grow faces
+up to ~48px; the old 88px cap filled the dock. Extra cards scroll sideways at that size.
+
+Incoming lives **on the identity row beside the kit**, not on a row under it. Multiple
+Incoming chips **stack vertically** and scroll inside a short column (`max-h-14`).
+Waiting on others on the felt stays a horizontal strip.
 
 Hand is more important than Incoming, the action log, and opponent seats. If the felt
 cannot fit one uncropped hand row, those regions collapse into a button + Dialog in this

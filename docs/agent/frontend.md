@@ -177,11 +177,13 @@ rules above are unchanged — this section only covers how the client looks.
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only (L51-04:
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
-  prose). **Private zone:**
-  Incoming is a **full-width chip row** under the identity header (title + chips on
-  one line). It is not squeezed beside the kit/name and has no `max-h-9` clip.
-  `CardBand` — Hand and Specials share **one** face width (preferred min **40px**, max
-  88px; shrink further rather than crop). Specials do not size independently. A short
+  prose).   **Private zone:**
+  Incoming sits **beside the kit** on the identity row (not a full-width row under
+  it). Chips **stack vertically** and scroll (`max-h-14`, overflow-y) when several
+  queue. No `max-h-9` clip on the chip itself. Felt Waiting stays a horizontal
+  strip. `CardBand` — Hand and Specials share **one** face width (preferred min
+  **22px**, max **48px**; shrink further rather than crop). Specials do not size
+  independently. A short
   Hand or Specials row packs to `w-max` and **centers** with `mx-auto` (do not
   `justify-center` the overflow row — that clips both sides). Resources sit
   above
