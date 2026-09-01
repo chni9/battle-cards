@@ -2947,4 +2947,15 @@ The table must fill **the rectangle the player sees** at every size.
 
 Still client presentation only — no rule or value change.
 
+## 2026-09-01 · [P] Full-bleed is a 100% chain (L53-07)
+
+Playtest: pinning `#root` to pixel `visualViewport` **froze the first size**
+(390×844 stayed after the window grew to 1100×800). `html`, `body`, and
+`#root` are `width` / `height: 100%` with `overflow: hidden`. The table is
+`h-full` of that root. No `100dvh`. Dialogs still measure live
+`visualViewport` so they do not paint outside the visible frame.
+
+This supersedes the pixel `--vv-*` lock in the entry above. Still client
+presentation only — no rule or value change.
+
 
