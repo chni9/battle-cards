@@ -434,7 +434,10 @@ up to ~88px when the dock is tall and wide. Extra cards scroll sideways at that 
 Hand is more important than Incoming, the action log, and opponent seats. If the felt
 cannot fit one uncropped hand row, those regions collapse into a button + Dialog in this
 order: Incoming (including Waiting on others) → opponents → action log. On short
-viewports (innerHeight ≤ 500px) collapse all three. Flyouts still aim at the
+viewports (innerHeight ≤ 500px) collapse Incoming and opponents; keep the action log
+on the felt unless leftover chrome still overflows. Landscape dock sits beside chrome, so
+collapsing the left column does not free hand height — leftover column height after
+opponents collapse belongs to the log, not an empty slate. Flyouts still aim at the
 collapsed buttons so token chips, card ghosts, and targeting pulses keep playing.
 Opponents on the table stay **one
 horizontally scrollable row** (Lot 53; supersedes L52-01 wrap). Collapse Dialogs must

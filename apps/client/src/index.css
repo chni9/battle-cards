@@ -177,10 +177,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .table-felt[data-collapse-log="true"] {
-    grid-template-rows: auto auto auto;
-  }
-
   /* Compact CTAs — unlayered to override Button `min-h-11` utilities. */
   [data-zone="economy-bar"] button {
     min-height: 2rem;
@@ -208,7 +204,18 @@
     flex-wrap: nowrap;
   }
 
-  .table-felt[data-collapse-opponents="true"] .table-felt__opponents,
+  .table-felt[data-collapse-opponents="true"] .table-felt__opponents {
+    align-self: start;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  /*
+   * Collapsed log hugs the button. Expanded log keeps minmax(0, 1fr) so
+   * leftover column height after opponents collapse is the log, not slate.
+   */
   .table-felt[data-collapse-log="true"] .table-felt__log {
     align-self: start;
     min-width: 0;

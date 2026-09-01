@@ -2958,4 +2958,22 @@ Playtest: pinning `#root` to pixel `visualViewport` **froze the first size**
 This supersedes the pixel `--vv-*` lock in the entry above. Still client
 presentation only — no rule or value change.
 
+## 2026-09-01 · [P] Home menu scrolls; landscape log keeps leftover (L53-07)
+
+Designer: the hub/menu could not scroll after the full-bleed `overflow: hidden`
+lock on `html` / `body` / `#root`. Home (and lobby) must scroll **inside**
+`#root`; the table shell stays non-scrolling.
+
+Designer: on landscape the action log collapsed into a bottom button while
+opponents were already a top button, leaving an empty slate in the left
+column. Short viewports (`innerHeight` ≤ 500px) collapse **Incoming and
+opponents only**. The log stays on the felt unless leftover chrome still
+overflows. Landscape `used()` does not add dock min-height — the dock is
+beside chrome, so collapsing the left column cannot free hand height.
+Expanded log keeps `minmax(0, 1fr)`; collapsed log hugs the button.
+
+This supersedes “collapse all three on innerHeight ≤ 500” in the Lot 53
+and L53-07 entries above. Still client presentation only — no rule or
+value change.
+
 

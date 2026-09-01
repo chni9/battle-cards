@@ -145,7 +145,9 @@ rules above are unchanged — this section only covers how the client looks.
   Shell is full-bleed
   (`h-full` of `#root`; `html` / `body` / `#root` are `width/height: 100%`
   with overflow hidden — not `100dvh`, which can stay stale after a resize
-  and leave the table as a small box on the html surface). No page scroll, no `max-w` gutters. Opponents stay **one
+  and leave the table as a small box on the html surface). Home and lobby
+  scroll **inside** `#root` (`overflow-y-auto`); the table shell does not
+  page-scroll. No `max-w` gutters. Opponents stay **one
   horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
   six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
   Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
@@ -158,7 +160,11 @@ rules above are unchanged — this section only covers how the client looks.
   `#root` (no `w-screen` / `100vw` / `100dvh` gutters). If one
   uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
   **Incoming** (dock Incoming + felt Waiting on others) → **opponents** → **action log**.
-  Viewports with `innerHeight` ≤ 500px collapse all three (L53-07). Flyouts aim at the
+  Viewports with `innerHeight` ≤ 500px collapse Incoming and opponents; the action log
+  stays on the felt unless leftover chrome still overflows (L53-07). Landscape `used()`
+  ignores dock min-height (dock is beside chrome). When opponents collapse, leftover
+  left-column height is the log (`minmax(0, 1fr)`), not two buttons with an empty slate.
+  Flyouts aim at the
   collapsed buttons (`log-collapsed` / `opponents-collapsed` / `incoming-collapsed`) so
   chips and pulses still play when the panel is unmounted. Collapse Dialogs must
   fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex

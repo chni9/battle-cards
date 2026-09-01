@@ -384,6 +384,7 @@ function TableScreenInner({
   const feltRef = useRef<HTMLDivElement>(null);
   const [feltHeight, setFeltHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [chromeOpen, setChromeOpen] = useState<
     'incoming' | 'log' | 'opponents' | null
   >(null);
@@ -399,6 +400,9 @@ function TableScreenInner({
       setFeltHeight((prev) => (Math.abs(prev - next) < 0.5 ? prev : next));
       setViewportHeight((prev) =>
         Math.abs(prev - box.height) < 0.5 ? prev : box.height,
+      );
+      setViewportWidth((prev) =>
+        Math.abs(prev - box.width) < 0.5 ? prev : box.width,
       );
     };
     measure();
@@ -961,6 +965,7 @@ function TableScreenInner({
     waitingCount: othersPending.length,
     specialsCount: view.self.specialCards.length,
     viewportHeight,
+    viewportWidth,
   });
   const otherModalOpen =
     dialog !== null ||

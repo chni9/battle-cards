@@ -100,7 +100,7 @@ describe('dockMinHeightPx', () => {
 });
 
 describe('short viewport collapse (L53-07)', () => {
-  it('collapses Incoming, log, and opponents on a 390px-tall landscape', () => {
+  it('collapses Incoming and opponents on a 390px-tall landscape, keeps the log', () => {
     const next = planFeltCollapse({
       opponentRowHeight: FELT_OPPONENT_ROW_PX,
       pendingHeight: FELT_PENDING_NONEMPTY_PX,
@@ -108,13 +108,91 @@ describe('short viewport collapse (L53-07)', () => {
       dockMinHeight: 300,
       incomingDockHeight: 64,
       buttonHeight: FELT_COLLAPSE_BUTTON_PX,
-      feltHeight: 900,
+      feltHeight: 330,
       viewportHeight: 390,
+      viewportWidth: 844,
+    });
+    expect(next).toEqual({
+      incoming: true,
+      actionLog: false,
+      opponents: true,
+    });
+  });
+
+  it('still collapses the log last when the dock is stacked on a short portrait', () => {
+    const next = planFeltCollapse({
+      opponentRowHeight: FELT_OPPONENT_ROW_PX,
+      pendingHeight: FELT_PENDING_NONEMPTY_PX,
+      logHeight: 80,
+      dockMinHeight: 300,
+      incomingDockHeight: 64,
+      buttonHeight: FELT_COLLAPSE_BUTTON_PX,
+      feltHeight: 340,
+      viewportHeight: 390,
+      viewportWidth: 360,
     });
     expect(next).toEqual({
       incoming: true,
       actionLog: true,
       opponents: true,
     });
+  });
+});
+
+describe('landscape leftover log (L53-07)', () => {
+  const landscape = {
+    opponentRowHeight: FELT_OPPONENT_ROW_PX,
+    pendingHeight: FELT_PENDING_NONEMPTY_PX,
+    logHeight: 80,
+    dockMinHeight: 300,
+    incomingDockHeight: 64,
+    buttonHeight: FELT_COLLAPSE_BUTTON_PX,
+    dockBesideChrome: true,
+  };
+
+  it('does not count dock height against left chrome', () => {
+    const stacked = planFeltCollapse({
+      ...landscape,
+      dockBesideChrome: false,
+      feltHeight: 330,
+    });
+    const beside = planFeltCollapse({ ...landscape, feltHeight: 330 });
+    expect(stacked.actionLog).toBe(true);
+    expect(beside).toEqual({
+      incoming: false,
+      actionLog: false,
+      opponents: false,
+    });
+  });
+
+  it('keeps the log after opponents collapse so leftover is not an empty slate', () => {
+    const next = planFeltCollapse({ ...landscape, feltHeight: 150 });
+    expect(next.incoming).toBe(true);
+    expect(next.opponents).toBe(true);
+    expect(next.actionLog).toBe(false);
+  });
+
+  it('collapses the log only when leftover chrome still overflows', () => {
+    const next = planFeltCollapse({ ...landscape, feltHeight: 100 });
+    expect(next).toEqual({
+      incoming: true,
+      actionLog: true,
+      opponents: true,
+    });
+  });
+
+  it('keeps the log on a short 6-player landscape felt', () => {
+    const next = feltCollapseFromCounts({
+      feltHeight: 330,
+      opponentCount: 5,
+      incomingCount: 0,
+      waitingCount: 0,
+      specialsCount: 1,
+      viewportHeight: 390,
+      viewportWidth: 844,
+    });
+    expect(next.incoming).toBe(true);
+    expect(next.opponents).toBe(true);
+    expect(next.actionLog).toBe(false);
   });
 });

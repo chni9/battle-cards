@@ -48,7 +48,16 @@ describe('opponent row (L53-04)', () => {
     expect(css).toContain('overflow-y: hidden');
     expect(css).toContain('flex-wrap: nowrap');
     expect(css).not.toContain('0.38fr');
-    expect(css).toContain('grid-template-rows: auto auto auto');
+    expect(css).toContain('grid-template-rows: auto auto auto minmax(0, 1fr)');
+    expect(css).toContain(
+      '.table-felt[data-collapse-opponents="true"] .table-felt__opponents {',
+    );
+    expect(css).toContain(
+      '.table-felt[data-collapse-log="true"] .table-felt__log {',
+    );
+    expect(css).not.toContain(
+      '.table-felt[data-collapse-opponents="true"] .table-felt__opponents,',
+    );
   });
 });
 
@@ -93,6 +102,7 @@ describe('felt chrome collapse wiring (L53-05)', () => {
     const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
     expect(table).toContain('feltCollapseFromCounts');
     expect(table).toContain('viewportHeight');
+    expect(table).toContain('viewportWidth');
     expect(table).toContain("setChromeOpen('incoming')");
     expect(table).toContain("setChromeOpen('log')");
     expect(table).toContain("setChromeOpen('opponents')");
