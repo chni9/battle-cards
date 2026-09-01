@@ -3020,5 +3020,16 @@ returns **404** with an empty body (do not advertise the route). Wrong or
 missing header returns **401**. After auth, an unset `DATABASE_URL` or
 query failure returns **503** `{ ok: false }` — never an empty 200 list.
 
+## 2026-09-01 · [P] Inbox CORS preflight (L47-05)
+
+Colyseus answers every `OPTIONS` before Express, with
+`DEFAULT_CORS_HEADERS` that omit `X-Inbox-Password`. Vite `:5173` → `:2567`
+inbox GET therefore failed the preflight and the SPA showed “Could not load”
+for both wrong and correct passwords. Patch
+`matchMaker.controller.DEFAULT_CORS_HEADERS` at boot so the header is allowed.
+POST `/api/feedback` was already fine (`Content-Type` is in the default list).
+
+
+
 
 

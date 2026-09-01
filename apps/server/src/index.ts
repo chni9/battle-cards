@@ -9,12 +9,15 @@ import { GAME_ROOM_NAME, PROTOCOL_VERSION } from '@card-battle/shared';
 import { defineRoom, defineServer } from 'colyseus';
 import express from 'express';
 
+import { allowInboxPasswordCorsHeader } from './http/allow-inbox-cors';
 import {
   defaultFeedbackApiDeps,
   mountFeedbackApi,
 } from './http/feedback-http';
 import { mountStaticSpa, resolveStaticDir } from './http/static-spa';
 import { GameRoom } from './rooms/game-room';
+
+allowInboxPasswordCorsHeader();
 
 const DEFAULT_PORT = 2567;
 

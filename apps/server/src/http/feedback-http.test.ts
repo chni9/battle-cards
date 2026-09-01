@@ -422,4 +422,20 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ ok: false });
   });
+
+  it('allows X-Inbox-Password on OPTIONS for the Vite origin', async () => {
+    const base = await start(testDeps({ isProduction: () => false }));
+    const response = await fetch(`${base}/api/inbox`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'X-Inbox-Password',
+      },
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Headers')).toContain(
+      'X-Inbox-Password',
+    );
+  });
 });

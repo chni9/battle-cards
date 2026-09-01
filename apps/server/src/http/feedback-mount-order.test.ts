@@ -92,6 +92,7 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
     expect(staticIndex).toBeGreaterThan(apiIndex);
     expect(source).toContain("app.use('/api', express.json");
     expect(source).toContain("app.set('trust proxy', 1)");
+    expect(source).toContain('allowInboxPasswordCorsHeader');
   });
 
   it('registers GET /api/inbox on the feedback HTTP module', () => {
