@@ -62,6 +62,7 @@ Single container: SPA + Colyseus on `$PORT`. See `Dockerfile` and
 | Variable | Required | Meaning |
 |---|---|---|
 | `DATABASE_URL` | yes (prod image) | Postgres; entrypoint migrates then starts |
+| `INBOX_PASSWORD` | no | Designer inbox; unset → `GET /api/inbox` is 404 |
 | `PORT` | no (default 2567) | Listen port — match Coolify `ports_exposes` |
 | `NODE_ENV` | yes in prod | `production` |
 | `STATIC_DIR` | no | SPA root (image default `/app/apps/client/dist`) |

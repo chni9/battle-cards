@@ -31,10 +31,12 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
         inserted.push(report);
         return Promise.resolve('id');
       },
+      listReports: () => Promise.resolve([]),
       lookupLive: () => null,
       lookupFinished: () => Promise.resolve(null),
       isProduction: () => false,
       rateLimiter: createIpRateLimiter(),
+      readInboxPassword: () => 'inbox-secret',
     };
 
     const app = express();
@@ -90,5 +92,14 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
     expect(staticIndex).toBeGreaterThan(apiIndex);
     expect(source).toContain("app.use('/api', express.json");
     expect(source).toContain("app.set('trust proxy', 1)");
+  });
+
+  it('registers GET /api/inbox on the feedback HTTP module', () => {
+    const source = readFileSync(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), 'feedback-http.ts'),
+      'utf8',
+    );
+    expect(source).toContain("app.get('/api/inbox'");
+    expect(source).toContain("app.options('/api/inbox'");
   });
 });

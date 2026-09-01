@@ -1,5 +1,5 @@
 /**
- * HTTP feedback API — technical spec v6 §7.1 / L47-02.
+ * HTTP feedback + inbox API — technical spec v6 §7 / L47-02 / L47-04.
  * Mount before the SPA catch-all. Never writes seed. Never 200 when DATABASE_URL is unset.
  */
 
@@ -10,6 +10,7 @@ import {
   PROTOCOL_VERSION,
   isFeedbackKind,
   isFeedbackScreen,
+  type FeedbackInboxRow,
   type FeedbackKind,
   type FeedbackScreen,
   type PlayKind,
@@ -17,6 +18,7 @@ import {
 
 import type { FeedbackReportInsert } from '../db/feedback-types';
 import { insertFeedbackReport } from '../db/insert-feedback-report';
+import { listFeedbackReports } from '../db/list-feedback-reports';
 import {
   lookupFinishedFeedbackContext,
   type FinishedFeedbackContext,
@@ -34,6 +36,7 @@ import {
   type LiveFeedbackContext,
 } from './live-feedback-registry';
 import { stripSeed } from './strip-seed';
+import { timingSafeEqualUtf8 } from './timing-safe-equal';
 
 export const FEEDBACK_NOT_SAVED_NO_DB = 'Not saved (no database)';
 export const FEEDBACK_COULD_NOT_SAVE = 'Could not save — try again';
@@ -47,6 +50,7 @@ const GAME_CODE_MAX = 32;
 export interface FeedbackApiDeps {
   getPool: () => Pool | null;
   insertReport: (pool: Pool, report: FeedbackReportInsert) => Promise<string>;
+  listReports: (pool: Pool) => Promise<readonly FeedbackInboxRow[]>;
   lookupLive: (gameCode: string) => LiveFeedbackContext | null;
   lookupFinished: (
     pool: Pool,
@@ -54,12 +58,24 @@ export interface FeedbackApiDeps {
   ) => Promise<FinishedFeedbackContext | null>;
   isProduction: () => boolean;
   rateLimiter: IpRateLimiter;
+  readInboxPassword: () => string | undefined;
+}
+
+export function readInboxPasswordFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  const value = env['INBOX_PASSWORD'];
+  if (value === undefined || value.length === 0) {
+    return undefined;
+  }
+  return value;
 }
 
 export function defaultFeedbackApiDeps(): FeedbackApiDeps {
   return {
     getPool,
     insertReport: insertFeedbackReport,
+    listReports: listFeedbackReports,
     lookupLive: lookupLiveFeedbackContext,
     lookupFinished: lookupFinishedFeedbackContext,
     isProduction: () => process.env['NODE_ENV'] === 'production',
@@ -67,6 +83,7 @@ export function defaultFeedbackApiDeps(): FeedbackApiDeps {
       FEEDBACK_RATE_LIMIT_MAX,
       FEEDBACK_RATE_LIMIT_WINDOW_MS,
     ),
+    readInboxPassword: () => readInboxPasswordFromEnv(),
   };
 }
 
@@ -241,6 +258,15 @@ export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void 
   app.post('/api/feedback', (req, res) => {
     void handleFeedbackPost(req, res, deps);
   });
+
+  app.options('/api/inbox', (req, res) => {
+    applyDevCors(req, res, deps.isProduction());
+    res.status(204).end();
+  });
+
+  app.get('/api/inbox', (req, res) => {
+    void handleInboxGet(req, res, deps);
+  });
 }
 
 async function handleFeedbackPost(
@@ -294,5 +320,38 @@ async function handleFeedbackPost(
     res.status(200).json({ ok: true });
   } catch {
     res.status(503).json({ ok: false, message: FEEDBACK_COULD_NOT_SAVE });
+  }
+}
+
+async function handleInboxGet(
+  req: Request,
+  res: Response,
+  deps: FeedbackApiDeps,
+): Promise<void> {
+  applyDevCors(req, res, deps.isProduction());
+
+  const expected = deps.readInboxPassword();
+  if (expected === undefined) {
+    res.status(404).end();
+    return;
+  }
+
+  const provided = req.get('x-inbox-password');
+  if (provided === undefined || !timingSafeEqualUtf8(provided, expected)) {
+    res.status(401).json({ ok: false });
+    return;
+  }
+
+  const pool = deps.getPool();
+  if (pool === null) {
+    res.status(503).json({ ok: false });
+    return;
+  }
+
+  try {
+    const rows = await deps.listReports(pool);
+    res.status(200).json(rows);
+  } catch {
+    res.status(503).json({ ok: false });
   }
 }

@@ -3012,4 +3012,13 @@ tutorial) / `end`.
 returns all rows newest first; kind filter is client-side. Missing
 `INBOX_PASSWORD` → API 404. Wrong password → 401. No hub link.
 
+## 2026-09-01 · [P] GET /api/inbox auth details (L47-04)
+
+`X-Inbox-Password` is compared with padded `crypto.timingSafeEqual` so a
+length mismatch still runs the compare. Missing/empty `INBOX_PASSWORD`
+returns **404** with an empty body (do not advertise the route). Wrong or
+missing header returns **401**. After auth, an unset `DATABASE_URL` or
+query failure returns **503** `{ ok: false }` — never an empty 200 list.
+
+
 

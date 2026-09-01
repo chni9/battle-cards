@@ -41,3 +41,22 @@ export interface FeedbackSubmitBody {
   playKind?: PlayKind;
   logTail?: readonly unknown[];
 }
+
+/**
+ * One inbox row from `GET /api/inbox` (technical spec v6 §7.3).
+ * Newest first. `logTail` is already seed-stripped.
+ */
+export interface FeedbackInboxRow {
+  id: string;
+  createdAt: string;
+  kind: FeedbackKind;
+  message: string;
+  contact: string | null;
+  nickname: string | null;
+  gameCode: string | null;
+  screen: FeedbackScreen;
+  protocolVersion: number;
+  playKind: PlayKind | null;
+  logTail: unknown;
+  userAgent: string | null;
+}

@@ -29,6 +29,8 @@ function testDeps(overrides: Partial<FeedbackApiDeps> = {}): FeedbackApiDeps {
     lookupFinished: () => Promise.resolve(null),
     isProduction: () => false,
     rateLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
+    listReports: () => Promise.resolve([]),
+    readInboxPassword: () => 'inbox-secret',
     ...overrides,
   };
 }
@@ -321,5 +323,103 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
     });
     expect(response.status).toBe(400);
     expect(inserted).toHaveLength(0);
+  });
+});
+
+describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
+  const closers: (() => void)[] = [];
+
+  afterEach(() => {
+    inserted.length = 0;
+    for (const close of closers) close();
+    closers.length = 0;
+  });
+
+  async function start(deps: FeedbackApiDeps = testDeps()): Promise<string> {
+    const app = express();
+    app.use('/api', express.json());
+    mountFeedbackApi(app, deps);
+    const server = await listen(app);
+    closers.push(server.close);
+    return server.base;
+  }
+
+  it('returns 404 when INBOX_PASSWORD is unset', async () => {
+    const base = await start(
+      testDeps({
+        readInboxPassword: () => undefined,
+      }),
+    );
+    const response = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'inbox-secret' },
+    });
+    expect(response.status).toBe(404);
+  });
+
+  it('returns 401 when the password header is missing or wrong', async () => {
+    const base = await start();
+    const missing = await fetch(`${base}/api/inbox`);
+    expect(missing.status).toBe(401);
+
+    const wrong = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'nope' },
+    });
+    expect(wrong.status).toBe(401);
+    expect(await wrong.json()).toEqual({ ok: false });
+  });
+
+  it('returns all rows newest first when the password matches', async () => {
+    const rows = [
+      {
+        id: 'newer',
+        createdAt: '2026-09-01T13:00:00.000Z',
+        kind: 'idea' as const,
+        message: 'Later',
+        contact: null,
+        nickname: 'Ada',
+        gameCode: 'ABCDEF',
+        screen: 'end' as const,
+        protocolVersion: 30,
+        playKind: 'classic' as const,
+        logTail: [{ kind: 'actionPlayed' }],
+        userAgent: 'vitest',
+      },
+      {
+        id: 'older',
+        createdAt: '2026-09-01T12:00:00.000Z',
+        kind: 'bug' as const,
+        message: 'Earlier',
+        contact: 'ada@example.com',
+        nickname: null,
+        gameCode: null,
+        screen: 'home' as const,
+        protocolVersion: 30,
+        playKind: null,
+        logTail: null,
+        userAgent: null,
+      },
+    ];
+    const listReports = vi.fn(() => Promise.resolve(rows));
+    const base = await start(testDeps({ listReports }));
+    const response = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'inbox-secret' },
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(rows);
+    expect(listReports).toHaveBeenCalledOnce();
+    expect(JSON.stringify(rows)).not.toContain('seed');
+  });
+
+  it('returns 503 when the password matches but DATABASE_URL is unset', async () => {
+    const base = await start(
+      testDeps({
+        getPool: () => null,
+      }),
+    );
+    const response = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'inbox-secret' },
+    });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false });
   });
 });
