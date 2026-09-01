@@ -724,3 +724,11 @@ chip row; short card rows pack to `w-max` and center with `mx-auto`.
   overflow and scroll from the start (`mx-auto` collapses).
 - **768×1024:** Hand **207/207**, Specials **240/240**, Incoming chip **42px**.
 
+Designer follow-up: desktop landscape starved opponents and the log in a
+10.5rem strip. Room `AQJXJW` (nick `L53Desk`, Specialist vs 5 Easy). Headless
+Chrome **1280×800:** table **1280×800** (full viewport); opponents column
+**482px** (~38% of the felt); action log **482×578**; dock **782px**; **5**
+seats on the row. **844×390** keeps the **168px** (10.5rem) column so the hand
+fits (chrome collapsed as specified for height ≤ 500px). `pnpm verify` 1149
+tests.
+
