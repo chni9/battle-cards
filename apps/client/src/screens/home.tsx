@@ -156,7 +156,7 @@ export function HomeScreen({
   };
 
   return (
-    <main className="relative h-full min-h-full overflow-hidden bg-surface font-sans text-ink">
+    <main className="relative h-full min-h-full overflow-y-auto overscroll-contain bg-surface font-sans text-ink">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,var(--color-surface-kit)_0%,transparent_55%),radial-gradient(ellipse_at_90%_20%,var(--color-slate-soft)_0%,transparent_45%)]"
@@ -164,7 +164,7 @@ export function HomeScreen({
 
       <BetaCard />
 
-      <div className="relative mx-auto grid h-full min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
+      <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
         <section className="order-2 md:order-1">
           <motion.div
             key={mode}

@@ -27,6 +27,10 @@ describe('full-bleed viewport (L53-07)', () => {
     expect(shell).not.toContain('w-screen');
     const home = readFileSync(join(dir, '../../screens/home.tsx'), 'utf8');
     expect(home).not.toContain('100dvh');
+    expect(home).toContain('overflow-y-auto overscroll-contain');
+    expect(home).not.toMatch(
+      /<main className="[^"]*\boverflow-hidden\b/,
+    );
     const lobby = readFileSync(join(dir, '../../screens/lobby.tsx'), 'utf8');
     expect(lobby).not.toContain('100dvh');
   });
