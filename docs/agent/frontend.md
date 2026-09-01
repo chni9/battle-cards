@@ -781,3 +781,15 @@ Incoming and opponents; leftover left-column height stays on the log.
   `data-collapse-log=false`. No document page-scroll.
 - Table **390×844:** table fills; Incoming / opponents / log stay expanded.
 
+Designer follow-up: faces still filled the dock at the 88px cap, and
+Incoming sat on its own full-width row. Floor **22** / cap **48**. Incoming
+beside the kit, stacked, vertical scroll (`max-h-14`).
+
+- Solo nick `L53Face` at **390×844:** `data-card-width` **48**, rendered face
+  **48×84**. **844×390:** same 48px cap, Hand/Specials side by side.
+- Room `IJCPGG` (host `L53In`, guests `L53AtkA` / `L53AtkB`). Portrait
+  Incoming **beside the kit** (kit top **347**, Incoming top **347**, left
+  **93** > kit right **51**), height **56**, **2** chips, `overflow-y: auto`.
+- `pnpm verify` **1158** tests.
+
+
