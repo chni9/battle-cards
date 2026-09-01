@@ -762,3 +762,20 @@ matches `innerWidth`×`innerHeight` (origin 0,0) at **390×844**, after a
 grow to **1100×800**, **844×390**, and **1280×800**. `pnpm verify` 1151
 tests.
 
+Designer follow-up: the hub/menu could not scroll after the full-bleed
+`overflow: hidden` lock, and landscape collapsed the action log into a
+bottom button with empty slate after opponents. Home (and lobby) scroll
+inside `#root`; the table does not page-scroll. Short viewports collapse
+Incoming and opponents; leftover left-column height stays on the log.
+
+- Room `EYPXBT` (nick `L53Log`), Specialist vs 5 Easy. Headless Chrome;
+  trust `innerWidth`/`innerHeight` and `getBoundingClientRect`. `pnpm verify`
+  **1156** tests.
+- Home Play solo **844×390:** `main` `overflow-y: auto`, `scrollHeight` 845 >
+  `clientHeight` 390; `scrollTop` 0 → 455.
+- Home Play solo **390×500:** `scrollHeight` 1123 > 500.
+- Table **844×390:** table **844×390**; opponents collapsed (**44px**);
+  action log **on the felt** **168×259** (grid rows `44px 0px 259px`);
+  `data-collapse-log=false`. No document page-scroll.
+- Table **390×844:** table fills; Incoming / opponents / log stay expanded.
+
