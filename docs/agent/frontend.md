@@ -793,3 +793,18 @@ Incoming and opponents; leftover left-column height stays on the log.
   `data-collapse-log=false`. No document page-scroll.
 - Table **390×844:** table fills; Incoming / opponents / log stay expanded.
 
+### Lot 47 verified 2026-09-01 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Hub + table Feedback, password-gated `/inbox`. `INBOX_PASSWORD=lot47-inbox`, no
+`DATABASE_URL` (local 503 copy). Vite `:5173`, server `:2567`.
+
+- Hub: How to play + Feedback; **no Inbox** control. Empty message keeps Send
+  disabled. Submit shows **Not saved (no database)**; Cancel closes.
+- Table `!` (aria-label Feedback) on the turn strip next to `?`; Draw + Shop
+  stay on the dock. Solo nick `Ada`, 1× Normal. Same 503 copy on Send.
+- `/inbox`: no rows until Open. Wrong password → **Wrong password**. Correct
+  password without Postgres → **Could not load**. First playtest saw both as
+  Could not load until Colyseus OPTIONS `X-Inbox-Password` was allowed.
+
+
+
