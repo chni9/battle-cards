@@ -73,6 +73,7 @@ import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type {
   ActionRejectPayload,
   PlayCardOptions,
@@ -98,6 +99,7 @@ import {
   ACTION_LOG_OPEN_LABEL,
   FELT_QUEUE_TITLE,
   FORFEIT_ARIA_LABEL,
+  FEEDBACK_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
   INCOMING_OPEN_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
@@ -368,6 +370,7 @@ function TableScreenInner({
   const reduceMotion = useReducedMotion();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
     null,
   );
@@ -1206,6 +1209,14 @@ function TableScreenInner({
             >
               ?
             </IconButton>
+            <IconButton
+              aria-label={FEEDBACK_ARIA_LABEL}
+              onClick={() => {
+                setFeedbackOpen(true);
+              }}
+            >
+              !
+            </IconButton>
             <div className="min-w-0 flex-1 overflow-visible">
               <TutorialZoneCallout
                 active={tourHighlight === 'timer'}
@@ -1635,6 +1646,18 @@ function TableScreenInner({
             markHowToPlaySeen();
           }
           setHowToPlayOpen(false);
+        }}
+      />
+      <FeedbackDialog
+        open={feedbackOpen}
+        mode="manual"
+        screen={readOnly ? 'end' : view.playKind === 'tutorial' ? 'tutorial' : 'table'}
+        gameCode={view.gameCode}
+        playKind={view.playKind}
+        actionLog={view.actionLog}
+        {...(selfPublic !== undefined ? { nickname: selfPublic.nickname } : {})}
+        onDismiss={() => {
+          setFeedbackOpen(false);
         }}
       />
 

@@ -18,6 +18,7 @@ import { BotSeatLabel } from '../design/components/bot-seat-label';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { KitPortrait } from '../design/components/kit-portrait';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
@@ -53,6 +54,8 @@ export function LobbyScreen({
   const [copyFailed, setCopyFailed] = useState(false);
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const youNick = view.players.find((player) => player.id === view.you)?.nickname;
 
   const closeCopyDialog = useCallback(() => {
     setCopyOpen(false);
@@ -223,6 +226,15 @@ export function LobbyScreen({
           <Button type="button" variant="red" onClick={onLeave}>
             Leave
           </Button>
+          <Button
+            type="button"
+            variant="orange"
+            onClick={() => {
+              setFeedbackOpen(true);
+            }}
+          >
+            Feedback
+          </Button>
         </div>
       </div>
 
@@ -241,6 +253,16 @@ export function LobbyScreen({
           : `Share this code with friends: ${view.gameCode}`}
       </Dialog>
 
+      <FeedbackDialog
+        open={feedbackOpen}
+        mode="manual"
+        screen="lobby"
+        gameCode={view.gameCode}
+        {...(youNick !== undefined ? { nickname: youNick } : {})}
+        onDismiss={() => {
+          setFeedbackOpen(false);
+        }}
+      />
       <LobbyKitPickerDialog
         open={kitPickerOpen}
         current={view.yourKitSelection}

@@ -17,6 +17,7 @@ import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
 import { Button } from '../design/components/button';
 import { KitPortrait } from '../design/components/kit-portrait';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import {
   hasSeenHowToPlay,
   markHowToPlaySeen,
@@ -77,6 +78,7 @@ export function HomeScreen({
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
   const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>('random');
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;
@@ -181,6 +183,9 @@ export function HomeScreen({
                 onOpenHowToPlay={() => {
                   setHowToPlayOpen(true);
                 }}
+                onOpenFeedback={() => {
+                  setFeedbackOpen(true);
+                }}
                 onChooseOnline={() => {
                   requestPath('online');
                 }}
@@ -207,6 +212,9 @@ export function HomeScreen({
                 onJoinCodeChange={onJoinCodeChange}
                 onCreateSubmit={onCreateSubmit}
                 onJoinSubmit={onJoinSubmit}
+                onOpenFeedback={() => {
+                  setFeedbackOpen(true);
+                }}
               />
             ) : null}
 
@@ -229,6 +237,9 @@ export function HomeScreen({
                   setKitPickerOpen(true);
                 }}
                 onSoloSubmit={onSoloSubmit}
+                onOpenFeedback={() => {
+                  setFeedbackOpen(true);
+                }}
               />
             ) : null}
 
@@ -243,6 +254,9 @@ export function HomeScreen({
                 onBack={goHub}
                 onNicknameChange={onNicknameChange}
                 onTutorialSubmit={onTutorialSubmit}
+                onOpenFeedback={() => {
+                  setFeedbackOpen(true);
+                }}
               />
             ) : null}
           </motion.div>
@@ -252,6 +266,15 @@ export function HomeScreen({
       </div>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
+      <FeedbackDialog
+        open={feedbackOpen}
+        mode="manual"
+        screen="home"
+        nickname={nickname}
+        onDismiss={() => {
+          setFeedbackOpen(false);
+        }}
+      />
       <LobbyKitPickerDialog
         open={kitPickerOpen}
         current={soloKitSelection}
@@ -272,6 +295,7 @@ interface HubViewProps {
   soloLaunchPending: boolean;
   busy: boolean;
   onOpenHowToPlay: () => void;
+  onOpenFeedback: () => void;
   onChooseOnline: () => void;
   onChooseSolo: () => void;
   onChooseTutorial: () => void;
@@ -283,6 +307,7 @@ function HubView({
   soloLaunchPending,
   busy,
   onOpenHowToPlay,
+  onOpenFeedback,
   onChooseOnline,
   onChooseSolo,
   onChooseTutorial,
@@ -314,6 +339,9 @@ function HubView({
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenHowToPlay}>
           How to play
         </Button>
+        <Button type="button" variant="orange" disabled={busy} onClick={onOpenFeedback}>
+          Feedback
+        </Button>
       </div>
 
       <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
@@ -336,6 +364,7 @@ interface OnlinePathProps {
   onJoinCodeChange: (value: string) => void;
   onCreateSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
   onJoinSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
+  onOpenFeedback: () => void;
 }
 
 function OnlinePath({
@@ -351,6 +380,7 @@ function OnlinePath({
   onJoinCodeChange,
   onCreateSubmit,
   onJoinSubmit,
+  onOpenFeedback,
 }: OnlinePathProps): ReactElement {
   return (
     <div>
@@ -362,6 +392,7 @@ function OnlinePath({
         soloLaunchPending={false}
         onBack={onBack}
         backDisabled={busy}
+        onOpenFeedback={onOpenFeedback}
       />
 
       <div className="mt-8 space-y-8">
@@ -423,6 +454,7 @@ interface SoloPathProps {
   onSoloDifficultyChange: (difficulty: BotDifficulty) => void;
   onOpenKitPicker: () => void;
   onSoloSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
+  onOpenFeedback: () => void;
 }
 
 function SoloPath({
@@ -441,6 +473,7 @@ function SoloPath({
   onSoloDifficultyChange,
   onOpenKitPicker,
   onSoloSubmit,
+  onOpenFeedback,
 }: SoloPathProps): ReactElement {
   return (
     <div>
@@ -452,6 +485,7 @@ function SoloPath({
         soloLaunchPending={soloLaunchPending}
         onBack={onBack}
         backDisabled={busy}
+        onOpenFeedback={onOpenFeedback}
       />
 
       <form onSubmit={onSoloSubmit} className="mt-8 space-y-6">
@@ -540,6 +574,7 @@ interface TutorialPathProps {
   onBack: () => void;
   onNicknameChange: (value: string) => void;
   onTutorialSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
+  onOpenFeedback: () => void;
 }
 
 function TutorialPath({
@@ -552,6 +587,7 @@ function TutorialPath({
   onBack,
   onNicknameChange,
   onTutorialSubmit,
+  onOpenFeedback,
 }: TutorialPathProps): ReactElement {
   return (
     <div>
@@ -563,6 +599,7 @@ function TutorialPath({
         soloLaunchPending={soloLaunchPending}
         onBack={onBack}
         backDisabled={busy}
+        onOpenFeedback={onOpenFeedback}
       />
 
       <form onSubmit={onTutorialSubmit} className="mt-8 space-y-6">
@@ -587,6 +624,7 @@ interface PathHeaderProps {
   soloLaunchPending: boolean;
   onBack: () => void;
   backDisabled: boolean;
+  onOpenFeedback: () => void;
 }
 
 function PathHeader({
@@ -597,12 +635,18 @@ function PathHeader({
   soloLaunchPending,
   onBack,
   backDisabled,
+  onOpenFeedback,
 }: PathHeaderProps): ReactElement {
   return (
     <div>
-      <Button type="button" variant="orange" disabled={backDisabled} onClick={onBack}>
-        Back
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="orange" disabled={backDisabled} onClick={onBack}>
+          Back
+        </Button>
+        <Button type="button" variant="orange" disabled={backDisabled} onClick={onOpenFeedback}>
+          Feedback
+        </Button>
+      </div>
       <p className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
         Card Battle
       </p>

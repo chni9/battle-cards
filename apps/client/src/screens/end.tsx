@@ -7,6 +7,8 @@
 import type { FinishedStateView } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { hasAskedFeedback, markFeedbackAsked } from '../feedback/asked-storage';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { ActionRejectPayload } from '../net/use-room-connection';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
@@ -34,7 +36,16 @@ export function EndScreen({
   onLeave,
 }: EndScreenProps): ReactElement {
   const [statsOpen, setStatsOpen] = useState(false);
+  const [feedbackAskOpen, setFeedbackAskOpen] = useState(false);
   const youWon = view.winnerPlayerId === view.finalTable.you;
+  const youNick = view.players.find((player) => player.id === view.you)?.nickname;
+
+  const onStatsClose = (): void => {
+    setStatsOpen(false);
+    if (!hasAskedFeedback(view.gameCode)) {
+      setFeedbackAskOpen(true);
+    }
+  };
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -77,10 +88,23 @@ export function EndScreen({
       <GameOverDialog
         open={statsOpen}
         view={view}
-        onClose={() => {
-          setStatsOpen(false);
-        }}
+        onClose={onStatsClose}
         onLeave={onLeave}
+      />
+      <FeedbackDialog
+        open={feedbackAskOpen}
+        mode="ask"
+        screen="end"
+        {...(youNick !== undefined ? { nickname: youNick } : {})}
+        gameCode={view.gameCode}
+        playKind={view.playKind}
+        actionLog={view.finalTable.actionLog}
+        onDismiss={(reason) => {
+          if (reason === 'skip' || reason === 'sent') {
+            markFeedbackAsked(view.gameCode);
+          }
+          setFeedbackAskOpen(false);
+        }}
       />
     </>
   );

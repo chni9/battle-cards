@@ -11,6 +11,7 @@ export const SHOP_PRICE_BLURB =
   'Choose a shared card from the shop. Prices are double the play cost.';
 
 export const HOW_TO_PLAY_ARIA_LABEL = 'How to play';
+export const FEEDBACK_ARIA_LABEL = 'Feedback';
 export const FORFEIT_ARIA_LABEL = 'Forfeit';
 export const LEAVE_TABLE_ARIA_LABEL = 'Leave table';
 export const RETURN_HOME_ARIA_LABEL = 'Return home';
