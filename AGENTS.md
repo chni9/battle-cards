@@ -74,11 +74,15 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 
 ## 5. Golden rules
 
-1. **Mutual attacks — stronger cancels weaker.** Two attacks targeting each other, both still
-   pending, compared on the retaliating player's turn: *equal damage cancels both*; *unequal
-   damage cancels the weaker*, and the stronger stays pending until its target's turn. Designer
-   ruling 2026-08-04 (Lot 19) restores stronger-prevails and supersedes the earlier tech §4.6
-   "unequal = no interaction" override. See `docs/agent/decisions.md`.
+1. **Mutual attacks — equal cancels both; stronger answer cancels weaker incoming.**
+   Two attacks targeting each other, both still pending, compared on the retaliating
+   player's turn: *equal damage cancels both*; *a stronger answer cancels the weaker
+   incoming* and stays pending until its target's turn; *a weaker answer is not
+   cancelled* — the incoming still resolves and the weaker attack stays queued.
+   Assassin multi-attack aimed at the same opponent is **one volley** (sum of final
+   damage) for this compare; Mirror still redirects a single pending effect.
+   Designer 2026-09-01 (Lot 54) supersedes Lot 19's "unequal always cancels the weaker".
+   See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
    player's card counters. `applyLifeLoss` is for Tax, Suicide, Imposition and every other

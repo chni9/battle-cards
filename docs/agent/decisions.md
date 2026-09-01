@@ -2985,4 +2985,19 @@ and upgraded resource reveal are unchanged.
 `heuristic-v4.freeze.json` traces were refreshed: cheaper Spy changes what the
 **same** policy can afford in the 12-step yardstick. `weightsHash` is unchanged.
 
+## 2026-09-01 · [P] Mutual attacks — weaker answers survive; assassin volley (L54-02)
+
+Supersedes Lot 19 only for the *weaker answer* case. On the retaliator's turn:
+
+- Equal volley damage cancels both volleys.
+- Stronger answer still cancels the weaker incoming volley; the answer stays pending.
+- Weaker answer is **not** cancelled. Incoming still resolves; the weaker attack
+  stays queued for the opponent's turn.
+
+Assassin `playMultipleAttacks` hits that share `sourcePlayerId`, `targetPlayerId`,
+and `queuedAt` are **one volley** (sum of final damage) for this compare only.
+Hits still resolve one-by-one. Mirror / Super Mirror still redirect a **single**
+pending effect (`chooseMirrorTarget`). Grouping uses `queuedAt` (no protocol bump);
+`duplicatePendingEffect` keeps `queuedAt` but a redirected copy has a new target
+so it does not join the original volley.
 

@@ -54,7 +54,7 @@ An attack card targets an opponent of choice and inflicts damage on them, reduci
 | Strong attack | 2 points | 2 | 4 |
 | Super attack | 10 points | 7 | 10 |
 
-The cost/damage ratio is not linear across cards: a high-damage attack is a deliberate design choice. Against a riposte, it is only vulnerable to an attack dealing exactly the same damage (rare to own for an expensive card like the Super attack) — if the riposte deals different damage, the two attacks do not interact at all and each resolves on its own target's turn (see Mutual Attacks in section 6). Once upgraded, it can only be redirected by an upgraded Mirror.
+The cost/damage ratio is not linear across cards: a high-damage attack is a deliberate design choice. Equal volley damage cancels both (an Assassin multi-attack aimed at the Super's user counts as one volley). A stronger answer cancels Super; a weaker answer does **not** cancel it — Super still resolves and the weaker attack stays pending (section 6). Once upgraded, it can only be redirected by an upgraded Mirror.
 
 ## 3. Action Cards
 
@@ -245,7 +245,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 
 ### Mutual Attacks
 
-When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated: if both attacks deal exactly the same damage, they both cancel out. If the damage differs, the weaker attack is cancelled and the stronger stays pending — it resolves normally on its target's turn.
+When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated, using each side's **volley** damage (an Assassin multi-attack aimed at that same opponent counts as one attack whose damage is the sum of those hits). If both volleys deal exactly the same damage, they both cancel out. If the retaliating volley is stronger, the incoming volley is cancelled and the stronger attack stays pending — it resolves normally on its target's turn. If the retaliating volley is weaker, it is **not** cancelled: the incoming attack still resolves on this turn, and the weaker attack stays pending until the opponent's turn. Mirror still redirects only one pending attack at a time, not a whole volley.
 
 An attack redirected by Mirror remains a fully pending attack: if the player it is redirected to has their own attack pending against the one who redirected it, both attacks are evaluated as mutual attacks between them, following the same rule. Example: player A attacks player C, and player B also attacks player C with the same card. On C's turn, C uses Mirror to redirect A's attack toward B. B's attack against C and A's attack (redirected by C) toward B face off as mutual attacks between B and C, and cancel out since they deal the same damage.
 

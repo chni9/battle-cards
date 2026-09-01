@@ -100,8 +100,9 @@ forfeit at 2 players · last survivor.
 These are the spots where a plausible implementation is wrong and silent:
 
 - A tax paid by a player holding a full shield → life lost, shield untouched, no counter moved.
-- Two attacks of **different** damage aimed at each other → both resolve, on their own turns.
-  The tempting bug is to cancel the weaker one.
+- Two attacks of **different** damage aimed at each other: a stronger *answer* still
+  cancels the weaker incoming; a weaker answer is **kept** and the incoming still
+  resolves (Lot 54). The tempting bug is to splice the weaker retaliation.
 - A third player attacking into an existing pair → no mutual cancellation, no reciprocity.
 - Absorber after a turn where the target both **spent** points and **was robbed** → upgraded
   Absorber captures the spending only.

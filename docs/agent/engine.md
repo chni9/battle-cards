@@ -27,8 +27,10 @@ What follows is what those rules do not say.
    resolution phase follows immediately.
 4. **Mutual cancellation compares final damage** (base/upgraded damage × `damageMultiplier`),
    not card identity (#V4-2). Equal final damage cancels both even when the cards differ
-   (e.g. Mirror-doubled basic = 2 cancels strong = 2). Unequal cancels the weaker; the
-   stronger stays pending (Lot 19 / AGENTS golden rule 1).
+   (e.g. Mirror-doubled basic = 2 cancels strong = 2). A stronger *answer* cancels the weaker
+   incoming volley; a weaker answer is kept and the incoming still resolves (Lot 54 /
+   AGENTS golden rule 1). Assassin attacks that share `sourcePlayerId` + `targetPlayerId` +
+   `queuedAt` sum as one volley.
 
 ## The two life-loss primitives
 
@@ -218,13 +220,18 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 ## Mutual attacks — mechanics
 
 The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
-(designer ruling 2026-08-04 / Lot 19: stronger cancels weaker; equal cancels both).
+(designer 2026-09-01 / Lot 54: weaker answers survive; assassin volley sums).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
-- When damage differs, the weaker pending effect is removed (`outcome: 'cancelled'`); the
-  stronger remains queued and resolves on its target's turn.
+- Equal damage: both volleys are removed (`outcome: 'cancelled'`).
+- Stronger answer: the incoming volley is cancelled; the answer stays queued.
+- Weaker answer: incoming still applies this turn; the answer stays queued for the
+  opponent's turn. Do **not** splice the weaker retaliation.
+- Assassin `playMultipleAttacks` aimed at the same opponent share `queuedAt` and compare
+  as one damage total. Hits still resolve one by one. Mirror / Super Mirror still
+  address a **single** pending effect id (`chooseMirrorTarget`).
 - A Mirror redirection produces a fully pending attack at its new target, so it can create a new
   mutual pair, and can be redirected again with no chain limit (rules spec §3).
 - **Attribution:** after Mirror / Super Mirror redirect, `sourcePlayerId` becomes the
