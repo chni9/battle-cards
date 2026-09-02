@@ -34,7 +34,12 @@ Screens measure what players face only when that holds.
 ## Freeze
 
 `heuristic-v4` is the yardstick (L32-03). If its freeze test fails, **do not**
-update expectations — put the change under a new policy id.
+update expectations — put the change under a new policy id. **Exception (L54-01):**
+a Classic catalog price change can shift recorded traces because the same policy
+faces different legal costs; refresh the fixture only for that reason and log it
+in `decisions.md`. Mirror / burn behaviour for room Normal/Hard is the L54-03
+`score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
+is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
 
 ## Weights profiles (L33-01)
 
@@ -287,6 +292,12 @@ determinizer is how V5 fails quietly.
   same gap. Normal/Hard `roomBotPolicyId` → `search-v5-engage` so the live
   room uses this prior (v4 Search dumped attacks in JAPMZR). Arena gate still
   failed; `DEFAULT_POLICY_ID` stays `heuristic-v4`. Do not raise iterations.
+- **L54-03:** overlay `farm-to-engage-v3` — Mirror vs uncancellable incoming;
+  assassin volley equal-cancel; burn Imposition/Poison; skip Points Generator
+  unless it funds a threat. Easy stays v4.
+- **L54-04:** overlay `farm-to-engage-v4` — Super Absorber uses the same skip
+  as Points Generator (selfish special, not a direct threat). Imposition /
+  Poison still burn. Easy stays v4.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 

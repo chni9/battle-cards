@@ -105,61 +105,118 @@ function cancelReciprocalCounter(
   return true;
 }
 
+/** Final attack damage for mutual compare (#V4-2). */
+function attackFinalDamage(effect: PendingEffect): number {
+  if (!isAttackCardId(effect.cardId)) {
+    return 0;
+  }
+
+  return attackDamageFor(effect.cardId, effect.isUpgraded) * effect.damageMultiplier;
+}
+
 /**
- * Mutual attack pair (tech §4.6 / Lot 19): equal damage cancels both; unequal cancels the
- * weaker and leaves the stronger pending. Returns true when the incoming effect is cancelled.
+ * Assassin multi-attack volley: same source, same target, same `queuedAt` (one action).
+ * Mirror still addresses a single effect id — this key is cancel-only (L54-02).
  */
-function resolveMutualAttack(
+function incomingVolleyKey(effect: PendingEffect): string {
+  return `${effect.sourcePlayerId}:${effect.targetPlayerId}:${String(effect.queuedAt)}`;
+}
+
+function isReciprocalAttack(
+  effect: PendingEffect,
+  resolvingPlayerId: string,
+  sourcePlayerId: string,
+): boolean {
+  return (
+    isAttackCardId(effect.cardId) &&
+    effect.sourcePlayerId === resolvingPlayerId &&
+    effect.targetPlayerId === sourcePlayerId
+  );
+}
+
+function sumAttackDamage(effects: readonly PendingEffect[]): number {
+  let total = 0;
+
+  for (const effect of effects) {
+    total += attackFinalDamage(effect);
+  }
+
+  return total;
+}
+
+function removeEffectsById(player: Player, ids: ReadonlySet<string>): void {
+  player.pendingEffects = player.pendingEffects.filter((effect) => !ids.has(effect.id));
+}
+
+/**
+ * Latest reciprocal attack volley on `source` (max `queuedAt` among resolvingPlayer → source).
+ * Older leftovers are a different volley and stay out of this compare.
+ */
+function latestRetaliationVolley(
+  source: Player,
+  resolvingPlayerId: string,
+): PendingEffect[] {
+  const reciprocal = source.pendingEffects.filter((effect) =>
+    isReciprocalAttack(effect, resolvingPlayerId, source.id),
+  );
+
+  if (reciprocal.length === 0) {
+    return [];
+  }
+
+  let maxQueuedAt = reciprocal[0]?.queuedAt ?? 0;
+
+  for (const effect of reciprocal) {
+    if (effect.queuedAt > maxQueuedAt) {
+      maxQueuedAt = effect.queuedAt;
+    }
+  }
+
+  return reciprocal.filter((effect) => effect.queuedAt === maxQueuedAt);
+}
+
+/**
+ * Mutual attacks (tech §4.6 / Lot 19 / L54-02): equal volley damage cancels both volleys;
+ * stronger answer cancels the weaker incoming volley; weaker answer stays pending and the
+ * incoming volley still resolves. Returns incoming ids to cancel (possibly the whole volley).
+ */
+function decideMutualAttack(
   state: GameState,
   resolvingPlayer: Player,
   incoming: PendingEffect,
-): boolean {
+  remainingIncomingVolley: readonly PendingEffect[],
+): readonly string[] {
   if (!isAttackCardId(incoming.cardId)) {
-    return false;
+    return [];
   }
 
   const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
 
   if (source === undefined || source.isEliminated) {
-    return false;
+    return [];
   }
 
-  const retaliationIndex = source.pendingEffects.findIndex(
-    (effect) =>
-      isAttackCardId(effect.cardId) &&
-      effect.sourcePlayerId === resolvingPlayer.id &&
-      effect.targetPlayerId === source.id,
-  );
+  const retaliationVolley = latestRetaliationVolley(source, resolvingPlayer.id);
 
-  if (retaliationIndex < 0) {
-    return false;
+  if (retaliationVolley.length === 0) {
+    return [];
   }
 
-  const retaliation = source.pendingEffects[retaliationIndex];
-
-  if (retaliation === undefined || !isAttackCardId(retaliation.cardId)) {
-    return false;
-  }
-
-  const incomingDamage =
-    attackDamageFor(incoming.cardId, incoming.isUpgraded) * incoming.damageMultiplier;
-  const retaliationDamage =
-    attackDamageFor(retaliation.cardId, retaliation.isUpgraded) * retaliation.damageMultiplier;
+  const incomingDamage = sumAttackDamage(remainingIncomingVolley);
+  const retaliationDamage = sumAttackDamage(retaliationVolley);
 
   if (incomingDamage === retaliationDamage) {
-    // Equal: cancel both.
-    source.pendingEffects.splice(retaliationIndex, 1);
-    return true;
+    removeEffectsById(source, new Set(retaliationVolley.map((effect) => effect.id)));
+    return remainingIncomingVolley.map((effect) => effect.id);
   }
 
   if (incomingDamage > retaliationDamage) {
-    // Incoming stronger: drop the weaker retaliation; resolve incoming normally.
-    source.pendingEffects.splice(retaliationIndex, 1);
-    return false;
+    // Weaker answer survives; incoming volley still applies (designer 2026-09-01).
+    return [];
   }
 
-  // Retaliation stronger: cancel incoming; stronger stays on source's queue.
-  return true;
+  // Stronger answer: cancel the whole incoming volley; retaliation stays pending.
+  return remainingIncomingVolley.map((effect) => effect.id);
 }
 
 function resolveThief(state: GameState, target: Player, effect: PendingEffect): ResolveOutcome {
@@ -369,6 +426,8 @@ export function resolvePendingEffects(
   player.pendingEffects = deferred;
 
   const resolved: ResolvedEffect[] = [];
+  const cancelIncomingIds = new Set<string>();
+  const appliedVolleyKeys = new Set<string>();
 
   for (const effect of ready) {
     // Invisibility — #V4-9: all opposing pending resolve as immune before mutual cancel.
@@ -382,15 +441,45 @@ export function resolvePendingEffects(
     let outcome: ResolveOutcome = 'applied';
 
     if (isAttackCardId(effect.cardId)) {
+      if (cancelIncomingIds.has(effect.id)) {
+        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+        continue;
+      }
+
       // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
       if (consumeAttackBlockCharge(player, effect)) {
         resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
         continue;
       }
 
-      if (resolveMutualAttack(state, player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
-        continue;
+      const key = incomingVolleyKey(effect);
+
+      if (!appliedVolleyKeys.has(key) && !cancelIncomingIds.has(effect.id)) {
+        const resolvedIds = new Set(resolved.map((entry) => entry.effect.id));
+        const remainingIncomingVolley = ready.filter(
+          (candidate) =>
+            isAttackCardId(candidate.cardId) &&
+            incomingVolleyKey(candidate) === key &&
+            !resolvedIds.has(candidate.id) &&
+            !cancelIncomingIds.has(candidate.id),
+        );
+        const cancelled = decideMutualAttack(
+          state,
+          player,
+          effect,
+          remainingIncomingVolley,
+        );
+
+        if (cancelled.length > 0) {
+          for (const id of cancelled) {
+            cancelIncomingIds.add(id);
+          }
+
+          resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+          continue;
+        }
+
+        appliedVolleyKeys.add(key);
       }
 
       const amount =

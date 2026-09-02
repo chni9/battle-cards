@@ -2993,4 +2993,51 @@ This supersedes the full-width Incoming row and the 40/88 face pair in
 the L53-07 entries above. Still client presentation only — no rule or
 value change.
 
+## 2026-09-01 · [P] Spy play cost 4 → 2 (L54-01)
+
+Designer session instruction. Spy usage cost is **2 points**; shop buy remains
+double (**4**); sell yield is 2. Visibility, counter, Scientific `alwaysUpgraded`,
+and upgraded resource reveal are unchanged.
+
+`heuristic-v4.freeze.json` traces were refreshed: cheaper Spy changes what the
+**same** policy can afford in the 12-step yardstick. `weightsHash` is unchanged.
+
+## 2026-09-01 · [P] Mutual attacks — weaker answers survive; assassin volley (L54-02)
+
+Supersedes Lot 19 only for the *weaker answer* case. On the retaliator's turn:
+
+- Equal volley damage cancels both volleys.
+- Stronger answer still cancels the weaker incoming volley; the answer stays pending.
+- Weaker answer is **not** cancelled. Incoming still resolves; the weaker attack
+  stays queued for the opponent's turn.
+
+Assassin `playMultipleAttacks` hits that share `sourcePlayerId`, `targetPlayerId`,
+and `queuedAt` are **one volley** (sum of final damage) for this compare only.
+Hits still resolve one-by-one. Mirror / Super Mirror still redirect a **single**
+pending effect (`chooseMirrorTarget`). Grouping uses `queuedAt` (no protocol bump);
+`duplicatePendingEffect` keeps `queuedAt` but a redirected copy has a new target
+so it does not join the original volley.
+
+## 2026-09-01 · [P] Engage overlay — Mirror vs big hits; hostile-only burn (L54-03)
+
+Room Normal/Hard (`search-v5-engage` / `heuristic-v5-engage`) only. Overlay id
+`farm-to-engage-v3`. Do not edit `score-play/` or `heuristic-v4`. Easy stays v4.
+
+- Mirror: if incoming volley damage exceeds every held attack, score
+  `survive + 55 + incoming` so Mirror beats a useless weaker riposte but still
+  loses to an equal-cancel Basic.
+- `playMultipleAttacks`: sum aimed at a source vs that source's incoming volley;
+  equal-or-greater gets the Survive mutual-cancel band.
+- Burn: Imposition / Poison stay Deny. Points Generator is not
+  burned unless it funds a threat (known points ≥ 10, last opponent, or that
+  seat is already attacking / finishable). Super Absorber was on this Deny
+  list until L54-04.
+
+## 2026-09-01 · [P] Super Absorber is selfish, not hostile (L54-04)
+
+Designer follow-up: Super Absorber does not pose a direct threat. Overlay
+`farm-to-engage-v4` treats it like Points Generator — skip the burn unless
+the seat funds a threat (1v1, already attacking / finishable, or known
+points ≥ 10). Imposition and Poison stay Deny. Easy stays v4.
+
 

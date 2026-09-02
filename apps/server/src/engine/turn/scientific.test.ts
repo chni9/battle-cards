@@ -114,7 +114,7 @@ describe('Scientific alwaysUpgraded (L4-04)', () => {
     }
 
     actor.kitId = 'scientific';
-    actor.points = 8;
+    actor.points = 4;
     actor.upgradePoints = 2;
     actor.hand = [];
 

@@ -792,4 +792,10 @@ beside the kit, stacked, vertical scroll (`max-h-14`).
   **93** > kit right **51**), height **56**, **2** chips, `overflow-y: auto`.
 - `pnpm verify` **1158** tests.
 
+### Lot 54 verified 2026-09-01 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Classic Spy price in the live Shop: play cost **2** on the card face, buy **4**
+(double). Room `ZIDABK` (nick `SpyPrice`, Solo vs 1 Normal). Mutual / volley /
+overlay covered by engine and `score-engage` unit tests; `pnpm verify` **1166**
+tests.
 

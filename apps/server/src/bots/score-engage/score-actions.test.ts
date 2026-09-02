@@ -598,4 +598,228 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
       instanceId: 're-1',
     });
   });
+
+  it('L54-03: Mirror beats a Basic when incoming Super cannot be cancelled', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        hand: [
+          { instanceId: 'm1', cardId: 'mirror', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-super',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          queuedAt: 3,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'm1' },
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-03-mirror')).action).toEqual({
+      type: 'playCard',
+      instanceId: 'm1',
+    });
+  });
+
+  it('L54-03: equal Basic cancel still beats Mirror', () => {
+    const view = baseView({
+      self: baseSelf({
+        points: 20,
+        hand: [
+          { instanceId: 'm1', cardId: 'mirror', isUpgraded: false },
+          { instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-basic',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          queuedAt: 3,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'm1' },
+      { type: 'playCard', instanceId: 'basic-1', targetPlayerId: 'bot-b' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-03-cancel')).action).toEqual({
+      type: 'playCard',
+      instanceId: 'basic-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('L54-03: four basics as a volley cancel upgraded Strong', () => {
+    const view = baseView({
+      self: baseSelf({
+        kitId: 'assassin',
+        points: 20,
+        hand: [
+          { instanceId: 'b1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'b2', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'b3', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'b4', cardId: 'basic-attack', isUpgraded: false },
+        ],
+      }),
+      pendingEffects: [
+        {
+          id: 'eff-strong',
+          sourcePlayerId: 'bot-b',
+          targetPlayerId: 'bot-a',
+          cardId: 'strong-attack',
+          isUpgraded: true,
+          queuedAt: 2,
+          damageMultiplier: 1,
+          redirectedBy: null,
+        },
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      {
+        type: 'playMultipleAttacks',
+        attacks: [
+          { instanceId: 'b1', targetPlayerId: 'bot-b' },
+          { instanceId: 'b2', targetPlayerId: 'bot-b' },
+          { instanceId: 'b3', targetPlayerId: 'bot-b' },
+          { instanceId: 'b4', targetPlayerId: 'bot-b' },
+        ],
+      },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-03-volley')).action.type).toBe(
+      'playMultipleAttacks',
+    );
+  });
+
+  it('L54-03: does not burn a Points Generator user when Tax is legal', () => {
+    const view = baseView({
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        hand: [
+          { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'pg-1',
+              cardId: 'points-generator',
+              isUpgraded: false,
+              counter: 3,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+        player('bot-c', 'Charlie', false),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-03-pg')).action).not.toEqual({
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('L54-04: does not burn a Super Absorber user when Tax is legal', () => {
+    const view = baseView({
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        hand: [
+          { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'sa-1',
+              cardId: 'super-absorber',
+              isUpgraded: false,
+              counter: 2,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+        player('bot-c', 'Charlie', false),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-04-sa')).action).not.toEqual({
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('L54-03: still burns Imposition over Tax', () => {
+    const view = baseView({
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        hand: [
+          { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'imp-1',
+              cardId: 'imposition',
+              isUpgraded: false,
+              counter: 2,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+    ];
+    expect(decideEngage(view, actions, createRng('l54-03-imp')).action).toEqual({
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
 });

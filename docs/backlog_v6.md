@@ -34,6 +34,9 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 10. **Six-player Classic (Lot 52).** Occupancy 2–6. No protocol bump.
 11. **Table crowding (Lot 53).** Shared-size hand/specials, horizontal card scroll,
     collapse chrome on short (especially mobile) tables. No protocol bump.
+12. **Designer Classic tweaks (Lot 54).** Spy price, weaker-answer mutual, assassin
+    volley, engage-bot Mirror/burn, Super Absorber skip. Session instruction; no
+    protocol bump.
 
 **Execution order**
 
@@ -53,12 +56,13 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 **Scope lock**
 
-- **Classic frozen.** Tutorial-only exceptions remain spec §5.3–§5.4.
-  Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4). No other Classic value
-  change.
+- **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
+  assassin volley). Tutorial-only exceptions remain spec §5.3–§5.4.
+  Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**.
-- **Do not edit `heuristic-v4` or its freeze test.**
+- **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
+  for catalog-price affordability (L54-01) and must keep `weightsHash`.
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).
 - Client still has **zero rule logic**. Spotlight is presentation; the server filters.
@@ -67,7 +71,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-66 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+70 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -84,6 +88,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
 | 53 · Table crowding | 7 | 7 |
+| 54 · Designer Classic tweaks | 4 | 4 |
 
 ---
 
@@ -276,6 +281,22 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 
 ---
 
+## Lot 54 — Designer Classic tweaks (2026-09-01)
+
+Explicit session instruction. V6 teaching lots stay frozen; this lot is the Classic
+exception. No protocol bump. Do not edit `heuristic-v4` scoring or its freeze fixture
+except if Spy affordability changes recorded traces — then refresh the fixture and
+record why in `decisions.md`.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L54-01 | Spy play cost **4 → 2** (shop 8 → 4, sell 2). Catalog `pointsCard`; rules spec §3; tests that seed exactly 4/8 for Spy. **Acceptance:** `SHARED_CARD_CATALOG.spy.cost.points === 2` and `buyCost.points === 4`; Scientific mid-game buy still upgraded. | S | Medium | — | Done |
+| L54-02 | Mutual: weaker *answer* stays pending while incoming still resolves; stronger answer still cancels weaker incoming; equals cancel both. Assassin same-target same-`queuedAt` hits sum as one volley for cancel only. Mirror still one effect. **Acceptance:** Super vs Basic keeps the Basic; 4 basics cancel upgraded Strong; 20 basics beat Super; `pnpm verify` green. | **L** | **High** | — | Done |
+| L54-03 | `score-engage` overlay only: use Mirror more vs uncancellable incoming (not above equal-cancel); burn Imposition/Poison/Super Absorber always; skip Points Generator unless it funds a real threat. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` green; Easy stays v4. | M | Medium | L54-02 | Done |
+| L54-04 | Super Absorber uses the Points Generator overlay path (skip unless 1v1 / attacker / finishable / known points ≥ 10). Imposition and Poison still burn. Overlay `farm-to-engage-v4`. **Acceptance:** 3p Super Absorber + Tax does not pick the burn; Imposition still burns; Easy stays v4. | S | Low | L54-03 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -293,7 +314,8 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | 51 | 16 |
 | 52 | 1 |
 | 53 | 7 |
-| **Total** | **73** |
+| 54 | 4 |
+| **Total** | **77** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
 

@@ -87,7 +87,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
-| 14 | Classic frozen. Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
+| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
 | 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
@@ -215,7 +215,7 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 | `hand` | First time the dock is shown (after Draw) | This is you hand where you have all the cards you can use. Click a card to **use**, **upgrade**, or **sell** it for points. |
 | `specials` | First time the dock is shown (after Hand) | **Specials** are one-use cards. They are stronger that normal cards. Use them wisely. Special cards you start with depend on your kit. |
 | `resources` | Same | Here you will find lives, points, upgrade points and shield. They are your ressources that you have to manage during the game. If your number of lives atteign 0, you are eliminated. |
-| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**! It will take effect **after you act**. In general, you can: attack back with a equal or stronger attack, use Shield, or use Mirror. |
+| `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**! It will take effect **after you act**. You can attack back (equal cancels both; a weaker answer still hits them later), use Shield, or use Mirror. |
 | `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | An opponent used **Thief** on you! It will take effect **after you act**. This will steal uo to 10 points from you. You can counter it with Thief, or spend your points before it resolves. |
 | `hidden-kit` | First time an unspied opponent is visible | Here are your opponents. You cannot see their kit until you use Spy to reveal it. |
 | `shop` | Current best remaining economy lesson on your turn (L46-02) | This is the shop. You can buy cards, special cards and upgrade points from here. |
@@ -624,6 +624,7 @@ Not even partially, even “to lay groundwork”:
 - French UI / i18n framework
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
+  (except designer 2026-09-01 Lot 54)
 - A second Colyseus room type
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games

@@ -12,36 +12,38 @@
       {
         "turnSequence": 2,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:action:3"
+          "type": "buyCard",
+          "cardId": "spy"
         }
       },
       {
         "turnSequence": 4,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:special:0"
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:2"
         }
       },
       {
         "turnSequence": 6,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:1"
+          "instanceId": "buy:bot-0:2:7",
+          "targetPlayerId": "bot-1"
         }
       },
       {
         "turnSequence": 8,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:special:1"
+          "instanceId": "buy:bot-0:2:7",
+          "targetPlayerId": "bot-1"
         }
       },
       {
         "turnSequence": 10,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:0",
+          "instanceId": "buy:bot-0:2:7",
           "targetPlayerId": "bot-1"
         }
       }
@@ -78,15 +80,16 @@
       {
         "turnSequence": 8,
         "action": {
-          "type": "upgradeCard",
-          "instanceId": "bot-0:start:action:4"
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:0",
+          "targetPlayerId": "bot-1"
         }
       },
       {
         "turnSequence": 10,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:action:5"
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:4"
         }
       }
     ],
@@ -101,22 +104,23 @@
       {
         "turnSequence": 2,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:action:3"
-        }
-      },
-      {
-        "turnSequence": 4,
-        "action": {
           "type": "buyCard",
           "cardId": "spy"
         }
       },
       {
-        "turnSequence": 6,
+        "turnSequence": 4,
         "action": {
           "type": "sellCard",
           "instanceId": "bot-0:start:action:1"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
         }
       },
       {
@@ -154,23 +158,22 @@
       {
         "turnSequence": 4,
         "action": {
-          "type": "playCard",
-          "instanceId": "buy:bot-0:0:8"
+          "type": "buyCard",
+          "cardId": "spy"
         }
       },
       {
         "turnSequence": 6,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:attack:1",
-          "targetPlayerId": "bot-1"
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:3"
         }
       },
       {
         "turnSequence": 8,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:2",
+          "instanceId": "buy:bot-0:4:9",
           "targetPlayerId": "bot-1"
         }
       },
@@ -178,7 +181,7 @@
         "turnSequence": 10,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:1",
+          "instanceId": "buy:bot-0:4:9",
           "targetPlayerId": "bot-1"
         }
       }
@@ -201,16 +204,16 @@
       {
         "turnSequence": 4,
         "action": {
-          "type": "sellCard",
-          "instanceId": "bot-0:start:action:2"
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:1",
+          "targetPlayerId": "bot-1"
         }
       },
       {
         "turnSequence": 6,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:attack:0",
-          "targetPlayerId": "bot-1"
+          "type": "sellCard",
+          "instanceId": "bot-0:start:action:2"
         }
       },
       {
@@ -225,7 +228,7 @@
         "turnSequence": 10,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:1",
+          "instanceId": "bot-0:start:attack:0",
           "targetPlayerId": "bot-1"
         }
       }
@@ -260,28 +263,30 @@
       {
         "turnSequence": 6,
         "action": {
-          "type": "draw"
-        }
-      },
-      {
-        "turnSequence": 7,
-        "action": {
           "type": "buyCard",
           "cardId": "spy"
         }
       },
       {
-        "turnSequence": 9,
+        "turnSequence": 7,
         "action": {
           "type": "sellCard",
           "instanceId": "bot-0:start:action:1"
         }
       },
       {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:6:4",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
         "turnSequence": 11,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:7:4",
+          "instanceId": "buy:bot-0:6:4",
           "targetPlayerId": "bot-1"
         }
       }
@@ -313,15 +318,14 @@
         "turnSequence": 7,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:0",
-          "targetPlayerId": "bot-1"
+          "instanceId": "buy:bot-0:5:4"
         }
       },
       {
         "turnSequence": 9,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:0",
+          "instanceId": "bot-0:start:action:2",
           "targetPlayerId": "bot-1"
         }
       },
@@ -329,7 +333,8 @@
         "turnSequence": 11,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:5:4"
+          "instanceId": "bot-0:start:action:1",
+          "targetPlayerId": "bot-1"
         }
       }
     ],
@@ -375,7 +380,8 @@
         "turnSequence": 11,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:special:1"
+          "instanceId": "bot-0:start:attack:1",
+          "targetPlayerId": "bot-1"
         }
       }
     ],
@@ -392,15 +398,15 @@
         "turnSequence": 3,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:2"
+          "instanceId": "bot-0:start:special:0",
+          "consumeInstanceId": "bot-0:start:action:1"
         }
       },
       {
         "turnSequence": 5,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:special:0",
-          "consumeInstanceId": "bot-0:start:action:0"
+          "instanceId": "bot-0:start:action:2"
         }
       },
       {
@@ -415,7 +421,8 @@
         "turnSequence": 9,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:2"
+          "instanceId": "bot-0:start:action:0",
+          "targetPlayerId": "bot-1"
         }
       },
       {
@@ -522,43 +529,44 @@
         "turnSequence": 0,
         "action": {
           "type": "buyCard",
-          "cardId": "tax"
-        }
-      },
-      {
-        "turnSequence": 2,
-        "action": {
-          "type": "playCard",
-          "instanceId": "buy:bot-0:0:6"
-        }
-      },
-      {
-        "turnSequence": 4,
-        "action": {
-          "type": "buyCard",
           "cardId": "spy"
         }
       },
       {
-        "turnSequence": 6,
+        "turnSequence": 2,
         "action": {
           "type": "sellCard",
           "instanceId": "bot-0:start:attack:1"
         }
       },
       {
+        "turnSequence": 4,
+        "action": {
+          "type": "playCard",
+          "instanceId": "buy:bot-0:0:6",
+          "targetPlayerId": "bot-1"
+        }
+      },
+      {
+        "turnSequence": 6,
+        "action": {
+          "type": "buyCard",
+          "cardId": "tax"
+        }
+      },
+      {
         "turnSequence": 8,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:4:7",
-          "targetPlayerId": "bot-1"
+          "instanceId": "buy:bot-0:6:6"
         }
       },
       {
         "turnSequence": 10,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:0:6"
+          "instanceId": "buy:bot-0:0:6",
+          "targetPlayerId": "bot-1"
         }
       }
     ],
@@ -581,8 +589,7 @@
         "turnSequence": 5,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:0",
-          "targetPlayerId": "bot-1"
+          "instanceId": "bot-0:start:action:0"
         }
       },
       {
@@ -596,7 +603,8 @@
         "turnSequence": 9,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:0"
+          "instanceId": "bot-0:start:attack:0",
+          "targetPlayerId": "bot-1"
         }
       },
       {
@@ -617,15 +625,15 @@
       {
         "turnSequence": 3,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:action:3"
+          "type": "buyCard",
+          "cardId": "spy"
         }
       },
       {
         "turnSequence": 5,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:special:0",
+          "instanceId": "buy:bot-0:3:6",
           "targetPlayerId": "bot-1"
         }
       },
@@ -633,15 +641,14 @@
         "turnSequence": 7,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:1",
-          "targetPlayerId": "bot-1"
+          "instanceId": "bot-0:start:action:3"
         }
       },
       {
         "turnSequence": 9,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:attack:1",
+          "instanceId": "buy:bot-0:3:6",
           "targetPlayerId": "bot-1"
         }
       },
@@ -649,7 +656,8 @@
         "turnSequence": 11,
         "action": {
           "type": "playCard",
-          "instanceId": "bot-0:start:action:3"
+          "instanceId": "buy:bot-0:3:6",
+          "targetPlayerId": "bot-1"
         }
       }
     ],

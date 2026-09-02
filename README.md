@@ -17,12 +17,6 @@ to any rule, screen flow, or protocol event.
 | `docs/backlog_v2.md` | **Active** task tracker: V2 visual design (Lots 10–14). Watch point and acceptance criteria per task. Read "How to read this" first. |
 | `AGENTS.md` | Working rules for agents and developers. `docs/agent/` holds the per-domain playbooks. |
 
-**Known correction not yet applied to the rules spec:** the mutual-attacks rule in rules spec
-§6 and the Super attack note in §2 still say the stronger attack prevails. That clause is
-overruled. Actual rule: two attacks targeting each other, both pending — equal damage cancels
-both on the retaliating player's turn; different damage means no interaction at all, each
-resolves on its own target's turn. See technical spec §4.6.
-
 ## Requirements
 
 Only **pnpm** needs to be on your machine. The Node runtime is not a system dependency here

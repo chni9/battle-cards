@@ -171,14 +171,19 @@ traits: {
 
 ### 4.6 Mutual attacks
 
-Two attacks directed at each other between two players, both still pending:
+Two attacks directed at each other between two players, both still pending. Assassin
+multi-attack hits that share a target and were queued in the same action are **one volley**
+(sum of final damage) for this compare only.
 
-- **Equal damage** → both are cancelled, on the turn of the player who retaliated. Neither player is affected.
-- **Unequal damage** → the weaker attack is cancelled; the stronger stays pending and resolves on its target's turn.
+- **Equal volley damage** → both volleys are cancelled, on the turn of the player who retaliated.
+- **Stronger answer** → the weaker incoming volley is cancelled; the stronger stays pending
+  and resolves on its target's turn.
+- **Weaker answer** → incoming still resolves this turn; the weaker answer stays pending
+  (designer 2026-09-01 / Lot 54). Mirror still redirects a single pending effect.
 
-Designer ruling 2026-08-04 (Lot 19) restores stronger-cancels-weaker. It supersedes the earlier
-session that had removed "the stronger one prevails" in favour of "unequal = no interaction"
-(Appendix A point 6 / previous §4.6 text).
+Designer ruling 2026-08-04 (Lot 19) restored stronger-answer-cancels-weaker-incoming over
+the earlier "unequal = no interaction" text. Lot 54 keeps that for a *stronger* answer and
+stops cancelling a *weaker* answer.
 
 Consequence: the comparison always triggers on the turn of the player who attacked second, since a retaliation can only be born during that player's own turn, and their resolution phase immediately follows.
 
