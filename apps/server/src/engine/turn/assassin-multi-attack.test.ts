@@ -169,4 +169,53 @@ describe('Assassin playMultipleAttacks (L4-05)', () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it('four basics equal-cancel upgraded Strong as one volley (L54-02)', () => {
+    const state = createInitialState({ seats, seed: 'assassin-volley-cancel' });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    if (alice === undefined || bob === undefined) {
+      return;
+    }
+
+    alice.kitId = 'kamikaze';
+    alice.lives = 20;
+    alice.points = 10;
+    alice.hand = [{ instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: true }];
+    bob.kitId = 'assassin';
+    bob.lives = 20;
+    bob.points = 4;
+    bob.hand = [
+      { instanceId: 'b1', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'b2', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'b3', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'b4', cardId: 'basic-attack', isUpgraded: false },
+    ];
+
+    state.currentTurnPlayerId = alice.id;
+    const alicePlay = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'strong-1',
+      targetPlayerId: bob.id,
+    });
+    expect(alicePlay.ok).toBe(true);
+
+    state.currentTurnPlayerId = bob.id;
+    const bobPlay = performTurnAction(state, bob.id, {
+      type: 'playMultipleAttacks',
+      attacks: [
+        { instanceId: 'b1', targetPlayerId: alice.id },
+        { instanceId: 'b2', targetPlayerId: alice.id },
+        { instanceId: 'b3', targetPlayerId: alice.id },
+        { instanceId: 'b4', targetPlayerId: alice.id },
+      ],
+    });
+    expect(bobPlay.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.lives).toBe(20);
+    expect(alice.pendingEffects).toHaveLength(0);
+    expect(bob.pendingEffects).toHaveLength(0);
+  });
 });

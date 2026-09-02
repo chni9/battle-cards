@@ -1268,7 +1268,7 @@ describe('heuristic decide (L16-04)', () => {
   });
 
   it('stance: Absorber+ with small points spend and no UP stays below draw', () => {
-    // Spy cost 4; absorber 3 + assassin draw 1 = 4 — spend must be > 4 to qualify.
+    // Spy cost 2; absorber 3 + assassin draw 1 = 4 — spend must be > 2 to qualify.
     const view = baseView({
       turnSequence: 10,
       self: baseSelf({

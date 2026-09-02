@@ -1,9 +1,10 @@
 /**
- * Engage overlay on frozen v4 `scoreActions` — backlog L40-02 / L40-06.
+ * Engage overlay on frozen v4 `scoreActions` — backlog L40-02 / L40-06 / L54-03 / L54-04.
  * New files only; `score-play/` stays untouched (L32-03).
  */
 
 import {
+  attackDamageFor,
   getCard,
   isAttackCardId,
   type CardId,
@@ -17,7 +18,12 @@ import {
   scoreActions as scoreV4Actions,
   type ScoredAction,
 } from '../heuristic-policy';
-import { findOwnCard, isSpyThiefImmuneSeat, ownCards } from '../policy-internals';
+import {
+  eligibleMirrorPendingFromView,
+  findOwnCard,
+  isSpyThiefImmuneSeat,
+  ownCards,
+} from '../policy-internals';
 import { DEFAULT_POLICY_WEIGHTS, type PolicyWeights } from '../policy-weights';
 import {
   attackDamageOfAction,
@@ -36,6 +42,165 @@ const WIN_SPECIAL_IDS = ['sentence', 'mega-attack', 'card-absorber'] as const;
 
 function isWinSpecialId(cardId: string): boolean {
   return (WIN_SPECIAL_IDS as readonly string[]).includes(cardId);
+}
+
+/** Direct damage to other seats — always burn. Super Absorber is selfish (L54-04). */
+const HOSTILE_COUNTER_IDS = new Set(['imposition', 'poison']);
+
+/** Economy persistents that do not hit other seats — same skip-unless-threat as PG. */
+const SELFISH_COUNTER_IDS = new Set(['points-generator', 'super-absorber']);
+
+/** Mirror survive bump vs uncancellable incoming — stays below equal-cancel (+40 + dmg). */
+const MIRROR_UNCANCELLABLE_BONUS = 55;
+
+function knownOpponentPoints(view: PlayingStateView, opponentId: string): number | null {
+  const player = view.players.find((entry) => entry.id === opponentId);
+  const spied = player?.spied;
+
+  if (spied === undefined) {
+    return null;
+  }
+
+  if (spied.points !== undefined) {
+    return spied.points;
+  }
+
+  return spied.resourcesSnapshot?.points ?? null;
+}
+
+function incomingVolleyDamageBySource(view: PlayingStateView): ReadonlyMap<string, number> {
+  const totals = new Map<string, Map<number, number>>();
+
+  for (const effect of view.pendingEffects) {
+    if (effect.targetPlayerId !== view.you || !isAttackCardId(effect.cardId)) {
+      continue;
+    }
+
+    const byQueuedAt = totals.get(effect.sourcePlayerId) ?? new Map<number, number>();
+    const current = byQueuedAt.get(effect.queuedAt) ?? 0;
+    byQueuedAt.set(
+      effect.queuedAt,
+      current + attackDamageFor(effect.cardId, effect.isUpgraded) * effect.damageMultiplier,
+    );
+    totals.set(effect.sourcePlayerId, byQueuedAt);
+  }
+
+  const latest = new Map<string, number>();
+
+  for (const [sourceId, byQueuedAt] of totals) {
+    let maxQueuedAt = -1;
+    let damage = 0;
+
+    for (const [queuedAt, amount] of byQueuedAt) {
+      if (queuedAt >= maxQueuedAt) {
+        maxQueuedAt = queuedAt;
+        damage = amount;
+      }
+    }
+
+    latest.set(sourceId, damage);
+  }
+
+  return latest;
+}
+
+function maxHeldAttackDamage(view: PlayingStateView): number {
+  let max = 0;
+
+  for (const card of ownCards(view)) {
+    if (!isAttackCardId(card.cardId)) {
+      continue;
+    }
+
+    const damage = attackDamageFor(card.cardId, card.isUpgraded);
+
+    if (damage > max) {
+      max = damage;
+    }
+  }
+
+  return max;
+}
+
+function hasUncancellableIncoming(view: PlayingStateView): boolean {
+  const held = maxHeldAttackDamage(view);
+
+  for (const damage of incomingVolleyDamageBySource(view).values()) {
+    if (damage > held) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function targetHasHostileCounter(view: PlayingStateView, opponentId: string): boolean {
+  const player = view.players.find((entry) => entry.id === opponentId);
+
+  if (player === undefined) {
+    return false;
+  }
+
+  return player.activePersistentEffects.some(
+    (effect) => effect.counter !== null && HOSTILE_COUNTER_IDS.has(effect.cardId),
+  );
+}
+
+function targetHasOnlySelfishCounter(view: PlayingStateView, opponentId: string): boolean {
+  const player = view.players.find((entry) => entry.id === opponentId);
+
+  if (player === undefined || targetHasHostileCounter(view, opponentId)) {
+    return false;
+  }
+
+  return player.activePersistentEffects.some(
+    (effect) => effect.counter !== null && SELFISH_COUNTER_IDS.has(effect.cardId),
+  );
+}
+
+function selfishPersistentIsThreat(
+  view: PlayingStateView,
+  opponentId: string,
+  table: EngageTable,
+): boolean {
+  const livingOpponents = view.players.filter(
+    (player) => player.id !== view.you && !player.isEliminated,
+  ).length;
+
+  if (livingOpponents <= 1) {
+    return true;
+  }
+
+  if (table.attackerIds.has(opponentId) || table.finishableIds.has(opponentId)) {
+    return true;
+  }
+
+  const points = knownOpponentPoints(view, opponentId);
+  return points !== null && points >= 10;
+}
+
+function volleyDamageToward(
+  view: PlayingStateView,
+  action: Extract<TurnAction, { type: 'playMultipleAttacks' }>,
+  opponentId: string,
+): number {
+  let total = 0;
+
+  for (const part of action.attacks) {
+    if (part.targetPlayerId !== opponentId) {
+      continue;
+    }
+
+    const instance = findOwnCard(view, part.instanceId);
+
+    if (instance === undefined || !isAttackCardId(instance.cardId)) {
+      continue;
+    }
+
+    total += attackDamageFor(instance.cardId, instance.isUpgraded);
+  }
+
+  return total;
 }
 
 function sellYieldPoints(cardId: CardId): number {
@@ -176,6 +341,43 @@ function overlayEntry(
         code: 'invest',
       };
     }
+
+    if (
+      instance?.cardId === 'mirror' &&
+      eligibleMirrorPendingFromView(view, instance.isUpgraded).length > 0 &&
+      table.incomingAttackDamage > 0 &&
+      hasUncancellableIncoming(view)
+    ) {
+      return {
+        action,
+        score: bands.survive + MIRROR_UNCANCELLABLE_BONUS + table.incomingAttackDamage,
+        code: 'survive',
+      };
+    }
+  }
+
+  if (action.type === 'buyCard' && action.cardId === 'mirror' && table.incomingAttackDamage >= 4) {
+    return {
+      action,
+      score: Math.max(entry.score, bands.invest + 50),
+      code: 'invest',
+    };
+  }
+
+  if (action.type === 'playMultipleAttacks') {
+    const incomingBySource = incomingVolleyDamageBySource(view);
+
+    for (const [sourceId, incomingDamage] of incomingBySource) {
+      const answer = volleyDamageToward(view, action, sourceId);
+
+      if (incomingDamage > 0 && answer >= incomingDamage) {
+        return {
+          action,
+          score: bands.survive + weights.action.mutualCancelBonus + answer,
+          code: 'survive',
+        };
+      }
+    }
   }
 
   if (action.type === 'buyCard' && isAttackCardId(action.cardId)) {
@@ -213,6 +415,28 @@ function overlayEntry(
   const targets = attackTargetIds(view, action);
 
   if (targets.length > 0) {
+    const hitsHostile = targets.some((id) => targetHasHostileCounter(view, id));
+    const hitsSelfishOnly = targets.some(
+      (id) =>
+        targetHasOnlySelfishCounter(view, id) && !selfishPersistentIsThreat(view, id, table),
+    );
+
+    if (hitsHostile) {
+      return {
+        action,
+        score: Math.max(entry.score, bands.deny + weights.action.burnCounterBonus),
+        code: 'deny',
+      };
+    }
+
+    if (hitsSelfishOnly) {
+      return {
+        action,
+        score: Math.min(entry.score, bands.sustain - 15),
+        code: 'pressure',
+      };
+    }
+
     const hitsFinishable = targets.some((id) => table.finishableIds.has(id));
     const hitsAttacker = targets.some((id) => table.attackerIds.has(id));
     const damage = attackDamageOfAction(view, action);

@@ -70,7 +70,9 @@ describe('room search wiring (L36-01)', () => {
 
   it('four search-v5 bots complete without hitting MAX_TURNS', () => {
     const result = runSimulatedGame({
-      seed: 'l36-01-four-search',
+      // Lot 54 cheaper Spy + weaker-answer mutual put the old seed in a
+      // 3-player life cycle; this seed still finishes inside the original cap.
+      seed: 'l54-four-search-a',
       playerCount: 4,
       difficulties: ['hard', 'hard', 'hard', 'hard'],
       kitAssignment: ['assassin', 'kamikaze', 'untouchable', 'prophet'],

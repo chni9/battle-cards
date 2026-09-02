@@ -35,7 +35,7 @@ export const HINT_COPY: Record<HintId, HintCopy> = {
   },
   incoming: {
     title: 'Incoming',
-    body: 'There is an incoming **attack**! It will take effect **after you act**. In general, you can: attack back with a equal or stronger attack, use Shield, or use Mirror.',
+    body: 'There is an incoming **attack**! It will take effect **after you act**. You can attack back (equal cancels both; a weaker answer still hits them later), use Shield, or use Mirror.',
   },
   'incoming-thief': {
     title: 'Incoming',

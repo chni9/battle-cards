@@ -34,6 +34,9 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 10. **Six-player Classic (Lot 52).** Occupancy 2–6. No protocol bump.
 11. **Table crowding (Lot 53).** Shared-size hand/specials, horizontal card scroll,
     collapse chrome on short (especially mobile) tables. No protocol bump.
+12. **Designer Classic tweaks (Lot 54).** Spy price, weaker-answer mutual, assassin
+    volley, engage-bot Mirror/burn, Super Absorber skip. Session instruction; no
+    protocol bump.
 
 **Execution order**
 
@@ -53,12 +56,13 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 **Scope lock**
 
-- **Classic frozen.** Tutorial-only exceptions remain spec §5.3–§5.4.
-  Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4). No other Classic value
-  change.
+- **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
+  assassin volley). Tutorial-only exceptions remain spec §5.3–§5.4.
+  Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**.
-- **Do not edit `heuristic-v4` or its freeze test.**
+- **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
+  for catalog-price affordability (L54-01) and must keep `weightsHash`.
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).
 - Client still has **zero rule logic**. Spotlight is presentation; the server filters.
@@ -67,7 +71,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-71 of 73 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+75 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -84,6 +88,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 51 · Beta UI feedback | 16 | 16 |
 | 52 · Six-player Classic | 1 | 1 |
 | 53 · Table crowding | 7 | 7 |
+| 54 · Designer Classic tweaks | 4 | 4 |
 
 ---
 
@@ -169,6 +174,11 @@ Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, 
 
 ## Lot 47 — Feedback + inbox
 
+HTTP + Postgres only. Lot 54 (Spy 2/4, weaker-answer mutual) and L53-07
+(Incoming beside the kit) landed on main in parallel; this lot does not
+reopen those values. Feedback `!` stays on the turn strip, not Incoming
+or the economy bar.
+
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L47-01 | Migration `005_feedback_reports.sql` as spec §7.2 (no seed column). Types + insert helper, unit-tested. **Acceptance:** kind check constraint; insert of a report with `log_tail` and without `game_code`. | M | **High** | — | Done |
@@ -183,8 +193,8 @@ Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, 
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`). **Acceptance:** playbooks match shipped behaviour; no second frontend playbook. | S | Low | L42–L47 as landed | To do |
-| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand pagination. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. | L | Medium | all of 41–47 | To do |
+| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit; Incoming beside kit; turn-strip Feedback), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`; overlay `farm-to-engage-v4`). **Acceptance:** playbooks match shipped behaviour including Lot 54 Spy 2/4 and weaker-answer; no second frontend playbook. | S | Low | L42–L47 as landed | To do |
+| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand pagination, Incoming beside the kit with Feedback `!` on the turn strip, Shop Spy play **2** / buy **4**. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. **Watch point:** a weaker answer that does not cancel incoming is Lot 54, not a V6 defect. | L | Medium | all of 41–47 | To do |
 
 ---
 
@@ -272,7 +282,23 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | L53-04 | Opponent arc: one `flex-nowrap` row, overflow-x only. Remove wrap / extra max-height for 4–5 foes. **Acceptance:** `table-shell` / CSS source test: `flex-nowrap`, no `flex-wrap` on the opponents zone. | S | Low | L53-01 | Done |
 | L53-05 | Felt collapse planner: when dock min-height (64px hand) does not fit, hide Incoming (and Waiting) then opponents then the action log behind a button + Dialog, in that order. Empty Incoming/Waiting take no space even before collapse. Landscape leftover after opponents collapse stays on the log (dock is beside chrome). **Acceptance:** `planFeltCollapse` tests for the three steps; 6p short portrait felt collapses the log last; short landscape keeps the log. | M | Medium | L53-03, L53-04 | Done |
 | L53-06 | Update `frontend.md`. Browser: phone 390×844 + landscape 844×390, Specialist + 5 Easy bots; crowded hand still tappable; opponents one row that scrolls; collapse buttons open Dialogs. Record room codes. **Acceptance:** notes in `frontend.md`; `pnpm verify` green. | L | Medium | L53-02–05 | Done |
-| L53-07 | Playtest fix: shared card size, **horizontal** scroll (no wrap/vertical), height-fit so faces are not cropped (min may drop below 64), Specials match Hand, Dialogs + collapse buttons fully on-screen at 390×844 and 844×390. **Acceptance:** `fitCardBand` never returns a width whose face is taller than the row; source has `flex-nowrap` + `overflow-x-auto` and no card `overflow-y-auto`; Dialog overlay is `items-start` with panel `max-h-full` of the overlay (not `100dvh`); Cancel / Close / Action log body / Opponents seats stay inside the viewport. `pnpm verify` green. | M | Medium | L53-06 | Done |
+| L53-07 | Playtest fix: shared card size, **horizontal** scroll (no wrap/vertical), height-fit so faces are not cropped (min 22 / max 48), Incoming beside the kit with vertical chip scroll, Dialogs + collapse buttons fully on-screen at 390×844 and 844×390. **Acceptance:** `fitCardBand` never returns a width whose face is taller than the row; Incoming `overflow-y-auto` + `max-h-14` beside the kit; Dialog overlay is `items-start` with panel `max-h-full` of the overlay (not `100dvh`). `pnpm verify` green. | M | Medium | L53-06 | Done |
+
+---
+
+## Lot 54 — Designer Classic tweaks (2026-09-01)
+
+Explicit session instruction. V6 teaching lots stay frozen; this lot is the Classic
+exception. No protocol bump. Do not edit `heuristic-v4` scoring or its freeze fixture
+except if Spy affordability changes recorded traces — then refresh the fixture and
+record why in `decisions.md`.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L54-01 | Spy play cost **4 → 2** (shop 8 → 4, sell 2). Catalog `pointsCard`; rules spec §3; tests that seed exactly 4/8 for Spy. **Acceptance:** `SHARED_CARD_CATALOG.spy.cost.points === 2` and `buyCost.points === 4`; Scientific mid-game buy still upgraded. | S | Medium | — | Done |
+| L54-02 | Mutual: weaker *answer* stays pending while incoming still resolves; stronger answer still cancels weaker incoming; equals cancel both. Assassin same-target same-`queuedAt` hits sum as one volley for cancel only. Mirror still one effect. **Acceptance:** Super vs Basic keeps the Basic; 4 basics cancel upgraded Strong; 20 basics beat Super; `pnpm verify` green. | **L** | **High** | — | Done |
+| L54-03 | `score-engage` overlay only: use Mirror more vs uncancellable incoming (not above equal-cancel); burn Imposition/Poison/Super Absorber always; skip Points Generator unless it funds a real threat. **Acceptance:** overlay tests; `heuristic-v4.freeze.test.ts` green; Easy stays v4. | M | Medium | L54-02 | Done |
+| L54-04 | Super Absorber uses the Points Generator overlay path (skip unless 1v1 / attacker / finishable / known points ≥ 10). Imposition and Poison still burn. Overlay `farm-to-engage-v4`. **Acceptance:** 3p Super Absorber + Tax does not pick the burn; Imposition still burns; Easy stays v4. | S | Low | L54-03 | Done |
 
 ---
 
@@ -293,9 +319,10 @@ Supersedes L43-04 short-dock shrink and L52-01 opponent wrap.
 | 51 | 16 |
 | 52 | 1 |
 | 53 | 7 |
-| **Total** | **73** |
+| 54 | 4 |
+| **Total** | **77** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump; Feedback on Incoming or the economy bar.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 

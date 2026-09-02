@@ -1,7 +1,6 @@
 /**
- * Private zone — kit + actives on the identity row; Incoming on its own
- * full-width chip row; hand/specials below. Activating a card must not steal
- * vertical space from the card band.
+ * Private zone — kit + Incoming on the identity row; hand/specials below.
+ * Incoming chips stack and scroll vertically so they do not steal the card band.
  */
 
 import type {
@@ -28,6 +27,8 @@ import { TutorialCallout } from './tutorial-callout';
 
 /** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */
 export const DOCK_RESOURCE_CAPTION_VISIBLE = true;
+/** Incoming column beside the kit — ~two compact chips, then vertical scroll. */
+export const INCOMING_STACK_MAX_CLASS = 'max-h-14';
 
 export interface PrivateZoneProps {
   view: PlayingStateView;
@@ -114,8 +115,8 @@ export function PrivateZone({
       data-active-seat={isActiveSeat ? 'true' : undefined}
       className="flex h-full min-h-0 flex-col gap-0.5 overflow-visible landscape:gap-1"
     >
-      <div className="flex shrink-0 items-center justify-between gap-1.5 overflow-visible sm:gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+      <div className="flex shrink-0 items-start justify-between gap-1.5 overflow-visible sm:gap-2">
+        <div className="flex min-w-0 max-w-[48%] items-center gap-1.5 sm:gap-2">
           <TutorialCallout
             active={highlightKit}
             arrow="top"
@@ -166,7 +167,7 @@ export function PrivateZone({
           )}
         </div>
         {showIncomingButton ? (
-          <div data-zone="incoming-collapsed" className="shrink-0">
+          <div data-zone="incoming-collapsed" className="min-w-0 flex-1">
             <TutorialCallout
               active={highlightIncoming}
               arrow="top"
@@ -177,6 +178,7 @@ export function PrivateZone({
                 type="button"
                 variant="orange"
                 data-hint-anchor="incoming"
+                className="w-full min-w-0"
                 onClick={onOpenIncoming}
               >
                 {incomingButtonLabel}
@@ -184,34 +186,38 @@ export function PrivateZone({
             </TutorialCallout>
           </div>
         ) : null}
-      </div>
-      {!showIncomingButton && incomingCount > 0 ? (
-        <div
-          data-zone="incoming-pending"
-          data-hint-anchor="incoming"
-          className={[
-            'min-w-0 w-full shrink-0 overflow-visible py-1 overscroll-x-contain',
-            highlightIncoming ? 'pt-10' : '',
-          ].join(' ')}
-        >
-          <TutorialCallout
-            active={highlightIncoming}
-            layout="stretch"
-            arrow="top"
-            highlightId="incoming"
+        {!showIncomingButton && incomingCount > 0 ? (
+          <div
+            data-zone="incoming-pending"
+            data-hint-anchor="incoming"
+            className={[
+              'min-h-0 min-w-0 flex-1',
+              INCOMING_STACK_MAX_CLASS,
+              highlightIncoming
+                ? 'overflow-visible'
+                : 'overflow-x-hidden overflow-y-auto overscroll-contain',
+            ].join(' ')}
           >
-            <PendingQueue
-              view={view}
-              effects={incomingEffects}
-              title={INCOMING_OPEN_LABEL}
-              compact
-              tone="dock"
-              highlightedIds={mirrorHighlightIds}
-              animateEntrance
-            />
-          </TutorialCallout>
-        </div>
-      ) : null}
+            <TutorialCallout
+              active={highlightIncoming}
+              layout="stretch"
+              arrow="top"
+              highlightId="incoming"
+            >
+              <PendingQueue
+                view={view}
+                effects={incomingEffects}
+                title={INCOMING_OPEN_LABEL}
+                compact
+                stack
+                tone="dock"
+                highlightedIds={mirrorHighlightIds}
+                animateEntrance
+              />
+            </TutorialCallout>
+          </div>
+        ) : null}
+      </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
         <CardBand
