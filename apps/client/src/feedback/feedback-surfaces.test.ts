@@ -30,6 +30,7 @@ describe('feedback surfaces (technical spec v6 §7.1 / L47-03)', () => {
     expect(table).toContain('{onOpenFeedback === undefined ? (');
     expect(economy).not.toContain('Feedback');
     expect(end).toContain('onOpenFeedback={onOpenManualFeedback}');
+    expect(end).toContain('isEndStatsOpen');
     expect(end).toContain('shouldAskFeedbackAfterStatsClose');
     expect(end).toContain('shouldMarkEndFeedbackAsked');
     expect(end).toContain('mode={feedbackMode}');

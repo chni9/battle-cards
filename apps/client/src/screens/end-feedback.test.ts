@@ -3,31 +3,38 @@ import { describe, expect, it } from 'vitest';
 import {
   canOpenEndManualFeedback,
   canReopenEndStats,
+  isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
-  shouldAutoOpenStats,
   shouldMarkEndFeedbackAsked,
 } from './end-feedback';
 
 describe('end feedback exclusivity (technical spec v6 §7.1 / L47-03)', () => {
-  it('delays Game over stats while the banner-period Feedback form is open', () => {
+  it('keeps Game over stats closed while the banner-period Feedback form is open', () => {
     expect(
-      shouldAutoOpenStats({
+      isEndStatsOpen({
         bannerElapsed: true,
-        autoStatsShown: false,
+        statsDismissed: false,
         feedbackOpen: true,
       }),
     ).toBe(false);
     expect(
-      shouldAutoOpenStats({
+      isEndStatsOpen({
         bannerElapsed: true,
-        autoStatsShown: false,
+        statsDismissed: false,
         feedbackOpen: false,
       }),
     ).toBe(true);
     expect(
-      shouldAutoOpenStats({
+      isEndStatsOpen({
+        bannerElapsed: false,
+        statsDismissed: false,
+        feedbackOpen: false,
+      }),
+    ).toBe(false);
+    expect(
+      isEndStatsOpen({
         bannerElapsed: true,
-        autoStatsShown: true,
+        statsDismissed: true,
         feedbackOpen: false,
       }),
     ).toBe(false);

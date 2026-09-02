@@ -5,13 +5,16 @@
 
 export type EndFeedbackMode = 'ask' | 'manual';
 
-/** After the win/death banner, open stats only if Feedback is not already up. */
-export function shouldAutoOpenStats(input: {
+/**
+ * Game over stats are derived: after the banner, until dismissed, and never
+ * while Feedback is already open (banner-period `!`).
+ */
+export function isEndStatsOpen(input: {
   bannerElapsed: boolean;
-  autoStatsShown: boolean;
+  statsDismissed: boolean;
   feedbackOpen: boolean;
 }): boolean {
-  return input.bannerElapsed && !input.autoStatsShown && !input.feedbackOpen;
+  return input.bannerElapsed && !input.statsDismissed && !input.feedbackOpen;
 }
 
 /** Frozen-board `!` must not open a second form over stats or an existing Feedback. */

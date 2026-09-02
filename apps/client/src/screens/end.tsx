@@ -14,8 +14,8 @@ import type { ActionRejectPayload } from '../net/use-room-connection';
 import {
   canOpenEndManualFeedback,
   canReopenEndStats,
+  isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
-  shouldAutoOpenStats,
   shouldMarkEndFeedbackAsked,
   type EndFeedbackMode,
 } from './end-feedback';
@@ -44,16 +44,20 @@ export function EndScreen({
   nowMs,
   onLeave,
 }: EndScreenProps): ReactElement {
-  const [statsOpen, setStatsOpen] = useState(false);
-  const [autoStatsShown, setAutoStatsShown] = useState(false);
   const [bannerElapsed, setBannerElapsed] = useState(false);
+  const [statsDismissed, setStatsDismissed] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMode, setFeedbackMode] = useState<EndFeedbackMode>('ask');
   const youWon = view.winnerPlayerId === view.finalTable.you;
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
+  const statsOpen = isEndStatsOpen({
+    bannerElapsed,
+    statsDismissed,
+    feedbackOpen,
+  });
 
   const onStatsClose = (): void => {
-    setStatsOpen(false);
+    setStatsDismissed(true);
     if (
       shouldAskFeedbackAfterStatsClose({
         alreadyAsked: hasAskedFeedback(view.gameCode),
@@ -82,20 +86,6 @@ export function EndScreen({
     };
   }, []);
 
-  useEffect(() => {
-    if (
-      !shouldAutoOpenStats({
-        bannerElapsed,
-        autoStatsShown,
-        feedbackOpen,
-      })
-    ) {
-      return;
-    }
-    setStatsOpen(true);
-    setAutoStatsShown(true);
-  }, [autoStatsShown, bannerElapsed, feedbackOpen]);
-
   return (
     <>
       <TableScreen
@@ -114,7 +104,7 @@ export function EndScreen({
           if (!canReopenEndStats({ feedbackOpen })) {
             return;
           }
-          setStatsOpen(true);
+          setStatsDismissed(false);
         }}
         onDraw={noop}
         onPlayCard={noop}
