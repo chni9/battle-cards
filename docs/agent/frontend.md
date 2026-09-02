@@ -360,7 +360,10 @@ rules above are unchanged — this section only covers how the client looks.
   First close of Game over stats (View board / overlay / Esc) opens Feedback in ask-mode
   once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
   successful send). **Return home** from stats does not auto-ask. Failed send does not
-  mark asked. Table **!** still opens manual Feedback on the frozen board (`screen: 'end'`).
+  mark asked. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
+  ask / turn-strip **!** never stack: banner-period `!` delays stats until that form
+  closes; a send there marks asked; `!` is a no-op while stats or Feedback is already
+  open. Live table still owns its own Dialog.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
   Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
   (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);

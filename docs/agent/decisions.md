@@ -3094,5 +3094,14 @@ for both wrong and correct passwords. Patch
 `matchMaker.controller.DEFAULT_CORS_HEADERS` at boot so the header is allowed.
 POST `/api/feedback` was already fine (`Content-Type` is in the default list).
 
+## 2026-09-02 · [P] Game over Feedback is one Dialog (L47-03)
+
+The finished table used to keep its own Feedback Dialog while `EndScreen` also
+opened ask-mode after stats. Banner-period `!` plus Game over Esc stacked two
+forms and dropped in-progress text. `EndScreen` now owns the only finished
+Feedback Dialog: delay auto-stats while it is open; `!` no-ops over stats or an
+open form; Skip or a successful send (including early `!`) marks asked so stats
+close does not prompt again. Live table chrome is unchanged.
+
 
 

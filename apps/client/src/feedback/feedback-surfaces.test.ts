@@ -26,12 +26,14 @@ describe('feedback surfaces (technical spec v6 §7.1 / L47-03)', () => {
     expect(lobby).toContain('screen="lobby"');
     expect(table).toContain('FEEDBACK_ARIA_LABEL');
     expect(table).toContain("setFeedbackOpen(true)");
+    expect(table).toContain('onOpenFeedback !== undefined');
+    expect(table).toContain('{onOpenFeedback === undefined ? (');
     expect(economy).not.toContain('Feedback');
-    expect(end).toContain("mode=\"ask\"");
-    expect(end).toContain('markFeedbackAsked');
-    expect(end).toContain('hasAskedFeedback');
+    expect(end).toContain('onOpenFeedback={onOpenManualFeedback}');
+    expect(end).toContain('shouldAskFeedbackAfterStatsClose');
+    expect(end).toContain('shouldMarkEndFeedbackAsked');
+    expect(end).toContain('mode={feedbackMode}');
     expect(end).toContain('onClose={onStatsClose}');
     expect(end).toContain('onLeave={onLeave}');
-    expect(end).toContain("reason === 'skip' || reason === 'sent'");
   });
 });

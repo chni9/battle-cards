@@ -167,6 +167,11 @@ export interface TableScreenProps {
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
   onShowStats?: () => void;
+  /**
+   * Finished board: parent owns Feedback so Game over stats / ask / `!` never stack
+   * (L47-03). Live table omits this and keeps its own Dialog.
+   */
+  onOpenFeedback?: () => void;
   /** Finished-board winner for the POV (L51-06). */
   youWon?: boolean;
 }
@@ -364,6 +369,7 @@ function TableScreenInner({
   onActivateDuplication,
   readOnly = false,
   onShowStats,
+  onOpenFeedback,
   youWon = false,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
@@ -1212,6 +1218,10 @@ function TableScreenInner({
             <IconButton
               aria-label={FEEDBACK_ARIA_LABEL}
               onClick={() => {
+                if (onOpenFeedback !== undefined) {
+                  onOpenFeedback();
+                  return;
+                }
                 setFeedbackOpen(true);
               }}
             >
@@ -1648,18 +1658,20 @@ function TableScreenInner({
           setHowToPlayOpen(false);
         }}
       />
-      <FeedbackDialog
-        open={feedbackOpen}
-        mode="manual"
-        screen={readOnly ? 'end' : view.playKind === 'tutorial' ? 'tutorial' : 'table'}
-        gameCode={view.gameCode}
-        playKind={view.playKind}
-        actionLog={view.actionLog}
-        {...(selfPublic !== undefined ? { nickname: selfPublic.nickname } : {})}
-        onDismiss={() => {
-          setFeedbackOpen(false);
-        }}
-      />
+      {onOpenFeedback === undefined ? (
+        <FeedbackDialog
+          open={feedbackOpen}
+          mode="manual"
+          screen={readOnly ? 'end' : view.playKind === 'tutorial' ? 'tutorial' : 'table'}
+          gameCode={view.gameCode}
+          playKind={view.playKind}
+          actionLog={view.actionLog}
+          {...(selfPublic !== undefined ? { nickname: selfPublic.nickname } : {})}
+          onDismiss={() => {
+            setFeedbackOpen(false);
+          }}
+        />
+      ) : null}
 
       <TableLeaveConfirm
         intent={leaveConfirm}
