@@ -2976,6 +2976,23 @@ This supersedes “collapse all three on innerHeight ≤ 500” in the Lot 53
 and L53-07 entries above. Still client presentation only — no rule or
 value change.
 
+## 2026-09-01 · [P] Smaller faces; Incoming beside kit (L53-07)
+
+Designer: live-table faces still filled the dock (the 40/88 pair was the
+cap, not a crowded min). Incoming sat on its own full-width row of
+horizontal chips under the kit.
+
+- Face width floor **22px**, cap **48px**. Still one shared width, one
+  horizontal row per section, shrink below the floor rather than crop.
+- Incoming is **on the identity row beside the kit**. Multiple chips
+  **stack** and scroll vertically (`max-h-14`). Felt Waiting stays a
+  horizontal strip. Incoming no longer adds dock height, so collapse
+  does not hide it to free empty space.
+
+This supersedes the full-width Incoming row and the 40/88 face pair in
+the L53-07 entries above. Still client presentation only — no rule or
+value change.
+
 ## 2026-09-01 · [P] Spy play cost 4 → 2 (L54-01)
 
 Designer session instruction. Spy usage cost is **2 points**; shop buy remains
@@ -3022,4 +3039,5 @@ Designer follow-up: Super Absorber does not pose a direct threat. Overlay
 `farm-to-engage-v4` treats it like Points Generator — skip the burn unless
 the seat funds a threat (1v1, already attacking / finishable, or known
 points ≥ 10). Imposition and Poison stay Deny. Easy stays v4.
+
 

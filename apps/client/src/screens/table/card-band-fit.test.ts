@@ -35,6 +35,11 @@ describe('fitCardBand (L53-07)', () => {
     expect(fit.cardWidth).toBe(CARD_BAND_MAX_W);
   });
 
+  it('keeps the live-table cap well below the old 88px dock-filling size', () => {
+    expect(CARD_BAND_MAX_W).toBeLessThanOrEqual(48);
+    expect(CARD_BAND_ABS_MIN_W).toBeLessThanOrEqual(22);
+  });
+
   it('keeps one width even when cards cannot all fit in the band', () => {
     const fit = fitCardBand(10, 120, 160);
     expect(fit.cardWidth).toBeGreaterThan(1);

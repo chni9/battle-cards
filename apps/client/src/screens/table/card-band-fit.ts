@@ -5,13 +5,16 @@
  */
 
 export const CARD_BAND_GAP_PX = 6;
-/** Preferred minimum when the row is tall enough. Shrink below rather than crop. */
-export const CARD_BAND_MIN_W = 40;
-export const CARD_BAND_MAX_W = 88;
-/** Preferred floor used by collapse budgeting when height is unknown. */
-export const CARD_BAND_ABS_MIN_W = 40;
+/**
+ * Preferred floor when the row is tall enough. Designer 2026-09-01: the
+ * previous 40/88 pair still filled the dock. Shrink below rather than crop.
+ */
+export const CARD_BAND_MIN_W = 22;
+export const CARD_BAND_MAX_W = 48;
+/** Floor used by collapse budgeting when height is unknown. */
+export const CARD_BAND_ABS_MIN_W = 22;
 /** Below this stacked-row width, Hand and Specials sit side by side. */
-export const CARD_BAND_COMFORT_W = 56;
+export const CARD_BAND_COMFORT_W = 32;
 /**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.

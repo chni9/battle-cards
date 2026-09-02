@@ -177,11 +177,13 @@ rules above are unchanged — this section only covers how the client looks.
   portrait opens a visual inspect Dialog from `getKit` / `getCard` only (L51-04:
   starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
   cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
-  prose). **Private zone:**
-  Incoming is a **full-width chip row** under the identity header (title + chips on
-  one line). It is not squeezed beside the kit/name and has no `max-h-9` clip.
-  `CardBand` — Hand and Specials share **one** face width (preferred min **40px**, max
-  88px; shrink further rather than crop). Specials do not size independently. A short
+  prose).   **Private zone:**
+  Incoming sits **beside the kit** on the identity row (not a full-width row under
+  it). Chips **stack vertically** and scroll (`max-h-14`, overflow-y) when several
+  queue. No `max-h-9` clip on the chip itself. Felt Waiting stays a horizontal
+  strip. `CardBand` — Hand and Specials share **one** face width (preferred min
+  **22px**, max **48px**; shrink further rather than crop). Specials do not size
+  independently. A short
   Hand or Specials row packs to `w-max` and **centers** with `mx-auto` (do not
   `justify-center` the overflow row — that clips both sides). Resources sit
   above
@@ -778,6 +780,17 @@ Incoming and opponents; leftover left-column height stays on the log.
   action log **on the felt** **168×259** (grid rows `44px 0px 259px`);
   `data-collapse-log=false`. No document page-scroll.
 - Table **390×844:** table fills; Incoming / opponents / log stay expanded.
+
+Designer follow-up: faces still filled the dock at the 88px cap, and
+Incoming sat on its own full-width row. Floor **22** / cap **48**. Incoming
+beside the kit, stacked, vertical scroll (`max-h-14`).
+
+- Solo nick `L53Face` at **390×844:** `data-card-width` **48**, rendered face
+  **48×84**. **844×390:** same 48px cap, Hand/Specials side by side.
+- Room `IJCPGG` (host `L53In`, guests `L53AtkA` / `L53AtkB`). Portrait
+  Incoming **beside the kit** (kit top **347**, Incoming top **347**, left
+  **93** > kit right **51**), height **56**, **2** chips, `overflow-y: auto`.
+- `pnpm verify` **1158** tests.
 
 ### Lot 54 verified 2026-09-01 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 

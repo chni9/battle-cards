@@ -43,4 +43,11 @@ describe('pending queue compact strip (L53-07)', () => {
     expect(source).toContain('flex-row items-center');
     expect(source).toContain('flex-1 flex-nowrap');
   });
+
+  it('stacks Incoming chips instead of a horizontal nowrap strip', () => {
+    const source = readFileSync(join(dir, 'pending-queue.tsx'), 'utf8');
+    expect(source).toContain('stack?: boolean');
+    expect(source).toContain('stacked');
+    expect(source).toContain('flex h-full min-h-0 min-w-0 flex-col');
+  });
 });

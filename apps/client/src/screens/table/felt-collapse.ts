@@ -13,7 +13,11 @@ export const FELT_OPPONENT_ROW_PX = 112;
 export const FELT_LOG_MIN_PX = 56;
 export const FELT_PENDING_NONEMPTY_PX = 72;
 export const DOCK_HEADER_PX = 40;
-export const DOCK_INCOMING_PX = 64;
+/**
+ * Incoming sits on the identity row (beside the kit), so it does not add
+ * dock height. Keep 0 so collapse does not hide chips to "free" empty space.
+ */
+export const DOCK_INCOMING_PX = 0;
 export const DOCK_RESOURCES_PX = 40;
 export const DOCK_ECONOMY_PX = 48;
 export const DOCK_GAP_PX = 8;

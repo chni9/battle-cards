@@ -22,8 +22,13 @@ export interface PendingQueueProps {
   effects: readonly PendingEffectView[];
   /** Section title. */
   title?: string;
-  /** Compact single-line chips (Incoming / felt strip). */
+  /** Compact chips (Incoming / felt strip). */
   compact?: boolean;
+  /**
+   * Compact Incoming beside the kit: stack chips and scroll vertically.
+   * Felt Waiting stays a horizontal strip.
+   */
+  stack?: boolean;
   /** Tone for placement on felt (light on dark) vs private dock. */
   tone?: 'felt' | 'dock';
   /** Pending effect ids to emphasize (Mirror eligible). */
@@ -37,6 +42,7 @@ export function PendingQueue({
   effects,
   title = 'Pending effects',
   compact = false,
+  stack = false,
   tone = 'felt',
   highlightedIds = [],
   animateEntrance = false,
@@ -60,13 +66,17 @@ export function PendingQueue({
     (effect) => !isPersistentPresentationId(effect.id),
   );
 
+  const stacked = compact && stack;
+
   return (
     <section
       data-zone="pending-queue"
       className={
-        compact
-          ? 'flex min-h-0 min-w-0 flex-row items-center gap-2'
-          : 'flex min-h-0 flex-col'
+        stacked
+          ? 'flex h-full min-h-0 min-w-0 flex-col gap-0.5'
+          : compact
+            ? 'flex min-h-0 min-w-0 flex-row items-center gap-2'
+            : 'flex min-h-0 flex-col'
       }
     >
       <h2 className={`shrink-0 ${titleClass}`}>{title}</h2>
@@ -75,10 +85,12 @@ export function PendingQueue({
       ) : (
         <ul
           className={[
-            'flex min-h-0 min-w-0 gap-1.5',
-            compact
-              ? 'flex-1 flex-nowrap items-center overflow-x-auto py-1.5'
-              : 'mt-1 flex-wrap',
+            'flex min-h-0 min-w-0 gap-1',
+            stacked
+              ? 'flex-col'
+              : compact
+                ? 'flex-1 flex-nowrap items-center overflow-x-auto py-1.5'
+                : 'mt-1 flex-wrap',
             !compact && hasRealPending ? 'overflow-visible' : '',
           ].join(' ')}
         >
@@ -109,14 +121,30 @@ export function PendingQueue({
             const chip = compact ? (
               <span
                 className={[
-                  'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
+                  stacked
+                    ? 'flex min-w-0 w-full items-center gap-1 overflow-hidden rounded-[length:var(--radius-badge)] border px-1.5 py-0.5 shadow-sm transition-shadow duration-200'
+                    : 'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
                   chipClass,
                   highlighted ? highlightClass : '',
                   entranceClass,
                 ].join(' ')}
               >
-                <span className="whitespace-nowrap text-xs font-semibold">{label}</span>
-                <span className="inline-flex shrink-0 whitespace-nowrap text-[10px] text-ink-muted">
+                <span
+                  className={
+                    stacked
+                      ? 'min-w-0 truncate text-[10px] font-semibold'
+                      : 'whitespace-nowrap text-xs font-semibold'
+                  }
+                >
+                  {label}
+                </span>
+                <span
+                  className={
+                    stacked
+                      ? 'inline-flex min-w-0 shrink truncate text-[9px] text-ink-muted'
+                      : 'inline-flex shrink-0 whitespace-nowrap text-[10px] text-ink-muted'
+                  }
+                >
                   {route}
                 </span>
               </span>
@@ -144,7 +172,7 @@ export function PendingQueue({
                 data-pending-id={effect.id}
                 title={compact ? `${label} · ${routePlain} · queued #${String(effect.queuedAt)}` : undefined}
                 className={[
-                  'shrink-0',
+                  stacked ? 'w-full min-w-0 shrink-0' : 'shrink-0',
                   ringPending ? 'overflow-visible' : undefined,
                 ]
                   .filter((part) => part !== undefined)
