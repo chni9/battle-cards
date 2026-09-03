@@ -36,6 +36,7 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
       lookupFinished: () => Promise.resolve(null),
       isProduction: () => false,
       rateLimiter: createIpRateLimiter(),
+      inboxAuthLimiter: createIpRateLimiter(),
       readInboxPassword: () => 'inbox-secret',
     };
 

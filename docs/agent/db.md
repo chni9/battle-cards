@@ -54,7 +54,7 @@ separate player-turn counter.
 | Variable | Meaning |
 |---|---|
 | `DATABASE_URL` | Postgres connection string. Unset → soft-skip persist (warn locally, error in production); feedback POST/inbox GET return 503 |
-| `INBOX_PASSWORD` | Shared secret for `GET /api/inbox` (`X-Inbox-Password`). Unset or empty → 404 (do not advertise the inbox) |
+| `INBOX_PASSWORD` | Shared secret for `GET /api/inbox` (`X-Inbox-Password`). Unset or empty → 404 (do not advertise the inbox). Failed guesses: 10 / 10 min / IP then 429; a correct password still succeeds |
 
 ## Commands
 

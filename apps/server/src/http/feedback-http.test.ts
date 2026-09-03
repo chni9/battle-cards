@@ -29,6 +29,7 @@ function testDeps(overrides: Partial<FeedbackApiDeps> = {}): FeedbackApiDeps {
     lookupFinished: () => Promise.resolve(null),
     isProduction: () => false,
     rateLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
+    inboxAuthLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
     listReports: () => Promise.resolve([]),
     readInboxPassword: () => 'inbox-secret',
     ...overrides,
@@ -324,6 +325,26 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
     expect(response.status).toBe(400);
     expect(inserted).toHaveLength(0);
   });
+
+  it('rejects a deeply nested logTail with 400 instead of overflowing the stack', async () => {
+    let logTail: unknown = [{ kind: 'actionPlayed', seed: 'secret' }];
+    for (let i = 0; i < 64; i += 1) {
+      logTail = [logTail];
+    }
+    const base = await start();
+    const response = await fetch(`${base}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'bug',
+        message: 'nested',
+        screen: 'home',
+        logTail,
+      }),
+    });
+    expect(response.status).toBe(400);
+    expect(inserted).toHaveLength(0);
+  });
 });
 
 describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
@@ -366,6 +387,31 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
     });
     expect(wrong.status).toBe(401);
     expect(await wrong.json()).toEqual({ ok: false });
+  });
+
+  it('rate-limits the 11th failed inbox password from one IP', async () => {
+    let now = 1_000;
+    const base = await start(
+      testDeps({
+        inboxAuthLimiter: createIpRateLimiter(10, 60_000, () => now),
+      }),
+    );
+    for (let i = 0; i < 10; i += 1) {
+      const wrong = await fetch(`${base}/api/inbox`, {
+        headers: { 'X-Inbox-Password': 'nope' },
+      });
+      expect(wrong.status).toBe(401);
+    }
+    const limited = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'nope' },
+    });
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ ok: false });
+
+    const ok = await fetch(`${base}/api/inbox`, {
+      headers: { 'X-Inbox-Password': 'inbox-secret' },
+    });
+    expect(ok.status).toBe(200);
   });
 
   it('returns all rows newest first when the password matches', async () => {

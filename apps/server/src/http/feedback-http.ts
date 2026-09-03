@@ -29,13 +29,15 @@ import {
   createIpRateLimiter,
   FEEDBACK_RATE_LIMIT_MAX,
   FEEDBACK_RATE_LIMIT_WINDOW_MS,
+  INBOX_AUTH_RATE_LIMIT_MAX,
+  INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
   type IpRateLimiter,
 } from './ip-rate-limit';
 import {
   lookupLiveFeedbackContext,
   type LiveFeedbackContext,
 } from './live-feedback-registry';
-import { stripSeed } from './strip-seed';
+import { stripSeed, tryStripSeed } from './strip-seed';
 import { timingSafeEqualUtf8 } from './timing-safe-equal';
 
 export const FEEDBACK_NOT_SAVED_NO_DB = 'Not saved (no database)';
@@ -58,6 +60,8 @@ export interface FeedbackApiDeps {
   ) => Promise<FinishedFeedbackContext | null>;
   isProduction: () => boolean;
   rateLimiter: IpRateLimiter;
+  /** Failed inbox password guesses only — a correct password must still get in. */
+  inboxAuthLimiter: IpRateLimiter;
   readInboxPassword: () => string | undefined;
 }
 
@@ -82,6 +86,10 @@ export function defaultFeedbackApiDeps(): FeedbackApiDeps {
     rateLimiter: createIpRateLimiter(
       FEEDBACK_RATE_LIMIT_MAX,
       FEEDBACK_RATE_LIMIT_WINDOW_MS,
+    ),
+    inboxAuthLimiter: createIpRateLimiter(
+      INBOX_AUTH_RATE_LIMIT_MAX,
+      INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
     ),
     readInboxPassword: () => readInboxPasswordFromEnv(),
   };
@@ -134,11 +142,11 @@ function parseLogTail(value: unknown): { ok: true; value: unknown } | { ok: fals
   if (!Array.isArray(value)) {
     return { ok: false };
   }
-  const stripped = stripSeed(value);
-  if (!Array.isArray(stripped)) {
+  const stripped = tryStripSeed(value);
+  if (!stripped.ok || !Array.isArray(stripped.value)) {
     return { ok: false };
   }
-  return { ok: true, value: stripped.slice(-FEEDBACK_LOG_TAIL_MAX) };
+  return { ok: true, value: stripped.value.slice(-FEEDBACK_LOG_TAIL_MAX) };
 }
 
 interface ParsedFeedbackBody {
@@ -256,7 +264,11 @@ export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void 
   });
 
   app.post('/api/feedback', (req, res) => {
-    void handleFeedbackPost(req, res, deps);
+    void handleFeedbackPost(req, res, deps).catch(() => {
+      if (!res.headersSent) {
+        res.status(503).json({ ok: false, message: FEEDBACK_COULD_NOT_SAVE });
+      }
+    });
   });
 
   app.options('/api/inbox', (req, res) => {
@@ -265,7 +277,11 @@ export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void 
   });
 
   app.get('/api/inbox', (req, res) => {
-    void handleInboxGet(req, res, deps);
+    void handleInboxGet(req, res, deps).catch(() => {
+      if (!res.headersSent) {
+        res.status(503).json({ ok: false });
+      }
+    });
   });
 }
 
@@ -274,29 +290,29 @@ async function handleFeedbackPost(
   res: Response,
   deps: FeedbackApiDeps,
 ): Promise<void> {
-  applyDevCors(req, res, deps.isProduction());
-
-  if (!deps.rateLimiter.take(clientIp(req))) {
-    res.status(429).json({ ok: false, message: 'Too many reports' });
-    return;
-  }
-
-  const parsed = parseFeedbackBody(req.body);
-  if (parsed === null) {
-    res.status(400).json({ ok: false, message: 'Invalid feedback' });
-    return;
-  }
-
-  const pool = deps.getPool();
-  if (pool === null) {
-    const message = deps.isProduction()
-      ? FEEDBACK_COULD_NOT_SAVE
-      : FEEDBACK_NOT_SAVED_NO_DB;
-    res.status(503).json({ ok: false, message });
-    return;
-  }
-
   try {
+    applyDevCors(req, res, deps.isProduction());
+
+    if (!deps.rateLimiter.take(clientIp(req))) {
+      res.status(429).json({ ok: false, message: 'Too many reports' });
+      return;
+    }
+
+    const parsed = parseFeedbackBody(req.body);
+    if (parsed === null) {
+      res.status(400).json({ ok: false, message: 'Invalid feedback' });
+      return;
+    }
+
+    const pool = deps.getPool();
+    if (pool === null) {
+      const message = deps.isProduction()
+        ? FEEDBACK_COULD_NOT_SAVE
+        : FEEDBACK_NOT_SAVED_NO_DB;
+      res.status(503).json({ ok: false, message });
+      return;
+    }
+
     const enriched = await enrichReport(parsed, deps, pool);
     const userAgentHeader = req.headers['user-agent'];
     const userAgent =
@@ -319,7 +335,9 @@ async function handleFeedbackPost(
 
     res.status(200).json({ ok: true });
   } catch {
-    res.status(503).json({ ok: false, message: FEEDBACK_COULD_NOT_SAVE });
+    if (!res.headersSent) {
+      res.status(503).json({ ok: false, message: FEEDBACK_COULD_NOT_SAVE });
+    }
   }
 }
 
@@ -328,30 +346,38 @@ async function handleInboxGet(
   res: Response,
   deps: FeedbackApiDeps,
 ): Promise<void> {
-  applyDevCors(req, res, deps.isProduction());
-
-  const expected = deps.readInboxPassword();
-  if (expected === undefined) {
-    res.status(404).end();
-    return;
-  }
-
-  const provided = req.get('x-inbox-password');
-  if (provided === undefined || !timingSafeEqualUtf8(provided, expected)) {
-    res.status(401).json({ ok: false });
-    return;
-  }
-
-  const pool = deps.getPool();
-  if (pool === null) {
-    res.status(503).json({ ok: false });
-    return;
-  }
-
   try {
+    applyDevCors(req, res, deps.isProduction());
+
+    const expected = deps.readInboxPassword();
+    if (expected === undefined) {
+      res.status(404).end();
+      return;
+    }
+
+    const provided = req.get('x-inbox-password');
+    const matches =
+      provided !== undefined && timingSafeEqualUtf8(provided, expected);
+    if (!matches) {
+      if (!deps.inboxAuthLimiter.take(clientIp(req))) {
+        res.status(429).json({ ok: false });
+        return;
+      }
+      res.status(401).json({ ok: false });
+      return;
+    }
+
+    const pool = deps.getPool();
+    if (pool === null) {
+      res.status(503).json({ ok: false });
+      return;
+    }
+
     const rows = await deps.listReports(pool);
     res.status(200).json(rows);
   } catch {
-    res.status(503).json({ ok: false });
+    if (!res.headersSent) {
+      res.status(503).json({ ok: false });
+    }
   }
 }

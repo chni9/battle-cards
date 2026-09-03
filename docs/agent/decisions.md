@@ -3103,5 +3103,18 @@ Feedback Dialog: delay auto-stats while it is open; `!` no-ops over stats or an
 open form; Skip or a successful send (including early `!`) marks asked so stats
 close does not prompt again. Live table chrome is unchanged.
 
+## 2026-09-03 · [P] Feedback HTTP hardening (L47-02 / L47-04)
+
+Security review of PR #18:
+
+- `stripSeed` is depth-capped (`STRIP_SEED_MAX_DEPTH` 32). Deeper attacker
+  `logTail` is **400 Invalid feedback**, not a recursive stack overflow.
+  `POST /api/feedback` parse+insert is inside try/catch; the `void` handler
+  also `.catch`es so a leftover throw cannot become an unhandled rejection on
+  the Colyseus process.
+- Failed `GET /api/inbox` password guesses share the in-memory IP window
+  (10 / 10 min). Excess **429**. Correct password still lists. Missing
+  `INBOX_PASSWORD` stays **404** and does not count.
+
 
 
