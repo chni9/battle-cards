@@ -390,7 +390,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
   });
 
   it('rate-limits the 11th failed inbox password from one IP', async () => {
-    let now = 1_000;
+    const now = 1_000;
     const base = await start(
       testDeps({
         inboxAuthLimiter: createIpRateLimiter(10, 60_000, () => now),
