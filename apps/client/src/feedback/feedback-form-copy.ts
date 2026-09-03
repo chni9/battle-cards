@@ -31,6 +31,17 @@ export function feedbackMessagePlaceholder(kind: FeedbackKind): string {
   return 'What would you add or change?';
 }
 
+export function feedbackSendHint(
+  kind: FeedbackKind,
+  topics: readonly FeedbackTopic[],
+  message: string,
+): string | null {
+  if (kind === 'bug' && topics.length === 0 && message.trim().length > 0) {
+    return 'Pick at least one area to send a bug.';
+  }
+  return null;
+}
+
 export function canSendFeedbackForm(input: {
   kind: FeedbackKind;
   message: string;

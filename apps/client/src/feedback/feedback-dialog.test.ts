@@ -21,5 +21,6 @@ describe('FeedbackDialog submit (technical spec v6 §7.1 / L47-03)', () => {
     expect(source).toContain('FEEDBACK_TOPICS');
     expect(source).toContain('toggleFeedbackTopic');
     expect(source).toContain('canSendFeedbackForm');
+    expect(source).toContain('feedbackSendHint');
   });
 });

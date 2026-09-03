@@ -25,6 +25,7 @@ import {
   canSendFeedbackForm,
   feedbackAboutHint,
   feedbackMessagePlaceholder,
+  feedbackSendHint,
 } from './feedback-form-copy';
 import { submitFeedback } from './submit-feedback';
 import { beginFeedbackSend, endFeedbackSend } from './submit-gate';
@@ -91,6 +92,7 @@ export function FeedbackDialog({
   };
 
   const canSend = canSendFeedbackForm({ kind, message, topics, busy });
+  const sendHint = feedbackSendHint(kind, topics, message);
 
   const onSubmit = (): void => {
     if (
@@ -203,6 +205,12 @@ export function FeedbackDialog({
           })}
         </div>
       </fieldset>
+
+      {sendHint !== null ? (
+        <p className="mt-2 text-xs text-cta-red" role="status">
+          {sendHint}
+        </p>
+      ) : null}
 
       <label className="mt-4 block text-sm font-medium text-ink">
         Message

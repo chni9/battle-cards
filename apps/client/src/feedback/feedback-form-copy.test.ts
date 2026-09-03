@@ -5,6 +5,7 @@ import {
   canSendFeedbackForm,
   feedbackAboutHint,
   feedbackMessagePlaceholder,
+  feedbackSendHint,
 } from './feedback-form-copy';
 
 describe('feedback form copy (technical spec v6 §7.1 / L47-06)', () => {
@@ -34,6 +35,10 @@ describe('feedback form copy (technical spec v6 §7.1 / L47-06)', () => {
         busy: false,
       }),
     ).toBe(true);
+    expect(feedbackSendHint('bug', [], 'broken draw')).toBe(
+      'Pick at least one area to send a bug.',
+    );
+    expect(feedbackSendHint('bug', ['ui'], 'broken draw')).toBeNull();
   });
 
   it('uses kind-specific hints and placeholders', () => {
