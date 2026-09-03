@@ -25,6 +25,14 @@ export function canOpenEndManualFeedback(input: {
   return !input.statsOpen && !input.feedbackOpen;
 }
 
+/**
+ * Stats-panel Feedback replaces Game over with the form (spec §7.1).
+ * Turn-strip `!` still no-ops while stats are showing.
+ */
+export function canOpenEndStatsFeedback(input: { feedbackOpen: boolean }): boolean {
+  return !input.feedbackOpen;
+}
+
 /** Reopen stats from the dock only when Feedback is not showing. */
 export function canReopenEndStats(input: { feedbackOpen: boolean }): boolean {
   return !input.feedbackOpen;

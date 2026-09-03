@@ -3116,5 +3116,14 @@ Security review of PR #18:
   (10 / 10 min). Excess **429**. Correct password still lists. Missing
   `INBOX_PASSWORD` stays **404** and does not count.
 
+## 2026-09-03 · [P] Game over stats Feedback button (L47-03)
+
+Spec §7.1 is “prompt + the same control” on Game over. The stats overlay
+covers the turn-strip **!**, and **Return home** does not auto-ask, so a
+tester who never hits View board had no Feedback control. The Game over
+action row now has **Feedback**: it dismisses stats and opens the existing
+`EndScreen` form (no second Dialog). Turn-strip **!** still no-ops while
+stats or Feedback is open.
+
 
 

@@ -360,7 +360,9 @@ rules above are unchanged — this section only covers how the client looks.
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   First close of Game over stats (View board / overlay / Esc) opens Feedback in ask-mode
   once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
-  successful send). **Return home** from stats does not auto-ask. Failed send does not
+  successful send). The Game over action row also has **Feedback** (same label as Home):
+  it dismisses stats and opens the form so the overlay cannot hide the turn-strip **!**.
+  **Return home** from stats does not auto-ask. Failed send does not
   mark asked. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
   ask / turn-strip **!** never stack: banner-period `!` delays stats until that form
   closes; a send there marks asked; `!` is a no-op while stats or Feedback is already

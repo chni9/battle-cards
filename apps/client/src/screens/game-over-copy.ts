@@ -9,6 +9,7 @@ export const TUTORIAL_COMPLETE_TITLE = 'Tutorial complete';
 export const PLAY_A_REAL_GAME_LABEL = 'Play a real game';
 export const GAME_OVER_TITLE = 'Game over';
 export const RETURN_HOME_LABEL = 'Return home';
+export const FEEDBACK_LABEL = 'Feedback';
 export const DOWNLOAD_ACTION_LOG_LABEL = 'Download action log';
 
 export function gameOverTitle(playKind: PlayKind): string {

@@ -13,6 +13,7 @@ import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { ActionRejectPayload } from '../net/use-room-connection';
 import {
   canOpenEndManualFeedback,
+  canOpenEndStatsFeedback,
   canReopenEndStats,
   isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
@@ -77,6 +78,15 @@ export function EndScreen({
     setFeedbackOpen(true);
   };
 
+  const onOpenStatsFeedback = (): void => {
+    if (!canOpenEndStatsFeedback({ feedbackOpen })) {
+      return;
+    }
+    setStatsDismissed(true);
+    setFeedbackMode('manual');
+    setFeedbackOpen(true);
+  };
+
   useEffect(() => {
     const id = window.setTimeout(() => {
       setBannerElapsed(true);
@@ -124,6 +134,7 @@ export function EndScreen({
         view={view}
         onClose={onStatsClose}
         onLeave={onLeave}
+        onOpenFeedback={onOpenStatsFeedback}
       />
       <FeedbackDialog
         open={feedbackOpen}

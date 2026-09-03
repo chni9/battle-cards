@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DOWNLOAD_ACTION_LOG_LABEL,
+  FEEDBACK_LABEL,
   GAME_OVER_TITLE,
   PLAY_A_REAL_GAME_LABEL,
   RETURN_HOME_LABEL,
@@ -43,5 +44,14 @@ describe('game-over copy (L45-06)', () => {
     expect(source).toContain('showActionLogDownload');
     expect(source).toContain('gameOverTitle(view.playKind)');
     expect(source).toContain('gameOverLeaveLabel(view.playKind)');
+  });
+
+  it('puts a Feedback control on the Game over action row', () => {
+    expect(FEEDBACK_LABEL).toBe('Feedback');
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(dir, 'game-over-dialog.tsx'), 'utf8');
+    expect(source).toContain('onOpenFeedback');
+    expect(source).toContain('{FEEDBACK_LABEL}');
+    expect(source).toContain('onClick={onOpenFeedback}');
   });
 });

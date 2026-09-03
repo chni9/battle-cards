@@ -14,6 +14,7 @@ import {
 } from '../export/build-action-log-xlsx';
 import {
   DOWNLOAD_ACTION_LOG_LABEL,
+  FEEDBACK_LABEL,
   gameOverLeaveLabel,
   gameOverTitle,
   showActionLogDownload,
@@ -24,6 +25,8 @@ export interface GameOverDialogProps {
   view: FinishedStateView;
   onClose: () => void;
   onLeave: () => void;
+  /** Opens Feedback in place of stats — never stacks (technical spec v6 §7.1). */
+  onOpenFeedback: () => void;
 }
 
 function nickOf(view: FinishedStateView, playerId: string): string {
@@ -35,6 +38,7 @@ export function GameOverDialog({
   view,
   onClose,
   onLeave,
+  onOpenFeedback,
 }: GameOverDialogProps): ReactElement {
   const winnerNick = nickOf(view, view.winnerPlayerId);
   const youWon = view.winnerPlayerId === view.you;
@@ -67,6 +71,7 @@ export function GameOverDialog({
         <>
           {allowExcel ? (
             <Button
+              compact
               type="button"
               variant="purple"
               disabled={exportBusy}
@@ -77,10 +82,13 @@ export function GameOverDialog({
               {exportBusy ? 'Building Excel…' : DOWNLOAD_ACTION_LOG_LABEL}
             </Button>
           ) : null}
-          <Button type="button" variant="orange" onClick={onClose}>
+          <Button compact type="button" variant="orange" onClick={onOpenFeedback}>
+            {FEEDBACK_LABEL}
+          </Button>
+          <Button compact type="button" variant="orange" onClick={onClose}>
             View board
           </Button>
-          <Button type="button" variant="red" onClick={onLeave}>
+          <Button compact type="button" variant="red" onClick={onLeave}>
             {gameOverLeaveLabel(view.playKind)}
           </Button>
         </>

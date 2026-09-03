@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canOpenEndManualFeedback,
+  canOpenEndStatsFeedback,
   canReopenEndStats,
   isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
@@ -50,6 +51,18 @@ describe('end feedback exclusivity (technical spec v6 §7.1 / L47-03)', () => {
     expect(canOpenEndManualFeedback({ statsOpen: false, feedbackOpen: false })).toBe(
       true,
     );
+  });
+
+  it('lets the Game over Feedback button replace stats without stacking', () => {
+    expect(canOpenEndStatsFeedback({ feedbackOpen: false })).toBe(true);
+    expect(canOpenEndStatsFeedback({ feedbackOpen: true })).toBe(false);
+    expect(
+      isEndStatsOpen({
+        bannerElapsed: true,
+        statsDismissed: true,
+        feedbackOpen: true,
+      }),
+    ).toBe(false);
   });
 
   it('does not reopen stats over Feedback', () => {
