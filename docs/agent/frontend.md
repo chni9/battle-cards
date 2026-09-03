@@ -73,7 +73,8 @@ rules above are unchanged — this section only covers how the client looks.
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
   **Feedback** (L47-03): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
-  omits `gameCode` / `logTail`. No Inbox link on the hub.
+  omits `gameCode` / `logTail`. Send uses a sync in-flight gate so two clicks before
+  paint cannot insert two rows. No Inbox link on the hub.
   **Inbox (L47-05):** `App` pathname `/inbox` before game phases (no Colyseus). Password
   field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
   kind filter is client-side; row click opens full message / contact / log tail /

@@ -16,6 +16,7 @@ import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { buildFeedbackPayload } from './build-feedback-payload';
 import { submitFeedback } from './submit-feedback';
+import { beginFeedbackSend, endFeedbackSend } from './submit-gate';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
   bug: 'Bug',
@@ -59,6 +60,7 @@ export function FeedbackDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
+  const inFlight = useRef(false);
 
   const resetForm = (): void => {
     setKind('bug');
@@ -66,6 +68,7 @@ export function FeedbackDialog({
     setContact('');
     setBusy(false);
     setError(null);
+    endFeedbackSend(inFlight);
   };
 
   const dismiss = (reason: 'skip' | 'cancel' | 'sent'): void => {
@@ -77,7 +80,7 @@ export function FeedbackDialog({
   const canSend = message.trim().length > 0 && !busy;
 
   const onSubmit = (): void => {
-    if (!canSend) {
+    if (message.trim().length === 0 || !beginFeedbackSend(inFlight)) {
       return;
     }
     setBusy(true);
@@ -96,6 +99,7 @@ export function FeedbackDialog({
       if (id !== requestId.current) {
         return;
       }
+      endFeedbackSend(inFlight);
       setBusy(false);
       if (result.ok) {
         dismiss('sent');
