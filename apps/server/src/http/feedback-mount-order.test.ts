@@ -66,6 +66,7 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
         kind: 'bug',
         message: 'not the spa',
         screen: 'home',
+        topics: ['ui'],
       }),
     });
     expect(post.status).toBe(200);

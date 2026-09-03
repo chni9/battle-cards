@@ -1,12 +1,17 @@
 /**
- * Tester feedback form (technical spec v6 §7.1 / L47-03).
+ * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06).
  * Ask-mode Skip / overlay marks asked in the parent. Does not call leaveGame.
  */
 
 import {
   FEEDBACK_KINDS,
+  FEEDBACK_TOPICS,
+  FEEDBACK_TOPIC_LABEL,
+  isFeedbackTopicsComplete,
+  toggleFeedbackTopic,
   type FeedbackKind,
   type FeedbackScreen,
+  type FeedbackTopic,
   type PlayKind,
   type ActionLogEntryView,
 } from '@card-battle/shared';
@@ -15,6 +20,12 @@ import { useRef, useState, type ReactElement } from 'react';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { buildFeedbackPayload } from './build-feedback-payload';
+import {
+  FEEDBACK_ABOUT_LEGEND,
+  canSendFeedbackForm,
+  feedbackAboutHint,
+  feedbackMessagePlaceholder,
+} from './feedback-form-copy';
 import { submitFeedback } from './submit-feedback';
 import { beginFeedbackSend, endFeedbackSend } from './submit-gate';
 
@@ -55,6 +66,7 @@ export function FeedbackDialog({
   onDismiss,
 }: FeedbackDialogProps): ReactElement {
   const [kind, setKind] = useState<FeedbackKind>('bug');
+  const [topics, setTopics] = useState<readonly FeedbackTopic[]>([]);
   const [message, setMessage] = useState('');
   const [contact, setContact] = useState('');
   const [busy, setBusy] = useState(false);
@@ -64,6 +76,7 @@ export function FeedbackDialog({
 
   const resetForm = (): void => {
     setKind('bug');
+    setTopics([]);
     setMessage('');
     setContact('');
     setBusy(false);
@@ -77,16 +90,21 @@ export function FeedbackDialog({
     onDismiss(reason);
   };
 
-  const canSend = message.trim().length > 0 && !busy;
+  const canSend = canSendFeedbackForm({ kind, message, topics, busy });
 
   const onSubmit = (): void => {
-    if (message.trim().length === 0 || !beginFeedbackSend(inFlight)) {
+    if (
+      !isFeedbackTopicsComplete(kind, topics) ||
+      message.trim().length === 0 ||
+      !beginFeedbackSend(inFlight)
+    ) {
       return;
     }
     setBusy(true);
     setError(null);
     const context = {
       screen,
+      topics,
       ...(nickname !== undefined ? { nickname } : {}),
       ...(gameCode !== undefined ? { gameCode } : {}),
       ...(playKind !== undefined ? { playKind } : {}),
@@ -162,12 +180,37 @@ export function FeedbackDialog({
         </div>
       </fieldset>
 
+      <fieldset className="mt-4 border-0 p-0">
+        <legend className="text-sm font-medium text-ink">{FEEDBACK_ABOUT_LEGEND}</legend>
+        <p className="mt-1 text-xs text-ink-muted">{feedbackAboutHint(kind)}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {FEEDBACK_TOPICS.map((id) => {
+            const selected = topics.includes(id);
+            return (
+              <Button
+                key={id}
+                compact
+                type="button"
+                variant={selected ? 'green' : 'orange'}
+                aria-pressed={selected}
+                onClick={() => {
+                  setTopics(toggleFeedbackTopic(topics, id));
+                }}
+              >
+                {FEEDBACK_TOPIC_LABEL[id]}
+              </Button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       <label className="mt-4 block text-sm font-medium text-ink">
         Message
         <textarea
           className={`${inputClassName} min-h-28`}
           value={message}
           maxLength={4000}
+          placeholder={feedbackMessagePlaceholder(kind)}
           onChange={(event) => {
             setMessage(event.target.value);
           }}

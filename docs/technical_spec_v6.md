@@ -489,6 +489,9 @@ control).
 Fields:
 
 - `kind`: `bug` \| `confusion` \| `idea`
+- `topics`: multi-select `ui` \| `gameplay` \| `card` \| `shop` \| `bot` \|
+  `tutorial` \| `other`. A **bug** requires at least one; confusion / idea may
+  send none. Testers can pick several.
 - `message`: string, trimmed, min 1, max 4000
 - `contact`: optional, max 200 (email or Discord — not validated beyond length)
 
@@ -534,6 +537,10 @@ CREATE TABLE feedback_reports (
 
 Check constraint on `kind` ∈ (`bug`,`confusion`,`idea`). No seed column.
 
+`topics text[] NOT NULL DEFAULT '{}'` (migration `006_feedback_topics.sql`) with
+CHECK `topics <@` the catalog array. Bug ≥1 topic is enforced on POST, not in
+SQL, so rows from before the chips still list.
+
 ### 7.3 Inbox
 
 - SPA route `/inbox` (pathname, not a hub button). Vite `historyApiFallback` / static
@@ -541,9 +548,9 @@ Check constraint on `kind` ∈ (`bug`,`confusion`,`idea`). No seed column.
 - `App.tsx`: if `pathname === '/inbox'`, render inbox, not Home.
 - `GET /api/inbox` requires header `X-Inbox-Password` matching `INBOX_PASSWORD` (timing-safe
   compare). Missing env: 404 (do not advertise the inbox). Wrong password: 401.
-- List newest first: date, kind, game code, nickname, message preview. Open one: full
-  message, contact, log tail, user agent, protocol.
-- Filter by `kind`. No edit/delete in V6 (YAGNI).
+- List newest first: date, kind, topics, game code, nickname, message preview. Open one: full
+  message, topics, contact, log tail, user agent, protocol.
+- Filter by `kind` and by topic. No edit/delete in V6 (YAGNI).
 
 ---
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   fetchInbox,
+  filterInbox,
   filterInboxByKind,
   parseInboxRow,
   type InboxFetcher,
@@ -21,6 +22,7 @@ const sample: FeedbackInboxRow = {
   playKind: 'classic',
   logTail: [{ kind: 'actionPlayed' }],
   userAgent: 'vitest',
+  topics: ['ui', 'card'],
 };
 
 describe('fetchInbox (technical spec v6 §7.3 / L47-05)', () => {
@@ -63,8 +65,33 @@ describe('inbox row parse and kind filter (technical spec v6 §7.3 / L47-05)', (
   });
 
   it('filters by kind on the client', () => {
-    const idea: FeedbackInboxRow = { ...sample, id: 'row-2', kind: 'idea' };
+    const idea: FeedbackInboxRow = { ...sample, id: 'row-2', kind: 'idea', topics: [] };
     expect(filterInboxByKind([sample, idea], 'all')).toHaveLength(2);
     expect(filterInboxByKind([sample, idea], 'bug')).toEqual([sample]);
+  });
+
+  it('filters by About chip on the client', () => {
+    const shop: FeedbackInboxRow = { ...sample, id: 'row-3', topics: ['shop'] };
+    expect(filterInbox([sample, shop], 'all', 'card')).toEqual([sample]);
+    expect(filterInbox([sample, shop], 'all', 'shop')).toEqual([shop]);
+  });
+
+  it('defaults a missing topics field to an empty list', () => {
+    expect(
+      parseInboxRow({
+        id: 'row-old',
+        createdAt: '2026-09-01T12:00:00.000Z',
+        kind: 'bug',
+        message: 'pre-chip',
+        contact: null,
+        nickname: null,
+        gameCode: null,
+        screen: 'home',
+        protocolVersion: PROTOCOL_VERSION,
+        playKind: null,
+        logTail: null,
+        userAgent: null,
+      })?.topics,
+    ).toEqual([]);
   });
 });

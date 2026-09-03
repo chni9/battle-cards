@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 
+import type { FeedbackInboxRow } from '@card-battle/shared';
 import express from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -84,6 +85,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
         message: 'Home is confusing',
         screen: 'home',
         protocolVersion: 30,
+        topics: ['ui'],
         logTail: [{ kind: 'actionPlayed', seed: 'secret' }],
       }),
     });
@@ -95,6 +97,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
     expect(row?.userAgent).toBe('vitest');
     expect(JSON.stringify(row)).not.toContain('seed');
     expect(row?.logTail).toEqual([{ kind: 'actionPlayed' }]);
+    expect(row?.topics).toEqual(['ui']);
   });
 
   it('returns 503 with the local copy when DATABASE_URL is unset', async () => {
@@ -159,6 +162,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
         kind: 'bug',
         message: 'Crash',
         screen: 'table',
+        topics: ['ui'],
       }),
     });
 
@@ -180,6 +184,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
       kind: 'bug',
       message: 'spam',
       screen: 'home',
+      topics: ['ui'],
     });
     for (let i = 0; i < 10; i += 1) {
       const ok = await fetch(`${base}/api/feedback`, {
@@ -236,6 +241,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
         gameCode: 'abcdef',
         playKind: 'classic',
         protocolVersion: 1,
+        topics: ['tutorial', 'ui'],
         logTail: [],
       }),
     });
@@ -302,6 +308,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
         kind: 'bug',
         message: 'cors',
         screen: 'home',
+        topics: ['ui'],
       }),
     });
 
@@ -326,6 +333,52 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
     expect(inserted).toHaveLength(0);
   });
 
+  it('rejects a bug with no About chips', async () => {
+    const base = await start();
+    const response = await fetch(`${base}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'bug',
+        message: 'broken',
+        screen: 'home',
+      }),
+    });
+    expect(response.status).toBe(400);
+    expect(inserted).toHaveLength(0);
+  });
+
+  it('persists several About chips in catalog order', async () => {
+    const base = await start();
+    const response = await fetch(`${base}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'bug',
+        message: 'Shop card art',
+        screen: 'table',
+        topics: ['card', 'ui', 'shop', 'card'],
+      }),
+    });
+    expect(response.status).toBe(200);
+    expect(inserted[0]?.topics).toEqual(['ui', 'card', 'shop']);
+  });
+
+  it('allows an idea with no About chips', async () => {
+    const base = await start();
+    const response = await fetch(`${base}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'idea',
+        message: 'A recap filter',
+        screen: 'end',
+      }),
+    });
+    expect(response.status).toBe(200);
+    expect(inserted[0]?.topics).toEqual([]);
+  });
+
   it('rejects a deeply nested logTail with 400 instead of overflowing the stack', async () => {
     let logTail: unknown = [{ kind: 'actionPlayed', seed: 'secret' }];
     for (let i = 0; i < 64; i += 1) {
@@ -339,6 +392,7 @@ describe('POST /api/feedback (technical spec v6 §7.1 / L47-02)', () => {
         kind: 'bug',
         message: 'nested',
         screen: 'home',
+        topics: ['ui'],
         logTail,
       }),
     });
@@ -415,7 +469,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
   });
 
   it('returns all rows newest first when the password matches', async () => {
-    const rows = [
+    const rows: FeedbackInboxRow[] = [
       {
         id: 'newer',
         createdAt: '2026-09-01T13:00:00.000Z',
@@ -429,6 +483,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
         playKind: 'classic' as const,
         logTail: [{ kind: 'actionPlayed' }],
         userAgent: 'vitest',
+        topics: [],
       },
       {
         id: 'older',
@@ -443,6 +498,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
         playKind: null,
         logTail: null,
         userAgent: null,
+        topics: ['ui'],
       },
     ];
     const listReports = vi.fn(() => Promise.resolve(rows));

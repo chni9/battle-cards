@@ -10,6 +10,7 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
   it('selects all columns newest first and never seed', () => {
     expect(LIST_FEEDBACK_REPORTS_SQL).toContain('ORDER BY created_at DESC');
     expect(LIST_FEEDBACK_REPORTS_SQL).toContain('log_tail');
+    expect(LIST_FEEDBACK_REPORTS_SQL).toContain('topics');
     expect(LIST_FEEDBACK_REPORTS_SQL).not.toMatch(/\bseed\b/);
   });
 
@@ -31,6 +32,7 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
             play_kind: 'classic',
             log_tail: [{ kind: 'actionPlayed', seed: 'secret' }],
             user_agent: 'vitest',
+            topics: ['ui', 'gameplay'],
           },
         ],
       }),
@@ -51,6 +53,7 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
         playKind: 'classic',
         logTail: [{ kind: 'actionPlayed' }],
         userAgent: 'vitest',
+        topics: ['ui', 'gameplay'],
       },
     ]);
     expect(JSON.stringify(rows)).not.toContain('seed');
@@ -74,5 +77,23 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
         user_agent: null,
       }),
     ).toBeNull();
+  });
+
+  it('treats a missing topics column as an empty list', () => {
+    const mapped = mapFeedbackInboxRow({
+      id: 'old',
+      created_at: '2026-09-01T12:00:00.000Z',
+      kind: 'bug',
+      message: 'pre-chip row',
+      contact: null,
+      nickname: null,
+      game_code: null,
+      screen: 'home',
+      protocol_version: 30,
+      play_kind: null,
+      log_tail: null,
+      user_agent: null,
+    });
+    expect(mapped?.topics).toEqual([]);
   });
 });

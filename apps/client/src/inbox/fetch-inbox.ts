@@ -6,8 +6,10 @@
 import {
   isFeedbackKind,
   isFeedbackScreen,
+  normalizeFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
+  type FeedbackTopic,
   type PlayKind,
 } from '@card-battle/shared';
 
@@ -92,6 +94,10 @@ export function parseInboxRow(value: unknown): FeedbackInboxRow | null {
   ) {
     return null;
   }
+  const topics = normalizeFeedbackTopics(Reflect.get(value, 'topics') ?? []);
+  if (topics === null) {
+    return null;
+  }
   return {
     id,
     createdAt,
@@ -105,6 +111,7 @@ export function parseInboxRow(value: unknown): FeedbackInboxRow | null {
     playKind,
     logTail: Reflect.get(value, 'logTail') ?? null,
     userAgent,
+    topics,
   };
 }
 
@@ -127,10 +134,20 @@ export function filterInboxByKind(
   rows: readonly FeedbackInboxRow[],
   kind: FeedbackKind | 'all',
 ): readonly FeedbackInboxRow[] {
-  if (kind === 'all') {
-    return rows;
-  }
-  return rows.filter((row) => row.kind === kind);
+  return filterInbox(rows, kind, 'all');
+}
+
+export function filterInbox(
+  rows: readonly FeedbackInboxRow[],
+  kind: FeedbackKind | 'all',
+  topic: FeedbackTopic | 'all',
+): readonly FeedbackInboxRow[] {
+  return rows.filter((row) => {
+    if (kind !== 'all' && row.kind !== kind) {
+      return false;
+    }
+    return topic === 'all' || row.topics.includes(topic);
+  });
 }
 
 export async function fetchInbox(

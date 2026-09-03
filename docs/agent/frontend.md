@@ -71,13 +71,16 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–5 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **Feedback** (L47-03): hub control next to How to play; same Dialog on Online / Solo /
+  **Feedback** (L47-03 / L47-06): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
-  omits `gameCode` / `logTail`. Send uses a sync in-flight gate so two clicks before
-  paint cannot insert two rows. No Inbox link on the hub.
-  **Inbox (L47-05):** `App` pathname `/inbox` before game phases (no Colyseus). Password
+  omits `gameCode` / `logTail`. Kind plus multi-select **About** chips (`UI`, `Gameplay`,
+  `Card`, `Shop`, `Bot`, `Tutorial`, `Other`). A bug needs at least one chip; confusion /
+  idea may skip. Message placeholder follows kind. Send uses a sync in-flight gate so two
+  clicks before paint cannot insert two rows. No Inbox link on the hub.
+  **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
   field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
-  kind filter is client-side; row click opens full message / contact / log tail /
+  kind and About filters are client-side; list shows topic labels; row click opens full
+  message / topics / contact / log tail /
   user agent / protocol. No edit or delete.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);

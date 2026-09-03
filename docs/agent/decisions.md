@@ -3125,5 +3125,14 @@ action row now has **Feedback**: it dismisses stats and opens the existing
 `EndScreen` form (no second Dialog). Turn-strip **!** still no-ops while
 stats or Feedback is open.
 
+## 2026-09-03 · [P] Feedback About chips (L47-06)
+
+Designer asked for a more specified form so inbox rows are easy to follow.
+Multi-select **About** chips: `ui`, `gameplay`, `card`, `shop`, `bot`,
+`tutorial`, `other`. A **bug** needs at least one (POST 400 otherwise).
+Confusion / idea may omit. Stored as `topics text[]` (`006_feedback_topics.sql`).
+No game protocol bump. No seed. Inbox lists the labels and filters by topic.
+Old rows keep `{}` and still appear under Any area.
+
 
 

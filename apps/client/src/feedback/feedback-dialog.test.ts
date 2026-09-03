@@ -18,5 +18,8 @@ describe('FeedbackDialog submit (technical spec v6 §7.1 / L47-03)', () => {
     expect(gateAt).toBeGreaterThan(submitAt);
     expect(fetchAt).toBeGreaterThan(gateAt);
     expect(source).toContain('endFeedbackSend(inFlight)');
+    expect(source).toContain('FEEDBACK_TOPICS');
+    expect(source).toContain('toggleFeedbackTopic');
+    expect(source).toContain('canSendFeedbackForm');
   });
 });

@@ -7,6 +7,7 @@ import type { Pool } from 'pg';
 import {
   isFeedbackKind,
   isFeedbackScreen,
+  normalizeFeedbackTopics,
   type FeedbackInboxRow,
   type PlayKind,
 } from '@card-battle/shared';
@@ -15,7 +16,7 @@ import { stripSeed } from '../http/strip-seed';
 
 export const LIST_FEEDBACK_REPORTS_SQL = `SELECT
   id, created_at, kind, message, contact, nickname, game_code, screen,
-  protocol_version, play_kind, log_tail, user_agent
+  protocol_version, play_kind, log_tail, user_agent, topics
 FROM feedback_reports
 ORDER BY created_at DESC`;
 
@@ -32,6 +33,7 @@ interface FeedbackReportPgRow {
   play_kind: string | null;
   log_tail: unknown;
   user_agent: string | null;
+  topics?: unknown;
 }
 
 function isoTimestamp(value: Date | string): string {
@@ -49,6 +51,10 @@ export function mapFeedbackInboxRow(row: FeedbackReportPgRow): FeedbackInboxRow 
   if (!isFeedbackKind(row.kind) || !isFeedbackScreen(row.screen)) {
     return null;
   }
+  const topics = normalizeFeedbackTopics(row.topics ?? []);
+  if (topics === null) {
+    return null;
+  }
   return {
     id: row.id,
     createdAt: isoTimestamp(row.created_at),
@@ -62,6 +68,7 @@ export function mapFeedbackInboxRow(row: FeedbackReportPgRow): FeedbackInboxRow 
     playKind: playKindOf(row.play_kind),
     logTail: row.log_tail === null ? null : stripSeed(row.log_tail),
     userAgent: row.user_agent,
+    topics,
   };
 }
 

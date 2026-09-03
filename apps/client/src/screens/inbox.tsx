@@ -5,8 +5,12 @@
 
 import {
   FEEDBACK_KINDS,
+  FEEDBACK_TOPICS,
+  FEEDBACK_TOPIC_LABEL,
+  formatFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
+  type FeedbackTopic,
 } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
@@ -14,7 +18,7 @@ import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import {
   fetchInbox,
-  filterInboxByKind,
+  filterInbox,
 } from '../inbox/fetch-inbox';
 import {
   clearStoredInboxPassword,
@@ -62,6 +66,7 @@ export function InboxScreen(): ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [kindFilter, setKindFilter] = useState<FeedbackKind | 'all'>('all');
+  const [topicFilter, setTopicFilter] = useState<FeedbackTopic | 'all'>('all');
   const [openId, setOpenId] = useState<string | null>(null);
 
   const loadRows = (secret: string): void => {
@@ -115,7 +120,7 @@ export function InboxScreen(): ReactElement {
     loadRows(password.trim());
   };
 
-  const visible = rows === null ? [] : filterInboxByKind(rows, kindFilter);
+  const visible = rows === null ? [] : filterInbox(rows, kindFilter, topicFilter);
   const selected = rows?.find((row) => row.id === openId) ?? null;
 
   return (
@@ -181,6 +186,31 @@ export function InboxScreen(): ReactElement {
                 </Button>
               ))}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                compact
+                type="button"
+                variant={topicFilter === 'all' ? 'green' : 'orange'}
+                onClick={() => {
+                  setTopicFilter('all');
+                }}
+              >
+                Any area
+              </Button>
+              {FEEDBACK_TOPICS.map((topic) => (
+                <Button
+                  key={topic}
+                  compact
+                  type="button"
+                  variant={topicFilter === topic ? 'green' : 'orange'}
+                  onClick={() => {
+                    setTopicFilter(topic);
+                  }}
+                >
+                  {FEEDBACK_TOPIC_LABEL[topic]}
+                </Button>
+              ))}
+            </div>
 
             {visible.length === 0 ? (
               <p className="mt-6 text-sm text-ink-muted">No reports</p>
@@ -197,6 +227,9 @@ export function InboxScreen(): ReactElement {
                     >
                       <p className="text-xs text-ink-muted">
                         {row.createdAt} · {KIND_LABEL[row.kind]}
+                        {row.topics.length > 0
+                          ? ` · ${formatFeedbackTopics(row.topics)}`
+                          : ''}
                         {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
                         {row.nickname !== null ? ` · ${row.nickname}` : ''}
                       </p>
@@ -233,6 +266,9 @@ export function InboxScreen(): ReactElement {
         {selected !== null ? (
           <div className="space-y-3 text-sm text-ink">
             <p className="text-xs text-ink-muted">{selected.createdAt}</p>
+            {selected.topics.length > 0 ? (
+              <p>About: {formatFeedbackTopics(selected.topics)}</p>
+            ) : null}
             <p className="whitespace-pre-wrap">{selected.message}</p>
             <p>Contact: {selected.contact ?? '—'}</p>
             <p>Nickname: {selected.nickname ?? '—'}</p>

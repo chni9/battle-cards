@@ -10,6 +10,10 @@ const migrationSql = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../db/migrations/005_feedback_reports.sql'),
   'utf8',
 );
+const topicsMigrationSql = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../db/migrations/006_feedback_topics.sql'),
+  'utf8',
+);
 
 describe('insertFeedbackReport (technical spec v6 §7.2 / L47-01)', () => {
   it('inserts a report with log_tail and without game_code', async () => {
@@ -17,9 +21,11 @@ describe('insertFeedbackReport (technical spec v6 §7.2 / L47-01)', () => {
     const query = vi.fn((sql: string, params: unknown[]) => {
       expect(sql).toContain('INSERT INTO feedback_reports');
       expect(sql).toContain('log_tail');
+      expect(sql).toContain('topics');
       expect(sql).not.toMatch(/\bseed\b/);
       expect(params[4]).toBeNull();
       expect(params[8]).toBe(JSON.stringify(logTail));
+      expect(params[10]).toEqual(['ui', 'card']);
       return Promise.resolve({ rows: [{ id: 'report-uuid' }] });
     });
 
@@ -34,6 +40,7 @@ describe('insertFeedbackReport (technical spec v6 §7.2 / L47-01)', () => {
       playKind: null,
       logTail,
       userAgent: 'vitest',
+      topics: ['ui', 'card'],
     });
 
     expect(id).toBe('report-uuid');
@@ -57,6 +64,7 @@ describe('insertFeedbackReport (technical spec v6 §7.2 / L47-01)', () => {
       playKind: 'classic',
       logTail: null,
       userAgent: null,
+      topics: [],
     });
 
     expect(query).toHaveBeenCalledOnce();
@@ -77,6 +85,7 @@ describe('insertFeedbackReport (technical spec v6 §7.2 / L47-01)', () => {
         playKind: 'tutorial',
         logTail: null,
         userAgent: null,
+        topics: [],
       }),
     ).rejects.toThrow('feedback_reports insert returned no id');
   });
@@ -93,5 +102,15 @@ describe('005_feedback_reports.sql (technical spec v6 §7.2 / L47-01)', () => {
     expect(tableBody).not.toMatch(/\bseed\b/);
     expect(tableBody).toContain('log_tail jsonb');
     expect(tableBody).toContain('game_code text');
+  });
+});
+
+describe('006_feedback_topics.sql (technical spec v6 §7.2 / L47-06)', () => {
+  it('adds a contained-by topics array and never a seed column', () => {
+    expect(topicsMigrationSql).toContain('ADD COLUMN topics text[] NOT NULL DEFAULT');
+    expect(topicsMigrationSql).toContain(
+      "ARRAY['ui', 'gameplay', 'card', 'shop', 'bot', 'tutorial', 'other']::text[]",
+    );
+    expect(topicsMigrationSql).not.toMatch(/ADD COLUMN seed\b/);
   });
 });

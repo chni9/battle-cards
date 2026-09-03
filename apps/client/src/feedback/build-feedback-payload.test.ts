@@ -8,6 +8,7 @@ describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
     const body = buildFeedbackPayload('bug', '  Home is confusing  ', {
       screen: 'home',
       nickname: 'Ada',
+      topics: ['ui', 'gameplay'],
     });
 
     expect(body).toEqual({
@@ -16,6 +17,7 @@ describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
       screen: 'home',
       protocolVersion: PROTOCOL_VERSION,
       nickname: 'Ada',
+      topics: ['ui', 'gameplay'],
     });
     expect(JSON.stringify(body)).not.toContain('seed');
     expect(Reflect.has(body, 'gameCode')).toBe(false);

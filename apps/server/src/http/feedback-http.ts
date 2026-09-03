@@ -10,9 +10,12 @@ import {
   PROTOCOL_VERSION,
   isFeedbackKind,
   isFeedbackScreen,
+  isFeedbackTopicsComplete,
+  normalizeFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
   type FeedbackScreen,
+  type FeedbackTopic,
   type PlayKind,
 } from '@card-battle/shared';
 
@@ -160,6 +163,7 @@ interface ParsedFeedbackBody {
   protocolVersion: number;
   playKind: PlayKind | null;
   logTail: unknown;
+  topics: readonly FeedbackTopic[];
 }
 
 function parseFeedbackBody(body: unknown): ParsedFeedbackBody | null {
@@ -204,6 +208,10 @@ function parseFeedbackBody(body: unknown): ParsedFeedbackBody | null {
   if (!logTail.ok) {
     return null;
   }
+  const topics = normalizeFeedbackTopics(record['topics']);
+  if (topics === null || !isFeedbackTopicsComplete(record['kind'], topics)) {
+    return null;
+  }
   const lookupCode = rawCode.value === null ? null : normaliseGameCode(rawCode.value);
 
   return {
@@ -217,6 +225,7 @@ function parseFeedbackBody(body: unknown): ParsedFeedbackBody | null {
     protocolVersion,
     playKind,
     logTail: logTail.value,
+    topics,
   };
 }
 
@@ -331,6 +340,7 @@ async function handleFeedbackPost(
       playKind: enriched.playKind,
       logTail: stripSeed(enriched.logTail),
       userAgent,
+      topics: enriched.topics,
     });
 
     res.status(200).json({ ok: true });

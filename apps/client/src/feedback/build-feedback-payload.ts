@@ -10,6 +10,7 @@ import {
   type FeedbackKind,
   type FeedbackScreen,
   type FeedbackSubmitBody,
+  type FeedbackTopic,
   type PlayKind,
 } from '@card-battle/shared';
 
@@ -19,6 +20,7 @@ export interface FeedbackPayloadContext {
   gameCode?: string;
   playKind?: PlayKind;
   actionLog?: readonly ActionLogEntryView[];
+  topics?: readonly FeedbackTopic[];
 }
 
 export function buildFeedbackPayload(
@@ -60,6 +62,7 @@ export function buildFeedbackPayload(
     message: message.trim(),
     screen: context.screen,
     protocolVersion: PROTOCOL_VERSION,
+    topics: context.topics ?? [],
     ...extras,
   };
 }

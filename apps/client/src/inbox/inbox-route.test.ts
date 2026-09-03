@@ -26,6 +26,9 @@ describe('inbox route (technical spec v6 §7.3 / L47-05)', () => {
 
     expect(home).not.toContain('Inbox');
     expect(home).not.toContain('/inbox');
+    expect(inbox).toContain('filterInbox(rows, kindFilter, topicFilter)');
+    expect(inbox).toContain('FEEDBACK_TOPICS');
+    expect(inbox).toContain('formatFeedbackTopics');
     expect(inbox).not.toContain('Delete');
     expect(inbox).not.toContain('Edit');
   });

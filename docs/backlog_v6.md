@@ -81,7 +81,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 44 · Visual pickers | 6 | 6 |
 | 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 3 |
-| 47 · Feedback + inbox | 5 | 5 |
+| 47 · Feedback + inbox | 6 | 6 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
@@ -186,6 +186,7 @@ or the economy bar.
 | L47-03 | Feedback Dialog on Home, Table, Game over. Game over **asks** once per finished `gameCode` (Skip). Fields: kind, message, optional contact. Attach nickname, code, screen, protocol, playKind, log tail from view. **Acceptance:** Home submit works with no room; table submit includes log tail; no seed in the JSON body. Forfeit→recap→prompt is proven in L43-06 + L48-02. | M | Medium | L47-02 | Done |
 | L47-04 | `GET /api/inbox` with `X-Inbox-Password` vs `INBOX_PASSWORD` (timing-safe). Missing env → 404. Wrong password → 401. | S | **High** | L47-01 | Done |
 | L47-05 | SPA `/inbox`: list + kind filter + detail. Not linked from the hub. `App.tsx` pathname branch. **Acceptance:** player hub has no Inbox button; opening `/inbox` without password cannot read rows. | M | Medium | L47-04 | Done |
+| L47-06 | Feedback **About** chips: multi-select `ui` / `gameplay` / `card` / `shop` / `bot` / `tutorial` / `other`. Bug requires ≥1. Persist `topics text[]`. Inbox lists and filters them. **Acceptance:** POST bug without topics is 400; `ui`+`card` round-trips to inbox; no seed; no protocol bump. | M | Medium | L47-03, L47-05 | Done |
 
 ---
 

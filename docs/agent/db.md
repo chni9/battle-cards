@@ -33,11 +33,11 @@
 | `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false) |
 | `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
-| `feedback_reports` | Tester Bug / Confusion / Idea rows (L47-01 / technical spec v6 §7.2). No seed column. `kind` CHECK ∈ (`bug`,`confusion`,`idea`). `log_tail` is a public action-log slice, nullable; `game_code` nullable (Home). |
+| `feedback_reports` | Tester Bug / Confusion / Idea rows (L47-01 / L47-06 / technical spec v6 §7.2). No seed column. `kind` CHECK ∈ (`bug`,`confusion`,`idea`). `topics text[]` CHECK contained-by (`ui`,`gameplay`,`card`,`shop`,`bot`,`tutorial`,`other`); bug ≥1 topic is POST-only so pre-chip rows still list. `log_tail` is a public action-log slice, nullable; `game_code` nullable (Home). |
 
 SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
 `003_finished_game_export_log.sql`, `004_finished_games_tutorial.sql`,
-`005_feedback_reports.sql`.  
+`005_feedback_reports.sql`, `006_feedback_topics.sql`.  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =

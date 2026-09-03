@@ -3,7 +3,7 @@
  * No seed field — GameState.seed must never reach this table.
  */
 
-import type { FeedbackKind, FeedbackScreen, PlayKind } from '@card-battle/shared';
+import type { FeedbackKind, FeedbackScreen, FeedbackTopic, PlayKind } from '@card-battle/shared';
 
 export interface FeedbackReportInsert {
   kind: FeedbackKind;
@@ -16,4 +16,5 @@ export interface FeedbackReportInsert {
   playKind: PlayKind | null;
   logTail: unknown;
   userAgent: string | null;
+  topics: readonly FeedbackTopic[];
 }
