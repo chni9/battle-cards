@@ -3040,4 +3040,99 @@ Designer follow-up: Super Absorber does not pose a direct threat. Overlay
 the seat funds a threat (1v1, already attacking / finishable, or known
 points ≥ 10). Imposition and Poison stay Deny. Easy stays v4.
 
+## 2026-09-01 · [P] Lot 47 feedback schema and session rulings (L47-01)
+
+Designer session for Lot 47. HTTP + Postgres only. Does not change Classic
+values (Lot 54 Spy cost / weaker-answer mutual landed on main in parallel).
+
+**Schema:** `005_feedback_reports.sql` creates `feedback_reports` as technical spec
+v6 §7.2 (CHECK on `kind` ∈ `bug` / `confusion` / `idea`). No seed column. Split
+from 004 is the 2026-08-20 discrepancy (tutorial `is_tutorial` already shipped).
+`screen` and `play_kind` stay TypeScript unions, not SQL CHECKs, so they can grow
+without a migration.
+
+**Unset `DATABASE_URL` (POST /api/feedback):** never HTTP 200. Always **503**.
+Local copy: “Not saved (no database)”. Production, and any real insert failure:
+“Could not save — try again”. Finished-game persist stays a silent skip.
+
+**Enrichment:** if `gameCode` matches a live `GameRoom`, overwrite room-level
+fields only (`gameCode`, `playKind`, `protocolVersion`, last 30 public
+`actionLog` entries) via a seed-free in-process registry — not Colyseus
+`matchMaker`. Else `SELECT room_id, is_tutorial, action_log FROM finished_games
+WHERE room_id = $1 ORDER BY ended_at DESC LIMIT 1` — never `seed`. Nickname and
+`screen` always come from the client (no accounts; HTTP has no seat identity).
+Home with no code stays client-allowlisted.
+
+**Game over ask:** `localStorage['card-battle.v6.feedbackAsked.' + gameCode] =
+'1'` after Skip or a successful submit (tutorial included). Failed submit does
+not mark asked. Manual Feedback stays. Do not stack Dialogs: on first close of
+Game over stats, open Feedback in ask-mode.
+
+**Chrome:** Home **Feedback** next to How to play; Lobby next to Leave; table
+turn-strip `IconButton` `!` (aria-label Feedback). Dock stays Draw + Shop
+(L43-05 / Lot 53). Incoming stays beside the kit (L53-07). `screen`: `home` /
+`lobby` / `table` / `tutorial` (live tutorial) / `end`.
+
+**Inbox:** `/inbox` password field; `sessionStorage` after success; one GET
+returns all rows newest first; kind filter is client-side. Missing
+`INBOX_PASSWORD` → API 404. Wrong password → 401. No hub link.
+
+## 2026-09-01 · [P] GET /api/inbox auth details (L47-04)
+
+`X-Inbox-Password` is compared with padded `crypto.timingSafeEqual` so a
+length mismatch still runs the compare. Missing/empty `INBOX_PASSWORD`
+returns **404** with an empty body (do not advertise the route). Wrong or
+missing header returns **401**. After auth, an unset `DATABASE_URL` or
+query failure returns **503** `{ ok: false }` — never an empty 200 list.
+
+## 2026-09-01 · [P] Inbox CORS preflight (L47-05)
+
+Colyseus answers every `OPTIONS` before Express, with
+`DEFAULT_CORS_HEADERS` that omit `X-Inbox-Password`. Vite `:5173` → `:2567`
+inbox GET therefore failed the preflight and the SPA showed “Could not load”
+for both wrong and correct passwords. Patch
+`matchMaker.controller.DEFAULT_CORS_HEADERS` at boot so the header is allowed.
+POST `/api/feedback` was already fine (`Content-Type` is in the default list).
+
+## 2026-09-02 · [P] Game over Feedback is one Dialog (L47-03)
+
+The finished table used to keep its own Feedback Dialog while `EndScreen` also
+opened ask-mode after stats. Banner-period `!` plus Game over Esc stacked two
+forms and dropped in-progress text. `EndScreen` now owns the only finished
+Feedback Dialog: delay auto-stats while it is open; `!` no-ops over stats or an
+open form; Skip or a successful send (including early `!`) marks asked so stats
+close does not prompt again. Live table chrome is unchanged.
+
+## 2026-09-03 · [P] Feedback HTTP hardening (L47-02 / L47-04)
+
+Security review of PR #18:
+
+- `stripSeed` is depth-capped (`STRIP_SEED_MAX_DEPTH` 32). Deeper attacker
+  `logTail` is **400 Invalid feedback**, not a recursive stack overflow.
+  `POST /api/feedback` parse+insert is inside try/catch; the `void` handler
+  also `.catch`es so a leftover throw cannot become an unhandled rejection on
+  the Colyseus process.
+- Failed `GET /api/inbox` password guesses share the in-memory IP window
+  (10 / 10 min). Excess **429**. Correct password still lists. Missing
+  `INBOX_PASSWORD` stays **404** and does not count.
+
+## 2026-09-03 · [P] Game over stats Feedback button (L47-03)
+
+Spec §7.1 is “prompt + the same control” on Game over. The stats overlay
+covers the turn-strip **!**, and **Return home** does not auto-ask, so a
+tester who never hits View board had no Feedback control. The Game over
+action row now has **Feedback**: it dismisses stats and opens the existing
+`EndScreen` form (no second Dialog). Turn-strip **!** still no-ops while
+stats or Feedback is open.
+
+## 2026-09-03 · [P] Feedback About chips (L47-06)
+
+Designer asked for a more specified form so inbox rows are easy to follow.
+Multi-select **About** chips: `ui`, `gameplay`, `card`, `shop`, `bot`,
+`tutorial`, `other`. A **bug** needs at least one (POST 400 otherwise).
+Confusion / idea may omit. Stored as `topics text[]` (`006_feedback_topics.sql`).
+No game protocol bump. No seed. Inbox lists the labels and filters by topic.
+Old rows keep `{}` and still appear under Any area.
+
+
 

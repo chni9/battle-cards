@@ -71,7 +71,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-70 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+75 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -81,7 +81,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 44 · Visual pickers | 6 | 6 |
 | 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 3 |
-| 47 · Feedback + inbox | 5 | 0 |
+| 47 · Feedback + inbox | 6 | 6 |
 | 48 · Docs + playtest | 2 | 0 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
@@ -174,13 +174,19 @@ Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, 
 
 ## Lot 47 — Feedback + inbox
 
+HTTP + Postgres only. Lot 54 (Spy 2/4, weaker-answer mutual) and L53-07
+(Incoming beside the kit) landed on main in parallel; this lot does not
+reopen those values. Feedback `!` stays on the turn strip, not Incoming
+or the economy bar.
+
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L47-01 | Migration `005_feedback_reports.sql` as spec §7.2 (no seed column). Types + insert helper, unit-tested. **Acceptance:** kind check constraint; insert of a report with `log_tail` and without `game_code`. | M | **High** | — | To do |
-| L47-02 | Express `POST /api/feedback` mounted **before** static catch-all. CORS for the Vite origin in dev. Rate limit 10 / 10 min / IP. Unset `DATABASE_URL`: client-visible failure, **not** 200 OK. Never write `seed`. **Acceptance:** tests with mocked db; production-shaped 503 vs local message per spec §7.1. | M | **High** | L47-01 | To do |
-| L47-03 | Feedback Dialog on Home, Table, Game over. Game over **asks** once per finished `gameCode` (Skip). Fields: kind, message, optional contact. Attach nickname, code, screen, protocol, playKind, log tail from view. **Acceptance:** Home submit works with no room; table submit includes log tail; no seed in the JSON body. Forfeit→recap→prompt is proven in L43-06 + L48-02. | M | Medium | L47-02 | To do |
-| L47-04 | `GET /api/inbox` with `X-Inbox-Password` vs `INBOX_PASSWORD` (timing-safe). Missing env → 404. Wrong password → 401. | S | **High** | L47-01 | To do |
-| L47-05 | SPA `/inbox`: list + kind filter + detail. Not linked from the hub. `App.tsx` pathname branch. **Acceptance:** player hub has no Inbox button; opening `/inbox` without password cannot read rows. | M | Medium | L47-04 | To do |
+| L47-01 | Migration `005_feedback_reports.sql` as spec §7.2 (no seed column). Types + insert helper, unit-tested. **Acceptance:** kind check constraint; insert of a report with `log_tail` and without `game_code`. | M | **High** | — | Done |
+| L47-02 | Express `POST /api/feedback` mounted **before** static catch-all. CORS for the Vite origin in dev. Rate limit 10 / 10 min / IP. Unset `DATABASE_URL`: client-visible failure, **not** 200 OK. Never write `seed`. **Acceptance:** tests with mocked db; production-shaped 503 vs local message per spec §7.1. | M | **High** | L47-01 | Done |
+| L47-03 | Feedback Dialog on Home, Table, Game over. Game over **asks** once per finished `gameCode` (Skip). Fields: kind, message, optional contact. Attach nickname, code, screen, protocol, playKind, log tail from view. **Acceptance:** Home submit works with no room; table submit includes log tail; no seed in the JSON body. Forfeit→recap→prompt is proven in L43-06 + L48-02. | M | Medium | L47-02 | Done |
+| L47-04 | `GET /api/inbox` with `X-Inbox-Password` vs `INBOX_PASSWORD` (timing-safe). Missing env → 404. Wrong password → 401. | S | **High** | L47-01 | Done |
+| L47-05 | SPA `/inbox`: list + kind filter + detail. Not linked from the hub. `App.tsx` pathname branch. **Acceptance:** player hub has no Inbox button; opening `/inbox` without password cannot read rows. | M | Medium | L47-04 | Done |
+| L47-06 | Feedback **About** chips: multi-select `ui` / `gameplay` / `card` / `shop` / `bot` / `tutorial` / `other`. Bug requires ≥1. Persist `topics text[]`. Inbox lists and filters them. **Acceptance:** POST bug without topics is 400; `ui`+`card` round-trips to inbox; no seed; no protocol bump. | M | Medium | L47-03, L47-05 | Done |
 
 ---
 
@@ -188,8 +194,8 @@ Designer follow-up 2026-08-28 (no new task id): added `incoming-thief`, `hand`, 
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`). **Acceptance:** playbooks match shipped behaviour; no second frontend playbook. | S | Low | L42–L47 as landed | To do |
-| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand pagination. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. | L | Medium | all of 41–47 | To do |
+| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit; Incoming beside kit; turn-strip Feedback), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`; overlay `farm-to-engage-v4`). **Acceptance:** playbooks match shipped behaviour including Lot 54 Spy 2/4 and weaker-answer; no second frontend playbook. | S | Low | L42–L47 as landed | To do |
+| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand pagination, Incoming beside the kit with Feedback `!` on the turn strip, Shop Spy play **2** / buy **4**. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. **Watch point:** a weaker answer that does not cancel incoming is Lot 54, not a V6 defect. | L | Medium | all of 41–47 | To do |
 
 ---
 
@@ -317,7 +323,7 @@ record why in `decisions.md`.
 | 54 | 4 |
 | **Total** | **77** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; upgrading Basic before the counter so unequal damage lands; minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump; Feedback on Incoming or the economy bar.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 

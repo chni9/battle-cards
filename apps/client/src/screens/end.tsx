@@ -2,12 +2,24 @@
  * Finished phase — closable stats over the frozen board (designer 2026-08-06).
  * Game over Dialog opens after the L51-06 win/death banner (~1.6s).
  * PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
+ * One FeedbackDialog owned here so stats / ask / turn-strip `!` never stack (L47-03).
  */
 
 import type { FinishedStateView } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { hasAskedFeedback, markFeedbackAsked } from '../feedback/asked-storage';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { ActionRejectPayload } from '../net/use-room-connection';
+import {
+  canOpenEndManualFeedback,
+  canOpenEndStatsFeedback,
+  canReopenEndStats,
+  isEndStatsOpen,
+  shouldAskFeedbackAfterStatsClose,
+  shouldMarkEndFeedbackAsked,
+  type EndFeedbackMode,
+} from './end-feedback';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
 import { TABLE_BANNER_MS } from './table/table-banner';
@@ -33,12 +45,51 @@ export function EndScreen({
   nowMs,
   onLeave,
 }: EndScreenProps): ReactElement {
-  const [statsOpen, setStatsOpen] = useState(false);
+  const [bannerElapsed, setBannerElapsed] = useState(false);
+  const [statsDismissed, setStatsDismissed] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackMode, setFeedbackMode] = useState<EndFeedbackMode>('ask');
   const youWon = view.winnerPlayerId === view.finalTable.you;
+  const youNick = view.players.find((player) => player.id === view.you)?.nickname;
+  const statsOpen = isEndStatsOpen({
+    bannerElapsed,
+    statsDismissed,
+    feedbackOpen,
+  });
+
+  const onStatsClose = (): void => {
+    setStatsDismissed(true);
+    if (
+      shouldAskFeedbackAfterStatsClose({
+        alreadyAsked: hasAskedFeedback(view.gameCode),
+        feedbackOpen,
+      })
+    ) {
+      setFeedbackMode('ask');
+      setFeedbackOpen(true);
+    }
+  };
+
+  const onOpenManualFeedback = (): void => {
+    if (!canOpenEndManualFeedback({ statsOpen, feedbackOpen })) {
+      return;
+    }
+    setFeedbackMode('manual');
+    setFeedbackOpen(true);
+  };
+
+  const onOpenStatsFeedback = (): void => {
+    if (!canOpenEndStatsFeedback({ feedbackOpen })) {
+      return;
+    }
+    setStatsDismissed(true);
+    setFeedbackMode('manual');
+    setFeedbackOpen(true);
+  };
 
   useEffect(() => {
     const id = window.setTimeout(() => {
-      setStatsOpen(true);
+      setBannerElapsed(true);
     }, TABLE_BANNER_MS);
     return () => {
       window.clearTimeout(id);
@@ -58,8 +109,12 @@ export function EndScreen({
         subChoice={null}
         readOnly
         youWon={youWon}
+        onOpenFeedback={onOpenManualFeedback}
         onShowStats={() => {
-          setStatsOpen(true);
+          if (!canReopenEndStats({ feedbackOpen })) {
+            return;
+          }
+          setStatsDismissed(false);
         }}
         onDraw={noop}
         onPlayCard={noop}
@@ -77,10 +132,24 @@ export function EndScreen({
       <GameOverDialog
         open={statsOpen}
         view={view}
-        onClose={() => {
-          setStatsOpen(false);
-        }}
+        onClose={onStatsClose}
         onLeave={onLeave}
+        onOpenFeedback={onOpenStatsFeedback}
+      />
+      <FeedbackDialog
+        open={feedbackOpen}
+        mode={feedbackMode}
+        screen="end"
+        {...(youNick !== undefined ? { nickname: youNick } : {})}
+        gameCode={view.gameCode}
+        playKind={view.playKind}
+        actionLog={view.finalTable.actionLog}
+        onDismiss={(reason) => {
+          if (shouldMarkEndFeedbackAsked(reason)) {
+            markFeedbackAsked(view.gameCode);
+          }
+          setFeedbackOpen(false);
+        }}
       />
     </>
   );

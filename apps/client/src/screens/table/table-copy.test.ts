@@ -14,6 +14,7 @@ import {
   HIDDEN_KIT_LABEL,
   HIDE_COACH_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
+  FEEDBACK_ARIA_LABEL,
   LEAVE_TABLE_ACTION_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
   LEAVE_TABLE_CONFIRM_TITLE,
@@ -59,6 +60,7 @@ describe('table leave chrome copy (L43-05)', () => {
     expect(RETURN_HOME_CONFIRM_TITLE).toBe('Return home?');
     expect(RETURN_HOME_CONFIRM_BODY).toContain('home screen');
     expect(HOW_TO_PLAY_ARIA_LABEL).toBe('How to play');
+    expect(FEEDBACK_ARIA_LABEL).toBe('Feedback');
     expect(SKIP_TUTORIAL_ARIA_LABEL).toBe('Skip tutorial');
     expect(SKIP_TUTORIAL_ACTION_LABEL).toBe('Skip tutorial');
     expect(SKIP_TUTORIAL_CONFIRM_TITLE).toBe('Skip the tutorial?');

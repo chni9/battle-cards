@@ -1,6 +1,7 @@
 /**
- * Phase router — Home / Lobby / Table / End.
+ * Phase router — Home / Lobby / Table / End / Inbox.
  * Conventions: docs/agent/frontend.md · technical spec v2 §6 · L17-01 solo skip-lobby.
+ * Inbox is pathname `/inbox`, not a game phase (technical spec v6 §7.3 / L47-05).
  */
 
 import { useEffect, useState } from 'react';
@@ -8,11 +9,19 @@ import { useEffect, useState } from 'react';
 import { useRoomConnection } from './net/use-room-connection';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
+import { InboxScreen } from './screens/inbox';
 import { LobbyScreen } from './screens/lobby';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen } from './screens/table';
 
 export function App() {
+  if (window.location.pathname === '/inbox') {
+    return <InboxScreen />;
+  }
+  return <GameApp />;
+}
+
+function GameApp() {
   const connection = useRoomConnection();
   const {
     status,

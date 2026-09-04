@@ -20,10 +20,11 @@ payloads, different chrome; implemented in L12-08).
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; optional How to play | `screens/home.tsx` + `how-to-play-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home | `screens/end.tsx` + `game-over-dialog.tsx` |
+| End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home; ask-once Feedback | `screens/end.tsx` + `game-over-dialog.tsx` |
+| Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -70,6 +71,17 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–5 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
+  **Feedback** (L47-03 / L47-06): hub control next to How to play; same Dialog on Online / Solo /
+  Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
+  omits `gameCode` / `logTail`. Kind plus multi-select **About** chips (`UI`, `Gameplay`,
+  `Card`, `Shop`, `Bot`, `Tutorial`, `Other`). A bug needs at least one chip; confusion /
+  idea may skip. Message placeholder follows kind. Send uses a sync in-flight gate so two
+  clicks before paint cannot insert two rows. No Inbox link on the hub.
+  **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
+  field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
+  kind and About filters are client-side; list shows topic labels; row click opens full
+  message / topics / contact / log tail /
+  user agent / protocol. No edit or delete.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under
@@ -115,7 +127,8 @@ rules above are unchanged — this section only covers how the client looks.
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty
-  while `players.length < MAX_PLAYERS` (2–6); `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
+  while `players.length < MAX_PLAYERS` (2–6); **Feedback** next to Leave (L47-03);
+  `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
   and sends `chooseKit` before `startGame` when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
@@ -135,7 +148,8 @@ rules above are unchanged — this section only covers how the client looks.
   public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
   `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
-  grid + Buy special, and the pool. Turn strip: **?** (How to play) left of timers, **flag**
+  grid + Buy special, and the pool. Turn strip: **?** (How to play) then **!** (Feedback,
+  `aria-label` Feedback) left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
   (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
@@ -347,6 +361,15 @@ rules above are unchanged — this section only covers how the client looks.
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
+  First close of Game over stats (View board / overlay / Esc) opens Feedback in ask-mode
+  once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
+  successful send). The Game over action row also has **Feedback** (same label as Home):
+  it dismisses stats and opens the form so the overlay cannot hide the turn-strip **!**.
+  **Return home** from stats does not auto-ask. Failed send does not
+  mark asked. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
+  ask / turn-strip **!** never stack: banner-period `!` delays stats until that form
+  closes; a send there marks asked; `!` is a no-op while stats or Feedback is already
+  open. Live table still owns its own Dialog.
   Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
   Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
   (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
@@ -798,4 +821,21 @@ Classic Spy price in the live Shop: play cost **2** on the card face, buy **4**
 (double). Room `ZIDABK` (nick `SpyPrice`, Solo vs 1 Normal). Mutual / volley /
 overlay covered by engine and `score-engage` unit tests; `pnpm verify` **1166**
 tests.
+
+### Lot 47 verified 2026-09-01 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+Hub + table Feedback, password-gated `/inbox`. `INBOX_PASSWORD=lot47-inbox`, no
+`DATABASE_URL` (local 503 copy). Vite `:5173`, server `:2567`.
+
+- Hub: How to play + Feedback; **no Inbox** control. Empty message keeps Send
+  disabled. Submit shows **Not saved (no database)**; Cancel closes.
+- Table `!` (aria-label Feedback) on the turn strip next to `?`; Draw + Shop
+  stay on the dock. Solo nick `Ada`, 1× Normal. Same 503 copy on Send.
+- `/inbox`: no rows until Open. Wrong password → **Wrong password**. Correct
+  password without Postgres → **Could not load**. First playtest saw both as
+  Could not load until Colyseus OPTIONS `X-Inbox-Password` was allowed.
+
+Merged `origin/main` after L53-07 / Lot 54: Incoming stays beside the kit
+(stacked, `max-h-14`); Feedback `!` stays on the turn strip, not the Incoming
+column. Spy shop play **2** / buy **4** is Lot 54, not a feedback regression.
 

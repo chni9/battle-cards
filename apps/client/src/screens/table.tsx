@@ -73,6 +73,7 @@ import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
+import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type {
   ActionRejectPayload,
   PlayCardOptions,
@@ -98,6 +99,7 @@ import {
   ACTION_LOG_OPEN_LABEL,
   FELT_QUEUE_TITLE,
   FORFEIT_ARIA_LABEL,
+  FEEDBACK_ARIA_LABEL,
   HOW_TO_PLAY_ARIA_LABEL,
   INCOMING_OPEN_LABEL,
   LEAVE_TABLE_ARIA_LABEL,
@@ -165,6 +167,11 @@ export interface TableScreenProps {
   readOnly?: boolean;
   /** Reopen game-over stats when `readOnly`. */
   onShowStats?: () => void;
+  /**
+   * Finished board: parent owns Feedback so Game over stats / ask / `!` never stack
+   * (L47-03). Live table omits this and keeps its own Dialog.
+   */
+  onOpenFeedback?: () => void;
   /** Finished-board winner for the POV (L51-06). */
   youWon?: boolean;
 }
@@ -362,12 +369,14 @@ function TableScreenInner({
   onActivateDuplication,
   readOnly = false,
   onShowStats,
+  onOpenFeedback,
   youWon = false,
 }: TableScreenProps): ReactElement {
   const { enqueue } = useTableFx();
   const reduceMotion = useReducedMotion();
   const [dialog, setDialog] = useState<TableDialog>(null);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState<Exclude<TableFlagIntent, 'hidden'> | null>(
     null,
   );
@@ -1206,6 +1215,18 @@ function TableScreenInner({
             >
               ?
             </IconButton>
+            <IconButton
+              aria-label={FEEDBACK_ARIA_LABEL}
+              onClick={() => {
+                if (onOpenFeedback !== undefined) {
+                  onOpenFeedback();
+                  return;
+                }
+                setFeedbackOpen(true);
+              }}
+            >
+              !
+            </IconButton>
             <div className="min-w-0 flex-1 overflow-visible">
               <TutorialZoneCallout
                 active={tourHighlight === 'timer'}
@@ -1637,6 +1658,20 @@ function TableScreenInner({
           setHowToPlayOpen(false);
         }}
       />
+      {onOpenFeedback === undefined ? (
+        <FeedbackDialog
+          open={feedbackOpen}
+          mode="manual"
+          screen={readOnly ? 'end' : view.playKind === 'tutorial' ? 'tutorial' : 'table'}
+          gameCode={view.gameCode}
+          playKind={view.playKind}
+          actionLog={view.actionLog}
+          {...(selfPublic !== undefined ? { nickname: selfPublic.nickname } : {})}
+          onDismiss={() => {
+            setFeedbackOpen(false);
+          }}
+        />
+      ) : null}
 
       <TableLeaveConfirm
         intent={leaveConfirm}
