@@ -42,12 +42,14 @@ What V6 has to prove:
 - Classic play is unchanged unless the designer explicitly requests a rule or value
   change in the current session: same prices, damage, kits, delay, mutual attacks by default.
   **2026-08-29:** Classic occupancy is **2 to 6** (was 2 to 4).
+  **2026-09-07:** Classic occupancy is **2 to 8**.
 
 ### Non-objectives
 
 - **No Classic rule change. No Classic value change** — unless the current session's
   developer instructions explicitly change one (record in `decisions.md` + rules spec).
-  **2026-08-29 exception:** Classic occupancy is 2–6. A confused tester is never grounds
+  **2026-08-29 exception:** Classic occupancy is 2–6.
+  **2026-09-07 exception:** Classic occupancy is 2–8. A confused tester is never grounds
   for changing Tax, delay, kits, or prices on inference alone. Same clause as V4 / V5,
   with that explicit-instruction exception.
 - **No new competitive mode.** Team, God, and Quick stay out (technical spec v1 §9). The
@@ -92,7 +94,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
 
-Classic rooms seat **2 to 6** players (was 2–4 through #V4-30). Not Team/God/Quick.
+Classic rooms seat **2 to 8** players (was 2–6 through L52-01). Not Team/God/Quick.
 Card values, delay, and mutual attacks are unchanged. Single source:
 `packages/shared/src/domain/player-count.ts`.
 
@@ -182,7 +184,7 @@ designer files (`delayed-resolution.png`, `table-overview.png`) stay on disk unu
 
 | Section id | Title | Must say | Screenshot file (designer) |
 |---|---|---|---|
-| `goal` | Goal | Last player alive wins. This is a turn-based elimination game for 2 to 6 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them. | — |
+| `goal` | Goal | Last player alive wins. This is a turn-based elimination game for 2 to 8 players: reduce opponents' lives to 0 and stay alive yourself. Lives can never go above 25, no matter how you gain them. | — |
 | `turn` | Turns | Players act one after another. On your turn you take exactly one action, then play passes on. That action is one of: Draw, play a card from your hand, play a special, buy, sell, or upgrade. | `how-to-play/one-action.png` |
 | `lives` | Lives | Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. | `how-to-play/resources.png` |
 | `points` | Points | Points are the currency for almost every action: playing most cards, buying from the Shop, selling, and buying upgrade points. Draw gives you points equal to your kit's Draw value. | — |

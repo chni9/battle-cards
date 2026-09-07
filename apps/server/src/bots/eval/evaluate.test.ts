@@ -25,7 +25,7 @@ import {
 describe('evaluate / features (L33-02)', () => {
   it('exposes a stable feature layout version and matching dim', () => {
     expect(FEATURE_LAYOUT_VERSION).toBe(1);
-    expect(FEATURE_MAX_PLAYERS).toBe(6);
+    expect(FEATURE_MAX_PLAYERS).toBe(8);
     expect(FEATURE_NAMES).toHaveLength(FEATURE_DIM);
     expect(DEFAULT_POLICY_WEIGHTS.evaluator.linearWeights).toHaveLength(FEATURE_DIM);
   });
@@ -117,13 +117,13 @@ describe('evaluate / features (L33-02)', () => {
     expect(pTwo).toBeGreaterThan(pThree);
   });
 
-  it('extracts FEATURE_DIM features on a 6-player table', () => {
+  it('extracts FEATURE_DIM features on an 8-player table', () => {
     const state = createInitialState({
-      seats: Array.from({ length: 6 }, (_, index) => ({
+      seats: Array.from({ length: 8 }, (_, index) => ({
         id: String.fromCodePoint(97 + index),
         nickname: `P${String(index)}`,
       })),
-      seed: 'l33-02-six-seats',
+      seed: 'l33-02-eight-seats',
     });
     const self = state.players[0];
     if (self === undefined) {

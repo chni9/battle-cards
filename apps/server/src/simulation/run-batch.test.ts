@@ -56,34 +56,34 @@ describe('simulation batch (L18-04)', () => {
     expect(config.baseSeed).toBe('pnpm-sep');
   });
 
-  it('accepts --players 6 and rejects 7', () => {
-    const six = parseBatchArgs([
+  it('accepts --players 8 and rejects 9', () => {
+    const eight = parseBatchArgs([
       '--games',
       '1',
       '--players',
-      '6',
+      '8',
       '--difficulties',
-      'easy,easy,easy,easy,easy,easy',
+      'easy,easy,easy,easy,easy,easy,easy,easy',
       '--seed',
-      'six',
+      'eight',
       '--out',
       '/tmp/out.jsonl',
     ]);
-    expect(six.playerCount).toBe(6);
+    expect(eight.playerCount).toBe(8);
     expect(() =>
       parseBatchArgs([
         '--games',
         '1',
         '--players',
-        '7',
+        '9',
         '--difficulties',
-        'easy,easy,easy,easy,easy,easy,easy',
+        'easy,easy,easy,easy,easy,easy,easy,easy,easy',
         '--seed',
-        'seven',
+        'nine',
         '--out',
         '/tmp/out.jsonl',
       ]),
-    ).toThrow(/2–6/);
+    ).toThrow(/2–8/);
   });
 
   it('same base seed and config → byte-identical JSONL', async () => {

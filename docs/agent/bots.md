@@ -55,7 +55,7 @@ is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
 ## State evaluator (L33-02)
 
 - `bots/eval/features.ts` — `extractFeatures(state, playerId, belief?)` / `FEATURE_LAYOUT_VERSION`.
-  `FEATURE_MAX_PLAYERS` follows Classic `MAX_PLAYERS` (6). Layout version stays 1; belief
+  `FEATURE_MAX_PLAYERS` follows Classic `MAX_PLAYERS` (8). Layout version stays 1; belief
   width slots remain three opponent offsets.
 - `bots/eval/evaluate.ts` — `evaluate` / `evaluateFromFeatures` → win-prob vector (#V5-7).
 - Belief slots fill from optional `BeliefSummary` (L34-03). Omitted → zeros. `evaluate` does

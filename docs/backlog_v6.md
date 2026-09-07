@@ -37,6 +37,7 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 12. **Designer Classic tweaks (Lot 54).** Spy price, weaker-answer mutual, assassin
     volley, engage-bot Mirror/burn, Super Absorber skip. Session instruction; no
     protocol bump.
+13. **Eight-player Classic (Lot 55).** Occupancy 2–8. No protocol bump.
 
 **Execution order**
 
@@ -59,6 +60,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
   assassin volley). Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
+  Designer 2026-09-07: Classic occupancy is **2–8**.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**.
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
@@ -71,7 +73,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-75 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+76 of 78 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -89,6 +91,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 52 · Six-player Classic | 1 | 1 |
 | 53 · Table crowding | 7 | 7 |
 | 54 · Designer Classic tweaks | 4 | 4 |
+| 55 · Eight-player Classic | 1 | 1 |
 
 ---
 
@@ -303,6 +306,17 @@ record why in `decisions.md`.
 
 ---
 
+## Lot 55 — Eight-player Classic (designer 2026-09-07)
+
+Explicit session instruction: Classic occupancy **2–8**. Not God mode. No protocol bump.
+Lot 53 opponent row stays `flex-nowrap` + overflow-x. Fitted layout version unchanged.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L55-01 | Raise Classic max seats 6 → 8. Shared `MAX_PLAYERS`; lobby/solo/Colyseus/`createInitialState`/batch/seat palette; MEGA/Poison/legal-action tests at 8. Fitted layout version unchanged. **Acceptance:** 8th seat joins; 9th rejected; solo 7 opponents; `pnpm verify` green. | L | Medium | — | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -321,7 +335,8 @@ record why in `decisions.md`.
 | 52 | 1 |
 | 53 | 7 |
 | 54 | 4 |
-| **Total** | **77** |
+| 55 | 1 |
+| **Total** | **78** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump; Feedback on Incoming or the economy bar.
 

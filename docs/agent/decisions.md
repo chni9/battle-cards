@@ -3134,5 +3134,20 @@ Confusion / idea may omit. Stored as `topics text[]` (`006_feedback_topics.sql`)
 No game protocol bump. No seed. Inbox lists the labels and filters by topic.
 Old rows keep `{}` and still appear under Any area.
 
+## 2026-09-07 · [P] Classic occupancy is 2–8 (supersedes L52-01)
+
+Designer instruction (this session): Classic rooms seat **2 to 8** players, not 2 to 6.
+Not God/Team/Quick. No card value, delay, or mutual-attack change. Lot 53 opponent
+arc stays one nowrap row.
+
+Single source: `packages/shared/src/domain/player-count.ts` (`MIN_PLAYERS` / `MAX_PLAYERS`).
+Lobby occupancy, `game-room.maxClients`, solo opponent picker, seat palette, batch
+`--players`, and `createInitialState` all read that constant. `FEATURE_LAYOUT_VERSION`
+stays **1** (dim 46); `livingOpponentCountNorm` now divides by 7. Belief width features
+remain three opponent-offset slots — an 8-player table does not add fitted dimensions.
+
+Rules spec §1 Number of Players updated in the same change. How to play primer Goal
+copy matches (2 to 8).
+
 
 

@@ -73,7 +73,7 @@ export const FEATURE_NAMES = [
   'pendingReanimationArmed',
   // Belief (Lot 34) — one width slot per opponent seat offset 1..3.
   // Fitted layout v1 reserved three slots when Classic was 2–4; extra living
-  // opponents at 5–6 seats have no dedicated width feature (zeros).
+  // opponents at 5–8 seats have no dedicated width feature (zeros).
   'beliefLifeWidthOpp1',
   'beliefLifeWidthOpp2',
   'beliefLifeWidthOpp3',
