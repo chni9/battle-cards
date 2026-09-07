@@ -46,6 +46,15 @@ before/after private snapshots, `events` = public action log). On new writes,
 same trust boundary as the finished Excel download. Headless simulation still
 does not write Postgres.
 
+Persist sets `is_tutorial` from the room overlay `playKind` (`true` only for tutorial
+rooms). Headless arena / gross-imbalance screens **do not query** `finished_games`
+today; they run in-process. Any future SQL reader of finished games **must** exclude
+`is_tutorial = true` so tutorial rows never enter balance numbers. Do not invent a
+`WHERE` in unused code.
+
+Feedback never stores `GameState.seed`. `load-finished-feedback-context` selects
+`room_id, is_tutorial, action_log` only when enriching a report from a finished row.
+
 Turn count in the log is **`turn_sequence`** (= `GameState.turnSequence` at end), not a
 separate player-turn counter.
 

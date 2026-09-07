@@ -71,7 +71,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-75 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+76 of 77 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -82,7 +82,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 45 · Tutorial | 7 | 7 |
 | 46 · First-game hints | 3 | 3 |
 | 47 · Feedback + inbox | 6 | 6 |
-| 48 · Docs + playtest | 2 | 0 |
+| 48 · Docs + playtest | 2 | 1 |
 | 49 · Lobby kit pick | 2 | 2 |
 | 50 · Beta feedback | 9 | 9 |
 | 51 · Beta UI feedback | 16 | 16 |
@@ -194,8 +194,8 @@ or the economy bar.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit; Incoming beside kit; turn-strip Feedback), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`; overlay `farm-to-engage-v4`). **Acceptance:** playbooks match shipped behaviour including Lot 54 Spy 2/4 and weaker-answer; no second frontend playbook. | S | Low | L42–L47 as landed | To do |
-| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand pagination, Incoming beside the kit with Feedback `!` on the turn strip, Shop Spy play **2** / buy **4**. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. **Watch point:** a weaker answer that does not cancel incoming is Lot 54, not a V6 defect. | L | Medium | all of 41–47 | To do |
+| L48-01 | Update living docs in place: `frontend.md` (hub/table/inbox/tutorial/hints/forfeit; Incoming beside kit; turn-strip Feedback), `protocol.md` (v29 fields, FORFEIT), `db.md` (feedback + `is_tutorial`), `bots.md` (`tutorial-script-v6`; overlay `farm-to-engage-v4`). **Acceptance:** playbooks match shipped behaviour including Lot 54 Spy 2/4 and weaker-answer; no second frontend playbook. | S | Low | L42–L47 as landed | Done |
+| L48-02 | Post-lot-style **first-time player** browser gate (spec §10): soft gate, How to play, Tutorial full script to kill, first Classic hints after tutorial, forfeit → Game over → feedback, `/inbox` with password, phone-width hand **horizontal scroll (L53-07, no pager)**, Incoming beside the kit with Feedback `!` on the turn strip, Shop Spy play **2** / buy **4**. Fix defects, re-verify, commit. Record room codes in `frontend.md`. **Acceptance:** designer or agent playtest notes in `frontend.md`; `pnpm verify` green. **Watch point:** a weaker answer that does not cancel incoming is Lot 54, not a V6 defect. | L | Medium | all of 41–47 | To do |
 
 ---
 

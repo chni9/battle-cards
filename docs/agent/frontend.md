@@ -7,14 +7,14 @@
 
 ## Status
 
-V1 shipped functional UI only, no art direction (technical spec v1 §9). **V2 is in progress**
-(`docs/technical_spec_v2.md`, `docs/backlog_v2.md` Lots 10–14). `App.tsx` is the phase
-router; Home, Lobby, Table, and End live under `apps/client/src/screens/` (Lots 11–13).
-Update this file's examples in place as V2 components land; don't fork a second frontend
-playbook. **Keep it current with every client convention change** (AGENTS.md §12) — same
-commit as the code, never a later cleanup. Intents, payloads, and visibility rules are
-unchanged by V2 (except the Table **control pattern** in technical spec v2 §6.1 — same
-payloads, different chrome; implemented in L12-08).
+V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 54
+(`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
+a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
+`apps/client/src/screens/`. **Keep it current with every client convention change**
+(AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
+visibility rules stay server-side; Lots 49–54 are the current table (kit pick, occupancy 2–6,
+no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual).
 
 ## Screens
 
@@ -113,6 +113,9 @@ rules above are unchanged — this section only covers how the client looks.
   Selector ranks one undismissed topic from view facts: reward (while POV is choosing) →
   **attack** Incoming → **Thief** Incoming → (on turn) your-turn → draw → hand → specials →
   shop → resources → hidden-kit. Spy stays on the Incoming strip without a hint card.
+  Incoming-attack copy is spec §5.2 (equal cancels both; a weaker answer still hits them
+  later — Lot 54). Do not invent `actionResolved` cancel-why copy if the wire has no
+  discriminant (spec v6 §12 #7). Copy typos in `HINT_COPY` are locked.
   Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
   thief-Incoming clear / confirm reward. × dismisses the same as Got it.
   Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming.
@@ -120,7 +123,9 @@ rules above are unchanged — this section only covers how the client looks.
   those two cards sit **beside** the cluster (top-aligned, left when it fits) so they are
   not dumped on the felt's left edge or over the other row. `leave` is not a hint id.
   Completing or skipping the tutorial does **not** set `skipAll`
-  (L46-03); Hub **Reset help** still clears the key. `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
+  (L46-03). There is **no** hub Reset help control (L51-03); `resetHelpStorage` is
+  tests-only. A stranger clears `localStorage['card-battle.v6.howToPlaySeen']` and
+  `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
@@ -148,7 +153,8 @@ rules above are unchanged — this section only covers how the client looks.
   public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
   `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
-  grid + Buy special, and the pool. Turn strip: **?** (How to play) then **!** (Feedback,
+  grid + Buy special, and the pool. Shop faces use catalog costs: Spy play **2** / buy **4**
+  (Lot 54 — do not restore 4/8). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback) left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
@@ -383,8 +389,7 @@ rules above are unchanged — this section only covers how the client looks.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
-  quantity Dialog. Regen quantity is a free text field; Confirm stays disabled until
-  the value is an integer from 1 to 4 (mobile `type="number"` was unusable).
+  the L44-06 quantity Dialog (four click-to-commit buttons, not a free-text field).
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
@@ -490,6 +495,43 @@ do not hand off an untested lot.
 5. Record the room code(s) and what was verified in this file (same pattern as the Lot 6/7
    notes above).
 
+### V6 first-time gate (L48)
+
+Reusable stranger path on the **current** tree (Lots 49–54 are the truth). One browser,
+not a two-human session and not a 6p crowding redo. Clear
+`card-battle.v6.howToPlaySeen` and `card-battle.v6.hints` first — there is no Reset help
+control. `TURN_DURATION_MS=300000 pnpm dev`. Inbox persist needs `DATABASE_URL` (migrated)
+and `INBOX_PASSWORD`. Do not restore pager / Reset help / Spy 4/8 / protocol 29.
+
+1. Hub: **Beta** (word only), Tutorial, How to play, Feedback; **no** Inbox link; **no**
+   `Protocol v`.
+2. First Play online / Play solo / Tutorial click opens How to play (soft gate). Skip and
+   Got it both continue. Primer order is spec §5.1 (no delayed-resolution section). Missing
+   `apps/client/src/assets/how-to-play/*.png` omit `<img>` — do not invent files.
+3. Tutorial: nickname-only create; one scripted bot; no turn timer; board tour then Look
+   then indices 0–30 to human win; coach + orange callout. Incoming beside the kit is
+   proven on tutorial Incoming (Basic / Strong / Spy / Thief); Feedback `!` stays on the
+   turn strip. Skip tutorial (flag-only, hub, no Game over) is L45 evidence — this gate
+   may complete 0–30 instead of Skip.
+4. **Tutorial complete** → Skip ask-once Feedback if it opens → **Play a real game** →
+   hub. Completing tutorial does **not** set hint `skipAll`.
+5. Next Classic Easy solo (1 opponent): first-game hint overlay (not tutorial coach).
+   Table **?** opens How to play without sending an intent. Shop: Spy play **2** / buy
+   **4**.
+6. Phone 390×844 and landscape 844×390: shared face width, one row, **no pager**, faces
+   not cropped. Horizontal scroll only if the hand overflows — a short 2p hand that fits
+   is not a fail.
+7. Alive flag → Stay then Forfeit (socket stays) → Game over → ask-once Feedback. POST
+   persists (this is the persist proof; tutorial Feedback may be Skip). No `seed` in the
+   JSON body. Failed send must not mark asked. CORS `:5173` → `:2567` (spec v6 §12 #8).
+8. `/inbox` + password: list shows that Classic row (kind, topics, message, no seed).
+   Wrong password → **Wrong password**. Missing-env 404 and no-DB 503 stay L47 evidence.
+9. Watch point: a weaker answer that still lets incoming land is Lot 54, not a V6 defect.
+   DEV **Download action log** is expected under `pnpm dev`.
+
+A presentation oddity that is how Lots 49–54 already work is **not** a defect. Stop and
+ask rather than revert.
+
 ### Lot 9 verified 2026-08-01 (Playwright, `TURN_DURATION_MS=300000`, PROTOCOL 18)
 
 - Action log: turn groups, draw/playCard/Resolved entries, player/kind/search filters.
@@ -589,6 +631,8 @@ do not hand off an untested lot.
 - Designer follow-up 2026-08-21: finished inspect **keeps the flag** as Return home; Draw is
   green; Sell is green; button costs show − / +.
 - Phone-width hand pagination remains L48-02.
+  **Superseded by L53-07:** shared-size horizontal scroll, no pager. Do not restore
+  pagination.
 
 ### Lot 44 verified 2026-08-24 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
@@ -659,6 +703,7 @@ do not hand off an untested lot.
   upgraded special-pick list has 19 specials and no Card Transformer. Log shows the long
   nick without ellipsis. Phone-width (390) Hand pager `1/2` with 44px `IconButton` arrows.
   Room `PPWXUP` on the pager pass.
+  **Superseded by L53-07:** no pager; one row, horizontal scroll. Do not restore arrows.
 
 ### Lot 51 verified 2026-08-26 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
@@ -717,6 +762,9 @@ do not hand off an untested lot.
   on the Points dock — spend and gain legs, not a single net chip.
 - Mutual equal/weaker attack vs Alpha's Strong still cancels (Round 2 log);
   cancelled attacks correctly fly no `livesLost` chips from the `?` seat.
+  **Superseded by Lot 54:** a weaker *answer* is kept and the incoming still
+  resolves; equal still cancels both. Do not treat a weaker answer that lands as a
+  V6 defect.
 
 ### Lot 53 verified 2026-08-31 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
 
