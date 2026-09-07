@@ -887,3 +887,40 @@ Merged `origin/main` after L53-07 / Lot 54: Incoming stays beside the kit
 (stacked, `max-h-14`); Feedback `!` stays on the turn strip, not the Incoming
 column. Spy shop play **2** / buy **4** is Lot 54, not a feedback regression.
 
+### Lot 48 verified 2026-09-07 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 30)
+
+First-time stranger path on the **current** tree (Lots 49–54 already shipped).
+One browser. Vite `:5173`, Colyseus `:2567`, migrated Postgres, `INBOX_PASSWORD`
+set (value not recorded). No product defects; nothing rewound.
+
+- **Hub:** **Beta** (word only); Play online / Play solo / Tutorial / How to play
+  / Feedback. No Inbox link; no `Protocol v`.
+- **Soft gate:** Tutorial click opens How to play. Primer Goal → Turns → Lives →
+  Points → Cards → Upgrade → Kits → Special cards → Shop (resource glyphs). No
+  delayed-resolution section. Skip continues.
+- **Tutorial** nick `L48Host`. Room `YKULWV`. No turn timer. 11-step board tour
+  (Got it) then Look (portrait click, no Got it) then indices **0–30** to a
+  human win. Incoming **Basic / Spy / Strong / Thief** chips sit beside the kit;
+  Feedback `!` stays on the turn strip. Index 3 non-upgraded Basic; equal cancel
+  left Alpha at 4 lives. Tax twice at +4 (base). Shop bought an upgrade point
+  then Absorber (not Basic). Title **Tutorial complete** (Protocol v30). Play a
+  real game → hub. Ask-once Feedback did not auto-open on that recap (opened
+  from Classic Game over **Feedback** instead).
+- **Classic Easy** 1 opponent, nick `L48Classic`. Room `EAXQFM`. First-game
+  hint **Your turn** (spec §5.2 body, not tutorial coach) — tutorial did not
+  `skipAll`. Table **?** opened How to play with no extra log line. Shop Spy
+  selected: buy **4** points (blurb “prices are double the play cost” → play
+  **2**). Alpha **BOT · Easy**.
+- **Phone:** 390×844 and 844×390 — one-row hand, shared Specials width, **no
+  pager**, faces not cropped. Landscape Incoming (1) beside the kit. A 2p hand
+  that fits without scroll is not a fail.
+- **Forfeit:** flag **Stay** kept the table; **Forfeit** kept the socket →
+  Game over (not Tutorial complete); `L48Classic eliminated (leave)`; winner
+  Alpha; Download action log present under `pnpm dev`.
+- **Inbox bar:** POST `/api/feedback` 200, body `playKind: classic`,
+  `protocolVersion: 30`, topics `ui`, **no seed**. `/inbox` wrong password →
+  **Wrong password** (401). Correct password lists the Classic row (kind Bug,
+  About UI, message, code `EAXQFM`, protocol 30, log tail, **no seed**).
+- Watch point: weaker-answer mutual was not hunted; Lot 54. Missing How to play
+  PNGs omitted `<img>` as wired.
+
