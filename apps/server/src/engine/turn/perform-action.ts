@@ -1215,7 +1215,9 @@ function collectSuperMirrorRedirects(
       if (effect.redirectedBy === 'super-mirror' && !beforeIds.has(effect.id)) {
         redirects.push({
           actorPlayerId,
-          cardId: 'super-mirror',
+          cardId: effect.cardId,
+          isUpgraded: effect.isUpgraded,
+          damageMultiplier: effect.damageMultiplier,
           previousTargetPlayerId: actorPlayerId,
           newTargetPlayerId: effect.targetPlayerId,
           turnSequence,

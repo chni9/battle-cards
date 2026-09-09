@@ -131,11 +131,7 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
   if (result.mirrorRedirect !== undefined) {
     log.push({
       kind: 'mirrorRedirected',
-      actorPlayerId: result.mirrorRedirect.actorPlayerId,
-      cardId: result.mirrorRedirect.cardId,
-      previousTargetPlayerId: result.mirrorRedirect.previousTargetPlayerId,
-      newTargetPlayerId: result.mirrorRedirect.newTargetPlayerId,
-      turnSequence: result.mirrorRedirect.turnSequence,
+      ...result.mirrorRedirect,
     });
   } else {
     log.push({
@@ -160,11 +156,7 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
     for (const redirect of result.mirrorRedirects) {
       log.push({
         kind: 'mirrorRedirected',
-        actorPlayerId: redirect.actorPlayerId,
-        cardId: redirect.cardId,
-        previousTargetPlayerId: redirect.previousTargetPlayerId,
-        newTargetPlayerId: redirect.newTargetPlayerId,
-        turnSequence: redirect.turnSequence,
+        ...redirect,
       });
     }
   }

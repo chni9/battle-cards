@@ -714,6 +714,8 @@ export function actionLogFlyoutKey(entry: ActionLogEntryView): string {
       return `elim:${entry.playerId}:${String(entry.turnSequence)}`;
     case 'mirrorRedirected':
       return `mirror:${String(entry.turnSequence)}:${entry.actorPlayerId}:${entry.previousTargetPlayerId}`;
+    case 'persistentDeactivated':
+      return `lost:${entry.ownerPlayerId}:${entry.cardId}:${String(entry.turnSequence)}`;
     case 'curseTransferred':
       return `curse:${entry.effectId}`;
     case 'playerReanimated':

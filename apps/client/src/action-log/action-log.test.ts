@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ActionLogEntryView } from '@card-battle/shared';
+import type { ActionLogEntryKind, ActionLogEntryView } from '@card-battle/shared';
 
 import {
+  ACTION_LOG_KINDS,
   filterActionLog,
   formatActionLogEntry,
   formatActionLogEntrySegments,
@@ -447,5 +448,36 @@ describe('formatActionLogEntrySegments (L39-03)', () => {
     expect(formatActionLogEntry(resolved, nick)).toBe(
       "Alice's Basic attack hits Bob (−1 life)",
     );
+  });
+});
+
+describe('action log kinds (L56-03)', () => {
+  it('lists every ActionLogEntryKind including persistentDeactivated', () => {
+    const kinds: Record<ActionLogEntryKind, true> = {
+      actionPlayed: true,
+      actionResolved: true,
+      playerEliminated: true,
+      mirrorRedirected: true,
+      persistentDeactivated: true,
+      curseTransferred: true,
+      playerReanimated: true,
+      rewardsClaimed: true,
+    };
+    expect([...ACTION_LOG_KINDS].sort()).toEqual(Object.keys(kinds).sort());
+  });
+
+  it('formats persistentDeactivated as lost copy', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'persistentDeactivated',
+          ownerPlayerId: 'a',
+          cardId: 'poison',
+          isUpgraded: false,
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe("Alice's Poison is deactivated and lost");
   });
 });

@@ -63,6 +63,17 @@ const KIND_META: Record<
       </svg>
     ),
   },
+  persistentDeactivated: {
+    label: 'Lost',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M3 4h10v1.5H9.5V14h-3V5.5H3V4Zm2-2h6l.5 1.5h-7L5 2Z"
+        />
+      </svg>
+    ),
+  },
   curseTransferred: {
     label: 'Curse',
     icon: (
@@ -259,6 +270,8 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
       return `${entry.kind}-${entry.playerId}-${entry.reason}-${String(index)}`;
     case 'mirrorRedirected':
       return `${entry.kind}-${entry.turnSequence}-${entry.newTargetPlayerId}-${String(index)}`;
+    case 'persistentDeactivated':
+      return `${entry.kind}-${entry.turnSequence}-${entry.ownerPlayerId}-${entry.cardId}-${String(index)}`;
     case 'curseTransferred':
       return `${entry.kind}-${entry.effectId}-${entry.fromPlayerId}-${entry.toPlayerId}-${String(index)}`;
     case 'playerReanimated':

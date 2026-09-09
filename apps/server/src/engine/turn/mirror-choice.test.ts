@@ -6,8 +6,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { PendingEffect } from '@card-battle/shared';
 
+import { createInitialState } from '../create-initial-state';
 import { makePlayer } from '../../testing/factories';
-import { listEligibleMirrorTargets, listEligibleSuperMirrorTargets } from './mirror-choice';
+import {
+  listEligibleMirrorTargets,
+  listEligibleSuperMirrorTargets,
+  redirectPendingAttack,
+} from './mirror-choice';
+import { queueEffect } from './queue-effect';
 
 function attack(
   overrides: Partial<PendingEffect> & Pick<PendingEffect, 'id'>,
@@ -73,5 +79,47 @@ describe('listEligibleMirrorTargets (technical spec v4 §4.7, L20-15)', () => {
       'super',
       'mega-up',
     ]);
+  });
+});
+
+describe('redirectPendingAttack (L56-03)', () => {
+  it('stamps isUpgraded and post-redirect damageMultiplier', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l56-03-redirect',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (alice === undefined || bob === undefined) {
+      throw new Error('missing players');
+    }
+
+    for (const player of state.players) {
+      player.pendingEffects = [];
+    }
+
+    const queued = queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    const result = redirectPendingAttack(state, alice, queued.id, bob.id, true);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.redirect.cardId).toBe('strong-attack');
+    expect(result.redirect.isUpgraded).toBe(true);
+    expect(result.redirect.damageMultiplier).toBe(2);
+    expect(result.redirect.previousTargetPlayerId).toBe(alice.id);
+    expect(result.redirect.newTargetPlayerId).toBe(bob.id);
   });
 });

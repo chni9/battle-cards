@@ -44,6 +44,8 @@ describe('aggregateActionsForPlayer (L8 / L9)', () => {
         kind: 'mirrorRedirected',
         actorPlayerId: 'alice',
         cardId: 'basic-attack',
+        isUpgraded: false,
+        damageMultiplier: 1,
         previousTargetPlayerId: 'alice',
         newTargetPlayerId: 'bob',
         turnSequence: 3,

@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **30** (L49-01 kit pick; V6 teaching fields
-> landed at 29 in L41-02). Lobby + playing + finished per-recipient views live in
+> **Status:** current `PROTOCOL_VERSION` is **31** (L56-03 Mirror redirect fields +
+> `persistentDeactivated`; V6 teaching fields landed at 29 in L41-02; lobby kit pick at 30).
+> Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in
 > `apps/server/src/protocol/visibility-matrix.ts` (L3-05).
@@ -114,12 +115,15 @@ PROTOCOL_VERSION 30 adds `'choose-kit-already-started'` and `'invalid-choose-kit
 (`'kit-unavailable'` covers an unknown catalog id).
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
-`kind` entries for plays, resolutions, eliminations, Mirror redirects, and **opaque**
+`kind` entries for plays, resolutions, eliminations, Mirror redirects, auto-lost persistents
+(`persistentDeactivated`, PROTOCOL_VERSION 31 / L56-03), and **opaque**
 `rewardsClaimed` (eliminator + victim only — never the picks). Ephemeral `actionPlayed` /
 `actionResolved` broadcasts stay separate. PROTOCOL_VERSION 19 adds `isUpgraded` on play/resolve
 log entries and public `activePersistentEffects` on every seat. L17-05 adds optional `botReason`
 (`{ code, params? }`) on bot `actionPlayed` / `mirrorRedirected` / `rewardsClaimed` — additive
-under PROTOCOL 21, not a new event; explanatory only.
+under PROTOCOL 21, not a new event; explanatory only. PROTOCOL_VERSION 31 requires
+`isUpgraded` and post-redirect `damageMultiplier` on `mirrorRedirected`; Super Mirror redirect
+lines use the **attack** `cardId` (playing Super Mirror remains a separate `actionPlayed`).
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
 counts per player + eliminations). PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats

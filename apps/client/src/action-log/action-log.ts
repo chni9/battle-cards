@@ -16,6 +16,7 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'actionResolved',
   'playerEliminated',
   'mirrorRedirected',
+  'persistentDeactivated',
   'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
@@ -228,10 +229,18 @@ export function formatActionLogEntrySegments(
     case 'mirrorRedirected': {
       return [
         player(entry.actorPlayerId, nicknameOf),
-        text(` redirects ${formatCardLabel(entry.cardId, false)} from `),
+        text(` redirects ${formatCardLabel(entry.cardId, entry.isUpgraded)} from `),
         player(entry.previousTargetPlayerId, nicknameOf),
         text(' to '),
         player(entry.newTargetPlayerId, nicknameOf),
+      ];
+    }
+    case 'persistentDeactivated': {
+      return [
+        player(entry.ownerPlayerId, nicknameOf, true),
+        text(
+          ` ${formatCardLabel(entry.cardId, entry.isUpgraded)} is deactivated and lost`,
+        ),
       ];
     }
     case 'curseTransferred': {
@@ -283,6 +292,8 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
         entry.previousTargetPlayerId === playerId ||
         entry.newTargetPlayerId === playerId
       );
+    case 'persistentDeactivated':
+      return entry.ownerPlayerId === playerId;
     case 'curseTransferred':
       return entry.fromPlayerId === playerId || entry.toPlayerId === playerId;
     case 'playerReanimated':

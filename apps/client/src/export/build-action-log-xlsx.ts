@@ -203,6 +203,7 @@ export async function buildActionLogWorkbook(
           '',
           event.newTargetPlayerId,
           event.cardId,
+          event.isUpgraded,
           '',
           '',
           '',
@@ -210,8 +211,26 @@ export async function buildActionLogWorkbook(
           '',
           '',
           '',
+          `from ${event.previousTargetPlayerId} ×${event.damageMultiplier}`,
+        ]);
+        break;
+      case 'persistentDeactivated':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          event.ownerPlayerId,
           '',
-          `from ${event.previousTargetPlayerId}`,
+          '',
+          event.cardId,
+          event.isUpgraded,
+          '',
+          '',
+          '',
+          '',
+          event.ownerPlayerId,
+          '',
+          '',
+          'deactivated and lost',
         ]);
         break;
       case 'curseTransferred':

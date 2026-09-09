@@ -79,7 +79,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-80 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+81 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09.
 
 | Lot | Tasks | Done |
@@ -99,7 +99,7 @@ Lot 56 opened 2026-09-09.
 | 53 · Table crowding | 7 | 7 |
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
-| 56 · Invisibility freeze + readability | 7 | 2 |
+| 56 · Invisibility freeze + readability | 7 | 3 |
 
 ---
 
@@ -336,7 +336,7 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 |---|---|---|---|---|---|
 | L56-01 | Append dated `[P]` Lot 56 entries to `docs/agent/decisions.md`; Lot 56 section here; technical spec v6 §13; rules spec freeze note (Invisibility out of circulation and play; Prophet/shop/Transformer pools). Protocol 30 → 31 exception recorded (same class as L49). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Invisibility is frozen, v31 is the next bump, and L56-02 starts the code. | S | Medium | — | Done |
 | L56-02 | `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS = ['invisibility']`; circulating / purchasable / transform pools; shop, Prophet deal, Transformer pick, belief `fillSpecials`; `playCard` not legal (`play-not-legal`). Handler, catalog, art, immunity tests stay. **Acceptance:** shop/Prophet/Transformer never grant it; seeded `playCard` rejected; `SPECIAL_CARD_IDS` still 20; `pnpm verify` green. | M | **High** | L56-01 | Done |
-| L56-03 | `PROTOCOL_VERSION` **30 → 31**. `mirrorRedirected` required `isUpgraded` + post-redirect `damageMultiplier`; Super Mirror redirect lines use the **attack** `cardId`. New log kind `persistentDeactivated` (`ownerPlayerId`, `cardId`, `isUpgraded`, `turnSequence`). Types + version only until L56-04 / L56-07 emit them. **Acceptance:** mismatch path rejects v30 clients; exhaustive kind union includes the new kind. | M | **High** | L56-01 | To do |
+| L56-03 | `PROTOCOL_VERSION` **30 → 31**. `mirrorRedirected` required `isUpgraded` + post-redirect `damageMultiplier`; Super Mirror redirect lines use the **attack** `cardId`. New log kind `persistentDeactivated` (`ownerPlayerId`, `cardId`, `isUpgraded`, `turnSequence`). Types + version only until L56-04 / L56-07 emit them. **Acceptance:** mismatch path rejects v30 clients; exhaustive kind union includes the new kind. | M | **High** | L56-01 | Done |
 | L56-04 | Compact life-icon damage badge: Incoming/Waiting chips, attack play log, Mirror picker, attack faces (hand / specials / shop / `CardChoiceTile`). Listed damage = `attackDamageFor × damageMultiplier`. Mirror history uses v31 fields. Not Tax/Absorber. **Acceptance:** tests on formatter + pending chip DOM; MEGA and doubled Mirror show the number. | M | Low | L56-03 | To do |
 | L56-05 | Click action-log card names and Incoming/Waiting chips to open the existing inspect Dialog (`CardEffectCopy`). Sources `'log'` / `'queue'` — no Spy footer. Card-bearing kinds including `persistentDeactivated`. **Acceptance:** Absorber play line and a pending attack chip open inspect; draw/elim lines are not buttons. | M | Low | L56-03 | To do |
 | L56-06 | Remaining card lives (`PersistentEffectView.counter`) as a life badge **under** active thumbs when `counter !== null` (own + opponents). Inspect copy matches. No badge on Curse / Invisibility / Shield. **Acceptance:** Poison thumb shows 3; Curse thumb has no number. | S | Low | — | To do |

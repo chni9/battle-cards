@@ -22,6 +22,9 @@ export const MIRROR_SUB_CHOICE_MS = SUB_CHOICE_MS;
 export interface MirrorRedirectInfo {
   actorPlayerId: string;
   cardId: CardId;
+  isUpgraded: boolean;
+  /** Multiplier after this redirect (L56-03). */
+  damageMultiplier: number;
   previousTargetPlayerId: string;
   newTargetPlayerId: string;
 }
@@ -117,6 +120,8 @@ export function redirectPendingAttack(
     redirect: {
       actorPlayerId: owner.id,
       cardId: effect.cardId,
+      isUpgraded: effect.isUpgraded,
+      damageMultiplier: effect.damageMultiplier,
       previousTargetPlayerId,
       newTargetPlayerId,
     },
