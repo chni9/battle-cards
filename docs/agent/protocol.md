@@ -6,7 +6,8 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** lobby + playing + finished per-recipient views exist (L1-01…L1-13) in
+> **Status:** current `PROTOCOL_VERSION` is **30** (L49-01 kit pick; V6 teaching fields
+> landed at 29 in L41-02). Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in
 > `apps/server/src/protocol/visibility-matrix.ts` (L3-05).
@@ -192,6 +193,10 @@ Technical spec §5.5, §5.6.
 | Sub-choice (Mirror, steal, pool, special, reanimation, reward) | 40s | Default action below |
 | Reconnection window | 60s | Player becomes absent |
 
+Tutorial rooms set `turnDeadlineMs = null` (no server turn timer; client idle 20s only
+retitles the coach **Play**). Honor `RoomJoinOptions.tutorial: true` only in `onCreate`;
+ignore it on `joinById`. `GameState.seed` never appears on any view.
+
 Defaults on sub-choice expiry: **Mirror** redirects the first attack in the queue to a randomly
 drawn opponent (via the seeded generator); **rewards** grant 2 × 4 lives. An already-paid card
 is never silently wasted — the player loses the optimisation, not the benefit.
@@ -210,8 +215,11 @@ Technical spec §5.7 — two independent mechanisms, deliberately different thre
 - **Connected but inactive:** the 60s turn timer expires and they draw. Eliminated after **5**
   consecutive expired turns. Reconnect does **not** reset this counter.
 - **Colyseus:** `onDrop` → `allowReconnection(client, "manual")` until elim or game over (so
-  reclaim stays possible while *absent*). Own 60s timer only flips status. Consented Leave
-  mid-game → forfeit elim (`reason: 'leave'`), not a grace window.
+  reclaim stays possible while *absent*). Own 60s timer only flips status. Table **`FORFEIT`**
+  (PROTOCOL_VERSION 29 / L43-06) applies consented-leave elim (`reason: 'leave'`) and **keeps
+  the socket** so the forfeiter still receives `phase: 'finished'` / Game over. Spectator
+  Leave and finished **Return home** call `leaveGame()` (disconnect). Lobby Leave is still
+  immediate disconnect. Do not send `leaveGame()` on a live-table Forfeit.
 - **Timers:** while `disconnected`, pause turn / Mirror / reward timers owned by that seat and
   resume remaining ms on `onReconnect`. Pure transitions live in
   `apps/server/src/engine/lifecycle/`; hooks stay in `game-room.ts`.
