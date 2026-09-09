@@ -2,7 +2,7 @@
  * Special card purchase — rules spec §5, L5-09, L21-01 / #V4-29.
  */
 
-import { SPECIAL_CARD_IDS } from '@card-battle/shared';
+import { PURCHASABLE_SPECIAL_CARD_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createRng } from '../rng';
@@ -10,7 +10,7 @@ import { createInitialState } from '../create-initial-state';
 import { buySpecialCard, SPECIAL_CARD_PURCHASE_COST } from './buy-special-card';
 
 describe('buySpecialCard (L21-01 / #V4-29)', () => {
-  it('draws from all 20 SPECIAL_CARD_IDS', () => {
+  it('draws from PURCHASABLE_SPECIAL_CARD_IDS and never Invisibility (L56-02)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -37,9 +37,10 @@ describe('buySpecialCard (L21-01 / #V4-29)', () => {
         return;
       }
 
-      expect((SPECIAL_CARD_IDS as readonly string[]).includes(result.instance.cardId)).toBe(
-        true,
-      );
+      expect(
+        (PURCHASABLE_SPECIAL_CARD_IDS as readonly string[]).includes(result.instance.cardId),
+      ).toBe(true);
+      expect(result.instance.cardId).not.toBe('invisibility');
       drawn.add(result.instance.cardId);
     }
 
@@ -47,6 +48,7 @@ describe('buySpecialCard (L21-01 / #V4-29)', () => {
     expect(drawn.size).toBeGreaterThan(6);
     expect(drawn.has('reanimation')).toBe(true);
     expect(drawn.has('card-transformer')).toBe(true);
+    expect(drawn.has('invisibility')).toBe(false);
   });
 
   it('rejects when the player cannot afford 20 points', () => {

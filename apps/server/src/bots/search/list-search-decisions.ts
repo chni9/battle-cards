@@ -5,7 +5,7 @@
 
 import {
   KIT_IDS,
-  SPECIAL_CARD_IDS,
+  TRANSFORM_RESULT_SPECIAL_IDS,
   type GameState,
   type RewardChoice,
 } from '@card-battle/shared';
@@ -137,7 +137,7 @@ function listSpecialDecisions(state: GameState): readonly SearchDecision[] {
   }
 
   const ids =
-    choice.eligibleCardIds.length > 0 ? choice.eligibleCardIds : SPECIAL_CARD_IDS;
+    choice.eligibleCardIds.length > 0 ? choice.eligibleCardIds : TRANSFORM_RESULT_SPECIAL_IDS;
 
   return [...ids]
     .sort((left, right) => left.localeCompare(right))

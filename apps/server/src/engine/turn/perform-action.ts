@@ -7,8 +7,9 @@ import {
   actionReject,
   getKit,
   isAttackCardId,
-  isSharedAttackCardId,
   isPersistentSpecialCardId,
+  isSharedAttackCardId,
+  isTemporarilyUnavailableCardId,
   type ActionReject,
   type ActionResolutionOutcome,
   type CardId,
@@ -1264,6 +1265,11 @@ function playCardAction(
   }
 
   const cardId = instance.cardId;
+
+  if (isTemporarilyUnavailableCardId(cardId)) {
+    return actionReject('play-not-legal');
+  }
+
   const handler = findHandler(cardId);
 
   if (handler === undefined) {

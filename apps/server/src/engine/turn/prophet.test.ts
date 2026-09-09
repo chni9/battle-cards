@@ -2,7 +2,7 @@
  * Prophet random starting specials — rules spec §4, #V4-27, backlog L27-04.
  */
 
-import { getKit, SPECIAL_CARD_IDS } from '@card-battle/shared';
+import { CIRCULATING_SPECIAL_CARD_IDS, getKit } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../create-initial-state';
@@ -44,11 +44,12 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
     expect(player.upgradePoints).toBe(2);
     expect(player.specialCards).toHaveLength(2);
     for (const card of player.specialCards) {
-      expect(SPECIAL_CARD_IDS).toContain(card.cardId);
+      expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(card.cardId);
+      expect(card.cardId).not.toBe('invisibility');
     }
   });
 
-  it('draws via injected rng over all 20 specials (with replacement)', () => {
+  it('draws via injected rng over circulating specials (with replacement)', () => {
     const state = createInitialState({
       seats,
       seed: 'prophet-rng-pool',
@@ -62,8 +63,9 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
 
     const dealtIds = player.specialCards.map((c) => c.cardId);
     expect(dealtIds).toHaveLength(2);
-    expect(SPECIAL_CARD_IDS).toContain(dealtIds[0]);
-    expect(SPECIAL_CARD_IDS).toContain(dealtIds[1]);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(dealtIds[0]);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(dealtIds[1]);
+    expect(dealtIds).not.toContain('invisibility');
 
     // Same seed → same two picks (reproducible).
     const again = createInitialState({
@@ -79,8 +81,9 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
     player.specialCards = [];
     dealStartingLoadout(player, 'prophet', createRng('prophet-forced-dupes'), 'forced');
     expect(player.specialCards).toHaveLength(2);
-    expect(SPECIAL_CARD_IDS).toContain(player.specialCards[0]?.cardId);
-    expect(SPECIAL_CARD_IDS).toContain(player.specialCards[1]?.cardId);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(player.specialCards[0]?.cardId);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(player.specialCards[1]?.cardId);
+    expect(player.specialCards.map((card) => card.cardId)).not.toContain('invisibility');
   });
 
   it('allows duplicate specials when rng picks the same id twice', () => {

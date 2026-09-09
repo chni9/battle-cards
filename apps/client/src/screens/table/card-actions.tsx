@@ -8,6 +8,7 @@ import {
   SHARED_CARD_IDS,
   formatCardLabel,
   getCard,
+  isTemporarilyUnavailableCardId,
   type CardInstance,
   type PlayingStateView,
   type PublicPlayerView,
@@ -161,6 +162,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const transformerUseBlocked =
     actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
+  const useUnavailable =
+    actionInstance !== null && isTemporarilyUnavailableCardId(actionInstance.cardId);
   const inspectInstance = dialog?.kind === 'inspect' ? dialog.instance : null;
   const inspectDefinition =
     inspectInstance !== null ? getCard(inspectInstance.cardId) : undefined;
@@ -183,6 +186,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 arrow="top"
                 highlightId="use"
               >
+              {useUnavailable ? (
+                <p className="text-sm text-ink-muted">Temporarily unavailable</p>
+              ) : (
               <Button
                 compact
                 variant="purple"
@@ -204,6 +210,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   'Use'
                 )}
               </Button>
+              )}
               </TutorialCallout>
               {!actionInstance.isUpgraded && (
                 <TutorialCallout
