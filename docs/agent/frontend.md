@@ -951,3 +951,32 @@ set (value not recorded). No product defects; nothing rewound.
 - Watch point: weaker-answer mutual was not hunted; Lot 54. Missing How to play
   PNGs omitted `<img>` as wired.
 
+### Lot 56 verified 2026-09-09 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 31)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567` (`protocol v31`). Invisibility
+handler stays in repo; circulating shop/Prophet/Transformer pools are unit-
+tested (L56-02). Shared shop tiles never listed Invisibility (special, not
+shared). Auto-loss `persistentDeactivated` lines are engine-tested (L56-07);
+this gate did not drain a counter to 0. Mirror picker doubled damage is
+unit-tested (`listedAttackDamage` × multiplier); no Mirror sub-choice opened
+in the rooms below.
+
+- Room `XTISAZ` nick `L56Gate` vs Easy Alpha. Shop: Basic overlay **1**,
+  Strong **2**, Super **7**; Absorber/Spy/Thief/Mirror/Shield/Tax/Regen
+  icon-free. Log card names open inspect (Block / Basic); no Spy footer.
+  Incoming **Thief** chip click → Thief inspect, no Spy footer. Hand Basic
+  overlay **1**.
+- Room `HMCBFY` nick `L56Gate` vs Normal Alpha. Alpha Points Generator:
+  opponent thumb with card-lives **3** under the art; inspect from that
+  thumb shows **Active** + **Card lives** 3. Incoming **Super attack**
+  chip **7**, click → Super inspect (art overlay 7, “Deal 7 damage”), no
+  Spy footer. Play log attack lines show listed damage.
+- Room `GVPKLD` nick `L56Gate2` vs Normal Alpha. Shop same 10 shared tiles
+  (no Invisibility). Log **Absorber** / **Spy** clicks open inspect with
+  art + effect, no Spy footer. Hand Strong overlay **2**, Super **7**.
+  Absorber Use **−3**, Spy Use **−2**.
+- Watch point: shop blurb still appends the selected tile’s
+  `CostDisplay` after “Prices are double the play cost” (looks like a
+  stray **−2** when Basic is selected). Pre-existing; not Lot 56.
+- `pnpm verify` **1274** tests.
+
