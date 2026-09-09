@@ -23,7 +23,8 @@
   (Lot 45; room tutorial only). The worker resolves by `policyId`.
   `tutorial-script-v6` is view-only; the bot-driver **short-circuits** Easy /
   search / noise and omits `botReason`. Do **not** seat it from the simulator
-  default path.
+  default path. Index map (spec §5.4, `tutorialStepAt`): **2** Basic→human;
+  **10** Spy→human; **16** and **28** Strong→human; **18** Thief→human; else Draw.
 
 ## Parity
 

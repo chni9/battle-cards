@@ -3134,6 +3134,22 @@ Confusion / idea may omit. Stored as `topics text[]` (`006_feedback_topics.sql`)
 No game protocol bump. No seed. Inbox lists the labels and filters by topic.
 Old rows keep `{}` and still appear under Any area.
 
+## 2026-09-07 · [P] Lot 48 first-time gate on the current tree
+
+L48 was written as V6’s last lot; Lots 49–54 already shipped and are the truth.
+L48-01 audits playbooks in place (no second frontend playbook) and adds a
+reusable **V6 first-time gate** checklist at the top of `frontend.md` · Post-lot.
+L48-02’s backlog “phone-width hand pagination” line is **aligned to L53-07**
+(shared-size horizontal scroll, no pager, Incoming beside the kit) — it does
+not restore a pager.
+
+Priority: shipped code and Lots 49–54 win over original L48 wording. Do not
+restore Reset help, occupancy 2–4, protocol 29-as-current, Spy 4/8, delayed-resolution
+primer, or “weaker cancels incoming.” A weaker *answer* that still lets incoming
+land is Lot 54, not a V6 defect. First-time replay clears
+`card-battle.v6.howToPlaySeen` and `card-battle.v6.hints`; there is no hub
+Reset help (L51-03). Inbox persist for the gate needs live Postgres.
+
 ## 2026-09-07 · [P] Classic occupancy is 2–8 (supersedes L52-01)
 
 Designer instruction (this session): Classic rooms seat **2 to 8** players, not 2 to 6.
