@@ -15,7 +15,7 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue).
+inspect from log/queue, card lives under actives).
 
 ## Screens
 
@@ -265,6 +265,13 @@ rules above are unchanged — this section only covers how the client looks.
   Spy footer. Draw / buy / sell / upgrade / elim / rewards stay text (no
   `cardId` button). Nested inspect from the collapsed log Dialog closes that
   chrome (`dialog !== null` clears `chromeVisible`).
+- **Card lives under actives (L56-06):** `PersistentEffectView.counter` is already
+  public. `ActivePersistentThumb` renders activated thumb art plus, when
+  `counter !== null`, a compact `LifeCountBadge` (`kind: 'card-lives'`) under
+  the card on own kit-row actives and every opponent seat. Curse, Invisibility,
+  and combat Shield stay badge-free (`counter === null`; Shield remaining lives
+  in the resource column). Inspect replaces `Counter: N` with the same badge
+  plus a one-line “Card lives” label. No protocol bump.
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
