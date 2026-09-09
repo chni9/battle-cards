@@ -30,6 +30,7 @@ import { applyDamage } from '../life/apply-damage';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import type { Rng } from '../rng';
 import { playerIsInvisible } from '../specials/is-invisible';
+import { recordAutoDeactivation } from '../specials/auto-deactivation-log';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import {
   transferCursesFromAttacker,
@@ -489,6 +490,9 @@ export function resolvePendingEffects(
       shieldAbsorbed = damageOutcome.shieldAbsorbed;
       player.turnLedger.livesLost += damageOutcome.livesLost;
       observeLifeLoss(state, player, damageOutcome.livesLost);
+      for (const deactivated of damageOutcome.deactivatedEffects) {
+        recordAutoDeactivation(state, player.id, deactivated);
+      }
       poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
       recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
       outcome = 'applied';

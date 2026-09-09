@@ -1429,6 +1429,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
     }
 
+    if (result.persistentDeactivations !== undefined) {
+      for (const lost of result.persistentDeactivations) {
+        this.actionLog.push({
+          kind: 'persistentDeactivated',
+          ownerPlayerId: lost.ownerPlayerId,
+          cardId: lost.cardId,
+          isUpgraded: lost.isUpgraded,
+          turnSequence: lost.turnSequence,
+        });
+      }
+    }
+
     for (const playerId of result.eliminatedPlayerIds) {
       const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
       const eliminated = this.gameState?.players.find((player) => player.id === playerId);

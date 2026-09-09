@@ -192,7 +192,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice deactivated Invisibility');
+    ).toBe('Alice deactivated Invisibility; it is lost');
     expect(
       formatActionLogEntry(
         {

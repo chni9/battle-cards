@@ -79,7 +79,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-84 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+85 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09.
 
 | Lot | Tasks | Done |
@@ -99,7 +99,7 @@ Lot 56 opened 2026-09-09.
 | 53 · Table crowding | 7 | 7 |
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
-| 56 · Invisibility freeze + readability | 7 | 6 |
+| 56 · Invisibility freeze + readability | 7 | 7 |
 
 ---
 
@@ -340,7 +340,7 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 | L56-04 | Compact life-icon damage badge: Incoming/Waiting chips, attack play log, Mirror picker, attack faces (hand / specials / shop / `CardChoiceTile`). Listed damage = `attackDamageFor × damageMultiplier`. Mirror history uses v31 fields. Not Tax/Absorber. **Acceptance:** tests on formatter + pending chip DOM; MEGA and doubled Mirror show the number. | M | Low | L56-03 | Done |
 | L56-05 | Click action-log card names and Incoming/Waiting chips to open the existing inspect Dialog (`CardEffectCopy`). Sources `'log'` / `'queue'` — no Spy footer. Card-bearing kinds including `persistentDeactivated`. **Acceptance:** Absorber play line and a pending attack chip open inspect; draw/elim lines are not buttons. | M | Low | L56-03 | Done |
 | L56-06 | Remaining card lives (`PersistentEffectView.counter`) as a life badge **under** active thumbs when `counter !== null` (own + opponents). Inspect copy matches. No badge on Curse / Invisibility / Shield. **Acceptance:** Poison thumb shows 3; Curse thumb has no number. | S | Low | — | Done |
-| L56-07 | Emit `persistentDeactivated` on auto-loss (counter 0, Curse at 1 life, death dump). Manual `deactivatePersistent` copy “deactivated {card}; it is lost” — do not double-emit. Tax/`applyLifeLoss` must not log a counter loss. **Acceptance:** Poison after enough attack damage logs one lost line; Curse at 1 life logs; Tax does not. | M | **High** | L56-03 | To do |
+| L56-07 | Emit `persistentDeactivated` on auto-loss (counter 0, Curse at 1 life, death dump). Manual `deactivatePersistent` copy “deactivated {card}; it is lost” — do not double-emit. Tax/`applyLifeLoss` must not log a counter loss. **Acceptance:** Poison after enough attack damage logs one lost line; Curse at 1 life logs; Tax does not. | M | **High** | L56-03 | Done |
 
 ---
 

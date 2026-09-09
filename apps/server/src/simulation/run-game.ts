@@ -200,6 +200,18 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
       });
     }
   }
+
+  if (result.persistentDeactivations !== undefined) {
+    for (const lost of result.persistentDeactivations) {
+      log.push({
+        kind: 'persistentDeactivated',
+        ownerPlayerId: lost.ownerPlayerId,
+        cardId: lost.cardId,
+        isUpgraded: lost.isUpgraded,
+        turnSequence: lost.turnSequence,
+      });
+    }
+  }
 }
 
 export function runSimulatedGame(input: RunGameInput): SimulationGameRow {

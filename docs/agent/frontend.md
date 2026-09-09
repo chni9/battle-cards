@@ -270,8 +270,11 @@ rules above are unchanged — this section only covers how the client looks.
   `counter !== null`, a compact `LifeCountBadge` (`kind: 'card-lives'`) under
   the card on own kit-row actives and every opponent seat. Curse, Invisibility,
   and combat Shield stay badge-free (`counter === null`; Shield remaining lives
-  in the resource column). Inspect replaces `Counter: N` with the same badge
+  in the resource column).   Inspect replaces `Counter: N` with the same badge
   plus a one-line “Card lives” label. No protocol bump.
+- **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`.
+  Manual Invisibility deactivate copy is “deactivated {card}; it is lost”
+  (`actionPlayed` only).
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.

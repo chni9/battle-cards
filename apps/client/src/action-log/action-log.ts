@@ -138,8 +138,8 @@ function formatPlayedActionSegments(
         actor,
         text(' deactivated '),
         ...(entry.cardId !== undefined
-          ? [cardName(entry.cardId, entry.isUpgraded ?? false)]
-          : [text('a persistent')]),
+          ? [cardName(entry.cardId, entry.isUpgraded ?? false), text('; it is lost')]
+          : [text('a persistent; it is lost')]),
       ];
     case 'activateDuplication':
       // Playtest: duplication activation reads as a draw in the action log
