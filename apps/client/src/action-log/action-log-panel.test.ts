@@ -29,6 +29,16 @@ describe('ActionLogPanel Dialog embed (L53-07)', () => {
       join(dir, '../screens/table.tsx'),
       'utf8',
     );
-    expect(table).toContain('<ActionLogPanel view={view} embedded />');
+    expect(table).toContain('embedded');
+    expect(table).toContain('onInspectCard');
+  });
+});
+
+describe('ActionLogPanel inspect from log (L56-05)', () => {
+  it('renders card segments as buttons when onInspectCard is set', () => {
+    const source = readFileSync(join(dir, 'action-log-panel.tsx'), 'utf8');
+    expect(source).toContain("segment.type === 'card'");
+    expect(source).toContain('type="button"');
+    expect(source).toContain('onInspectCard(segment.cardId, segment.isUpgraded)');
   });
 });

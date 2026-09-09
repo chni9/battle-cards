@@ -42,6 +42,7 @@ export interface PrivateZoneProps {
   onSelectActive?: (instanceId: string) => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
+  onInspectPending?: (effect: PendingEffectView) => void;
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
@@ -63,6 +64,7 @@ export function PrivateZone({
   onSelectActive,
   onDeactivatePersistent,
   onActivateDuplication,
+  onInspectPending,
   highlightedInstanceIds,
   zoneHighlight,
   collapseIncoming = false,
@@ -213,6 +215,9 @@ export function PrivateZone({
                 tone="dock"
                 highlightedIds={mirrorHighlightIds}
                 animateEntrance
+                {...(onInspectPending !== undefined
+                  ? { onInspectCard: onInspectPending }
+                  : {})}
               />
             </TutorialCallout>
           </div>

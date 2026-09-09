@@ -63,7 +63,7 @@ export type TableDialog =
       instance: CardInstance;
       activated?: boolean;
       counter?: number | null;
-      source: 'spy' | 'active';
+      source: 'spy' | 'active' | 'log' | 'queue';
     }
   | { kind: 'target'; instance: CardInstance }
   | { kind: 'quantity'; instance: CardInstance }
@@ -334,7 +334,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   isUpgraded={inspectInstance.isUpgraded}
                 />
               ) : null}
-              {dialog.source === 'active' ? (
+              {dialog.source === 'spy' ? (
+                <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
+              ) : dialog.source === 'active' ? (
                 <>
                   <p className="text-sm font-semibold text-ink">Active</p>
                   {dialog.counter !== undefined && dialog.counter !== null && (
@@ -343,9 +345,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                     </p>
                   )}
                 </>
-              ) : (
-                <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
-              )}
+              ) : null}
             </div>
           </div>
         )}

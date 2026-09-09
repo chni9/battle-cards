@@ -12,6 +12,7 @@ import {
   tutorialTourStepAt,
   type ActionLogEntryView,
   type ActionResolvedPayload,
+  type CardId,
   type CardInstance,
   type KitId,
   type PlayingStateView,
@@ -1175,6 +1176,22 @@ function TableScreenInner({
     });
   }
 
+  function onInspectCatalogCard(
+    cardId: CardId,
+    isUpgraded: boolean,
+    source: 'log' | 'queue',
+  ): void {
+    setDialog({
+      kind: 'inspect',
+      instance: {
+        instanceId: `inspect:${source}:${cardId}:${isUpgraded ? 'up' : 'base'}`,
+        cardId,
+        isUpgraded,
+      },
+      source,
+    });
+  }
+
   return (
     <>
       <TableBannerFlash
@@ -1324,6 +1341,9 @@ function TableScreenInner({
             compact
             tone="felt"
             highlightedIds={mirrorHighlightIds}
+            onInspectCard={(effect) => {
+              onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
+            }}
           />
         }
         actionLog={
@@ -1333,7 +1353,12 @@ function TableScreenInner({
             arrow="bottom"
             className="h-full min-h-0"
           >
-            <ActionLogPanel view={view} />
+            <ActionLogPanel
+              view={view}
+              onInspectCard={(cardId, isUpgraded) => {
+                onInspectCatalogCard(cardId, isUpgraded, 'log');
+              }}
+            />
           </TutorialZoneCallout>
         }
         privateZone={
@@ -1356,6 +1381,9 @@ function TableScreenInner({
               {...(overlayLocksTable ? {} : { onSelectOwnCard })}
               onSelectActive={(effectId) => {
                 onInspectActive(view.you, effectId);
+              }}
+              onInspectPending={(effect) => {
+                onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
               }}
               {...(onDeactivatePersistent !== undefined
                 ? {
@@ -1437,6 +1465,9 @@ function TableScreenInner({
               title={INCOMING_OPEN_LABEL}
               tone="dock"
               highlightedIds={mirrorHighlightIds}
+              onInspectCard={(effect) => {
+                onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
+              }}
             />
           ) : null}
           {othersPending.length > 0 ? (
@@ -1446,6 +1477,9 @@ function TableScreenInner({
               title={FELT_QUEUE_TITLE}
               tone="dock"
               highlightedIds={mirrorHighlightIds}
+              onInspectCard={(effect) => {
+                onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
+              }}
             />
           ) : null}
         </div>
@@ -1470,7 +1504,13 @@ function TableScreenInner({
           </Button>
         }
       >
-        <ActionLogPanel view={view} embedded />
+        <ActionLogPanel
+          view={view}
+          embedded
+          onInspectCard={(cardId, isUpgraded) => {
+            onInspectCatalogCard(cardId, isUpgraded, 'log');
+          }}
+        />
       </Dialog>
 
       <Dialog

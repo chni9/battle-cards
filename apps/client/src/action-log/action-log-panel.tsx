@@ -7,8 +7,10 @@
 import type {
   ActionLogEntryKind,
   ActionLogEntryView,
+  CardId,
   PlayingStateView,
 } from '@card-battle/shared';
+import { formatCardLabel } from '@card-battle/shared';
 import { Fragment, useEffect, useRef, type ReactElement } from 'react';
 
 import { LifeCountBadge } from '../design/components/life-count-badge';
@@ -114,6 +116,7 @@ export interface ActionLogPanelProps {
   view: PlayingStateView;
   /** Dialog already titles the panel — skip the inner heading and do not stretch. */
   embedded?: boolean;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }
 
 function nicknameOf(view: PlayingStateView, playerId: string): string {
@@ -123,6 +126,7 @@ function nicknameOf(view: PlayingStateView, playerId: string): string {
 export function ActionLogPanel({
   view,
   embedded = false,
+  onInspectCard,
 }: ActionLogPanelProps): ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -192,6 +196,7 @@ export function ActionLogPanel({
                     entry={entry}
                     view={view}
                     nicknameOf={resolveNick}
+                    {...(onInspectCard !== undefined ? { onInspectCard } : {})}
                   />
                 ))}
               </ul>
@@ -207,10 +212,12 @@ function LogLine({
   entry,
   view,
   nicknameOf: resolve,
+  onInspectCard,
 }: {
   entry: ActionLogEntryView;
   view: PlayingStateView;
   nicknameOf: (playerId: string) => string;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }): ReactElement {
   const meta = KIND_META[entry.kind];
   const segments = formatActionLogEntrySegments(entry, resolve);
@@ -226,7 +233,11 @@ function LogLine({
           {meta.icon}
         </span>
         <p className="min-w-0 flex-1 whitespace-normal break-words text-xs leading-5 text-ink">
-          <LogSegments segments={segments} view={view} />
+          <LogSegments
+            segments={segments}
+            view={view}
+            {...(onInspectCard !== undefined ? { onInspectCard } : {})}
+          />
         </p>
       </div>
     </li>
@@ -236,9 +247,11 @@ function LogLine({
 function LogSegments({
   segments,
   view,
+  onInspectCard,
 }: {
   segments: readonly ActionLogSegment[];
   view: PlayingStateView;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }): ReactElement {
   return (
     <>
@@ -255,6 +268,24 @@ function LogSegments({
               iconSize={12}
               className="ml-0.5 align-text-bottom text-[11px] text-ink"
             />
+          );
+        }
+        if (segment.type === 'card') {
+          const label = formatCardLabel(segment.cardId, segment.isUpgraded);
+          if (onInspectCard === undefined) {
+            return <Fragment key={`c-${String(index)}`}>{label}</Fragment>;
+          }
+          return (
+            <button
+              key={`c-${String(index)}`}
+              type="button"
+              className="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink"
+              onClick={() => {
+                onInspectCard(segment.cardId, segment.isUpgraded);
+              }}
+            >
+              {label}
+            </button>
           );
         }
         return (

@@ -14,7 +14,8 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
-no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage).
+no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
+inspect from log/queue).
 
 ## Screens
 
@@ -256,6 +257,14 @@ rules above are unchanged — this section only covers how the client looks.
   Incoming/Waiting chips, attack **play** log + Mirror history (v31 fields), Mirror
   picker, attack faces (hand / specials / shop / `CardChoiceTile`). Resolved lines
   keep actual `−N life` / shield absorbed.
+- **Inspect from log / queue (L56-05):** card-name segments in the action log
+  (`actionPlayed`, `actionResolved`, `mirrorRedirected`, `curseTransferred`,
+  `persistentDeactivated`) and Incoming/Waiting chips open the existing inspect
+  Dialog (`Card` + `CardEffectCopy`). Synthetic `CardInstance`
+  `inspect:{log|queue}:…` — catalog only. Sources `'log'` / `'queue'` omit the
+  Spy footer. Draw / buy / sell / upgrade / elim / rewards stay text (no
+  `cardId` button). Nested inspect from the collapsed log Dialog closes that
+  chrome (`dialog !== null` clears `chromeVisible`).
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.

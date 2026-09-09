@@ -58,4 +58,17 @@ describe('pending queue compact strip (L53-07)', () => {
     expect(source).toContain('stacked');
     expect(source).toContain('flex h-full min-h-0 min-w-0 flex-col');
   });
+
+  it('opens inspect from chips when onInspectCard is set (L56-05)', () => {
+    const source = readFileSync(join(dir, 'pending-queue.tsx'), 'utf8');
+    expect(source).toContain('onInspectCard');
+    expect(source).toContain('type="button"');
+    expect(source).toContain('Inspect ${label}');
+    const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
+    expect(table).toContain("onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue')");
+    expect(table).toContain("onInspectCatalogCard(cardId, isUpgraded, 'log')");
+    expect(table).toContain('inspect:${source}');
+    const privateZone = readFileSync(join(dir, 'private-zone.tsx'), 'utf8');
+    expect(privateZone).toContain('onInspectPending');
+  });
 });

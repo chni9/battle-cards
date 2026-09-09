@@ -49,6 +49,13 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).toContain('<Button compact variant="red" onClick={close}>');
   });
 
+  it('opens log and queue inspect without a Spy footer (L56-05)', () => {
+    expect(source).toContain("source: 'spy' | 'active' | 'log' | 'queue'");
+    expect(source).toContain("dialog.source === 'spy'");
+    expect(source).toContain("dialog.source === 'active'");
+    expect(source).toContain('Spy reveal — inspect only');
+  });
+
   it('commits Regeneration quantity with four click-to-buy tiles (L44-06)', () => {
     expect(source).toContain('REGEN_QUANTITIES');
     expect(source).toContain('1 life');
