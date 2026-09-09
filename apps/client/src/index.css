@@ -46,6 +46,8 @@
   --color-seat-3: #ffd400;
   --color-seat-4: #7c3aed;
   --color-seat-5: #ea580c;
+  --color-seat-6: #0d9488;
+  --color-seat-7: #db2777;
 
   /* Radius — thin card border language; controls and CTAs slightly softer */
   --radius-card: 0.375rem;
@@ -92,6 +94,8 @@
     --color-seat-3: #ffd400;
     --color-seat-4: #7c3aed;
     --color-seat-5: #ea580c;
+    --color-seat-6: #0d9488;
+    --color-seat-7: #db2777;
   }
 }
 

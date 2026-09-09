@@ -131,7 +131,7 @@ export function LobbyScreen({
           <h2 className="text-lg font-semibold text-ink">
             Players ({view.players.length}/{MAX_PLAYERS})
           </h2>
-          <ul className="mt-3 max-h-[min(28rem,52vh)] divide-y divide-border-soft overflow-y-auto rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
+          <ul className="mt-3 max-h-[min(36rem,58vh)] divide-y divide-border-soft overflow-y-auto rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
             {view.players.map((player) => (
               <li
                 key={player.id}

@@ -1,7 +1,8 @@
 /**
  * Seat-index identity colors — Table UX polish L39-03.
  * Index is `view.players` array position (not turnOrder). Client-only; no wire field.
- * Palette: 0 blue · 1 red · 2 green · 3 yellow · 4 violet · 5 orange.
+ * Palette: 0 blue · 1 red · 2 green · 3 yellow · 4 violet · 5 orange ·
+ * 6 teal · 7 pink.
  *
  * Hex values are used in inline styles (not `var(--color-seat-*)` / `color-mix`) so
  * mobile Safari always paints them — theme CSS vars alone were falling through to gray.
@@ -14,7 +15,7 @@ import { MAX_PLAYERS } from '@card-battle/shared';
 /** Max seats in Classic; palette length matches `MAX_PLAYERS`. */
 export const SEAT_PALETTE_SIZE = MAX_PLAYERS;
 
-export type SeatIndex = 0 | 1 | 2 | 3 | 4 | 5;
+export type SeatIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /** Concrete hex palette — single source for inline styles. */
 export const SEAT_COLORS = [
@@ -24,7 +25,18 @@ export const SEAT_COLORS = [
   '#ffd400',
   '#7c3aed',
   '#ea580c',
-] as const satisfies readonly [string, string, string, string, string, string];
+  '#0d9488',
+  '#db2777',
+] as const satisfies readonly [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+];
 
 export interface SeatPlayersView {
   players: readonly { id: string }[];
@@ -39,7 +51,7 @@ export function seatIndexOf(view: SeatPlayersView, playerId: string): SeatIndex 
   return index as SeatIndex;
 }
 
-/** Clamp any integer into the 0–5 palette (unknown seats fall back to 0). */
+/** Clamp any integer into the 0–7 palette (unknown seats fall back to 0). */
 export function clampSeatIndex(index: number): SeatIndex {
   if (!Number.isFinite(index) || index < 0) {
     return 0;

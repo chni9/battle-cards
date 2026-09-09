@@ -12,7 +12,16 @@ import {
 } from './seat-colors';
 
 const view = {
-  players: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }, { id: 'f' }],
+  players: [
+    { id: 'a' },
+    { id: 'b' },
+    { id: 'c' },
+    { id: 'd' },
+    { id: 'e' },
+    { id: 'f' },
+    { id: 'g' },
+    { id: 'h' },
+  ],
 };
 
 describe('seatIndexOf (L39-03)', () => {
@@ -23,14 +32,16 @@ describe('seatIndexOf (L39-03)', () => {
     expect(seatIndexOf(view, 'd')).toBe(3);
     expect(seatIndexOf(view, 'e')).toBe(4);
     expect(seatIndexOf(view, 'f')).toBe(5);
+    expect(seatIndexOf(view, 'g')).toBe(6);
+    expect(seatIndexOf(view, 'h')).toBe(7);
   });
 
   it('returns null for unknown ids', () => {
     expect(seatIndexOf(view, 'missing')).toBeNull();
   });
 
-  it('returns null when index would exceed the 6-seat palette', () => {
-    const seven = {
+  it('returns null when index would exceed the 8-seat palette', () => {
+    const nine = {
       players: [
         { id: 'a' },
         { id: 'b' },
@@ -39,14 +50,16 @@ describe('seatIndexOf (L39-03)', () => {
         { id: 'e' },
         { id: 'f' },
         { id: 'g' },
+        { id: 'h' },
+        { id: 'i' },
       ],
     };
-    expect(seatIndexOf(seven, 'g')).toBeNull();
+    expect(seatIndexOf(nine, 'i')).toBeNull();
   });
 });
 
 describe('seatColorHex / styles (L39-03)', () => {
-  it('exposes a 6-seat hex palette (blue/red/green/yellow/violet/orange)', () => {
+  it('exposes an 8-seat hex palette (blue/red/green/yellow/violet/orange/teal/pink)', () => {
     expect(SEAT_COLORS).toEqual([
       '#1d6fd8',
       '#d62828',
@@ -54,15 +67,19 @@ describe('seatColorHex / styles (L39-03)', () => {
       '#ffd400',
       '#7c3aed',
       '#ea580c',
+      '#0d9488',
+      '#db2777',
     ]);
     expect(seatColorHex(3)).toBe('#ffd400');
     expect(seatColorHex(5)).toBe('#ea580c');
+    expect(seatColorHex(6)).toBe('#0d9488');
+    expect(seatColorHex(7)).toBe('#db2777');
     expect(seatColorVar(2)).toBe(SEAT_COLORS[2]);
   });
 
   it('clamps out-of-range indices into the palette', () => {
     expect(clampSeatIndex(-1)).toBe(0);
-    expect(clampSeatIndex(99)).toBe(5);
+    expect(clampSeatIndex(99)).toBe(7);
   });
 
   it('washes hex over white without color-mix', () => {

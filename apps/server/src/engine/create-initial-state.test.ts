@@ -98,15 +98,21 @@ describe('createInitialState (L4-02)', () => {
   });
 
   it('accepts MAX_PLAYERS seats and rejects one more', () => {
-    const six = Array.from({ length: MAX_PLAYERS }, (_, index) => ({
+    const full = Array.from({ length: MAX_PLAYERS }, (_, index) => ({
       id: String.fromCodePoint(97 + index),
       nickname: `P${String(index)}`,
     }));
-    expect(() => createInitialState({ seats: six, seed: 'six-ok' })).not.toThrow();
+    expect(() => createInitialState({ seats: full, seed: 'full-ok' })).not.toThrow();
     expect(() =>
       createInitialState({
-        seats: [...six, { id: 'g', nickname: 'P6' }],
-        seed: 'seven-no',
+        seats: [
+          ...full,
+          {
+            id: String.fromCodePoint(97 + MAX_PLAYERS),
+            nickname: `P${String(MAX_PLAYERS)}`,
+          },
+        ],
+        seed: 'over-no',
       }),
     ).toThrow(RangeError);
   });

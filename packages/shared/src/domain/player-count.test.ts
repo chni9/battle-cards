@@ -1,5 +1,5 @@
 /**
- * Classic occupancy constants — designer 2026-08-29 / rules spec §1.
+ * Classic occupancy constants — designer 2026-09-07 / rules spec §1.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -7,9 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { MAX_PLAYERS, MIN_PLAYERS, SOLO_OPPONENT_COUNTS } from './player-count';
 
 describe('Classic player count', () => {
-  it('caps Classic rooms at 2–6 seats', () => {
+  it('caps Classic rooms at 2–8 seats', () => {
     expect(MIN_PLAYERS).toBe(2);
-    expect(MAX_PLAYERS).toBe(6);
+    expect(MAX_PLAYERS).toBe(8);
   });
 
   it('lists solo opponent counts up to MAX_PLAYERS − 1', () => {

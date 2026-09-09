@@ -18,7 +18,7 @@ import {
 
 describe('lobby rules (L1-02)', () => {
   it(`caps the room at ${MAX_PLAYERS} players`, () => {
-    expect(MAX_PLAYERS).toBe(6);
+    expect(MAX_PLAYERS).toBe(8);
   });
 
   it(`requires ${MIN_PLAYERS_TO_START} players to start`, () => {

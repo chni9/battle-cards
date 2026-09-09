@@ -8,12 +8,12 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 54
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 55
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–54 are the current table (kit pick, occupancy 2–6,
+visibility rules stay server-side; Lots 49–55 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual).
 
 ## Screens
@@ -69,7 +69,7 @@ rules above are unchanged — this section only covers how the client looks.
   token hues — no `*_button.png` skins, no hex clip-path.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
-  (nickname + create / join) and **Play solo** (nickname + opponent count 1–5 + difficulty,
+  (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
   **Feedback** (L47-03 / L47-06): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
@@ -132,7 +132,7 @@ rules above are unchanged — this section only covers how the client looks.
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty
-  while `players.length < MAX_PLAYERS` (2–6); **Feedback** next to Leave (L47-03);
+  while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to Leave (L47-03);
   `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
   and sends `chooseKit` before `startGame` when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
@@ -170,7 +170,8 @@ rules above are unchanged — this section only covers how the client looks.
   page-scroll. No `max-w` gutters. Opponents stay **one
   horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
   six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
-  Lobby player list scrolls (`max-h` + overflow) so six seats do not cover Start / Add bot. **Dock is primary**
+  Eight-player tables stay on that same nowrap row (overflow-x). Lobby player list
+  scrolls (`max-h` + overflow) so eight seats do not cover Start / Add bot. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
   too short. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
@@ -281,8 +282,8 @@ rules above are unchanged — this section only covers how the client looks.
     `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read).
     When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
     AnimatePresence cannot leave a stuck blocking overlay.
-  - **Seat colors (L39-03):** client-only palette `--color-seat-0…3` (blue / red /
-    green / yellow) indexed by `view.players` array position (`seat-colors.ts`).
+  - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
+    green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`seat-colors.ts`).
     POV **dock** uses a strong seat wash (`seatZoneStyle({ intensity: 'fill' })`)
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
@@ -609,7 +610,7 @@ ask rather than revert.
 - **Solo rooms:** `XZVWJS` (HostA, 2× Normal), `EGIPYR` (HostB, 2× Easy), `DYNMDK`
   (HostC, 2× Normal). Home shows Protocol v27.
 - **Seat colors:** POV + opponents tinted; log/pending names use seat hue (blue / red /
-  green / yellow).
+  green / yellow / violet / orange / teal / pink).
 - **IllegalActionDialog:** Buy UP / unaffordable Super attack → modal “Not enough points”;
   timers strip has no red reject line. Modal survives bot `stateUpdate` (fix in
   `use-room-connection`). OK dismiss works after unmount-on-clear fix (stuck overlay).
