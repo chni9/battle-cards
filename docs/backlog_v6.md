@@ -38,6 +38,10 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     volley, engage-bot Mirror/burn, Super Absorber skip. Session instruction; no
     protocol bump.
 13. **Eight-player Classic (Lot 55).** Occupancy 2–8. No protocol bump.
+14. **Table readability + Invisibility freeze (Lot 56).** Designer 2026-09-09.
+    Invisibility out of Classic circulation and play (code stays). Attack damage
+    badges, click-to-explain log/Incoming, card lives under persistents, lost
+    deactivation log. `PROTOCOL_VERSION` 30 → 31 (exception, same class as L49).
 
 **Execution order**
 
@@ -58,11 +62,13 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 **Scope lock**
 
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
-  assassin volley). Tutorial-only exceptions remain spec §5.3–§5.4.
+  assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation
+  and play; card files stay). Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
-- **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**.
+- **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
+  exceptions: L49-01 (29 → 30) and **L56-03 (30 → 31)**.
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
   for catalog-price affordability (L54-01) and must keep `weightsHash`.
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
@@ -73,7 +79,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-78 of 78 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+79 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+Lot 56 opened 2026-09-09.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -92,6 +99,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 | 53 · Table crowding | 7 | 7 |
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
+| 56 · Invisibility freeze + readability | 7 | 1 |
 
 ---
 
@@ -317,6 +325,25 @@ Lot 53 opponent row stays `flex-nowrap` + overflow-x. Fitted layout version unch
 
 ---
 
+## Lot 56 — Invisibility freeze + table readability (designer 2026-09-09)
+
+Explicit session instruction. Invisibility stays in the catalog, handler, art, and
+mechanic tests; it must not enter a live game or be playable. Attack damage, click-to-
+explain, card-lives under persistents, and a public lost-deactivation log are client
+readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L56-01 | Append dated `[P]` Lot 56 entries to `docs/agent/decisions.md`; Lot 56 section here; technical spec v6 §13; rules spec freeze note (Invisibility out of circulation and play; Prophet/shop/Transformer pools). Protocol 30 → 31 exception recorded (same class as L49). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Invisibility is frozen, v31 is the next bump, and L56-02 starts the code. | S | Medium | — | Done |
+| L56-02 | `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS = ['invisibility']`; circulating / purchasable / transform pools; shop, Prophet deal, Transformer pick, belief `fillSpecials`; `playCard` not legal (`play-not-legal`). Handler, catalog, art, immunity tests stay. **Acceptance:** shop/Prophet/Transformer never grant it; seeded `playCard` rejected; `SPECIAL_CARD_IDS` still 20; `pnpm verify` green. | M | **High** | L56-01 | To do |
+| L56-03 | `PROTOCOL_VERSION` **30 → 31**. `mirrorRedirected` required `isUpgraded` + post-redirect `damageMultiplier`; Super Mirror redirect lines use the **attack** `cardId`. New log kind `persistentDeactivated` (`ownerPlayerId`, `cardId`, `isUpgraded`, `turnSequence`). Types + version only until L56-04 / L56-07 emit them. **Acceptance:** mismatch path rejects v30 clients; exhaustive kind union includes the new kind. | M | **High** | L56-01 | To do |
+| L56-04 | Compact life-icon damage badge: Incoming/Waiting chips, attack play log, Mirror picker, attack faces (hand / specials / shop / `CardChoiceTile`). Listed damage = `attackDamageFor × damageMultiplier`. Mirror history uses v31 fields. Not Tax/Absorber. **Acceptance:** tests on formatter + pending chip DOM; MEGA and doubled Mirror show the number. | M | Low | L56-03 | To do |
+| L56-05 | Click action-log card names and Incoming/Waiting chips to open the existing inspect Dialog (`CardEffectCopy`). Sources `'log'` / `'queue'` — no Spy footer. Card-bearing kinds including `persistentDeactivated`. **Acceptance:** Absorber play line and a pending attack chip open inspect; draw/elim lines are not buttons. | M | Low | L56-03 | To do |
+| L56-06 | Remaining card lives (`PersistentEffectView.counter`) as a life badge **under** active thumbs when `counter !== null` (own + opponents). Inspect copy matches. No badge on Curse / Invisibility / Shield. **Acceptance:** Poison thumb shows 3; Curse thumb has no number. | S | Low | — | To do |
+| L56-07 | Emit `persistentDeactivated` on auto-loss (counter 0, Curse at 1 life, death dump). Manual `deactivatePersistent` copy “deactivated {card}; it is lost” — do not double-emit. Tax/`applyLifeLoss` must not log a counter loss. **Acceptance:** Poison after enough attack damage logs one lost line; Curse at 1 life logs; Tax does not. | M | **High** | L56-03 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -336,9 +363,10 @@ Lot 53 opponent row stays `flex-nowrap` + overflow-x. Fitted layout version unch
 | 53 | 7 |
 | 54 | 4 |
 | 55 | 1 |
-| **Total** | **78** |
+| 56 | 7 |
+| **Total** | **85** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; a second protocol bump; Feedback on Incoming or the economy bar.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 
