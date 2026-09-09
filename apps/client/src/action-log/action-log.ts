@@ -7,6 +7,7 @@
 import {
   formatCardLabel,
   isAttackCardId,
+  listedAttackDamage,
   type ActionLogEntryKind,
   type ActionLogEntryView,
 } from '@card-battle/shared';
@@ -41,7 +42,14 @@ export interface ActionLogPlayerSegment {
   /** When true, UI appends a literal `'s` after the colored nickname. */
   possessive?: boolean;
 }
-export type ActionLogSegment = ActionLogTextSegment | ActionLogPlayerSegment;
+export interface ActionLogDamageSegment {
+  type: 'damage';
+  amount: number;
+}
+export type ActionLogSegment =
+  | ActionLogTextSegment
+  | ActionLogPlayerSegment
+  | ActionLogDamageSegment;
 
 function text(value: string): ActionLogTextSegment {
   return { type: 'text', text: value };
@@ -63,11 +71,27 @@ function player(
   return segment;
 }
 
+function damageBadge(amount: number): ActionLogDamageSegment {
+  return { type: 'damage', amount };
+}
+
+function listedDamageSegments(
+  cardId: string,
+  isUpgraded: boolean,
+  multiplier = 1,
+): ActionLogSegment[] {
+  const amount = listedAttackDamage(cardId, isUpgraded, multiplier);
+  return amount === null ? [] : [damageBadge(amount)];
+}
+
 function joinSegments(segments: readonly ActionLogSegment[]): string {
   return segments
     .map((segment) => {
       if (segment.type === 'text') {
         return segment.text;
+      }
+      if (segment.type === 'damage') {
+        return ` (${String(segment.amount)})`;
       }
       return segment.possessive === true ? `${segment.nickname}'s` : segment.nickname;
     })
@@ -116,7 +140,9 @@ function formatPlayedActionSegments(
           segments.push(text(', '));
         }
         segments.push(
-          text(`${formatCardLabel(attack.cardId, attack.isUpgraded)} against `),
+          text(formatCardLabel(attack.cardId, attack.isUpgraded)),
+          ...listedDamageSegments(attack.cardId, attack.isUpgraded),
+          text(' against '),
           player(attack.targetPlayerId, nicknameOf),
         );
       });
@@ -132,12 +158,22 @@ function formatPlayedActionSegments(
       if (targetId !== undefined) {
         const target = player(targetId, nicknameOf);
         if (isAttackCardId(id)) {
-          return [actor, text(' attacks '), target, text(` with ${name}`)];
+          return [
+            actor,
+            text(' attacks '),
+            target,
+            text(` with ${name}`),
+            ...listedDamageSegments(id, entry.isUpgraded === true),
+          ];
         }
         return [actor, text(` plays ${name} on `), target];
       }
       if (isAttackCardId(id)) {
-        return [actor, text(` attacks with ${name}`)];
+        return [
+          actor,
+          text(` attacks with ${name}`),
+          ...listedDamageSegments(id, entry.isUpgraded === true),
+        ];
       }
       return [actor, text(` plays ${name}`)];
     }
@@ -229,7 +265,9 @@ export function formatActionLogEntrySegments(
     case 'mirrorRedirected': {
       return [
         player(entry.actorPlayerId, nicknameOf),
-        text(` redirects ${formatCardLabel(entry.cardId, entry.isUpgraded)} from `),
+        text(` redirects ${formatCardLabel(entry.cardId, entry.isUpgraded)}`),
+        ...listedDamageSegments(entry.cardId, entry.isUpgraded, entry.damageMultiplier),
+        text(' from '),
         player(entry.previousTargetPlayerId, nicknameOf),
         text(' to '),
         player(entry.newTargetPlayerId, nicknameOf),

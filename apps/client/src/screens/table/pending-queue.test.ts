@@ -28,6 +28,14 @@ describe('pending queue callouts (L51-07)', () => {
     expect(source).not.toContain('arrow="top"');
   });
 
+  it('shows listed attack damage on chips (L56-04)', () => {
+    const source = readFileSync(join(dir, 'pending-queue.tsx'), 'utf8');
+    expect(source).toContain('listedAttackDamage');
+    expect(source).toContain('LifeCountBadge');
+    expect(source).toContain("kind=\"damage\"");
+    expect(source).not.toContain('ResourceIcon');
+  });
+
   it('keeps coach arrows on scripted table controls', () => {
     const table = readFileSync(join(dir, '../table.tsx'), 'utf8');
     expect(table).toContain('arrow="top"');

@@ -13,8 +13,8 @@ Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** 
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–55 are the current table (kit pick, occupancy 2–8,
-no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual).
+visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
+no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage).
 
 ## Screens
 
@@ -249,6 +249,13 @@ rules above are unchanged — this section only covers how the client looks.
 - **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
   source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
   `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
+  L56-04: tiles pass `damageMultiplier` so doubled listed damage shows immediately.
+- **Listed attack damage (L56-04):** compact `LifeCountBadge` (life glyph + tabular
+  number, no `ResourceIcon` flyout). Catalog × `damageMultiplier` via shared
+  `listedAttackDamage` — `null` for Tax / Absorber / Super Mirror the card. Surfaces:
+  Incoming/Waiting chips, attack **play** log + Mirror history (v31 fields), Mirror
+  picker, attack faces (hand / specials / shop / `CardChoiceTile`). Resolved lines
+  keep actual `−N life` / shield absorbed.
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.

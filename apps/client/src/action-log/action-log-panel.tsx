@@ -11,6 +11,7 @@ import type {
 } from '@card-battle/shared';
 import { Fragment, useEffect, useRef, type ReactElement } from 'react';
 
+import { LifeCountBadge } from '../design/components/life-count-badge';
 import { PlayerName } from '../design/components/player-name';
 import {
   formatActionLogEntrySegments,
@@ -244,6 +245,17 @@ function LogSegments({
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
           return <Fragment key={`t-${String(index)}`}>{segment.text}</Fragment>;
+        }
+        if (segment.type === 'damage') {
+          return (
+            <LifeCountBadge
+              key={`d-${String(index)}`}
+              amount={segment.amount}
+              kind="damage"
+              iconSize={12}
+              className="ml-0.5 align-text-bottom text-[11px] text-ink"
+            />
+          );
         }
         return (
           <PlayerName

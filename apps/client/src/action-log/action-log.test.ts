@@ -58,7 +58,7 @@ describe('formatActionLogEntry (L9-02)', () => {
     }
 
     expect(formatActionLogEntry(play, nick)).toBe(
-      'Alice attacks Bob with Basic attack',
+      'Alice attacks Bob with Basic attack (1)',
     );
     expect(formatActionLogEntry(resolved, nick)).toBe(
       "Alice's Basic attack hits Bob (−1 life)",
@@ -159,7 +159,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice attacks Bob with Strong attack +');
+    ).toBe('Alice attacks Bob with Strong attack + (4)');
     expect(
       formatActionLogEntry(
         {
@@ -364,7 +364,7 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice attacks with MEGA ATTACK');
+    ).toBe('Alice attacks with MEGA ATTACK (20)');
 
     expect(
       formatActionLogEntry(
@@ -425,9 +425,10 @@ describe('formatActionLogEntrySegments (L39-03)', () => {
       { type: 'text', text: ' attacks ' },
       { type: 'player', playerId: 'b', nickname: 'Anna' },
       { type: 'text', text: ' with Basic attack' },
+      { type: 'damage', amount: 1 },
     ]);
     expect(formatActionLogEntry(play, nickCollision)).toBe(
-      'Ann attacks Anna with Basic attack',
+      'Ann attacks Anna with Basic attack (1)',
     );
   });
 
@@ -479,5 +480,57 @@ describe('action log kinds (L56-03)', () => {
         nick,
       ),
     ).toBe("Alice's Poison is deactivated and lost");
+  });
+});
+
+describe('listed attack damage on play and Mirror log (L56-04)', () => {
+  it('shows MEGA catalog damage on the play line', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'playCard',
+          cardId: 'mega-attack',
+          isUpgraded: false,
+          targetPlayerId: 'b',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice attacks Bob with MEGA ATTACK (20)');
+  });
+
+  it('shows post-redirect listed damage on Mirror history', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'mirrorRedirected',
+          actorPlayerId: 'a',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          damageMultiplier: 2,
+          previousTargetPlayerId: 'a',
+          newTargetPlayerId: 'b',
+          turnSequence: 3,
+        },
+        nick,
+      ),
+    ).toBe('Alice redirects Super attack (14) from Alice to Bob');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'mirrorRedirected',
+          actorPlayerId: 'a',
+          cardId: 'super-attack',
+          isUpgraded: false,
+          damageMultiplier: 4,
+          previousTargetPlayerId: 'b',
+          newTargetPlayerId: 'a',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe('Alice redirects Super attack (28) from Bob to Alice');
   });
 });
