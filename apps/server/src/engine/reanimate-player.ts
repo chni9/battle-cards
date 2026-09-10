@@ -9,9 +9,9 @@
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
+  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   KIT_IDS,
-  SPECIAL_CARD_IDS,
   type KitId,
   type Player,
 } from '@card-battle/shared';
@@ -27,8 +27,8 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  * Deal starting attack/action draws and kit specials (setup steps 3–4).
  * Caller sets resources (step 2) and clears zones first when resetting.
  *
- * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from all 20
- * specials via seeded `rng.pick` with replacement (duplicates OK).
+ * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
+ * specials via seeded `rng.pick` with replacement (duplicates OK). L56-02 freeze.
  */
 export function dealStartingLoadout(
   player: Player,
@@ -52,7 +52,7 @@ export function dealStartingLoadout(
 
   if (randomCount !== undefined && randomCount > 0) {
     for (let index = 0; index < randomCount; index += 1) {
-      const specialId = rng.pick(SPECIAL_CARD_IDS);
+      const specialId = rng.pick(CIRCULATING_SPECIAL_CARD_IDS);
       acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
     }
     return;

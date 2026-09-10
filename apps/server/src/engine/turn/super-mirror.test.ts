@@ -165,14 +165,23 @@ describe('Super Mirror (L23-02)', () => {
       { instanceId: 'sm-1', cardId: 'super-mirror', isUpgraded: true },
     ];
     state.currentTurnPlayerId = alice.id;
-    expect(
-      performTurnAction(state, alice.id, { type: 'playCard', instanceId: 'sm-1' }).ok,
-    ).toBe(true);
+    const result = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'sm-1',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
 
     expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(1);
     expect(bob.pendingEffects[0]?.damageMultiplier).toBe(2);
     expect(bob.pendingEffects[0]?.redirectedBy).toBe('super-mirror');
+    expect(result.mirrorRedirects).toHaveLength(1);
+    expect(result.mirrorRedirects?.[0]?.cardId).toBe('basic-attack');
+    expect(result.mirrorRedirects?.[0]?.isUpgraded).toBe(false);
+    expect(result.mirrorRedirects?.[0]?.damageMultiplier).toBe(2);
   });
 
   it('fan-out back to the attacker deals damage on their turn', () => {
@@ -310,7 +319,14 @@ describe('Super Mirror (L23-02)', () => {
     }
 
     expect(result.mirrorRedirects).toHaveLength(6);
-    expect(result.mirrorRedirects?.every((redirect) => redirect.cardId === 'super-mirror')).toBe(
+    expect(result.mirrorRedirects?.every((redirect) => redirect.cardId !== 'super-mirror')).toBe(
+      true,
+    );
+    expect(new Set(result.mirrorRedirects?.map((redirect) => redirect.cardId))).toEqual(
+      new Set(['basic-attack', 'strong-attack']),
+    );
+    expect(result.mirrorRedirects?.every((redirect) => !redirect.isUpgraded)).toBe(true);
+    expect(result.mirrorRedirects?.every((redirect) => redirect.damageMultiplier === 1)).toBe(
       true,
     );
     expect(result.mirrorRedirects?.every((redirect) => redirect.actorPlayerId === alice.id)).toBe(

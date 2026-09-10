@@ -214,7 +214,12 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   (persistents pooled). A successful
   attack that deals ≥1 life moves every Curse on the attacker onto the hit
   player (`transferCursesFromAttacker`, logged as `curseTransferred`).
-  Deactivated counter cards join the shared pool. Invisibility is
+  Deactivated counter cards join the shared pool and emit public
+  `persistentDeactivated` (L56-07: counter 0 through `applyDamage`, Curse at 1 life,
+  death dump of remaining persistents). Manual Invisibility deactivate stays
+  `actionPlayed` (“deactivated {card}; it is lost”) and must not double-emit.
+  Tax / `applyLifeLoss` never decrement counters and therefore never log a counter loss.
+  Invisibility is
   `counter: null` and exits only via the `deactivatePersistent` TurnAction (#V4-10).
 
 ## Mutual attacks — mechanics

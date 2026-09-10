@@ -8,6 +8,8 @@ import { ATTACK_DAMAGE } from './attack-damage';
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
+  CIRCULATING_SPECIAL_CARD_IDS,
+  PURCHASABLE_SPECIAL_CARD_IDS,
   SPECIAL_ATTACK_CARD_IDS,
   SPECIAL_CARD_IDS,
   TRANSFORM_RESULT_SPECIAL_IDS,
@@ -34,11 +36,19 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
   });
 
   it('keeps Card Transformer out of its own result pool (L50-08)', () => {
-    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(19);
     expect(TRANSFORM_RESULT_SPECIAL_IDS).not.toContain('card-transformer');
     expect([...TRANSFORM_RESULT_SPECIAL_IDS].sort()).toEqual(
-      [...SPECIAL_CARD_IDS].filter((id) => id !== 'card-transformer').sort(),
+      [...CIRCULATING_SPECIAL_CARD_IDS].filter((id) => id !== 'card-transformer').sort(),
     );
+  });
+
+  it('freezes Invisibility out of circulating pools (L56-02)', () => {
+    expect(SPECIAL_CARD_IDS).toContain('invisibility');
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toHaveLength(19);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).not.toContain('invisibility');
+    expect(PURCHASABLE_SPECIAL_CARD_IDS).toEqual(CIRCULATING_SPECIAL_CARD_IDS);
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(18);
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).not.toContain('invisibility');
   });
 
   it('never repeats a card id', () => {

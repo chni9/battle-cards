@@ -11,7 +11,6 @@ import type {
 } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
-import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
@@ -19,6 +18,7 @@ import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
 import { seatIndexOf } from '../../design/seat-colors';
 import { persistentToCardInstance, shieldActiveInstance } from './active-display';
+import { ActivePersistentThumb } from './active-persistent-thumb';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
@@ -42,6 +42,7 @@ export interface PrivateZoneProps {
   onSelectActive?: (instanceId: string) => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
+  onInspectPending?: (effect: PendingEffectView) => void;
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
@@ -63,6 +64,7 @@ export function PrivateZone({
   onSelectActive,
   onDeactivatePersistent,
   onActivateDuplication,
+  onInspectPending,
   highlightedInstanceIds,
   zoneHighlight,
   collapseIncoming = false,
@@ -71,9 +73,19 @@ export function PrivateZone({
 }: PrivateZoneProps): ReactElement {
   const actives = [
     ...(view.self.shield > 0
-      ? [shieldActiveInstance(view.self.shieldIsUpgraded)]
+      ? [
+          {
+            instance: shieldActiveInstance(view.self.shieldIsUpgraded),
+            counter: null,
+            activated: false,
+          },
+        ]
       : []),
-    ...view.self.activePersistentEffects.map(persistentToCardInstance),
+    ...view.self.activePersistentEffects.map((effect) => ({
+      instance: persistentToCardInstance(effect),
+      counter: effect.counter,
+      activated: true,
+    })),
   ];
 
   const invisibilityEffect = view.self.activePersistentEffects.find(
@@ -144,20 +156,20 @@ export function PrivateZone({
           {actives.length > 0 && (
             <div
               data-zone="own-actives"
-              className="flex shrink-0 items-center gap-0.5"
+              className="flex shrink-0 items-start gap-0.5"
               title="Active cards"
             >
-              {actives.map((instance) => (
-                <Card
-                  key={instance.instanceId}
-                  instance={instance}
-                  detail="thumb"
-                  activated={instance.cardId !== 'shield'}
+              {actives.map((active) => (
+                <ActivePersistentThumb
+                  key={active.instance.instanceId}
+                  instance={active.instance}
+                  counter={active.counter}
+                  activated={active.activated}
                   className="w-7 !p-0.5 sm:w-8"
                   {...(onSelectActive !== undefined
                     ? {
                         onSelect: () => {
-                          onSelectActive(instance.instanceId);
+                          onSelectActive(active.instance.instanceId);
                         },
                       }
                     : {})}
@@ -213,6 +225,9 @@ export function PrivateZone({
                 tone="dock"
                 highlightedIds={mirrorHighlightIds}
                 animateEntrance
+                {...(onInspectPending !== undefined
+                  ? { onInspectCard: onInspectPending }
+                  : {})}
               />
             </TutorialCallout>
           </div>

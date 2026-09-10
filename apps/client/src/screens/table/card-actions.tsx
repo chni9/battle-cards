@@ -8,6 +8,7 @@ import {
   SHARED_CARD_IDS,
   formatCardLabel,
   getCard,
+  isTemporarilyUnavailableCardId,
   type CardInstance,
   type PlayingStateView,
   type PublicPlayerView,
@@ -31,6 +32,7 @@ import { MOTION_DURATION_S, MOTION_EASE, MOTION_STAGGER_S } from '../../fx/motio
 import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { CardEffectCopy } from '../../design/components/card-effect-copy';
+import { LifeCountBadge } from '../../design/components/life-count-badge';
 import { visibleKitId } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -62,7 +64,7 @@ export type TableDialog =
       instance: CardInstance;
       activated?: boolean;
       counter?: number | null;
-      source: 'spy' | 'active';
+      source: 'spy' | 'active' | 'log' | 'queue';
     }
   | { kind: 'target'; instance: CardInstance }
   | { kind: 'quantity'; instance: CardInstance }
@@ -161,6 +163,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const transformerUseBlocked =
     actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
+  const useUnavailable =
+    actionInstance !== null && isTemporarilyUnavailableCardId(actionInstance.cardId);
   const inspectInstance = dialog?.kind === 'inspect' ? dialog.instance : null;
   const inspectDefinition =
     inspectInstance !== null ? getCard(inspectInstance.cardId) : undefined;
@@ -183,6 +187,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 arrow="top"
                 highlightId="use"
               >
+              {useUnavailable ? (
+                <p className="text-sm text-ink-muted">Temporarily unavailable</p>
+              ) : (
               <Button
                 compact
                 variant="purple"
@@ -204,6 +211,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   'Use'
                 )}
               </Button>
+              )}
               </TutorialCallout>
               {!actionInstance.isUpgraded && (
                 <TutorialCallout
@@ -327,18 +335,22 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   isUpgraded={inspectInstance.isUpgraded}
                 />
               ) : null}
-              {dialog.source === 'active' ? (
+              {dialog.source === 'spy' ? (
+                <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
+              ) : dialog.source === 'active' ? (
                 <>
                   <p className="text-sm font-semibold text-ink">Active</p>
                   {dialog.counter !== undefined && dialog.counter !== null && (
-                    <p className="text-sm text-ink-muted">
-                      Counter: {String(dialog.counter)}
+                    <p className="flex items-center justify-center gap-1 text-sm text-ink-muted sm:justify-start">
+                      Card lives
+                      <LifeCountBadge
+                        amount={dialog.counter}
+                        kind="card-lives"
+                      />
                     </p>
                   )}
                 </>
-              ) : (
-                <p className="text-sm text-ink-muted">Spy reveal — inspect only</p>
-              )}
+              ) : null}
             </div>
           </div>
         )}

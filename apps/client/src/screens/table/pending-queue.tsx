@@ -7,10 +7,16 @@
  * L51-07: real pending chips use tutorial callout chrome, no arrow.
  */
 
-import { formatCardLabel, type PendingEffectView, type PlayingStateView } from '@card-battle/shared';
+import {
+  formatCardLabel,
+  listedAttackDamage,
+  type PendingEffectView,
+  type PlayingStateView,
+} from '@card-battle/shared';
 import { useReducedMotion } from 'motion/react';
 import type { ReactElement } from 'react';
 
+import { LifeCountBadge } from '../../design/components/life-count-badge';
 import { PlayerName } from '../../design/components/player-name';
 import { isPersistentPresentationId } from '../../fx/incoming-threat-diff';
 import { pendingChipCalloutTone } from './pending-chip-tone';
@@ -35,6 +41,8 @@ export interface PendingQueueProps {
   highlightedIds?: readonly string[];
   /** Animate chips on mount (Incoming). Stable keys keep the animation one-shot. */
   animateEntrance?: boolean;
+  /** Open catalog inspect (L56-05). Presentation persistents included. */
+  onInspectCard?: (effect: PendingEffectView) => void;
 }
 
 export function PendingQueue({
@@ -46,6 +54,7 @@ export function PendingQueue({
   tone = 'felt',
   highlightedIds = [],
   animateEntrance = false,
+  onInspectCard,
 }: PendingQueueProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const entranceClass =
@@ -96,6 +105,20 @@ export function PendingQueue({
         >
           {effects.map((effect) => {
             const label = formatCardLabel(effect.cardId, effect.isUpgraded);
+            const listedDamage = listedAttackDamage(
+              effect.cardId,
+              effect.isUpgraded,
+              effect.damageMultiplier,
+            );
+            const damageBadge =
+              listedDamage === null ? null : (
+                <LifeCountBadge
+                  amount={listedDamage}
+                  kind="damage"
+                  iconSize={compact ? 10 : 12}
+                  className="shrink-0 text-[9px] text-ink"
+                />
+              );
             const sourceNick = nicknameOf(view, effect.sourcePlayerId);
             const targetNick = nicknameOf(view, effect.targetPlayerId);
             const routePlain = `${sourceNick} → ${targetNick}`;
@@ -118,17 +141,19 @@ export function PendingQueue({
                 />
               </>
             );
-            const chip = compact ? (
-              <span
-                className={[
-                  stacked
-                    ? 'flex min-w-0 w-full items-center gap-1 overflow-hidden rounded-[length:var(--radius-badge)] border px-1.5 py-0.5 shadow-sm transition-shadow duration-200'
-                    : 'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200',
-                  chipClass,
-                  highlighted ? highlightClass : '',
-                  entranceClass,
-                ].join(' ')}
-              >
+            const chipClassName = [
+              compact
+                ? stacked
+                  ? 'flex min-w-0 w-full items-center gap-1 overflow-hidden rounded-[length:var(--radius-badge)] border px-1.5 py-0.5 shadow-sm transition-shadow duration-200'
+                  : 'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[length:var(--radius-badge)] border px-2 py-1 shadow-sm transition-shadow duration-200'
+                : 'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm transition-shadow duration-200',
+              chipClass,
+              highlighted ? highlightClass : '',
+              entranceClass,
+              onInspectCard === undefined ? '' : 'cursor-pointer text-left',
+            ].join(' ');
+            const chipBody = compact ? (
+              <>
                 <span
                   className={
                     stacked
@@ -138,6 +163,7 @@ export function PendingQueue({
                 >
                   {label}
                 </span>
+                {damageBadge}
                 <span
                   className={
                     stacked
@@ -147,30 +173,41 @@ export function PendingQueue({
                 >
                   {route}
                 </span>
-              </span>
+              </>
             ) : (
-              <span
-                className={[
-                  'flex min-w-[8rem] flex-col rounded-[length:var(--radius-card)] border px-2 py-1 shadow-sm transition-shadow duration-200',
-                  chipClass,
-                  highlighted ? highlightClass : '',
-                  entranceClass,
-                ].join(' ')}
-              >
-                <span className="text-sm font-semibold">{label}</span>
+              <>
+                <span className="flex items-center gap-1">
+                  <span className="text-sm font-semibold">{label}</span>
+                  {damageBadge}
+                </span>
                 <span className="inline-flex flex-wrap items-baseline gap-0 text-[10px] leading-tight text-ink-muted">
                   {route}
                 </span>
                 <span className="text-[10px] tabular-nums text-ink-muted">
                   queued #{effect.queuedAt}
                 </span>
-              </span>
+              </>
             );
+            const chip =
+              onInspectCard === undefined ? (
+                <span className={chipClassName}>{chipBody}</span>
+              ) : (
+                <button
+                  type="button"
+                  className={chipClassName}
+                  aria-label={`Inspect ${label}`}
+                  onClick={() => {
+                    onInspectCard(effect);
+                  }}
+                >
+                  {chipBody}
+                </button>
+              );
             return (
               <li
                 key={effect.id}
                 data-pending-id={effect.id}
-                title={compact ? `${label} · ${routePlain} · queued #${String(effect.queuedAt)}` : undefined}
+                title={compact ? `${label} · ${routePlain} · queued #${String(effect.queuedAt)}${listedDamage === null ? '' : ` · ${String(listedDamage)} damage`}` : undefined}
                 className={[
                   stacked ? 'w-full min-w-0 shrink-0' : 'shrink-0',
                   ringPending ? 'overflow-visible' : undefined,

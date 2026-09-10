@@ -3,7 +3,8 @@
  *
  * Specials are not bought/sold individually (`buyCost` / `sellYield` keep the Card
  * shape but are unused by the shared shop). Play cost is the listed Price. Random
- * acquisition uses `buySpecialCard` over all `SPECIAL_CARD_IDS` (L21-01 / #V4-29).
+ * acquisition uses `buySpecialCard` over `PURCHASABLE_SPECIAL_CARD_IDS`
+ * (L21-01 / #V4-29; L56-02 circulating freeze).
  *
  * Every price re-verified against rules spec §5 at L20-04.
  *
@@ -132,6 +133,7 @@ export const SPECIAL_CARD_CATALOG = {
     'Transform an owned action or attack card into a special of your choice (never Card Transformer).',
     'Choose the special instead of drawing at random (still never Card Transformer).',
   ),
+  // Temporarily out of Classic circulation/play (L56-02). Catalog + handler stay.
   invisibility: specialCard(
     'invisibility',
     'Invisibility',

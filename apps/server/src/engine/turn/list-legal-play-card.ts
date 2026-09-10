@@ -4,8 +4,14 @@
  * Calls real `handler.canPlay` and the shared play-cost gate; never re-derives rules.
  */
 
-import type { CardInstance, GameState, Player } from '@card-battle/shared';
-import { isAttackCardId, SHARED_CARD_IDS } from '@card-battle/shared';
+import {
+  isAttackCardId,
+  isTemporarilyUnavailableCardId,
+  SHARED_CARD_IDS,
+  type CardInstance,
+  type GameState,
+  type Player,
+} from '@card-battle/shared';
 
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
@@ -33,6 +39,10 @@ export function listLegalPlayCardActions(
   const held: readonly CardInstance[] = [...actor.hand, ...actor.specialCards];
 
   for (const instance of held) {
+    if (isTemporarilyUnavailableCardId(instance.cardId)) {
+      continue;
+    }
+
     const handler = findHandler(instance.cardId);
 
     if (handler === undefined) {

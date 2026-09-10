@@ -108,7 +108,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Tactician | 1 | 15 | 0 | 4 | 2 | 2 | Spy, Thief and Mirror already upgraded | Block |
 | Indestructible | 18 | 0 | 0 | 1 | 4 | 1 | Tax and Regeneration already upgraded | Super Regeneration |
 | Assassin | 10 | 0 | 0 | 1 | 4 | 4 | Can play an unlimited number of attack cards in the same turn, as long as they have the necessary points. Each attack targets an opponent of choice (the same target or different targets). Each attack keeps its own independent resolution. | Sentence, Points Generator |
-| Prophet | 10 | 4 | 2 | 1 | 5 | 2 | None | 2 random special cards, drawn from the full pool of all existing special cards |
+| Prophet | 10 | 4 | 2 | 1 | 5 | 2 | None | 2 random special cards, drawn from the circulating special pool (Invisibility temporarily excluded — designer 2026-09-09) |
 | Specialist | 8 | 4 | 0 | 1 | 3 | 2 | Absorber already upgraded | 2 Card Transformers, Card Thief, Super Absorber |
 | Scientific | 10 | 0 | 0 | 1 | 5 | 2 | Spy already upgraded | Cloning |
 | Ghost | 14 | 0 | 0 | 1 | 4 | 2 | Every life this player loses, regardless of cause, makes them gain 2 points | Curse |
@@ -131,7 +131,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### General Rules
 
-- A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
+- A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one). **Temporary Classic freeze (designer 2026-09-09):** that draw uses the circulating special pool, which currently excludes Invisibility. The card remains in the catalog for later reactivation.
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
 - Four cards (Points Generator, Poison, Super Absorber, Imposition) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2.
@@ -171,14 +171,15 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: steals a card from every opponent (same exception if an opponent is spied on).
 
 **Card Transformer** — Price: 2 points
-- Action: the user transforms an action or attack card of their choice, in their possession, into a random special card. The result is never another Card Transformer.
-- Upgrade: allows choosing the special card obtained instead of a random draw. Card Transformer is not among the choices.
+- Action: the user transforms an action or attack card of their choice, in their possession, into a random special card. The result is never another Card Transformer. **Temporary Classic freeze (designer 2026-09-09):** the result is never Invisibility either.
+- Upgrade: allows choosing the special card obtained instead of a random draw. Card Transformer is not among the choices. **Temporary Classic freeze:** Invisibility is not among the choices.
 
 **Cloning** — Price: 3 points
 - Action: the user copies an opponent of choice's kit, lives, points, upgrade points and shield. The user keeps their own hand, special cards and active persistent cards. This action cancels all effects pending against the user; they inherit no effect pending against the cloned player. Any visibility gained through Spy (or equivalent) is reset to zero both ways: what the user held over other players, and what others held over them.
 - Upgrade: also gains 10 points, 2 upgrade points and 4 lives.
 
 **Invisibility** — Price: 10 points
+- **Temporary Classic freeze (designer 2026-09-09):** this card is not granted by shop, Prophet, Card Transformer, or any other deal, and is not playable. Catalog, handler, and values stay for later reactivation.
 - Action: the user becomes immune to any opposing action and draws 4 points per turn while invisibility is active. Must be deactivated manually by the user (no automatic condition).
 - Upgrade: draws 6 points per turn.
 

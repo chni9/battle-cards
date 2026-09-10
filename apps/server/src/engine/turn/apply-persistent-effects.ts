@@ -174,7 +174,7 @@ function applyCursesOnVictim(state: GameState, victim: Player): void {
 
 function applyOneCurse(state: GameState, victim: Player, effect: PersistentEffect): void {
   if (victim.lives <= 1) {
-    deactivatePersistentEffect(state, victim.id, effect.id);
+    deactivatePersistentEffect(state, victim.id, effect.id, true);
     return;
   }
 
@@ -195,6 +195,6 @@ function applyOneCurse(state: GameState, victim: Player, effect: PersistentEffec
   // No elimination credit — Curse cannot finish a player off (designer 2026-08-07).
 
   if (victim.lives <= 1) {
-    deactivatePersistentEffect(state, victim.id, effect.id);
+    deactivatePersistentEffect(state, victim.id, effect.id, true);
   }
 }

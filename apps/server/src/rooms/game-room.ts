@@ -1352,11 +1352,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const botReason = this.consumePendingBotReason();
       this.actionLog.push({
         kind: 'mirrorRedirected',
-        actorPlayerId: result.mirrorRedirect.actorPlayerId,
-        cardId: result.mirrorRedirect.cardId,
-        previousTargetPlayerId: result.mirrorRedirect.previousTargetPlayerId,
-        newTargetPlayerId: result.mirrorRedirect.newTargetPlayerId,
-        turnSequence: result.mirrorRedirect.turnSequence,
+        ...result.mirrorRedirect,
         ...(botReason !== null ? { botReason } : {}),
       });
     } else {
@@ -1394,11 +1390,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       for (const redirect of result.mirrorRedirects) {
         this.actionLog.push({
           kind: 'mirrorRedirected',
-          actorPlayerId: redirect.actorPlayerId,
-          cardId: redirect.cardId,
-          previousTargetPlayerId: redirect.previousTargetPlayerId,
-          newTargetPlayerId: redirect.newTargetPlayerId,
-          turnSequence: redirect.turnSequence,
+          ...redirect,
         });
       }
     }
@@ -1433,6 +1425,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
           isUpgraded: transfer.isUpgraded,
           effectId: transfer.effectId,
           turnSequence: transfer.turnSequence,
+        });
+      }
+    }
+
+    if (result.persistentDeactivations !== undefined) {
+      for (const lost of result.persistentDeactivations) {
+        this.actionLog.push({
+          kind: 'persistentDeactivated',
+          ownerPlayerId: lost.ownerPlayerId,
+          cardId: lost.cardId,
+          isUpgraded: lost.isUpgraded,
+          turnSequence: lost.turnSequence,
         });
       }
     }

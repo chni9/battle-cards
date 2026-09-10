@@ -4,11 +4,12 @@
  * `activePersistentEffects` (PROTOCOL_VERSION 19).
  */
 
-import { getCard, type CardInstance } from '@card-battle/shared';
+import { getCard, listedAttackDamage, type CardInstance } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { getCardArtUrl } from '../asset-lookup';
 import { CardEffectCopy } from './card-effect-copy';
+import { LifeCountBadge } from './life-count-badge';
 
 export interface CardProps {
   instance: CardInstance;
@@ -23,6 +24,11 @@ export interface CardProps {
    * `thumb` — art only (Spy opponent seats, tiny).
    */
   detail?: 'full' | 'face' | 'thumb';
+  /**
+   * Pending listed-damage multiplier (Mirror). Default 1.
+   * Faces use catalog × this value (L56-04).
+   */
+  damageMultiplier?: number;
 }
 
 export function Card({
@@ -32,6 +38,7 @@ export function Card({
   onSelect,
   className = '',
   detail = 'full',
+  damageMultiplier = 1,
 }: CardProps): ReactElement {
   const definition = getCard(instance.cardId);
   const name = definition?.name ?? instance.cardId;
@@ -39,15 +46,36 @@ export function Card({
     isUpgraded: instance.isUpgraded,
     ...(activated ? { activated: true } : {}),
   });
+  const listedDamage = listedAttackDamage(
+    instance.cardId,
+    instance.isUpgraded,
+    damageMultiplier,
+  );
+  const damageBadge =
+    listedDamage === null ? null : (
+      <LifeCountBadge
+        amount={listedDamage}
+        kind="damage"
+        iconSize={detail === 'thumb' ? 8 : 10}
+        className="text-[8px] text-ink sm:text-[10px]"
+      />
+    );
 
   const body = (
     <>
-      <img
-        src={artUrl}
-        alt=""
-        className="aspect-[2/3] w-full object-contain"
-        draggable={false}
-      />
+      <span className="relative block w-full">
+        <img
+          src={artUrl}
+          alt=""
+          className="aspect-[2/3] w-full object-contain"
+          draggable={false}
+        />
+        {damageBadge !== null ? (
+          <span className="pointer-events-none absolute right-0 bottom-0 rounded-sm bg-surface-raised/90 px-0.5">
+            {damageBadge}
+          </span>
+        ) : null}
+      </span>
       {detail !== 'thumb' && (
         <span
           className={[
@@ -67,9 +95,11 @@ export function Card({
     </>
   );
 
+  const damageSpoken =
+    listedDamage === null ? '' : `, ${String(listedDamage)} damage`;
   const label =
     detail === 'thumb'
-      ? `${name}${instance.isUpgraded ? ' upgraded' : ''}`
+      ? `${name}${instance.isUpgraded ? ' upgraded' : ''}${damageSpoken}`
       : undefined;
 
   if (onSelect !== undefined) {

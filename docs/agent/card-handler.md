@@ -140,6 +140,8 @@ for `playCard` / `sellCard` / `upgradeCard` key on `instanceId` (Lot 2 ruling).
 Rules spec §5: single use, cannot be bought or sold individually, and 20 points buys a
 **random** one — in V1 drawn only from the 6 cards of the lot (ruling §6.2 #10). An upgrade
 placed before use is lost when the card is played. After use the card joins the shared pool.
+Classic freeze (L56-02): `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS` is excluded from shop,
+Prophet, Transformer, and play; keep the catalog row and handler.
 
 **Lot 4 → Lot 5 handoff:** starting specials are already dealt into `player.specialCards` at
 `createInitialState` (L4-02). Lot 5 adds static definitions, handlers, and unlocks play — do
@@ -169,8 +171,8 @@ the user loses a life **to damage**, and at 0 the card deactivates and is perman
 `transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
 Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
 and mints a special from `TRANSFORM_RESULT_SPECIAL_IDS` (never `card-transformer`:
-designer 2026-08-24 / L50-08). Base: rng; upgraded: `special-pick`. Shop 20-point
-purchase still uses `SPECIAL_CARD_IDS`. Instant personal effects — not opponent-queued.
+designer 2026-08-24 / L50-08; never a frozen id: L56-02). Base: rng; upgraded: `special-pick`. Shop 20-point
+purchase uses `PURCHASABLE_SPECIAL_CARD_IDS`. Instant personal effects — not opponent-queued.
 `reanimation-kit` remains untyped until Lot 26.
 
 ## What not to do

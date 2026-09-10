@@ -21,6 +21,7 @@ import {
 import { transferCardInstance } from '../kits/acquire-card';
 import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import { createRng, type Rng } from '../rng';
+import { recordAutoDeactivation } from '../specials/auto-deactivation-log';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { onPlayerEliminatedForAbsorbWindow } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
@@ -142,6 +143,9 @@ function candidatesForVictim(state: GameState, victimPlayerId: string): string[]
 function cleanupEliminatedPlayer(state: GameState, player: Player): void {
   player.pendingEffects = [];
   if (player.activePersistentEffects.length > 0) {
+    for (const effect of player.activePersistentEffects) {
+      recordAutoDeactivation(state, player.id, effect);
+    }
     poolDeactivatedPersistentEffects(state, player.activePersistentEffects);
     player.activePersistentEffects = [];
   }

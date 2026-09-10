@@ -33,9 +33,9 @@ describe('deactivatePersistentEffect (technical spec v4 §4.2, L20-13)', () => {
 
     expect(state.pool).toHaveLength(0);
 
-    const ok = deactivatePersistentEffect(state, owner.id, effect.id);
+    const removed = deactivatePersistentEffect(state, owner.id, effect.id);
 
-    expect(ok).toBe(true);
+    expect(removed).not.toBeNull();
     expect(owner.activePersistentEffects).toHaveLength(0);
     expect(state.pool).toHaveLength(1);
     expect(state.pool[0]?.cardId).toBe(effect.cardId);
@@ -43,7 +43,7 @@ describe('deactivatePersistentEffect (technical spec v4 §4.2, L20-13)', () => {
 
     const again = deactivatePersistentEffect(state, owner.id, effect.id);
 
-    expect(again).toBe(false);
+    expect(again).toBeNull();
     expect(state.pool).toHaveLength(1);
   });
 });

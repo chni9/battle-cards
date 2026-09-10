@@ -13,8 +13,9 @@ Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** 
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–55 are the current table (kit pick, occupancy 2–8,
-no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual).
+visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
+no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
+inspect from log/queue, card lives under actives).
 
 ## Screens
 
@@ -249,6 +250,31 @@ rules above are unchanged — this section only covers how the client looks.
 - **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
   source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
   `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
+  L56-04: tiles pass `damageMultiplier` so doubled listed damage shows immediately.
+- **Listed attack damage (L56-04):** compact `LifeCountBadge` (life glyph + tabular
+  number, no `ResourceIcon` flyout). Catalog × `damageMultiplier` via shared
+  `listedAttackDamage` — `null` for Tax / Absorber / Super Mirror the card. Surfaces:
+  Incoming/Waiting chips, attack **play** log + Mirror history (v31 fields), Mirror
+  picker, attack faces (hand / specials / shop / `CardChoiceTile`). Resolved lines
+  keep actual `−N life` / shield absorbed.
+- **Inspect from log / queue (L56-05):** card-name segments in the action log
+  (`actionPlayed`, `actionResolved`, `mirrorRedirected`, `curseTransferred`,
+  `persistentDeactivated`) and Incoming/Waiting chips open the existing inspect
+  Dialog (`Card` + `CardEffectCopy`). Synthetic `CardInstance`
+  `inspect:{log|queue}:…` — catalog only. Sources `'log'` / `'queue'` omit the
+  Spy footer. Draw / buy / sell / upgrade / elim / rewards stay text (no
+  `cardId` button). Nested inspect from the collapsed log Dialog closes that
+  chrome (`dialog !== null` clears `chromeVisible`).
+- **Card lives under actives (L56-06):** `PersistentEffectView.counter` is already
+  public. `ActivePersistentThumb` renders activated thumb art plus, when
+  `counter !== null`, a compact `LifeCountBadge` (`kind: 'card-lives'`) under
+  the card on own kit-row actives and every opponent seat. Curse, Invisibility,
+  and combat Shield stay badge-free (`counter === null`; Shield remaining lives
+  in the resource column).   Inspect replaces `Counter: N` with the same badge
+  plus a one-line “Card lives” label. No protocol bump.
+- **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`.
+  Manual Invisibility deactivate copy is “deactivated {card}; it is lost”
+  (`actionPlayed` only).
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
@@ -924,4 +950,33 @@ set (value not recorded). No product defects; nothing rewound.
   About UI, message, code `EAXQFM`, protocol 30, log tail, **no seed**).
 - Watch point: weaker-answer mutual was not hunted; Lot 54. Missing How to play
   PNGs omitted `<img>` as wired.
+
+### Lot 56 verified 2026-09-09 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 31)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567` (`protocol v31`). Invisibility
+handler stays in repo; circulating shop/Prophet/Transformer pools are unit-
+tested (L56-02). Shared shop tiles never listed Invisibility (special, not
+shared). Auto-loss `persistentDeactivated` lines are engine-tested (L56-07);
+this gate did not drain a counter to 0. Mirror picker doubled damage is
+unit-tested (`listedAttackDamage` × multiplier); no Mirror sub-choice opened
+in the rooms below.
+
+- Room `XTISAZ` nick `L56Gate` vs Easy Alpha. Shop: Basic overlay **1**,
+  Strong **2**, Super **7**; Absorber/Spy/Thief/Mirror/Shield/Tax/Regen
+  icon-free. Log card names open inspect (Block / Basic); no Spy footer.
+  Incoming **Thief** chip click → Thief inspect, no Spy footer. Hand Basic
+  overlay **1**.
+- Room `HMCBFY` nick `L56Gate` vs Normal Alpha. Alpha Points Generator:
+  opponent thumb with card-lives **3** under the art; inspect from that
+  thumb shows **Active** + **Card lives** 3. Incoming **Super attack**
+  chip **7**, click → Super inspect (art overlay 7, “Deal 7 damage”), no
+  Spy footer. Play log attack lines show listed damage.
+- Room `GVPKLD` nick `L56Gate2` vs Normal Alpha. Shop same 10 shared tiles
+  (no Invisibility). Log **Absorber** / **Spy** clicks open inspect with
+  art + effect, no Spy footer. Hand Strong overlay **2**, Super **7**.
+  Absorber Use **−3**, Spy Use **−2**.
+- Watch point: shop blurb still appends the selected tile’s
+  `CostDisplay` after “Prices are double the play cost” (looks like a
+  stray **−2** when Basic is selected). Pre-existing; not Lot 56.
+- `pnpm verify` **1274** tests.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ATTACK_DAMAGE, attackDamageFor } from './attack-damage';
+import { ATTACK_DAMAGE, attackDamageFor, listedAttackDamage } from './attack-damage';
 import { ATTACK_CARD_IDS, SPECIAL_ATTACK_CARD_IDS } from './card';
 
 describe('ATTACK_DAMAGE (rules spec §2, L2-04 / L20-05)', () => {
@@ -22,5 +22,14 @@ describe('ATTACK_DAMAGE (rules spec §2, L2-04 / L20-05)', () => {
     expect(attackDamageFor('super-attack', true)).toBe(10);
     expect(attackDamageFor('mega-attack', false)).toBe(20);
     expect(attackDamageFor('mega-attack', true)).toBe(20);
+  });
+
+  it('lists catalog × multiplier for attacks and null otherwise (L56-04)', () => {
+    expect(listedAttackDamage('mega-attack', false)).toBe(20);
+    expect(listedAttackDamage('super-attack', false, 2)).toBe(14);
+    expect(listedAttackDamage('super-attack', false, 4)).toBe(28);
+    expect(listedAttackDamage('tax', false)).toBeNull();
+    expect(listedAttackDamage('absorber', false)).toBeNull();
+    expect(listedAttackDamage('super-mirror', false)).toBeNull();
   });
 });

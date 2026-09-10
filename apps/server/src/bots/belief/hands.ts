@@ -12,7 +12,7 @@
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
-  SPECIAL_CARD_IDS,
+  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   isSharedAttackCardId,
   isSpecialCardId,
@@ -599,7 +599,7 @@ function fillSpecials(
   const ids: CardId[] = [...known];
 
   while (ids.length < count) {
-    ids.push(rng.pick(SPECIAL_CARD_IDS));
+    ids.push(rng.pick(CIRCULATING_SPECIAL_CARD_IDS));
   }
 
   return ids;
