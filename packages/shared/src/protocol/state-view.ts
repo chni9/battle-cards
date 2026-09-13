@@ -312,12 +312,30 @@ export interface PlayerEliminatedLogEntry {
 export interface MirrorRedirectedLogEntry {
   kind: 'mirrorRedirected';
   actorPlayerId: string;
+  /** The redirected attack — Super Mirror lines use this, not `'super-mirror'` (L56-03). */
   cardId: CardId;
+  /** Upgrade tier of the redirected attack. */
+  isUpgraded: boolean;
+  /** Listed damage multiplier **after** this redirect (`*= 2` when the Mirror is upgraded). */
+  damageMultiplier: number;
   previousTargetPlayerId: string;
   newTargetPlayerId: string;
   turnSequence: number;
   /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
   botReason?: BotDecisionReason;
+}
+
+/**
+ * Auto-loss of an active persistent (counter 0, Curse floor, death dump) —
+ * PROTOCOL_VERSION 31 / L56-03. Manual `deactivatePersistent` stays `actionPlayed`.
+ */
+export interface PersistentDeactivatedLogEntry {
+  kind: 'persistentDeactivated';
+  /** Seat that held the effect (Curse is victim-owned). */
+  ownerPlayerId: string;
+  cardId: CardId;
+  isUpgraded: boolean;
+  turnSequence: number;
 }
 
 /** Curse passed by a successful attack (lives lost ≥ 1) — designer 2026-08-07 / PROTOCOL_VERSION 26. */
@@ -361,6 +379,7 @@ export type ActionLogEntryView =
   | ActionResolvedLogEntry
   | PlayerEliminatedLogEntry
   | MirrorRedirectedLogEntry
+  | PersistentDeactivatedLogEntry
   | CurseTransferredLogEntry
   | PlayerReanimatedLogEntry
   | RewardsClaimedLogEntry;

@@ -133,8 +133,8 @@ function poolPreferenceRank(card: CardInstance): number {
 }
 
 /**
- * Card Transformer upgraded special-pick. `eligibleCardIds` is the 19-entry
- * `TRANSFORM_RESULT_SPECIAL_IDS` set (`beginSpecialPick`, L50-08), so this resolves
+ * Card Transformer upgraded special-pick. `eligibleCardIds` is the 18-entry
+ * `TRANSFORM_RESULT_SPECIAL_IDS` set (`beginSpecialPick`, L50-08 / L56-02), so this resolves
  * to the first eligible entry of a fixed high-impact-first preference order;
  * `rng` only breaks a tie that cannot occur today (kept for when the eligible
  * set narrows).

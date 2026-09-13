@@ -1,11 +1,11 @@
 /**
  * Buy a random special for 20 points — rules spec §5, L5-09, L21-01 / #V4-29.
- * Draws from all 20 `SPECIAL_CARD_IDS` (pending-handler specials may be granted).
+ * Draws from `PURCHASABLE_SPECIAL_CARD_IDS` (L21-01 / L56-02 freeze).
  */
 
 import {
   actionReject,
-  SPECIAL_CARD_IDS,
+  PURCHASABLE_SPECIAL_CARD_IDS,
   type ActionReject,
   type CardInstance,
   type GameState,
@@ -39,7 +39,7 @@ export function buySpecialCard(
   actor.points -= SPECIAL_CARD_PURCHASE_COST;
   actor.turnLedger.pointsSpent += SPECIAL_CARD_PURCHASE_COST;
 
-  const cardId = rng.pick(SPECIAL_CARD_IDS);
+  const cardId = rng.pick(PURCHASABLE_SPECIAL_CARD_IDS);
   const instance = acquireSpecialCard(
     actor,
     cardId,

@@ -4,7 +4,7 @@
  * Kept beside the catalog so resolve-pending never hardcodes values (L2-04).
  */
 
-import type { AttackCardId } from './card';
+import { isAttackCardId, type AttackCardId } from './card';
 
 export const ATTACK_DAMAGE = {
   'basic-attack': { base: 1, upgraded: 3 },
@@ -17,4 +17,19 @@ export const ATTACK_DAMAGE = {
 export function attackDamageFor(cardId: AttackCardId, isUpgraded: boolean): number {
   const row = ATTACK_DAMAGE[cardId];
   return isUpgraded ? row.upgraded : row.base;
+}
+
+/**
+ * Catalog attack damage × pending multiplier — L56-04.
+ * `null` when the card is not an attack (Tax / Absorber / Super Mirror the card).
+ */
+export function listedAttackDamage(
+  cardId: string,
+  isUpgraded: boolean,
+  multiplier = 1,
+): number | null {
+  if (!isAttackCardId(cardId)) {
+    return null;
+  }
+  return attackDamageFor(cardId, isUpgraded) * multiplier;
 }

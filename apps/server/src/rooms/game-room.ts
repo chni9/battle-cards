@@ -678,7 +678,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
     this.clearAbsentTimer(sessionId);
-    eliminateWithoutReward(state, sessionId);
+    const left = eliminateWithoutReward(state, sessionId);
+    this.appendPersistentDeactivations(left.persistentDeactivations);
     this.recordElimination({
       playerId: sessionId,
       eliminatorPlayerId: null,
@@ -742,6 +743,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${playerId} forfeit — stay connected`);
     this.clearAbsentTimer(playerId);
+    this.appendPersistentDeactivations(result.persistentDeactivations);
     this.recordElimination({
       playerId,
       eliminatorPlayerId: null,
@@ -1352,11 +1354,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const botReason = this.consumePendingBotReason();
       this.actionLog.push({
         kind: 'mirrorRedirected',
-        actorPlayerId: result.mirrorRedirect.actorPlayerId,
-        cardId: result.mirrorRedirect.cardId,
-        previousTargetPlayerId: result.mirrorRedirect.previousTargetPlayerId,
-        newTargetPlayerId: result.mirrorRedirect.newTargetPlayerId,
-        turnSequence: result.mirrorRedirect.turnSequence,
+        ...result.mirrorRedirect,
         ...(botReason !== null ? { botReason } : {}),
       });
     } else {
@@ -1394,11 +1392,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       for (const redirect of result.mirrorRedirects) {
         this.actionLog.push({
           kind: 'mirrorRedirected',
-          actorPlayerId: redirect.actorPlayerId,
-          cardId: redirect.cardId,
-          previousTargetPlayerId: redirect.previousTargetPlayerId,
-          newTargetPlayerId: redirect.newTargetPlayerId,
-          turnSequence: redirect.turnSequence,
+          ...redirect,
         });
       }
     }
@@ -1435,6 +1429,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
           turnSequence: transfer.turnSequence,
         });
       }
+    }
+
+    if (result.persistentDeactivations !== undefined) {
+      this.appendPersistentDeactivations(result.persistentDeactivations);
     }
 
     for (const playerId of result.eliminatedPlayerIds) {
@@ -1492,6 +1490,25 @@ export class GameRoom extends Room<{ client: GameClient }> {
         playerId: entry.playerId,
         kitId: entry.kitId,
         turnSequence,
+      });
+    }
+  }
+
+  private appendPersistentDeactivations(
+    items: readonly {
+      ownerPlayerId: string;
+      cardId: CardId;
+      isUpgraded: boolean;
+      turnSequence: number;
+    }[],
+  ): void {
+    for (const lost of items) {
+      this.actionLog.push({
+        kind: 'persistentDeactivated',
+        ownerPlayerId: lost.ownerPlayerId,
+        cardId: lost.cardId,
+        isUpgraded: lost.isUpgraded,
+        turnSequence: lost.turnSequence,
       });
     }
   }
@@ -2953,9 +2970,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    if (!eliminateWithoutReward(state, playerId)) {
+    const eliminated = eliminateWithoutReward(state, playerId);
+
+    if (!eliminated.eliminated) {
       return;
     }
+
+    this.appendPersistentDeactivations(eliminated.persistentDeactivations);
 
     const after = state.players.find((player) => player.id === playerId);
 

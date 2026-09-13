@@ -27,7 +27,7 @@ describe('eliminateWithoutReward (L7-02 / L7-04)', () => {
     }
 
     const handSize = alice.hand.length + alice.specialCards.length;
-    expect(eliminateWithoutReward(state, 'a')).toBe(true);
+    expect(eliminateWithoutReward(state, 'a').eliminated).toBe(true);
     expect(alice.isEliminated).toBe(true);
     expect(alice.hand).toHaveLength(0);
     expect(alice.specialCards).toHaveLength(0);

@@ -8,10 +8,10 @@
  */
 
 import {
+  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   isSpecialCardId,
   KIT_IDS,
-  SPECIAL_CARD_IDS,
   type ActionLogEntryView,
   type ActionPlayedLogEntry,
   type CardId,
@@ -23,7 +23,7 @@ import type { KitPosterior } from './types';
 
 const PROPHET_HOLD_PROBABILITY: number = (() => {
   const draws = getKit('prophet').randomStartingSpecialCount ?? 0;
-  const n = SPECIAL_CARD_IDS.length;
+  const n = CIRCULATING_SPECIAL_CARD_IDS.length;
   return 1 - (1 - 1 / n) ** draws;
 })();
 

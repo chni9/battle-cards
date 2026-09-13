@@ -33,5 +33,10 @@
  * 29 → 30 (L49-01 / designer 2026-08-23): lobby `chooseKit` + per-recipient
  * `yourKitSelection`. Default remains random. Opponents never receive another
  * seat's lobby kit. Exception to the V6 single-bump lock; see decisions.md.
+ *
+ * 30 → 31 (L56-03 / designer 2026-09-09): `mirrorRedirected` required
+ * `isUpgraded` + post-redirect `damageMultiplier`; Super Mirror redirect lines
+ * use the attack `cardId`; new public kind `persistentDeactivated`. Exception
+ * to the V6 single-bump lock (same class as L49); see decisions.md.
  */
-export const PROTOCOL_VERSION = 30;
+export const PROTOCOL_VERSION = 31;

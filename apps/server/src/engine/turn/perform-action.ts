@@ -7,8 +7,9 @@ import {
   actionReject,
   getKit,
   isAttackCardId,
-  isSharedAttackCardId,
   isPersistentSpecialCardId,
+  isSharedAttackCardId,
+  isTemporarilyUnavailableCardId,
   type ActionReject,
   type ActionResolutionOutcome,
   type CardId,
@@ -34,6 +35,10 @@ import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
+import {
+  ensureAutoDeactivationLog,
+  takeAutoDeactivationLog,
+} from '../specials/auto-deactivation-log';
 import { activateDuplicationAction } from '../kits/activate-duplication';
 import {
   applyDefaultMirrorRedirect,
@@ -153,6 +158,16 @@ export interface TurnResult {
   playerReanimated?: readonly { playerId: string; kitId: KitId }[];
   /** Curse instances passed by successful attacks this resolve (designer 2026-08-07). */
   curseTransfers?: readonly (CurseTransfer & { turnSequence: number })[];
+  /**
+   * Auto-lost persistents this turn (counter 0, Curse floor, death dump) — L56-07.
+   * Manual `deactivatePersistent` is not included.
+   */
+  persistentDeactivations?: readonly {
+    ownerPlayerId: string;
+    cardId: CardId;
+    isUpgraded: boolean;
+    turnSequence: number;
+  }[];
 }
 
 export type TurnRejection = ActionReject;
@@ -214,6 +229,24 @@ export function performTurnAction(
     return actionReject('not-active-player');
   }
 
+  ensureAutoDeactivationLog(state);
+  try {
+    return performPreparedTurnAction(state, actor, actorPlayerId, action, rng, nowMs);
+  } finally {
+    // Reject / sub-choice-pending returns never take the collector. Drop leftovers
+    // so a later leave/forfeit dump cannot attach to this WeakMap (L56-07).
+    takeAutoDeactivationLog(state);
+  }
+}
+
+function performPreparedTurnAction(
+  state: GameState,
+  actor: Player,
+  actorPlayerId: string,
+  action: TurnAction,
+  rng: Rng,
+  nowMs: number,
+): PerformActionResult {
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
@@ -310,6 +343,7 @@ export function performTurnAction(
       actorPlayerId,
       action: 'deactivatePersistent',
       cardId: deactivated.cardId,
+      isUpgraded: deactivated.isUpgraded,
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'activateDuplication') {
@@ -958,6 +992,7 @@ function finishTurnPhases(
   immediateResolved: readonly ActionResolvedEvent[] = [],
   mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[],
 ): TurnResult {
+  ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
@@ -967,6 +1002,7 @@ function finishTurnPhases(
     resolvedEffects,
     actionPlayed.turnSequence,
   );
+  const losses = persistentDeactivationFields(state, actionPlayed.turnSequence);
 
   const reanimated =
     playerReanimated.length > 0 ? { playerReanimated } : {};
@@ -987,6 +1023,7 @@ function finishTurnPhases(
       ...reanimated,
       ...redirects,
       ...transfers,
+      ...losses,
     };
   }
 
@@ -1002,6 +1039,7 @@ function finishTurnPhases(
       ...reanimated,
       ...redirects,
       ...transfers,
+      ...losses,
     };
   }
 
@@ -1023,7 +1061,24 @@ function finishTurnPhases(
     ...reanimated,
     ...redirects,
     ...transfers,
+    ...losses,
   };
+}
+
+function persistentDeactivationFields(
+  state: GameState,
+  turnSequence: number,
+): Pick<TurnResult, 'persistentDeactivations'> {
+  const items = takeAutoDeactivationLog(state).map((entry) => ({
+    ...entry,
+    turnSequence,
+  }));
+
+  if (items.length === 0) {
+    return {};
+  }
+
+  return { persistentDeactivations: items };
 }
 
 function collectCurseTransfers(
@@ -1214,7 +1269,9 @@ function collectSuperMirrorRedirects(
       if (effect.redirectedBy === 'super-mirror' && !beforeIds.has(effect.id)) {
         redirects.push({
           actorPlayerId,
-          cardId: 'super-mirror',
+          cardId: effect.cardId,
+          isUpgraded: effect.isUpgraded,
+          damageMultiplier: effect.damageMultiplier,
           previousTargetPlayerId: actorPlayerId,
           newTargetPlayerId: effect.targetPlayerId,
           turnSequence,
@@ -1264,6 +1321,11 @@ function playCardAction(
   }
 
   const cardId = instance.cardId;
+
+  if (isTemporarilyUnavailableCardId(cardId)) {
+    return actionReject('play-not-legal');
+  }
+
   const handler = findHandler(cardId);
 
   if (handler === undefined) {

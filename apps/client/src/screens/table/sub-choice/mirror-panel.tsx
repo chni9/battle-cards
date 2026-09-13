@@ -77,6 +77,7 @@ export function MirrorPanel({
                 onSelect={() => {
                   setEffectId(effect.id);
                 }}
+                damageMultiplier={effect.damageMultiplier}
                 meta={
                   <span className="mt-0.5 w-full truncate text-center text-[11px] font-medium text-ink-muted">
                     <PlayerName

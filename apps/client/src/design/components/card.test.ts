@@ -17,4 +17,12 @@ describe('Card detail=full (L51-05)', () => {
     expect(source).not.toContain('formatCardEffectText');
     expect(source).not.toContain('Cost:');
   });
+
+  it('overlays listed attack damage without ResourceIcon (L56-04)', () => {
+    const source = readFileSync(join(dir, 'card.tsx'), 'utf8');
+    expect(source).toContain('listedAttackDamage');
+    expect(source).toContain('LifeCountBadge');
+    expect(source).toContain("kind=\"damage\"");
+    expect(source).not.toContain('ResourceIcon');
+  });
 });

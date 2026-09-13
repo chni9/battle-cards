@@ -69,6 +69,7 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
     expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
+    expect(KIT_ABILITY_COPY.prophet).toMatch(/Invisibility excluded/i);
   });
 });
 

@@ -89,8 +89,8 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
-| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. |
+| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation and play; catalog/handler stay). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
 
@@ -633,7 +633,8 @@ Not even partially, even “to lay groundwork”:
 - French UI / i18n framework
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
-  (except designer 2026-09-01 Lot 54)
+  (except designer 2026-09-01 Lot 54 and designer 2026-09-09 Lot 56 Invisibility
+  freeze — card stays in the repo, not in live Classic)
 - A second Colyseus room type
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games
@@ -676,7 +677,9 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 47 | Feedback + inbox | Postgres, HTTP, form, `/inbox` |
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
+| 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
 **48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
+**56** is a designer session follow-up (Classic freeze exception + one protocol bump).

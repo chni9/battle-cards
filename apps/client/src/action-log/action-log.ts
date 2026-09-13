@@ -7,8 +7,10 @@
 import {
   formatCardLabel,
   isAttackCardId,
+  listedAttackDamage,
   type ActionLogEntryKind,
   type ActionLogEntryView,
+  type CardId,
 } from '@card-battle/shared';
 
 export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
@@ -16,6 +18,7 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'actionResolved',
   'playerEliminated',
   'mirrorRedirected',
+  'persistentDeactivated',
   'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
@@ -40,7 +43,20 @@ export interface ActionLogPlayerSegment {
   /** When true, UI appends a literal `'s` after the colored nickname. */
   possessive?: boolean;
 }
-export type ActionLogSegment = ActionLogTextSegment | ActionLogPlayerSegment;
+export interface ActionLogDamageSegment {
+  type: 'damage';
+  amount: number;
+}
+export interface ActionLogCardSegment {
+  type: 'card';
+  cardId: CardId;
+  isUpgraded: boolean;
+}
+export type ActionLogSegment =
+  | ActionLogTextSegment
+  | ActionLogPlayerSegment
+  | ActionLogDamageSegment
+  | ActionLogCardSegment;
 
 function text(value: string): ActionLogTextSegment {
   return { type: 'text', text: value };
@@ -62,11 +78,34 @@ function player(
   return segment;
 }
 
+function damageBadge(amount: number): ActionLogDamageSegment {
+  return { type: 'damage', amount };
+}
+
+function listedDamageSegments(
+  cardId: string,
+  isUpgraded: boolean,
+  multiplier = 1,
+): ActionLogSegment[] {
+  const amount = listedAttackDamage(cardId, isUpgraded, multiplier);
+  return amount === null ? [] : [damageBadge(amount)];
+}
+
+function cardName(cardId: CardId, isUpgraded: boolean): ActionLogCardSegment {
+  return { type: 'card', cardId, isUpgraded };
+}
+
 function joinSegments(segments: readonly ActionLogSegment[]): string {
   return segments
     .map((segment) => {
       if (segment.type === 'text') {
         return segment.text;
+      }
+      if (segment.type === 'damage') {
+        return ` (${String(segment.amount)})`;
+      }
+      if (segment.type === 'card') {
+        return formatCardLabel(segment.cardId, segment.isUpgraded);
       }
       return segment.possessive === true ? `${segment.nickname}'s` : segment.nickname;
     })
@@ -97,9 +136,10 @@ function formatPlayedActionSegments(
     case 'deactivatePersistent':
       return [
         actor,
-        text(
-          ` deactivated ${entry.cardId !== undefined ? formatCardLabel(entry.cardId, entry.isUpgraded ?? false) : 'a persistent'}`,
-        ),
+        text(' deactivated '),
+        ...(entry.cardId !== undefined
+          ? [cardName(entry.cardId, entry.isUpgraded ?? false), text('; it is lost')]
+          : [text('a persistent; it is lost')]),
       ];
     case 'activateDuplication':
       // Playtest: duplication activation reads as a draw in the action log
@@ -115,7 +155,9 @@ function formatPlayedActionSegments(
           segments.push(text(', '));
         }
         segments.push(
-          text(`${formatCardLabel(attack.cardId, attack.isUpgraded)} against `),
+          cardName(attack.cardId, attack.isUpgraded),
+          ...listedDamageSegments(attack.cardId, attack.isUpgraded),
+          text(' against '),
           player(attack.targetPlayerId, nicknameOf),
         );
       });
@@ -126,19 +168,31 @@ function formatPlayedActionSegments(
       if (id === undefined) {
         return [actor, text(' plays a card')];
       }
-      const name = formatCardLabel(id, entry.isUpgraded === true);
+      const upgraded = entry.isUpgraded === true;
       const targetId = entry.targetPlayerId;
       if (targetId !== undefined) {
         const target = player(targetId, nicknameOf);
         if (isAttackCardId(id)) {
-          return [actor, text(' attacks '), target, text(` with ${name}`)];
+          return [
+            actor,
+            text(' attacks '),
+            target,
+            text(' with '),
+            cardName(id, upgraded),
+            ...listedDamageSegments(id, upgraded),
+          ];
         }
-        return [actor, text(` plays ${name} on `), target];
+        return [actor, text(' plays '), cardName(id, upgraded), text(' on '), target];
       }
       if (isAttackCardId(id)) {
-        return [actor, text(` attacks with ${name}`)];
+        return [
+          actor,
+          text(' attacks with '),
+          cardName(id, upgraded),
+          ...listedDamageSegments(id, upgraded),
+        ];
       }
-      return [actor, text(` plays ${name}`)];
+      return [actor, text(' plays '), cardName(id, upgraded)];
     }
     default: {
       const _exhaustive: never = entry.action;
@@ -157,13 +211,14 @@ export function formatActionLogEntrySegments(
     case 'actionResolved': {
       const source = player(entry.sourcePlayerId, nicknameOf);
       const target = player(entry.targetPlayerId, nicknameOf);
-      const name = formatCardLabel(entry.cardId, entry.isUpgraded);
+      const nameCard = cardName(entry.cardId, entry.isUpgraded);
       switch (entry.outcome) {
         case 'immune':
-          return [text(`${name} from `), source, text(' resolves on '), target, text(' — immune')];
+          return [nameCard, text(' from '), source, text(' resolves on '), target, text(' — immune')];
         case 'cancelled':
           return [
-            text(`${name} from `),
+            nameCard,
+            text(' from '),
             source,
             text(' against '),
             target,
@@ -171,7 +226,8 @@ export function formatActionLogEntrySegments(
           ];
         case 'blocked':
           return [
-            text(`${name} from `),
+            nameCard,
+            text(' from '),
             source,
             text(' against '),
             target,
@@ -185,21 +241,24 @@ export function formatActionLogEntrySegments(
           if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
             return [
               player(entry.sourcePlayerId, nicknameOf, true),
-              text(` ${name} hits `),
+              text(' '),
+              nameCard,
+              text(' hits '),
               target,
               text(` (−${String(entry.livesLost)} life${shield})`),
             ];
           }
           if (entry.shieldAbsorbed > 0) {
             return [
-              text(`${name} from `),
+              nameCard,
+              text(' from '),
               source,
               text(' resolves on '),
               target,
               text(` (${String(entry.shieldAbsorbed)} absorbed by shield)`),
             ];
           }
-          return [text(`${name} from `), source, text(' resolves on '), target];
+          return [nameCard, text(' from '), source, text(' resolves on '), target];
         }
         default: {
           const _exhaustive: never = entry.outcome;
@@ -228,16 +287,29 @@ export function formatActionLogEntrySegments(
     case 'mirrorRedirected': {
       return [
         player(entry.actorPlayerId, nicknameOf),
-        text(` redirects ${formatCardLabel(entry.cardId, false)} from `),
+        text(' redirects '),
+        cardName(entry.cardId, entry.isUpgraded),
+        ...listedDamageSegments(entry.cardId, entry.isUpgraded, entry.damageMultiplier),
+        text(' from '),
         player(entry.previousTargetPlayerId, nicknameOf),
         text(' to '),
         player(entry.newTargetPlayerId, nicknameOf),
       ];
     }
+    case 'persistentDeactivated': {
+      return [
+        player(entry.ownerPlayerId, nicknameOf, true),
+        text(' '),
+        cardName(entry.cardId, entry.isUpgraded),
+        text(' is deactivated and lost'),
+      ];
+    }
     case 'curseTransferred': {
       return [
         player(entry.fromPlayerId, nicknameOf),
-        text(` passes ${formatCardLabel(entry.cardId, entry.isUpgraded)} to `),
+        text(' passes '),
+        cardName(entry.cardId, entry.isUpgraded),
+        text(' to '),
         player(entry.toPlayerId, nicknameOf),
       ];
     }
@@ -283,6 +355,8 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
         entry.previousTargetPlayerId === playerId ||
         entry.newTargetPlayerId === playerId
       );
+    case 'persistentDeactivated':
+      return entry.ownerPlayerId === playerId;
     case 'curseTransferred':
       return entry.fromPlayerId === playerId || entry.toPlayerId === playerId;
     case 'playerReanimated':

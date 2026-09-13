@@ -27,7 +27,7 @@ export function deactivateCursesAtLifeFloor(state: GameState, victim: Player): v
     .map((effect) => effect.id);
 
   for (const effectId of curseIds) {
-    deactivatePersistentEffect(state, victim.id, effectId);
+    deactivatePersistentEffect(state, victim.id, effectId, true);
   }
 }
 

@@ -9,7 +9,6 @@ import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
-import { Card } from '../../design/components/card';
 import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
@@ -19,6 +18,7 @@ import {
   persistentToCardInstance,
   shieldActiveInstance,
 } from './active-display';
+import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
 import { opponentResourceDisplay } from './opponent-seat-resources';
 import { TutorialCallout } from './tutorial-callout';
@@ -44,9 +44,19 @@ function ActiveThumbs({
 }): ReactElement | null {
   const actives = [
     ...(player.activeShield !== null
-      ? [shieldActiveInstance(player.activeShield.isUpgraded)]
+      ? [
+          {
+            instance: shieldActiveInstance(player.activeShield.isUpgraded),
+            counter: null,
+            activated: false,
+          },
+        ]
       : []),
-    ...player.activePersistentEffects.map(persistentToCardInstance),
+    ...player.activePersistentEffects.map((effect) => ({
+      instance: persistentToCardInstance(effect),
+      counter: effect.counter,
+      activated: true,
+    })),
   ];
   if (actives.length === 0) {
     return null;
@@ -55,20 +65,20 @@ function ActiveThumbs({
   return (
     <div
       data-zone="opponent-actives"
-      className="flex max-w-full flex-wrap items-center gap-0.5"
+      className="flex max-w-full flex-wrap items-start gap-0.5"
       title="Active cards"
     >
-      {actives.map((instance) => (
-        <Card
-          key={instance.instanceId}
-          instance={instance}
-          detail="thumb"
-          activated={instance.cardId !== 'shield'}
+      {actives.map((active) => (
+        <ActivePersistentThumb
+          key={active.instance.instanceId}
+          instance={active.instance}
+          counter={active.counter}
+          activated={active.activated}
           className="w-6 !p-0 sm:w-7"
           {...(onInspectActive !== undefined
             ? {
                 onSelect: () => {
-                  onInspectActive(instance.instanceId);
+                  onInspectActive(active.instance.instanceId);
                 },
               }
             : {})}

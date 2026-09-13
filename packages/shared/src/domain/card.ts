@@ -42,22 +42,6 @@ export const SPECIAL_CARD_IDS = [
 ] as const;
 
 /**
- * Card Transformer result pool — never `card-transformer` itself
- * (designer 2026-08-24 / L50-08). Shop special purchase still uses
- * `SPECIAL_CARD_IDS`.
- */
-export const TRANSFORM_RESULT_SPECIAL_IDS = SPECIAL_CARD_IDS.filter(
-  (id): id is Exclude<(typeof SPECIAL_CARD_IDS)[number], 'card-transformer'> =>
-    id !== 'card-transformer',
-);
-
-/**
- * Alias of `SPECIAL_CARD_IDS` — L21-01 / #V4-29: the 20-point purchase draws from
- * all 20 specials (pending-handler ids included; play stays rejected until implemented).
- */
-export const PURCHASABLE_SPECIAL_CARD_IDS = SPECIAL_CARD_IDS;
-
-/**
  * Cards that inflict *damage* as rules spec §1 defines it, and therefore the only
  * cards `applyDamage` may ever be called for.
  *
@@ -87,6 +71,46 @@ export function isSharedAttackCardId(cardId: string): cardId is SharedAttackCard
 export type ActionCardId = (typeof ACTION_CARD_IDS)[number];
 
 export type SpecialCardId = (typeof SPECIAL_CARD_IDS)[number];
+
+/**
+ * Classic freeze (designer 2026-09-09 / L56-02): these specials stay in the
+ * catalog and handler map but must not be granted or played. Reactivate by
+ * removing the id from this list.
+ */
+export const TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS = [
+  'invisibility',
+] as const satisfies readonly SpecialCardId[];
+
+export type TemporarilyUnavailableSpecialCardId =
+  (typeof TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS)[number];
+
+const TEMPORARILY_UNAVAILABLE_SET = new Set<string>(TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS);
+
+export function isTemporarilyUnavailableCardId(
+  cardId: string,
+): cardId is TemporarilyUnavailableSpecialCardId {
+  return TEMPORARILY_UNAVAILABLE_SET.has(cardId);
+}
+
+/** Specials that may enter a live game (shop, Prophet, Transformer). */
+export const CIRCULATING_SPECIAL_CARD_IDS = SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<SpecialCardId, TemporarilyUnavailableSpecialCardId> =>
+    !TEMPORARILY_UNAVAILABLE_SET.has(id),
+);
+
+/**
+ * 20-point purchase pool — L21-01 / #V4-29 over circulating ids (L56-02 freeze).
+ */
+export const PURCHASABLE_SPECIAL_CARD_IDS = CIRCULATING_SPECIAL_CARD_IDS;
+
+/**
+ * Card Transformer result pool — never `card-transformer` itself
+ * (designer 2026-08-24 / L50-08) and never a frozen id (L56-02).
+ */
+export const TRANSFORM_RESULT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'card-transformer'> =>
+    id !== 'card-transformer',
+);
 
 export type CardId = AttackCardId | ActionCardId | SpecialCardId;
 

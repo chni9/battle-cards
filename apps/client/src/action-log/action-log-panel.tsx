@@ -7,10 +7,13 @@
 import type {
   ActionLogEntryKind,
   ActionLogEntryView,
+  CardId,
   PlayingStateView,
 } from '@card-battle/shared';
+import { formatCardLabel } from '@card-battle/shared';
 import { Fragment, useEffect, useRef, type ReactElement } from 'react';
 
+import { LifeCountBadge } from '../design/components/life-count-badge';
 import { PlayerName } from '../design/components/player-name';
 import {
   formatActionLogEntrySegments,
@@ -63,6 +66,17 @@ const KIND_META: Record<
       </svg>
     ),
   },
+  persistentDeactivated: {
+    label: 'Lost',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M3 4h10v1.5H9.5V14h-3V5.5H3V4Zm2-2h6l.5 1.5h-7L5 2Z"
+        />
+      </svg>
+    ),
+  },
   curseTransferred: {
     label: 'Curse',
     icon: (
@@ -102,6 +116,7 @@ export interface ActionLogPanelProps {
   view: PlayingStateView;
   /** Dialog already titles the panel — skip the inner heading and do not stretch. */
   embedded?: boolean;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }
 
 function nicknameOf(view: PlayingStateView, playerId: string): string {
@@ -111,6 +126,7 @@ function nicknameOf(view: PlayingStateView, playerId: string): string {
 export function ActionLogPanel({
   view,
   embedded = false,
+  onInspectCard,
 }: ActionLogPanelProps): ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
@@ -180,6 +196,7 @@ export function ActionLogPanel({
                     entry={entry}
                     view={view}
                     nicknameOf={resolveNick}
+                    {...(onInspectCard !== undefined ? { onInspectCard } : {})}
                   />
                 ))}
               </ul>
@@ -195,10 +212,12 @@ function LogLine({
   entry,
   view,
   nicknameOf: resolve,
+  onInspectCard,
 }: {
   entry: ActionLogEntryView;
   view: PlayingStateView;
   nicknameOf: (playerId: string) => string;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }): ReactElement {
   const meta = KIND_META[entry.kind];
   const segments = formatActionLogEntrySegments(entry, resolve);
@@ -214,7 +233,11 @@ function LogLine({
           {meta.icon}
         </span>
         <p className="min-w-0 flex-1 whitespace-normal break-words text-xs leading-5 text-ink">
-          <LogSegments segments={segments} view={view} />
+          <LogSegments
+            segments={segments}
+            view={view}
+            {...(onInspectCard !== undefined ? { onInspectCard } : {})}
+          />
         </p>
       </div>
     </li>
@@ -224,15 +247,46 @@ function LogLine({
 function LogSegments({
   segments,
   view,
+  onInspectCard,
 }: {
   segments: readonly ActionLogSegment[];
   view: PlayingStateView;
+  onInspectCard?: (cardId: CardId, isUpgraded: boolean) => void;
 }): ReactElement {
   return (
     <>
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
           return <Fragment key={`t-${String(index)}`}>{segment.text}</Fragment>;
+        }
+        if (segment.type === 'damage') {
+          return (
+            <LifeCountBadge
+              key={`d-${String(index)}`}
+              amount={segment.amount}
+              kind="damage"
+              iconSize={12}
+              className="ml-0.5 align-text-bottom text-[11px] text-ink"
+            />
+          );
+        }
+        if (segment.type === 'card') {
+          const label = formatCardLabel(segment.cardId, segment.isUpgraded);
+          if (onInspectCard === undefined) {
+            return <Fragment key={`c-${String(index)}`}>{label}</Fragment>;
+          }
+          return (
+            <button
+              key={`c-${String(index)}`}
+              type="button"
+              className="font-semibold text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink"
+              onClick={() => {
+                onInspectCard(segment.cardId, segment.isUpgraded);
+              }}
+            >
+              {label}
+            </button>
+          );
         }
         return (
           <PlayerName
@@ -259,6 +313,8 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
       return `${entry.kind}-${entry.playerId}-${entry.reason}-${String(index)}`;
     case 'mirrorRedirected':
       return `${entry.kind}-${entry.turnSequence}-${entry.newTargetPlayerId}-${String(index)}`;
+    case 'persistentDeactivated':
+      return `${entry.kind}-${entry.turnSequence}-${entry.ownerPlayerId}-${entry.cardId}-${String(index)}`;
     case 'curseTransferred':
       return `${entry.kind}-${entry.effectId}-${entry.fromPlayerId}-${entry.toPlayerId}-${String(index)}`;
     case 'playerReanimated':

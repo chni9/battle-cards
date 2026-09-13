@@ -244,21 +244,10 @@ describe('Invisibility (L25-02)', () => {
 
     state.currentTurnPlayerId = a.id;
     a.points = 20;
-    a.specialCards = [{ instanceId: 'inv-card', cardId: 'invisibility', isUpgraded: false }];
-    expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'inv-card' }).ok,
-    ).toBe(true);
-
-    const effectId = a.activePersistentEffects.find(
-      (effect) => effect.cardId === 'invisibility',
-    )?.id;
-
-    if (effectId === undefined) {
-      throw new Error('missing invisibility effect');
-    }
-
-    expect(state.currentTurnPlayerId).toBe('b');
-    state.currentTurnPlayerId = a.id;
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+    ];
+    const effectId = 'inv-1';
     const beforePool = state.pool.length;
     expect(
       performTurnAction(state, a.id, { type: 'deactivatePersistent', effectId }).ok,
@@ -268,6 +257,40 @@ describe('Invisibility (L25-02)', () => {
     );
     expect(state.pool.length).toBeGreaterThan(beforePool);
     expect(state.currentTurnPlayerId).toBe('b');
+  });
+
+  it('rejects playCard on a seeded copy (L56-02 freeze)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l56-02-play',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+
+    if (a === undefined) {
+      throw new Error('missing a');
+    }
+
+    state.currentTurnPlayerId = a.id;
+    a.points = 20;
+    a.specialCards = [{ instanceId: 'inv-card', cardId: 'invisibility', isUpgraded: false }];
+    const result = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'inv-card',
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.code).toBe('play-not-legal');
+    expect(a.specialCards).toHaveLength(1);
+    expect(
+      listLegalActions(state, a.id).some(
+        (action) => action.type === 'playCard' && action.instanceId === 'inv-card',
+      ),
+    ).toBe(false);
   });
 
   it('bot scoreAction handles deactivatePersistent without sellUpgradePoint fallback', () => {

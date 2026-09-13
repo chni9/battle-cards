@@ -22,6 +22,8 @@ export interface CardChoiceTileProps {
   caption: string;
   meta?: ReactNode;
   ariaLabel: string;
+  /** Pending listed-damage multiplier (Mirror picker). Default 1. */
+  damageMultiplier?: number;
 }
 
 export function CardChoiceTile({
@@ -33,6 +35,7 @@ export function CardChoiceTile({
   caption,
   meta,
   ariaLabel,
+  damageMultiplier = 1,
 }: CardChoiceTileProps): ReactElement {
   return (
     <button
@@ -54,6 +57,7 @@ export function CardChoiceTile({
         <Card
           instance={instance}
           detail="thumb"
+          damageMultiplier={damageMultiplier}
           className="pointer-events-none w-full max-w-[5.5rem]"
         />
       )}

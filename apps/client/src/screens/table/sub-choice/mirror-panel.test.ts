@@ -22,4 +22,9 @@ describe('MirrorPanel (L44-03)', () => {
     expect(source).toContain('→ you');
     expect(source).not.toContain('<select');
   });
+
+  it('passes pending damageMultiplier onto the attack tile (L56-04)', () => {
+    const source = readFileSync(join(dir, 'mirror-panel.tsx'), 'utf8');
+    expect(source).toContain('damageMultiplier={effect.damageMultiplier}');
+  });
 });

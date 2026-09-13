@@ -3165,5 +3165,32 @@ remain three opponent-offset slots — an 8-player table does not add fitted dim
 Rules spec §1 Number of Players updated in the same change. How to play primer Goal
 copy matches (2 to 8).
 
+## 2026-09-09 · [P] Lot 56 Invisibility freeze + table readability (L56-01)
+
+Designer instruction (this session): **Invisibility is out of live Classic** until
+explicitly reactivated. The card stays in the catalog, art, handler, and mechanic
+tests. It must not be granted (shop lottery, Prophet/Reanimation random deal, Card
+Transformer random or pick list) and must not be playable even if a copy is seeded.
+Reactivation: remove `'invisibility'` from `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS`
+and restore Prophet/shop/Transformer copy.
+
+Readability (same lot, no rule values): listed attack damage on Incoming/Waiting,
+play lines, Mirror picker, attack faces, and Mirror redirect history; click-to-explain
+on log card names and pending chips (reuse inspect Dialog); remaining **card lives**
+(`PersistentEffectView.counter`) under active thumbs when the counter is not null;
+public log when a persistent is deactivated and lost (including Curse). Manual
+Invisibility deactivate keeps the `actionPlayed` line and says the card is lost — do
+not also emit `persistentDeactivated`.
+
+`PROTOCOL_VERSION` **30 → 31** (L56-03) is an exception to the V6 single-bump lock
+(same class as 29 → 30 / L49): `mirrorRedirected` gains `isUpgraded` and post-redirect
+`damageMultiplier`; Super Mirror redirect lines use the attack `cardId`; new kind
+`persistentDeactivated`. Client presentation of pending damage and card lives does not
+need the bump (fields already on the view).
+
+Do not edit `heuristic-v4` scoring. `applyDamage` vs `applyLifeLoss` is unchanged:
+Tax must not decrement card-lives counters or emit a lost line.
+
+---
 
 

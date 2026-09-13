@@ -5,6 +5,7 @@
 import {
   actionReject,
   type ActionReject,
+  type CardId,
   type CardInstance,
   type GameState,
   type KitId,
@@ -21,6 +22,10 @@ import {
 import { transferCardInstance } from '../kits/acquire-card';
 import { pickReanimationKit, reanimatePlayer } from '../reanimate-player';
 import { createRng, type Rng } from '../rng';
+import {
+  recordAutoDeactivation,
+  type AutoDeactivation,
+} from '../specials/auto-deactivation-log';
 import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { onPlayerEliminatedForAbsorbWindow } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
@@ -35,6 +40,19 @@ export const ELIMINATION_REWARD_POINTS = 8;
 export interface EliminationEvent {
   playerId: string;
   eliminatorPlayerId: string | null;
+}
+
+/** Auto-lost persistents from a leave / forfeit / inactivity dump (L56-07). */
+export interface PersistentDeactivation {
+  ownerPlayerId: string;
+  cardId: CardId;
+  isUpgraded: boolean;
+  turnSequence: number;
+}
+
+export interface EliminateWithoutRewardResult {
+  eliminated: boolean;
+  persistentDeactivations: readonly PersistentDeactivation[];
 }
 
 /**
@@ -139,12 +157,35 @@ function candidatesForVictim(state: GameState, victimPlayerId: string): string[]
   return ids;
 }
 
-function cleanupEliminatedPlayer(state: GameState, player: Player): void {
+/**
+ * Dump remaining persistents to the pool. Combat callers record onto the turn
+ * WeakMap; leave/forfeit returns the list so the room can log immediately
+ * without sharing that collector (L56-07).
+ */
+function cleanupEliminatedPlayer(state: GameState, player: Player): AutoDeactivation[] {
   player.pendingEffects = [];
-  if (player.activePersistentEffects.length > 0) {
-    poolDeactivatedPersistentEffects(state, player.activePersistentEffects);
-    player.activePersistentEffects = [];
+  if (player.activePersistentEffects.length === 0) {
+    return [];
   }
+
+  const dumped: AutoDeactivation[] = player.activePersistentEffects.map((effect) => ({
+    ownerPlayerId: player.id,
+    cardId: effect.cardId,
+    isUpgraded: effect.isUpgraded,
+  }));
+  poolDeactivatedPersistentEffects(state, player.activePersistentEffects);
+  player.activePersistentEffects = [];
+  return dumped;
+}
+
+function stampPersistentDeactivations(
+  state: GameState,
+  dumped: readonly AutoDeactivation[],
+): PersistentDeactivation[] {
+  return dumped.map((entry) => ({
+    ...entry,
+    turnSequence: state.turnSequence,
+  }));
 }
 
 function dumpCardsToPool(state: GameState, player: Player): void {
@@ -177,17 +218,18 @@ function captureEliminationSnapshot(player: Player, turnSequence: number): void 
  * No eliminator → cards to the pool immediately — technical spec §5.7, L7-02…L7-04.
  * Armed Reanimation consumes and revives after the dump (#V4-12a / L26-01).
  *
- * @returns true when the player was newly eliminated (even if immediately revived).
+ * @returns whether the player was newly eliminated (even if immediately revived)
+ * and any persistents dumped as lost (not consumed Reanimation).
  */
 export function eliminateWithoutReward(
   state: GameState,
   playerId: string,
   rng: Rng = createRng(`${state.seed}:lifecycle-elim:${state.turnSequence}:${playerId}`),
-): boolean {
+): EliminateWithoutRewardResult {
   const player = findPlayer(state, playerId);
 
   if (player === undefined || player.isEliminated) {
-    return false;
+    return { eliminated: false, persistentDeactivations: [] };
   }
 
     consumeArmedReanimation(state, player);
@@ -197,14 +239,17 @@ export function eliminateWithoutReward(
     // Not a typed loss: the player may still have lives; this is administrative state only.
     player.lives = 0;
     onPlayerEliminatedForAbsorbWindow(state, player);
-    cleanupEliminatedPlayer(state, player);
+    const persistentDeactivations = stampPersistentDeactivations(
+      state,
+      cleanupEliminatedPlayer(state, player),
+    );
   dumpCardsToPool(state, player);
   processPendingReanimations(
     state,
     rng,
     Date.now(),
   );
-  return true;
+  return { eliminated: true, persistentDeactivations };
 }
 
 /**
@@ -286,7 +331,10 @@ export function processEliminations(
     // Lives were already 0 from typed primitives or lethal effects; not a new loss event.
     player.lives = 0;
     onPlayerEliminatedForAbsorbWindow(state, player);
-    cleanupEliminatedPlayer(state, player);
+    const dumped = cleanupEliminatedPlayer(state, player);
+    for (const item of dumped) {
+      recordAutoDeactivation(state, item.ownerPlayerId, item);
+    }
 
     const candidates = candidatesForVictim(state, player.id);
     const eliminatorPlayerId = selectEliminator(candidates, state, rng);

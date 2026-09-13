@@ -41,7 +41,7 @@ export function deactivatePersistentAction(
   state: GameState,
   actorPlayerId: string,
   effectId: string,
-): { ok: true; cardId: CardId } | ActionReject {
+): { ok: true; cardId: CardId; isUpgraded: boolean } | ActionReject {
   const actor = state.players.find((player) => player.id === actorPlayerId);
 
   if (actor === undefined) {
@@ -60,9 +60,9 @@ export function deactivatePersistentAction(
 
   const cardId = effect.cardId;
 
-  if (!deactivatePersistentEffect(state, actorPlayerId, effectId)) {
+  if (deactivatePersistentEffect(state, actorPlayerId, effectId) === null) {
     return actionReject('persistent-not-active');
   }
 
-  return { ok: true, cardId };
+  return { ok: true, cardId, isUpgraded: effect.isUpgraded };
 }
