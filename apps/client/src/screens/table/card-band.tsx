@@ -1,6 +1,8 @@
 /**
  * Shared-size card band — one row each for hand and specials, horizontal scroll.
  * Width is measured once on the parent so Specials cannot outgrow Hand (L53-07).
+ * Tutorial callouts must not switch this row to overflow:visible (decisions.md
+ * 2026-09-13).
  */
 
 import { type CardInstance } from '@card-battle/shared';
@@ -49,6 +51,33 @@ function CardSection({
   highlightedInstanceIds?: readonly string[];
   spotlightSection?: boolean;
 }): ReactElement {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const highlightedId = cards.find((card) =>
+    highlightedInstanceIds.includes(card.instanceId),
+  )?.instanceId;
+
+  useLayoutEffect(() => {
+    if (highlightedId === undefined) {
+      return;
+    }
+    const scroller = scrollRef.current;
+    if (scroller === null) {
+      return;
+    }
+    const node = Array.from(
+      scroller.querySelectorAll<HTMLElement>('[data-card-instance]'),
+    ).find((el) => el.dataset['cardInstance'] === highlightedId);
+    if (node === undefined) {
+      return;
+    }
+    const scrollerRect = scroller.getBoundingClientRect();
+    const nodeRect = node.getBoundingClientRect();
+    scroller.scrollLeft +=
+      nodeRect.left +
+      nodeRect.width / 2 -
+      (scrollerRect.left + scrollerRect.width / 2);
+  }, [highlightedId]);
+
   if (cards.length === 0) {
     return wrapSection(
       spotlightSection,
@@ -68,8 +97,6 @@ function CardSection({
     );
   }
 
-  const spotlighted = highlightedInstanceIds.length > 0 || spotlightSection;
-
   return wrapSection(
     spotlightSection,
     zone,
@@ -83,11 +110,9 @@ function CardSection({
         {label}
       </p>
       <div
+        ref={scrollRef}
         data-zone={zone}
-        className={[
-          'min-h-0 min-w-0 w-full',
-          spotlighted ? 'overflow-visible' : 'overflow-x-auto overflow-y-hidden',
-        ].join(' ')}
+        className="min-h-0 min-w-0 w-full overflow-x-auto overflow-y-hidden"
       >
         <div
           data-card-row
@@ -100,6 +125,7 @@ function CardSection({
           return (
             <div
               key={card.instanceId}
+              data-card-instance={card.instanceId}
               style={{ width: cardWidth }}
               className="h-auto shrink-0 overflow-visible rounded-[length:var(--radius-card)]"
             >
@@ -149,7 +175,7 @@ function wrapSection(
       layout="stretch"
       arrow="top"
       highlightId={zone}
-      className="min-h-0 w-full shrink-0 overflow-visible pt-10"
+      className="min-h-0 w-full min-w-0 shrink-0"
     >
       {body}
     </TutorialCallout>
@@ -166,7 +192,6 @@ export function CardBand({
   const bandRef = useRef<HTMLDivElement>(null);
   const [cardWidth, setCardWidth] = useState(CARD_BAND_ABS_MIN_W);
   const [sideBySide, setSideBySide] = useState(false);
-  const sectionLit = highlightedSection !== undefined;
 
   useLayoutEffect(() => {
     const el = bandRef.current;
@@ -208,12 +233,8 @@ export function CardBand({
       data-card-width={String(Math.round(cardWidth))}
       data-side-by-side={sideBySide ? 'true' : 'false'}
       className={[
-        'flex h-full min-h-0 w-full gap-1',
+        'flex h-full min-h-0 w-full gap-1 overflow-hidden',
         sideBySide ? 'flex-row items-stretch' : 'flex-col justify-end',
-        (highlightedInstanceIds !== undefined && highlightedInstanceIds.length > 0) ||
-        sectionLit
-          ? 'overflow-visible'
-          : 'overflow-hidden',
       ].join(' ')}
     >
       <CardSection

@@ -200,9 +200,9 @@
     overflow: hidden;
   }
 
-  [data-zone="card-band"]:has([data-tutorial-highlight]) {
-    overflow: visible;
-  }
+  /* Do not set overflow:visible when a tutorial callout is present.
+   * overflow-x:auto + overflow-y:visible computes to both-axis auto, which
+   * drops the Hand/Specials scrollport on small screens. */
 
   [data-card-row] {
     flex-wrap: nowrap;

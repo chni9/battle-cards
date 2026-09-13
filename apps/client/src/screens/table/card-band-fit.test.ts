@@ -79,6 +79,26 @@ describe('CardBand source (L53-07)', () => {
     expect(src).toContain('cardBandSideBySide');
   });
 
+  it('keeps overflow-x-auto while a tutorial card callout is active', () => {
+    const src = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'card-band.tsx'),
+      'utf8',
+    );
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../../index.css'),
+      'utf8',
+    );
+    expect(src).toContain('overflow-x-auto overflow-y-hidden');
+    expect(src).toContain('data-card-instance');
+    expect(src).not.toMatch(/spotlighted \? 'overflow-visible'/);
+    expect(src).not.toMatch(
+      /highlightedInstanceIds[\s\S]{0,180}\? 'overflow-visible'/,
+    );
+    expect(css).not.toMatch(
+      /\[data-zone="card-band"\]:has\(\[data-tutorial-highlight\]\)/,
+    );
+  });
+
   it('centers a short packed row (mx-auto + w-max, not justify-start)', () => {
     // `justify-center` on an overflowing flex row clips both sides. Pack to
     // intrinsic width, then `mx-auto` centers; overflow auto-margins collapse

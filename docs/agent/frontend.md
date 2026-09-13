@@ -102,7 +102,10 @@ rules above are unchanged — this section only covers how the client looks.
   on new copy; compact **?** reopens it (not a Coach pill). Skip tutorial is **flag only**.
   Resource words in coach copy render as table icons.
   Pulsing orange callout + pointing arrow **outside** the highlight square on scripted
-  controls (Draw, cards, Shop). Real pending chips (Incoming **and** Waiting on others)
+  controls (Draw, cards, Shop). Hand/Specials keep `overflow-x-auto` while a card is
+  ringed — never `overflow: visible` on the row or `card-band` (that drops the
+  scrollport; CSS `overflow-x: auto` + `overflow-y: visible` computes to both-axis
+  auto). The row scrolls the highlighted instance into view. Real pending chips (Incoming **and** Waiting on others)
   get the same callout chrome **without** an arrow: red when `threatToneFor` is attack,
   orange otherwise, until the chip leaves the queue. Presentation persistents are not
   ringed. Shop is **not**
@@ -216,7 +219,8 @@ rules above are unchanged — this section only covers how the client looks.
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
   shown) with one line per action. Hand/specials are **one row each** and **scroll
   horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
-  height so the name line stays on-screen.
+  height so the name line stays on-screen. A tutorial card callout does not disable
+  that scroll — the row stays `overflow-x-auto` and pans the ringed instance into view.
 - **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
   `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
   Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips

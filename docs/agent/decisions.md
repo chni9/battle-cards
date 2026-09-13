@@ -3165,5 +3165,18 @@ remain three opponent-offset slots — an 8-player table does not add fitted dim
 Rules spec §1 Number of Players updated in the same change. How to play primer Goal
 copy matches (2 to 8).
 
+## 2026-09-13 · [P] Tutorial card callout keeps horizontal scroll
+
+Designer report: on a small screen the tutorial highlight made the hand unscrollable.
+
+`overflow-x: auto` plus `overflow-y: visible` computes to both-axis `auto`, so the
+card-band used `overflow: visible` to let the outside arrow paint — and that dropped
+the scrollport. Landscape CSS `:has([data-tutorial-highlight])` did the same.
+
+Keep `overflow-x-auto overflow-y-hidden` on the row. Do not pad the dock to make
+room for the outside arrow — on 844×390 that pad steals the face row. Scroll the
+ringed instance into view. Board-tour section rings wrap the section; they also
+must not set `overflow: visible` on `card-band`.
+
 
 
