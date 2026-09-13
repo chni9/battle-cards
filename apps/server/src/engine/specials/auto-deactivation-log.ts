@@ -3,6 +3,8 @@
  *
  * Keyed by `GameState` so concurrent rooms and search clones never mix.
  * Manual `deactivatePersistent` does not record here — that stays `actionPlayed`.
+ * Leave / forfeit / inactivity dumps return from `eliminateWithoutReward` instead
+ * of this map, so they cannot attach to a leftover turn collector.
  */
 
 import type { CardId, GameState, PersistentEffect } from '@card-battle/shared';

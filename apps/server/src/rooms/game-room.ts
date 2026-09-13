@@ -678,7 +678,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
     this.clearAbsentTimer(sessionId);
-    eliminateWithoutReward(state, sessionId);
+    const left = eliminateWithoutReward(state, sessionId);
+    this.appendPersistentDeactivations(left.persistentDeactivations);
     this.recordElimination({
       playerId: sessionId,
       eliminatorPlayerId: null,
@@ -742,6 +743,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     console.log(`[${this.roomId}] ${playerId} forfeit — stay connected`);
     this.clearAbsentTimer(playerId);
+    this.appendPersistentDeactivations(result.persistentDeactivations);
     this.recordElimination({
       playerId,
       eliminatorPlayerId: null,
@@ -1430,15 +1432,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     if (result.persistentDeactivations !== undefined) {
-      for (const lost of result.persistentDeactivations) {
-        this.actionLog.push({
-          kind: 'persistentDeactivated',
-          ownerPlayerId: lost.ownerPlayerId,
-          cardId: lost.cardId,
-          isUpgraded: lost.isUpgraded,
-          turnSequence: lost.turnSequence,
-        });
-      }
+      this.appendPersistentDeactivations(result.persistentDeactivations);
     }
 
     for (const playerId of result.eliminatedPlayerIds) {
@@ -1496,6 +1490,25 @@ export class GameRoom extends Room<{ client: GameClient }> {
         playerId: entry.playerId,
         kitId: entry.kitId,
         turnSequence,
+      });
+    }
+  }
+
+  private appendPersistentDeactivations(
+    items: readonly {
+      ownerPlayerId: string;
+      cardId: CardId;
+      isUpgraded: boolean;
+      turnSequence: number;
+    }[],
+  ): void {
+    for (const lost of items) {
+      this.actionLog.push({
+        kind: 'persistentDeactivated',
+        ownerPlayerId: lost.ownerPlayerId,
+        cardId: lost.cardId,
+        isUpgraded: lost.isUpgraded,
+        turnSequence: lost.turnSequence,
       });
     }
   }
@@ -2957,9 +2970,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    if (!eliminateWithoutReward(state, playerId)) {
+    const eliminated = eliminateWithoutReward(state, playerId);
+
+    if (!eliminated.eliminated) {
       return;
     }
+
+    this.appendPersistentDeactivations(eliminated.persistentDeactivations);
 
     const after = state.players.find((player) => player.id === playerId);
 

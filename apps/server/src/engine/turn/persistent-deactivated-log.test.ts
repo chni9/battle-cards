@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { makeCounterEffect } from '../../testing/factories';
 import { createInitialState } from '../create-initial-state';
+import { eliminateWithoutReward } from './elimination-rewards';
 import { performTurnAction } from './perform-action';
 import { queueEffect } from './queue-effect';
 
@@ -182,10 +183,86 @@ describe('persistentDeactivated log (L56-07)', () => {
     expect(result.persistentDeactivations).toBeUndefined();
   });
 
+  it('logs remaining persistents on leave/forfeit dump', () => {
+    const { state, defender } = twoSeatState('l56-07-forfeit');
+    defender.activePersistentEffects = [
+      makeCounterEffect({ id: 'pg-1', cardId: 'points-generator', counter: 2 }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+    ];
+
+    const dumped = eliminateWithoutReward(state, defender.id);
+
+    expect(dumped.eliminated).toBe(true);
+    expect(dumped.persistentDeactivations).toEqual([
+      {
+        ownerPlayerId: defender.id,
+        cardId: 'points-generator',
+        isUpgraded: false,
+        turnSequence: state.turnSequence,
+      },
+      {
+        ownerPlayerId: defender.id,
+        cardId: 'invisibility',
+        isUpgraded: false,
+        turnSequence: state.turnSequence,
+      },
+    ]);
+    expect(defender.activePersistentEffects).toHaveLength(0);
+  });
+
+  it('does not treat consumed Reanimation as a lost persistent', () => {
+    const { state, defender } = twoSeatState('l56-07-reanim-spend');
+    defender.activePersistentEffects = [
+      makeCounterEffect({ id: 're-1', cardId: 'reanimation', counter: null }),
+      makeCounterEffect({ id: 'pg-1', cardId: 'points-generator', counter: 3 }),
+    ];
+
+    const dumped = eliminateWithoutReward(state, defender.id);
+
+    expect(dumped.eliminated).toBe(true);
+    expect(dumped.persistentDeactivations).toEqual([
+      {
+        ownerPlayerId: defender.id,
+        cardId: 'points-generator',
+        isUpgraded: false,
+        turnSequence: state.turnSequence,
+      },
+    ]);
+  });
+
+  it('does not attach a forfeit dump to a later turn after a rejected action', () => {
+    const { state, attacker, defender } = twoSeatState('l56-07-reject-leak');
+    attacker.points = 0;
+    state.currentTurnPlayerId = attacker.id;
+    const rejected = performTurnAction(state, attacker.id, {
+      type: 'buyCard',
+      cardId: 'super-attack',
+    });
+    expect(rejected.ok).toBe(false);
+
+    defender.activePersistentEffects = [
+      makeCounterEffect({ id: 'pg-1', cardId: 'points-generator', counter: 3 }),
+    ];
+    const dumped = eliminateWithoutReward(state, defender.id);
+    expect(dumped.persistentDeactivations).toHaveLength(1);
+
+    const next = performTurnAction(state, attacker.id, { type: 'draw' });
+    expect(next.ok).toBe(true);
+    if (!next.ok) {
+      return;
+    }
+
+    expect(next.persistentDeactivations).toBeUndefined();
+  });
+
   it('wires the kind onto the room and simulator logs', () => {
     const room = readFileSync(join(dir, '../../rooms/game-room.ts'), 'utf8');
     const sim = readFileSync(join(dir, '../../simulation/run-game.ts'), 'utf8');
+    const forfeit = readFileSync(join(dir, '../../rooms/playing-forfeit.ts'), 'utf8');
     expect(room).toContain("kind: 'persistentDeactivated'");
+    expect(room).toContain('appendPersistentDeactivations');
+    expect(room).toContain('left.persistentDeactivations');
+    expect(forfeit).toContain('persistentDeactivations');
     expect(sim).toContain("kind: 'persistentDeactivated'");
   });
 });

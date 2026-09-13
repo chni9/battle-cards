@@ -9,22 +9,32 @@ import type { GameState } from '@card-battle/shared';
 import {
   eliminateWithoutReward,
   findSoleSurvivorId,
+  type PersistentDeactivation,
 } from '../engine/turn/elimination-rewards';
 
 export interface PlayingForfeitResult {
   eliminated: boolean;
   soleSurvivorId: string | null;
+  persistentDeactivations: readonly PersistentDeactivation[];
 }
 
 export function applyPlayingForfeit(
   state: GameState,
   playerId: string,
 ): PlayingForfeitResult {
-  const eliminated = eliminateWithoutReward(state, playerId);
+  const result = eliminateWithoutReward(state, playerId);
 
-  if (!eliminated) {
-    return { eliminated: false, soleSurvivorId: null };
+  if (!result.eliminated) {
+    return {
+      eliminated: false,
+      soleSurvivorId: null,
+      persistentDeactivations: [],
+    };
   }
 
-  return { eliminated: true, soleSurvivorId: findSoleSurvivorId(state) };
+  return {
+    eliminated: true,
+    soleSurvivorId: findSoleSurvivorId(state),
+    persistentDeactivations: result.persistentDeactivations,
+  };
 }

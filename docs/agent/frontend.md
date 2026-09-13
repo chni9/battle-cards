@@ -272,7 +272,8 @@ rules above are unchanged — this section only covers how the client looks.
   and combat Shield stay badge-free (`counter === null`; Shield remaining lives
   in the resource column).   Inspect replaces `Counter: N` with the same badge
   plus a one-line “Card lives” label. No protocol bump.
-- **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`.
+- **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`
+  (counter 0, Curse floor, death dump, leave / forfeit / inactivity).
   Manual Invisibility deactivate copy is “deactivated {card}; it is lost”
   (`actionPlayed` only).
 - **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.

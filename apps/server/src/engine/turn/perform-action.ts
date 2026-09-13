@@ -230,7 +230,23 @@ export function performTurnAction(
   }
 
   ensureAutoDeactivationLog(state);
+  try {
+    return performPreparedTurnAction(state, actor, actorPlayerId, action, rng, nowMs);
+  } finally {
+    // Reject / sub-choice-pending returns never take the collector. Drop leftovers
+    // so a later leave/forfeit dump cannot attach to this WeakMap (L56-07).
+    takeAutoDeactivationLog(state);
+  }
+}
 
+function performPreparedTurnAction(
+  state: GameState,
+  actor: Player,
+  actorPlayerId: string,
+  action: TurnAction,
+  rng: Rng,
+  nowMs: number,
+): PerformActionResult {
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {

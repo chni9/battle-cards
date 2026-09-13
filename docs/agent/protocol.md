@@ -124,7 +124,8 @@ log entries and public `activePersistentEffects` on every seat. L17-05 adds opti
 under PROTOCOL 21, not a new event; explanatory only. PROTOCOL_VERSION 31 requires
 `isUpgraded` and post-redirect `damageMultiplier` on `mirrorRedirected`; Super Mirror redirect
 lines use the **attack** `cardId` (playing Super Mirror remains a separate `actionPlayed`).
-L56-07 emits `persistentDeactivated` from the engine (counter 0, Curse floor, death dump);
+L56-07 emits `persistentDeactivated` from the engine (counter 0, Curse floor, death dump,
+and leave / forfeit / inactivity dumps);
 manual `deactivatePersistent` stays `actionPlayed`.
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade

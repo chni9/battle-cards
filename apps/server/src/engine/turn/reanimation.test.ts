@@ -167,9 +167,9 @@ describe('Reanimation base (L26-01 / §10.3)', () => {
     ];
     a.hand = [{ instanceId: 'keep-me', cardId: 'tax', isUpgraded: false }];
 
-    expect(eliminateWithoutReward(state, a.id, createRng('l26-01-lifecycle-rng'))).toBe(
-      true,
-    );
+    expect(
+      eliminateWithoutReward(state, a.id, createRng('l26-01-lifecycle-rng')).eliminated,
+    ).toBe(true);
     expect(a.isEliminated).toBe(false);
     expect(a.pendingReanimation).toBeNull();
     expect(state.pool.some((card) => card.instanceId === 'keep-me')).toBe(true);
