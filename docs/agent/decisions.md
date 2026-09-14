@@ -3191,6 +3191,33 @@ need the bump (fields already on the view).
 Do not edit `heuristic-v4` scoring. `applyDamage` vs `applyLifeLoss` is unchanged:
 Tax must not decrement card-lives counters or emit a lost line.
 
+## 2026-09-14 · [P] Lot 57 Feedback conversion (L57-01)
+
+Designer: first users (friends) play regularly but do not send inbox rows. Convert
+the existing Lot 47 pipeline — do not add Slack, mail, ratings, screenshots, or a
+second form product.
+
+**Ask-mode** (Game over auto-prompt, including before hub leave): one sentence.
+No Kind / About / Contact. POST `kind: 'confusion'`, `topics: []`, `message`
+trimmed min 1. Skip is the empty path. Overlay dismiss = Skip.
+
+**Manual** (`!`, Home, Lobby, Game over **Feedback** button): unchanged ticket
+(Kind + About + message + optional contact). Bug still needs ≥1 topic.
+
+**Leave intercept:** Game over Return home, tutorial Play a real game, and the
+finished-board flag all hit ask-once unless
+`localStorage['card-battle.v6.feedbackAsked.' + gameCode]` is already `'1'`.
+Skip or a successful Send then leaves. View board ask does **not** leave.
+Stats Feedback stays manual and does not auto-leave. Failed send does not mark
+asked and does not leave. Dialogs still never stack.
+
+**Table chrome:** keep the 44px turn-strip **`!`**. Never print the word
+Feedback on the felt, Incoming, or the economy bar (mobile crowding). Home /
+Lobby / Game over stats may keep the word.
+
+No protocol bump. No new HTTP or Postgres fields. `heuristic-v4` untouched.
+L57-02 is the ask-mode Dialog; L57-03 is the leave intercept.
+
 ---
 
 

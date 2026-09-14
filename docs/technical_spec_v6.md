@@ -83,7 +83,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 5 | Tutorial **must** show, at least: Draw (points, not a card), **Tax twice (base +4)**, **upgrade**, **equal Basic counter**, **Spy** (and Spy counter), **sell**, **buy Absorber**, **buy an upgrade point**, **Shield vs Strong**, **Super Regeneration**, **Absorber**, **Thief**, then **kill** with Basic+. Spotlight every index 0–30. |
 | 6 | Human tutorial seat starts at **2 lives** (designer 2026-08-25). Tax 2→1; Shield vs Strong keeps 1 life for Super Regeneration. The counter lesson is still **equal** Basic vs Basic (both cancel; the bot stays at 4). Kill is **upgraded Basic** (3) after Super Regeneration, Thief, a second base Tax, Absorber, and a Strong counter. **Do not** upgrade Basic before the equal-counter beat. |
 | 7 | Completing the tutorial does **not** dismiss first-real-game hints. The first Solo or Online Classic match still gets them. Skip-all remains. Tutorial itself uses coach copy, not the hint overlay. |
-| 8 | Feedback is always on Home, Table, and Game over. Game over **asks** once per finished match (skippable). |
+| 8 | Feedback is always on Home, Table, and Game over. Game over **asks** once per finished match (skippable), including every hub-leave path (Lot 57). |
 | 9 | A report is Bug / Confusion / Idea + message + optional contact. Server attaches game code, nickname, screen, protocol, `playKind`, and a public log tail when in a match. No seed on the client or in the report row. |
 | 10 | Designer inbox is `/inbox` in the same SPA, env password, not linked from the player hub. Postgres table `feedback_reports`. |
 | 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
@@ -111,6 +111,23 @@ Inference flagged as such (not a separate designer vote, required by the locked 
 - **Counter = mutual attacks**, not Mirror and not Block. Equal Basic vs Basic on the
   retaliating (human) turn cancels both (golden rule 1). Mirror remains a first-real-game
   hint / How to play sentence, not a tutorial beat.
+
+### 2.2 Session 2026-09-14 — Feedback conversion (Lot 57)
+
+Designer: friends test regularly but do not send inbox rows. Convert the Lot 47
+pipeline; do not add a second channel.
+
+- **Ask-mode** (auto after stats close, or before a finished hub leave) is one
+  sentence. No Kind / About / Contact. POST `kind: 'confusion'`, `topics: []`,
+  `message` min 1. Skip remains the empty path.
+- **Manual** (`!`, Home, Lobby, Game over **Feedback**) stays the Lot 47 ticket.
+- **Every** finished leave-to-hub (Return home, Play a real game, flag) hits
+  ask-once unless `localStorage` already marked that `gameCode`. View board ask
+  does not leave. Stats Feedback does not auto-leave.
+- Table control stays the compact turn-strip **`!`**. Never the word Feedback on
+  the felt, Incoming, or the economy bar (mobile crowding).
+- No protocol bump. No new HTTP fields. No Slack / mail ping, rating, or
+  screenshot (section 11).
 
 ---
 
@@ -485,8 +502,20 @@ logic on the client.
 
 ### 7.1 Player form
 
-Always: Home, Table (economy-adjacent **Feedback** control), Game over (prompt + the same
-control).
+Always: Home, Table (turn-strip **`!`** `IconButton`, aria-label Feedback — not the
+word on the felt), Game over (ask-once prompt + the same **Feedback** control on
+the stats row).
+
+**Ask-mode** (Lot 57): auto after the first stats close, and before every finished
+hub leave that is not yet marked asked. One-sentence copy; no Kind / About /
+Contact. Submit sends `kind: 'confusion'`, `topics: []`, message only. Skip or a
+successful send marks asked (`localStorage['card-battle.v6.feedbackAsked.' +
+gameCode]`). Overlay dismiss in ask-mode is Skip. A pending leave then goes to
+the hub; View board ask does not leave. Failed send does not mark asked and does
+not leave.
+
+**Manual:** `!`, Home, Lobby, and Game over **Feedback** keep the Lot 47 ticket
+(Kind + About + message + optional contact). Bug still requires ≥1 topic.
 
 Fields:
 
@@ -587,7 +616,8 @@ Update `docs/agent/frontend.md` in the lot that lands each surface.
 - Hub: Beta card (top-right, word **Beta** only); Tutorial button; How to play.
   No protocol footer. No Reset help control.
 - Soft gate wraps Online / Solo / Tutorial submits.
-- Table: How to play, Feedback, coach (tutorial), hints (first Classic).
+- Table: How to play **?**, Feedback **`!`** (Lot 57: never the word on the felt),
+  coach (tutorial), hints (first Classic).
 - `leaveGame()` is **not** the forfeit path from a live table.
 - Inbox is a fifth top-level surface (`pathname`), not a game phase.
 - Feedback fetch: `resolve-server-url()` + `/api/feedback`.
@@ -678,8 +708,10 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
+| 57 | Feedback conversion | Ask-mode one sentence; hub leave hits ask; table stays `!`; no protocol bump |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
 **48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
 **56** is a designer session follow-up (Classic freeze exception + one protocol bump).
+**57** is a designer session follow-up (feedback conversion; no protocol bump).

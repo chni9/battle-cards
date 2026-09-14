@@ -42,6 +42,10 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     Invisibility out of Classic circulation and play (code stays). Attack damage
     badges, click-to-explain log/Incoming, card lives under persistents, lost
     deactivation log. `PROTOCOL_VERSION` 30 → 31 (exception, same class as L49).
+15. **Feedback conversion (Lot 57).** Designer 2026-09-14. Ask-mode is one
+    sentence (`confusion`, no chips/contact). Every finished hub leave hits that
+    ask. Table control stays the compact `!` — never the word Feedback on the felt.
+    No protocol bump.
 
 **Execution order**
 
@@ -79,8 +83,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-85 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
-Lot 56 opened 2026-09-09.
+86 of 89 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+Lot 57 opened 2026-09-14.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -100,6 +104,7 @@ Lot 56 opened 2026-09-09.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
+| 57 · Feedback conversion | 4 | 1 |
 
 ---
 
@@ -344,6 +349,22 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 
 ---
 
+## Lot 57 — Feedback conversion (designer 2026-09-14)
+
+Explicit session instruction. Convert the Lot 47 pipeline so friends actually send
+rows. No new HTTP fields, no protocol bump, no Slack/mail ping, no rating, no
+screenshot. Table chrome stays the compact `!` (mobile crowding). Home / Lobby /
+Game over stats may keep the word Feedback.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L57-01 | Append dated `[P]` Lot 57 entries to `docs/agent/decisions.md`; Lot 57 section here; technical spec v6 §7.1 + §13; `AGENTS.md` snapshot. **Acceptance:** an agent reading only `decisions.md` + this backlog can tell ask-mode is one sentence (`confusion`), every finished hub leave hits that ask, and the table control stays `!`. | S | Medium | — | Done |
+| L57-02 | Ask-mode Feedback Dialog: one-sentence copy; no Kind / About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Manual (`!`, Home, Lobby, Game over Feedback) unchanged. **Acceptance:** ask-mode payload test; manual bug still requires ≥1 topic; table `!` glyph unchanged. | M | Medium | L57-01 | To do |
+| L57-03 | Finished hub leave (Game over Return home / Play a real game / flag) asks once unless already marked; Skip or successful Send then leaves. View board ask does not leave. Stats Feedback stays manual and does not auto-leave. **Acceptance:** helper tests for ask-then-leave, already-asked immediate leave, View board stay; `pnpm verify` green. | M | Medium | L57-02 | To do |
+| L57-04 | Update `frontend.md` Game over / Feedback paragraphs to the leave intercept + ask-mode split. Table `!` still one icon cell. **Acceptance:** playbook matches shipped behaviour; `pnpm verify` green. | S | Low | L57-03 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -364,9 +385,10 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 | 54 | 4 |
 | 55 | 1 |
 | 56 | 7 |
-| **Total** | **85** |
+| 57 | 4 |
+| **Total** | **89** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 

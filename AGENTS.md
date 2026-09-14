@@ -14,8 +14,8 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lot 56 is the open table-readability + Invisibility freeze
-lot. V5 may continue in parallel. Audience: the designer
+`docs/backlog_v6.md`); Lot 57 is the open feedback-conversion lot
+(table `!` stays; Game over ask on every hub leave). V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -112,8 +112,10 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Classic rule or value. V5 adds a policy registry, arena, belief model, search, and fitted
  evaluation. V6 adds teaching, table readability, and in-game feedback (tutorial is Classic
  with setup overrides, not a new competitive mode). **Lot 56** (designer 2026-09-09)
- temporarily takes Invisibility out of Classic circulation and play — catalog and
- handler stay. A bot playing badly is never grounds for touching a rule. **Search,
+temporarily takes Invisibility out of Classic circulation and play — catalog and
+handler stay. **Lot 57** (designer 2026-09-14) converts existing feedback: ask-mode
+is one sentence; every finished hub leave hits that ask; the table control stays
+`!`. A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
    has Spyed) and the **public** action log is **out** — technical spec v3 decision 2 is
