@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-87 of 89 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+88 of 89 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 57 opened 2026-09-14.
 
 | Lot | Tasks | Done |
@@ -104,7 +104,7 @@ Lot 57 opened 2026-09-14.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
-| 57 · Feedback conversion | 4 | 2 |
+| 57 · Feedback conversion | 4 | 3 |
 
 ---
 
@@ -360,7 +360,7 @@ Game over stats may keep the word Feedback.
 |---|---|---|---|---|---|
 | L57-01 | Append dated `[P]` Lot 57 entries to `docs/agent/decisions.md`; Lot 57 section here; technical spec v6 §7.1 + §13; `AGENTS.md` snapshot. **Acceptance:** an agent reading only `decisions.md` + this backlog can tell ask-mode is one sentence (`confusion`), every finished hub leave hits that ask, and the table control stays `!`. | S | Medium | — | Done |
 | L57-02 | Ask-mode Feedback Dialog: one-sentence copy; no Kind / About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Manual (`!`, Home, Lobby, Game over Feedback) unchanged. **Acceptance:** ask-mode payload test; manual bug still requires ≥1 topic; table `!` glyph unchanged. | M | Medium | L57-01 | Done |
-| L57-03 | Finished hub leave (Game over Return home / Play a real game / flag) asks once unless already marked; Skip or successful Send then leaves. View board ask does not leave. Stats Feedback stays manual and does not auto-leave. **Acceptance:** helper tests for ask-then-leave, already-asked immediate leave, View board stay; `pnpm verify` green. | M | Medium | L57-02 | To do |
+| L57-03 | Finished hub leave (Game over Return home / Play a real game / flag) asks once unless already marked; Skip or successful Send then leaves. View board ask does not leave. Stats Feedback stays manual and does not auto-leave. **Acceptance:** helper tests for ask-then-leave, already-asked immediate leave, View board stay; `pnpm verify` green. | M | Medium | L57-02 | Done |
 | L57-04 | Update `frontend.md` Game over / Feedback paragraphs to the leave intercept + ask-mode split. Table `!` still one icon cell. **Acceptance:** playbook matches shipped behaviour; `pnpm verify` green. | S | Low | L57-03 | To do |
 
 ---

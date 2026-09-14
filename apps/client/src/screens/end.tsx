@@ -3,6 +3,7 @@
  * Game over Dialog opens after the L51-06 win/death banner (~1.6s).
  * PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
  * One FeedbackDialog owned here so stats / ask / turn-strip `!` never stack (L47-03).
+ * Finished hub leave goes through ask-once (L57-03).
  */
 
 import type { FinishedStateView } from '@card-battle/shared';
@@ -15,8 +16,10 @@ import {
   canOpenEndManualFeedback,
   canOpenEndStatsFeedback,
   canReopenEndStats,
+  finishedHubLeaveAction,
   isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
+  shouldLeaveAfterAskDismiss,
   shouldMarkEndFeedbackAsked,
   type EndFeedbackMode,
 } from './end-feedback';
@@ -49,6 +52,7 @@ export function EndScreen({
   const [statsDismissed, setStatsDismissed] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMode, setFeedbackMode] = useState<EndFeedbackMode>('ask');
+  const [leavePending, setLeavePending] = useState(false);
   const youWon = view.winnerPlayerId === view.finalTable.you;
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
   const statsOpen = isEndStatsOpen({
@@ -84,6 +88,17 @@ export function EndScreen({
     }
     setStatsDismissed(true);
     setFeedbackMode('manual');
+    setFeedbackOpen(true);
+  };
+
+  const requestLeave = (): void => {
+    if (finishedHubLeaveAction(hasAskedFeedback(view.gameCode)) === 'leaveNow') {
+      onLeave();
+      return;
+    }
+    setStatsDismissed(true);
+    setFeedbackMode('ask');
+    setLeavePending(true);
     setFeedbackOpen(true);
   };
 
@@ -126,14 +141,14 @@ export function EndScreen({
         onBuyUpgradePoint={noop}
         onBuySpecialCard={noop}
         onSellUpgradePoint={noop}
-        onLeave={onLeave}
+        onLeave={requestLeave}
         onForfeit={noop}
       />
       <GameOverDialog
         open={statsOpen}
         view={view}
         onClose={onStatsClose}
-        onLeave={onLeave}
+        onLeave={requestLeave}
         onOpenFeedback={onOpenStatsFeedback}
       />
       <FeedbackDialog
@@ -148,7 +163,12 @@ export function EndScreen({
           if (shouldMarkEndFeedbackAsked(reason)) {
             markFeedbackAsked(view.gameCode);
           }
+          const pendingLeave = leavePending;
+          setLeavePending(false);
           setFeedbackOpen(false);
+          if (shouldLeaveAfterAskDismiss({ leavePending: pendingLeave, reason })) {
+            onLeave();
+          }
         }}
       />
     </>

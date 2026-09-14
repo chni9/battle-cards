@@ -39,6 +39,12 @@ describe('feedback surfaces (technical spec v6 §7.1 / L47-03)', () => {
     expect(end).toContain('shouldMarkEndFeedbackAsked');
     expect(end).toContain('mode={feedbackMode}');
     expect(end).toContain('onClose={onStatsClose}');
-    expect(end).toContain('onLeave={onLeave}');
+    expect(end).toContain('onLeave={requestLeave}');
+    expect(end).not.toContain('onLeave={onLeave}');
+    expect(end).toContain('finishedHubLeaveAction');
+    expect(end).toContain('shouldLeaveAfterAskDismiss');
+    expect(end).toContain('setLeavePending(true)');
+    expect(end.split('setLeavePending(true)').length).toBe(2);
+    expect(end).toContain('onOpenStatsFeedback');
   });
 });
