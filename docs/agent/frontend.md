@@ -8,14 +8,15 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 55
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 57
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–57 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives).
+inspect from log/queue, card lives under actives, Game over ask on every hub leave, table
+`!` not the word Feedback).
 
 ## Screens
 
@@ -24,7 +25,7 @@ inspect from log/queue, card lives under actives).
 | Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home; ask-once Feedback | `screens/end.tsx` + `game-over-dialog.tsx` |
+| End | `phase: 'finished'` — closable stats over frozen board; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` |
 | Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
@@ -72,11 +73,14 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **Feedback** (L47-03 / L47-06): hub control next to How to play; same Dialog on Online / Solo /
+  **Feedback** (L47-03 / L47-06 / L57-02): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
-  omits `gameCode` / `logTail`. Kind plus multi-select **About** chips (`UI`, `Gameplay`,
+  omits `gameCode` / `logTail`. **Manual** (Home, Lobby, table `!`, Game over **Feedback**):
+  Kind plus multi-select **About** chips (`UI`, `Gameplay`,
   `Card`, `Shop`, `Bot`, `Tutorial`, `Other`). A bug needs at least one chip; confusion /
-  idea may skip. Message placeholder follows kind. Send uses a sync in-flight gate so two
+  idea may skip. Message placeholder follows kind. **Ask-mode** (Game over auto-prompt and
+  finished hub leave): title **One sentence for the beta**, lead **Skip is fine.**, no Kind /
+  About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
   **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
   field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
@@ -156,7 +160,8 @@ rules above are unchanged — this section only covers how the client looks.
   `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
   grid + Buy special, and the pool. Shop faces use catalog costs: Spy play **2** / buy **4**
   (Lot 54 — do not restore 4/8). Turn strip: **?** (How to play) then **!** (Feedback,
-  `aria-label` Feedback) left of timers, **flag**
+  `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
+  left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
   (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
@@ -371,7 +376,9 @@ rules above are unchanged — this section only covers how the client looks.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
-  and finished-board **Return home** (flag or Game over) call `leaveGame()`. Unexpected drop shows
+  calls `leaveGame()`. Finished-board **Return home** (flag or Game over) and tutorial
+  **Play a real game** go through `EndScreen.requestLeave` (Lot 57): ask-once if unmarked,
+  then `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
@@ -395,16 +402,19 @@ rules above are unchanged — this section only covers how the client looks.
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
-  First close of Game over stats (View board / overlay / Esc) opens Feedback in ask-mode
+  First close of Game over stats (View board / overlay / Esc) opens Feedback in **ask-mode**
   once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
-  successful send). The Game over action row also has **Feedback** (same label as Home):
-  it dismisses stats and opens the form so the overlay cannot hide the turn-strip **!**.
-  **Return home** from stats does not auto-ask. Failed send does not
-  mark asked. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
+  successful send). Ask-mode copy is Lot 57 (one sentence, `confusion`, no chips/contact).
+  View board ask does **not** leave. The Game over action row also has **Feedback** (same
+  label as Home): it dismisses stats and opens the **manual** ticket so the overlay cannot
+  hide the turn-strip **!** — it does not auto-leave. **Return home**, tutorial **Play a
+  real game**, and the finished flag all hit the same ask-once (`requestLeave` /
+  `leavePending`); already-asked leaves immediately. Failed send does not
+  mark asked and does not leave. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
   ask / turn-strip **!** never stack: banner-period `!` delays stats until that form
   closes; a send there marks asked; `!` is a no-op while stats or Feedback is already
   open. Live table still owns its own Dialog.
-  Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
+  Flag opens Stay / Return home (then `requestLeave`); Game over **Return home** is the same path.
   Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
   (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
   **You are being attacked** once per new attack-tone Incoming (flashier, red);
@@ -541,8 +551,8 @@ and `INBOX_PASSWORD`. Do not restore pager / Reset help / Spy 4/8 / protocol 29.
    proven on tutorial Incoming (Basic / Strong / Spy / Thief); Feedback `!` stays on the
    turn strip. Skip tutorial (flag-only, hub, no Game over) is L45 evidence — this gate
    may complete 0–30 instead of Skip.
-4. **Tutorial complete** → Skip ask-once Feedback if it opens → **Play a real game** →
-   hub. Completing tutorial does **not** set hint `skipAll`.
+4. **Tutorial complete** → **Play a real game** (or View board) hits ask-mode one
+   sentence if not yet marked; Skip → hub. Completing tutorial does **not** set hint `skipAll`.
 5. Next Classic Easy solo (1 opponent): first-game hint overlay (not tutorial coach).
    Table **?** opens How to play without sending an intent. Shop: Spy play **2** / buy
    **4**.
