@@ -993,3 +993,19 @@ in the rooms below.
   stray **−2** when Basic is selected). Pre-existing; not Lot 56.
 - `pnpm verify` **1274** tests.
 
+### Lot 57 verified 2026-09-14 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 31)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567`. Nick `L57Gate` vs Alpha. Room
+`JUYNBZ`.
+
+- Live table turn strip: **?** then compact **`!`** (not the word Feedback),
+  then code / timers; flag on the right. Economy bar has Draw / Shop only.
+- Flag → Leave the game? → Forfeit → Game over stats (Winner Alpha,
+  L57Gate eliminated leave). **Return home** opens ask-mode Feedback: title
+  **Feedback**, lead **Skip is fine.**, Kind Bug / Confusion / Idea, About
+  chips, Message, Contact (optional), **Skip** + Send. Not the one-sentence
+  stub.
+- Skip → hub (Play online / Play solo / Tutorial / How to play / Feedback).
+- `pnpm verify` **1283** tests.
+
+
