@@ -1,5 +1,5 @@
 /**
- * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06).
+ * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06 / L57-02).
  * Ask-mode Skip / overlay marks asked in the parent. Does not call leaveGame.
  */
 
@@ -22,10 +22,14 @@ import { Dialog } from '../design/components/dialog';
 import { buildFeedbackPayload } from './build-feedback-payload';
 import {
   FEEDBACK_ABOUT_LEGEND,
+  FEEDBACK_ASK_LEAD,
   canSendFeedbackForm,
   feedbackAboutHint,
-  feedbackMessagePlaceholder,
+  feedbackDialogTitle,
+  feedbackMessagePlaceholderFor,
   feedbackSendHint,
+  resolveFeedbackSubmitFields,
+  type FeedbackFormMode,
 } from './feedback-form-copy';
 import { submitFeedback } from './submit-feedback';
 import { beginFeedbackSend, endFeedbackSend } from './submit-gate';
@@ -43,7 +47,7 @@ const inputClassName = [
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
 ].join(' ');
 
-export type FeedbackDialogMode = 'ask' | 'manual';
+export type FeedbackDialogMode = FeedbackFormMode;
 
 export interface FeedbackDialogProps {
   open: boolean;
@@ -91,12 +95,13 @@ export function FeedbackDialog({
     onDismiss(reason);
   };
 
-  const canSend = canSendFeedbackForm({ kind, message, topics, busy });
-  const sendHint = feedbackSendHint(kind, topics, message);
+  const submitted = resolveFeedbackSubmitFields(mode, kind, topics);
+  const canSend = canSendFeedbackForm({ kind, message, topics, busy, mode });
+  const sendHint = mode === 'manual' ? feedbackSendHint(kind, topics, message) : null;
 
   const onSubmit = (): void => {
     if (
-      !isFeedbackTopicsComplete(kind, topics) ||
+      !isFeedbackTopicsComplete(submitted.kind, submitted.topics) ||
       message.trim().length === 0 ||
       !beginFeedbackSend(inFlight)
     ) {
@@ -106,16 +111,18 @@ export function FeedbackDialog({
     setError(null);
     const context = {
       screen,
-      topics,
+      topics: submitted.topics,
       ...(nickname !== undefined ? { nickname } : {}),
       ...(gameCode !== undefined ? { gameCode } : {}),
       ...(playKind !== undefined ? { playKind } : {}),
       ...(actionLog !== undefined ? { actionLog } : {}),
     };
     const id = requestId.current;
-    void submitFeedback(
-      buildFeedbackPayload(kind, message, context, contact),
-    ).then((result) => {
+    const payload =
+      mode === 'ask'
+        ? buildFeedbackPayload(submitted.kind, message, context)
+        : buildFeedbackPayload(submitted.kind, message, context, contact);
+    void submitFeedback(payload).then((result) => {
       if (id !== requestId.current) {
         return;
       }
@@ -132,7 +139,7 @@ export function FeedbackDialog({
   return (
     <Dialog
       open={open}
-      title="Feedback"
+      title={feedbackDialogTitle(mode)}
       panelClassName="max-w-md"
       closeOnOverlayClick
       onClose={() => {
@@ -163,48 +170,54 @@ export function FeedbackDialog({
         </>
       }
     >
-      <fieldset className="border-0 p-0">
-        <legend className="text-sm font-medium text-ink">Kind</legend>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {FEEDBACK_KINDS.map((id) => (
-            <Button
-              key={id}
-              compact
-              type="button"
-              variant={kind === id ? 'green' : 'orange'}
-              onClick={() => {
-                setKind(id);
-              }}
-            >
-              {KIND_LABEL[id]}
-            </Button>
-          ))}
-        </div>
-      </fieldset>
+      {mode === 'ask' ? (
+        <p className="text-sm text-ink-muted">{FEEDBACK_ASK_LEAD}</p>
+      ) : (
+        <>
+          <fieldset className="border-0 p-0">
+            <legend className="text-sm font-medium text-ink">Kind</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {FEEDBACK_KINDS.map((id) => (
+                <Button
+                  key={id}
+                  compact
+                  type="button"
+                  variant={kind === id ? 'green' : 'orange'}
+                  onClick={() => {
+                    setKind(id);
+                  }}
+                >
+                  {KIND_LABEL[id]}
+                </Button>
+              ))}
+            </div>
+          </fieldset>
 
-      <fieldset className="mt-4 border-0 p-0">
-        <legend className="text-sm font-medium text-ink">{FEEDBACK_ABOUT_LEGEND}</legend>
-        <p className="mt-1 text-xs text-ink-muted">{feedbackAboutHint(kind)}</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {FEEDBACK_TOPICS.map((id) => {
-            const selected = topics.includes(id);
-            return (
-              <Button
-                key={id}
-                compact
-                type="button"
-                variant={selected ? 'green' : 'orange'}
-                aria-pressed={selected}
-                onClick={() => {
-                  setTopics(toggleFeedbackTopic(topics, id));
-                }}
-              >
-                {FEEDBACK_TOPIC_LABEL[id]}
-              </Button>
-            );
-          })}
-        </div>
-      </fieldset>
+          <fieldset className="mt-4 border-0 p-0">
+            <legend className="text-sm font-medium text-ink">{FEEDBACK_ABOUT_LEGEND}</legend>
+            <p className="mt-1 text-xs text-ink-muted">{feedbackAboutHint(kind)}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {FEEDBACK_TOPICS.map((id) => {
+                const selected = topics.includes(id);
+                return (
+                  <Button
+                    key={id}
+                    compact
+                    type="button"
+                    variant={selected ? 'green' : 'orange'}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setTopics(toggleFeedbackTopic(topics, id));
+                    }}
+                  >
+                    {FEEDBACK_TOPIC_LABEL[id]}
+                  </Button>
+                );
+              })}
+            </div>
+          </fieldset>
+        </>
+      )}
 
       {sendHint !== null ? (
         <p className="mt-2 text-xs text-cta-red" role="status">
@@ -218,25 +231,27 @@ export function FeedbackDialog({
           className={`${inputClassName} min-h-28`}
           value={message}
           maxLength={4000}
-          placeholder={feedbackMessagePlaceholder(kind)}
+          placeholder={feedbackMessagePlaceholderFor(mode, kind)}
           onChange={(event) => {
             setMessage(event.target.value);
           }}
         />
       </label>
 
-      <label className="mt-3 block text-sm font-medium text-ink">
-        Contact (optional)
-        <input
-          className={inputClassName}
-          value={contact}
-          maxLength={200}
-          autoComplete="email"
-          onChange={(event) => {
-            setContact(event.target.value);
-          }}
-        />
-      </label>
+      {mode === 'manual' ? (
+        <label className="mt-3 block text-sm font-medium text-ink">
+          Contact (optional)
+          <input
+            className={inputClassName}
+            value={contact}
+            maxLength={200}
+            autoComplete="email"
+            onChange={(event) => {
+              setContact(event.target.value);
+            }}
+          />
+        </label>
+      ) : null}
 
       {error !== null ? (
         <p className="mt-3 text-sm text-cta-red" role="alert">

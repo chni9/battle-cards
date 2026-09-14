@@ -2,6 +2,7 @@ import { PROTOCOL_VERSION } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { buildFeedbackPayload } from './build-feedback-payload';
+import { resolveFeedbackSubmitFields } from './feedback-form-copy';
 
 describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
   it('omits gameCode and logTail on Home and never includes seed', () => {
@@ -49,6 +50,23 @@ describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
     expect(body.contact).toBe('ada@example.com');
     expect(body.logTail).toHaveLength(30);
     expect(body.logTail?.[0]).toEqual(actionLog[1]);
+    expect(JSON.stringify(body)).not.toContain('seed');
+  });
+
+  it('builds an ask-mode body as confusion with empty topics and no contact', () => {
+    const submitted = resolveFeedbackSubmitFields('ask', 'bug', ['ui']);
+    const body = buildFeedbackPayload(submitted.kind, '  Incoming was unclear  ', {
+      screen: 'end',
+      gameCode: 'ABCDEF',
+      playKind: 'classic',
+      topics: submitted.topics,
+    });
+
+    expect(body.kind).toBe('confusion');
+    expect(body.topics).toEqual([]);
+    expect(body.message).toBe('Incoming was unclear');
+    expect(body.gameCode).toBe('ABCDEF');
+    expect(Reflect.has(body, 'contact')).toBe(false);
     expect(JSON.stringify(body)).not.toContain('seed');
   });
 });

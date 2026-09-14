@@ -25,10 +25,13 @@ describe('feedback surfaces (technical spec v6 §7.1 / L47-03)', () => {
     expect(lobby).toContain('FeedbackDialog');
     expect(lobby).toContain('screen="lobby"');
     expect(table).toContain('FEEDBACK_ARIA_LABEL');
+    expect(table).toMatch(
+      /aria-label=\{FEEDBACK_ARIA_LABEL\}[\s\S]*?>\s*!\s*<\/IconButton>/,
+    );
+    expect(economy).not.toContain('Feedback');
     expect(table).toContain("setFeedbackOpen(true)");
     expect(table).toContain('onOpenFeedback !== undefined');
     expect(table).toContain('{onOpenFeedback === undefined ? (');
-    expect(economy).not.toContain('Feedback');
     expect(end).toContain('onOpenFeedback={onOpenManualFeedback}');
     expect(end).toContain('onOpenFeedback={onOpenStatsFeedback}');
     expect(end).toContain('isEndStatsOpen');
