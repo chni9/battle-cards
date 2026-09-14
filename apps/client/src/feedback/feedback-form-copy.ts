@@ -17,8 +17,12 @@ export const FEEDBACK_TITLE = 'Feedback';
 /** Ask-mode lead — Skip still leaves after a finished hub leave (L57-03 / L57-05). */
 export const FEEDBACK_ASK_LEAD = 'Skip is fine.';
 
-export function feedbackDialogTitle(_mode: FeedbackFormMode): string {
-  return FEEDBACK_TITLE;
+export function feedbackDialogTitle(mode: FeedbackFormMode): string {
+  switch (mode) {
+    case 'ask':
+    case 'manual':
+      return FEEDBACK_TITLE;
+  }
 }
 
 /**
@@ -26,11 +30,15 @@ export function feedbackDialogTitle(_mode: FeedbackFormMode): string {
  * L57-05: Return home shows the same ticket as Home, not a one-sentence stub.
  */
 export function resolveFeedbackSubmitFields(
-  _mode: FeedbackFormMode,
+  mode: FeedbackFormMode,
   kind: FeedbackKind,
   topics: readonly FeedbackTopic[],
 ): { kind: FeedbackKind; topics: readonly FeedbackTopic[] } {
-  return { kind, topics };
+  switch (mode) {
+    case 'ask':
+    case 'manual':
+      return { kind, topics };
+  }
 }
 
 export function feedbackAboutHint(kind: FeedbackKind): string {
