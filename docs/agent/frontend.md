@@ -15,8 +15,8 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–57 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives, Game over ask on every hub leave, table
-`!` not the word Feedback).
+inspect from log/queue, card lives under actives, Game over full Feedback ticket
+on every hub leave, table `!` not the word Feedback).
 
 ## Screens
 
@@ -73,14 +73,15 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **Feedback** (L47-03 / L47-06 / L57-02): hub control next to How to play; same Dialog on Online / Solo /
+  **Feedback** (L47-03 / L47-06 / L57-05): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
   omits `gameCode` / `logTail`. **Manual** (Home, Lobby, table `!`, Game over **Feedback**):
   Kind plus multi-select **About** chips (`UI`, `Gameplay`,
   `Card`, `Shop`, `Bot`, `Tutorial`, `Other`). A bug needs at least one chip; confusion /
   idea may skip. Message placeholder follows kind. **Ask-mode** (Game over auto-prompt and
-  finished hub leave): title **One sentence for the beta**, lead **Skip is fine.**, no Kind /
-  About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Send uses a sync in-flight gate so two
+  finished hub leave, including Return home): the same ticket; title **Feedback**, lead
+  **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
+  kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
   **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
   field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
@@ -404,7 +405,8 @@ rules above are unchanged — this section only covers how the client looks.
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
   First close of Game over stats (View board / overlay / Esc) opens Feedback in **ask-mode**
   once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
-  successful send). Ask-mode copy is Lot 57 (one sentence, `confusion`, no chips/contact).
+  successful send). Ask-mode is the Lot 47 ticket (Kind / About / message / optional
+  contact; title Feedback; lead Skip is fine) — including Return home (L57-05).
   View board ask does **not** leave. The Game over action row also has **Feedback** (same
   label as Home): it dismisses stats and opens the **manual** ticket so the overlay cannot
   hide the turn-strip **!** — it does not auto-leave. **Return home**, tutorial **Play a
@@ -551,8 +553,8 @@ and `INBOX_PASSWORD`. Do not restore pager / Reset help / Spy 4/8 / protocol 29.
    proven on tutorial Incoming (Basic / Strong / Spy / Thief); Feedback `!` stays on the
    turn strip. Skip tutorial (flag-only, hub, no Game over) is L45 evidence — this gate
    may complete 0–30 instead of Skip.
-4. **Tutorial complete** → **Play a real game** (or View board) hits ask-mode one
-   sentence if not yet marked; Skip → hub. Completing tutorial does **not** set hint `skipAll`.
+4. **Tutorial complete** → **Play a real game** (or View board) hits ask-mode full
+   ticket if not yet marked; Skip → hub. Completing tutorial does **not** set hint `skipAll`.
 5. Next Classic Easy solo (1 opponent): first-game hint overlay (not tutorial coach).
    Table **?** opens How to play without sending an intent. Shop: Spy play **2** / buy
    **4**.

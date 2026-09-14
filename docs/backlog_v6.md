@@ -42,10 +42,10 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     Invisibility out of Classic circulation and play (code stays). Attack damage
     badges, click-to-explain log/Incoming, card lives under persistents, lost
     deactivation log. `PROTOCOL_VERSION` 30 → 31 (exception, same class as L49).
-15. **Feedback conversion (Lot 57).** Designer 2026-09-14. Ask-mode is one
-    sentence (`confusion`, no chips/contact). Every finished hub leave hits that
-    ask. Table control stays the compact `!` — never the word Feedback on the felt.
-    No protocol bump.
+15. **Feedback conversion (Lot 57).** Designer 2026-09-14. Ask-mode is the
+    Lot 47 ticket (Kind / About / message / optional contact) with Skip.
+    Every finished hub leave hits that ask. Table control stays the compact
+    `!` — never the word Feedback on the felt. No protocol bump.
 
 **Execution order**
 
@@ -362,6 +362,7 @@ Game over stats may keep the word Feedback.
 | L57-02 | Ask-mode Feedback Dialog: one-sentence copy; no Kind / About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Manual (`!`, Home, Lobby, Game over Feedback) unchanged. **Acceptance:** ask-mode payload test; manual bug still requires ≥1 topic; table `!` glyph unchanged. | M | Medium | L57-01 | Done |
 | L57-03 | Finished hub leave (Game over Return home / Play a real game / flag) asks once unless already marked; Skip or successful Send then leaves. View board ask does not leave. Stats Feedback stays manual and does not auto-leave. **Acceptance:** helper tests for ask-then-leave, already-asked immediate leave, View board stay; `pnpm verify` green. | M | Medium | L57-02 | Done |
 | L57-04 | Update `frontend.md` Game over / Feedback paragraphs to the leave intercept + ask-mode split. Table `!` still one icon cell. **Acceptance:** playbook matches shipped behaviour; `pnpm verify` green. | S | Low | L57-03 | Done |
+| L57-05 | Ask-mode is the Lot 47 ticket (Kind / About / message / optional contact), including Return home. Title Feedback; lead Skip is fine; Skip still leaves. POST uses the tester's kind/topics (bug ≥1 topic) plus contact when filled. **Acceptance:** ask-mode payload is no longer forced `confusion` / empty topics; dialog source shows Kind / About / Contact with Skip; table `!` unchanged; `pnpm verify` green. | M | Medium | L57-04 | Done |
 
 ---
 
@@ -385,8 +386,8 @@ Game over stats may keep the word Feedback.
 | 54 | 4 |
 | 55 | 1 |
 | 56 | 7 |
-| 57 | 4 |
-| **Total** | **89** |
+| 57 | 5 |
+| **Total** | **90** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
 

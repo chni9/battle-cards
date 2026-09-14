@@ -1,6 +1,7 @@
 /**
- * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06 / L57-02).
- * Ask-mode Skip / overlay marks asked in the parent. Does not call leaveGame.
+ * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06 / L57-05).
+ * Ask-mode is the same Lot 47 ticket with Skip. Overlay marks asked in the
+ * parent. Does not call leaveGame.
  */
 
 import {
@@ -26,7 +27,7 @@ import {
   canSendFeedbackForm,
   feedbackAboutHint,
   feedbackDialogTitle,
-  feedbackMessagePlaceholderFor,
+  feedbackMessagePlaceholder,
   feedbackSendHint,
   resolveFeedbackSubmitFields,
   type FeedbackFormMode,
@@ -97,7 +98,7 @@ export function FeedbackDialog({
 
   const submitted = resolveFeedbackSubmitFields(mode, kind, topics);
   const canSend = canSendFeedbackForm({ kind, message, topics, busy, mode });
-  const sendHint = mode === 'manual' ? feedbackSendHint(kind, topics, message) : null;
+  const sendHint = feedbackSendHint(kind, topics, message);
 
   const onSubmit = (): void => {
     if (
@@ -118,10 +119,12 @@ export function FeedbackDialog({
       ...(actionLog !== undefined ? { actionLog } : {}),
     };
     const id = requestId.current;
-    const payload =
-      mode === 'ask'
-        ? buildFeedbackPayload(submitted.kind, message, context)
-        : buildFeedbackPayload(submitted.kind, message, context, contact);
+    const payload = buildFeedbackPayload(
+      submitted.kind,
+      message,
+      context,
+      contact,
+    );
     void submitFeedback(payload).then((result) => {
       if (id !== requestId.current) {
         return;
@@ -171,53 +174,51 @@ export function FeedbackDialog({
       }
     >
       {mode === 'ask' ? (
-        <p className="text-sm text-ink-muted">{FEEDBACK_ASK_LEAD}</p>
-      ) : (
-        <>
-          <fieldset className="border-0 p-0">
-            <legend className="text-sm font-medium text-ink">Kind</legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {FEEDBACK_KINDS.map((id) => (
-                <Button
-                  key={id}
-                  compact
-                  type="button"
-                  variant={kind === id ? 'green' : 'orange'}
-                  onClick={() => {
-                    setKind(id);
-                  }}
-                >
-                  {KIND_LABEL[id]}
-                </Button>
-              ))}
-            </div>
-          </fieldset>
+        <p className="mb-4 text-sm text-ink-muted">{FEEDBACK_ASK_LEAD}</p>
+      ) : null}
 
-          <fieldset className="mt-4 border-0 p-0">
-            <legend className="text-sm font-medium text-ink">{FEEDBACK_ABOUT_LEGEND}</legend>
-            <p className="mt-1 text-xs text-ink-muted">{feedbackAboutHint(kind)}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {FEEDBACK_TOPICS.map((id) => {
-                const selected = topics.includes(id);
-                return (
-                  <Button
-                    key={id}
-                    compact
-                    type="button"
-                    variant={selected ? 'green' : 'orange'}
-                    aria-pressed={selected}
-                    onClick={() => {
-                      setTopics(toggleFeedbackTopic(topics, id));
-                    }}
-                  >
-                    {FEEDBACK_TOPIC_LABEL[id]}
-                  </Button>
-                );
-              })}
-            </div>
-          </fieldset>
-        </>
-      )}
+      <fieldset className="border-0 p-0">
+        <legend className="text-sm font-medium text-ink">Kind</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {FEEDBACK_KINDS.map((id) => (
+            <Button
+              key={id}
+              compact
+              type="button"
+              variant={kind === id ? 'green' : 'orange'}
+              onClick={() => {
+                setKind(id);
+              }}
+            >
+              {KIND_LABEL[id]}
+            </Button>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-4 border-0 p-0">
+        <legend className="text-sm font-medium text-ink">{FEEDBACK_ABOUT_LEGEND}</legend>
+        <p className="mt-1 text-xs text-ink-muted">{feedbackAboutHint(kind)}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {FEEDBACK_TOPICS.map((id) => {
+            const selected = topics.includes(id);
+            return (
+              <Button
+                key={id}
+                compact
+                type="button"
+                variant={selected ? 'green' : 'orange'}
+                aria-pressed={selected}
+                onClick={() => {
+                  setTopics(toggleFeedbackTopic(topics, id));
+                }}
+              >
+                {FEEDBACK_TOPIC_LABEL[id]}
+              </Button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       {sendHint !== null ? (
         <p className="mt-2 text-xs text-cta-red" role="status">
@@ -231,27 +232,25 @@ export function FeedbackDialog({
           className={`${inputClassName} min-h-28`}
           value={message}
           maxLength={4000}
-          placeholder={feedbackMessagePlaceholderFor(mode, kind)}
+          placeholder={feedbackMessagePlaceholder(kind)}
           onChange={(event) => {
             setMessage(event.target.value);
           }}
         />
       </label>
 
-      {mode === 'manual' ? (
-        <label className="mt-3 block text-sm font-medium text-ink">
-          Contact (optional)
-          <input
-            className={inputClassName}
-            value={contact}
-            maxLength={200}
-            autoComplete="email"
-            onChange={(event) => {
-              setContact(event.target.value);
-            }}
-          />
-        </label>
-      ) : null}
+      <label className="mt-3 block text-sm font-medium text-ink">
+        Contact (optional)
+        <input
+          className={inputClassName}
+          value={contact}
+          maxLength={200}
+          autoComplete="email"
+          onChange={(event) => {
+            setContact(event.target.value);
+          }}
+        />
+      </label>
 
       {error !== null ? (
         <p className="mt-3 text-sm text-cta-red" role="alert">

@@ -53,20 +53,25 @@ describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
     expect(JSON.stringify(body)).not.toContain('seed');
   });
 
-  it('builds an ask-mode body as confusion with empty topics and no contact', () => {
+  it('builds an ask-mode body from the tester kind, topics, and optional contact', () => {
     const submitted = resolveFeedbackSubmitFields('ask', 'bug', ['ui']);
-    const body = buildFeedbackPayload(submitted.kind, '  Incoming was unclear  ', {
-      screen: 'end',
-      gameCode: 'ABCDEF',
-      playKind: 'classic',
-      topics: submitted.topics,
-    });
+    const body = buildFeedbackPayload(
+      submitted.kind,
+      '  Incoming was unclear  ',
+      {
+        screen: 'end',
+        gameCode: 'ABCDEF',
+        playKind: 'classic',
+        topics: submitted.topics,
+      },
+      ' ada@example.com ',
+    );
 
-    expect(body.kind).toBe('confusion');
-    expect(body.topics).toEqual([]);
+    expect(body.kind).toBe('bug');
+    expect(body.topics).toEqual(['ui']);
     expect(body.message).toBe('Incoming was unclear');
     expect(body.gameCode).toBe('ABCDEF');
-    expect(Reflect.has(body, 'contact')).toBe(false);
+    expect(body.contact).toBe('ada@example.com');
     expect(JSON.stringify(body)).not.toContain('seed');
   });
 });

@@ -3220,4 +3220,25 @@ L57-02 is the ask-mode Dialog; L57-03 is the leave intercept.
 
 ---
 
+## 2026-09-14 · [P] Lot 57 ask-mode is the full ticket (L57-05)
+
+Designer follow-up: every finished game must show the Feedback form, including
+Return home. L57-03 already intercepts Return home / Play a real game / flag.
+The Game over prompt was still the L57-02 one-sentence stub (`confusion`, no
+chips/contact). That is not the Home ticket testers already know.
+
+**Ask-mode** is the same Lot 47 ticket as manual (Kind + About + message +
+optional contact). Title **Feedback**. Lead stays **Skip is fine.** Skip /
+overlay still mark asked and, when `leavePending`, leave to the hub. A bug
+still needs ≥1 topic. POST uses the tester's kind and topics, plus contact
+when filled.
+
+Manual (`!`, Home, Lobby, Game over **Feedback**) unchanged. Table chrome
+still `!`. No protocol bump, no Slack/mail, no ratings.
+
+Supersedes the L57-01 / L57-02 one-sentence ask-mode copy. Leave intercept
+(L57-03) is unchanged.
+
+---
+
 

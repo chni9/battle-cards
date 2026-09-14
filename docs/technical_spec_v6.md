@@ -117,9 +117,11 @@ Inference flagged as such (not a separate designer vote, required by the locked 
 Designer: friends test regularly but do not send inbox rows. Convert the Lot 47
 pipeline; do not add a second channel.
 
-- **Ask-mode** (auto after stats close, or before a finished hub leave) is one
-  sentence. No Kind / About / Contact. POST `kind: 'confusion'`, `topics: []`,
-  `message` min 1. Skip remains the empty path.
+- **Ask-mode** (auto after stats close, or before a finished hub leave) is the
+  Lot 47 ticket. Title Feedback. Lead: Skip is fine. Skip remains the empty
+  path. POST uses the tester's kind / topics (a bug still needs ≥1 topic) and
+  optional contact. Designer 2026-09-14 L57-05 supersedes the same-day
+  one-sentence stub.
 - **Manual** (`!`, Home, Lobby, Game over **Feedback**) stays the Lot 47 ticket.
 - **Every** finished leave-to-hub (Return home, Play a real game, flag) hits
   ask-once unless `localStorage` already marked that `gameCode`. View board ask
@@ -506,9 +508,11 @@ Always: Home, Table (turn-strip **`!`** `IconButton`, aria-label Feedback — no
 word on the felt), Game over (ask-once prompt + the same **Feedback** control on
 the stats row).
 
-**Ask-mode** (Lot 57): auto after the first stats close, and before every finished
-hub leave that is not yet marked asked. One-sentence copy; no Kind / About /
-Contact. Submit sends `kind: 'confusion'`, `topics: []`, message only. Skip or a
+**Ask-mode** (Lot 57 / L57-05): auto after the first stats close, and before every
+finished hub leave that is not yet marked asked. Same Lot 47 ticket as manual
+(Kind + About + message + optional contact). Title **Feedback**. Lead **Skip is
+fine.** Submit sends the tester's kind and topics (a bug still needs ≥1 topic)
+plus contact when filled. Skip or a
 successful send marks asked (`localStorage['card-battle.v6.feedbackAsked.' +
 gameCode]`). Overlay dismiss in ask-mode is Skip. A pending leave then goes to
 the hub; View board ask does not leave. Failed send does not mark asked and does
@@ -708,7 +712,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
-| 57 | Feedback conversion | Ask-mode one sentence; hub leave hits ask; table stays `!`; no protocol bump |
+| 57 | Feedback conversion | Ask-mode is the Lot 47 ticket; hub leave hits ask; table stays `!`; no protocol bump |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).

@@ -1,6 +1,7 @@
 /**
- * Feedback Dialog copy (technical spec v6 §7.1 / L47-06 / L57-02).
- * Manual is the Lot 47 ticket. Ask-mode is one sentence (confusion, no chips).
+ * Feedback Dialog copy (technical spec v6 §7.1 / L47-06 / L57-05).
+ * Ask-mode is the Lot 47 ticket with Skip (Game over / Return home).
+ * Manual is the same ticket with Cancel (Home, Lobby, `!`).
  */
 
 import {
@@ -12,40 +13,23 @@ import {
 export type FeedbackFormMode = 'ask' | 'manual';
 
 export const FEEDBACK_ABOUT_LEGEND = 'About';
-export const FEEDBACK_MANUAL_TITLE = 'Feedback';
-/** Ask-mode Dialog title — technical spec v6 §2.2 / §7.1. */
-export const FEEDBACK_ASK_TITLE = 'One sentence for the beta';
+export const FEEDBACK_TITLE = 'Feedback';
+/** Ask-mode lead — Skip still leaves after a finished hub leave (L57-03 / L57-05). */
 export const FEEDBACK_ASK_LEAD = 'Skip is fine.';
-export const FEEDBACK_ASK_PLACEHOLDER = 'What was unclear, broken, or missing?';
-export const ASK_FEEDBACK_KIND: FeedbackKind = 'confusion';
-export const ASK_FEEDBACK_TOPICS: readonly FeedbackTopic[] = [];
 
-export function feedbackDialogTitle(mode: FeedbackFormMode): string {
-  return mode === 'ask' ? FEEDBACK_ASK_TITLE : FEEDBACK_MANUAL_TITLE;
-}
-
-export function feedbackMessagePlaceholderFor(
-  mode: FeedbackFormMode,
-  kind: FeedbackKind,
-): string {
-  if (mode === 'ask') {
-    return FEEDBACK_ASK_PLACEHOLDER;
-  }
-  return feedbackMessagePlaceholder(kind);
+export function feedbackDialogTitle(_mode: FeedbackFormMode): string {
+  return FEEDBACK_TITLE;
 }
 
 /**
- * Ask-mode always posts confusion with no About chips so friends are not
- * filling a ticket at Game over — technical spec v6 §7.1.
+ * Ask and manual post the fields the tester picked. Designer 2026-09-14
+ * L57-05: Return home shows the same ticket as Home, not a one-sentence stub.
  */
 export function resolveFeedbackSubmitFields(
-  mode: FeedbackFormMode,
+  _mode: FeedbackFormMode,
   kind: FeedbackKind,
   topics: readonly FeedbackTopic[],
 ): { kind: FeedbackKind; topics: readonly FeedbackTopic[] } {
-  if (mode === 'ask') {
-    return { kind: ASK_FEEDBACK_KIND, topics: ASK_FEEDBACK_TOPICS };
-  }
   return { kind, topics };
 }
 
