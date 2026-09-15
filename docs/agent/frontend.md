@@ -400,7 +400,8 @@ rules above are unchanged — this section only covers how the client looks.
   with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
   picker is **not** shown to a living seated player (host Draw stays reachable).
   Walk-in Stay sends `staySpectating` so the server unfogs kits; until then the
-  table behind the picker has no Spy overlay (L57-16). `claimSeat` remaps onto
+  table behind the picker has no Spy overlay (L57-16). Watching copy only says
+  hands are visible when a `spied` overlay is on the view. `claimSeat` remaps onto
   that `player.id`.
   Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
@@ -1066,5 +1067,17 @@ living host can still Draw.
   picker. Tutorial room `VWLXXS` nick TutA: **?** / **`!`**, flag **Skip
   the tutorial?**
 - `pnpm verify` **1331** tests.
+
+### Lot 57 Ready chrome + claim fog verified 2026-09-15 (browser, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=300000`, PROTOCOL 33)
+
+Two-window Classic online, Vite `:5173`, Colyseus `:2567`. Room `KNPSCI`.
+
+- Guest **Ready** is green with a check. Seat ready is a colored check/cross
+  column left of nicknames. Host Start enables after Guest Ready.
+- Walk-in SpecC with picker open: opponent portraits are `?` (no kit art,
+  resource `?`). **Stay spectating** then shows kits and live lives.
+- Watching copy does not claim every hand is visible until a `spied` overlay
+  is on the view.
+- `pnpm verify` **1337** tests.
 
 

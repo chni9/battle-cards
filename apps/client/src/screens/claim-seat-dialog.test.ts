@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { claimStayLabel, shouldShowClaimPicker } from './claim-seat';
+import { claimStayLabel, shouldShowClaimPicker, walkInSeesPrivateHands } from './claim-seat';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -89,5 +89,22 @@ describe('App claim picker wiring (L57-15)', () => {
     const app = readFileSync(join(here, '../App.tsx'), 'utf8');
     expect(app).toContain('shouldShowClaimPicker');
     expect(app).toContain('staySpectating');
+  });
+});
+
+describe('walkInSeesPrivateHands (L57-16)', () => {
+  it('follows whether any seat carries a Spy overlay', () => {
+    expect(walkInSeesPrivateHands([{}])).toBe(false);
+    expect(
+      walkInSeesPrivateHands([
+        { spied: { kitId: 'warrior', hand: [], specialCards: [] } },
+      ]),
+    ).toBe(true);
+  });
+
+  it('hides watching-hands copy while the overlay is fogged', () => {
+    const table = readFileSync(join(here, 'table.tsx'), 'utf8');
+    expect(table).toContain('walkInSeesPrivateHands');
+    expect(table).toContain('Hands stay hidden until you stay spectating or sit.');
   });
 });

@@ -3,6 +3,8 @@
  * Playing seated humans do not see the picker (host Draw must stay reachable).
  */
 
+import type { PublicPlayerView } from '@card-battle/shared';
+
 export function claimStayLabel(input: {
   isSpectator: boolean;
   phase: 'lobby' | 'playing' | 'finished';
@@ -30,4 +32,11 @@ export function shouldShowClaimPicker(input: {
   }
 
   return input.phase === 'lobby' && !input.youAreHost;
+}
+
+/** Spy overlay present on the wire — L57-16 watching copy follows this fact. */
+export function walkInSeesPrivateHands(
+  players: readonly Pick<PublicPlayerView, 'spied'>[],
+): boolean {
+  return players.some((player) => player.spied !== undefined);
 }

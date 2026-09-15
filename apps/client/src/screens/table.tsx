@@ -82,6 +82,7 @@ import type {
 import { HowToPlayDialog } from './how-to-play-dialog';
 import { IllegalActionDialog } from './illegal-action-dialog';
 import { ILLEGAL_ACTION_COPY } from './illegal-action-copy';
+import { walkInSeesPrivateHands } from './claim-seat';
 import { CardActions, type TableDialog } from './table/card-actions';
 import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
@@ -818,6 +819,7 @@ function TableScreenInner({
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
   const walkInSpectator = view.isSpectator === true;
+  const walkInHandsVisible = walkInSpectator && walkInSeesPrivateHands(view.players);
   const selfPublic = view.players.find((player) => player.isYou);
   const povSeat = seatIndexOf(view, view.you);
   const dockStyle =
@@ -1299,7 +1301,9 @@ function TableScreenInner({
             <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Watching</h2>
               <p className="mt-0.5 text-xs text-ink-muted">
-                You can see every hand. Claim a disconnected seat or leave the table.
+                {walkInHandsVisible
+                  ? 'You can see every hand. Claim a disconnected seat or leave the table.'
+                  : 'Claim a disconnected seat or leave the table.'}
               </p>
             </section>
           ) : selfEliminated ? (
@@ -1373,8 +1377,9 @@ function TableScreenInner({
         privateZone={
           walkInSpectator ? (
             <section className="flex h-full min-h-0 items-center justify-center p-4 text-center text-sm text-ink-muted">
-              Watching this table. Hands and kits are visible the same way as an eliminated
-              player.
+              {walkInHandsVisible
+                ? 'Watching this table. Hands and kits are visible the same way as an eliminated player.'
+                : 'Hands stay hidden until you stay spectating or sit.'}
             </section>
           ) : (
           <TutorialZoneCallout
