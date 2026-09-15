@@ -140,7 +140,7 @@ function formatPlayedActionSegments(
     case 'clearSpy':
       return [
         actor,
-        text(' unspied '),
+        text(' got unspied from '),
         ...(entry.targetPlayerId !== undefined
           ? [player(entry.targetPlayerId, nicknameOf)]
           : [text('a spy')]),

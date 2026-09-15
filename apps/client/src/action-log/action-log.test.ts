@@ -108,7 +108,7 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
-  it('names the Unspy target publicly (L58-07)', () => {
+  it('logs that the actor got unspied from the spy (L58-07)', () => {
     expect(
       formatActionLogEntry(
         {
@@ -120,7 +120,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice unspied Bob');
+    ).toBe('Alice got unspied from Bob');
   });
 
   it('does not invent equal-cancel vs stronger-prevails copy (L43-03)', () => {

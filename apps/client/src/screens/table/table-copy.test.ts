@@ -29,6 +29,7 @@ import {
   SKIP_TUTORIAL_CONFIRM_BODY,
   SKIP_TUTORIAL_CONFIRM_TITLE,
   STAY_LABEL,
+  UNSPY_PICKER_HINT,
   ACTION_LOG_OPEN_LABEL,
   INCOMING_OPEN_LABEL,
   OPPONENTS_OPEN_LABEL,
@@ -42,6 +43,12 @@ describe('table copy (L43-03 / technical spec v6 §6.1)', () => {
     expect(SHOP_PRICE_BLURB).toContain('double the play cost');
     expect(SHOP_PRICE_BLURB).not.toContain('base play cost');
     expect(SHOP_PRICE_BLURB).not.toMatch(/\bUP\b/);
+  });
+});
+
+describe('Unspy picker copy (L58-07)', () => {
+  it('asks who is spying you, not who to unspy', () => {
+    expect(UNSPY_PICKER_HINT).toBe('Choose who is spying you.');
   });
 });
 

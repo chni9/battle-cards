@@ -140,7 +140,7 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   },
   'not-spying-you': {
     title: 'Not spying you',
-    body: 'That player is not currently spying you, so Unspy cannot target them.',
+    body: 'That player is not currently spying you, so you cannot get unspied from them.',
   },
 
   'duplicator-kit-required': {

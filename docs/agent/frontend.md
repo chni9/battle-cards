@@ -154,12 +154,16 @@ rules above are unchanged — this section only covers how the client looks.
   icon) + **Shop** (L43-02 / L43-05) + **Unspy** (L58-07: crossed-eye inline SVG, label
   Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`).   Unspy is grey when it is not
   your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
-  exists; click opens a `SeatTile` picker (a single living spy is preselected so Confirm
-  stays readable). Shop Dialog (always openable — pool is
-  public off-turn) shows upgrade-point **icons + count first**, then Buy/Sell **below**
-  (`CostDisplay` of kit points cost/yield via
-  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
-  `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
+  exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
+  (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
+  stays readable). The public log is `{actor} got unspied from {spy}` — Unspy drops
+  **their** Spy on you, not yours on them. Shop Dialog (always openable — pool is
+  public off-turn) shows the **Upgrade points** title plus the upgrade-point icon
+  (no current-count). Buy/Sell sit **below**: kit points `CostDisplay` via
+  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached, plus
+  **+1 / −1** upgrade-point `CostDisplay` (`signed="gain"` on Buy, `signed="cost"` on
+  Sell). Buy is orange (points `signed="cost"`); Sell is green (points `signed="gain"`
+  so the point icon has contrast). Then the shared-card
   grid + Buy special, and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
   (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
   (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,

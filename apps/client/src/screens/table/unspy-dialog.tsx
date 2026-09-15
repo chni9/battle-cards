@@ -10,6 +10,7 @@ import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { SeatTile } from '../../design/components/seat-tile';
 import { UNSPY_ACTION_LABEL } from './chrome-labels';
+import { UNSPY_PICKER_HINT } from './table-copy';
 import { visibleKitId } from './table-helpers';
 
 export interface UnspyDialogProps {
@@ -74,7 +75,12 @@ export function UnspyDialog({
         </>
       }
     >
-      <ul className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3" data-unspy-picker="">
+      <p className="px-2 text-sm text-ink">{UNSPY_PICKER_HINT}</p>
+      <ul
+        className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3"
+        data-unspy-picker=""
+        aria-label={UNSPY_PICKER_HINT}
+      >
         {spies.map((player) => (
           <li key={player.id}>
             <SeatTile

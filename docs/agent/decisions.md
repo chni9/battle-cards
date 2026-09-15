@@ -3259,4 +3259,20 @@ the L32-03 yardstick. `heuristic-v4.freeze.json` traces were refreshed because a
 
 ---
 
+## 2026-09-15 · [P] Lot 58 follow-up — shop UP chrome and Unspy copy
+
+Designer 2026-09-15 16:19, after the L58-09 gate.
+
+**Shop (L58-03):** do not show a current-count next to Upgrade points. The section
+title is the label plus the upgrade-point icon. Buy shows kit points cost
+(`signed="cost"`) and **+1** upgrade-point (`signed="gain"`). Sell shows kit points
+yield (`signed="gain"`) and **−1** upgrade-point (`signed="cost"`).
+
+**Unspy (L58-07):** engine already drops `(viewer = chosen living opponent, subject
+= you)`. Client copy must not read as dropping the POV's Spy on someone else.
+Picker hint: “Choose who is spying you.” Public log: `{actor} got unspied from
+{spy}`. Reject copy: you cannot get unspied from a player who is not spying you.
+
+---
+
 
