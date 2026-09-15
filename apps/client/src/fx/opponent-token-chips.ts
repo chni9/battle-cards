@@ -300,6 +300,9 @@ export function chipsForPublicLogEntry(
           to: 'log',
         },
       ];
+    case 'buyPoolCard':
+    case 'clearSpy':
+      return [];
     case 'deactivatePersistent':
     case 'activateDuplication':
       return [];

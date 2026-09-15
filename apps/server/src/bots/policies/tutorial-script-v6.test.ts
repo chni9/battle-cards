@@ -111,6 +111,7 @@ function viewAt(tutorialIndex: number): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    poolBuyCost: 1,
     playKind: 'tutorial',
     tutorialIndex,
   };

@@ -86,6 +86,7 @@ function baseView(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    poolBuyCost: 1,
     playKind: 'classic',
     tutorialIndex: null,
   };

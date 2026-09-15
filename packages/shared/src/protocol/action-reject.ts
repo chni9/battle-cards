@@ -43,6 +43,8 @@ export const ACTION_REJECT_CODES = [
   'card-not-buyable-individually',
   'card-not-sellable-individually',
   'cost-not-shop-transfer',
+  'empty-pool',
+  'not-spying-you',
 
   // Kits / persistents
   'duplicator-kit-required',
@@ -90,6 +92,7 @@ export const ACTION_REJECT_CODES = [
   'invalid-sell-card-payload',
   'invalid-upgrade-card-payload',
   'invalid-deactivate-persistent-payload',
+  'invalid-clear-spy-payload',
   'invalid-resolve-sub-choice-payload',
   'invalid-add-bot-payload',
   'invalid-remove-bot-payload',
@@ -154,6 +157,8 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'card-not-buyable-individually': 'That card cannot be bought individually.',
   'card-not-sellable-individually': 'That card cannot be sold individually.',
   'cost-not-shop-transfer': 'That cost cannot be paid as a shop transfer.',
+  'empty-pool': 'The pool is empty.',
+  'not-spying-you': 'That player is not spying you.',
 
   'duplicator-kit-required': 'Only the Duplicator kit can activate duplication.',
   'persistent-not-active': 'That persistent effect is not active.',
@@ -195,6 +200,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'invalid-sell-card-payload': 'Invalid sellCard payload.',
   'invalid-upgrade-card-payload': 'Invalid upgradeCard payload.',
   'invalid-deactivate-persistent-payload': 'Invalid deactivatePersistent payload.',
+  'invalid-clear-spy-payload': 'Invalid clearSpy payload.',
   'invalid-resolve-sub-choice-payload': 'Invalid resolveSubChoice payload.',
   'invalid-add-bot-payload': 'Invalid addBot payload.',
   'invalid-remove-bot-payload': 'Invalid removeBot payload.',

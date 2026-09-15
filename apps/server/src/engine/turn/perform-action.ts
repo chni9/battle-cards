@@ -90,6 +90,8 @@ export type TurnAction =
   | { type: 'buyUpgradePoint' }
   | { type: 'sellUpgradePoint' }
   | { type: 'buySpecialCard' }
+  | { type: 'buyPoolCard' }
+  | { type: 'clearSpy'; targetPlayerId: string }
   | { type: 'deactivatePersistent'; effectId: string }
   | { type: 'activateDuplication' };
 
@@ -103,6 +105,8 @@ export type PublicActionKind =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
+  | 'buyPoolCard'
+  | 'clearSpy'
   | 'deactivatePersistent'
   | 'activateDuplication';
 
@@ -332,6 +336,10 @@ function performPreparedTurnAction(
       cardId: bought.instance.cardId,
       turnSequence: state.turnSequence,
     };
+  } else if (action.type === 'buyPoolCard') {
+    return actionReject('play-not-legal');
+  } else if (action.type === 'clearSpy') {
+    return actionReject('play-not-legal');
   } else if (action.type === 'deactivatePersistent') {
     const deactivated = deactivatePersistentAction(state, actorPlayerId, action.effectId);
 

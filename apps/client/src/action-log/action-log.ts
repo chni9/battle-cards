@@ -129,6 +129,22 @@ function formatPlayedActionSegments(
       return [actor, text(' upgraded a card')];
     case 'buySpecialCard':
       return [actor, text(' bought a special card')];
+    case 'buyPoolCard':
+      return [
+        actor,
+        text(' bought '),
+        ...(entry.cardId !== undefined
+          ? [cardName(entry.cardId, entry.isUpgraded ?? false), text(' from the pool')]
+          : [text('a card from the pool')]),
+      ];
+    case 'clearSpy':
+      return [
+        actor,
+        text(' unspied '),
+        ...(entry.targetPlayerId !== undefined
+          ? [player(entry.targetPlayerId, nicknameOf)]
+          : [text('a spy')]),
+      ];
     case 'buyUpgradePoint':
       return [actor, text(' bought an upgrade point')];
     case 'sellUpgradePoint':

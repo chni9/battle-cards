@@ -33,6 +33,8 @@ export const UPGRADE_CARD = 'upgradeCard';
 export const BUY_UPGRADE_POINT = 'buyUpgradePoint';
 export const SELL_UPGRADE_POINT = 'sellUpgradePoint';
 export const BUY_SPECIAL_CARD = 'buySpecialCard';
+export const BUY_POOL_CARD = 'buyPoolCard';
+export const CLEAR_SPY = 'clearSpy';
 export const DEACTIVATE_PERSISTENT = 'deactivatePersistent';
 export const ACTIVATE_DUPLICATION = 'activateDuplication';
 export const ERROR_MESSAGE = 'error';
@@ -78,6 +80,8 @@ export type PublicActionKind =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
+  | 'buyPoolCard'
+  | 'clearSpy'
   | 'deactivatePersistent'
   | 'activateDuplication';
 
@@ -161,6 +165,11 @@ export interface UpgradeCardPayload {
 
 export interface DeactivatePersistentPayload {
   effectId: string;
+}
+
+/** PROTOCOL_VERSION 32 / L58-02 — drop one living opponent's Spy on you. */
+export interface ClearSpyPayload {
+  targetPlayerId: string;
 }
 
 export interface ChooseMirrorTargetPayload {
@@ -297,6 +306,8 @@ export interface ClientToServerMessages {
   [BUY_UPGRADE_POINT]: undefined;
   [SELL_UPGRADE_POINT]: undefined;
   [BUY_SPECIAL_CARD]: undefined;
+  [BUY_POOL_CARD]: undefined;
+  [CLEAR_SPY]: ClearSpyPayload;
   [DEACTIVATE_PERSISTENT]: DeactivatePersistentPayload;
   [ACTIVATE_DUPLICATION]: undefined;
   [RESOLVE_SUB_CHOICE]: ResolveSubChoicePayload;

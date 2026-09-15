@@ -262,6 +262,59 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(view.self.lives).toBe(state.players.find((player) => player.id === 'a')?.lives);
   });
 
+  it('exposes poolBuyCost at 1 on a fresh game (L58-02)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l58-02-pool-cost',
+    });
+    expect(state.poolBuyCost).toBe(1);
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(view.poolBuyCost).toBe(1);
+  });
+
+  it('sets spyingOnYou only on seats that spy the recipient (L58-02)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'l58-02-spying-on-you',
+    });
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+
+    const aliceView = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(aliceView.players.find((player) => player.id === 'b')?.spyingOnYou).toBe(true);
+    expect(aliceView.players.find((player) => player.id === 'c')?.spyingOnYou).toBeUndefined();
+    expect(aliceView.players.find((player) => player.id === 'a')?.spyingOnYou).toBeUndefined();
+
+    const bobView = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(bobView.players.find((player) => player.id === 'a')?.spyingOnYou).toBeUndefined();
+  });
+
   it('exposes active persistents on self and every public seat', () => {
     const state = createInitialState({
       seats: [
