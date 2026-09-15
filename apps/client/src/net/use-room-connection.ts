@@ -30,6 +30,7 @@ import {
   REMOVE_BOT,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  SET_READY,
   SET_BOT_DIFFICULTY,
   UPGRADE_CARD,
   START_GAME,
@@ -159,6 +160,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   removeBot: (playerId: string) => void;
   kickPlayer: (playerId: string) => void;
   playAgain: () => void;
+  setReady: (ready: boolean) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   chooseKit: (selection: LobbyKitSelection) => void;
   drawCard: () => void;
@@ -495,6 +497,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(PLAY_AGAIN);
   }, []);
 
+  const setReady = useCallback((ready: boolean): void => {
+    roomRef.current?.send(SET_READY, { ready });
+  }, []);
+
   const setBotDifficulty = useCallback(
     (playerId: string, difficulty: BotDifficulty): void => {
       roomRef.current?.send(SET_BOT_DIFFICULTY, { playerId, difficulty });
@@ -657,6 +663,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     removeBot,
     kickPlayer,
     playAgain,
+    setReady,
     setBotDifficulty,
     chooseKit,
     drawCard,

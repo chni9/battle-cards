@@ -39,6 +39,7 @@ function GameApp() {
     startTutorialGame,
     addBot,
     kickPlayer,
+    setReady,
     setBotDifficulty,
     chooseKit,
     drawCard,
@@ -129,6 +130,7 @@ function GameApp() {
         }}
         onAddBot={addBot}
         onKickPlayer={kickPlayer}
+        onSetReady={setReady}
         onSetBotDifficulty={setBotDifficulty}
         onChooseKit={chooseKit}
       />

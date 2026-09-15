@@ -6,7 +6,6 @@
 import {
   BOT_DIFFICULTIES,
   MAX_PLAYERS,
-  MIN_PLAYERS,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
@@ -22,6 +21,11 @@ import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
+import {
+  lobbyReadyLabel,
+  lobbyShowsReadyToggle,
+  lobbyStartEnabled,
+} from './lobby-ready';
 import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
@@ -32,6 +36,7 @@ export interface LobbyScreenProps {
   onLeave: () => void;
   onAddBot: (difficulty: BotDifficulty) => void;
   onKickPlayer: (playerId: string) => void;
+  onSetReady: (ready: boolean) => void;
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   onChooseKit: (selection: LobbyKitSelection) => void;
 }
@@ -44,11 +49,14 @@ export function LobbyScreen({
   onLeave,
   onAddBot,
   onKickPlayer,
+  onSetReady,
   onSetBotDifficulty,
   onChooseKit,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
-  const canLaunch = isHost && view.players.length >= MIN_PLAYERS;
+  const canLaunch = isHost && lobbyStartEnabled(view);
+  const showReadyToggle = lobbyShowsReadyToggle(view);
+  const youReady = view.players.find((player) => player.id === view.you)?.isReady === true;
   const canAddBot = isHost && view.players.length < MAX_PLAYERS;
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
@@ -153,6 +161,9 @@ export function LobbyScreen({
                   {player.isBot && player.botDifficulty !== undefined && (
                     <BotSeatLabel difficulty={player.botDifficulty} />
                   )}
+                  <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                    {lobbyReadyLabel(player.isReady)}
+                  </span>
                 </div>
                 {isHost && player.id !== view.you && (
                   <div className="flex flex-wrap gap-2">
@@ -223,9 +234,25 @@ export function LobbyScreen({
               Start game
             </Button>
           )}
-          {!isHost && (
+          {showReadyToggle && (
+            <Button
+              type="button"
+              variant={youReady ? 'green' : 'orange'}
+              onClick={() => {
+                onSetReady(!youReady);
+              }}
+            >
+              {youReady ? 'Cancel ready' : 'Ready'}
+            </Button>
+          )}
+          {!isHost && !showReadyToggle && (
             <p className="self-center text-sm text-ink-muted">
               Waiting for the host to start…
+            </p>
+          )}
+          {!isHost && showReadyToggle && (
+            <p className="self-center text-sm text-ink-muted">
+              {youReady ? 'Waiting for the host to start…' : 'Press Ready when you are set.'}
             </p>
           )}
           <Button type="button" variant="red" onClick={onLeave}>
