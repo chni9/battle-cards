@@ -817,6 +817,7 @@ function TableScreenInner({
     subChoice?.kind === 'mirror' ? subChoice.eligibleEffectIds : [];
 
   const isMyTurn = view.currentTurnPlayerId === view.you;
+  const walkInSpectator = view.isSpectator === true;
   const selfPublic = view.players.find((player) => player.isYou);
   const povSeat = seatIndexOf(view, view.you);
   const dockStyle =
@@ -832,6 +833,7 @@ function TableScreenInner({
     readOnly,
     selfEliminated,
     playKind: view.playKind,
+    ...(walkInSpectator ? { isSpectator: true } : {}),
   });
   const flagAria = tableFlagAriaLabel(flagIntent, {
     forfeit: FORFEIT_ARIA_LABEL,
@@ -839,7 +841,7 @@ function TableScreenInner({
     returnHome: RETURN_HOME_ARIA_LABEL,
     skipTutorial: SKIP_TUTORIAL_ARIA_LABEL,
   });
-  const actionsLocked = readOnly || subChoice !== null || selfEliminated;
+  const actionsLocked = readOnly || subChoice !== null || selfEliminated || walkInSpectator;
   const tutorialIndex = view.playKind === 'tutorial' ? view.tutorialIndex : null;
   const tourActive = isTutorialTourActive(tutorialIndex, tourStep);
   const lookPending =
@@ -1009,8 +1011,8 @@ function TableScreenInner({
   const currentHint = selectHint({
     playKind: view.playKind,
     readOnly,
-    selfEliminated,
-    isMyTurn: isMyTurn && !readOnly && !selfEliminated,
+    selfEliminated: selfEliminated || walkInSpectator,
+    isMyTurn: isMyTurn && !readOnly && !selfEliminated && !walkInSpectator,
     skipAll: hintState.skipAll,
     dismissed: hintState.dismissed,
     hasIncomingAttack,
@@ -1293,6 +1295,13 @@ function TableScreenInner({
                 return home.
               </p>
             </section>
+          ) : walkInSpectator ? (
+            <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
+              <h2 className="text-sm font-semibold">Watching</h2>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                You can see every hand. Claim a disconnected seat or leave the table.
+              </p>
+            </section>
           ) : selfEliminated ? (
             <section className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-2">
               <h2 className="text-sm font-semibold">Eliminated</h2>
@@ -1362,6 +1371,12 @@ function TableScreenInner({
           </TutorialZoneCallout>
         }
         privateZone={
+          walkInSpectator ? (
+            <section className="flex h-full min-h-0 items-center justify-center p-4 text-center text-sm text-ink-muted">
+              Watching this table. Hands and kits are visible the same way as an eliminated
+              player.
+            </section>
+          ) : (
           <TutorialZoneCallout
             active={tourHighlight === 'your-zone'}
             highlightId="your-zone"
@@ -1416,6 +1431,7 @@ function TableScreenInner({
               }}
             />
           </TutorialZoneCallout>
+          )
         }
         economy={
           <EconomyBar

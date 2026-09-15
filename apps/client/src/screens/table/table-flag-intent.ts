@@ -16,6 +16,7 @@ export function tableFlagIntent(input: {
   readOnly: boolean;
   selfEliminated: boolean;
   playKind?: PlayKind;
+  isSpectator?: boolean;
 }): TableFlagIntent {
   if (input.readOnly) {
     return 'returnHome';
@@ -23,7 +24,7 @@ export function tableFlagIntent(input: {
   if (input.playKind === 'tutorial') {
     return 'skipTutorial';
   }
-  if (input.selfEliminated) {
+  if (input.selfEliminated || input.isSpectator === true) {
     return 'leaveTable';
   }
   return 'forfeit';

@@ -73,6 +73,16 @@ export interface LobbyStateView {
    * Other seats' choices are omitted from this view entirely.
    */
   yourKitSelection: LobbyKitSelection;
+  /**
+   * Walk-in watcher waiting to claim a reserved lobby seat (PROTOCOL_VERSION 32 / L57-13).
+   * Omit on seated recipients.
+   */
+  isSpectator?: true;
+  /**
+   * Disconnected human seats this recipient may `claimSeat`.
+   * Empty / omitted when none.
+   */
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 /** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */

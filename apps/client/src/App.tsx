@@ -4,9 +4,11 @@
  * Inbox is pathname `/inbox`, not a game phase (technical spec v6 §7.3 / L47-05).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useRoomConnection } from './net/use-room-connection';
+import { ClaimSeatDialog } from './screens/claim-seat-dialog';
+import { claimStayLabel } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
 import { InboxScreen } from './screens/inbox';
@@ -41,6 +43,7 @@ function GameApp() {
     kickPlayer,
     setReady,
     playAgain,
+    claimSeat,
     setBotDifficulty,
     chooseKit,
     drawCard,
@@ -62,6 +65,16 @@ function GameApp() {
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [claimDismissedKey, setClaimDismissedKey] = useState<string | null>(null);
+
+  const claimableSeats = view?.claimableSeats ?? [];
+  const claimableKey = claimableSeats.map((seat) => seat.playerId).join('|');
+  const showClaimPicker = claimableSeats.length > 0 && claimDismissedKey !== claimableKey;
+  const walkInSpectator = view?.isSpectator === true;
+  const claimPlayerIds = useMemo(
+    () => (view === null ? [] : view.players.map((player) => player.id)),
+    [view],
+  );
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -73,75 +86,104 @@ function GameApp() {
     };
   }, []);
 
+  const claimDialog =
+    view !== null && showClaimPicker ? (
+      <ClaimSeatDialog
+        open
+        seats={claimableSeats}
+        playerIds={claimPlayerIds}
+        stayLabel={claimStayLabel({
+          isSpectator: walkInSpectator,
+          phase: view.phase,
+        })}
+        {...(view.phase === 'lobby' ? { hostPlayerId: view.hostPlayerId } : {})}
+        onClaim={(playerId) => {
+          claimSeat(playerId);
+        }}
+        onStay={() => {
+          setClaimDismissedKey(claimableKey);
+        }}
+      />
+    ) : null;
+
   if (view?.phase === 'finished') {
     return (
-      <EndScreen
-        view={view}
-        actionReject={actionReject}
-        onDismissActionReject={clearActionReject}
-        statusLabel={STATUS_LABELS[status]}
-        nowMs={nowMs}
-        onLeave={() => {
-          void leaveGame();
-        }}
-        {...(view.playKind === 'classic'
-          ? {
-              onPlayAgain: () => {
-                playAgain();
-              },
-            }
-          : {})}
-      />
+      <>
+        <EndScreen
+          view={view}
+          actionReject={actionReject}
+          onDismissActionReject={clearActionReject}
+          statusLabel={STATUS_LABELS[status]}
+          nowMs={nowMs}
+          onLeave={() => {
+            void leaveGame();
+          }}
+          {...(view.playKind === 'classic' && !walkInSpectator
+            ? {
+                onPlayAgain: () => {
+                  playAgain();
+                },
+              }
+            : {})}
+        />
+        {claimDialog}
+      </>
     );
   }
 
   if (view?.phase === 'playing') {
     return (
-      <TableScreen
-        view={view}
-        actionReject={actionReject}
-        onDismissActionReject={clearActionReject}
-        statusLabel={STATUS_LABELS[status]}
-        nowMs={nowMs}
-        deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
-        lastActionResolved={lastActionResolved}
-        subChoice={subChoice}
-        onDraw={drawCard}
-        onPlayCard={playCard}
-        onPlayMultipleAttacks={playMultipleAttacks}
-        onResolveSubChoice={resolveSubChoice}
-        onBuyCard={buyCard}
-        onSellCard={sellCard}
-        onUpgradeCard={upgradeCard}
-        onBuyUpgradePoint={buyUpgradePoint}
-        onBuySpecialCard={buySpecialCard}
-        onSellUpgradePoint={sellUpgradePoint}
-        onDeactivatePersistent={deactivatePersistent}
-        onActivateDuplication={activateDuplication}
-        onLeave={() => {
-          void leaveGame();
-        }}
-        onForfeit={forfeit}
-      />
+      <>
+        <TableScreen
+          view={view}
+          actionReject={actionReject}
+          onDismissActionReject={clearActionReject}
+          statusLabel={STATUS_LABELS[status]}
+          nowMs={nowMs}
+          deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
+          lastActionResolved={lastActionResolved}
+          subChoice={subChoice}
+          onDraw={drawCard}
+          onPlayCard={playCard}
+          onPlayMultipleAttacks={playMultipleAttacks}
+          onResolveSubChoice={resolveSubChoice}
+          onBuyCard={buyCard}
+          onSellCard={sellCard}
+          onUpgradeCard={upgradeCard}
+          onBuyUpgradePoint={buyUpgradePoint}
+          onBuySpecialCard={buySpecialCard}
+          onSellUpgradePoint={sellUpgradePoint}
+          onDeactivatePersistent={deactivatePersistent}
+          onActivateDuplication={activateDuplication}
+          onLeave={() => {
+            void leaveGame();
+          }}
+          onForfeit={forfeit}
+        />
+        {claimDialog}
+      </>
     );
   }
 
   if (view?.phase === 'lobby' && !soloLaunchPending) {
     return (
-      <LobbyScreen
-        view={view}
-        status={status}
-        error={error}
-        onStart={startGame}
-        onLeave={() => {
-          void leaveGame();
-        }}
-        onAddBot={addBot}
-        onKickPlayer={kickPlayer}
-        onSetReady={setReady}
-        onSetBotDifficulty={setBotDifficulty}
-        onChooseKit={chooseKit}
-      />
+      <>
+        <LobbyScreen
+          view={view}
+          status={status}
+          error={error}
+          onStart={startGame}
+          onLeave={() => {
+            void leaveGame();
+          }}
+          onAddBot={addBot}
+          onKickPlayer={kickPlayer}
+          onSetReady={setReady}
+          onSetBotDifficulty={setBotDifficulty}
+          onChooseKit={chooseKit}
+        />
+        {claimDialog}
+      </>
     );
   }
 

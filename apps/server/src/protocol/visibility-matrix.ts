@@ -37,13 +37,19 @@ export function isEliminatedSpectator(player: Player): boolean {
 
 /**
  * True when `viewerId` may see `subjectId`'s private kit / hand / live resources
- * and Spy-gated log lines: real Spy relation **or** eliminated spectator overlay.
+ * and Spy-gated log lines: real Spy relation, eliminated spectator overlay, or
+ * a walk-in spectator (same overlay — L57-13).
  */
 export function recipientSeesPrivateOf(
   state: GameState,
   viewerId: string,
   subjectId: string,
+  walkInSpectator = false,
 ): boolean {
+  if (walkInSpectator) {
+    return true;
+  }
+
   if (viewerId === subjectId) {
     return true;
   }

@@ -7,16 +7,17 @@ import type { PendingEffect, PersistentEffect } from './effect';
 import type { KitId } from './kit';
 
 /**
- * Technical spec §5.7. `disconnected` is the 60-second grace window; once it expires
- * the player becomes `absent` and draws immediately on each of their turns. An absent
- * or inactive player stays a valid target throughout — no immunity.
+ * Technical spec §5.7. `disconnected` is the 30-second grace window (L57-13;
+ * overrides v1 §5.7 60s); once it expires the player becomes `absent` and draws
+ * immediately on each of their turns. An absent or inactive player stays a valid
+ * target throughout — no immunity. The third absent autodraw eliminates them.
  */
 export type ConnectionStatus = 'connected' | 'disconnected' | 'absent';
 
 export interface ConnectionState {
   status: ConnectionStatus;
   /**
-   * Epoch milliseconds when the 60-second reconnection window started, or `null` while
+   * Epoch milliseconds when the 30-second reconnection window started, or `null` while
    * connected. Real time, independent of whose turn it is.
    */
   disconnectedAt: number | null;

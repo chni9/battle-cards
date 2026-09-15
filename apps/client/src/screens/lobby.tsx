@@ -54,6 +54,7 @@ export function LobbyScreen({
   onChooseKit,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
+  const walkInSpectator = view.isSpectator === true;
   const canLaunch = isHost && lobbyStartEnabled(view);
   const showReadyToggle = lobbyShowsReadyToggle(view);
   const youReady = view.players.find((player) => player.id === view.you)?.isReady === true;
@@ -114,6 +115,14 @@ export function LobbyScreen({
           )}
         </section>
 
+        {walkInSpectator ? (
+          <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
+            <h2 className="text-sm font-medium text-ink-muted">Watching the lobby</h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Claim a disconnected seat if one is listed, or leave and join again later.
+            </p>
+          </section>
+        ) : (
         <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
           <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
           <p className="mt-1 text-sm text-ink-muted">Hidden from opponents until Spy or death.</p>
@@ -137,6 +146,7 @@ export function LobbyScreen({
             </div>
           </div>
         </section>
+        )}
 
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-ink">

@@ -15,6 +15,7 @@
 import type {
   ActionLogEntryView,
   BotDifficulty,
+  ClaimableSeatView,
   EliminationRevealView,
   ExportTurnRowView,
   FinishedStateView,
@@ -37,6 +38,43 @@ import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { isAbsorbWindowOpen } from '../engine/turn/absorb-window';
 import { findSpyRelation, isEliminatedSpectator, recipientSeesPrivateOf } from './visibility-matrix';
+
+/**
+ * Type filler for walk-in spectators (L57-13). The client hides the private dock
+ * when `isSpectator` is set; this is never a seated kit.
+ */
+const EMPTY_SPECTATOR_SELF: PrivateSelfView = {
+  lives: 0,
+  shield: 0,
+  shieldIsUpgraded: false,
+  points: 0,
+  upgradePoints: 0,
+  kitId: 'untouchable',
+  hand: [],
+  specialCards: [],
+  activePersistentEffects: [],
+  attackBlockCharges: 0,
+};
+
+function withSpectatorFields<T extends object>(
+  view: T,
+  input: {
+    walkInSpectator?: boolean;
+    claimableSeats?: readonly ClaimableSeatView[];
+  },
+): T {
+  const extra: { isSpectator?: true; claimableSeats?: readonly ClaimableSeatView[] } = {};
+
+  if (input.walkInSpectator === true) {
+    extra.isSpectator = true;
+  }
+
+  if (input.claimableSeats !== undefined && input.claimableSeats.length > 0) {
+    extra.claimableSeats = input.claimableSeats;
+  }
+
+  return { ...view, ...extra };
+}
 
 function mapPersistentEffects(
   effects: GameState['players'][number]['activePersistentEffects'],
@@ -79,36 +117,46 @@ export interface LobbyViewInput {
   seats: readonly LobbySeatView[];
   /** Recipient's own pick only — never a map of every seat (L49-01). */
   yourKitSelection: LobbyKitSelection;
+  /** Walk-in lobby watcher (L57-13). Omit for seated recipients. */
+  isSpectator?: true;
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
   const { recipientSessionId, gameCode, hostPlayerId, seats, yourKitSelection } = input;
+  const walkInSpectator = input.isSpectator === true;
 
-  if (!seats.some((seat) => seat.id === recipientSessionId)) {
+  if (!walkInSpectator && !seats.some((seat) => seat.id === recipientSessionId)) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
 
-  return {
-    phase: 'lobby',
-    you: recipientSessionId,
-    gameCode,
-    hostPlayerId,
-    yourKitSelection,
-    players: seats.map((seat) => {
-      const view: LobbySeatView = {
-        id: seat.id,
-        nickname: seat.nickname,
-        isBot: seat.isBot,
-        isReady: seat.isReady,
-      };
+  return withSpectatorFields(
+    {
+      phase: 'lobby',
+      you: recipientSessionId,
+      gameCode,
+      hostPlayerId,
+      yourKitSelection,
+      players: seats.map((seat) => {
+        const view: LobbySeatView = {
+          id: seat.id,
+          nickname: seat.nickname,
+          isBot: seat.isBot,
+          isReady: seat.isReady,
+        };
 
-      if (seat.botDifficulty !== undefined) {
-        view.botDifficulty = seat.botDifficulty;
-      }
+        if (seat.botDifficulty !== undefined) {
+          view.botDifficulty = seat.botDifficulty;
+        }
 
-      return view;
-    }),
-  };
+        return view;
+      }),
+    },
+    {
+      walkInSpectator,
+      ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
+    },
+  );
 }
 
 export interface PlayingViewInput {
@@ -123,21 +171,25 @@ export interface PlayingViewInput {
   playKind?: PlayKind;
   /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
   tutorialIndex?: number | null;
+  /** Walk-in Classic spectator (L57-13). Same vision as an eliminated spectator. */
+  walkInSpectator?: true;
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 function buildSpiedView(
   state: GameState,
-  recipient: GameState['players'][number],
+  recipientId: string,
   subject: GameState['players'][number],
+  walkInSpectator: boolean,
 ): SpiedPlayerView | undefined {
-  if (subject.id === recipient.id) {
+  if (subject.id === recipientId) {
     return undefined;
   }
 
-  const relation = findSpyRelation(state, recipient.id, subject.id);
-  // Eliminated spectator (no pending Reanimation): upgraded Spy of every other seat
-  // without writing matrix rows (designer 2026-08-06).
-  const spectatorFullVision = isEliminatedSpectator(recipient);
+  const relation = findSpyRelation(state, recipientId, subject.id);
+  const recipient = state.players.find((player) => player.id === recipientId);
+  const spectatorFullVision =
+    walkInSpectator || (recipient !== undefined && isEliminatedSpectator(recipient));
 
   if (relation === undefined && !spectatorFullVision) {
     return undefined;
@@ -171,10 +223,11 @@ function mapActionLogForRecipient(
   actionLog: readonly ActionLogEntryView[],
   recipientSessionId: string,
   state: GameState,
+  walkInSpectator = false,
 ): ActionLogEntryView[] {
   return actionLog.map((entry) => {
     if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
-      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId)) {
+      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
         return entry;
       }
 
@@ -222,9 +275,10 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     input;
   const playKind = input.playKind ?? 'classic';
   const tutorialIndex = input.tutorialIndex ?? null;
+  const walkInSpectator = input.walkInSpectator === true;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
-  if (selfPlayer === undefined) {
+  if (selfPlayer === undefined && !walkInSpectator) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
 
@@ -242,7 +296,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   );
 
   const players: PublicPlayerView[] = state.players.map((player) => {
-    const spied = buildSpiedView(state, selfPlayer, player);
+    const spied = buildSpiedView(state, recipientSessionId, player, walkInSpectator);
     const eliminationReveal = buildEliminationReveal(player);
     const difficulty = botDifficulties?.get(player.id);
     const isBot = difficulty !== undefined;
@@ -250,7 +304,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       id: player.id,
       nickname: player.nickname,
       isEliminated: player.isEliminated,
-      isYou: player.id === recipientSessionId,
+      isYou: !walkInSpectator && player.id === recipientSessionId,
       isBot,
       connection: {
         status: player.connectionState.status,
@@ -291,35 +345,49 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
     return view;
   });
 
-  const self: PrivateSelfView = {
-    lives: selfPlayer.lives,
-    shield: selfPlayer.shield,
-    shieldIsUpgraded: selfPlayer.shieldIsUpgraded,
-    points: selfPlayer.points,
-    upgradePoints: selfPlayer.upgradePoints,
-    kitId: selfPlayer.kitId,
-    hand: selfPlayer.hand.map((card) => ({ ...card })),
-    specialCards: selfPlayer.specialCards.map((card) => ({ ...card })),
-    activePersistentEffects: mapPersistentEffects(selfPlayer.activePersistentEffects),
-    attackBlockCharges: selfPlayer.attackBlockCharges,
-  };
+  const self: PrivateSelfView =
+    selfPlayer === undefined
+      ? EMPTY_SPECTATOR_SELF
+      : {
+          lives: selfPlayer.lives,
+          shield: selfPlayer.shield,
+          shieldIsUpgraded: selfPlayer.shieldIsUpgraded,
+          points: selfPlayer.points,
+          upgradePoints: selfPlayer.upgradePoints,
+          kitId: selfPlayer.kitId,
+          hand: selfPlayer.hand.map((card) => ({ ...card })),
+          specialCards: selfPlayer.specialCards.map((card) => ({ ...card })),
+          activePersistentEffects: mapPersistentEffects(selfPlayer.activePersistentEffects),
+          attackBlockCharges: selfPlayer.attackBlockCharges,
+        };
 
-  return {
-    phase: 'playing',
-    you: recipientSessionId,
-    gameCode,
-    currentTurnPlayerId: state.currentTurnPlayerId,
-    turnSequence: state.turnSequence,
-    turnOrder: state.players.map((player) => player.id),
-    turnDeadlineMs,
-    players,
-    self,
-    pendingEffects,
-    actionLog: mapActionLogForRecipient(actionLog, recipientSessionId, state),
-    pool: state.pool.map((card) => ({ ...card })),
-    playKind,
-    tutorialIndex,
-  };
+  return withSpectatorFields(
+    {
+      phase: 'playing',
+      you: recipientSessionId,
+      gameCode,
+      currentTurnPlayerId: state.currentTurnPlayerId,
+      turnSequence: state.turnSequence,
+      turnOrder: state.players.map((player) => player.id),
+      turnDeadlineMs,
+      players,
+      self,
+      pendingEffects,
+      actionLog: mapActionLogForRecipient(
+        actionLog,
+        recipientSessionId,
+        state,
+        walkInSpectator,
+      ),
+      pool: state.pool.map((card) => ({ ...card })),
+      playKind,
+      tutorialIndex,
+    },
+    {
+      walkInSpectator,
+      ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
+    },
+  );
 }
 
 export interface FinishedViewInput {
@@ -336,6 +404,8 @@ export interface FinishedViewInput {
   playKind?: PlayKind;
   /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
   tutorialIndex?: number | null;
+  walkInSpectator?: true;
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 export function buildGameRecapView(
@@ -377,14 +447,10 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
   } = input;
   const playKind = input.playKind ?? 'classic';
   const tutorialIndex = input.tutorialIndex ?? null;
-
-  if (!state.players.some((player) => player.id === recipientSessionId)) {
-    throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
-  }
-
+  const walkInSpectator = input.walkInSpectator === true;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
-  if (selfPlayer === undefined) {
+  if (selfPlayer === undefined && !walkInSpectator) {
     throw new Error(`Cannot build a view for ${recipientSessionId}: not in the room`);
   }
 
@@ -403,61 +469,73 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     playKind,
     tutorialIndex,
     ...(botDifficulties !== undefined ? { botDifficulties } : {}),
+    ...(walkInSpectator ? { walkInSpectator: true } : {}),
+    ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
   });
 
-  return {
-    phase: 'finished',
-    you: recipientSessionId,
-    gameCode,
-    winnerPlayerId,
-    finalTable,
-    players: state.players.map((player) => {
-      const difficulty = botDifficulties?.get(player.id);
-      const eliminationReveal = buildEliminationReveal(player);
-      const spied = buildSpiedView(state, selfPlayer, player);
-      const view: PublicPlayerView = {
-        id: player.id,
-        nickname: player.nickname,
-        isEliminated: player.isEliminated,
-        isYou: player.id === recipientSessionId,
-        isBot: difficulty !== undefined,
-        connection: {
-          status: player.connectionState.status,
-          disconnectedAt: player.connectionState.disconnectedAt,
-          automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
-          consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
-        },
-        activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
-        activeShield:
-          player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
-        blockTurnsRemaining: player.blockTurnsRemaining,
-        blockAttacksForbidden: player.blockAttacksForbidden,
-        activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
-        duplicationActive: duplicationActiveForRecipient(
-          player,
-          recipientSessionId,
-          spied,
-        ),
-        pendingReanimation:
-          player.pendingReanimation === null
-            ? null
-            : { isUpgraded: player.pendingReanimation.isUpgraded },
-        absorbWindowOpen: isAbsorbWindowOpen(player),
-      };
+  return withSpectatorFields(
+    {
+      phase: 'finished',
+      you: recipientSessionId,
+      gameCode,
+      winnerPlayerId,
+      finalTable,
+      players: state.players.map((player) => {
+        const difficulty = botDifficulties?.get(player.id);
+        const eliminationReveal = buildEliminationReveal(player);
+        const spied = buildSpiedView(state, recipientSessionId, player, walkInSpectator);
+        const view: PublicPlayerView = {
+          id: player.id,
+          nickname: player.nickname,
+          isEliminated: player.isEliminated,
+          isYou: !walkInSpectator && player.id === recipientSessionId,
+          isBot: difficulty !== undefined,
+          connection: {
+            status: player.connectionState.status,
+            disconnectedAt: player.connectionState.disconnectedAt,
+            automaticTurnsTaken: player.connectionState.automaticTurnsTaken,
+            consecutiveTimeouts: player.connectionState.consecutiveTimeouts,
+          },
+          activePersistentEffects: mapPersistentEffects(player.activePersistentEffects),
+          activeShield:
+            player.shield > 0 ? { isUpgraded: player.shieldIsUpgraded } : null,
+          blockTurnsRemaining: player.blockTurnsRemaining,
+          blockAttacksForbidden: player.blockAttacksForbidden,
+          activeAttackBlock: player.attackBlockCharges > 0 ? true : null,
+          duplicationActive: duplicationActiveForRecipient(
+            player,
+            recipientSessionId,
+            spied,
+          ),
+          pendingReanimation:
+            player.pendingReanimation === null
+              ? null
+              : { isUpgraded: player.pendingReanimation.isUpgraded },
+          absorbWindowOpen: isAbsorbWindowOpen(player),
+        };
 
-      if (difficulty !== undefined) {
-        view.botDifficulty = difficulty;
-      }
+        if (difficulty !== undefined) {
+          view.botDifficulty = difficulty;
+        }
 
-      if (eliminationReveal !== undefined) {
-        view.eliminationReveal = eliminationReveal;
-      }
+        if (spied !== undefined) {
+          view.spied = spied;
+        }
 
-      return view;
-    }),
-    recap: buildGameRecapView(state, actionLog, eliminations),
-    exportLog,
-    playKind,
-    tutorialIndex,
-  };
+        if (eliminationReveal !== undefined) {
+          view.eliminationReveal = eliminationReveal;
+        }
+
+        return view;
+      }),
+      recap: buildGameRecapView(state, actionLog, eliminations),
+      exportLog,
+      playKind,
+      tutorialIndex,
+    },
+    {
+      walkInSpectator,
+      ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
+    },
+  );
 }
