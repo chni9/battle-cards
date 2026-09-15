@@ -184,6 +184,7 @@ import {
 } from './last-human-leave';
 import {
   canPlayAgain,
+  canSeatSpectatorAsLobbyGuest,
   optedInHumanIdsInPriorOrder,
   playAgainRejectionMessage,
   recapHumanSeats,
@@ -1128,6 +1129,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     if (first) {
       this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
       this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
+      this.seatWalkInSpectatorsAsLobbyGuests();
     } else {
       const recapIndex = this.recapSeats.findIndex((seat) => seat.sessionId === playerId);
 
@@ -1156,6 +1158,30 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.refreshAutoDispose();
     this.sendStateToEveryone();
+  }
+
+  private seatWalkInSpectatorsAsLobbyGuests(): void {
+    for (const client of this.clients) {
+      if (!this.spectators.has(client.sessionId)) {
+        continue;
+      }
+
+      if (!canSeatSpectatorAsLobbyGuest(this.seats.length)) {
+        break;
+      }
+
+      const nickname = this.spectatorNicknames.get(client.sessionId);
+
+      if (nickname === undefined) {
+        continue;
+      }
+
+      this.spectators.delete(client.sessionId);
+      this.spectatorNicknames.delete(client.sessionId);
+      this.bindSession(client.sessionId, client.sessionId);
+      this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
+      this.guestReady.set(client.sessionId, false);
+    }
   }
 
   private handleKickPlayer(client: GameClient, payload: unknown): void {

@@ -9,7 +9,7 @@ import {
   type PlayKind,
 } from '@card-battle/shared';
 
-import { isBotSeat, isHumanSeat, type HumanSeat, type Seat } from './seats';
+import { isBotSeat, isHumanSeat, occupancyIsFull, type HumanSeat, type Seat } from './seats';
 
 export type PlayAgainRejection = 'not-finished' | 'tutorial';
 
@@ -89,4 +89,9 @@ export function recapHumanSeats(
 /** One write per finished match; the next Start is a new persist. */
 export function shouldPersistFinishedGame(alreadyPersisted: boolean): boolean {
   return !alreadyPersisted;
+}
+
+/** Walk-in watchers sit as guests while Classic occupancy still has a free seat (L57-14). */
+export function canSeatSpectatorAsLobbyGuest(seatCount: number): boolean {
+  return !occupancyIsFull(seatCount);
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canPlayAgain,
+  canSeatSpectatorAsLobbyGuest,
   optedInHumanIdsInPriorOrder,
   playAgainRejectionMessage,
   recapHumanSeats,
@@ -81,5 +82,11 @@ describe('play again (L57-10)', () => {
   it('writes the finished game once per match', () => {
     expect(shouldPersistFinishedGame(false)).toBe(true);
     expect(shouldPersistFinishedGame(true)).toBe(false);
+  });
+
+  it('seats walk-in spectators only while occupancy is below MAX_PLAYERS (L57-14)', () => {
+    expect(canSeatSpectatorAsLobbyGuest(1)).toBe(true);
+    expect(canSeatSpectatorAsLobbyGuest(7)).toBe(true);
+    expect(canSeatSpectatorAsLobbyGuest(8)).toBe(false);
   });
 });

@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-99 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+100 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 
 | Lot | Tasks | Done |
