@@ -1016,4 +1016,17 @@ did not appear on this table.
   after “Prices are double the play cost” (Lot 56, not Lot 58).
 - `pnpm verify` **1316** tests.
 
+### Lot 58 designer follow-up verified 2026-09-15 (browser, PROTOCOL 32)
+
+Two-tab Classic, Vite `:5173`, Colyseus `:2567`, room `WYZIDP`. Host nick
+`L58HostF` Tactician, guest `L58GuestF` Kamikaze.
+
+- Shop: **Upgrade points** title plus the upgrade-point icon; **no** live count.
+  Buy **−10** points and **+1** upgrade-point. Sell **+7** points and **−1**
+  upgrade-point.
+- Unspy picker hint **Choose who is spying you.** (lists the opponent who is
+  spying you, not who you spy). After Confirm, public log
+  `L58HostF got unspied from L58GuestF`; open eye gone; Unspy greys.
+- `pnpm verify` **1318** tests.
+
 
