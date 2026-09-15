@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-93 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+94 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 
 | Lot | Tasks | Done |
@@ -104,7 +104,7 @@ Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
-| 57 · Feedback + lobby rematch | 15 | 7 |
+| 57 · Feedback + lobby rematch | 15 | 8 |
 
 ---
 
@@ -366,7 +366,7 @@ No Slack/mail ping, no rating, no screenshot, no accounts.
 | L57-05 | Ask-mode is the Lot 47 ticket (Kind / About / message / optional contact), including Return home. Title Feedback; lead Skip is fine; Skip still leaves. POST uses the tester's kind/topics (bug ≥1 topic) plus contact when filled. **Acceptance:** ask-mode payload is no longer forced `confusion` / empty topics; dialog source shows Kind / About / Contact with Skip; table `!` unchanged; `pnpm verify` green. | M | Medium | L57-04 | Done |
 | L57-06 | Governance addendum (still Lot 57, not 58): dated `[P]` in `decisions.md`; Lot 57 tasks here; technical spec v6 session + 31 → 32 exception; `AGENTS.md` snapshot. **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Ready/Kick/Play again/spectate-claim stay Lot 57 and v32 is the next bump. | S | Medium | L57-05 | Done |
 | L57-07 | `PROTOCOL_VERSION` **31 → 32**. Messages `setReady`, `kickPlayer`, `playAgain`, `claimSeat`; `LobbySeatView.isReady`; playing/finished `isSpectator` + `claimableSeats`; reject codes for ready/kick/rematch/claim. **Acceptance:** v31 clients fail the mismatch path; exhaustive reject-code test includes the new codes. | M | **High** | L57-06 | Done |
-| L57-08 | Server Ready + `canStartGame` `start-not-all-ready`. Human guests must ready; host implicit; bots ready. Solo/tutorial `startGame` still green. **Acceptance:** helper tests: guest unreadied blocks Start; host+bots starts; host cannot `setReady`. | M | Medium | L57-07 | To do |
+| L57-08 | Server Ready + `canStartGame` `start-not-all-ready`. Human guests must ready; host implicit; bots ready. Solo/tutorial `startGame` still green. **Acceptance:** helper tests: guest unreadied blocks Start; host+bots starts; host cannot `setReady`. | M | Medium | L57-07 | Done |
 | L57-09 | Host Kick any other lobby seat: human drop (clears reservation) + bot `removeBot`; confirm Dialog; kicked copy. **Acceptance:** kick-self / not-host rejected; human can rejoin as a new guest; `pnpm verify` green. | M | Medium | L57-07 | To do |
 | L57-10 | Play again same room/code: reforming per-recipient views; host reclaim; bots persist; persist-once. Tutorial: no Play again. **Acceptance:** first Play again does not yank the other recap; next `startGame` is a new match write. | **L** | **High** | L57-07 | To do |
 | L57-11 | Lobby Ready UI + Start disabled from view facts (connected human guests ready). **Acceptance:** guest sees Ready toggle; host Start grey until guests ready; table `!` unchanged. | M | Low | L57-08 | To do |

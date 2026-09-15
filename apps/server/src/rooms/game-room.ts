@@ -16,6 +16,7 @@ import {
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
+  SET_READY,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -156,14 +157,18 @@ import {
   canChooseKit,
   canRemoveBot,
   canSetBotDifficulty,
+  canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
   collectForcedKitsBySeatId,
   MAX_PLAYERS,
   parseChooseKitPayload,
+  parseSetReadyPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
+  setReadyRejectionMessage,
   startGameRejectionMessage,
+  type HumanGuestReadyState,
 } from './lobby-rules';
 import {
   shouldDisposeLobbyWithOnlyBots,
@@ -201,6 +206,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private hasStarted = false;
   /** Human lobby kit picks — never copied onto other seats' views (L49-01). */
   private readonly kitSelections = new Map<string, LobbyKitSelection>();
+  /** Human guest Ready flags — host implicit, bots always ready (L57-08). */
+  private readonly guestReady = new Map<string, boolean>();
   /** Room-owned teaching overlay — not on GameState (technical spec v6 §5.3 / L41-03). */
   private playKind: PlayKind = 'classic';
   private tutorialIndex: number | null = null;
@@ -378,6 +385,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         hostSessionId,
         seatCount: this.seats.length,
         hasStarted: this.hasStarted,
+        humanGuests: this.humanGuestReadyStates(),
       });
 
       if (rejection !== null) {
@@ -427,6 +435,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [CHOOSE_KIT]: (client: GameClient, payload: unknown): void => {
       this.handleChooseKit(client, payload);
+    },
+
+    [SET_READY]: (client: GameClient, payload: unknown): void => {
+      this.handleSetReady(client, payload);
     },
 
     [DRAW_CARD]: (client: GameClient): void => {
@@ -549,6 +561,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
     this.hostSessionId ??= client.sessionId;
+    this.guestReady.set(client.sessionId, false);
 
     console.log(
       `[${this.roomId}] ${nickname} (${client.sessionId}) joined — ${this.seats.length} seated`,
@@ -637,6 +650,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
     this.kitSelections.delete(client.sessionId);
+    this.guestReady.delete(client.sessionId);
 
     if (this.hostSessionId === client.sessionId) {
       this.hostSessionId = this.seats[0]?.sessionId ?? null;
@@ -917,6 +931,52 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.kitSelections.set(client.sessionId, parsed.value.kitId);
     this.sendStateTo(client);
+  }
+
+  private handleSetReady(client: GameClient, payload: unknown): void {
+    const parsed = parseSetReadyPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const requesterIsHost = client.sessionId === this.hostSessionId;
+    const requesterIsHumanGuest =
+      !requesterIsHost &&
+      this.seats.some((seat) => seat.sessionId === client.sessionId && isHumanSeat(seat));
+
+    const rejection = canSetReady({
+      hasStarted: this.hasStarted,
+      requesterIsHost,
+      requesterIsHumanGuest,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, setReadyRejectionMessage(rejection));
+      return;
+    }
+
+    this.guestReady.set(client.sessionId, parsed.value.ready);
+    this.sendStateToEveryone();
+  }
+
+  private humanGuestReadyStates(): HumanGuestReadyState[] {
+    const hostSessionId = this.hostSessionId;
+    const connected = new Set(this.clients.map((entry) => entry.sessionId));
+
+    return this.seats.filter(isHumanSeat).flatMap((seat) => {
+      if (seat.sessionId === hostSessionId) {
+        return [];
+      }
+
+      return [
+        {
+          isReady: this.guestReady.get(seat.sessionId) === true,
+          isConnected: connected.has(seat.sessionId),
+        },
+      ];
+    });
   }
 
   private tutorialSeatIds(): TutorialSeatIds | null {
@@ -3148,8 +3208,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         id: seat.sessionId,
         nickname: seat.nickname,
         isBot: false,
-        // Host implicit ready; guests stay false until L57-08 `setReady`.
-        isReady: seat.sessionId === this.hostSessionId,
+        // Host always ready; guests follow `guestReady` (L57-08).
+        isReady:
+          seat.sessionId === this.hostSessionId || this.guestReady.get(seat.sessionId) === true,
       };
     });
   }
