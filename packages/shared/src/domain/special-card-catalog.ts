@@ -89,9 +89,9 @@ export const SPECIAL_CARD_CATALOG = {
     'points-generator',
     'Points Generator',
     5,
-    'Generate 2 points per turn while the internal counter is not depleted.',
-    'Generate 4 points per turn while the internal counter is not depleted.',
-    'Generate 4 points per turn instead of 2.',
+    'Generate 3 points per turn while the internal counter is not depleted.',
+    'Generate 6 points per turn while the internal counter is not depleted.',
+    'Generate 6 points per turn instead of 3.',
   ),
   'upgrade-point-thief': specialCard(
     'upgrade-point-thief',

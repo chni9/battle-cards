@@ -238,9 +238,9 @@ describe('points-generator truth-in-interval (L34-03)', () => {
       log,
       CLASSIC_LIFE_LIMIT,
     );
-    // Assassin start 0 pts, draw 1. Five draws → 5; PG play −5 +2 tick → 2;
-    // two later draws each +1 draw +2 PG → 8.
-    const expectedPoints = 8;
+    // Assassin start 0 pts, draw 1. Five draws → 5; PG play −5 +3 tick → 3;
+    // two later draws each +1 draw +3 PG → 11.
+    const expectedPoints = 11;
     expect(belief.points.lo).toBeLessThanOrEqual(expectedPoints);
     expect(expectedPoints).toBeLessThanOrEqual(belief.points.hi);
   });

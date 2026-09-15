@@ -64,8 +64,8 @@ const GHOST_POINTS_PER_LIFE = 2;
 const THIEF_STEAL_CAP = 10;
 
 /** Persistent tick amounts — `apply-persistent-effects.ts`. */
-const POINTS_GENERATOR_BASE = 2;
-const POINTS_GENERATOR_UPGRADED = 4;
+const POINTS_GENERATOR_BASE = 3;
+const POINTS_GENERATOR_UPGRADED = 6;
 const INVISIBILITY_POINTS_BASE = 4;
 const INVISIBILITY_POINTS_UPGRADED = 6;
 const IMPOSITION_POINTS_BASE = 2;

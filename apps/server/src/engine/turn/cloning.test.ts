@@ -102,7 +102,7 @@ describe('Cloning (kit + resources only)', () => {
 
     expect(a.kitId).toBe('scientific');
     expect(a.lives).toBe(12);
-    expect(a.points).toBe(6); // cloned 4 + own Points Generator tick +2
+    expect(a.points).toBe(7); // cloned 4 + own Points Generator tick +3
     expect(a.upgradePoints).toBe(1);
     expect(a.shield).toBe(4);
     expect(a.shieldIsUpgraded).toBe(true);
