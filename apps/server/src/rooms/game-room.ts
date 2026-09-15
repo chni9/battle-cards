@@ -196,6 +196,7 @@ import {
   resolveReformingHost,
   shouldPersistFinishedGame,
 } from './play-again-rules';
+import { ThinkTimeAccumulator } from './think-time';
 import {
   canClaimSeat,
   claimSeatRejectionMessage,
@@ -226,6 +227,7 @@ interface FinishedHoldout {
   turnHistory: readonly ExportTurnRowView[];
   playKind: PlayKind;
   tutorialIndex: number | null;
+  thinkTimeMsByPlayerId: ReadonlyMap<string, number>;
 }
 
 const TURN_DURATION_MS = (() => {
@@ -370,6 +372,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private reconnectionRejectors = new Map<string, (reason?: Error) => void>();
   private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private pausedTurnRemainingMs: number | null = null;
+  /**
+   * Wall-clock think time for finished recap — not on GameState (L59-04).
+   * Cleared on the next `createInitialState`, not on the first Play again.
+   */
+  private readonly thinkTime = new ThinkTimeAccumulator();
 
   override async onCreate(options: unknown): Promise<void> {
     this.roomId = await this.allocateGameCode();
@@ -478,6 +485,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.gameState = createInitialState(
         forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
       );
+      this.thinkTime.clear();
       if (this.playKind === 'tutorial') {
         const tutorialSeats = this.tutorialSeatIds();
 
@@ -1926,6 +1934,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private applyTurnResult(result: TurnResult): void {
+    this.thinkTime.creditAndClose(Date.now());
     this.actionTakenThisTurn = true;
     this.clearTurnTimer();
 
@@ -2642,8 +2651,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const ms = Math.max(0, durationMs);
-    this.turnDeadlineMs = Date.now() + ms;
+    const now = Date.now();
+    this.turnDeadlineMs = now + ms;
     const activePlayerId = state.currentTurnPlayerId;
+    this.thinkTime.start(activePlayerId, now);
 
     this.turnTimer = setTimeout(() => {
       this.onTurnTimeout(activePlayerId);
@@ -3415,6 +3426,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.currentTurnPlayerId === sessionId && this.turnDeadlineMs !== null) {
       this.pausedTurnRemainingMs = remainingMs(this.turnDeadlineMs, now);
+      this.thinkTime.pause(sessionId, now);
       this.clearTurnTimer();
     }
 
@@ -3638,6 +3650,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     const state = this.gameState;
     const startedAtMs = this.startedAtMs;
+    this.thinkTime.creditAndClose(Date.now());
 
     if (state !== null) {
       this.finishedHoldout = {
@@ -3648,6 +3661,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         turnHistory: [...this.turnHistory],
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
+        thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
       };
     }
 
@@ -3857,6 +3871,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           turnHistory: holdout.turnHistory,
           playKind: holdout.playKind,
           tutorialIndex: holdout.tutorialIndex,
+          thinkTimeMsByPlayerId: holdout.thinkTimeMsByPlayerId,
           ...walkInOpt,
           ...walkInPrivateOpt,
           ...claimableOpt,
@@ -3899,6 +3914,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           turnHistory: this.turnHistory,
           playKind: this.playKind,
           tutorialIndex: this.tutorialIndex,
+          thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
           ...walkInOpt,
           ...walkInPrivateOpt,
           ...claimableOpt,

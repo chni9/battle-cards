@@ -97,7 +97,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-113 of 115 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+114 of 115 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15.
 
@@ -122,7 +122,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15.
 | 56 · Invisibility freeze + readability | 7 | 7 |
 | 57 · Feedback + lobby rematch | 16 | 16 |
 | 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 9 |
-| 59 · Game over awards | 5 | 3 |
+| 59 · Game over awards | 5 | 4 |
 
 
 ---
@@ -429,7 +429,7 @@ public recap numbers only — zero rule logic.
 | L59-01 | Append dated `[P]` Lot 59 entries to `docs/agent/decisions.md`; Lot 59 section here; technical spec v6 §2 / §8 / §12 / §13; `AGENTS.md` snapshot. Protocol 34 → 35 exception recorded (same class as L49 / L56 / L57 / L58). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell recap kits and match awards are Lot 59, v35 is the next bump, and L59-02 starts the wire. | S | Medium | — | Done |
 | L59-02 | `PROTOCOL_VERSION` **34 → 35**. Extend `GameRecapPlayerView` with `kitId?`, `isBot`, match totals, split buy/sell/special/draw/attack counts, `damageDealt`, `kills`, `thinkTimeMs`. Keep existing play/buy/sell/upgrade counts. **Acceptance:** mismatch path rejects v34 clients; recap type has the new fields; `pnpm verify` green. | M | **High** | L59-01 | Done |
 | L59-03 | `Player.matchStats` (lives lost/gained, points spent/gained, upgrade points spent). Increment in `applyDamage` and `applyLifeLoss` separately, `gainLives`, `gainPoints`, and every `turnLedger` spend site including `payCost`. Reanimation keeps matchStats. **Acceptance:** theft does not inflate pointsSpent; Reanimation keeps totals; Invisibility turn counters still ignored by `applyDamage`; `pnpm verify` green. | M | **High** | L59-01 | Done |
-| L59-04 | Fill recap from matchStats + action log + GameRoom think-time map. Combat kills only; `buyCardCount` includes `buyPoolCard`; `draw` excludes `activateDuplication`; omit `kitId` for L57-16 fogged walk-ins. Do not clear stats on first Play again. **Acceptance:** recap numbers identical for seated recipients; fogged walk-in recap omits kitId; `pnpm verify` green. | L | **High** | L59-02, L59-03 | To do |
+| L59-04 | Fill recap from matchStats + action log + GameRoom think-time map. Combat kills only; `buyCardCount` includes `buyPoolCard`; `draw` excludes `activateDuplication`; omit `kitId` for L57-16 fogged walk-ins. Do not clear stats on first Play again. **Acceptance:** recap numbers identical for seated recipients; fogged walk-in recap omits kitId; `pnpm verify` green. | L | **High** | L59-02, L59-03 | Done |
 | L59-05 | Game over Dialog: winner header + award tiles (seat color, kit portrait, nickname, kit name, value) + compact elim list. Skip all-zero awards; Slowest/Fastest humans only (≥2). Keep Play again / Feedback / View board / Return home / DEV Excel. **Acceptance:** copy tests still lock Play again + Feedback + DEV Excel; award helper tests ties and human-only clocks; `pnpm verify` green. | L | Medium | L59-04 | To do |
 
 ---
