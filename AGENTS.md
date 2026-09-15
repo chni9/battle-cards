@@ -14,8 +14,8 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lot 58 is the open Classic shop/pool/Invisibility/PG/Unspy
-lot. V5 may continue in parallel. Audience: the designer
+`docs/backlog_v6.md`); Lot 58 (shop / pool / Invisibility / PG / Unspy) is
+**done**. V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·

@@ -152,9 +152,10 @@ rules above are unchanged — this section only covers how the client looks.
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
   + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
   icon) + **Shop** (L43-02 / L43-05) + **Unspy** (L58-07: crossed-eye inline SVG, label
-  Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`). Unspy is grey when it is not
+  Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`).   Unspy is grey when it is not
   your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
-  exists; click opens a `SeatTile` picker. Shop Dialog (always openable — pool is
+  exists; click opens a `SeatTile` picker (a single living spy is preselected so Confirm
+  stays readable). Shop Dialog (always openable — pool is
   public off-turn) shows upgrade-point **icons + count first**, then Buy/Sell **below**
   (`CostDisplay` of kit points cost/yield via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
@@ -987,4 +988,28 @@ in the rooms below.
   `CostDisplay` after “Prices are double the play cost” (looks like a
   stray **−2** when Basic is selected). Pre-existing; not Lot 56.
 - `pnpm verify` **1274** tests.
+
+### Lot 58 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 32)
+
+Two-tab Classic, Vite `:5173`, Colyseus `:2567` (`protocol v32`). Host nick
+`L58Host2` Tactician, guest `L58Guest2` Kamikaze, room `EMIVWS`. Invisibility
+did not deal from the shop this gate (handler / pacifist / card-lives whitelist
+are unit-tested in L58-06). Points Generator 3/6 is unit-tested in L58-04; it
+did not appear on this table.
+
+- Shop: upgrade-point **icon + count** above Buy/Sell. Empty pool: **Buy random
+  −1** disabled, copy “The pool is empty.” After a Mirror sell, Pool (1) **Buy
+  random −1** enabled; log `L58Host2 bought Mirror + from the pool`. After a
+  second sell, **Buy random −2**. Tactician shop Spy still play-2 / buy-4 (↑).
+- Economy bar: Unspy −10 grey with no living spy. After Spy resolved on the
+  host, open eye on `L58Guest2` and Unspy enabled. SeatTile picker preselects
+  the sole spy; Confirm readable; log `L58Host2 unspied L58Guest2`; eye gone;
+  points 24 → 14. Overlay never involved.
+- First Unspy Confirm in room `LMXQDQ` was a false hang: seat color made the
+  only tile look selected while Confirm stayed disabled and shrank. Sole-spy
+  preselect + `whitespace-nowrap` landed before this gate.
+- Watch point: shop blurb still appends the selected tile’s `CostDisplay`
+  after “Prices are double the play cost” (Lot 56, not Lot 58).
+- `pnpm verify` **1316** tests.
+
 

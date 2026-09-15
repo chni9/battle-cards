@@ -85,7 +85,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-93 of 94 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+94 of 94 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09. Lot 58 opened 2026-09-15.
 
 | Lot | Tasks | Done |
@@ -106,7 +106,7 @@ Lot 56 opened 2026-09-09. Lot 58 opened 2026-09-15.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
-| 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 8 |
+| 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 9 |
 
 ---
 
@@ -367,7 +367,7 @@ weights; freeze fixture refresh is L58-08.
 | L58-06 | Unfreeze Invisibility. Counter 4 / 7 remaining owner turns (activation counts). Pacifist: `cardActsOnOpponents` includes Mirror / Super Mirror / attacks / targeted specials. Auto-loss at 0 emits `persistentDeactivated`. `applyDamage` card-lives whitelist of the four spec-§5 cards. Turns badge, not heart. Flip L56-02 grant/play tests. **Acceptance:** shop/Prophet/Transformer can grant it; hostile/Mirror illegal while active; Tax/draw legal; 4 ticks then lost; damage does not eat the turn counter; immunity still `immune`. | L | **High** | L58-01 | Done |
 | L58-07 | `clearSpy` 10 points, one living viewer row. Economy-bar Unspy (crossed-eye SVG, −10 coin) next to Shop; SeatTile picker; eye on `spyingOnYou` seats. Overlay not Unspy-able. **Acceptance:** 10 points drops one row; dead spies ignored; button disabled with no living spy; log public; `pnpm verify` green. | M | **High** | L58-02 | Done |
 | L58-08 | Score `buyPoolCard` / `clearSpy` so they never fall through to `sellUpgradePoint`. Do not retune `heuristic-v4` weights; refresh freeze fixture (legal set changed — L54-01 class). Update Invisibility stall/freeze assertion. **Acceptance:** new actions have own scores; freeze `weightsHash` unchanged unless a new constant is required; `pnpm verify` green. | M | Medium | L58-05, L58-06, L58-07 | Done |
-| L58-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `bots.md`); How to play shop/pool copy; post-lot browser gate (shop UP icons, pool buy 1 then 2, Unspy grey/enabled + picker, spy eye). **Acceptance:** playbooks match code; browser gate recorded in `frontend.md`. | M | Low | L58-03–L58-08 | To do |
+| L58-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `bots.md`); How to play shop/pool copy; post-lot browser gate (shop UP icons, pool buy 1 then 2, Unspy grey/enabled + picker, spy eye). **Acceptance:** playbooks match code; browser gate recorded in `frontend.md`. | M | Low | L58-03–L58-08 | Done |
 
 ---
 
