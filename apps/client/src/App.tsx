@@ -40,6 +40,7 @@ function GameApp() {
     addBot,
     kickPlayer,
     setReady,
+    playAgain,
     setBotDifficulty,
     chooseKit,
     drawCard,
@@ -83,6 +84,13 @@ function GameApp() {
         onLeave={() => {
           void leaveGame();
         }}
+        {...(view.playKind === 'classic'
+          ? {
+              onPlayAgain: () => {
+                playAgain();
+              },
+            }
+          : {})}
       />
     );
   }

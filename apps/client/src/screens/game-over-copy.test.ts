@@ -12,12 +12,14 @@ import {
   DOWNLOAD_ACTION_LOG_LABEL,
   FEEDBACK_LABEL,
   GAME_OVER_TITLE,
+  PLAY_AGAIN_LABEL,
   PLAY_A_REAL_GAME_LABEL,
   RETURN_HOME_LABEL,
   TUTORIAL_COMPLETE_TITLE,
   gameOverLeaveLabel,
   gameOverTitle,
   showActionLogDownload,
+  showPlayAgain,
 } from './game-over-copy';
 
 describe('game-over copy (L45-06)', () => {
@@ -29,6 +31,12 @@ describe('game-over copy (L45-06)', () => {
   it('sends Play a real game to the hub (same onLeave)', () => {
     expect(gameOverLeaveLabel('tutorial')).toBe(PLAY_A_REAL_GAME_LABEL);
     expect(gameOverLeaveLabel('classic')).toBe(RETURN_HOME_LABEL);
+  });
+
+  it('shows Play again only on Classic Game over (L57-12)', () => {
+    expect(showPlayAgain('classic')).toBe(true);
+    expect(showPlayAgain('tutorial')).toBe(false);
+    expect(PLAY_AGAIN_LABEL).toBe('Play again');
   });
 
   it('hides Download action log unless DEV', () => {
@@ -44,6 +52,8 @@ describe('game-over copy (L45-06)', () => {
     expect(source).toContain('showActionLogDownload');
     expect(source).toContain('gameOverTitle(view.playKind)');
     expect(source).toContain('gameOverLeaveLabel(view.playKind)');
+    expect(source).toContain('showPlayAgain');
+    expect(source).toContain('onPlayAgain');
   });
 
   it('puts a Feedback control on the Game over action row', () => {

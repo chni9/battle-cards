@@ -8,6 +8,8 @@ export type EndFeedbackMode = 'ask' | 'manual';
 
 export type FinishedHubLeaveAction = 'leaveNow' | 'askThenLeave';
 
+export type FinishedHubPlayAgainAction = 'playAgainNow' | 'askThenPlayAgain';
+
 /**
  * Game over stats are derived: after the banner, until dismissed, and never
  * while Feedback is already open (banner-period `!`).
@@ -63,6 +65,10 @@ export function finishedHubLeaveAction(alreadyAsked: boolean): FinishedHubLeaveA
   return alreadyAsked ? 'leaveNow' : 'askThenLeave';
 }
 
+export function finishedHubPlayAgainAction(alreadyAsked: boolean): FinishedHubPlayAgainAction {
+  return alreadyAsked ? 'playAgainNow' : 'askThenPlayAgain';
+}
+
 /**
  * View board ask does not set leavePending, so Skip/Send stay on the frozen
  * board. Hub leave sets it so Skip/Send then disconnect.
@@ -72,4 +78,12 @@ export function shouldLeaveAfterAskDismiss(input: {
   reason: 'skip' | 'cancel' | 'sent';
 }): boolean {
   return input.leavePending && (input.reason === 'skip' || input.reason === 'sent');
+}
+
+/** Skip/Send rematch; failed send and overlay Cancel do not. */
+export function shouldPlayAgainAfterAskDismiss(input: {
+  playAgainPending: boolean;
+  reason: 'skip' | 'cancel' | 'sent';
+}): boolean {
+  return input.playAgainPending && (input.reason === 'skip' || input.reason === 'sent');
 }

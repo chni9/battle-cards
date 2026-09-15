@@ -14,10 +14,12 @@ import {
 } from '../export/build-action-log-xlsx';
 import {
   DOWNLOAD_ACTION_LOG_LABEL,
+  PLAY_AGAIN_LABEL,
   FEEDBACK_LABEL,
   gameOverLeaveLabel,
   gameOverTitle,
   showActionLogDownload,
+  showPlayAgain,
 } from './game-over-copy';
 
 export interface GameOverDialogProps {
@@ -25,6 +27,8 @@ export interface GameOverDialogProps {
   view: FinishedStateView;
   onClose: () => void;
   onLeave: () => void;
+  /** Classic rematch in this room (L57-12). Omit on tutorial. */
+  onPlayAgain?: () => void;
   /** Opens Feedback in place of stats — never stacks (technical spec v6 §7.1). */
   onOpenFeedback: () => void;
 }
@@ -38,6 +42,7 @@ export function GameOverDialog({
   view,
   onClose,
   onLeave,
+  onPlayAgain,
   onOpenFeedback,
 }: GameOverDialogProps): ReactElement {
   const winnerNick = nickOf(view, view.winnerPlayerId);
@@ -88,6 +93,11 @@ export function GameOverDialog({
           <Button compact type="button" variant="orange" onClick={onClose}>
             View board
           </Button>
+          {showPlayAgain(view.playKind) && onPlayAgain !== undefined ? (
+            <Button compact type="button" variant="green" onClick={onPlayAgain}>
+              {PLAY_AGAIN_LABEL}
+            </Button>
+          ) : null}
           <Button compact type="button" variant="red" onClick={onLeave}>
             {gameOverLeaveLabel(view.playKind)}
           </Button>

@@ -42,6 +42,8 @@ describe('feedback surfaces (technical spec v6 §7.1 / L47-03)', () => {
     expect(end).toContain('onLeave={requestLeave}');
     expect(end).not.toContain('onLeave={onLeave}');
     expect(end).toContain('finishedHubLeaveAction');
+    expect(end).toContain('finishedHubPlayAgainAction');
+    expect(end).toContain('playAgainPending');
     expect(end).toContain('shouldLeaveAfterAskDismiss');
     expect(end).toContain('setLeavePending(true)');
     expect(end.split('setLeavePending(true)').length).toBe(2);

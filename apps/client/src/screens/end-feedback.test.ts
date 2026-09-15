@@ -5,10 +5,12 @@ import {
   canOpenEndStatsFeedback,
   canReopenEndStats,
   finishedHubLeaveAction,
+  finishedHubPlayAgainAction,
   isEndStatsOpen,
   shouldAskFeedbackAfterStatsClose,
   shouldLeaveAfterAskDismiss,
   shouldMarkEndFeedbackAsked,
+  shouldPlayAgainAfterAskDismiss,
 } from './end-feedback';
 
 describe('end feedback exclusivity (technical spec v6 §7.1 / L47-03 / L57-03)', () => {
@@ -95,6 +97,11 @@ describe('end feedback exclusivity (technical spec v6 §7.1 / L47-03 / L57-03)',
     expect(finishedHubLeaveAction(true)).toBe('leaveNow');
   });
 
+  it('asks before Play again unless already asked (L57-12)', () => {
+    expect(finishedHubPlayAgainAction(false)).toBe('askThenPlayAgain');
+    expect(finishedHubPlayAgainAction(true)).toBe('playAgainNow');
+  });
+
   it('leaves after ask only when Return home started the prompt', () => {
     expect(
       shouldLeaveAfterAskDismiss({ leavePending: true, reason: 'skip' }),
@@ -110,6 +117,21 @@ describe('end feedback exclusivity (technical spec v6 §7.1 / L47-03 / L57-03)',
     ).toBe(false);
     expect(
       shouldLeaveAfterAskDismiss({ leavePending: false, reason: 'sent' }),
+    ).toBe(false);
+  });
+
+  it('rematch after ask only when Play again started the prompt', () => {
+    expect(
+      shouldPlayAgainAfterAskDismiss({ playAgainPending: true, reason: 'skip' }),
+    ).toBe(true);
+    expect(
+      shouldPlayAgainAfterAskDismiss({ playAgainPending: true, reason: 'sent' }),
+    ).toBe(true);
+    expect(
+      shouldPlayAgainAfterAskDismiss({ playAgainPending: true, reason: 'cancel' }),
+    ).toBe(false);
+    expect(
+      shouldPlayAgainAfterAskDismiss({ playAgainPending: false, reason: 'skip' }),
     ).toBe(false);
   });
 });
