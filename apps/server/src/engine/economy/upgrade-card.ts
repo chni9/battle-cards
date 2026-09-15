@@ -12,6 +12,7 @@ import {
 } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
+import { recordChosenUpgradePointsSpent } from './record-chosen-spend';
 
 export type UpgradeCardResult =
   | { ok: true; cardId: CardId }
@@ -45,7 +46,7 @@ export function upgradeCard(
   }
 
   actor.upgradePoints -= 1;
-  actor.turnLedger.upgradePointsSpent += 1;
+  recordChosenUpgradePointsSpent(actor, 1);
   instance.isUpgraded = true;
 
   return { ok: true, cardId: instance.cardId };

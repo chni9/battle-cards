@@ -423,13 +423,24 @@ export interface FinishedViewInput {
   walkInSpectator?: true;
   walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
+  /** Room wall-clock map — omitted / missing seat → `thinkTimeMs: 0` (L60-04). */
+  thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
 }
 
 export function buildGameRecapView(
   state: GameState,
   actionLog: readonly ActionLogEntryView[],
   eliminations: readonly FinishedGameEliminationRecord[],
+  options: {
+    botDifficulties?: ReadonlyMap<string, BotDifficulty>;
+    thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
+    omitKitId?: boolean;
+  } = {},
 ): GameRecapView {
+  const omitKitId = options.omitKitId === true;
+  const botDifficulties = options.botDifficulties;
+  const thinkTimeMsByPlayerId = options.thinkTimeMsByPlayerId;
+
   return {
     turnSequence: state.turnSequence,
     players: state.players.map((player) => {
@@ -441,6 +452,21 @@ export function buildGameRecapView(
         buyCount: aggregates.buyCount,
         sellCount: aggregates.sellCount,
         upgradeCount: aggregates.upgradeCount,
+        ...(omitKitId ? {} : { kitId: player.kitId }),
+        isBot: botDifficulties?.has(player.id) === true,
+        livesLost: player.matchStats.livesLost,
+        livesGained: player.matchStats.livesGained,
+        pointsSpent: player.matchStats.pointsSpent,
+        pointsGained: player.matchStats.pointsGained,
+        upgradePointsSpent: player.matchStats.upgradePointsSpent,
+        specialsPlayedCount: aggregates.specialsPlayedCount,
+        buyCardCount: aggregates.buyCardCount,
+        sellCardCount: aggregates.sellCardCount,
+        drawCount: aggregates.drawCount,
+        attacksPlayedCount: aggregates.attacksPlayedCount,
+        damageDealt: aggregates.damageDealt,
+        kills: aggregates.kills,
+        thinkTimeMs: thinkTimeMsByPlayerId?.get(player.id) ?? 0,
       };
     }),
     eliminations: eliminations.map((entry) => ({
@@ -547,7 +573,13 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
 
         return view;
       }),
-      recap: buildGameRecapView(state, actionLog, eliminations),
+      recap: buildGameRecapView(state, actionLog, eliminations, {
+        omitKitId: walkInSpectator && !walkInSeesPrivate,
+        ...(botDifficulties !== undefined ? { botDifficulties } : {}),
+        ...(input.thinkTimeMsByPlayerId !== undefined
+          ? { thinkTimeMsByPlayerId: input.thinkTimeMsByPlayerId }
+          : {}),
+      }),
       exportLog,
       playKind,
       tutorialIndex,

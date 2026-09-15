@@ -14,6 +14,7 @@ import {
 import { acquireSpecialCard } from '../kits/acquire-card';
 import type { Rng } from '../rng';
 import { findPlayer } from '../turn/advance-turn';
+import { recordChosenPointsSpent } from './record-chosen-spend';
 
 export const SPECIAL_CARD_PURCHASE_COST = 20;
 
@@ -37,7 +38,7 @@ export function buySpecialCard(
   }
 
   actor.points -= SPECIAL_CARD_PURCHASE_COST;
-  actor.turnLedger.pointsSpent += SPECIAL_CARD_PURCHASE_COST;
+  recordChosenPointsSpent(actor, SPECIAL_CARD_PURCHASE_COST);
 
   const cardId = rng.pick(PURCHASABLE_SPECIAL_CARD_IDS);
   const instance = acquireSpecialCard(

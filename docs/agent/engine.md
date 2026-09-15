@@ -287,6 +287,21 @@ ticked in `beginTurnFor`, opened from elimination). Mid-window deaths prune the 
 When the window closes, the ledger is cleared. Helpers: `absorb-window.ts`. Super Absorber
 activation and ticks share `absorbLedgerFromVictim`.
 
+## Match stats (Lot 60)
+
+`Player.matchStats` is career totals for the finished recap. It is **not** the turn
+ledger: Reanimation resets `turnLedger` and keeps `matchStats`. Cloning does not copy
+another seat's stats. Spend matches Absorber — `recordChosenPointsSpent` / `payCost`,
+never theft. `livesLost` increments in `applyDamage` and `applyLifeLoss` **separately**
+(do not merge those primitives). Gains are post-cap.
+
+Think time is **not** on `GameState`. `GameRoom` owns `ThinkTimeAccumulator` (wall-clock).
+Pause accrues the open segment without writing totals so disconnect + action cannot
+double-count. Credit on `applyTurnResult` (action / timeout / auto-draw) and leftover
+close at game over. Clear only on the next `createInitialState` (host Start), not on the
+first Play again — recap holdout snapshots the map. Headless / missing map → recap
+`thinkTimeMs: 0`.
+
 ## Elimination
 
 Rules spec §6, rulings §6.2 #2, #3, #4. Engine: `apps/server/src/engine/turn/elimination-rewards.ts`.

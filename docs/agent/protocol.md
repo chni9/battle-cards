@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **34** (L58-02 pool buy / Unspy /
-> `poolBuyCost` / `spyingOnYou`; L57-16 `staySpectating` + claim-picker fog at 33;
+> **Status:** current `PROTOCOL_VERSION` is **35** (L60-02 recap match totals /
+> optional `kitId` / think time; L58-02 pool buy / Unspy / `poolBuyCost` /
+> `spyingOnYou` at 34; L57-16 `staySpectating` + claim-picker fog at 33;
 > L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
 > fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
@@ -50,7 +51,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView`. **Finished recap exception (PROTOCOL_VERSION 35 / L60-04):** `recap.players[].kitId` is the seat's **final** kit and is public to seated recipients. Omit that field for L57-16 fogged walk-ins. `finalTable` living seats still follow Spy / elim / walk-in overlay — do not put living kits there |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
@@ -159,6 +160,15 @@ and `exportLog` (turn before/after snapshots + full event log) for the Excel dow
 war lifted only there. PROTOCOL_VERSION 24 adds `finalTable`: a nested per-recipient
 `PlayingStateView` of the finished board (`turnDeadlineMs: null`) so the client can dismiss
 stats and keep inspecting hands / log / pool under the same visibility rules as playing.
+PROTOCOL_VERSION 35 (L60-02 / L60-04) adds match totals and optional `kitId` on each recap
+row (`isBot`, lives lost/gained, points spent/gained, upgrade points spent, specials played,
+`buyCardCount` including `buyPoolCard`, `sellCardCount` = `sellCard` only, real `draw` not
+`activateDuplication`, attacks played, attack-source `damageDealt`, combat `kills`,
+`thinkTimeMs`). Recap **numbers** are identical for every seated recipient; only fogged
+walk-ins omit `kitId`. Think time is a **room** wall-clock map, not `GameState` — missing
+map / headless → `0`. Do not parse `exportLog` for the awards UI. Spend on recap is chosen
+spend (`matchStats`), never theft. The first Play again does not clear match stats or think
+time; the next `createInitialState` does.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

@@ -27,4 +27,5 @@ export function gainPoints(
   }
 
   player.points += amount;
+  player.matchStats.pointsGained += amount;
 }

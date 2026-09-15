@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../engine/create-initial-state';
-import { buildFinishedViewFor, buildLobbyViewFor, buildPlayingViewFor } from './build-view-for';
+import {
+  buildFinishedViewFor,
+  buildGameRecapView,
+  buildLobbyViewFor,
+  buildPlayingViewFor,
+} from './build-view-for';
 import { grantSpy } from './visibility-matrix';
 
 describe('buildLobbyViewFor (L1-01)', () => {
@@ -1078,5 +1083,232 @@ describe('buildPlayingViewFor — walk-in spectator (L57-13 / L57-16)', () => {
       lives: 14,
       points: 6,
     });
+  });
+});
+
+describe('buildGameRecapView (L60-04)', () => {
+  it('fills match totals, log counts, kitId, isBot, and think time', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l59-04-fill',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (alice === undefined || bob === undefined) {
+      throw new Error('missing seats');
+    }
+
+    alice.matchStats.livesLost = 2;
+    alice.matchStats.livesGained = 4;
+    alice.matchStats.pointsSpent = 11;
+    alice.matchStats.pointsGained = 8;
+    alice.matchStats.upgradePointsSpent = 1;
+
+    const recap = buildGameRecapView(
+      state,
+      [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'playCard',
+          cardId: 'basic-attack',
+          targetPlayerId: 'b',
+          turnSequence: 1,
+        },
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'tax',
+          turnSequence: 2,
+        },
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'draw',
+          turnSequence: 3,
+        },
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'activateDuplication',
+          turnSequence: 4,
+        },
+        {
+          kind: 'actionResolved',
+          effectId: 'e1',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          livesLost: 2,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 5,
+        },
+        {
+          kind: 'playerEliminated',
+          playerId: 'b',
+          eliminatorPlayerId: 'a',
+          reason: 'combat',
+          turnSequence: 5,
+        },
+      ],
+      [{ playerId: 'b', eliminatorPlayerId: 'a', reason: 'combat' }],
+      {
+        botDifficulties: new Map([['b', 'easy']]),
+        thinkTimeMsByPlayerId: new Map([['a', 1_500]]),
+      },
+    );
+
+    expect(recap.players.find((row) => row.playerId === 'a')).toEqual({
+      playerId: 'a',
+      cardsPlayedCount: 1,
+      buyCount: 1,
+      sellCount: 0,
+      upgradeCount: 0,
+      kitId: alice.kitId,
+      isBot: false,
+      livesLost: 2,
+      livesGained: 4,
+      pointsSpent: 11,
+      pointsGained: 8,
+      upgradePointsSpent: 1,
+      specialsPlayedCount: 0,
+      buyCardCount: 1,
+      sellCardCount: 0,
+      drawCount: 1,
+      attacksPlayedCount: 1,
+      damageDealt: 2,
+      kills: 1,
+      thinkTimeMs: 1_500,
+    });
+    expect(recap.players.find((row) => row.playerId === 'b')).toMatchObject({
+      kitId: bob.kitId,
+      isBot: true,
+      thinkTimeMs: 0,
+      kills: 0,
+    });
+  });
+
+  it('omits kitId when asked (L57-16 fog) without changing numbers', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l59-04-fog-helper',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+
+    const open = buildGameRecapView(state, [], [], { omitKitId: true });
+    const seated = buildGameRecapView(state, [], []);
+
+    expect(open.players.every((row) => !('kitId' in row))).toBe(true);
+    expect(seated.players.every((row) => typeof row.kitId === 'string')).toBe(true);
+    expect(open.players.map((row) => row.playerId)).toEqual(seated.players.map((row) => row.playerId));
+    expect(open.players.map((row) => row.thinkTimeMs)).toEqual(
+      seated.players.map((row) => row.thinkTimeMs),
+    );
+  });
+});
+
+describe('buildFinishedViewFor (L60-04)', () => {
+  const finishedLog = [
+    {
+      kind: 'actionPlayed' as const,
+      actorPlayerId: 'a',
+      action: 'playCard' as const,
+      cardId: 'basic-attack' as const,
+      targetPlayerId: 'b',
+      turnSequence: 1,
+    },
+    {
+      kind: 'actionResolved' as const,
+      effectId: 'e1',
+      sourcePlayerId: 'a',
+      targetPlayerId: 'b',
+      cardId: 'basic-attack' as const,
+      isUpgraded: false,
+      livesLost: 1,
+      shieldAbsorbed: 0,
+      outcome: 'applied' as const,
+      turnSequence: 2,
+    },
+  ];
+
+  it('publishes identical recap numbers to both seated recipients', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l59-04-identical',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+
+    const input = {
+      gameCode: 'ABCDEF',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: finishedLog,
+      eliminations: [] as const,
+      thinkTimeMsByPlayerId: new Map([
+        ['a', 400],
+        ['b', 900],
+      ]),
+    };
+    const forA = buildFinishedViewFor({ ...input, recipientSessionId: 'a' });
+    const forB = buildFinishedViewFor({ ...input, recipientSessionId: 'b' });
+
+    expect(forA.recap.players).toEqual(forB.recap.players);
+    expect(forA.recap.players[0]?.kitId).toBeDefined();
+  });
+
+  it('omits recap kitId for a fogged walk-in and keeps it after Stay', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l59-04-walk-in',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+
+    if (alice === undefined) {
+      throw new Error('missing alice');
+    }
+
+    const fogged = buildFinishedViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: finishedLog,
+      eliminations: [],
+      walkInSpectator: true,
+    });
+    const stayed = buildFinishedViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: finishedLog,
+      eliminations: [],
+      walkInSpectator: true,
+      walkInSeesPrivate: true,
+    });
+
+    expect(fogged.recap.players.every((row) => !('kitId' in row))).toBe(true);
+    expect(stayed.recap.players.find((row) => row.playerId === 'a')?.kitId).toBe(alice.kitId);
+    expect(fogged.recap.players.map((row) => row.damageDealt)).toEqual(
+      stayed.recap.players.map((row) => row.damageDealt),
+    );
   });
 });

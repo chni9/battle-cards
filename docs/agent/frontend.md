@@ -8,17 +8,18 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 59
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 60
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–59 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–60 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
-Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word labels).
+Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
+labels, Lot 60 Game over awards gallery).
 
 ## Screens
 
@@ -27,7 +28,7 @@ Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word la
 | Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable stats; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` |
+| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
@@ -475,9 +476,12 @@ rules above are unchanged — this section only covers how the client looks.
   **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
   win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
   `import.meta.env.DEV` (every mode).
-  No kits on the finished seat list
-  itself (still private
-  except via `finalTable.self` / Spy / eliminationReveal as in playing).
+  **Lot 60 gallery:** winner header + award tiles (seat color, kit portrait, nickname, kit
+  name, value) + compact elim list. Skip an award when every eligible seat is tied at 0.
+  Slowest / Fastest count humans only (≥2). Bots compete for every other award. Recap
+  `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
+  Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
+  Client ranks recap numbers only (`game-over-awards.ts`); do not parse `exportLog`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
@@ -1146,5 +1150,20 @@ Skip all first-game hints.
   tooltip does not steal it. Unspy stays grey with no living spy; click does
   not open the picker.
 - `pnpm verify` **1381** tests.
+
+### Lot 60 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 35)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567`.
+
+- Immediate forfeit (room `FITHWU`, 0 turns): winner header (Alpha / Kamikaze
+  portrait, seat color), compact `L59Gate eliminated (leave)`, **No awards this
+  match** (every recap stat 0). Footer: purple Excel, orange Feedback / View
+  board, green Play again, red Return home. Play again still reforms the lobby.
+- Three Draws then forfeit (room `FWNEMK`, 4 turns): award tiles with kit
+  portraits, kit names, seat-colored nicknames — Most points spent / gained,
+  upgrade points used, cards sold (Alpha); Fewest attacks + Most draws
+  (`L59Play`); Most attacks / cards played (Alpha). Ask-once Feedback still
+  intercepts first leave / Play again.
+- `pnpm verify` **1417** tests.
 
 

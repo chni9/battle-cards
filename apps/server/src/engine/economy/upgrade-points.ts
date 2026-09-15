@@ -15,6 +15,7 @@ import {
 
 import { findPlayer } from '../turn/advance-turn';
 import { grantPoints, grantUpgradePoints } from './grant-resources';
+import { recordChosenPointsSpent } from './record-chosen-spend';
 
 export type UpgradePointResult = { ok: true } | ActionReject;
 
@@ -34,7 +35,7 @@ export function buyUpgradePoint(state: GameState, actorPlayerId: string): Upgrad
   }
 
   actor.points -= cost;
-  actor.turnLedger.pointsSpent += cost;
+  recordChosenPointsSpent(actor, cost);
   grantUpgradePoints(state, actor, 1, 'direct');
 
   return { ok: true };

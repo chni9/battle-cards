@@ -3421,3 +3421,50 @@ uses the same compact `Button`.
 
 ---
 
+## 2026-09-15 · [P] Lot 60 Game over awards gallery (L60-01)
+
+Designer instruction (this session): Game over is a white text list. Restyle it
+into visual awards (kit portrait, seat color, nickname, kit name, value).
+
+**Visibility override of L9-03:** finished `recap` publishes each seat’s **final**
+`kitId` (after Reanimation / Cloning) to seated recipients. Mid-game
+`PlayingStateView` and `finalTable` fog stay. **L57-16 still wins:** a walk-in
+with an open claim picker must not receive kits — omit `recap.players[].kitId`
+for that recipient until Stay or the picker empties.
+
+**Match totals** are public recap numbers, not current private resources:
+
+- Spend = chosen spend (`turnLedger` / `payCost`), never theft.
+- Lives lost = actual loss from `applyDamage` and `applyLifeLoss` separately
+  (do not merge those primitives).
+- Lives / points gained = post-cap `gainLives` / `gainPoints`.
+- Kills = `reason === 'combat'` with `eliminatorPlayerId`.
+- Cards bought = `buyCard` + `buySpecialCard` + `buyPoolCard` (not upgrade points).
+- Cards sold = `sellCard` only.
+- Draws = real `draw`, not opaque `activateDuplication`.
+- Damage dealt = `actionResolved.livesLost` whose card is an attack.
+- Think time = room wall-clock, not `GameState`. Slowest / Fastest count
+  humans only (≥2 human seats). Bots compete for every other award.
+- Skip an award when every eligible seat is tied at 0.
+- Award “Fewest attacks”, not “Pacifist” (Lot 58 already uses that word for
+  Invisibility).
+
+**Play again (L57-10):** do not clear match totals or think time on the first
+`playAgain`; recap humans still need the finished `GameState`. Clear on the
+next match’s `createInitialState`.
+
+`PROTOCOL_VERSION` **34 → 35** (L60-02) is an exception to the V6 single-bump
+lock (same class as L49 / L56 / L57 / L58): recap match fields + optional
+`kitId`. No Classic combat-value change. Client ranks recap numbers only.
+
+---
+
+## 2026-09-15 · [P] Lot 60 awards retargeted from Lot 59
+
+Lot 59 landed on `main` (`#27`) as compact Draw/Unspy dock (`L59-01` /
+`L59-02`, no protocol bump). This branch had used Lot 59 for Game over awards
+(`PROTOCOL_VERSION` 34 → 35). Recap wire stays; the live lot is **60** so the
+dock keeps 59. L60-02 records the bump. No rule change.
+
+---
+

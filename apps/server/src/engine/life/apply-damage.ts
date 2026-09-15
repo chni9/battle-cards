@@ -46,6 +46,7 @@ export function applyDamage(
 
   const livesLost = Math.min(target.lives, amount - shieldAbsorbed);
   target.lives -= livesLost;
+  target.matchStats.livesLost += livesLost;
 
   const countersDecremented: CounterDecrement[] = [];
   const deactivatedEffects: PersistentEffect[] = [];

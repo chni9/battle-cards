@@ -53,5 +53,9 @@
  * `PlayingStateView.poolBuyCost`, `PublicPlayerView.spyingOnYou`, reject
  * codes `empty-pool` / `not-spying-you`. Retargeted from 31 → 32 after
  * Lot 57 landed on main; see decisions.md.
+ *
+ * 34 → 35 (L60-02 / designer 2026-09-15): `GameRecapPlayerView` match totals,
+ * optional recap `kitId`, think time. Exception to the V6 single-bump lock
+ * (same class as L49 / L56 / L57 / L58); see decisions.md.
  */
-export const PROTOCOL_VERSION = 34;
+export const PROTOCOL_VERSION = 35;

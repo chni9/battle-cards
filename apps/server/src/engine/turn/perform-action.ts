@@ -27,6 +27,7 @@ import { buyCard } from '../economy/buy-card';
 import { buyPoolCard } from '../economy/buy-pool-card';
 import { buySpecialCard } from '../economy/buy-special-card';
 import { clearSpy } from '../economy/clear-spy';
+import { recordChosenPointsSpent } from '../economy/record-chosen-spend';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
@@ -521,7 +522,7 @@ function chargeDeferredMirrorPayment(actor: Player): void {
 
   const spent = Math.min(playPoints, actor.points);
   actor.points -= spent;
-  actor.turnLedger.pointsSpent += spent;
+  recordChosenPointsSpent(actor, spent);
 }
 
 /**
@@ -1244,7 +1245,7 @@ function playMultipleAttacksAction(
   for (const entry of prepared) {
     if (entry.playPoints > 0) {
       actor.points -= entry.playPoints;
-      actor.turnLedger.pointsSpent += entry.playPoints;
+      recordChosenPointsSpent(actor, entry.playPoints);
     }
 
     const handler = findHandler(entry.instance.cardId);
@@ -1427,7 +1428,7 @@ function playCardAction(
 
   if (playPoints > 0) {
     actor.points -= playPoints;
-    actor.turnLedger.pointsSpent += playPoints;
+    recordChosenPointsSpent(actor, playPoints);
   }
 
   const beforeEffectIds = cardId === 'super-mirror' ? snapshotPendingEffectIds(state) : null;
