@@ -4,6 +4,7 @@
  * Draw is green so the point icon is not yellow-on-yellow.
  * Draw / Unspy omit word labels (designer 2026-09-15): gain CostDisplay and
  * crossed-eye + cost only; names stay on aria-label / title.
+ * Shop keeps its word label and uses the same compact Button (L59-02).
  * CostDisplay inner title is omitted so hover uses the button name.
  */
 
@@ -91,7 +92,12 @@ export function EconomyBar({
         arrow="top"
         highlightId="shop"
       >
-        <Button variant="orange" onClick={onOpenShop} data-hint-anchor="shop">
+        <Button
+          variant="orange"
+          compact
+          onClick={onOpenShop}
+          data-hint-anchor="shop"
+        >
           {SHOP_ACTION_LABEL}
         </Button>
       </TutorialCallout>

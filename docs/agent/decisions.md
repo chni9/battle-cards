@@ -3413,3 +3413,11 @@ nested costs so the button name is the tooltip.
 
 ---
 
+## 2026-09-15 · Shop compact to match Draw / Unspy (L59-02)
+
+Designer 2026-09-15: Shop was still the full `Button` (`min-w-[7rem]`), so it
+sat taller and wider than compact Draw / Unspy. Shop keeps the word Shop and
+uses the same compact `Button`.
+
+---
+

@@ -176,7 +176,8 @@ rules above are unchanged — this section only covers how the client looks.
   **Draw** is only the gain point `CostDisplay` (`signed="gain"`, green CTA — not
   yellow-on-yellow with the point icon; no “Draw” letters — L59-01; `aria-label` /
   `title` keep the name; nested `CostDisplay` `title={null}` so hover is not only
-  “plus 1 pt”) + **Shop** (L43-02 / L43-05, word label stays) + compact **Unspy** (L58-07 /
+  “plus 1 pt”) + compact **Shop** (L43-02 / L43-05 / L59-02, word label stays, same
+  compact `Button` as Draw / Unspy) + compact **Unspy** (L58-07 /
   L59-01: crossed-eye inline SVG + `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`;
   no “Unspy” letters; `aria-label` / `title` keep the name; nested `CostDisplay`
   `title={null}` so hover is not only “minus 10 pts”).   Unspy is grey when it is not

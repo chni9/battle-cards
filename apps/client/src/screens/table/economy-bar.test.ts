@@ -29,7 +29,7 @@ describe('economy bar Unspy (L58-07)', () => {
   });
 });
 
-describe('economy bar compact Draw / Unspy (L59-01)', () => {
+describe('economy bar compact Draw / Shop / Unspy (L59-01 / L59-02)', () => {
   it('omits Draw and Unspy words from the button face', () => {
     const source = readFileSync(join(dir, 'economy-bar.tsx'), 'utf8');
     expect(source).not.toMatch(/\{DRAW_ACTION_LABEL\}\s*\{' '\}/);
@@ -41,6 +41,7 @@ describe('economy bar compact Draw / Unspy (L59-01)', () => {
     expect(source).toContain('signed="gain"');
     expect(source).toContain("variant=\"crossed\"");
     expect(source).toMatch(/variant="green"[\s\S]{0,120}compact/);
+    expect(source).toMatch(/variant="orange"[\s\S]{0,80}compact/);
     expect(source).toMatch(/variant="purple"[\s\S]{0,80}compact/);
     expect(source).toContain('{SHOP_ACTION_LABEL}');
     expect(source).toContain('title={drawLabel}');
