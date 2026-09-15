@@ -99,6 +99,7 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
         id: seat.id,
         nickname: seat.nickname,
         isBot: seat.isBot,
+        isReady: seat.isReady,
       };
 
       if (seat.botDifficulty !== undefined) {

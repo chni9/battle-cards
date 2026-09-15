@@ -3140,6 +3140,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           nickname: seat.nickname,
           isBot: true,
           botDifficulty: seat.difficulty,
+          isReady: true,
         };
       }
 
@@ -3147,6 +3148,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         id: seat.sessionId,
         nickname: seat.nickname,
         isBot: false,
+        // Host implicit ready; guests stay false until L57-08 `setReady`.
+        isReady: seat.sessionId === this.hostSessionId,
       };
     });
   }

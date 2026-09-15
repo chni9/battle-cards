@@ -31,4 +31,26 @@ describe('ActionRejectCode catalog (L32-01)', () => {
   it('room-full copy names the Classic seat cap', () => {
     expect(ACTION_REJECT_MESSAGE['add-bot-room-full']).toContain(`${String(MAX_PLAYERS)} seats`);
   });
+
+  it('includes lobby rematch codes (L57-07)', () => {
+    expect(ACTION_REJECT_CODES).toEqual(
+      expect.arrayContaining([
+        'start-not-all-ready',
+        'ready-not-in-lobby',
+        'ready-not-allowed',
+        'invalid-set-ready-payload',
+        'kick-not-host',
+        'kick-not-in-lobby',
+        'kick-self',
+        'kick-unknown',
+        'invalid-kick-payload',
+        'play-again-not-finished',
+        'play-again-tutorial',
+        'claim-not-claimable',
+        'claim-unknown',
+        'invalid-claim-payload',
+        'spectate-room-full',
+      ]),
+    );
+  });
 });

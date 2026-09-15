@@ -322,6 +322,59 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
     title: 'Game already started',
     body: 'You cannot change your kit after the host has started the game.',
   },
+
+  'start-not-all-ready': {
+    title: 'Guests not ready',
+    body: 'Every connected guest must press Ready before the host can start.',
+  },
+  'ready-not-in-lobby': {
+    body: 'Ready is only used while the table is still in the lobby.',
+  },
+  'ready-not-allowed': {
+    title: 'Ready not needed',
+    body: 'The host and bots do not toggle Ready. Only human guests do.',
+  },
+  'invalid-set-ready-payload': {
+    body: 'The Ready request was malformed. Toggle Ready again from the lobby.',
+  },
+  'kick-not-host': {
+    title: 'Host only',
+    body: 'Only the host can kick a player from the lobby.',
+  },
+  'kick-not-in-lobby': {
+    body: 'Kick is only used while the table is still in the lobby.',
+  },
+  'kick-self': {
+    body: 'You cannot kick yourself. Leave the table if you want to go.',
+  },
+  'kick-unknown': {
+    body: 'That seat was not found. They may already have left.',
+  },
+  'invalid-kick-payload': {
+    body: 'The kick request was malformed. Try kicking that seat again.',
+  },
+  'play-again-not-finished': {
+    body: 'Play again is only available after the game ends.',
+  },
+  'play-again-tutorial': {
+    title: 'Tutorial',
+    body: 'The tutorial cannot play again in this room. Return home and start a real game.',
+  },
+  'claim-not-claimable': {
+    title: 'Seat taken',
+    body: 'That seat cannot be claimed. It may already be occupied or eliminated.',
+  },
+  'claim-unknown': {
+    body: 'That seat was not found. Pick another claimable seat or stay spectating.',
+  },
+  'invalid-claim-payload': {
+    body: 'The claim request was malformed. Pick a seat from the list and try again.',
+  },
+  'spectate-room-full': {
+    title: 'Table full',
+    body: 'This table has no more spectator space. Try another code or wait for a seat.',
+  },
+
   'tutorial-follow-coach': {
     title: 'Tutorial step',
     body: 'This tutorial step asks for a different action.',

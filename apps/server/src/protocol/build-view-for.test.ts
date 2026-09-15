@@ -6,8 +6,8 @@ import { grantSpy } from './visibility-matrix';
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
-    { id: 'session-a', nickname: 'Alice', isBot: false },
-    { id: 'session-b', nickname: 'Bob', isBot: false },
+    { id: 'session-a', nickname: 'Alice', isBot: false, isReady: true },
+    { id: 'session-b', nickname: 'Bob', isBot: false, isReady: false },
   ] as const;
 
   it('tells the recipient which session is theirs', () => {
@@ -37,12 +37,13 @@ describe('buildLobbyViewFor (L1-01)', () => {
 
   it('exposes bot seats and difficulty to every recipient (L15-05)', () => {
     const withBot = [
-      { id: 'session-a', nickname: 'Alice', isBot: false },
+      { id: 'session-a', nickname: 'Alice', isBot: false, isReady: true },
       {
         id: 'bot-1',
         nickname: 'Alpha',
         isBot: true,
         botDifficulty: 'hard' as const,
+        isReady: true,
       },
     ];
 
@@ -87,6 +88,18 @@ describe('buildLobbyViewFor (L1-01)', () => {
     expect(bobView.yourKitSelection).toBe('random');
     expect(JSON.stringify(bobView)).not.toContain('assassin');
     expect(JSON.stringify(bobView)).not.toContain('ghost');
+  });
+
+  it('copies public isReady onto every lobby seat (L57-07)', () => {
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'session-b',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+    });
+
+    expect(view.players.map((seat) => seat.isReady)).toEqual([true, false]);
   });
 });
 

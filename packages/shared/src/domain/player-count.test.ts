@@ -4,12 +4,21 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { MAX_PLAYERS, MIN_PLAYERS, SOLO_OPPONENT_COUNTS } from './player-count';
+import {
+  MAX_PLAYERS,
+  MAX_SPECTATORS,
+  MIN_PLAYERS,
+  SOLO_OPPONENT_COUNTS,
+} from './player-count';
 
 describe('Classic player count', () => {
   it('caps Classic rooms at 2–8 seats', () => {
     expect(MIN_PLAYERS).toBe(2);
     expect(MAX_PLAYERS).toBe(8);
+  });
+
+  it('allows 8 walk-in spectators besides player seats (L57-07)', () => {
+    expect(MAX_SPECTATORS).toBe(8);
   });
 
   it('lists solo opponent counts up to MAX_PLAYERS − 1', () => {

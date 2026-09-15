@@ -38,5 +38,10 @@
  * `isUpgraded` + post-redirect `damageMultiplier`; Super Mirror redirect lines
  * use the attack `cardId`; new public kind `persistentDeactivated`. Exception
  * to the V6 single-bump lock (same class as L49); see decisions.md.
+ *
+ * 31 → 32 (L57-07 / designer 2026-09-15): lobby `setReady` / `kickPlayer`,
+ * finished `playAgain`, join-by-code `claimSeat` + spectator views
+ * (`isSpectator`, `claimableSeats`), `LobbySeatView.isReady`. Exception to
+ * the V6 single-bump lock (same class as L49 / L56); see decisions.md.
  */
-export const PROTOCOL_VERSION = 31;
+export const PROTOCOL_VERSION = 32;
