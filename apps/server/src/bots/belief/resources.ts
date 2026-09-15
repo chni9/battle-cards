@@ -13,9 +13,11 @@
  */
 
 import {
+  CLEAR_SPY_COST,
   getCard,
   getKit,
   isSharedCardId,
+  POOL_BUY_INITIAL_COST,
   upgradePointBuyCost,
   upgradePointSellYield,
   type ActionLogEntryView,
@@ -277,6 +279,7 @@ function applyOpponentPlay(
   kitId: KitId,
   entry: ActionPlayedLogEntry,
   lifeLimit: number,
+  poolBuyCost: number,
 ): void {
   const cardId = entry.cardId;
   const upgraded = entry.isUpgraded === true;
@@ -315,6 +318,12 @@ function applyOpponentPlay(
       return;
     case 'buySpecialCard':
       addExact(points, -SPECIAL_CARD_PURCHASE_COST);
+      return;
+    case 'buyPoolCard':
+      addExact(points, -poolBuyCost);
+      return;
+    case 'clearSpy':
+      addExact(points, -CLEAR_SPY_COST);
       return;
     case 'playMultipleAttacks':
       for (const attack of entry.attacks ?? []) {
@@ -551,6 +560,7 @@ function integrateLog(
   };
   let eliminated = playerView(view, opponentPlayerId)?.isEliminated === true;
   const others = Math.max(0, livingCount(view) - 1);
+  let poolBuyCost = POOL_BUY_INITIAL_COST;
 
   for (const entry of log) {
     if (entry.kind === 'playerEliminated' && entry.playerId === opponentPlayerId) {
@@ -593,8 +603,22 @@ function integrateLog(
       continue;
     }
 
-    if (entry.kind === 'actionPlayed' && entry.actorPlayerId === opponentPlayerId) {
-      applyOpponentPlay(lives, points, upgradePoints, kitId, entry, lifeLimit);
+    if (entry.kind === 'actionPlayed') {
+      if (entry.actorPlayerId === opponentPlayerId) {
+        applyOpponentPlay(
+          lives,
+          points,
+          upgradePoints,
+          kitId,
+          entry,
+          lifeLimit,
+          poolBuyCost,
+        );
+      }
+
+      if (entry.action === 'buyPoolCard') {
+        poolBuyCost *= 2;
+      }
     }
   }
 

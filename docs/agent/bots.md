@@ -43,7 +43,9 @@ is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 `score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
 is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
-so they never fall through to `sellUpgradePoint`. Belief
+so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
+the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
+`buyPoolCard` `cardId` into hand/special counts. Belief
 `visibilityFromActingView` rebuilds outgoing Spy **and** incoming `spyingOnYou`
 rows (L58-07).
 
