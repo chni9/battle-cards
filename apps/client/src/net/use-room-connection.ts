@@ -7,6 +7,7 @@ import {
   ACTION_RESOLVED,
   ADD_BOT,
   BUY_CARD,
+  BUY_POOL_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
@@ -167,6 +168,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   upgradeCard: (instanceId: string) => void;
   buyUpgradePoint: () => void;
   buySpecialCard: () => void;
+  buyPoolCard: () => void;
   sellUpgradePoint: () => void;
   deactivatePersistent: (effectId: string) => void;
   activateDuplication: () => void;
@@ -584,6 +586,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(BUY_SPECIAL_CARD);
   }, []);
 
+  const buyPoolCard = useCallback((): void => {
+    roomRef.current?.send(BUY_POOL_CARD);
+  }, []);
+
   const sellUpgradePoint = useCallback((): void => {
     roomRef.current?.send(SELL_UPGRADE_POINT);
   }, []);
@@ -619,6 +625,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     upgradeCard,
     buyUpgradePoint,
     buySpecialCard,
+    buyPoolCard,
     sellUpgradePoint,
     deactivatePersistent,
     activateDuplication,

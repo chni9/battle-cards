@@ -156,6 +156,7 @@ export interface TableScreenProps {
   onUpgradeCard: (instanceId: string) => void;
   onBuyUpgradePoint: () => void;
   onBuySpecialCard: () => void;
+  onBuyPoolCard: () => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
   /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
@@ -363,6 +364,7 @@ function TableScreenInner({
   onUpgradeCard,
   onBuyUpgradePoint,
   onBuySpecialCard,
+  onBuyPoolCard,
   onSellUpgradePoint,
   onLeave,
   onForfeit,
@@ -576,6 +578,14 @@ function TableScreenInner({
     if (measured !== null) {
       enqueue({ kind: 'playFlyout', ...measured });
     }
+  };
+
+  const buyPoolWithFx = (): void => {
+    if (!allowTutorialSend({ kind: 'other' })) {
+      return;
+    }
+    noteHintCause('playing-intent');
+    onBuyPoolCard();
   };
 
   const sellCardWithFx = (instanceId: string): void => {
@@ -1666,6 +1676,7 @@ function TableScreenInner({
         onSellUpgradePoint={sellUpgradeWithFx}
         onBuyCard={buyCardWithFx}
         onBuySpecialCard={buySpecialWithFx}
+        onBuyPoolCard={buyPoolWithFx}
         {...(tutorialHighlight !== null ? { tutorialHighlight } : {})}
       />
 

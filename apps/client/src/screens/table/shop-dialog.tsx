@@ -26,6 +26,7 @@ import {
   structuredCostFromCardCost,
 } from '../../design/components/structured-cost';
 import {
+  BUY_POOL_CARD_LABEL,
   BUY_SPECIAL_LABEL,
   BUY_UPGRADE_POINT_LABEL,
   CARD_BUY_LABEL,
@@ -74,6 +75,7 @@ export interface ShopDialogProps {
   onSellUpgradePoint: () => void;
   onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
   onBuySpecialCard: () => void;
+  onBuyPoolCard: () => void;
   /** Tutorial spotlight (L45-05). Shop is never auto-opened. */
   tutorialHighlight?: TutorialHighlight;
 }
@@ -88,6 +90,7 @@ export function ShopDialog({
   onSellUpgradePoint,
   onBuyCard,
   onBuySpecialCard,
+  onBuyPoolCard,
   tutorialHighlight = null,
 }: ShopDialogProps): ReactElement {
   const [buyCardId, setBuyCardId] = useState<string>(DEFAULT_SHOP_CARD_ID);
@@ -105,6 +108,7 @@ export function ShopDialog({
         : DEFAULT_SHOP_CARD_ID;
   const shopBlurbCost = structuredCostFromCardCost(getCard(selectedShopId)?.buyCost);
   const highlightUpgradePoint = tutorialHighlight === 'shop-upgrade-point';
+  const canBuyPool = view.pool.length >= 1 && view.self.points >= view.poolBuyCost;
 
   useEffect(() => {
     if (!open || !highlightUpgradePoint) {
@@ -304,6 +308,24 @@ export function ShopDialog({
         <p className="mt-1 text-sm text-ink-muted">
           Cards deactivated or dumped here are visible to every player. This is not a hand.
         </p>
+        <div className="mt-3" data-shop-pool-buy="">
+          <Button
+            compact
+            variant="orange"
+            disabled={disabled || !canBuyPool}
+            onClick={() => {
+              onBuyPoolCard();
+              onClose();
+            }}
+          >
+            {BUY_POOL_CARD_LABEL}{' '}
+            <CostDisplay
+              cost={{ kind: 'points', amount: view.poolBuyCost }}
+              signed="cost"
+              className="text-inherit"
+            />
+          </Button>
+        </div>
         {view.pool.length === 0 ? (
           <p className="mt-3 text-sm text-ink-muted">The pool is empty.</p>
         ) : (

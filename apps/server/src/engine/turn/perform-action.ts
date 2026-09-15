@@ -23,6 +23,7 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
+import { buyPoolCard } from '../economy/buy-pool-card';
 import { buySpecialCard } from '../economy/buy-special-card';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
@@ -337,7 +338,19 @@ function performPreparedTurnAction(
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'buyPoolCard') {
-    return actionReject('play-not-legal');
+    const bought = buyPoolCard(state, actorPlayerId, rng);
+
+    if (!bought.ok) {
+      return bought;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'buyPoolCard',
+      cardId: bought.instance.cardId,
+      isUpgraded: bought.instance.isUpgraded,
+      turnSequence: state.turnSequence,
+    };
   } else if (action.type === 'clearSpy') {
     return actionReject('play-not-legal');
   } else if (action.type === 'deactivatePersistent') {

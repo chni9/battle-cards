@@ -33,4 +33,14 @@ describe('shop buy cells (L44-01 / L58-03)', () => {
     expect(source).toContain('highlightId="shop-upgrade-point"');
     expect(source).not.toMatch(/\bUP\b/);
   });
+
+  it('shows Buy random with the public pool fee (L58-05)', () => {
+    const source = readFileSync(join(dir, 'shop-dialog.tsx'), 'utf8');
+    const poolAt = source.indexOf('data-shop-pool-buy');
+    expect(poolAt).toBeGreaterThan(-1);
+    expect(source).toContain('BUY_POOL_CARD_LABEL');
+    expect(source).toContain('view.poolBuyCost');
+    expect(source.slice(poolAt, poolAt + 400)).toContain("kind: 'points'");
+    expect(source).toContain('onBuyPoolCard');
+  });
 });

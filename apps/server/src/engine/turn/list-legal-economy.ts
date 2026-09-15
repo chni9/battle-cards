@@ -2,11 +2,13 @@
  * Enumerate legal economy turn actions — technical spec v3 §4.3 (L16-01).
  *
  * Affordability via existing `canAffordCost` / economy constants; no re-derived rules.
+ * Takes `state` so pool-buy can read public `pool` + `poolBuyCost` (L58-05).
  */
 
 import {
   getSharedCard,
   SHARED_CARD_IDS,
+  type GameState,
   type Player,
 } from '@card-battle/shared';
 
@@ -15,7 +17,10 @@ import { canAffordCost } from '../economy/transfers';
 import { upgradePointBuyCost } from '../economy/upgrade-points';
 import type { TurnAction } from './perform-action';
 
-export function listLegalEconomyActions(actor: Player): readonly TurnAction[] {
+export function listLegalEconomyActions(
+  state: GameState,
+  actor: Player,
+): readonly TurnAction[] {
   const actions: TurnAction[] = [];
 
   for (const cardId of SHARED_CARD_IDS) {
@@ -55,6 +60,10 @@ export function listLegalEconomyActions(actor: Player): readonly TurnAction[] {
 
   if (actor.points >= SPECIAL_CARD_PURCHASE_COST) {
     actions.push({ type: 'buySpecialCard' });
+  }
+
+  if (state.pool.length >= 1 && actor.points >= state.poolBuyCost) {
+    actions.push({ type: 'buyPoolCard' });
   }
 
   return actions;

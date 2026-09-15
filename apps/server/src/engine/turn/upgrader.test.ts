@@ -107,11 +107,11 @@ describe('Upgrader upgrade-point economy (L27-01 / #V4-28)', () => {
     actor.specialCards = [];
     actor.upgradePoints = 0;
 
-    const legal = listLegalEconomyActions(actor);
+    const legal = listLegalEconomyActions(state, actor);
     expect(legal.some((a) => a.type === 'buyUpgradePoint')).toBe(true);
 
     actor.points = 4;
-    expect(listLegalEconomyActions(actor).some((a) => a.type === 'buyUpgradePoint')).toBe(
+    expect(listLegalEconomyActions(state, actor).some((a) => a.type === 'buyUpgradePoint')).toBe(
       false,
     );
   });
