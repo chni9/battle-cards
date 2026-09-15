@@ -10,6 +10,7 @@ import {
   BUY_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  PLAY_AGAIN,
   KICK_PLAYER,
   CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
@@ -157,6 +158,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   addBot: (difficulty: BotDifficulty) => void;
   removeBot: (playerId: string) => void;
   kickPlayer: (playerId: string) => void;
+  playAgain: () => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   chooseKit: (selection: LobbyKitSelection) => void;
   drawCard: () => void;
@@ -489,6 +491,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(KICK_PLAYER, { playerId });
   }, []);
 
+  const playAgain = useCallback((): void => {
+    roomRef.current?.send(PLAY_AGAIN);
+  }, []);
+
   const setBotDifficulty = useCallback(
     (playerId: string, difficulty: BotDifficulty): void => {
       roomRef.current?.send(SET_BOT_DIFFICULTY, { playerId, difficulty });
@@ -650,6 +656,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     addBot,
     removeBot,
     kickPlayer,
+    playAgain,
     setBotDifficulty,
     chooseKit,
     drawCard,

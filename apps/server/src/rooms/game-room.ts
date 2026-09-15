@@ -18,6 +18,7 @@ import {
   CHOOSE_KIT,
   SET_READY,
   KICK_PLAYER,
+  PLAY_AGAIN,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -178,6 +179,15 @@ import {
   shouldDisposeLobbyWithOnlyBots,
   shouldKeepRoomAlive,
 } from './last-human-leave';
+import {
+  canPlayAgain,
+  optedInHumanIdsInPriorOrder,
+  playAgainRejectionMessage,
+  recapHumanSeats,
+  reformingLobbySeats,
+  resolveReformingHost,
+  shouldPersistFinishedGame,
+} from './play-again-rules';
 import { applyPlayingForfeit } from './playing-forfeit';
 import {
   createBotSeat,
@@ -185,11 +195,22 @@ import {
   isHumanSeat,
   shouldLockForOccupancy,
   shouldUnlockForOccupancy,
+  type HumanSeat,
   type Seat,
 } from './seats';
 import { readTutorialCreateOption, shouldRejectTutorialJoin, shouldRejectTutorialAddBot } from './tutorial-join';
 
 type GameClient = Client<{ messages: ServerToClientMessages }>;
+
+interface FinishedHoldout {
+  state: GameState;
+  winnerPlayerId: string;
+  actionLog: readonly ActionLogEntryView[];
+  eliminations: readonly FinishedGameEliminationRecord[];
+  turnHistory: readonly ExportTurnRowView[];
+  playKind: PlayKind;
+  tutorialIndex: number | null;
+}
 
 const TURN_DURATION_MS = (() => {
   const raw = process.env['TURN_DURATION_MS'];
@@ -217,6 +238,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private tutorialIndex: number | null = null;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
+  /** Frozen recap for clients who have not opted into Play again (L57-10). */
+  private finishedHoldout: FinishedHoldout | null = null;
+  private reforming = false;
+  private readonly playAgainOptedIn = new Set<string>();
+  private recapSeats: HumanSeat[] = [];
+  private matchHostSessionId: string | null = null;
+  private matchHumanSeatOrder: string[] = [];
+  private matchPersisted = false;
   private readonly botDriver = new BotDriver({
     isBotSeat: (playerId) => {
       const seat = this.seats.find((entry) => entry.sessionId === playerId);
@@ -397,9 +426,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
+      this.reforming = false;
+      this.playAgainOptedIn.clear();
+      this.matchPersisted = false;
+      this.winnerPlayerId = null;
       this.hasStarted = true;
       this.startedAtMs = Date.now();
       this.eliminations = [];
+      this.matchHostSessionId = hostSessionId;
+      this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
       const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
       const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
       this.gameState = createInitialState(
@@ -447,6 +482,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [KICK_PLAYER]: (client: GameClient, payload: unknown): void => {
       this.handleKickPlayer(client, payload);
+    },
+
+    [PLAY_AGAIN]: (client: GameClient): void => {
+      this.handlePlayAgain(client);
     },
 
     [DRAW_CARD]: (client: GameClient): void => {
@@ -653,6 +692,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
       // player remains in gameState (possibly already eliminated).
       this.clearAbsentTimer(client.sessionId);
       this.rejectReconnection(client.sessionId, new Error('Client left'));
+      return;
+    }
+
+    const recapIndex = this.recapSeats.findIndex((seat) => seat.sessionId === client.sessionId);
+
+    if (recapIndex >= 0) {
+      this.recapSeats.splice(recapIndex, 1);
+      this.playAgainOptedIn.delete(client.sessionId);
+      this.rejectReconnection(client.sessionId, new Error('Client left recap'));
       return;
     }
 
@@ -956,6 +1004,61 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     this.guestReady.set(client.sessionId, parsed.value.ready);
+    this.sendStateToEveryone();
+  }
+
+  private handlePlayAgain(client: GameClient): void {
+    const rejection = canPlayAgain({
+      playKind: this.playKind,
+      winnerPlayerId: this.winnerPlayerId,
+      reforming: this.reforming,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, playAgainRejectionMessage(rejection));
+      return;
+    }
+
+    if (this.playAgainOptedIn.has(client.sessionId)) {
+      this.sendStateTo(client);
+      return;
+    }
+
+    const first = !this.reforming;
+    this.reforming = true;
+    this.hasStarted = false;
+    this.playAgainOptedIn.add(client.sessionId);
+
+    if (first) {
+      this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
+      this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
+    } else {
+      const recapIndex = this.recapSeats.findIndex((seat) => seat.sessionId === client.sessionId);
+
+      if (recapIndex >= 0) {
+        const [moved] = this.recapSeats.splice(recapIndex, 1);
+
+        if (moved !== undefined) {
+          this.seats.push(moved);
+        }
+      }
+    }
+
+    this.guestReady.set(client.sessionId, false);
+    this.hostSessionId =
+      resolveReformingHost({
+        originalHostSessionId: this.matchHostSessionId,
+        optedInHumanIdsInPriorSeatOrder: optedInHumanIdsInPriorOrder(
+          this.matchHumanSeatOrder,
+          this.playAgainOptedIn,
+        ),
+      }) ?? client.sessionId;
+
+    if (shouldUnlockForOccupancy(this.seats.length)) {
+      void this.unlock();
+    }
+
+    this.refreshAutoDispose();
     this.sendStateToEveryone();
   }
 
@@ -3185,10 +3288,23 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.winnerPlayerId = winnerPlayerId;
     this.rejectAllReconnections(new Error('Game over'));
     this.broadcast(GAME_OVER, { winnerPlayerId });
-    this.sendStateToEveryone();
 
     const state = this.gameState;
     const startedAtMs = this.startedAtMs;
+
+    if (state !== null) {
+      this.finishedHoldout = {
+        state,
+        winnerPlayerId,
+        actionLog: [...this.actionLog],
+        eliminations: [...this.eliminations],
+        turnHistory: [...this.turnHistory],
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
+      };
+    }
+
+    this.sendStateToEveryone();
 
     if (state === null || startedAtMs === null) {
       console.warn(`[${this.roomId}] finished-game persist skipped — missing state or start time`);
@@ -3199,20 +3315,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const snapshot = buildFinishedGameSnapshot({
-      roomId: this.roomId,
-      startedAtMs,
-      endedAtMs: Date.now(),
-      winnerPlayerId,
-      gameState: state,
-      actionLog: this.actionLog,
-      turnHistory: this.turnHistory,
-      eliminations: this.eliminations,
-      botDifficultiesByPlayerId: this.botDifficulties(),
-      isTutorial: this.playKind === 'tutorial',
-    });
+    if (shouldPersistFinishedGame(this.matchPersisted)) {
+      const snapshot = buildFinishedGameSnapshot({
+        roomId: this.roomId,
+        startedAtMs,
+        endedAtMs: Date.now(),
+        winnerPlayerId,
+        gameState: state,
+        actionLog: this.actionLog,
+        turnHistory: this.turnHistory,
+        eliminations: this.eliminations,
+        botDifficultiesByPlayerId: this.botDifficulties(),
+        isTutorial: this.playKind === 'tutorial',
+      });
 
-    void persistFinishedGame(snapshot);
+      void persistFinishedGame(snapshot);
+      this.matchPersisted = true;
+    }
+
     this.refreshAutoDispose();
     // Humans still need the finished view. Dispose only when no sockets remain (bot-only finish).
     if (this.clients.length === 0) {
@@ -3346,6 +3466,27 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   private sendStateTo(client: GameClient): void {
     const hostPlayerId = this.hostSessionId;
+    const recap = this.recapSeats.some((seat) => seat.sessionId === client.sessionId);
+    const holdout = this.finishedHoldout;
+
+    if (recap && holdout !== null) {
+      client.send(
+        STATE_UPDATE,
+        buildFinishedViewFor({
+          recipientSessionId: client.sessionId,
+          gameCode: this.roomId,
+          state: holdout.state,
+          winnerPlayerId: holdout.winnerPlayerId,
+          actionLog: holdout.actionLog,
+          eliminations: holdout.eliminations,
+          botDifficulties: this.botDifficulties(),
+          turnHistory: holdout.turnHistory,
+          playKind: holdout.playKind,
+          tutorialIndex: holdout.tutorialIndex,
+        }),
+      );
+      return;
+    }
 
     if (!this.hasStarted || this.gameState === null) {
       if (hostPlayerId === null) {
