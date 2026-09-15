@@ -15,12 +15,12 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
+import { getResourceIconUrl } from '../../design/asset-lookup';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../design/components/cost-display';
 import { Dialog } from '../../design/components/dialog';
-import { ResourceIcon } from '../../design/components/resource-icon';
 import {
   costAriaLabel,
   structuredCostFromCardCost,
@@ -167,21 +167,23 @@ export function ShopDialog({
       }
     >
       <section className={highlightUpgradePoint ? 'space-y-2 overflow-visible pt-12' : 'space-y-2'}>
-        <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_UPGRADE_POINTS}</h3>
-        <div
-          className="flex flex-wrap items-center gap-2"
+        <h3
+          className="flex items-center gap-1.5 text-sm font-semibold text-ink"
           data-shop-upgrade-balance=""
         >
-          <ResourceIcon
-            kind="upgradePoint"
-            value={view.self.upgradePoints}
-            captionVisible
-            flyToken={false}
+          {SHOP_SECTION_UPGRADE_POINTS}
+          <img
+            src={getResourceIconUrl('upgradePoint')}
+            alt=""
+            width={16}
+            height={16}
+            className="shrink-0 object-contain"
+            aria-hidden
           />
-        </div>
+        </h3>
         <div
           ref={upgradePointRef}
-          className="mt-4 flex flex-wrap gap-2 overflow-visible"
+          className="flex flex-wrap gap-2 overflow-visible"
           data-shop-upgrade-actions=""
         >
           <TutorialCallout
@@ -199,11 +201,18 @@ export function ShopDialog({
             }}
           >
             {BUY_UPGRADE_POINT_LABEL}{' '}
-            <CostDisplay
-              cost={{ kind: 'points', amount: buyUpgradeCost }}
-              signed="cost"
-              className="text-inherit"
-            />
+            <span className="inline-flex items-center gap-1">
+              <CostDisplay
+                cost={{ kind: 'points', amount: buyUpgradeCost }}
+                signed="cost"
+                className="text-inherit"
+              />
+              <CostDisplay
+                cost={{ kind: 'upgradePoint', amount: 1 }}
+                signed="gain"
+                className="text-inherit"
+              />
+            </span>
           </Button>
           </TutorialCallout>
           <Button
@@ -216,11 +225,18 @@ export function ShopDialog({
             }}
           >
             {SELL_UPGRADE_POINT_LABEL}{' '}
-            <CostDisplay
-              cost={{ kind: 'points', amount: sellUpgradeYield }}
-              signed="gain"
-              className="text-inherit"
-            />
+            <span className="inline-flex items-center gap-1">
+              <CostDisplay
+                cost={{ kind: 'points', amount: sellUpgradeYield }}
+                signed="gain"
+                className="text-inherit"
+              />
+              <CostDisplay
+                cost={{ kind: 'upgradePoint', amount: 1 }}
+                signed="cost"
+                className="text-inherit"
+              />
+            </span>
           </Button>
         </div>
       </section>
