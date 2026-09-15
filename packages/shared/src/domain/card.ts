@@ -73,12 +73,10 @@ export type ActionCardId = (typeof ACTION_CARD_IDS)[number];
 export type SpecialCardId = (typeof SPECIAL_CARD_IDS)[number];
 
 /**
- * Classic freeze (designer 2026-09-09 / L56-02): these specials stay in the
- * catalog and handler map but must not be granted or played. Reactivate by
- * removing the id from this list.
+ * Classic freeze switch (L56-02 / L58-06): ids stay in the catalog and handler
+ * map but must not be granted or played. Empty — Invisibility is live again.
  */
 export const TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS = [
-  'invisibility',
 ] as const satisfies readonly SpecialCardId[];
 
 export type TemporarilyUnavailableSpecialCardId =
@@ -99,13 +97,13 @@ export const CIRCULATING_SPECIAL_CARD_IDS = SPECIAL_CARD_IDS.filter(
 );
 
 /**
- * 20-point purchase pool — L21-01 / #V4-29 over circulating ids (L56-02 freeze).
+ * 20-point purchase pool — L21-01 / #V4-29 over circulating ids.
  */
 export const PURCHASABLE_SPECIAL_CARD_IDS = CIRCULATING_SPECIAL_CARD_IDS;
 
 /**
  * Card Transformer result pool — never `card-transformer` itself
- * (designer 2026-08-24 / L50-08) and never a frozen id (L56-02).
+ * (designer 2026-08-24 / L50-08). Frozen ids are already absent from circulating.
  */
 export const TRANSFORM_RESULT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
   (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'card-transformer'> =>
@@ -113,6 +111,54 @@ export const TRANSFORM_RESULT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
 );
 
 export type CardId = AttackCardId | ActionCardId | SpecialCardId;
+
+/**
+ * Spec §5 dedicated internal counters ("card lives"). Duration counters
+ * (Invisibility remaining turns) are not in this set — `applyDamage` must not
+ * decrement them (L58-06).
+ */
+export const CARD_LIVES_SPECIAL_IDS = [
+  'points-generator',
+  'imposition',
+  'poison',
+  'super-absorber',
+] as const satisfies readonly SpecialCardId[];
+
+const CARD_LIVES_SET = new Set<string>(CARD_LIVES_SPECIAL_IDS);
+
+export function isCardLivesSpecialId(cardId: string): boolean {
+  return CARD_LIVES_SET.has(cardId);
+}
+
+/**
+ * Cards that act on another player — illegal to play while own Invisibility is
+ * active (rules spec §5 / L58-06). Designer-locked set; do not add Attack Thief.
+ */
+export const CARD_IDS_THAT_ACT_ON_OPPONENTS = [
+  ...ATTACK_CARD_IDS,
+  'mega-attack',
+  'spy',
+  'thief',
+  'card-thief',
+  'spy-thief',
+  'upgrade-point-thief',
+  'poison',
+  'curse',
+  'imposition',
+  'super-absorber',
+  'absorber',
+  'cloning',
+  'suicide',
+  'sentence',
+  'mirror',
+  'super-mirror',
+] as const satisfies readonly CardId[];
+
+const CARD_IDS_THAT_ACT_ON_OPPONENTS_SET = new Set<string>(CARD_IDS_THAT_ACT_ON_OPPONENTS);
+
+export function cardActsOnOpponents(cardId: string): boolean {
+  return CARD_IDS_THAT_ACT_ON_OPPONENTS_SET.has(cardId);
+}
 
 export type CardType = 'attack' | 'action' | 'special';
 

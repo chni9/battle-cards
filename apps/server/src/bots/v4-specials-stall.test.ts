@@ -133,7 +133,7 @@ describe('L29-08: turn-flow specials never stall the room', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('seeded Invisibility is not a legal play (L56-02)', () => {
+  it('seeded Invisibility play completes without throwing (L58-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -159,7 +159,7 @@ describe('L29-08: turn-flow specials never stall the room', () => {
       noThrowHooks('invis'),
       { nowMs: NOW_MS },
     );
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
   });
 
   it('bot plays upgraded Card Absorber and resolves the pool-pick sub-choice without throwing', () => {

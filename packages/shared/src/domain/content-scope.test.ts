@@ -8,11 +8,14 @@ import { ATTACK_DAMAGE } from './attack-damage';
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
+  CARD_LIVES_SPECIAL_IDS,
   CIRCULATING_SPECIAL_CARD_IDS,
   PURCHASABLE_SPECIAL_CARD_IDS,
   SPECIAL_ATTACK_CARD_IDS,
   SPECIAL_CARD_IDS,
+  TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS,
   TRANSFORM_RESULT_SPECIAL_IDS,
+  cardActsOnOpponents,
   isAttackCardId,
   type CardId,
 } from './card';
@@ -42,13 +45,33 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
     );
   });
 
-  it('freezes Invisibility out of circulating pools (L56-02)', () => {
+  it('keeps Invisibility in circulating pools (L58-06)', () => {
     expect(SPECIAL_CARD_IDS).toContain('invisibility');
-    expect(CIRCULATING_SPECIAL_CARD_IDS).toHaveLength(19);
-    expect(CIRCULATING_SPECIAL_CARD_IDS).not.toContain('invisibility');
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toHaveLength(20);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain('invisibility');
     expect(PURCHASABLE_SPECIAL_CARD_IDS).toEqual(CIRCULATING_SPECIAL_CARD_IDS);
-    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(18);
-    expect(TRANSFORM_RESULT_SPECIAL_IDS).not.toContain('invisibility');
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(19);
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).toContain('invisibility');
+    expect(TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS).toEqual([]);
+  });
+
+  it('treats only the four spec §5 counters as card lives (L58-06)', () => {
+    expect([...CARD_LIVES_SPECIAL_IDS].sort()).toEqual(
+      ['imposition', 'points-generator', 'poison', 'super-absorber'].sort(),
+    );
+  });
+
+  it('marks Mirror and attacks as acting on opponents, not Tax (L58-06)', () => {
+    expect(cardActsOnOpponents('mirror')).toBe(true);
+    expect(cardActsOnOpponents('super-mirror')).toBe(true);
+    expect(cardActsOnOpponents('basic-attack')).toBe(true);
+    expect(cardActsOnOpponents('spy')).toBe(true);
+    expect(cardActsOnOpponents('tax')).toBe(false);
+    expect(cardActsOnOpponents('regeneration')).toBe(false);
+    expect(cardActsOnOpponents('card-transformer')).toBe(false);
+    expect(cardActsOnOpponents('card-absorber')).toBe(false);
+    expect(cardActsOnOpponents('invisibility')).toBe(false);
+    expect(cardActsOnOpponents('attack-thief')).toBe(false);
   });
 
   it('never repeats a card id', () => {

@@ -28,7 +28,7 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  * Caller sets resources (step 2) and clears zones first when resetting.
  *
  * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
- * specials via seeded `rng.pick` with replacement (duplicates OK). L56-02 freeze.
+ * specials via seeded `rng.pick` with replacement (duplicates OK).
  */
 export function dealStartingLoadout(
   player: Player,

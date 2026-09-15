@@ -5,6 +5,7 @@
 
 import {
   actionReject,
+  cardActsOnOpponents,
   getKit,
   isAttackCardId,
   isPersistentSpecialCardId,
@@ -40,6 +41,7 @@ import {
   ensureAutoDeactivationLog,
   takeAutoDeactivationLog,
 } from '../specials/auto-deactivation-log';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { activateDuplicationAction } from '../kits/activate-duplication';
 import {
   applyDefaultMirrorRedirect,
@@ -1142,6 +1144,10 @@ function playMultipleAttacksAction(
     return actionReject('attacks-forbidden-during-block');
   }
 
+  if (playerIsInvisible(actor)) {
+    return actionReject('play-not-legal');
+  }
+
   if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
     return actionReject('multi-attack-kit-forbidden');
   }
@@ -1344,6 +1350,10 @@ function playCardAction(
   const cardId = instance.cardId;
 
   if (isTemporarilyUnavailableCardId(cardId)) {
+    return actionReject('play-not-legal');
+  }
+
+  if (playerIsInvisible(actor) && cardActsOnOpponents(cardId)) {
     return actionReject('play-not-legal');
   }
 

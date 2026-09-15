@@ -10,7 +10,7 @@ import { createInitialState } from '../create-initial-state';
 import { buySpecialCard, SPECIAL_CARD_PURCHASE_COST } from './buy-special-card';
 
 describe('buySpecialCard (L21-01 / #V4-29)', () => {
-  it('draws from PURCHASABLE_SPECIAL_CARD_IDS and never Invisibility (L56-02)', () => {
+  it('draws from PURCHASABLE_SPECIAL_CARD_IDS including Invisibility (L58-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -40,7 +40,6 @@ describe('buySpecialCard (L21-01 / #V4-29)', () => {
       expect(
         (PURCHASABLE_SPECIAL_CARD_IDS as readonly string[]).includes(result.instance.cardId),
       ).toBe(true);
-      expect(result.instance.cardId).not.toBe('invisibility');
       drawn.add(result.instance.cardId);
     }
 
@@ -48,7 +47,7 @@ describe('buySpecialCard (L21-01 / #V4-29)', () => {
     expect(drawn.size).toBeGreaterThan(6);
     expect(drawn.has('reanimation')).toBe(true);
     expect(drawn.has('card-transformer')).toBe(true);
-    expect(drawn.has('invisibility')).toBe(false);
+    expect(PURCHASABLE_SPECIAL_CARD_IDS).toContain('invisibility');
   });
 
   it('rejects when the player cannot afford 20 points', () => {

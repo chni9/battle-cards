@@ -51,7 +51,7 @@ export interface PoolPickSubChoicePayload {
 export interface SpecialPickSubChoicePayload {
   playerId: string;
   /**
-   * Circulating specials minus `card-transformer` (L50-08) and frozen ids (L56-02).
+   * Circulating specials minus `card-transformer` (L50-08).
    * Duplicates with hand allowed.
    */
   eligibleCardIds: readonly SpecialCardId[];

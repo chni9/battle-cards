@@ -15,7 +15,9 @@ describe('ActivePersistentThumb (L56-06)', () => {
     const source = readFileSync(join(dir, 'active-persistent-thumb.tsx'), 'utf8');
     expect(source).toContain('detail="thumb"');
     expect(source).toContain('activated');
-    expect(source).toContain("kind=\"card-lives\"");
+    expect(source).toContain("kind={badgeKind}");
+    expect(source).toContain("'turns'");
+    expect(source).toContain("'card-lives'");
     expect(source).toContain('counter !== null');
     expect(source).toContain('amount={counter}');
     expect(source).not.toContain("from '../../design/components/resource-icon'");
@@ -32,12 +34,14 @@ describe('ActivePersistentThumb (L56-06)', () => {
     expect(opponent).toContain('data-zone="opponent-actives"');
   });
 
-  it('omits the badge when counter is null (Curse / Invisibility / Shield)', () => {
+  it('omits the badge when counter is null (Curse / Shield)', () => {
     const own = readFileSync(join(dir, 'private-zone.tsx'), 'utf8');
     expect(own).toContain('counter: null');
     const inspect = readFileSync(join(dir, 'card-actions.tsx'), 'utf8');
     expect(inspect).toContain('Card lives');
-    expect(inspect).toContain("kind=\"card-lives\"");
+    expect(inspect).toContain('Turns left');
+    expect(inspect).toContain("'card-lives'");
+    expect(inspect).toContain("'turns'");
     expect(inspect).not.toContain('Counter:');
   });
 });

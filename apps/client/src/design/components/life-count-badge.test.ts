@@ -16,6 +16,7 @@ describe('LifeCountBadge (L56-04)', () => {
     expect(source).toContain("getResourceIconUrl('life')");
     expect(source).toContain('damage');
     expect(source).toContain('card lives');
+    expect(source).toContain('turns remaining');
     expect(source).not.toContain("from './resource-icon'");
     expect(source).toContain('tabular-nums');
   });

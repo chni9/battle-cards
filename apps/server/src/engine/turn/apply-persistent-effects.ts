@@ -73,17 +73,27 @@ function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
 }
 
 function applyInvisibilityTicks(state: GameState, owner: Player): void {
-  for (const effect of owner.activePersistentEffects) {
-    if (effect.cardId !== 'invisibility') {
-      continue;
-    }
+  const effects = owner.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'invisibility',
+  );
 
+  for (const effect of effects) {
     grantPoints(
       state,
       owner,
       effect.isUpgraded ? INVISIBILITY_POINTS_UPGRADED : INVISIBILITY_POINTS_BASE,
       'direct',
     );
+
+    if (effect.counter === null) {
+      continue;
+    }
+
+    effect.counter -= 1;
+
+    if (effect.counter <= 0) {
+      deactivatePersistentEffect(state, owner.id, effect.id, true);
+    }
   }
 }
 

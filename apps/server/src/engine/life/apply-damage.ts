@@ -5,14 +5,20 @@
  * paths must never be merged, wrapped in a common helper, or selected by a flag.
  */
 
-import type { AttackCardId, PersistentEffect, Player } from '@card-battle/shared';
+import {
+  isCardLivesSpecialId,
+  type AttackCardId,
+  type PersistentEffect,
+  type Player,
+} from '@card-battle/shared';
 
 import type { CounterDecrement, DamageOutcome } from './outcome';
 
 /**
  * Applies `amount` damage to `target`: the shield absorbs first and the excess carries
- * over to lives (rules spec §1), then each of the hit player's active internal counters
- * loses one point per life lost (rules spec §5).
+ * over to lives (rules spec §1), then each of the hit player's spec §5 card-lives
+ * counters loses one point per life lost (rules spec §5). Duration counters such
+ * as Invisibility remaining turns are not card lives (L58-06).
  *
  * Lives are floored at 0 and elimination is *not* processed here — the turn loop checks
  * it in its own step (technical spec §4.3).
@@ -46,7 +52,7 @@ export function applyDamage(
 
   if (livesLost > 0) {
     for (const effect of target.activePersistentEffects) {
-      if (effect.counter === null) {
+      if (effect.counter === null || !isCardLivesSpecialId(effect.cardId)) {
         continue;
       }
 

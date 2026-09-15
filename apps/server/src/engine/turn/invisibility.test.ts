@@ -35,7 +35,7 @@ describe('Invisibility (L25-02)', () => {
       makeCounterEffect({
         id: 'inv-1',
         cardId: 'invisibility',
-        counter: null,
+        counter: 4,
         isUpgraded: false,
       }),
     ];
@@ -46,7 +46,7 @@ describe('Invisibility (L25-02)', () => {
     a.activePersistentEffects[0] = makeCounterEffect({
       id: 'inv-1',
       cardId: 'invisibility',
-      counter: null,
+      counter: 4,
       isUpgraded: true,
     });
     a.points = 0;
@@ -73,7 +73,7 @@ describe('Invisibility (L25-02)', () => {
       makeCounterEffect({
         id: 'inv-1',
         cardId: 'invisibility',
-        counter: null,
+        counter: 4,
       }),
     ];
     b.activePersistentEffects = [
@@ -118,7 +118,7 @@ describe('Invisibility (L25-02)', () => {
     }
 
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     a.lives = 10;
     queueEffect({
@@ -151,7 +151,7 @@ describe('Invisibility (L25-02)', () => {
     }
 
     b.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     state.currentTurnPlayerId = a.id;
     a.points = 20;
@@ -180,7 +180,7 @@ describe('Invisibility (L25-02)', () => {
     }
 
     b.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     b.kitId = 'scientific';
     b.lives = 18;
@@ -222,7 +222,7 @@ describe('Invisibility (L25-02)', () => {
     }
 
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     eliminateWithoutReward(state, a.id);
     expect(a.isEliminated).toBe(true);
@@ -245,7 +245,7 @@ describe('Invisibility (L25-02)', () => {
     state.currentTurnPlayerId = a.id;
     a.points = 20;
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     const effectId = 'inv-1';
     const beforePool = state.pool.length;
@@ -259,7 +259,7 @@ describe('Invisibility (L25-02)', () => {
     expect(state.currentTurnPlayerId).toBe('b');
   });
 
-  it('rejects playCard on a seeded copy (L56-02 freeze)', () => {
+  it('plays a seeded copy and starts a 4-turn counter (L58-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -274,23 +274,17 @@ describe('Invisibility (L25-02)', () => {
     }
 
     state.currentTurnPlayerId = a.id;
-    a.points = 20;
+    a.points = 10;
+    a.pendingEffects = [];
     a.specialCards = [{ instanceId: 'inv-card', cardId: 'invisibility', isUpgraded: false }];
     const result = performTurnAction(state, a.id, {
       type: 'playCard',
       instanceId: 'inv-card',
     });
-    expect(result.ok).toBe(false);
-    if (result.ok) {
-      return;
-    }
-    expect(result.code).toBe('play-not-legal');
-    expect(a.specialCards).toHaveLength(1);
-    expect(
-      listLegalActions(state, a.id).some(
-        (action) => action.type === 'playCard' && action.instanceId === 'inv-card',
-      ),
-    ).toBe(false);
+    expect(result.ok).toBe(true);
+    const effect = a.activePersistentEffects.find((entry) => entry.cardId === 'invisibility');
+    expect(effect?.counter).toBe(3);
+    expect(a.points).toBe(4);
   });
 
   it('bot scoreAction handles deactivatePersistent without sellUpgradePoint fallback', () => {
@@ -308,7 +302,7 @@ describe('Invisibility (L25-02)', () => {
     }
 
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: null }),
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
     ];
     a.upgradePoints = 0;
     state.currentTurnPlayerId = a.id;
@@ -330,5 +324,124 @@ describe('Invisibility (L25-02)', () => {
         (action) => action.type === 'deactivatePersistent' && action.effectId === 'inv-1',
       ),
     ).toBe(true);
+  });
+
+  it('forbids hostile plays and Mirror while active; Tax and draw stay legal (L58-06)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l58-06-pacifist',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
+    ];
+    a.hand = [
+      { instanceId: 'spy-1', cardId: 'spy', isUpgraded: false },
+      { instanceId: 'mir-1', cardId: 'mirror', isUpgraded: false },
+      { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+      { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+    ];
+    a.specialCards = [
+      { instanceId: 'sm-1', cardId: 'super-mirror', isUpgraded: false },
+    ];
+    a.points = 20;
+    a.lives = 10;
+    a.pendingEffects = [];
+    b.pendingEffects = [];
+    state.currentTurnPlayerId = a.id;
+
+    const legal = listLegalActions(state, a.id);
+    expect(legal.some((action) => action.type === 'draw')).toBe(true);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.instanceId === 'tax-1'),
+    ).toBe(true);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.instanceId === 'spy-1'),
+    ).toBe(false);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.instanceId === 'mir-1'),
+    ).toBe(false);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.instanceId === 'atk-1'),
+    ).toBe(false);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.instanceId === 'sm-1'),
+    ).toBe(false);
+
+    const spy = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'spy-1',
+      targetPlayerId: b.id,
+    });
+    expect(spy.ok).toBe(false);
+    if (!spy.ok) {
+      expect(spy.code).toBe('play-not-legal');
+    }
+
+    const tax = performTurnAction(state, a.id, { type: 'playCard', instanceId: 'tax-1' });
+    expect(tax.ok).toBe(true);
+  });
+
+  it('auto-loses after 4 owner ticks including activation; upgraded lasts 7 (L58-06)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l58-06-duration',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+
+    if (a === undefined) {
+      throw new Error('missing a');
+    }
+
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
+    ];
+    a.points = 0;
+    for (let tick = 0; tick < 3; tick += 1) {
+      applyPersistentEffects(state, a.id);
+      expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
+        true,
+      );
+    }
+
+    applyPersistentEffects(state, a.id);
+    expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
+      false,
+    );
+    expect(a.points).toBe(16);
+
+    a.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'inv-up',
+        cardId: 'invisibility',
+        counter: 7,
+        isUpgraded: true,
+      }),
+    ];
+    a.points = 0;
+    for (let tick = 0; tick < 6; tick += 1) {
+      applyPersistentEffects(state, a.id);
+      expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
+        true,
+      );
+    }
+
+    applyPersistentEffects(state, a.id);
+    expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
+      false,
+    );
+    expect(a.points).toBe(42);
   });
 });

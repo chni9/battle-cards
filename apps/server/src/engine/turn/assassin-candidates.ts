@@ -16,6 +16,7 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
 import { playPointsCost } from './play-cost';
@@ -42,6 +43,10 @@ export function listAssassinMultiAttackCandidates(
   }
 
   if (attacksForbiddenDuringBlock(actor)) {
+    return [];
+  }
+
+  if (playerIsInvisible(actor)) {
     return [];
   }
 

@@ -1,6 +1,6 @@
 /**
  * Buy a random special for 20 points — rules spec §5, L5-09, L21-01 / #V4-29.
- * Draws from `PURCHASABLE_SPECIAL_CARD_IDS` (L21-01 / L56-02 freeze).
+ * Draws from `PURCHASABLE_SPECIAL_CARD_IDS` (L21-01).
  */
 
 import {
