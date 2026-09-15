@@ -1131,5 +1131,20 @@ Two-tab Classic, Vite `:5173`, Colyseus `:2567`, room `WYZIDP`. Host nick
   `L58HostF got unspied from L58GuestF`; open eye gone; Unspy greys.
 - `pnpm verify` **1318** tests.
 
+### Lot 59 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 35)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567`.
+
+- Immediate forfeit (room `FITHWU`, 0 turns): winner header (Alpha / Kamikaze
+  portrait, seat color), compact `L59Gate eliminated (leave)`, **No awards this
+  match** (every recap stat 0). Footer: purple Excel, orange Feedback / View
+  board, green Play again, red Return home. Play again still reforms the lobby.
+- Three Draws then forfeit (room `FWNEMK`, 4 turns): award tiles with kit
+  portraits, kit names, seat-colored nicknames — Most points spent / gained,
+  upgrade points used, cards sold (Alpha); Fewest attacks + Most draws
+  (`L59Play`); Most attacks / cards played (Alpha). Ask-once Feedback still
+  intercepts first leave / Play again.
+- `pnpm verify` **1417** tests.
+
 
 

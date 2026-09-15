@@ -194,7 +194,7 @@ export function GameOverDialog({
       title={gameOverTitle(view.playKind)}
       onClose={onClose}
       closeOnOverlayClick
-      panelClassName="max-w-3xl bg-[color-mix(in_srgb,var(--color-slate)_22%,var(--color-surface-kit))]"
+      panelClassName="max-w-3xl !bg-[color-mix(in_srgb,var(--color-slate)_38%,var(--color-surface-kit))]"
       actions={
         <>
           {allowExcel ? (
