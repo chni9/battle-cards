@@ -72,6 +72,7 @@ describe('seats (L15-02)', () => {
         hostSessionId: 'host',
         seatCount: seats.length,
         hasStarted: false,
+        humanGuests: [],
       }),
     ).toBeNull();
 

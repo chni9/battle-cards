@@ -29,7 +29,7 @@ export function markAbsent(player: Player): void {
 }
 
 /**
- * Any reconnection resets the 60s window and the absent auto-turn counter.
+ * Any reconnection resets the 30s window and the absent auto-turn counter.
  * Does **not** reset `consecutiveTimeouts` (independent inactivity mechanism).
  */
 export function markReconnected(player: Player): void {

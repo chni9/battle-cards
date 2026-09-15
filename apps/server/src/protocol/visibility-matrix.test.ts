@@ -1,5 +1,6 @@
 /**
  * Spy matrix grant / revoke — technical spec §5.1, L58-07.
+ * Walk-in Spy overlay gate — L57-16.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -10,6 +11,7 @@ import {
   grantSpy,
   listLivingSpiesOn,
   revokeSpy,
+  walkInSpectatorSeesPrivate,
 } from './visibility-matrix';
 
 describe('visibility matrix (L58-07)', () => {
@@ -36,5 +38,22 @@ describe('visibility matrix (L58-07)', () => {
     expect(findSpyRelation(state, 'b', 'a')).toBeUndefined();
     expect(revokeSpy(state, 'b', 'a')).toBe(false);
     expect(listLivingSpiesOn(state, 'a')).toEqual([]);
+  });
+});
+
+describe('walkInSpectatorSeesPrivate (L57-16)', () => {
+  it('withholds kits while claimable seats exist and Stay is not confirmed', () => {
+    expect(
+      walkInSpectatorSeesPrivate({ claimableCount: 1, stayConfirmed: false }),
+    ).toBe(false);
+  });
+
+  it('grants the overlay after Stay or when the picker is empty', () => {
+    expect(
+      walkInSpectatorSeesPrivate({ claimableCount: 2, stayConfirmed: true }),
+    ).toBe(true);
+    expect(
+      walkInSpectatorSeesPrivate({ claimableCount: 0, stayConfirmed: false }),
+    ).toBe(true);
   });
 });

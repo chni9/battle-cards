@@ -17,9 +17,12 @@ describe('tableFlagIntent (L43-05)', () => {
     expect(tableFlagIntent({ readOnly: true, selfEliminated: true })).toBe('returnHome');
   });
 
-  it('uses forfeit while alive and leave-table after elimination', () => {
+  it('uses forfeit while alive and leave-table after elimination or walk-in spectate', () => {
     expect(tableFlagIntent({ readOnly: false, selfEliminated: false })).toBe('forfeit');
     expect(tableFlagIntent({ readOnly: false, selfEliminated: true })).toBe('leaveTable');
+    expect(
+      tableFlagIntent({ readOnly: false, selfEliminated: false, isSpectator: true }),
+    ).toBe('leaveTable');
   });
 
   it('uses Skip tutorial instead of Forfeit during a tutorial match (L45-04)', () => {

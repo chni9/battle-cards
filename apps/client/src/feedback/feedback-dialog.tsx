@@ -1,6 +1,7 @@
 /**
- * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06).
- * Ask-mode Skip / overlay marks asked in the parent. Does not call leaveGame.
+ * Tester feedback form (technical spec v6 §7.1 / L47-03 / L47-06 / L57-05).
+ * Ask-mode is the same Lot 47 ticket with Skip. Overlay marks asked in the
+ * parent. Does not call leaveGame.
  */
 
 import {
@@ -22,10 +23,14 @@ import { Dialog } from '../design/components/dialog';
 import { buildFeedbackPayload } from './build-feedback-payload';
 import {
   FEEDBACK_ABOUT_LEGEND,
+  FEEDBACK_ASK_LEAD,
   canSendFeedbackForm,
   feedbackAboutHint,
+  feedbackDialogTitle,
   feedbackMessagePlaceholder,
   feedbackSendHint,
+  resolveFeedbackSubmitFields,
+  type FeedbackFormMode,
 } from './feedback-form-copy';
 import { submitFeedback } from './submit-feedback';
 import { beginFeedbackSend, endFeedbackSend } from './submit-gate';
@@ -43,7 +48,7 @@ const inputClassName = [
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
 ].join(' ');
 
-export type FeedbackDialogMode = 'ask' | 'manual';
+export type FeedbackDialogMode = FeedbackFormMode;
 
 export interface FeedbackDialogProps {
   open: boolean;
@@ -91,12 +96,13 @@ export function FeedbackDialog({
     onDismiss(reason);
   };
 
-  const canSend = canSendFeedbackForm({ kind, message, topics, busy });
+  const submitted = resolveFeedbackSubmitFields(mode, kind, topics);
+  const canSend = canSendFeedbackForm({ kind, message, topics, busy, mode });
   const sendHint = feedbackSendHint(kind, topics, message);
 
   const onSubmit = (): void => {
     if (
-      !isFeedbackTopicsComplete(kind, topics) ||
+      !isFeedbackTopicsComplete(submitted.kind, submitted.topics) ||
       message.trim().length === 0 ||
       !beginFeedbackSend(inFlight)
     ) {
@@ -106,16 +112,20 @@ export function FeedbackDialog({
     setError(null);
     const context = {
       screen,
-      topics,
+      topics: submitted.topics,
       ...(nickname !== undefined ? { nickname } : {}),
       ...(gameCode !== undefined ? { gameCode } : {}),
       ...(playKind !== undefined ? { playKind } : {}),
       ...(actionLog !== undefined ? { actionLog } : {}),
     };
     const id = requestId.current;
-    void submitFeedback(
-      buildFeedbackPayload(kind, message, context, contact),
-    ).then((result) => {
+    const payload = buildFeedbackPayload(
+      submitted.kind,
+      message,
+      context,
+      contact,
+    );
+    void submitFeedback(payload).then((result) => {
       if (id !== requestId.current) {
         return;
       }
@@ -132,7 +142,7 @@ export function FeedbackDialog({
   return (
     <Dialog
       open={open}
-      title="Feedback"
+      title={feedbackDialogTitle(mode)}
       panelClassName="max-w-md"
       closeOnOverlayClick
       onClose={() => {
@@ -163,6 +173,10 @@ export function FeedbackDialog({
         </>
       }
     >
+      {mode === 'ask' ? (
+        <p className="mb-4 text-sm text-ink-muted">{FEEDBACK_ASK_LEAD}</p>
+      ) : null}
+
       <fieldset className="border-0 p-0">
         <legend className="text-sm font-medium text-ink">Kind</legend>
         <div className="mt-2 flex flex-wrap gap-2">

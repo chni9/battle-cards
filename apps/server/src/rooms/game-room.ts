@@ -17,7 +17,12 @@ import {
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
+  CLAIM_SEAT,
   CLEAR_SPY,
+  KICK_PLAYER,
+  PLAY_AGAIN,
+  SET_READY,
+  STAY_SPECTATING,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -31,6 +36,7 @@ import {
   PLAY_MULTIPLE_ATTACKS,
   PLAYER_ELIMINATED,
   PROTOCOL_VERSION,
+  MAX_SPECTATORS,
   REMOVE_BOT,
   SELL_CARD,
   SELL_UPGRADE_POINT,
@@ -53,6 +59,7 @@ import {
   type ChooseReanimationKitPayload,
   type ChooseSpecialPickPayload,
   type ChooseStealPickPayload,
+  type ClaimableSeatView,
   type ClearSpyPayload,
   type DeactivatePersistentPayload,
   isKitId,
@@ -148,7 +155,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
 } from '../protocol/build-view-for';
-import { recipientSeesPrivateOf } from '../protocol/visibility-matrix';
+import { recipientSeesPrivateOf, walkInSpectatorSeesPrivate } from '../protocol/visibility-matrix';
 import {
   GAME_CODE_PRESENCE_CHANNEL,
   generateGameCodeCandidate,
@@ -157,21 +164,46 @@ import {
   addBotRejectionMessage,
   canAddBot,
   canChooseKit,
+  canKickPlayer,
   canRemoveBot,
   canSetBotDifficulty,
+  canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
   collectForcedKitsBySeatId,
+  kickPlayerRejectionMessage,
   MAX_PLAYERS,
   parseChooseKitPayload,
+  parseKickPlayerPayload,
+  parseSetReadyPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
+  setReadyRejectionMessage,
   startGameRejectionMessage,
+  type HumanGuestReadyState,
 } from './lobby-rules';
 import {
   shouldDisposeLobbyWithOnlyBots,
   shouldKeepRoomAlive,
 } from './last-human-leave';
+import {
+  canPlayAgain,
+  canSeatSpectatorAsLobbyGuest,
+  optedInHumanIdsInPriorOrder,
+  playAgainRejectionMessage,
+  recapHumanSeats,
+  reformingLobbySeats,
+  resolveReformingHost,
+  shouldPersistFinishedGame,
+} from './play-again-rules';
+import {
+  canClaimSeat,
+  claimSeatRejectionMessage,
+  listLobbyClaimableSeats,
+  listPlayingClaimableSeats,
+  lobbyJoinKind,
+  parseClaimSeatPayload,
+} from './claim-seat-rules';
 import { applyPlayingForfeit } from './playing-forfeit';
 import {
   createBotSeat,
@@ -179,11 +211,22 @@ import {
   isHumanSeat,
   shouldLockForOccupancy,
   shouldUnlockForOccupancy,
+  type HumanSeat,
   type Seat,
 } from './seats';
 import { readTutorialCreateOption, shouldRejectTutorialJoin, shouldRejectTutorialAddBot } from './tutorial-join';
 
 type GameClient = Client<{ messages: ServerToClientMessages }>;
+
+interface FinishedHoldout {
+  state: GameState;
+  winnerPlayerId: string;
+  actionLog: readonly ActionLogEntryView[];
+  eliminations: readonly FinishedGameEliminationRecord[];
+  turnHistory: readonly ExportTurnRowView[];
+  playKind: PlayKind;
+  tutorialIndex: number | null;
+}
 
 const TURN_DURATION_MS = (() => {
   const raw = process.env['TURN_DURATION_MS'];
@@ -196,19 +239,37 @@ const TURN_DURATION_MS = (() => {
 })();
 
 export class GameRoom extends Room<{ client: GameClient }> {
-  /** Socket cap = Classic occupancy (`MAX_PLAYERS`). Bots are seats, not clients. */
-  override maxClients = MAX_PLAYERS;
+  /** Socket cap = 8 player seats + 8 walk-in spectators (L57-13). Occupancy stays MAX_PLAYERS. */
+  override maxClients = MAX_PLAYERS + MAX_SPECTATORS;
 
   private seats: Seat[] = [];
   private hostSessionId: string | null = null;
   private hasStarted = false;
+  /** sessionId → stable Player.id after claimSeat (L57-13). */
+  private readonly sessionToPlayerId = new Map<string, string>();
+  /** Walk-in sockets not in GameState.players (L57-13). */
+  private readonly spectators = new Set<string>();
+  /** Nickname captured at walk-in join — used when seating them after Play again (L57-14). */
+  private readonly spectatorNicknames = new Map<string, string>();
+  /** Walk-ins who confirmed Stay spectating — Spy overlay granted (L57-16). */
+  private readonly stayConfirmedSpectators = new Set<string>();
   /** Human lobby kit picks — never copied onto other seats' views (L49-01). */
   private readonly kitSelections = new Map<string, LobbyKitSelection>();
+  /** Human guest Ready flags — host implicit, bots always ready (L57-08). */
+  private readonly guestReady = new Map<string, boolean>();
   /** Room-owned teaching overlay — not on GameState (technical spec v6 §5.3 / L41-03). */
   private playKind: PlayKind = 'classic';
   private tutorialIndex: number | null = null;
   private gameState: GameState | null = null;
   private winnerPlayerId: string | null = null;
+  /** Frozen recap for clients who have not opted into Play again (L57-10). */
+  private finishedHoldout: FinishedHoldout | null = null;
+  private reforming = false;
+  private readonly playAgainOptedIn = new Set<string>();
+  private recapSeats: HumanSeat[] = [];
+  private matchHostSessionId: string | null = null;
+  private matchHumanSeatOrder: string[] = [];
+  private matchPersisted = false;
   private readonly botDriver = new BotDriver({
     isBotSeat: (playerId) => {
       const seat = this.seats.find((entry) => entry.sessionId === playerId);
@@ -350,12 +411,26 @@ export class GameRoom extends Room<{ client: GameClient }> {
       );
     }
 
-    if (this.hasStarted) {
-      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This game has already started.');
-    }
-
     if (readNickname(options) === null) {
       throw new ServerError(ErrorCode.APPLICATION_ERROR, 'A nickname is required to join.');
+    }
+
+    const joinKind = lobbyJoinKind({
+      hasStarted: this.hasStarted,
+      seatCount: this.seats.length,
+      claimableCount: this.claimableSeatsNow().length,
+      spectatorCount: this.spectators.size,
+    });
+
+    if (joinKind === 'reject-spectate-full') {
+      throw new ServerError(
+        ErrorCode.APPLICATION_ERROR,
+        ACTION_REJECT_MESSAGE['spectate-room-full'],
+      );
+    }
+
+    if (joinKind === 'reject-full') {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This table is full.');
     }
 
     return true;
@@ -377,10 +452,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.ensureTutorialBotSeated();
 
       const rejection = canStartGame({
-        requesterSessionId: client.sessionId,
+        requesterSessionId: this.playerIdFor(client),
         hostSessionId,
         seatCount: this.seats.length,
         hasStarted: this.hasStarted,
+        humanGuests: this.humanGuestReadyStates(),
       });
 
       if (rejection !== null) {
@@ -388,9 +464,15 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
+      this.reforming = false;
+      this.playAgainOptedIn.clear();
+      this.matchPersisted = false;
+      this.winnerPlayerId = null;
       this.hasStarted = true;
       this.startedAtMs = Date.now();
       this.eliminations = [];
+      this.matchHostSessionId = hostSessionId;
+      this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
       const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
       const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
       this.gameState = createInitialState(
@@ -406,11 +488,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
       this.actionTakenThisTurn = false;
       this.actionLog = [];
-      void this.lock();
+      this.refreshJoinLock();
       console.log(
         `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
       );
       this.refreshAutoDispose();
+      this.refreshJoinLock();
       this.beginTurnOrAbsentAutoPlay();
       this.sendStateToEveryone();
       this.broadcastTurnStarted();
@@ -430,6 +513,26 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [CHOOSE_KIT]: (client: GameClient, payload: unknown): void => {
       this.handleChooseKit(client, payload);
+    },
+
+    [SET_READY]: (client: GameClient, payload: unknown): void => {
+      this.handleSetReady(client, payload);
+    },
+
+    [KICK_PLAYER]: (client: GameClient, payload: unknown): void => {
+      this.handleKickPlayer(client, payload);
+    },
+
+    [PLAY_AGAIN]: (client: GameClient): void => {
+      this.handlePlayAgain(client);
+    },
+
+    [CLAIM_SEAT]: (client: GameClient, payload: unknown): void => {
+      this.handleClaimSeat(client, payload);
+    },
+
+    [STAY_SPECTATING]: (client: GameClient): void => {
+      this.handleStaySpectating(client);
     },
 
     [DRAW_CARD]: (client: GameClient): void => {
@@ -568,106 +671,165 @@ export class GameRoom extends Room<{ client: GameClient }> {
       throw new ServerError(ErrorCode.APPLICATION_ERROR, 'A nickname is required to join.');
     }
 
+    const joinKind = lobbyJoinKind({
+      hasStarted: this.hasStarted,
+      seatCount: this.seats.length,
+      claimableCount: this.claimableSeatsNow().length,
+      spectatorCount: this.spectators.size,
+    });
+
+    if (joinKind === 'reject-spectate-full') {
+      throw new ServerError(
+        ErrorCode.APPLICATION_ERROR,
+        ACTION_REJECT_MESSAGE['spectate-room-full'],
+      );
+    }
+
+    if (joinKind === 'reject-full') {
+      throw new ServerError(ErrorCode.APPLICATION_ERROR, 'This table is full.');
+    }
+
+    if (joinKind === 'spectate') {
+      this.spectators.add(client.sessionId);
+      this.spectatorNicknames.set(client.sessionId, nickname);
+      console.log(
+        `[${this.roomId}] ${nickname} (${client.sessionId}) spectating — ${this.spectators.size} watchers`,
+      );
+      this.refreshJoinLock();
+      this.sendStateToEveryoneExcept(client);
+      return;
+    }
+
+    this.bindSession(client.sessionId, client.sessionId);
     this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
     this.hostSessionId ??= client.sessionId;
+    this.guestReady.set(client.sessionId, false);
 
     console.log(
       `[${this.roomId}] ${nickname} (${client.sessionId}) joined — ${this.seats.length} seated`,
     );
 
-    if (shouldLockForOccupancy(this.seats.length)) {
-      void this.lock();
-    }
-
+    this.refreshJoinLock();
     this.sendStateToEveryoneExcept(client);
   }
 
   /**
-   * Unexpected disconnect mid-game — technical spec §5.7, L7-01.
-   * Keep the seat reclaimable (`manual`) until elim or game over.
+   * Unexpected disconnect mid-game — technical spec §5.7, L7-01 / L57-13.
+   * Keep the seat reclaimable (`manual`) until elim, Kick, claim, or game over.
+   * Lobby accidental drop reserves the seat instead of unseating.
    */
   override async onDrop(client: GameClient): Promise<void> {
-    const state = this.gameState;
-
-    if (!this.hasStarted || state === null || this.winnerPlayerId !== null) {
+    if (this.spectators.has(client.sessionId)) {
       return;
     }
 
-    const player = findPlayer(state, client.sessionId);
+    const playerId = this.playerIdFor(client);
+
+    if (!this.hasStarted) {
+      this.guestReady.set(playerId, false);
+      this.sendStateToEveryone();
+      await this.holdReconnection(client, playerId);
+      return;
+    }
+
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+    const player = findPlayer(state, playerId);
 
     if (player === undefined || player.isEliminated) {
       return;
     }
 
-    console.log(`[${this.roomId}] ${client.sessionId} dropped — grace ${RECONNECT_GRACE_MS}ms`);
+    console.log(`[${this.roomId}] ${playerId} dropped — grace ${RECONNECT_GRACE_MS}ms`);
     markDisconnected(player, Date.now());
-    this.pauseTimersOwnedBy(client.sessionId);
-    this.scheduleAbsentTransition(client.sessionId);
+    this.pauseTimersOwnedBy(playerId);
+    this.scheduleAbsentTransition(playerId);
     this.sendStateToEveryone();
-
-    const deferred = this.allowReconnection(client, 'manual');
-    this.reconnectionRejectors.set(client.sessionId, (reason?: Error) => {
-      // Deferred.reject is loosely typed on the Colyseus Deferred helper.
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Colyseus Deferred.reject
-      deferred.reject(reason ?? new Error('Reconnection closed'));
-    });
-
-    try {
-      await deferred;
-    } catch {
-      // Rejected on elim / Leave / dispose, or never reclaimed.
-    } finally {
-      this.reconnectionRejectors.delete(client.sessionId);
-    }
+    await this.holdReconnection(client, playerId);
   }
 
   override onReconnect(client: GameClient): void {
+    const playerId = this.playerIdFor(client);
     const state = this.gameState;
 
     if (state === null) {
+      this.sendStateToEveryone();
       return;
     }
 
-    const player = findPlayer(state, client.sessionId);
+    const player = findPlayer(state, playerId);
 
     if (player === undefined || player.isEliminated) {
       return;
     }
 
-    console.log(`[${this.roomId}] ${client.sessionId} reconnected`);
+    console.log(`[${this.roomId}] ${playerId} reconnected`);
     markReconnected(player);
-    this.clearAbsentTimer(client.sessionId);
-    this.resumeTimersOwnedBy(client.sessionId);
+    this.clearAbsentTimer(playerId);
+    this.resumeTimersOwnedBy(playerId);
     this.sendStateToEveryone();
   }
 
   override onLeave(client: GameClient, code?: number): void {
     const consented = code === CloseCode.CONSENTED;
+    const sessionId = client.sessionId;
+    const playerId = this.playerIdFor(client);
 
-    if (this.hasStarted && this.gameState !== null && this.winnerPlayerId === null) {
-      if (consented) {
-        this.handleConsentedLeave(client.sessionId);
-      }
-
-      // Permanent leave after drop (reconnection rejected): seat may stay for lobby id map;
-      // player remains in gameState (possibly already eliminated).
-      this.clearAbsentTimer(client.sessionId);
-      this.rejectReconnection(client.sessionId, new Error('Client left'));
+    if (this.spectators.delete(sessionId)) {
+      this.spectatorNicknames.delete(sessionId);
+      this.stayConfirmedSpectators.delete(sessionId);
+      this.sessionToPlayerId.delete(sessionId);
+      this.refreshJoinLock();
+      this.sendStateToEveryoneExcept(client);
       return;
     }
 
-    this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
-    this.kitSelections.delete(client.sessionId);
+    const stolen =
+      [...this.sessionToPlayerId.entries()].some(
+        ([otherSession, mapped]) => otherSession !== sessionId && mapped === playerId,
+      );
 
-    if (this.hostSessionId === client.sessionId) {
-      this.hostSessionId = this.seats[0]?.sessionId ?? null;
+    if (this.hasStarted && this.gameState !== null && this.winnerPlayerId === null) {
+      if (consented && !stolen) {
+        this.handleConsentedLeave(playerId);
+      }
+
+      this.clearAbsentTimer(playerId);
+      if (!stolen) {
+        this.rejectReconnection(playerId, new Error('Client left'));
+      }
+      this.sessionToPlayerId.delete(sessionId);
+      return;
     }
 
-    console.log(`[${this.roomId}] ${client.sessionId} left — ${this.seats.length} seated`);
+    const recapIndex = this.recapSeats.findIndex((seat) => seat.sessionId === playerId);
 
-    if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {
-      void this.unlock();
+    if (recapIndex >= 0) {
+      if (!stolen) {
+        this.recapSeats.splice(recapIndex, 1);
+        this.playAgainOptedIn.delete(playerId);
+        this.rejectReconnection(playerId, new Error('Client left recap'));
+      }
+      this.sessionToPlayerId.delete(sessionId);
+      return;
     }
+
+    if (stolen) {
+      this.sessionToPlayerId.delete(sessionId);
+      return;
+    }
+
+    if (consented) {
+      this.unseatLobbySeat(playerId);
+    }
+
+    this.sessionToPlayerId.delete(sessionId);
+    this.rejectReconnection(playerId, new Error('Client left'));
+
+    console.log(`[${this.roomId}] ${sessionId} left — ${this.seats.length} seated`);
 
     if (
       shouldDisposeLobbyWithOnlyBots({
@@ -676,11 +838,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botSeatCount: this.seats.filter(isBotSeat).length,
       })
     ) {
-      // Lobby orphan bots: dispose, write nothing (#V3-3b complement).
       void this.disconnect();
       return;
     }
 
+    this.refreshJoinLock();
     this.sendStateToEveryoneExcept(client);
   }
 
@@ -723,7 +885,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.subChoice?.kind === 'reanimation-kit') {
       const kitChoice = state.subChoice;
-      const chooser = this.clients.find((entry) => entry.sessionId === kitChoice.playerId);
+      const chooser = this.clientForPlayerId(kitChoice.playerId);
       this.beginReanimationKitTimer(kitChoice, chooser);
       this.sendStateToEveryone();
       return;
@@ -755,7 +917,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const playerId = client.sessionId;
+      const playerId = this.playerIdFor(client);
     const result = applyPlayingForfeit(state, playerId);
 
     if (!result.eliminated) {
@@ -777,7 +939,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.subChoice?.kind === 'reanimation-kit') {
       const kitChoice = state.subChoice;
-      const chooser = this.clients.find((entry) => entry.sessionId === kitChoice.playerId);
+      const chooser = this.clientForPlayerId(kitChoice.playerId);
       this.beginReanimationKitTimer(kitChoice, chooser);
       this.sendStateToEveryone();
       return;
@@ -819,7 +981,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const rejection = canAddBot({
-      requesterSessionId: client.sessionId,
+      requesterSessionId: this.playerIdFor(client),
       hostSessionId,
       seatCount: this.seats.length,
       hasStarted: this.hasStarted,
@@ -833,7 +995,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.seats.push(createBotSeat(this.seats, parsed.difficulty));
 
     if (shouldLockForOccupancy(this.seats.length)) {
-      void this.lock();
+      this.refreshJoinLock();
     }
 
     this.refreshAutoDispose();
@@ -857,7 +1019,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     const target = this.seats.find((seat) => seat.sessionId === parsed.playerId);
     const rejection = canRemoveBot({
-      requesterSessionId: client.sessionId,
+      requesterSessionId: this.playerIdFor(client),
       hostSessionId,
       hasStarted: this.hasStarted,
       targetExists: target !== undefined,
@@ -872,7 +1034,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.seats = this.seats.filter((seat) => seat.sessionId !== parsed.playerId);
 
     if (shouldUnlockForOccupancy(this.seats.length)) {
-      void this.unlock();
+      this.refreshJoinLock();
     }
 
     this.refreshAutoDispose();
@@ -896,7 +1058,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     const target = this.seats.find((seat) => seat.sessionId === parsed.playerId);
     const rejection = canSetBotDifficulty({
-      requesterSessionId: client.sessionId,
+      requesterSessionId: this.playerIdFor(client),
       hostSessionId,
       hasStarted: this.hasStarted,
       targetExists: target !== undefined,
@@ -931,13 +1093,405 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    if (!this.seats.some((seat) => seat.sessionId === client.sessionId && isHumanSeat(seat))) {
+    if (!this.seats.some((seat) => seat.sessionId === this.playerIdFor(client) && isHumanSeat(seat))) {
       client.send(ERROR_MESSAGE, actionReject('unknown-player'));
       return;
     }
 
-    this.kitSelections.set(client.sessionId, parsed.value.kitId);
+    this.kitSelections.set(this.playerIdFor(client), parsed.value.kitId);
     this.sendStateTo(client);
+  }
+
+  private handleSetReady(client: GameClient, payload: unknown): void {
+    const parsed = parseSetReadyPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+    const requesterIsHost = playerId === this.hostSessionId;
+    const requesterIsHumanGuest =
+      !requesterIsHost &&
+      this.seats.some((seat) => seat.sessionId === playerId && isHumanSeat(seat));
+
+    const rejection = canSetReady({
+      hasStarted: this.hasStarted,
+      requesterIsHost,
+      requesterIsHumanGuest,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, setReadyRejectionMessage(rejection));
+      return;
+    }
+
+    this.guestReady.set(playerId, parsed.value.ready);
+    this.sendStateToEveryone();
+  }
+
+  private handlePlayAgain(client: GameClient): void {
+    const rejection = canPlayAgain({
+      playKind: this.playKind,
+      winnerPlayerId: this.winnerPlayerId,
+      reforming: this.reforming,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, playAgainRejectionMessage(rejection));
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+
+    if (this.playAgainOptedIn.has(playerId)) {
+      this.sendStateTo(client);
+      return;
+    }
+
+    const first = !this.reforming;
+    this.reforming = true;
+    this.hasStarted = false;
+    this.playAgainOptedIn.add(playerId);
+
+    if (first) {
+      this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
+      this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
+      this.seatWalkInSpectatorsAsLobbyGuests();
+    } else {
+      const recapIndex = this.recapSeats.findIndex((seat) => seat.sessionId === playerId);
+
+      if (recapIndex >= 0) {
+        const [moved] = this.recapSeats.splice(recapIndex, 1);
+
+        if (moved !== undefined) {
+          this.seats.push(moved);
+        }
+      }
+    }
+
+    this.guestReady.set(playerId, false);
+    this.hostSessionId =
+      resolveReformingHost({
+        originalHostSessionId: this.matchHostSessionId,
+        optedInHumanIdsInPriorSeatOrder: optedInHumanIdsInPriorOrder(
+          this.matchHumanSeatOrder,
+          this.playAgainOptedIn,
+        ),
+      }) ?? playerId;
+
+    if (shouldUnlockForOccupancy(this.seats.length)) {
+      this.refreshJoinLock();
+    }
+
+    this.refreshAutoDispose();
+    this.sendStateToEveryone();
+  }
+
+  private seatWalkInSpectatorsAsLobbyGuests(): void {
+    for (const client of this.clients) {
+      if (!this.spectators.has(client.sessionId)) {
+        continue;
+      }
+
+      if (!canSeatSpectatorAsLobbyGuest(this.seats.length)) {
+        break;
+      }
+
+      const nickname = this.spectatorNicknames.get(client.sessionId);
+
+      if (nickname === undefined) {
+        continue;
+      }
+
+      this.spectators.delete(client.sessionId);
+      this.spectatorNicknames.delete(client.sessionId);
+      this.stayConfirmedSpectators.delete(client.sessionId);
+      this.bindSession(client.sessionId, client.sessionId);
+      this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
+      this.guestReady.set(client.sessionId, false);
+    }
+  }
+
+  private handleKickPlayer(client: GameClient, payload: unknown): void {
+    const hostSessionId = this.hostSessionId;
+
+    if (hostSessionId === null) {
+      client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
+      return;
+    }
+
+    const parsed = parseKickPlayerPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const target = this.seats.find((seat) => seat.sessionId === parsed.value.playerId);
+    const rejection = canKickPlayer({
+      requesterSessionId: this.playerIdFor(client),
+      hostSessionId,
+      hasStarted: this.hasStarted,
+      targetExists: target !== undefined,
+      targetIsSelf: parsed.value.playerId === this.playerIdFor(client),
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, kickPlayerRejectionMessage(rejection));
+      return;
+    }
+
+    if (target === undefined) {
+      return;
+    }
+
+    if (isBotSeat(target)) {
+      this.seats = this.seats.filter((seat) => seat.sessionId !== target.sessionId);
+
+      if (shouldUnlockForOccupancy(this.seats.length)) {
+        this.refreshJoinLock();
+      }
+
+      this.refreshAutoDispose();
+      this.sendStateToEveryone();
+      return;
+    }
+
+    const targetClient = this.clientForPlayerId(target.sessionId);
+    targetClient?.send(ERROR_MESSAGE, actionReject('kicked'));
+    this.rejectReconnection(target.sessionId, new Error('Kicked'));
+    this.unseatLobbySeat(target.sessionId);
+    this.refreshAutoDispose();
+
+    if (targetClient !== undefined) {
+      this.sendStateToEveryoneExcept(targetClient);
+      targetClient.leave(CloseCode.CONSENTED, ACTION_REJECT_MESSAGE.kicked);
+      return;
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  private unseatLobbySeat(sessionId: string): void {
+    this.seats = this.seats.filter((seat) => seat.sessionId !== sessionId);
+    this.kitSelections.delete(sessionId);
+    this.guestReady.delete(sessionId);
+
+    if (this.hostSessionId === sessionId) {
+      this.hostSessionId = this.seats[0]?.sessionId ?? null;
+    }
+
+    if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {
+      this.refreshJoinLock();
+    }
+  }
+
+  private bindSession(sessionId: string, playerId: string): void {
+    this.sessionToPlayerId.set(sessionId, playerId);
+  }
+
+  private playerIdFor(client: GameClient): string {
+    return this.sessionToPlayerId.get(client.sessionId) ?? client.sessionId;
+  }
+
+  private viewRecipientId(client: GameClient): string {
+    if (this.spectators.has(client.sessionId)) {
+      return client.sessionId;
+    }
+
+    return this.playerIdFor(client);
+  }
+
+  private clientForPlayerId(playerId: string): GameClient | undefined {
+    if (playerId.length === 0) {
+      return undefined;
+    }
+
+    for (const client of this.clients) {
+      if (this.spectators.has(client.sessionId)) {
+        continue;
+      }
+
+      if (this.playerIdFor(client) === playerId) {
+        return client;
+      }
+    }
+
+    return undefined;
+  }
+
+  private connectedSeatedPlayerIds(): Set<string> {
+    const ids = new Set<string>();
+
+    for (const client of this.clients) {
+      if (this.spectators.has(client.sessionId)) {
+        continue;
+      }
+
+      ids.add(this.playerIdFor(client));
+    }
+
+    return ids;
+  }
+
+  private botIds(): Set<string> {
+    return new Set(this.seats.filter(isBotSeat).map((seat) => seat.sessionId));
+  }
+
+  private claimableSeatsNow(): ClaimableSeatView[] {
+    if (this.winnerPlayerId !== null) {
+      return [];
+    }
+
+    if (this.hasStarted && this.gameState !== null) {
+      return listPlayingClaimableSeats({
+        players: this.gameState.players,
+        botIds: this.botIds(),
+      });
+    }
+
+    return listLobbyClaimableSeats(this.seats, this.connectedSeatedPlayerIds());
+  }
+
+  private refreshJoinLock(): void {
+    const kind = lobbyJoinKind({
+      hasStarted: this.hasStarted,
+      seatCount: this.seats.length,
+      claimableCount: this.claimableSeatsNow().length,
+      spectatorCount: this.spectators.size,
+    });
+
+    if (kind === 'reject-full' || kind === 'reject-spectate-full') {
+      void this.lock();
+      return;
+    }
+
+    void this.unlock();
+  }
+
+  private async holdReconnection(client: GameClient, playerId: string): Promise<void> {
+    const deferred = this.allowReconnection(client, 'manual');
+    this.reconnectionRejectors.set(playerId, (reason?: Error) => {
+      // Deferred.reject is loosely typed on the Colyseus Deferred helper.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Colyseus Deferred.reject
+      deferred.reject(reason ?? new Error('Reconnection closed'));
+    });
+
+    try {
+      await deferred;
+    } catch {
+      // Rejected on elim / Leave / claim / dispose, or never reclaimed.
+    } finally {
+      this.reconnectionRejectors.delete(playerId);
+    }
+  }
+
+  private handleStaySpectating(client: GameClient): void {
+    if (!this.spectators.has(client.sessionId)) {
+      client.send(ERROR_MESSAGE, actionReject('stay-spectating-not-spectator'));
+      return;
+    }
+
+    this.stayConfirmedSpectators.add(client.sessionId);
+    this.sendStateTo(client);
+  }
+
+  private handleClaimSeat(client: GameClient, payload: unknown): void {
+    const parsed = parseClaimSeatPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const targetId = parsed.value.playerId;
+    const listed = this.claimableSeatsNow().some((seat) => seat.playerId === targetId);
+    const targetSeat = this.seats.find((seat) => seat.sessionId === targetId);
+    const targetPlayer =
+      this.gameState !== null ? findPlayer(this.gameState, targetId) : undefined;
+    const rejection = canClaimSeat({
+      targetExists: targetSeat !== undefined || targetPlayer !== undefined,
+      isClaimable: listed,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, claimSeatRejectionMessage(rejection));
+      return;
+    }
+
+    const requesterId = this.playerIdFor(client);
+
+    if (requesterId === targetId && !this.spectators.has(client.sessionId)) {
+      this.sendStateTo(client);
+      return;
+    }
+
+    if (
+      !this.spectators.has(client.sessionId) &&
+      this.hasStarted &&
+      this.gameState !== null &&
+      this.winnerPlayerId === null
+    ) {
+      const living = findPlayer(this.gameState, requesterId);
+
+      if (
+        living !== undefined &&
+        !living.isEliminated &&
+        living.connectionState.status === 'connected'
+      ) {
+        client.send(ERROR_MESSAGE, actionReject('claim-not-claimable'));
+        return;
+      }
+    }
+
+    this.spectators.delete(client.sessionId);
+    this.spectatorNicknames.delete(client.sessionId);
+    this.stayConfirmedSpectators.delete(client.sessionId);
+
+    if (
+      !this.hasStarted &&
+      requesterId !== targetId &&
+      this.seats.some((seat) => seat.sessionId === requesterId && isHumanSeat(seat))
+    ) {
+      this.unseatLobbySeat(requesterId);
+    }
+
+    this.bindSession(client.sessionId, targetId);
+    this.rejectReconnection(targetId, new Error('Seat claimed'));
+    this.guestReady.set(targetId, false);
+
+    if (this.gameState !== null && this.winnerPlayerId === null) {
+      const player = findPlayer(this.gameState, targetId);
+
+      if (player !== undefined && !player.isEliminated) {
+        markReconnected(player);
+        this.clearAbsentTimer(targetId);
+        this.resumeTimersOwnedBy(targetId);
+      }
+    }
+
+    this.refreshJoinLock();
+    this.sendStateToEveryone();
+  }
+
+  private humanGuestReadyStates(): HumanGuestReadyState[] {
+    const hostSessionId = this.hostSessionId;
+    const connected = this.connectedSeatedPlayerIds();
+
+    return this.seats.filter(isHumanSeat).flatMap((seat) => {
+      if (seat.sessionId === hostSessionId) {
+        return [];
+      }
+
+      return [
+        {
+          isReady: this.guestReady.get(seat.sessionId) === true,
+          isConnected: connected.has(seat.sessionId),
+        },
+      ];
+    });
   }
 
   private tutorialSeatIds(): TutorialSeatIds | null {
@@ -968,7 +1522,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return false;
     }
 
-    if (isTutorialActionAllowed(state, client.sessionId, this.tutorialIndex, action)) {
+    if (isTutorialActionAllowed(state, this.playerIdFor(client), this.tutorialIndex, action)) {
       return false;
     }
 
@@ -1012,14 +1566,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const actor = findPlayer(state, client.sessionId);
+    if (this.spectators.has(client.sessionId)) {
+      client.send(ERROR_MESSAGE, actionReject('not-active-player'));
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+    const actor = findPlayer(state, playerId);
 
     if (actor !== undefined) {
       resetConnectedTimeouts(actor);
     }
 
     const before = snapshotPlayersForExport(state);
-    const result = performTurnAction(state, client.sessionId, action);
+    const result = performTurnAction(state, playerId, action);
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
@@ -1065,7 +1625,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
-      const chooser = this.clients.find((entry) => entry.sessionId === choice.playerId);
+      const chooser = this.clientForPlayerId(choice.playerId);
 
       if (choice.kind === 'pool-pick') {
         if (chooser !== undefined) {
@@ -1150,7 +1710,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     const result = completeMirrorChoice(
       state,
-      client.sessionId,
+      this.playerIdFor(client),
       parsed.pendingEffectId,
       parsed.newTargetPlayerId,
     );
@@ -1186,7 +1746,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = completeStealChoice(state, client.sessionId, parsed.instanceId);
+    const result = completeStealChoice(state, this.playerIdFor(client), parsed.instanceId);
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
@@ -1230,7 +1790,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = completePoolPick(state, client.sessionId, parsed.instanceIds);
+    const result = completePoolPick(state, this.playerIdFor(client), parsed.instanceIds);
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
@@ -1263,7 +1823,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = completeSpecialPick(state, client.sessionId, parsed.cardId);
+    const result = completeSpecialPick(state, this.playerIdFor(client), parsed.cardId);
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
@@ -1299,7 +1859,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = completeReanimationKitPick(state, client.sessionId, parsed.kitId);
+    const result = completeReanimationKitPick(state, this.playerIdFor(client), parsed.kitId);
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
@@ -1320,7 +1880,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     const result = completeEliminationRewardChoice(
       state,
-      client.sessionId,
+      this.playerIdFor(client),
       parsed.eliminationId,
       parsed.choices,
     );
@@ -1664,7 +2224,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (result.stealChoicePending === true) {
       const choice = state.stealChoice;
-      const client = this.clients.find((entry) => entry.sessionId === choice.playerId);
+      const client = this.clientForPlayerId(choice.playerId);
 
       if (client !== undefined) {
         this.beginStealTimer(client, choice);
@@ -1845,7 +2405,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
     }
 
-    const target = client ?? this.clients.find((entry) => entry.sessionId === choice.playerId);
+    const target = client ?? this.clientForPlayerId(choice.playerId);
 
     if (target !== undefined) {
       target.send(SUB_CHOICE_REQUIRED, {
@@ -1947,7 +2507,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const seat = this.seats.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
-    const client = this.clients.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
+    const client = this.clientForPlayerId(choice.eliminatorPlayerId);
     const route = classifyRewardRoute(seat, client !== undefined);
 
     if (route === 'bot') {
@@ -2006,7 +2566,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       const choice = state?.subChoice;
 
       if (state !== null && choice?.kind === 'reanimation-kit') {
-        const chooser = this.clients.find((entry) => entry.sessionId === choice.playerId);
+        const chooser = this.clientForPlayerId(choice.playerId);
         this.beginReanimationKitTimer(choice, chooser);
         this.sendStateToEveryone();
         return;
@@ -2917,7 +3477,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.mirrorChoice?.playerId === sessionId && pausedMirrorRemainingMs !== undefined) {
       this.pausedSubChoiceRemainingMs.delete('mirror');
-      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+      const client = this.clientForPlayerId(sessionId);
 
       if (client !== undefined) {
         this.beginMirrorTimer(
@@ -2933,7 +3493,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.stealChoice?.playerId === sessionId && pausedStealRemainingMs !== undefined) {
       this.pausedSubChoiceRemainingMs.delete('steal-pick');
-      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+      const client = this.clientForPlayerId(sessionId);
 
       if (client !== undefined) {
         this.beginStealTimer(client, state.stealChoice, pausedStealRemainingMs);
@@ -2948,7 +3508,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       pausedPoolRemainingMs !== undefined
     ) {
       this.pausedSubChoiceRemainingMs.delete('pool-pick');
-      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+      const client = this.clientForPlayerId(sessionId);
 
       if (client !== undefined) {
         this.beginPoolTimer(client, state.subChoice, pausedPoolRemainingMs);
@@ -2963,7 +3523,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       pausedSpecialRemainingMs !== undefined
     ) {
       this.pausedSubChoiceRemainingMs.delete('special-pick');
-      const client = this.clients.find((entry) => entry.sessionId === sessionId);
+      const client = this.clientForPlayerId(sessionId);
 
       if (client !== undefined) {
         this.beginSpecialTimer(client, state.subChoice, pausedSpecialRemainingMs);
@@ -3018,7 +3578,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     if (state.subChoice?.kind === 'reanimation-kit') {
-      const chooser = this.clients.find((entry) => entry.sessionId === state.subChoice?.playerId);
+      const chooser = this.clientForPlayerId(state.subChoice.playerId);
       this.beginReanimationKitTimer(state.subChoice, chooser);
       this.sendStateToEveryone();
       return;
@@ -3075,10 +3635,23 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.winnerPlayerId = winnerPlayerId;
     this.rejectAllReconnections(new Error('Game over'));
     this.broadcast(GAME_OVER, { winnerPlayerId });
-    this.sendStateToEveryone();
 
     const state = this.gameState;
     const startedAtMs = this.startedAtMs;
+
+    if (state !== null) {
+      this.finishedHoldout = {
+        state,
+        winnerPlayerId,
+        actionLog: [...this.actionLog],
+        eliminations: [...this.eliminations],
+        turnHistory: [...this.turnHistory],
+        playKind: this.playKind,
+        tutorialIndex: this.tutorialIndex,
+      };
+    }
+
+    this.sendStateToEveryone();
 
     if (state === null || startedAtMs === null) {
       console.warn(`[${this.roomId}] finished-game persist skipped — missing state or start time`);
@@ -3089,20 +3662,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const snapshot = buildFinishedGameSnapshot({
-      roomId: this.roomId,
-      startedAtMs,
-      endedAtMs: Date.now(),
-      winnerPlayerId,
-      gameState: state,
-      actionLog: this.actionLog,
-      turnHistory: this.turnHistory,
-      eliminations: this.eliminations,
-      botDifficultiesByPlayerId: this.botDifficulties(),
-      isTutorial: this.playKind === 'tutorial',
-    });
+    if (shouldPersistFinishedGame(this.matchPersisted)) {
+      const snapshot = buildFinishedGameSnapshot({
+        roomId: this.roomId,
+        startedAtMs,
+        endedAtMs: Date.now(),
+        winnerPlayerId,
+        gameState: state,
+        actionLog: this.actionLog,
+        turnHistory: this.turnHistory,
+        eliminations: this.eliminations,
+        botDifficultiesByPlayerId: this.botDifficulties(),
+        isTutorial: this.playKind === 'tutorial',
+      });
 
-    void persistFinishedGame(snapshot);
+      void persistFinishedGame(snapshot);
+      this.matchPersisted = true;
+    }
+
     this.refreshAutoDispose();
     // Humans still need the finished view. Dispose only when no sockets remain (bot-only finish).
     if (this.clients.length === 0) {
@@ -3161,6 +3738,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           nickname: seat.nickname,
           isBot: true,
           botDifficulty: seat.difficulty,
+          isReady: true,
         };
       }
 
@@ -3168,6 +3746,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         id: seat.sessionId,
         nickname: seat.nickname,
         isBot: false,
+        // Host always ready; guests follow `guestReady` (L57-08).
+        isReady:
+          seat.sessionId === this.hostSessionId || this.guestReady.get(seat.sessionId) === true,
       };
     });
   }
@@ -3191,6 +3772,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
+   * Walk-in Spy overlay (L57-16): withheld while a claim picker is still open.
+   */
+  private walkInSeesPrivate(sessionId: string): boolean {
+    if (!this.spectators.has(sessionId)) {
+      return false;
+    }
+
+    return walkInSpectatorSeesPrivate({
+      claimableCount: this.claimableSeatsNow().length,
+      stayConfirmed: this.stayConfirmedSpectators.has(sessionId),
+    });
+  }
+
+  /**
    * `activateDuplication` is not a public action (designer 2026-08-06).
    * Unicast the real payload to the actor, current spies, and eliminated
    * spectators; send an opaque `draw` ACTION_PLAYED to everyone else.
@@ -3205,14 +3800,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
     };
 
     for (const client of this.clients) {
-      if (client.sessionId === played.actorPlayerId) {
+      const recipientId = this.viewRecipientId(client);
+      const walkInSeesPrivate = this.walkInSeesPrivate(client.sessionId);
+
+      if (recipientId === played.actorPlayerId || walkInSeesPrivate) {
         client.send(ACTION_PLAYED, played);
         continue;
       }
 
       if (
         state !== null &&
-        recipientSeesPrivateOf(state, client.sessionId, played.actorPlayerId)
+        recipientSeesPrivateOf(state, recipientId, played.actorPlayerId, walkInSeesPrivate)
       ) {
         client.send(ACTION_PLAYED, played);
         continue;
@@ -3232,6 +3830,40 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   private sendStateTo(client: GameClient): void {
     const hostPlayerId = this.hostSessionId;
+    const recipientId = this.viewRecipientId(client);
+    const walkIn = this.spectators.has(client.sessionId);
+    const claimableSeats = this.claimableSeatsNow();
+    const recap = this.recapSeats.some((seat) => seat.sessionId === recipientId);
+    const holdout = this.finishedHoldout;
+    const walkInOpt = walkIn ? { walkInSpectator: true as const } : {};
+    const walkInPrivateOpt = this.walkInSeesPrivate(client.sessionId)
+      ? { walkInSeesPrivate: true as const }
+      : {};
+    const claimableOpt =
+      claimableSeats.length > 0 ? { claimableSeats } : {};
+    const lobbySpectatorOpt = walkIn ? { isSpectator: true as const } : {};
+
+    if (recap && holdout !== null) {
+      client.send(
+        STATE_UPDATE,
+        buildFinishedViewFor({
+          recipientSessionId: recipientId,
+          gameCode: this.roomId,
+          state: holdout.state,
+          winnerPlayerId: holdout.winnerPlayerId,
+          actionLog: holdout.actionLog,
+          eliminations: holdout.eliminations,
+          botDifficulties: this.botDifficulties(),
+          turnHistory: holdout.turnHistory,
+          playKind: holdout.playKind,
+          tutorialIndex: holdout.tutorialIndex,
+          ...walkInOpt,
+          ...walkInPrivateOpt,
+          ...claimableOpt,
+        }),
+      );
+      return;
+    }
 
     if (!this.hasStarted || this.gameState === null) {
       if (hostPlayerId === null) {
@@ -3241,11 +3873,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       client.send(
         STATE_UPDATE,
         buildLobbyViewFor({
-          recipientSessionId: client.sessionId,
+          recipientSessionId: recipientId,
           gameCode: this.roomId,
           hostPlayerId,
           seats: this.seatViews(),
-          yourKitSelection: this.kitSelections.get(client.sessionId) ?? 'random',
+          yourKitSelection: this.kitSelections.get(recipientId) ?? 'random',
+          ...lobbySpectatorOpt,
+          ...claimableOpt,
         }),
       );
       return;
@@ -3255,7 +3889,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       client.send(
         STATE_UPDATE,
         buildFinishedViewFor({
-          recipientSessionId: client.sessionId,
+          recipientSessionId: recipientId,
           gameCode: this.roomId,
           state: this.gameState,
           winnerPlayerId: this.winnerPlayerId,
@@ -3265,6 +3899,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
           turnHistory: this.turnHistory,
           playKind: this.playKind,
           tutorialIndex: this.tutorialIndex,
+          ...walkInOpt,
+          ...walkInPrivateOpt,
+          ...claimableOpt,
         }),
       );
       return;
@@ -3273,7 +3910,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     client.send(
       STATE_UPDATE,
       buildPlayingViewFor({
-        recipientSessionId: client.sessionId,
+        recipientSessionId: recipientId,
         gameCode: this.roomId,
         state: this.gameState,
         turnDeadlineMs: this.turnDeadlineMs,
@@ -3281,6 +3918,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botDifficulties: this.botDifficulties(),
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
+        ...walkInOpt,
+        ...walkInPrivateOpt,
+        ...claimableOpt,
       }),
     );
   }

@@ -38,6 +38,20 @@ export interface LobbySeatView {
   isBot: boolean;
   /** Present only when `isBot` is true. */
   botDifficulty?: BotDifficulty;
+  /**
+   * Public ready flag (PROTOCOL_VERSION 32 / L57-07). Host and bots are always
+   * `true`. Human guests start `false` until `setReady`.
+   */
+  isReady: boolean;
+}
+
+/**
+ * Living disconnected seat a joiner may claim (PROTOCOL_VERSION 32 / L57-07).
+ * Public nickname only — no kit.
+ */
+export interface ClaimableSeatView {
+  playerId: string;
+  nickname: string;
 }
 
 /**
@@ -61,6 +75,16 @@ export interface LobbyStateView {
    * Other seats' choices are omitted from this view entirely.
    */
   yourKitSelection: LobbyKitSelection;
+  /**
+   * Walk-in watcher waiting to claim a reserved lobby seat (PROTOCOL_VERSION 32 / L57-13).
+   * Omit on seated recipients.
+   */
+  isSpectator?: true;
+  /**
+   * Disconnected human seats this recipient may `claimSeat`.
+   * Empty / omitted when none.
+   */
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 /** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */
@@ -129,7 +153,7 @@ export interface PublicPlayerView {
   spied?: SpiedPlayerView;
   /**
    * True when this living seat has a Spy matrix row on the recipient
-   * (PROTOCOL_VERSION 32 / L58-02). Never set on `isYou`. Never inferred from
+   * (PROTOCOL_VERSION 34 / L58-02). Never set on `isYou`. Never inferred from
    * the eliminated-spectator overlay.
    */
   spyingOnYou?: true;
@@ -281,6 +305,16 @@ export interface PlayingStateView {
    * (technical spec v6 §8).
    */
   tutorialIndex: number | null;
+  /**
+   * Walk-in watcher, not a `GameState` player (PROTOCOL_VERSION 32 / L57-07).
+   * Omit on seated recipients (`exactOptionalPropertyTypes`).
+   */
+  isSpectator?: true;
+  /**
+   * Living disconnected seats this recipient may `claimSeat` (PROTOCOL_VERSION 32).
+   * Empty / omitted when none.
+   */
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 /** Played action — same public fields as `actionPlayed` wire payload. */
@@ -493,6 +527,10 @@ export interface FinishedStateView {
    */
   playKind: PlayKind;
   tutorialIndex: number | null;
+  /** Walk-in watcher (PROTOCOL_VERSION 32 / L57-07). Omit on seated recipients. */
+  isSpectator?: true;
+  /** Living disconnected seats this recipient may `claimSeat`. */
+  claimableSeats?: readonly ClaimableSeatView[];
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

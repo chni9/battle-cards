@@ -14,8 +14,8 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lot 58 (shop / pool / Invisibility / PG / Unspy) is
-**done**. V5 may continue in parallel. Audience: the designer
+`docs/backlog_v6.md`); Lot 57 (feedback + rematch) and Lot 58
+(shop / pool / Invisibility / PG / Unspy) are **done**. V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -112,8 +112,11 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Classic rule or value. V5 adds a policy registry, arena, belief model, search, and fitted
  evaluation. V6 adds teaching, table readability, and in-game feedback (tutorial is Classic
  with setup overrides, not a new competitive mode). **Lot 56** froze Invisibility;
- **Lot 58** (designer 2026-09-15) reactivates it as a timed pacifist (4 / 7 turns,
- no acting on others including Mirror) and adds pool buy, PG 3/6, and Unspy.
+ **Lot 57** (designer 2026-09-14 / 2026-09-15) converts feedback then lobby/rematch
+ (Ready / Kick / Play again / spectate-claim; walk-in kits fog until Stay;
+ `PROTOCOL_VERSION` 32 then 33). **Lot 58** (designer 2026-09-15) reactivates
+ Invisibility as a timed pacifist (4 / 7 turns, no acting on others including
+ Mirror) and adds pool buy, PG 3/6, and Unspy (`PROTOCOL_VERSION` 34).
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

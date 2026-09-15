@@ -6,8 +6,8 @@ import { grantSpy } from './visibility-matrix';
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
-    { id: 'session-a', nickname: 'Alice', isBot: false },
-    { id: 'session-b', nickname: 'Bob', isBot: false },
+    { id: 'session-a', nickname: 'Alice', isBot: false, isReady: true },
+    { id: 'session-b', nickname: 'Bob', isBot: false, isReady: false },
   ] as const;
 
   it('tells the recipient which session is theirs', () => {
@@ -35,14 +35,31 @@ describe('buildLobbyViewFor (L1-01)', () => {
     ).toThrow(/not in the room/);
   });
 
+  it('builds a walk-in lobby view with claimable seats (L57-13)', () => {
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+      isSpectator: true,
+      claimableSeats: [{ playerId: 'session-b', nickname: 'Bob' }],
+    });
+
+    expect(view.isSpectator).toBe(true);
+    expect(view.you).toBe('watcher');
+    expect(view.claimableSeats).toEqual([{ playerId: 'session-b', nickname: 'Bob' }]);
+  });
+
   it('exposes bot seats and difficulty to every recipient (L15-05)', () => {
     const withBot = [
-      { id: 'session-a', nickname: 'Alice', isBot: false },
+      { id: 'session-a', nickname: 'Alice', isBot: false, isReady: true },
       {
         id: 'bot-1',
         nickname: 'Alpha',
         isBot: true,
         botDifficulty: 'hard' as const,
+        isReady: true,
       },
     ];
 
@@ -87,6 +104,18 @@ describe('buildLobbyViewFor (L1-01)', () => {
     expect(bobView.yourKitSelection).toBe('random');
     expect(JSON.stringify(bobView)).not.toContain('assassin');
     expect(JSON.stringify(bobView)).not.toContain('ghost');
+  });
+
+  it('copies public isReady onto every lobby seat (L57-07)', () => {
+    const view = buildLobbyViewFor({
+      recipientSessionId: 'session-b',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+    });
+
+    expect(view.players.map((seat) => seat.isReady)).toEqual([true, false]);
   });
 });
 
@@ -975,5 +1004,79 @@ describe('buildPlayingViewFor (L41-03 / technical spec v6 §8)', () => {
     expect(playingJson).not.toContain('nextPoolInstanceSeq');
     expect(finishedJson).not.toContain('secret-seed-value');
     expect(finishedJson).not.toContain('nextPoolInstanceSeq');
+  });
+});
+
+describe('buildPlayingViewFor — walk-in spectator (L57-13 / L57-16)', () => {
+  it('marks isSpectator without Spy kits while a claim picker is open', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'walk-in-spy',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(bob).toBeDefined();
+    if (bob === undefined) {
+      return;
+    }
+
+    bob.lives = 14;
+    bob.points = 6;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      walkInSpectator: true,
+      claimableSeats: [{ playerId: 'a', nickname: 'Alice' }],
+    });
+
+    expect(view.isSpectator).toBe(true);
+    expect(view.you).toBe('watcher');
+    expect(view.players.every((player) => !player.isYou)).toBe(true);
+    expect(view.claimableSeats).toEqual([{ playerId: 'a', nickname: 'Alice' }]);
+    expect(view.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+    expect(state.visibility).toEqual([]);
+  });
+
+  it('grants the eliminated-spectator overlay after Stay spectating', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'walk-in-stay',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(bob).toBeDefined();
+    if (bob === undefined) {
+      return;
+    }
+
+    bob.lives = 14;
+    bob.points = 6;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      walkInSpectator: true,
+      walkInSeesPrivate: true,
+      claimableSeats: [{ playerId: 'a', nickname: 'Alice' }],
+    });
+
+    expect(view.players.find((player) => player.id === 'b')?.spied).toMatchObject({
+      kitId: bob.kitId,
+      lives: 14,
+      points: 6,
+    });
   });
 });

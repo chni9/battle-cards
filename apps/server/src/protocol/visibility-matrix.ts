@@ -36,14 +36,31 @@ export function isEliminatedSpectator(player: Player): boolean {
 }
 
 /**
+ * Walk-in Spy overlay is withheld while a claim picker is still open (L57-16).
+ * Stay spectating, or an empty claimable list, restores the overlay.
+ */
+export function walkInSpectatorSeesPrivate(input: {
+  claimableCount: number;
+  stayConfirmed: boolean;
+}): boolean {
+  return input.stayConfirmed || input.claimableCount === 0;
+}
+
+/**
  * True when `viewerId` may see `subjectId`'s private kit / hand / live resources
- * and Spy-gated log lines: real Spy relation **or** eliminated spectator overlay.
+ * and Spy-gated log lines: real Spy relation, eliminated spectator overlay, or
+ * a walk-in spectator whose overlay is currently granted (L57-13 / L57-16).
  */
 export function recipientSeesPrivateOf(
   state: GameState,
   viewerId: string,
   subjectId: string,
+  walkInSpectator = false,
 ): boolean {
+  if (walkInSpectator) {
+    return true;
+  }
+
   if (viewerId === subjectId) {
     return true;
   }

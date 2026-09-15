@@ -6,7 +6,6 @@
 import {
   BOT_DIFFICULTIES,
   MAX_PLAYERS,
-  MIN_PLAYERS,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
@@ -22,6 +21,11 @@ import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
+import {
+  lobbyShowsReadyToggle,
+  lobbyStartEnabled,
+} from './lobby-ready';
+import { LobbyReadyCheckIcon, LobbyReadyStatusMark } from './lobby-ready-mark';
 import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
@@ -31,7 +35,8 @@ export interface LobbyScreenProps {
   onStart: () => void;
   onLeave: () => void;
   onAddBot: (difficulty: BotDifficulty) => void;
-  onRemoveBot: (playerId: string) => void;
+  onKickPlayer: (playerId: string) => void;
+  onSetReady: (ready: boolean) => void;
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   onChooseKit: (selection: LobbyKitSelection) => void;
 }
@@ -43,18 +48,25 @@ export function LobbyScreen({
   onStart,
   onLeave,
   onAddBot,
-  onRemoveBot,
+  onKickPlayer,
+  onSetReady,
   onSetBotDifficulty,
   onChooseKit,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
-  const canLaunch = isHost && view.players.length >= MIN_PLAYERS;
+  const walkInSpectator = view.isSpectator === true;
+  const canLaunch = isHost && lobbyStartEnabled(view);
+  const showReadyToggle = lobbyShowsReadyToggle(view);
+  const youReady = view.players.find((player) => player.id === view.you)?.isReady === true;
   const canAddBot = isHost && view.players.length < MAX_PLAYERS;
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [kickTarget, setKickTarget] = useState<{ id: string; nickname: string } | null>(
+    null,
+  );
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
 
   const closeCopyDialog = useCallback(() => {
@@ -103,6 +115,14 @@ export function LobbyScreen({
           )}
         </section>
 
+        {walkInSpectator ? (
+          <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
+            <h2 className="text-sm font-medium text-ink-muted">Watching the lobby</h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Claim a disconnected seat if one is listed, or leave and join again later.
+            </p>
+          </section>
+        ) : (
         <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
           <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
           <p className="mt-1 text-sm text-ink-muted">Hidden from opponents until Spy or death.</p>
@@ -126,6 +146,7 @@ export function LobbyScreen({
             </div>
           </div>
         </section>
+        )}
 
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-ink">
@@ -137,8 +158,9 @@ export function LobbyScreen({
                 key={player.id}
                 className="flex min-h-11 flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-ink">
+                <div className="flex min-w-0 items-center gap-2">
+                  <LobbyReadyStatusMark isReady={player.isReady} />
+                  <span className="min-w-0 font-sans font-medium text-ink">
                     {player.nickname}
                     {player.id === view.you ? ' (you)' : ''}
                   </span>
@@ -151,28 +173,30 @@ export function LobbyScreen({
                     <BotSeatLabel difficulty={player.botDifficulty} />
                   )}
                 </div>
-                {isHost && player.isBot && player.botDifficulty !== undefined && (
+                {isHost && player.id !== view.you && (
                   <div className="flex flex-wrap gap-2">
-                    {BOT_DIFFICULTIES.map((tier) => (
-                      <Button
-                        key={tier}
-                        type="button"
-                        variant={player.botDifficulty === tier ? 'green' : 'orange'}
-                        onClick={() => {
-                          onSetBotDifficulty(player.id, tier);
-                        }}
-                      >
-                        {formatBotDifficulty(tier)}
-                      </Button>
-                    ))}
+                    {player.isBot &&
+                      player.botDifficulty !== undefined &&
+                      BOT_DIFFICULTIES.map((tier) => (
+                        <Button
+                          key={tier}
+                          type="button"
+                          variant={player.botDifficulty === tier ? 'green' : 'orange'}
+                          onClick={() => {
+                            onSetBotDifficulty(player.id, tier);
+                          }}
+                        >
+                          {formatBotDifficulty(tier)}
+                        </Button>
+                      ))}
                     <Button
                       type="button"
                       variant="red"
                       onClick={() => {
-                        onRemoveBot(player.id);
+                        setKickTarget({ id: player.id, nickname: player.nickname });
                       }}
                     >
-                      Remove
+                      Kick
                     </Button>
                   </div>
                 )}
@@ -218,9 +242,32 @@ export function LobbyScreen({
               Start game
             </Button>
           )}
-          {!isHost && (
+          {showReadyToggle && (
+            <Button
+              type="button"
+              variant={youReady ? 'orange' : 'green'}
+              onClick={() => {
+                onSetReady(!youReady);
+              }}
+            >
+              {youReady ? (
+                'Cancel ready'
+              ) : (
+                <>
+                  <LobbyReadyCheckIcon />
+                  Ready
+                </>
+              )}
+            </Button>
+          )}
+          {!isHost && !showReadyToggle && (
             <p className="self-center text-sm text-ink-muted">
               Waiting for the host to start…
+            </p>
+          )}
+          {!isHost && showReadyToggle && (
+            <p className="self-center text-sm text-ink-muted">
+              {youReady ? 'Waiting for the host to start…' : 'Press Ready when you are set.'}
             </p>
           )}
           <Button type="button" variant="red" onClick={onLeave}>
@@ -251,6 +298,43 @@ export function LobbyScreen({
         {copyFailed
           ? `Could not copy automatically. Game code: ${view.gameCode}`
           : `Share this code with friends: ${view.gameCode}`}
+      </Dialog>
+
+      <Dialog
+        open={kickTarget !== null}
+        title="Kick this player?"
+        onClose={() => {
+          setKickTarget(null);
+        }}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="orange"
+              onClick={() => {
+                setKickTarget(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="red"
+              onClick={() => {
+                if (kickTarget !== null) {
+                  onKickPlayer(kickTarget.id);
+                  setKickTarget(null);
+                }
+              }}
+            >
+              Kick
+            </Button>
+          </>
+        }
+      >
+        {kickTarget !== null
+          ? `${kickTarget.nickname} will leave this lobby. They can join again with the code.`
+          : null}
       </Dialog>
 
       <FeedbackDialog

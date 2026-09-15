@@ -5,12 +5,17 @@
 import {
   ACTION_PLAYED,
   ACTION_RESOLVED,
+  ACTION_REJECT_MESSAGE,
   ADD_BOT,
   BUY_CARD,
   BUY_POOL_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CLEAR_SPY,
+  PLAY_AGAIN,
+  CLAIM_SEAT,
+  STAY_SPECTATING,
+  KICK_PLAYER,
   CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
@@ -29,6 +34,7 @@ import {
   REMOVE_BOT,
   SELL_CARD,
   SELL_UPGRADE_POINT,
+  SET_READY,
   SET_BOT_DIFFICULTY,
   UPGRADE_CARD,
   START_GAME,
@@ -156,6 +162,11 @@ export interface UseRoomConnectionResult extends RoomConnection {
   startTutorialGame: (nickname: string) => Promise<void>;
   addBot: (difficulty: BotDifficulty) => void;
   removeBot: (playerId: string) => void;
+  kickPlayer: (playerId: string) => void;
+  playAgain: () => void;
+  claimSeat: (playerId: string) => void;
+  staySpectating: () => void;
+  setReady: (ready: boolean) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   chooseKit: (selection: LobbyKitSelection) => void;
   drawCard: () => void;
@@ -180,6 +191,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
   const [connection, setConnection] = useState<RoomConnection>(INITIAL);
   const roomRef = useRef<Room | null>(null);
   const intentionalLeaveRef = useRef(false);
+  const kickPendingRef = useRef(false);
   const soloLaunchPendingRef = useRef(false);
   const attachRoomRef = useRef<(room: Room) => void>(() => {
     /* assigned below */
@@ -188,6 +200,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
   const attachRoom = useCallback((room: Room): void => {
     roomRef.current = room;
     intentionalLeaveRef.current = false;
+    kickPendingRef.current = false;
 
     room.reconnection.enabled = true;
     room.reconnection.maxRetries = RECONNECT_MAX_RETRIES;
@@ -221,6 +234,23 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onMessage(ERROR_MESSAGE, (payload: unknown) => {
       if (isErrorPayload(payload)) {
+        if (payload.code === 'kicked') {
+          kickPendingRef.current = true;
+          intentionalLeaveRef.current = true;
+          clearToken();
+          const current = roomRef.current;
+          if (current !== null) {
+            current.reconnection.enabled = false;
+          }
+          setConnection({
+            ...INITIAL,
+            status: 'disconnected',
+            error: payload.message,
+            actionReject: payload,
+          });
+          return;
+        }
+
         if (soloLaunchPendingRef.current) {
           soloLaunchPendingRef.current = false;
           intentionalLeaveRef.current = true;
@@ -328,6 +358,21 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onLeave((_code, reason) => {
       roomRef.current = null;
+
+      const kicked =
+        kickPendingRef.current || reason === ACTION_REJECT_MESSAGE.kicked;
+
+      if (kicked) {
+        kickPendingRef.current = false;
+        intentionalLeaveRef.current = false;
+        clearToken();
+        setConnection((previous) => ({
+          ...INITIAL,
+          status: 'disconnected',
+          error: previous.error ?? reason ?? ACTION_REJECT_MESSAGE.kicked,
+        }));
+        return;
+      }
 
       if (intentionalLeaveRef.current) {
         clearToken();
@@ -450,6 +495,26 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
   const removeBot = useCallback((playerId: string): void => {
     roomRef.current?.send(REMOVE_BOT, { playerId });
+  }, []);
+
+  const kickPlayer = useCallback((playerId: string): void => {
+    roomRef.current?.send(KICK_PLAYER, { playerId });
+  }, []);
+
+  const playAgain = useCallback((): void => {
+    roomRef.current?.send(PLAY_AGAIN);
+  }, []);
+
+  const claimSeat = useCallback((playerId: string): void => {
+    roomRef.current?.send(CLAIM_SEAT, { playerId });
+  }, []);
+
+  const staySpectating = useCallback((): void => {
+    roomRef.current?.send(STAY_SPECTATING);
+  }, []);
+
+  const setReady = useCallback((ready: boolean): void => {
+    roomRef.current?.send(SET_READY, { ready });
   }, []);
 
   const setBotDifficulty = useCallback(
@@ -620,6 +685,11 @@ export function useRoomConnection(): UseRoomConnectionResult {
     startTutorialGame,
     addBot,
     removeBot,
+    kickPlayer,
+    playAgain,
+    claimSeat,
+    staySpectating,
+    setReady,
     setBotDifficulty,
     chooseKit,
     drawCard,

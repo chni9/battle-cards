@@ -9,6 +9,7 @@ export const TUTORIAL_COMPLETE_TITLE = 'Tutorial complete';
 export const PLAY_A_REAL_GAME_LABEL = 'Play a real game';
 export const GAME_OVER_TITLE = 'Game over';
 export const RETURN_HOME_LABEL = 'Return home';
+export const PLAY_AGAIN_LABEL = 'Play again';
 export const FEEDBACK_LABEL = 'Feedback';
 export const DOWNLOAD_ACTION_LOG_LABEL = 'Download action log';
 
@@ -18,6 +19,11 @@ export function gameOverTitle(playKind: PlayKind): string {
 
 export function gameOverLeaveLabel(playKind: PlayKind): string {
   return playKind === 'tutorial' ? PLAY_A_REAL_GAME_LABEL : RETURN_HOME_LABEL;
+}
+
+/** Classic rematch in this room. Tutorial keeps Play a real game (L57-12). */
+export function showPlayAgain(playKind: PlayKind): boolean {
+  return playKind === 'classic';
 }
 
 /** Excel download is DEV-only in every mode (spec §5.4). */

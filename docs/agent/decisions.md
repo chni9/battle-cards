@@ -3191,6 +3191,104 @@ need the bump (fields already on the view).
 Do not edit `heuristic-v4` scoring. `applyDamage` vs `applyLifeLoss` is unchanged:
 Tax must not decrement card-lives counters or emit a lost line.
 
+## 2026-09-14 · [P] Lot 57 Feedback conversion (L57-01)
+
+Designer: first users (friends) play regularly but do not send inbox rows. Convert
+the existing Lot 47 pipeline — do not add Slack, mail, ratings, screenshots, or a
+second form product.
+
+**Ask-mode** (Game over auto-prompt, including before hub leave): one sentence.
+No Kind / About / Contact. POST `kind: 'confusion'`, `topics: []`, `message`
+trimmed min 1. Skip is the empty path. Overlay dismiss = Skip.
+
+**Manual** (`!`, Home, Lobby, Game over **Feedback** button): unchanged ticket
+(Kind + About + message + optional contact). Bug still needs ≥1 topic.
+
+**Leave intercept:** Game over Return home, tutorial Play a real game, and the
+finished-board flag all hit ask-once unless
+`localStorage['card-battle.v6.feedbackAsked.' + gameCode]` is already `'1'`.
+Skip or a successful Send then leaves. View board ask does **not** leave.
+Stats Feedback stays manual and does not auto-leave. Failed send does not mark
+asked and does not leave. Dialogs still never stack.
+
+**Table chrome:** keep the 44px turn-strip **`!`**. Never print the word
+Feedback on the felt, Incoming, or the economy bar (mobile crowding). Home /
+Lobby / Game over stats may keep the word.
+
+No protocol bump. No new HTTP or Postgres fields. `heuristic-v4` untouched.
+L57-02 is the ask-mode Dialog; L57-03 is the leave intercept.
+
+---
+
+## 2026-09-14 · [P] Lot 57 ask-mode is the full ticket (L57-05)
+
+Designer follow-up: every finished game must show the Feedback form, including
+Return home. L57-03 already intercepts Return home / Play a real game / flag.
+The Game over prompt was still the L57-02 one-sentence stub (`confusion`, no
+chips/contact). That is not the Home ticket testers already know.
+
+**Ask-mode** is the same Lot 47 ticket as manual (Kind + About + message +
+optional contact). Title **Feedback**. Lead stays **Skip is fine.** Skip /
+overlay still mark asked and, when `leavePending`, leave to the hub. A bug
+still needs ≥1 topic. POST uses the tester's kind and topics, plus contact
+when filled.
+
+Manual (`!`, Home, Lobby, Game over **Feedback**) unchanged. Table chrome
+still `!`. No protocol bump, no Slack/mail, no ratings.
+
+Supersedes the L57-01 / L57-02 one-sentence ask-mode copy. Leave intercept
+(L57-03) is unchanged.
+
+## 2026-09-15 · [P] Lot 57 lobby rematch add-on (L57-06)
+
+Still **Lot 57** — do not open Lot 58. Designer: friends need Ready before
+Start, host Kick, Play again with the same code, and Join-with-code after a
+drop or to watch.
+
+**Ready:** human guests only; host implicit; bots ready. `startGame` rejects
+`start-not-all-ready` until every **connected** human guest is ready.
+
+**Kick:** host, lobby, any other seat. Human: drop + clear reservation. Bot:
+`removeBot`. Confirm on the client.
+
+**Play again:** same Colyseus room/code. Per-recipient reforming (do not yank
+Game over). Bots persist. Original host reclaims if they opt in. `onGameOver`
+persist stays once; the next Start is a new match. Tutorial keeps Play a real
+game. Walk-in spectators sit in the new lobby as unready guests.
+
+**Join / spectate:** playing Join enters as spectator. Picker lists living
+disconnected seats (no nickname auto-match; nicknames are not unique). Claim
+attaches the new socket to that `Player.id`. Walk-in vision reuses the
+eliminated upgraded-Spy overlay. `maxClients` = 8 seats + 8 spectators.
+
+**Disconnect clock** (overrides technical spec v1 §5.7 60s): default grace
+**30s**, then instant autodraw on their turns. The **third** autodraw
+**eliminates** (`eliminateWithoutReward`, `absence`). Dead seats are not in
+the picker. Same-tab Colyseus reconnection during grace stays.
+
+`PROTOCOL_VERSION` **31 → 32** in L57-07 (same class of V6 exception as L49 /
+L56). No accounts, no replay VOD, no Classic combat-value change. Table `!`
+unchanged. `heuristic-v4` untouched.
+
+---
+
+## 2026-09-15 · [P] Lot 57 claim-picker fog + lobby Ready chrome (L57-16)
+
+Walk-in spectators were receiving the eliminated upgraded-Spy overlay on join,
+so opponent kits leaked behind the claim picker before Stay or Sit.
+
+**Fog:** withhold `walkInSeesPrivate` while `claimableSeats` is non-empty and
+the socket has not confirmed Stay. Empty claim list auto-unfogs. `claimSeat`
+uses seated vision. Client `staySpectating` (payload none) is walk-in only.
+
+**Lobby chrome:** Ready CTA is green with a check. Seat ready is a colored
+check/cross in a fixed column left of the nickname (Outfit `font-sans`).
+
+`PROTOCOL_VERSION` **32 → 33** (same class of V6 exception as L49 / L56 /
+L57-07). Table `!` unchanged.
+
+---
+
 ## 2026-09-15 · [P] Lot 58 shop, pool, Invisibility, PG, Unspy (L58-01)
 
 Designer instruction (this session). Classic values and rules change. Supersedes the
@@ -3275,4 +3373,13 @@ Picker hint: “Choose who is spying you.” Public log: `{actor} got unspied fr
 
 ---
 
+## 2026-09-15 · [P] Lot 58 protocol bump retargeted 33 → 34
+
+Lot 57 landed on `main` (`#26`) as `PROTOCOL_VERSION` 32 then 33 (`setReady` /
+`kickPlayer` / `playAgain` / `claimSeat` / `staySpectating`). Lot 58 had used
+31 → 32 for `buyPoolCard` / `clearSpy` / `poolBuyCost` / `spyingOnYou`. Those
+wire fields stay; the live bump is **33 → 34** so rematch clients on 33 still
+mismatch. L58-02 task text on this branch records the retarget. No rule change.
+
+---
 
