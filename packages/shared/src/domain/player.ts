@@ -52,6 +52,30 @@ export interface TurnLedger {
   upgradePointsLostToTheft: number;
 }
 
+/**
+ * Match-long totals for the finished recap (L59-03). Never reset with `turnLedger`.
+ * Spend matches Absorber: chosen spend, not theft.
+ */
+export interface MatchStats {
+  livesLost: number;
+  livesGained: number;
+  pointsSpent: number;
+  pointsGained: number;
+  upgradePointsSpent: number;
+}
+
+export const EMPTY_MATCH_STATS: MatchStats = {
+  livesLost: 0,
+  livesGained: 0,
+  pointsSpent: 0,
+  pointsGained: 0,
+  upgradePointsSpent: 0,
+};
+
+export function emptyMatchStats(): MatchStats {
+  return { ...EMPTY_MATCH_STATS };
+}
+
 export interface Player {
   /** Stable per-game identifier. */
   id: string;
@@ -80,6 +104,8 @@ export interface Player {
   /** Persistent effects this player activated, whoever they act on. */
   activePersistentEffects: PersistentEffect[];
   turnLedger: TurnLedger;
+  /** Career totals for Game over recap — not reset on Reanimation (L59-03). */
+  matchStats: MatchStats;
   connectionState: ConnectionState;
   /**
    * Set when the player is eliminated (rules spec §6): they lose all lives and become

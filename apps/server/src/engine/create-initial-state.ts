@@ -13,6 +13,7 @@
 
 import {
   CLASSIC_LIFE_LIMIT,
+  emptyMatchStats,
   getKit,
   isKitId,
   KIT_IDS,
@@ -161,6 +162,7 @@ function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): 
       pointsLostToTheft: 0,
       upgradePointsLostToTheft: 0,
     },
+    matchStats: emptyMatchStats(),
     connectionState: {
       status: 'connected',
       disconnectedAt: null,

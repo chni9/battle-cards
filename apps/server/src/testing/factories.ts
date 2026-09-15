@@ -4,7 +4,7 @@
  * be edited.
  */
 
-import type { PersistentEffect, Player } from '@card-battle/shared';
+import { emptyMatchStats, type PersistentEffect, type Player } from '@card-battle/shared';
 
 export function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -27,6 +27,7 @@ export function makePlayer(overrides: Partial<Player> = {}): Player {
       pointsLostToTheft: 0,
       upgradePointsLostToTheft: 0,
     },
+    matchStats: emptyMatchStats(),
     connectionState: {
       status: 'connected',
       disconnectedAt: null,

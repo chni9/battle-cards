@@ -16,6 +16,7 @@ import {
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { observeLifeLoss } from '../life/observe-life-loss';
 import { grantLives, grantPoints } from './grant-resources';
+import { recordChosenPointsSpent } from './record-chosen-spend';
 
 export function canAffordCost(player: Player, cost: CardCost): boolean {
   if (cost.pointsPerLife !== undefined) {
@@ -71,7 +72,7 @@ export function payCost(
 
   if (points > 0) {
     player.points -= points;
-    player.turnLedger.pointsSpent += points;
+    recordChosenPointsSpent(player, points);
   }
 
   if (lives > 0) {

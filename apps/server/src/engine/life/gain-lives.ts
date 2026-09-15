@@ -24,6 +24,7 @@ export function gainLives(target: Player, amount: number, lifeLimit: number): Li
 
   const livesGained = Math.max(0, Math.min(amount, lifeLimit - target.lives));
   target.lives += livesGained;
+  target.matchStats.livesGained += livesGained;
 
   return { livesGained, livesWasted: amount - livesGained };
 }

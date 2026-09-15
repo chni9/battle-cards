@@ -30,6 +30,7 @@ export function applyLifeLoss(
 
   const livesLost = Math.min(target.lives, amount);
   target.lives -= livesLost;
+  target.matchStats.livesLost += livesLost;
 
   return { reason, livesLost };
 }

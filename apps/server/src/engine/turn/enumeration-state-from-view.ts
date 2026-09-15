@@ -13,6 +13,7 @@ import {
   type Player,
   type PlayingStateView,
   type SpyRelation,
+  emptyMatchStats,
 } from '@card-battle/shared';
 
 const EMPTY_LEDGER = {
@@ -55,6 +56,7 @@ export function enumerationStateFromView(
           ...effect,
         })),
         turnLedger: { ...EMPTY_LEDGER },
+        matchStats: emptyMatchStats(),
         connectionState: { ...CONNECTED },
         isEliminated: publicPlayer.isEliminated,
         eliminationSnapshot: null,
@@ -89,6 +91,7 @@ export function enumerationStateFromView(
         ...effect,
       })),
       turnLedger: { ...EMPTY_LEDGER },
+      matchStats: emptyMatchStats(),
       connectionState: { ...CONNECTED },
       isEliminated: publicPlayer.isEliminated,
       eliminationSnapshot: null,

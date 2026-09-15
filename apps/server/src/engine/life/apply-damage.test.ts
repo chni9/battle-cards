@@ -122,6 +122,7 @@ describe('applyDamage — internal counters (rules spec §5)', () => {
     expect(effect.counter).toBe(4);
     expect(target.activePersistentEffects).toEqual([effect]);
     expect(outcome.countersDecremented).toEqual([]);
+    expect(target.matchStats.livesLost).toBe(3);
   });
 });
 
