@@ -211,15 +211,20 @@ export function pickGameOverAwards(recap: GameRecapView): GameOverAward[] {
 }
 
 export function formatThinkTimeMs(ms: number): string {
-  const totalSeconds = Math.max(0, ms) / 1000;
+  const safeMs = Math.max(0, ms);
+  const tenths = Math.round(safeMs / 100);
 
-  if (totalSeconds < 60) {
-    const rounded = Math.round(totalSeconds * 10) / 10;
-    return Number.isInteger(rounded) ? `${String(rounded)}s` : `${rounded.toFixed(1)}s`;
+  // Tenths-round first so 59.95s becomes 1m, not `60s`.
+  if (tenths < 600) {
+    const seconds = tenths / 10;
+    return Number.isInteger(seconds) ? `${String(seconds)}s` : `${seconds.toFixed(1)}s`;
   }
 
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.round(totalSeconds % 60);
+  // Round total seconds, then split. Floor(minutes) + round(remainder)
+  // yields `1m 60s` at every Nm 59.5s+ boundary.
+  const wholeSeconds = Math.round(safeMs / 1000);
+  const minutes = Math.floor(wholeSeconds / 60);
+  const seconds = wholeSeconds % 60;
   return `${String(minutes)}m ${String(seconds)}s`;
 }
 

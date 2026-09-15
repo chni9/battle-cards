@@ -166,6 +166,12 @@ describe('formatThinkTimeMs (L60-05)', () => {
   it('renders seconds under a minute and mm:ss past it', () => {
     expect(formatThinkTimeMs(0)).toBe('0s');
     expect(formatThinkTimeMs(1_500)).toBe('1.5s');
+    expect(formatThinkTimeMs(59_400)).toBe('59.4s');
     expect(formatThinkTimeMs(65_000)).toBe('1m 5s');
+  });
+
+  it('rolls rounded 60 seconds into the next minute', () => {
+    expect(formatThinkTimeMs(59_950)).toBe('1m 0s');
+    expect(formatThinkTimeMs(119_600)).toBe('2m 0s');
   });
 });
