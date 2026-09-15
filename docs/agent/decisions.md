@@ -3393,3 +3393,23 @@ step 4 because the effect is already gone when persistents run.
 
 ---
 
+## 2026-09-15 · [P] Lot 59 compact Draw / Unspy dock (L59-01)
+
+Designer 2026-09-15: make space on the economy bar. **Draw** drops the word
+Draw — the button face is only the gain `CostDisplay` (`+N` points). **Unspy**
+drops the word Unspy — the face is the crossed-eye SVG plus the `CLEAR_SPY_COST`
+`CostDisplay`. Shop keeps its word label. Names stay on `aria-label` / `title`
+(and the Unspy picker title). Compact `Button` (no `min-w-[7rem]`). No protocol
+bump, no rule or value change.
+
+---
+
+## 2026-09-15 · CostDisplay title must not hide Draw / Unspy hover (L59-01)
+
+Compact Draw / Unspy put the action name on the button `title`. `CostDisplay`
+already sets a spoken-cost `title` on the inner span that fills the face, so
+hover showed only `plus 1 pt` / `minus 10 pts`. Pass `title={null}` on those
+nested costs so the button name is the tooltip.
+
+---
+

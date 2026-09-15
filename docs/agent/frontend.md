@@ -8,17 +8,17 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 57
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 59
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–57 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–59 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
-Unspy / Invisibility turns badge).
+Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word labels).
 
 ## Screens
 
@@ -172,10 +172,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
-  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
-  + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
-  icon) + **Shop** (L43-02 / L43-05) + **Unspy** (L58-07: crossed-eye inline SVG, label
-  Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`).   Unspy is grey when it is not
+  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: compact
+  **Draw** is only the gain point `CostDisplay` (`signed="gain"`, green CTA — not
+  yellow-on-yellow with the point icon; no “Draw” letters — L59-01; `aria-label` /
+  `title` keep the name; nested `CostDisplay` `title={null}` so hover is not only
+  “plus 1 pt”) + **Shop** (L43-02 / L43-05, word label stays) + compact **Unspy** (L58-07 /
+  L59-01: crossed-eye inline SVG + `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`;
+  no “Unspy” letters; `aria-label` / `title` keep the name; nested `CostDisplay`
+  `title={null}` so hover is not only “minus 10 pts”).   Unspy is grey when it is not
   your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
   exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
   (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
@@ -1128,5 +1132,18 @@ Two-tab Classic, Vite `:5173`, Colyseus `:2567`, room `WYZIDP`. Host nick
   `L58HostF got unspied from L58GuestF`; open eye gone; Unspy greys.
 - `pnpm verify` **1318** tests.
 
+### Lot 59 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 34)
+
+Solo Easy, Vite `:5173`, Colyseus `:2567`, nick `L59Dock`, room `ZPHQBS`.
+Skip all first-game hints.
+
+- Economy bar: green Draw face is **+1** point icon only (no word Draw);
+  orange **Shop** still spelled; purple Unspy is crossed-eye **−10** (no word
+  Unspy). Compact width — no 7rem min.
+- Draw click: points 9 → 10; log `L59Dock draws`. Hover title is the button
+  name (`Draw, plus 1 pt`) — `CostDisplay` `title={null}` so the spoken-cost
+  tooltip does not steal it. Unspy stays grey with no living spy; click does
+  not open the picker.
+- `pnpm verify` **1381** tests.
 
 

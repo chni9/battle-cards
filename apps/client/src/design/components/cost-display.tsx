@@ -23,6 +23,11 @@ export interface CostDisplayProps {
   iconSize?: number;
   /** Prefix the amount with − (pay) or + (receive). */
   signed?: CostSign;
+  /**
+   * Native tooltip. Defaults to the spoken cost. Pass `null` when a parent
+   * control already names the action (L59-01) — an inner `title` would hide it.
+   */
+  title?: string | null;
 }
 
 const KIND_TO_RESOURCE: Record<StructuredCost['kind'], ResourceKind> = {
@@ -58,15 +63,17 @@ export function CostDisplay({
   className = '',
   iconSize = 14,
   signed,
+  title: titleOverride,
 }: CostDisplayProps): ReactElement {
   const spoken =
     signed === undefined ? spokenCost(cost, multiplier) : spokenCost(cost, multiplier, signed);
   const signGlyph = costSignGlyph(signed);
+  const tooltip = titleOverride === undefined ? spoken : (titleOverride ?? undefined);
 
   return (
     <span
       className={`inline-flex items-center gap-0.5 font-sans tabular-nums ${className}`}
-      title={spoken}
+      title={tooltip}
     >
       <span className="sr-only">{spoken}</span>
       {multiplier !== undefined && multiplier !== 1 ? (
