@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **31** (L56-03 Mirror redirect fields +
-> `persistentDeactivated`; V6 teaching fields landed at 29 in L41-02; lobby kit pick at 30).
+> **Status:** current `PROTOCOL_VERSION` is **32** (L57-07 lobby Ready / Kick / Play again /
+> `claimSeat` + walk-in spectator views; Mirror redirect fields landed at 31 in L56-03;
+> V6 teaching fields at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in
@@ -31,6 +32,8 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    `recipientSeesPrivateOf` / `isEliminatedSpectator` — **no** matrix rows written. Pending
    Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
    Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
+   **Walk-in Classic spectators** (L57-13) reuse this overlay (`walkInSpectator` on the view
+   builder) without sitting in `GameState.players`. Do not invent a second vision matrix.
 4. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
    can be bypassed.
 5. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
@@ -43,7 +46,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, or an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
@@ -80,6 +83,11 @@ Client → server (technical spec §5.2):
 (host-only, lobby-only; PROTOCOL_VERSION 21) ·
 `chooseKit` (PROTOCOL_VERSION 30 / L49-01 — payload `{ kitId: KitId | 'random' }`;
 lobby-only; each human sets only their own pick; default `'random'`) ·
+`setReady` `{ ready: boolean }` (PROTOCOL_VERSION 32 / L57-08 — human guests in lobby only) ·
+`kickPlayer` `{ playerId }` (PROTOCOL_VERSION 32 / L57-09 — host, lobby only) ·
+`playAgain` (PROTOCOL_VERSION 32 / L57-10 — Classic finished / reforming; same room/code) ·
+`claimSeat` `{ playerId }` (PROTOCOL_VERSION 32 / L57-13 — remap this socket onto a living
+disconnected human seat; no nickname auto-match) ·
 `playCard` · `playMultipleAttacks` (Assassin only,
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
@@ -113,6 +121,9 @@ the same catalog; local lobby reason unions (`not-host`, …) remain for `canSta
 with the latter message (L41-05); it is not an in-game `error` event.
 PROTOCOL_VERSION 30 adds `'choose-kit-already-started'` and `'invalid-choose-kit-payload'`
 (`'kit-unavailable'` covers an unknown catalog id).
+PROTOCOL_VERSION 32 adds Ready / Kick / Play again / claim / spectate codes
+(`start-not-all-ready`, `claim-not-claimable`, `spectate-room-full`, `kicked`, …).
+`CLIENT_READY` stays the Colyseus ping — not lobby Ready.
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
 `kind` entries for plays, resolutions, eliminations, Mirror redirects, auto-lost persistents
@@ -169,9 +180,11 @@ knowing before touching `game-room.ts`:
   `this.clients` when `onLeave` runs.
 - **`onAuth` is the earliest hook with the join options**, and where the protocol version is
   checked: a client on a different contract misreads everything it receives. Throwing
-  `ServerError` there rejects the join with a message the client shows. Order (L41-05):
-  protocol version, then `tutorial-room-closed` when `playKind === 'tutorial'` and a human is
-  already seated, then `hasStarted`, then nickname. Honor `tutorial: true` only in `onCreate`;
+  `ServerError` there rejects the join with a message the client shows. Order (L41-05 /
+  L57-13): protocol version, then `tutorial-room-closed` when `playKind === 'tutorial'` and a
+  human is already seated, then nickname, then occupancy (`reject-full` /
+  `spectate-room-full`). A started Classic room **does not** reject join — the client
+  sits as a walk-in spectator. Honor `tutorial: true` only in `onCreate`;
   ignore it on `joinById`. Do not put the tutorial reject on `onReconnect`.
 - Options arriving from a client are typed `unknown` and narrowed by hand. Nothing about a
   payload is assumed, on either side of the wire (§5.4).
@@ -188,7 +201,10 @@ The builder takes the recipient and decides what to include. There is deliberate
 "full view" function anywhere for it to filter down from — if one exists, golden rule 4 above
 has nothing to attach to and new fields start leaking by default. Keeping it pure is what makes
 the hidden-information tests of technical spec §8 level 2 cheap: no server, no socket, no
-timing. It refuses to build a view for a session that is not in the room.
+timing. Seated recipients use `Player.id`. Walk-in spectators (L57-13) are Colyseus clients
+**not** in `GameState.players`; `buildPlayingViewFor` / lobby / finished siblings take
+`walkInSpectator` and reuse the eliminated-spectator overlay (`isSpectator`, empty legal
+actions, public `claimableSeats`). Lobby seats carry public `isReady`.
 
 ## Timers and sub-choices
 
@@ -198,7 +214,7 @@ Technical spec §5.5, §5.6.
 |---|---|---|
 | Turn | 60s | Automatic draw |
 | Sub-choice (Mirror, steal, pool, special, reanimation, reward) | 40s | Default action below |
-| Reconnection window | 60s | Player becomes absent |
+| Reconnection window | 30s | Player becomes absent (L57-13; overrides v1 §5.7 60s) |
 
 Tutorial rooms set `turnDeadlineMs = null` (no server turn timer; client idle 20s only
 retitles the coach **Play**). Honor `RoomJoinOptions.tutorial: true` only in `onCreate`;
@@ -215,18 +231,31 @@ a sub-choice: it is their turn action, covered by the 60s turn timer.
 
 Technical spec §5.7 — two independent mechanisms, deliberately different thresholds.
 
-- **Disconnected:** 60s real-time window from the moment of disconnection, independent of whose
-  turn it is. Past it the player is *absent* and draws **immediately** on each of their turns,
-  without waiting the turn timer. Eliminated after **3** automatic turns, with no eliminator and so no
-  reward. Any reconnection resets both the window and the counter.
+- **Disconnected:** 30s real-time window from the moment of disconnection (L57-13; overrides
+  technical spec v1 §5.7 60s), independent of whose turn it is. Env `RECONNECT_GRACE_MS`
+  (min 1000) still overrides. Past it the player is *absent* and draws **immediately** on each
+  of their turns, without waiting the turn timer. The **third** automatic turn eliminates them
+  (`eliminateWithoutReward`, reason `absence`) — lives 0, cards pooled, no eliminator / no
+  rewards. They stay in the room as an eliminated spectator of that seat and drop off the
+  join picker **because they are eliminated**. Any reconnection or successful `claimSeat`
+  resets both the window and the counter.
 - **Connected but inactive:** the 60s turn timer expires and they draw. Eliminated after **5**
   consecutive expired turns. Reconnect does **not** reset this counter.
-- **Colyseus:** `onDrop` → `allowReconnection(client, "manual")` until elim or game over (so
-  reclaim stays possible while *absent*). Own 60s timer only flips status. Table **`FORFEIT`**
+- **Colyseus:** `onDrop` → `allowReconnection(client, "manual")` until elim, Kick, `claimSeat`
+  steal, consented Leave, or dispose (so reclaim stays possible while *absent*). Same-tab
+  reconnection during grace does **not** need the picker. A Join-with-code is a **new**
+  socket: `Player.id` stays stable; `sessionId → playerId` remaps on `claimSeat`. Picker
+  claim rejects the old reconnection token. `maxClients` is 8 player seats + 8 spectators;
+  occupancy is still `MAX_PLAYERS` 2–8. Own 30s timer only flips status. Table **`FORFEIT`**
   (PROTOCOL_VERSION 29 / L43-06) applies consented-leave elim (`reason: 'leave'`) and **keeps
   the socket** so the forfeiter still receives `phase: 'finished'` / Game over. Spectator
-  Leave and finished **Return home** call `leaveGame()` (disconnect). Lobby Leave is still
-  immediate disconnect. Do not send `leaveGame()` on a live-table Forfeit.
+  Leave and finished **Return home** call `leaveGame()` (disconnect). Lobby accidental drop
+  **reserves** the human seat until Kick, consented Leave, or claim/rejoin. Do not send
+  `leaveGame()` on a live-table Forfeit.
+- **Join-by-code while playing:** always spectator first (`isSpectator`, empty legal actions).
+  `claimableSeats` lists living disconnected humans only (public nicknames). Finished recap
+  has no claimable list. After Play again, walk-in spectators become unready lobby guests
+  (L57-14) while occupancy has a free seat.
 - **Timers:** while `disconnected`, pause turn / Mirror / reward timers owned by that seat and
   resume remaining ms on `onReconnect`. Pure transitions live in
   `apps/server/src/engine/lifecycle/`; hooks stay in `game-room.ts`.

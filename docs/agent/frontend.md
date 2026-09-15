@@ -16,16 +16,18 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 visibility rules stay server-side; Lots 49–57 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
-on every hub leave, table `!` not the word Feedback).
+on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
+Play again, join-by-code spectate + claim picker).
 
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
+| Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable stats over frozen board; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` |
+| End | `phase: 'finished'` — closable stats; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` |
+| Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
@@ -134,15 +136,30 @@ rules above are unchanged — this section only covers how the client looks.
   `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
-- **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
+- **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
-  Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty
-  while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to Leave (L47-03);
-  `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
-  and sends `chooseKit` before `startGame` when the pick is not random.
+  Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
+  Each seat shows **Ready** / **Not ready**. Host and bots are ready on the wire; human
+  **guests** toggle with **Ready** / **Cancel ready** (`setReady`). Host has no Ready
+  control. **Start** is grey until `>= 2` seats **and** every connected human guest is
+  ready (`lobbyStartEnabled` — grey is not validation). Host **Kick** on every other
+  seat (bots and humans) opens **Kick this player?** then `kickPlayer`. Kicked humans
+  see **You were kicked** and may Join with the same code. Start / Leave; host-only Add
+  bot / set difficulty while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to
+  Leave (L47-03); `BotSeatLabel` on every bot seat for all recipients. Tutorial and Home
+  solo skip the lobby flash (`soloLaunchPending`), so Ready / Kick never appear there.
+  Guest Ready is Classic online lobby only. **Join with code** (Home) sits a guest when
+  the table is still lobby, or opens the claim picker for a reserved disconnected seat.
+  Solo path on Home uses the same kit picker and sends `chooseKit` before `startGame`
+  when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
+- **Walk-in spectator (L57-13):** `isSpectator` on playing/finished views. Zero legal
+  actions; flag **Leave table**; **Watching** copy on the felt; private dock hidden.
+  Hands, kits, and resources use the same upgraded-Spy overlay as an eliminated
+  spectator. After Game over **Play again**, these sockets become unready lobby guests
+  (L57-14) while a player seat is free.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
@@ -376,8 +393,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
+  Same-tab reclaim during the **30s** grace does **not** need the picker. A later
+  Join-with-code is a new socket: if the table is **playing**, enter as spectator first;
+  `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
+  with **Sit here** / **Stay spectating**. `claimSeat` remaps onto that `player.id`.
+  Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
-  calls `leaveGame()`. Finished-board **Return home** (flag or Game over) and tutorial
+  (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board
+  **Return home** (flag or Game over) and tutorial
   **Play a real game** go through `EndScreen.requestLeave` (Lot 57): ask-once if unmarked,
   then `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
@@ -417,8 +440,14 @@ rules above are unchanged — this section only covers how the client looks.
   closes; a send there marks asked; `!` is a no-op while stats or Feedback is already
   open. Live table still owns its own Dialog.
   Flag opens Stay / Return home (then `requestLeave`); Game over **Return home** is the same path.
-  Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
-  (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
+  Classic Game over also has **Play again** (L57-12) next to Return home. If this
+  `gameCode` is not yet asked, Play again opens the same ask-once ticket
+  (`playAgainPending`) then sends `playAgain` after Skip or a successful send.
+  Already-asked sends `playAgain` immediately. Cancel does not rematch. The first
+  `playAgain` in the room reforms the lobby **without yanking** other recap views;
+  walk-in spectators become unready lobby guests (L57-14). Tutorial finished views
+  use title **Tutorial complete** and CTA **Play a real game**
+  (still `onLeave` → hub only; no Play again). Table banners (L51-06): **Your turn** (seat color);
   **You are being attacked** once per new attack-tone Incoming (flashier, red);
   **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
   win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
@@ -453,7 +482,8 @@ rules above are unchanged — this section only covers how the client looks.
   when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
   seat until rewards finish. Reward picks stay opaque in the action log.
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default 60s.
-  `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
+  `RECONNECT_GRACE_MS` env (ms, min 1000) — default **30s** (L57-13; overrides
+  technical spec v1 §5.7 60s). Invalid env falls back to 30s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.
 
 ## Manual two-browser check (Lot 6)
