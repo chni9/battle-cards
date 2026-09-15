@@ -56,6 +56,11 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).toContain('Spy reveal — inspect only');
   });
 
+  it('greys hostile Use while own Invisibility is active (L58-06)', () => {
+    expect(source).toContain('cardActsOnOpponents');
+    expect(source).toContain('useBlockedByInvisibility');
+  });
+
   it('commits Regeneration quantity with four click-to-buy tiles (L44-06)', () => {
     expect(source).toContain('REGEN_QUANTITIES');
     expect(source).toContain('1 life');

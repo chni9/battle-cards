@@ -5,6 +5,7 @@
 
 import {
   actionReject,
+  cardActsOnOpponents,
   getKit,
   isAttackCardId,
   isPersistentSpecialCardId,
@@ -23,7 +24,9 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
+import { buyPoolCard } from '../economy/buy-pool-card';
 import { buySpecialCard } from '../economy/buy-special-card';
+import { clearSpy } from '../economy/clear-spy';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
@@ -39,6 +42,7 @@ import {
   ensureAutoDeactivationLog,
   takeAutoDeactivationLog,
 } from '../specials/auto-deactivation-log';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { activateDuplicationAction } from '../kits/activate-duplication';
 import {
   applyDefaultMirrorRedirect,
@@ -90,6 +94,8 @@ export type TurnAction =
   | { type: 'buyUpgradePoint' }
   | { type: 'sellUpgradePoint' }
   | { type: 'buySpecialCard' }
+  | { type: 'buyPoolCard' }
+  | { type: 'clearSpy'; targetPlayerId: string }
   | { type: 'deactivatePersistent'; effectId: string }
   | { type: 'activateDuplication' };
 
@@ -103,6 +109,8 @@ export type PublicActionKind =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
+  | 'buyPoolCard'
+  | 'clearSpy'
   | 'deactivatePersistent'
   | 'activateDuplication';
 
@@ -330,6 +338,33 @@ function performPreparedTurnAction(
       actorPlayerId,
       action: 'buySpecialCard',
       cardId: bought.instance.cardId,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'buyPoolCard') {
+    const bought = buyPoolCard(state, actorPlayerId, rng);
+
+    if (!bought.ok) {
+      return bought;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'buyPoolCard',
+      cardId: bought.instance.cardId,
+      isUpgraded: bought.instance.isUpgraded,
+      turnSequence: state.turnSequence,
+    };
+  } else if (action.type === 'clearSpy') {
+    const cleared = clearSpy(state, actorPlayerId, action.targetPlayerId);
+
+    if (!cleared.ok) {
+      return cleared;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'clearSpy',
+      targetPlayerId: action.targetPlayerId,
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'deactivatePersistent') {
@@ -1121,6 +1156,10 @@ function playMultipleAttacksAction(
     return actionReject('attacks-forbidden-during-block');
   }
 
+  if (playerIsInvisible(actor)) {
+    return actionReject('play-not-legal');
+  }
+
   if (!getKit(actor.kitId).traits.allowsMultipleAttacksPerTurn) {
     return actionReject('multi-attack-kit-forbidden');
   }
@@ -1323,6 +1362,10 @@ function playCardAction(
   const cardId = instance.cardId;
 
   if (isTemporarilyUnavailableCardId(cardId)) {
+    return actionReject('play-not-legal');
+  }
+
+  if (playerIsInvisible(actor) && cardActsOnOpponents(cardId)) {
     return actionReject('play-not-legal');
   }
 

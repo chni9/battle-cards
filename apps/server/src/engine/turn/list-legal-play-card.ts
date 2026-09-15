@@ -5,9 +5,10 @@
  */
 
 import {
+  SHARED_CARD_IDS,
+  cardActsOnOpponents,
   isAttackCardId,
   isTemporarilyUnavailableCardId,
-  SHARED_CARD_IDS,
   type CardInstance,
   type GameState,
   type Player,
@@ -16,6 +17,7 @@ import {
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
+import { playerIsInvisible } from '../specials/is-invisible';
 import { isAbsorberTargetable } from './absorb-window';
 import { findPlayer } from './advance-turn';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
@@ -40,6 +42,10 @@ export function listLegalPlayCardActions(
 
   for (const instance of held) {
     if (isTemporarilyUnavailableCardId(instance.cardId)) {
+      continue;
+    }
+
+    if (playerIsInvisible(actor) && cardActsOnOpponents(instance.cardId)) {
       continue;
     }
 

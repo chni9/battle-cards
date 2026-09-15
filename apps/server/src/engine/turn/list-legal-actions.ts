@@ -34,7 +34,7 @@ export function listLegalActions(state: GameState, playerId: string): readonly T
     { type: 'draw' },
     ...listLegalPlayCardActions(state, actor),
     ...listAssassinMultiAttackCandidates(state, actor),
-    ...listLegalEconomyActions(actor),
+    ...listLegalEconomyActions(state, actor),
     ...listLegalDeactivateActions(actor),
     ...listLegalActivateDuplicationActions(actor),
   ];

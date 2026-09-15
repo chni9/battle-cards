@@ -6,6 +6,7 @@
 import {
   ATTACK_CARD_IDS,
   SHARED_CARD_IDS,
+  cardActsOnOpponents,
   formatCardLabel,
   getCard,
   isTemporarilyUnavailableCardId,
@@ -71,6 +72,7 @@ export type TableDialog =
   | { kind: 'consume'; instance: CardInstance }
   | { kind: 'multi' }
   | { kind: 'shop' }
+  | { kind: 'unspy' }
   | null;
 
 export interface CardActionsProps {
@@ -165,6 +167,13 @@ export function CardActions(props: CardActionsProps): ReactElement {
     actionInstance?.cardId === 'card-transformer' && transformableHand.length === 0;
   const useUnavailable =
     actionInstance !== null && isTemporarilyUnavailableCardId(actionInstance.cardId);
+  const ownInvisibilityActive = view.self.activePersistentEffects.some(
+    (effect) => effect.cardId === 'invisibility',
+  );
+  const useBlockedByInvisibility =
+    actionInstance !== null &&
+    ownInvisibilityActive &&
+    cardActsOnOpponents(actionInstance.cardId);
   const inspectInstance = dialog?.kind === 'inspect' ? dialog.instance : null;
   const inspectDefinition =
     inspectInstance !== null ? getCard(inspectInstance.cardId) : undefined;
@@ -193,7 +202,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
               <Button
                 compact
                 variant="purple"
-                disabled={!isMyTurn || actionsLocked || transformerUseBlocked}
+                disabled={!isMyTurn || actionsLocked || transformerUseBlocked || useBlockedByInvisibility}
                 onClick={() => {
                   onBeginUse(actionInstance);
                 }}
@@ -342,10 +351,12 @@ export function CardActions(props: CardActionsProps): ReactElement {
                   <p className="text-sm font-semibold text-ink">Active</p>
                   {dialog.counter !== undefined && dialog.counter !== null && (
                     <p className="flex items-center justify-center gap-1 text-sm text-ink-muted sm:justify-start">
-                      Card lives
+                      {dialog.instance.cardId === 'invisibility' ? 'Turns left' : 'Card lives'}
                       <LifeCountBadge
                         amount={dialog.counter}
-                        kind="card-lives"
+                        kind={
+                          dialog.instance.cardId === 'invisibility' ? 'turns' : 'card-lives'
+                        }
                       />
                     </p>
                   )}

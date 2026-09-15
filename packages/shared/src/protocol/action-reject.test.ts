@@ -55,4 +55,12 @@ describe('ActionRejectCode catalog (L32-01)', () => {
       ]),
     );
   });
+
+  it('includes Lot 58 pool-buy and Unspy codes (L58-02)', () => {
+    expect(ACTION_REJECT_CODES).toContain('empty-pool');
+    expect(ACTION_REJECT_CODES).toContain('not-spying-you');
+    expect(ACTION_REJECT_CODES).toContain('invalid-clear-spy-payload');
+    expect(ACTION_REJECT_MESSAGE['empty-pool'].length).toBeGreaterThan(0);
+    expect(ACTION_REJECT_MESSAGE['not-spying-you'].length).toBeGreaterThan(0);
+  });
 });

@@ -107,6 +107,22 @@ describe('applyDamage — internal counters (rules spec §5)', () => {
     expect(target.activePersistentEffects).toEqual([effect]);
     expect(outcome.countersDecremented).toEqual([]);
   });
+
+  it('does not eat Invisibility remaining turns (L58-06)', () => {
+    const effect = makeCounterEffect({
+      id: 'inv-1',
+      cardId: 'invisibility',
+      counter: 4,
+    });
+    const target = makePlayer({ lives: 10, activePersistentEffects: [effect] });
+
+    const outcome = applyDamage(target, 3, 'super-attack');
+
+    expect(target.lives).toBe(7);
+    expect(effect.counter).toBe(4);
+    expect(target.activePersistentEffects).toEqual([effect]);
+    expect(outcome.countersDecremented).toEqual([]);
+  });
 });
 
 describe('applyDamage — boundaries', () => {

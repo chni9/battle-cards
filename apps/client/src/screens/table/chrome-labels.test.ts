@@ -33,6 +33,7 @@ describe('economy chrome labels (L43-02)', () => {
     expect(cardDialog).not.toMatch(/\bUP\b/);
     expect(economy).toContain('DRAW_ACTION_LABEL');
     expect(economy).toContain('SHOP_ACTION_LABEL');
+    expect(economy).toContain('UNSPY_ACTION_LABEL');
     expect(economy).toContain("kind: 'points'");
     expect(economy).not.toContain('How to play');
     expect(economy).not.toContain('onLeave');

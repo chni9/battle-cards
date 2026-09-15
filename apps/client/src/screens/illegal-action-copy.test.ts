@@ -29,6 +29,13 @@ describe('ILLEGAL_ACTION_COPY (L39-02)', () => {
     expect(keys.sort()).toEqual([...ACTION_REJECT_CODES].sort());
   });
 
+  it('says Unspy drops a spy on you, not your Spy on them (L58-07)', () => {
+    expect(ILLEGAL_ACTION_COPY['not-spying-you'].body).toMatch(/spying you/);
+    expect(ILLEGAL_ACTION_COPY['not-spying-you'].body).toMatch(
+      /get unspied from them/,
+    );
+  });
+
   it('falls back to wire message when code is undefined', () => {
     const resolved = resolveIllegalActionCopy(undefined, 'Server said no.');
     expect(resolved.title).toBe("Can't do that");

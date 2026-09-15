@@ -53,6 +53,7 @@ export function aggregateActionsForPlayer(
       }
       case 'buyCard':
       case 'buySpecialCard':
+      case 'buyPoolCard':
       case 'buyUpgradePoint': {
         buyCount += 1;
         break;
@@ -68,6 +69,7 @@ export function aggregateActionsForPlayer(
       }
       case 'deactivatePersistent':
       case 'activateDuplication':
+      case 'clearSpy':
       case 'draw': {
         break;
       }

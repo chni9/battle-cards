@@ -10,6 +10,7 @@
  */
 
 import {
+  CLEAR_SPY_COST,
   attackDamageFor,
   getCard,
   getKit,
@@ -444,6 +445,24 @@ function scoreAction(
     return { score: ctx.weights.action.bands.invest, code: 'invest' };
   }
 
+  if (action.type === 'buyPoolCard') {
+    if (violatesPointReserve(view, ctx, view.self.points - view.poolBuyCost)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    // Same filler-shop add-on as a non-priority `buyCard`. A 1-point recover
+    // then outranks Draw without new weight constants (L58-08).
+    return { score: ctx.weights.action.bands.invest + 10, code: 'invest' };
+  }
+
+  if (action.type === 'clearSpy') {
+    if (violatesPointReserve(view, ctx, view.self.points - CLEAR_SPY_COST)) {
+      return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
+    }
+
+    return { score: ctx.weights.action.bands.invest, code: 'invest' };
+  }
+
   if (action.type === 'sellCard') {
     return scoreSellCard(view, action, ctx);
   }
@@ -456,7 +475,8 @@ function scoreAction(
     return scoreActivateDuplication(view, ctx);
   }
 
-  // sellUpgradePoint
+  const sellUpgradePoint: Extract<TurnAction, { type: 'sellUpgradePoint' }> = action;
+  void sellUpgradePoint;
   return { score: ctx.weights.action.bands.sustain - 20, code: 'sustain' };
 }
 

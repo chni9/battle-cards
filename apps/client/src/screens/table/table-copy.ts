@@ -10,6 +10,9 @@ export const FELT_QUEUE_TITLE = 'Waiting on others';
 export const SHOP_PRICE_BLURB =
   'Choose a shared card from the shop. Prices are double the play cost.';
 
+/** Unspy picker — drop an incoming Spy on you, not your Spy on them (L58-07). */
+export const UNSPY_PICKER_HINT = 'Choose who is spying you.';
+
 export const HOW_TO_PLAY_ARIA_LABEL = 'How to play';
 export const FEEDBACK_ARIA_LABEL = 'Feedback';
 export const FORFEIT_ARIA_LABEL = 'Forfeit';

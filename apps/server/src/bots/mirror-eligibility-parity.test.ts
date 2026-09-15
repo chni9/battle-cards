@@ -70,6 +70,7 @@ function viewWithPending(pendingEffects: readonly PendingEffect[]): PlayingState
     pendingEffects: pendingEffects.map(toPendingEffectView),
     actionLog: [],
     pool: [],
+    poolBuyCost: 1,
     playKind: 'classic',
     tutorialIndex: null,
   };

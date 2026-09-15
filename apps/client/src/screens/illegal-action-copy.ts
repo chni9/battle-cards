@@ -134,6 +134,14 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   'cost-not-shop-transfer': {
     body: 'That cost cannot be paid as a shop transfer. Use the normal buy/sell actions instead.',
   },
+  'empty-pool': {
+    title: 'Pool empty',
+    body: 'The shared pool has no cards right now, so you cannot buy one from it.',
+  },
+  'not-spying-you': {
+    title: 'Not spying you',
+    body: 'That player is not currently spying you, so you cannot get unspied from them.',
+  },
 
   'duplicator-kit-required': {
     title: 'Duplicator only',
@@ -253,6 +261,9 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   },
   'invalid-deactivate-persistent-payload': {
     body: 'The deactivate request was malformed. Try turning off the persistent effect again.',
+  },
+  'invalid-clear-spy-payload': {
+    body: 'The Unspy request was malformed. Open Unspy and pick a player again.',
   },
   'invalid-resolve-sub-choice-payload': {
     body: 'The sub-choice confirmation was malformed. Reopen the prompt and confirm again.',

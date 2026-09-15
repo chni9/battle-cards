@@ -1,14 +1,20 @@
 /**
- * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05.
- * Draw + Shop. Stats only on a finished board (`readOnly`).
+ * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05 / L58-07.
+ * Draw + Shop + Unspy. Stats only on a finished board (`readOnly`).
  * Draw is green so the point icon is not yellow-on-yellow.
  */
 
+import { CLEAR_SPY_COST } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
-import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from './chrome-labels';
+import {
+  DRAW_ACTION_LABEL,
+  SHOP_ACTION_LABEL,
+  UNSPY_ACTION_LABEL,
+} from './chrome-labels';
+import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';
 
 export interface EconomyBarProps {
@@ -17,6 +23,10 @@ export interface EconomyBarProps {
   drawValue: number;
   onDraw: () => void;
   onOpenShop: () => void;
+  /** Living opponent currently spying the recipient (public `spyingOnYou`). */
+  hasLivingSpy: boolean;
+  canAffordUnspy: boolean;
+  onOpenUnspy: () => void;
   /** Finished board — reopen the stats dialog (PROTOCOL 24). */
   onShowStats?: () => void;
   /** Tutorial spotlight (L45-05) — presentation only. */
@@ -29,10 +39,14 @@ export function EconomyBar({
   drawValue,
   onDraw,
   onOpenShop,
+  hasLivingSpy,
+  canAffordUnspy,
+  onOpenUnspy,
   onShowStats,
   spotlight,
 }: EconomyBarProps): ReactElement {
   const disabled = !isMyTurn || actionsLocked;
+  const unspyDisabled = disabled || !hasLivingSpy || !canAffordUnspy;
 
   return (
     <section
@@ -70,6 +84,20 @@ export function EconomyBar({
           {SHOP_ACTION_LABEL}
         </Button>
       </TutorialCallout>
+      <Button
+        variant="purple"
+        disabled={unspyDisabled}
+        onClick={onOpenUnspy}
+        data-unspy=""
+      >
+        <SpyEyeIcon variant="crossed" size={14} className="text-inherit" />
+        {UNSPY_ACTION_LABEL}{' '}
+        <CostDisplay
+          cost={{ kind: 'points', amount: CLEAR_SPY_COST }}
+          signed="cost"
+          className="text-inherit"
+        />
+      </Button>
       {onShowStats !== undefined && (
         <Button type="button" variant="purple" onClick={onShowStats}>
           Stats

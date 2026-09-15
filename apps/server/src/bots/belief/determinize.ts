@@ -204,8 +204,9 @@ export function inferBelief(
 }
 
 /**
- * This recipient's Spy map only (#V4-35 / L40-01). Built from the view so
- * `determinizeFromView` still takes no `GameState`.
+ * This recipient's Spy map from the view (#V4-35 / L40-01), plus incoming
+ * living spies from public `spyingOnYou` so Unspy stays legal (L58-07).
+ * Built from the view so `determinizeFromView` still takes no `GameState`.
  */
 export function visibilityFromActingView(view: PlayingStateView): SpyRelation[] {
   const relations: SpyRelation[] = [];
@@ -217,30 +218,36 @@ export function visibilityFromActingView(view: PlayingStateView): SpyRelation[] 
 
     const spied = player.spied;
 
-    if (spied === undefined) {
-      continue;
+    if (spied !== undefined) {
+      const snapshot = spied.resourcesSnapshot;
+      const liveSnapshot =
+        spied.lives !== undefined
+          ? {
+              lives: spied.lives,
+              points: spied.points ?? 0,
+              upgradePoints: spied.upgradePoints ?? 0,
+              shield: spied.shield ?? 0,
+              turnSequence: view.turnSequence,
+            }
+          : undefined;
+      const resourcesSnapshot = snapshot ?? liveSnapshot;
+      const level = spied.lives !== undefined ? 'full-resources' : 'kit-and-cards';
+
+      relations.push({
+        viewerId: view.you,
+        subjectId: player.id,
+        level,
+        ...(resourcesSnapshot !== undefined ? { resourcesSnapshot } : {}),
+      });
     }
 
-    const snapshot = spied.resourcesSnapshot;
-    const liveSnapshot =
-      spied.lives !== undefined
-        ? {
-            lives: spied.lives,
-            points: spied.points ?? 0,
-            upgradePoints: spied.upgradePoints ?? 0,
-            shield: spied.shield ?? 0,
-            turnSequence: view.turnSequence,
-          }
-        : undefined;
-    const resourcesSnapshot = snapshot ?? liveSnapshot;
-    const level = spied.lives !== undefined ? 'full-resources' : 'kit-and-cards';
-
-    relations.push({
-      viewerId: view.you,
-      subjectId: player.id,
-      level,
-      ...(resourcesSnapshot !== undefined ? { resourcesSnapshot } : {}),
-    });
+    if (player.spyingOnYou === true && !player.isEliminated) {
+      relations.push({
+        viewerId: player.id,
+        subjectId: view.you,
+        level: 'kit-and-cards',
+      });
+    }
   }
 
   return relations;

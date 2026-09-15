@@ -56,6 +56,8 @@ function GameApp() {
     upgradeCard,
     buyUpgradePoint,
     buySpecialCard,
+    buyPoolCard,
+    clearSpy,
     sellUpgradePoint,
     deactivatePersistent,
     activateDuplication,
@@ -165,6 +167,8 @@ function GameApp() {
           onUpgradeCard={upgradeCard}
           onBuyUpgradePoint={buyUpgradePoint}
           onBuySpecialCard={buySpecialCard}
+          onBuyPoolCard={buyPoolCard}
+          onClearSpy={clearSpy}
           onSellUpgradePoint={sellUpgradePoint}
           onDeactivatePersistent={deactivatePersistent}
           onActivateDuplication={activateDuplication}

@@ -15,10 +15,11 @@ function source(name: string): string {
 }
 
 describe('table corner chrome (L43-05)', () => {
-  it('keeps the dock as Draw + Shop (Stats when finished)', () => {
+  it('keeps the dock as Draw + Shop + Unspy (Stats when finished)', () => {
     const economy = source('economy-bar.tsx');
     expect(economy).toContain('DRAW_ACTION_LABEL');
     expect(economy).toContain('SHOP_ACTION_LABEL');
+    expect(economy).toContain('UNSPY_ACTION_LABEL');
     expect(economy).toContain('onShowStats');
     expect(economy).not.toContain('How to play');
     expect(economy).not.toContain('onLeave');

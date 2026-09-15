@@ -13,13 +13,15 @@ import {
   ACTION_RESOLVED,
   ADD_BOT,
   BUY_CARD,
+  BUY_POOL_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
-  SET_READY,
+  CLAIM_SEAT,
+  CLEAR_SPY,
   KICK_PLAYER,
   PLAY_AGAIN,
-  CLAIM_SEAT,
+  SET_READY,
   STAY_SPECTATING,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
@@ -58,6 +60,7 @@ import {
   type ChooseSpecialPickPayload,
   type ChooseStealPickPayload,
   type ClaimableSeatView,
+  type ClearSpyPayload,
   type DeactivatePersistentPayload,
   isKitId,
   isSpecialCardId,
@@ -610,6 +613,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [BUY_SPECIAL_CARD]: (client: GameClient): void => {
       this.handleAction(client, { type: 'buySpecialCard' });
+    },
+
+    [BUY_POOL_CARD]: (client: GameClient): void => {
+      this.handleAction(client, { type: 'buyPoolCard' });
+    },
+
+    [CLEAR_SPY]: (client: GameClient, payload: unknown): void => {
+      const parsed = readClearSpyPayload(payload);
+
+      if (parsed === null) {
+        client.send(ERROR_MESSAGE, actionReject('invalid-clear-spy-payload'));
+        return;
+      }
+
+      this.handleAction(client, {
+        type: 'clearSpy',
+        targetPlayerId: parsed.targetPlayerId,
+      });
     },
 
     [SELL_UPGRADE_POINT]: (client: GameClient): void => {
@@ -4136,6 +4157,24 @@ function readDeactivatePersistentPayload(
   }
 
   return { effectId };
+}
+
+function readClearSpyPayload(payload: unknown): ClearSpyPayload | null {
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('targetPlayerId' in payload)
+  ) {
+    return null;
+  }
+
+  const { targetPlayerId } = payload;
+
+  if (typeof targetPlayerId !== 'string' || targetPlayerId.length === 0) {
+    return null;
+  }
+
+  return { targetPlayerId };
 }
 
 function readChooseMirrorTargetPayload(payload: unknown): ChooseMirrorTargetPayload | null {

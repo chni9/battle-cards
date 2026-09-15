@@ -204,6 +204,7 @@ function applyOpponentPlay(
 
   switch (entry.action) {
     case 'buyCard':
+    case 'buyPoolCard':
       if (cardId !== undefined) {
         applyZoneDelta(action, attack, special, cardId, 1);
       }
@@ -512,7 +513,7 @@ function knownHeldSpecialIds(
     }
 
     if (
-      entry.action === 'buySpecialCard' &&
+      (entry.action === 'buySpecialCard' || entry.action === 'buyPoolCard') &&
       entry.cardId !== undefined &&
       isSpecialCardId(entry.cardId)
     ) {
@@ -544,7 +545,11 @@ function playedSharedIds(
       continue;
     }
 
-    if (entry.action === 'playCard' && entry.cardId !== undefined && zoneOf(entry.cardId) === zone) {
+    if (
+      (entry.action === 'playCard' || entry.action === 'buyPoolCard') &&
+      entry.cardId !== undefined &&
+      zoneOf(entry.cardId) === zone
+    ) {
       ids.push(entry.cardId);
     }
 

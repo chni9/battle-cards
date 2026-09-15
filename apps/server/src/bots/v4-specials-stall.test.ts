@@ -13,6 +13,7 @@ import { applyDefaultEliminationRewards } from '../engine/turn/elimination-rewar
 import { performAndCompleteTurn, type TurnSubChoiceHooks } from '../engine/turn/orchestrate-turn';
 import { completeReanimationKitPick, performTurnAction } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
+import { grantSpy } from '../protocol/visibility-matrix';
 import { getDefaultPolicy } from './registry';
 
 const NOW_MS = 0;
@@ -133,7 +134,7 @@ describe('L29-08: turn-flow specials never stall the room', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('seeded Invisibility is not a legal play (L56-02)', () => {
+  it('seeded Invisibility play completes without throwing (L58-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -159,7 +160,7 @@ describe('L29-08: turn-flow specials never stall the room', () => {
       noThrowHooks('invis'),
       { nowMs: NOW_MS },
     );
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
   });
 
   it('bot plays upgraded Card Absorber and resolves the pool-pick sub-choice without throwing', () => {
@@ -308,5 +309,50 @@ describe('L29-08: turn-flow specials never stall the room', () => {
     expect(completed?.ok).toBe(true);
     expect(state.subChoice).toBeNull();
     expect(b.isEliminated).toBe(false);
+  });
+
+  it('bot buys a pool card and Unspies without throwing (L58-08)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l58-08-pool-unspy',
+      kitAssignment: ['assassin', 'kamikaze'],
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.points = 20;
+    a.pendingEffects = [];
+    b.pendingEffects = [];
+    state.pool = [{ instanceId: 'pool-1', cardId: 'basic-attack', isUpgraded: false }];
+    state.currentTurnPlayerId = a.id;
+    const bought = performAndCompleteTurn(
+      state,
+      a.id,
+      { type: 'buyPoolCard' },
+      noThrowHooks('pool-buy'),
+      { nowMs: NOW_MS },
+    );
+    expect(bought.ok).toBe(true);
+
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+    a.points = 20;
+    a.pendingEffects = [];
+    b.pendingEffects = [];
+    state.currentTurnPlayerId = a.id;
+    const unspied = performAndCompleteTurn(
+      state,
+      a.id,
+      { type: 'clearSpy', targetPlayerId: b.id },
+      noThrowHooks('unspy'),
+      { nowMs: NOW_MS },
+    );
+    expect(unspied.ok).toBe(true);
   });
 });

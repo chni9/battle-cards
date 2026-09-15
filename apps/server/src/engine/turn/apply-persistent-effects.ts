@@ -27,8 +27,8 @@ const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
 const IMPOSITION_LIVES_BASE = 1;
 const IMPOSITION_LIVES_UPGRADED = 2;
-const POINTS_GENERATOR_BASE = 2;
-const POINTS_GENERATOR_UPGRADED = 4;
+const POINTS_GENERATOR_BASE = 3;
+const POINTS_GENERATOR_UPGRADED = 6;
 const INVISIBILITY_POINTS_BASE = 4;
 const INVISIBILITY_POINTS_UPGRADED = 6;
 const POISON_LIVES_BASE = 1;
@@ -44,10 +44,13 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(state, player);
+  // Snapshot before last-turn auto-loss: this owner turn still counts as
+  // invisible for victim ticks (#V4-9a / L58-06). Manual deactivate already
+  // dropped the effect before this function runs, so those turns resume.
+  const skipVictimTicks = playerIsInvisible(player);
   applyInvisibilityTicks(state, player);
 
-  // #V4-9a: already-active persistents stay armed; ticks skip while invisible.
-  if (playerIsInvisible(player)) {
+  if (skipVictimTicks) {
     return;
   }
 
@@ -73,17 +76,27 @@ function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
 }
 
 function applyInvisibilityTicks(state: GameState, owner: Player): void {
-  for (const effect of owner.activePersistentEffects) {
-    if (effect.cardId !== 'invisibility') {
-      continue;
-    }
+  const effects = owner.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'invisibility',
+  );
 
+  for (const effect of effects) {
     grantPoints(
       state,
       owner,
       effect.isUpgraded ? INVISIBILITY_POINTS_UPGRADED : INVISIBILITY_POINTS_BASE,
       'direct',
     );
+
+    if (effect.counter === null) {
+      continue;
+    }
+
+    effect.counter -= 1;
+
+    if (effect.counter <= 0) {
+      deactivatePersistentEffect(state, owner.id, effect.id, true);
+    }
   }
 }
 

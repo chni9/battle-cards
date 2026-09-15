@@ -10,6 +10,7 @@
  * - `GameState.seed`
  * - `GameState.nextPoolInstanceSeq` (technical spec v4 §5.1)
  * - sub-choice slot/queue (unicast events, not StateView)
+ * `GameState.poolBuyCost` is public (L58-02).
  */
 
 import type {
@@ -348,6 +349,14 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       view.eliminationReveal = eliminationReveal;
     }
 
+    if (
+      player.id !== recipientSessionId &&
+      !player.isEliminated &&
+      findSpyRelation(state, player.id, recipientSessionId) !== undefined
+    ) {
+      view.spyingOnYou = true;
+    }
+
     return view;
   });
 
@@ -386,6 +395,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         walkInSeesPrivate,
       ),
       pool: state.pool.map((card) => ({ ...card })),
+      poolBuyCost: state.poolBuyCost,
       playKind,
       tutorialIndex,
     },

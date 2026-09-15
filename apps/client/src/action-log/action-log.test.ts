@@ -108,6 +108,21 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
+  it('logs that the actor got unspied from the spy (L58-07)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'clearSpy',
+          targetPlayerId: 'b',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).toBe('Alice got unspied from Bob');
+  });
+
   it('does not invent equal-cancel vs stronger-prevails copy (L43-03)', () => {
     expect(
       formatActionLogEntry(

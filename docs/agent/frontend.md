@@ -17,7 +17,8 @@ visibility rules stay server-side; Lots 49–57 are the current table (kit pick,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
-Play again, join-by-code spectate + claim picker).
+Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
+Unspy / Invisibility turns badge).
 
 ## Screens
 
@@ -173,12 +174,22 @@ rules above are unchanged — this section only covers how the client looks.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
   + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
-  icon) + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
-  public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
-  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
-  `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
-  grid + Buy special, and the pool. Shop faces use catalog costs: Spy play **2** / buy **4**
-  (Lot 54 — do not restore 4/8). Turn strip: **?** (How to play) then **!** (Feedback,
+  icon) + **Shop** (L43-02 / L43-05) + **Unspy** (L58-07: crossed-eye inline SVG, label
+  Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`).   Unspy is grey when it is not
+  your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
+  exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
+  (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
+  stays readable). The public log is `{actor} got unspied from {spy}` — Unspy drops
+  **their** Spy on you, not yours on them. Shop Dialog (always openable — pool is
+  public off-turn) shows the **Upgrade points** title plus the upgrade-point icon
+  (no current-count). Buy/Sell sit **below**: kit points `CostDisplay` via
+  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached, plus
+  **+1 / −1** upgrade-point `CostDisplay` (`signed="gain"` on Buy, `signed="cost"` on
+  Sell). Buy is orange (points `signed="cost"`); Sell is green (points `signed="gain"`
+  so the point icon has contrast). Then the shared-card
+  grid + Buy special, and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
+  (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
+  (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
   left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
@@ -291,11 +302,12 @@ rules above are unchanged — this section only covers how the client looks.
   chrome (`dialog !== null` clears `chromeVisible`).
 - **Card lives under actives (L56-06):** `PersistentEffectView.counter` is already
   public. `ActivePersistentThumb` renders activated thumb art plus, when
-  `counter !== null`, a compact `LifeCountBadge` (`kind: 'card-lives'`) under
-  the card on own kit-row actives and every opponent seat. Curse, Invisibility,
-  and combat Shield stay badge-free (`counter === null`; Shield remaining lives
-  in the resource column).   Inspect replaces `Counter: N` with the same badge
-  plus a one-line “Card lives” label. No protocol bump.
+  `counter !== null`, a compact `LifeCountBadge` under
+  the card on own kit-row actives and every opponent seat. **Invisibility** uses
+  `kind: 'turns'` (remaining owner turns, L58-06). Spec-§5 card-lives cards use
+  `kind: 'card-lives'`. Curse and combat Shield stay badge-free (`counter === null`;
+  Shield remaining lives in the resource column). Inspect matches the thumb
+  (Turns left vs Card lives). No protocol bump for the badge itself.
 - **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`
   (counter 0, Curse floor, death dump, leave / forfeit / inactivity).
   Manual Invisibility deactivate copy is “deactivated {card}; it is lost”
@@ -1079,5 +1091,42 @@ Two-window Classic online, Vite `:5173`, Colyseus `:2567`. Room `KNPSCI`.
 - Watching copy does not claim every hand is visible until a `spied` overlay
   is on the view.
 - `pnpm verify` **1337** tests.
+
+### Lot 58 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 32)
+
+Two-tab Classic, Vite `:5173`, Colyseus `:2567` (`protocol v32`). Host nick
+`L58Host2` Tactician, guest `L58Guest2` Kamikaze, room `EMIVWS`. Invisibility
+did not deal from the shop this gate (handler / pacifist / card-lives whitelist
+are unit-tested in L58-06). Points Generator 3/6 is unit-tested in L58-04; it
+did not appear on this table.
+
+- Shop: upgrade-point **icon + count** above Buy/Sell. Empty pool: **Buy random
+  −1** disabled, copy “The pool is empty.” After a Mirror sell, Pool (1) **Buy
+  random −1** enabled; log `L58Host2 bought Mirror + from the pool`. After a
+  second sell, **Buy random −2**. Tactician shop Spy still play-2 / buy-4 (↑).
+- Economy bar: Unspy −10 grey with no living spy. After Spy resolved on the
+  host, open eye on `L58Guest2` and Unspy enabled. SeatTile picker preselects
+  the sole spy; Confirm readable; log `L58Host2 unspied L58Guest2`; eye gone;
+  points 24 → 14. Overlay never involved.
+- First Unspy Confirm in room `LMXQDQ` was a false hang: seat color made the
+  only tile look selected while Confirm stayed disabled and shrank. Sole-spy
+  preselect + `whitespace-nowrap` landed before this gate.
+- Watch point: shop blurb still appends the selected tile’s `CostDisplay`
+  after “Prices are double the play cost” (Lot 56, not Lot 58).
+- `pnpm verify` **1316** tests.
+
+### Lot 58 designer follow-up verified 2026-09-15 (browser, PROTOCOL 32)
+
+Two-tab Classic, Vite `:5173`, Colyseus `:2567`, room `WYZIDP`. Host nick
+`L58HostF` Tactician, guest `L58GuestF` Kamikaze.
+
+- Shop: **Upgrade points** title plus the upgrade-point icon; **no** live count.
+  Buy **−10** points and **+1** upgrade-point. Sell **+7** points and **−1**
+  upgrade-point.
+- Unspy picker hint **Choose who is spying you.** (lists the opponent who is
+  spying you, not who you spy). After Confirm, public log
+  `L58HostF got unspied from L58GuestF`; open eye gone; Unspy greys.
+- `pnpm verify` **1318** tests.
+
 
 

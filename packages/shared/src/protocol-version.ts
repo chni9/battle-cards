@@ -48,5 +48,10 @@
  * with an open claim picker does not receive the Spy overlay until Stay
  * or the picker empties. Exception to the V6 single-bump lock (same class
  * as L49 / L56 / L57-07); see decisions.md.
+ *
+ * 33 → 34 (L58-02 / designer 2026-09-15): `buyPoolCard`, `clearSpy`,
+ * `PlayingStateView.poolBuyCost`, `PublicPlayerView.spyingOnYou`, reject
+ * codes `empty-pool` / `not-spying-you`. Retargeted from 31 → 32 after
+ * Lot 57 landed on main; see decisions.md.
  */
-export const PROTOCOL_VERSION = 33;
+export const PROTOCOL_VERSION = 34;

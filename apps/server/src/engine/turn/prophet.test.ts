@@ -45,7 +45,6 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
     expect(player.specialCards).toHaveLength(2);
     for (const card of player.specialCards) {
       expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(card.cardId);
-      expect(card.cardId).not.toBe('invisibility');
     }
   });
 
@@ -65,7 +64,6 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
     expect(dealtIds).toHaveLength(2);
     expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(dealtIds[0]);
     expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(dealtIds[1]);
-    expect(dealtIds).not.toContain('invisibility');
 
     // Same seed → same two picks (reproducible).
     const again = createInitialState({
@@ -83,7 +81,6 @@ describe('Prophet kit (L27-04 / #V4-27)', () => {
     expect(player.specialCards).toHaveLength(2);
     expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(player.specialCards[0]?.cardId);
     expect(CIRCULATING_SPECIAL_CARD_IDS).toContain(player.specialCards[1]?.cardId);
-    expect(player.specialCards.map((card) => card.cardId)).not.toContain('invisibility');
   });
 
   it('allows duplicate specials when rng picks the same id twice', () => {

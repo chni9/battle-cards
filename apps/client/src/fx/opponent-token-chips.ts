@@ -9,6 +9,7 @@
  */
 
 import {
+  CLEAR_SPY_COST,
   getCard,
   getKit,
   UPGRADE_POINT_ECONOMY,
@@ -296,6 +297,17 @@ export function chipsForPublicLogEntry(
         {
           kind: 'point',
           count: SPECIAL_CARD_PURCHASE_POINTS,
+          from: { playerId: actorId },
+          to: 'log',
+        },
+      ];
+    case 'buyPoolCard':
+      return [];
+    case 'clearSpy':
+      return [
+        {
+          kind: 'point',
+          count: CLEAR_SPY_COST,
           from: { playerId: actorId },
           to: 'log',
         },

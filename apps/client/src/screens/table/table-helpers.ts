@@ -58,6 +58,13 @@ export function visibleKitId(player: PublicPlayerView): KitId | null {
   return null;
 }
 
+/** Living opponents with public `spyingOnYou` — Unspy picker (L58-07). */
+export function livingSpiesOnYou(view: PlayingStateView): PublicPlayerView[] {
+  return view.players.filter(
+    (player) => !player.isYou && !player.isEliminated && player.spyingOnYou === true,
+  );
+}
+
 export function buildRewardChoice(
   kind: RewardKind,
   cardInstanceId: string,

@@ -87,6 +87,7 @@ function view(extras: Partial<PlayingStateView> = {}): PlayingStateView {
     pendingEffects: [],
     actionLog: [],
     pool: [],
+    poolBuyCost: 1,
     playKind: 'classic',
     tutorialIndex: null,
     ...extras,
@@ -237,11 +238,31 @@ describe('points-generator truth-in-interval (L34-03)', () => {
       log,
       CLASSIC_LIFE_LIMIT,
     );
-    // Assassin start 0 pts, draw 1. Five draws → 5; PG play −5 +2 tick → 2;
-    // two later draws each +1 draw +2 PG → 8.
-    const expectedPoints = 8;
+    // Assassin start 0 pts, draw 1. Five draws → 5; PG play −5 +3 tick → 3;
+    // two later draws each +1 draw +3 PG → 11.
+    const expectedPoints = 11;
     expect(belief.points.lo).toBeLessThanOrEqual(expectedPoints);
     expect(expectedPoints).toBeLessThanOrEqual(belief.points.hi);
+  });
+});
+
+describe('pool buy and Unspy public spends (L58-02)', () => {
+  it('subtracts the doubling table fee and Unspy 10 from opponent points', () => {
+    const log: ActionLogEntryView[] = [
+      play('buyPoolCard', { cardId: 'basic-attack', turnSequence: 1 }),
+      play('buyPoolCard', { actorPlayerId: SELF_ID, cardId: 'tax', turnSequence: 2 }),
+      play('buyPoolCard', { cardId: 'poison', isUpgraded: false, turnSequence: 3 }),
+      play('clearSpy', { targetPlayerId: SELF_ID, turnSequence: 4 }),
+    ];
+    const belief = reconstructOpponentResources(
+      OPP_ID,
+      'tactician',
+      view(),
+      log,
+      CLASSIC_LIFE_LIMIT,
+    );
+    // Tactician start 15; table fees 1 then 2 (other seat) then 4; Unspy 10 → 0.
+    expect(belief.points).toEqual({ lo: 0, hi: 0 });
   });
 });
 

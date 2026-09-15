@@ -6,10 +6,10 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **33** (L57-16 `staySpectating` +
-> claim-picker kit fog; L57-07 lobby Ready / Kick / Play again / `claimSeat` +
-> walk-in spectator views; Mirror redirect fields landed at 31 in L56-03;
-> V6 teaching fields at 29; lobby kit pick at 30).
+> **Status:** current `PROTOCOL_VERSION` is **34** (L58-02 pool buy / Unspy /
+> `poolBuyCost` / `spyingOnYou`; L57-16 `staySpectating` + claim-picker fog at 33;
+> L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
+> fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in
@@ -33,6 +33,7 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    `recipientSeesPrivateOf` / `isEliminatedSpectator` — **no** matrix rows written. Pending
    Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
    Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
+   Unspy (`clearSpy`) drops one **real** matrix row; overlay vision is not Unspy-able.
    **Walk-in Classic spectators** (L57-13) reuse this overlay (`walkInSpectator` on the view
    builder) without sitting in `GameState.players`. **L57-16:** the overlay is granted only
    after `staySpectating` or when `claimableSeats` is empty — a walk-in with the picker
@@ -63,6 +64,8 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
 | `GameState.pool` | **Public** in `PlayingStateView` (rules spec §1; tech v4 §4.3 / §5.1) |
+| `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
+| Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
@@ -96,7 +99,8 @@ claimable seats remain) ·
 `playCard` · `playMultipleAttacks` (Assassin only,
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
-`buySpecialCard` ·
+`buySpecialCard` · `buyPoolCard` (PROTOCOL_VERSION 34 / L58-05 — no payload) ·
+`clearSpy` (PROTOCOL_VERSION 34 / L58-07 — `{ targetPlayerId }`) ·
 `forfeit` (PROTOCOL_VERSION 29 / L43-06 — payload `undefined`; client stays connected) ·
 `resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
 `kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
@@ -144,6 +148,10 @@ lines use the **attack** `cardId` (playing Super Mirror remains a separate `acti
 L56-07 emits `persistentDeactivated` from the engine (counter 0, Curse floor, death dump,
 and leave / forfeit / inactivity dumps);
 manual `deactivatePersistent` stays `actionPlayed`.
+PROTOCOL_VERSION 34 (L58-02) adds `buyPoolCard` / `clearSpy`, public `poolBuyCost`,
+`PublicPlayerView.spyingOnYou` (living matrix viewers only), and reject codes
+`empty-pool` / `not-spying-you`. Belief `visibilityFromActingView` must keep incoming
+spy rows so Unspy stays legal in determinized worlds.
 
 `FinishedStateView.recap` (same bump): public end-screen aggregates (play/buy/sell/upgrade
 counts per player + eliminations). PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats

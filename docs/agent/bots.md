@@ -35,12 +35,19 @@ Screens measure what players face only when that holds.
 ## Freeze
 
 `heuristic-v4` is the yardstick (L32-03). If its freeze test fails, **do not**
-update expectations — put the change under a new policy id. **Exception (L54-01):**
-a Classic catalog price change can shift recorded traces because the same policy
-faces different legal costs; refresh the fixture only for that reason and log it
-in `decisions.md`. Mirror / burn behaviour for room Normal/Hard is the L54-03
+update expectations — put the change under a new policy id. **Exceptions:**
+L54-01 (Spy catalog price) and **L58-08** (new legal actions `buyPoolCard` /
+`clearSpy`) may refresh traces because the same policy faces a different legal
+set; log it in `decisions.md` and keep `weightsHash` unless a new weight constant
+is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 `score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
 is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
+`scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
+so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
+the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
+`buyPoolCard` `cardId` into hand/special counts. Belief
+`visibilityFromActingView` rebuilds outgoing Spy **and** incoming `spyingOnYou`
+rows (L58-07).
 
 ## Weights profiles (L33-01)
 

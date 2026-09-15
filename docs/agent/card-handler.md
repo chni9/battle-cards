@@ -140,8 +140,10 @@ for `playCard` / `sellCard` / `upgradeCard` key on `instanceId` (Lot 2 ruling).
 Rules spec §5: single use, cannot be bought or sold individually, and 20 points buys a
 **random** one — in V1 drawn only from the 6 cards of the lot (ruling §6.2 #10). An upgrade
 placed before use is lost when the card is played. After use the card joins the shared pool.
-Classic freeze (L56-02): `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS` is excluded from shop,
-Prophet, Transformer, and play; keep the catalog row and handler.
+Classic freeze (L56-02): `TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS` excluded Invisibility
+from shop, Prophet, Transformer, and play; catalog and handler stayed. **Lot 58 emptied
+that set** — Invisibility is circulating again as a timed pacifist (4 / 7 owner turns,
+counting activation; remaining turns in `counter` are **not** card-lives).
 
 **Lot 4 → Lot 5 handoff:** starting specials are already dealt into `player.specialCards` at
 `createInitialState` (L4-02). Lot 5 adds static definitions, handlers, and unlocks play — do
@@ -165,10 +167,13 @@ that seat reaches 1 life or is eliminated. A successful attack (≥1 life lost) 
 every Curse on the attacker to the hit player.
 The counter is not a shield — damage still reaches the user normally. It decrements by 1 whenever
 the user loses a life **to damage**, and at 0 the card deactivates and is permanently lost.
-`applyLifeLoss` must never decrement it.
+`applyLifeLoss` must never decrement it. `applyDamage` decrements **only** those four ids —
+Invisibility's remaining-turn `counter` is not card-lives (L58-06).
 
 **Lot 24:** Card Absorber recovers from `state.pool` via `takeFromPool` +
 `transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
+Lot 58 `buyPoolCard` uses the same recover path for **one** uniform-random instance; Absorber
+does **not** double `poolBuyCost`.
 Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
 and mints a special from `TRANSFORM_RESULT_SPECIAL_IDS` (never `card-transformer`:
 designer 2026-08-24 / L50-08; never a frozen id: L56-02). Base: rng; upgraded: `special-pick`. Shop 20-point

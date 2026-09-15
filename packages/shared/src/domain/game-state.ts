@@ -28,9 +28,16 @@ export interface GameState {
   /**
    * The shared pool (rules spec §1): sold cards, used special cards, and the cards of
    * eliminated players. Public to all players (rules spec §1); readable by Card Absorber
-   * via `takeFromPool` (technical spec v4 §4.3).
+   * via `takeFromPool` (technical spec v4 §4.3). Random shop buy uses the same
+   * pool (Lot 58).
    */
   pool: CardInstance[];
+  /**
+   * Table-wide fee for `buyPoolCard` (rules spec §1 / L58-02). Starts at
+   * `POOL_BUY_INITIAL_COST`, doubles after every successful buy, never resets.
+   * Public — copied onto `PlayingStateView.poolBuyCost`.
+   */
+  poolBuyCost: number;
   /**
    * Monotonic counter for minting `instanceId`s when deactivated persistents join the
    * pool (technical spec v4 §3.3 #1 / §5.1). Must not derive from `pool.length` (collides

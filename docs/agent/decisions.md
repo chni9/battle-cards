@@ -3289,4 +3289,107 @@ L57-07). Table `!` unchanged.
 
 ---
 
+## 2026-09-15 · [P] Lot 58 shop, pool, Invisibility, PG, Unspy (L58-01)
+
+Designer instruction (this session). Classic values and rules change. Supersedes the
+Lot 56 circulating freeze of Invisibility (reactivate and retune; do not delete the
+2026-09-09 entry).
+
+**Shop upgrade points (client only, L58-03):** the Shop upgrade-points section shows
+the existing upgrade-point icon and the player's current count. Buy / Sell sit below
+that row so the icons read first. Currency on those buttons stays a points
+`CostDisplay` (kit buy 10 / sell 7, Upgrader 5 / 7). No `UP` substring (L43-02).
+
+**Pool shop buy (L58-05):** new turn action `buyPoolCard`. Pay the **table-wide** fee,
+receive **one** uniform-random pool instance (seeded RNG; same recover path as Card
+Absorber). Fee starts at **1**, **doubles after every successful buy**, **never
+resets** (empty pool does not reset). Card Absorber is unchanged and **does not**
+move the fee. Empty pool or cannot afford → illegal. Consumes the turn. Current fee
+is public (`PlayingStateView.poolBuyCost`). Recovered `cardId` is public on
+`actionPlayed`.
+
+**Invisibility (L58-06):** remove `'invisibility'` from
+`TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS`. Keep +4 / +6 income and full immunity
+(pending against the user still resolves `'immune'`). While active, illegal to play
+anything that acts on another player, **including Mirror and Super Mirror**. Legal:
+draw, shop/economy, Tax, Regeneration, Shield, Block, Card Transformer, Card
+Absorber, Reanimation, Duplicator activate, Points Generator, Super Regeneration,
+manual deactivate. Duration **4** of the owner's turns (**7** upgraded), counting
+the activation turn. Last turn still pays income, then auto-loss
+(`persistentDeactivated`). Manual deactivate stays and still consumes the action
+(#V4-10). Remaining turns use `PersistentEffect.counter` but are **not** card-lives:
+`applyDamage` decrements only the four spec-§5 counter cards (`points-generator`,
+`imposition`, `poison`, `super-absorber`). Thumb badge is remaining turns, not the
+L56 heart.
+
+**Points Generator (L58-04):** income **3** base / **6** upgraded (was 2 / 4).
+Internal counter stays 3. Play cost stays 5.
+
+**Unspy (L58-07):** pay **10** points as the turn's action to drop **one** visibility
+row `(viewer = chosen living opponent, subject = you)`. Economy-bar control next to
+Shop (crossed-eye SVG, no new PNG, label Unspy, −10 + coin). Grey when not your
+turn, actions locked, cannot afford, or no living player is spying you. Click opens
+a SeatTile picker of those living spies. Small eye (not crossed) on opponent seats
+that spy you (`PublicPlayerView.spyingOnYou`). Eliminated-spectator overlay is not a
+matrix row and is not Unspy-able. The action is public, so the table learns that
+the target was spying the actor at click time.
+
+`PROTOCOL_VERSION` **31 → 32** (L58-02) is an exception to the V6 single-bump lock
+(same class as L49 / L56): `buyPoolCard`, `clearSpy`, `poolBuyCost`, `spyingOnYou`,
+reject codes `empty-pool` / `not-spying-you`.
+
+Do not edit `heuristic-v4` **weights**. Freeze fixture refresh is allowed in L58-08
+because the legal-action set changed (1-point pool buy is often better than draw) —
+same exception class as L54-01; keep `weightsHash` unless a new weight constant is
+unavoidable.
+
+`applyDamage` vs `applyLifeLoss` stays two functions. Tax must not decrement
+card-lives **or** Invisibility remaining turns.
+
+---
+
+## 2026-09-15 · [P] heuristic-v4 freeze refresh for pool buy / Unspy (L58-08)
+
+Lot 58 added `buyPoolCard` and `clearSpy` to the legal set. Scoring uses existing
+Invest-band constants (no new `heuristic-weights` export), so `weightsHash` stays
+the L32-03 yardstick. `heuristic-v4.freeze.json` traces were refreshed because a
+1-point pool recover outranks Draw — same fixture exception class as L54-01.
+
+---
+
+## 2026-09-15 · [P] Lot 58 follow-up — shop UP chrome and Unspy copy
+
+Designer 2026-09-15 16:19, after the L58-09 gate.
+
+**Shop (L58-03):** do not show a current-count next to Upgrade points. The section
+title is the label plus the upgrade-point icon. Buy shows kit points cost
+(`signed="cost"`) and **+1** upgrade-point (`signed="gain"`). Sell shows kit points
+yield (`signed="gain"`) and **−1** upgrade-point (`signed="cost"`).
+
+**Unspy (L58-07):** engine already drops `(viewer = chosen living opponent, subject
+= you)`. Client copy must not read as dropping the POV's Spy on someone else.
+Picker hint: “Choose who is spying you.” Public log: `{actor} got unspied from
+{spy}`. Reject copy: you cannot get unspied from a player who is not spying you.
+
+---
+
+## 2026-09-15 · [P] Lot 58 protocol bump retargeted 33 → 34
+
+Lot 57 landed on `main` (`#26`) as `PROTOCOL_VERSION` 32 then 33 (`setReady` /
+`kickPlayer` / `playAgain` / `claimSeat` / `staySpectating`). Lot 58 had used
+31 → 32 for `buyPoolCard` / `clearSpy` / `poolBuyCost` / `spyingOnYou`. Those
+wire fields stay; the live bump is **33 → 34** so rematch clients on 33 still
+mismatch. L58-02 task text on this branch records the retarget. No rule change.
+
+---
+
+## 2026-09-15 · Invisibility last-turn victim ticks skip (#V4-9a / L58-06)
+
+Last-turn auto-loss pays Invisibility income then drops the effect inside
+step 4. That owner turn still counts as invisible: snapshot `playerIsInvisible`
+before the decrement so Poison / Curse / Imposition / Super Absorber skip and
+resume on the next owner turn. Manual deactivate still resumes in the same
+step 4 because the effect is already gone when persistents run.
+
+---
 

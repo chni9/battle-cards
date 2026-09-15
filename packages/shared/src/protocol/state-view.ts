@@ -25,6 +25,8 @@ export type ActionLogPlayedAction =
   | 'buyUpgradePoint'
   | 'sellUpgradePoint'
   | 'buySpecialCard'
+  | 'buyPoolCard'
+  | 'clearSpy'
   | 'deactivatePersistent'
   | 'activateDuplication';
 
@@ -149,6 +151,12 @@ export interface PublicPlayerView {
   absorbWindowOpen: boolean;
   /** Filled only when the recipient spies this player (L3-05). */
   spied?: SpiedPlayerView;
+  /**
+   * True when this living seat has a Spy matrix row on the recipient
+   * (PROTOCOL_VERSION 34 / L58-02). Never set on `isYou`. Never inferred from
+   * the eliminated-spectator overlay.
+   */
+  spyingOnYou?: true;
   /**
    * Death-time freeze of kit / cards / tokens — present when `isEliminated`
    * (PROTOCOL_VERSION 22 / Lot 19). Visible to every recipient.
@@ -283,6 +291,11 @@ export interface PlayingStateView {
    * Required so `enumerationStateFromView` can reconstruct pool contents for §10.1.
    */
   pool: readonly CardInstance[];
+  /**
+   * Table-wide pool-buy fee (rules spec §1 / L58-02). Public. Starts at 1 and
+   * doubles after every successful `buyPoolCard`. Never resets.
+   */
+  poolBuyCost: number;
   /**
    * Public teaching overlay (technical spec v6 §8). Classic rooms: `'classic'`.
    */

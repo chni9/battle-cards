@@ -4,7 +4,7 @@
  * Specials are not bought/sold individually (`buyCost` / `sellYield` keep the Card
  * shape but are unused by the shared shop). Play cost is the listed Price. Random
  * acquisition uses `buySpecialCard` over `PURCHASABLE_SPECIAL_CARD_IDS`
- * (L21-01 / #V4-29; L56-02 circulating freeze).
+ * (L21-01 / #V4-29).
  *
  * Every price re-verified against rules spec §5 at L20-04.
  *
@@ -89,9 +89,9 @@ export const SPECIAL_CARD_CATALOG = {
     'points-generator',
     'Points Generator',
     5,
-    'Generate 2 points per turn while the internal counter is not depleted.',
-    'Generate 4 points per turn while the internal counter is not depleted.',
-    'Generate 4 points per turn instead of 2.',
+    'Generate 3 points per turn while the internal counter is not depleted.',
+    'Generate 6 points per turn while the internal counter is not depleted.',
+    'Generate 6 points per turn instead of 3.',
   ),
   'upgrade-point-thief': specialCard(
     'upgrade-point-thief',
@@ -133,14 +133,13 @@ export const SPECIAL_CARD_CATALOG = {
     'Transform an owned action or attack card into a special of your choice (never Card Transformer).',
     'Choose the special instead of drawing at random (still never Card Transformer).',
   ),
-  // Temporarily out of Classic circulation/play (L56-02). Catalog + handler stay.
   invisibility: specialCard(
     'invisibility',
     'Invisibility',
     10,
-    'Become immune to opposing actions and gain 4 points per turn; deactivate manually.',
-    'Become immune to opposing actions and gain 6 points per turn; deactivate manually.',
-    'Gain 6 points per turn instead of 4.',
+    'Become immune to opposing actions and gain 4 points per turn for 4 of your turns including this one. You cannot play anything that acts on another player.',
+    'Become immune to opposing actions and gain 6 points per turn for 7 of your turns including this one. You cannot play anything that acts on another player.',
+    'Lasts 7 turns and gains 6 points per turn instead of 4 for 4 turns.',
   ),
   reanimation: specialCard(
     'reanimation',

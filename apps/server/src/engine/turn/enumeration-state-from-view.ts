@@ -12,6 +12,7 @@ import {
   type KitId,
   type Player,
   type PlayingStateView,
+  type SpyRelation,
 } from '@card-battle/shared';
 
 const EMPTY_LEDGER = {
@@ -123,16 +124,35 @@ export function enumerationStateFromView(
     });
   }
 
+  const visibility: SpyRelation[] = [];
+
+  for (const publicPlayer of view.players) {
+    if (
+      publicPlayer.id === view.you ||
+      publicPlayer.isEliminated ||
+      publicPlayer.spyingOnYou !== true
+    ) {
+      continue;
+    }
+
+    visibility.push({
+      viewerId: publicPlayer.id,
+      subjectId: view.you,
+      level: 'kit-and-cards',
+    });
+  }
+
   return {
     mode: 'classic',
     lifeLimit: CLASSIC_LIFE_LIMIT,
     players,
     pool: view.pool.map((card) => ({ ...card })),
+    poolBuyCost: view.poolBuyCost,
     nextPoolInstanceSeq: 0,
     currentTurnPlayerId: view.currentTurnPlayerId,
     turnSequence: view.turnSequence,
     seed,
-    visibility: [],
+    visibility,
     mirrorChoice: null,
     stealChoice: null,
     subChoice: null,
