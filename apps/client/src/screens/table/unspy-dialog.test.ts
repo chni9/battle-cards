@@ -17,6 +17,9 @@ describe('Unspy dialog (L58-07)', () => {
     expect(source).toContain('visibleKitId');
     expect(source).toContain('onConfirm(resolvedTarget)');
     expect(source).toContain('data-unspy-picker');
+    expect(source).toContain('whitespace-nowrap');
+    expect(source).toContain('onlySpyId');
+    expect(source).toContain('pickedId');
     expect(source).not.toMatch(/type="radio"/);
   });
 });

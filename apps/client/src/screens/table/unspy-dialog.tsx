@@ -27,15 +27,20 @@ export function UnspyDialog({
   onClose,
   onConfirm,
 }: UnspyDialogProps): ReactElement {
-  const [targetId, setTargetId] = useState('');
-  const resolvedTarget = spies.some((player) => player.id === targetId) ? targetId : '';
+  const [pickedId, setPickedId] = useState('');
+  // One living spy is selected without a click — seat color already frames the
+  // tile, so a disabled Confirm shrank into an unreadable blob (L58-09).
+  const onlySpyId = spies.length === 1 ? spies[0]?.id : undefined;
+  const resolvedTarget = spies.some((player) => player.id === pickedId)
+    ? pickedId
+    : (onlySpyId ?? '');
 
   return (
     <Dialog
       open={open}
       title={UNSPY_ACTION_LABEL}
       onClose={() => {
-        setTargetId('');
+        setPickedId('');
         onClose();
       }}
       actions={
@@ -43,13 +48,14 @@ export function UnspyDialog({
           <Button
             compact
             variant="purple"
+            className="whitespace-nowrap"
             disabled={resolvedTarget === ''}
             onClick={() => {
               if (resolvedTarget === '') {
                 return;
               }
               onConfirm(resolvedTarget);
-              setTargetId('');
+              setPickedId('');
             }}
           >
             Confirm
@@ -57,8 +63,9 @@ export function UnspyDialog({
           <Button
             compact
             variant="red"
+            className="whitespace-nowrap"
             onClick={() => {
-              setTargetId('');
+              setPickedId('');
               onClose();
             }}
           >
@@ -77,7 +84,7 @@ export function UnspyDialog({
               kitId={visibleKitId(player)}
               selected={resolvedTarget === player.id}
               onSelect={() => {
-                setTargetId(player.id);
+                setPickedId(player.id);
               }}
             />
           </li>
