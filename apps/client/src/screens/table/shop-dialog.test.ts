@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 
-describe('shop buy cells (L44-01)', () => {
+describe('shop buy cells (L44-01 / L58-03)', () => {
   it('uses choiceTileClassName and keeps Buy / double-click / CostDisplay', () => {
     const source = readFileSync(join(dir, 'shop-dialog.tsx'), 'utf8');
     expect(source).toContain('choiceTileClassName');
@@ -19,5 +19,18 @@ describe('shop buy cells (L44-01)', () => {
     expect(source).toContain('CARD_BUY_LABEL');
     expect(source).toContain('pt-12');
     expect(source).toContain('scrollIntoView');
+  });
+
+  it('shows upgrade-point icons above a lower Buy/Sell row (L58-03)', () => {
+    const source = readFileSync(join(dir, 'shop-dialog.tsx'), 'utf8');
+    const balanceAt = source.indexOf('data-shop-upgrade-balance');
+    const actionsAt = source.indexOf('data-shop-upgrade-actions');
+    expect(balanceAt).toBeGreaterThan(-1);
+    expect(actionsAt).toBeGreaterThan(balanceAt);
+    expect(source).toContain('kind="upgradePoint"');
+    expect(source).toContain('ResourceIcon');
+    expect(source.slice(balanceAt, actionsAt + 80)).toContain('mt-4');
+    expect(source).toContain('highlightId="shop-upgrade-point"');
+    expect(source).not.toMatch(/\bUP\b/);
   });
 });

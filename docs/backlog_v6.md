@@ -85,7 +85,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-87 of 94 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+88 of 94 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09. Lot 58 opened 2026-09-15.
 
 | Lot | Tasks | Done |
@@ -106,7 +106,7 @@ Lot 56 opened 2026-09-09. Lot 58 opened 2026-09-15.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
-| 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 2 |
+| 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 3 |
 
 ---
 
@@ -361,7 +361,7 @@ weights; freeze fixture refresh is L58-08.
 |---|---|---|---|---|---|
 | L58-01 | Append dated `[P]` Lot 58 entries to `docs/agent/decisions.md`; Lot 58 section here; technical spec v6 §13 + freeze/protocol exceptions; rules spec (pool buy, PG 3/6, Invisibility pacifist 4/7, Unspy 10); AGENTS.md snapshot. Protocol 31 → 32 exception recorded (same class as L49 / L56). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Invisibility is live again under the new text, v32 is the next bump, and L58-02 starts the wire. | S | Medium | — | Done |
 | L58-02 | `PROTOCOL_VERSION` **31 → 32**. `buyPoolCard`; `clearSpy` `{ targetPlayerId }`; `PlayingStateView.poolBuyCost`; `PublicPlayerView.spyingOnYou`; reject codes `empty-pool` / `not-spying-you`; `GameState.poolBuyCost` init 1; shared `POOL_BUY_INITIAL_COST` / `CLEAR_SPY_COST`. Types + version until later tasks emit them. **Acceptance:** mismatch path rejects v31 clients; exhaustive reject-code test includes the two new codes. | M | **High** | L58-01 | Done |
-| L58-03 | Shop upgrade-points section: `ResourceIcon` upgradePoint + current count; Buy/Sell **below** that row; point `CostDisplay` on the buttons. No `UP` substring. Tutorial `shop-upgrade-point` still wraps Buy. **Acceptance:** source test finds the icon + lower button row; `pnpm verify` green. | S | Low | L58-01 | To do |
+| L58-03 | Shop upgrade-points section: `ResourceIcon` upgradePoint + current count; Buy/Sell **below** that row; point `CostDisplay` on the buttons. No `UP` substring. Tutorial `shop-upgrade-point` still wraps Buy. **Acceptance:** source test finds the icon + lower button row; `pnpm verify` green. | S | Low | L58-01 | Done |
 | L58-04 | Points Generator income **3** base / **6** upgraded (catalog, `apply-persistent-effects`, belief `resources.ts`, tests). Counter stays 3. Do not change `heuristic-v4` weights. **Acceptance:** a tick grants 3 (6 upgraded); catalog copy matches; `pnpm verify` green. | S | Medium | L58-01 | To do |
 | L58-05 | `buyPoolCard`: table-wide fee starts at 1, doubles after each buy, never resets; seeded one-card recover; Absorber does not move the fee; empty/unaffordable illegal. `listLegalEconomyActions` takes `state`. Shop pool section Buy random + public fee. `enumerationStateFromView` copies `poolBuyCost`. **Acceptance:** 1→2→4; empty illegal; Absorber unchanged fee; view parity; `pnpm verify` green. | M | **High** | L58-02 | To do |
 | L58-06 | Unfreeze Invisibility. Counter 4 / 7 remaining owner turns (activation counts). Pacifist: `cardActsOnOpponents` includes Mirror / Super Mirror / attacks / targeted specials. Auto-loss at 0 emits `persistentDeactivated`. `applyDamage` card-lives whitelist of the four spec-§5 cards. Turns badge, not heart. Flip L56-02 grant/play tests. **Acceptance:** shop/Prophet/Transformer can grant it; hostile/Mirror illegal while active; Tax/draw legal; 4 ticks then lost; damage does not eat the turn counter; immunity still `immune`. | L | **High** | L58-01 | To do |

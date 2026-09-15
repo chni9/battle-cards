@@ -20,6 +20,7 @@ import { Card } from '../../design/components/card';
 import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../design/components/cost-display';
 import { Dialog } from '../../design/components/dialog';
+import { ResourceIcon } from '../../design/components/resource-icon';
 import {
   costAriaLabel,
   structuredCostFromCardCost,
@@ -163,7 +164,22 @@ export function ShopDialog({
     >
       <section className={highlightUpgradePoint ? 'space-y-2 overflow-visible pt-12' : 'space-y-2'}>
         <h3 className="text-sm font-semibold text-ink">{SHOP_SECTION_UPGRADE_POINTS}</h3>
-        <div ref={upgradePointRef} className="flex flex-wrap gap-2 overflow-visible">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          data-shop-upgrade-balance=""
+        >
+          <ResourceIcon
+            kind="upgradePoint"
+            value={view.self.upgradePoints}
+            captionVisible
+            flyToken={false}
+          />
+        </div>
+        <div
+          ref={upgradePointRef}
+          className="mt-4 flex flex-wrap gap-2 overflow-visible"
+          data-shop-upgrade-actions=""
+        >
           <TutorialCallout
             active={tutorialHighlight === 'shop-upgrade-point'}
             arrow="top"
