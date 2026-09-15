@@ -1130,5 +1130,16 @@ Two-tab Classic, Vite `:5173`, Colyseus `:2567`, room `WYZIDP`. Host nick
   `L58HostF got unspied from L58GuestF`; open eye gone; Unspy greys.
 - `pnpm verify` **1318** tests.
 
+### Lot 59 verified 2026-09-15 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 34)
+
+Solo Easy, Vite `:5173`, Colyseus `:2567`, nick `L59Dock`, room `ZPHQBS`.
+Skip all first-game hints.
+
+- Economy bar: green Draw face is **+1** point icon only (no word Draw);
+  orange **Shop** still spelled; purple Unspy is crossed-eye **−10** (no word
+  Unspy). Compact width — no 7rem min.
+- Draw click: points 9 → 10; log `L59Dock draws`. Hover title `plus 1 pt`.
+  Unspy stays grey with no living spy; click does not open the picker.
+- `pnpm verify` **1381** tests.
 
 
