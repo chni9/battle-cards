@@ -9,6 +9,7 @@
  */
 
 import {
+  CLEAR_SPY_COST,
   getCard,
   getKit,
   UPGRADE_POINT_ECONOMY,
@@ -301,8 +302,16 @@ export function chipsForPublicLogEntry(
         },
       ];
     case 'buyPoolCard':
-    case 'clearSpy':
       return [];
+    case 'clearSpy':
+      return [
+        {
+          kind: 'point',
+          count: CLEAR_SPY_COST,
+          from: { playerId: actorId },
+          to: 'log',
+        },
+      ];
     case 'deactivatePersistent':
     case 'activateDuplication':
       return [];

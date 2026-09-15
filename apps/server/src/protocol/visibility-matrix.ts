@@ -97,3 +97,54 @@ export function grantSpy(
     existing.level = level;
   }
 }
+
+/**
+ * Drop one Spy matrix row. Returns false when that pair is absent.
+ * Overlay spectator vision is not a row — Unspy cannot call this for it (L58-07).
+ */
+export function revokeSpy(
+  state: GameState,
+  viewerId: string,
+  subjectId: string,
+): boolean {
+  const index = state.visibility.findIndex(
+    (relation) => relation.viewerId === viewerId && relation.subjectId === subjectId,
+  );
+
+  if (index === -1) {
+    return false;
+  }
+
+  state.visibility.splice(index, 1);
+  return true;
+}
+
+/**
+ * Living opponents who currently Spy `subjectId` via a real matrix row.
+ * Dead viewers and the eliminated-spectator overlay are omitted (L58-07).
+ */
+export function listLivingSpiesOn(state: GameState, subjectId: string): Player[] {
+  const seen = new Set<string>();
+  const spies: Player[] = [];
+
+  for (const relation of state.visibility) {
+    if (relation.subjectId !== subjectId || relation.viewerId === subjectId) {
+      continue;
+    }
+
+    if (seen.has(relation.viewerId)) {
+      continue;
+    }
+
+    const viewer = state.players.find((player) => player.id === relation.viewerId);
+
+    if (viewer === undefined || viewer.isEliminated) {
+      continue;
+    }
+
+    seen.add(viewer.id);
+    spies.push(viewer);
+  }
+
+  return spies;
+}

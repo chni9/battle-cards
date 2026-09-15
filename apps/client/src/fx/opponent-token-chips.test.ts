@@ -4,8 +4,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { ActionLogEntryView, PublicPlayerView } from '@card-battle/shared';
-import { UPGRADE_POINT_ECONOMY } from '@card-battle/shared';
+import {
+  CLEAR_SPY_COST,
+  UPGRADE_POINT_ECONOMY,
+  type ActionLogEntryView,
+  type PublicPlayerView,
+} from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
 import {
@@ -504,6 +508,25 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
       ),
     ).toEqual([
       { kind: 'point', count: 20, from: { playerId: 'opp' }, to: 'log' },
+    ]);
+  });
+
+  it('flies the 10-point Unspy spend (L58-07)', () => {
+    expect(
+      chipsForPublicLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'opp',
+          action: 'clearSpy',
+          targetPlayerId: 'me',
+          turnSequence: 8,
+        },
+        'me',
+        [you, hidden],
+        'indestructible',
+      ),
+    ).toEqual([
+      { kind: 'point', count: CLEAR_SPY_COST, from: { playerId: 'opp' }, to: 'log' },
     ]);
   });
 

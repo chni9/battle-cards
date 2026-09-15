@@ -72,6 +72,7 @@ export type TableDialog =
   | { kind: 'consume'; instance: CardInstance }
   | { kind: 'multi' }
   | { kind: 'shop' }
+  | { kind: 'unspy' }
   | null;
 
 export interface CardActionsProps {

@@ -26,6 +26,7 @@ import { findHandler } from '../../cards/registry';
 import { buyCard } from '../economy/buy-card';
 import { buyPoolCard } from '../economy/buy-pool-card';
 import { buySpecialCard } from '../economy/buy-special-card';
+import { clearSpy } from '../economy/clear-spy';
 import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
@@ -354,7 +355,18 @@ function performPreparedTurnAction(
       turnSequence: state.turnSequence,
     };
   } else if (action.type === 'clearSpy') {
-    return actionReject('play-not-legal');
+    const cleared = clearSpy(state, actorPlayerId, action.targetPlayerId);
+
+    if (!cleared.ok) {
+      return cleared;
+    }
+
+    actionPlayed = {
+      actorPlayerId,
+      action: 'clearSpy',
+      targetPlayerId: action.targetPlayerId,
+      turnSequence: state.turnSequence,
+    };
   } else if (action.type === 'deactivatePersistent') {
     const deactivated = deactivatePersistentAction(state, actorPlayerId, action.effectId);
 

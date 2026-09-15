@@ -5,10 +5,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type {
-  ActionLogEntryView,
-  GameState,
-  PlayingStateView,
+import {
+  CLEAR_SPY_COST,
+  type ActionLogEntryView,
+  type GameState,
+  type PlayingStateView,
 } from '@card-battle/shared';
 
 import { createInitialState } from '../../engine/create-initial-state';
@@ -50,19 +51,35 @@ function assertDeterminizeConsistency(
   expect(world.pool).toEqual(state.pool);
   expect(world.currentTurnPlayerId).toBe(state.currentTurnPlayerId);
   expect(world.turnSequence).toBe(state.turnSequence);
-  const spiedSubjects = view.players
+  const outgoingSubjects = view.players
     .filter((player) => player.id !== playerId && player.spied !== undefined)
     .map((player) => player.id)
     .sort((left, right) => left.localeCompare(right));
-  const worldSpySubjects = world.visibility
+  const incomingViewers = view.players
+    .filter(
+      (player) =>
+        player.id !== playerId &&
+        !player.isEliminated &&
+        player.spyingOnYou === true,
+    )
+    .map((player) => player.id)
+    .sort((left, right) => left.localeCompare(right));
+  const worldOutgoing = world.visibility
     .filter((relation) => relation.viewerId === playerId)
     .map((relation) => relation.subjectId)
     .sort((left, right) => left.localeCompare(right));
+  const worldIncoming = world.visibility
+    .filter((relation) => relation.subjectId === playerId)
+    .map((relation) => relation.viewerId)
+    .sort((left, right) => left.localeCompare(right));
 
-  expect(world.visibility.every((relation) => relation.viewerId === playerId)).toBe(
-    true,
-  );
-  expect(worldSpySubjects).toEqual(spiedSubjects);
+  expect(
+    world.visibility.every(
+      (relation) => relation.viewerId === playerId || relation.subjectId === playerId,
+    ),
+  ).toBe(true);
+  expect(worldOutgoing).toEqual(outgoingSubjects);
+  expect(worldIncoming).toEqual(incomingViewers);
 
   for (const publicPlayer of view.players) {
     const worldPlayer = world.players.find((player) => player.id === publicPlayer.id);
@@ -247,7 +264,9 @@ describe('determinizeFromView consistency (L34-05)', () => {
     ]);
     expect(sampledBob?.spied).toBeDefined();
     expect(
-      world.visibility.every((relation) => relation.viewerId === 'a'),
+      world.visibility.every(
+        (relation) => relation.viewerId === 'a' || relation.subjectId === 'a',
+      ),
     ).toBe(true);
 
     const asBob = determinizeFromView(
@@ -262,7 +281,40 @@ describe('determinizeFromView consistency (L34-05)', () => {
       createRng('l40-01-spy-b'),
     );
 
-    expect(asBob.visibility).toEqual([]);
+    expect(asBob.visibility).toEqual([
+      expect.objectContaining({
+        viewerId: 'a',
+        subjectId: 'b',
+        level: 'kit-and-cards',
+      }),
+    ]);
+  });
+
+  it('keeps Unspy legal when a living opponent spies this seat (L58-07)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l58-07-det-unspy',
+    });
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+    const alice = state.players.find((player) => player.id === 'a');
+    if (alice === undefined) {
+      throw new Error('missing alice');
+    }
+
+    alice.points = CLEAR_SPY_COST;
+    alice.hand = [];
+    alice.specialCards = [];
+    alice.upgradePoints = 0;
+    state.currentTurnPlayerId = alice.id;
+    assertDeterminizeConsistency(state, alice.id);
+    expect(
+      listLegalActions(state, alice.id).some(
+        (action) => action.type === 'clearSpy' && action.targetPlayerId === 'b',
+      ),
+    ).toBe(true);
   });
 });
 

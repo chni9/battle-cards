@@ -4,6 +4,7 @@
 
 export const DRAW_ACTION_LABEL = 'Draw';
 export const SHOP_ACTION_LABEL = 'Shop';
+export const UNSPY_ACTION_LABEL = 'Unspy';
 export const BUY_UPGRADE_POINT_LABEL = 'Buy';
 export const SELL_UPGRADE_POINT_LABEL = 'Sell';
 export const CARD_UPGRADE_LABEL = 'Upgrade';
@@ -18,6 +19,7 @@ export const SHOP_SECTION_POOL = 'Pool';
 export const CHROME_COST_LABELS = [
   DRAW_ACTION_LABEL,
   SHOP_ACTION_LABEL,
+  UNSPY_ACTION_LABEL,
   BUY_UPGRADE_POINT_LABEL,
   SELL_UPGRADE_POINT_LABEL,
   CARD_UPGRADE_LABEL,

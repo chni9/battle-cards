@@ -126,6 +126,7 @@ export function EndScreen({
         onBuyUpgradePoint={noop}
         onBuySpecialCard={noop}
         onBuyPoolCard={noop}
+        onClearSpy={noop}
         onSellUpgradePoint={noop}
         onLeave={onLeave}
         onForfeit={noop}

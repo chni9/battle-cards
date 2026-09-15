@@ -127,7 +127,11 @@ export function enumerationStateFromView(
   const visibility: SpyRelation[] = [];
 
   for (const publicPlayer of view.players) {
-    if (publicPlayer.id === view.you || publicPlayer.spyingOnYou !== true) {
+    if (
+      publicPlayer.id === view.you ||
+      publicPlayer.isEliminated ||
+      publicPlayer.spyingOnYou !== true
+    ) {
       continue;
     }
 

@@ -4,6 +4,7 @@
  */
 
 import {
+  CLEAR_SPY_COST,
   isSharedAttackCardId,
   isTutorialLookPending,
   isTutorialTourActive,
@@ -95,7 +96,12 @@ import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
 import { ShopDialog } from './table/shop-dialog';
 import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
-import { cardPlayNeedsConsume, cardPlayNeedsTarget } from './table/table-helpers';
+import {
+  cardPlayNeedsConsume,
+  cardPlayNeedsTarget,
+  livingSpiesOnYou,
+} from './table/table-helpers';
+import { UnspyDialog } from './table/unspy-dialog';
 import {
   ACTION_LOG_OPEN_LABEL,
   FELT_QUEUE_TITLE,
@@ -157,6 +163,7 @@ export interface TableScreenProps {
   onBuyUpgradePoint: () => void;
   onBuySpecialCard: () => void;
   onBuyPoolCard: () => void;
+  onClearSpy: (targetPlayerId: string) => void;
   onSellUpgradePoint: () => void;
   onLeave: () => void;
   /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
@@ -365,6 +372,7 @@ function TableScreenInner({
   onBuyUpgradePoint,
   onBuySpecialCard,
   onBuyPoolCard,
+  onClearSpy,
   onSellUpgradePoint,
   onLeave,
   onForfeit,
@@ -586,6 +594,14 @@ function TableScreenInner({
     }
     noteHintCause('playing-intent');
     onBuyPoolCard();
+  };
+
+  const clearSpyWithFx = (targetPlayerId: string): void => {
+    if (!allowTutorialSend({ kind: 'other' })) {
+      return;
+    }
+    noteHintCause('playing-intent');
+    onClearSpy(targetPlayerId);
   };
 
   const sellCardWithFx = (instanceId: string): void => {
@@ -972,6 +988,7 @@ function TableScreenInner({
       : Math.max(0, Math.min(1, (deadlineMs - nowMs) / 60_000));
 
   const opponents = view.players.filter((player) => !player.isYou);
+  const livingSpies = livingSpiesOnYou(view);
   const incomingEffects = view.pendingEffects.filter(
     (effect) => effect.targetPlayerId === view.you,
   );
@@ -1440,6 +1457,14 @@ function TableScreenInner({
               noteHintCause('open-shop');
               setDialog({ kind: 'shop' });
             }}
+            hasLivingSpy={livingSpies.length > 0}
+            canAffordUnspy={view.self.points >= CLEAR_SPY_COST}
+            onOpenUnspy={() => {
+              if (overlayLocksTable) {
+                return;
+              }
+              setDialog({ kind: 'unspy' });
+            }}
             {...(economySpotlight !== undefined ? { spotlight: economySpotlight } : {})}
             {...(readOnly && onShowStats !== undefined ? { onShowStats } : {})}
           />
@@ -1678,6 +1703,19 @@ function TableScreenInner({
         onBuySpecialCard={buySpecialWithFx}
         onBuyPoolCard={buyPoolWithFx}
         {...(tutorialHighlight !== null ? { tutorialHighlight } : {})}
+      />
+
+      <UnspyDialog
+        open={dialog?.kind === 'unspy'}
+        view={view}
+        spies={livingSpies}
+        onClose={() => {
+          setDialog(null);
+        }}
+        onConfirm={(targetPlayerId) => {
+          clearSpyWithFx(targetPlayerId);
+          setDialog(null);
+        }}
       />
 
       {subChoice !== null && (

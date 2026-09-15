@@ -10,6 +10,7 @@ import {
   BUY_POOL_CARD,
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
+  CLEAR_SPY,
   CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
@@ -169,6 +170,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   buyUpgradePoint: () => void;
   buySpecialCard: () => void;
   buyPoolCard: () => void;
+  clearSpy: (targetPlayerId: string) => void;
   sellUpgradePoint: () => void;
   deactivatePersistent: (effectId: string) => void;
   activateDuplication: () => void;
@@ -590,6 +592,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(BUY_POOL_CARD);
   }, []);
 
+  const clearSpy = useCallback((targetPlayerId: string): void => {
+    roomRef.current?.send(CLEAR_SPY, { targetPlayerId });
+  }, []);
+
   const sellUpgradePoint = useCallback((): void => {
     roomRef.current?.send(SELL_UPGRADE_POINT);
   }, []);
@@ -626,6 +632,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     buyUpgradePoint,
     buySpecialCard,
     buyPoolCard,
+    clearSpy,
     sellUpgradePoint,
     deactivatePersistent,
     activateDuplication,

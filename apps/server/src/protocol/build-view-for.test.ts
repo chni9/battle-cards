@@ -315,6 +315,50 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(bobView.players.find((player) => player.id === 'a')?.spyingOnYou).toBeUndefined();
   });
 
+  it('omits spyingOnYou on dead viewers and spectator overlay (L58-07)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'l58-07-spying-on-you',
+    });
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+    const bob = state.players.find((player) => player.id === 'b');
+    const carol = state.players.find((player) => player.id === 'c');
+    if (bob === undefined || carol === undefined) {
+      throw new Error('missing players');
+    }
+
+    bob.isEliminated = true;
+    bob.lives = 0;
+    bob.pendingReanimation = null;
+    carol.isEliminated = true;
+    carol.lives = 0;
+    carol.pendingReanimation = null;
+
+    const aliceView = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(aliceView.players.find((player) => player.id === 'b')?.spyingOnYou).toBeUndefined();
+    expect(aliceView.players.find((player) => player.id === 'c')?.spyingOnYou).toBeUndefined();
+
+    const carolView = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(carolView.players.find((player) => player.id === 'a')?.spyingOnYou).toBeUndefined();
+    expect(carolView.players.find((player) => player.id === 'a')?.spied).toBeDefined();
+  });
+
   it('exposes active persistents on self and every public seat', () => {
     const state = createInitialState({
       seats: [

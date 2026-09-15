@@ -21,6 +21,7 @@ import {
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
 import { opponentResourceDisplay } from './opponent-seat-resources';
+import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';
 
 export interface OpponentZoneProps {
@@ -189,6 +190,16 @@ export function OpponentZone({
         </h3>
         {!player.isEliminated && (
           <ConnectionBadge player={player} className="shrink-0" />
+        )}
+        {player.spyingOnYou === true && !player.isEliminated && (
+          <span
+            data-spy-eye=""
+            title="Spying on you"
+            aria-label="Spying on you"
+            className="shrink-0 text-ink"
+          >
+            <SpyEyeIcon variant="open" size={12} />
+          </span>
         )}
         {!player.isEliminated &&
           player.isBot &&

@@ -2,16 +2,19 @@
  * Enumerate legal economy turn actions — technical spec v3 §4.3 (L16-01).
  *
  * Affordability via existing `canAffordCost` / economy constants; no re-derived rules.
- * Takes `state` so pool-buy can read public `pool` + `poolBuyCost` (L58-05).
+ * Takes `state` so pool-buy can read public `pool` + `poolBuyCost` (L58-05)
+ * and Unspy can read living Spy matrix rows (L58-07).
  */
 
 import {
+  CLEAR_SPY_COST,
   getSharedCard,
   SHARED_CARD_IDS,
   type GameState,
   type Player,
 } from '@card-battle/shared';
 
+import { listLivingSpiesOn } from '../../protocol/visibility-matrix';
 import { SPECIAL_CARD_PURCHASE_COST } from '../economy/buy-special-card';
 import { canAffordCost } from '../economy/transfers';
 import { upgradePointBuyCost } from '../economy/upgrade-points';
@@ -64,6 +67,12 @@ export function listLegalEconomyActions(
 
   if (state.pool.length >= 1 && actor.points >= state.poolBuyCost) {
     actions.push({ type: 'buyPoolCard' });
+  }
+
+  if (actor.points >= CLEAR_SPY_COST) {
+    for (const spy of listLivingSpiesOn(state, actor.id)) {
+      actions.push({ type: 'clearSpy', targetPlayerId: spy.id });
+    }
   }
 
   return actions;

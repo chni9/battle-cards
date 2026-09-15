@@ -290,6 +290,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
 
     if (
       player.id !== recipientSessionId &&
+      !player.isEliminated &&
       findSpyRelation(state, player.id, recipientSessionId) !== undefined
     ) {
       view.spyingOnYou = true;
