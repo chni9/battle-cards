@@ -89,8 +89,8 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 11 | Table pass: **no “UP” letters** on chrome; upgrade points are the existing icon + number. **Every interactive cost or yield** is icon + number. Action-log **prose** may still say “points”. |
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
-| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation and play; catalog/handler stay). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**. |
+| 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, superseded by Lot 58), and designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L58-02 (31 → 32)**. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
 
@@ -160,8 +160,8 @@ Hints:     localStorage, first Classic playing view only
 - Local Vite (`:5173`) talks to `:2567` today (`resolve-server-url.ts`). Feedback `fetch`
   uses that same base URL. Enable CORS on the feedback/inbox routes for the Vite origin
   in development; production same-origin Coolify needs none.
-- **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. No later
-  V6 task bumps it.
+- **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
+  later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L58-02 (31 → 32)**.
 
 ---
 
@@ -558,7 +558,9 @@ SQL, so rows from before the chips still list.
 
 ## 8. Protocol (28 → 29)
 
-Single bump in L41-02.
+Single bump in L41-02. Later documented exceptions: L49-01 (29 → 30), L56-03
+(30 → 31), **L58-02 (31 → 32)** — `buyPoolCard`, `clearSpy`, `poolBuyCost`,
+`spyingOnYou`, reject codes `empty-pool` / `not-spying-you`.
 
 | Change | Where |
 |---|---|
@@ -633,8 +635,9 @@ Not even partially, even “to lay groundwork”:
 - French UI / i18n framework
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
-  (except designer 2026-09-01 Lot 54 and designer 2026-09-09 Lot 56 Invisibility
-  freeze — card stays in the repo, not in live Classic)
+  (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
+  freeze, and designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
+  PG 3/6 / Unspy)
 - A second Colyseus room type
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games
@@ -652,7 +655,8 @@ Not even partially, even “to lay groundwork”:
    `applyTutorialSetup` must force base Tax.
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
-6. **Protocol bump twice** in V6 is forbidden; put every wire change in L41-02.
+6. **Protocol bump twice** in V6 is forbidden except the documented exceptions
+   (L49, L56, **L58**); put Lot 58 wire changes in L58-02.
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
    `decisions.md` rather than guessing. Coach at index 3 already explains equal cancel.
@@ -678,8 +682,11 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
+| 58 | Shop, pool, Invisibility, PG, Unspy | Upgrade-point shop icons, doubling pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10; 31 → 32 |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
 **48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
 **56** is a designer session follow-up (Classic freeze exception + one protocol bump).
+**58** is a designer session follow-up (Classic values + one protocol bump; unfreezes
+Invisibility under the Lot 58 text).

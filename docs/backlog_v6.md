@@ -42,6 +42,10 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     Invisibility out of Classic circulation and play (code stays). Attack damage
     badges, click-to-explain log/Incoming, card lives under persistents, lost
     deactivation log. `PROTOCOL_VERSION` 30 → 31 (exception, same class as L49).
+15. **Designer Classic tweaks (Lot 58).** Designer 2026-09-15. Shop upgrade-point
+    icons; table-wide doubling pool buy; Invisibility unfrozen as timed pacifist
+    (4 / 7 turns); Points Generator 3 / 6; Unspy 10 points. `PROTOCOL_VERSION`
+    31 → 32 (exception, same class as L49 / L56).
 
 **Execution order**
 
@@ -62,15 +66,17 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 **Scope lock**
 
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
-  assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation
-  and play; card files stay). Tutorial-only exceptions remain spec §5.3–§5.4.
+  assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, later superseded
+  by Lot 58), and designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
+  PG 3/6, Unspy 10). Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
-  exceptions: L49-01 (29 → 30) and **L56-03 (30 → 31)**.
-- **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
-  for catalog-price affordability (L54-01) and must keep `weightsHash`.
+  exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, and **L58-02 (31 → 32)**.
+- **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed for
+  catalog-price affordability (L54-01) and for Lot 58's new legal actions (L58-08);
+  keep `weightsHash` unless a new weight constant is unavoidable.
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).
 - Client still has **zero rule logic**. Spotlight is presentation; the server filters.
@@ -79,8 +85,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-85 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
-Lot 56 opened 2026-09-09.
+86 of 94 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+Lot 56 opened 2026-09-09. Lot 58 opened 2026-09-15.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -100,6 +106,7 @@ Lot 56 opened 2026-09-09.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
+| 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 1 |
 
 ---
 
@@ -344,6 +351,26 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 
 ---
 
+## Lot 58 — Shop, pool, Invisibility, PG, Unspy (designer 2026-09-15)
+
+Explicit session instruction. Classic values/rules change. Reactivates Invisibility
+(Lot 56 freeze superseded). One protocol bump 31 → 32. Do not edit `heuristic-v4`
+weights; freeze fixture refresh is L58-08.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L58-01 | Append dated `[P]` Lot 58 entries to `docs/agent/decisions.md`; Lot 58 section here; technical spec v6 §13 + freeze/protocol exceptions; rules spec (pool buy, PG 3/6, Invisibility pacifist 4/7, Unspy 10); AGENTS.md snapshot. Protocol 31 → 32 exception recorded (same class as L49 / L56). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Invisibility is live again under the new text, v32 is the next bump, and L58-02 starts the wire. | S | Medium | — | Done |
+| L58-02 | `PROTOCOL_VERSION` **31 → 32**. `buyPoolCard`; `clearSpy` `{ targetPlayerId }`; `PlayingStateView.poolBuyCost`; `PublicPlayerView.spyingOnYou`; reject codes `empty-pool` / `not-spying-you`; `GameState.poolBuyCost` init 1; shared `POOL_BUY_INITIAL_COST` / `CLEAR_SPY_COST`. Types + version until later tasks emit them. **Acceptance:** mismatch path rejects v31 clients; exhaustive reject-code test includes the two new codes. | M | **High** | L58-01 | To do |
+| L58-03 | Shop upgrade-points section: `ResourceIcon` upgradePoint + current count; Buy/Sell **below** that row; point `CostDisplay` on the buttons. No `UP` substring. Tutorial `shop-upgrade-point` still wraps Buy. **Acceptance:** source test finds the icon + lower button row; `pnpm verify` green. | S | Low | L58-01 | To do |
+| L58-04 | Points Generator income **3** base / **6** upgraded (catalog, `apply-persistent-effects`, belief `resources.ts`, tests). Counter stays 3. Do not change `heuristic-v4` weights. **Acceptance:** a tick grants 3 (6 upgraded); catalog copy matches; `pnpm verify` green. | S | Medium | L58-01 | To do |
+| L58-05 | `buyPoolCard`: table-wide fee starts at 1, doubles after each buy, never resets; seeded one-card recover; Absorber does not move the fee; empty/unaffordable illegal. `listLegalEconomyActions` takes `state`. Shop pool section Buy random + public fee. `enumerationStateFromView` copies `poolBuyCost`. **Acceptance:** 1→2→4; empty illegal; Absorber unchanged fee; view parity; `pnpm verify` green. | M | **High** | L58-02 | To do |
+| L58-06 | Unfreeze Invisibility. Counter 4 / 7 remaining owner turns (activation counts). Pacifist: `cardActsOnOpponents` includes Mirror / Super Mirror / attacks / targeted specials. Auto-loss at 0 emits `persistentDeactivated`. `applyDamage` card-lives whitelist of the four spec-§5 cards. Turns badge, not heart. Flip L56-02 grant/play tests. **Acceptance:** shop/Prophet/Transformer can grant it; hostile/Mirror illegal while active; Tax/draw legal; 4 ticks then lost; damage does not eat the turn counter; immunity still `immune`. | L | **High** | L58-01 | To do |
+| L58-07 | `clearSpy` 10 points, one living viewer row. Economy-bar Unspy (crossed-eye SVG, −10 coin) next to Shop; SeatTile picker; eye on `spyingOnYou` seats. Overlay not Unspy-able. **Acceptance:** 10 points drops one row; dead spies ignored; button disabled with no living spy; log public; `pnpm verify` green. | M | **High** | L58-02 | To do |
+| L58-08 | Score `buyPoolCard` / `clearSpy` so they never fall through to `sellUpgradePoint`. Do not retune `heuristic-v4` weights; refresh freeze fixture (legal set changed — L54-01 class). Update Invisibility stall/freeze assertion. **Acceptance:** new actions have own scores; freeze `weightsHash` unchanged unless a new constant is required; `pnpm verify` green. | M | Medium | L58-05, L58-06, L58-07 | To do |
+| L58-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `bots.md`); How to play shop/pool copy; post-lot browser gate (shop UP icons, pool buy 1 then 2, Unspy grey/enabled + picker, spy eye). **Acceptance:** playbooks match code; browser gate recorded in `frontend.md`. | M | Low | L58-03–L58-08 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -364,9 +391,10 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 | 54 | 4 |
 | 55 | 1 |
 | 56 | 7 |
-| **Total** | **85** |
+| 58 | 9 |
+| **Total** | **94** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 
