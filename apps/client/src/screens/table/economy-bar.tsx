@@ -3,7 +3,8 @@
  * Draw + Shop + Unspy. Stats only on a finished board (`readOnly`).
  * Draw is green so the point icon is not yellow-on-yellow.
  * Draw / Unspy omit word labels (designer 2026-09-15): gain CostDisplay and
- * crossed-eye + cost only; names stay on aria-label.
+ * crossed-eye + cost only; names stay on aria-label / title.
+ * CostDisplay inner title is omitted so hover uses the button name.
  */
 
 import { CLEAR_SPY_COST } from '@card-battle/shared';
@@ -81,6 +82,7 @@ export function EconomyBar({
             cost={drawCost}
             signed="gain"
             className="text-inherit"
+            title={null}
           />
         </Button>
       </TutorialCallout>
@@ -107,6 +109,7 @@ export function EconomyBar({
           cost={unspyCost}
           signed="cost"
           className="text-inherit"
+          title={null}
         />
       </Button>
       {onShowStats !== undefined && (

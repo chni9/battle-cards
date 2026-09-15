@@ -3404,3 +3404,12 @@ bump, no rule or value change.
 
 ---
 
+## 2026-09-15 · CostDisplay title must not hide Draw / Unspy hover (L59-01)
+
+Compact Draw / Unspy put the action name on the button `title`. `CostDisplay`
+already sets a spoken-cost `title` on the inner span that fills the face, so
+hover showed only `plus 1 pt` / `minus 10 pts`. Pass `title={null}` on those
+nested costs so the button name is the tooltip.
+
+---
+

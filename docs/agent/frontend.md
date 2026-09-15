@@ -174,10 +174,12 @@ rules above are unchanged — this section only covers how the client looks.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: compact
   **Draw** is only the gain point `CostDisplay` (`signed="gain"`, green CTA — not
-  yellow-on-yellow with the point icon; no “Draw” letters — L59-01; `aria-label` keeps
-  the name) + **Shop** (L43-02 / L43-05, word label stays) + compact **Unspy** (L58-07 /
+  yellow-on-yellow with the point icon; no “Draw” letters — L59-01; `aria-label` /
+  `title` keep the name; nested `CostDisplay` `title={null}` so hover is not only
+  “plus 1 pt”) + **Shop** (L43-02 / L43-05, word label stays) + compact **Unspy** (L58-07 /
   L59-01: crossed-eye inline SVG + `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`;
-  no “Unspy” letters; `aria-label` keeps the name).   Unspy is grey when it is not
+  no “Unspy” letters; `aria-label` / `title` keep the name; nested `CostDisplay`
+  `title={null}` so hover is not only “minus 10 pts”).   Unspy is grey when it is not
   your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
   exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
   (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
@@ -1138,8 +1140,10 @@ Skip all first-game hints.
 - Economy bar: green Draw face is **+1** point icon only (no word Draw);
   orange **Shop** still spelled; purple Unspy is crossed-eye **−10** (no word
   Unspy). Compact width — no 7rem min.
-- Draw click: points 9 → 10; log `L59Dock draws`. Hover title `plus 1 pt`.
-  Unspy stays grey with no living spy; click does not open the picker.
+- Draw click: points 9 → 10; log `L59Dock draws`. Hover title is the button
+  name (`Draw, plus 1 pt`) — `CostDisplay` `title={null}` so the spoken-cost
+  tooltip does not steal it. Unspy stays grey with no living spy; click does
+  not open the picker.
 - `pnpm verify` **1381** tests.
 
 

@@ -43,5 +43,8 @@ describe('economy bar compact Draw / Unspy (L59-01)', () => {
     expect(source).toMatch(/variant="green"[\s\S]{0,120}compact/);
     expect(source).toMatch(/variant="purple"[\s\S]{0,80}compact/);
     expect(source).toContain('{SHOP_ACTION_LABEL}');
+    expect(source).toContain('title={drawLabel}');
+    expect(source).toContain('title={unspyLabel}');
+    expect(source).toContain('title={null}');
   });
 });
