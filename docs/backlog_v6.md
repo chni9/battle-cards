@@ -83,7 +83,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-100 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+101 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 
 | Lot | Tasks | Done |
@@ -104,7 +104,7 @@ Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
-| 57 · Feedback + lobby rematch | 15 | 14 |
+| 57 · Feedback + lobby rematch | 15 | 15 |
 
 ---
 
@@ -373,7 +373,7 @@ No Slack/mail ping, no rating, no screenshot, no accounts.
 | L57-12 | Game over **Play again** + Lot 57 ask-once (`playAgainPending`) then `playAgain`. **Acceptance:** helper tests ask-then-rematch vs already-asked; Return home still leaves. | M | Medium | L57-10 | Done |
 | L57-13 | Join-by-code: spectate if playing; picker to `claimSeat`; lobby reserved seats; 30s grace (default); 3rd autodraw **eliminates** (`absence`) then not claimable. Walk-in vision = eliminated Spy overlay. `maxClients` 8+8. **Acceptance:** claim remaps socket; dead seats absent from picker; `pnpm verify` green. | **L** | **High** | L57-07 | Done |
 | L57-14 | Walk-in spectators become unready lobby guests after Play again / finished reform. **Acceptance:** spectator on Game over then Play again is a lobby guest, not still `isSpectator`. | M | Medium | L57-10, L57-13 | Done |
-| L57-15 | Playbooks (`frontend.md`, `protocol.md`) + `pnpm verify` + browser gate (ready/kick/rematch, drop+join picker, spectate hands, 3rd autodraw elim). **Acceptance:** playbooks match shipped behaviour; gate recorded. | S | Low | L57-11, L57-12, L57-14 | In progress |
+| L57-15 | Playbooks (`frontend.md`, `protocol.md`) + `pnpm verify` + browser gate (ready/kick/rematch, drop+join picker, spectate hands, 3rd autodraw elim). **Acceptance:** playbooks match shipped behaviour; gate recorded. | S | Low | L57-11, L57-12, L57-14 | Done |
 
 ---
 

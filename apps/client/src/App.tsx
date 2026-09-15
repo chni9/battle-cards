@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useRoomConnection } from './net/use-room-connection';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
-import { claimStayLabel } from './screens/claim-seat';
+import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
 import { InboxScreen } from './screens/inbox';
@@ -69,8 +69,17 @@ function GameApp() {
 
   const claimableSeats = view?.claimableSeats ?? [];
   const claimableKey = claimableSeats.map((seat) => seat.playerId).join('|');
-  const showClaimPicker = claimableSeats.length > 0 && claimDismissedKey !== claimableKey;
   const walkInSpectator = view?.isSpectator === true;
+  const youAreHost = view?.phase === 'lobby' && view.hostPlayerId === view.you;
+  const showClaimPicker =
+    view !== null &&
+    shouldShowClaimPicker({
+      claimableCount: claimableSeats.length,
+      isSpectator: walkInSpectator,
+      phase: view.phase,
+      youAreHost,
+    }) &&
+    claimDismissedKey !== claimableKey;
   const claimPlayerIds = useMemo(
     () => (view === null ? [] : view.players.map((player) => player.id)),
     [view],

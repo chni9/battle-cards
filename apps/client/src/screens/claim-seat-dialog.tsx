@@ -30,6 +30,11 @@ export function ClaimSeatDialog({
   onStay,
 }: ClaimSeatDialogProps): ReactElement {
   const [picked, setPicked] = useState<string | null>(null);
+  const onlySeatId = seats.length === 1 ? seats[0]?.playerId : undefined;
+  const selectedId =
+    picked !== null && seats.some((seat) => seat.playerId === picked)
+      ? picked
+      : (onlySeatId ?? null);
 
   return (
     <Dialog
@@ -38,17 +43,16 @@ export function ClaimSeatDialog({
       onClose={onStay}
       actions={
         <>
-          <Button compact type="button" variant="orange" onClick={onStay}>
+          <Button type="button" variant="orange" onClick={onStay}>
             {stayLabel}
           </Button>
           <Button
-            compact
             type="button"
             variant="green"
-            disabled={picked === null}
+            disabled={selectedId === null}
             onClick={() => {
-              if (picked !== null) {
-                onClaim(picked);
+              if (selectedId !== null) {
+                onClaim(selectedId);
               }
             }}
           >
@@ -66,7 +70,7 @@ export function ClaimSeatDialog({
             { players: playerIds.map((id) => ({ id })) },
             seat.playerId,
           );
-          const selected = picked === seat.playerId;
+          const selected = selectedId === seat.playerId;
           const host = hostPlayerId !== undefined && seat.playerId === hostPlayerId;
 
           return (

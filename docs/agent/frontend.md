@@ -396,7 +396,9 @@ rules above are unchanged — this section only covers how the client looks.
   Same-tab reclaim during the **30s** grace does **not** need the picker. A later
   Join-with-code is a new socket: if the table is **playing**, enter as spectator first;
   `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
-  with **Sit here** / **Stay spectating**. `claimSeat` remaps onto that `player.id`.
+  with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
+  picker is **not** shown to a living seated player (host Draw stays reachable).
+  `claimSeat` remaps onto that `player.id`.
   Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
   (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board
@@ -1037,5 +1039,29 @@ Solo Classic, Vite `:5173`, Colyseus `:2567`. Nick `L57Gate` vs Alpha. Room
   stub.
 - Skip → hub (Play online / Play solo / Tutorial / How to play / Feedback).
 - `pnpm verify` **1283** tests.
+
+### Lot 57 rematch verified 2026-09-15 (browser, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=300000`, PROTOCOL 32)
+
+Two-tab Classic online, Vite `:5173`, Colyseus `:2567`. Compact table **`!`**
+unchanged (not the word Feedback). Tutorial still auto-starts with Skip
+tutorial (not Forfeit). Claim picker is walk-in / lobby-guest only so a
+living host can still Draw.
+
+- Room `TPHFVU` HostA + GuestB. Host Start grey until Guest Ready. Kick
+  confirm **Kick this player?** removed bot Alpha. Guest forfeit → Game
+  over. Host **Play again** opened ask-once Feedback (**Skip is fine.**);
+  Guest recap stayed (not yanked). Guest Play again sat Not ready in the
+  same-code lobby; Start grey again.
+- Same room, mid-match SpecC join: **Watching**, opponent hands/kits
+  visible. GuestB drop → picker **Sit as a disconnected player?** listing
+  GuestB. After grace, Host Draw ×3; log **GuestB is eliminated by
+  absence**; picker gone. Host Play again seated SpecC as unready lobby
+  guest.
+- Room `MWSELQ` HostC + GuestC + SpecE. After GuestC tab X, picker
+  pre-selected GuestC with full **Stay spectating** / **Sit here**. Sit
+  here remapped SpecE onto GuestC (private hand). HostC never saw the
+  picker. Tutorial room `VWLXXS` nick TutA: **?** / **`!`**, flag **Skip
+  the tutorial?**
+- `pnpm verify` **1331** tests.
 
 

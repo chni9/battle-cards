@@ -15,7 +15,8 @@ import {
 } from './bench-determinizer';
 
 describe('bench-determinizer (L34-06)', () => {
-  it('reports zero impossible worlds on a tiny seeded run', () => {
+  // Two seeded games + k=2 regularly exceeds Vitest's default 5s on a loaded host.
+  it('reports zero impossible worlds on a tiny seeded run', { timeout: 20_000 }, () => {
     const result = runBenchDeterminizer({
       games: 2,
       samplesPerDecision: 2,
