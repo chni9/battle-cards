@@ -32,7 +32,7 @@ function twoPlayerState() {
 }
 
 describe('connection lifecycle (L7-01)', () => {
-  it('marks disconnected with disconnectedAt and reconnects with no penalty at 40s', () => {
+  it('marks disconnected with disconnectedAt and reconnects with no penalty at 20s', () => {
     const state = twoPlayerState();
     const alice = state.players.find((player) => player.id === 'a');
 
@@ -46,7 +46,7 @@ describe('connection lifecycle (L7-01)', () => {
 
     expect(alice.connectionState.status).toBe('disconnected');
     expect(alice.connectionState.disconnectedAt).toBe(t0);
-    expect(isPastReconnectGrace(alice.connectionState, t0 + 40_000, RECONNECT_GRACE_MS)).toBe(
+    expect(isPastReconnectGrace(alice.connectionState, t0 + 20_000, RECONNECT_GRACE_MS)).toBe(
       false,
     );
 

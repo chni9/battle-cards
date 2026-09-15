@@ -4,16 +4,23 @@ import {
   addBotRejectionMessage,
   canAddBot,
   canChooseKit,
+  canKickPlayer,
   canRemoveBot,
   canSetBotDifficulty,
+  canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
   collectForcedKitsBySeatId,
+  kickPlayerRejectionMessage,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
   parseChooseKitPayload,
+  parseKickPlayerPayload,
+  parseSetReadyPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
+  setReadyRejectionMessage,
+  startGameRejectionMessage,
 } from './lobby-rules';
 
 describe('lobby rules (L1-02)', () => {
@@ -28,6 +35,7 @@ describe('lobby rules (L1-02)', () => {
         hostSessionId: 'host',
         seatCount: 1,
         hasStarted: false,
+        humanGuests: [],
       }),
     ).toBe('not-enough-players');
   });
@@ -39,17 +47,19 @@ describe('lobby rules (L1-02)', () => {
         hostSessionId: 'host',
         seatCount: 2,
         hasStarted: false,
+        humanGuests: [{ isReady: true, isConnected: true }],
       }),
     ).toBe('not-host');
   });
 
-  it('allows the host to start with two or more players', () => {
+  it('allows the host to start with bots and no human guests', () => {
     expect(
       canStartGame({
         requesterSessionId: 'host',
         hostSessionId: 'host',
         seatCount: 2,
         hasStarted: false,
+        humanGuests: [],
       }),
     ).toBeNull();
   });
@@ -61,6 +71,7 @@ describe('lobby rules (L1-02)', () => {
         hostSessionId: 'host',
         seatCount: 2,
         hasStarted: true,
+        humanGuests: [],
       }),
     ).toBe('already-started');
   });
@@ -214,6 +225,152 @@ describe('bot lobby rules (L15-03)', () => {
         ['b', 'random' as const],
       ]);
       expect(collectForcedKitsBySeatId(selections)).toEqual(new Map([['a', 'assassin']]));
+    });
+  });
+});
+
+describe('lobby ready gate (L57-08)', () => {
+  const hostStart = {
+    requesterSessionId: 'host',
+    hostSessionId: 'host',
+    seatCount: 2,
+    hasStarted: false,
+  } as const;
+
+  it('blocks start when a connected guest is not ready', () => {
+    expect(
+      canStartGame({
+        ...hostStart,
+        humanGuests: [{ isReady: false, isConnected: true }],
+      }),
+    ).toBe('not-all-ready');
+    expect(startGameRejectionMessage('not-all-ready').code).toBe('start-not-all-ready');
+  });
+
+  it('allows start when every connected guest is ready', () => {
+    expect(
+      canStartGame({
+        ...hostStart,
+        seatCount: 3,
+        humanGuests: [
+          { isReady: true, isConnected: true },
+          { isReady: true, isConnected: true },
+        ],
+      }),
+    ).toBeNull();
+  });
+
+  it('allows host plus bots with no human guests (solo / tutorial)', () => {
+    expect(
+      canStartGame({
+        ...hostStart,
+        humanGuests: [],
+      }),
+    ).toBeNull();
+  });
+
+  it('blocks start when a reserved guest is disconnected', () => {
+    expect(
+      canStartGame({
+        ...hostStart,
+        humanGuests: [{ isReady: false, isConnected: false }],
+      }),
+    ).toBe('not-all-ready');
+  });
+
+  it('rejects host and non-guest setReady', () => {
+    expect(
+      canSetReady({
+        hasStarted: false,
+        requesterIsHost: true,
+        requesterIsHumanGuest: false,
+      }),
+    ).toBe('not-allowed');
+    expect(
+      canSetReady({
+        hasStarted: false,
+        requesterIsHost: false,
+        requesterIsHumanGuest: false,
+      }),
+    ).toBe('not-allowed');
+    expect(setReadyRejectionMessage('not-allowed').code).toBe('ready-not-allowed');
+  });
+
+  it('rejects setReady after start', () => {
+    expect(
+      canSetReady({
+        hasStarted: true,
+        requesterIsHost: false,
+        requesterIsHumanGuest: true,
+      }),
+    ).toBe('not-in-lobby');
+    expect(setReadyRejectionMessage('not-in-lobby').code).toBe('ready-not-in-lobby');
+  });
+
+  it('allows a human guest to toggle Ready in the lobby', () => {
+    expect(
+      canSetReady({
+        hasStarted: false,
+        requesterIsHost: false,
+        requesterIsHumanGuest: true,
+      }),
+    ).toBeNull();
+  });
+
+  it('parses setReady payloads', () => {
+    expect(parseSetReadyPayload({ ready: true })).toEqual({
+      ok: true,
+      value: { ready: true },
+    });
+    expect(parseSetReadyPayload({ ready: false })).toEqual({
+      ok: true,
+      value: { ready: false },
+    });
+    expect(parseSetReadyPayload(undefined)).toEqual({
+      ok: false,
+      code: 'invalid-set-ready-payload',
+    });
+    expect(parseSetReadyPayload({ ready: 'yes' })).toEqual({
+      ok: false,
+      code: 'invalid-set-ready-payload',
+    });
+  });
+});
+
+describe('lobby kick (L57-09)', () => {
+  const hostKick = {
+    requesterSessionId: 'host',
+    hostSessionId: 'host',
+    hasStarted: false,
+    targetExists: true,
+    targetIsSelf: false,
+  } as const;
+
+  it('allows the host to kick another lobby seat', () => {
+    expect(canKickPlayer(hostKick)).toBeNull();
+  });
+
+  it('rejects kick-self and non-host', () => {
+    expect(canKickPlayer({ ...hostKick, targetIsSelf: true })).toBe('self');
+    expect(kickPlayerRejectionMessage('self').code).toBe('kick-self');
+    expect(canKickPlayer({ ...hostKick, requesterSessionId: 'guest' })).toBe('not-host');
+    expect(kickPlayerRejectionMessage('not-host').code).toBe('kick-not-host');
+  });
+
+  it('rejects kick after start and unknown seats', () => {
+    expect(canKickPlayer({ ...hostKick, hasStarted: true })).toBe('not-in-lobby');
+    expect(canKickPlayer({ ...hostKick, targetExists: false })).toBe('unknown');
+    expect(kickPlayerRejectionMessage('unknown').code).toBe('kick-unknown');
+  });
+
+  it('parses kickPlayer payloads', () => {
+    expect(parseKickPlayerPayload({ playerId: 'guest' })).toEqual({
+      ok: true,
+      value: { playerId: 'guest' },
+    });
+    expect(parseKickPlayerPayload({})).toEqual({
+      ok: false,
+      code: 'invalid-kick-payload',
     });
   });
 });

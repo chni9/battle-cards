@@ -42,6 +42,11 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     Invisibility out of Classic circulation and play (code stays). Attack damage
     badges, click-to-explain log/Incoming, card lives under persistents, lost
     deactivation log. `PROTOCOL_VERSION` 30 → 31 (exception, same class as L49).
+15. **Lot 57** (designer 2026-09-14 / 2026-09-15). Feedback conversion, then
+    lobby Ready + host Kick, Play again (same room/code), join-by-code spectate
+    or claim a disconnected seat. `PROTOCOL_VERSION` **31 → 32** (exception,
+    same class as L49 / L56), then **32 → 33** in L57-16 (claim-picker kit fog).
+    Table `!` unchanged. No Slack/mail, no accounts.
 
 **Execution order**
 
@@ -68,7 +73,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
   Designer 2026-09-07: Classic occupancy is **2–8**.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
-  exceptions: L49-01 (29 → 30) and **L56-03 (30 → 31)**.
+  exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**,
+  and **L57-16 (32 → 33)**.
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed only
   for catalog-price affordability (L54-01) and must keep `weightsHash`.
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
@@ -79,8 +85,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-85 of 85 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
-Lot 56 opened 2026-09-09.
+101 of 101 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 
 | Lot | Tasks | Done |
 |---|---|---|
@@ -100,6 +106,7 @@ Lot 56 opened 2026-09-09.
 | 54 · Designer Classic tweaks | 4 | 4 |
 | 55 · Eight-player Classic | 1 | 1 |
 | 56 · Invisibility freeze + readability | 7 | 7 |
+| 57 · Feedback + lobby rematch | 15 | 15 |
 
 ---
 
@@ -344,6 +351,36 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 
 ---
 
+## Lot 57 — Feedback conversion + lobby rematch (designer 2026-09-14 / 2026-09-15)
+
+Explicit session instruction. First: convert the Lot 47 pipeline so friends send
+rows (L57-01…05). Then: Classic online Ready + Kick, Play again in the same
+room, join-by-code spectate or claim a disconnected seat (L57-06…15).
+`PROTOCOL_VERSION` **31 → 32** in L57-07; **32 → 33** in L57-16. Table chrome
+stays the compact `!`.
+No Slack/mail ping, no rating, no screenshot, no accounts.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L57-01 | Append dated `[P]` Lot 57 entries to `docs/agent/decisions.md`; Lot 57 section here; technical spec v6 §7.1 + §13; `AGENTS.md` snapshot. **Acceptance:** an agent reading only `decisions.md` + this backlog can tell ask-mode is one sentence (`confusion`), every finished hub leave hits that ask, and the table control stays `!`. | S | Medium | — | Done |
+| L57-02 | Ask-mode Feedback Dialog: one-sentence copy; no Kind / About / Contact; POST `kind: 'confusion'`, `topics: []`, message only. Manual (`!`, Home, Lobby, Game over Feedback) unchanged. **Acceptance:** ask-mode payload test; manual bug still requires ≥1 topic; table `!` glyph unchanged. | M | Medium | L57-01 | Done |
+| L57-03 | Finished hub leave (Game over Return home / Play a real game / flag) asks once unless already marked; Skip or successful Send then leaves. View board ask does not leave. Stats Feedback stays manual and does not auto-leave. **Acceptance:** helper tests for ask-then-leave, already-asked immediate leave, View board stay; `pnpm verify` green. | M | Medium | L57-02 | Done |
+| L57-04 | Update `frontend.md` Game over / Feedback paragraphs to the leave intercept + ask-mode split. Table `!` still one icon cell. **Acceptance:** playbook matches shipped behaviour; `pnpm verify` green. | S | Low | L57-03 | Done |
+| L57-05 | Ask-mode is the Lot 47 ticket (Kind / About / message / optional contact), including Return home. Title Feedback; lead Skip is fine; Skip still leaves. POST uses the tester's kind/topics (bug ≥1 topic) plus contact when filled. **Acceptance:** ask-mode payload is no longer forced `confusion` / empty topics; dialog source shows Kind / About / Contact with Skip; table `!` unchanged; `pnpm verify` green. | M | Medium | L57-04 | Done |
+| L57-06 | Governance addendum (still Lot 57, not 58): dated `[P]` in `decisions.md`; Lot 57 tasks here; technical spec v6 session + 31 → 32 exception; `AGENTS.md` snapshot. **Acceptance:** an agent reading only `decisions.md` + this backlog can tell Ready/Kick/Play again/spectate-claim stay Lot 57 and v32 is the next bump. | S | Medium | L57-05 | Done |
+| L57-07 | `PROTOCOL_VERSION` **31 → 32**. Messages `setReady`, `kickPlayer`, `playAgain`, `claimSeat`; `LobbySeatView.isReady`; playing/finished `isSpectator` + `claimableSeats`; reject codes for ready/kick/rematch/claim. **Acceptance:** v31 clients fail the mismatch path; exhaustive reject-code test includes the new codes. | M | **High** | L57-06 | Done |
+| L57-08 | Server Ready + `canStartGame` `start-not-all-ready`. Human guests must ready; host implicit; bots ready. Solo/tutorial `startGame` still green. **Acceptance:** helper tests: guest unreadied blocks Start; host+bots starts; host cannot `setReady`. | M | Medium | L57-07 | Done |
+| L57-09 | Host Kick any other lobby seat: human drop (clears reservation) + bot `removeBot`; confirm Dialog; kicked copy. **Acceptance:** kick-self / not-host rejected; human can rejoin as a new guest; `pnpm verify` green. | M | Medium | L57-07 | Done |
+| L57-10 | Play again same room/code: reforming per-recipient views; host reclaim; bots persist; persist-once. Tutorial: no Play again. **Acceptance:** first Play again does not yank the other recap; next `startGame` is a new match write. | **L** | **High** | L57-07 | Done |
+| L57-11 | Lobby Ready UI + Start disabled from view facts (connected human guests ready). **Acceptance:** guest sees Ready toggle; host Start grey until guests ready; table `!` unchanged. | M | Low | L57-08 | Done |
+| L57-12 | Game over **Play again** + Lot 57 ask-once (`playAgainPending`) then `playAgain`. **Acceptance:** helper tests ask-then-rematch vs already-asked; Return home still leaves. | M | Medium | L57-10 | Done |
+| L57-13 | Join-by-code: spectate if playing; picker to `claimSeat`; lobby reserved seats; 30s grace (default); 3rd autodraw **eliminates** (`absence`) then not claimable. Walk-in vision = eliminated Spy overlay. `maxClients` 8+8. **Acceptance:** claim remaps socket; dead seats absent from picker; `pnpm verify` green. | **L** | **High** | L57-07 | Done |
+| L57-14 | Walk-in spectators become unready lobby guests after Play again / finished reform. **Acceptance:** spectator on Game over then Play again is a lobby guest, not still `isSpectator`. | M | Medium | L57-10, L57-13 | Done |
+| L57-15 | Playbooks (`frontend.md`, `protocol.md`) + `pnpm verify` + browser gate (ready/kick/rematch, drop+join picker, spectate hands, 3rd autodraw elim). **Acceptance:** playbooks match shipped behaviour; gate recorded. | S | Low | L57-11, L57-12, L57-14 | Done |
+| L57-16 | Lobby Ready chrome (green Ready + check; aligned colored check/cross left of nicknames) and walk-in kit fog: `staySpectating` + `PROTOCOL_VERSION` **32 → 33**. Spy overlay withheld until Stay or the claim list empties. **Acceptance:** Ready CTA is green with a check; seat ready marks share a column left of nicknames; a walk-in with a picker open has no `spied.kitId`; Stay then unfogs; Sit uses seated vision; `pnpm verify` green. | M | **High** | L57-15 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -364,9 +401,10 @@ readability (plus one protocol bump). Do not edit `heuristic-v4` scoring.
 | 54 | 4 |
 | 55 | 1 |
 | 56 | 7 |
-| **Total** | **85** |
+| 57 | 16 |
+| **Total** | **101** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; granting or playing Invisibility while Lot 56 freeze is on; logging a counter loss from `applyLifeLoss`.
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
 

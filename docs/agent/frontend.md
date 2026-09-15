@@ -8,23 +8,26 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 55
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 57
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–57 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives).
+inspect from log/queue, card lives under actives, Game over full Feedback ticket
+on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
+Play again, join-by-code spectate + claim picker).
 
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, code, host Start / bot controls, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
+| Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable stats dialog over frozen board (`finalTable`); return home; ask-once Feedback | `screens/end.tsx` + `game-over-dialog.tsx` |
+| End | `phase: 'finished'` — closable stats; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` |
+| Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
 
 Shared status copy: `screens/status-labels.ts`.
@@ -72,11 +75,15 @@ rules above are unchanged — this section only covers how the client looks.
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **Feedback** (L47-03 / L47-06): hub control next to How to play; same Dialog on Online / Solo /
+  **Feedback** (L47-03 / L47-06 / L57-05): hub control next to How to play; same Dialog on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
-  omits `gameCode` / `logTail`. Kind plus multi-select **About** chips (`UI`, `Gameplay`,
+  omits `gameCode` / `logTail`. **Manual** (Home, Lobby, table `!`, Game over **Feedback**):
+  Kind plus multi-select **About** chips (`UI`, `Gameplay`,
   `Card`, `Shop`, `Bot`, `Tutorial`, `Other`). A bug needs at least one chip; confusion /
-  idea may skip. Message placeholder follows kind. Send uses a sync in-flight gate so two
+  idea may skip. Message placeholder follows kind. **Ask-mode** (Game over auto-prompt and
+  finished hub leave, including Return home): the same ticket; title **Feedback**, lead
+  **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
+  kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
   **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
   field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
@@ -129,15 +136,31 @@ rules above are unchanged — this section only covers how the client looks.
   `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
-- **Lobby (L11-02 / L17-02 / L17-03 / L49-02):** game code + Copy (clipboard); copy result via `Dialog`;
+- **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
-  Other seats never show a kit. Start / Leave; host-only Add bot / Remove / set difficulty
-  while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to Leave (L47-03);
-  `BotSeatLabel` on every bot seat for all recipients. Solo path on Home uses the same picker
-  and sends `chooseKit` before `startGame` when the pick is not random.
+  Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
+  Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
+  nickname (`font-sans`). Host and bots are ready on the wire; human **guests** toggle with
+  **Ready** (green + check) / **Cancel ready** (orange, `setReady`). Host has no Ready
+  control. **Start** is grey until `>= 2` seats **and** every connected human guest is
+  ready (`lobbyStartEnabled` — grey is not validation). Host **Kick** on every other
+  seat (bots and humans) opens **Kick this player?** then `kickPlayer`. Kicked humans
+  see **You were kicked** and may Join with the same code. Start / Leave; host-only Add
+  bot / set difficulty while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to
+  Leave (L47-03); `BotSeatLabel` on every bot seat for all recipients. Tutorial and Home
+  solo skip the lobby flash (`soloLaunchPending`), so Ready / Kick never appear there.
+  Guest Ready is Classic online lobby only. **Join with code** (Home) sits a guest when
+  the table is still lobby, or opens the claim picker for a reserved disconnected seat.
+  Solo path on Home uses the same kit picker and sends `chooseKit` before `startGame`
+  when the pick is not random.
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
+- **Walk-in spectator (L57-13):** `isSpectator` on playing/finished views. Zero legal
+  actions; flag **Leave table**; **Watching** copy on the felt; private dock hidden.
+  Hands, kits, and resources use the same upgraded-Spy overlay as an eliminated
+  spectator. After Game over **Play again**, these sockets become unready lobby guests
+  (L57-14) while a player seat is free.
 - **Activated art** for Imposition / Points Generator: pass `activated` on `Card` when
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
@@ -156,7 +179,8 @@ rules above are unchanged — this section only covers how the client looks.
   `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
   grid + Buy special, and the pool. Shop faces use catalog costs: Spy play **2** / buy **4**
   (Lot 54 — do not restore 4/8). Turn strip: **?** (How to play) then **!** (Feedback,
-  `aria-label` Feedback) left of timers, **flag**
+  `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
+  left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
   (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
@@ -370,8 +394,21 @@ rules above are unchanged — this section only covers how the client looks.
 - **Zero rule logic** on the client. Buttons send intents; the server revalidates.
 - Connection hook: `apps/client/src/net/use-room-connection.ts` — create / joinById /
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
+  Same-tab reclaim during the **30s** grace does **not** need the picker. A later
+  Join-with-code is a new socket: if the table is **playing**, enter as spectator first;
+  `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
+  with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
+  picker is **not** shown to a living seated player (host Draw stays reachable).
+  Walk-in Stay sends `staySpectating` so the server unfogs kits; until then the
+  table behind the picker has no Spy overlay (L57-16). Watching copy only says
+  hands are visible when a `spied` overlay is on the view. `claimSeat` remaps onto
+  that `player.id`.
+  Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
-  and finished-board **Return home** (flag or Game over) call `leaveGame()`. Unexpected drop shows
+  (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board
+  **Return home** (flag or Game over) and tutorial
+  **Play a real game** go through `EndScreen.requestLeave` (Lot 57): ask-once if unmarked,
+  then `leaveGame()`. Unexpected drop shows
   status `reconnecting` and does not clear the table view until reclaim fails.
 - Every `stateUpdate` replaces the previous view. Validate shape before use.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
@@ -395,18 +432,28 @@ rules above are unchanged — this section only covers how the client looks.
   snapshot, `turnDeadlineMs: null`). Client renders the frozen table under a closable
   Game over Dialog (default open; Esc / overlay / View board dismiss). Stats button on the
   economy bar reopens it. Intents are locked (`readOnly`); Shop / inspect / action log stay.
-  First close of Game over stats (View board / overlay / Esc) opens Feedback in ask-mode
+  First close of Game over stats (View board / overlay / Esc) opens Feedback in **ask-mode**
   once per `gameCode` (`localStorage['card-battle.v6.feedbackAsked.' + gameCode]`; Skip or
-  successful send). The Game over action row also has **Feedback** (same label as Home):
-  it dismisses stats and opens the form so the overlay cannot hide the turn-strip **!**.
-  **Return home** from stats does not auto-ask. Failed send does not
-  mark asked. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
+  successful send). Ask-mode is the Lot 47 ticket (Kind / About / message / optional
+  contact; title Feedback; lead Skip is fine) — including Return home (L57-05).
+  View board ask does **not** leave. The Game over action row also has **Feedback** (same
+  label as Home): it dismisses stats and opens the **manual** ticket so the overlay cannot
+  hide the turn-strip **!** — it does not auto-leave. **Return home**, tutorial **Play a
+  real game**, and the finished flag all hit the same ask-once (`requestLeave` /
+  `leavePending`); already-asked leaves immediately. Failed send does not
+  mark asked and does not leave. `EndScreen` owns the only Feedback Dialog on the finished board so stats /
   ask / turn-strip **!** never stack: banner-period `!` delays stats until that form
   closes; a send there marks asked; `!` is a no-op while stats or Feedback is already
   open. Live table still owns its own Dialog.
-  Flag opens Stay / Return home (`leaveGame()`); Game over **Return home** is the same intent.
-  Tutorial finished views use title **Tutorial complete** and CTA **Play a real game**
-  (still `onLeave` → hub only). Table banners (L51-06): **Your turn** (seat color);
+  Flag opens Stay / Return home (then `requestLeave`); Game over **Return home** is the same path.
+  Classic Game over also has **Play again** (L57-12) next to Return home. If this
+  `gameCode` is not yet asked, Play again opens the same ask-once ticket
+  (`playAgainPending`) then sends `playAgain` after Skip or a successful send.
+  Already-asked sends `playAgain` immediately. Cancel does not rematch. The first
+  `playAgain` in the room reforms the lobby **without yanking** other recap views;
+  walk-in spectators become unready lobby guests (L57-14). Tutorial finished views
+  use title **Tutorial complete** and CTA **Play a real game**
+  (still `onLeave` → hub only; no Play again). Table banners (L51-06): **Your turn** (seat color);
   **You are being attacked** once per new attack-tone Incoming (flashier, red);
   **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
   win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
@@ -441,7 +488,8 @@ rules above are unchanged — this section only covers how the client looks.
   when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
   seat until rewards finish. Reward picks stay opaque in the action log.
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default 60s.
-  `RECONNECT_GRACE_MS` env (ms, min 1000) — default 60s.
+  `RECONNECT_GRACE_MS` env (ms, min 1000) — default **30s** (L57-13; overrides
+  technical spec v1 §5.7 60s). Invalid env falls back to 30s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.
 
 ## Manual two-browser check (Lot 6)
@@ -541,8 +589,8 @@ and `INBOX_PASSWORD`. Do not restore pager / Reset help / Spy 4/8 / protocol 29.
    proven on tutorial Incoming (Basic / Strong / Spy / Thief); Feedback `!` stays on the
    turn strip. Skip tutorial (flag-only, hub, no Game over) is L45 evidence — this gate
    may complete 0–30 instead of Skip.
-4. **Tutorial complete** → Skip ask-once Feedback if it opens → **Play a real game** →
-   hub. Completing tutorial does **not** set hint `skipAll`.
+4. **Tutorial complete** → **Play a real game** (or View board) hits ask-mode full
+   ticket if not yet marked; Skip → hub. Completing tutorial does **not** set hint `skipAll`.
 5. Next Classic Easy solo (1 opponent): first-game hint overlay (not tutorial coach).
    Table **?** opens How to play without sending an intent. Shop: Spy play **2** / buy
    **4**.
@@ -980,4 +1028,56 @@ in the rooms below.
   `CostDisplay` after “Prices are double the play cost” (looks like a
   stray **−2** when Basic is selected). Pre-existing; not Lot 56.
 - `pnpm verify` **1274** tests.
+
+### Lot 57 verified 2026-09-14 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 31)
+
+Solo Classic, Vite `:5173`, Colyseus `:2567`. Nick `L57Gate` vs Alpha. Room
+`JUYNBZ`.
+
+- Live table turn strip: **?** then compact **`!`** (not the word Feedback),
+  then code / timers; flag on the right. Economy bar has Draw / Shop only.
+- Flag → Leave the game? → Forfeit → Game over stats (Winner Alpha,
+  L57Gate eliminated leave). **Return home** opens ask-mode Feedback: title
+  **Feedback**, lead **Skip is fine.**, Kind Bug / Confusion / Idea, About
+  chips, Message, Contact (optional), **Skip** + Send. Not the one-sentence
+  stub.
+- Skip → hub (Play online / Play solo / Tutorial / How to play / Feedback).
+- `pnpm verify` **1283** tests.
+
+### Lot 57 rematch verified 2026-09-15 (browser, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=300000`, PROTOCOL 32)
+
+Two-tab Classic online, Vite `:5173`, Colyseus `:2567`. Compact table **`!`**
+unchanged (not the word Feedback). Tutorial still auto-starts with Skip
+tutorial (not Forfeit). Claim picker is walk-in / lobby-guest only so a
+living host can still Draw.
+
+- Room `TPHFVU` HostA + GuestB. Host Start grey until Guest Ready. Kick
+  confirm **Kick this player?** removed bot Alpha. Guest forfeit → Game
+  over. Host **Play again** opened ask-once Feedback (**Skip is fine.**);
+  Guest recap stayed (not yanked). Guest Play again sat Not ready in the
+  same-code lobby; Start grey again.
+- Same room, mid-match SpecC join: **Watching**, opponent hands/kits
+  visible. GuestB drop → picker **Sit as a disconnected player?** listing
+  GuestB. After grace, Host Draw ×3; log **GuestB is eliminated by
+  absence**; picker gone. Host Play again seated SpecC as unready lobby
+  guest.
+- Room `MWSELQ` HostC + GuestC + SpecE. After GuestC tab X, picker
+  pre-selected GuestC with full **Stay spectating** / **Sit here**. Sit
+  here remapped SpecE onto GuestC (private hand). HostC never saw the
+  picker. Tutorial room `VWLXXS` nick TutA: **?** / **`!`**, flag **Skip
+  the tutorial?**
+- `pnpm verify` **1331** tests.
+
+### Lot 57 Ready chrome + claim fog verified 2026-09-15 (browser, `RECONNECT_GRACE_MS=5000 TURN_DURATION_MS=300000`, PROTOCOL 33)
+
+Two-window Classic online, Vite `:5173`, Colyseus `:2567`. Room `KNPSCI`.
+
+- Guest **Ready** is green with a check. Seat ready is a colored check/cross
+  column left of nicknames. Host Start enables after Guest Ready.
+- Walk-in SpecC with picker open: opponent portraits are `?` (no kit art,
+  resource `?`). **Stay spectating** then shows kits and live lives.
+- Watching copy does not claim every hand is visible until a `spied` overlay
+  is on the view.
+- `pnpm verify` **1337** tests.
+
 

@@ -5,6 +5,8 @@
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 8;
+/** Walk-in Classic spectators (L57-07). Player occupancy stays `MAX_PLAYERS`. */
+export const MAX_SPECTATORS = 8;
 
 /**
  * Solo opponent counts (total seats = 1 human + N bots).

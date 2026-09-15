@@ -2,6 +2,7 @@ import { PROTOCOL_VERSION } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { buildFeedbackPayload } from './build-feedback-payload';
+import { resolveFeedbackSubmitFields } from './feedback-form-copy';
 
 describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
   it('omits gameCode and logTail on Home and never includes seed', () => {
@@ -49,6 +50,28 @@ describe('buildFeedbackPayload (technical spec v6 §7.1 / L47-03)', () => {
     expect(body.contact).toBe('ada@example.com');
     expect(body.logTail).toHaveLength(30);
     expect(body.logTail?.[0]).toEqual(actionLog[1]);
+    expect(JSON.stringify(body)).not.toContain('seed');
+  });
+
+  it('builds an ask-mode body from the tester kind, topics, and optional contact', () => {
+    const submitted = resolveFeedbackSubmitFields('ask', 'bug', ['ui']);
+    const body = buildFeedbackPayload(
+      submitted.kind,
+      '  Incoming was unclear  ',
+      {
+        screen: 'end',
+        gameCode: 'ABCDEF',
+        playKind: 'classic',
+        topics: submitted.topics,
+      },
+      ' ada@example.com ',
+    );
+
+    expect(body.kind).toBe('bug');
+    expect(body.topics).toEqual(['ui']);
+    expect(body.message).toBe('Incoming was unclear');
+    expect(body.gameCode).toBe('ABCDEF');
+    expect(body.contact).toBe('ada@example.com');
     expect(JSON.stringify(body)).not.toContain('seed');
   });
 });

@@ -54,6 +54,16 @@ export const RESOLVE_SUB_CHOICE = 'resolveSubChoice';
 export const FORFEIT = 'forfeit';
 /** PROTOCOL_VERSION 30 / L49-01 — lobby kit pick; payload `ChooseKitPayload`. */
 export const CHOOSE_KIT = 'chooseKit';
+/** PROTOCOL_VERSION 32 / L57-07 — human guest lobby ready toggle. */
+export const SET_READY = 'setReady';
+/** PROTOCOL_VERSION 32 / L57-07 — host lobby kick (human or bot). */
+export const KICK_PLAYER = 'kickPlayer';
+/** PROTOCOL_VERSION 32 / L57-07 — Classic finished rematch in this room. */
+export const PLAY_AGAIN = 'playAgain';
+/** PROTOCOL_VERSION 32 / L57-07 — attach this socket to a claimable disconnected seat. */
+export const CLAIM_SEAT = 'claimSeat';
+/** PROTOCOL_VERSION 33 / L57-16 — walk-in confirms Stay spectating; unfogs Spy overlay. */
+export const STAY_SPECTATING = 'staySpectating';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -257,6 +267,21 @@ export interface ChooseKitPayload {
   kitId: KitId | 'random';
 }
 
+/** Human guest ready toggle — PROTOCOL_VERSION 32 / L57-07. */
+export interface SetReadyPayload {
+  ready: boolean;
+}
+
+/** Host kick — PROTOCOL_VERSION 32 / L57-07. Same shape as `removeBot`. */
+export interface KickPlayerPayload {
+  playerId: string;
+}
+
+/** Claim a disconnected living seat — PROTOCOL_VERSION 32 / L57-07. */
+export interface ClaimSeatPayload {
+  playerId: string;
+}
+
 export interface ServerToClientMessages {
   [STATE_UPDATE]: StateView;
   /** PROTOCOL_VERSION 27 — typed reject code + short English fallback message. */
@@ -288,6 +313,11 @@ export interface ClientToServerMessages {
   [REMOVE_BOT]: RemoveBotPayload;
   [SET_BOT_DIFFICULTY]: SetBotDifficultyPayload;
   [CHOOSE_KIT]: ChooseKitPayload;
+  [SET_READY]: SetReadyPayload;
+  [KICK_PLAYER]: KickPlayerPayload;
+  [PLAY_AGAIN]: undefined;
+  [CLAIM_SEAT]: ClaimSeatPayload;
+  [STAY_SPECTATING]: undefined;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
   [PLAY_MULTIPLE_ATTACKS]: PlayMultipleAttacksPayload;
