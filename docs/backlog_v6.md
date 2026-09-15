@@ -51,6 +51,9 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     (4 / 7 turns); Points Generator 3 / 6; Unspy 10 points. `PROTOCOL_VERSION`
     **33 → 34** (exception, same class as L49 / L56 / L57; retargeted from 31 → 32
     after Lot 57 landed on main).
+17. **Compact Draw / Unspy dock (Lot 59).** Designer 2026-09-15. Economy-bar Draw
+    and Unspy drop word labels (gain CostDisplay / crossed-eye + cost). No protocol
+    bump.
 
 
 **Execution order**
@@ -93,9 +96,9 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-110 of 110 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+111 of 111 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
-Lot 58 opened 2026-09-15.
+Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15.
 
 
 | Lot | Tasks | Done |
@@ -118,6 +121,7 @@ Lot 58 opened 2026-09-15.
 | 56 · Invisibility freeze + readability | 7 | 7 |
 | 57 · Feedback + lobby rematch | 16 | 16 |
 | 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 9 |
+| 59 · Compact Draw / Unspy dock | 1 | 1 |
 
 
 ---
@@ -412,6 +416,18 @@ weights; freeze fixture refresh is L58-08.
 
 ---
 
+## Lot 59 — Compact Draw / Unspy dock (designer 2026-09-15)
+
+Explicit session instruction. Client presentation only. No protocol bump. No Classic
+rule or value change. Shop keeps its word label.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L59-01 | Economy bar: Draw face is only gain point `CostDisplay` (`signed="gain"`); Unspy face is crossed-eye SVG + `CLEAR_SPY_COST` `CostDisplay` (`signed="cost"`). Drop the words Draw and Unspy from the button. Compact `Button` (no 7rem min-width). `aria-label` / `title` keep the names. Unspy picker title unchanged. **Acceptance:** source tests prove no `{DRAW_ACTION_LABEL}` / `{UNSPY_ACTION_LABEL}` children; Shop still shows `SHOP_ACTION_LABEL`; `pnpm verify` green. | S | Low | L58-07 | Done |
+
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -434,7 +450,8 @@ weights; freeze fixture refresh is L58-08.
 | 56 | 7 |
 | 57 | 16 |
 | 58 | 9 |
-| **Total** | **110** |
+| 59 | 1 |
+| **Total** | **111** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 

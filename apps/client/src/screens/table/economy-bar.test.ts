@@ -1,5 +1,5 @@
 /**
- * Economy bar Unspy chrome — L58-07.
+ * Economy bar Unspy chrome — L58-07 / compact Draw + Unspy — L59-01.
  */
 
 import { readFileSync } from 'node:fs';
@@ -26,5 +26,22 @@ describe('economy bar Unspy (L58-07)', () => {
     expect(source).toContain('hasLivingSpy');
     expect(source).toContain('canAffordUnspy');
     expect(source).not.toMatch(/\bUP\b/);
+  });
+});
+
+describe('economy bar compact Draw / Unspy (L59-01)', () => {
+  it('omits Draw and Unspy words from the button face', () => {
+    const source = readFileSync(join(dir, 'economy-bar.tsx'), 'utf8');
+    expect(source).not.toMatch(/\{DRAW_ACTION_LABEL\}\s*\{' '\}/);
+    expect(source).not.toMatch(/\{UNSPY_ACTION_LABEL\}\s*\{' '\}/);
+    expect(source).toContain('aria-label={drawLabel}');
+    expect(source).toContain('aria-label={unspyLabel}');
+    expect(source).toContain('costAriaLabel(drawCost, \'gain\')');
+    expect(source).toContain('costAriaLabel(unspyCost, \'cost\')');
+    expect(source).toContain('signed="gain"');
+    expect(source).toContain("variant=\"crossed\"");
+    expect(source).toMatch(/variant="green"[\s\S]{0,120}compact/);
+    expect(source).toMatch(/variant="purple"[\s\S]{0,80}compact/);
+    expect(source).toContain('{SHOP_ACTION_LABEL}');
   });
 });

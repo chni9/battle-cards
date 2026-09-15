@@ -1,5 +1,6 @@
 /**
- * Economy / shop button labels — L43-02. No "UP" token on chrome.
+ * Economy / shop button labels — L43-02 / L59-01. No "UP" token on chrome.
+ * Draw / Unspy words stay here for aria-label and the Unspy picker title.
  */
 
 export const DRAW_ACTION_LABEL = 'Draw';

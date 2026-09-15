@@ -34,6 +34,10 @@ describe('economy chrome labels (L43-02)', () => {
     expect(economy).toContain('DRAW_ACTION_LABEL');
     expect(economy).toContain('SHOP_ACTION_LABEL');
     expect(economy).toContain('UNSPY_ACTION_LABEL');
+    expect(economy).toContain('aria-label={drawLabel}');
+    expect(economy).toContain('aria-label={unspyLabel}');
+    expect(economy).not.toMatch(/\{DRAW_ACTION_LABEL\}\s*\{' '\}/);
+    expect(economy).not.toMatch(/\{UNSPY_ACTION_LABEL\}\s*\{' '\}/);
     expect(economy).toContain("kind: 'points'");
     expect(economy).not.toContain('How to play');
     expect(economy).not.toContain('onLeave');

@@ -750,6 +750,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
 | 57 | Feedback + lobby rematch | Ask-mode ticket; Ready/Kick/Play again; spectate/claim join; 31 → 32 then 32 → 33 |
 | 58 | Shop, pool, Invisibility, PG, Unspy | Upgrade-point shop icons, doubling pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10; 33 → 34 |
+| 59 | Compact Draw / Unspy dock | Economy-bar Draw/Unspy drop word labels; gain/cost CostDisplay (+ crossed-eye); no protocol bump |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
@@ -759,4 +760,5 @@ so the tutorial shop/target already look like the real table). **46** after 43 (
 **57** is a designer session follow-up (feedback, then lobby rematch; 31 → 32, then 32 → 33).
 **58** is a designer session follow-up (Classic values + one protocol bump; unfreezes
 Invisibility under the Lot 58 text).
+**59** is a designer session follow-up (client presentation; no protocol bump).
 
