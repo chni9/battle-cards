@@ -910,8 +910,8 @@ describe('buildPlayingViewFor (L41-03 / technical spec v6 §8)', () => {
   });
 });
 
-describe('buildPlayingViewFor — walk-in spectator (L57-13)', () => {
-  it('reuses eliminated-spectator overlay and marks isSpectator', () => {
+describe('buildPlayingViewFor — walk-in spectator (L57-13 / L57-16)', () => {
+  it('marks isSpectator without Spy kits while a claim picker is open', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -943,11 +943,43 @@ describe('buildPlayingViewFor — walk-in spectator (L57-13)', () => {
     expect(view.you).toBe('watcher');
     expect(view.players.every((player) => !player.isYou)).toBe(true);
     expect(view.claimableSeats).toEqual([{ playerId: 'a', nickname: 'Alice' }]);
+    expect(view.players.find((player) => player.id === 'b')?.spied).toBeUndefined();
+    expect(state.visibility).toEqual([]);
+  });
+
+  it('grants the eliminated-spectator overlay after Stay spectating', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'walk-in-stay',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(bob).toBeDefined();
+    if (bob === undefined) {
+      return;
+    }
+
+    bob.lives = 14;
+    bob.points = 6;
+
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      walkInSpectator: true,
+      walkInSeesPrivate: true,
+      claimableSeats: [{ playerId: 'a', nickname: 'Alice' }],
+    });
+
     expect(view.players.find((player) => player.id === 'b')?.spied).toMatchObject({
       kitId: bob.kitId,
       lives: 14,
       points: 6,
     });
-    expect(state.visibility).toEqual([]);
   });
 });

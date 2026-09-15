@@ -140,8 +140,9 @@ rules above are unchanged — this section only covers how the client looks.
   **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
-  Each seat shows **Ready** / **Not ready**. Host and bots are ready on the wire; human
-  **guests** toggle with **Ready** / **Cancel ready** (`setReady`). Host has no Ready
+  Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
+  nickname (`font-sans`). Host and bots are ready on the wire; human **guests** toggle with
+  **Ready** (green + check) / **Cancel ready** (orange, `setReady`). Host has no Ready
   control. **Start** is grey until `>= 2` seats **and** every connected human guest is
   ready (`lobbyStartEnabled` — grey is not validation). Host **Kick** on every other
   seat (bots and humans) opens **Kick this player?** then `kickPlayer`. Kicked humans
@@ -398,7 +399,9 @@ rules above are unchanged — this section only covers how the client looks.
   `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
   with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
   picker is **not** shown to a living seated player (host Draw stays reachable).
-  `claimSeat` remaps onto that `player.id`.
+  Walk-in Stay sends `staySpectating` so the server unfogs kits; until then the
+  table behind the picker has no Spy overlay (L57-16). `claimSeat` remaps onto
+  that `player.id`.
   Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
   (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board

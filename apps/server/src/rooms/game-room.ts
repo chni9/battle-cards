@@ -20,6 +20,7 @@ import {
   KICK_PLAYER,
   PLAY_AGAIN,
   CLAIM_SEAT,
+  STAY_SPECTATING,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -151,7 +152,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
 } from '../protocol/build-view-for';
-import { recipientSeesPrivateOf } from '../protocol/visibility-matrix';
+import { recipientSeesPrivateOf, walkInSpectatorSeesPrivate } from '../protocol/visibility-matrix';
 import {
   GAME_CODE_PRESENCE_CHANNEL,
   generateGameCodeCandidate,
@@ -247,6 +248,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private readonly spectators = new Set<string>();
   /** Nickname captured at walk-in join — used when seating them after Play again (L57-14). */
   private readonly spectatorNicknames = new Map<string, string>();
+  /** Walk-ins who confirmed Stay spectating — Spy overlay granted (L57-16). */
+  private readonly stayConfirmedSpectators = new Set<string>();
   /** Human lobby kit picks — never copied onto other seats' views (L49-01). */
   private readonly kitSelections = new Map<string, LobbyKitSelection>();
   /** Human guest Ready flags — host implicit, bots always ready (L57-08). */
@@ -525,6 +528,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.handleClaimSeat(client, payload);
     },
 
+    [STAY_SPECTATING]: (client: GameClient): void => {
+      this.handleStaySpectating(client);
+    },
+
     [DRAW_CARD]: (client: GameClient): void => {
       this.handleAction(client, { type: 'draw' });
     },
@@ -752,6 +759,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (this.spectators.delete(sessionId)) {
       this.spectatorNicknames.delete(sessionId);
+      this.stayConfirmedSpectators.delete(sessionId);
       this.sessionToPlayerId.delete(sessionId);
       this.refreshJoinLock();
       this.sendStateToEveryoneExcept(client);
@@ -1178,6 +1186,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
       this.spectators.delete(client.sessionId);
       this.spectatorNicknames.delete(client.sessionId);
+      this.stayConfirmedSpectators.delete(client.sessionId);
       this.bindSession(client.sessionId, client.sessionId);
       this.seats.push({ kind: 'human', sessionId: client.sessionId, nickname });
       this.guestReady.set(client.sessionId, false);
@@ -1358,6 +1367,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
   }
 
+  private handleStaySpectating(client: GameClient): void {
+    if (!this.spectators.has(client.sessionId)) {
+      client.send(ERROR_MESSAGE, actionReject('stay-spectating-not-spectator'));
+      return;
+    }
+
+    this.stayConfirmedSpectators.add(client.sessionId);
+    this.sendStateTo(client);
+  }
+
   private handleClaimSeat(client: GameClient, payload: unknown): void {
     const parsed = parseClaimSeatPayload(payload);
 
@@ -1408,6 +1427,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.spectators.delete(client.sessionId);
     this.spectatorNicknames.delete(client.sessionId);
+    this.stayConfirmedSpectators.delete(client.sessionId);
 
     if (
       !this.hasStarted &&
@@ -3731,6 +3751,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
+   * Walk-in Spy overlay (L57-16): withheld while a claim picker is still open.
+   */
+  private walkInSeesPrivate(sessionId: string): boolean {
+    if (!this.spectators.has(sessionId)) {
+      return false;
+    }
+
+    return walkInSpectatorSeesPrivate({
+      claimableCount: this.claimableSeatsNow().length,
+      stayConfirmed: this.stayConfirmedSpectators.has(sessionId),
+    });
+  }
+
+  /**
    * `activateDuplication` is not a public action (designer 2026-08-06).
    * Unicast the real payload to the actor, current spies, and eliminated
    * spectators; send an opaque `draw` ACTION_PLAYED to everyone else.
@@ -3746,16 +3780,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     for (const client of this.clients) {
       const recipientId = this.viewRecipientId(client);
-      const walkIn = this.spectators.has(client.sessionId);
+      const walkInSeesPrivate = this.walkInSeesPrivate(client.sessionId);
 
-      if (recipientId === played.actorPlayerId || walkIn) {
+      if (recipientId === played.actorPlayerId || walkInSeesPrivate) {
         client.send(ACTION_PLAYED, played);
         continue;
       }
 
       if (
         state !== null &&
-        recipientSeesPrivateOf(state, recipientId, played.actorPlayerId, walkIn)
+        recipientSeesPrivateOf(state, recipientId, played.actorPlayerId, walkInSeesPrivate)
       ) {
         client.send(ACTION_PLAYED, played);
         continue;
@@ -3781,6 +3815,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const recap = this.recapSeats.some((seat) => seat.sessionId === recipientId);
     const holdout = this.finishedHoldout;
     const walkInOpt = walkIn ? { walkInSpectator: true as const } : {};
+    const walkInPrivateOpt = this.walkInSeesPrivate(client.sessionId)
+      ? { walkInSeesPrivate: true as const }
+      : {};
     const claimableOpt =
       claimableSeats.length > 0 ? { claimableSeats } : {};
     const lobbySpectatorOpt = walkIn ? { isSpectator: true as const } : {};
@@ -3800,6 +3837,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           playKind: holdout.playKind,
           tutorialIndex: holdout.tutorialIndex,
           ...walkInOpt,
+          ...walkInPrivateOpt,
           ...claimableOpt,
         }),
       );
@@ -3841,6 +3879,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           playKind: this.playKind,
           tutorialIndex: this.tutorialIndex,
           ...walkInOpt,
+          ...walkInPrivateOpt,
           ...claimableOpt,
         }),
       );
@@ -3859,6 +3898,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
         ...walkInOpt,
+        ...walkInPrivateOpt,
         ...claimableOpt,
       }),
     );

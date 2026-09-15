@@ -51,6 +51,7 @@ describe('ActionRejectCode catalog (L32-01)', () => {
         'invalid-claim-payload',
         'spectate-room-full',
         'kicked',
+        'stay-spectating-not-spectator',
       ]),
     );
   });

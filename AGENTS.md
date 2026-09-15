@@ -115,7 +115,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 temporarily takes Invisibility out of Classic circulation and play — catalog and
 handler stay. **Lot 57** (designer 2026-09-14 / 2026-09-15) converts feedback
 and then lobby/rematch: full Game over ticket; Ready + Kick; Play again in the
-same room; join-by-code spectate/claim; table control stays `!`. A bot playing badly is never grounds for touching a rule. **Search,
+same room; join-by-code spectate/claim; table control stays `!`; walk-in kits
+fog until Stay (`PROTOCOL_VERSION` 33). A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
    has Spyed) and the **public** action log is **out** — technical spec v3 decision 2 is

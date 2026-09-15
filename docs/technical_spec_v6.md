@@ -90,7 +90,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
 | 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation and play; catalog/handler stay). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**, **L57-16 (32 → 33)**. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
 
@@ -147,12 +147,14 @@ Still Lot 57 (not a new lot). Classic online only. No combat-value change.
   unready lobby guests.
 - **Join-by-code while playing:** enter as spectator, then picker if any
   **living disconnected** seats remain (sit as that seat or stay watching).
-  No nickname auto-match. Walk-in vision = eliminated upgraded-Spy overlay.
+  No nickname auto-match. Walk-in vision = eliminated upgraded-Spy overlay
+  **after** Stay spectating or when no claimable seats remain (L57-16); kits
+  stay hidden while the picker is open.
 - **Disconnect clock:** 30s grace (default `RECONNECT_GRACE_MS`), then instant
   autodraw on their turns. The **third** autodraw eliminates
   (`eliminateWithoutReward`, `absence`). Eliminated seats are not claimable.
-- `PROTOCOL_VERSION` **31 → 32** (L57-07). `maxClients` 8 player seats + 8
-  spectators. Player occupancy still 2–8.
+- `PROTOCOL_VERSION` **31 → 32** (L57-07), **32 → 33** (L57-16). `maxClients` 8
+  player seats + 8 spectators. Player occupancy still 2–8.
 
 ---
 
@@ -204,7 +206,7 @@ Hints:     localStorage, first Classic playing view only
   in development; production same-origin Coolify needs none.
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. No later
   V6 task bumps it except documented exceptions: L49-01 (29 → 30), L56-03 (30 → 31),
-  **L57-07 (31 → 32)**.
+  **L57-07 (31 → 32)**, **L57-16 (32 → 33)**.
 
 ---
 
@@ -739,10 +741,10 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
-| 57 | Feedback + lobby rematch | Ask-mode ticket; Ready/Kick/Play again; spectate/claim join; 31 → 32 |
+| 57 | Feedback + lobby rematch | Ask-mode ticket; Ready/Kick/Play again; spectate/claim join; 31 → 32 then 32 → 33 |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
 **48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
 **56** is a designer session follow-up (Classic freeze exception + one protocol bump).
-**57** is a designer session follow-up (feedback, then lobby rematch; 31 → 32).
+**57** is a designer session follow-up (feedback, then lobby rematch; 31 → 32, then 32 → 33).

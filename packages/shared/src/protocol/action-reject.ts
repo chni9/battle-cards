@@ -130,6 +130,8 @@ export const ACTION_REJECT_CODES = [
   'invalid-claim-payload',
   'spectate-room-full',
   'kicked',
+  // Claim-picker fog (PROTOCOL_VERSION 33 / L57-16)
+  'stay-spectating-not-spectator',
 
   // Tutorial (PROTOCOL_VERSION 29 / L41-02)
   'tutorial-follow-coach',
@@ -251,6 +253,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'invalid-claim-payload': 'Invalid claimSeat payload.',
   'spectate-room-full': 'This table has no more spectator space.',
   'kicked': 'You were kicked.',
+  'stay-spectating-not-spectator': 'Only a spectator can stay spectating.',
 
   'tutorial-follow-coach': 'This tutorial step asks for a different action.',
   'tutorial-room-closed': 'This tutorial cannot be joined.',

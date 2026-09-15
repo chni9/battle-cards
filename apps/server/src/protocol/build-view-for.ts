@@ -171,8 +171,13 @@ export interface PlayingViewInput {
   playKind?: PlayKind;
   /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
   tutorialIndex?: number | null;
-  /** Walk-in Classic spectator (L57-13). Same vision as an eliminated spectator. */
+  /** Walk-in Classic spectator (L57-13). Identity only — overlay is `walkInSeesPrivate`. */
   walkInSpectator?: true;
+  /**
+   * Walk-in Spy overlay (L57-16). Omit while a claim picker is still open so
+   * kits stay hidden until Stay spectating or the list empties.
+   */
+  walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
 }
 
@@ -276,6 +281,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   const playKind = input.playKind ?? 'classic';
   const tutorialIndex = input.tutorialIndex ?? null;
   const walkInSpectator = input.walkInSpectator === true;
+  const walkInSeesPrivate = input.walkInSeesPrivate === true;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
   if (selfPlayer === undefined && !walkInSpectator) {
@@ -296,7 +302,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
   );
 
   const players: PublicPlayerView[] = state.players.map((player) => {
-    const spied = buildSpiedView(state, recipientSessionId, player, walkInSpectator);
+    const spied = buildSpiedView(state, recipientSessionId, player, walkInSeesPrivate);
     const eliminationReveal = buildEliminationReveal(player);
     const difficulty = botDifficulties?.get(player.id);
     const isBot = difficulty !== undefined;
@@ -377,7 +383,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         actionLog,
         recipientSessionId,
         state,
-        walkInSpectator,
+        walkInSeesPrivate,
       ),
       pool: state.pool.map((card) => ({ ...card })),
       playKind,
@@ -405,6 +411,7 @@ export interface FinishedViewInput {
   /** Room-owned overlay (technical spec v6 §8 / L41-03). Default `null`. */
   tutorialIndex?: number | null;
   walkInSpectator?: true;
+  walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
 }
 
@@ -448,6 +455,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
   const playKind = input.playKind ?? 'classic';
   const tutorialIndex = input.tutorialIndex ?? null;
   const walkInSpectator = input.walkInSpectator === true;
+  const walkInSeesPrivate = input.walkInSeesPrivate === true;
   const selfPlayer = state.players.find((player) => player.id === recipientSessionId);
 
   if (selfPlayer === undefined && !walkInSpectator) {
@@ -470,6 +478,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     tutorialIndex,
     ...(botDifficulties !== undefined ? { botDifficulties } : {}),
     ...(walkInSpectator ? { walkInSpectator: true } : {}),
+    ...(walkInSeesPrivate ? { walkInSeesPrivate: true } : {}),
     ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
   });
 
@@ -483,7 +492,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
       players: state.players.map((player) => {
         const difficulty = botDifficulties?.get(player.id);
         const eliminationReveal = buildEliminationReveal(player);
-        const spied = buildSpiedView(state, recipientSessionId, player, walkInSpectator);
+        const spied = buildSpiedView(state, recipientSessionId, player, walkInSeesPrivate);
         const view: PublicPlayerView = {
           id: player.id,
           nickname: player.nickname,

@@ -12,6 +12,7 @@ import {
   BUY_UPGRADE_POINT,
   PLAY_AGAIN,
   CLAIM_SEAT,
+  STAY_SPECTATING,
   KICK_PLAYER,
   CHOOSE_KIT,
   DEACTIVATE_PERSISTENT,
@@ -162,6 +163,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   kickPlayer: (playerId: string) => void;
   playAgain: () => void;
   claimSeat: (playerId: string) => void;
+  staySpectating: () => void;
   setReady: (ready: boolean) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   chooseKit: (selection: LobbyKitSelection) => void;
@@ -503,6 +505,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(CLAIM_SEAT, { playerId });
   }, []);
 
+  const staySpectating = useCallback((): void => {
+    roomRef.current?.send(STAY_SPECTATING);
+  }, []);
+
   const setReady = useCallback((ready: boolean): void => {
     roomRef.current?.send(SET_READY, { ready });
   }, []);
@@ -670,6 +676,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
     kickPlayer,
     playAgain,
     claimSeat,
+    staySpectating,
     setReady,
     setBotDifficulty,
     chooseKit,

@@ -22,10 +22,10 @@ import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
-  lobbyReadyLabel,
   lobbyShowsReadyToggle,
   lobbyStartEnabled,
 } from './lobby-ready';
+import { LobbyReadyCheckIcon, LobbyReadyStatusMark } from './lobby-ready-mark';
 import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
@@ -158,8 +158,9 @@ export function LobbyScreen({
                 key={player.id}
                 className="flex min-h-11 flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-ink">
+                <div className="flex min-w-0 items-center gap-2">
+                  <LobbyReadyStatusMark isReady={player.isReady} />
+                  <span className="min-w-0 font-sans font-medium text-ink">
                     {player.nickname}
                     {player.id === view.you ? ' (you)' : ''}
                   </span>
@@ -171,9 +172,6 @@ export function LobbyScreen({
                   {player.isBot && player.botDifficulty !== undefined && (
                     <BotSeatLabel difficulty={player.botDifficulty} />
                   )}
-                  <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    {lobbyReadyLabel(player.isReady)}
-                  </span>
                 </div>
                 {isHost && player.id !== view.you && (
                   <div className="flex flex-wrap gap-2">
@@ -247,12 +245,19 @@ export function LobbyScreen({
           {showReadyToggle && (
             <Button
               type="button"
-              variant={youReady ? 'green' : 'orange'}
+              variant={youReady ? 'orange' : 'green'}
               onClick={() => {
                 onSetReady(!youReady);
               }}
             >
-              {youReady ? 'Cancel ready' : 'Ready'}
+              {youReady ? (
+                'Cancel ready'
+              ) : (
+                <>
+                  <LobbyReadyCheckIcon />
+                  Ready
+                </>
+              )}
             </Button>
           )}
           {!isHost && !showReadyToggle && (

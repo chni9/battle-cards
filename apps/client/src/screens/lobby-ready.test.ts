@@ -69,6 +69,9 @@ describe('lobby Ready wiring (L57-11)', () => {
     expect(lobby).toContain('onSetReady');
     expect(lobby).toContain('lobbyStartEnabled');
     expect(lobby).toContain('Cancel ready');
+    expect(lobby).toContain("variant={youReady ? 'orange' : 'green'}");
+    expect(lobby).toContain('LobbyReadyCheckIcon');
+    expect(lobby).toContain('LobbyReadyStatusMark');
     expect(lobby).not.toContain('Feedback on the felt');
   });
 });

@@ -3272,4 +3272,21 @@ unchanged. `heuristic-v4` untouched.
 
 ---
 
+## 2026-09-15 · [P] Lot 57 claim-picker fog + lobby Ready chrome (L57-16)
+
+Walk-in spectators were receiving the eliminated upgraded-Spy overlay on join,
+so opponent kits leaked behind the claim picker before Stay or Sit.
+
+**Fog:** withhold `walkInSeesPrivate` while `claimableSeats` is non-empty and
+the socket has not confirmed Stay. Empty claim list auto-unfogs. `claimSeat`
+uses seated vision. Client `staySpectating` (payload none) is walk-in only.
+
+**Lobby chrome:** Ready CTA is green with a check. Seat ready is a colored
+check/cross in a fixed column left of the nickname (Outfit `font-sans`).
+
+`PROTOCOL_VERSION` **32 → 33** (same class of V6 exception as L49 / L56 /
+L57-07). Table `!` unchanged.
+
+---
+
 

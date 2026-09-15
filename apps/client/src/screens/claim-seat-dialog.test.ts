@@ -88,5 +88,6 @@ describe('App claim picker wiring (L57-15)', () => {
   it('gates the dialog on shouldShowClaimPicker so seated players keep Draw', () => {
     const app = readFileSync(join(here, '../App.tsx'), 'utf8');
     expect(app).toContain('shouldShowClaimPicker');
+    expect(app).toContain('staySpectating');
   });
 });

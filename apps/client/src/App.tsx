@@ -44,6 +44,7 @@ function GameApp() {
     setReady,
     playAgain,
     claimSeat,
+    staySpectating,
     setBotDifficulty,
     chooseKit,
     drawCard,
@@ -110,6 +111,9 @@ function GameApp() {
           claimSeat(playerId);
         }}
         onStay={() => {
+          if (walkInSpectator) {
+            staySpectating();
+          }
           setClaimDismissedKey(claimableKey);
         }}
       />

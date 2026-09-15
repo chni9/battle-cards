@@ -378,6 +378,10 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
     title: 'Kicked',
     body: 'You were kicked from the lobby. You can join again with the same code.',
   },
+  'stay-spectating-not-spectator': {
+    title: 'Already seated',
+    body: 'Only a spectator can stay spectating. You already have a seat at this table.',
+  },
 
   'tutorial-follow-coach': {
     title: 'Tutorial step',

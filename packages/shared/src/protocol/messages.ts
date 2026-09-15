@@ -62,6 +62,8 @@ export const KICK_PLAYER = 'kickPlayer';
 export const PLAY_AGAIN = 'playAgain';
 /** PROTOCOL_VERSION 32 / L57-07 — attach this socket to a claimable disconnected seat. */
 export const CLAIM_SEAT = 'claimSeat';
+/** PROTOCOL_VERSION 33 / L57-16 — walk-in confirms Stay spectating; unfogs Spy overlay. */
+export const STAY_SPECTATING = 'staySpectating';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -315,6 +317,7 @@ export interface ClientToServerMessages {
   [KICK_PLAYER]: KickPlayerPayload;
   [PLAY_AGAIN]: undefined;
   [CLAIM_SEAT]: ClaimSeatPayload;
+  [STAY_SPECTATING]: undefined;
   [DRAW_CARD]: undefined;
   [PLAY_CARD]: PlayCardPayload;
   [PLAY_MULTIPLE_ATTACKS]: PlayMultipleAttacksPayload;

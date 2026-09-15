@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **32** (L57-07 lobby Ready / Kick / Play again /
-> `claimSeat` + walk-in spectator views; Mirror redirect fields landed at 31 in L56-03;
+> **Status:** current `PROTOCOL_VERSION` is **33** (L57-16 `staySpectating` +
+> claim-picker kit fog; L57-07 lobby Ready / Kick / Play again / `claimSeat` +
+> walk-in spectator views; Mirror redirect fields landed at 31 in L56-03;
 > V6 teaching fields at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
@@ -33,7 +34,9 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
    Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
    **Walk-in Classic spectators** (L57-13) reuse this overlay (`walkInSpectator` on the view
-   builder) without sitting in `GameState.players`. Do not invent a second vision matrix.
+   builder) without sitting in `GameState.players`. **L57-16:** the overlay is granted only
+   after `staySpectating` or when `claimableSeats` is empty — a walk-in with the picker
+   still open must not see kits. Do not invent a second vision matrix.
 4. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
    can be bypassed.
 5. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
@@ -46,7 +49,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView` |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
@@ -88,6 +91,8 @@ lobby-only; each human sets only their own pick; default `'random'`) ·
 `playAgain` (PROTOCOL_VERSION 32 / L57-10 — Classic finished / reforming; same room/code) ·
 `claimSeat` `{ playerId }` (PROTOCOL_VERSION 32 / L57-13 — remap this socket onto a living
 disconnected human seat; no nickname auto-match) ·
+`staySpectating` (PROTOCOL_VERSION 33 / L57-16 — walk-in only; unfogs Spy overlay while
+claimable seats remain) ·
 `playCard` · `playMultipleAttacks` (Assassin only,
 min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buyCard` · `sellCard` · `upgradeCard` · `buyUpgradePoint` · `sellUpgradePoint` · `drawCard` ·
@@ -123,6 +128,7 @@ PROTOCOL_VERSION 30 adds `'choose-kit-already-started'` and `'invalid-choose-kit
 (`'kit-unavailable'` covers an unknown catalog id).
 PROTOCOL_VERSION 32 adds Ready / Kick / Play again / claim / spectate codes
 (`start-not-all-ready`, `claim-not-claimable`, `spectate-room-full`, `kicked`, …).
+PROTOCOL_VERSION 33 adds `stay-spectating-not-spectator`.
 `CLIENT_READY` stays the Colyseus ping — not lobby Ready.
 
 `PlayingStateView.actionLog` (PROTOCOL_VERSION 18+) is the durable public history: discriminated
@@ -204,7 +210,8 @@ the hidden-information tests of technical spec §8 level 2 cheap: no server, no 
 timing. Seated recipients use `Player.id`. Walk-in spectators (L57-13) are Colyseus clients
 **not** in `GameState.players`; `buildPlayingViewFor` / lobby / finished siblings take
 `walkInSpectator` and reuse the eliminated-spectator overlay (`isSpectator`, empty legal
-actions, public `claimableSeats`). Lobby seats carry public `isReady`.
+actions, public `claimableSeats`) **only** when `walkInSeesPrivate` is set (Stay confirmed
+or no claimable seats — L57-16). Lobby seats carry public `isReady`.
 
 ## Timers and sub-choices
 

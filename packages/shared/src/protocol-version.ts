@@ -43,5 +43,10 @@
  * finished `playAgain`, join-by-code `claimSeat` + spectator views
  * (`isSpectator`, `claimableSeats`), `LobbySeatView.isReady`. Exception to
  * the V6 single-bump lock (same class as L49 / L56); see decisions.md.
+ *
+ * 32 → 33 (L57-16 / designer 2026-09-15): `staySpectating` so a walk-in
+ * with an open claim picker does not receive the Spy overlay until Stay
+ * or the picker empties. Exception to the V6 single-bump lock (same class
+ * as L49 / L56 / L57-07); see decisions.md.
  */
-export const PROTOCOL_VERSION = 32;
+export const PROTOCOL_VERSION = 33;

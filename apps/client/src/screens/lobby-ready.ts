@@ -1,5 +1,5 @@
 /**
- * Lobby Ready chrome — L57-11 / PROTOCOL_VERSION 32.
+ * Lobby Ready chrome — L57-11 / L57-16 / PROTOCOL_VERSION 33.
  * Grey Start is not validation; the server still rejects `start-not-all-ready`.
  */
 
