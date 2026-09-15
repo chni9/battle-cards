@@ -85,7 +85,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'shop',
     title: 'Shop',
-    body: 'Open Shop to buy extra cards or upgrade points, and to sell cards you do not need.',
+    body: 'Open Shop to buy extra cards or upgrade points, a random pool card, and to sell cards you do not need.',
     screenshotFile: HOW_TO_PLAY_SCREENSHOT_FILES.shop,
   },
 ];

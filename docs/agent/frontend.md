@@ -15,7 +15,8 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–56 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives).
+inspect from log/queue, card lives under actives, Lot 58 shop UP icons / pool buy /
+Unspy / Invisibility turns badge).
 
 ## Screens
 
@@ -150,12 +151,17 @@ rules above are unchanged — this section only covers how the client looks.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
   action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: **Draw**
   + point `CostDisplay` (`signed="gain"`, green CTA — not yellow-on-yellow with the point
-  icon) + **Shop** (L43-02 / L43-05). Shop Dialog (always openable — pool is
-  public off-turn) holds upgrade-point Buy/Sell (`CostDisplay` of kit points cost/yield via
+  icon) + **Shop** (L43-02 / L43-05) + **Unspy** (L58-07: crossed-eye inline SVG, label
+  Unspy, `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`). Unspy is grey when it is not
+  your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
+  exists; click opens a `SeatTile` picker. Shop Dialog (always openable — pool is
+  public off-turn) shows upgrade-point **icons + count first**, then Buy/Sell **below**
+  (`CostDisplay` of kit points cost/yield via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached; Buy is orange
   `signed="cost"`, Sell is green `signed="gain"` so the point icon has contrast), the shared-card
-  grid + Buy special, and the pool. Shop faces use catalog costs: Spy play **2** / buy **4**
-  (Lot 54 — do not restore 4/8). Turn strip: **?** (How to play) then **!** (Feedback,
+  grid + Buy special, and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
+  (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
+  (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback) left of timers, **flag**
   right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
@@ -267,11 +273,12 @@ rules above are unchanged — this section only covers how the client looks.
   chrome (`dialog !== null` clears `chromeVisible`).
 - **Card lives under actives (L56-06):** `PersistentEffectView.counter` is already
   public. `ActivePersistentThumb` renders activated thumb art plus, when
-  `counter !== null`, a compact `LifeCountBadge` (`kind: 'card-lives'`) under
-  the card on own kit-row actives and every opponent seat. Curse, Invisibility,
-  and combat Shield stay badge-free (`counter === null`; Shield remaining lives
-  in the resource column).   Inspect replaces `Counter: N` with the same badge
-  plus a one-line “Card lives” label. No protocol bump.
+  `counter !== null`, a compact `LifeCountBadge` under
+  the card on own kit-row actives and every opponent seat. **Invisibility** uses
+  `kind: 'turns'` (remaining owner turns, L58-06). Spec-§5 card-lives cards use
+  `kind: 'card-lives'`. Curse and combat Shield stay badge-free (`counter === null`;
+  Shield remaining lives in the resource column). Inspect matches the thumb
+  (Turns left vs Card lives). No protocol bump for the badge itself.
 - **Lost persistents (L56-07):** auto-loss lines use `persistentDeactivated`
   (counter 0, Curse floor, death dump, leave / forfeit / inactivity).
   Manual Invisibility deactivate copy is “deactivated {card}; it is lost”

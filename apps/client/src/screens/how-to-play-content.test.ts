@@ -54,6 +54,7 @@ describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
     expect(byId['kits']?.body).toMatch(/Random/);
     expect(byId['specials']?.body).toMatch(/one use/);
     expect(byId['shop']?.body).toMatch(/buy extra cards or upgrade points/i);
+    expect(byId['shop']?.body).toMatch(/pool/i);
   });
 
   it('omits delayed resolution, shop-price formula, and draw-is-not-a-card', () => {

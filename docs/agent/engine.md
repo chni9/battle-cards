@@ -41,7 +41,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 |---|---|---|
 | Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
-| Card counters | Decrements the hit player's active counters | Never touches them |
+| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`) | Never touches them |
 
 ```ts
 // apps/server/src/engine/life/{apply-damage,apply-life-loss,gain-lives}.ts
@@ -155,7 +155,7 @@ Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
 Attack Thief (`Player.attackBlockCharges`, L23-03): if `attackBlockCharges > 0` when an
 attack is about to resolve on P, spend one charge and emit `outcome: 'blocked'` **before**
 mutual cancel — even when mutual would have cancelled that attack. Do not store the charge
-in `PersistentEffect.counter` (`applyDamage` eats counters).
+in `PersistentEffect.counter` (`applyDamage` eats **card-lives** counters only).
 
 Invariant to hold at every step: **a player never suffers a loss of life or resources outside
 their own turn, and never before playing their action.** "Drawing" grants no card — it gains
@@ -181,13 +181,19 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 - **`alwaysUpgraded`**: checked on every acquisition helper call — never a one-shot at deal.
 - **`immuneTo`**: resolve-time only (`isImmuneTo`); play still queues; public
   `actionResolved.outcome: 'immune'`.
-- **Invisibility (L25-02 / #V4-9):** `playerIsInvisible` / active persistent
+- **Invisibility (L25-02 / #V4-9 / L58-06):** `playerIsInvisible` / active persistent
   `cardId === 'invisibility'`. Ready pending against an invisible player resolve as
   `'immune'` at the head of `resolvePendingEffects` (before mutual cancel). Victim-side
   persistent ticks (Imposition / Poison / Curse / Super Absorber) **skip** while invisible
   and resume after deactivate; own Invisibility + Points Generator ticks still run.
   Cloning reports `'immune'` via `immediateResolved`. Sentence excludes invisible seats
-  from its candidate pool. Lifecycle elim is unaffected.
+  from its candidate pool. Lifecycle elim is unaffected. Duration is **4** owner turns
+  (**7** upgraded), counting the activation turn; remaining turns live in
+  `PersistentEffect.counter` but are **not** card-lives (`applyDamage` must not eat them).
+  While active it is illegal to play anything that acts on another player, including
+  Mirror / Super Mirror (`cardActsOnOpponents`). Last-turn income still pays, then
+  auto-loss emits `persistentDeactivated`. Manual deactivate still consumes the action
+  (#V4-10).
 - **Block (L25-01):** `grantBlockTurns` sets `blockTurnsRemaining` and
   `blockAttacksForbidden` (ban must not rely on remaining alone — last chain turn has
   remaining 0). Attack **play/use** banned at the four portals; buy/upgrade stay legal.
@@ -220,8 +226,9 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   `eliminateWithoutReward` — not the turn WeakMap). Manual Invisibility deactivate stays
   `actionPlayed` (“deactivated {card}; it is lost”) and must not double-emit.
   Tax / `applyLifeLoss` never decrement counters and therefore never log a counter loss.
-  Invisibility is
-  `counter: null` and exits only via the `deactivatePersistent` TurnAction (#V4-10).
+  Invisibility remaining turns use `counter` (4 / 7) and auto-lose at 0 via
+  `persistentDeactivated`; they are not card-lives. Manual deactivate stays
+  `actionPlayed` and must not double-emit.
 
 ## Mutual attacks — mechanics
 
@@ -327,6 +334,15 @@ through legality either.
 Assassin `playMultipleAttacks` candidates are a deliberate ≤8 approximation (L16-02 /
 `decisions.md`); opponent order inside the generator uses a seeded shuffle of alive ids
 only so the set stays view-derivable.
+
+**Lot 58 economy (designer 2026-09-15):** `listLegalEconomyActions(state, actor)` takes
+`GameState` so `buyPoolCard` can read public `poolBuyCost` and `pool.length`. Successful
+buy: pay the table-wide fee, `rng.pick` one pool instance, `recoverCardsFromPool`, then
+`poolBuyCost *= 2` (never resets; empty pool does not reset). Card Absorber does not
+move the fee. `clearSpy` pays `CLEAR_SPY_COST` and `revokeSpy`s one living viewer whose
+subject is the actor (eliminated-spectator overlay is not a matrix row).
+`enumerationStateFromView` copies `poolBuyCost` and rebuilds incoming spy rows from
+`spyingOnYou` so §10.1 holds for the new actions.
 
 ## What not to do
 
