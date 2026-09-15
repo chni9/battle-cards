@@ -51,10 +51,14 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     (4 / 7 turns); Points Generator 3 / 6; Unspy 10 points. `PROTOCOL_VERSION`
     **33 → 34** (exception, same class as L49 / L56 / L57; retargeted from 31 → 32
     after Lot 57 landed on main).
-17. **Game over awards (Lot 59).** Designer 2026-09-15. Seat-colored award tiles
+17. **Compact Draw / Unspy dock (Lot 59).** Designer 2026-09-15. Economy-bar Draw
+    and Unspy drop word labels (gain CostDisplay / crossed-eye + cost). No protocol
+    bump.
+18. **Game over awards (Lot 60).** Designer 2026-09-15. Seat-colored award tiles
     (kit portrait, name, nickname) plus match totals. `PROTOCOL_VERSION`
-    **34 → 35** (exception, same class as L49 / L56 / L57 / L58). Play again and
-    ask-once stay. Walk-in claim-picker fog still hides kits.
+    **34 → 35** (exception, same class as L49 / L56 / L57 / L58; retargeted from
+    Lot 59 after the dock landed on main). Play again and ask-once stay.
+    Walk-in claim-picker fog still hides kits.
 
 
 **Execution order**
@@ -84,7 +88,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
   exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**,
-  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, and **L59-02 (34 → 35)**.
+  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, and **L60-02 (34 → 35)**.
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed for
   catalog-price affordability (L54-01) and for Lot 58's new legal actions (L58-08);
   keep `weightsHash` unless a new weight constant is unavoidable.
@@ -97,9 +101,10 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 ## Progress
 
-115 of 115 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
+117 of 117 tasks done. Spec written 2026-08-19. Lot 41 coding started 2026-08-20.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
-Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15.
+Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
+(retargeted from Lot 59 after the dock landed on main).
 
 
 | Lot | Tasks | Done |
@@ -122,7 +127,8 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15.
 | 56 · Invisibility freeze + readability | 7 | 7 |
 | 57 · Feedback + lobby rematch | 16 | 16 |
 | 58 · Shop, pool, Invisibility, PG, Unspy | 9 | 9 |
-| 59 · Game over awards | 5 | 5 |
+| 59 · Compact Draw / Unspy dock | 2 | 2 |
+| 60 · Game over awards | 5 | 5 |
 
 
 ---
@@ -416,21 +422,35 @@ weights; freeze fixture refresh is L58-08.
 
 ---
 
-## Lot 59 — Game over awards gallery (designer 2026-09-15)
+## Lot 59 — Compact Draw / Unspy dock (designer 2026-09-15)
+
+Explicit session instruction. Client presentation only. No protocol bump. No Classic
+rule or value change. Shop keeps its word label and uses the same compact Button.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L59-01 | Economy bar: Draw face is only gain point `CostDisplay` (`signed="gain"`); Unspy face is crossed-eye SVG + `CLEAR_SPY_COST` `CostDisplay` (`signed="cost"`). Drop the words Draw and Unspy from the button. Compact `Button` (no 7rem min-width). `aria-label` / `title` keep the names. Unspy picker title unchanged. **Acceptance:** source tests prove no `{DRAW_ACTION_LABEL}` / `{UNSPY_ACTION_LABEL}` children; Shop still shows `SHOP_ACTION_LABEL`; `pnpm verify` green. | S | Low | L58-07 | Done |
+| L59-02 | Shop uses the same compact `Button` as Draw / Unspy (no 7rem min-width). Word **Shop** stays. **Acceptance:** source test finds `compact` on the orange Shop CTA; `pnpm verify` green. | S | Low | L59-01 | Done |
+
+---
+
+## Lot 60 — Game over awards gallery (designer 2026-09-15)
 
 Explicit session instruction. Restyle the finished recap from a white text list
 into seat-colored award tiles (kit portrait, kit name, nickname, value). Match
 totals plus public log counts. No Classic combat-value change. Keep Play again
 and ask-once. Walk-in claim-picker fog (L57-16) still hides kits. Client ranks
-public recap numbers only — zero rule logic.
+public recap numbers only — zero rule logic. Retargeted from Lot 59 after the
+compact Draw/Unspy dock landed on main as Lot 59.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L59-01 | Append dated `[P]` Lot 59 entries to `docs/agent/decisions.md`; Lot 59 section here; technical spec v6 §2 / §8 / §12 / §13; `AGENTS.md` snapshot. Protocol 34 → 35 exception recorded (same class as L49 / L56 / L57 / L58). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell recap kits and match awards are Lot 59, v35 is the next bump, and L59-02 starts the wire. | S | Medium | — | Done |
-| L59-02 | `PROTOCOL_VERSION` **34 → 35**. Extend `GameRecapPlayerView` with `kitId?`, `isBot`, match totals, split buy/sell/special/draw/attack counts, `damageDealt`, `kills`, `thinkTimeMs`. Keep existing play/buy/sell/upgrade counts. **Acceptance:** mismatch path rejects v34 clients; recap type has the new fields; `pnpm verify` green. | M | **High** | L59-01 | Done |
-| L59-03 | `Player.matchStats` (lives lost/gained, points spent/gained, upgrade points spent). Increment in `applyDamage` and `applyLifeLoss` separately, `gainLives`, `gainPoints`, and every `turnLedger` spend site including `payCost`. Reanimation keeps matchStats. **Acceptance:** theft does not inflate pointsSpent; Reanimation keeps totals; Invisibility turn counters still ignored by `applyDamage`; `pnpm verify` green. | M | **High** | L59-01 | Done |
-| L59-04 | Fill recap from matchStats + action log + GameRoom think-time map. Combat kills only; `buyCardCount` includes `buyPoolCard`; `draw` excludes `activateDuplication`; omit `kitId` for L57-16 fogged walk-ins. Do not clear stats on first Play again. **Acceptance:** recap numbers identical for seated recipients; fogged walk-in recap omits kitId; `pnpm verify` green. | L | **High** | L59-02, L59-03 | Done |
-| L59-05 | Game over Dialog: winner header + award tiles (seat color, kit portrait, nickname, kit name, value) + compact elim list. Skip all-zero awards; Slowest/Fastest humans only (≥2). Keep Play again / Feedback / View board / Return home / DEV Excel. **Acceptance:** copy tests still lock Play again + Feedback + DEV Excel; award helper tests ties and human-only clocks; `pnpm verify` green. | L | Medium | L59-04 | Done |
+| L60-01 | Append dated `[P]` Lot 60 entries to `docs/agent/decisions.md`; Lot 60 section here; technical spec v6 §2 / §8 / §12 / §13; `AGENTS.md` snapshot. Protocol 34 → 35 exception recorded (same class as L49 / L56 / L57 / L58). **Acceptance:** an agent reading only `decisions.md` + this backlog can tell recap kits and match awards are Lot 60, v35 is the next bump, and L60-02 starts the wire. | S | Medium | — | Done |
+| L60-02 | `PROTOCOL_VERSION` **34 → 35**. Extend `GameRecapPlayerView` with `kitId?`, `isBot`, match totals, split buy/sell/special/draw/attack counts, `damageDealt`, `kills`, `thinkTimeMs`. Keep existing play/buy/sell/upgrade counts. **Acceptance:** mismatch path rejects v34 clients; recap type has the new fields; `pnpm verify` green. | M | **High** | L60-01 | Done |
+| L60-03 | `Player.matchStats` (lives lost/gained, points spent/gained, upgrade points spent). Increment in `applyDamage` and `applyLifeLoss` separately, `gainLives`, `gainPoints`, and every `turnLedger` spend site including `payCost`. Reanimation keeps matchStats. **Acceptance:** theft does not inflate pointsSpent; Reanimation keeps totals; Invisibility turn counters still ignored by `applyDamage`; `pnpm verify` green. | M | **High** | L60-01 | Done |
+| L60-04 | Fill recap from matchStats + action log + GameRoom think-time map. Combat kills only; `buyCardCount` includes `buyPoolCard`; `draw` excludes `activateDuplication`; omit `kitId` for L57-16 fogged walk-ins. Do not clear stats on first Play again. **Acceptance:** recap numbers identical for seated recipients; fogged walk-in recap omits kitId; `pnpm verify` green. | L | **High** | L60-02, L60-03 | Done |
+| L60-05 | Game over Dialog: winner header + award tiles (seat color, kit portrait, nickname, kit name, value) + compact elim list. Skip all-zero awards; Slowest/Fastest humans only (≥2). Keep Play again / Feedback / View board / Return home / DEV Excel. **Acceptance:** copy tests still lock Play again + Feedback + DEV Excel; award helper tests ties and human-only clocks; `pnpm verify` green. | L | Medium | L60-04 | Done |
+
 
 ---
 
@@ -456,8 +476,9 @@ public recap numbers only — zero rule logic.
 | 56 | 7 |
 | 57 | 16 |
 | 58 | 9 |
-| 59 | 5 |
-| **Total** | **115** |
+| 59 | 2 |
+| 60 | 5 |
+| **Total** | **117** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 

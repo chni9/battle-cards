@@ -1,6 +1,6 @@
 /**
  * Play-only aggregates from the public action log — L8 finished-game metrics,
- * L9-03 recap, L59-04 award counts.
+ * L9-03 recap, L60-04 award counts.
  * `actionPlayed` drives play / buy / sell / upgrade / draw / attack / special
  * totals. `actionResolved` attack `livesLost` is damage dealt. Combat
  * `playerEliminated` rows are kills. Resolutions / Mirror / rewards never

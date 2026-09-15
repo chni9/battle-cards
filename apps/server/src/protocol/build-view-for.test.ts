@@ -1086,7 +1086,7 @@ describe('buildPlayingViewFor — walk-in spectator (L57-13 / L57-16)', () => {
   });
 });
 
-describe('buildGameRecapView (L59-04)', () => {
+describe('buildGameRecapView (L60-04)', () => {
   it('fills match totals, log counts, kitId, isBot, and think time', () => {
     const state = createInitialState({
       seats: [
@@ -1218,7 +1218,7 @@ describe('buildGameRecapView (L59-04)', () => {
   });
 });
 
-describe('buildFinishedViewFor (L59-04)', () => {
+describe('buildFinishedViewFor (L60-04)', () => {
   const finishedLog = [
     {
       kind: 'actionPlayed' as const,

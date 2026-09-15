@@ -76,7 +76,7 @@ describe('aggregateActionsForPlayer (L8 / L9)', () => {
   });
 });
 
-describe('aggregateActionsForPlayer (L59-04)', () => {
+describe('aggregateActionsForPlayer (L60-04)', () => {
   it('includes buyPoolCard in buyCardCount and excludes upgrade-point trades', () => {
     const log: ActionLogEntryView[] = [
       {

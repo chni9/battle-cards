@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ThinkTimeAccumulator } from './think-time';
 
-describe('ThinkTimeAccumulator (L59-04)', () => {
+describe('ThinkTimeAccumulator (L60-04)', () => {
   it('credits elapsed wall-clock on close', () => {
     const clock = new ThinkTimeAccumulator();
     clock.start('alice', 1_000);

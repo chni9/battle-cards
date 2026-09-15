@@ -90,7 +90,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
 | 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, superseded by Lot 58), and designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**, **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L59-02 (34 → 35)**. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**, **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**. |
 
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
@@ -155,9 +155,9 @@ Still Lot 57 (not a new lot). Classic online only. No combat-value change.
   autodraw on their turns. The **third** autodraw eliminates
   (`eliminateWithoutReward`, `absence`). Eliminated seats are not claimable.
 - `PROTOCOL_VERSION` **31 → 32** (L57-07), **32 → 33** (L57-16), **33 → 34**
-  (L58-02), **34 → 35** (L59-02). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
+  (L58-02), **34 → 35** (L60-02). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
 
-### 2.4 Session 2026-09-15 — Game over awards (Lot 59)
+### 2.4 Session 2026-09-15 — Game over awards (Lot 60)
 
 Designer: Game over is a white text list. Restyle into visual awards.
 
@@ -170,7 +170,7 @@ Designer: Game over is a white text list. Restyle into visual awards.
 - **UI:** winner header + award tiles (seat color, kit portrait, nickname, kit
   name, value) + compact elim list. Skip an award when every eligible seat is
   tied at 0. Play again and ask-once stay. Tutorial: no Play again.
-- `PROTOCOL_VERSION` **34 → 35** (L59-02). No Classic combat-value change.
+- `PROTOCOL_VERSION` **34 → 35** (L60-02). No Classic combat-value change.
 
 ---
 
@@ -222,7 +222,7 @@ Hints:     localStorage, first Classic playing view only
   in development; production same-origin Coolify needs none.
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
   later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L57-07 (31 → 32)**,
-  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L59-02 (34 → 35)**.
+  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**.
 
 
 ---
@@ -637,7 +637,7 @@ SQL, so rows from before the chips still list.
 Single bump in L41-02. Later documented exceptions: L49-01 (29 → 30), L56-03
 (30 → 31), **L57-07 (31 → 32)**, **L57-16 (32 → 33)**, **L58-02 (33 → 34)** —
 `buyPoolCard`, `clearSpy`, `poolBuyCost`, `spyingOnYou`, reject codes
-`empty-pool` / `not-spying-you`. **L59-02 (34 → 35)** — finished recap match
+`empty-pool` / `not-spying-you`. **L60-02 (34 → 35)** — finished recap match
 totals, optional `kitId`, think time.
 
 | Change | Where |
@@ -737,7 +737,7 @@ Not even partially, even “to lay groundwork”:
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
 6. **Protocol bump twice** in V6 is forbidden except the documented exceptions
-   (L49, L56, L57-07, L57-16, L58, **L59**); put Lot 59 wire changes in L59-02.
+   (L49, L56, L57-07, L57-16, L58, **L60**); put Lot 60 wire changes in L60-02.
 
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
@@ -766,7 +766,8 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
 | 57 | Feedback + lobby rematch | Ask-mode ticket; Ready/Kick/Play again; spectate/claim join; 31 → 32 then 32 → 33 |
 | 58 | Shop, pool, Invisibility, PG, Unspy | Upgrade-point shop icons, doubling pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10; 33 → 34 |
-| 59 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
+| 59 | Compact Draw / Unspy dock | Economy-bar Draw/Unspy drop word labels; gain/cost CostDisplay (+ crossed-eye); no protocol bump |
+| 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
@@ -776,5 +777,6 @@ so the tutorial shop/target already look like the real table). **46** after 43 (
 **57** is a designer session follow-up (feedback, then lobby rematch; 31 → 32, then 32 → 33).
 **58** is a designer session follow-up (Classic values + one protocol bump; unfreezes
 Invisibility under the Lot 58 text).
-**59** is a designer session follow-up (Game over awards; 34 → 35).
+**59** is a designer session follow-up (client presentation; no protocol bump).
+**60** is a designer session follow-up (Game over awards; 34 → 35).
 

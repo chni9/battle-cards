@@ -373,7 +373,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private absentTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private pausedTurnRemainingMs: number | null = null;
   /**
-   * Wall-clock think time for finished recap — not on GameState (L59-04).
+   * Wall-clock think time for finished recap — not on GameState (L60-04).
    * Cleared on the next `createInitialState`, not on the first Play again.
    */
   private readonly thinkTime = new ThinkTimeAccumulator();

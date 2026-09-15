@@ -1,5 +1,5 @@
 /**
- * Game-over award ranking — L59-05.
+ * Game-over award ranking — L60-05.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -53,7 +53,7 @@ function recapOf(players: readonly GameRecapPlayerView[]): GameRecapView {
   return { turnSequence: 4, players, eliminations: [] };
 }
 
-describe('pickGameOverAwards (L59-05)', () => {
+describe('pickGameOverAwards (L60-05)', () => {
   it('skips an award when every eligible seat is tied at 0', () => {
     const awards = pickGameOverAwards(
       recapOf([recapRow('a', { kitId: 'untouchable' }), recapRow('b', { kitId: 'warrior' })]),
@@ -162,7 +162,7 @@ describe('pickGameOverAwards (L59-05)', () => {
   });
 });
 
-describe('formatThinkTimeMs (L59-05)', () => {
+describe('formatThinkTimeMs (L60-05)', () => {
   it('renders seconds under a minute and mm:ss past it', () => {
     expect(formatThinkTimeMs(0)).toBe('0s');
     expect(formatThinkTimeMs(1_500)).toBe('1.5s');

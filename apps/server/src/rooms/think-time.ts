@@ -1,5 +1,5 @@
 /**
- * Room-owned wall-clock think time — L59-04.
+ * Room-owned wall-clock think time — L60-04.
  *
  * Not on `GameState` (simulations stay seed-pure). Pause accrues the open
  * segment without writing totals so disconnect + later action cannot

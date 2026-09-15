@@ -1,7 +1,11 @@
 /**
- * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05 / L58-07.
+ * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05 / L58-07 / L59-01.
  * Draw + Shop + Unspy. Stats only on a finished board (`readOnly`).
  * Draw is green so the point icon is not yellow-on-yellow.
+ * Draw / Unspy omit word labels (designer 2026-09-15): gain CostDisplay and
+ * crossed-eye + cost only; names stay on aria-label / title.
+ * Shop keeps its word label and uses the same compact Button (L59-02).
+ * CostDisplay inner title is omitted so hover uses the button name.
  */
 
 import { CLEAR_SPY_COST } from '@card-battle/shared';
@@ -9,6 +13,7 @@ import type { ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
+import { costAriaLabel } from '../../design/components/structured-cost';
 import {
   DRAW_ACTION_LABEL,
   SHOP_ACTION_LABEL,
@@ -47,6 +52,10 @@ export function EconomyBar({
 }: EconomyBarProps): ReactElement {
   const disabled = !isMyTurn || actionsLocked;
   const unspyDisabled = disabled || !hasLivingSpy || !canAffordUnspy;
+  const drawCost = { kind: 'points' as const, amount: drawValue };
+  const unspyCost = { kind: 'points' as const, amount: CLEAR_SPY_COST };
+  const drawLabel = `${DRAW_ACTION_LABEL}, ${costAriaLabel(drawCost, 'gain')}`;
+  const unspyLabel = `${UNSPY_ACTION_LABEL}, ${costAriaLabel(unspyCost, 'cost')}`;
 
   return (
     <section
@@ -63,15 +72,18 @@ export function EconomyBar({
       >
         <Button
           variant="green"
+          compact
           disabled={disabled}
           onClick={onDraw}
           data-hint-anchor="draw"
+          aria-label={drawLabel}
+          title={drawLabel}
         >
-          {DRAW_ACTION_LABEL}{' '}
           <CostDisplay
-            cost={{ kind: 'points', amount: drawValue }}
+            cost={drawCost}
             signed="gain"
             className="text-inherit"
+            title={null}
           />
         </Button>
       </TutorialCallout>
@@ -80,22 +92,30 @@ export function EconomyBar({
         arrow="top"
         highlightId="shop"
       >
-        <Button variant="orange" onClick={onOpenShop} data-hint-anchor="shop">
+        <Button
+          variant="orange"
+          compact
+          onClick={onOpenShop}
+          data-hint-anchor="shop"
+        >
           {SHOP_ACTION_LABEL}
         </Button>
       </TutorialCallout>
       <Button
         variant="purple"
+        compact
         disabled={unspyDisabled}
         onClick={onOpenUnspy}
         data-unspy=""
+        aria-label={unspyLabel}
+        title={unspyLabel}
       >
         <SpyEyeIcon variant="crossed" size={14} className="text-inherit" />
-        {UNSPY_ACTION_LABEL}{' '}
         <CostDisplay
-          cost={{ kind: 'points', amount: CLEAR_SPY_COST }}
+          cost={unspyCost}
           signed="cost"
           className="text-inherit"
+          title={null}
         />
       </Button>
       {onShowStats !== undefined && (

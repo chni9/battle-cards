@@ -433,7 +433,7 @@ export type ActionLogEntryView =
 
 export type ActionLogEntryKind = ActionLogEntryView['kind'];
 
-/** Per-player public aggregates for the end-screen recap (L9-03 / L59-02). */
+/** Per-player public aggregates for the end-screen recap (L9-03 / L60-02). */
 export interface GameRecapPlayerView {
   playerId: string;
   cardsPlayedCount: number;
@@ -474,7 +474,7 @@ export interface GameRecapEliminationView {
 /**
  * Public game-over summary — L9-03.
  * PROTOCOL_VERSION 22 adds `eliminationReveal` on dead seats and `exportLog` for Excel.
- * PROTOCOL_VERSION 35 adds match totals, optional `kitId`, and think time (L59-02).
+ * PROTOCOL_VERSION 35 adds match totals, optional `kitId`, and think time (L60-02).
  */
 export interface GameRecapView {
   turnSequence: number;

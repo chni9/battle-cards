@@ -1,5 +1,5 @@
 /**
- * Protocol version pin — L59-02 / PROTOCOL_VERSION 35 (after Lot 58 on main).
+ * Protocol version pin — L60-02 / PROTOCOL_VERSION 35 (after Lot 58 on main).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -16,8 +16,8 @@ import {
 import { PROTOCOL_VERSION } from './protocol-version';
 import type { GameRecapPlayerView } from './protocol/state-view';
 
-describe('PROTOCOL_VERSION (L59-02)', () => {
-  it('is 35 after Lot 59 recap awards', () => {
+describe('PROTOCOL_VERSION (L60-02)', () => {
+  it('is 35 after Lot 60 recap awards', () => {
     expect(PROTOCOL_VERSION).toBe(35);
   });
 
@@ -31,7 +31,7 @@ describe('PROTOCOL_VERSION (L59-02)', () => {
     expect(CLEAR_SPY).toBe('clearSpy');
   });
 
-  it('requires recap match totals on GameRecapPlayerView (L59-02)', () => {
+  it('requires recap match totals on GameRecapPlayerView (L60-02)', () => {
     const row: GameRecapPlayerView = {
       playerId: 'a',
       cardsPlayedCount: 0,

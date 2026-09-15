@@ -53,7 +53,7 @@ export interface TurnLedger {
 }
 
 /**
- * Match-long totals for the finished recap (L59-03). Never reset with `turnLedger`.
+ * Match-long totals for the finished recap (L60-03). Never reset with `turnLedger`.
  * Spend matches Absorber: chosen spend, not theft.
  */
 export interface MatchStats {
@@ -104,7 +104,7 @@ export interface Player {
   /** Persistent effects this player activated, whoever they act on. */
   activePersistentEffects: PersistentEffect[];
   turnLedger: TurnLedger;
-  /** Career totals for Game over recap — not reset on Reanimation (L59-03). */
+  /** Career totals for Game over recap — not reset on Reanimation (L60-03). */
   matchStats: MatchStats;
   connectionState: ConnectionState;
   /**

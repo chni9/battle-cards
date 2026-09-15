@@ -1,5 +1,5 @@
 /**
- * Rank public recap numbers for the Game over gallery — L59-05.
+ * Rank public recap numbers for the Game over gallery — L60-05.
  * Client has zero rule logic: no exportLog parse, no matchStats reconstruction.
  */
 

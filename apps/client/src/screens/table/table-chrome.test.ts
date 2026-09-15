@@ -21,6 +21,10 @@ describe('table corner chrome (L43-05)', () => {
     expect(economy).toContain('SHOP_ACTION_LABEL');
     expect(economy).toContain('UNSPY_ACTION_LABEL');
     expect(economy).toContain('onShowStats');
+    expect(economy).toContain('aria-label={drawLabel}');
+    expect(economy).toContain('aria-label={unspyLabel}');
+    expect(economy).not.toMatch(/\{DRAW_ACTION_LABEL\}\s*\{' '\}/);
+    expect(economy).not.toMatch(/\{UNSPY_ACTION_LABEL\}\s*\{' '\}/);
     expect(economy).not.toContain('How to play');
     expect(economy).not.toContain('onLeave');
     expect(economy).not.toContain('onOpenHowToPlay');

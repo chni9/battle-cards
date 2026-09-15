@@ -1,5 +1,5 @@
 /**
- * Chosen spend for Absorber's turn ledger and match recap (L59-03).
+ * Chosen spend for Absorber's turn ledger and match recap (L60-03).
  * Never use this for theft — theft writes `pointsLostToTheft` only.
  */
 

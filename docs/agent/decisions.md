@@ -3393,7 +3393,35 @@ step 4 because the effect is already gone when persistents run.
 
 ---
 
-## 2026-09-15 · [P] Lot 59 Game over awards gallery (L59-01)
+## 2026-09-15 · [P] Lot 59 compact Draw / Unspy dock (L59-01)
+
+Designer 2026-09-15: make space on the economy bar. **Draw** drops the word
+Draw — the button face is only the gain `CostDisplay` (`+N` points). **Unspy**
+drops the word Unspy — the face is the crossed-eye SVG plus the `CLEAR_SPY_COST`
+`CostDisplay`. Shop keeps its word label. Names stay on `aria-label` / `title`
+(and the Unspy picker title). Compact `Button` (no `min-w-[7rem]`). No protocol
+bump, no rule or value change.
+
+---
+
+## 2026-09-15 · CostDisplay title must not hide Draw / Unspy hover (L59-01)
+
+Compact Draw / Unspy put the action name on the button `title`. `CostDisplay`
+already sets a spoken-cost `title` on the inner span that fills the face, so
+hover showed only `plus 1 pt` / `minus 10 pts`. Pass `title={null}` on those
+nested costs so the button name is the tooltip.
+
+---
+
+## 2026-09-15 · Shop compact to match Draw / Unspy (L59-02)
+
+Designer 2026-09-15: Shop was still the full `Button` (`min-w-[7rem]`), so it
+sat taller and wider than compact Draw / Unspy. Shop keeps the word Shop and
+uses the same compact `Button`.
+
+---
+
+## 2026-09-15 · [P] Lot 60 Game over awards gallery (L60-01)
 
 Designer instruction (this session): Game over is a white text list. Restyle it
 into visual awards (kit portrait, seat color, nickname, kit name, value).
@@ -3425,9 +3453,18 @@ for that recipient until Stay or the picker empties.
 `playAgain`; recap humans still need the finished `GameState`. Clear on the
 next match’s `createInitialState`.
 
-`PROTOCOL_VERSION` **34 → 35** (L59-02) is an exception to the V6 single-bump
+`PROTOCOL_VERSION` **34 → 35** (L60-02) is an exception to the V6 single-bump
 lock (same class as L49 / L56 / L57 / L58): recap match fields + optional
 `kitId`. No Classic combat-value change. Client ranks recap numbers only.
+
+---
+
+## 2026-09-15 · [P] Lot 60 awards retargeted from Lot 59
+
+Lot 59 landed on `main` (`#27`) as compact Draw/Unspy dock (`L59-01` /
+`L59-02`, no protocol bump). This branch had used Lot 59 for Game over awards
+(`PROTOCOL_VERSION` 34 → 35). Recap wire stays; the live lot is **60** so the
+dock keeps 59. L60-02 records the bump. No rule change.
 
 ---
 

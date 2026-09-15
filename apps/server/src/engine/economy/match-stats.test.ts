@@ -1,5 +1,5 @@
 /**
- * Match-long recap totals — L59-03.
+ * Match-long recap totals — L60-03.
  * Spend is chosen spend, not theft. applyDamage and applyLifeLoss stay separate.
  */
 
@@ -18,7 +18,7 @@ import { stealPoints } from './steal-points';
 import { payCost } from './transfers';
 import { upgradeCard } from './upgrade-card';
 
-describe('matchStats (L59-03)', () => {
+describe('matchStats (L60-03)', () => {
   it('counts lives lost from applyDamage, not shield absorb', () => {
     const target = makePlayer({ lives: 10, shield: 4 });
 

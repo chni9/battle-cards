@@ -1,5 +1,5 @@
 /**
- * Closable game-over stats dialog — designer 2026-08-06 / Lot 59 gallery.
+ * Closable game-over stats dialog — designer 2026-08-06 / Lot 60 gallery.
  * Sits over the finished board (`FinishedStateView.finalTable`); Esc / overlay dismiss.
  */
 

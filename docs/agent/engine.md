@@ -287,7 +287,7 @@ ticked in `beginTurnFor`, opened from elimination). Mid-window deaths prune the 
 When the window closes, the ledger is cleared. Helpers: `absorb-window.ts`. Super Absorber
 activation and ticks share `absorbLedgerFromVictim`.
 
-## Match stats (Lot 59)
+## Match stats (Lot 60)
 
 `Player.matchStats` is career totals for the finished recap. It is **not** the turn
 ledger: Reanimation resets `turnLedger` and keeps `matchStats`. Cloning does not copy

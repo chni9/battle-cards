@@ -423,7 +423,7 @@ export interface FinishedViewInput {
   walkInSpectator?: true;
   walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
-  /** Room wall-clock map — omitted / missing seat → `thinkTimeMs: 0` (L59-04). */
+  /** Room wall-clock map — omitted / missing seat → `thinkTimeMs: 0` (L60-04). */
   thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
 }
 
