@@ -205,7 +205,10 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
   Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator →
-  Invisibility → (if not invisible) Super Absorber → Imposition → Poison → Curse. Super Absorber
+  Invisibility → (if the player entered this phase invisible) skip Super Absorber /
+  Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
+  effect *after* that skip, so victim persistents resume on the next owner turn
+  (#V4-9a / L58-06). Super Absorber
   reads the current seat's ledger
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /

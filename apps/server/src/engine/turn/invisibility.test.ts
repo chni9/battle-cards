@@ -444,4 +444,39 @@ describe('Invisibility (L25-02)', () => {
     );
     expect(a.points).toBe(42);
   });
+
+  it('skips Poison on the last Invisibility tick; victim persistents resume next turn (L58-06 / #V4-9a)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l58-06-last-tick',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 1 }),
+    ];
+    b.activePersistentEffects = [
+      makeCounterEffect({ id: 'poison-1', cardId: 'poison', counter: 3 }),
+    ];
+    a.lives = 10;
+    a.points = 0;
+
+    applyPersistentEffects(state, a.id);
+    expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
+      false,
+    );
+    expect(a.lives).toBe(10);
+    expect(a.points).toBe(4);
+
+    applyPersistentEffects(state, a.id);
+    expect(a.lives).toBe(9);
+  });
 });

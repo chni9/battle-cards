@@ -3383,3 +3383,13 @@ mismatch. L58-02 task text on this branch records the retarget. No rule change.
 
 ---
 
+## 2026-09-15 · Invisibility last-turn victim ticks skip (#V4-9a / L58-06)
+
+Last-turn auto-loss pays Invisibility income then drops the effect inside
+step 4. That owner turn still counts as invisible: snapshot `playerIsInvisible`
+before the decrement so Poison / Curse / Imposition / Super Absorber skip and
+resume on the next owner turn. Manual deactivate still resumes in the same
+step 4 because the effect is already gone when persistents run.
+
+---
+

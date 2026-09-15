@@ -44,10 +44,13 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(state, player);
+  // Snapshot before last-turn auto-loss: this owner turn still counts as
+  // invisible for victim ticks (#V4-9a / L58-06). Manual deactivate already
+  // dropped the effect before this function runs, so those turns resume.
+  const skipVictimTicks = playerIsInvisible(player);
   applyInvisibilityTicks(state, player);
 
-  // #V4-9a: already-active persistents stay armed; ticks skip while invisible.
-  if (playerIsInvisible(player)) {
+  if (skipVictimTicks) {
     return;
   }
 
