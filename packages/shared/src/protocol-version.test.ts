@@ -1,5 +1,5 @@
 /**
- * Protocol version pin — L58-02 / PROTOCOL_VERSION 34 (after Lot 57 on main).
+ * Protocol version pin — L59-02 / PROTOCOL_VERSION 35 (after Lot 58 on main).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -14,10 +14,11 @@ import {
   STAY_SPECTATING,
 } from './protocol/messages';
 import { PROTOCOL_VERSION } from './protocol-version';
+import type { GameRecapPlayerView } from './protocol/state-view';
 
-describe('PROTOCOL_VERSION (L57-16 / L58-02)', () => {
-  it('is 34 after Lot 58 on top of rematch', () => {
-    expect(PROTOCOL_VERSION).toBe(34);
+describe('PROTOCOL_VERSION (L59-02)', () => {
+  it('is 35 after Lot 59 recap awards', () => {
+    expect(PROTOCOL_VERSION).toBe(35);
   });
 
   it('names rematch and Lot 58 client messages', () => {
@@ -28,5 +29,32 @@ describe('PROTOCOL_VERSION (L57-16 / L58-02)', () => {
     expect(STAY_SPECTATING).toBe('staySpectating');
     expect(BUY_POOL_CARD).toBe('buyPoolCard');
     expect(CLEAR_SPY).toBe('clearSpy');
+  });
+
+  it('requires recap match totals on GameRecapPlayerView (L59-02)', () => {
+    const row: GameRecapPlayerView = {
+      playerId: 'a',
+      cardsPlayedCount: 0,
+      buyCount: 0,
+      sellCount: 0,
+      upgradeCount: 0,
+      isBot: false,
+      livesLost: 0,
+      livesGained: 0,
+      pointsSpent: 0,
+      pointsGained: 0,
+      upgradePointsSpent: 0,
+      specialsPlayedCount: 0,
+      buyCardCount: 0,
+      sellCardCount: 0,
+      drawCount: 0,
+      attacksPlayedCount: 0,
+      damageDealt: 0,
+      kills: 0,
+      thinkTimeMs: 0,
+    };
+
+    expect(row.kills).toBe(0);
+    expect(row.kitId).toBeUndefined();
   });
 });

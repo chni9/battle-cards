@@ -435,12 +435,27 @@ export function buildGameRecapView(
     players: state.players.map((player) => {
       const aggregates = aggregateActionsForPlayer(player.id, actionLog);
 
+      // L59-02 types/zeros until L59-04 fills match totals and kitId.
       return {
         playerId: player.id,
         cardsPlayedCount: aggregates.cardsPlayedCount,
         buyCount: aggregates.buyCount,
         sellCount: aggregates.sellCount,
         upgradeCount: aggregates.upgradeCount,
+        isBot: false,
+        livesLost: 0,
+        livesGained: 0,
+        pointsSpent: 0,
+        pointsGained: 0,
+        upgradePointsSpent: 0,
+        specialsPlayedCount: 0,
+        buyCardCount: 0,
+        sellCardCount: 0,
+        drawCount: 0,
+        attacksPlayedCount: 0,
+        damageDealt: 0,
+        kills: 0,
+        thinkTimeMs: 0,
       };
     }),
     eliminations: eliminations.map((entry) => ({
