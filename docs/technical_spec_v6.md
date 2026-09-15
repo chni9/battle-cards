@@ -90,7 +90,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
 | 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley) and designer 2026-09-09 Lot 56 (Invisibility out of circulation and play; catalog/handler stay). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**. |
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
 
@@ -130,6 +130,29 @@ pipeline; do not add a second channel.
   the felt, Incoming, or the economy bar (mobile crowding).
 - No protocol bump. No new HTTP fields. No Slack / mail ping, rating, or
   screenshot (section 11).
+
+### 2.3 Session 2026-09-15 — Lobby rematch (Lot 57 add-on)
+
+Still Lot 57 (not a new lot). Classic online only. No combat-value change.
+
+- **Ready:** every human guest. Host is implicit. Bots count as ready. Host
+  Start is illegal until all **connected** human guests are ready (`>= 2`
+  seats). Solo compose path unchanged.
+- **Kick:** host, lobby only, any other seat. Humans dropped (reservation
+  cleared); bots use `removeBot`. Kicked humans may Join the same code as a
+  new guest.
+- **Play again:** same room/code. First click does not yank others still on
+  Game over. Bots persist. Host reclaims if they opt in. Next Start is a new
+  match (new persist). Tutorial: no Play again. Walk-in spectators become
+  unready lobby guests.
+- **Join-by-code while playing:** enter as spectator, then picker if any
+  **living disconnected** seats remain (sit as that seat or stay watching).
+  No nickname auto-match. Walk-in vision = eliminated upgraded-Spy overlay.
+- **Disconnect clock:** 30s grace (default `RECONNECT_GRACE_MS`), then instant
+  autodraw on their turns. The **third** autodraw eliminates
+  (`eliminateWithoutReward`, `absence`). Eliminated seats are not claimable.
+- `PROTOCOL_VERSION` **31 → 32** (L57-07). `maxClients` 8 player seats + 8
+  spectators. Player occupancy still 2–8.
 
 ---
 
@@ -180,7 +203,8 @@ Hints:     localStorage, first Classic playing view only
   uses that same base URL. Enable CORS on the feedback/inbox routes for the Vite origin
   in development; production same-origin Coolify needs none.
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. No later
-  V6 task bumps it.
+  V6 task bumps it except documented exceptions: L49-01 (29 → 30), L56-03 (30 → 31),
+  **L57-07 (31 → 32)**.
 
 ---
 
@@ -670,6 +694,8 @@ Not even partially, even “to lay groundwork”:
   (except designer 2026-09-01 Lot 54 and designer 2026-09-09 Lot 56 Invisibility
   freeze — card stays in the repo, not in live Classic)
 - A second Colyseus room type
+- Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
+  it reuses eliminated-player vision, not a replay product)
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games
 
@@ -686,7 +712,8 @@ Not even partially, even “to lay groundwork”:
    `applyTutorialSetup` must force base Tax.
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
-6. **Protocol bump twice** in V6 is forbidden; put every wire change in L41-02.
+6. **Protocol bump twice** in V6 is forbidden except documented exceptions (L49,
+   L56, L57-07). Put other wire changes in those tasks.
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
    `decisions.md` rather than guessing. Coach at index 3 already explains equal cancel.
@@ -712,10 +739,10 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 48 | Docs + browser gate | Playbooks, first-time playtest, screenshot wiring |
 | 51 | Beta UI feedback | Primer rewrite, hub chrome, inspect, banners, Spy seat, flyouts |
 | 56 | Invisibility freeze + readability | Circulating freeze, damage badges, click-to-explain, card lives, lost log; 30 → 31 |
-| 57 | Feedback conversion | Ask-mode is the Lot 47 ticket; hub leave hits ask; table stays `!`; no protocol bump |
+| 57 | Feedback + lobby rematch | Ask-mode ticket; Ready/Kick/Play again; spectate/claim join; 31 → 32 |
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
 so the tutorial shop/target already look like the real table). **46** after 43 (anchors).
 **48** last. **51** is a designer playtest follow-up (client presentation; no protocol bump).
 **56** is a designer session follow-up (Classic freeze exception + one protocol bump).
-**57** is a designer session follow-up (feedback conversion; no protocol bump).
+**57** is a designer session follow-up (feedback, then lobby rematch; 31 → 32).

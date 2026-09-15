@@ -3239,6 +3239,37 @@ still `!`. No protocol bump, no Slack/mail, no ratings.
 Supersedes the L57-01 / L57-02 one-sentence ask-mode copy. Leave intercept
 (L57-03) is unchanged.
 
+## 2026-09-15 · [P] Lot 57 lobby rematch add-on (L57-06)
+
+Still **Lot 57** — do not open Lot 58. Designer: friends need Ready before
+Start, host Kick, Play again with the same code, and Join-with-code after a
+drop or to watch.
+
+**Ready:** human guests only; host implicit; bots ready. `startGame` rejects
+`start-not-all-ready` until every **connected** human guest is ready.
+
+**Kick:** host, lobby, any other seat. Human: drop + clear reservation. Bot:
+`removeBot`. Confirm on the client.
+
+**Play again:** same Colyseus room/code. Per-recipient reforming (do not yank
+Game over). Bots persist. Original host reclaims if they opt in. `onGameOver`
+persist stays once; the next Start is a new match. Tutorial keeps Play a real
+game. Walk-in spectators sit in the new lobby as unready guests.
+
+**Join / spectate:** playing Join enters as spectator. Picker lists living
+disconnected seats (no nickname auto-match; nicknames are not unique). Claim
+attaches the new socket to that `Player.id`. Walk-in vision reuses the
+eliminated upgraded-Spy overlay. `maxClients` = 8 seats + 8 spectators.
+
+**Disconnect clock** (overrides technical spec v1 §5.7 60s): default grace
+**30s**, then instant autodraw on their turns. The **third** autodraw
+**eliminates** (`eliminateWithoutReward`, `absence`). Dead seats are not in
+the picker. Same-tab Colyseus reconnection during grace stays.
+
+`PROTOCOL_VERSION` **31 → 32** in L57-07 (same class of V6 exception as L49 /
+L56). No accounts, no replay VOD, no Classic combat-value change. Table `!`
+unchanged. `heuristic-v4` untouched.
+
 ---
 
 
