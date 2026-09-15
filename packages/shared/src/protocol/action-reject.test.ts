@@ -50,6 +50,7 @@ describe('ActionRejectCode catalog (L32-01)', () => {
         'claim-unknown',
         'invalid-claim-payload',
         'spectate-room-full',
+        'kicked',
       ]),
     );
   });

@@ -31,7 +31,7 @@ export interface LobbyScreenProps {
   onStart: () => void;
   onLeave: () => void;
   onAddBot: (difficulty: BotDifficulty) => void;
-  onRemoveBot: (playerId: string) => void;
+  onKickPlayer: (playerId: string) => void;
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   onChooseKit: (selection: LobbyKitSelection) => void;
 }
@@ -43,7 +43,7 @@ export function LobbyScreen({
   onStart,
   onLeave,
   onAddBot,
-  onRemoveBot,
+  onKickPlayer,
   onSetBotDifficulty,
   onChooseKit,
 }: LobbyScreenProps): ReactElement {
@@ -55,6 +55,9 @@ export function LobbyScreen({
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [kickTarget, setKickTarget] = useState<{ id: string; nickname: string } | null>(
+    null,
+  );
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
 
   const closeCopyDialog = useCallback(() => {
@@ -151,28 +154,30 @@ export function LobbyScreen({
                     <BotSeatLabel difficulty={player.botDifficulty} />
                   )}
                 </div>
-                {isHost && player.isBot && player.botDifficulty !== undefined && (
+                {isHost && player.id !== view.you && (
                   <div className="flex flex-wrap gap-2">
-                    {BOT_DIFFICULTIES.map((tier) => (
-                      <Button
-                        key={tier}
-                        type="button"
-                        variant={player.botDifficulty === tier ? 'green' : 'orange'}
-                        onClick={() => {
-                          onSetBotDifficulty(player.id, tier);
-                        }}
-                      >
-                        {formatBotDifficulty(tier)}
-                      </Button>
-                    ))}
+                    {player.isBot &&
+                      player.botDifficulty !== undefined &&
+                      BOT_DIFFICULTIES.map((tier) => (
+                        <Button
+                          key={tier}
+                          type="button"
+                          variant={player.botDifficulty === tier ? 'green' : 'orange'}
+                          onClick={() => {
+                            onSetBotDifficulty(player.id, tier);
+                          }}
+                        >
+                          {formatBotDifficulty(tier)}
+                        </Button>
+                      ))}
                     <Button
                       type="button"
                       variant="red"
                       onClick={() => {
-                        onRemoveBot(player.id);
+                        setKickTarget({ id: player.id, nickname: player.nickname });
                       }}
                     >
-                      Remove
+                      Kick
                     </Button>
                   </div>
                 )}
@@ -251,6 +256,43 @@ export function LobbyScreen({
         {copyFailed
           ? `Could not copy automatically. Game code: ${view.gameCode}`
           : `Share this code with friends: ${view.gameCode}`}
+      </Dialog>
+
+      <Dialog
+        open={kickTarget !== null}
+        title="Kick this player?"
+        onClose={() => {
+          setKickTarget(null);
+        }}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="orange"
+              onClick={() => {
+                setKickTarget(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="red"
+              onClick={() => {
+                if (kickTarget !== null) {
+                  onKickPlayer(kickTarget.id);
+                  setKickTarget(null);
+                }
+              }}
+            >
+              Kick
+            </Button>
+          </>
+        }
+      >
+        {kickTarget !== null
+          ? `${kickTarget.nickname} will leave this lobby. They can join again with the code.`
+          : null}
       </Dialog>
 
       <FeedbackDialog

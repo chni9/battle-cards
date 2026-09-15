@@ -17,6 +17,7 @@ import {
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
   SET_READY,
+  KICK_PLAYER,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -155,14 +156,17 @@ import {
   addBotRejectionMessage,
   canAddBot,
   canChooseKit,
+  canKickPlayer,
   canRemoveBot,
   canSetBotDifficulty,
   canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
   collectForcedKitsBySeatId,
+  kickPlayerRejectionMessage,
   MAX_PLAYERS,
   parseChooseKitPayload,
+  parseKickPlayerPayload,
   parseSetReadyPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
@@ -441,6 +445,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.handleSetReady(client, payload);
     },
 
+    [KICK_PLAYER]: (client: GameClient, payload: unknown): void => {
+      this.handleKickPlayer(client, payload);
+    },
+
     [DRAW_CARD]: (client: GameClient): void => {
       this.handleAction(client, { type: 'draw' });
     },
@@ -648,19 +656,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.seats = this.seats.filter((seat) => seat.sessionId !== client.sessionId);
-    this.kitSelections.delete(client.sessionId);
-    this.guestReady.delete(client.sessionId);
-
-    if (this.hostSessionId === client.sessionId) {
-      this.hostSessionId = this.seats[0]?.sessionId ?? null;
-    }
+    this.unseatLobbySeat(client.sessionId);
 
     console.log(`[${this.roomId}] ${client.sessionId} left — ${this.seats.length} seated`);
-
-    if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {
-      void this.unlock();
-    }
 
     if (
       shouldDisposeLobbyWithOnlyBots({
@@ -959,6 +957,79 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.guestReady.set(client.sessionId, parsed.value.ready);
     this.sendStateToEveryone();
+  }
+
+  private handleKickPlayer(client: GameClient, payload: unknown): void {
+    const hostSessionId = this.hostSessionId;
+
+    if (hostSessionId === null) {
+      client.send(ERROR_MESSAGE, actionReject('no-host-seated'));
+      return;
+    }
+
+    const parsed = parseKickPlayerPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const target = this.seats.find((seat) => seat.sessionId === parsed.value.playerId);
+    const rejection = canKickPlayer({
+      requesterSessionId: client.sessionId,
+      hostSessionId,
+      hasStarted: this.hasStarted,
+      targetExists: target !== undefined,
+      targetIsSelf: parsed.value.playerId === client.sessionId,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, kickPlayerRejectionMessage(rejection));
+      return;
+    }
+
+    if (target === undefined) {
+      return;
+    }
+
+    if (isBotSeat(target)) {
+      this.seats = this.seats.filter((seat) => seat.sessionId !== target.sessionId);
+
+      if (shouldUnlockForOccupancy(this.seats.length)) {
+        void this.unlock();
+      }
+
+      this.refreshAutoDispose();
+      this.sendStateToEveryone();
+      return;
+    }
+
+    const targetClient = this.clients.find((entry) => entry.sessionId === target.sessionId);
+    targetClient?.send(ERROR_MESSAGE, actionReject('kicked'));
+    this.unseatLobbySeat(target.sessionId);
+    this.refreshAutoDispose();
+
+    if (targetClient !== undefined) {
+      this.sendStateToEveryoneExcept(targetClient);
+      targetClient.leave(CloseCode.CONSENTED, ACTION_REJECT_MESSAGE.kicked);
+      return;
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  private unseatLobbySeat(sessionId: string): void {
+    this.seats = this.seats.filter((seat) => seat.sessionId !== sessionId);
+    this.kitSelections.delete(sessionId);
+    this.guestReady.delete(sessionId);
+
+    if (this.hostSessionId === sessionId) {
+      this.hostSessionId = this.seats[0]?.sessionId ?? null;
+    }
+
+    if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {
+      void this.unlock();
+    }
   }
 
   private humanGuestReadyStates(): HumanGuestReadyState[] {

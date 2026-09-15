@@ -129,6 +129,7 @@ export const ACTION_REJECT_CODES = [
   'claim-unknown',
   'invalid-claim-payload',
   'spectate-room-full',
+  'kicked',
 
   // Tutorial (PROTOCOL_VERSION 29 / L41-02)
   'tutorial-follow-coach',
@@ -249,6 +250,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'claim-unknown': 'That seat was not found.',
   'invalid-claim-payload': 'Invalid claimSeat payload.',
   'spectate-room-full': 'This table has no more spectator space.',
+  'kicked': 'You were kicked.',
 
   'tutorial-follow-coach': 'This tutorial step asks for a different action.',
   'tutorial-room-closed': 'This tutorial cannot be joined.',

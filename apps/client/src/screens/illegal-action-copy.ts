@@ -374,6 +374,10 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
     title: 'Table full',
     body: 'This table has no more spectator space. Try another code or wait for a seat.',
   },
+  kicked: {
+    title: 'Kicked',
+    body: 'You were kicked from the lobby. You can join again with the same code.',
+  },
 
   'tutorial-follow-coach': {
     title: 'Tutorial step',

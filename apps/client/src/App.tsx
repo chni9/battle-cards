@@ -38,7 +38,7 @@ function GameApp() {
     startSoloGame,
     startTutorialGame,
     addBot,
-    removeBot,
+    kickPlayer,
     setBotDifficulty,
     chooseKit,
     drawCard,
@@ -128,7 +128,7 @@ function GameApp() {
           void leaveGame();
         }}
         onAddBot={addBot}
-        onRemoveBot={removeBot}
+        onKickPlayer={kickPlayer}
         onSetBotDifficulty={setBotDifficulty}
         onChooseKit={chooseKit}
       />

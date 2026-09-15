@@ -4,15 +4,18 @@ import {
   addBotRejectionMessage,
   canAddBot,
   canChooseKit,
+  canKickPlayer,
   canRemoveBot,
   canSetBotDifficulty,
   canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
   collectForcedKitsBySeatId,
+  kickPlayerRejectionMessage,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
   parseChooseKitPayload,
+  parseKickPlayerPayload,
   parseSetReadyPayload,
   removeBotRejectionMessage,
   setBotDifficultyRejectionMessage,
@@ -330,6 +333,44 @@ describe('lobby ready gate (L57-08)', () => {
     expect(parseSetReadyPayload({ ready: 'yes' })).toEqual({
       ok: false,
       code: 'invalid-set-ready-payload',
+    });
+  });
+});
+
+describe('lobby kick (L57-09)', () => {
+  const hostKick = {
+    requesterSessionId: 'host',
+    hostSessionId: 'host',
+    hasStarted: false,
+    targetExists: true,
+    targetIsSelf: false,
+  } as const;
+
+  it('allows the host to kick another lobby seat', () => {
+    expect(canKickPlayer(hostKick)).toBeNull();
+  });
+
+  it('rejects kick-self and non-host', () => {
+    expect(canKickPlayer({ ...hostKick, targetIsSelf: true })).toBe('self');
+    expect(kickPlayerRejectionMessage('self').code).toBe('kick-self');
+    expect(canKickPlayer({ ...hostKick, requesterSessionId: 'guest' })).toBe('not-host');
+    expect(kickPlayerRejectionMessage('not-host').code).toBe('kick-not-host');
+  });
+
+  it('rejects kick after start and unknown seats', () => {
+    expect(canKickPlayer({ ...hostKick, hasStarted: true })).toBe('not-in-lobby');
+    expect(canKickPlayer({ ...hostKick, targetExists: false })).toBe('unknown');
+    expect(kickPlayerRejectionMessage('unknown').code).toBe('kick-unknown');
+  });
+
+  it('parses kickPlayer payloads', () => {
+    expect(parseKickPlayerPayload({ playerId: 'guest' })).toEqual({
+      ok: true,
+      value: { playerId: 'guest' },
+    });
+    expect(parseKickPlayerPayload({})).toEqual({
+      ok: false,
+      code: 'invalid-kick-payload',
     });
   });
 });

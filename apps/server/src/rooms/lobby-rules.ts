@@ -15,6 +15,7 @@ import {
   type ActionReject,
   type ActionRejectCode,
   type ChooseKitPayload,
+  type KickPlayerPayload,
   type KitId,
   type LobbyKitSelection,
   type SetReadyPayload,
@@ -36,6 +37,8 @@ export interface HumanGuestReadyState {
 }
 
 export type SetReadyRejection = 'not-in-lobby' | 'not-allowed';
+
+export type KickPlayerRejection = 'not-host' | 'not-in-lobby' | 'self' | 'unknown';
 
 export type AddBotRejection = 'not-host' | 'already-started' | 'room-full';
 
@@ -135,6 +138,61 @@ export function parseSetReadyPayload(
   }
 
   return { ok: true, value: { ready } };
+}
+
+export function canKickPlayer(input: {
+  requesterSessionId: string;
+  hostSessionId: string;
+  hasStarted: boolean;
+  targetExists: boolean;
+  targetIsSelf: boolean;
+}): KickPlayerRejection | null {
+  if (input.hasStarted) {
+    return 'not-in-lobby';
+  }
+
+  if (input.requesterSessionId !== input.hostSessionId) {
+    return 'not-host';
+  }
+
+  if (!input.targetExists) {
+    return 'unknown';
+  }
+
+  if (input.targetIsSelf) {
+    return 'self';
+  }
+
+  return null;
+}
+
+export function kickPlayerRejectionMessage(reason: KickPlayerRejection): ActionReject {
+  switch (reason) {
+    case 'not-host':
+      return actionReject('kick-not-host');
+    case 'not-in-lobby':
+      return actionReject('kick-not-in-lobby');
+    case 'self':
+      return actionReject('kick-self');
+    case 'unknown':
+      return actionReject('kick-unknown');
+  }
+}
+
+export function parseKickPlayerPayload(
+  payload: unknown,
+): { ok: true; value: KickPlayerPayload } | { ok: false; code: ActionRejectCode } {
+  if (typeof payload !== 'object' || payload === null || !('playerId' in payload)) {
+    return { ok: false, code: 'invalid-kick-payload' };
+  }
+
+  const { playerId } = payload;
+
+  if (typeof playerId !== 'string' || playerId.length === 0) {
+    return { ok: false, code: 'invalid-kick-payload' };
+  }
+
+  return { ok: true, value: { playerId } };
 }
 
 export function canAddBot(input: {
