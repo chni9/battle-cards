@@ -2112,6 +2112,42 @@ describe('L29-08: turn-flow, pool and reversal specials', () => {
     });
   });
 
+  it('buyPoolCard and clearSpy never fall back to sellUpgradePoint (L58-08)', () => {
+    const poolView = baseView({
+      pool: [{ instanceId: 'pool-1', cardId: 'basic-attack', isUpgraded: false }],
+      poolBuyCost: 1,
+      self: baseSelf({ points: 4 }),
+    });
+    const poolActions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'sellUpgradePoint' },
+      { type: 'buyPoolCard' },
+    ];
+    expect(decide(poolView, poolActions, createRng('pool-not-sell'))).toEqual({
+      type: 'buyPoolCard',
+    });
+    const [poolScore] = scoreActions(poolView, [{ type: 'buyPoolCard' }], createRng('pool-score'));
+    const [drawScore] = scoreActions(poolView, [{ type: 'draw' }], createRng('draw-score'));
+    expect(poolScore?.score).toBeGreaterThan(drawScore?.score ?? 0);
+
+    const unspyView = baseView({
+      self: baseSelf({ points: 12 }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, { spyingOnYou: true }),
+      ],
+    });
+    const unspyActions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'sellUpgradePoint' },
+      { type: 'clearSpy', targetPlayerId: 'bot-b' },
+    ];
+    expect(decide(unspyView, unspyActions, createRng('unspy-not-sell'))).toEqual({
+      type: 'clearSpy',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
   it('Upgrader buyUpgradePoint uses cost 5 for point-reserve (not global 10)', () => {
     // Contest + Mirror reserve (6). Points 11: after Upgrader buy (5) → 6 OK;
     // after global 10 → 1 below reserve → -Infinity.

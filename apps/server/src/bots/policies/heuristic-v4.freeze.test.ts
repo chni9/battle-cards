@@ -5,9 +5,11 @@
  * Move the behaviour change into a new policy id.
  * L54-01: Spy cost 4→2 is a catalog change, not a policy change — traces were
  * refreshed for affordability only (`weightsHash` unchanged).
+ * L58-08: pool buy / Unspy add legal actions; traces refreshed, `weightsHash`
+ * unchanged (no new weight constants).
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -242,3 +244,20 @@ describe('heuristic-v4 freeze (L32-03)', () => {
     });
   }
 });
+
+if (process.env['REFRESH_HEURISTIC_V4_FREEZE'] === '1') {
+  describe('heuristic-v4 freeze refresh (L58-08)', () => {
+    it('rewrites traces while keeping weightsHash', () => {
+      const weightsHash = computeHeuristicV4WeightsHash();
+      expect(weightsHash).toBe(fixture.weightsHash);
+      const traces: Record<string, FreezeTraceStep[]> = {};
+      for (const kit of KIT_IDS) {
+        traces[kit] = collectBot0Trace(kit);
+      }
+      writeFileSync(
+        join(import.meta.dirname, 'heuristic-v4.freeze.json'),
+        `${JSON.stringify({ weightsHash, traces }, null, 2)}\n`,
+      );
+    });
+  });
+}

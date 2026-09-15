@@ -3250,4 +3250,13 @@ card-lives **or** Invisibility remaining turns.
 
 ---
 
+## 2026-09-15 · [P] heuristic-v4 freeze refresh for pool buy / Unspy (L58-08)
+
+Lot 58 added `buyPoolCard` and `clearSpy` to the legal set. Scoring uses existing
+Invest-band constants (no new `heuristic-weights` export), so `weightsHash` stays
+the L32-03 yardstick. `heuristic-v4.freeze.json` traces were refreshed because a
+1-point pool recover outranks Draw — same fixture exception class as L54-01.
+
+---
+
 
