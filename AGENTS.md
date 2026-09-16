@@ -15,7 +15,8 @@ full Classic content (15 kits). **V5** adds measurement, fitted evaluation, beli
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
 `docs/backlog_v6.md`); Lots 57–60 (feedback + rematch; shop / pool /
-Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**. V5 may continue in parallel. Audience: the designer
+Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**;
+**Lot 61** (password `/admin` insights) is **in progress**. V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·

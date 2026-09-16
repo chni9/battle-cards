@@ -3468,3 +3468,27 @@ dock keeps 59. L60-02 records the bump. No rule change.
 
 ---
 
+## 2026-09-16 · [P] Lot 61 designer admin insights (L61-01)
+
+**Reopen V6 §11 analytics** for password-gated `/admin` only (technical spec v6
+§14). No player accounts, no hub link, no `PROTOCOL_VERSION` bump.
+
+**Auth:** same `INBOX_PASSWORD` / `X-Inbox-Password` / rate limit as inbox.
+
+**Seed:** admin HTTP may return `finished_games.seed`; all playing and player
+finished views stay seed-free (`strip-seed` unchanged on feedback paths).
+
+**Tutorial rows:** dashboard and kit-stats default `is_tutorial = false`; explicit
+filter may include tutorials.
+
+**Nicknames:** persist on `finished_game_players` (migration 007); display-only,
+not identity.
+
+**Table browser:** allowlist four tables only; truncate large JSONB in grids; no
+arbitrary SQL.
+
+**Out:** kit-vs-kit, card frequencies from action logs, tutorial funnel, SQL/JSON
+IDE, feedback edit/delete, live room list.
+
+---
+

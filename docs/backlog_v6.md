@@ -451,6 +451,27 @@ compact Draw/Unspy dock landed on main as Lot 59.
 | L60-04 | Fill recap from matchStats + action log + GameRoom think-time map. Combat kills only; `buyCardCount` includes `buyPoolCard`; `draw` excludes `activateDuplication`; omit `kitId` for L57-16 fogged walk-ins. Do not clear stats on first Play again. **Acceptance:** recap numbers identical for seated recipients; fogged walk-in recap omits kitId; `pnpm verify` green. | L | **High** | L60-02, L60-03 | Done |
 | L60-05 | Game over Dialog: winner header + award tiles (seat color, kit portrait, nickname, kit name, value) + compact elim list. Skip all-zero awards; Slowest/Fastest humans only (≥2). Keep Play again / Feedback / View board / Return home / DEV Excel. **Acceptance:** copy tests still lock Play again + Feedback + DEV Excel; award helper tests ties and human-only clocks; `pnpm verify` green. | L | Medium | L60-04 | Done |
 
+---
+
+## Lot 61 — Designer admin insights (designer 2026-09-16)
+
+Password-gated `/admin` SPA + `GET /api/admin/*` (reuse inbox auth). Dashboard,
+games list/detail, kit pick/win rates, Excel exports, feedback inbox move,
+four-table browser. Migration `007` nickname on `finished_game_players`. No protocol
+bump, no hub link, no accounts. Default exclude `is_tutorial` on dashboard/kits.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L61-01 | Dated `[P]` Lot 61 in `decisions.md`; technical spec v6 §11 exception + §14 addendum + lot map; Lot 61 section here; reopen analytics scope. **Acceptance:** agent reading `decisions.md` + backlog knows `/admin`, seed exception, nickname persist, tutorial default-off. | S | Low | — | Done |
+| L61-02 | Migration `007_finished_game_player_nickname.sql`; `nickname` on snapshot + writer + builder from seat nicknames. **Acceptance:** new writes persist nickname; old rows null; `pnpm verify` green. | S | Low | L61-01 | In progress |
+| L61-03 | Shared inbox-auth helper; `GET /api/admin/overview` + `GET /api/admin/games` (filters, pagination). Tests: 404/401/429/503, tutorial excluded by default. **Acceptance:** filters work; auth matches inbox; `pnpm verify` green. | M | **High** | L61-02 | Todo |
+| L61-04 | `GET /api/admin/games/:roomId` detail + `GET /api/admin/kit-stats`. **Acceptance:** detail shows seats/elim/winner; kit rates respect tutorial filter; `pnpm verify` green. | M | Medium | L61-03 | Todo |
+| L61-05 | `GET /api/admin/tables/:name` allowlisted four tables; truncate JSONB in rows. **Acceptance:** unknown table 404; no raw SQL param; `pnpm verify` green. | M | Medium | L61-03 | Todo |
+| L61-06 | SPA `/admin` shell, password storage reuse, nav, `/inbox` → `/admin/feedback`. **Acceptance:** `/admin` loads without Colyseus; inbox redirect; no hub link; `pnpm verify` green. | M | Medium | L61-03 | Todo |
+| L61-07 | Dashboard + games list/detail UI. **Acceptance:** filters match API; designed detail not JSON dump; `pnpm verify` green. | L | Medium | L61-04, L61-06 | Todo |
+| L61-08 | Kit stats page + client exceljs exports (games list, kit table). **Acceptance:** Excel downloads from loaded JSON; `pnpm verify` green. | M | Low | L61-07 | Todo |
+| L61-09 | Inbox UI under `/admin/feedback`; `GET /api/inbox` unchanged. **Acceptance:** feedback page works; legacy `/inbox` redirect; `pnpm verify` green. | S | Low | L61-06 | Todo |
+| L61-10 | Table browser UI + page Excel + `frontend.md` / `db.md` admin notes. **Acceptance:** four tables only; truncated JSONB; `pnpm verify` green. | M | Low | L61-05, L61-08 | Todo |
 
 ---
 
@@ -478,7 +499,8 @@ compact Draw/Unspy dock landed on main as Lot 59.
 | 58 | 9 |
 | 59 | 2 |
 | 60 | 5 |
-| **Total** | **117** |
+| 61 | 10 |
+| **Total** | **127** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 

@@ -722,6 +722,8 @@ Not even partially, even “to lay groundwork”:
   it reuses eliminated-player vision, not a replay product)
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games
+  **except Lot 61** (password-gated `/admin`, HTTP `/api/admin/*`, no accounts,
+  no `PROTOCOL_VERSION` bump — see §14 addendum)
 
 ---
 
@@ -768,6 +770,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 58 | Shop, pool, Invisibility, PG, Unspy | Upgrade-point shop icons, doubling pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10; 33 → 34 |
 | 59 | Compact Draw / Unspy dock | Economy-bar Draw/Unspy drop word labels; gain/cost CostDisplay (+ crossed-eye); no protocol bump |
 | 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
+| 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
@@ -779,4 +782,28 @@ so the tutorial shop/target already look like the real table). **46** after 43 (
 Invisibility under the Lot 58 text).
 **59** is a designer session follow-up (client presentation; no protocol bump).
 **60** is a designer session follow-up (Game over awards; 34 → 35).
+**61** is a designer session follow-up (admin analytics; no protocol bump).
+
+---
+
+## 14. Lot 61 addendum — designer admin insights
+
+Reopens the §11 “designer-facing analytics beyond inbox” line **on purpose** for
+this lot only.
+
+- **Surface:** SPA `/admin` (same app as the hub; **not** linked from the hub).
+  `/inbox` redirects to `/admin/feedback`. Mount `GET /api/admin/*` before the
+  SPA catch-all.
+- **Auth:** reuse `INBOX_PASSWORD` + header `X-Inbox-Password`, timing-safe compare,
+  404 when unset, 401 wrong password, shared IP guess limiter, dev CORS helper.
+  Unset `DATABASE_URL` → **503** on admin routes (never empty 200).
+- **Seed exception:** player and finished **player** views still never include
+  `GameState.seed`. Password-gated admin **may** return `finished_games.seed` for
+  balancing; keep `strip-seed` on feedback and `log_tail`.
+- **Data:** Postgres finished-game tables + `feedback_reports`. Default dashboard
+  and kit readers **exclude** `is_tutorial = true` unless the filter includes tutorials.
+- **Persist:** migration `007` adds `nickname` on `finished_game_players` for new
+  writes (not unique identity — no accounts).
+- **Out of this lot:** SQL box, JSON IDE, kit-vs-kit matrix, action-log card
+  frequencies, tutorial funnel, feedback read/done, live rooms, accounts.
 
