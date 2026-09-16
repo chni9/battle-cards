@@ -1,24 +1,29 @@
 /**
- * Phase router — Home / Lobby / Table / End / Inbox.
+ * Phase router — Home / Lobby / Table / End / Admin.
  * Conventions: docs/agent/frontend.md · technical spec v2 §6 · L17-01 solo skip-lobby.
- * Inbox is pathname `/inbox`, not a game phase (technical spec v6 §7.3 / L47-05).
+ * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 
 import { useRoomConnection } from './net/use-room-connection';
+import { AdminApp } from './screens/admin/admin-app';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
-import { InboxScreen } from './screens/inbox';
 import { LobbyScreen } from './screens/lobby';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen } from './screens/table';
 
 export function App() {
-  if (window.location.pathname === '/inbox') {
-    return <InboxScreen />;
+  const path = window.location.pathname;
+  if (path === '/inbox' || path.startsWith('/inbox/')) {
+    window.location.replace('/admin/feedback');
+    return null;
+  }
+  if (path === '/admin' || path.startsWith('/admin/')) {
+    return <AdminApp />;
   }
   return <GameApp />;
 }
