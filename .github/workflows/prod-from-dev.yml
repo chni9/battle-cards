@@ -1,0 +1,22 @@
+name: prod-from-dev
+
+# Production (main) only accepts promotions from staging (dev).
+# Feature work targets `dev`. See docs/agent/deploy.md.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  require-dev:
+    name: head-branch-is-dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject PRs to main that are not from dev
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" != "dev" ]; then
+            echo "::error::Production (main) only accepts pull requests from the dev branch. Open this PR against dev, then promote with a PR from dev to main. See docs/agent/deploy.md."
+            exit 1
+          fi

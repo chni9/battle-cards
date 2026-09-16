@@ -160,6 +160,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 | `docs/agent/protocol.md` | Colyseus rooms, events, per-recipient views, Spy visibility |
 | `docs/agent/frontend.md` | Client screens and connection conventions (from L1-12) |
 | `docs/agent/db.md` | Finished-game Postgres log, migrations, end-of-game write |
+| `docs/agent/deploy.md` | Coolify staging vs production, `dev`/`main` gitflow |
 | `docs/agent/testing.md` | Writing tests — which are mandatory and what they must prove |
 | `docs/agent/bots.md` | Bot policies, registry, arena, workers (created in L32-02) |
 | `docs/agent/decisions.md` | Checking why something is the way it is, or logging a new decision |
@@ -229,6 +230,9 @@ failure.
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
 task alone. Do not bundle several task IDs into one commit unless the developer explicitly
 allows it for that pass (e.g. a catch-up commit after a multi-task session).
+
+**PRs target `dev` (staging).** Promote to production with a PR `dev` → `main`. Coolify
+watches `dev` for staging and `main` for production (`docs/agent/deploy.md`).
 
 ## 11. Agent output style
 

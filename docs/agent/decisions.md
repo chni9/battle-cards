@@ -3468,3 +3468,24 @@ dock keeps 59. L60-02 records the bump. No rule change.
 
 ---
 
+## 2026-09-16 · [T] Staging Coolify environment + `dev` gitflow
+
+Designer: a persistent staging host, feature PRs merge to `dev`, production
+updates only when `dev` is merged to `main`.
+
+Locked choices (no rule change, no second Dockerfile):
+
+- Git: `dev` is the integration branch (GitHub default branch, once switched in
+  Settings). `main` stays the production ref. `.github/workflows/prod-from-dev.yml`
+  rejects PRs into `main` whose head is not `dev`.
+- Coolify: a second **environment** named `staging` in the existing project —
+  its own PostgreSQL and its own Dockerfile app watching `dev`. Production keeps
+  watching `main`.
+- Runtime: both hosts set `NODE_ENV=production`. Staging is not a Vite/tsx
+  `pnpm dev` box.
+- Isolation: distinct `DATABASE_URL` and `INBOX_PASSWORD`. Never clone production
+  volumes onto staging.
+- Operator playbook: `docs/agent/deploy.md`.
+
+---
+
