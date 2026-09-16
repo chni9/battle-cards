@@ -10,6 +10,7 @@ import { defineRoom, defineServer } from 'colyseus';
 import express from 'express';
 
 import { allowInboxPasswordCorsHeader } from './http/allow-inbox-cors';
+import { defaultAdminApiDeps, mountAdminApi } from './http/admin-http';
 import {
   defaultFeedbackApiDeps,
   mountFeedbackApi,
@@ -32,6 +33,7 @@ const server = defineServer({
     // /api must mount even when STATIC_DIR is missing (local tsx without a client build).
     app.use('/api', express.json({ limit: '64kb' }));
     mountFeedbackApi(app, defaultFeedbackApiDeps());
+    mountAdminApi(app, defaultAdminApiDeps());
 
     const staticDir = resolveStaticDir();
     if (staticDir === undefined) {
