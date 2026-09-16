@@ -2,7 +2,7 @@
  * Single finished-game detail for admin (Lot 61).
  */
 
-import type { AdminGameDetail, KitId } from '@card-battle/shared';
+import type { AdminGameDetail, GameExportLogView, KitId } from '@card-battle/shared';
 import type { Pool } from 'pg';
 
 export async function loadAdminGameDetail(
@@ -83,7 +83,8 @@ export async function loadAdminGameDetail(
 
   const winnerRow = playersResult.rows.find((row) => row.is_winner);
 
-  return {
+  const hasExportLog = game.export_log !== null;
+  const detail: AdminGameDetail = {
     roomId: game.room_id,
     mode: game.mode,
     seed: game.seed,
@@ -113,6 +114,10 @@ export async function loadAdminGameDetail(
       eliminatorPlayerId: row.eliminator_player_id,
       reason: row.reason,
     })),
-    hasExportLog: game.export_log !== null,
+    hasExportLog,
   };
+  if (hasExportLog && game.export_log !== null) {
+    detail.exportLog = game.export_log as GameExportLogView;
+  }
+  return detail;
 }

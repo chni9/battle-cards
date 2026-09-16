@@ -4,6 +4,7 @@
  */
 
 import type { KitId } from '../domain/kit';
+import type { GameExportLogView } from '../protocol/state-view';
 
 export interface AdminOverview {
   gameCount: number;
@@ -69,6 +70,8 @@ export interface AdminGameDetail {
   seats: readonly AdminGameSeat[];
   eliminations: readonly AdminGameElimination[];
   hasExportLog: boolean;
+  /** Present when `hasExportLog`; admin-only Excel parity payload. */
+  exportLog?: GameExportLogView;
 }
 
 export interface AdminKitStatRow {
