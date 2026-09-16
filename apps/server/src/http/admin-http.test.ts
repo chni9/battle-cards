@@ -187,3 +187,77 @@ describe('GET /api/admin/games (L61-03)', () => {
     expect(body.items[0]?.roomId).toBe('ABCDEF');
   });
 });
+
+describe('GET /api/admin/games/:roomId (L61-04)', () => {
+  it('returns game detail including seed', async () => {
+    const query = vi.fn((sql: string) => {
+      if (sql.includes('FROM finished_games') && sql.includes('LIMIT 1') && sql.includes('seed')) {
+        return Promise.resolve({
+          rows: [
+            {
+              room_id: 'ABCDEF',
+              mode: 'classic',
+              seed: 'secret-seed',
+              winner_player_id: 'p1',
+              turn_sequence: 3,
+              started_at: new Date('2026-01-01T00:00:00.000Z'),
+              ended_at: new Date('2026-01-01T00:10:00.000Z'),
+              duration_ms: 600_000,
+              has_bots: false,
+              is_tutorial: false,
+              export_log: null,
+            },
+          ],
+        });
+      }
+      if (sql.includes('SELECT id FROM finished_games')) {
+        return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+      }
+      if (sql.includes('finished_game_players')) {
+        return Promise.resolve({
+          rows: [
+            {
+              player_id: 'p1',
+              seat_index: 0,
+              nickname: 'Ada',
+              kit_id: 'kamikaze',
+              lives: 5,
+              points: 1,
+              is_winner: true,
+              is_eliminated: false,
+              is_bot: false,
+            },
+          ],
+        });
+      }
+      if (sql.includes('finished_game_eliminations')) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+    const app = express();
+    mountAdminApi(app, testDeps({ getPool: () => ({ query }) as never }));
+    const server = await listen(app);
+    closers.push(server.close);
+    const response = await fetch(`${server.base}/api/admin/games/ABCDEF`, {
+      headers: { 'X-Inbox-Password': 'admin-secret' },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { seed: string; seats: { nickname: string }[] };
+    expect(body.seed).toBe('secret-seed');
+    expect(body.seats[0]?.nickname).toBe('Ada');
+  });
+});
+
+describe('GET /api/admin/tables/:name (L61-05)', () => {
+  it('returns 404 for unknown tables', async () => {
+    const app = express();
+    mountAdminApi(app, testDeps());
+    const server = await listen(app);
+    closers.push(server.close);
+    const response = await fetch(`${server.base}/api/admin/tables/pg_catalog`, {
+      headers: { 'X-Inbox-Password': 'admin-secret' },
+    });
+    expect(response.status).toBe(404);
+  });
+});
