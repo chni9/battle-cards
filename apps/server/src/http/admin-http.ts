@@ -6,7 +6,7 @@ import type { Application, Request, Response } from 'express';
 import type { Pool } from 'pg';
 
 import { getPool } from '../db/pool';
-import { loadAdminGameDetail } from '../db/admin-game-detail';
+import { isFinishedGameId, loadAdminGameDetail } from '../db/admin-game-detail';
 import { loadAdminGamesPage } from '../db/admin-list-games';
 import { loadAdminKitStats } from '../db/admin-kit-stats';
 import { loadAdminOverview } from '../db/admin-overview';
@@ -22,6 +22,7 @@ import {
   respondInboxAuthFailure,
   type InboxAuthDeps,
 } from './inbox-auth';
+import type { IpRateLimiter } from './ip-rate-limit';
 
 export interface AdminApiDeps {
   getPool: () => Pool | null;
@@ -29,11 +30,11 @@ export interface AdminApiDeps {
   inboxAuth: InboxAuthDeps;
 }
 
-export function defaultAdminApiDeps(): AdminApiDeps {
+export function defaultAdminApiDeps(inboxAuthLimiter: IpRateLimiter): AdminApiDeps {
   return {
     getPool,
     isProduction: () => process.env['NODE_ENV'] === 'production',
-    inboxAuth: defaultInboxAuthDeps(),
+    inboxAuth: defaultInboxAuthDeps(inboxAuthLimiter),
   };
 }
 
@@ -81,7 +82,7 @@ export function mountAdminApi(app: Application, deps: AdminApiDeps): void {
 
   corsOptions('/api/admin/overview');
   corsOptions('/api/admin/games');
-  corsOptions('/api/admin/games/:roomId');
+  corsOptions('/api/admin/games/:gameId');
   corsOptions('/api/admin/kit-stats');
   corsOptions('/api/admin/tables/:name');
 
@@ -101,7 +102,7 @@ export function mountAdminApi(app: Application, deps: AdminApiDeps): void {
     });
   });
 
-  app.get('/api/admin/games/:roomId', (req, res) => {
+  app.get('/api/admin/games/:gameId', (req, res) => {
     void handleGameDetail(req, res, deps).catch(() => {
       if (!res.headersSent) {
         res.status(503).json({ ok: false });
@@ -156,12 +157,12 @@ async function handleGameDetail(req: Request, res: Response, deps: AdminApiDeps)
   if (pool === null) {
     return;
   }
-  const roomId = paramString(req.params['roomId']);
-  if (roomId === undefined || roomId.length === 0) {
-    res.status(400).json({ ok: false });
+  const gameId = paramString(req.params['gameId']);
+  if (gameId === undefined || gameId.length === 0 || !isFinishedGameId(gameId)) {
+    res.status(404).json({ ok: false });
     return;
   }
-  const detail = await loadAdminGameDetail(pool, roomId);
+  const detail = await loadAdminGameDetail(pool, gameId);
   if (detail === null) {
     res.status(404).json({ ok: false });
     return;

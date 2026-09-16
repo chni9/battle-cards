@@ -15,6 +15,11 @@ import {
   defaultFeedbackApiDeps,
   mountFeedbackApi,
 } from './http/feedback-http';
+import {
+  createIpRateLimiter,
+  INBOX_AUTH_RATE_LIMIT_MAX,
+  INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
+} from './http/ip-rate-limit';
 import { mountStaticSpa, resolveStaticDir } from './http/static-spa';
 import { GameRoom } from './rooms/game-room';
 
@@ -32,8 +37,12 @@ const server = defineServer({
     }
     // /api must mount even when STATIC_DIR is missing (local tsx without a client build).
     app.use('/api', express.json({ limit: '64kb' }));
-    mountFeedbackApi(app, defaultFeedbackApiDeps());
-    mountAdminApi(app, defaultAdminApiDeps());
+    const inboxAuthLimiter = createIpRateLimiter(
+      INBOX_AUTH_RATE_LIMIT_MAX,
+      INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
+    );
+    mountFeedbackApi(app, defaultFeedbackApiDeps(inboxAuthLimiter));
+    mountAdminApi(app, defaultAdminApiDeps(inboxAuthLimiter));
 
     const staticDir = resolveStaticDir();
     if (staticDir === undefined) {

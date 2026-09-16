@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createIpRateLimiter } from './ip-rate-limit';
 import { mountAdminApi, type AdminApiDeps } from './admin-http';
+import { mountFeedbackApi, type FeedbackApiDeps } from './feedback-http';
 
 const closers: (() => void)[] = [];
 
@@ -162,6 +163,7 @@ describe('GET /api/admin/games (L61-03)', () => {
       return Promise.resolve({
         rows: [
           {
+            id: '11111111-1111-4111-8111-111111111111',
             room_id: 'ABCDEF',
             ended_at: new Date('2026-01-01T00:00:00.000Z'),
             duration_ms: 1000,
@@ -183,18 +185,22 @@ describe('GET /api/admin/games (L61-03)', () => {
       headers: { 'X-Inbox-Password': 'admin-secret' },
     });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { items: { roomId: string }[] };
+    const body = (await response.json()) as { items: { id: string; roomId: string }[] };
+    expect(body.items[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
     expect(body.items[0]?.roomId).toBe('ABCDEF');
   });
 });
 
-describe('GET /api/admin/games/:roomId (L61-04)', () => {
+describe('GET /api/admin/games/:gameId (L61-04)', () => {
+  const gameId = '11111111-1111-4111-8111-111111111111';
+
   it('returns game detail including seed', async () => {
     const query = vi.fn((sql: string) => {
-      if (sql.includes('FROM finished_games') && sql.includes('LIMIT 1') && sql.includes('seed')) {
+      if (sql.includes('FROM finished_games') && sql.includes('seed')) {
         return Promise.resolve({
           rows: [
             {
+              id: gameId,
               room_id: 'ABCDEF',
               mode: 'classic',
               seed: 'secret-seed',
@@ -209,9 +215,6 @@ describe('GET /api/admin/games/:roomId (L61-04)', () => {
             },
           ],
         });
-      }
-      if (sql.includes('SELECT id FROM finished_games')) {
-        return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
       }
       if (sql.includes('finished_game_players')) {
         return Promise.resolve({
@@ -239,13 +242,37 @@ describe('GET /api/admin/games/:roomId (L61-04)', () => {
     mountAdminApi(app, testDeps({ getPool: () => ({ query }) as never }));
     const server = await listen(app);
     closers.push(server.close);
-    const response = await fetch(`${server.base}/api/admin/games/ABCDEF`, {
+    const response = await fetch(`${server.base}/api/admin/games/${gameId}`, {
       headers: { 'X-Inbox-Password': 'admin-secret' },
     });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { seed: string; seats: { nickname: string }[] };
+    const body = (await response.json()) as {
+      id: string;
+      seed: string;
+      seats: { nickname: string }[];
+    };
+    expect(body.id).toBe(gameId);
     expect(body.seed).toBe('secret-seed');
     expect(body.seats[0]?.nickname).toBe('Ada');
+    expect(
+      query.mock.calls.some((call) => {
+        const sql = call[0];
+        return typeof sql === 'string' && sql.includes('WHERE id = $1');
+      }),
+    ).toBe(true);
+  });
+
+  it('returns 404 for a room code so rematch rows are not collapsed', async () => {
+    const query = vi.fn(() => Promise.resolve({ rows: [] }));
+    const app = express();
+    mountAdminApi(app, testDeps({ getPool: () => ({ query }) as never }));
+    const server = await listen(app);
+    closers.push(server.close);
+    const response = await fetch(`${server.base}/api/admin/games/ABCDEF`, {
+      headers: { 'X-Inbox-Password': 'admin-secret' },
+    });
+    expect(response.status).toBe(404);
+    expect(query).not.toHaveBeenCalled();
   });
 });
 
@@ -259,5 +286,38 @@ describe('GET /api/admin/tables/:name (L61-05)', () => {
       headers: { 'X-Inbox-Password': 'admin-secret' },
     });
     expect(response.status).toBe(404);
+  });
+});
+
+describe('shared inboxAuthLimiter (Lot 61)', () => {
+  it('counts failed guesses across /api/inbox and /api/admin', async () => {
+    const limiter = createIpRateLimiter(2, 60_000, () => Date.now());
+    const inboxAuth = {
+      readInboxPassword: () => 'admin-secret',
+      inboxAuthLimiter: limiter,
+    };
+    const feedbackDeps: FeedbackApiDeps = {
+      getPool: () => ({ query: vi.fn() }) as never,
+      insertReport: () => Promise.resolve('id'),
+      listReports: () => Promise.resolve([]),
+      lookupLive: () => null,
+      lookupFinished: () => Promise.resolve(null),
+      isProduction: () => false,
+      rateLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
+      inboxAuthLimiter: limiter,
+      readInboxPassword: () => 'admin-secret',
+    };
+    const app = express();
+    mountFeedbackApi(app, feedbackDeps);
+    mountAdminApi(app, testDeps({ inboxAuth }));
+    const server = await listen(app);
+    closers.push(server.close);
+    const headers = { 'X-Inbox-Password': 'nope' };
+    const inbox = await fetch(`${server.base}/api/inbox`, { headers });
+    expect(inbox.status).toBe(401);
+    const admin = await fetch(`${server.base}/api/admin/overview`, { headers });
+    expect(admin.status).toBe(401);
+    const limited = await fetch(`${server.base}/api/inbox`, { headers });
+    expect(limited.status).toBe(429);
   });
 });

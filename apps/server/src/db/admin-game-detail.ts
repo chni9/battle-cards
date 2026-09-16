@@ -1,15 +1,25 @@
 /**
  * Single finished-game detail for admin (Lot 61).
+ * Look up by `finished_games.id` — `room_id` is reused on Play again.
  */
 
 import type { AdminGameDetail, GameExportLogView, KitId } from '@card-battle/shared';
 import type { Pool } from 'pg';
 
+/** Postgres uuid text form. Rejects room codes so a bad path is 404, not a 22P02 503. */
+const FINISHED_GAME_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isFinishedGameId(value: string): boolean {
+  return FINISHED_GAME_ID_PATTERN.test(value);
+}
+
 export async function loadAdminGameDetail(
   pool: Pool,
-  roomId: string,
+  gameId: string,
 ): Promise<AdminGameDetail | null> {
   const gameResult = await pool.query<{
+    id: string;
     room_id: string;
     mode: string;
     seed: string;
@@ -22,26 +32,15 @@ export async function loadAdminGameDetail(
     is_tutorial: boolean;
     export_log: unknown;
   }>(
-    `SELECT room_id, mode, seed, winner_player_id, turn_sequence,
+    `SELECT id, room_id, mode, seed, winner_player_id, turn_sequence,
       started_at, ended_at, duration_ms, has_bots, is_tutorial, export_log
     FROM finished_games
-    WHERE room_id = $1
-    ORDER BY ended_at DESC
-    LIMIT 1`,
-    [roomId],
+    WHERE id = $1`,
+    [gameId],
   );
 
   const game = gameResult.rows[0];
   if (game === undefined) {
-    return null;
-  }
-
-  const gameIdResult = await pool.query<{ id: string }>(
-    `SELECT id FROM finished_games WHERE room_id = $1 ORDER BY ended_at DESC LIMIT 1`,
-    [roomId],
-  );
-  const gameId = gameIdResult.rows[0]?.id;
-  if (gameId === undefined) {
     return null;
   }
 
@@ -61,7 +60,7 @@ export async function loadAdminGameDetail(
     FROM finished_game_players
     WHERE game_id = $1
     ORDER BY seat_index ASC`,
-    [gameId],
+    [game.id],
   );
 
   const elimResult = await pool.query<{
@@ -74,7 +73,7 @@ export async function loadAdminGameDetail(
     FROM finished_game_eliminations
     WHERE game_id = $1
     ORDER BY order_index ASC`,
-    [gameId],
+    [game.id],
   );
 
   const nicknameByPlayer = new Map(
@@ -85,6 +84,7 @@ export async function loadAdminGameDetail(
 
   const hasExportLog = game.export_log !== null;
   const detail: AdminGameDetail = {
+    id: game.id,
     roomId: game.room_id,
     mode: game.mode,
     seed: game.seed,

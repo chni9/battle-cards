@@ -17,6 +17,8 @@ export interface AdminOverview {
 }
 
 export interface AdminGameListItem {
+  /** `finished_games.id` — unique per match; `roomId` is reused on Play again. */
+  id: string;
   roomId: string;
   endedAt: string;
   occupancy: number;
@@ -56,6 +58,7 @@ export interface AdminGameElimination {
 }
 
 export interface AdminGameDetail {
+  id: string;
   roomId: string;
   mode: string;
   seed: string;

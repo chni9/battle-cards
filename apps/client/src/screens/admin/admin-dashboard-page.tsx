@@ -30,6 +30,7 @@ export function AdminDashboardPage({ password }: AdminDashboardPageProps): React
         return;
       }
       setOverview(result.data);
+      setError(null);
     });
     return () => {
       cancelled = true;

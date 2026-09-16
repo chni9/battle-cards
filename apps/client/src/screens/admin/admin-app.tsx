@@ -88,7 +88,7 @@ export function AdminApp(): ReactElement {
             <div className="mt-6" key={routeKey}>
               {route.page === 'dashboard' ? <AdminDashboardPage password={password} /> : null}
               {route.page === 'games' ? (
-                <AdminGamesPage password={password} detailCode={route.gameCode} />
+                <AdminGamesPage password={password} detailId={route.gameCode} />
               ) : null}
               {route.page === 'kits' ? <AdminKitsPage password={password} /> : null}
               {route.page === 'feedback' ? <AdminFeedbackPage password={password} /> : null}

@@ -30,6 +30,7 @@ export async function loadAdminGamesPage(
   const offsetIdx = params.length + 2;
 
   const listResult = await pool.query<{
+    id: string;
     room_id: string;
     ended_at: Date;
     duration_ms: number;
@@ -41,6 +42,7 @@ export async function loadAdminGamesPage(
     winner_kit_id: string | null;
   }>(
     `SELECT
+      g.id,
       g.room_id,
       g.ended_at,
       g.duration_ms,
@@ -59,6 +61,7 @@ export async function loadAdminGamesPage(
   );
 
   const items: AdminGameListItem[] = listResult.rows.map((row) => ({
+    id: row.id,
     roomId: row.room_id,
     endedAt: row.ended_at.toISOString(),
     occupancy: Number.parseInt(row.occupancy, 10),

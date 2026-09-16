@@ -28,4 +28,18 @@ describe('admin route (Lot 61-06)', () => {
     expect(admin).toContain('readStoredInboxPassword');
     expect(fetchAdmin).toContain('X-Inbox-Password');
   });
+
+  it('keys game detail by finished-game id and can close a URL dialog', () => {
+    const games = read('screens/admin/admin-games-page.tsx');
+    expect(games).toContain('openDetail(row.id)');
+    expect(games).toContain('ignoreUrlDetail');
+    expect(games).toContain("replaceState({}, '', gamesListPath())");
+    expect(games).not.toContain('setPickedDetail(row.roomId)');
+  });
+
+  it('clears dashboard error after a successful overview fetch', () => {
+    const dashboard = read('screens/admin/admin-dashboard-page.tsx');
+    expect(dashboard).toContain('setOverview(result.data)');
+    expect(dashboard).toContain('setError(null)');
+  });
 });

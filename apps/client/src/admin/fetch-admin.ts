@@ -88,9 +88,9 @@ export function fetchAdminGames(
 
 export function fetchAdminGameDetail(
   password: string,
-  roomId: string,
+  gameId: string,
 ): Promise<AdminFetchResult<AdminGameDetail>> {
-  return adminGet(password, `/games/${encodeURIComponent(roomId)}`);
+  return adminGet(password, `/games/${encodeURIComponent(gameId)}`);
 }
 
 export function fetchAdminKitStats(

@@ -18,16 +18,25 @@ import { AdminFiltersForm } from './admin-filters-form';
 
 interface AdminGamesPageProps {
   password: string;
-  detailCode: string | null;
+  detailId: string | null;
 }
 
-export function AdminGamesPage({ password, detailCode }: AdminGamesPageProps): ReactElement {
+function gamesListPath(): string {
+  return '/admin/games';
+}
+
+function gameDetailPath(gameId: string): string {
+  return `/admin/games/${encodeURIComponent(gameId)}`;
+}
+
+export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [page, setPage] = useState<AdminGamesPage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
-  const activeDetail = pickedDetail ?? detailCode;
+  const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
+  const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
   const [detail, setDetail] = useState<Awaited<
     ReturnType<typeof fetchAdminGameDetail>
   > | null>(null);
@@ -51,6 +60,22 @@ export function AdminGamesPage({ password, detailCode }: AdminGamesPageProps): R
       setDetail(result);
     });
   }, [password, activeDetail]);
+
+  const closeDetail = (): void => {
+    setPickedDetail(null);
+    setIgnoreUrlDetail(true);
+    setDetail(null);
+    if (window.location.pathname.startsWith('/admin/games/')) {
+      window.history.replaceState({}, '', gamesListPath());
+    }
+  };
+
+  const openDetail = (gameId: string): void => {
+    setIgnoreUrlDetail(false);
+    setPickedDetail(gameId);
+    setDetail(null);
+    window.history.replaceState({}, '', gameDetailPath(gameId));
+  };
 
   const items = page?.items ?? [];
 
@@ -79,12 +104,12 @@ export function AdminGamesPage({ password, detailCode }: AdminGamesPageProps): R
       {error !== null ? <p className="text-sm text-cta-red">{error}</p> : null}
       <ul className="divide-y divide-border-soft rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
         {items.map((row) => (
-          <li key={`${row.roomId}-${row.endedAt}`}>
+          <li key={row.id}>
             <button
               type="button"
               className="block w-full px-3 py-3 text-left"
               onClick={() => {
-                setPickedDetail(row.roomId);
+                openDetail(row.id);
               }}
             >
               <GameRow row={row} />
@@ -95,11 +120,9 @@ export function AdminGamesPage({ password, detailCode }: AdminGamesPageProps): R
 
       <Dialog
         open={activeDetail !== null && detail?.ok === true}
-        title={activeDetail ?? 'Game'}
+        title={detail?.ok === true ? detail.data.roomId : 'Game'}
         panelClassName="max-w-lg"
-        onClose={() => {
-          setPickedDetail(null);
-        }}
+        onClose={closeDetail}
         actions={
           <>
             {detail?.ok === true && detail.data.exportLog !== undefined ? (
@@ -120,14 +143,7 @@ export function AdminGamesPage({ password, detailCode }: AdminGamesPageProps): R
                 Excel (match)
               </Button>
             ) : null}
-            <Button
-              compact
-              type="button"
-              variant="orange"
-              onClick={() => {
-                setPickedDetail(null);
-              }}
-            >
+            <Button compact type="button" variant="orange" onClick={closeDetail}>
               Close
             </Button>
           </>

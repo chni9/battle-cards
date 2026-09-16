@@ -795,8 +795,12 @@ this lot only.
   `/inbox` redirects to `/admin/feedback`. Mount `GET /api/admin/*` before the
   SPA catch-all.
 - **Auth:** reuse `INBOX_PASSWORD` + header `X-Inbox-Password`, timing-safe compare,
-  404 when unset, 401 wrong password, shared IP guess limiter, dev CORS helper.
+  404 when unset, 401 wrong password, **one** IP guess limiter shared by `/api/inbox`
+  and `/api/admin/*` (constructed in `apps/server/src/index.ts`), dev CORS helper.
   Unset `DATABASE_URL` → **503** on admin routes (never empty 200).
+- **Games:** list rows include `finished_games.id`. `GET /api/admin/games/:id` looks
+  up that uuid. `room_id` is reused on Play again / later code reuse, so it is not
+  a unique key.
 - **Seed exception:** player and finished **player** views still never include
   `GameState.seed`. Password-gated admin **may** return `finished_games.seed` for
   balancing; keep `strip-seed` on feedback and `log_tail`.

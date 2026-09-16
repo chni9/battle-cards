@@ -32,8 +32,6 @@ import {
   createIpRateLimiter,
   FEEDBACK_RATE_LIMIT_MAX,
   FEEDBACK_RATE_LIMIT_WINDOW_MS,
-  INBOX_AUTH_RATE_LIMIT_MAX,
-  INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
   type IpRateLimiter,
 } from './ip-rate-limit';
 import {
@@ -75,7 +73,7 @@ export interface FeedbackApiDeps {
 
 export { readInboxPasswordFromEnv } from './inbox-auth';
 
-export function defaultFeedbackApiDeps(): FeedbackApiDeps {
+export function defaultFeedbackApiDeps(inboxAuthLimiter: IpRateLimiter): FeedbackApiDeps {
   return {
     getPool,
     insertReport: insertFeedbackReport,
@@ -87,10 +85,7 @@ export function defaultFeedbackApiDeps(): FeedbackApiDeps {
       FEEDBACK_RATE_LIMIT_MAX,
       FEEDBACK_RATE_LIMIT_WINDOW_MS,
     ),
-    inboxAuthLimiter: createIpRateLimiter(
-      INBOX_AUTH_RATE_LIMIT_MAX,
-      INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
-    ),
+    inboxAuthLimiter,
     readInboxPassword: () => readInboxPasswordFromEnv(),
   };
 }

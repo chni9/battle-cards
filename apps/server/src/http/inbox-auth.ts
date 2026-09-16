@@ -4,12 +4,7 @@
 
 import type { Request, Response } from 'express';
 
-import {
-  createIpRateLimiter,
-  INBOX_AUTH_RATE_LIMIT_MAX,
-  INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
-  type IpRateLimiter,
-} from './ip-rate-limit';
+import type { IpRateLimiter } from './ip-rate-limit';
 import { timingSafeEqualUtf8 } from './timing-safe-equal';
 
 export function readInboxPasswordFromEnv(
@@ -80,12 +75,9 @@ export function respondInboxAuthFailure(res: Response, failure: InboxAuthFailure
   res.status(401).json({ ok: false });
 }
 
-export function defaultInboxAuthDeps(): InboxAuthDeps {
+export function defaultInboxAuthDeps(inboxAuthLimiter: IpRateLimiter): InboxAuthDeps {
   return {
     readInboxPassword: () => readInboxPasswordFromEnv(),
-    inboxAuthLimiter: createIpRateLimiter(
-      INBOX_AUTH_RATE_LIMIT_MAX,
-      INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
-    ),
+    inboxAuthLimiter,
   };
 }

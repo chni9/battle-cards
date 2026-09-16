@@ -3492,3 +3492,15 @@ IDE, feedback edit/delete, live room list.
 
 ---
 
+## 2026-09-16 · Lot 61 Bugbot: game id + shared limiter
+
+Play again / later code reuse writes another `finished_games` row with the same
+`room_id`. Admin list already has unique rows; detail is `GET /api/admin/games/:id`
+on `finished_games.id`, not newest-by-`room_id`.
+
+Inbox and admin share **one** `inboxAuthLimiter` constructed in
+`apps/server/src/index.ts` (same 10 / 10 min / IP budget). Seed still only on
+passworded admin HTTP; no protocol bump; no hub Admin link.
+
+---
+

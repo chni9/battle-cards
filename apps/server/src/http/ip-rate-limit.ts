@@ -5,7 +5,7 @@
 export const FEEDBACK_RATE_LIMIT_MAX = 10;
 export const FEEDBACK_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
-/** Failed `GET /api/inbox` password guesses — same window as feedback POST. */
+/** Failed `GET /api/inbox` and `GET /api/admin/*` password guesses — same window as feedback POST. */
 export const INBOX_AUTH_RATE_LIMIT_MAX = 10;
 export const INBOX_AUTH_RATE_LIMIT_WINDOW_MS = FEEDBACK_RATE_LIMIT_WINDOW_MS;
 

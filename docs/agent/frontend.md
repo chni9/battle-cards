@@ -91,10 +91,13 @@ rules above are unchanged — this section only covers how the client looks.
   **Admin (L61-06+):** `App` branches `/admin` before game phases (no Colyseus). Reuses
   `sessionStorage['card-battle.v6.inboxPassword']` and `X-Inbox-Password` against
   `GET /api/admin/*`. Nav: Dashboard, Games, Kits, Feedback, Data. Default filters
-  exclude tutorial rows. Client `exceljs` exports for games list, kit stats, and table
+  exclude tutorial rows. Games list is keyed by `finished_games.id`; detail
+  `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
+  returns to `/admin/games`. Client `exceljs` exports for games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
-  client-side; row detail with log tail; no edit or delete.
+  client-side; row detail with contact, nickname, game code, screen, playKind, protocol,
+  user agent, and log tail; no edit or delete.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under

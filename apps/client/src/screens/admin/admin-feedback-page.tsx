@@ -24,6 +24,13 @@ const KIND_LABEL: Record<FeedbackKind, string> = {
   idea: 'Idea',
 };
 
+function messagePreview(message: string): string {
+  if (message.length <= 96) {
+    return message;
+  }
+  return `${message.slice(0, 96)}…`;
+}
+
 interface AdminFeedbackPageProps {
   password: string;
 }
@@ -115,8 +122,11 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                 >
                   <p className="text-xs text-ink-muted">
                     {row.createdAt} · {KIND_LABEL[row.kind]}
+                    {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
+                    {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
+                    {row.nickname !== null ? ` · ${row.nickname}` : ''}
                   </p>
-                  <p className="mt-1 text-sm text-ink">{row.message.slice(0, 96)}</p>
+                  <p className="mt-1 text-sm text-ink">{messagePreview(row.message)}</p>
                 </button>
               </li>
             ))}
@@ -144,12 +154,20 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         }
       >
         {selected !== null ? (
-          <div className="space-y-2 text-sm">
-            <p className="whitespace-pre-wrap">{selected.message}</p>
+          <div className="space-y-3 text-sm text-ink">
+            <p className="text-xs text-ink-muted">{selected.createdAt}</p>
             {selected.topics.length > 0 ? (
               <p>About: {formatFeedbackTopics(selected.topics)}</p>
             ) : null}
-            <pre className="overflow-x-auto text-xs">
+            <p className="whitespace-pre-wrap">{selected.message}</p>
+            <p>Contact: {selected.contact ?? '—'}</p>
+            <p>Nickname: {selected.nickname ?? '—'}</p>
+            <p>Code: {selected.gameCode ?? '—'}</p>
+            <p>Screen: {selected.screen}</p>
+            <p>Play: {selected.playKind ?? '—'}</p>
+            <p>Protocol: {selected.protocolVersion}</p>
+            <p>User agent: {selected.userAgent ?? '—'}</p>
+            <pre className="overflow-x-auto rounded-[length:var(--radius-control)] border border-border bg-surface p-2 text-xs">
               {JSON.stringify(selected.logTail, null, 2)}
             </pre>
           </div>
