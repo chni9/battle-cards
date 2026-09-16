@@ -137,6 +137,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
     expect(aliceRow).toMatchObject({
       playerId: 'alice',
       seatIndex: 0,
+      nickname: 'Alice',
       kitId: 'kamikaze',
       isWinner: true,
       isEliminated: false,

@@ -24,6 +24,8 @@ export interface FinishedGameEliminationRecord {
 export interface FinishedGamePlayerRecord {
   playerId: string;
   seatIndex: number;
+  /** L61-02 — seat nickname at game end; null only on pre-migrate rows. */
+  nickname: string;
   kitId: KitId;
   isWinner: boolean;
   isEliminated: boolean;
@@ -79,6 +81,7 @@ export interface BuildFinishedGameSnapshotInput {
     turnSequence: number;
     players: readonly {
       id: string;
+      nickname: string;
       kitId: KitId;
       lives: number;
       points: number;
