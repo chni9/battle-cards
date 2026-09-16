@@ -21,6 +21,7 @@ const JSONB_COLUMNS = new Set([
   'log_tail',
 ]);
 
+/** Grid preview cap — full values stay in Postgres (L61-05). */
 const TRUNCATE_BYTES = 512;
 
 export function isAllowedAdminTable(name: string): boolean {
