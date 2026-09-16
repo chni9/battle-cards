@@ -465,13 +465,13 @@ bump, no hub link, no accounts. Default exclude `is_tutorial` on dashboard/kits.
 | L61-01 | Dated `[P]` Lot 61 in `decisions.md`; technical spec v6 §11 exception + §14 addendum + lot map; Lot 61 section here; reopen analytics scope. **Acceptance:** agent reading `decisions.md` + backlog knows `/admin`, seed exception, nickname persist, tutorial default-off. | S | Low | — | Done |
 | L61-02 | Migration `007_finished_game_player_nickname.sql`; `nickname` on snapshot + writer + builder from seat nicknames. **Acceptance:** new writes persist nickname; old rows null; `pnpm verify` green. | S | Low | L61-01 | Done |
 | L61-03 | Shared inbox-auth helper; `GET /api/admin/overview` + `GET /api/admin/games` (filters, pagination). Tests: 404/401/429/503, tutorial excluded by default. **Acceptance:** filters work; auth matches inbox; `pnpm verify` green. | M | **High** | L61-02 | Done |
-| L61-04 | `GET /api/admin/games/:roomId` detail + `GET /api/admin/kit-stats`. **Acceptance:** detail shows seats/elim/winner; kit rates respect tutorial filter; `pnpm verify` green. | M | Medium | L61-03 | In progress |
-| L61-05 | `GET /api/admin/tables/:name` allowlisted four tables; truncate JSONB in rows. **Acceptance:** unknown table 404; no raw SQL param; `pnpm verify` green. | M | Medium | L61-03 | Todo |
-| L61-06 | SPA `/admin` shell, password storage reuse, nav, `/inbox` → `/admin/feedback`. **Acceptance:** `/admin` loads without Colyseus; inbox redirect; no hub link; `pnpm verify` green. | M | Medium | L61-03 | Todo |
-| L61-07 | Dashboard + games list/detail UI. **Acceptance:** filters match API; designed detail not JSON dump; `pnpm verify` green. | L | Medium | L61-04, L61-06 | Todo |
-| L61-08 | Kit stats page + client exceljs exports (games list, kit table). **Acceptance:** Excel downloads from loaded JSON; `pnpm verify` green. | M | Low | L61-07 | Todo |
-| L61-09 | Inbox UI under `/admin/feedback`; `GET /api/inbox` unchanged. **Acceptance:** feedback page works; legacy `/inbox` redirect; `pnpm verify` green. | S | Low | L61-06 | Todo |
-| L61-10 | Table browser UI + page Excel + `frontend.md` / `db.md` admin notes. **Acceptance:** four tables only; truncated JSONB; `pnpm verify` green. | M | Low | L61-05, L61-08 | Todo |
+| L61-04 | `GET /api/admin/games/:roomId` detail + `GET /api/admin/kit-stats`. **Acceptance:** detail shows seats/elim/winner; kit rates respect tutorial filter; `pnpm verify` green. | M | Medium | L61-03 | Done |
+| L61-05 | `GET /api/admin/tables/:name` allowlisted four tables; truncate JSONB in rows. **Acceptance:** unknown table 404; no raw SQL param; `pnpm verify` green. | M | Medium | L61-03 | Done |
+| L61-06 | SPA `/admin` shell, password storage reuse, nav, `/inbox` → `/admin/feedback`. **Acceptance:** `/admin` loads without Colyseus; inbox redirect; no hub link; `pnpm verify` green. | M | Medium | L61-03 | Done |
+| L61-07 | Dashboard + games list/detail UI. **Acceptance:** filters match API; designed detail not JSON dump; `pnpm verify` green. | L | Medium | L61-04, L61-06 | Done |
+| L61-08 | Kit stats page + client exceljs exports (games list, kit table). **Acceptance:** Excel downloads from loaded JSON; `pnpm verify` green. | M | Low | L61-07 | Done |
+| L61-09 | Inbox UI under `/admin/feedback`; `GET /api/inbox` unchanged. **Acceptance:** feedback page works; legacy `/inbox` redirect; `pnpm verify` green. | S | Low | L61-06 | Done |
+| L61-10 | Table browser UI + page Excel + `frontend.md` / `db.md` admin notes. **Acceptance:** four tables only; truncated JSONB; `pnpm verify` green. | M | Low | L61-05, L61-08 | Done |
 
 ---
 
