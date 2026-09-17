@@ -3525,3 +3525,26 @@ Locked choices (no rule change, no second Dockerfile):
 
 ---
 
+## 2026-09-17 · [T] Coolify Preview Deployments on staging only
+
+Designer: match WaaS (`BoldysAI/whatsapp-ai-migration`) — Coolify **native**
+Preview Deployments via GitHub webhooks, not GitHub Actions that clone apps.
+
+Locked (no rule change, no protocol bump, no second Dockerfile):
+
+- Enable Preview Deployments on the **staging** Coolify app (branch `dev`)
+  only. Production stays **off**.
+- Preview runtime env is staging, not prod: `NODE_ENV=production`, `PORT=2567`,
+  `DATABASE_URL` = staging Internal URL, `INBOX_PASSWORD` = staging secret.
+  `VITE_SERVER_URL` unset (same-origin SPA).
+- Shared staging Postgres: PR test games appear in staging `/admin`. No
+  per-PR database.
+- Wildcard DNS e.g. `*.staging.yassine.boldys.ai`. Image is `/Dockerfile`,
+  Ports Exposes `2567`, no `3000:3000` mapping.
+- Feature PRs still target `dev`. Persistent staging remains the `dev` app;
+  previews are ephemeral extras, not a substitute.
+
+Operator playbook: `docs/agent/deploy.md` section F.
+
+---
+
