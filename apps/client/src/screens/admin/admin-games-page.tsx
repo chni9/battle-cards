@@ -34,6 +34,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [page, setPage] = useState<AdminGamesPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
   const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
   const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
@@ -56,15 +57,29 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
     if (activeDetail === null) {
       return;
     }
+    let cancelled = false;
     void fetchAdminGameDetail(password, activeDetail).then((result) => {
+      if (cancelled) {
+        return;
+      }
+      if (!result.ok) {
+        setDetailError(adminErrorCopy(result.status));
+        setDetail(null);
+        return;
+      }
       setDetail(result);
+      setDetailError(null);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [password, activeDetail]);
 
   const closeDetail = (): void => {
     setPickedDetail(null);
     setIgnoreUrlDetail(true);
     setDetail(null);
+    setDetailError(null);
     if (window.location.pathname.startsWith('/admin/games/')) {
       window.history.replaceState({}, '', gamesListPath());
     }
@@ -74,6 +89,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
     setIgnoreUrlDetail(false);
     setPickedDetail(gameId);
     setDetail(null);
+    setDetailError(null);
     window.history.replaceState({}, '', gameDetailPath(gameId));
   };
 
@@ -102,6 +118,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         </Button>
       </div>
       {error !== null ? <p className="text-sm text-cta-red">{error}</p> : null}
+      {detailError !== null ? <p className="text-sm text-cta-red">{detailError}</p> : null}
       <ul className="divide-y divide-border-soft rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
         {items.map((row) => (
           <li key={row.id}>

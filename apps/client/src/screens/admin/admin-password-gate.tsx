@@ -29,18 +29,24 @@ export function AdminPasswordGate({ onUnlocked, probe }: AdminPasswordGateProps)
     }
     setBusy(true);
     setError(null);
-    void probe(secret).then((result) => {
-      setBusy(false);
-      if (!result.ok) {
-        if (result.status === 401) {
-          clearStoredInboxPassword();
+    void probe(secret)
+      .then((result) => {
+        if (!result.ok) {
+          if (result.status === 401) {
+            clearStoredInboxPassword();
+          }
+          setError(adminErrorCopy(result.status));
+          return;
         }
-        setError(adminErrorCopy(result.status));
-        return;
-      }
-      storeInboxPassword(secret);
-      onUnlocked(secret);
-    });
+        storeInboxPassword(secret);
+        onUnlocked(secret);
+      })
+      .catch(() => {
+        setError(adminErrorCopy(0));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
   };
 
   const onSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {

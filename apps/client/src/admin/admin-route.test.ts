@@ -37,6 +37,24 @@ describe('admin route (Lot 61-06)', () => {
     expect(games).not.toContain('setPickedDetail(row.roomId)');
   });
 
+  it('ignores stale game-detail responses and surfaces 404/503', () => {
+    const games = read('screens/admin/admin-games-page.tsx');
+    expect(games).toContain('let cancelled = false');
+    expect(games).toContain('if (cancelled)');
+    expect(games).toContain('setDetailError(adminErrorCopy(result.status))');
+  });
+
+  it('re-opens the password gate on 401', () => {
+    const admin = read('screens/admin/admin-app.tsx');
+    const fetchAdmin = read('admin/fetch-admin.ts');
+    const gate = read('screens/admin/admin-password-gate.tsx');
+    expect(fetchAdmin).toContain('lockAdminSession');
+    expect(admin).toContain('subscribeAdminUnauthorized');
+    expect(admin).toContain('setPassword(null)');
+    expect(gate).toContain('.finally(');
+    expect(gate).toContain('adminErrorCopy(0)');
+  });
+
   it('clears dashboard error after a successful overview fetch', () => {
     const dashboard = read('screens/admin/admin-dashboard-page.tsx');
     expect(dashboard).toContain('setOverview(result.data)');

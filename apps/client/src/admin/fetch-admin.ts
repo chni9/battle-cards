@@ -20,6 +20,30 @@ export type AdminFetchResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number };
 
+export type AdminFetcher = (
+  url: string,
+  init: RequestInit,
+) => Promise<Pick<Response, 'ok' | 'status' | 'json'>>;
+
+type UnauthorizedListener = () => void;
+
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+export function subscribeAdminUnauthorized(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => {
+    unauthorizedListeners.delete(listener);
+  };
+}
+
+/** Clear the stored secret and show the password gate again (401). */
+export function lockAdminSession(): void {
+  clearStoredInboxPassword();
+  for (const listener of unauthorizedListeners) {
+    listener();
+  }
+}
+
 function apiBase(): string {
   const loc =
     typeof window !== 'undefined'
@@ -32,10 +56,11 @@ function apiBase(): string {
   return `${resolveServerUrl(import.meta.env.VITE_SERVER_URL, loc)}/api/admin`;
 }
 
-async function adminGet<T>(
+export async function adminGet<T>(
   password: string,
   path: string,
   query?: Record<string, string>,
+  fetchImpl: AdminFetcher = fetch,
 ): Promise<AdminFetchResult<T>> {
   const url = new URL(`${apiBase()}${path}`);
   if (query !== undefined) {
@@ -45,18 +70,22 @@ async function adminGet<T>(
       }
     }
   }
-  const response = await fetch(url.toString(), {
-    headers: { 'X-Inbox-Password': password },
-  });
-  if (response.status === 401) {
-    clearStoredInboxPassword();
+  try {
+    const response = await fetchImpl(url.toString(), {
+      headers: { 'X-Inbox-Password': password },
+    });
+    if (response.status === 401) {
+      lockAdminSession();
+    }
+    if (!response.ok) {
+      return { ok: false, status: response.status };
+    }
+    const data = (await response.json()) as T;
+    storeInboxPassword(password);
+    return { ok: true, data };
+  } catch {
+    return { ok: false, status: 0 };
   }
-  if (!response.ok) {
-    return { ok: false, status: response.status };
-  }
-  storeInboxPassword(password);
-  const data = (await response.json()) as T;
-  return { ok: true, data };
 }
 
 export function adminErrorCopy(status: number): string {

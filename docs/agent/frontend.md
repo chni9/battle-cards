@@ -93,7 +93,10 @@ rules above are unchanged — this section only covers how the client looks.
   `GET /api/admin/*`. Nav: Dashboard, Games, Kits, Feedback, Data. Default filters
   exclude tutorial rows. Games list is keyed by `finished_games.id`; detail
   `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
-  returns to `/admin/games`. Client `exceljs` exports for games list, kit stats, and table
+  returns to `/admin/games`. Detail fetch ignores stale responses and shows
+  `adminErrorCopy` on 404/503. A 401 clears the session and re-opens the password
+  gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
+  Client `exceljs` exports for games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
   client-side; row detail with contact, nickname, game code, screen, playKind, protocol,

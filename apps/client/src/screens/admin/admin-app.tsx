@@ -4,7 +4,7 @@
 
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { fetchAdminOverview } from '../../admin/fetch-admin';
+import { fetchAdminOverview, subscribeAdminUnauthorized } from '../../admin/fetch-admin';
 import { readStoredInboxPassword } from '../../inbox/password-storage';
 import { AdminNav } from './admin-nav';
 import { AdminPasswordGate } from './admin-password-gate';
@@ -56,6 +56,12 @@ export function AdminApp(): ReactElement {
     return () => {
       window.removeEventListener('popstate', onPop);
     };
+  }, []);
+
+  useEffect(() => {
+    return subscribeAdminUnauthorized(() => {
+      setPassword(null);
+    });
   }, []);
 
   const route = adminRoute();

@@ -16,7 +16,7 @@ import { useEffect, useState, type ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { fetchInbox, filterInbox } from '../../inbox/fetch-inbox';
-import { adminErrorCopy } from '../../admin/fetch-admin';
+import { adminErrorCopy, lockAdminSession } from '../../admin/fetch-admin';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
   bug: 'Bug',
@@ -45,6 +45,9 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   useEffect(() => {
     void fetchInbox(password).then((result) => {
       if (!result.ok) {
+        if (result.status === 401) {
+          lockAdminSession();
+        }
         setError(adminErrorCopy(result.status));
         return;
       }
