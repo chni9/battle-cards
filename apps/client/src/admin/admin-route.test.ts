@@ -31,7 +31,7 @@ describe('admin route (Lot 61-06)', () => {
 
   it('keys game detail by finished-game id and can close a URL dialog', () => {
     const games = read('screens/admin/admin-games-page.tsx');
-    expect(games).toContain('openDetail(row.id)');
+    expect(games).toContain('onOpen(row.id)');
     expect(games).toContain('ignoreUrlDetail');
     expect(games).toContain("replaceState({}, '', gamesListPath())");
     expect(games).not.toContain('setPickedDetail(row.roomId)');

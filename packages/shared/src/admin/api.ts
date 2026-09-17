@@ -11,6 +11,8 @@ export interface AdminOverview {
   humanOnlyCount: number;
   withBotsCount: number;
   avgDurationMs: number | null;
+  /** Weighted by human seat count per match (`duration × humans` / total human seats). */
+  avgDurationMsPerHumanPlayer: number | null;
   avgTurnSequence: number | null;
   topKitByWins: { kitId: KitId; wins: number } | null;
   feedbackCount: number;
