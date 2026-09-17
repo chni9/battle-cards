@@ -24,6 +24,8 @@
    `pnpm --filter @card-battle/server db:migrate` against `DATABASE_URL`.
    **Production exception:** the Docker entrypoint (`docker/entrypoint.sh`) runs
    migrations once before `listen`, and exits non-zero if they fail (fail-fast).
+   The Coolify **staging** image uses the same entrypoint against **its own**
+   Postgres — never the production `DATABASE_URL` (`docs/agent/deploy.md`).
    Do not add migrate-on-boot to the `tsx`/`pnpm dev` path.
 
 ## Schema map
@@ -72,7 +74,8 @@ separate player-turn counter.
 DATABASE_URL=postgres://… pnpm --filter @card-battle/server db:migrate
 ```
 
-In production, `docker/entrypoint.sh` runs the same command before starting the server.
+In the Coolify image (staging and production), `docker/entrypoint.sh` runs the same
+command before starting the server.
 
 ## Extending metrics
 

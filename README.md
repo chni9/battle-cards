@@ -48,21 +48,29 @@ apps/client       React client. Displays state, sends intents, holds no rule log
 packages/shared   Domain types shared by both. Single definition, never duplicated.
 ```
 
-## Production (Coolify)
+## Production and staging (Coolify)
 
 Single container: SPA + Colyseus on `$PORT`. See `Dockerfile` and
 `docs/superpowers/specs/2026-08-04-coolify-dockerfile-deploy-design.md`.
+Operator clicks (GitHub default branch, Coolify `staging` environment) →
+`docs/agent/deploy.md`.
+
+| Git | Coolify environment |
+|---|---|
+| `dev` | staging — merge feature PRs here |
+| `main` | production — merge `dev` here to release |
 
 | Variable | Required | Meaning |
 |---|---|---|
-| `DATABASE_URL` | yes (prod image) | Postgres; entrypoint migrates then starts |
+| `DATABASE_URL` | yes (image) | Postgres; entrypoint migrates then starts. Staging and production **each** have their own. |
 | `INBOX_PASSWORD` | no | Designer inbox; unset → `GET /api/inbox` is 404; 10 failed guesses / 10 min / IP → 429 |
 | `PORT` | no (default 2567) | Listen port — match Coolify `ports_exposes` |
-| `NODE_ENV` | yes in prod | `production` |
+| `NODE_ENV` | yes on the VPS | `production` on **both** hosts (runtime mode, not the Git branch) |
 | `STATIC_DIR` | no | SPA root (image default `/app/apps/client/dist`) |
 | `VITE_SERVER_URL` | no | Leave unset for same-origin Coolify deploys |
 
-Coolify: Git Dockerfile build → attach domain + HTTPS → link Postgres `DATABASE_URL` → deploy.
+Coolify: Git Dockerfile build → attach domain + HTTPS → link that environment’s Postgres
+`DATABASE_URL` → deploy. Staging watches branch `dev`; production watches `main`.
 
 ## Toolchain
 
