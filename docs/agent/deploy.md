@@ -1,41 +1,56 @@
-# docs/agent/deploy.md — Coolify staging and production
+# docs/agent/deploy.md — Coolify staging, PR previews, and production
 
 > Read before changing hosting, Git branches Coolify watches, or env vars on the VPS.
 > Transverse rules → `/AGENTS.md`. Finished-game DB → `db.md`. Client same-origin →
 > `frontend.md`. Topology locked in `docs/superpowers/specs/2026-08-04-coolify-dockerfile-deploy-design.md`.
 >
-> Sources: technical spec v1 §3 (VPS + Coolify) · designer 2026-09-16 (staging + `dev` gitflow).
+> Sources: technical spec v1 §3 (VPS + Coolify) · designer 2026-09-16 (staging +
+> `dev` gitflow) · designer 2026-09-17 (Coolify Preview Deployments on staging,
+> WaaS pattern).
 
 ## Layout
 
-| Git branch | Coolify environment | Who plays there |
+| Git ref | Coolify environment | Who plays there |
 |---|---|---|
-| `dev` | **staging** (new) | Testers / designer before a release |
-| `main` | **production** (existing) | Live players |
+| `dev` | **staging** | Testers / designer before a release |
+| PR **into `dev`** | Ephemeral **preview** on the staging app | Reviewers of that PR |
+| `main` | **production** | Live players |
 
-Feature work opens a PR **into `dev`**. Staging auto-deploys when `dev` moves. Production
-updates only when `dev` is merged **into `main`**.
+Feature work opens a PR **into `dev`**. Coolify listens to GitHub webhooks (same
+pattern as WaaS / `BoldysAI/whatsapp-ai-migration`): the **staging** app auto-deploys
+when `dev` moves, and **Preview Deployments** spin an ephemeral container per PR.
+Production updates only when `dev` is merged **into `main`**. Do not add a GitHub
+Action that clones Coolify apps.
 
 Same image as today: one Dockerfile, SPA + Colyseus on `$PORT`, Coolify HTTPS proxy,
 Coolify-managed Postgres. Staging is a **second** app + **second** Postgres. Do not reuse
-the production `DATABASE_URL` or `INBOX_PASSWORD`.
+the production `DATABASE_URL` or `INBOX_PASSWORD`. PR previews **reuse staging
+Postgres** — test games land in staging `/admin`.
 
-`NODE_ENV` stays `production` on both hosts. That flag means “run the production server
-path” (trust proxy, migrate-on-boot, SPA). It is not the Git branch name.
+`NODE_ENV` stays `production` on staging, PR previews, and production. That flag
+means “run the production server path” (trust proxy, migrate-on-boot, SPA). It is
+not the Git branch name.
 
 ## What the repo already has
 
-Nothing else is required in Git for Coolify to build staging. The image is the root
-`Dockerfile`; the entrypoint migrates then listens (`docker/entrypoint.sh`).
+Nothing else is required in Git for Coolify to build staging or PR previews. The
+image is the root `Dockerfile` (no `VITE_SERVER_URL` bake-in); the entrypoint
+migrates then listens (`docker/entrypoint.sh`). Preview hostnames work because
+the client dials `window.location.origin` when that env is unset
+(`apps/client/src/net/resolve-server-url.ts`).
 
-| Variable | Staging | Production |
-|---|---|---|
-| `DATABASE_URL` | **New** Postgres Internal URL | Existing prod Postgres (do not copy) |
-| `INBOX_PASSWORD` | **Different** shared secret | Existing prod secret |
-| `NODE_ENV` | `production` | `production` |
-| `PORT` | Match **Ports Exposes** (default `2567`) | Same as today |
-| `STATIC_DIR` | Leave unset (image default) | Leave unset |
-| `VITE_SERVER_URL` | **Unset** (same-origin WebSocket) | **Unset** |
+Coolify does **not** copy the staging app’s variables into previews. Set Preview
+Deployment Environment Variables explicitly (section F). Never paste production
+secrets there.
+
+| Variable | Staging app | PR preview (staging app) | Production |
+|---|---|---|---|
+| `DATABASE_URL` | Staging Postgres Internal URL | **Same staging Internal URL** | Existing prod Postgres (do not copy) |
+| `INBOX_PASSWORD` | Staging secret (not prod) | **Same staging secret** | Existing prod secret |
+| `NODE_ENV` | `production` | `production` | `production` |
+| `PORT` | Match **Ports Exposes** (`2567`) | `2567` | Same as today |
+| `STATIC_DIR` | Leave unset (image default) | Leave unset | Leave unset |
+| `VITE_SERVER_URL` | **Unset** (same-origin WebSocket) | **Unset** | **Unset** |
 
 GitHub Action `.github/workflows/prod-from-dev.yml` fails any PR into `main` whose head
 branch is not `dev`. It is inert until that workflow itself lives on `main` (first
@@ -104,6 +119,7 @@ Safer: empty environment + new resources (this section).
 
 - **Git Branch** = `dev`.
 - **Ports Exposes** = `2567` (must match `PORT`).
+- **Port Mappings:** none extra — do **not** map `3000:3000`.
 - **Name** something like `card-battle-staging` so it is not confused with prod.
 
 **Domains**
@@ -136,8 +152,9 @@ runtime only (`docs/agent/db.md`; the Vite build must not bake a server URL).
 
 - **Configuration → Webhooks / Git**: auto-deploy on push, already typical for a
   GitHub App. Confirm it lists branch `dev`.
-- Leave **Preview Deployments** off unless you explicitly want a third app per PR.
-  Persistent staging is `dev`, not PR previews.
+- **Preview Deployments:** enable on this **staging** app after section D succeeds.
+  See section F. Persistent staging is still `dev`; previews are extra ephemeral
+  containers, not a substitute for the `dev` host. **Production stays off.**
 
 8. **Deploy**. Follow the build log: `pnpm install --frozen-lockfile`, client build,
    runtime install, then `Running database migrations…` then
@@ -162,8 +179,59 @@ On the **production** environment tab, the existing app must still show:
 - Git Branch **`main`**
 - The original domain
 - The original `DATABASE_URL` / `INBOX_PASSWORD`
+- **Preview Deployments** **off**
 
-Do not click **Deploy** on production as part of this setup.
+Do not click **Deploy** on production as part of this setup. Do not enable
+previews on production.
+
+### F. PR preview deployments (staging app only)
+
+Match WaaS: Coolify **native** Preview Deployments. GitHub fires `pull_request`
+webhooks; Coolify builds the PR ref with the same `/Dockerfile` and tears the
+container down when the PR merges or closes. No workflow in this repo clones a
+Coolify app.
+
+Enable only after the **staging** app itself is healthy (section D). Confirm
+Build Pack **Dockerfile**, **Dockerfile Location** `/Dockerfile`, **Ports Exposes**
+`2567`, no `3000:3000` mapping.
+
+1. **Wildcard DNS first.** Create an `A` / `AAAA` record for
+   `*.staging.yassine.boldys.ai` (or `*.<your-staging-hostname>`) pointing at the
+   same VPS as staging. Without the wildcard, Coolify cannot serve
+   `https://{pr_id}.staging.yassine.boldys.ai`.
+2. Staging app → **Configuration → Advanced → Deployment** → enable
+   **Preview Deployments**. Leave **Allow Public PR Deployments** **off** (fork
+   / public-contributor code would run on the VPS).
+3. **Configuration → Preview Deployments** → **Preview URL Template**
+   `{{pr_id}}.staging.yassine.boldys.ai`. Coolify’s default `{{pr_id}}.{{domain}}`
+   is the same if the staging domain is `staging.yassine.boldys.ai`.
+4. **Preview Deployment Environment Variables** (runtime, **not** Build
+   Variable — Coolify does not inherit the staging app’s env):
+
+   ```
+   NODE_ENV=production
+   PORT=2567
+   DATABASE_URL=<staging Internal URL>
+   INBOX_PASSWORD=<staging secret>
+   ```
+
+   Leave `VITE_SERVER_URL` unset so the SPA dials the preview origin.
+5. GitHub App already watching `chni9/battle-cards` needs **Pull requests**
+   Read and write and a subscription to **Pull request** events. If the app was
+   created without those: Coolify **Sources** → the GitHub App → **Permissions**
+   → **Update**, then accept the GitHub permission prompt.
+6. Open a test PR **into `dev`**. Confirm a hostname like
+   `https://{n}.staging.yassine.boldys.ai` boots (`Running database migrations…`
+   then `Starting Card Battle server…`). Hub + two-tab room; WebSocket stays
+   same-origin. Staging `/admin` (staging `INBOX_PASSWORD`) lists the preview
+   game — that pollution is expected.
+7. Close the PR and confirm Coolify deletes the preview container.
+8. PRs already open when you flip the switch are **not** auto-deployed: Preview
+   Deployments → **Load Pull Requests** → **Deploy** on the ones you want.
+
+A preview that adds a SQL migration runs `docker/entrypoint.sh` against the
+**shared** staging database. That is the locked trade-off versus a per-PR
+Postgres (out of scope). Never set preview `DATABASE_URL` to production.
 
 ## Promote staging → production
 
@@ -197,5 +265,8 @@ production domain.
 
 - A second Dockerfile or docker-compose for staging
 - Sharing one Postgres between staging and production
-- Coolify Preview Deployments as a substitute for `dev`
+- Per-PR Postgres (previews share staging)
+- GitHub Actions that clone Coolify applications
+- Enabling Preview Deployments on **production**
+- Using PR previews as a substitute for the persistent `dev` staging host
 - Server production JS bundle (`tsx` in the image is unchanged)
