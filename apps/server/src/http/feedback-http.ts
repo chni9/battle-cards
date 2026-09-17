@@ -32,8 +32,6 @@ import {
   createIpRateLimiter,
   FEEDBACK_RATE_LIMIT_MAX,
   FEEDBACK_RATE_LIMIT_WINDOW_MS,
-  INBOX_AUTH_RATE_LIMIT_MAX,
-  INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
   type IpRateLimiter,
 } from './ip-rate-limit';
 import {
@@ -41,12 +39,17 @@ import {
   type LiveFeedbackContext,
 } from './live-feedback-registry';
 import { stripSeed, tryStripSeed } from './strip-seed';
-import { timingSafeEqualUtf8 } from './timing-safe-equal';
+import {
+  applyInboxDevCors,
+  checkInboxPassword,
+  clientIp,
+  readInboxPasswordFromEnv,
+  respondInboxAuthFailure,
+} from './inbox-auth';
 
 export const FEEDBACK_NOT_SAVED_NO_DB = 'Not saved (no database)';
 export const FEEDBACK_COULD_NOT_SAVE = 'Could not save — try again';
 
-const DEV_CORS_ORIGINS = new Set(['http://localhost:5173', 'http://127.0.0.1:5173']);
 const NICKNAME_MAX = 200;
 const CONTACT_MAX = 200;
 const MESSAGE_MAX = 4000;
@@ -68,17 +71,9 @@ export interface FeedbackApiDeps {
   readInboxPassword: () => string | undefined;
 }
 
-export function readInboxPasswordFromEnv(
-  env: NodeJS.ProcessEnv = process.env,
-): string | undefined {
-  const value = env['INBOX_PASSWORD'];
-  if (value === undefined || value.length === 0) {
-    return undefined;
-  }
-  return value;
-}
+export { readInboxPasswordFromEnv } from './inbox-auth';
 
-export function defaultFeedbackApiDeps(): FeedbackApiDeps {
+export function defaultFeedbackApiDeps(inboxAuthLimiter: IpRateLimiter): FeedbackApiDeps {
   return {
     getPool,
     insertReport: insertFeedbackReport,
@@ -90,28 +85,9 @@ export function defaultFeedbackApiDeps(): FeedbackApiDeps {
       FEEDBACK_RATE_LIMIT_MAX,
       FEEDBACK_RATE_LIMIT_WINDOW_MS,
     ),
-    inboxAuthLimiter: createIpRateLimiter(
-      INBOX_AUTH_RATE_LIMIT_MAX,
-      INBOX_AUTH_RATE_LIMIT_WINDOW_MS,
-    ),
+    inboxAuthLimiter,
     readInboxPassword: () => readInboxPasswordFromEnv(),
   };
-}
-
-function applyDevCors(req: Request, res: Response, isProduction: boolean): void {
-  if (isProduction) {
-    return;
-  }
-  const origin = req.get('origin');
-  if (origin !== undefined && DEV_CORS_ORIGINS.has(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Inbox-Password');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  }
-}
-
-function clientIp(req: Request): string {
-  return req.ip ?? req.socket.remoteAddress ?? 'unknown';
 }
 
 function isPlayKind(value: unknown): value is PlayKind {
@@ -268,7 +244,7 @@ async function enrichReport(
 
 export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void {
   app.options('/api/feedback', (req, res) => {
-    applyDevCors(req, res, deps.isProduction());
+    applyInboxDevCors(req, res, deps.isProduction());
     res.status(204).end();
   });
 
@@ -281,7 +257,7 @@ export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void 
   });
 
   app.options('/api/inbox', (req, res) => {
-    applyDevCors(req, res, deps.isProduction());
+    applyInboxDevCors(req, res, deps.isProduction());
     res.status(204).end();
   });
 
@@ -300,7 +276,7 @@ async function handleFeedbackPost(
   deps: FeedbackApiDeps,
 ): Promise<void> {
   try {
-    applyDevCors(req, res, deps.isProduction());
+    applyInboxDevCors(req, res, deps.isProduction());
 
     if (!deps.rateLimiter.take(clientIp(req))) {
       res.status(429).json({ ok: false, message: 'Too many reports' });
@@ -357,23 +333,14 @@ async function handleInboxGet(
   deps: FeedbackApiDeps,
 ): Promise<void> {
   try {
-    applyDevCors(req, res, deps.isProduction());
+    applyInboxDevCors(req, res, deps.isProduction());
 
-    const expected = deps.readInboxPassword();
-    if (expected === undefined) {
-      res.status(404).end();
-      return;
-    }
-
-    const provided = req.get('x-inbox-password');
-    const matches =
-      provided !== undefined && timingSafeEqualUtf8(provided, expected);
-    if (!matches) {
-      if (!deps.inboxAuthLimiter.take(clientIp(req))) {
-        res.status(429).json({ ok: false });
-        return;
-      }
-      res.status(401).json({ ok: false });
+    const auth = checkInboxPassword(req, {
+      readInboxPassword: deps.readInboxPassword,
+      inboxAuthLimiter: deps.inboxAuthLimiter,
+    });
+    if (!('ok' in auth)) {
+      respondInboxAuthFailure(res, auth);
       return;
     }
 

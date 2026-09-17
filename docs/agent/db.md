@@ -33,13 +33,14 @@
 | Table | Role |
 |---|---|
 | `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false) |
-| `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04) |
+| `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04), `nickname` at game end (L61-02; display-only) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
 | `feedback_reports` | Tester Bug / Confusion / Idea rows (L47-01 / L47-06 / technical spec v6 §7.2). No seed column. `kind` CHECK ∈ (`bug`,`confusion`,`idea`). `topics text[]` CHECK contained-by (`ui`,`gameplay`,`card`,`shop`,`bot`,`tutorial`,`other`); bug ≥1 topic is POST-only so pre-chip rows still list. `log_tail` is a public action-log slice, nullable; `game_code` nullable (Home). |
 
 SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
 `003_finished_game_export_log.sql`, `004_finished_games_tutorial.sql`,
-`005_feedback_reports.sql`, `006_feedback_topics.sql`.  
+`005_feedback_reports.sql`, `006_feedback_topics.sql`,
+`007_finished_game_player_nickname.sql`.  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
@@ -64,8 +65,8 @@ separate player-turn counter.
 
 | Variable | Meaning |
 |---|---|
-| `DATABASE_URL` | Postgres connection string. Unset → soft-skip persist (warn locally, error in production); feedback POST/inbox GET return 503 |
-| `INBOX_PASSWORD` | Shared secret for `GET /api/inbox` (`X-Inbox-Password`). Unset or empty → 404 (do not advertise the inbox). Failed guesses: 10 / 10 min / IP then 429; a correct password still succeeds |
+| `DATABASE_URL` | Postgres connection string. Unset → soft-skip persist (warn locally, error in production); feedback POST, inbox GET, and admin GET return 503 |
+| `INBOX_PASSWORD` | Shared secret for `GET /api/inbox` and `GET /api/admin/*` (`X-Inbox-Password`). Unset or empty → 404 (do not advertise the inbox/admin). Failed guesses: 10 / 10 min / IP then 429, **one** limiter for both surfaces (constructed in `index.ts`); a correct password still succeeds |
 
 ## Commands
 
