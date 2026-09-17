@@ -1,9 +1,11 @@
 import type { AdminTablePage } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { columnDisplayName, formatCount, tableDisplayName } from '../../admin/admin-present';
 import { adminErrorCopy, fetchAdminTable } from '../../admin/fetch-admin';
 import { exportTablePageXlsx } from '../../export/admin-xlsx';
 import { Button } from '../../design/components/button';
+import { AdminPageIntro } from './admin-ui';
 
 const TABLES = [
   'finished_games',
@@ -38,7 +40,11 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
   const rows = page?.rows ?? [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
+      <AdminPageIntro
+        title="Database"
+        description="Read-only view of log tables. Large fields are shortened in the grid."
+      />
       <div className="flex flex-wrap gap-2">
         {TABLES.map((name) => (
           <Button
@@ -52,52 +58,63 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
           >
-            {name}
+            {tableDisplayName(name)}
           </Button>
         ))}
       </div>
-      <Button
-        compact
-        type="button"
-        variant="orange"
-        disabled={page === null}
-        onClick={() => {
-          if (page !== null) {
-            void exportTablePageXlsx(page);
-          }
-        }}
-      >
-        Excel (page)
-      </Button>
-      {error !== null ? <p className="text-sm text-cta-red">{error}</p> : null}
-      {page !== null ? (
-        <p className="text-xs text-ink-muted">
-          {page.total} rows · page {page.page}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          compact
+          type="button"
+          variant="orange"
+          disabled={page === null}
+          onClick={() => {
+            if (page !== null) {
+              void exportTablePageXlsx(page);
+            }
+          }}
+        >
+          Download spreadsheet (this page)
+        </Button>
+        {page !== null ? (
+          <p className="text-sm text-ink-muted">
+            {formatCount(page.total)} rows · page {page.page}
+          </p>
+        ) : null}
+      </div>
+      {error !== null ? (
+        <p className="text-sm text-cta-red" role="alert">
+          {error}
         </p>
       ) : null}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-border">
-              {columns.map((col) => (
-                <th key={col.name} className="px-2 py-1 font-medium text-ink-muted">
-                  {col.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr key={index} className="border-b border-border-soft align-top">
+      <div className="overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-border bg-surface">
                 {columns.map((col) => (
-                  <td key={col.name} className="max-w-[14rem] truncate px-2 py-1">
-                    {formatCell(row[col.name])}
-                  </td>
+                  <th
+                    key={col.name}
+                    className="whitespace-nowrap px-3 py-2.5 font-semibold uppercase tracking-wide text-ink-muted"
+                  >
+                    {columnDisplayName(col.name)}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={index} className="border-b border-border-soft align-top hover:bg-surface/80">
+                  {columns.map((col) => (
+                    <td key={col.name} className="max-w-[16rem] truncate px-3 py-2 text-ink">
+                      {formatCell(row[col.name])}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -110,7 +127,7 @@ function formatCell(value: unknown): string {
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
     if (record['_truncated'] === true) {
-      return `[truncated ${String(record['totalBytes'])} B]`;
+      return `Preview only (${String(record['totalBytes'])} bytes)`;
     }
     return JSON.stringify(value);
   }

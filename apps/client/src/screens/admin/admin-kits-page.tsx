@@ -1,6 +1,7 @@
-import type { AdminKitStats } from '@card-battle/shared';
+import type { AdminKitStatRow, AdminKitStats } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { formatCount, formatPercent, kitDisplayName } from '../../admin/admin-present';
 import {
   DEFAULT_ADMIN_FILTERS,
   filtersToQuery,
@@ -10,10 +11,43 @@ import { adminErrorCopy, fetchAdminKitStats } from '../../admin/fetch-admin';
 import { exportKitStatsXlsx } from '../../export/admin-xlsx';
 import { Button } from '../../design/components/button';
 import { AdminFiltersForm } from './admin-filters-form';
+import { AdminDataTable, AdminPageIntro, type AdminTableColumn } from './admin-ui';
 
 interface AdminKitsPageProps {
   password: string;
 }
+
+const kitColumns: AdminTableColumn<AdminKitStatRow>[] = [
+  {
+    id: 'kit',
+    header: 'Kit',
+    cell: (row) => <span className="font-medium">{kitDisplayName(row.kitId)}</span>,
+  },
+  {
+    id: 'picks',
+    header: 'Times picked',
+    align: 'right',
+    cell: (row) => formatCount(row.picks),
+  },
+  {
+    id: 'wins',
+    header: 'Wins',
+    align: 'right',
+    cell: (row) => formatCount(row.wins),
+  },
+  {
+    id: 'pickRate',
+    header: 'Share of picks',
+    align: 'right',
+    cell: (row) => formatPercent(row.pickRate),
+  },
+  {
+    id: 'winRate',
+    header: 'Win rate',
+    align: 'right',
+    cell: (row) => formatPercent(row.winRate),
+  },
+];
 
 export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
@@ -33,7 +67,11 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
   }, [password, applied]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <AdminPageIntro
+        title="Kits"
+        description="Pick and win rates for the filtered match set. Tutorial matches stay excluded unless you change filters."
+      />
       <AdminFiltersForm
         filters={filters}
         onChange={setFilters}
@@ -41,45 +79,37 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
           setApplied(filters);
         }}
       />
-      <Button
-        compact
-        type="button"
-        variant="orange"
-        disabled={stats === null || stats.rows.length === 0}
-        onClick={() => {
-          if (stats !== null) {
-            void exportKitStatsXlsx(stats.rows);
-          }
-        }}
-      >
-        Excel
-      </Button>
-      {error !== null ? <p className="text-sm text-cta-red">{error}</p> : null}
-      {stats !== null ? (
-        <p className="text-sm text-ink-muted">Sample games: {stats.sampleGames}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          compact
+          type="button"
+          variant="orange"
+          disabled={stats === null || stats.rows.length === 0}
+          onClick={() => {
+            if (stats !== null) {
+              void exportKitStatsXlsx(stats.rows);
+            }
+          }}
+        >
+          Download spreadsheet
+        </Button>
+        {stats !== null ? (
+          <p className="text-sm text-ink-muted">
+            Based on {formatCount(stats.sampleGames)} matches
+          </p>
+        ) : null}
+      </div>
+      {error !== null ? (
+        <p className="text-sm text-cta-red" role="alert">
+          {error}
+        </p>
       ) : null}
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-border text-ink-muted">
-            <th className="py-2 pr-2">Kit</th>
-            <th className="py-2 pr-2">Picks</th>
-            <th className="py-2 pr-2">Wins</th>
-            <th className="py-2 pr-2">Pick %</th>
-            <th className="py-2">Win %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stats?.rows.map((row) => (
-            <tr key={row.kitId} className="border-b border-border-soft">
-              <td className="py-2 pr-2">{row.kitId}</td>
-              <td className="py-2 pr-2">{row.picks}</td>
-              <td className="py-2 pr-2">{row.wins}</td>
-              <td className="py-2 pr-2">{(row.pickRate * 100).toFixed(1)}</td>
-              <td className="py-2">{(row.winRate * 100).toFixed(1)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AdminDataTable
+        columns={kitColumns}
+        rows={stats?.rows ?? []}
+        rowKey={(row) => row.kitId}
+        emptyMessage="No kit data for these filters."
+      />
     </div>
   );
 }

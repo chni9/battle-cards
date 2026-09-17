@@ -73,8 +73,12 @@ export function AdminApp(): ReactElement {
           Designer
         </p>
         <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-          Admin
+          Insights
         </h1>
+        <p className="mt-2 max-w-xl text-sm text-ink-muted">
+          Finished matches, kit balance, feedback, and raw log tables. Not linked from the player
+          hub.
+        </p>
 
         {password === null ? (
           <div className="mt-8">

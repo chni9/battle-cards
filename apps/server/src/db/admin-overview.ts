@@ -37,6 +37,31 @@ export async function loadAdminOverview(
   const row = statsResult.rows[0];
   const gameCount = Number.parseInt(row?.game_count ?? '0', 10);
 
+  const perHumanResult = await pool.query<{
+    weighted_ms: string | null;
+    human_seats: string | null;
+  }>(
+    `SELECT
+      SUM(g.duration_ms * h.human_count)::text AS weighted_ms,
+      SUM(h.human_count)::text AS human_seats
+    FROM finished_games g
+    INNER JOIN (
+      SELECT game_id, COUNT(*)::int AS human_count
+      FROM finished_game_players
+      WHERE is_bot = false
+      GROUP BY game_id
+    ) h ON h.game_id = g.id AND h.human_count > 0
+    ${whereSql}`,
+    params,
+  );
+
+  const perHumanRow = perHumanResult.rows[0];
+  const humanSeats = Number.parseInt(perHumanRow?.human_seats ?? '0', 10);
+  const weightedMs =
+    perHumanRow?.weighted_ms === null || perHumanRow?.weighted_ms === undefined
+      ? null
+      : Number.parseFloat(perHumanRow.weighted_ms);
+
   const topKitResult = await pool.query<{ kit_id: string; wins: string }>(
     `SELECT p.kit_id, COUNT(*)::text AS wins
     FROM finished_games g
@@ -84,6 +109,10 @@ export async function loadAdminOverview(
       avgDurationRaw === null || avgDurationRaw === undefined
         ? null
         : Math.round(Number.parseFloat(avgDurationRaw)),
+    avgDurationMsPerHumanPlayer:
+      weightedMs === null || humanSeats === 0
+        ? null
+        : Math.round(weightedMs / humanSeats),
     avgTurnSequence:
       avgTurnsRaw === null || avgTurnsRaw === undefined
         ? null
