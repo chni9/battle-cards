@@ -15,7 +15,8 @@ full Classic content (15 kits). **V5** adds measurement, fitted evaluation, beli
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
 `docs/backlog_v6.md`); Lots 57–60 (feedback + rematch; shop / pool /
-Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**. V5 may continue in parallel. Audience: the designer
+Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**;
+**Lot 61** (password `/admin` insights) is **done**. V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -160,6 +161,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 | `docs/agent/protocol.md` | Colyseus rooms, events, per-recipient views, Spy visibility |
 | `docs/agent/frontend.md` | Client screens and connection conventions (from L1-12) |
 | `docs/agent/db.md` | Finished-game Postgres log, migrations, end-of-game write |
+| `docs/agent/deploy.md` | Coolify staging, PR previews, production; `dev`/`main` gitflow |
 | `docs/agent/testing.md` | Writing tests — which are mandatory and what they must prove |
 | `docs/agent/bots.md` | Bot policies, registry, arena, workers (created in L32-02) |
 | `docs/agent/decisions.md` | Checking why something is the way it is, or logging a new decision |
@@ -229,6 +231,10 @@ failure.
 **One commit per backlog task.** Finish a task, `pnpm verify`, mark it `Done`, then commit that
 task alone. Do not bundle several task IDs into one commit unless the developer explicitly
 allows it for that pass (e.g. a catch-up commit after a multi-task session).
+
+**PRs target `dev` (staging).** Promote to production with a PR `dev` → `main`. Coolify
+watches `dev` for staging (Preview Deployments on that app only) and `main` for
+production (`docs/agent/deploy.md`).
 
 ## 11. Agent output style
 

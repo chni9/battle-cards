@@ -30,7 +30,8 @@ labels, Lot 60 Game over awards gallery).
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
-| Inbox | `pathname === '/inbox'` — password then list; not a game phase; no hub link | `screens/inbox.tsx` |
+| Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
+| Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -87,11 +88,19 @@ rules above are unchanged — this section only covers how the client looks.
   **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
-  **Inbox (L47-05 / L47-06):** `App` pathname `/inbox` before game phases (no Colyseus). Password
-  field; `sessionStorage['card-battle.v6.inboxPassword']` after a successful GET;
-  kind and About filters are client-side; list shows topic labels; row click opens full
-  message / topics / contact / log tail /
-  user agent / protocol. No edit or delete.
+  **Admin (L61-06+):** `App` branches `/admin` before game phases (no Colyseus). Reuses
+  `sessionStorage['card-battle.v6.inboxPassword']` and `X-Inbox-Password` against
+  `GET /api/admin/*`. Nav: Dashboard, Games, Kits, Feedback, Data. Default filters
+  exclude tutorial rows. Games list is keyed by `finished_games.id`; detail
+  `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
+  returns to `/admin/games`. Detail fetch ignores stale responses and shows
+  `adminErrorCopy` on 404/503. A 401 clears the session and re-opens the password
+  gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
+  Client `exceljs` exports for games list, kit stats, and table
+  browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
+  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
+  client-side; row detail with contact, nickname, game code, screen, playKind, protocol,
+  user agent, and log tail; no edit or delete.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under

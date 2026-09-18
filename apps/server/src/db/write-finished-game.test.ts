@@ -22,6 +22,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
       {
         playerId: 'alice',
         seatIndex: 0,
+        nickname: 'Alice',
         kitId: 'kamikaze',
         isWinner: true,
         isEliminated: false,
@@ -158,12 +159,12 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     expect(gameInsert?.[10]).toBe(true);
     expect(gameInsert?.[11]).toBe(false);
 
-    const playerInserts = bound.filter((params) => params.length === 20);
+    const playerInserts = bound.filter((params) => params.length === 21);
     expect(playerInserts).toHaveLength(2);
-    expect(playerInserts[0]?.[18]).toBe(false);
-    expect(playerInserts[0]?.[19]).toBeNull();
-    expect(playerInserts[1]?.[18]).toBe(true);
-    expect(playerInserts[1]?.[19]).toBe('normal');
+    expect(playerInserts[0]?.[19]).toBe(false);
+    expect(playerInserts[0]?.[20]).toBeNull();
+    expect(playerInserts[1]?.[19]).toBe(true);
+    expect(playerInserts[1]?.[20]).toBe('normal');
   });
 
   it('inserts is_tutorial (L41-04)', async () => {

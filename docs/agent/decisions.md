@@ -3468,3 +3468,83 @@ dock keeps 59. L60-02 records the bump. No rule change.
 
 ---
 
+## 2026-09-16 · [P] Lot 61 designer admin insights (L61-01)
+
+**Reopen V6 §11 analytics** for password-gated `/admin` only (technical spec v6
+§14). No player accounts, no hub link, no `PROTOCOL_VERSION` bump.
+
+**Auth:** same `INBOX_PASSWORD` / `X-Inbox-Password` / rate limit as inbox.
+
+**Seed:** admin HTTP may return `finished_games.seed`; all playing and player
+finished views stay seed-free (`strip-seed` unchanged on feedback paths).
+
+**Tutorial rows:** dashboard and kit-stats default `is_tutorial = false`; explicit
+filter may include tutorials.
+
+**Nicknames:** persist on `finished_game_players` (migration 007); display-only,
+not identity.
+
+**Table browser:** allowlist four tables only; truncate large JSONB in grids; no
+arbitrary SQL.
+
+**Out:** kit-vs-kit, card frequencies from action logs, tutorial funnel, SQL/JSON
+IDE, feedback edit/delete, live room list.
+
+---
+
+## 2026-09-16 · Lot 61 Bugbot: game id + shared limiter
+
+Play again / later code reuse writes another `finished_games` row with the same
+`room_id`. Admin list already has unique rows; detail is `GET /api/admin/games/:id`
+on `finished_games.id`, not newest-by-`room_id`.
+
+Inbox and admin share **one** `inboxAuthLimiter` constructed in
+`apps/server/src/index.ts` (same 10 / 10 min / IP budget). Seed still only on
+passworded admin HTTP; no protocol bump; no hub Admin link.
+
+---
+
+## 2026-09-16 · [T] Staging Coolify environment + `dev` gitflow
+
+Designer: a persistent staging host, feature PRs merge to `dev`, production
+updates only when `dev` is merged to `main`.
+
+Locked choices (no rule change, no second Dockerfile):
+
+- Git: `dev` is the integration branch (GitHub default branch, once switched in
+  Settings). `main` stays the production ref. `.github/workflows/prod-from-dev.yml`
+  rejects PRs into `main` whose head is not `dev`.
+- Coolify: a second **environment** named `staging` in the existing project —
+  its own PostgreSQL and its own Dockerfile app watching `dev`. Production keeps
+  watching `main`.
+- Runtime: both hosts set `NODE_ENV=production`. Staging is not a Vite/tsx
+  `pnpm dev` box.
+- Isolation: distinct `DATABASE_URL` and `INBOX_PASSWORD`. Never clone production
+  volumes onto staging.
+- Operator playbook: `docs/agent/deploy.md`.
+
+---
+
+## 2026-09-17 · [T] Coolify Preview Deployments on staging only
+
+Designer: match WaaS (`BoldysAI/whatsapp-ai-migration`) — Coolify **native**
+Preview Deployments via GitHub webhooks, not GitHub Actions that clone apps.
+
+Locked (no rule change, no protocol bump, no second Dockerfile):
+
+- Enable Preview Deployments on the **staging** Coolify app (branch `dev`)
+  only. Production stays **off**.
+- Preview runtime env is staging, not prod: `NODE_ENV=production`, `PORT=2567`,
+  `DATABASE_URL` = staging Internal URL, `INBOX_PASSWORD` = staging secret.
+  `VITE_SERVER_URL` unset (same-origin SPA).
+- Shared staging Postgres: PR test games appear in staging `/admin`. No
+  per-PR database.
+- Wildcard DNS e.g. `*.staging.yassine.boldys.ai`. Image is `/Dockerfile`,
+  Ports Exposes `2567`, no `3000:3000` mapping.
+- Feature PRs still target `dev`. Persistent staging remains the `dev` app;
+  previews are ephemeral extras, not a substitute.
+
+Operator playbook: `docs/agent/deploy.md` section F.
+
+---
+

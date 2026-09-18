@@ -92,12 +92,18 @@ Do **not** set `VITE_SERVER_URL` at image build time for the default same-origin
 
 ## Coolify operator steps (after code lands)
 
-1. Create PostgreSQL in the same Coolify project/environment.
-2. Create / configure the Git-backed application with build pack **Dockerfile**, Dockerfile at repo root.
-3. Attach the existing domain; force HTTPS.
+**Production** (`main`) — already shipped:
+
+1. Create PostgreSQL in the Coolify **production** environment.
+2. Create / configure the Git-backed application with build pack **Dockerfile**, Dockerfile at repo root, branch **`main`**.
+3. Attach the live domain; force HTTPS.
 4. Set `ports_exposes` to match container `PORT`.
-5. Link `DATABASE_URL` from the Postgres service; set `NODE_ENV=production`.
+5. Link `DATABASE_URL` from the production Postgres; set `NODE_ENV=production`.
 6. Deploy; confirm migrate logs succeed; open the domain; create/join a room (WebSocket); finish a game and confirm a Postgres row.
+
+**Staging** (`dev`) — 2026-09-16: a second Coolify **environment** in the same project,
+second Postgres, second app, Git branch **`dev`**, its own domain. Click-by-click:
+`docs/agent/deploy.md`. Do not share production `DATABASE_URL`.
 
 WebSocket upgrade is expected to work through Coolify’s HTTP proxy without extra ports.
 

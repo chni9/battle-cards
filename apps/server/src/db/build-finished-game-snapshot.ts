@@ -57,6 +57,7 @@ function buildPlayerRecord(
   return {
     playerId: player.id,
     seatIndex,
+    nickname: player.nickname,
     kitId: player.kitId,
     isWinner: player.id === winnerPlayerId,
     isEliminated: player.isEliminated,
