@@ -723,7 +723,8 @@ Not even partially, even “to lay groundwork”:
 - Raising search iteration budgets / touching V5 freeze tests
 - Designer-facing analytics beyond inbox + `is_tutorial` on finished games
   **except Lot 61** (password-gated `/admin`, HTTP `/api/admin/*`, no accounts,
-  no `PROTOCOL_VERSION` bump — see §14 addendum)
+  no `PROTOCOL_VERSION` bump — see §14 addendum) and **Lot 62** (Overview
+  metrics modules on that same `/admin`, no protocol bump — see §15 addendum)
 
 ---
 
@@ -771,6 +772,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 59 | Compact Draw / Unspy dock | Economy-bar Draw/Unspy drop word labels; gain/cost CostDisplay (+ crossed-eye); no protocol bump |
 | 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
+| 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
@@ -783,6 +785,7 @@ Invisibility under the Lot 58 text).
 **59** is a designer session follow-up (client presentation; no protocol bump).
 **60** is a designer session follow-up (Game over awards; 34 → 35).
 **61** is a designer session follow-up (admin analytics; no protocol bump).
+**62** is a designer session follow-up (Overview metrics on `/admin`; no protocol bump).
 
 ---
 
@@ -810,4 +813,31 @@ this lot only.
   writes (not unique identity — no accounts).
 - **Out of this lot:** SQL box, JSON IDE, kit-vs-kit matrix, action-log card
   frequencies, tutorial funnel, feedback read/done, live rooms, accounts.
+  Lot 62 reopens action-log / card frequencies and Overview modules (see §15).
+
+---
+
+## 15. Lot 62 addendum — Overview metrics modules
+
+Designer 2026-09-18. Same `/admin` + `GET /api/admin/*` as §14. No
+`PROTOCOL_VERSION` bump, no hub link, no accounts, no chart npm package.
+
+- **Overview:** one `GET /api/admin/overview` payload with nested series for
+  nine sections: General, Volume, Gameplay, Economy, Combat, Hidden tools,
+  Bots and seats, Endings, Retention and feedback. SQL aggregates on the
+  server; the SPA only renders and exports.
+- **Filters:** existing match mix (`all` / humans-only games / games with
+  bots) plus `actors=humans|bots|both` (default `both`) on seat / action
+  series. Mixed tables still contribute the selected seats. Tutorial rows
+  stay excluded unless the filter includes them.
+- **Charts:** CSS/SVG (bar, pie, scatter, buckets). No Recharts / Chart.js.
+- **Persist:** migration `008` adds nullable `think_time_ms` on
+  `finished_game_players` from the Game over recap map. Do not persist recap
+  `matchStats` this lot. Old rows stay null.
+- **Combat:** `actionResolved.livesLost` / `shieldAbsorbed` / `outcome` only.
+  Tax / Suicide / Imposition are not attack damage (`applyDamage` vs
+  `applyLifeLoss`). Do not invent a mutual-attack cancel rate.
+- **Out of this lot:** kit-vs-kit matrix, mutual-attack cancel rates,
+  tutorial funnel, Reanimation / rewards claimed, live rooms, accounts,
+  SQL/JSON IDE, recap lives/points/damage/kills columns.
 
