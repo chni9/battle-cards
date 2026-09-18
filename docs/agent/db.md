@@ -86,3 +86,15 @@ In the Coolify image (staging, staging PR previews, and production),
 
 Prefer additive columns or jsonb fields on the existing tables. Document the change in
 `decisions.md`. Keep the builder pure and unit-tested; keep the room write fire-and-forget.
+
+## Admin Overview (Lot 62)
+
+`GET /api/admin/overview` aggregates the finished-game log in SQL. Match mix
+(`bots=all|humans|withBots`) filters `finished_games`. `actors=humans|bots|both`
+(default `both`) joins `finished_game_players` and applies `is_bot` only to seat /
+action series — mixed tables still contribute the selected seats. Combat sums
+`action_log` `actionResolved.livesLost` / `shieldAbsorbed` / `outcome` for attack
+card ids only (golden rule 2); Tax / Suicide / Imposition are not damage.
+Do not read `export_log` (private hands). Do not GIN-index `action_log` unless a
+query is slow. `think_time_ms` is nullable on pre-008 rows. Nicknames are not
+identity. Headless arena still does not write Postgres.

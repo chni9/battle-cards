@@ -500,7 +500,7 @@ action-log card frequencies that Lot 61 left out.
 | L62-03 | Match-level `GET /api/admin/overview` series: General, Volume (day + hour UTC), Endings + closeness, Retention, Feedback pulse. Tutorial still default-off. **Acceptance:** tests lock series math; `pnpm verify` green. | L | Medium | L62-01 | Done |
 | L62-04 | `actors` query param + actor-level series: Gameplay, Economy, Combat, Hidden tools + persistents, Bots, seat win share. Combat uses `actionResolved` attack fields only. **Acceptance:** mixed games contribute only selected seats; non-attack life loss is not damage; `pnpm verify` green. | L | **High** | L62-02, L62-03 | Done |
 | L62-05 | CSS/SVG bar, pie, scatter, bucket primitives + present helpers (sort, percent, action/card labels). **Acceptance:** empty/max/zero cases unit-tested; no new npm dep; `pnpm verify` green. | M | Low | L62-01 | Done |
-| L62-06 | Overview UI for all nine sections + Actors control + Excel of loaded series. Playbooks `frontend.md` / `db.md`. **Acceptance:** modules render from API; `pnpm verify` green. | L | Medium | L62-04, L62-05 | To do |
+| L62-06 | Overview UI for all nine sections + Actors control + Excel of loaded series. Playbooks `frontend.md` / `db.md`. **Acceptance:** modules render from API; `pnpm verify` green. | L | Medium | L62-04, L62-05 | Done |
 
 ---
 

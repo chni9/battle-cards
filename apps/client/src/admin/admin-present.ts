@@ -41,12 +41,31 @@ export function formatPercent(rate: number): string {
   return `${(rate * 100).toFixed(1)}%`;
 }
 
+export function formatNullablePercent(rate: number | null | undefined): string {
+  if (rate === null || rate === undefined) {
+    return '—';
+  }
+  return formatPercent(rate);
+}
+
 export function formatCount(value: number): string {
   return value.toLocaleString();
 }
 
 export function formatTurns(turns: number): string {
   return turns.toLocaleString();
+}
+
+/** Recap / pacing think time in seconds. */
+export function formatThinkMs(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) {
+    return '—';
+  }
+  const seconds = ms / 1000;
+  if (seconds < 0.05) {
+    return '< 0.1 s';
+  }
+  return `${seconds.toFixed(1)} s`;
 }
 
 export function tableDisplayName(table: string): string {
