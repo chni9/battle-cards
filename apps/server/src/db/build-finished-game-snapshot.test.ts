@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { makePlayer } from '../testing/factories';
@@ -152,6 +156,7 @@ describe('buildFinishedGameSnapshot (technical spec §3, L8-01)', () => {
       upgradeCount: 1,
       isBot: false,
       botDifficulty: null,
+      thinkTimeMs: 0,
     });
     expect(aliceRow?.hand).toEqual([
       { instanceId: 'h1', cardId: 'basic-attack', isUpgraded: false },
@@ -354,5 +359,43 @@ describe('buildFinishedGameSnapshot (L41-04 / technical spec v6 §7.2)', () => {
     });
 
     expect(snapshot.isTutorial).toBe(true);
+  });
+});
+
+describe('buildFinishedGameSnapshot (L62-02 / technical spec v6 §15)', () => {
+  it('stores recap think time per seat and defaults missing seats to 0', () => {
+    const alice = makePlayer({ id: 'alice', kitId: 'kamikaze' });
+    const bob = makePlayer({ id: 'bob', kitId: 'scientific', isEliminated: true });
+
+    const snapshot = buildFinishedGameSnapshot({
+      roomId: 'THINK1',
+      startedAtMs: 0,
+      endedAtMs: 10,
+      winnerPlayerId: 'alice',
+      gameState: {
+        mode: 'classic',
+        seed: 's',
+        turnSequence: 1,
+        players: [alice, bob],
+      },
+      actionLog: [],
+      eliminations: [],
+      thinkTimeMsByPlayerId: new Map([['alice', 1_500]]),
+    });
+
+    expect(snapshot.players[0]?.thinkTimeMs).toBe(1_500);
+    expect(snapshot.players[1]?.thinkTimeMs).toBe(0);
+  });
+});
+
+describe('GameRoom persist wire (L62-02)', () => {
+  it('passes the recap think-time map into the finished-game snapshot', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../rooms/game-room.ts'),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /buildFinishedGameSnapshot\(\{[\s\S]*?thinkTimeMsByPlayerId: this\.thinkTime\.snapshot\(\)/,
+    );
   });
 });

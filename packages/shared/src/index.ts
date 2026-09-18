@@ -22,6 +22,7 @@ export * from './protocol/state-view';
 export { PROTOCOL_VERSION } from './protocol-version';
 export * from './feedback/report';
 export * from './admin/api';
+export * from './admin/overview-series';
 export * from './tutorial/script';
 export * from './tutorial/setup';
 export * from './tutorial/tour';

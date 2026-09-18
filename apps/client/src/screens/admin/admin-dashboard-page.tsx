@@ -1,15 +1,17 @@
-import type { AdminOverview } from '@card-battle/shared';
+import type { AdminActorsFilter, AdminOverview } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { kitDisplayName, formatCount, formatMinutesFromMs, formatTurns } from '../../admin/admin-present';
 import {
   DEFAULT_ADMIN_FILTERS,
-  filtersToQuery,
+  overviewQuery,
   type AdminFilterState,
 } from '../../admin/filter-query';
 import { adminErrorCopy, fetchAdminOverview } from '../../admin/fetch-admin';
+import { exportOverviewXlsx } from '../../export/admin-xlsx';
+import { Button } from '../../design/components/button';
 import { AdminFiltersForm } from './admin-filters-form';
-import { AdminMetricCard, AdminMetricGrid, AdminPageIntro } from './admin-ui';
+import { AdminOverviewModules } from './admin-overview-modules';
+import { AdminPageIntro } from './admin-ui';
 
 interface AdminDashboardPageProps {
   password: string;
@@ -18,15 +20,18 @@ interface AdminDashboardPageProps {
 export function AdminDashboardPage({ password }: AdminDashboardPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
+  const [actors, setActors] = useState<AdminActorsFilter>('both');
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchAdminOverview(password, filtersToQuery(applied)).then((result) => {
+    void fetchAdminOverview(password, overviewQuery(applied, actors)).then((result) => {
       if (cancelled) {
         return;
       }
+      setHasLoaded(true);
       if (!result.ok) {
         setError(adminErrorCopy(result.status));
         return;
@@ -37,18 +42,13 @@ export function AdminDashboardPage({ password }: AdminDashboardPageProps): React
     return () => {
       cancelled = true;
     };
-  }, [password, applied]);
-
-  const topKit =
-    overview?.topKitByWins === null || overview?.topKitByWins === undefined
-      ? '—'
-      : `${kitDisplayName(overview.topKitByWins.kitId)} (${formatCount(overview.topKitByWins.wins)} wins)`;
+  }, [password, applied, actors]);
 
   return (
     <div className="space-y-8">
       <AdminPageIntro
         title="Overview"
-        description="Summary for finished matches in the log. Lengths are shown in minutes."
+        description="Nine modules on the finished-game log. Match mix filters games; Actors filters seats inside those games."
       />
       <AdminFiltersForm
         filters={filters}
@@ -62,38 +62,29 @@ export function AdminDashboardPage({ password }: AdminDashboardPageProps): React
           {error}
         </p>
       ) : null}
+      {!hasLoaded && overview === null ? (
+        <p className="text-sm text-ink-muted">Loading…</p>
+      ) : null}
       {overview !== null ? (
-        <AdminMetricGrid>
-          <AdminMetricCard label="Finished matches" value={formatCount(overview.gameCount)} />
-          <AdminMetricCard
-            label="Humans only"
-            value={formatCount(overview.humanOnlyCount)}
-            hint="No bot seats"
+        <>
+          <div>
+            <Button
+              compact
+              type="button"
+              variant="orange"
+              onClick={() => {
+                void exportOverviewXlsx(overview);
+              }}
+            >
+              Download Excel
+            </Button>
+          </div>
+          <AdminOverviewModules
+            overview={overview}
+            actors={actors}
+            onActorsChange={setActors}
           />
-          <AdminMetricCard
-            label="With bots"
-            value={formatCount(overview.withBotsCount)}
-            hint="At least one bot seat"
-          />
-          <AdminMetricCard
-            label="Average length"
-            value={formatMinutesFromMs(overview.avgDurationMs)}
-            hint="Per match"
-          />
-          <AdminMetricCard
-            label="Average length per human"
-            value={formatMinutesFromMs(overview.avgDurationMsPerHumanPlayer)}
-            hint="Weighted by human seats; bots excluded"
-          />
-          <AdminMetricCard
-            label="Average turns"
-            value={
-              overview.avgTurnSequence === null ? '—' : formatTurns(overview.avgTurnSequence)
-            }
-          />
-          <AdminMetricCard label="Feedback reports" value={formatCount(overview.feedbackCount)} />
-          <AdminMetricCard label="Most wins (kit)" value={topKit} />
-        </AdminMetricGrid>
+        </>
       ) : null}
     </div>
   );

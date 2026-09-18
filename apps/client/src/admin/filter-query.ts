@@ -2,6 +2,8 @@
  * Shared admin filter query params for dashboard, games, and kits.
  */
 
+import type { AdminActorsFilter } from '@card-battle/shared';
+
 export interface AdminFilterState {
   from: string;
   to: string;
@@ -39,6 +41,18 @@ export function filtersToQuery(filters: AdminFilterState): Record<string, string
   }
   if (filters.includeTutorial) {
     query['includeTutorial'] = 'true';
+  }
+  return query;
+}
+
+/** Overview-only: `actors` is seat/action grain, not match mix. */
+export function overviewQuery(
+  filters: AdminFilterState,
+  actors: AdminActorsFilter,
+): Record<string, string> {
+  const query = filtersToQuery(filters);
+  if (actors !== 'both') {
+    query['actors'] = actors;
   }
   return query;
 }

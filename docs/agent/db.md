@@ -36,14 +36,15 @@
 | Table | Role |
 |---|---|
 | `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false) |
-| `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04), `nickname` at game end (L61-02; display-only) |
+| `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04), `nickname` at game end (L61-02; display-only), `think_time_ms` recap clock (L62-02; null on pre-migrate rows) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
 | `feedback_reports` | Tester Bug / Confusion / Idea rows (L47-01 / L47-06 / technical spec v6 §7.2). No seed column. `kind` CHECK ∈ (`bug`,`confusion`,`idea`). `topics text[]` CHECK contained-by (`ui`,`gameplay`,`card`,`shop`,`bot`,`tutorial`,`other`); bug ≥1 topic is POST-only so pre-chip rows still list. `log_tail` is a public action-log slice, nullable; `game_code` nullable (Home). |
 
 SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
 `003_finished_game_export_log.sql`, `004_finished_games_tutorial.sql`,
 `005_feedback_reports.sql`, `006_feedback_topics.sql`,
-`007_finished_game_player_nickname.sql`.  
+`007_finished_game_player_nickname.sql`,
+`008_finished_game_player_think_time.sql`.  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
@@ -85,3 +86,20 @@ In the Coolify image (staging, staging PR previews, and production),
 
 Prefer additive columns or jsonb fields on the existing tables. Document the change in
 `decisions.md`. Keep the builder pure and unit-tested; keep the room write fire-and-forget.
+
+## Admin Overview (Lot 62)
+
+`GET /api/admin/overview` aggregates the finished-game log in SQL. Match mix
+(`bots=all|humans|withBots`) filters `finished_games`. `actors=humans|bots|both`
+(default `both`) joins `finished_game_players` and applies `is_bot` only to seat /
+action series — mixed tables still contribute the selected seats. Combat sums
+`action_log` `actionResolved.livesLost` / `shieldAbsorbed` / `outcome` for attack
+card ids only (golden rule 2); Tax / Suicide / Imposition are not damage.
+Do not read `export_log` (private hands). Do not GIN-index `action_log` unless a
+query is slow. `think_time_ms` is nullable on pre-008 rows. Nicknames are not
+identity. Headless arena still does not write Postgres.
+
+Seat win share applies `actors` to both wins and `game_count` (selected seats at
+that index). Feedback `reportsPerGame` divides date-window reports by
+date-window `finished_games` (`ended_at`); occupancy, kit, match mix, and
+tutorial do not change that denominator.

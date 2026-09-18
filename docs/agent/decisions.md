@@ -3548,3 +3548,45 @@ Operator playbook: `docs/agent/deploy.md` section F.
 
 ---
 
+## 2026-09-18 · [P] Lot 62 Overview metrics modules (L62-01)
+
+Designer: expand password-gated `/admin` Overview beyond Lot 61 KPI cards.
+No protocol bump, no hub link, no accounts, no chart npm package.
+
+**Two filter grains.** Match mix stays `all` / humans-only games / games with
+bots (`g.has_bots`). Overview adds `actors=humans|bots|both` (default `both`)
+on seat / action series only, so mixed tables still contribute selected seats.
+
+**Reopen action-log frequencies** for admin SQL aggregates (Lot 61 left them
+out). The SPA still has zero rule logic: server aggregates, client renders.
+
+**Persist:** migration `008` adds `think_time_ms` on `finished_game_players`
+from the Game over recap map. Old rows stay null. Do **not** persist recap
+`matchStats` (lives/points/damage/kills) this lot.
+
+**Overview sections:** General, Volume, Gameplay, Economy, Combat, Hidden
+tools, Bots and seats, Endings, Retention and feedback. CSS/SVG charts.
+Combat uses `actionResolved` attack `livesLost` / `shieldAbsorbed` — never
+merge Tax / Suicide / Imposition into damage (golden rule 2).
+
+**Out:** kit-vs-kit matrix, mutual-attack cancel rates, tutorial funnel,
+Reanimation / rewards claimed, live rooms, SQL/JSON IDE.
+
+---
+
+## 2026-09-18 · [P] Lot 62 Overview ratio grains
+
+Bugbot on the Lot 62 PR. Same two filter grains; two ratio bugs.
+
+**Seat win share.** Actors filters both the wins numerator and `game_count`
+at that `seat_index`. Mixed tables contribute only the selected seats — not
+“human/bot wins over every game that filled the chair.” Occupancy still comes
+from match mix (which games enter the join).
+
+**Feedback reports per game.** Numerator stays date-window `feedback_reports`
+(`created_at`). Denominator is date-window `finished_games` (`ended_at`), not
+`general.gameCount`. Occupancy, kit, match mix, and tutorial do not shrink
+the denominator alone.
+
+---
+
