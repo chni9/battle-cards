@@ -95,12 +95,12 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         game_id, player_id, seat_index, nickname, kit_id, is_winner, is_eliminated,
         lives, points, upgrade_points, shield, shield_is_upgraded,
         hand, special_cards, cards_played_count, cards_played_by_id,
-        buy_count, sell_count, upgrade_count, is_bot, bot_difficulty
+        buy_count, sell_count, upgrade_count, is_bot, bot_difficulty, think_time_ms
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12,
         $13, $14, $15, $16,
-        $17, $18, $19, $20, $21
+        $17, $18, $19, $20, $21, $22
       )`,
       [
         gameId,
@@ -124,6 +124,7 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         player.upgradeCount,
         player.isBot,
         player.botDifficulty,
+        player.thinkTimeMs,
       ],
     );
   }

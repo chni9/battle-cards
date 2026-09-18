@@ -45,6 +45,11 @@ export interface FinishedGamePlayerRecord {
   isBot: boolean;
   /** L17-04 — set only when `isBot`; null for humans. */
   botDifficulty: BotDifficulty | null;
+  /**
+   * L62-02 — recap wall-clock think time (ms). 0 when the map omits the seat.
+   * Pre-migrate Postgres rows stay SQL null.
+   */
+  thinkTimeMs: number;
 }
 
 export interface FinishedGameSnapshot {
@@ -104,4 +109,8 @@ export interface BuildFinishedGameSnapshotInput {
   botDifficultiesByPlayerId?: ReadonlyMap<string, BotDifficulty>;
   /** L41-04 — default false so simulation callers omit it. */
   isTutorial?: boolean;
+  /**
+   * L62-02 — Game over recap think-time map. Omitted / missing seat → `thinkTimeMs: 0`.
+   */
+  thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
 }
