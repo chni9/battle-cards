@@ -3,11 +3,11 @@ import type { ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 
 const LINKS: { href: string; label: string }[] = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/games', label: 'Games' },
+  { href: '/admin', label: 'Overview' },
+  { href: '/admin/games', label: 'Matches' },
   { href: '/admin/kits', label: 'Kits' },
   { href: '/admin/feedback', label: 'Feedback' },
-  { href: '/admin/data', label: 'Data' },
+  { href: '/admin/data', label: 'Database' },
 ];
 
 export function AdminNav(): ReactElement {
