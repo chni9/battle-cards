@@ -77,11 +77,6 @@ export async function loadAdminOverview(
     loadAdminOverviewActors(pool, filters, whereSql, params),
   ]);
 
-  const feedbackWithRate: AdminOverviewFeedbackPulse = {
-    ...feedbackPulse,
-    reportsPerGame: reportsPerGame(feedbackPulse.reportCount, general.gameCount),
-  };
-
   return {
     gameCount: general.gameCount,
     humanOnlyCount: general.humanOnlyCount,
@@ -90,12 +85,12 @@ export async function loadAdminOverview(
     avgDurationMsPerHumanPlayer: general.avgDurationMsPerHumanPlayer,
     avgTurnSequence: general.avgTurnSequence,
     topKitByWins: general.topKitByWins,
-    feedbackCount: feedbackWithRate.reportCount,
+    feedbackCount: feedbackPulse.reportCount,
     general,
     volume,
     endings,
     retention,
-    feedbackPulse: feedbackWithRate,
+    feedbackPulse,
     gameplay: actors.gameplay,
     economy: actors.economy,
     combat: actors.combat,
@@ -458,7 +453,19 @@ async function loadFeedbackPulse(
   }
   const whereFeedback = feedbackClauses.join(' AND ');
 
-  const [countResult, kindResult] = await Promise.all([
+  const dateGameParams: unknown[] = [];
+  const dateGameClauses: string[] = ['1=1'];
+  if (filters.endedFrom !== undefined) {
+    dateGameParams.push(filters.endedFrom.toISOString());
+    dateGameClauses.push(`g.ended_at >= $${String(dateGameParams.length)}`);
+  }
+  if (filters.endedTo !== undefined) {
+    dateGameParams.push(filters.endedTo.toISOString());
+    dateGameClauses.push(`g.ended_at <= $${String(dateGameParams.length)}`);
+  }
+  const whereDateGames = dateGameClauses.join(' AND ');
+
+  const [countResult, kindResult, dateGamesResult] = await Promise.all([
     pool.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM feedback_reports WHERE ${whereFeedback}`,
       feedbackParams,
@@ -470,13 +477,21 @@ async function loadFeedbackPulse(
       GROUP BY kind`,
       feedbackParams,
     ),
+    pool.query<{ count: string }>(
+      `-- overview_feedback_date_games
+      SELECT COUNT(*)::text AS count
+      FROM finished_games g
+      WHERE ${whereDateGames}`,
+      dateGameParams,
+    ),
   ]);
 
   const reportCount = parseCount(countResult.rows[0]?.count);
+  const dateGameCount = parseCount(dateGamesResult.rows[0]?.count);
 
   return {
     reportCount,
-    reportsPerGame: null,
+    reportsPerGame: reportsPerGame(reportCount, dateGameCount),
     byKind: fillFeedbackKinds(
       kindResult.rows.flatMap((row) =>
         isFeedbackKindRow(row.kind) ? [{ kind: row.kind, count: parseCount(row.count) }] : [],

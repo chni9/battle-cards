@@ -96,7 +96,9 @@ rules above are unchanged — this section only covers how the client looks.
   one `GET /api/admin/overview` payload. Match mix (`bots`) filters games; **Actors**
   (`humans` / `bots` / `both`, default both) lives on actor-level module headers and
   filters seats / action joins — mixed tables still contribute the selected seats.
-  Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package. Do not flash
+  Seat win share applies Actors to both wins and games at that seat. Feedback
+  reports-per-game uses the date window on both sides (not occupancy / kit /
+  match mix). Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package. Do not flash
   “no data” before the first fetch (`Loading…`). Excel downloads the loaded overview
   JSON. Games list is keyed by `finished_games.id`; detail
   `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`

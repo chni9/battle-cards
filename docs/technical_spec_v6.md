@@ -829,7 +829,9 @@ Designer 2026-09-18. Same `/admin` + `GET /api/admin/*` as §14. No
 - **Filters:** existing match mix (`all` / humans-only games / games with
   bots) plus `actors=humans|bots|both` (default `both`) on seat / action
   series. Mixed tables still contribute the selected seats. Tutorial rows
-  stay excluded unless the filter includes them.
+  stay excluded unless the filter includes them. Seat win share applies
+  Actors to both wins and games at that seat. Feedback `reportsPerGame`
+  uses the date window on both sides (not occupancy / kit / match mix).
 - **Charts:** CSS/SVG (bar, pie, scatter, buckets). No Recharts / Chart.js.
 - **Persist:** migration `008` adds nullable `think_time_ms` on
   `finished_game_players` from the Game over recap map. Do not persist recap

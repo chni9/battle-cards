@@ -246,7 +246,7 @@ export async function exportOverviewXlsx(
   retention.addRow(['Rematch rate', overview.retention.rematchRate]);
   retention.addRow(['Distinct nicknames', overview.retention.distinctNicknames]);
   retention.addRow(['Feedback reports', overview.feedbackPulse.reportCount]);
-  retention.addRow(['Reports per game', overview.feedbackPulse.reportsPerGame]);
+  retention.addRow(['Reports per game (date window)', overview.feedbackPulse.reportsPerGame]);
   retention.addRow([]);
   retention.addRow(['Kind', 'Count']);
   for (const row of overview.feedbackPulse.byKind) {

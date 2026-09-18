@@ -162,6 +162,7 @@ export interface AdminOverviewRetention {
 
 export interface AdminOverviewFeedbackPulse {
   reportCount: number;
+  /** Date-window reports / date-window finished games — not occupancy, kit, or match mix. */
   reportsPerGame: number | null;
   byKind: readonly AdminKindCountRow[];
 }
@@ -200,7 +201,9 @@ export interface AdminBotDifficultyRow {
 
 export interface AdminSeatWinRow {
   seatIndex: number;
+  /** Winners among actor-matching seats at this index. */
   wins: number;
+  /** Games where this seat matched Actors (not every game that filled the chair). */
   gameCount: number;
 }
 

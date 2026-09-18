@@ -98,3 +98,8 @@ card ids only (golden rule 2); Tax / Suicide / Imposition are not damage.
 Do not read `export_log` (private hands). Do not GIN-index `action_log` unless a
 query is slow. `think_time_ms` is nullable on pre-008 rows. Nicknames are not
 identity. Headless arena still does not write Postgres.
+
+Seat win share applies `actors` to both wins and `game_count` (selected seats at
+that index). Feedback `reportsPerGame` divides date-window reports by
+date-window `finished_games` (`ended_at`); occupancy, kit, match mix, and
+tutorial do not change that denominator.

@@ -3574,3 +3574,19 @@ Reanimation / rewards claimed, live rooms, SQL/JSON IDE.
 
 ---
 
+## 2026-09-18 · [P] Lot 62 Overview ratio grains
+
+Bugbot on the Lot 62 PR. Same two filter grains; two ratio bugs.
+
+**Seat win share.** Actors filters both the wins numerator and `game_count`
+at that `seat_index`. Mixed tables contribute only the selected seats — not
+“human/bot wins over every game that filled the chair.” Occupancy still comes
+from match mix (which games enter the join).
+
+**Feedback reports per game.** Numerator stays date-window `feedback_reports`
+(`created_at`). Denominator is date-window `finished_games` (`ended_at`), not
+`general.gameCount`. Occupancy, kit, match mix, and tutorial do not shrink
+the denominator alone.
+
+---
+

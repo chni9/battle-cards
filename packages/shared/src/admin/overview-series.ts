@@ -76,6 +76,7 @@ export function safeRatio(numerator: number, denominator: number): number | null
   return numerator / denominator;
 }
 
+/** Date-window reports divided by date-window finished games. Zero games → null. */
 export function reportsPerGame(reportCount: number, gameCount: number): number | null {
   if (gameCount === 0) {
     return null;

@@ -85,6 +85,9 @@ function dispatch(sql: string): { rows: Record<string, unknown>[] } {
   if (sql.includes('overview_nicknames')) {
     return { rows: [{ overview_nicknames: '5' }] };
   }
+  if (sql.includes('overview_feedback_date_games')) {
+    return { rows: [{ count: '10' }] };
+  }
   if (sql.includes('GROUP BY kind')) {
     return { rows: [{ kind: 'bug', count: '3' }] };
   }
@@ -126,13 +129,46 @@ describe('loadAdminOverview match-level series (L62-03)', () => {
     expect(overview.endings.reasons.find((row) => row.reason === 'absence')?.count).toBe(0);
     expect(overview.retention.rematchRate).toBe(0.5);
     expect(overview.retention.distinctNicknames).toBe(5);
-    expect(overview.feedbackPulse.reportsPerGame).toBe(0.75);
+    expect(overview.feedbackPulse.reportsPerGame).toBe(0.3);
     expect(overview.feedbackCount).toBe(3);
 
     const mixSql = sql.find((text) => text.includes('GROUP BY g.has_bots'));
     expect(mixSql).toBeDefined();
     expect(mixSql).not.toContain('has_bots = false');
     expect(sql.some((text) => text.includes('is_tutorial = false'))).toBe(true);
+
+    const dateGamesSql = sql.find((text) => text.includes('overview_feedback_date_games'));
+    expect(dateGamesSql).toBeDefined();
+    expect(dateGamesSql).not.toContain('has_bots');
+    expect(dateGamesSql).not.toContain('is_tutorial');
+    expect(dateGamesSql).not.toContain('gp_kit');
+    expect(dateGamesSql).not.toContain('ocp.game_id');
+  });
+
+  it('uses date-window games for reports per game, not match mix', async () => {
+    const sql: string[] = [];
+    const pool = {
+      query: vi.fn((text: string) => {
+        sql.push(text);
+        return Promise.resolve(dispatch(text));
+      }),
+    };
+
+    const overview = await loadAdminOverview(
+      pool as never,
+      parseAdminFinishedGameFilters({ bots: 'humans', occupancy: '8' }),
+    );
+
+    expect(overview.gameCount).toBe(4);
+    expect(overview.feedbackPulse.reportCount).toBe(3);
+    expect(overview.feedbackPulse.reportsPerGame).toBe(0.3);
+
+    const dateGamesSql = sql.find((text) => text.includes('overview_feedback_date_games'));
+    expect(dateGamesSql).toBeDefined();
+    expect(dateGamesSql).not.toContain('has_bots');
+    expect(dateGamesSql).not.toContain('is_tutorial');
+    expect(dateGamesSql).not.toContain('gp_kit');
+    expect(dateGamesSql).not.toContain('ocp.game_id');
   });
 
   it('excludes tutorials by default on an empty log', async () => {
@@ -288,6 +324,29 @@ describe('loadAdminOverview actor-level series (L62-04)', () => {
     expect(overview.hidden.unspyCount).toBe(3);
     expect(overview.botsSeats.humanWinRateInMixed).toBe(0.25);
     expect(overview.botsSeats.seatWinShare).toHaveLength(8);
+
+    const seatSql = sql.find((text) => text.includes('overview_seat_wins'));
+    expect(seatSql).toContain('p.is_bot = false');
+    expect(seatSql).not.toContain('FILTER (WHERE p.is_winner AND');
+  });
+
+  it('counts seat win share games only among actor-matching seats', async () => {
+    const sql: string[] = [];
+    const pool = {
+      query: vi.fn((text: string) => {
+        sql.push(text);
+        return Promise.resolve(actorDispatch(text));
+      }),
+    };
+
+    await loadAdminOverview(
+      pool as never,
+      parseAdminFinishedGameFilters({ actors: 'humans' }),
+    );
+
+    const seatSql = sql.find((text) => text.includes('overview_seat_wins'));
+    expect(seatSql).toContain('p.is_bot = false');
+    expect(seatSql).not.toContain('FILTER (WHERE p.is_winner AND');
   });
 
   it('does not treat Tax / Suicide / Imposition as attack damage', async () => {
@@ -315,5 +374,7 @@ describe('loadAdminOverview actor-level series (L62-04)', () => {
 
     const bothActions = sql.find((text) => text.includes('overview_actor_actions'));
     expect(bothActions).not.toContain('is_bot');
+    const bothSeats = sql.find((text) => text.includes('overview_seat_wins'));
+    expect(bothSeats).not.toContain('is_bot');
   });
 });

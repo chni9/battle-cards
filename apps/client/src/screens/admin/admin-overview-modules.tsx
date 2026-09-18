@@ -554,8 +554,8 @@ export function AdminOverviewModules({
             value={formatCount(overview.feedbackPulse.reportCount)}
             hint={
               overview.feedbackPulse.reportsPerGame === null
-                ? 'Same date window'
-                : `${overview.feedbackPulse.reportsPerGame.toFixed(2)} reports per game`
+                ? 'Date window only — not occupancy, kit, or match mix'
+                : `${overview.feedbackPulse.reportsPerGame.toFixed(2)} reports per game (date window)`
             }
           />
         </AdminMetricGrid>

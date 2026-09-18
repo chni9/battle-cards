@@ -91,7 +91,6 @@ export async function loadAdminOverviewActors(
   params: unknown[],
 ): Promise<AdminOverviewActorModules> {
   const actorAnd = actorSeatAnd('p', filters.actors);
-  const winnerAnd = actorSeatAnd('p', filters.actors);
 
   const [
     actionsResult,
@@ -349,14 +348,16 @@ export async function loadAdminOverviewActors(
       GROUP BY difficulty`,
       params,
     ),
+    // Actors on both wins and game_count — mixed tables contribute selected seats only.
     pool.query<{ seat_index: string; wins: string; game_count: string }>(
       `-- overview_seat_wins
       SELECT p.seat_index::text AS seat_index,
-        COUNT(*) FILTER (WHERE p.is_winner${winnerAnd})::text AS wins,
+        COUNT(*) FILTER (WHERE p.is_winner)::text AS wins,
         COUNT(DISTINCT g.id)::text AS game_count
       FROM finished_games g
       JOIN finished_game_players p ON p.game_id = g.id
       ${whereSql}
+        ${actorAnd}
       GROUP BY p.seat_index`,
       params,
     ),
