@@ -37,7 +37,14 @@ export function buildFinishedGameSnapshot(
     hasBots,
     isTutorial: input.isTutorial ?? false,
     players: input.gameState.players.map((player, seatIndex) =>
-      buildPlayerRecord(player, seatIndex, input.winnerPlayerId, input.actionLog, botDifficulties),
+      buildPlayerRecord(
+        player,
+        seatIndex,
+        input.winnerPlayerId,
+        input.actionLog,
+        botDifficulties,
+        input.thinkTimeMsByPlayerId,
+      ),
     ),
     eliminations: input.eliminations,
   };
@@ -49,6 +56,7 @@ function buildPlayerRecord(
   winnerPlayerId: string,
   actionLog: readonly ActionLogEntryView[],
   botDifficulties: ReadonlyMap<string, BotDifficulty>,
+  thinkTimeMsByPlayerId: ReadonlyMap<string, number> | undefined,
 ): FinishedGamePlayerRecord {
   const aggregates = aggregateActionsForPlayer(player.id, actionLog);
   const botDifficulty = botDifficulties.get(player.id);
@@ -75,5 +83,6 @@ function buildPlayerRecord(
     upgradeCount: aggregates.upgradeCount,
     isBot,
     botDifficulty: isBot ? botDifficulty : null,
+    thinkTimeMs: thinkTimeMsByPlayerId?.get(player.id) ?? 0,
   };
 }

@@ -40,6 +40,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
         upgradeCount: 0,
         isBot: false,
         botDifficulty: null,
+        thinkTimeMs: 0,
       },
     ],
     eliminations: [
@@ -159,12 +160,14 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     expect(gameInsert?.[10]).toBe(true);
     expect(gameInsert?.[11]).toBe(false);
 
-    const playerInserts = bound.filter((params) => params.length === 21);
+    const playerInserts = bound.filter((params) => params.length === 22);
     expect(playerInserts).toHaveLength(2);
     expect(playerInserts[0]?.[19]).toBe(false);
     expect(playerInserts[0]?.[20]).toBeNull();
+    expect(playerInserts[0]?.[21]).toBe(0);
     expect(playerInserts[1]?.[19]).toBe(true);
     expect(playerInserts[1]?.[20]).toBe('normal');
+    expect(playerInserts[1]?.[21]).toBe(0);
   });
 
   it('inserts is_tutorial (L41-04)', async () => {
@@ -194,6 +197,44 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     expect(queries.some((sql) => sql.includes('is_tutorial'))).toBe(true);
     const gameInsert = bound.find((params) => params.length === 12);
     expect(gameInsert?.[11]).toBe(false);
+  });
+
+  it('inserts think_time_ms (L62-02)', async () => {
+    const queries: string[] = [];
+    const bound: unknown[][] = [];
+    const client = {
+      query: vi.fn((sql: string, params?: unknown[]) => {
+        queries.push(typeof sql === 'string' ? sql : String(sql));
+        if (params !== undefined) {
+          bound.push(params);
+        }
+
+        if (sql.includes('RETURNING id')) {
+          return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      }),
+      release: vi.fn(),
+    };
+    const pool = {
+      connect: vi.fn(() => Promise.resolve(client)),
+    };
+
+    const snapshot = sampleSnapshot();
+    const player = snapshot.players[0];
+    if (player === undefined) {
+      throw new Error('expected player');
+    }
+
+    await writeFinishedGame(pool as never, {
+      ...snapshot,
+      players: [{ ...player, thinkTimeMs: 2_400 }],
+    });
+
+    expect(queries.some((sql) => sql.includes('think_time_ms'))).toBe(true);
+    const playerInserts = bound.filter((params) => params.length === 22);
+    expect(playerInserts[0]?.[21]).toBe(2_400);
   });
 
   it('binds is_tutorial true when the snapshot is a tutorial (L41-04)', async () => {
