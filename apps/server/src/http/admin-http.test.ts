@@ -178,6 +178,11 @@ describe('GET /api/admin/overview (L61-03)', () => {
       expect('endings' in body).toBe(true);
       expect('retention' in body).toBe(true);
       expect('feedbackPulse' in body).toBe(true);
+      expect('gameplay' in body).toBe(true);
+      expect('economy' in body).toBe(true);
+      expect('combat' in body).toBe(true);
+      expect('hidden' in body).toBe(true);
+      expect('botsSeats' in body).toBe(true);
     }
     expect(
       query.mock.calls.some((call) => {

@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   durationBucketId,
+  fillCombatOutcomes,
   fillHoursUtc,
   fillOccupancyCounts,
+  fillPlayedActions,
+  fillSeatWinShare,
   rematchRate,
+  safeRatio,
   winnerLivesBucketId,
 } from './overview-series';
 
@@ -53,5 +57,26 @@ describe('overview series buckets (L62-03 / technical spec v6 §15)', () => {
   it('returns null rematch rate when there are no games', () => {
     expect(rematchRate(0, 0)).toBeNull();
     expect(rematchRate(2, 4)).toBe(0.5);
+    expect(safeRatio(1, 0)).toBeNull();
+  });
+
+  it('fills every played action and seat index with zeros', () => {
+    const actions = fillPlayedActions([{ action: 'draw', count: 4 }]);
+    expect(actions).toHaveLength(13);
+    expect(actions.find((row) => row.action === 'draw')?.count).toBe(4);
+    expect(actions.find((row) => row.action === 'playCard')?.count).toBe(0);
+    const seats = fillSeatWinShare([{ seatIndex: 0, wins: 2, gameCount: 5 }]);
+    expect(seats).toHaveLength(8);
+    expect(seats[0]).toEqual({ seatIndex: 0, wins: 2, gameCount: 5 });
+    expect(seats[7]).toEqual({ seatIndex: 7, wins: 0, gameCount: 0 });
+  });
+
+  it('fills combat outcomes including zeros', () => {
+    expect(fillCombatOutcomes([{ outcome: 'applied', count: 3 }])).toEqual([
+      { outcome: 'applied', count: 3 },
+      { outcome: 'immune', count: 0 },
+      { outcome: 'cancelled', count: 0 },
+      { outcome: 'blocked', count: 0 },
+    ]);
   });
 });

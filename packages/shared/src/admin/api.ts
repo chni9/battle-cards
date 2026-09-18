@@ -3,9 +3,11 @@
  * Password-gated; seed may appear on game rows only.
  */
 
+import type { CardId } from '../domain/card';
 import type { KitId } from '../domain/kit';
 import type { FeedbackKind } from '../feedback/report';
-import type { GameExportLogView } from '../protocol/state-view';
+import type { ActionResolutionOutcome } from '../protocol/action-outcome';
+import type { ActionLogPlayedAction, GameExportLogView } from '../protocol/state-view';
 
 export const ADMIN_OCCUPANCY_KEYS = [2, 3, 4, 5, 6, 7, 8] as const;
 export type AdminOccupancyKey = (typeof ADMIN_OCCUPANCY_KEYS)[number];
@@ -29,6 +31,49 @@ export const ADMIN_DURATION_BUCKET_MS = {
   fifteenMin: 15 * 60_000,
   thirtyMin: 30 * 60_000,
 } as const;
+
+export type AdminActorsFilter = 'humans' | 'bots' | 'both';
+
+/** Runtime list matching `ActionLogPlayedAction` (Lot 62 Overview actions bar). */
+export const ADMIN_PLAYED_ACTION_IDS = [
+  'draw',
+  'playCard',
+  'playMultipleAttacks',
+  'buyCard',
+  'sellCard',
+  'upgradeCard',
+  'buyUpgradePoint',
+  'sellUpgradePoint',
+  'buySpecialCard',
+  'buyPoolCard',
+  'clearSpy',
+  'deactivatePersistent',
+  'activateDuplication',
+] as const satisfies readonly ActionLogPlayedAction[];
+
+export type AdminPlayedActionId = (typeof ADMIN_PLAYED_ACTION_IDS)[number];
+
+export const ADMIN_SHOP_MIX_ACTION_IDS = [
+  'buyCard',
+  'buyPoolCard',
+  'buySpecialCard',
+  'buyUpgradePoint',
+] as const satisfies readonly AdminPlayedActionId[];
+
+export type AdminShopMixActionId = (typeof ADMIN_SHOP_MIX_ACTION_IDS)[number];
+
+export const ADMIN_OVERVIEW_PERSISTENT_IDS = [
+  'invisibility',
+  'points-generator',
+  'imposition',
+] as const;
+
+export type AdminOverviewPersistentId = (typeof ADMIN_OVERVIEW_PERSISTENT_IDS)[number];
+
+export const ADMIN_SEAT_INDEXES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+
+export const ADMIN_BOT_DIFFICULTY_BUCKETS = ['easy', 'normal', 'hard', 'mixed'] as const;
+export type AdminBotDifficultyBucket = (typeof ADMIN_BOT_DIFFICULTY_BUCKETS)[number];
 
 export interface AdminOccupancyCountRow {
   occupancy: number;
@@ -121,6 +166,99 @@ export interface AdminOverviewFeedbackPulse {
   byKind: readonly AdminKindCountRow[];
 }
 
+export interface AdminPlayedActionRow {
+  action: AdminPlayedActionId;
+  count: number;
+}
+
+export interface AdminCardCountRow {
+  cardId: CardId;
+  count: number;
+}
+
+export interface AdminShopMixRow {
+  action: AdminShopMixActionId;
+  count: number;
+}
+
+export interface AdminCombatOutcomeRow {
+  outcome: ActionResolutionOutcome;
+  count: number;
+}
+
+export interface AdminPersistentRow {
+  cardId: AdminOverviewPersistentId;
+  plays: number;
+  deactivations: number;
+}
+
+export interface AdminBotDifficultyRow {
+  difficulty: AdminBotDifficultyBucket;
+  gameCount: number;
+  wins: number;
+}
+
+export interface AdminSeatWinRow {
+  seatIndex: number;
+  wins: number;
+  gameCount: number;
+}
+
+export interface AdminOverviewGameplay {
+  actions: readonly AdminPlayedActionRow[];
+  kits: readonly AdminKitStatRow[];
+  kitSampleGames: number;
+  specialsPlayed: readonly AdminCardCountRow[];
+  sharedCardsPlayed: readonly AdminCardCountRow[];
+  avgThinkTimeMs: number | null;
+  thinkTimePerActionMs: number | null;
+  p50ThinkTimeMs: number | null;
+  p90ThinkTimeMs: number | null;
+  thinkTimeSeatCount: number;
+  actorSeatCount: number;
+  thinkTimePartial: boolean;
+  drawShare: number | null;
+}
+
+export interface AdminOverviewEconomy {
+  shopMix: readonly AdminShopMixRow[];
+  upgradeCardCount: number;
+  upgradedPlayCount: number;
+  playCardOrMultiCount: number;
+  upgradedPlayShare: number | null;
+  avgLeftoverLives: number | null;
+  avgLeftoverPoints: number | null;
+  avgLeftoverUpgradePoints: number | null;
+  avgBuyCount: number | null;
+  avgSellCount: number | null;
+  avgUpgradeCount: number | null;
+  avgCardsPlayed: number | null;
+}
+
+export interface AdminOverviewCombat {
+  livesLost: number;
+  shieldAbsorbed: number;
+  /** `actionResolved.livesLost` on non-attack cards (Tax / Suicide / Imposition). */
+  nonAttackLivesLost: number;
+  outcomes: readonly AdminCombatOutcomeRow[];
+}
+
+export interface AdminOverviewHidden {
+  spyPlays: number;
+  thiefPlays: number;
+  unspyCount: number;
+  mirrorRedirects: number;
+  persistents: readonly AdminPersistentRow[];
+}
+
+export interface AdminOverviewBotsSeats {
+  mixedGameCount: number;
+  humanWinsInMixed: number;
+  humanWinRateInMixed: number | null;
+  byBotDifficulty: readonly AdminBotDifficultyRow[];
+  seatWinShare: readonly AdminSeatWinRow[];
+}
+
 export interface AdminOverview {
   gameCount: number;
   humanOnlyCount: number;
@@ -137,6 +275,12 @@ export interface AdminOverview {
   endings: AdminOverviewEndings;
   retention: AdminOverviewRetention;
   feedbackPulse: AdminOverviewFeedbackPulse;
+  /** Lot 62 actor-level Overview modules (`actors` query param). */
+  gameplay: AdminOverviewGameplay;
+  economy: AdminOverviewEconomy;
+  combat: AdminOverviewCombat;
+  hidden: AdminOverviewHidden;
+  botsSeats: AdminOverviewBotsSeats;
 }
 
 export interface AdminGameListItem {

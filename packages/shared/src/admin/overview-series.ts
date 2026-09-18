@@ -3,13 +3,24 @@
  * Shared so SQL aliases and charts use the same edges.
  */
 
+import { ACTION_CARD_IDS, ATTACK_CARD_IDS, SPECIAL_CARD_IDS, type CardId } from '../domain/card';
 import { FEEDBACK_KINDS, type FeedbackKind } from '../feedback/report';
+import { ACTION_RESOLUTION_OUTCOMES, type ActionResolutionOutcome } from '../protocol/action-outcome';
 import {
+  ADMIN_BOT_DIFFICULTY_BUCKETS,
   ADMIN_DURATION_BUCKET_IDS,
   ADMIN_DURATION_BUCKET_MS,
   ADMIN_ELIM_REASON_IDS,
   ADMIN_OCCUPANCY_KEYS,
+  ADMIN_OVERVIEW_PERSISTENT_IDS,
+  ADMIN_PLAYED_ACTION_IDS,
+  ADMIN_SEAT_INDEXES,
+  ADMIN_SHOP_MIX_ACTION_IDS,
   ADMIN_WINNER_LIVES_BUCKET_IDS,
+  type AdminBotDifficultyBucket,
+  type AdminBotDifficultyRow,
+  type AdminCardCountRow,
+  type AdminCombatOutcomeRow,
   type AdminDurationBucketId,
   type AdminElimReasonId,
   type AdminHourCountRow,
@@ -18,7 +29,13 @@ import {
   type AdminOccupancyCountRow,
   type AdminOccupancyDurationRow,
   type AdminOpponentMixDurationRow,
+  type AdminPersistentRow,
+  type AdminPlayedActionId,
+  type AdminPlayedActionRow,
   type AdminReasonCountRow,
+  type AdminSeatWinRow,
+  type AdminShopMixActionId,
+  type AdminShopMixRow,
   type AdminWinnerLivesBucketId,
 } from './api';
 
@@ -49,10 +66,14 @@ export function winnerLivesBucketId(lives: number): AdminWinnerLivesBucketId {
 }
 
 export function rematchRate(rematchGameCount: number, gameCount: number): number | null {
-  if (gameCount === 0) {
+  return safeRatio(rematchGameCount, gameCount);
+}
+
+export function safeRatio(numerator: number, denominator: number): number | null {
+  if (denominator === 0) {
     return null;
   }
-  return rematchGameCount / gameCount;
+  return numerator / denominator;
 }
 
 export function reportsPerGame(reportCount: number, gameCount: number): number | null {
@@ -186,4 +207,116 @@ export function fillWinnerLivesBuckets(
 
 export function isAdminElimReason(value: string): value is AdminElimReasonId {
   return (ADMIN_ELIM_REASON_IDS as readonly string[]).includes(value);
+}
+
+export function isAdminPlayedAction(value: string): value is AdminPlayedActionId {
+  return (ADMIN_PLAYED_ACTION_IDS as readonly string[]).includes(value);
+}
+
+export function isAdminShopMixAction(value: string): value is AdminShopMixActionId {
+  return (ADMIN_SHOP_MIX_ACTION_IDS as readonly string[]).includes(value);
+}
+
+export function isAdminBotDifficultyBucket(value: string): value is AdminBotDifficultyBucket {
+  return (ADMIN_BOT_DIFFICULTY_BUCKETS as readonly string[]).includes(value);
+}
+
+export function isActionResolutionOutcome(value: string): value is ActionResolutionOutcome {
+  return (ACTION_RESOLUTION_OUTCOMES as readonly string[]).includes(value);
+}
+
+export function fillPlayedActions(
+  rows: readonly AdminPlayedActionRow[],
+): AdminPlayedActionRow[] {
+  const byAction = new Map<string, number>();
+  for (const row of rows) {
+    byAction.set(row.action, row.count);
+  }
+  return ADMIN_PLAYED_ACTION_IDS.map((action) => ({
+    action,
+    count: byAction.get(action) ?? 0,
+  }));
+}
+
+export function fillShopMix(rows: readonly AdminShopMixRow[]): AdminShopMixRow[] {
+  const byAction = new Map<string, number>();
+  for (const row of rows) {
+    byAction.set(row.action, row.count);
+  }
+  return ADMIN_SHOP_MIX_ACTION_IDS.map((action) => ({
+    action,
+    count: byAction.get(action) ?? 0,
+  }));
+}
+
+export function fillCombatOutcomes(
+  rows: readonly AdminCombatOutcomeRow[],
+): AdminCombatOutcomeRow[] {
+  const byOutcome = new Map<string, number>();
+  for (const row of rows) {
+    byOutcome.set(row.outcome, row.count);
+  }
+  return ACTION_RESOLUTION_OUTCOMES.map((outcome) => ({
+    outcome,
+    count: byOutcome.get(outcome) ?? 0,
+  }));
+}
+
+export function fillSeatWinShare(rows: readonly AdminSeatWinRow[]): AdminSeatWinRow[] {
+  const bySeat = new Map<number, AdminSeatWinRow>();
+  for (const row of rows) {
+    bySeat.set(row.seatIndex, row);
+  }
+  return ADMIN_SEAT_INDEXES.map((seatIndex) => {
+    const found = bySeat.get(seatIndex);
+    return found ?? { seatIndex, wins: 0, gameCount: 0 };
+  });
+}
+
+export function fillBotDifficulties(
+  rows: readonly AdminBotDifficultyRow[],
+): AdminBotDifficultyRow[] {
+  const byDifficulty = new Map<string, AdminBotDifficultyRow>();
+  for (const row of rows) {
+    byDifficulty.set(row.difficulty, row);
+  }
+  return ADMIN_BOT_DIFFICULTY_BUCKETS.map((difficulty) => {
+    const found = byDifficulty.get(difficulty);
+    return found ?? { difficulty, gameCount: 0, wins: 0 };
+  });
+}
+
+export function fillPersistentOverview(
+  rows: readonly AdminPersistentRow[],
+): AdminPersistentRow[] {
+  const byCard = new Map<string, AdminPersistentRow>();
+  for (const row of rows) {
+    byCard.set(row.cardId, row);
+  }
+  return ADMIN_OVERVIEW_PERSISTENT_IDS.map((cardId) => {
+    const found = byCard.get(cardId);
+    return found ?? { cardId, plays: 0, deactivations: 0 };
+  });
+}
+
+export function fillSharedCardCounts(rows: readonly AdminCardCountRow[]): AdminCardCountRow[] {
+  return fillCardCounts([...ATTACK_CARD_IDS, ...ACTION_CARD_IDS], rows);
+}
+
+export function fillSpecialCardCounts(rows: readonly AdminCardCountRow[]): AdminCardCountRow[] {
+  return fillCardCounts([...SPECIAL_CARD_IDS], rows);
+}
+
+function fillCardCounts(
+  ids: readonly CardId[],
+  rows: readonly AdminCardCountRow[],
+): AdminCardCountRow[] {
+  const byId = new Map<string, number>();
+  for (const row of rows) {
+    byId.set(row.cardId, row.count);
+  }
+  return ids.map((cardId) => ({
+    cardId,
+    count: byId.get(cardId) ?? 0,
+  }));
 }

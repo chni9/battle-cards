@@ -2,9 +2,10 @@
  * Shared finished-game filters for admin SQL (Lot 61 / db.md tutorial exclusion).
  */
 
-import type { KitId } from '@card-battle/shared';
+import type { AdminActorsFilter, KitId } from '@card-battle/shared';
 
 export type AdminBotsFilter = 'all' | 'humans' | 'withBots';
+export type { AdminActorsFilter };
 
 export interface AdminFinishedGameFilters {
   /** When true, only non-tutorial rows (default for dashboard/kits). */
@@ -12,6 +13,8 @@ export interface AdminFinishedGameFilters {
   endedFrom?: Date;
   endedTo?: Date;
   bots: AdminBotsFilter;
+  /** Seat / action grain (Lot 62). Match mix (`bots`) still selects games. */
+  actors: AdminActorsFilter;
   occupancy?: number;
   kitId?: KitId;
 }
@@ -24,6 +27,24 @@ export function parseAdminBotsFilter(raw: string | undefined): AdminBotsFilter {
     return raw;
   }
   return 'all';
+}
+
+export function parseAdminActorsFilter(raw: string | undefined): AdminActorsFilter {
+  if (raw === 'humans' || raw === 'bots') {
+    return raw;
+  }
+  return 'both';
+}
+
+/** Extra AND on a `finished_game_players` alias. Empty when `actors=both`. */
+export function actorSeatAnd(alias: string, actors: AdminActorsFilter): string {
+  if (actors === 'humans') {
+    return ` AND ${alias}.is_bot = false`;
+  }
+  if (actors === 'bots') {
+    return ` AND ${alias}.is_bot = true`;
+  }
+  return '';
 }
 
 export function parseAdminPagination(
@@ -77,6 +98,9 @@ export function parseAdminFinishedGameFilters(query: Record<string, unknown>): A
     excludeTutorial: !includeTutorial,
     bots: parseAdminBotsFilter(
       typeof query['bots'] === 'string' ? query['bots'] : undefined,
+    ),
+    actors: parseAdminActorsFilter(
+      typeof query['actors'] === 'string' ? query['actors'] : undefined,
     ),
   };
   if (endedFrom !== undefined) {

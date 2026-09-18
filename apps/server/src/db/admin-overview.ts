@@ -32,6 +32,7 @@ import {
   buildFinishedGamesWhere,
   type AdminFinishedGameFilters,
 } from './admin-filters';
+import { loadAdminOverviewActors } from './admin-overview-actors';
 
 const OCC_JOIN = `LEFT JOIN LATERAL (
   SELECT COUNT(*)::int AS occ_n
@@ -67,12 +68,13 @@ export async function loadAdminOverview(
   const mixFilters: AdminFinishedGameFilters = { ...filters, bots: 'all' };
   const mix = buildFinishedGamesWhere(mixFilters);
 
-  const [general, volume, endings, retention, feedbackPulse] = await Promise.all([
+  const [general, volume, endings, retention, feedbackPulse, actors] = await Promise.all([
     loadGeneral(pool, whereSql, params, mix.whereSql, mix.params),
     loadVolume(pool, whereSql, params),
     loadEndings(pool, whereSql, params),
     loadRetention(pool, whereSql, params),
     loadFeedbackPulse(pool, filters),
+    loadAdminOverviewActors(pool, filters, whereSql, params),
   ]);
 
   const feedbackWithRate: AdminOverviewFeedbackPulse = {
@@ -94,6 +96,11 @@ export async function loadAdminOverview(
     endings,
     retention,
     feedbackPulse: feedbackWithRate,
+    gameplay: actors.gameplay,
+    economy: actors.economy,
+    combat: actors.combat,
+    hidden: actors.hidden,
+    botsSeats: actors.botsSeats,
   };
 }
 

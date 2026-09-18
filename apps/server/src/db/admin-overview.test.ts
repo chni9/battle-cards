@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { loadAdminOverview } from './admin-overview';
+import { overviewAttackCardIdSql } from './admin-overview-actors';
 import { parseAdminFinishedGameFilters } from './admin-filters';
 
 function dispatch(sql: string): { rows: Record<string, unknown>[] } {
@@ -164,5 +165,155 @@ describe('loadAdminOverview match-level series (L62-03)', () => {
     expect(overview.retention.rematchRate).toBeNull();
     expect(overview.volume.gamesByHourUtc).toHaveLength(24);
     expect(sql.some((text) => text.includes('is_tutorial = false'))).toBe(true);
+  });
+});
+
+describe('loadAdminOverview actor-level series (L62-04)', () => {
+  function actorDispatch(sql: string): { rows: Record<string, unknown>[] } {
+    if (sql.includes('overview_actor_actions')) {
+      return { rows: [{ action: 'draw', n: '4' }, { action: 'buyCard', n: '2' }] };
+    }
+    if (sql.includes('overview_actor_kit_sample')) {
+      return { rows: [{ count: '3' }] };
+    }
+    if (sql.includes('overview_actor_kits')) {
+      return { rows: [{ kit_id: 'kamikaze', picks: '4', wins: '2' }] };
+    }
+    if (sql.includes('overview_cards_played_by_id')) {
+      return {
+        rows: [
+          { card_id: 'spy', played: '3' },
+          { card_id: 'basic-attack', played: '5' },
+        ],
+      };
+    }
+    if (sql.includes('overview_actor_seats')) {
+      return {
+        rows: [
+          {
+            actor_seats: '4',
+            think_seats: '2',
+            avg_think: '8000',
+            p50_think: '7000',
+            p90_think: '12000',
+            sum_think: '16000',
+            think_actions: '8',
+            avg_lives: '9.2',
+            avg_points: '4',
+            avg_upgrade_points: '1',
+            avg_buy: '2.4',
+            avg_sell: '0.5',
+            avg_upgrade: '1',
+            avg_cards: '6',
+          },
+        ],
+      };
+    }
+    if (sql.includes('overview_upgraded_plays')) {
+      return { rows: [{ play_or_multi: '10', upgraded_plays: '4' }] };
+    }
+    if (sql.includes('overview_attack_lives_lost')) {
+      return {
+        rows: [
+          {
+            lives_lost: '12',
+            shield: '3',
+            non_attack: '6',
+            o_applied: '5',
+            o_immune: '1',
+            o_cancelled: '0',
+            o_blocked: '2',
+          },
+        ],
+      };
+    }
+    if (sql.includes('overview_hidden_tools')) {
+      return {
+        rows: [{ spy_plays: '2', thief_plays: '1', unspy: '3', mirror_redirects: '4' }],
+      };
+    }
+    if (sql.includes('overview_persistents')) {
+      return {
+        rows: [{ card_id: 'invisibility', plays: '2', deacts: '1' }],
+      };
+    }
+    if (sql.includes('overview_mixed_human_wins')) {
+      return { rows: [{ mixed_games: '4', human_wins: '1' }] };
+    }
+    if (sql.includes('overview_bot_difficulty')) {
+      return { rows: [{ difficulty: 'normal', game_count: '3', wins: '2' }] };
+    }
+    if (sql.includes('overview_seat_wins')) {
+      return { rows: [{ seat_index: '0', wins: '2', game_count: '4' }] };
+    }
+    return dispatch(sql);
+  }
+
+  it('filters mixed-game seats by actors=humans and keeps match mix open', async () => {
+    const sql: string[] = [];
+    const pool = {
+      query: vi.fn((text: string) => {
+        sql.push(text);
+        return Promise.resolve(actorDispatch(text));
+      }),
+    };
+
+    const overview = await loadAdminOverview(
+      pool as never,
+      parseAdminFinishedGameFilters({ actors: 'humans' }),
+    );
+
+    const actionsSql = sql.find((text) => text.includes('overview_actor_actions'));
+    expect(actionsSql).toContain('p.is_bot = false');
+    expect(actionsSql).not.toContain('has_bots = false');
+    expect(actionsSql).not.toContain('has_bots = true');
+
+    const cardsSql = sql.find((text) => text.includes('overview_cards_played_by_id'));
+    expect(cardsSql).toContain('p.is_bot = false');
+
+    expect(overview.gameplay.actions.find((row) => row.action === 'draw')?.count).toBe(4);
+    expect(overview.gameplay.drawShare).toBe(4 / 6);
+    expect(overview.gameplay.kitSampleGames).toBe(3);
+    expect(overview.gameplay.kits[0]).toEqual({
+      kitId: 'kamikaze',
+      picks: 4,
+      wins: 2,
+      pickRate: 1,
+      winRate: 0.5,
+    });
+    expect(overview.gameplay.thinkTimePartial).toBe(true);
+    expect(overview.gameplay.thinkTimePerActionMs).toBe(2000);
+    expect(overview.economy.shopMix.find((row) => row.action === 'buyCard')?.count).toBe(2);
+    expect(overview.economy.upgradedPlayShare).toBe(0.4);
+    expect(overview.hidden.unspyCount).toBe(3);
+    expect(overview.botsSeats.humanWinRateInMixed).toBe(0.25);
+    expect(overview.botsSeats.seatWinShare).toHaveLength(8);
+  });
+
+  it('does not treat Tax / Suicide / Imposition as attack damage', async () => {
+    const sql: string[] = [];
+    const pool = {
+      query: vi.fn((text: string) => {
+        sql.push(text);
+        return Promise.resolve(actorDispatch(text));
+      }),
+    };
+
+    const overview = await loadAdminOverview(pool as never, parseAdminFinishedGameFilters({}));
+    const combatSql = sql.find((text) => text.includes('overview_attack_lives_lost'));
+    expect(combatSql).toBeDefined();
+    expect(overviewAttackCardIdSql()).toBe(
+      "'basic-attack', 'strong-attack', 'super-attack', 'mega-attack'",
+    );
+    expect(combatSql).toContain(overviewAttackCardIdSql());
+    expect(overviewAttackCardIdSql()).not.toContain('tax');
+    expect(overviewAttackCardIdSql()).not.toContain('suicide');
+    expect(overviewAttackCardIdSql()).not.toContain('imposition');
+    expect(overview.combat.livesLost).toBe(12);
+    expect(overview.combat.nonAttackLivesLost).toBe(6);
+    expect(overview.combat.outcomes.find((row) => row.outcome === 'blocked')?.count).toBe(2);
+
+    const bothActions = sql.find((text) => text.includes('overview_actor_actions'));
+    expect(bothActions).not.toContain('is_bot');
   });
 });
