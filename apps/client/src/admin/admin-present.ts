@@ -16,7 +16,7 @@ export function kitDisplayName(kitId: string | null | undefined): string {
 
 /** Match length in minutes (one decimal). */
 export function formatMinutesFromMs(durationMs: number | null | undefined): string {
-  if (durationMs === null || durationMs === undefined) {
+  if (durationMs === null || durationMs === undefined || !Number.isFinite(durationMs)) {
     return '—';
   }
   const minutes = durationMs / 60_000;
@@ -38,6 +38,9 @@ export function formatDateTime(iso: string): string {
 }
 
 export function formatPercent(rate: number): string {
+  if (!Number.isFinite(rate)) {
+    return '—';
+  }
   return `${(rate * 100).toFixed(1)}%`;
 }
 
@@ -58,7 +61,7 @@ export function formatTurns(turns: number): string {
 
 /** Recap / pacing think time in seconds. */
 export function formatThinkMs(ms: number | null | undefined): string {
-  if (ms === null || ms === undefined) {
+  if (ms === null || ms === undefined || !Number.isFinite(ms)) {
     return '—';
   }
   const seconds = ms / 1000;

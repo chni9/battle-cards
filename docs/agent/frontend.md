@@ -1182,4 +1182,21 @@ Solo Classic, Vite `:5173`, Colyseus `:2567`.
   intercepts first leave / Play again.
 - `pnpm verify` **1417** tests.
 
+### Lot 62 verified 2026-09-18 (browser, `/admin` Overview, no protocol bump)
+
+Vite `:5173`, Colyseus `:2567`, local Postgres with two seeded finished games
+(`LOT62A` humans-only, `LOT62B` mixed) plus one feedback row. Password
+`INBOX_PASSWORD` unlock. `pnpm verify` **1473** tests after the NaN format
+guard.
+
+- Overview nine modules: General, Volume, Gameplay, Economy, Combat, Hidden
+  tools, Bots and seats, Endings, Retention and feedback. CSS/SVG bars, pie,
+  scatter. Download Excel writes `admin-overview.xlsx`.
+- Actors on Gameplay / Economy / Combat / Hidden / Bots headers; Humans
+  reloads seat series without dropping match mix (2 finished matches).
+- Combat: attack lives lost vs **Non-attack life loss** (Tax caption). Seed
+  showed 4 attack lives / 2 non-attack.
+- Empty: Seat count **8** → Finished matches **0**, modules still on screen,
+  Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
+  not an empty flash. Formatters treat non-finite numbers as **—**.
 

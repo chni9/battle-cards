@@ -21,6 +21,12 @@ describe('admin-present', () => {
     expect(formatNullablePercent(null)).toBe('—');
   });
 
+  it('formats non-finite numbers as em dash', () => {
+    expect(formatMinutesFromMs(Number.NaN)).toBe('—');
+    expect(formatThinkMs(Number.NaN)).toBe('—');
+    expect(formatNullablePercent(Number.NaN)).toBe('—');
+  });
+
   it('uses catalog kit names', () => {
     expect(kitDisplayName('kamikaze')).toBe('Kamikaze');
   });
