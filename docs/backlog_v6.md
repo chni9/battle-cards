@@ -109,7 +109,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 ## Progress
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
-Lot 61). Lot 62 opened 2026-09-18: **129 of 133** tasks done.
+Lot 61). Lot 62 opened 2026-09-18: **130 of 133** tasks done.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -139,7 +139,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 59 · Compact Draw / Unspy dock | 2 | 2 |
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
-| 62 · Overview metrics modules | 6 | 2 |
+| 62 · Overview metrics modules | 6 | 3 |
 
 
 ---
@@ -497,7 +497,7 @@ action-log card frequencies that Lot 61 left out.
 |---|---|---|---|---|---|
 | L62-01 | Dated `[P]` Lot 62 in `decisions.md`; technical spec v6 §11 exception + §15 addendum + lot map; Lot 62 section here; reopen action-log frequencies. **Acceptance:** agent reading `decisions.md` + backlog knows Overview modules, two filter grains, think_time persist, Later list. | S | Low | — | Done |
 | L62-02 | Migration `008_finished_game_player_think_time.sql`; snapshot + writer + `onGameOver` wire from recap think-time map. **Acceptance:** new writes store think time; old rows null; `pnpm verify` green. | S | Low | L62-01 | Done |
-| L62-03 | Match-level `GET /api/admin/overview` series: General, Volume (day + hour UTC), Endings + closeness, Retention, Feedback pulse. Tutorial still default-off. **Acceptance:** tests lock series math; `pnpm verify` green. | L | Medium | L62-01 | To do |
+| L62-03 | Match-level `GET /api/admin/overview` series: General, Volume (day + hour UTC), Endings + closeness, Retention, Feedback pulse. Tutorial still default-off. **Acceptance:** tests lock series math; `pnpm verify` green. | L | Medium | L62-01 | Done |
 | L62-04 | `actors` query param + actor-level series: Gameplay, Economy, Combat, Hidden tools + persistents, Bots, seat win share. Combat uses `actionResolved` attack fields only. **Acceptance:** mixed games contribute only selected seats; non-attack life loss is not damage; `pnpm verify` green. | L | **High** | L62-02, L62-03 | To do |
 | L62-05 | CSS/SVG bar, pie, scatter, bucket primitives + present helpers (sort, percent, action/card labels). **Acceptance:** empty/max/zero cases unit-tested; no new npm dep; `pnpm verify` green. | M | Low | L62-01 | To do |
 | L62-06 | Overview UI for all nine sections + Actors control + Excel of loaded series. Playbooks `frontend.md` / `db.md`. **Acceptance:** modules render from API; `pnpm verify` green. | L | Medium | L62-04, L62-05 | To do |

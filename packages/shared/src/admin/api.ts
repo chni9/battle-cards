@@ -1,10 +1,125 @@
 /**
- * Admin HTTP JSON shapes (Lot 61) — technical spec v6 §14.
+ * Admin HTTP JSON shapes (Lot 61 / Lot 62) — technical spec v6 §14–§15.
  * Password-gated; seed may appear on game rows only.
  */
 
 import type { KitId } from '../domain/kit';
+import type { FeedbackKind } from '../feedback/report';
 import type { GameExportLogView } from '../protocol/state-view';
+
+export const ADMIN_OCCUPANCY_KEYS = [2, 3, 4, 5, 6, 7, 8] as const;
+export type AdminOccupancyKey = (typeof ADMIN_OCCUPANCY_KEYS)[number];
+
+export const ADMIN_DURATION_BUCKET_IDS = [
+  'under5min',
+  'from5to15min',
+  'from15to30min',
+  'over30min',
+] as const;
+export type AdminDurationBucketId = (typeof ADMIN_DURATION_BUCKET_IDS)[number];
+
+export const ADMIN_WINNER_LIVES_BUCKET_IDS = ['1to5', '6to10', '11to15', '16plus'] as const;
+export type AdminWinnerLivesBucketId = (typeof ADMIN_WINNER_LIVES_BUCKET_IDS)[number];
+
+export const ADMIN_ELIM_REASON_IDS = ['combat', 'absence', 'inactivity', 'leave'] as const;
+export type AdminElimReasonId = (typeof ADMIN_ELIM_REASON_IDS)[number];
+
+export const ADMIN_DURATION_BUCKET_MS = {
+  fiveMin: 5 * 60_000,
+  fifteenMin: 15 * 60_000,
+  thirtyMin: 30 * 60_000,
+} as const;
+
+export interface AdminOccupancyCountRow {
+  occupancy: number;
+  gameCount: number;
+}
+
+export interface AdminOccupancyDurationRow {
+  occupancy: number;
+  gameCount: number;
+  avgDurationMs: number | null;
+  avgTurnSequence: number | null;
+}
+
+export interface AdminOpponentMixDurationRow {
+  hasBots: boolean;
+  gameCount: number;
+  avgDurationMs: number | null;
+}
+
+export interface AdminDayCountRow {
+  day: string;
+  gameCount: number;
+}
+
+export interface AdminHourCountRow {
+  hour: number;
+  gameCount: number;
+}
+
+export interface AdminReasonCountRow {
+  reason: AdminElimReasonId;
+  count: number;
+}
+
+export interface AdminLeaveRateRow {
+  occupancy: number;
+  gameCount: number;
+  leaveGameCount: number;
+  inactivityGameCount: number;
+}
+
+export interface AdminBucketCountRow {
+  bucket: string;
+  count: number;
+}
+
+export interface AdminKindCountRow {
+  kind: FeedbackKind;
+  count: number;
+}
+
+export interface AdminOverviewGeneral {
+  gameCount: number;
+  humanOnlyCount: number;
+  withBotsCount: number;
+  avgDurationMs: number | null;
+  medianDurationMs: number | null;
+  avgDurationMsPerHumanPlayer: number | null;
+  avgTurnSequence: number | null;
+  avgClockMsPerTurn: number | null;
+  avgOccupancy: number | null;
+  durationByOpponentMix: readonly AdminOpponentMixDurationRow[];
+  durationByOccupancy: readonly AdminOccupancyDurationRow[];
+  gamesByOccupancy: readonly AdminOccupancyCountRow[];
+  topKitByWins: { kitId: KitId; wins: number } | null;
+}
+
+export interface AdminOverviewVolume {
+  gamesByDay: readonly AdminDayCountRow[];
+  gamesByHourUtc: readonly AdminHourCountRow[];
+}
+
+export interface AdminOverviewEndings {
+  reasons: readonly AdminReasonCountRow[];
+  leaveRateByOccupancy: readonly AdminLeaveRateRow[];
+  avgWinnerLives: number | null;
+  winnerLivesBuckets: readonly AdminBucketCountRow[];
+  durationBuckets: readonly AdminBucketCountRow[];
+}
+
+export interface AdminOverviewRetention {
+  rematchGameCount: number;
+  rematchRate: number | null;
+  distinctNicknames: number;
+}
+
+export interface AdminOverviewFeedbackPulse {
+  reportCount: number;
+  reportsPerGame: number | null;
+  byKind: readonly AdminKindCountRow[];
+}
 
 export interface AdminOverview {
   gameCount: number;
@@ -16,6 +131,12 @@ export interface AdminOverview {
   avgTurnSequence: number | null;
   topKitByWins: { kitId: KitId; wins: number } | null;
   feedbackCount: number;
+  /** Lot 62 match-level Overview modules. */
+  general: AdminOverviewGeneral;
+  volume: AdminOverviewVolume;
+  endings: AdminOverviewEndings;
+  retention: AdminOverviewRetention;
+  feedbackPulse: AdminOverviewFeedbackPulse;
 }
 
 export interface AdminGameListItem {

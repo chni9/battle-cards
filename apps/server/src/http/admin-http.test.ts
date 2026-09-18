@@ -33,6 +33,22 @@ async function listen(app: express.Express): Promise<{ base: string; close: () =
 
 function defaultQueryMock() {
   return vi.fn((sql: string) => {
+    if (sql.includes('overview_median_duration')) {
+      return Promise.resolve({
+        rows: [
+          {
+            overview_game_count: '0',
+            overview_human_only: '0',
+            overview_with_bots: '0',
+            overview_avg_duration: null,
+            overview_median_duration: null,
+            overview_avg_turns: null,
+            overview_avg_clock: null,
+            overview_avg_occupancy: null,
+          },
+        ],
+      });
+    }
     if (sql.includes('COUNT(*)')) {
       return Promise.resolve({
         rows: [
@@ -122,15 +138,23 @@ describe('GET /api/admin/overview (L61-03)', () => {
 
   it('defaults to excluding tutorial games in SQL', async () => {
     const query = vi.fn((sql: string) => {
-      if (sql.includes('COUNT(*)')) {
+      if (sql.includes('overview_median_duration') || sql.includes('COUNT(*)')) {
         return Promise.resolve({
           rows: [
             {
+              overview_game_count: '0',
+              overview_human_only: '0',
+              overview_with_bots: '0',
               game_count: '0',
               human_only: '0',
               with_bots: '0',
               avg_duration: null,
               avg_turns: null,
+              overview_avg_duration: null,
+              overview_median_duration: null,
+              overview_avg_turns: null,
+              overview_avg_clock: null,
+              overview_avg_occupancy: null,
             },
           ],
         });
@@ -145,6 +169,16 @@ describe('GET /api/admin/overview (L61-03)', () => {
       headers: { 'X-Inbox-Password': 'admin-secret' },
     });
     expect(response.status).toBe(200);
+    const body: unknown = await response.json();
+    expect(typeof body).toBe('object');
+    expect(body).not.toBeNull();
+    if (typeof body === 'object' && body !== null) {
+      expect('general' in body).toBe(true);
+      expect('volume' in body).toBe(true);
+      expect('endings' in body).toBe(true);
+      expect('retention' in body).toBe(true);
+      expect('feedbackPulse' in body).toBe(true);
+    }
     expect(
       query.mock.calls.some((call) => {
         const sql = call[0];
