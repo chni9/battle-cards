@@ -232,9 +232,10 @@ failure.
 task alone. Do not bundle several task IDs into one commit unless the developer explicitly
 allows it for that pass (e.g. a catch-up commit after a multi-task session).
 
-**PRs target `dev` (staging).** Promote to production with a PR `dev` → `main`. Coolify
-watches `dev` for staging (Preview Deployments on that app only) and `main` for
-production (`docs/agent/deploy.md`).
+**PRs target `dev` (staging).** Open every GitHub PR **ready for review**, never as a
+draft, so staging Preview Deployments start (`docs/agent/deploy.md`). Promote to
+production with a PR `dev` → `main`. Coolify watches `dev` for staging (previews on
+that app only) and `main` for production.
 
 ## 11. Agent output style
 
