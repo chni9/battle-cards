@@ -6,7 +6,7 @@
 >
 > Sources: technical spec v1 §3 (VPS + Coolify) · designer 2026-09-16 (staging +
 > `dev` gitflow) · designer 2026-09-17 (Coolify Preview Deployments on staging,
-> WaaS pattern).
+> WaaS pattern) · designer 2026-09-18 (PRs never draft — preview webhook).
 
 ## Layout
 
@@ -16,7 +16,8 @@
 | PR **into `dev`** | Ephemeral **preview** on the staging app | Reviewers of that PR |
 | `main` | **production** | Live players |
 
-Feature work opens a PR **into `dev`**. Coolify listens to GitHub webhooks (same
+Feature work opens a **ready-for-review** PR **into `dev`** (never a GitHub draft).
+Coolify listens to GitHub webhooks (same
 pattern as WaaS / `BoldysAI/whatsapp-ai-migration`): the **staging** app auto-deploys
 when `dev` moves, and **Preview Deployments** spin an ephemeral container per PR.
 Production updates only when `dev` is merged **into `main`**. Do not add a GitHub
@@ -60,6 +61,10 @@ promotion, or they will fail the check.
 ## GitHub (once)
 
 These clicks live on GitHub, not Coolify.
+
+Open every GitHub PR **ready for review**, never as a draft — feature work into `dev`
+and promote `dev` → `main`. Coolify Preview Deployments listen to `pull_request`
+**opened**; drafts skip that webhook (section F).
 
 1. **Settings → General → Default branch.** Switch from `main` to `dev` → **Update**.
    New PRs then target staging. Cursor / `gh` / the GitHub **Compare** button will offer
@@ -187,9 +192,12 @@ previews on production.
 ### F. PR preview deployments (staging app only)
 
 Match WaaS: Coolify **native** Preview Deployments. GitHub fires `pull_request`
-webhooks; Coolify builds the PR ref with the same `/Dockerfile` and tears the
-container down when the PR merges or closes. No workflow in this repo clones a
-Coolify app.
+**opened** webhooks; Coolify builds the PR ref with the same `/Dockerfile` and
+tears the container down when the PR merges or closes. **Draft PRs skip that
+webhook**, and converting a draft to ready later does **not** start a preview.
+New PRs into `dev` must be created ready. Use **Load Pull Requests** only as a
+fallback (PRs already open, or a draft marked ready after the fact). No workflow
+in this repo clones a Coolify app.
 
 Enable only after the **staging** app itself is healthy (section D). Confirm
 Build Pack **Dockerfile**, **Dockerfile Location** `/Dockerfile`, **Ports Exposes**
@@ -220,14 +228,16 @@ Build Pack **Dockerfile**, **Dockerfile Location** `/Dockerfile`, **Ports Expose
    Read and write and a subscription to **Pull request** events. If the app was
    created without those: Coolify **Sources** → the GitHub App → **Permissions**
    → **Update**, then accept the GitHub permission prompt.
-6. Open a test PR **into `dev`**. Confirm a hostname like
-   `https://{n}.staging.yassine.boldys.ai` boots (`Running database migrations…`
-   then `Starting Card Battle server…`). Hub + two-tab room; WebSocket stays
-   same-origin. Staging `/admin` (staging `INBOX_PASSWORD`) lists the preview
-   game — that pollution is expected.
+6. Open a test PR **into `dev` as ready for review, not a draft**. Confirm a
+   hostname like `https://{n}.staging.yassine.boldys.ai` boots (`Running database
+   migrations…` then `Starting Card Battle server…`). Hub + two-tab room;
+   WebSocket stays same-origin. Staging `/admin` (staging `INBOX_PASSWORD`) lists
+   the preview game — that pollution is expected.
 7. Close the PR and confirm Coolify deletes the preview container.
 8. PRs already open when you flip the switch are **not** auto-deployed: Preview
-   Deployments → **Load Pull Requests** → **Deploy** on the ones you want.
+   Deployments → **Load Pull Requests** → **Deploy** on the ones you want. That
+   UI is a fallback only — including drafts later marked ready, which never
+   emitted `opened`.
 
 A preview that adds a SQL migration runs `docker/entrypoint.sh` against the
 **shared** staging database. That is the locked trade-off versus a per-PR

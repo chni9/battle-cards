@@ -3590,3 +3590,22 @@ the denominator alone.
 
 ---
 
+## 2026-09-18 · [T] GitHub PRs are never drafts (Coolify previews)
+
+Designer: create every GitHub PR **ready for review**, never as a draft, so Coolify
+Preview Deployments start automatically.
+
+Coolify native Preview Deployments on the **staging** app listen to GitHub
+`pull_request` **opened**. Drafts skip that webhook, and converting a draft to
+ready later does **not** start a preview (Lot 62 `#34` had zero Coolify
+comments). PRs already open when Preview Deployments were enabled also miss
+`opened` (`#32` needed **Load Pull Requests**).
+
+**Load Pull Requests** remains a fallback only. New PRs into `dev` (and any other
+GitHub PR this project opens, including promote `dev` → `main`) must be created
+ready. Production Preview Deployments stay **off**. No rule or value change.
+
+Operator playbook: `docs/agent/deploy.md` section F; AGENTS.md §10.
+
+---
+
