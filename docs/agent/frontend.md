@@ -103,9 +103,12 @@ rules above are unchanged — this section only covers how the client looks.
   JSON. Games list is keyed by `finished_games.id`; detail
   `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
   returns to `/admin/games`. Detail fetch ignores stale responses and shows
-  `adminErrorCopy` on 404/503. A 401 clears the session and re-opens the password
+  `adminErrorCopy` on 404/503. Matches, Kits, and Database list fetches ignore
+  stale responses and clear the previous page on switch or error. A 401 clears
+  the session and re-opens the password
   gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
-  Client `exceljs` exports for overview, games list, kit stats, and table
+  From/To `datetime-local` values are converted to UTC ISO on the client so the
+  VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
   client-side; row detail with contact, nickname, game code, screen, playKind, protocol,

@@ -58,6 +58,24 @@ export function parseAdminPagination(
   return { page, pageSize, offset };
 }
 
+/**
+ * Admin From/To instants. Offset / `Z` strings keep their zone. Naive
+ * `datetime-local` (`YYYY-MM-DDTHH:mm`) is UTC so a raw API call matches
+ * Volume's UTC labels. The SPA converts the designer's local clock to ISO
+ * before sending (`filter-query.ts`).
+ */
+export function parseAdminDate(raw: string): Date | undefined {
+  if (raw.length === 0) {
+    return undefined;
+  }
+  const naiveLocal = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(raw);
+  const parsed = new Date(naiveLocal ? `${raw}Z` : raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+  return parsed;
+}
+
 export function parseAdminFinishedGameFilters(query: Record<string, unknown>): AdminFinishedGameFilters {
   const includeTutorial = query['includeTutorial'] === 'true' || query['includeTutorial'] === '1';
   const endedFromRaw = query['from'];
@@ -65,21 +83,9 @@ export function parseAdminFinishedGameFilters(query: Record<string, unknown>): A
   const occupancyRaw = query['occupancy'];
   const kitRaw = query['kit'];
 
-  let endedFrom: Date | undefined;
-  if (typeof endedFromRaw === 'string' && endedFromRaw.length > 0) {
-    const parsed = new Date(endedFromRaw);
-    if (!Number.isNaN(parsed.getTime())) {
-      endedFrom = parsed;
-    }
-  }
-
-  let endedTo: Date | undefined;
-  if (typeof endedToRaw === 'string' && endedToRaw.length > 0) {
-    const parsed = new Date(endedToRaw);
-    if (!Number.isNaN(parsed.getTime())) {
-      endedTo = parsed;
-    }
-  }
+  const endedFrom =
+    typeof endedFromRaw === 'string' ? parseAdminDate(endedFromRaw) : undefined;
+  const endedTo = typeof endedToRaw === 'string' ? parseAdminDate(endedToRaw) : undefined;
 
   let occupancy: number | undefined;
   if (typeof occupancyRaw === 'string' && occupancyRaw.length > 0) {

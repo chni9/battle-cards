@@ -32,7 +32,8 @@ export function AdminFiltersForm({
         Filters
       </h3>
       <p className="mt-1 text-xs text-ink-muted">
-        Tutorial matches are hidden unless you include them below.
+        Tutorial matches are hidden unless you include them below. From and To
+        use your local clock.
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label className="block text-xs font-medium text-ink-muted">
