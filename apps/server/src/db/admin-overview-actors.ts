@@ -280,10 +280,14 @@ export async function loadAdminOverviewActors(
       `-- overview_hidden_tools
       SELECT
         COUNT(*) FILTER (
-          WHERE ev->>'kind' = 'actionPlayed' AND ev->>'cardId' = 'spy'
+          WHERE ev->>'kind' = 'actionPlayed'
+            AND ev->>'action' = 'playCard'
+            AND ev->>'cardId' = 'spy'
         )::text AS spy_plays,
         COUNT(*) FILTER (
-          WHERE ev->>'kind' = 'actionPlayed' AND ev->>'cardId' = 'thief'
+          WHERE ev->>'kind' = 'actionPlayed'
+            AND ev->>'action' = 'playCard'
+            AND ev->>'cardId' = 'thief'
         )::text AS thief_plays,
         COUNT(*) FILTER (
           WHERE ev->>'kind' = 'actionPlayed' AND ev->>'action' = 'clearSpy'
@@ -301,8 +305,16 @@ export async function loadAdminOverviewActors(
     pool.query<{ card_id: string; plays: string; deacts: string }>(
       `-- overview_persistents
       SELECT ev->>'cardId' AS card_id,
-        COUNT(*) FILTER (WHERE ev->>'kind' = 'actionPlayed')::text AS plays,
-        COUNT(*) FILTER (WHERE ev->>'kind' = 'persistentDeactivated')::text AS deacts
+        COUNT(*) FILTER (
+          WHERE ev->>'kind' = 'actionPlayed' AND ev->>'action' = 'playCard'
+        )::text AS plays,
+        COUNT(*) FILTER (
+          WHERE ev->>'kind' = 'persistentDeactivated'
+            OR (
+              ev->>'kind' = 'actionPlayed'
+              AND ev->>'action' = 'deactivatePersistent'
+            )
+        )::text AS deacts
       FROM finished_games g
       CROSS JOIN LATERAL jsonb_array_elements(g.action_log) ev
       JOIN finished_game_players p ON p.game_id = g.id AND (
@@ -310,7 +322,13 @@ export async function loadAdminOverviewActors(
         OR (ev->>'kind' = 'persistentDeactivated' AND p.player_id = ev->>'ownerPlayerId')
       )
       ${whereSql}
-        AND ev->>'kind' IN ('actionPlayed', 'persistentDeactivated')
+        AND (
+          (
+            ev->>'kind' = 'actionPlayed'
+            AND ev->>'action' IN ('playCard', 'deactivatePersistent')
+          )
+          OR ev->>'kind' = 'persistentDeactivated'
+        )
         AND ev->>'cardId' IN (${PERSISTENT_ID_SQL})
         ${actorAnd}
       GROUP BY 1`,

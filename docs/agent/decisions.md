@@ -3609,3 +3609,27 @@ Operator playbook: `docs/agent/deploy.md` section F; AGENTS.md §10.
 
 ---
 
+## 2026-09-19 · [P] Lot 62 Overview Bugbot follow-up (#36)
+
+Unresolved Bugbot on promote PR #36 (head `dev`). No rule, value, or protocol
+change.
+
+**Hidden plays.** Spy, Thief, and persistent play counts are `actionPlayed` +
+`playCard` only. Shop / upgrade / `deactivatePersistent` rows carry the same
+`cardId` and must not inflate plays. Persistent off-counts include auto-loss
+(`persistentDeactivated`) and manual `deactivatePersistent` (which never
+emits the auto-loss kind).
+
+**Rematch.** Room-code `COUNT` uses the same match-filter `WHERE` as the outer
+query (tutorial default-off, date, kit, occupancy, match mix). Play-again
+reuse of a tutorial room must not mark the first real match as a rematch.
+
+**Stale admin lists.** Matches, Kits, and Database ignore in-flight responses
+and clear the previous page on switch or error (same `cancelled` pattern as
+Overview / game detail).
+
+**From/To timezone.** `datetime-local` has no offset. The SPA sends UTC ISO
+from the designer's local clock. Naive query strings on the API are UTC.
+
+---
+

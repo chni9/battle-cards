@@ -44,6 +44,23 @@ describe('admin route (Lot 61-06)', () => {
     expect(games).toContain('setDetailError(adminErrorCopy(result.status))');
   });
 
+  it('ignores stale Matches, Kits, and Database list fetches', () => {
+    const games = read('screens/admin/admin-games-page.tsx');
+    const kits = read('screens/admin/admin-kits-page.tsx');
+    const data = read('screens/admin/admin-data-page.tsx');
+    expect(games.match(/let cancelled = false/g)).toHaveLength(2);
+    expect(games).toContain('loadedKey === listKey');
+    expect(games).toContain('setPage(null)');
+    expect(kits).toContain('let cancelled = false');
+    expect(kits).toContain('if (cancelled)');
+    expect(kits).toContain('visibleStats');
+    expect(kits).toContain('setStats(null)');
+    expect(data).toContain('let cancelled = false');
+    expect(data).toContain('if (cancelled)');
+    expect(data).toContain('loadedTable === activeTable');
+    expect(data).toContain('setPage(null)');
+  });
+
   it('re-opens the password gate on 401', () => {
     const admin = read('screens/admin/admin-app.tsx');
     const fetchAdmin = read('admin/fetch-admin.ts');

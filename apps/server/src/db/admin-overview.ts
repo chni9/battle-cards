@@ -403,14 +403,16 @@ async function loadRetention(
 ): Promise<AdminOverviewRetention> {
   const [rematchResult, nickResult] = await Promise.all([
     pool.query<{ overview_game_count: string; overview_rematch_count: string }>(
-      `SELECT
+      `-- overview_rematch_count
+      SELECT
         COUNT(*)::text AS overview_game_count,
         COUNT(*) FILTER (WHERE dup.n > 1)::text AS overview_rematch_count
       FROM finished_games g
       INNER JOIN (
-        SELECT room_id, COUNT(*)::int AS n
-        FROM finished_games
-        GROUP BY room_id
+        SELECT g.room_id, COUNT(*)::int AS n
+        FROM finished_games g
+        ${whereSql}
+        GROUP BY g.room_id
       ) dup ON dup.room_id = g.room_id
       ${whereSql}`,
       params,

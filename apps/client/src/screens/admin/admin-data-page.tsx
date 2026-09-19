@@ -23,21 +23,33 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
   const [pickedTable, setPickedTable] = useState<string | null>(null);
   const activeTable = table ?? pickedTable ?? 'finished_games';
   const [page, setPage] = useState<AdminTablePage | null>(null);
+  const [loadedTable, setLoadedTable] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     void fetchAdminTable(password, activeTable, { page: '1', pageSize: '50' }).then((result) => {
+      if (cancelled) {
+        return;
+      }
       if (!result.ok) {
         setError(adminErrorCopy(result.status));
+        setPage(null);
+        setLoadedTable(activeTable);
         return;
       }
       setPage(result.data);
+      setLoadedTable(activeTable);
       setError(null);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [password, activeTable]);
 
-  const columns = page?.columns ?? [];
-  const rows = page?.rows ?? [];
+  const visiblePage = loadedTable === activeTable ? page : null;
+  const columns = visiblePage?.columns ?? [];
+  const rows = visiblePage?.rows ?? [];
 
   return (
     <div className="space-y-8">
@@ -67,22 +79,22 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
           compact
           type="button"
           variant="orange"
-          disabled={page === null}
+          disabled={visiblePage === null}
           onClick={() => {
-            if (page !== null) {
-              void exportTablePageXlsx(page);
+            if (visiblePage !== null) {
+              void exportTablePageXlsx(visiblePage);
             }
           }}
         >
           Download spreadsheet (this page)
         </Button>
-        {page !== null ? (
+        {visiblePage !== null ? (
           <p className="text-sm text-ink-muted">
-            {formatCount(page.total)} rows · page {page.page}
+            {formatCount(visiblePage.total)} rows · page {visiblePage.page}
           </p>
         ) : null}
       </div>
-      {error !== null ? (
+      {error !== null && loadedTable === activeTable ? (
         <p className="text-sm text-cta-red" role="alert">
           {error}
         </p>

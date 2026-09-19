@@ -109,7 +109,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 ## Progress
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
-Lot 61). Lot 62 opened 2026-09-18: **130 of 133** tasks done.
+Lot 61). Lot 62 opened 2026-09-18: **131 of 134** tasks done.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -139,7 +139,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 59 · Compact Draw / Unspy dock | 2 | 2 |
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
-| 62 · Overview metrics modules | 6 | 3 |
+| 62 · Overview metrics modules | 7 | 7 |
 
 
 ---
@@ -501,6 +501,7 @@ action-log card frequencies that Lot 61 left out.
 | L62-04 | `actors` query param + actor-level series: Gameplay, Economy, Combat, Hidden tools + persistents, Bots, seat win share. Combat uses `actionResolved` attack fields only. **Acceptance:** mixed games contribute only selected seats; non-attack life loss is not damage; `pnpm verify` green. | L | **High** | L62-02, L62-03 | Done |
 | L62-05 | CSS/SVG bar, pie, scatter, bucket primitives + present helpers (sort, percent, action/card labels). **Acceptance:** empty/max/zero cases unit-tested; no new npm dep; `pnpm verify` green. | M | Low | L62-01 | Done |
 | L62-06 | Overview UI for all nine sections + Actors control + Excel of loaded series. Playbooks `frontend.md` / `db.md`. **Acceptance:** modules render from API; `pnpm verify` green. | L | Medium | L62-04, L62-05 | Done |
+| L62-07 | Bugbot on #36: Hidden plays = `playCard` only; rematch subquery uses the match-filter `WHERE`; Matches/Kits/Database ignore stale fetches; From/To send UTC ISO. **Acceptance:** tests lock SQL and client conversion; `pnpm verify` green. | M | Medium | L62-04, L62-06 | Done |
 
 ---
 
@@ -529,8 +530,8 @@ action-log card frequencies that Lot 61 left out.
 | 59 | 2 |
 | 60 | 5 |
 | 61 | 10 |
-| 62 | 6 |
-| **Total** | **133** |
+| 62 | 7 |
+| **Total** | **134** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 

@@ -53,18 +53,32 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [stats, setStats] = useState<AdminKitStats | null>(null);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const listKey = JSON.stringify(applied);
 
   useEffect(() => {
+    let cancelled = false;
     void fetchAdminKitStats(password, filtersToQuery(applied)).then((result) => {
+      if (cancelled) {
+        return;
+      }
       if (!result.ok) {
         setError(adminErrorCopy(result.status));
+        setStats(null);
+        setLoadedKey(listKey);
         return;
       }
       setStats(result.data);
+      setLoadedKey(listKey);
       setError(null);
     });
-  }, [password, applied]);
+    return () => {
+      cancelled = true;
+    };
+  }, [password, applied, listKey]);
+
+  const visibleStats = loadedKey === listKey ? stats : null;
 
   return (
     <div className="space-y-8">
@@ -84,29 +98,29 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
           compact
           type="button"
           variant="orange"
-          disabled={stats === null || stats.rows.length === 0}
+          disabled={visibleStats === null || visibleStats.rows.length === 0}
           onClick={() => {
-            if (stats !== null) {
-              void exportKitStatsXlsx(stats.rows);
+            if (visibleStats !== null) {
+              void exportKitStatsXlsx(visibleStats.rows);
             }
           }}
         >
           Download spreadsheet
         </Button>
-        {stats !== null ? (
+        {visibleStats !== null ? (
           <p className="text-sm text-ink-muted">
-            Based on {formatCount(stats.sampleGames)} matches
+            Based on {formatCount(visibleStats.sampleGames)} matches
           </p>
         ) : null}
       </div>
-      {error !== null ? (
+      {error !== null && loadedKey === listKey ? (
         <p className="text-sm text-cta-red" role="alert">
           {error}
         </p>
       ) : null}
       <AdminDataTable
         columns={kitColumns}
-        rows={stats?.rows ?? []}
+        rows={visibleStats?.rows ?? []}
         rowKey={(row) => row.kitId}
         emptyMessage="No kit data for these filters."
       />

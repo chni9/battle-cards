@@ -103,3 +103,10 @@ Seat win share applies `actors` to both wins and `game_count` (selected seats at
 that index). Feedback `reportsPerGame` divides date-window reports by
 date-window `finished_games` (`ended_at`); occupancy, kit, match mix, and
 tutorial do not change that denominator.
+
+Hidden Spy / Thief / persistent **plays** count `actionPlayed` `playCard` only
+(shop, upgrade, and manual `deactivatePersistent` share `cardId` but are not
+plays). Persistent deactivations include auto-loss (`persistentDeactivated`)
+and manual `deactivatePersistent`. Rematch room-code counts use the same
+match-filter `WHERE` as the outer query, so a tutorial in a reused Play-again
+room does not mark the first real match as a rematch.

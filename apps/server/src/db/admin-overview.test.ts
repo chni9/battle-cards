@@ -132,6 +132,12 @@ describe('loadAdminOverview match-level series (L62-03)', () => {
     expect(overview.feedbackPulse.reportsPerGame).toBe(0.3);
     expect(overview.feedbackCount).toBe(3);
 
+    const rematchSql = sql.find((text) => text.includes('overview_rematch_count'));
+    expect(rematchSql).toBeDefined();
+    expect(rematchSql).not.toMatch(/FROM finished_games\s+GROUP BY room_id/);
+    expect(rematchSql?.match(/is_tutorial = false/g)).toHaveLength(2);
+    expect(rematchSql).toContain('has_bots = false');
+
     const mixSql = sql.find((text) => text.includes('GROUP BY g.has_bots'));
     expect(mixSql).toBeDefined();
     expect(mixSql).not.toContain('has_bots = false');
@@ -169,6 +175,10 @@ describe('loadAdminOverview match-level series (L62-03)', () => {
     expect(dateGamesSql).not.toContain('is_tutorial');
     expect(dateGamesSql).not.toContain('gp_kit');
     expect(dateGamesSql).not.toContain('ocp.game_id');
+
+    const rematchSql = sql.find((text) => text.includes('overview_rematch_count'));
+    expect(rematchSql).toContain('ocp.game_id');
+    expect(rematchSql?.match(/ocp.game_id/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
   it('excludes tutorials by default on an empty log', async () => {
@@ -322,6 +332,22 @@ describe('loadAdminOverview actor-level series (L62-04)', () => {
     expect(overview.economy.shopMix.find((row) => row.action === 'buyCard')?.count).toBe(2);
     expect(overview.economy.upgradedPlayShare).toBe(0.4);
     expect(overview.hidden.unspyCount).toBe(3);
+    expect(overview.hidden.spyPlays).toBe(2);
+
+    const hiddenSql = sql.find((text) => text.includes('overview_hidden_tools'));
+    expect(hiddenSql).toContain("ev->>'action' = 'playCard'");
+    expect(hiddenSql).toContain("ev->>'cardId' = 'spy'");
+    expect(hiddenSql).toContain("ev->>'cardId' = 'thief'");
+    expect(hiddenSql).not.toMatch(
+      /kind' = 'actionPlayed' AND ev->>'cardId' = 'spy'/,
+    );
+
+    const persistSql = sql.find((text) => text.includes('overview_persistents'));
+    expect(persistSql).toContain("ev->>'action' = 'playCard'");
+    expect(persistSql).toContain('deactivatePersistent');
+    expect(persistSql).toContain('persistentDeactivated');
+    expect(persistSql).not.toContain("AND ev->>'kind' IN ('actionPlayed', 'persistentDeactivated')");
+
     expect(overview.botsSeats.humanWinRateInMixed).toBe(0.25);
     expect(overview.botsSeats.seatWinShare).toHaveLength(8);
 

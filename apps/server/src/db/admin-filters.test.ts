@@ -28,4 +28,22 @@ describe('parseAdminFinishedGameFilters (L61-03)', () => {
     const { whereSql } = buildFinishedGamesWhere(filters);
     expect(whereSql).not.toContain('is_tutorial');
   });
+
+  it('treats naive datetime-local From/To as UTC', () => {
+    const filters = parseAdminFinishedGameFilters({
+      from: '2026-09-18T09:00',
+      to: '2026-09-18T18:30:00',
+    });
+    expect(filters.endedFrom?.toISOString()).toBe('2026-09-18T09:00:00.000Z');
+    expect(filters.endedTo?.toISOString()).toBe('2026-09-18T18:30:00.000Z');
+  });
+
+  it('keeps explicit offsets on From/To', () => {
+    const filters = parseAdminFinishedGameFilters({
+      from: '2026-09-18T09:00:00.000Z',
+      to: '2026-09-18T11:00:00+02:00',
+    });
+    expect(filters.endedFrom?.toISOString()).toBe('2026-09-18T09:00:00.000Z');
+    expect(filters.endedTo?.toISOString()).toBe('2026-09-18T09:00:00.000Z');
+  });
 });
