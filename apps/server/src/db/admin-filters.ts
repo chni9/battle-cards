@@ -2,9 +2,10 @@
  * Shared finished-game filters for admin SQL (Lot 61 / db.md tutorial exclusion).
  */
 
-import type { KitId } from '@card-battle/shared';
+import type { AdminActorsFilter, KitId } from '@card-battle/shared';
 
 export type AdminBotsFilter = 'all' | 'humans' | 'withBots';
+export type { AdminActorsFilter };
 
 export interface AdminFinishedGameFilters {
   /** When true, only non-tutorial rows (default for dashboard/kits). */
@@ -12,6 +13,8 @@ export interface AdminFinishedGameFilters {
   endedFrom?: Date;
   endedTo?: Date;
   bots: AdminBotsFilter;
+  /** Seat / action grain (Lot 62). Match mix (`bots`) still selects games. */
+  actors: AdminActorsFilter;
   occupancy?: number;
   kitId?: KitId;
 }
@@ -26,6 +29,24 @@ export function parseAdminBotsFilter(raw: string | undefined): AdminBotsFilter {
   return 'all';
 }
 
+export function parseAdminActorsFilter(raw: string | undefined): AdminActorsFilter {
+  if (raw === 'humans' || raw === 'bots') {
+    return raw;
+  }
+  return 'both';
+}
+
+/** Extra AND on a `finished_game_players` alias. Empty when `actors=both`. */
+export function actorSeatAnd(alias: string, actors: AdminActorsFilter): string {
+  if (actors === 'humans') {
+    return ` AND ${alias}.is_bot = false`;
+  }
+  if (actors === 'bots') {
+    return ` AND ${alias}.is_bot = true`;
+  }
+  return '';
+}
+
 export function parseAdminPagination(
   pageRaw: string | undefined,
   pageSizeRaw: string | undefined,
@@ -37,6 +58,24 @@ export function parseAdminPagination(
   return { page, pageSize, offset };
 }
 
+/**
+ * Admin From/To instants. Offset / `Z` strings keep their zone. Naive
+ * `datetime-local` (`YYYY-MM-DDTHH:mm`) is UTC so a raw API call matches
+ * Volume's UTC labels. The SPA converts the designer's local clock to ISO
+ * before sending (`filter-query.ts`).
+ */
+export function parseAdminDate(raw: string): Date | undefined {
+  if (raw.length === 0) {
+    return undefined;
+  }
+  const naiveLocal = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(raw);
+  const parsed = new Date(naiveLocal ? `${raw}Z` : raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+  return parsed;
+}
+
 export function parseAdminFinishedGameFilters(query: Record<string, unknown>): AdminFinishedGameFilters {
   const includeTutorial = query['includeTutorial'] === 'true' || query['includeTutorial'] === '1';
   const endedFromRaw = query['from'];
@@ -44,21 +83,9 @@ export function parseAdminFinishedGameFilters(query: Record<string, unknown>): A
   const occupancyRaw = query['occupancy'];
   const kitRaw = query['kit'];
 
-  let endedFrom: Date | undefined;
-  if (typeof endedFromRaw === 'string' && endedFromRaw.length > 0) {
-    const parsed = new Date(endedFromRaw);
-    if (!Number.isNaN(parsed.getTime())) {
-      endedFrom = parsed;
-    }
-  }
-
-  let endedTo: Date | undefined;
-  if (typeof endedToRaw === 'string' && endedToRaw.length > 0) {
-    const parsed = new Date(endedToRaw);
-    if (!Number.isNaN(parsed.getTime())) {
-      endedTo = parsed;
-    }
-  }
+  const endedFrom =
+    typeof endedFromRaw === 'string' ? parseAdminDate(endedFromRaw) : undefined;
+  const endedTo = typeof endedToRaw === 'string' ? parseAdminDate(endedToRaw) : undefined;
 
   let occupancy: number | undefined;
   if (typeof occupancyRaw === 'string' && occupancyRaw.length > 0) {
@@ -77,6 +104,9 @@ export function parseAdminFinishedGameFilters(query: Record<string, unknown>): A
     excludeTutorial: !includeTutorial,
     bots: parseAdminBotsFilter(
       typeof query['bots'] === 'string' ? query['bots'] : undefined,
+    ),
+    actors: parseAdminActorsFilter(
+      typeof query['actors'] === 'string' ? query['actors'] : undefined,
     ),
   };
   if (endedFrom !== undefined) {

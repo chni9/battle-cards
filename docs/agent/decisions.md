@@ -3548,3 +3548,88 @@ Operator playbook: `docs/agent/deploy.md` section F.
 
 ---
 
+## 2026-09-18 · [P] Lot 62 Overview metrics modules (L62-01)
+
+Designer: expand password-gated `/admin` Overview beyond Lot 61 KPI cards.
+No protocol bump, no hub link, no accounts, no chart npm package.
+
+**Two filter grains.** Match mix stays `all` / humans-only games / games with
+bots (`g.has_bots`). Overview adds `actors=humans|bots|both` (default `both`)
+on seat / action series only, so mixed tables still contribute selected seats.
+
+**Reopen action-log frequencies** for admin SQL aggregates (Lot 61 left them
+out). The SPA still has zero rule logic: server aggregates, client renders.
+
+**Persist:** migration `008` adds `think_time_ms` on `finished_game_players`
+from the Game over recap map. Old rows stay null. Do **not** persist recap
+`matchStats` (lives/points/damage/kills) this lot.
+
+**Overview sections:** General, Volume, Gameplay, Economy, Combat, Hidden
+tools, Bots and seats, Endings, Retention and feedback. CSS/SVG charts.
+Combat uses `actionResolved` attack `livesLost` / `shieldAbsorbed` — never
+merge Tax / Suicide / Imposition into damage (golden rule 2).
+
+**Out:** kit-vs-kit matrix, mutual-attack cancel rates, tutorial funnel,
+Reanimation / rewards claimed, live rooms, SQL/JSON IDE.
+
+---
+
+## 2026-09-18 · [P] Lot 62 Overview ratio grains
+
+Bugbot on the Lot 62 PR. Same two filter grains; two ratio bugs.
+
+**Seat win share.** Actors filters both the wins numerator and `game_count`
+at that `seat_index`. Mixed tables contribute only the selected seats — not
+“human/bot wins over every game that filled the chair.” Occupancy still comes
+from match mix (which games enter the join).
+
+**Feedback reports per game.** Numerator stays date-window `feedback_reports`
+(`created_at`). Denominator is date-window `finished_games` (`ended_at`), not
+`general.gameCount`. Occupancy, kit, match mix, and tutorial do not shrink
+the denominator alone.
+
+---
+
+## 2026-09-18 · [T] GitHub PRs are never drafts (Coolify previews)
+
+Designer: create every GitHub PR **ready for review**, never as a draft, so Coolify
+Preview Deployments start automatically.
+
+Coolify native Preview Deployments on the **staging** app listen to GitHub
+`pull_request` **opened**. Drafts skip that webhook, and converting a draft to
+ready later does **not** start a preview (Lot 62 `#34` had zero Coolify
+comments). PRs already open when Preview Deployments were enabled also miss
+`opened` (`#32` needed **Load Pull Requests**).
+
+**Load Pull Requests** remains a fallback only. New PRs into `dev` (and any other
+GitHub PR this project opens, including promote `dev` → `main`) must be created
+ready. Production Preview Deployments stay **off**. No rule or value change.
+
+Operator playbook: `docs/agent/deploy.md` section F; AGENTS.md §10.
+
+---
+
+## 2026-09-19 · [P] Lot 62 Overview Bugbot follow-up (#36)
+
+Unresolved Bugbot on promote PR #36 (head `dev`). No rule, value, or protocol
+change.
+
+**Hidden plays.** Spy, Thief, and persistent play counts are `actionPlayed` +
+`playCard` only. Shop / upgrade / `deactivatePersistent` rows carry the same
+`cardId` and must not inflate plays. Persistent off-counts include auto-loss
+(`persistentDeactivated`) and manual `deactivatePersistent` (which never
+emits the auto-loss kind).
+
+**Rematch.** Room-code `COUNT` uses the same match-filter `WHERE` as the outer
+query (tutorial default-off, date, kit, occupancy, match mix). Play-again
+reuse of a tutorial room must not mark the first real match as a rematch.
+
+**Stale admin lists.** Matches, Kits, and Database ignore in-flight responses
+and clear the previous page on switch or error (same `cancelled` pattern as
+Overview / game detail).
+
+**From/To timezone.** `datetime-local` has no offset. The SPA sends UTC ISO
+from the designer's local clock. Naive query strings on the API are UTC.
+
+---
+

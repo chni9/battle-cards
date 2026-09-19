@@ -68,7 +68,7 @@ export function AdminApp(): ReactElement {
 
   return (
     <main className="h-full overflow-y-auto bg-surface font-sans text-ink">
-      <div className="mx-auto max-w-5xl px-4 py-8 md:px-6">
+            <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
         <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
           Designer
         </p>

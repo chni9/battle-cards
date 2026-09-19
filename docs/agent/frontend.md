@@ -88,15 +88,27 @@ rules above are unchanged — this section only covers how the client looks.
   **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
-  **Admin (L61-06+):** `App` branches `/admin` before game phases (no Colyseus). Reuses
+  **Admin (L61-06+ / Lot 62):** `App` branches `/admin` before game phases (no Colyseus). Reuses
   `sessionStorage['card-battle.v6.inboxPassword']` and `X-Inbox-Password` against
-  `GET /api/admin/*`. Nav: Dashboard, Games, Kits, Feedback, Data. Default filters
-  exclude tutorial rows. Games list is keyed by `finished_games.id`; detail
+  `GET /api/admin/*`. Nav: Overview, Matches, Kits, Feedback, Database. Default filters
+  exclude tutorial rows. Overview is nine stacked modules (General, Volume, Gameplay,
+  Economy, Combat, Hidden tools, Bots and seats, Endings, Retention and feedback) from
+  one `GET /api/admin/overview` payload. Match mix (`bots`) filters games; **Actors**
+  (`humans` / `bots` / `both`, default both) lives on actor-level module headers and
+  filters seats / action joins — mixed tables still contribute the selected seats.
+  Seat win share applies Actors to both wins and games at that seat. Feedback
+  reports-per-game uses the date window on both sides (not occupancy / kit /
+  match mix). Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package. Do not flash
+  “no data” before the first fetch (`Loading…`). Excel downloads the loaded overview
+  JSON. Games list is keyed by `finished_games.id`; detail
   `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
   returns to `/admin/games`. Detail fetch ignores stale responses and shows
-  `adminErrorCopy` on 404/503. A 401 clears the session and re-opens the password
+  `adminErrorCopy` on 404/503. Matches, Kits, and Database list fetches ignore
+  stale responses and clear the previous page on switch or error. A 401 clears
+  the session and re-opens the password
   gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
-  Client `exceljs` exports for games list, kit stats, and table
+  From/To `datetime-local` values are converted to UTC ISO on the client so the
+  VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
   client-side; row detail with contact, nickname, game code, screen, playKind, protocol,
@@ -1175,4 +1187,21 @@ Solo Classic, Vite `:5173`, Colyseus `:2567`.
   intercepts first leave / Play again.
 - `pnpm verify` **1417** tests.
 
+### Lot 62 verified 2026-09-18 (browser, `/admin` Overview, no protocol bump)
+
+Vite `:5173`, Colyseus `:2567`, local Postgres with two seeded finished games
+(`LOT62A` humans-only, `LOT62B` mixed) plus one feedback row. Password
+`INBOX_PASSWORD` unlock. `pnpm verify` **1473** tests after the NaN format
+guard.
+
+- Overview nine modules: General, Volume, Gameplay, Economy, Combat, Hidden
+  tools, Bots and seats, Endings, Retention and feedback. CSS/SVG bars, pie,
+  scatter. Download Excel writes `admin-overview.xlsx`.
+- Actors on Gameplay / Economy / Combat / Hidden / Bots headers; Humans
+  reloads seat series without dropping match mix (2 finished matches).
+- Combat: attack lives lost vs **Non-attack life loss** (Tax caption). Seed
+  showed 4 attack lives / 2 non-attack.
+- Empty: Seat count **8** → Finished matches **0**, modules still on screen,
+  Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
+  not an empty flash. Formatters treat non-finite numbers as **—**.
 

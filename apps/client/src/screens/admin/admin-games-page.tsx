@@ -97,25 +97,37 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [page, setPage] = useState<AdminGamesPage | null>(null);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
   const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
   const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
+  const listKey = JSON.stringify(applied);
   const [detail, setDetail] = useState<Awaited<
     ReturnType<typeof fetchAdminGameDetail>
   > | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     void fetchAdminGames(password, { ...filtersToQuery(applied), page: '1' }).then((result) => {
+      if (cancelled) {
+        return;
+      }
       if (!result.ok) {
         setError(adminErrorCopy(result.status));
+        setPage(null);
+        setLoadedKey(listKey);
         return;
       }
       setPage(result.data);
+      setLoadedKey(listKey);
       setError(null);
     });
-  }, [password, applied]);
+    return () => {
+      cancelled = true;
+    };
+  }, [password, applied, listKey]);
 
   useEffect(() => {
     if (activeDetail === null) {
@@ -157,7 +169,8 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
     window.history.replaceState({}, '', gameDetailPath(gameId));
   };
 
-  const items = page?.items ?? [];
+  const visiblePage = loadedKey === listKey ? page : null;
+  const items = visiblePage?.items ?? [];
 
   return (
     <div className="space-y-8">
@@ -184,13 +197,13 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         >
           Download spreadsheet
         </Button>
-        {page !== null ? (
+        {visiblePage !== null ? (
           <p className="text-sm text-ink-muted">
-            Showing {formatCount(items.length)} of {formatCount(page.total)}
+            Showing {formatCount(items.length)} of {formatCount(visiblePage.total)}
           </p>
         ) : null}
       </div>
-      {error !== null ? (
+      {error !== null && loadedKey === listKey ? (
         <p className="text-sm text-cta-red" role="alert">
           {error}
         </p>

@@ -3688,6 +3688,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         eliminations: this.eliminations,
         botDifficultiesByPlayerId: this.botDifficulties(),
         isTutorial: this.playKind === 'tutorial',
+        thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
       });
 
       void persistFinishedGame(snapshot);

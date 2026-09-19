@@ -44,6 +44,23 @@ describe('admin route (Lot 61-06)', () => {
     expect(games).toContain('setDetailError(adminErrorCopy(result.status))');
   });
 
+  it('ignores stale Matches, Kits, and Database list fetches', () => {
+    const games = read('screens/admin/admin-games-page.tsx');
+    const kits = read('screens/admin/admin-kits-page.tsx');
+    const data = read('screens/admin/admin-data-page.tsx');
+    expect(games.match(/let cancelled = false/g)).toHaveLength(2);
+    expect(games).toContain('loadedKey === listKey');
+    expect(games).toContain('setPage(null)');
+    expect(kits).toContain('let cancelled = false');
+    expect(kits).toContain('if (cancelled)');
+    expect(kits).toContain('visibleStats');
+    expect(kits).toContain('setStats(null)');
+    expect(data).toContain('let cancelled = false');
+    expect(data).toContain('if (cancelled)');
+    expect(data).toContain('loadedTable === activeTable');
+    expect(data).toContain('setPage(null)');
+  });
+
   it('re-opens the password gate on 401', () => {
     const admin = read('screens/admin/admin-app.tsx');
     const fetchAdmin = read('admin/fetch-admin.ts');
@@ -59,5 +76,28 @@ describe('admin route (Lot 61-06)', () => {
     const dashboard = read('screens/admin/admin-dashboard-page.tsx');
     expect(dashboard).toContain('setOverview(result.data)');
     expect(dashboard).toContain('setError(null)');
+    expect(dashboard).toContain('Loading…');
+    expect(dashboard).toContain('overviewQuery(applied, actors)');
+    expect(dashboard).toContain('exportOverviewXlsx');
+    expect(dashboard).not.toContain('setOverview(null)');
+  });
+
+  it('renders nine Overview modules and an Actors control', () => {
+    const modules = read('screens/admin/admin-overview-modules.tsx');
+    expect(modules).toContain('title="General"');
+    expect(modules).toContain('title="Volume"');
+    expect(modules).toContain('title="Gameplay"');
+    expect(modules).toContain('title="Economy"');
+    expect(modules).toContain('title="Combat"');
+    expect(modules).toContain('title="Hidden tools"');
+    expect(modules).toContain('title="Bots and seats"');
+    expect(modules).toContain('title="Endings"');
+    expect(modules).toContain('title="Retention and feedback"');
+    expect(modules).toContain('AdminActorsControl');
+    expect(modules).toContain('Hours are UTC.');
+    expect(modules).toContain('Tax, Suicide, and Imposition life loss is not attack damage.');
+    expect(modules).toContain('Ignores the opponents match-mix filter');
+    expect(modules).toContain('AdminScatterChart');
+    expect(modules).toContain('New matches only');
   });
 });
