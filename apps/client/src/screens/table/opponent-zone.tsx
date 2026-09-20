@@ -21,6 +21,7 @@ import {
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
 import { opponentResourceDisplay } from './opponent-seat-resources';
+import { SentenceChipsForSeat } from './sentence-chip';
 import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -212,7 +213,7 @@ export function OpponentZone({
         )}
       </div>
       {!player.isEliminated && (
-        <FlowStatusBadges player={player} pendingSentences={view.pendingSentences} compact />
+        <FlowStatusBadges player={player} compact />
       )}
 
       <div className="mt-1 flex items-start gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">
@@ -243,6 +244,11 @@ export function OpponentZone({
           <ActiveThumbs
             player={player}
             {...(onInspectActive !== undefined ? { onInspectActive } : {})}
+          />
+          <SentenceChipsForSeat
+            playerId={player.id}
+            pendingSentences={view.pendingSentences}
+            compact
           />
         </div>
         <OpponentSeatResourceColumn player={player} />

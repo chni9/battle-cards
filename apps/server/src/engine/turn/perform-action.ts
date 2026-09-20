@@ -19,6 +19,7 @@ import {
   type KitId,
   type Player,
   type RewardChoice,
+  type SentenceAnnouncementLogEntry,
   type SpecialCardId,
 } from '@card-battle/shared';
 
@@ -178,6 +179,11 @@ export interface TurnResult {
     isUpgraded: boolean;
     turnSequence: number;
   }[];
+  /**
+   * Sentence countdown / fire messages this turn (L63-03 playtest).
+   * Absent when remaining did not decrement and nothing fired.
+   */
+  sentenceAnnouncements?: readonly SentenceAnnouncementLogEntry[];
 }
 
 export type TurnRejection = ActionReject;
@@ -1032,7 +1038,13 @@ function finishTurnPhases(
   ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
-  tickPendingSentences(state, actorPlayerId);
+  const skipNewestSentence =
+    actionPlayed.action === 'playCard' && actionPlayed.cardId === 'sentence';
+  const sentenceAnnouncements = tickPendingSentences(
+    state,
+    actorPlayerId,
+    skipNewestSentence,
+  );
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
@@ -1041,6 +1053,7 @@ function finishTurnPhases(
     actionPlayed.turnSequence,
   );
   const losses = persistentDeactivationFields(state, actionPlayed.turnSequence);
+  const sentences = sentenceAnnouncementFields(sentenceAnnouncements);
 
   const reanimated =
     playerReanimated.length > 0 ? { playerReanimated } : {};
@@ -1062,6 +1075,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1078,6 +1092,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1100,6 +1115,7 @@ function finishTurnPhases(
     ...redirects,
     ...transfers,
     ...losses,
+    ...sentences,
   };
 }
 
@@ -1117,6 +1133,16 @@ function persistentDeactivationFields(
   }
 
   return { persistentDeactivations: items };
+}
+
+function sentenceAnnouncementFields(
+  announcements: readonly SentenceAnnouncementLogEntry[],
+): Pick<TurnResult, 'sentenceAnnouncements'> {
+  if (announcements.length === 0) {
+    return {};
+  }
+
+  return { sentenceAnnouncements: announcements };
 }
 
 function collectCurseTransfers(

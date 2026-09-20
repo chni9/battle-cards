@@ -156,8 +156,8 @@ export type GenericSubChoiceState = Extract<
 
 /**
  * One ticking Sentence — designer 2026-09-20 / L63-02.
- * `remainingOwnerTurns` starts at `SENTENCE_OWNER_TURNS` and counts the
- * activator's own turns including the play turn.
+ * `remainingOwnerTurns` starts at `SENTENCE_OWNER_TURNS` after play. Activation
+ * does not consume a countdown turn; later owner turns decrement.
  */
 export interface PendingSentence {
   sourcePlayerId: string;
@@ -165,5 +165,5 @@ export interface PendingSentence {
   isUpgraded: boolean;
 }
 
-/** Activator turns until fire, including the play turn (rules spec §5 / Lot 63). */
+/** Activator turns until fire, not including the play turn (rules spec §5 / Lot 63). */
 export const SENTENCE_OWNER_TURNS = 3;

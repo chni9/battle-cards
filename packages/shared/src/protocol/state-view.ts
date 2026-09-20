@@ -269,23 +269,8 @@ export interface PendingEffectView {
 export type PlayKind = 'classic' | 'tutorial';
 
 /**
- * Occupancy-only pool slot (L63-06). No `instanceId` — sell/death dumps reuse
- * that id, and deactivated persistents mint `pool:${effect.id}:${seq}` while
- * `PersistentEffectView` is public.
+ * Public Sentence countdown — same shape as `GameState.pendingSentences`.
  */
-export interface FoggedPoolCard {
-  readonly hidden: true;
-}
-
-export const FOGGED_POOL_CARD: FoggedPoolCard = { hidden: true };
-
-export type PoolCardView = CardInstance | FoggedPoolCard;
-
-export function poolCardHasIdentity(card: PoolCardView): card is CardInstance {
-  return 'cardId' in card;
-}
-
-/** Public Sentence countdown — same shape as `GameState.pendingSentences`. */
 export type PendingSentenceView = PendingSentence;
 
 export interface PlayingStateView {
@@ -308,11 +293,11 @@ export interface PlayingStateView {
    */
   actionLog: readonly ActionLogEntryView[];
   /**
-   * Shared pool occupancy — rules spec §1; technical spec v4 §4.3 / §5.1.
-   * Identity (`cardId` / `isUpgraded` / `instanceId`) is omitted unless the
-   * recipient is the pool-pick chooser (L63-06). Occupancy stays public.
+   * Shared pool — rules spec §1; technical spec v4 §4.3 / §5.1.
+   * Sitting cards show their faces. Occupancy stays public. Recovered
+   * `buyPoolCard` identity is still fogged on the action log (L63-06).
    */
-  pool: readonly PoolCardView[];
+  pool: readonly CardInstance[];
   /**
    * Table-wide pool-buy fee (rules spec §1 / L58-02). Public. Starts at 1 and
    * doubles after every successful `buyPoolCard`. Never resets.
@@ -448,6 +433,26 @@ export interface RewardsClaimedLogEntry {
   botReason?: BotDecisionReason;
 }
 
+/** Caster’s remaining Sentence count actually decremented (L63-03 playtest). */
+export interface SentenceCountdownLogEntry {
+  kind: 'sentenceCountdown';
+  sourcePlayerId: string;
+  remainingOwnerTurns: number;
+  turnSequence: number;
+}
+
+/** Sentence fire queued a kill — names the victim (L63-03 playtest). */
+export interface SentenceFiredLogEntry {
+  kind: 'sentenceFired';
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  turnSequence: number;
+}
+
+export type SentenceAnnouncementLogEntry =
+  | SentenceCountdownLogEntry
+  | SentenceFiredLogEntry;
+
 export type ActionLogEntryView =
   | ActionPlayedLogEntry
   | ActionResolvedLogEntry
@@ -456,7 +461,9 @@ export type ActionLogEntryView =
   | PersistentDeactivatedLogEntry
   | CurseTransferredLogEntry
   | PlayerReanimatedLogEntry
-  | RewardsClaimedLogEntry;
+  | RewardsClaimedLogEntry
+  | SentenceCountdownLogEntry
+  | SentenceFiredLogEntry;
 
 export type ActionLogEntryKind = ActionLogEntryView['kind'];
 

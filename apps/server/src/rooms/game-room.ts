@@ -2029,6 +2029,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.appendPersistentDeactivations(result.persistentDeactivations);
     }
 
+    if (result.sentenceAnnouncements !== undefined) {
+      for (const entry of result.sentenceAnnouncements) {
+        this.actionLog.push(entry);
+      }
+    }
+
     for (const playerId of result.eliminatedPlayerIds) {
       const elimination = result.eliminations.find((entry) => entry.playerId === playerId);
       const eliminated = this.gameState?.players.find((player) => player.id === playerId);

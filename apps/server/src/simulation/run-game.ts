@@ -212,6 +212,12 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
       });
     }
   }
+
+  if (result.sentenceAnnouncements !== undefined) {
+    for (const entry of result.sentenceAnnouncements) {
+      log.push(entry);
+    }
+  }
 }
 
 export function runSimulatedGame(input: RunGameInput): SimulationGameRow {

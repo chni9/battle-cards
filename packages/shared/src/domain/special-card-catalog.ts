@@ -81,8 +81,8 @@ export const SPECIAL_CARD_CATALOG = {
     'sentence',
     'Sentence',
     20,
-    'After 3 of your turns including this play, a random living visible player is marked to die on their turn (can be you). Cancelled if you die first.',
-    'After 3 of your turns including this play, a random living visible player other than you is marked to die on their turn. Cancelled if you die first.',
+    'After 3 of your later turns (this play does not count), a random living visible player is marked to die on their turn (can be you). Cancelled if you die first.',
+    'After 3 of your later turns (this play does not count), a random living visible player other than you is marked to die on their turn. Cancelled if you die first.',
     'The random draw never picks you.',
   ),
   'points-generator': specialCard(

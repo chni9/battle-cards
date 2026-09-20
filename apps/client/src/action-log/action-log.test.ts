@@ -248,6 +248,42 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card from the pool');
   });
 
+  it('formats Sentence countdown and fire without a table-wide banner (L63-03)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'sentenceCountdown',
+          sourcePlayerId: 'a',
+          remainingOwnerTurns: 2,
+          turnSequence: 3,
+        },
+        nick,
+      ),
+    ).toBe('2 turns before Sentence!');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'sentenceCountdown',
+          sourcePlayerId: 'a',
+          remainingOwnerTurns: 1,
+          turnSequence: 5,
+        },
+        nick,
+      ),
+    ).toBe('1 turn before Sentence!');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'sentenceFired',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          turnSequence: 7,
+        },
+        nick,
+      ),
+    ).toBe('Bob will be killed');
+  });
+
   it('formats player reanimation without the kit (L50-03)', () => {
     expect(
       formatActionLogEntry(
@@ -506,6 +542,8 @@ describe('action log kinds (L56-03)', () => {
       curseTransferred: true,
       playerReanimated: true,
       rewardsClaimed: true,
+      sentenceCountdown: true,
+      sentenceFired: true,
     };
     expect([...ACTION_LOG_KINDS].sort()).toEqual(Object.keys(kinds).sort());
   });

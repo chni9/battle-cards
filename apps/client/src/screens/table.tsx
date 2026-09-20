@@ -1230,9 +1230,6 @@ function TableScreenInner({
         isEliminated={selfEliminated}
         youWon={povWon}
         pendingEffects={view.pendingEffects}
-        pendingSentences={view.pendingSentences}
-        currentTurnPlayerId={view.currentTurnPlayerId}
-        turnSequence={view.turnSequence}
         you={view.you}
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />

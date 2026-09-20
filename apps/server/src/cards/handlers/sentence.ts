@@ -1,7 +1,7 @@
 /**
  * Sentence — rules spec §5, backlog L5-07 / L63-03.
  *
- * Starts a public 3-owner-turn countdown (activation counts). Fire is a seeded
+ * Starts a public 3-owner-turn countdown (activation does not count). Fire is a seeded
  * pick that queues elimination on the victim's turn. Upgraded excludes the user.
  * Invisible players are excluded; empty pool → canPlay false / fire fizzle.
  * Remaining turns are not card-lives. Not deactivatePersistent.

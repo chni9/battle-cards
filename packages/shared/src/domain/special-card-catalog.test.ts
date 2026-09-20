@@ -19,7 +19,8 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(SPECIAL_CARD_CATALOG.imposition.cost).toEqual({ points: 6 });
     expect(SPECIAL_CARD_CATALOG.cloning.cost).toEqual({ points: 3 });
     expect(SPECIAL_CARD_CATALOG.sentence.cost).toEqual({ points: 20 });
-    expect(SPECIAL_CARD_CATALOG.sentence.effect).toMatch(/3 of your turns/i);
+    expect(SPECIAL_CARD_CATALOG.sentence.effect).toMatch(/3 of your later turns/i);
+    expect(SPECIAL_CARD_CATALOG.sentence.effect).toMatch(/does not count/i);
     expect(SPECIAL_CARD_CATALOG.sentence.effect).not.toMatch(/Eliminate a randomly drawn/i);
     expect(SPECIAL_CARD_CATALOG.imposition.effect).toMatch(/at least 2 points/i);
     expect(SPECIAL_CARD_CATALOG.imposition.effect).not.toMatch(/life/i);

@@ -22,6 +22,8 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
+  'sentenceCountdown',
+  'sentenceFired',
 ] as const;
 
 export interface ActionLogFilters {
@@ -339,6 +341,15 @@ export function formatActionLogEntrySegments(
         player(entry.eliminatedPlayerId, nicknameOf),
       ];
     }
+    case 'sentenceCountdown': {
+      const unit = entry.remainingOwnerTurns === 1 ? 'turn' : 'turns';
+      return [
+        text(`${String(entry.remainingOwnerTurns)} ${unit} before Sentence!`),
+      ];
+    }
+    case 'sentenceFired': {
+      return [player(entry.targetPlayerId, nicknameOf), text(' will be killed')];
+    }
     default: {
       const _exhaustive: never = entry;
       return [text(_exhaustive)];
@@ -379,6 +390,10 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
       return entry.playerId === playerId;
     case 'rewardsClaimed':
       return entry.eliminatorPlayerId === playerId || entry.eliminatedPlayerId === playerId;
+    case 'sentenceCountdown':
+      return entry.sourcePlayerId === playerId;
+    case 'sentenceFired':
+      return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

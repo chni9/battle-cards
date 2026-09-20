@@ -3,6 +3,7 @@
  *
  * Remaining owner turns are not card-lives. Fire queues elimination for the
  * victim's turn (golden rule 3). Activator death before fire cancels.
+ * Activation does not consume a countdown turn (playtest 2026-09-20).
  */
 
 import {
@@ -10,6 +11,7 @@ import {
   type GameState,
   type PendingSentence,
   type Player,
+  type SentenceAnnouncementLogEntry,
 } from '@card-battle/shared';
 
 import { createRng } from '../rng';
@@ -49,21 +51,34 @@ export function cancelPendingSentencesFrom(state: GameState, sourcePlayerId: str
 }
 
 /**
- * After the activator's action (including the play turn): decrement; on 0, seeded
- * pick and queue. Skip / cancel if the activator is already dead this phase.
+ * After the activator's later actions (not the play turn): decrement; on 0,
+ * seeded pick and queue. Skip / cancel if the activator is already dead.
  */
-export function tickPendingSentences(state: GameState, actorPlayerId: string): void {
+export function tickPendingSentences(
+  state: GameState,
+  actorPlayerId: string,
+  skipNewestForActor = false,
+): SentenceAnnouncementLogEntry[] {
   const actor = findPlayer(state, actorPlayerId);
 
   if (actor === undefined || actor.isEliminated || actor.lives <= 0) {
     cancelPendingSentencesFrom(state, actorPlayerId);
-    return;
+    return [];
   }
 
+  const skipIndex = skipNewestForActor
+    ? lastIndexForActor(state.pendingSentences, actorPlayerId)
+    : -1;
+  const announcements: SentenceAnnouncementLogEntry[] = [];
   const next: PendingSentence[] = [];
 
-  for (const pending of state.pendingSentences) {
+  for (const [index, pending] of state.pendingSentences.entries()) {
     if (pending.sourcePlayerId !== actorPlayerId) {
+      next.push(pending);
+      continue;
+    }
+
+    if (index === skipIndex) {
       next.push(pending);
       continue;
     }
@@ -72,13 +87,28 @@ export function tickPendingSentences(state: GameState, actorPlayerId: string): v
 
     if (remaining > 0) {
       next.push({ ...pending, remainingOwnerTurns: remaining });
+      announcements.push({
+        kind: 'sentenceCountdown',
+        sourcePlayerId: actorPlayerId,
+        remainingOwnerTurns: remaining,
+        turnSequence: state.turnSequence,
+      });
       continue;
     }
 
-    fireSentence(state, actorPlayerId, pending.isUpgraded);
+    const victimId = fireSentence(state, actorPlayerId, pending.isUpgraded);
+    if (victimId !== undefined) {
+      announcements.push({
+        kind: 'sentenceFired',
+        sourcePlayerId: actorPlayerId,
+        targetPlayerId: victimId,
+        turnSequence: state.turnSequence,
+      });
+    }
   }
 
   state.pendingSentences = next;
+  return announcements;
 }
 
 export function startPendingSentence(
@@ -93,15 +123,25 @@ export function startPendingSentence(
   });
 }
 
+function lastIndexForActor(pending: readonly PendingSentence[], actorPlayerId: string): number {
+  for (let index = pending.length - 1; index >= 0; index -= 1) {
+    if (pending[index]?.sourcePlayerId === actorPlayerId) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
 function fireSentence(
   state: GameState,
   sourcePlayerId: string,
   isUpgraded: boolean,
-): void {
+): string | undefined {
   const candidates = sentenceCandidates(state, sourcePlayerId, isUpgraded);
 
   if (candidates.length === 0) {
-    return;
+    return undefined;
   }
 
   const rng = createRng(state.seed);
@@ -118,4 +158,6 @@ function fireSentence(
     cardId: 'sentence',
     isUpgraded,
   });
+
+  return victim.id;
 }
