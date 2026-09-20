@@ -1245,3 +1245,13 @@ Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 2
 “After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
 tests.
 
+### Lot 63 pool-buy log fog (L63-06) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Two-tab Classic
+online, nicks `AliceFog` / `BobFog`, room **WZAUOW**. Alice Wizard, Bob
+Kamikaze. Alice sold Tax into the shop pool (faces stay public), then **Buy
+random**. Buyer log: **AliceFog bought Tax from the pool**. Opponent log:
+**AliceFog bought a card from the pool**. Live `ACTION_PLAYED` matches.
+`pnpm verify` **1552** tests. No protocol bump.
+
+
