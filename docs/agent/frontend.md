@@ -1225,20 +1225,17 @@ guard.
 ### Lot 63 verified 2026-09-20 (browser, playtest corrections, PROTOCOL 36)
 
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
-`protocol v36`. `pnpm verify` **1515** tests.
+`protocol v36`. `pnpm verify` **1520** tests (`715b2e1`).
 
-- Hub: compact **New** control top-right (`data-whats-new-button`) with a red
-  unread badge; not a large labeled hub-row block. Dialog did **not** auto-open
-  while How to play was unseen.
-- Dialog: 2026-09-20 **Sentence, Imposition, Super Absorber, and pool buys**
-  (Latest, one id `lot-63`). Copy covers Sentence 20 / 3 later turns, Imposition
-  points-only skip, Super Absorber no past-turn capture / spend not doubled,
-  pool buy fog. No Super Regeneration / +9 / +18. No Superpowers player bullet.
-  No banner / button-placement notes. Got it writes
-  `card-battle.v6.lastSeenReleaseId` = `lot-63`; red badge gone; history still
-  lists the entry.
-- After `howToPlaySeen=1` and clearing the last-seen id, reload auto-opens
-  What's new.
+- Hub: compact **green** **New** (`bg-cta-green`, `data-whats-new-button`) with a
+  **red** unread tick. First visit of `lot-63` **auto-opens** What’s new — How
+  to play is not a blocker. Got it writes
+  `card-battle.v6.lastSeenReleaseId` = `lot-63`; reload does not loop; red
+  tick gone; green New remains. Dialog lists Latest **Sentence, Imposition,
+  Super Absorber, and pool buys** as before → after with card art. Super
+  Absorber after: unupgraded only absorbs lives; upgraded absorbs lives,
+  points, and upgrade points but no longer doubles. No Super Regeneration /
+  Superpowers / banner-placement notes.
 - Solo Specialist rooms **RRXiKT** (inspect) and **WU2JJKY** (Shop). Super
   Absorber inspect: “Playing it does not capture past turns”; upgrade “Also
   absorb points and upgrade points they spent” (no doubling).
@@ -1248,9 +1245,7 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
   a hand.”
 - Sentence (Assassin solo **GLOULA** / `L63Play2`): remaining **3** in red under
   the caster Sentence chip after play (activation does not decrement). Later
-  Draws log `2 turns before Sentence!` then `1 turn before Sentence!` then
-  `L63Play2 will be killed` (Classic self-can-die). No table-wide countdown
-  banner. First play crashed (`Card sentence has no activated art`) — chip now
-  uses the catalog face.
+  caster turns flash **2 turns before Sentence!** then fire **Sentence will
+  kill {nickname}!** Eliminated seats still flash. Chip uses the catalog face.
 
 
