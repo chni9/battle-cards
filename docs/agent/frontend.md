@@ -132,7 +132,9 @@ rules above are unchanged — this section only covers how the client looks.
   `additions` (kit portrait or card art + body) for kits/cards that did not
   exist before; before → after `items` cover nerfs with named-card art and
   render **above** the New block. Lot 63 items: Sentence, Imposition, Super
-  Absorber. Lot 63 additions: Gambler kit, Factory special. The dialog lists history
+  Absorber. Lot 63 additions: Gambler kit, Factory special. Sentence chips sit
+  on the caster (remaining turns in red). Play / later caster ticks / fire flash
+  the table-wide red banner. The dialog lists history
   (every catalog entry). **Update the latest catalog entry in the same commit
   as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution

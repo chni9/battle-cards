@@ -87,6 +87,7 @@ function baseView(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     actionLog: [],
     pool: [],
     poolBuyCost: 1,
+    pendingSentences: [],
     playKind: 'classic',
     tutorialIndex: null,
   };
@@ -2147,6 +2148,7 @@ describe('L29-08: turn-flow, pool and reversal specials', () => {
     const poolView = baseView({
       pool: [{ instanceId: 'pool-1', cardId: 'basic-attack', isUpgraded: false }],
       poolBuyCost: 1,
+      pendingSentences: [],
       self: baseSelf({ points: 4 }),
     });
     const poolActions: TurnAction[] = [

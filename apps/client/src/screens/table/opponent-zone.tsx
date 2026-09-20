@@ -21,6 +21,7 @@ import {
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
 import { opponentResourceDisplay } from './opponent-seat-resources';
+import { SentenceChipsForSeat } from './sentence-chip';
 import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -243,6 +244,11 @@ export function OpponentZone({
           <ActiveThumbs
             player={player}
             {...(onInspectActive !== undefined ? { onInspectActive } : {})}
+          />
+          <SentenceChipsForSeat
+            playerId={player.id}
+            pendingSentences={view.pendingSentences}
+            compact
           />
         </div>
         <OpponentSeatResourceColumn player={player} />

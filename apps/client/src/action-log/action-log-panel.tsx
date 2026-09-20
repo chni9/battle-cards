@@ -110,6 +110,28 @@ const KIND_META: Record<
       </svg>
     ),
   },
+  sentenceCountdown: {
+    label: 'Sentence',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.5 6.5 0 0 0 8 1.5Zm.75 3v3.2l2.2 1.3-.7 1.2L7.5 8.4V4.5h1.25Z"
+        />
+      </svg>
+    ),
+  },
+  sentenceFired: {
+    label: 'Sentence',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M8 1.5 9.2 5.2 13 6l-2.8 2.5.8 3.8L8 10.6 5 12.3l.8-3.8L3 6l3.8-.8L8 1.5Z"
+        />
+      </svg>
+    ),
+  },
 };
 
 export interface ActionLogPanelProps {
@@ -321,6 +343,10 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
       return `${entry.kind}-${entry.playerId}-${entry.kitId ?? 'hidden'}-${String(index)}`;
     case 'rewardsClaimed':
       return `${entry.kind}-${entry.eliminatorPlayerId}-${entry.eliminatedPlayerId}-${String(index)}`;
+    case 'sentenceCountdown':
+      return `${entry.kind}-${entry.turnSequence}-${entry.sourcePlayerId}-${String(entry.remainingOwnerTurns)}-${String(index)}`;
+    case 'sentenceFired':
+      return `${entry.kind}-${entry.turnSequence}-${entry.sourcePlayerId}-${entry.targetPlayerId}-${String(index)}`;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

@@ -61,5 +61,10 @@
  * 35 → 36 (L63-03 / designer 2026-09-20): public `drawBust` on `actionPlayed`
  * so a Draw that instantly eliminates is a table tell. Exception to the V6
  * single-bump lock (same class as L49 / L56–L60); see decisions.md.
+ *
+ * 36 → 37 (designer 2026-09-20): public `pendingSentences` plus
+ * `sentenceCountdown` / `sentenceFired` action-log kinds. Older clients cannot
+ * read the countdown. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L60 / L63); see decisions.md.
  */
-export const PROTOCOL_VERSION = 36;
+export const PROTOCOL_VERSION = 37;

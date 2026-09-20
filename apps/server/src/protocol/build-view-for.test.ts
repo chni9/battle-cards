@@ -317,6 +317,25 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(view.poolBuyCost).toBe(1);
   });
 
+  it('exposes empty pendingSentences on a fresh game', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'pending-sentences-empty',
+    });
+    expect(state.pendingSentences).toEqual([]);
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(view.pendingSentences).toEqual([]);
+  });
+
   it('sets spyingOnYou only on seats that spy the recipient (L58-02)', () => {
     const state = createInitialState({
       seats: [

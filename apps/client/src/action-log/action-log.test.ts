@@ -505,6 +505,8 @@ describe('action log kinds (L56-03)', () => {
       curseTransferred: true,
       playerReanimated: true,
       rewardsClaimed: true,
+      sentenceCountdown: true,
+      sentenceFired: true,
     };
     expect([...ACTION_LOG_KINDS].sort()).toEqual(Object.keys(kinds).sort());
   });

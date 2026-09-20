@@ -3735,3 +3735,16 @@ latest entry in the same commit as player-visible work. No protocol bump.
 
 ---
 
+## 2026-09-20 · [P] What’s new nerfs match live rules
+
+Bugbot on PR #46 (`911fed9d`): hub What’s new announced Sentence, Imposition,
+and Super Absorber changes while handlers still used the old rules. Designer
+copy stays; the engine now matches it. Sentence costs 20 and waits 3 later
+owner turns (`pendingSentences`, remaining turns are not card-lives).
+Imposition skips short victims (no lives). Unupgraded Super Absorber absorbs
+lives only; upgraded also absorbs spend at ×1; no activation snapshot.
+`PROTOCOL_VERSION` **36 → 37** so older clients cannot read the public
+countdown. V6 bump exception, same class as L49 / L56–L60 / L63-03.
+
+---
+

@@ -39,7 +39,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 
 | | `applyDamage` | `applyLifeLoss` |
 |---|---|---|
-| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
+| Used by | Attack cards only | Tax, Suicide, Poison, Curse, every remaining non-attack loss. Imposition no longer calls it (designer 2026-09-20). |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
 | Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`, `factory`) | Never touches them |
 

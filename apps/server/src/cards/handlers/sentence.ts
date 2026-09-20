@@ -1,43 +1,17 @@
 /**
- * Sentence — rules spec §5, backlog L5-07 / L25-02 #V4-9c.
+ * Sentence — rules spec §5, backlog L5-07 / L63-03.
  *
- * Seeded draw among alive players at play time; queues elimination on the victim.
- * Upgraded excludes the user from the draw. Self-elim: no eliminator reward.
- * Invisible players are excluded from the candidate pool; empty pool → canPlay false
- * (Mirror empty-target precedent).
+ * Starts a public 3-owner-turn countdown (activation does not count). Fire is a seeded
+ * pick that queues elimination on the victim's turn. Upgraded excludes the user.
+ * Invisible players are excluded; empty pool → canPlay false / fire fizzle.
+ * Remaining turns are not card-lives. Not deactivatePersistent.
  */
 
-import type { GameState, Player } from '@card-battle/shared';
-
-import { createRng } from '../../engine/rng';
-import { playerIsInvisible } from '../../engine/specials/is-invisible';
-import { queueEffect } from '../../engine/turn/queue-effect';
-import type { CardHandler, EffectContext } from '../handler';
-
-function sentenceCandidates(
-  state: GameState,
-  sourcePlayerId: string,
-  isUpgraded: boolean,
-): Player[] {
-  return state.players.filter((player) => {
-    if (player.isEliminated) {
-      return false;
-    }
-
-    if (playerIsInvisible(player)) {
-      return false;
-    }
-
-    if (isUpgraded && player.id === sourcePlayerId) {
-      return false;
-    }
-
-    return true;
-  });
-}
+import { sentenceCandidates, startPendingSentence } from '../../engine/turn/pending-sentences';
+import type { CardHandler } from '../handler';
 
 export const sentenceHandler: CardHandler = {
-  canPlay(context: EffectContext): boolean {
+  canPlay(context): boolean {
     if (context.targetPlayerId !== null) {
       return false;
     }
@@ -48,7 +22,7 @@ export const sentenceHandler: CardHandler = {
     );
   },
 
-  play(context: EffectContext): void {
+  play(context): void {
     const { state, sourcePlayerId, card } = context;
     const candidates = sentenceCandidates(state, sourcePlayerId, card.isUpgraded);
 
@@ -56,20 +30,6 @@ export const sentenceHandler: CardHandler = {
       return;
     }
 
-    const rng = createRng(state.seed);
-    // Advance RNG by turnSequence so successive Sentences in one game diverge.
-    for (let i = 0; i < state.turnSequence; i += 1) {
-      rng.nextInt(1);
-    }
-
-    const victim = rng.pick(candidates);
-
-    queueEffect({
-      state,
-      sourcePlayerId,
-      targetPlayerId: victim.id,
-      cardId: 'sentence',
-      isUpgraded: card.isUpgraded,
-    });
+    startPendingSentence(state, sourcePlayerId, card.isUpgraded);
   },
 };

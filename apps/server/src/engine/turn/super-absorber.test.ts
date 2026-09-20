@@ -1,22 +1,25 @@
 /**
- * Super Absorber — rules spec §5, backlog L22-03, #V4-21.
+ * Super Absorber — rules spec §5, designer 2026-09-20 / L63-05.
+ * Package 3, no upgrade double, no activation snapshot.
  */
 
 import { describe, expect, it } from 'vitest';
+
+import { SPECIAL_CARD_CATALOG } from '@card-battle/shared';
 
 import { makeCounterEffect } from '../../testing/factories';
 import { createInitialState } from '../create-initial-state';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { performTurnAction } from './perform-action';
 
-describe('Super Absorber (L22-03)', () => {
-  it('base absorbs points, UP and livesLost from the current seat; upgraded doubles', () => {
+describe('Super Absorber (L63-05)', () => {
+  it('base tick absorbs livesLost only, never spend or theft', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l22-03-base',
+      seed: 'l63-05-base',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -34,36 +37,21 @@ describe('Super Absorber (L22-03)', () => {
     b.turnLedger.pointsSpent = 4;
     b.turnLedger.upgradePointsSpent = 1;
     b.turnLedger.livesLost = 2;
+    b.turnLedger.pointsLostToTheft = 5;
 
     applyPersistentEffects(state, b.id);
-    expect(a.points).toBe(4);
-    expect(a.upgradePoints).toBe(1);
+    expect(a.points).toBe(0);
+    expect(a.upgradePoints).toBe(0);
     expect(a.lives).toBe(12);
-
-    a.points = 0;
-    a.upgradePoints = 0;
-    a.lives = 10;
-    a.activePersistentEffects = [
-      makeCounterEffect({
-        id: 'sa-u',
-        cardId: 'super-absorber',
-        isUpgraded: true,
-        counter: 2,
-      }),
-    ];
-    applyPersistentEffects(state, b.id);
-    expect(a.points).toBe(8);
-    expect(a.upgradePoints).toBe(2);
-    expect(a.lives).toBe(14);
   });
 
-  it('does not absorb stolen points', () => {
+  it('upgraded tick absorbs livesLost plus spend at multiplier 1, never theft', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l22-03-theft',
+      seed: 'l63-05-upgraded',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -73,14 +61,25 @@ describe('Super Absorber (L22-03)', () => {
     }
 
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'sa', cardId: 'super-absorber', counter: 2 }),
+      makeCounterEffect({
+        id: 'sa-u',
+        cardId: 'super-absorber',
+        isUpgraded: true,
+        counter: 2,
+      }),
     ];
     a.points = 0;
-    b.turnLedger.pointsSpent = 0;
-    b.turnLedger.pointsLostToTheft = 5;
+    a.upgradePoints = 0;
+    a.lives = 10;
+    b.turnLedger.pointsSpent = 4;
+    b.turnLedger.upgradePointsSpent = 1;
+    b.turnLedger.livesLost = 2;
+    b.turnLedger.upgradePointsLostToTheft = 3;
 
     applyPersistentEffects(state, b.id);
-    expect(a.points).toBe(0);
+    expect(a.points).toBe(4);
+    expect(a.upgradePoints).toBe(1);
+    expect(a.lives).toBe(12);
   });
 
   it('life gains clamp at GameState.lifeLimit', () => {
@@ -89,7 +88,7 @@ describe('Super Absorber (L22-03)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l22-03-cap',
+      seed: 'l63-05-cap',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -115,7 +114,7 @@ describe('Super Absorber (L22-03)', () => {
         { id: 'b', nickname: 'B' },
         { id: 'c', nickname: 'C' },
       ],
-      seed: 'l22-03-order',
+      seed: 'l63-05-order',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -125,9 +124,13 @@ describe('Super Absorber (L22-03)', () => {
       return;
     }
 
-    // a holds SA; c holds Poison against b. SA ticks before Poison.
     a.activePersistentEffects = [
-      makeCounterEffect({ id: 'sa', cardId: 'super-absorber', counter: 2 }),
+      makeCounterEffect({
+        id: 'sa',
+        cardId: 'super-absorber',
+        isUpgraded: true,
+        counter: 2,
+      }),
     ];
     c.activePersistentEffects = [
       makeCounterEffect({ id: 'poi', cardId: 'poison', counter: 3 }),
@@ -140,9 +143,9 @@ describe('Super Absorber (L22-03)', () => {
 
     applyPersistentEffects(state, b.id);
     expect(a.points).toBe(3);
-    expect(a.lives).toBe(10); // no livesLost at SA time
-    expect(b.lives).toBe(9); // Poison after SA
-    expect(b.turnLedger.livesLost).toBe(1); // Poison wrote after SA read
+    expect(a.lives).toBe(10);
+    expect(b.lives).toBe(9);
+    expect(b.turnLedger.livesLost).toBe(1);
   });
 
   it('counter depletes on owner damage and pools', () => {
@@ -151,7 +154,7 @@ describe('Super Absorber (L22-03)', () => {
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l22-03-counter',
+      seed: 'l63-05-counter',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -184,35 +187,7 @@ describe('Super Absorber (L22-03)', () => {
     expect(state.pool.some((card) => card.cardId === 'super-absorber')).toBe(true);
   });
 
-  it('activates via playCard without pooling the copy', () => {
-    const state = createInitialState({
-      seats: [
-        { id: 'a', nickname: 'A' },
-        { id: 'b', nickname: 'B' },
-      ],
-      seed: 'l22-03-play',
-    });
-    const a = state.players.find((player) => player.id === 'a');
-
-    if (a === undefined) {
-      return;
-    }
-
-    a.specialCards = [{ instanceId: 'sa-1', cardId: 'super-absorber', isUpgraded: false }];
-    a.points = 8;
-    a.pendingEffects = [];
-    state.currentTurnPlayerId = a.id;
-    const poolBefore = state.pool.length;
-
-    expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'sa-1' }).ok,
-    ).toBe(true);
-    expect(a.activePersistentEffects[0]?.cardId).toBe('super-absorber');
-    expect(a.activePersistentEffects[0]?.counter).toBe(2);
-    expect(state.pool.length).toBe(poolBefore);
-  });
-
-  it('on activation absorbs last-turn ledgers of living and in-window eliminated opponents', () => {
+  it('activates via playCard without pooling the copy and without a snapshot', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -220,7 +195,7 @@ describe('Super Absorber (L22-03)', () => {
         { id: 'c', nickname: 'C' },
         { id: 'd', nickname: 'D' },
       ],
-      seed: 'sa-activation-snapshot',
+      seed: 'l63-05-no-snapshot',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -235,6 +210,7 @@ describe('Super Absorber (L22-03)', () => {
     a.points = 8;
     a.lives = 10;
     a.upgradePoints = 0;
+    a.pendingEffects = [];
     b.turnLedger.pointsSpent = 3;
     b.turnLedger.livesLost = 1;
     c.isEliminated = true;
@@ -245,24 +221,26 @@ describe('Super Absorber (L22-03)', () => {
     d.turnLedger.pointsSpent = 9;
     d.absorbWindowPendingPlayerIds = null;
     state.currentTurnPlayerId = a.id;
+    const poolBefore = state.pool.length;
 
     expect(
       performTurnAction(state, a.id, { type: 'playCard', instanceId: 'sa-1' }).ok,
     ).toBe(true);
-    // b: 3 pts + 1 life; c: 2 UP + 4 lives; d out of window → ignored
-    expect(a.points).toBe(3);
-    expect(a.upgradePoints).toBe(2);
-    expect(a.lives).toBe(15);
     expect(a.activePersistentEffects[0]?.cardId).toBe('super-absorber');
+    expect(a.activePersistentEffects[0]?.counter).toBe(2);
+    expect(state.pool.length).toBe(poolBefore);
+    expect(a.points).toBe(0);
+    expect(a.upgradePoints).toBe(0);
+    expect(a.lives).toBe(10);
   });
 
-  it('upgraded activation doubles the snapshot and later ticks still absorb', () => {
+  it('upgraded activation also skips the snapshot; later ticks absorb spend at ×1', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'sa-activation-upgraded',
+      seed: 'l63-05-upgraded-play',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -276,6 +254,7 @@ describe('Super Absorber (L22-03)', () => {
     ];
     a.points = 8;
     a.lives = 10;
+    a.upgradePoints = 0;
     b.turnLedger.pointsSpent = 2;
     b.turnLedger.livesLost = 1;
     state.currentTurnPlayerId = a.id;
@@ -283,14 +262,28 @@ describe('Super Absorber (L22-03)', () => {
     expect(
       performTurnAction(state, a.id, { type: 'playCard', instanceId: 'sa-1' }).ok,
     ).toBe(true);
-    expect(a.points).toBe(4);
-    expect(a.lives).toBe(12);
+    expect(a.points).toBe(0);
+    expect(a.upgradePoints).toBe(0);
+    expect(a.lives).toBe(10);
 
     a.points = 0;
     a.lives = 10;
     b.turnLedger.pointsSpent = 5;
     b.turnLedger.livesLost = 0;
     applyPersistentEffects(state, b.id);
-    expect(a.points).toBe(10);
+    expect(a.points).toBe(5);
+    expect(a.lives).toBe(10);
+  });
+
+  it('catalog copy matches lives-only base and spend-on-upgrade without doubling', () => {
+    const card = SPECIAL_CARD_CATALOG['super-absorber'];
+    expect(card.cost).toEqual({ points: 8 });
+    expect(card.effect).toMatch(/lives/i);
+    expect(card.effect).not.toMatch(/doubl/i);
+    expect(card.effect).not.toMatch(/snapshot|last complete turn/i);
+    expect(card.upgradeEffect).toMatch(/points/i);
+    expect(card.upgradeEffect).toMatch(/upgrade/i);
+    expect(card.upgradeEffect).not.toMatch(/doubl/i);
+    expect(card.upgradeAdds).not.toMatch(/doubl/i);
   });
 });

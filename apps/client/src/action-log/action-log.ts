@@ -8,6 +8,7 @@ import {
   formatCardLabel,
   isAttackCardId,
   listedAttackDamage,
+  SENTENCE_OWNER_TURNS,
   type ActionLogEntryKind,
   type ActionLogEntryView,
   type CardId,
@@ -22,6 +23,8 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
+  'sentenceCountdown',
+  'sentenceFired',
 ] as const;
 
 export interface ActionLogFilters {
@@ -341,6 +344,18 @@ export function formatActionLogEntrySegments(
         player(entry.eliminatedPlayerId, nicknameOf),
       ];
     }
+    case 'sentenceCountdown': {
+      if (entry.remainingOwnerTurns === SENTENCE_OWNER_TURNS) {
+        return [text('Sentence in 3 turns!')];
+      }
+      const unit = entry.remainingOwnerTurns === 1 ? 'turn' : 'turns';
+      return [
+        text(`${String(entry.remainingOwnerTurns)} ${unit} before Sentence!`),
+      ];
+    }
+    case 'sentenceFired': {
+      return [text('Sentence will kill '), player(entry.targetPlayerId, nicknameOf), text('!')];
+    }
     default: {
       const _exhaustive: never = entry;
       return [text(_exhaustive)];
@@ -381,6 +396,10 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
       return entry.playerId === playerId;
     case 'rewardsClaimed':
       return entry.eliminatorPlayerId === playerId || entry.eliminatedPlayerId === playerId;
+    case 'sentenceCountdown':
+      return entry.sourcePlayerId === playerId;
+    case 'sentenceFired':
+      return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

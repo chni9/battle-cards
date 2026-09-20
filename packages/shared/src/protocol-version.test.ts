@@ -1,16 +1,18 @@
 /**
- * Protocol version pin — L63-03 / PROTOCOL_VERSION 36.
+ * Protocol version pin — PROTOCOL_VERSION 37.
  */
 
 import { describe, expect, it } from 'vitest';
 
+import { SENTENCE_OWNER_TURNS } from './domain/game-state';
 import { PROTOCOL_VERSION } from './protocol-version';
 import type { ActionPlayedPayload } from './protocol/messages';
-import type { ActionPlayedLogEntry } from './protocol/state-view';
+import type { ActionPlayedLogEntry, PlayingStateView } from './protocol/state-view';
 
-describe('PROTOCOL_VERSION (L63-03)', () => {
-  it('is 36 after public drawBust', () => {
-    expect(PROTOCOL_VERSION).toBe(36);
+describe('PROTOCOL_VERSION', () => {
+  it('is 37 after public pendingSentences', () => {
+    expect(PROTOCOL_VERSION).toBe(37);
+    expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 
   it('allows optional drawBust on actionPlayed log entries', () => {
@@ -47,5 +49,12 @@ describe('PROTOCOL_VERSION (L63-03)', () => {
 
     expect(bust.drawBust).toBe(true);
     expect(safe.drawBust).toBeUndefined();
+  });
+
+  it('requires pendingSentences on PlayingStateView', () => {
+    const pendingSentences: PlayingStateView['pendingSentences'] = [
+      { sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false },
+    ];
+    expect(pendingSentences[0]?.remainingOwnerTurns).toBe(2);
   });
 });

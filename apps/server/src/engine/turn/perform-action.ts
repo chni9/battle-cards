@@ -20,6 +20,7 @@ import {
   type Player,
   type PublicActionKind,
   type RewardChoice,
+  type SentenceAnnouncementLogEntry,
   type SpecialCardId,
 } from '@card-battle/shared';
 
@@ -39,6 +40,7 @@ import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
+import { tickPendingSentences } from './pending-sentences';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
 import {
@@ -166,6 +168,11 @@ export interface TurnResult {
     isUpgraded: boolean;
     turnSequence: number;
   }[];
+  /**
+   * Sentence countdown / fire messages this turn.
+   * Absent when remaining did not decrement and nothing fired.
+   */
+  sentenceAnnouncements?: readonly SentenceAnnouncementLogEntry[];
 }
 
 export type TurnRejection = ActionReject;
@@ -1042,6 +1049,13 @@ function finishTurnPhases(
   ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId, rng);
+  const skipNewestSentence =
+    actionPlayed.action === 'playCard' && actionPlayed.cardId === 'sentence';
+  const sentenceAnnouncements = tickPendingSentences(
+    state,
+    actorPlayerId,
+    skipNewestSentence,
+  );
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
@@ -1050,6 +1064,7 @@ function finishTurnPhases(
     actionPlayed.turnSequence,
   );
   const losses = persistentDeactivationFields(state, actionPlayed.turnSequence);
+  const sentences = sentenceAnnouncementFields(sentenceAnnouncements);
 
   const reanimated =
     playerReanimated.length > 0 ? { playerReanimated } : {};
@@ -1071,6 +1086,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1087,6 +1103,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1109,6 +1126,7 @@ function finishTurnPhases(
     ...redirects,
     ...transfers,
     ...losses,
+    ...sentences,
   };
 }
 
@@ -1126,6 +1144,16 @@ function persistentDeactivationFields(
   }
 
   return { persistentDeactivations: items };
+}
+
+function sentenceAnnouncementFields(
+  announcements: readonly SentenceAnnouncementLogEntry[],
+): Pick<TurnResult, 'sentenceAnnouncements'> {
+  if (announcements.length === 0) {
+    return {};
+  }
+
+  return { sentenceAnnouncements: announcements };
 }
 
 function collectCurseTransfers(
