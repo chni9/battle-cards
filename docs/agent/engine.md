@@ -76,13 +76,13 @@ from `GameState.lifeLimit`.
 
 ### Direct `player.lives` mutations — exempted
 
-Technical spec v4 §4.6. Five production call sites bypass the three life primitives. Each carries
+Technical spec v4 §4.6. Six production call sites bypass the three life primitives. Each carries
 an inline comment citing why; do not route them through `applyDamage` or `applyLifeLoss` without
 a ruling — golden rule 2 forbids enriching those primitives to absorb these cases. Future kit
 hooks (Ghost, Duplicator) observe outcomes caller-side, not inside the primitives.
 
 **Ghost (#V4-22 / L28-01):** `creditGhostLifeLoss(state, player, livesLost)` after every typed
-loss outcome and after Self-Suicide / Sentence (lives before assignment). Does **not**
+loss outcome and after Self-Suicide / Sentence / Draw bust (lives before assignment). Does **not**
 run on Cloning's resource copy or elimination bookkeeping that zeros already-0 lives.
 Routes through `grantPoints` so an active Duplicator can observe.
 
@@ -100,6 +100,7 @@ the grant wrappers.
 | `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
 | `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
 | `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
+| `perform-action.ts` — Draw bust | Instant lethal kit ability (designer 2026-09-20 / Lot 63). `rng.nextInt(drawBustDenominator) === 0` on the Draw action only — not Invisibility ticks. Not `applyLifeLoss` (cannot express die-from-any-life in one step without Ghost siphoning each life) and not `applyDamage`. Ghost credits `livesBefore` then assigns 0. No elimination contributor; no kill reward. |
 
 ## Seeded randomness
 
@@ -116,7 +117,8 @@ function createSeed(): string;         // one per game, stored in GameState.seed
 ```
 
 Every draw goes through an **injected** instance: card distribution (L4-02), Sentence (L5-07),
-the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09). A module
+the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09),
+Draw bust (Lot 63), Factory grants (Lot 63). A module
 that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
 downstream of it.
 
@@ -204,8 +206,8 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 - Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
-  Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator →
-  Invisibility → (if the player entered this phase invisible) skip Super Absorber /
+  Tick order (implementation detail, `decisions.md` 2026-08-05 / Lot 63): Points Generator →
+  Factory → Invisibility → (if the player entered this phase invisible) skip Super Absorber /
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
   (#V4-9a / L58-06). Super Absorber

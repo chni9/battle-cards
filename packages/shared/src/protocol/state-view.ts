@@ -328,6 +328,8 @@ export interface ActionPlayedLogEntry {
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
+  /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
+  drawBust?: true;
   /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
   botReason?: BotDecisionReason;
 }

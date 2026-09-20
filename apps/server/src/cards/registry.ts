@@ -18,6 +18,7 @@ import { cardThiefHandler } from './handlers/card-thief';
 import { cardTransformerHandler } from './handlers/card-transformer';
 import { cloningHandler } from './handlers/cloning';
 import { curseHandler } from './handlers/curse';
+import { factoryHandler } from './handlers/factory';
 import { impositionHandler } from './handlers/imposition';
 import { invisibilityHandler } from './handlers/invisibility';
 import { megaAttackHandler } from './handlers/mega-attack';
@@ -72,13 +73,14 @@ export const IMPLEMENTED_CARD_IDS = [
   'block',
   'invisibility',
   'reanimation',
+  'factory',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
-export const PENDING_CARD_IDS = ['factory'] as const satisfies readonly PendingCardId[];
+export const PENDING_CARD_IDS = [] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,
@@ -111,6 +113,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   block: blockHandler,
   invisibility: invisibilityHandler,
   reanimation: reanimationHandler,
+  factory: factoryHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

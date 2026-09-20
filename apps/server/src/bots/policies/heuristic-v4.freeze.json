@@ -707,20 +707,6 @@
         "action": {
           "type": "draw"
         }
-      },
-      {
-        "turnSequence": 9,
-        "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:special:1"
-        }
-      },
-      {
-        "turnSequence": 11,
-        "action": {
-          "type": "buyCard",
-          "cardId": "spy"
-        }
       }
     ]
   }
