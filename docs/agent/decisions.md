@@ -3701,3 +3701,11 @@ Designer follow-up on Lot 63, same day:
 
 ---
 
+## 2026-09-20 · [P] Gambler / Factory test-art placeholders
+
+Designer: do not reuse other cards' PNGs as placeholders. Gambler portrait and
+the four Factory faces (base, upgraded, activated, activated-upgraded) are
+white fields with the word **Test** until real art lands.
+
+---
+
