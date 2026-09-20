@@ -3689,3 +3689,15 @@ needs a low rate. Retune after playtest; ship 1-in-10.
 
 ---
 
+## 2026-09-20 · [P] Gambler name + Factory burn skip
+
+Designer follow-up on Lot 63, same day:
+
+- Display name is **Gambler**, not "The Gambler" (`KIT_CATALOG.gambler.name`).
+- Engage overlay (`farm-to-engage-v4`): Factory is a selfish counter like
+  Points Generator and Super Absorber — skip burning it unless 1v1 /
+  attacker / finishable / known points ≥ 10. Imposition / Poison still burn.
+  Easy stays `heuristic-v4` (same as L54-04). No new weight; freeze unchanged.
+
+---
+

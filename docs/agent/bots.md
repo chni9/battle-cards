@@ -41,7 +41,8 @@ L54-01 (Spy catalog price) and **L58-08** (new legal actions `buyPoolCard` /
 set; log it in `decisions.md` and keep `weightsHash` unless a new weight constant
 is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 `score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
-is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
+is L54-04 (`farm-to-engage-v4`), same path as Points Generator. Factory
+joins that skip set (Lot 63 follow-up).
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
 so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
 the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
@@ -311,7 +312,9 @@ determinizer is how V5 fails quietly.
   unless it funds a threat. Easy stays v4.
 - **L54-04:** overlay `farm-to-engage-v4` — Super Absorber uses the same skip
   as Points Generator (selfish special, not a direct threat). Imposition /
-  Poison still burn. Easy stays v4.
+  Poison still burn. Easy stays v4. Factory joins that skip set (Lot 63
+  follow-up): do not burn a Factory owner unless 1v1 / attacker / finishable /
+  known points ≥ 10.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 

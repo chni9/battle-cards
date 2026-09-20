@@ -200,7 +200,7 @@ export const KIT_CATALOG = {
   },
   gambler: {
     id: 'gambler',
-    name: 'The Gambler',
+    name: 'Gambler',
     startingResources: { lives: 1, points: 0, upgradePoints: 0, draw: 10 },
     startingCardCounts: { action: 0, attack: 0 },
     specialCards: ['factory'],

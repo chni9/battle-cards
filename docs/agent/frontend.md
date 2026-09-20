@@ -1210,7 +1210,7 @@ guard.
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
 `L63Gate`. Room **JFBMCN**. `pnpm verify` **1504** tests.
 
-- Kit picker last cell is **The Gambler**. Inspect: 1 life, 0 points, 0 UP,
+- Kit picker last cell is **Gambler**. Inspect: 1 life, 0 points, 0 UP,
   Draw +10, action/attack 0, Factory special, Draw risk 1 in 10, ability copy
   names Factory and the bust.
 - Opening deal: 1 life, 0 points, empty hand, 6 specials including Factory

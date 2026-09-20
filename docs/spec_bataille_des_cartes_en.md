@@ -118,7 +118,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Wizard | 10 | 4 | 0 | 2 | 4 | 2 | Thief already upgraded | MEGA ATTACK |
 | Juggernaut | 14 | 4 | 1 | 1 | 4 | 2 | Shield already upgraded | Super Mirror |
 | Duplicator (in testing) | 2 | 0 | 0 | 1 | 1 | 0 | Activatable duplication — see detail below | Imposition, Attack Thief |
-| The Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Factory) plus Factory |
+| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Factory) plus Factory |
 
 ### Duplicator — Ability Detail
 
@@ -129,7 +129,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - If they take another action on their turn instead of activating duplication, no gain is duplicated during the interval that follows — activation is not permanent, it must be renewed on every Duplicator turn to stay active.
 - If several players have the Duplicator kit in the same game, they exclude each other for gains obtained through their own duplication power (no loop): only a Duplicator's active gains (obtained directly through their own actions, not those received through duplication) are duplicated by another Duplicator.
 
-### The Gambler — Ability Detail
+### Gambler — Ability Detail
 
 - Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **5** random special cards drawn from the circulating pool excluding Factory (duplicates allowed), and **Factory**.
 - The Draw action grants **10** points.
@@ -251,7 +251,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 ### Game Turn
 
 - A player can only take one action per turn, whether a classic action (drawing, playing/selling/buying a card, buying an upgrade point, buying a random pool card, Unspy) or using a special card — no exception, except an explicit override from a kit or a card (e.g. Assassin, Block).
-- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. The Gambler's Draw instead rolls a 1-in-10 instant elimination (section 4); a bust grants no points.
+- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead rolls a 1-in-10 instant elimination (section 4); a bust grants no points.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
 - Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
