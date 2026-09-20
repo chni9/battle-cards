@@ -86,8 +86,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
-   player's card counters. `applyLifeLoss` is for Tax, Suicide, Imposition and every other
-   non-attack loss: it ignores the shield and touches no counter. This is the project's most
+   player's card counters. `applyLifeLoss` is for Tax, Suicide, and every other
+   non-attack loss: it ignores the shield and touches no counter. Imposition no longer
+   calls it (Lot 63). This is the project's most
    likely silent bug — nothing will flag it. See `docs/agent/engine.md`.
 3. **Nothing resolves before its target has played their own action.** A queued effect
    resolves on its target's turn, *after* that player acts, in ascending `queuedAt` order.
@@ -120,7 +121,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
  **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
  (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
- adds Gambler + Factory (`PROTOCOL_VERSION` 36). Walk-in claim-picker fog stays.
+ adds Gambler + Factory (`PROTOCOL_VERSION` 36) and Sentence / Imposition /
+ Super Absorber nerfs (`PROTOCOL_VERSION` 37). Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
@@ -130,7 +132,7 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.
-9. **The 25-life cap applies to every source of gain** — Regeneration, Absorber, Imposition,
+9. **The 25-life cap applies to every source of gain** — Regeneration, Absorber,
    elimination rewards, upgraded Cloning. Read it from `GameState.lifeLimit`, never hardcode it.
 
 ## 6. Code conventions
