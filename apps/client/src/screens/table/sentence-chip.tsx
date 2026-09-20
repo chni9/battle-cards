@@ -1,6 +1,7 @@
 /**
  * Ticking Sentence next to the caster — designer 2026-09-20 playtest.
  * Remaining owner turns sit in red under the card. Not card-lives.
+ * Use the catalog face; Sentence has no activated PNG (`getCardArtUrl` throws).
  */
 
 import type { PendingSentenceView } from '@card-battle/shared';
@@ -28,7 +29,6 @@ export function SentenceChip({
           isUpgraded,
         }}
         detail="thumb"
-        activated
         className={compact ? 'w-6 !p-0 sm:w-7' : 'w-7 !p-0.5 sm:w-8'}
       />
       <span className="mt-px font-sans text-[9px] font-semibold tabular-nums text-cta-red">

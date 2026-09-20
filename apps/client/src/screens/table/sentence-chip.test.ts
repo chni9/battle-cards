@@ -21,6 +21,8 @@ describe('Sentence chip (L63-03)', () => {
     expect(chip).toContain("cardId: 'sentence'");
     expect(chip).toContain('text-cta-red');
     expect(chip).toContain('remainingOwnerTurns');
+    // Sentence has no activated PNG — Card(activated) throws and blanks the table.
+    expect(chip).not.toMatch(/detail="thumb"\s+activated/);
   });
 
   it('sits on opponent and private seats instead of a Sentence · pill', () => {

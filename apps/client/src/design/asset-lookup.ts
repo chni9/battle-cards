@@ -6,6 +6,7 @@
  *
  * Activated art: pass `activated: true` only for cards currently in
  * `activePersistentEffects` (and Block's consecutive-turn window when surfaced).
+ * Sentence's caster chip uses the base/upgraded face — there is no activated PNG.
  */
 
 import {
