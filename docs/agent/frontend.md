@@ -1221,19 +1221,25 @@ guard.
 ### Lot 63 verified 2026-09-20 (browser, hub What’s new, PROTOCOL 36)
 
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
-`protocol v36`. `pnpm verify` **1506** tests.
+`protocol v36`. `pnpm verify` **1510** tests.
 
 - Hub: **What's new** next to How to play / Feedback; red unread dot on first
   visit. Dialog did **not** auto-open while How to play was unseen.
-- Dialog: 2026-09-20 **Sentence, Imposition, and pool buys** (Latest). Copy
-  covers Sentence 20 / 3 turns / red banner, Imposition points-only skip, pool
-  buy fog. No Super Regeneration / +9 / +18. Got it writes
+- Dialog: 2026-09-20 **Sentence, Imposition, Super Absorber, and pool buys**
+  (Latest, one id `lot-63`). Copy covers Sentence 20 / 3 turns / red banner,
+  Imposition points-only skip, Super Absorber no past-turn capture / spend on
+  upgrade not doubled, pool buy fog, pool-list occupancy. No Super Regeneration
+  / +9 / +18. No Superpowers player bullet. Got it writes
   `card-battle.v6.lastSeenReleaseId` = `lot-63`; red dot gone; history still
   lists the entry.
 - After `howToPlaySeen=1` and clearing the last-seen id, reload auto-opens
   What's new.
-- Sentence red banner, Imposition skip, and pool-buy log fog are locked by
-  engine / view / belief tests on this branch; this gate did not play a live
-  table to those states (needs Assassin 20 pts / Imposition victim / Spy).
+- Solo Specialist rooms **RRXiKT** (inspect) and **WU2JJKY** (Shop). Super
+  Absorber inspect: “Playing it does not capture past turns”; upgrade “Also
+  absorb points and upgrade points they spent” (no doubling). Shop **Pool (2)**
+  / **Pool (3)** tiles are attack verso + **Hidden card** — not the dumped
+  card’s name. Live Super Absorber *play* to 8 points was not reached (Tax /
+  Spy Thief drain). Sentence red banner and Imposition skip stay locked by
+  engine tests (needs Assassin 20 pts / Imposition victim).
 
 
