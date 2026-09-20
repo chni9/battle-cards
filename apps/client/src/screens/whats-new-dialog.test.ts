@@ -26,17 +26,26 @@ describe('What’s new dialog (L63-07)', () => {
     expect(RELEASE_NOTES.map((note) => note.id)[0]).toBe(latestReleaseNote().id);
   });
 
-  it('wires a hub button, red dot, auto-popup after How to play, and the storage key', () => {
+  it('wires a green New control, red unread badge, and auto-open when unseen', () => {
     const home = read('home.tsx');
     expect(home).toContain("What's new");
     expect(home).toContain('WhatsNewDialog');
     expect(home).toContain('hasUnseenReleaseNotes');
     expect(home).toContain('shouldAutoOpenWhatsNew');
-    expect(home).toContain('hasSeenHowToPlay');
     expect(home).toContain('markLatestReleaseSeen');
     expect(home).toContain('data-whats-new-unread');
     expect(home).toContain('data-whats-new-button');
+    expect(home).toContain('bg-cta-green');
+    expect(home).toContain('bg-cta-red');
     expect(home).not.toContain('Super Regeneration');
+  });
+
+  it('shows card art and before/after copy in the dialog', () => {
+    const source = read('whats-new-dialog.tsx');
+    expect(source).toContain('item.cardId');
+    expect(source).toContain('item.before');
+    expect(source).toContain('item.after');
+    expect(source).toContain('<Card');
   });
 
   it('keeps What’s new as a small top-right control, not a hub action-row block', () => {

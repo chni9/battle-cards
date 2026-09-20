@@ -16,15 +16,23 @@ describe('release notes catalog (L63-07)', () => {
   });
 
   it('covers this lot’s visible changes and omits Super Regeneration', () => {
-    const body = [latestReleaseNote().title, ...latestReleaseNote().items].join('\n');
+    const latest = latestReleaseNote();
+    const body = [
+      latest.title,
+      ...latest.items.map((item) => `${item.before}\n${item.after}`),
+    ].join('\n');
+    expect(latest.items.map((item) => item.cardId)).toEqual([
+      'sentence',
+      'imposition',
+      'super-absorber',
+    ]);
     expect(body).toMatch(/Sentence/i);
     expect(body).toMatch(/20/);
     expect(body).toMatch(/3/);
     expect(body).toMatch(/Imposition/i);
-    expect(body).toMatch(/points only/i);
-    expect(body).toMatch(/pool/i);
     expect(body).toMatch(/Super Absorber/i);
-    expect(body).toMatch(/past turns/i);
+    expect(body).toMatch(/only absorbs lives/i);
+    expect(body).toMatch(/no longer doubles/i);
     expect(body).not.toMatch(/Super Regeneration/i);
     expect(body).not.toMatch(/\+9/);
     expect(body).not.toMatch(/\+18/);
@@ -32,5 +40,10 @@ describe('release notes catalog (L63-07)', () => {
     expect(body).not.toMatch(/banner/i);
     expect(body).not.toMatch(/button/i);
     expect(body).not.toMatch(/this play counts/i);
+    for (const item of latest.items) {
+      expect(item.before.length).toBeGreaterThan(0);
+      expect(item.after.length).toBeGreaterThan(0);
+      expect(item.before).not.toBe(item.after);
+    }
   });
 });

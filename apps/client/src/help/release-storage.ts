@@ -39,11 +39,11 @@ export function hasUnseenReleaseNotes(): boolean {
 }
 
 /**
- * How to play first-play gate still wins if both would fire (L63-07).
+ * First visit of the latest catalog id auto-opens (designer 2026-09-20 retest).
+ * How to play is a Play-path gate, not a What’s new blocker.
  */
 export function shouldAutoOpenWhatsNew(input: {
-  howToPlaySeen: boolean;
   latestUnseen: boolean;
 }): boolean {
-  return input.howToPlaySeen && input.latestUnseen;
+  return input.latestUnseen;
 }

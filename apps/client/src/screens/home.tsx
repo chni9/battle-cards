@@ -82,7 +82,6 @@ export function HomeScreen({
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
     shouldAutoOpenWhatsNew({
-      howToPlaySeen: hasSeenHowToPlay(),
       latestUnseen: hasUnseenReleaseNotes(),
     }),
   );
@@ -135,7 +134,6 @@ export function HomeScreen({
   const openWhatsNewIfDue = (): void => {
     if (
       !shouldAutoOpenWhatsNew({
-        howToPlaySeen: hasSeenHowToPlay(),
         latestUnseen: hasUnseenReleaseNotes(),
       })
     ) {
@@ -208,7 +206,7 @@ export function HomeScreen({
         }}
         className={[
           'absolute right-[5.75rem] top-4 z-10 inline-flex min-h-9 min-w-9 items-center justify-center',
-          'rounded-full border border-border bg-surface-raised px-2.5 font-sans text-[11px] font-semibold text-ink',
+          'rounded-full border border-border bg-cta-green px-2.5 font-sans text-[11px] font-semibold text-cta-label-on-dark',
           'shadow-sm sm:right-28 sm:top-6',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
         ].join(' ')}

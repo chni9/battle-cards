@@ -77,16 +77,9 @@ describe('release storage (L63-07)', () => {
     expect(hasUnseenReleaseNotes()).toBe(true);
   });
 
-  it('does not auto-open while How to play is still unseen', () => {
-    expect(
-      shouldAutoOpenWhatsNew({ howToPlaySeen: false, latestUnseen: true }),
-    ).toBe(false);
-    expect(
-      shouldAutoOpenWhatsNew({ howToPlaySeen: true, latestUnseen: true }),
-    ).toBe(true);
-    expect(
-      shouldAutoOpenWhatsNew({ howToPlaySeen: true, latestUnseen: false }),
-    ).toBe(false);
+  it('auto-opens this version when last-seen is not lot-63', () => {
+    expect(shouldAutoOpenWhatsNew({ latestUnseen: true })).toBe(true);
+    expect(shouldAutoOpenWhatsNew({ latestUnseen: false })).toBe(false);
   });
 
   it('treats missing localStorage as unread and ignores write failures', () => {

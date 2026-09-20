@@ -3,11 +3,19 @@
  * Newest first. Update the latest entry in the same commit as player-visible work.
  */
 
+import type { CardId } from './domain/card';
+
+export interface ReleaseNoteItem {
+  readonly cardId?: CardId;
+  readonly before: string;
+  readonly after: string;
+}
+
 export interface ReleaseNote {
   readonly id: string;
   readonly date: string;
   readonly title: string;
-  readonly items: readonly string[];
+  readonly items: readonly ReleaseNoteItem[];
 }
 
 export const RELEASE_NOTES = [
@@ -16,10 +24,27 @@ export const RELEASE_NOTES = [
     date: '2026-09-20',
     title: 'Sentence, Imposition, Super Absorber, and pool buys',
     items: [
-      'Sentence costs 20 points. After you play it, it waits through 3 of your later turns, then a living visible player is marked to die on their turn. Playing it does not use up one of those 3 turns. If you die first, Sentence is cancelled. Upgraded Sentence never picks you. Invisible players are skipped.',
-      'Imposition takes points only. If the victim has fewer than 2 points (4 if upgraded), nothing happens — no lives are lost.',
-      'Super Absorber no longer captures past turns when you play it. While it is active it takes lives each living opponent lost on their turn; upgraded also takes points and upgrade points they spent. Amounts are not doubled.',
-      'When someone buys a card from the pool, others see that a pool buy happened, not which card. You still see your own recovered card, and so does anyone already Spying you.',
+      {
+        cardId: 'sentence',
+        before:
+          'Cost 15. Playing it started a 3-turn countdown that included the play, then a random living player was marked to die.',
+        after:
+          'Costs 20. After you play it, it waits through 3 of your later turns (playing it does not count), then a living visible player is marked to die on their turn.',
+      },
+      {
+        cardId: 'imposition',
+        before:
+          'If a victim had fewer points than the tax, they lost lives to make up the difference.',
+        after:
+          'If they have fewer than 2 points (4 if upgraded), nothing happens — no lives are lost.',
+      },
+      {
+        cardId: 'super-absorber',
+        before:
+          'Absorbed lives, points, and upgrade points from opponents, and doubled those gains when upgraded.',
+        after:
+          'Unupgraded Super Absorber now only absorbs lives and no longer absorbs points and upgrade points. Upgraded Super Absorber absorbs lives, points, and upgrade points but no longer doubles the gains.',
+      },
     ],
   },
 ] as const satisfies readonly ReleaseNote[];
