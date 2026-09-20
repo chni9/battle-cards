@@ -115,8 +115,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 ## Progress
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
-Lot 61). Lot 62 is done (134 of 134). Lot 63 opened 2026-09-20: **3 of 4**
-tasks done.
+Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (138 of 138).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -147,7 +146,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
-| 63 · The Gambler + Factory | 4 | 1 |
+| 63 · The Gambler + Factory | 4 | 4 |
 
 
 ---
@@ -523,7 +522,7 @@ instant-elimination bust. Placeholder art. `PROTOCOL_VERSION` 35 → 36.
 | L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Gambler + Factory; kit/card ids, catalogs, mixed `dealStartingLoadout`, content-scope 16/21; Factory pending in the registry. **Acceptance:** Gambler starts with 5 random specials none of which are Factory plus Factory; Prophet can still roll Factory; `pnpm verify` green aside from freeze traces refreshed in L63-04. | L | **High** | — | Done |
 | L63-02 | Draw bust (1-in-10, `lives = 0`, no points) + Factory handler, card-lives, persistent tick 80/20 and upgraded 70/30 + 30% upgraded grant. **Acceptance:** tests lock bust, safe draw 10, Factory same-turn grant, Tax vs damage counters; `pnpm verify` green. | L | **High** | L63-01 | Done |
 | L63-03 | `PROTOCOL_VERSION` 35 → 36; public `drawBust` on `actionPlayed`; inspect/lobby copy; placeholder kit + Factory art including activated. **Acceptance:** table log shows a bust; older clients fail the version gate; `pnpm verify` green. | M | Medium | L63-02 | Done |
-| L63-04 | Belief posterior/uniqueness for random-deal Gambler + Factory scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Factory play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | To do |
+| L63-04 | Belief posterior/uniqueness for random-deal Gambler + Factory scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Factory play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | Done |
 
 ---
 

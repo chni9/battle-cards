@@ -120,7 +120,10 @@ rows (L58-07).
 - Spy `view.players[].spied.kitId` is a point mass. Otherwise a uniform prior over
   `KIT_IDS` is Bayes-updated from the public log.
 - Tells: special `playCard` / `playMultipleAttacks` (catalog owner likelihood 1;
-  Prophet `1-(1-1/20)^2`; impossible → 0); `outcome: 'immune'` only when some kit
+  random-deal kits `1-(1-1/n)^draws` on that kit's random pool — Prophet n =
+  circulating, Gambler n = circulating minus Factory; impossible → 0);
+  `drawBust: true` zeros every kit without `drawBustDenominator`;
+  `outcome: 'immune'` only when some kit
   lists that `cardId` in `immuneTo` (thief/spy → Untouchable). Immune on other
   cards is Invisibility / Cloning-on-invisible — do not zero the roster.
   `playMultipleAttacks` → `allowsMultipleAttacksPerTurn`. Upgraded `playCard` with
@@ -128,8 +131,10 @@ rows (L58-07).
   lists that card.
 - `sampleKit(posterior, rng)` weighted-samples a `KitId`.
 - Uniqueness table: `bots/belief/kit-uniqueness.ts` (`UNIQUENESS_GUARANTEED_KIT_IDS`,
-  `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Prophet is never uniqueness-
+  `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Kits with
+  `randomStartingSpecialCount` (Prophet, Gambler) are never uniqueness-
   guaranteed from specials alone. `imposition` is shared (Untouchable + Duplicator).
+  Factory in `specialCards` still identifies Gambler with Prophet residual.
 - **If we add new kits with shared or random specials, update `kit-uniqueness.ts`
   and this section.**
 
@@ -163,9 +168,10 @@ rows (L58-07).
 - **#V5-2 unlimited shop:** do not forbid a `cardId` because a copy sits in the pool.
   Hard constraint is instance identity — never mint an `instanceId` from `view.self.hand`,
   `self.specialCards`, or `view.pool`.
-- Spy-revealed `hand` / `specialCards` are copied as a point. Prophet starting specials
-  have known *count* (`randomStartingSpecialCount`) and unknown ids (sample from
-  `SPECIAL_CARD_IDS`). Kit specials not yet publicly played are preferred, then the prior.
+- Spy-revealed `hand` / `specialCards` are copied as a point. Random starting specials
+  have known *count* (`randomStartingSpecialCount` plus `specialCards.length`) and
+  unknown ids (sample from that kit's random pool). Kit specials not yet publicly
+  played are preferred, then the prior.
 - Card Thief / Attack Thief / Card Transformer / Card Absorber / opaque rewards **widen
   intervals** (technical spec v4 §5.1). Do not collapse them to a point.
 

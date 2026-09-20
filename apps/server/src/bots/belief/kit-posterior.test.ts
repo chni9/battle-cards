@@ -166,7 +166,7 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
   it('collapses to kamikaze after a unique suicide play', () => {
     const post = posterior([play('playCard', { cardId: 'suicide' })]);
     expect(sum(post)).toBeCloseTo(1, 10);
-    expect(post.kamikaze).toBeGreaterThan(0.8);
+    expect(post.kamikaze).toBeGreaterThan(0.7);
     expect(post.prophet).toBeGreaterThan(0);
     expect(post.gambler).toBeGreaterThan(0);
     expect(post.prophet).toBeLessThan(0.15);
@@ -260,6 +260,22 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
     ]);
     expect(post.warrior).toBeCloseTo(1 / 16, 10);
     expect(support(post)).toHaveLength(16);
+  });
+
+  it('keeps Prophet residual after a Factory play (L63-04)', () => {
+    const post = posterior([play('playCard', { cardId: 'factory' })]);
+    expect(sum(post)).toBeCloseTo(1, 10);
+    expect(post.gambler).toBeGreaterThan(0.8);
+    expect(post.prophet).toBeGreaterThan(0);
+    expect(post.prophet).toBeLessThan(0.15);
+    expect(support(post).sort()).toEqual(['gambler', 'prophet']);
+    expect(post.kamikaze).toBe(0);
+  });
+
+  it('collapses to Gambler after a public drawBust (L63-04)', () => {
+    const post = posterior([play('draw', { drawBust: true })]);
+    expect(post.gambler).toBeCloseTo(1, 10);
+    expect(support(post)).toEqual(['gambler']);
   });
 
   it('sampleKit draws only from positive-mass kits', () => {

@@ -19,7 +19,8 @@ const ECONOMY_THEFT_CARD_IDS: ReadonlySet<CardId> = new Set([
 /**
  * L29-06 — Poison, Curse, Super Absorber, plus Sentence / Imposition / Spy Thief /
  * Points Generator (moved here from `'core'`, retuned in the same change — see
- * `score-persistents.ts` and decisions.md 2026-08-05). `cloning` outside an incoming
+ * `score-persistents.ts` and decisions.md 2026-08-05). Factory joined this family
+ * in Lot 63 so it does not fall through. `cloning` outside an incoming
  * threat stays `'core'`: it is not persistent, just already branched there since L20-17.
  */
 const PERSISTENTS_CARD_IDS: ReadonlySet<CardId> = new Set([
@@ -30,6 +31,7 @@ const PERSISTENTS_CARD_IDS: ReadonlySet<CardId> = new Set([
   'imposition',
   'spy-thief',
   'points-generator',
+  'factory',
 ]);
 
 /**
