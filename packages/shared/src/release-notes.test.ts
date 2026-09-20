@@ -19,6 +19,7 @@ describe('release notes catalog (L63-07)', () => {
     const body = [latestReleaseNote().title, ...latestReleaseNote().items].join('\n');
     expect(body).toMatch(/Sentence/i);
     expect(body).toMatch(/20/);
+    expect(body).toMatch(/3/);
     expect(body).toMatch(/Imposition/i);
     expect(body).toMatch(/points only/i);
     expect(body).toMatch(/pool/i);
@@ -28,5 +29,8 @@ describe('release notes catalog (L63-07)', () => {
     expect(body).not.toMatch(/\+9/);
     expect(body).not.toMatch(/\+18/);
     expect(body).not.toMatch(/Superpowers/i);
+    expect(body).not.toMatch(/banner/i);
+    expect(body).not.toMatch(/button/i);
+    expect(body).not.toMatch(/this play counts/i);
   });
 });

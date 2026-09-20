@@ -199,6 +199,29 @@ export function HomeScreen({
       />
 
       <BetaCard />
+      <button
+        type="button"
+        data-whats-new-button
+        aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
+        onClick={() => {
+          setWhatsNewOpen(true);
+        }}
+        className={[
+          'absolute right-[5.75rem] top-4 z-10 inline-flex min-h-9 min-w-9 items-center justify-center',
+          'rounded-full border border-border bg-surface-raised px-2.5 font-sans text-[11px] font-semibold text-ink',
+          'shadow-sm sm:right-28 sm:top-6',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+        ].join(' ')}
+      >
+        New
+        {whatsNewUnread ? (
+          <span
+            data-whats-new-unread
+            aria-hidden
+            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
+          />
+        ) : null}
+      </button>
 
       <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
         <section className="order-2 md:order-1">
@@ -217,10 +240,6 @@ export function HomeScreen({
                 onOpenHowToPlay={() => {
                   setHowToPlayOpen(true);
                 }}
-                onOpenWhatsNew={() => {
-                  setWhatsNewOpen(true);
-                }}
-                whatsNewUnread={whatsNewUnread}
                 onOpenFeedback={() => {
                   setFeedbackOpen(true);
                 }}
@@ -334,8 +353,6 @@ interface HubViewProps {
   soloLaunchPending: boolean;
   busy: boolean;
   onOpenHowToPlay: () => void;
-  onOpenWhatsNew: () => void;
-  whatsNewUnread: boolean;
   onOpenFeedback: () => void;
   onChooseOnline: () => void;
   onChooseSolo: () => void;
@@ -348,8 +365,6 @@ function HubView({
   soloLaunchPending,
   busy,
   onOpenHowToPlay,
-  onOpenWhatsNew,
-  whatsNewUnread,
   onOpenFeedback,
   onChooseOnline,
   onChooseSolo,
@@ -382,24 +397,6 @@ function HubView({
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenHowToPlay}>
           How to play
         </Button>
-        <span className="relative inline-flex">
-          <Button
-            type="button"
-            variant="orange"
-            disabled={busy}
-            onClick={onOpenWhatsNew}
-            aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
-          >
-            What's new
-          </Button>
-          {whatsNewUnread ? (
-            <span
-              data-whats-new-unread
-              aria-hidden
-              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
-            />
-          ) : null}
-        </span>
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenFeedback}>
           Feedback
         </Button>

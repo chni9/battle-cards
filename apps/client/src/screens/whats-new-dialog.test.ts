@@ -35,6 +35,16 @@ describe('What’s new dialog (L63-07)', () => {
     expect(home).toContain('hasSeenHowToPlay');
     expect(home).toContain('markLatestReleaseSeen');
     expect(home).toContain('data-whats-new-unread');
+    expect(home).toContain('data-whats-new-button');
     expect(home).not.toContain('Super Regeneration');
+  });
+
+  it('keeps What’s new as a small top-right control, not a hub action-row block', () => {
+    const home = read('home.tsx');
+    const hubStart = home.indexOf('function HubView');
+    const hub = hubStart === -1 ? '' : home.slice(hubStart);
+    expect(hub).not.toContain('onOpenWhatsNew');
+    expect(home).toContain('data-whats-new-button');
+    expect(home).toMatch(/data-whats-new-button[\s\S]{0,400}absolute/);
   });
 });
