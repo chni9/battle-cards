@@ -1,6 +1,7 @@
 /**
- * Life loss that is not damage — Tax's cost, Suicide, Imposition's ceded life
- * (rules spec §1, §3, §5, technical spec §4.2).
+ * Life loss that is not damage — Tax's cost, Suicide, Poison ticks
+ * (rules spec §1, §3, §5, technical spec §4.2). Imposition no longer
+ * cedes lives (L63-04).
  *
  * Deliberately a file of its own, next to but separate from `applyDamage`. The shield
  * protects against attacks only, and only damage moves a card's internal counter, so

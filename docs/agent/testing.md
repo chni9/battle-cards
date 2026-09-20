@@ -79,8 +79,9 @@ effects resolve after the target's action · `applyDamage` goes through the shie
 one action per turn except Assassin · 25-life cap on every source of gain.
 
 **2 — Hidden information.** No client receives an unspied opponent's kit, hand, or exact
-resources · every action is broadcast to everyone, card identity included · the pending effects
-queue is public · Spy persists to the end of the game · Cloning resets visibility both ways.
+resources · every action is broadcast to everyone, card identity included, **except**
+`buyPoolCard` identity (L63-06) · the pending effects queue is public · ticking Sentence
+is public · Spy persists to the end of the game · Cloning resets visibility both ways.
 
 **3 — Rulings.** One dedicated test per row of technical spec §6.2, plus the timer and threshold
 rules of §5.
@@ -99,7 +100,10 @@ forfeit at 2 players · last survivor.
 
 These are the spots where a plausible implementation is wrong and silent:
 
-- A tax paid by a player holding a full shield → life lost, shield untouched, no counter moved.
+- Imposition with 1 point vs 2 due → no transfer and no `applyLifeLoss` (L63-04).
+- Sentence fire after 3 activator turns; cancel if the activator dies first; remaining
+  turns are not shortened by `applyDamage` (L63-03).
+- Fogged `buyPoolCard` log does not pin an opponent card in belief (L63-06).
 - Two attacks of **different** damage aimed at each other: a stronger *answer* still
   cancels the weaker incoming; a weaker answer is **kept** and the incoming still
   resolves (Lot 54). The tempting bug is to splice the weaker retaliation.

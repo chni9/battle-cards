@@ -527,7 +527,7 @@ weights. English only.
 | L63-06 | `mapActionLogForRecipient` omits `buyPoolCard` `cardId` / `isUpgraded` unless recipient sees that actor’s private info; belief does not invent opponent cards from fogged logs. **Acceptance:** view + belief tests; Excel `exportLog` stays full; `pnpm verify` green. | M | **High** | L63-02 | Done |
 | L63-07 | Shared release-notes catalog; hub What’s new + red dot; auto-popup if unseen (How to play first); history; playbook “update the latest entry in the same commit as player-visible work”. **Acceptance:** localStorage key; latest id unread; first entry covers this lot’s visible changes except Super Regen; `pnpm verify` green. | L | Medium | L63-01 | Done |
 | L63-08 | Catalog, How to play, and bot freeze as needed for Sentence / Imposition / pool fog. No `heuristic-v4` weight retune. **Acceptance:** copy matches rules spec; freeze only if the legal set changed; `pnpm verify` green. | M | Medium | L63-03, L63-04, L63-06 | Done |
-| L63-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `testing.md`, `bots.md`) + post-lot browser gate (What’s new, Sentence red banner, Imposition skip, pool fog). **Acceptance:** playbooks match code; browser gate recorded; `pnpm verify` green. | M | Low | L63-07, L63-08 | To do |
+| L63-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `testing.md`, `bots.md`) + post-lot browser gate (What’s new, Sentence red banner, Imposition skip, pool fog). **Acceptance:** playbooks match code; browser gate recorded; `pnpm verify` green. | M | Low | L63-07, L63-08 | Done |
 
 ---
 

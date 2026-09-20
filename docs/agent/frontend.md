@@ -8,7 +8,7 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 60
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 63
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
@@ -434,6 +434,11 @@ rules above are unchanged — this section only covers how the client looks.
     Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
     banner gets a stronger seat tint. Table banners reuse the same flash duration (~1.6s,
     `pointer-events-none`): attacked / dead are flashier red; win copy is `You won!`.
+    **Lot 63 Sentence:** while `pendingSentences` is non-empty, every table turn shows a
+    red scary Motion banner `N turn(s) before Sentence!` (`formatSentenceBanner` /
+    `nextSentenceBannerLines` in `table-banner.ts`; `data-banner="sentence"`). N is the
+    soonest `remainingOwnerTurns` (or one line per live Sentence). Seat badge
+    `Sentence · N`. Not a persistent; not `deactivatePersistent`.
 
 ## Conventions
 
@@ -465,7 +470,8 @@ rules above are unchanged — this section only covers how the client looks.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
   `apps/client/src/action-log/` — scrollable round groups (no player/kind/search filters).
   Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit
-  the card name (`sold a card`). Card display names come from `getCard`.
+  the card name (`sold a card`). Pool buy names the card only when `cardId` is present
+  (L63-06: others see “a card from the pool”). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
   `playerEliminated`, `mirrorRedirected`, `playerReanimated`, opaque `rewardsClaimed`).
   Reward picks are never shown. In-game `playerReanimated` never includes `kitId`
@@ -1211,4 +1217,23 @@ guard.
 - Empty: Seat count **8** → Finished matches **0**, modules still on screen,
   Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
   not an empty flash. Formatters treat non-finite numbers as **—**.
+
+### Lot 63 verified 2026-09-20 (browser, hub What’s new, PROTOCOL 36)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
+`protocol v36`. `pnpm verify` **1506** tests.
+
+- Hub: **What's new** next to How to play / Feedback; red unread dot on first
+  visit. Dialog did **not** auto-open while How to play was unseen.
+- Dialog: 2026-09-20 **Sentence, Imposition, and pool buys** (Latest). Copy
+  covers Sentence 20 / 3 turns / red banner, Imposition points-only skip, pool
+  buy fog. No Super Regeneration / +9 / +18. Got it writes
+  `card-battle.v6.lastSeenReleaseId` = `lot-63`; red dot gone; history still
+  lists the entry.
+- After `howToPlaySeen=1` and clearing the last-seen id, reload auto-opens
+  What's new.
+- Sentence red banner, Imposition skip, and pool-buy log fog are locked by
+  engine / view / belief tests on this branch; this gate did not play a live
+  table to those states (needs Assassin 20 pts / Imposition victim / Spy).
+
 

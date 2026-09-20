@@ -39,7 +39,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 
 | | `applyDamage` | `applyLifeLoss` |
 |---|---|---|
-| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
+| Used by | Attack cards only | Tax, Suicide, Poison, every non-attack loss. **Not** Imposition (L63-04: skip, no lives) |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
 | Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`) | Never touches them |
 
@@ -96,7 +96,7 @@ the grant wrappers.
 | Site | Why not a typed loss or gain |
 |---|---|
 | `resolve-pending.ts` — self-Suicide | Lethal self-elimination in one step (rules spec §5). Not a bounded debit; must not decrement card counters. Ghost credits `livesBefore` then assigns 0. |
-| `resolve-pending.ts` — Sentence | Instant lethal effect (rules spec §5). Zeroes lives regardless of current count; not attack damage and not incremental loss. Ghost credits `livesBefore` then assigns 0. |
+| `resolve-pending.ts` — Sentence | Queued elimination on the **victim's** turn (L63-03). Fire is a seeded pick after 3 of the activator's turns; `queueEffect` then zeroes lives on resolve. Not attack damage. Ghost credits `livesBefore` then assigns 0. Remaining countdown turns are not card-lives. |
 | `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
 | `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
 | `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
@@ -212,7 +212,14 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   reads the current seat's ledger
   (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
-  Poison act on the current player from other seats' active effects. Curse is
+  Poison act on the current player from other seats' active effects. Imposition (L63-04)
+  transfers 2 points (4 upgraded) only when the victim has at least that many; otherwise
+  **skip** — no `applyLifeLoss`. `tickPendingSentences` runs **after** persistents and
+  **before** `processEliminations` (L63-03): decrement the activator's live Sentence;
+  on 0, seeded pick among living non-invisible seats and `queueEffect` kill for the
+  victim's turn. Cancel if the activator is already eliminated. Upgraded never picks
+  self. Empty candidate pool → fizzle. Public `pendingSentences` on `GameState`.
+  Curse is
   **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
   (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**
   actual lives lost to the original caster (designer 2026-08-24 / L50-09: both, not

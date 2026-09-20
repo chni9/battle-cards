@@ -44,9 +44,11 @@ is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
 so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
-the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
-`buyPoolCard` `cardId` into hand/special counts. Belief
-`visibilityFromActingView` rebuilds outgoing Spy **and** incoming `spyingOnYou`
+the public doubling pool fee and `CLEAR_SPY_COST`. A `buyPoolCard` with `cardId`
+pins that recovered card; a **fogged** log (L63-06) widens every zone instead of
+inventing an opponent card. Do **not** retune `heuristic-v4` weights for Lot 63
+(Sentence 20 / Imposition skip / pool fog) — freeze only if the legal set changes.
+Belief `visibilityFromActingView` rebuilds outgoing Spy **and** incoming `spyingOnYou`
 rows (L58-07).
 
 ## Weights profiles (L33-01)
@@ -167,7 +169,8 @@ rows (L58-07).
   have known *count* (`randomStartingSpecialCount`) and unknown ids (sample from
   `SPECIAL_CARD_IDS`). Kit specials not yet publicly played are preferred, then the prior.
 - Card Thief / Attack Thief / Card Transformer / Card Absorber / opaque rewards **widen
-  intervals** (technical spec v4 §5.1). Do not collapse them to a point.
+  intervals** (technical spec v4 §5.1). Do not collapse them to a point. Fogged
+  `buyPoolCard` (no `cardId`) is the same class of unknown +1 card (L63-06).
 
 ## Belief — determinize (L34-05)
 

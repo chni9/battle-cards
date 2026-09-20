@@ -157,7 +157,11 @@ leave the zone on use. Special **Price** is paid on play (`getCard`); persistent
 instead of joining the pool immediately. Periodic multi-opponent ticks live in
 `apply-persistent-effects.ts` (shared dispatcher) — adding a new periodic persistent extends
 that file; it does not edit another card's handler (`card-handler.md` golden rule 2 exception
-agreed for Lot 22).
+agreed for Lot 22). Imposition ticks (L63-04) transfer points only; skip if the victim
+has fewer than 2 (4 upgraded) — never `applyLifeLoss`. Sentence (L63-03) is **not** a
+persistent: play starts `pendingSentences` (cost 20; 3 activator turns including play);
+fire queues kill; cancel if the activator dies first. Remaining turns are not card-lives
+and `applyDamage` must not shorten them.
 
 **Counter cards** ("card lives", rules spec §5): Points Generator 3, Imposition 2, Poison 3,
 Super Absorber 2. Curse has `counter: null`, lives on the cursed seat, stores

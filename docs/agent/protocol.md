@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **35** (L60-02 recap match totals /
-> optional `kitId` / think time; L58-02 pool buy / Unspy / `poolBuyCost` /
+> **Status:** current `PROTOCOL_VERSION` is **36** (L63-02 `pendingSentences` +
+> per-recipient `buyPoolCard` fog; L60-02 recap match totals /
+> optional `kitId` / think time at 35; L58-02 pool buy / Unspy / `poolBuyCost` /
 > `spyingOnYou` at 34; L57-16 `staySpectating` + claim-picker fog at 33;
 > L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
 > fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
@@ -33,7 +34,8 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    the recipient sees every other seat as **upgraded Spy** at view time via
    `recipientSeesPrivateOf` / `isEliminatedSpectator` — **no** matrix rows written. Pending
    Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
-   Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
+   Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication` **and**
+   `buyPoolCard` identity (L63-06).
    Unspy (`clearSpy`) drops one **real** matrix row; overlay vision is not Unspy-able.
    **Walk-in Classic spectators** (L57-13) reuse this overlay (`walkInSpectator` on the view
    builder) without sitting in `GameState.players`. **L57-16:** the overlay is granted only
@@ -53,8 +55,9 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 |---|---|
 | Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView`. **Finished recap exception (PROTOCOL_VERSION 35 / L60-04):** `recap.players[].kitId` is the seat's **final** kit and is public to seated recipients. Omit that field for L57-16 fogged walk-ins. `finalTable` living seats still follow Spy / elim / walk-in overlay — do not put living kits there |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
-| Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
+| Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
+| Ticking Sentence (`pendingSentences`) | **Public** on the playing view (PROTOCOL_VERSION 36 / L63-02). Remaining owner turns are not card-lives |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -75,7 +78,8 @@ victim, the special card purchase and Mirror's default target. Any field added l
 disclosure would let a client compute a future draw belongs in the same category.
 
 Consequence worth knowing: with fully public actions, a hand can be partly reconstructed by
-deduction, which costs Spy some value. That is accepted, not a bug.
+deduction, which costs Spy some value. That is accepted, not a bug. **L63-06** withholds
+pool-buy identity from that reconstruction unless the recipient already sees the buyer.
 
 Cloning **resets visibility to zero in both directions** — what the user saw of others and what
 others saw of them — and cancels effects pending against the user while inheriting none from the
@@ -169,6 +173,11 @@ walk-ins omit `kitId`. Think time is a **room** wall-clock map, not `GameState` 
 map / headless → `0`. Do not parse `exportLog` for the awards UI. Spend on recap is chosen
 spend (`matchStats`), never theft. The first Play again does not clear match stats or think
 time; the next `createInitialState` does.
+
+PROTOCOL_VERSION 36 (L63-02 / L63-06) adds public `pendingSentences` on the playing view
+and may omit `buyPoolCard` `cardId` / `isUpgraded` on per-recipient logs and live
+`ACTION_PLAYED` unless the recipient sees that actor's private info. Recap / Excel keep
+the full server log.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is
