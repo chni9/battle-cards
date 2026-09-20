@@ -440,7 +440,9 @@ rules above are unchanged — this section only covers how the client looks.
     Everyone sees a scary red Motion banner (`data-banner="sentence"`) only
     when the caster plays: play **“Sentence in 3 turns!”**, later decrements
     **“N turn(s) before Sentence!”**, fire **“Sentence will kill {nickname}!”**.
-    Other seats’ turns do not flash. Not a persistent; not `deactivatePersistent`.
+    Other seats’ turns do not flash. Eliminated seats and spectators still
+    flash — do not gate on POV death/win. Not a persistent; not
+    `deactivatePersistent`.
 
 ## Conventions
 

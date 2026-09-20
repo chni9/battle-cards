@@ -75,6 +75,7 @@ export function sentenceAnnouncementKey(entry: SentenceAnnouncementLogEntry): st
 export interface SentenceBannerInput {
   announcements: readonly SentenceAnnouncementLogEntry[];
   nicknameOf: (id: string) => string;
+  /** POV death/win must not suppress table-wide Sentence banners. */
   isEliminated: boolean;
   youWon: boolean;
 }
@@ -82,7 +83,8 @@ export interface SentenceBannerInput {
 /**
  * Flash only when a new public Sentence announcement appears (play, caster
  * decrement, or fire). Skip historical log on first paint. Other seats’ turns
- * add no announcement, so they do not flash.
+ * add no announcement, so they do not flash. Table-wide: eliminated seats,
+ * walk-in spectators, and a won POV still flash — do not gate on death/win.
  */
 export function nextSentenceBannerLines(
   prev: SentenceBannerWatch,
@@ -92,10 +94,6 @@ export function nextSentenceBannerLines(
     seeded: true,
     seenKeys: new Set(input.announcements.map(sentenceAnnouncementKey)),
   };
-
-  if (input.youWon || input.isEliminated) {
-    return { lines: [], next };
-  }
 
   if (!prev.seeded) {
     return { lines: [], next };

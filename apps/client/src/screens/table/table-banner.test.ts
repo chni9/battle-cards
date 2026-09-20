@@ -286,6 +286,56 @@ describe('Sentence countdown banners (L63-03)', () => {
     expect(opponentTurn.lines).toEqual([]);
   });
 
+  it('flashes play, tick, and fire for eliminated and won POVs', () => {
+    const play: SentenceAnnouncementLogEntry = {
+      kind: 'sentenceCountdown',
+      sourcePlayerId: 'a',
+      remainingOwnerTurns: 3,
+      turnSequence: 1,
+    };
+    const tick: SentenceAnnouncementLogEntry = {
+      kind: 'sentenceCountdown',
+      sourcePlayerId: 'a',
+      remainingOwnerTurns: 2,
+      turnSequence: 3,
+    };
+    const fire: SentenceAnnouncementLogEntry = {
+      kind: 'sentenceFired',
+      sourcePlayerId: 'a',
+      targetPlayerId: 'b',
+      turnSequence: 7,
+    };
+
+    const deadSeed = nextSentenceBannerLines(
+      emptySentenceBannerWatch(),
+      input([], { isEliminated: true }),
+    );
+    expect(deadSeed.lines).toEqual([]);
+    const deadPlay = nextSentenceBannerLines(
+      deadSeed.next,
+      input([play], { isEliminated: true }),
+    );
+    expect(deadPlay.lines).toEqual(['Sentence in 3 turns!']);
+    const deadTick = nextSentenceBannerLines(
+      deadPlay.next,
+      input([play, tick], { isEliminated: true }),
+    );
+    expect(deadTick.lines).toEqual(['2 turns before Sentence!']);
+    const deadFire = nextSentenceBannerLines(
+      deadTick.next,
+      input([play, tick, fire], { isEliminated: true }),
+    );
+    expect(deadFire.lines).toEqual(['Sentence will kill Bob!']);
+
+    const wonSeed = nextSentenceBannerLines(
+      emptySentenceBannerWatch(),
+      input([], { youWon: true }),
+    );
+    expect(wonSeed.lines).toEqual([]);
+    const wonPlay = nextSentenceBannerLines(wonSeed.next, input([play], { youWon: true }));
+    expect(wonPlay.lines).toEqual(['Sentence in 3 turns!']);
+  });
+
   it('locks the scary Sentence banner in the Motion flash', () => {
     const flash = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), 'your-turn-flash.tsx'),

@@ -104,8 +104,9 @@ These are the spots where a plausible implementation is wrong and silent:
 - Sentence fire after 3 **later** activator turns (play does not count); countdown
   announcement on play (remaining 3) and later caster decrements only; no banner
   on a non-caster turn; fire banner names the victim (`Sentence will kill
-  {nickname}!`); cancel if the activator dies first; remaining turns are not
-  shortened by `applyDamage` (L63-03).
+  {nickname}!`); eliminated / spectator / won POV still flash; cancel if the
+  activator dies first; remaining turns are not shortened by `applyDamage`
+  (L63-03).
 - What’s new auto-opens when last-seen ≠ latest id (`lot-63`); **New** is green
   with a red unread badge; items are before → after with card art (L63-07).
 - Fogged `buyPoolCard` log does not pin an opponent card in belief (L63-06).

@@ -3826,7 +3826,8 @@ beside the caster stays.
 - Later caster turns that decrement: **“X turn(s) before Sentence!”**
 - Fire: **“Sentence will kill {nickname}!”**
 - Unchanged log: opponent turns add no announcement, so they do not
-  flash.
+  flash. Eliminated seats, walk-in spectators, and a won POV still see
+  the same banners (table-wide). Death/win table cues stay separate.
 
 Supersedes the “action-log line only / `{nickname} will be killed`”
 lines in the 2026-09-20 playtest-corrections entry for Sentence
