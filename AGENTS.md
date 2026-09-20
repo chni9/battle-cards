@@ -14,10 +14,8 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lots 57–60 (feedback + rematch; shop / pool /
-Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**;
-**Lot 61** (password `/admin` insights) is **done**; **Lot 62** (Overview metrics
-modules) is **in progress**. V5 may continue in parallel. Audience: the designer
+`docs/backlog_v6.md`); Lots 57–63 are **done**. Classic now has **16 kits**.
+V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -121,7 +119,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Mirror) and adds pool buy, PG 3/6, and Unspy (`PROTOCOL_VERSION` 34).
  **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
  **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
- (kits + match totals; `PROTOCOL_VERSION` 35). Walk-in claim-picker fog stays.
+ (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
+ adds Gambler + Factory (`PROTOCOL_VERSION` 36). Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

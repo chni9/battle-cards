@@ -2,12 +2,13 @@
  * One headless simulated game — technical spec v3 §8 (L18-04).
  */
 
-import type {
-  ActionLogEntryView,
-  BotDifficulty,
-  GameState,
-  KitId,
-  PlayingStateView,
+import {
+  toActionPlayedPayload,
+  type ActionLogEntryView,
+  type BotDifficulty,
+  type GameState,
+  type KitId,
+  type PlayingStateView,
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
@@ -25,8 +26,12 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { listLegalActions } from '../engine/turn/list-legal-actions';
-import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
-import type { TurnResult } from '../engine/turn/perform-action';
+import {
+  continuePendingSubChoices,
+  performAndCompleteTurn,
+} from '../engine/turn/orchestrate-turn';
+import type { ActionPlayedEvent, TurnResult } from '../engine/turn/perform-action';
+import { hasActiveSubChoice } from '../engine/turn/sub-choice';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
 import type { FinishedGameEliminationRecord } from '../db/finished-game-types';
 import { buildFinishedGameSnapshot } from '../db/build-finished-game-snapshot';
@@ -125,7 +130,25 @@ export interface SimulationGameRow {
   featureSnapshots?: readonly FeatureSnapshotRow[];
 }
 
-function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
+function pendingResumeResult(state: GameState, actionPlayed: ActionPlayedEvent): TurnResult {
+  return {
+    ok: true,
+    actionPlayed,
+    resolved: [],
+    winnerPlayerId: null,
+    eliminatedPlayerIds: [],
+    eliminations: [],
+    ...(state.mirrorChoice !== null ? { mirrorChoicePending: true } : {}),
+    ...(state.stealChoice !== null ? { stealChoicePending: true } : {}),
+    ...(state.subChoice !== null ? { subChoicePending: true } : {}),
+    ...(state.rewardChoice !== null || state.rewardQueue.length > 0
+      ? { rewardChoicePending: true }
+      : {}),
+  };
+}
+
+/** Exported so tests can prove public tells (e.g. `drawBust`) survive the log copy. */
+export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResult): void {
   const turnSequence = result.actionPlayed.turnSequence;
 
   if (result.mirrorRedirect !== undefined) {
@@ -136,19 +159,7 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
   } else {
     log.push({
       kind: 'actionPlayed',
-      actorPlayerId: result.actionPlayed.actorPlayerId,
-      action: result.actionPlayed.action,
-      ...(result.actionPlayed.cardId !== undefined ? { cardId: result.actionPlayed.cardId } : {}),
-      ...(result.actionPlayed.isUpgraded !== undefined
-        ? { isUpgraded: result.actionPlayed.isUpgraded }
-        : {}),
-      ...(result.actionPlayed.targetPlayerId !== undefined
-        ? { targetPlayerId: result.actionPlayed.targetPlayerId }
-        : {}),
-      ...(result.actionPlayed.attacks !== undefined
-        ? { attacks: result.actionPlayed.attacks }
-        : {}),
-      turnSequence,
+      ...toActionPlayedPayload(result.actionPlayed),
     });
   }
 
@@ -497,7 +508,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     let result = performAndCompleteTurn(state, botId, chosen, hooks, {
       nowMs: SIM_NOW_MS,
       onTurnResult: (step) => {
-        appendLog(actionLog, step);
+        appendTurnResultLog(actionLog, step);
 
         for (const event of step.eliminations) {
           eliminations.push({
@@ -521,7 +532,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       result = performAndCompleteTurn(state, botId, { type: 'draw' }, hooks, {
         nowMs: SIM_NOW_MS,
         onTurnResult: (step) => {
-          appendLog(actionLog, step);
+          appendTurnResultLog(actionLog, step);
 
           for (const event of step.eliminations) {
             eliminations.push({
@@ -536,6 +547,46 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
 
     if (!result.ok) {
       throw new Error(`sim bot ${botId} could not act: ${result.message}`);
+    }
+
+    // Kit-pick / reward can land on GameState after the TurnResult flags were
+    // already built. Drain before the next decide() sees an empty legal list
+    // (Lot 63 roster growth exposed seed l18-04-smoke-easy:11).
+    while (hasActiveSubChoice(state) && findSoleSurvivorId(state) === null) {
+      const drained = continuePendingSubChoices(
+        state,
+        botId,
+        pendingResumeResult(state, result.actionPlayed),
+        hooks,
+        SIM_NOW_MS,
+        {
+          rng: createRng(`${state.seed}:bot:${botId}:drain:${state.turnSequence}`),
+          onTurnResult: (step) => {
+            appendTurnResultLog(actionLog, step);
+            for (const event of step.eliminations) {
+              eliminations.push({
+                playerId: event.playerId,
+                eliminatorPlayerId: event.eliminatorPlayerId,
+                reason: 'combat',
+              });
+            }
+          },
+          onRewardResult: (reward) => {
+            actionLog.push({
+              kind: 'rewardsClaimed',
+              eliminatorPlayerId: reward.rewardsClaimed.eliminatorPlayerId,
+              eliminatedPlayerId: reward.rewardsClaimed.eliminatedPlayerId,
+              turnSequence: state.turnSequence,
+            });
+          },
+        },
+      );
+
+      if (!drained.ok) {
+        throw new Error(`sim bot ${botId} could not complete sub-choice: ${drained.message}`);
+      }
+
+      result = drained;
     }
 
     turns += 1;

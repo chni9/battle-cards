@@ -1,8 +1,7 @@
 /**
  * Persistent specials — Poison, Curse, Super Absorber (L29-06) — plus Sentence,
- * Imposition, Spy Thief and Points Generator, moved here from `score-core.ts` and
- * retuned in the same change (decisions.md 2026-08-05). `cloning` outside an incoming
- * threat stays in `score-core.ts` — it is not persistent, just already branched there.
+ * Imposition, Spy Thief, Points Generator and Factory. Factory joined in Lot 63
+ * on the Points Generator invest path (no new weight constant).
  */
 
 import { getKit, type BotReasonCode, type PlayingStateView } from '@card-battle/shared';
@@ -68,6 +67,16 @@ export function scorePersistentsPlayCard(
       return { score: Number.NEGATIVE_INFINITY, code: 'invest' };
     }
 
+    return {
+      score: ctx.weights.action.bands.invest + ctx.weights.action.pointsGeneratorInvestBonus,
+      code: 'invest',
+    };
+  }
+
+  // Factory — same invest family as Points Generator (Lot 63). Multiple copies
+  // tick independently, so a second armed Factory is still worth playing.
+  // Reuses the PG bonus: heuristic-v4 weights stay frozen.
+  if (cardId === 'factory') {
     return {
       score: ctx.weights.action.bands.invest + ctx.weights.action.pointsGeneratorInvestBonus,
       code: 'invest',

@@ -57,5 +57,9 @@
  * 34 → 35 (L60-02 / designer 2026-09-15): `GameRecapPlayerView` match totals,
  * optional recap `kitId`, think time. Exception to the V6 single-bump lock
  * (same class as L49 / L56 / L57 / L58); see decisions.md.
+ *
+ * 35 → 36 (L63-03 / designer 2026-09-20): public `drawBust` on `actionPlayed`
+ * so a Draw that instantly eliminates is a table tell. Exception to the V6
+ * single-bump lock (same class as L49 / L56–L60); see decisions.md.
  */
-export const PROTOCOL_VERSION = 35;
+export const PROTOCOL_VERSION = 36;

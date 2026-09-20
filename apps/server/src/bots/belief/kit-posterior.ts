@@ -3,15 +3,16 @@
  * (L34-02). No `GameState`. Spy-revealed `kitId` is a point mass; otherwise a
  * uniform prior over `KIT_IDS` is Bayes-updated from the public action log.
  *
- * Contradicted kits get probability 0. Prophet random specials (#V4-27) are weak
- * evidence for the catalog owner — over-inferring searches the wrong world.
+ * Contradicted kits get probability 0. Random starting specials (#V4-27 / Lot 63)
+ * are weak evidence for the catalog owner — over-inferring searches the wrong world.
+ * Hold chance is per kit: `1 - (1 - 1/n)^draws` on that kit's random pool.
  */
 
 import {
-  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   isSpecialCardId,
   KIT_IDS,
+  randomStartingSpecialPool,
   type ActionLogEntryView,
   type ActionPlayedLogEntry,
   type CardId,
@@ -21,11 +22,20 @@ import {
 
 import type { KitPosterior } from './types';
 
-const PROPHET_HOLD_PROBABILITY: number = (() => {
-  const draws = getKit('prophet').randomStartingSpecialCount ?? 0;
-  const n = CIRCULATING_SPECIAL_CARD_IDS.length;
-  return 1 - (1 - 1 / n) ** draws;
-})();
+function randomHoldProbability(kitId: KitId): number {
+  const kit = getKit(kitId);
+  const draws = kit.randomStartingSpecialCount ?? 0;
+  if (draws <= 0) {
+    return 0;
+  }
+
+  const poolSize = randomStartingSpecialPool(kit).length;
+  if (poolSize <= 0) {
+    return 0;
+  }
+
+  return 1 - (1 - 1 / poolSize) ** draws;
+}
 
 function uniformMass(): number[] {
   const share = 1 / KIT_IDS.length;
@@ -106,7 +116,7 @@ function specialPlayLikelihood(
     return 1;
   }
 
-  return PROPHET_HOLD_PROBABILITY;
+  return randomHoldProbability(kitId);
 }
 
 function kitsWithImmuneTo(cardId: CardId): readonly KitId[] {
@@ -203,6 +213,15 @@ export function kitPosteriorForOpponent(
 
     if (entry.action === 'buySpecialCard' && entry.cardId !== undefined) {
       boughtSpecials.add(entry.cardId);
+      continue;
+    }
+
+    if (entry.action === 'draw' && entry.drawBust === true) {
+      zeroKitsUnless(
+        mass,
+        (kitId) => getKit(kitId).traits.drawBustDenominator !== undefined,
+      );
+      renormalize(mass);
       continue;
     }
 

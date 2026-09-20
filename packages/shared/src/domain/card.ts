@@ -2,7 +2,7 @@
  * Card identity and static card data — technical spec §4.1, rules spec §1–§3, §5.
  *
  * Attack / action lists are the shop/deal shared set. Specials cover the full rules
- * special lot (20); handlers land per card task, with undeclared ones in
+ * special lot (21 as of Lot 63); handlers land per card task, with undeclared ones in
  * `PENDING_CARD_IDS` (technical spec v4 §8.1 / L20-04).
  */
 
@@ -39,6 +39,7 @@ export const SPECIAL_CARD_IDS = [
   'curse',
   'poison',
   'attack-thief',
+  'factory',
 ] as const;
 
 /**
@@ -122,6 +123,7 @@ export const CARD_LIVES_SPECIAL_IDS = [
   'imposition',
   'poison',
   'super-absorber',
+  'factory',
 ] as const satisfies readonly SpecialCardId[];
 
 const CARD_LIVES_SET = new Set<string>(CARD_LIVES_SPECIAL_IDS);

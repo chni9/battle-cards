@@ -2,21 +2,31 @@
  * Apply persistent effects that act on the current player after their action —
  * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
  *
- * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
- * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
- * persistents so it does not re-absorb lives lost later in the same phase.
- * Curse still ticks on `pointsSpent` (#V4-20) and siphons those lost lives — and any
- * other actual life loss — to the original caster (L50-09; L50-02 siphon stays).
+ * Tick order (implementation detail, decisions.md 2026-08-05 / Lot 63): Points
+ * Generator → Factory → Invisibility → Super Absorber → Imposition → Poison →
+ * Curse. Super Absorber runs before life-ticking persistents so it does not
+ * re-absorb lives lost later in the same phase. Factory grants a seeded random
+ * card (golden rule 5). Curse still ticks on `pointsSpent` (#V4-20) and siphons
+ * those lost lives — and any other actual life loss — to the original caster
+ * (L50-09; L50-02 siphon stays).
  */
 
-import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
+import {
+  CIRCULATING_SPECIAL_CARD_IDS,
+  SHARED_CARD_IDS,
+  type GameState,
+  type PersistentEffect,
+  type Player,
+} from '@card-battle/shared';
 
 import {
   grantLives,
   grantPoints,
 } from '../economy/grant-resources';
+import { acquireCardToHand, acquireSpecialCard } from '../kits/acquire-card';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { observeLifeLoss } from '../life/observe-life-loss';
+import type { Rng } from '../rng';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { absorbLedgerFromVictim } from './absorb-ledger';
@@ -35,8 +45,23 @@ const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
 const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
+/** Base Factory: `nextInt(10) < 8` → 80% shared card. */
+const FACTORY_NORMAL_ROLL_BASE = 8;
+/** Upgraded Factory: `nextInt(10) < 7` → 70% shared card. */
+const FACTORY_NORMAL_ROLL_UPGRADED = 7;
+/** Upgraded Factory: independent `nextInt(10) < 3` → granted copy is upgraded. */
+const FACTORY_GRANT_UPGRADE_ROLL = 3;
 
-export function applyPersistentEffects(state: GameState, playerId: string): void {
+const FACTORY_GRANT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'factory'> =>
+    id !== 'factory',
+);
+
+export function applyPersistentEffects(
+  state: GameState,
+  playerId: string,
+  rng?: Rng,
+): void {
   const player = findPlayer(state, playerId);
 
   if (player === undefined || player.isEliminated) {
@@ -44,6 +69,7 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(state, player);
+  applyFactoryTicks(state, player, rng);
   // Snapshot before last-turn auto-loss: this owner turn still counts as
   // invisible for victim ticks (#V4-9a / L58-06). Manual deactivate already
   // dropped the effect before this function runs, so those turns resume.
@@ -72,6 +98,47 @@ function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
       effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
       'direct',
     );
+  }
+}
+
+function applyFactoryTicks(state: GameState, owner: Player, rng: Rng | undefined): void {
+  const effects = owner.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'factory' && effect.counter !== null && effect.counter > 0,
+  );
+
+  if (effects.length === 0) {
+    return;
+  }
+
+  if (rng === undefined) {
+    throw new Error('applyPersistentEffects: Factory tick requires injected rng');
+  }
+
+  for (const effect of effects) {
+    grantFactoryCard(state, owner, effect, rng);
+  }
+}
+
+function grantFactoryCard(
+  state: GameState,
+  owner: Player,
+  effect: PersistentEffect,
+  rng: Rng,
+): void {
+  const normalThreshold = effect.isUpgraded
+    ? FACTORY_NORMAL_ROLL_UPGRADED
+    : FACTORY_NORMAL_ROLL_BASE;
+  const grantNormal = rng.nextInt(10) < normalThreshold;
+  const cardId = grantNormal
+    ? rng.pick(SHARED_CARD_IDS)
+    : rng.pick(FACTORY_GRANT_SPECIAL_IDS);
+  const instanceId = `${owner.id}:factory:${effect.id}:${String(state.turnSequence)}`;
+  const instance = grantNormal
+    ? acquireCardToHand(owner, cardId, instanceId)
+    : acquireSpecialCard(owner, cardId, instanceId);
+
+  if (effect.isUpgraded && rng.nextInt(10) < FACTORY_GRANT_UPGRADE_ROLL) {
+    instance.isUpgraded = true;
   }
 }
 

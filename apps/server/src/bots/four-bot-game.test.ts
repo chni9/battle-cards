@@ -6,7 +6,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { ActionLogEntryView, GameState } from '@card-battle/shared';
+import {
+  toActionPlayedPayload,
+  type ActionLogEntryView,
+  type GameState,
+} from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
 import { getDefaultPolicy } from '../bots/registry';
@@ -27,19 +31,10 @@ const FIXED_NOW_MS = 0;
 function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: number): void {
   log.push({
     kind: 'actionPlayed',
-    actorPlayerId: result.actionPlayed.actorPlayerId,
-    action: result.actionPlayed.action,
-    ...(result.actionPlayed.cardId !== undefined ? { cardId: result.actionPlayed.cardId } : {}),
-    ...(result.actionPlayed.isUpgraded !== undefined
-      ? { isUpgraded: result.actionPlayed.isUpgraded }
-      : {}),
-    ...(result.actionPlayed.targetPlayerId !== undefined
-      ? { targetPlayerId: result.actionPlayed.targetPlayerId }
-      : {}),
-    ...(result.actionPlayed.attacks !== undefined
-      ? { attacks: result.actionPlayed.attacks }
-      : {}),
-    turnSequence,
+    ...toActionPlayedPayload({
+      ...result.actionPlayed,
+      turnSequence,
+    }),
   });
 
   for (const resolved of result.resolved) {

@@ -7,6 +7,8 @@
  * refreshed for affordability only (`weightsHash` unchanged).
  * L58-08: pool buy / Unspy add legal actions; traces refreshed, `weightsHash`
  * unchanged (no new weight constants).
+ * L63-02: Factory becomes playable; Gambler Draw can bust — traces refreshed,
+ * `weightsHash` unchanged.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -228,7 +230,7 @@ describe('heuristic-v4 freeze (L32-03)', () => {
     expect(getPolicy(HEURISTIC_V4_POLICY_ID).weightsHash).toBe(fixture.weightsHash);
   });
 
-  it('covers all 15 kits in the fixture', () => {
+  it('covers all 16 kits in the fixture', () => {
     expect(Object.keys(fixture.traces).sort()).toEqual([...KIT_IDS].sort());
   });
 
@@ -246,7 +248,7 @@ describe('heuristic-v4 freeze (L32-03)', () => {
 });
 
 if (process.env['REFRESH_HEURISTIC_V4_FREEZE'] === '1') {
-  describe('heuristic-v4 freeze refresh (L58-08)', () => {
+  describe('heuristic-v4 freeze refresh (L63-02)', () => {
     it('rewrites traces while keeping weightsHash', () => {
       const weightsHash = computeHeuristicV4WeightsHash();
       expect(weightsHash).toBe(fixture.weightsHash);

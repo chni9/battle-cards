@@ -9,8 +9,9 @@
 import type { CardId } from './card';
 
 /**
- * Growing kit roster (technical spec v4 §8.2). V4 closed count is **15**
- * (Lots 27–28). `content-scope.test.ts` asserts exhaustiveness.
+ * Growing kit roster (technical spec v4 §8.2). V4 closed count was **15**
+ * (Lots 27–28); Lot 63 adds `gambler` (Classic 16). `content-scope.test.ts`
+ * asserts exhaustiveness.
  */
 export const KIT_IDS = [
   'untouchable',
@@ -28,6 +29,7 @@ export const KIT_IDS = [
   'juggernaut',
   'ghost',
   'duplicator',
+  'gambler',
 ] as const;
 
 export type KitId = (typeof KIT_IDS)[number];
@@ -73,6 +75,12 @@ export interface KitTraits {
    * `UPGRADE_POINT_ECONOMY.sellYieldPoints`. Upgrader: 7 (#V4-28 / L27-01).
    */
   upgradePointSellYield?: number;
+  /**
+   * When set, the Draw action rolls `rng.nextInt(denominator) === 0` and on a
+   * hit instantly eliminates the actor (any life total, no points granted).
+   * Gambler: 10 (designer 2026-09-20 / Lot 63). Absent → Draw is safe.
+   */
+  drawBustDenominator?: number;
 }
 
 /** Static, immutable kit definition. */
@@ -83,9 +91,10 @@ export interface Kit {
   startingCardCounts: KitStartingCardCounts;
   specialCards: CardId[];
   /**
-   * When set, deal this many specials via seeded `rng.pick` over all specials
-   * (with replacement per #V4-27) instead of `specialCards`. Prophet: 2.
-   * `specialCards` stays empty for that kit. technical spec v4 §4.8.
+   * When set, deal this many specials via seeded `rng.pick` over circulating
+   * specials minus this kit's `specialCards` (with replacement per #V4-27),
+   * then append `specialCards`. Prophet: 2 with an empty list. Gambler: 5
+   * plus Factory (Lot 63). technical spec v4 §4.8.
    */
   randomStartingSpecialCount?: number;
   traits: KitTraits;

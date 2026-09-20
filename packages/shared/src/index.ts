@@ -20,6 +20,7 @@ export * from './protocol/messages';
 export * from './protocol/reward-choice';
 export * from './protocol/state-view';
 export { PROTOCOL_VERSION } from './protocol-version';
+export * from './release-notes';
 export * from './feedback/report';
 export * from './admin/api';
 export * from './admin/overview-series';

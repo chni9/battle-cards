@@ -235,6 +235,14 @@ export function KitInspectDetails({ kitId }: KitInspectDetailsProps): ReactEleme
           </div>
         </Group>
 
+        <Group title="Draw risk" trait>
+          <p className="text-sm leading-snug text-ink">
+            {traits.drawBustDenominator !== undefined
+              ? `1 in ${String(traits.drawBustDenominator)} chance each Draw instantly eliminates this player (no points).`
+              : 'None'}
+          </p>
+        </Group>
+
         {abilityCopy !== undefined && (
           <Group title="Ability">
             <p className="text-sm leading-snug text-ink">{abilityCopy}</p>

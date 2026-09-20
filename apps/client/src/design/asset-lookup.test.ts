@@ -19,7 +19,7 @@ import {
 
 describe('asset-lookup (L30-01)', () => {
   it('resolves a portrait for every KitId', () => {
-    expect(KIT_IDS).toHaveLength(15);
+    expect(KIT_IDS).toHaveLength(16);
     for (const kitId of KIT_IDS) {
       const url = getKitPortraitUrl(kitId);
       expect(url.length).toBeGreaterThan(0);
@@ -34,18 +34,19 @@ describe('asset-lookup (L30-01)', () => {
     expect(getKitPortraitUrl('warrior')).toMatch(/Warrior\.png/);
   });
 
-  it('maps ghost and duplicator portraits (L28-03)', () => {
+  it('maps ghost, duplicator and gambler portraits (L28-03 / L63-01)', () => {
     expect(getKitPortraitUrl('ghost')).toMatch(/Ghost\.png/);
     expect(getKitPortraitUrl('duplicator')).toMatch(/Duplicator\.png/);
+    expect(getKitPortraitUrl('gambler')).toMatch(/Gambler\.png/);
   });
 
   it('maps wizard to Magician.png (L27-08)', () => {
     expect(getKitPortraitUrl('wizard')).toMatch(/Magician\.png/);
   });
 
-  it('covers all 30 card ids', () => {
-    expect(ALL_ART_CARD_IDS).toHaveLength(30);
-    expect(new Set(ALL_ART_CARD_IDS).size).toBe(30);
+  it('covers all 31 card ids', () => {
+    expect(ALL_ART_CARD_IDS).toHaveLength(31);
+    expect(new Set(ALL_ART_CARD_IDS).size).toBe(31);
   });
 
   it('resolves base and upgraded art for every CardId', () => {
@@ -56,6 +57,22 @@ describe('asset-lookup (L30-01)', () => {
       expect(upgraded.length).toBeGreaterThan(0);
       expect(base).not.toEqual(upgraded);
     }
+  });
+
+  it('maps Factory placeholder art including activated (L63-03)', () => {
+    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false }))).toMatch(
+      /Factory\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true }))).toMatch(
+      /Factory \+\.png/,
+    );
+    expect(
+      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false, activated: true })),
+    ).toMatch(/Factory \(activated\)\.png/);
+    expect(
+      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true, activated: true })),
+    ).toMatch(/Factory \+ \(activated\)\.png/);
+    expect(CARDS_WITH_ACTIVATED_ART).toContain('factory');
   });
 
   it('resolves MEGA ATTACK, Super Mirror and Card Absorber art', () => {

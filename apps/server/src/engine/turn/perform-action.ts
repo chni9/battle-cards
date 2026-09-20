@@ -18,6 +18,7 @@ import {
   type GameState,
   type KitId,
   type Player,
+  type PublicActionKind,
   type RewardChoice,
   type SpecialCardId,
 } from '@card-battle/shared';
@@ -32,6 +33,7 @@ import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
+import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
@@ -100,21 +102,6 @@ export type TurnAction =
   | { type: 'deactivatePersistent'; effectId: string }
   | { type: 'activateDuplication' };
 
-export type PublicActionKind =
-  | 'draw'
-  | 'playCard'
-  | 'playMultipleAttacks'
-  | 'buyCard'
-  | 'sellCard'
-  | 'upgradeCard'
-  | 'buyUpgradePoint'
-  | 'sellUpgradePoint'
-  | 'buySpecialCard'
-  | 'buyPoolCard'
-  | 'clearSpy'
-  | 'deactivatePersistent'
-  | 'activateDuplication';
-
 export interface ActionPlayedEvent {
   actorPlayerId: string;
   action: PublicActionKind;
@@ -123,6 +110,8 @@ export interface ActionPlayedEvent {
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
+  /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
+  drawBust?: true;
 }
 
 export interface ActionResolvedEvent {
@@ -259,12 +248,34 @@ function performPreparedTurnAction(
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
-    grantPoints(state, actor, getKit(actor.kitId).startingResources.draw, 'direct');
-    actionPlayed = {
-      actorPlayerId,
-      action: 'draw',
-      turnSequence: state.turnSequence,
-    };
+    const kit = getKit(actor.kitId);
+    const bustDenominator = kit.traits.drawBustDenominator;
+    const busted =
+      bustDenominator !== undefined && rng.nextInt(bustDenominator) === 0;
+
+    if (busted) {
+      const livesBefore = actor.lives;
+      // Instant lethal Draw bust — designer 2026-09-20 / Lot 63.
+      // Not `applyLifeLoss`: cannot express die-from-any-life in one step
+      // without Ghost siphoning each life. Not `applyDamage` (no shield, no
+      // card-lives). Ghost credits lives before the lethal assignment.
+      // No elimination contributor — no kill reward (rules spec §6).
+      observeLifeLoss(state, actor, livesBefore);
+      actor.lives = 0;
+      actionPlayed = {
+        actorPlayerId,
+        action: 'draw',
+        turnSequence: state.turnSequence,
+        drawBust: true,
+      };
+    } else {
+      grantPoints(state, actor, kit.startingResources.draw, 'direct');
+      actionPlayed = {
+        actorPlayerId,
+        action: 'draw',
+        turnSequence: state.turnSequence,
+      };
+    }
   } else if (action.type === 'buyCard') {
     const bought = buyCard(state, actorPlayerId, action.cardId);
 
@@ -1030,7 +1041,7 @@ function finishTurnPhases(
 ): TurnResult {
   ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
-  applyPersistentEffects(state, actorPlayerId);
+  applyPersistentEffects(state, actorPlayerId, rng);
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];

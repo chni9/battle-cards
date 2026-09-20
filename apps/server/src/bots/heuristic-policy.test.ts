@@ -911,6 +911,26 @@ describe('heuristic decide (L16-04)', () => {
     ).toEqual({ type: 'playCard', instanceId: 'pg-1' });
   });
 
+  it('prefers Factory over Draw and never falls through to sellUpgradePoint (L63-04)', () => {
+    const factoryView = baseView({
+      self: baseSelf({
+        kitId: 'gambler',
+        specialCards: [{ instanceId: 'fac-1', cardId: 'factory', isUpgraded: false }],
+      }),
+    });
+    expect(
+      decide(
+        factoryView,
+        [
+          { type: 'draw' },
+          { type: 'sellUpgradePoint' },
+          { type: 'playCard', instanceId: 'fac-1' },
+        ],
+        createRng('factory-over-draw'),
+      ),
+    ).toEqual({ type: 'playCard', instanceId: 'fac-1' });
+  });
+
   it('prefers Spy Thief over draw', () => {
     const view = baseView({
       self: baseSelf({
@@ -1390,6 +1410,17 @@ describe('heuristic decide (L16-04)', () => {
 
     expect(untouchableScored[0]?.score).toBe(100);
     expect(wizardScored[0]?.score).toBe(120);
+  });
+
+  it('L63-04: Gambler Draw is not free EV of 10 points', () => {
+    const gamblerView = baseView({ self: baseSelf({ kitId: 'gambler' }) });
+    const wizardView = baseView({ self: baseSelf({ kitId: 'wizard' }) });
+    const actions: TurnAction[] = [{ type: 'draw' }];
+    const gamblerScored = scoreActions(gamblerView, actions, createRng('draw-gambler'));
+    const wizardScored = scoreActions(wizardView, actions, createRng('draw-wizard-vs-gambler'));
+
+    expect(gamblerScored[0]?.score).toBeLessThan(wizardScored[0]?.score ?? 0);
+    expect(gamblerScored[0]?.score).toBeLessThan(0);
   });
 
   it('L29-02: draw score reads getKit live, not a hardcoded draw value', () => {

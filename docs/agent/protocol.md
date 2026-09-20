@@ -6,11 +6,12 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **35** (L60-02 recap match totals /
-> optional `kitId` / think time; L58-02 pool buy / Unspy / `poolBuyCost` /
-> `spyingOnYou` at 34; L57-16 `staySpectating` + claim-picker fog at 33;
-> L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
-> fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
+> **Status:** current `PROTOCOL_VERSION` is **36** (L63-03 public `drawBust` on
+> `actionPlayed`; L60-02 recap match totals / optional `kitId` / think time at 35;
+> L58-02 pool buy / Unspy / `poolBuyCost` / `spyingOnYou` at 34; L57-16
+> `staySpectating` + claim-picker fog at 33; L57-07 lobby Ready / Kick / Play
+> again / `claimSeat` at 32; Mirror redirect fields at 31; V6 teaching fields
+> at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in
@@ -169,6 +170,13 @@ walk-ins omit `kitId`. Think time is a **room** wall-clock map, not `GameState` 
 map / headless → `0`. Do not parse `exportLog` for the awards UI. Spend on recap is chosen
 spend (`matchStats`), never theft. The first Play again does not clear match stats or think
 time; the next `createInitialState` does.
+PROTOCOL_VERSION 36 (L63-03) adds optional `drawBust: true` on `actionPlayed` / the
+matching log entry so a Draw that instantly eliminates is a public table tell.
+Kind stays `'draw'`. Older clients fail the version gate. Room `applyTurnResult`,
+simulator `appendTurnResultLog`, and the four-bot harness copy optional public
+fields through `toActionPlayedPayload` (`packages/shared/src/protocol/messages.ts`)
+so a new tell cannot be dropped on one path. Opaque `activateDuplication` → `draw`
+must not copy `drawBust`.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

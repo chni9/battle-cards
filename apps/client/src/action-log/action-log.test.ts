@@ -221,6 +221,32 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice draws');
   });
 
+  it('shows a public Draw-bust tell (L63-03)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'draw',
+          drawBust: true,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice draws and busts');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'draw',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice draws');
+  });
+
   it('formats player reanimation without the kit (L50-03)', () => {
     expect(
       formatActionLogEntry(

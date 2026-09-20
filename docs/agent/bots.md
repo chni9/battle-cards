@@ -41,7 +41,8 @@ L54-01 (Spy catalog price) and **L58-08** (new legal actions `buyPoolCard` /
 set; log it in `decisions.md` and keep `weightsHash` unless a new weight constant
 is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 `score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
-is L54-04 (`farm-to-engage-v4`), same path as Points Generator.
+is L54-04 (`farm-to-engage-v4`), same path as Points Generator. Factory
+joins that skip set (Lot 63 follow-up).
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
 so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
 the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
@@ -120,7 +121,10 @@ rows (L58-07).
 - Spy `view.players[].spied.kitId` is a point mass. Otherwise a uniform prior over
   `KIT_IDS` is Bayes-updated from the public log.
 - Tells: special `playCard` / `playMultipleAttacks` (catalog owner likelihood 1;
-  Prophet `1-(1-1/20)^2`; impossible → 0); `outcome: 'immune'` only when some kit
+  random-deal kits `1-(1-1/n)^draws` on that kit's random pool — Prophet n =
+  circulating, Gambler n = circulating minus Factory; impossible → 0);
+  `drawBust: true` zeros every kit without `drawBustDenominator`;
+  `outcome: 'immune'` only when some kit
   lists that `cardId` in `immuneTo` (thief/spy → Untouchable). Immune on other
   cards is Invisibility / Cloning-on-invisible — do not zero the roster.
   `playMultipleAttacks` → `allowsMultipleAttacksPerTurn`. Upgraded `playCard` with
@@ -128,8 +132,10 @@ rows (L58-07).
   lists that card.
 - `sampleKit(posterior, rng)` weighted-samples a `KitId`.
 - Uniqueness table: `bots/belief/kit-uniqueness.ts` (`UNIQUENESS_GUARANTEED_KIT_IDS`,
-  `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Prophet is never uniqueness-
+  `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Kits with
+  `randomStartingSpecialCount` (Prophet, Gambler) are never uniqueness-
   guaranteed from specials alone. `imposition` is shared (Untouchable + Duplicator).
+  Factory in `specialCards` still identifies Gambler with Prophet residual.
 - **If we add new kits with shared or random specials, update `kit-uniqueness.ts`
   and this section.**
 
@@ -163,9 +169,10 @@ rows (L58-07).
 - **#V5-2 unlimited shop:** do not forbid a `cardId` because a copy sits in the pool.
   Hard constraint is instance identity — never mint an `instanceId` from `view.self.hand`,
   `self.specialCards`, or `view.pool`.
-- Spy-revealed `hand` / `specialCards` are copied as a point. Prophet starting specials
-  have known *count* (`randomStartingSpecialCount`) and unknown ids (sample from
-  `SPECIAL_CARD_IDS`). Kit specials not yet publicly played are preferred, then the prior.
+- Spy-revealed `hand` / `specialCards` are copied as a point. Random starting specials
+  have known *count* (`randomStartingSpecialCount` plus `specialCards.length`) and
+  unknown ids (sample from that kit's random pool). Kit specials not yet publicly
+  played are preferred, then the prior.
 - Card Thief / Attack Thief / Card Transformer / Card Absorber / opaque rewards **widen
   intervals** (technical spec v4 §5.1). Do not collapse them to a point.
 
@@ -305,7 +312,9 @@ determinizer is how V5 fails quietly.
   unless it funds a threat. Easy stays v4.
 - **L54-04:** overlay `farm-to-engage-v4` — Super Absorber uses the same skip
   as Points Generator (selfish special, not a direct threat). Imposition /
-  Poison still burn. Easy stays v4.
+  Poison still burn. Easy stays v4. Factory joins that skip set (Lot 63
+  follow-up): do not burn a Factory owner unless 1v1 / attacker / finishable /
+  known points ≥ 10.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.
 

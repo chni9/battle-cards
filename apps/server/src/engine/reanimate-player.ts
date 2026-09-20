@@ -9,9 +9,9 @@
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
-  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   KIT_IDS,
+  randomStartingSpecialPool,
   type KitId,
   type Player,
 } from '@card-battle/shared';
@@ -29,6 +29,8 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  *
  * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
  * specials via seeded `rng.pick` with replacement (duplicates OK).
+ * Gambler (Lot 63): random draws exclude guaranteed `specialCards`, then the
+ * fixed list is appended (Factory after five randoms).
  */
 export function dealStartingLoadout(
   player: Player,
@@ -48,18 +50,29 @@ export function dealStartingLoadout(
     acquireCardToHand(player, cardId, `${instancePrefix}:attack:${String(index)}`);
   }
 
+  let specialIndex = 0;
   const randomCount = kit.randomStartingSpecialCount;
 
   if (randomCount !== undefined && randomCount > 0) {
+    const pool = randomStartingSpecialPool(kit);
     for (let index = 0; index < randomCount; index += 1) {
-      const specialId = rng.pick(CIRCULATING_SPECIAL_CARD_IDS);
-      acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
+      const specialId = rng.pick(pool);
+      acquireSpecialCard(
+        player,
+        specialId,
+        `${instancePrefix}:special:${String(specialIndex)}`,
+      );
+      specialIndex += 1;
     }
-    return;
   }
 
-  for (const [index, specialId] of kit.specialCards.entries()) {
-    acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
+  for (const specialId of kit.specialCards) {
+    acquireSpecialCard(
+      player,
+      specialId,
+      `${instancePrefix}:special:${String(specialIndex)}`,
+    );
+    specialIndex += 1;
   }
 }
 

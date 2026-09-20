@@ -1,60 +1,51 @@
 /**
- * Protocol version pin — L60-02 / PROTOCOL_VERSION 35 (after Lot 58 on main).
+ * Protocol version pin — L63-03 / PROTOCOL_VERSION 36.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  BUY_POOL_CARD,
-  CLAIM_SEAT,
-  CLEAR_SPY,
-  KICK_PLAYER,
-  PLAY_AGAIN,
-  SET_READY,
-  STAY_SPECTATING,
-} from './protocol/messages';
 import { PROTOCOL_VERSION } from './protocol-version';
-import type { GameRecapPlayerView } from './protocol/state-view';
+import type { ActionPlayedPayload } from './protocol/messages';
+import type { ActionPlayedLogEntry } from './protocol/state-view';
 
-describe('PROTOCOL_VERSION (L60-02)', () => {
-  it('is 35 after Lot 60 recap awards', () => {
-    expect(PROTOCOL_VERSION).toBe(35);
+describe('PROTOCOL_VERSION (L63-03)', () => {
+  it('is 36 after public drawBust', () => {
+    expect(PROTOCOL_VERSION).toBe(36);
   });
 
-  it('names rematch and Lot 58 client messages', () => {
-    expect(SET_READY).toBe('setReady');
-    expect(KICK_PLAYER).toBe('kickPlayer');
-    expect(PLAY_AGAIN).toBe('playAgain');
-    expect(CLAIM_SEAT).toBe('claimSeat');
-    expect(STAY_SPECTATING).toBe('staySpectating');
-    expect(BUY_POOL_CARD).toBe('buyPoolCard');
-    expect(CLEAR_SPY).toBe('clearSpy');
-  });
-
-  it('requires recap match totals on GameRecapPlayerView (L60-02)', () => {
-    const row: GameRecapPlayerView = {
-      playerId: 'a',
-      cardsPlayedCount: 0,
-      buyCount: 0,
-      sellCount: 0,
-      upgradeCount: 0,
-      isBot: false,
-      livesLost: 0,
-      livesGained: 0,
-      pointsSpent: 0,
-      pointsGained: 0,
-      upgradePointsSpent: 0,
-      specialsPlayedCount: 0,
-      buyCardCount: 0,
-      sellCardCount: 0,
-      drawCount: 0,
-      attacksPlayedCount: 0,
-      damageDealt: 0,
-      kills: 0,
-      thinkTimeMs: 0,
+  it('allows optional drawBust on actionPlayed log entries', () => {
+    const bust: ActionPlayedLogEntry = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 1,
+      drawBust: true,
+    };
+    const safe: ActionPlayedLogEntry = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 2,
     };
 
-    expect(row.kills).toBe(0);
-    expect(row.kitId).toBeUndefined();
+    expect(bust.drawBust).toBe(true);
+    expect(safe.drawBust).toBeUndefined();
+  });
+
+  it('allows optional drawBust on ACTION_PLAYED payloads', () => {
+    const bust: ActionPlayedPayload = {
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 1,
+      drawBust: true,
+    };
+    const safe: ActionPlayedPayload = {
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 2,
+    };
+
+    expect(bust.drawBust).toBe(true);
+    expect(safe.drawBust).toBeUndefined();
   });
 });

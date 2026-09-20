@@ -45,6 +45,7 @@ const KIT_FILES = {
   juggernaut: 'Juggernaut.png',
   ghost: 'Ghost.png',
   duplicator: 'Duplicator.png',
+  gambler: 'Gambler.png',
 } as const satisfies Record<KitId, string>;
 
 const CARD_FILES = {
@@ -127,9 +128,15 @@ const CARD_FILES = {
     activatedUpgraded: 'Poison + (activated).png',
   },
   'attack-thief': { base: 'Attack Thief.png', upgraded: 'Attack Thief +.png' },
+  factory: {
+    base: 'Factory.png',
+    upgraded: 'Factory +.png',
+    activatedBase: 'Factory (activated).png',
+    activatedUpgraded: 'Factory + (activated).png',
+  },
 } as const satisfies Record<CardId, CardArtFiles>;
 
-/** Every playable card id with shipped art (3 attack + 7 action + 20 special). */
+/** Every playable card id with shipped art (3 attack + 7 action + 21 special). */
 export const ALL_ART_CARD_IDS: readonly CardId[] = [
   ...ATTACK_CARD_IDS,
   ...ACTION_CARD_IDS,
@@ -145,6 +152,7 @@ const CARDS_WITH_ACTIVATED_ART = [
   'super-absorber',
   'curse',
   'poison',
+  'factory',
 ] as const satisfies readonly CardId[];
 
 const RESOURCE_FILES = {

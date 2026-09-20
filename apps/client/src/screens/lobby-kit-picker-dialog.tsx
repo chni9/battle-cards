@@ -161,7 +161,7 @@ function RandomKitDetails(): ReactElement {
   return (
     <div className="space-y-3 text-sm text-ink">
       <p>
-        The server assigns one of the 15 kits at random when the game starts, the same way as
+        The server assigns one of the 16 kits at random when the game starts, the same way as
         before this picker existed.
       </p>
       <p className="text-ink-muted">

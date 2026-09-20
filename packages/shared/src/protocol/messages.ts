@@ -101,17 +101,65 @@ export interface PublicAttackPlay {
   isUpgraded: boolean;
 }
 
-export interface ActionPlayedPayload {
-  actorPlayerId: string;
-  action: PublicActionKind;
+/**
+ * Optional public fields on `actionPlayed`. Room, simulator, and the four-bot
+ * harness copy through `toActionPlayedPayload` so a new tell cannot be dropped
+ * on one path (L63-03 / PR #45 Bugbot).
+ */
+export interface ActionPlayedOptionalPublicFields {
   cardId?: CardId;
   isUpgraded?: boolean;
   targetPlayerId?: string;
   /** Present when action is `playMultipleAttacks` (Assassin). */
   attacks?: readonly PublicAttackPlay[];
+  /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
+  drawBust?: true;
+}
+
+export interface ActionPlayedPayload extends ActionPlayedOptionalPublicFields {
+  actorPlayerId: string;
+  action: PublicActionKind;
   turnSequence: number;
   /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
   botReason?: BotDecisionReason;
+}
+
+/**
+ * Copy optional public `actionPlayed` fields. Conditional spreads keep
+ * `exactOptionalPropertyTypes` honest — never emit `undefined` keys.
+ */
+export function actionPlayedPublicFields(source: ActionPlayedOptionalPublicFields): {
+  cardId?: CardId;
+  isUpgraded?: boolean;
+  targetPlayerId?: string;
+  attacks?: readonly PublicAttackPlay[];
+  drawBust?: true;
+} {
+  return {
+    ...(source.cardId !== undefined ? { cardId: source.cardId } : {}),
+    ...(source.isUpgraded !== undefined ? { isUpgraded: source.isUpgraded } : {}),
+    ...(source.targetPlayerId !== undefined
+      ? { targetPlayerId: source.targetPlayerId }
+      : {}),
+    ...(source.attacks !== undefined ? { attacks: source.attacks } : {}),
+    ...(source.drawBust === true ? { drawBust: true as const } : {}),
+  };
+}
+
+/** Wire payload for `ACTION_PLAYED` and the stored `actionPlayed` log row. */
+export function toActionPlayedPayload(
+  played: {
+    actorPlayerId: string;
+    action: PublicActionKind;
+    turnSequence: number;
+  } & ActionPlayedOptionalPublicFields,
+): ActionPlayedPayload {
+  return {
+    actorPlayerId: played.actorPlayerId,
+    action: played.action,
+    turnSequence: played.turnSequence,
+    ...actionPlayedPublicFields(played),
+  };
 }
 
 export interface ActionResolvedPayload {

@@ -3658,3 +3658,78 @@ devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 The Gambler kit + Factory
+
+Designer session: add Classic kit `gambler` (The Gambler) and circulating
+special `factory`. God / Team / Quick stay out; this is a 16th Classic kit,
+not the God role. Rule + value change (golden rule 7 exception).
+
+Locked:
+
+- Start: 1 life, 0 points, 0 upgrade points, draw 10, 0 action, 0 attack,
+  5 random circulating specials excluding Factory, then one Factory.
+- Draw risk: only the Draw turn action. `rng.nextInt(10) === 0` instantly
+  eliminates at any life total and grants no points. Public `drawBust` on
+  the played-action log. No eliminator reward. Invisibility ticks do not
+  roll. Seeded RNG.
+- Factory: persistent, play cost 10, 2 card-lives (`applyDamage` only).
+  Owner-turn tick including activation. Base 80/20 uniform among 10 shared
+  cards vs circulating specials except Factory. Upgraded: 70/30 and an
+  independent 30% that the granted copy is upgraded.
+- Factory circulates (shop / Prophet / Transformer). Deal path may mix
+  `randomStartingSpecialCount` and `specialCards` (random first, then
+  append; random pool excludes guaranteed ids).
+- Art is test placeholders until design lands.
+- `PROTOCOL_VERSION` 35 → 36 in L63-03 for public `drawBust` (V6 bump
+  exception, same class as L56–L60).
+
+10% bust: first action is always Draw (no affordable special at 0 points).
+Tactician's safe draw 4 is the 1-life comparison; instant elim at 25 lives
+needs a low rate. Retune after playtest; ship 1-in-10.
+
+---
+
+## 2026-09-20 · [P] Gambler name + Factory burn skip
+
+Designer follow-up on Lot 63, same day:
+
+- Display name is **Gambler**, not "The Gambler" (`KIT_CATALOG.gambler.name`).
+- Engage overlay (`farm-to-engage-v4`): Factory is a selfish counter like
+  Points Generator and Super Absorber — skip burning it unless 1v1 /
+  attacker / finishable / known points ≥ 10. Imposition / Poison still burn.
+  Easy stays `heuristic-v4` (same as L54-04). No new weight; freeze unchanged.
+
+---
+
+## 2026-09-20 · [P] Gambler / Factory test-art placeholders
+
+Designer: do not reuse other cards' PNGs as placeholders. Gambler portrait and
+the four Factory faces (base, upgraded, activated, activated-upgraded) are
+white fields with the word **Test** until real art lands.
+
+---
+
+## 2026-09-20 · [P] Publish Draw-bust on ACTION_PLAYED
+
+Bugbot on PR #45 (`d81f790b`): engine `ActionPlayedEvent.drawBust` and
+`ActionPlayedLogEntry.drawBust` existed, but `ActionPlayedPayload` omitted the
+field and three copy sites dropped it — room `applyTurnResult`, simulator
+`appendLog`, four-bot harness. Table always showed a normal Draw; kit posterior
+never collapsed on the public tell.
+
+Fix: `toActionPlayedPayload` / `actionPlayedPublicFields` in shared protocol.
+PROTOCOL_VERSION stays 36 (the bump already documented the tell). Opaque
+Duplicator `draw` still must not copy `drawBust`.
+
+---
+
+## 2026-09-20 · [P] What’s new New additions (Gambler / Factory)
+
+`RELEASE_NOTES` (`packages/shared/src/release-notes.ts`) is the hub What’s new
+catalog. Each entry has `additions` (heading **New**: kits and new cards) and
+before/after `items` (nerfs). Lot 63 additions: Gambler kit, Factory special.
+Compact green **New** + red unread tick; auto-open this catalog id. Update the
+latest entry in the same commit as player-visible work. No protocol bump.
+
+---
+
