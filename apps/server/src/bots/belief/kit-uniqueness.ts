@@ -3,10 +3,10 @@
  * (technical spec v5 §4.2 / L34-02).
  *
  * Derived from `KIT_CATALOG`, with two hard rules that live in this module:
- * - Prophet is **never** uniqueness-guaranteed from specials alone (#V4-27 random
- *   starting specials). Residual Prophet mass after a unique-owner special is
- *   expected; trait tells (multi-attack, immuneTo, alwaysUpgraded) can still
- *   zero Prophet.
+ * - Kits with `randomStartingSpecialCount` (Prophet, Gambler) are **never**
+ *   uniqueness-guaranteed from specials alone (#V4-27 / Lot 63). Residual mass
+ *   after a unique-owner special is expected; trait tells (multi-attack,
+ *   immuneTo, alwaysUpgraded, later draw-bust) can still zero them.
  * - A special in `specialCards` of more than one kit is not a uniqueness tell.
  *   Today that is `imposition` (Untouchable and Duplicator).
  *
@@ -37,7 +37,7 @@ function uniqueSpecialOwnerKitIds(): ReadonlySet<KitId> {
     }
 
     const owner = kits[0];
-    if (owner !== undefined && owner !== 'prophet') {
+    if (owner !== undefined && !isRandomStartingSpecialKit(owner)) {
       owners.add(owner);
     }
   }
@@ -100,13 +100,13 @@ const UNIQUENESS_SET: ReadonlySet<KitId> = (() => {
   const ids = new Set<KitId>();
 
   for (const kitId of uniqueSpecialOwnerKitIds()) {
-    if (kitId !== 'prophet') {
+    if (!isRandomStartingSpecialKit(kitId)) {
       ids.add(kitId);
     }
   }
 
   for (const kitId of uniqueTraitKitIds()) {
-    if (kitId !== 'prophet') {
+    if (!isRandomStartingSpecialKit(kitId)) {
       ids.add(kitId);
     }
   }
@@ -114,7 +114,11 @@ const UNIQUENESS_SET: ReadonlySet<KitId> = (() => {
   return ids;
 })();
 
-/** Classic kits with at least one unique public tell. Prophet is never included. */
+function isRandomStartingSpecialKit(kitId: KitId): boolean {
+  return (getKit(kitId).randomStartingSpecialCount ?? 0) > 0;
+}
+
+/** Classic kits with at least one unique public tell. Random-deal kits are never included. */
 export const UNIQUENESS_GUARANTEED_KIT_IDS: readonly KitId[] = KIT_IDS.filter((kitId) =>
   UNIQUENESS_SET.has(kitId),
 );

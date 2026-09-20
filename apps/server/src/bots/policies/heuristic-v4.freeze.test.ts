@@ -228,7 +228,7 @@ describe('heuristic-v4 freeze (L32-03)', () => {
     expect(getPolicy(HEURISTIC_V4_POLICY_ID).weightsHash).toBe(fixture.weightsHash);
   });
 
-  it('covers all 15 kits in the fixture', () => {
+  it('covers all 16 kits in the fixture', () => {
     expect(Object.keys(fixture.traces).sort()).toEqual([...KIT_IDS].sort());
   });
 

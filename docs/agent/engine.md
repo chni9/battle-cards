@@ -41,7 +41,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 |---|---|---|
 | Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
-| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`) | Never touches them |
+| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`, `factory`) | Never touches them |
 
 ```ts
 // apps/server/src/engine/life/{apply-damage,apply-life-loss,gain-lives}.ts

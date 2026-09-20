@@ -31,11 +31,11 @@ const ALL_CARD_IDS: readonly CardId[] = [
 const DECLARED_CARD_IDS = new Set<string>(ALL_CARD_IDS);
 
 describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
-  it('holds 3 shop attack + 7 action + 20 special ids', () => {
+  it('holds 3 shop attack + 7 action + 21 special ids', () => {
     expect(ATTACK_CARD_IDS).toHaveLength(3);
     expect(ACTION_CARD_IDS).toHaveLength(7);
-    expect(SPECIAL_CARD_IDS).toHaveLength(20);
-    expect(ALL_CARD_IDS).toHaveLength(30);
+    expect(SPECIAL_CARD_IDS).toHaveLength(21);
+    expect(ALL_CARD_IDS).toHaveLength(31);
   });
 
   it('keeps Card Transformer out of its own result pool (L50-08)', () => {
@@ -47,17 +47,17 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
 
   it('keeps Invisibility in circulating pools (L58-06)', () => {
     expect(SPECIAL_CARD_IDS).toContain('invisibility');
-    expect(CIRCULATING_SPECIAL_CARD_IDS).toHaveLength(20);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toHaveLength(21);
     expect(CIRCULATING_SPECIAL_CARD_IDS).toContain('invisibility');
     expect(PURCHASABLE_SPECIAL_CARD_IDS).toEqual(CIRCULATING_SPECIAL_CARD_IDS);
-    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(19);
+    expect(TRANSFORM_RESULT_SPECIAL_IDS).toHaveLength(20);
     expect(TRANSFORM_RESULT_SPECIAL_IDS).toContain('invisibility');
     expect(TEMPORARILY_UNAVAILABLE_SPECIAL_CARD_IDS).toEqual([]);
   });
 
-  it('treats only the four spec §5 counters as card lives (L58-06)', () => {
+  it('treats spec §5 counters as card lives (L58-06 / L63-01)', () => {
     expect([...CARD_LIVES_SPECIAL_IDS].sort()).toEqual(
-      ['imposition', 'points-generator', 'poison', 'super-absorber'].sort(),
+      ['factory', 'imposition', 'points-generator', 'poison', 'super-absorber'].sort(),
     );
   });
 
@@ -129,14 +129,15 @@ describe('content scope — kits (technical spec v4 §10.5 / L28-03)', () => {
    * V4 closed kit count is 15 (Lots 27–28). Exhaustive over KIT_IDS / KIT_CATALOG;
    * client KIT_FILES is asserted in asset-lookup.test.ts (Lot 30 art gate).
    */
-  it('ships exactly 15 kits including Ghost and Duplicator', () => {
+  it('ships exactly 16 kits including Ghost, Duplicator and Gambler', () => {
     expect(KIT_IDS).toContain('ghost');
     expect(KIT_IDS).toContain('duplicator');
+    expect(KIT_IDS).toContain('gambler');
     expect(KIT_IDS).toContain('upgrader');
     expect(KIT_IDS).toContain('tactician');
     expect(KIT_IDS).toContain('prophet');
     expect(KIT_IDS).toContain('warrior');
-    expect(KIT_IDS).toHaveLength(15);
-    expect(Object.keys(KIT_CATALOG)).toHaveLength(15);
+    expect(KIT_IDS).toHaveLength(16);
+    expect(Object.keys(KIT_CATALOG)).toHaveLength(16);
   });
 });

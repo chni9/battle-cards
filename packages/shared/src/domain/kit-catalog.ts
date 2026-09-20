@@ -5,6 +5,10 @@
  * (backlog Lot 27 sequencing).
  */
 
+import {
+  CIRCULATING_SPECIAL_CARD_IDS,
+  type SpecialCardId,
+} from './card';
 import type { Kit, KitId } from './kit';
 import { KIT_IDS } from './kit';
 
@@ -194,7 +198,33 @@ export const KIT_CATALOG = {
     specialCards: ['imposition', 'attack-thief'],
     traits: { ...EMPTY_TRAITS },
   },
+  gambler: {
+    id: 'gambler',
+    name: 'The Gambler',
+    startingResources: { lives: 1, points: 0, upgradePoints: 0, draw: 10 },
+    startingCardCounts: { action: 0, attack: 0 },
+    specialCards: ['factory'],
+    randomStartingSpecialCount: 5,
+    traits: {
+      ...EMPTY_TRAITS,
+      drawBustDenominator: 10,
+    },
+  },
 } as const satisfies Record<KitId, Kit>;
+
+/**
+ * Seeded random-start pool: circulating specials minus this kit's guaranteed
+ * `specialCards` (Gambler never rolls a second Factory in the random five).
+ * Prophet's empty list uses the full circulating pool.
+ */
+export function randomStartingSpecialPool(kit: Kit): readonly SpecialCardId[] {
+  if (kit.specialCards.length === 0) {
+    return CIRCULATING_SPECIAL_CARD_IDS;
+  }
+
+  const exclude = new Set<string>(kit.specialCards);
+  return CIRCULATING_SPECIAL_CARD_IDS.filter((id) => !exclude.has(id));
+}
 
 export function getKit(kitId: KitId): Kit {
   return KIT_CATALOG[kitId];

@@ -154,8 +154,11 @@ describe('kit uniqueness table (L34-02)', () => {
     expect(isUniquenessGuaranteedKit('untouchable')).toBe(true);
     expect(isUniquenessGuaranteedKit('duplicator')).toBe(true);
     expect(isUniquenessGuaranteedKit('prophet')).toBe(false);
+    expect(isUniquenessGuaranteedKit('gambler')).toBe(false);
     expect(UNIQUENESS_GUARANTEED_KIT_IDS).not.toContain('prophet');
+    expect(UNIQUENESS_GUARANTEED_KIT_IDS).not.toContain('gambler');
     expect(UNIQUENESS_GUARANTEED_KIT_IDS).toHaveLength(14);
+    expect(kitsOwningSpecial('factory')).toEqual(['gambler']);
   });
 });
 
@@ -163,9 +166,10 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
   it('collapses to kamikaze after a unique suicide play', () => {
     const post = posterior([play('playCard', { cardId: 'suicide' })]);
     expect(sum(post)).toBeCloseTo(1, 10);
-    expect(post.kamikaze).toBeGreaterThan(0.9);
+    expect(post.kamikaze).toBeGreaterThan(0.8);
     expect(post.prophet).toBeGreaterThan(0);
-    expect(post.prophet).toBeLessThan(0.1);
+    expect(post.gambler).toBeGreaterThan(0);
+    expect(post.prophet).toBeLessThan(0.15);
     expect(post.assassin).toBe(0);
     expect(post.duplicator).toBe(0);
   });
@@ -199,11 +203,12 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
     expect(post.kamikaze).toBe(0);
   });
 
-  it('keeps kamikaze and prophet after a kamikaze special with no buySpecial', () => {
+  it('keeps kamikaze, prophet and gambler after a kamikaze special with no buySpecial', () => {
     const post = posterior([play('playCard', { cardId: 'suicide' })]);
     expect(post.kamikaze).toBeGreaterThan(0);
     expect(post.prophet).toBeGreaterThan(0);
-    expect(support(post).sort()).toEqual(['kamikaze', 'prophet']);
+    expect(post.gambler).toBeGreaterThan(0);
+    expect(support(post).sort()).toEqual(['gambler', 'kamikaze', 'prophet']);
   });
 
   it('assigns zero to kamikaze after an assassin multi-attack tell', () => {
@@ -235,9 +240,9 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
 
   it('does not zero kits on immune for a card no kit lists in immuneTo', () => {
     const post = posterior([resolved({ cardId: 'basic-attack', outcome: 'immune' })]);
-    expect(post.kamikaze).toBeCloseTo(1 / 15, 10);
-    expect(post.untouchable).toBeCloseTo(1 / 15, 10);
-    expect(support(post)).toHaveLength(15);
+    expect(post.kamikaze).toBeCloseTo(1 / 16, 10);
+    expect(post.untouchable).toBeCloseTo(1 / 16, 10);
+    expect(support(post)).toHaveLength(16);
   });
 
   it('zeros kits without alwaysUpgraded when an upgraded shop attack is free', () => {
@@ -253,8 +258,8 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
       play('upgradeCard', { cardId: 'basic-attack', turnSequence: 1 }),
       play('playCard', { cardId: 'basic-attack', isUpgraded: true, turnSequence: 2 }),
     ]);
-    expect(post.warrior).toBeCloseTo(1 / 15, 10);
-    expect(support(post)).toHaveLength(15);
+    expect(post.warrior).toBeCloseTo(1 / 16, 10);
+    expect(support(post)).toHaveLength(16);
   });
 
   it('sampleKit draws only from positive-mass kits', () => {

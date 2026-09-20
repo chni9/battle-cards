@@ -56,7 +56,7 @@ rules above are unchanged — this section only covers how the client looks.
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
   (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG, mid-game `alwaysUpgraded` test. No engine
   change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` locks
-  `KIT_IDS.length === 15` with exhaustive catalog keys; client `KIT_FILES` is asserted in
+  `KIT_IDS.length === 16` with exhaustive catalog keys; client `KIT_FILES` is asserted in
   `asset-lookup.test.ts`. Inspect dialog already renders `alwaysUpgraded` / `specialCards`;
   only duplicate specials need a `${cardId}:${index}` React key (L27-05). New `KitTraits`
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
@@ -160,7 +160,7 @@ rules above are unchanged — this section only covers how the client looks.
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
-  **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
+  **Your kit** (self portrait or Random) + Choose kit Dialog (all 16 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
   Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the

@@ -15,6 +15,7 @@ export const KIT_TRAIT_SECTION_KEYS = [
   'allowsMultipleAttacksPerTurn',
   'upgradePointBuyCost',
   'upgradePointSellYield',
+  'drawBustDenominator',
 ] as const satisfies readonly (keyof KitTraits)[];
 
 /** Kit-id abilities that are not `KitTraits` fields (Ghost, Duplicator, …). */
@@ -25,4 +26,6 @@ export const KIT_ABILITY_COPY: Partial<Record<KitId, string>> = {
     "Instead of a normal action, activate duplication for the following table round: copy opponents' life, point, and upgrade-point gains (not shield, not Cloning's resource copy). Renew each turn. Two Duplicators do not loop.",
   prophet:
     'Starts with 2 special cards drawn at random from the circulating special pool (Invisibility excluded; duplicates allowed).',
+  gambler:
+    'Draw 10 points. Each Draw has a 1-in-10 chance to instantly eliminate you at any life total; a bust grants no points. Starts with 5 random specials (never Factory) plus Factory.',
 };

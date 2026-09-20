@@ -66,6 +66,9 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     modules (General, Volume, Gameplay, Economy, Combat, Hidden tools, Bots
     and seats, Endings, Retention and feedback). Action-log frequencies;
     `think_time_ms` persist. No protocol bump.
+21. **The Gambler + Factory (Lot 63).** Designer 2026-09-20. Classic 16th kit
+    and circulating Factory special. Draw 10 with 1-in-10 instant-elim bust.
+    `PROTOCOL_VERSION` **35 → 36** (exception, same class as L49 / L56–L60).
 
 
 **Execution order**
@@ -88,17 +91,20 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
   assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, later superseded
-  by Lot 58), and designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
-  PG 3/6, Unspy 10). Tutorial-only exceptions remain spec §5.3–§5.4.
+  by Lot 58), designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
+  PG 3/6, Unspy 10), and designer 2026-09-20 Lot 63 (The Gambler + Factory).
+  Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.
 - **No Team / God / Quick. No accounts. No French UI. No screenshot uploads.**
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
   exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**,
-  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, and **L60-02 (34 → 35)**.
+  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, and
+  **L63-03 (35 → 36)**.
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed for
-  catalog-price affordability (L54-01) and for Lot 58's new legal actions (L58-08);
-  keep `weightsHash` unless a new weight constant is unavoidable.
+  catalog-price affordability (L54-01), Lot 58's new legal actions (L58-08), and
+  Lot 63 roster/pool growth (L63-04); keep `weightsHash` unless a new weight
+  constant is unavoidable.
 
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).
@@ -109,11 +115,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 ## Progress
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
-Lot 61). Lot 62 opened 2026-09-18: **131 of 134** tasks done.
+Lot 61). Lot 62 is done (134 of 134). Lot 63 opened 2026-09-20: **1 of 4**
+tasks done.
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
-2026-09-16. Lot 62 opened 2026-09-18.
+2026-09-16. Lot 62 opened 2026-09-18. Lot 63 opened 2026-09-20.
 
 
 | Lot | Tasks | Done |
@@ -140,6 +147,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
+| 63 · The Gambler + Factory | 4 | 1 |
 
 
 ---
@@ -505,6 +513,20 @@ action-log card frequencies that Lot 61 left out.
 
 ---
 
+## Lot 63 — The Gambler kit + Factory (designer 2026-09-20)
+
+Classic 16th kit and circulating Factory special. Draw 10 with a 1-in-10
+instant-elimination bust. Placeholder art. `PROTOCOL_VERSION` 35 → 36.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Gambler + Factory; kit/card ids, catalogs, mixed `dealStartingLoadout`, content-scope 16/21; Factory pending in the registry. **Acceptance:** Gambler starts with 5 random specials none of which are Factory plus Factory; Prophet can still roll Factory; `pnpm verify` green aside from freeze traces refreshed in L63-04. | L | **High** | — | Done |
+| L63-02 | Draw bust (1-in-10, `lives = 0`, no points) + Factory handler, card-lives, persistent tick 80/20 and upgraded 70/30 + 30% upgraded grant. **Acceptance:** tests lock bust, safe draw 10, Factory same-turn grant, Tax vs damage counters; `pnpm verify` green. | L | **High** | L63-01 | To do |
+| L63-03 | `PROTOCOL_VERSION` 35 → 36; public `drawBust` on `actionPlayed`; inspect/lobby copy; placeholder kit + Factory art including activated. **Acceptance:** table log shows a bust; older clients fail the version gate; `pnpm verify` green. | M | Medium | L63-02 | To do |
+| L63-04 | Belief posterior/uniqueness for random-deal Gambler + Factory scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Factory play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -531,7 +553,8 @@ action-log card frequencies that Lot 61 left out.
 | 60 | 5 |
 | 61 | 10 |
 | 62 | 7 |
-| **Total** | **134** |
+| 63 | 4 |
+| **Total** | **138** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
 

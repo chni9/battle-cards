@@ -681,6 +681,47 @@
           "type": "activateDuplication"
         }
       }
+    ],
+    "gambler": [
+      {
+        "turnSequence": 1,
+        "action": {
+          "type": "draw"
+        }
+      },
+      {
+        "turnSequence": 3,
+        "action": {
+          "type": "buyUpgradePoint"
+        }
+      },
+      {
+        "turnSequence": 5,
+        "action": {
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:special:3"
+        }
+      },
+      {
+        "turnSequence": 7,
+        "action": {
+          "type": "draw"
+        }
+      },
+      {
+        "turnSequence": 9,
+        "action": {
+          "type": "playCard",
+          "instanceId": "bot-0:start:special:1"
+        }
+      },
+      {
+        "turnSequence": 11,
+        "action": {
+          "type": "buyCard",
+          "cardId": "spy"
+        }
+      }
     ]
   }
 }

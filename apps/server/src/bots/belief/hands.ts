@@ -130,7 +130,7 @@ function sizesFromCards(
 
 function startingSpecialCount(kitId: KitId): number {
   const kit = getKit(kitId);
-  return kit.randomStartingSpecialCount ?? kit.specialCards.length;
+  return (kit.randomStartingSpecialCount ?? 0) + kit.specialCards.length;
 }
 
 function resetToKitStart(

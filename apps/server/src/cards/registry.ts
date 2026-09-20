@@ -78,7 +78,7 @@ export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
 
 type PendingCardId = Exclude<CardId, ImplementedCardId>;
 
-export const PENDING_CARD_IDS = [] as const satisfies readonly PendingCardId[];
+export const PENDING_CARD_IDS = ['factory'] as const satisfies readonly PendingCardId[];
 
 export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   'basic-attack': basicAttackHandler,

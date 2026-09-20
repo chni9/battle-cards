@@ -3658,3 +3658,34 @@ devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 The Gambler kit + Factory
+
+Designer session: add Classic kit `gambler` (The Gambler) and circulating
+special `factory`. God / Team / Quick stay out; this is a 16th Classic kit,
+not the God role. Rule + value change (golden rule 7 exception).
+
+Locked:
+
+- Start: 1 life, 0 points, 0 upgrade points, draw 10, 0 action, 0 attack,
+  5 random circulating specials excluding Factory, then one Factory.
+- Draw risk: only the Draw turn action. `rng.nextInt(10) === 0` instantly
+  eliminates at any life total and grants no points. Public `drawBust` on
+  the played-action log. No eliminator reward. Invisibility ticks do not
+  roll. Seeded RNG.
+- Factory: persistent, play cost 10, 2 card-lives (`applyDamage` only).
+  Owner-turn tick including activation. Base 80/20 uniform among 10 shared
+  cards vs circulating specials except Factory. Upgraded: 70/30 and an
+  independent 30% that the granted copy is upgraded.
+- Factory circulates (shop / Prophet / Transformer). Deal path may mix
+  `randomStartingSpecialCount` and `specialCards` (random first, then
+  append; random pool excludes guaranteed ids).
+- Art is test placeholders until design lands.
+- `PROTOCOL_VERSION` 35 → 36 in L63-03 for public `drawBust` (V6 bump
+  exception, same class as L56–L60).
+
+10% bust: first action is always Draw (no affordable special at 0 points).
+Tactician's safe draw 4 is the 1-life comparison; instant elim at 25 lives
+needs a low rate. Retune after playtest; ship 1-in-10.
+
+---
+

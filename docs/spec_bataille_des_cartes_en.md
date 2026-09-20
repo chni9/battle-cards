@@ -34,7 +34,7 @@ A card that inflicts a direct effect on an opponent — meaning it alters their 
 
 ### Kits
 
-Each kit corresponds to a unique card. 15 kits currently exist: 14 finalized and the Duplicator, in testing. In the lobby, each player may choose a kit (or keep Random). The choice stays hidden from opponents. Seats that stay on Random receive a kit drawn at random at the start of the game. Duplicate kits across seats are allowed.
+Each kit corresponds to a unique card. 16 kits currently exist: 15 finalized and the Duplicator, in testing. In the lobby, each player may choose a kit (or keep Random). The choice stays hidden from opponents. Seats that stay on Random receive a kit drawn at random at the start of the game. Duplicate kits across seats are allowed.
 
 ### Number of Players
 
@@ -118,6 +118,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Wizard | 10 | 4 | 0 | 2 | 4 | 2 | Thief already upgraded | MEGA ATTACK |
 | Juggernaut | 14 | 4 | 1 | 1 | 4 | 2 | Shield already upgraded | Super Mirror |
 | Duplicator (in testing) | 2 | 0 | 0 | 1 | 1 | 0 | Activatable duplication — see detail below | Imposition, Attack Thief |
+| The Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Factory) plus Factory |
 
 ### Duplicator — Ability Detail
 
@@ -128,6 +129,13 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - If they take another action on their turn instead of activating duplication, no gain is duplicated during the interval that follows — activation is not permanent, it must be renewed on every Duplicator turn to stay active.
 - If several players have the Duplicator kit in the same game, they exclude each other for gains obtained through their own duplication power (no loop): only a Duplicator's active gains (obtained directly through their own actions, not those received through duplication) are duplicated by another Duplicator.
 
+### The Gambler — Ability Detail
+
+- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **5** random special cards drawn from the circulating pool excluding Factory (duplicates allowed), and **Factory**.
+- The Draw action grants **10** points.
+- Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The roll uses the injected seeded generator. Invisibility's passive point ticks do not roll.
+- Factory is otherwise a normal circulating special (shop, Prophet, Card Transformer).
+
 ## 5. Special Cards
 
 ### General Rules
@@ -135,7 +143,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
-- Four cards (Points Generator, Poison, Super Absorber, Imposition) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2.
+- Five cards (Points Generator, Poison, Super Absorber, Imposition, Factory) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Factory 2.
 
 ### Card List
 
@@ -222,6 +230,10 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.
 - Upgrade: steals all attack cards from all opponents.
 
+**Factory** — Price: 10 points
+- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random card: 80% a shared attack or action card (uniform among the 10 shop types), 20% a circulating special other than Factory. 2 card lives.
+- Upgrade: still one card per turn; 70% attack or action / 30% special (never Factory); independent 30% chance the granted copy is already upgraded.
+
 ## 6. Game Flow and Resolution
 
 ### Setup
@@ -239,7 +251,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 ### Game Turn
 
 - A player can only take one action per turn, whether a classic action (drawing, playing/selling/buying a card, buying an upgrade point, buying a random pool card, Unspy) or using a special card — no exception, except an explicit override from a kit or a card (e.g. Assassin, Block).
-- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name.
+- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. The Gambler's Draw instead rolls a 1-in-10 instant elimination (section 4); a bust grants no points.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
 - Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
@@ -255,7 +267,7 @@ An attack redirected by Mirror remains a fully pending attack: if the player it 
 - An eliminated player loses all their lives. They become a spectator; all their unclaimed cards join the shared pool (section 1).
 - The eliminator chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's cards (including their unused special cards), or an upgrade point. Both choices can be identical (e.g. "4 lives" twice).
 - When a single effect eliminates several players at once, the eliminator receives two rewards per eliminated player, cumulative.
-- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, their own non-upgraded Suicide — generates no reward for anyone.
+- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, their own non-upgraded Suicide, or the Gambler's Draw bust — generates no reward for anyone.
 - *Case of several simultaneous eliminators: the reward goes to whoever has the fewest lives remaining among the eliminators. In case of a tie, whoever has the fewest points. In case of another tie, a random draw among the tied eliminators.*
 
 ## 7. Game Modes
