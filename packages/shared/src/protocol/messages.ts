@@ -162,6 +162,23 @@ export function toActionPlayedPayload(
   };
 }
 
+/**
+ * Public `buyPoolCard` never names the recovered card (designer 2026-09-20).
+ * Engine `actionPlayed` and Excel `exportLog` keep `cardId`.
+ */
+export function toPublicBuyPoolCardPlayed(source: {
+  actorPlayerId: string;
+  turnSequence: number;
+  botReason?: BotDecisionReason;
+}): ActionPlayedPayload {
+  return {
+    actorPlayerId: source.actorPlayerId,
+    action: 'buyPoolCard',
+    turnSequence: source.turnSequence,
+    ...(source.botReason !== undefined ? { botReason: source.botReason } : {}),
+  };
+}
+
 export interface ActionResolvedPayload {
   effectId: string;
   sourcePlayerId: string;

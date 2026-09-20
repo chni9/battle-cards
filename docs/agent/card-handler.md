@@ -173,7 +173,8 @@ Invisibility's remaining-turn `counter` is not card-lives (L58-06).
 **Lot 24:** Card Absorber recovers from `state.pool` via `takeFromPool` +
 `transferCardInstance` (base: rng up to 4; upgraded: `pool-pick` on `GameState.subChoice`).
 Lot 58 `buyPoolCard` uses the same recover path for **one** uniform-random instance; Absorber
-does **not** double `poolBuyCost`.
+does **not** double `poolBuyCost`. Public log / live `ACTION_PLAYED` omit the recovered
+card (designer 2026-09-20); Excel `exportLog` keeps it.
 Card Transformer consumes a hand `SHARED_CARD_IDS` card via `consumeInstanceId`, pools it,
 and mints a special from `TRANSFORM_RESULT_SPECIAL_IDS` (never `card-transformer`:
 designer 2026-08-24 / L50-08; never a frozen id: L56-02). Base: rng; upgraded: `special-pick`. Shop 20-point

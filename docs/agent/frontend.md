@@ -222,7 +222,9 @@ rules above are unchanged — this section only covers how the client looks.
   exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
   (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
   stays readable). The public log is `{actor} got unspied from {spy}` — Unspy drops
-  **their** Spy on you, not yours on them. Shop Dialog (always openable — pool is
+  **their** Spy on you, not yours on them. Pool buy log is
+  `{actor} bought a card from the pool` — never the recovered card name
+  (designer 2026-09-20). Shop Dialog (always openable — pool is
   public off-turn) shows the **Upgrade points** title plus the upgrade-point icon
   (no current-count). Buy/Sell sit **below**: kit points `CostDisplay` via
   `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached, plus
@@ -339,7 +341,7 @@ rules above are unchanged — this section only covers how the client looks.
   `persistentDeactivated`) and Incoming/Waiting chips open the existing inspect
   Dialog (`Card` + `CardEffectCopy`). Synthetic `CardInstance`
   `inspect:{log|queue}:…` — catalog only. Sources `'log'` / `'queue'` omit the
-  Spy footer. Draw / buy / sell / upgrade / elim / rewards stay text (no
+  Spy footer. Draw / buy / sell / upgrade / pool buy / elim / rewards stay text (no
   `cardId` button). Nested inspect from the collapsed log Dialog closes that
   chrome (`dialog !== null` clears `chromeVisible`).
 - **Card lives under actives (L56-06):** `PersistentEffectView.counter` is already
@@ -1243,4 +1245,11 @@ Super Absorber before **New** Gambler + Factory. Solo nickname `NerfCheck`,
 Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 20,
 “After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
 tests.
+
+### Pool buy log identity (designer 2026-09-20)
+
+Lot 58’s gate recorded `bought Mirror + from the pool`. That recovered-card
+tell is a regression: public log and live `ACTION_PLAYED` must stay
+`{actor} bought a card from the pool`. Excel `exportLog` still stores
+`cardId`. No protocol bump (optional field omitted).
 

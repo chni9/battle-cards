@@ -32,6 +32,7 @@ import {
   GAME_OVER,
   isBotDifficulty,
   toActionPlayedPayload,
+  toPublicBuyPoolCardPlayed,
   SUB_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAY_MULTIPLE_ATTACKS,
@@ -1960,6 +1961,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
         // Spy-gated live event (designer 2026-08-06) — real to actor + spies;
         // opaque `draw` to everyone else so the turn still surfaces.
         this.sendActivateDuplicationPlayed(played);
+      } else if (played.action === 'buyPoolCard') {
+        // Recovered card is not public (designer 2026-09-20). Store full
+        // identity on the server log for Excel; live event matches the view.
+        this.broadcast(ACTION_PLAYED, toPublicBuyPoolCardPlayed(played));
       } else {
         this.broadcast(ACTION_PLAYED, played);
       }

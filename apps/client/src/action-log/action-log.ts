@@ -135,13 +135,7 @@ function formatPlayedActionSegments(
     case 'buySpecialCard':
       return [actor, text(' bought a special card')];
     case 'buyPoolCard':
-      return [
-        actor,
-        text(' bought '),
-        ...(entry.cardId !== undefined
-          ? [cardName(entry.cardId, entry.isUpgraded ?? false), text(' from the pool')]
-          : [text('a card from the pool')]),
-      ];
+      return [actor, text(' bought a card from the pool')];
     case 'clearSpy':
       return [
         actor,

@@ -123,14 +123,15 @@ describe('accountOpponentHandSizes (L34-04)', () => {
     expect(sizes.actionCount).toEqual({ lo: 7, hi: 7 });
   });
 
-  it('adds the recovered pool card after buyPoolCard (L58-05)', () => {
+  it('widens hand intervals after an opaque buyPoolCard', () => {
     const log: ActionLogEntryView[] = [
-      play('buyPoolCard', { cardId: 'basic-attack' }),
+      play('buyPoolCard'),
       play('buyPoolCard', { cardId: 'poison', isUpgraded: false, turnSequence: 2 }),
     ];
     const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', view(), log);
-    expect(sizes.attackCount).toEqual({ lo: 3, hi: 3 });
-    expect(sizes.specialCount).toEqual({ lo: 2, hi: 2 });
+    expect(intervalWidth(sizes.actionCount)).toBeGreaterThan(0);
+    expect(intervalWidth(sizes.attackCount)).toBeGreaterThan(0);
+    expect(intervalWidth(sizes.specialCount)).toBeGreaterThan(0);
   });
 
   it('decrements special count after playCard suicide', () => {
@@ -215,25 +216,5 @@ describe('sampleOpponentHandAndSpecials (L34-04)', () => {
     expect(attackHeld).toBeLessThanOrEqual(sizes.attackCount.hi);
     expect(sampled.specialCards.length).toBeGreaterThanOrEqual(sizes.specialCount.lo);
     expect(sampled.specialCards.length).toBeLessThanOrEqual(sizes.specialCount.hi);
-  });
-
-  it('prefers the public pool-recovered card in the sampled hand (L58-05)', () => {
-    const log: ActionLogEntryView[] = [
-      play('buyPoolCard', { cardId: 'basic-attack' }),
-      play('buyPoolCard', { cardId: 'poison', isUpgraded: false, turnSequence: 2 }),
-    ];
-    const playing = view();
-    const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', playing, log);
-    const sampled = sampleOpponentHandAndSpecials({
-      opponentPlayerId: OPP_ID,
-      kitId: 'kamikaze',
-      view: playing,
-      log,
-      sizes,
-      prior: uniformZonePrior,
-      rng: createRng('l58-05-pool-hand'),
-    });
-    expect(sampled.hand.some((card) => card.cardId === 'basic-attack')).toBe(true);
-    expect(sampled.specialCards.some((card) => card.cardId === 'poison')).toBe(true);
   });
 });

@@ -944,6 +944,49 @@ describe('buildPlayingViewFor — eliminated spectator (designer 2026-08-06)', (
   });
 });
 
+describe('buildPlayingViewFor — pool buy card privacy', () => {
+  it('omits buyPoolCard cardId for actor, spy, and others', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'pool-buy-log-privacy',
+    });
+    grantSpy(state, 'b', 'a', 'full-resources');
+
+    const log = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: 'a',
+        action: 'buyPoolCard' as const,
+        cardId: 'mirror' as const,
+        isUpgraded: true,
+        turnSequence: 2,
+      },
+    ];
+
+    for (const recipient of ['a', 'b', 'c'] as const) {
+      const view = buildPlayingViewFor({
+        recipientSessionId: recipient,
+        gameCode: 'TEST',
+        state,
+        turnDeadlineMs: null,
+        actionLog: log,
+      });
+      expect(view.actionLog[0]).toEqual({
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'buyPoolCard',
+        turnSequence: 2,
+      });
+      expect(view.actionLog[0]).not.toHaveProperty('cardId');
+      expect(view.actionLog[0]).not.toHaveProperty('isUpgraded');
+    }
+  });
+});
+
 describe('buildPlayingViewFor (L41-03 / technical spec v6 §8)', () => {
   const seats = [
     { id: 'a', nickname: 'Alice' },

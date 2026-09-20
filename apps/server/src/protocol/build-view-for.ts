@@ -14,26 +14,27 @@
  * `GameState.pendingSentences` is public (PROTOCOL_VERSION 37).
  */
 
-import type {
-  ActionLogEntryView,
-  BotDifficulty,
-  ClaimableSeatView,
-  EliminationRevealView,
-  ExportTurnRowView,
-  FinishedStateView,
-  GameExportLogView,
-  GameRecapView,
-  GameState,
-  LobbyKitSelection,
-  LobbySeatView,
-  LobbyStateView,
-  PendingEffectView,
-  PersistentEffectView,
-  PlayKind,
-  PlayingStateView,
-  PrivateSelfView,
-  PublicPlayerView,
-  SpiedPlayerView,
+import {
+  toPublicBuyPoolCardPlayed,
+  type ActionLogEntryView,
+  type BotDifficulty,
+  type ClaimableSeatView,
+  type EliminationRevealView,
+  type ExportTurnRowView,
+  type FinishedStateView,
+  type GameExportLogView,
+  type GameRecapView,
+  type GameState,
+  type LobbyKitSelection,
+  type LobbySeatView,
+  type LobbyStateView,
+  type PendingEffectView,
+  type PersistentEffectView,
+  type PlayKind,
+  type PlayingStateView,
+  type PrivateSelfView,
+  type PublicPlayerView,
+  type SpiedPlayerView,
 } from '@card-battle/shared';
 
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
@@ -221,9 +222,10 @@ function buildSpiedView(
 }
 
 /**
- * Per-recipient action-log redaction (designer 2026-08-06):
+ * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20):
  * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
  * - `playerReanimated.kitId` omitted unless self, Spy, or eliminated spectator
+ * - `buyPoolCard` omits recovered `cardId` / `isUpgraded` for every recipient
  * Excel `exportLog` keeps the full server log.
  */
 function mapActionLogForRecipient(
@@ -250,6 +252,10 @@ function mapActionLogForRecipient(
       }
 
       return opaque;
+    }
+
+    if (entry.kind === 'actionPlayed' && entry.action === 'buyPoolCard') {
+      return { kind: 'actionPlayed', ...toPublicBuyPoolCardPlayed(entry) };
     }
 
     if (entry.kind === 'playerReanimated') {

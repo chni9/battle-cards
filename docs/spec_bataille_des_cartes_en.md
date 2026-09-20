@@ -246,7 +246,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Visibility
 
-Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, pool buys, and Unspy. The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A random pool buy is public only as that action — not the recovered card's identity. The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
 
 ### Game Turn
 

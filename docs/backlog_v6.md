@@ -93,7 +93,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
   assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, later superseded
   by Lot 58), designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
-  PG 3/6, Unspy 10), and designer 2026-09-20 Lot 63 (The Gambler + Factory).
+  PG 3/6, Unspy 10), designer 2026-09-20 Lot 63 (The Gambler + Factory), and
+  designer 2026-09-20 (pool-buy log omits recovered card).
   Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.

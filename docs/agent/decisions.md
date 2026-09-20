@@ -3748,3 +3748,19 @@ countdown. V6 bump exception, same class as L49 / L56–L60 / L63-03.
 
 ---
 
+## 2026-09-20 · [P] Pool buy log omits recovered card
+
+Designer: the card bought from the pool must not be public on the action log.
+Copy is `{actor} bought a card from the pool`. Supersedes L58-05 / 2026-09-15
+“Recovered `cardId` is public on `actionPlayed`”.
+
+Per-recipient `actionLog` and live `ACTION_PLAYED` omit `cardId` / `isUpgraded`
+for every recipient (including actor and Spy). Engine `actionPlayed` and Excel
+`exportLog` keep the identity. No protocol bump: the field was already
+optional. Belief treats an opaque pool buy as +1 unknown-zone card.
+
+The shared pool itself stays public (rules spec §1); this ruling is the log
+line, not pool fog.
+
+---
+

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   actionPlayedPublicFields,
   toActionPlayedPayload,
+  toPublicBuyPoolCardPlayed,
   type ActionPlayedPayload,
 } from './messages';
 
@@ -60,5 +61,24 @@ describe('toActionPlayedPayload (L63-03)', () => {
 
     expect(payload.drawBust).toBeUndefined();
     expect('drawBust' in payload).toBe(false);
+  });
+});
+
+describe('toPublicBuyPoolCardPlayed (designer 2026-09-20)', () => {
+  it('keeps the action kind and drops recovered-card fields', () => {
+    const payload = toPublicBuyPoolCardPlayed({
+      actorPlayerId: 'a',
+      turnSequence: 4,
+      botReason: { code: 'invest' },
+    });
+
+    expect(payload).toEqual({
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 4,
+      botReason: { code: 'invest' },
+    });
+    expect('cardId' in payload).toBe(false);
+    expect('isUpgraded' in payload).toBe(false);
   });
 });

@@ -108,6 +108,22 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
+  it('omits the recovered card name for a pool buy', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'mirror',
+          isUpgraded: true,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought a card from the pool');
+  });
+
   it('logs that the actor got unspied from the spy (L58-07)', () => {
     expect(
       formatActionLogEntry(

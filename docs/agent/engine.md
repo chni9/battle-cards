@@ -363,6 +363,9 @@ move the fee. `clearSpy` pays `CLEAR_SPY_COST` and `revokeSpy`s one living viewe
 subject is the actor (eliminated-spectator overlay is not a matrix row).
 `enumerationStateFromView` copies `poolBuyCost` and rebuilds incoming spy rows from
 `spyingOnYou` so §10.1 holds for the new actions.
+Designer 2026-09-20: recovered `cardId` is **not** public on `actionPlayed` /
+per-recipient `actionLog`. The log line is “bought a card from the pool”. Excel
+`exportLog` still stores the identity.
 
 ## What not to do
 

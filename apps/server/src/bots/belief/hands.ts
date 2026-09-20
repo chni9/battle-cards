@@ -204,10 +204,14 @@ function applyOpponentPlay(
 
   switch (entry.action) {
     case 'buyCard':
-    case 'buyPoolCard':
       if (cardId !== undefined) {
         applyZoneDelta(action, attack, special, cardId, 1);
       }
+      return;
+    case 'buyPoolCard':
+      // Recovered identity is not public (designer 2026-09-20). Ignore a leaked
+      // `cardId` the same way the per-recipient log does.
+      widenUnknownCard(action, attack, special, 0, 1);
       return;
     case 'sellCard':
       if (cardId !== undefined) {
@@ -513,7 +517,7 @@ function knownHeldSpecialIds(
     }
 
     if (
-      (entry.action === 'buySpecialCard' || entry.action === 'buyPoolCard') &&
+      entry.action === 'buySpecialCard' &&
       entry.cardId !== undefined &&
       isSpecialCardId(entry.cardId)
     ) {
@@ -546,7 +550,7 @@ function playedSharedIds(
     }
 
     if (
-      (entry.action === 'playCard' || entry.action === 'buyPoolCard') &&
+      entry.action === 'playCard' &&
       entry.cardId !== undefined &&
       zoneOf(entry.cardId) === zone
     ) {
