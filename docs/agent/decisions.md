@@ -3633,3 +3633,28 @@ from the designer's local clock. Naive query strings on the API are UTC.
 
 ---
 
+## 2026-09-20 · [T] Image build ignores Coolify NODE_ENV
+
+Promote `#36` (`c69d0c8`) failed on production Coolify (~38 min, helper exit
+255). Coolify warned `NODE_ENV=production` was Available at Buildtime. New
+Coolify vars default to both flags; with Inject Build Args on (default),
+Coolify splices `ARG NODE_ENV=production` after every `FROM`. Docker exports
+ARG into `RUN`, so `pnpm install --frozen-lockfile` in the compile stage would
+skip client `vite` (`apps/client/package.json` `devDependencies`).
+
+Locked (no rule or value change):
+
+- Coolify `NODE_ENV=production` is **runtime only** on staging, previews, and
+  production. Uncheck Available at Buildtime. `VITE_SERVER_URL` stays unset.
+  Production Preview Deployments stay off.
+- Dockerfile: shared `pnpm` stage (one corepack prepare); build stage
+  `ENV NODE_ENV=development` plus `NODE_ENV=development pnpm install`; `vite
+  build` runs with `NODE_ENV=production`. Runtime stage still
+  `NODE_ENV=production` and `pnpm install --prod`.
+
+The truncated production log never showed `vite: not found`; it died on
+`[build 3/10] corepack` with `#10 ...`. The image change still closes the
+devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
+
+---
+

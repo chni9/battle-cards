@@ -30,7 +30,11 @@ Postgres** — test games land in staging `/admin`.
 
 `NODE_ENV` stays `production` on staging, PR previews, and production. That flag
 means “run the production server path” (trust proxy, migrate-on-boot, SPA). It is
-not the Git branch name.
+not the Git branch name. Mark it **runtime only**: uncheck **Available at
+Buildtime** / **Build Variable**. Coolify defaults both flags on, injects
+`ARG NODE_ENV=production` after every `FROM`, and pnpm then skips client `vite`
+(a `devDependency`). The image build stage forces `NODE_ENV=development` for
+`pnpm install` so a leftover Buildtime checkbox cannot omit vite.
 
 ## What the repo already has
 
@@ -48,7 +52,7 @@ secrets there.
 |---|---|---|---|
 | `DATABASE_URL` | Staging Postgres Internal URL | **Same staging Internal URL** | Existing prod Postgres (do not copy) |
 | `INBOX_PASSWORD` | Staging secret (not prod) | **Same staging secret** | Existing prod secret |
-| `NODE_ENV` | `production` | `production` | `production` |
+| `NODE_ENV` | `production` (**runtime only**) | `production` (**runtime only**) | `production` (**runtime only**) |
 | `PORT` | Match **Ports Exposes** (`2567`) | `2567` | Same as today |
 | `STATIC_DIR` | Leave unset (image default) | Leave unset | Leave unset |
 | `VITE_SERVER_URL` | **Unset** (same-origin WebSocket) | **Unset** | **Unset** |
@@ -134,7 +138,7 @@ Safer: empty environment + new resources (this section).
 - HTTPS / Coolify proxy on. One domain, same origin for the SPA and the WebSocket.
 - DNS: the same A/AAAA (or CNAME) pattern as production, for this hostname only.
 
-**Environment Variables** → Developer view, runtime (not build-only):
+**Environment Variables** → Developer view, then Normal view to set flags:
 
 ```
 NODE_ENV=production
@@ -144,8 +148,10 @@ INBOX_PASSWORD=<new secret, not production>
 ```
 
 Leave `VITE_SERVER_URL` and `STATIC_DIR` out. Mark `DATABASE_URL` and
-`INBOX_PASSWORD` as secrets. Disable **Build Variable** on those two — they are
-runtime only (`docs/agent/db.md`; the Vite build must not bake a server URL).
+`INBOX_PASSWORD` as secrets. Disable **Build Variable** / **Available at
+Buildtime** on `NODE_ENV`, `DATABASE_URL`, and `INBOX_PASSWORD` — they are
+runtime only (`docs/agent/db.md`; the Vite build must not bake a server URL;
+`NODE_ENV=production` at build time skips `vite`).
 
 **Network**
 
@@ -185,9 +191,23 @@ On the **production** environment tab, the existing app must still show:
 - The original domain
 - The original `DATABASE_URL` / `INBOX_PASSWORD`
 - **Preview Deployments** **off**
+- `NODE_ENV=production` **runtime only** (uncheck **Available at Buildtime**)
+- `VITE_SERVER_URL` **unset**
 
-Do not click **Deploy** on production as part of this setup. Do not enable
+Do not click **Deploy** on production as part of staging setup. Do not enable
 previews on production.
+
+**Production `NODE_ENV` clicks** (`yassine.boldys.ai`, branch `main`):
+
+1. `https://coolify.boldys.ai` → Card Battle project → **production** tab →
+   the production **application** (not Postgres).
+2. **Configuration → Environment Variables** → **Normal** view → `NODE_ENV`.
+3. Value stays `production`. **Runtime Variable** on. **Available at
+   Buildtime** / **Build Variable** **off**. Save.
+4. Confirm `VITE_SERVER_URL` is absent. **Configuration → Advanced →
+   Deployment** → **Preview Deployments** **off**.
+5. Next production image comes from promoting `dev` → `main`. Redeploy only
+   after that merge (or a deliberate retry of `main` with **Show Debug Logs**).
 
 ### F. PR preview deployments (staging app only)
 
@@ -223,7 +243,8 @@ Build Pack **Dockerfile**, **Dockerfile Location** `/Dockerfile`, **Ports Expose
    INBOX_PASSWORD=<staging secret>
    ```
 
-   Leave `VITE_SERVER_URL` unset so the SPA dials the preview origin.
+   Runtime only — not Build Variable. Leave `VITE_SERVER_URL` unset so the SPA
+   dials the preview origin.
 5. GitHub App already watching `chni9/battle-cards` needs **Pull requests**
    Read and write and a subscription to **Pull request** events. If the app was
    created without those: Coolify **Sources** → the GitHub App → **Permissions**
