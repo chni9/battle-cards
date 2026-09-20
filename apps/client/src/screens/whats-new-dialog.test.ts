@@ -33,6 +33,15 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source).toContain('note.additions');
     expect(source).toContain('KitPortrait');
     expect(source).toContain('<Card');
+    expect(source).toContain('note.items');
+    expect(source).toContain('item.before');
+    expect(source).toContain('item.after');
+    expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
+    expect(latestReleaseNote().items.map((item) => item.cardId)).toEqual([
+      'sentence',
+      'imposition',
+      'super-absorber',
+    ]);
     expect(latestReleaseNote().additions).toHaveLength(2);
   });
 
