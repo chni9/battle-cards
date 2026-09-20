@@ -90,6 +90,7 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     players,
     pool: [],
     poolBuyCost: POOL_BUY_INITIAL_COST,
+    pendingSentences: [],
     nextPoolInstanceSeq: 0,
     currentTurnPlayerId: first.id,
     turnSequence: 0,

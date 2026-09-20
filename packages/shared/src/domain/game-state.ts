@@ -39,6 +39,12 @@ export interface GameState {
    */
   poolBuyCost: number;
   /**
+   * Public ticking Sentences (PROTOCOL_VERSION 36 / L63-02). Remaining owner
+   * turns are **not** card-lives — `applyDamage` must not shorten them.
+   * Empty until a Sentence is played (L63-03).
+   */
+  pendingSentences: PendingSentence[];
+  /**
    * Monotonic counter for minting `instanceId`s when deactivated persistents join the
    * pool (technical spec v4 §3.3 #1 / §5.1). Must not derive from `pool.length` (collides
    * once the pool shrinks) or from `seed` (server-only and must stay so).
@@ -147,3 +153,17 @@ export type GenericSubChoiceState = Extract<
   SubChoiceState,
   { kind: 'pool-pick' } | { kind: 'special-pick' } | { kind: 'reanimation-kit' }
 >;
+
+/**
+ * One ticking Sentence — designer 2026-09-20 / L63-02.
+ * `remainingOwnerTurns` starts at `SENTENCE_OWNER_TURNS` and counts the
+ * activator's own turns including the play turn.
+ */
+export interface PendingSentence {
+  sourcePlayerId: string;
+  remainingOwnerTurns: number;
+  isUpgraded: boolean;
+}
+
+/** Activator turns until fire, including the play turn (rules spec §5 / Lot 63). */
+export const SENTENCE_OWNER_TURNS = 3;

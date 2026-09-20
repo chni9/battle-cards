@@ -5,9 +5,10 @@
  */
 
 import type { ActionResolutionOutcome } from './action-outcome';
-import type { CardId, CardInstance } from '../domain/card';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
+import type { CardId, CardInstance } from '../domain/card';
 import type { PendingEffectRedirectSource } from '../domain/effect';
+import type { PendingSentence } from '../domain/game-state';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
@@ -267,6 +268,9 @@ export interface PendingEffectView {
  */
 export type PlayKind = 'classic' | 'tutorial';
 
+/** Public Sentence countdown — same shape as `GameState.pendingSentences`. */
+export type PendingSentenceView = PendingSentence;
+
 export interface PlayingStateView {
   phase: 'playing';
   you: string;
@@ -296,6 +300,11 @@ export interface PlayingStateView {
    * doubles after every successful `buyPoolCard`. Never resets.
    */
   poolBuyCost: number;
+  /**
+   * Public ticking Sentences (PROTOCOL_VERSION 36 / L63-02). Remaining owner
+   * turns are not card-lives. Copied from `GameState.pendingSentences`.
+   */
+  pendingSentences: readonly PendingSentenceView[];
   /**
    * Public teaching overlay (technical spec v6 §8). Classic rooms: `'classic'`.
    */

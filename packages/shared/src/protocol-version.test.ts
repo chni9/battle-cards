@@ -1,9 +1,10 @@
 /**
- * Protocol version pin — L60-02 / PROTOCOL_VERSION 35 (after Lot 58 on main).
+ * Protocol version pin — L63-02 / PROTOCOL_VERSION 36.
  */
 
 import { describe, expect, it } from 'vitest';
 
+import { SENTENCE_OWNER_TURNS } from './domain/game-state';
 import {
   BUY_POOL_CARD,
   CLAIM_SEAT,
@@ -13,12 +14,13 @@ import {
   SET_READY,
   STAY_SPECTATING,
 } from './protocol/messages';
+import type { GameRecapPlayerView, PlayingStateView } from './protocol/state-view';
 import { PROTOCOL_VERSION } from './protocol-version';
-import type { GameRecapPlayerView } from './protocol/state-view';
 
-describe('PROTOCOL_VERSION (L60-02)', () => {
-  it('is 35 after Lot 60 recap awards', () => {
-    expect(PROTOCOL_VERSION).toBe(35);
+describe('PROTOCOL_VERSION (L63-02)', () => {
+  it('is 36 after Lot 63 pendingSentences', () => {
+    expect(PROTOCOL_VERSION).toBe(36);
+    expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 
   it('names rematch and Lot 58 client messages', () => {
@@ -56,5 +58,12 @@ describe('PROTOCOL_VERSION (L60-02)', () => {
 
     expect(row.kills).toBe(0);
     expect(row.kitId).toBeUndefined();
+  });
+
+  it('requires pendingSentences on PlayingStateView (L63-02)', () => {
+    const pendingSentences: PlayingStateView['pendingSentences'] = [
+      { sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false },
+    ];
+    expect(pendingSentences[0]?.remainingOwnerTurns).toBe(2);
   });
 });
