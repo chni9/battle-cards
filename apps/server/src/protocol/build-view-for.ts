@@ -16,7 +16,9 @@
 
 import type {
   ActionLogEntryView,
+  ActionPlayedPayload,
   BotDifficulty,
+  CardInstance,
   ClaimableSeatView,
   EliminationRevealView,
   ExportTurnRowView,
@@ -221,9 +223,32 @@ function buildSpiedView(
 }
 
 /**
- * Per-recipient action-log redaction (designer 2026-08-06):
+ * Drop recovered-card identity from a live `buyPoolCard` ACTION_PLAYED.
+ * Designer 2026-09-20 / L63-06 — buyer + Spy + spectator overlay still get the full payload.
+ */
+export function fogBuyPoolCardPlayed(played: ActionPlayedPayload): ActionPlayedPayload {
+  return {
+    actorPlayerId: played.actorPlayerId,
+    action: 'buyPoolCard',
+    turnSequence: played.turnSequence,
+    ...(played.botReason !== undefined ? { botReason: played.botReason } : {}),
+  };
+}
+
+/**
+ * Sitting pool cards show their faces to every recipient (designer 2026-09-20
+ * playtest). Occupancy stays public. Recovered `buyPoolCard` identity is
+ * fogged on the action log only.
+ */
+export function mapPoolForRecipient(state: GameState): CardInstance[] {
+  return state.pool.map((card) => ({ ...card }));
+}
+
+/**
+ * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20):
  * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
- * - `playerReanimated.kitId` omitted unless self, Spy, or eliminated spectator
+ * - `buyPoolCard` omits `cardId` / `isUpgraded` unless self, Spy, or spectator overlay
+ * - `playerReanimated.kitId` omitted for every in-game recipient
  * Excel `exportLog` keeps the full server log.
  */
 function mapActionLogForRecipient(
@@ -250,6 +275,25 @@ function mapActionLogForRecipient(
       }
 
       return opaque;
+    }
+
+    if (entry.kind === 'actionPlayed' && entry.action === 'buyPoolCard') {
+      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
+        return entry;
+      }
+
+      const fogged: ActionLogEntryView = {
+        kind: 'actionPlayed',
+        actorPlayerId: entry.actorPlayerId,
+        action: 'buyPoolCard',
+        turnSequence: entry.turnSequence,
+      };
+
+      if (entry.botReason !== undefined) {
+        return { ...fogged, botReason: entry.botReason };
+      }
+
+      return fogged;
     }
 
     if (entry.kind === 'playerReanimated') {
@@ -395,7 +439,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         state,
         walkInSeesPrivate,
       ),
-      pool: state.pool.map((card) => ({ ...card })),
+      pool: mapPoolForRecipient(state),
       poolBuyCost: state.poolBuyCost,
       pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,

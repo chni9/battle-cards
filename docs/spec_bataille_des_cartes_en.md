@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool, visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn.
+Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy and the faces of cards sitting in the pool are visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 
@@ -246,7 +246,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Visibility
 
-Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, pool buys, and Unspy. The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A pool buy is public as an action; the recovered card's identity stays private to the buyer (and anyone who already sees that buyer's private information). The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
 
 ### Game Turn
 

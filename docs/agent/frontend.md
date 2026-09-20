@@ -20,7 +20,8 @@ on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-ro
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
 labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
-Lot 63 hub What’s new with a **New** additions section).
+Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
+action-log fog).
 
 ## Screens
 

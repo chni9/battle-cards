@@ -3748,3 +3748,18 @@ countdown. V6 bump exception, same class as L49 / L56–L60 / L63-03.
 
 ---
 
+## 2026-09-20 · [P] Fog recovered pool-buy identity on the action log (L63-06)
+
+Designer: a card bought from the pool must not be public on the action log.
+The public tell is only that the actor bought a card from the pool. Buyer,
+Spy of the buyer, eliminated spectators, and Stay walk-in overlay still see
+the recovered `cardId` / `isUpgraded`. Sitting pool faces stay public
+(occupancy and identity of cards still in the pool). Excel `exportLog` stays
+full. No `PROTOCOL_VERSION` bump — optional-field omission, Duplication class.
+Stored server log and `toActionPlayedPayload` keep identity so draw-bust and
+Excel stay honest; live `ACTION_PLAYED` unicasts `fogBuyPoolCardPlayed`.
+Belief widens every zone on a fogged `buyPoolCard` instead of pinning a card.
+Do not invent a What’s new item for this restore.
+
+---
+
