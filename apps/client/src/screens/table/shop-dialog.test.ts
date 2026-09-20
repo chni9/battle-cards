@@ -57,6 +57,8 @@ describe('shop buy cells (L44-01 / L58-03)', () => {
     expect(source).not.toContain('poolCardHasIdentity');
     expect(source).not.toContain('HIDDEN_CARD_CAPTION');
     expect(source).not.toContain('fogged-pool-');
+    expect(source).not.toContain('Others do not see which cards they are');
+    expect(source).toContain('visible to every player');
     expect(source).toContain('view.pool.map((instance)');
     expect(source).toContain('instance.instanceId');
   });

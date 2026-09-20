@@ -322,7 +322,7 @@ export function ShopDialog({
           {SHOP_SECTION_POOL} ({String(view.pool.length)})
         </h3>
         <p className="mt-1 text-sm text-ink-muted">
-          Cards dumped here count toward the pool. Others do not see which cards they are.
+          Cards deactivated or dumped here are visible to every player. This is not a hand.
         </p>
         <div className="mt-3" data-shop-pool-buy="">
           <Button
