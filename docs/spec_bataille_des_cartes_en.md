@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy (how many cards sit there) is visible to all players; **which** cards they are is not, except to a player currently choosing a Card Absorber pool pick. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
+Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy and the faces of cards sitting in the pool are visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 
@@ -160,7 +160,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: gain 18 lives.
 
 **Sentence** — Price: 20 points
-- Action: after **3** of the user's own turns including the activation turn, a seeded random living player is chosen (including the user) and elimination is queued for that victim's next turn. Invisible players are excluded from the draw. If nobody remains eligible, the Sentence fizzles. If the user is eliminated before the draw fires, the Sentence is cancelled and does not queue. Remaining countdown turns are not card lives and are not shortened by damage. Sentence is not a manual deactivate. The table sees a public countdown while it ticks.
+- Action: after **3** of the user's own later turns (the activation turn does not count as one of those three), a seeded random living player is chosen (including the user) and elimination is queued for that victim's next turn. Invisible players are excluded from the draw. If nobody remains eligible, the Sentence fizzles. If the user is eliminated before the draw fires, the Sentence is cancelled and does not queue. Remaining countdown turns are not card lives and are not shortened by damage. Sentence is not a manual deactivate. The table sees a public countdown on the caster while it ticks. When remaining decrements on a later caster turn, the table log shows that remaining count. When Sentence fires, the log names who will be killed.
 - Upgrade: the random draw never picks the user.
 
 **Points Generator** — Price: 5 points

@@ -101,12 +101,12 @@ forfeit at 2 players · last survivor.
 These are the spots where a plausible implementation is wrong and silent:
 
 - Imposition with 1 point vs 2 due → no transfer and no `applyLifeLoss` (L63-04).
-- Sentence fire after 3 activator turns; cancel if the activator dies first; remaining
-  turns are not shortened by `applyDamage` (L63-03).
+- Sentence fire after 3 **later** activator turns (play does not count); countdown log
+  only when remaining decrements on a caster turn; fire log names the victim; cancel
+  if the activator dies first; remaining turns are not shortened by `applyDamage` (L63-03).
 - Fogged `buyPoolCard` log does not pin an opponent card in belief (L63-06).
-- Fogged `PlayingStateView.pool` omits `cardId` / `isUpgraded` / `instanceId` except
-  for the pool-pick chooser; a non-private recipient must not map a fogged buy to a
-  named card via `instanceId`; belief does not learn the missing card from a pool diff.
+- Sitting `PlayingStateView.pool` cards keep `cardId` / `isUpgraded` / `instanceId` for
+  every recipient; occupancy stays public.
 - Two attacks of **different** damage aimed at each other: a stronger *answer* still
   cancels the weaker incoming; a weaker answer is **kept** and the incoming still
   resolves (Lot 54). The tempting bug is to splice the weaker retaliation.

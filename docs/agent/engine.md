@@ -96,7 +96,7 @@ the grant wrappers.
 | Site | Why not a typed loss or gain |
 |---|---|
 | `resolve-pending.ts` — self-Suicide | Lethal self-elimination in one step (rules spec §5). Not a bounded debit; must not decrement card counters. Ghost credits `livesBefore` then assigns 0. |
-| `resolve-pending.ts` — Sentence | Queued elimination on the **victim's** turn (L63-03). Fire is a seeded pick after 3 of the activator's turns; `queueEffect` then zeroes lives on resolve. Not attack damage. Ghost credits `livesBefore` then assigns 0. Remaining countdown turns are not card-lives. |
+| `resolve-pending.ts` — Sentence | Queued elimination on the **victim's** turn (L63-03). Fire is a seeded pick after 3 of the activator's **later** turns (play does not count); `queueEffect` then zeroes lives on resolve. Not attack damage. Ghost credits `livesBefore` then assigns 0. Remaining countdown turns are not card-lives. |
 | `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
 | `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
 | `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
@@ -216,10 +216,13 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Poison act on the current player from other seats' active effects. Imposition (L63-04)
   transfers 2 points (4 upgraded) only when the victim has at least that many; otherwise
   **skip** — no `applyLifeLoss`. `tickPendingSentences` runs **after** persistents and
-  **before** `processEliminations` (L63-03): decrement the activator's live Sentence;
-  on 0, seeded pick among living non-invisible seats and `queueEffect` kill for the
+  **before** `processEliminations` (L63-03): skip decrement on the play turn
+  (remaining starts at 3). Later activator turns decrement; on 0, seeded pick
+  among living non-invisible seats and `queueEffect` kill for the
   victim's turn. Cancel if the activator is already eliminated. Upgraded never picks
   self. Empty candidate pool → fizzle. Public `pendingSentences` on `GameState`.
+  Countdown / fire messages are `sentenceCountdown` / `sentenceFired` on the
+  action log (decrement turns only; fire names the victim).
   Curse is
   **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
   (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**

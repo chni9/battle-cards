@@ -3774,3 +3774,38 @@ Chooser/buyer still see faces. Excel `exportLog` stays full.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 playtest corrections
+
+Designer Yassine Chenik playtest of PR #43. Classic values still change.
+`PROTOCOL_VERSION` stays **36** (this branch unreleased). New public log
+kinds `sentenceCountdown` / `sentenceFired` are additive; sitting pool
+faces return to `CardInstance[]` (list fog retired).
+
+**Sentence duration:** after play, `remainingOwnerTurns` starts at **3**.
+Activation does **not** consume one of the three. Countdown ticks on the
+caster’s later turns only. After those 3 caster turns, fire queues the
+kill for the victim’s next turn. Classic self-can-die unless upgraded —
+unchanged. Super Regeneration stays +9/+18. Super Absorber package 3
+(no upgrade double) unchanged.
+
+**Sentence messages:** countdown text is an action-log line only when the
+caster acts and remaining actually decrements (`N turn(s) before
+Sentence!`). No table-wide banner on other players’ turns. When fire
+queues, a log line names who will be killed (`{nickname} will be killed`).
+UI: Sentence card next to the caster with remaining turns in red under it.
+
+**Pool:** sitting cards show their faces. Occupancy stays public. Keep
+only the original Lot 63 public *buy log* fog: others see “bought from
+the pool” with no card name; buyer and Spy of buyer still see the card;
+Excel `exportLog` stays full. Showing pool faces is the rule, not a leak.
+Supersedes the 2026-09-20 pool-list and `instanceId` fog entries for
+`PlayingStateView.pool`.
+
+**What’s new:** same catalog id `lot-63`. Compact top-right control with
+a red unread badge. Player-facing copy only (Sentence 20 / 3 later turns,
+Imposition skip, Super Absorber package 3, pool buy fog). No Superpowers
+player bullet.
+
+---
+
+

@@ -511,22 +511,23 @@ action-log card frequencies that Lot 61 left out.
 
 ## Lot 63 — What’s new + Classic nerfs (designer 2026-09-20)
 
-Hub What’s new (localStorage, red dot, auto-popup, history) plus Classic
-nerfs: Sentence 20 delayed kill, Imposition points-only, pool-buy fog,
-Super Absorber package 3. `PROTOCOL_VERSION` **35 → 36**. Super Regeneration
-stays +9/+18. Do not retune `heuristic-v4` weights. English only.
+Hub What’s new (localStorage, compact top-right, red unread badge, auto-popup,
+history) plus Classic nerfs: Sentence 20 delayed kill (3 later caster turns),
+Imposition points-only, pool-buy log fog (pool faces public), Super Absorber
+package 3. `PROTOCOL_VERSION` **35 → 36**. Super Regeneration stays +9/+18.
+Do not retune `heuristic-v4` weights. English only.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Sentence / Imposition / pool visibility; technical spec v6 §2.5 + §16 addendum + lot map; AGENTS snapshot + v36 exception; Lot 63 section here; Super Regen options listed. **Acceptance:** agent reading `decisions.md` + backlog knows v36, Sentence 20 delayed kill, Imposition skip, pool fog, What’s new, L63-05 Blocked. | S | Low | — | Done |
 | L63-02 | `PROTOCOL_VERSION` **35 → 36**. Add public `pendingSentences: { sourcePlayerId, remainingOwnerTurns, isUpgraded }[]` on `GameState` and `PlayingStateView`. **Acceptance:** mismatch path rejects v35 clients; playing view type has the new list; `pnpm verify` green. | M | **High** | L63-01 | Done |
-| L63-03 | Sentence cost 20; 3 activator turns including play; fire queues kill; cancel if activator dies first; upgraded never self; invisible excluded; table badge + red animated **“N turn(s) before Sentence!”** every table turn. **Acceptance:** tests lock 3-turn fire, cancel-on-death, upgraded/invisible/empty fizzle, victim-turn life loss, banner copy; `pnpm verify` green. | L | **High** | L63-02 | Done |
+| L63-03 | Sentence cost 20; 3 later activator turns (play does not count); fire queues kill; cancel if activator dies first; upgraded never self; invisible excluded; caster chip + decrement-only countdown log + fire names victim. **Acceptance:** tests lock remaining=3 after play, 3 later ticks, countdown log only on decrement, fire announcement, cancel-on-death, upgraded/invisible/empty fizzle, victim-turn life loss; `pnpm verify` green. | L | **High** | L63-02 | Done |
 | L63-04 | Imposition points-only; skip if victim has fewer than 2 (4 upgraded); no lives. **Acceptance:** 1 point vs 2-due = no transfer and no `applyLifeLoss`; 2 points = 2 transferred; upgraded 4 analogously; `pnpm verify` green. | M | **High** | L63-01 | Done |
 | L63-05 | Super Absorber package 3, no upgrade double: drop activation snapshot; unupgraded `livesLost` only; upgraded also `pointsSpent` + `upgradePointsSpent` at ×1. Super Regeneration stays +9/+18. **Acceptance:** no snapshot (living or in-window corpse); base tick lives only; upgraded tick spend+lives at ×1; theft excluded; cap 25; catalog + rules spec §5; `pnpm verify` green. | M | Medium | L63-01 | Done |
-| L63-06 | `mapActionLogForRecipient` omits `buyPoolCard` `cardId` / `isUpgraded` unless recipient sees that actor’s private info; `PlayingStateView.pool` fogs identity **including `instanceId`** except for the pool-pick chooser; belief does not invent opponent cards from fogged logs or pool diffs. **Acceptance:** a non-private recipient cannot map a fogged buy to a named card via `instanceId`; occupancy stays public; view + belief tests; Excel `exportLog` stays full; `pnpm verify` green. | M | **High** | L63-02 | Done |
-| L63-07 | Shared release-notes catalog; hub What’s new + red dot; auto-popup if unseen (How to play first); history; playbook “update the latest entry in the same commit as player-visible work”. **Acceptance:** localStorage key; latest id unread; first entry covers this lot’s visible changes except Super Regen; `pnpm verify` green. | L | Medium | L63-01 | Done |
+| L63-06 | `mapActionLogForRecipient` omits `buyPoolCard` `cardId` / `isUpgraded` unless recipient sees that actor’s private info; sitting pool faces stay public; belief does not invent opponent cards from fogged buy logs. **Acceptance:** occupancy and pool faces public; buy log fogged for non-private recipients; Excel `exportLog` stays full; `pnpm verify` green. | M | **High** | L63-02 | Done |
+| L63-07 | Shared release-notes catalog; compact top-right What’s new + red unread badge; auto-popup if unseen (How to play first); history; playbook “update the latest entry in the same commit as player-visible work”. **Acceptance:** localStorage key; latest id unread; first entry covers this lot’s gameplay changes except Super Regen; `pnpm verify` green. | L | Medium | L63-01 | Done |
 | L63-08 | Catalog, How to play, and bot freeze as needed for Sentence / Imposition / pool fog. No `heuristic-v4` weight retune. **Acceptance:** copy matches rules spec; freeze only if the legal set changed; `pnpm verify` green. | M | Medium | L63-03, L63-04, L63-06 | Done |
-| L63-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `testing.md`, `bots.md`) + post-lot browser gate (What’s new, Sentence red banner, Imposition skip, pool fog). **Acceptance:** playbooks match code; browser gate recorded; `pnpm verify` green. | M | Low | L63-07, L63-08 | Done |
+| L63-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `testing.md`, `bots.md`) + post-lot browser gate (What’s new compact control, Sentence chip, pool faces). **Acceptance:** playbooks match code; browser gate recorded; `pnpm verify` green. | M | Low | L63-07, L63-08 | Done |
 
 ---
 

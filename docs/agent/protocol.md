@@ -57,7 +57,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
-| Ticking Sentence (`pendingSentences`) | **Public** on the playing view (PROTOCOL_VERSION 36 / L63-02). Remaining owner turns are not card-lives |
+| Ticking Sentence (`pendingSentences`) | **Public** on the playing view (PROTOCOL_VERSION 36 / L63-02). Remaining owner turns are not card-lives. Countdown / fire also appear as public `sentenceCountdown` / `sentenceFired` log kinds when remaining decrements or fire queues |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -67,7 +67,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
-| `GameState.pool` | **Occupancy public** in `PlayingStateView`. `cardId` / `isUpgraded` / `instanceId` omitted unless the recipient is the pool-pick chooser (L63-06). Fogged slots are `{ hidden: true }` — a stable `instanceId` would name a recovered card after sell/death dump or `pool:${effect.id}:${seq}` mint |
+| `GameState.pool` | **Public** in `PlayingStateView` including sitting-card faces (`cardId` / `isUpgraded` / `instanceId`). Occupancy stays public. Recovered `buyPoolCard` identity stays fogged on the action log (L63-06 playtest: showing pool faces is the rule, not a leak) |
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
 | Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
@@ -79,10 +79,10 @@ disclosure would let a client compute a future draw belongs in the same category
 
 Consequence worth knowing: with fully public actions, a hand can be partly reconstructed by
 deduction, which costs Spy some value. That is accepted, not a bug. **L63-06** withholds
-pool-buy identity from that reconstruction unless the recipient already sees the buyer,
-and fogs `PlayingStateView.pool` identity the same way so a list diff cannot name the
-card — occupancy stays public; fogged slots omit `instanceId` as well as `cardId` /
-`isUpgraded`. Excel `exportLog` stays full. Belief must not learn a card from a fogged pool list.
+pool-buy identity from that reconstruction unless the recipient already sees the buyer.
+Sitting pool faces stay public (playtest 2026-09-20 — showing them is the rule, not a
+leak). Excel `exportLog` stays full. Belief must not pin an opponent card from a fogged
+`buyPoolCard` log.
 
 Cloning **resets visibility to zero in both directions** — what the user saw of others and what
 others saw of them — and cancels effects pending against the user while inheriting none from the
@@ -179,8 +179,10 @@ time; the next `createInitialState` does.
 
 PROTOCOL_VERSION 36 (L63-02 / L63-06) adds public `pendingSentences` on the playing view
 and may omit `buyPoolCard` `cardId` / `isUpgraded` on per-recipient logs and live
-`ACTION_PLAYED` unless the recipient sees that actor's private info. Recap / Excel keep
-the full server log.
+`ACTION_PLAYED` unless the recipient sees that actor's private info. Sitting pool
+cards keep their faces. Recap / Excel keep the full server log. Playtest 2026-09-20
+adds public `sentenceCountdown` / `sentenceFired` log kinds (still v36 on this
+unreleased branch).
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

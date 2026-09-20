@@ -159,9 +159,9 @@ instead of joining the pool immediately. Periodic multi-opponent ticks live in
 that file; it does not edit another card's handler (`card-handler.md` golden rule 2 exception
 agreed for Lot 22). Imposition ticks (L63-04) transfer points only; skip if the victim
 has fewer than 2 (4 upgraded) — never `applyLifeLoss`. Sentence (L63-03) is **not** a
-persistent: play starts `pendingSentences` (cost 20; 3 activator turns including play);
-fire queues kill; cancel if the activator dies first. Remaining turns are not card-lives
-and `applyDamage` must not shorten them. Super Absorber (L63-05) stays persistent
+persistent: play starts `pendingSentences` (cost 20; 3 later activator turns, play
+does not count); fire queues kill; cancel if the activator dies first. Remaining
+turns are not card-lives and `applyDamage` must not shorten them. Super Absorber (L63-05) stays persistent
 counter 2: **no** activation snapshot; unupgraded ticks `livesLost` only; upgraded
 also `pointsSpent` + `upgradePointsSpent` at ×1. Theft never. Regular Absorber
 is still one-shot / one seat.

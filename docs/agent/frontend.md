@@ -434,11 +434,12 @@ rules above are unchanged — this section only covers how the client looks.
     Active seat gets seat-colored glow (`seatZoneStyle({ active: true })`); own-turn timers
     banner gets a stronger seat tint. Table banners reuse the same flash duration (~1.6s,
     `pointer-events-none`): attacked / dead are flashier red; win copy is `You won!`.
-    **Lot 63 Sentence:** while `pendingSentences` is non-empty, every table turn shows a
-    red scary Motion banner `N turn(s) before Sentence!` (`formatSentenceBanner` /
-    `nextSentenceBannerLines` in `table-banner.ts`; `data-banner="sentence"`). N is the
-    soonest `remainingOwnerTurns` (or one line per live Sentence). Seat badge
-    `Sentence · N`. Not a persistent; not `deactivatePersistent`.
+    **Lot 63 Sentence:** `pendingSentences` is public. The caster seat shows the
+    Sentence card with remaining turns in **red** under it (`SentenceChip`).
+    Countdown copy `N turn(s) before Sentence!` is an **action-log** line only
+    when the caster’s remaining count decrements — not a table-wide banner.
+    Fire logs `{nickname} will be killed`. Not a persistent; not
+    `deactivatePersistent`.
 
 ## Conventions
 
@@ -1223,23 +1224,22 @@ guard.
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
 `protocol v36`. `pnpm verify` **1510** tests.
 
-- Hub: **What's new** next to How to play / Feedback; red unread dot on first
-  visit. Dialog did **not** auto-open while How to play was unseen.
+- Hub: compact **New** control top-right (`data-whats-new-button`) with a red
+  unread badge; not a large labeled hub-row block. Dialog did **not** auto-open
+  while How to play was unseen.
 - Dialog: 2026-09-20 **Sentence, Imposition, Super Absorber, and pool buys**
-  (Latest, one id `lot-63`). Copy covers Sentence 20 / 3 turns / red banner,
-  Imposition points-only skip, Super Absorber no past-turn capture / spend on
-  upgrade not doubled, pool buy fog, pool-list occupancy. No Super Regeneration
-  / +9 / +18. No Superpowers player bullet. Got it writes
-  `card-battle.v6.lastSeenReleaseId` = `lot-63`; red dot gone; history still
+  (Latest, one id `lot-63`). Copy covers Sentence 20 / 3 later turns, Imposition
+  points-only skip, Super Absorber no past-turn capture / spend not doubled,
+  pool buy fog. No Super Regeneration / +9 / +18. No Superpowers player bullet.
+  No banner / button-placement notes. Got it writes
+  `card-battle.v6.lastSeenReleaseId` = `lot-63`; red badge gone; history still
   lists the entry.
 - After `howToPlaySeen=1` and clearing the last-seen id, reload auto-opens
   What's new.
 - Solo Specialist rooms **RRXiKT** (inspect) and **WU2JJKY** (Shop). Super
   Absorber inspect: “Playing it does not capture past turns”; upgrade “Also
   absorb points and upgrade points they spent” (no doubling). Shop **Pool (2)**
-  / **Pool (3)** tiles are attack verso + **Hidden card** — not the dumped
-  card’s name. Live Super Absorber *play* to 8 points was not reached (Tax /
-  Spy Thief drain). Sentence red banner and Imposition skip stay locked by
-  engine tests (needs Assassin 20 pts / Imposition victim).
+  Shop **Pool** tiles show sitting-card faces. Sentence chip and decrement-only
+  countdown log stay locked by engine tests (needs Assassin 20 pts).
 
 

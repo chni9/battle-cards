@@ -164,8 +164,7 @@ rows (L58-07).
   not add cards. Playing a shared card is evidence of holding that id, not a size change.
 - **#V5-2 unlimited shop:** do not forbid a `cardId` because a copy sits in the pool.
   Hard constraint is instance identity — never mint an `instanceId` from `view.self.hand`,
-  `self.specialCards`, or a known `view.pool` slot (`poolCardHasIdentity`). Fogged
-  pool slots have no `instanceId`.
+  `self.specialCards`, or a known `view.pool` slot. Pool list identity is public.
 - Spy-revealed `hand` / `specialCards` are copied as a point. Prophet starting specials
   have known *count* (`randomStartingSpecialCount`) and unknown ids (sample from
   `SPECIAL_CARD_IDS`). Kit specials not yet publicly played are preferred, then the prior.
