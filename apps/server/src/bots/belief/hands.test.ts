@@ -263,7 +263,7 @@ describe('sampleOpponentHandAndSpecials (L34-04)', () => {
 
   it('does not invent a named card from a fogged pool list (L63-06)', () => {
     const playing = view({
-      pool: [{ instanceId: 'pool-secret' }],
+      pool: [{ hidden: true }],
     });
     const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', playing, []);
     const sampled = sampleOpponentHandAndSpecials({

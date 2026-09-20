@@ -348,14 +348,15 @@ export function ShopDialog({
           <p className="mt-3 text-sm text-ink-muted">The pool is empty.</p>
         ) : (
           <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {view.pool.map((instance) => {
+            {view.pool.map((instance, index) => {
               const known = poolCardHasIdentity(instance);
               const definition = known ? getCard(instance.cardId) : undefined;
               const name = known
                 ? formatCardLabel(instance.cardId, instance.isUpgraded)
                 : HIDDEN_CARD_CAPTION;
+              const key = known ? instance.instanceId : `fogged-pool-${String(index)}`;
               return (
-                <li key={instance.instanceId}>
+                <li key={key}>
                   <div className="flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border border-border-soft bg-surface p-1.5">
                     {known ? (
                       <Card

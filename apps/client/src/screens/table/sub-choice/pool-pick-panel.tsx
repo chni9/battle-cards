@@ -12,7 +12,7 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
-import { CardChoiceTile, HIDDEN_CARD_CAPTION } from '../../../design/components/card-choice-tile';
+import { CardChoiceTile } from '../../../design/components/card-choice-tile';
 
 export interface PoolPickPanelProps {
   subChoice: PoolPickChoiceRequiredPayload;
@@ -27,9 +27,9 @@ export function PoolPickPanel({
 }: PoolPickPanelProps): ReactElement {
   const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
 
-  const eligiblePool = view.pool.filter((instance) =>
-    subChoice.eligibleInstanceIds.includes(instance.instanceId),
-  );
+  const eligiblePool = view.pool
+    .filter(poolCardHasIdentity)
+    .filter((instance) => subChoice.eligibleInstanceIds.includes(instance.instanceId));
 
   const toggle = (instanceId: string): void => {
     if (selectedIds.includes(instanceId)) {
@@ -60,15 +60,12 @@ export function PoolPickPanel({
           {eligiblePool.map((instance) => {
             const selected = selectedIds.includes(instance.instanceId);
             const atCap = !selected && selectedIds.length >= subChoice.maxCount;
-            const name = poolCardHasIdentity(instance)
-              ? formatCardLabel(instance.cardId, instance.isUpgraded)
-              : HIDDEN_CARD_CAPTION;
-            const tileInstance = poolCardHasIdentity(instance) ? instance : null;
+            const name = formatCardLabel(instance.cardId, instance.isUpgraded);
 
             return (
               <li key={instance.instanceId}>
                 <CardChoiceTile
-                  instance={tileInstance}
+                  instance={instance}
                   caption={name}
                   selected={selected}
                   disabled={atCap}

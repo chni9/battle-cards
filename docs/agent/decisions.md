@@ -3761,3 +3761,16 @@ stays full.
 
 ---
 
+## 2026-09-20 · [P] Pool `instanceId` fog (L63-06)
+
+Occupancy-only pool slots still published stable `instanceId`. Sell/death
+dumps reuse that id; deactivated persistents mint `pool:${effect.id}:${seq}`
+while `PersistentEffectView.id` / `cardId` are public. Occupancy plus which
+id disappeared on a fogged `buyPoolCard` named the recovered card.
+
+Supersedes the “occupancy and `instanceId` stay public” line in the
+2026-09-20 pool-list fog entry. Fogged slots are `{ hidden: true }`.
+Chooser/buyer still see faces. Excel `exportLog` stays full.
+
+---
+

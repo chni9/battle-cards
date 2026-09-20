@@ -14,28 +14,29 @@
  * `GameState.pendingSentences` is public (L63-02).
  */
 
-import type {
-  ActionLogEntryView,
-  ActionPlayedPayload,
-  BotDifficulty,
-  ClaimableSeatView,
-  EliminationRevealView,
-  ExportTurnRowView,
-  FinishedStateView,
-  GameExportLogView,
-  GameRecapView,
-  GameState,
-  LobbyKitSelection,
-  LobbySeatView,
-  LobbyStateView,
-  PendingEffectView,
-  PersistentEffectView,
-  PlayKind,
-  PlayingStateView,
-  PoolCardView,
-  PrivateSelfView,
-  PublicPlayerView,
-  SpiedPlayerView,
+import {
+  FOGGED_POOL_CARD,
+  type ActionLogEntryView,
+  type ActionPlayedPayload,
+  type BotDifficulty,
+  type ClaimableSeatView,
+  type EliminationRevealView,
+  type ExportTurnRowView,
+  type FinishedStateView,
+  type GameExportLogView,
+  type GameRecapView,
+  type GameState,
+  type LobbyKitSelection,
+  type LobbySeatView,
+  type LobbyStateView,
+  type PendingEffectView,
+  type PersistentEffectView,
+  type PlayKind,
+  type PlayingStateView,
+  type PoolCardView,
+  type PrivateSelfView,
+  type PublicPlayerView,
+  type SpiedPlayerView,
 } from '@card-battle/shared';
 
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
@@ -236,8 +237,9 @@ export function fogBuyPoolCardPlayed(played: ActionPlayedPayload): ActionPlayedP
 }
 
 /**
- * Occupancy stays public. Identity only for the pool-pick chooser so a list
- * diff cannot name a recovered card (designer 2026-09-20 / L63-06).
+ * Occupancy stays public. Identity (including `instanceId`) only for the
+ * pool-pick chooser so a list diff cannot name a recovered card
+ * (designer 2026-09-20 / L63-06).
  */
 export function mapPoolForRecipient(
   state: GameState,
@@ -250,7 +252,7 @@ export function mapPoolForRecipient(
     return state.pool.map((card) => ({ ...card }));
   }
 
-  return state.pool.map((card) => ({ instanceId: card.instanceId }));
+  return state.pool.map(() => FOGGED_POOL_CARD);
 }
 
 /**

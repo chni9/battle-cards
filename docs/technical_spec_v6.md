@@ -184,7 +184,8 @@ Designer: hub What’s new (localStorage, no accounts) plus Classic nerfs.
   no lives.
 - **Pool buy:** per-recipient log fogs `cardId` / `isUpgraded` unless the
   recipient sees that actor’s private info. `PlayingStateView.pool` occupancy
-  is public; identity is omitted except for the pool-pick chooser.
+  is public; identity (`cardId` / `isUpgraded` / `instanceId`) is omitted except
+  for the pool-pick chooser.
 - **What’s new:** shared catalog + hub button, red dot, auto-popup, history.
 - **Super Regeneration:** stays +9 / +18. L63-05 is Super Absorber package 3
   (no snapshot; unupgraded livesLost only; upgraded also spend at ×1).

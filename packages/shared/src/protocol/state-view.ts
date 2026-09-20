@@ -268,10 +268,16 @@ export interface PendingEffectView {
  */
 export type PlayKind = 'classic' | 'tutorial';
 
-/** Shared pool slot as seen by a recipient (L63-06). */
+/**
+ * Occupancy-only pool slot (L63-06). No `instanceId` — sell/death dumps reuse
+ * that id, and deactivated persistents mint `pool:${effect.id}:${seq}` while
+ * `PersistentEffectView` is public.
+ */
 export interface FoggedPoolCard {
-  readonly instanceId: string;
+  readonly hidden: true;
 }
+
+export const FOGGED_POOL_CARD: FoggedPoolCard = { hidden: true };
 
 export type PoolCardView = CardInstance | FoggedPoolCard;
 
@@ -303,9 +309,8 @@ export interface PlayingStateView {
   actionLog: readonly ActionLogEntryView[];
   /**
    * Shared pool occupancy — rules spec §1; technical spec v4 §4.3 / §5.1.
-   * `cardId` / `isUpgraded` omitted unless the recipient is the pool-pick chooser
-   * (L63-06). Occupancy and `instanceId` stay public so a pool buy cannot be
-   * reverse-engineered from a list diff.
+   * Identity (`cardId` / `isUpgraded` / `instanceId`) is omitted unless the
+   * recipient is the pool-pick chooser (L63-06). Occupancy stays public.
    */
   pool: readonly PoolCardView[];
   /**

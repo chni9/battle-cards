@@ -67,7 +67,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
-| `GameState.pool` | **Occupancy public** in `PlayingStateView`. `cardId` / `isUpgraded` omitted unless the recipient is the pool-pick chooser (L63-06) |
+| `GameState.pool` | **Occupancy public** in `PlayingStateView`. `cardId` / `isUpgraded` / `instanceId` omitted unless the recipient is the pool-pick chooser (L63-06). Fogged slots are `{ hidden: true }` — a stable `instanceId` would name a recovered card after sell/death dump or `pool:${effect.id}:${seq}` mint |
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
 | Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
@@ -81,7 +81,8 @@ Consequence worth knowing: with fully public actions, a hand can be partly recon
 deduction, which costs Spy some value. That is accepted, not a bug. **L63-06** withholds
 pool-buy identity from that reconstruction unless the recipient already sees the buyer,
 and fogs `PlayingStateView.pool` identity the same way so a list diff cannot name the
-card. Excel `exportLog` stays full. Belief must not learn a card from a fogged pool list.
+card — occupancy stays public; fogged slots omit `instanceId` as well as `cardId` /
+`isUpgraded`. Excel `exportLog` stays full. Belief must not learn a card from a fogged pool list.
 
 Cloning **resets visibility to zero in both directions** — what the user saw of others and what
 others saw of them — and cancels effects pending against the user while inheriting none from the

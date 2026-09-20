@@ -56,5 +56,6 @@ describe('shop buy cells (L44-01 / L58-03)', () => {
     const source = readFileSync(join(dir, 'shop-dialog.tsx'), 'utf8');
     expect(source).toContain('poolCardHasIdentity');
     expect(source).toContain('HIDDEN_CARD_CAPTION');
+    expect(source).toContain('fogged-pool-');
   });
 });

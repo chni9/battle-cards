@@ -177,12 +177,14 @@ function publicFieldsAgree(world: GameState, view: PlayingStateView): boolean {
       return false;
     }
 
-    if (right.instanceId !== left.instanceId) {
-      return false;
-    }
+    if (poolCardHasIdentity(right)) {
+      if (right.instanceId !== left.instanceId) {
+        return false;
+      }
 
-    if (poolCardHasIdentity(right) && right.cardId !== left.cardId) {
-      return false;
+      if (right.cardId !== left.cardId) {
+        return false;
+      }
     }
   }
 
