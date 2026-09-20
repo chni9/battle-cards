@@ -3842,6 +3842,11 @@ longer absorbs points and upgrade points; upgraded absorbs lives,
 points, and upgrade points but no longer doubles. Super Regeneration
 stays +9/+18 (omit). Superpowers is not a player bullet.
 
+**What’s new Sentence before (designer 2026-09-20):** old Sentence was
+**instant** — no 3-turn countdown. After / this update adds the 3-turn
+countdown and the cost is 20. Do not describe the previous card as
+already waiting 3 turns.
+
 ---
 
 

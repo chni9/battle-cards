@@ -27,9 +27,9 @@ export const RELEASE_NOTES = [
       {
         cardId: 'sentence',
         before:
-          'Cost 15. Playing it started a 3-turn countdown that included the play, then a random living player was marked to die.',
+          'Sentence was instant. Playing it immediately marked a random living player to die.',
         after:
-          'Costs 20. After you play it, it waits through 3 of your later turns (playing it does not count), then a living visible player is marked to die on their turn.',
+          'This update adds a 3-turn countdown. Sentence costs 20 points. After you play it, it waits through 3 of your later turns (playing it does not count), then a living visible player is marked to die on their turn.',
       },
       {
         cardId: 'imposition',

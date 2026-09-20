@@ -29,6 +29,12 @@ describe('release notes catalog (L63-07)', () => {
     expect(body).toMatch(/Sentence/i);
     expect(body).toMatch(/20/);
     expect(body).toMatch(/3/);
+    const sentence = latest.items.find((item) => item.cardId === 'sentence');
+    expect(sentence).toBeDefined();
+    expect(sentence?.before).toMatch(/instant/i);
+    expect(sentence?.before).not.toMatch(/started a 3-turn countdown/i);
+    expect(sentence?.after).toMatch(/20/);
+    expect(sentence?.after).toMatch(/3/);
     expect(body).toMatch(/Imposition/i);
     expect(body).toMatch(/Super Absorber/i);
     expect(body).toMatch(/only absorbs lives/i);
