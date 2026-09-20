@@ -133,6 +133,14 @@ describe('accountOpponentHandSizes (L34-04)', () => {
     expect(sizes.specialCount).toEqual({ lo: 2, hi: 2 });
   });
 
+  it('does not pin a recovered card from a fogged buyPoolCard (L63-06)', () => {
+    const log: ActionLogEntryView[] = [play('buyPoolCard')];
+    const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', view(), log);
+    expect(sizes.actionCount).toEqual({ lo: 7, hi: 8 });
+    expect(sizes.attackCount).toEqual({ lo: 2, hi: 3 });
+    expect(sizes.specialCount).toEqual({ lo: 1, hi: 2 });
+  });
+
   it('decrements special count after playCard suicide', () => {
     const log: ActionLogEntryView[] = [play('playCard', { cardId: 'suicide' })];
     const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', view(), log);
@@ -235,5 +243,21 @@ describe('sampleOpponentHandAndSpecials (L34-04)', () => {
     });
     expect(sampled.hand.some((card) => card.cardId === 'basic-attack')).toBe(true);
     expect(sampled.specialCards.some((card) => card.cardId === 'poison')).toBe(true);
+  });
+
+  it('does not invent a named pool card from a fogged buyPoolCard (L63-06)', () => {
+    const log: ActionLogEntryView[] = [play('buyPoolCard')];
+    const playing = view();
+    const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', playing, log);
+    const sampled = sampleOpponentHandAndSpecials({
+      opponentPlayerId: OPP_ID,
+      kitId: 'kamikaze',
+      view: playing,
+      log,
+      sizes,
+      prior: uniformZonePrior,
+      rng: createRng('l58-05-pool-hand'),
+    });
+    expect(sampled.specialCards.some((card) => card.cardId === 'poison')).toBe(false);
   });
 });

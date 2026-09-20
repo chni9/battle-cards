@@ -221,6 +221,33 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice draws');
   });
 
+  it('names a pool buy only when cardId is present (L63-06)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'tax',
+          isUpgraded: false,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought Tax from the pool');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought a card from the pool');
+  });
+
   it('formats player reanimation without the kit (L50-03)', () => {
     expect(
       formatActionLogEntry(
