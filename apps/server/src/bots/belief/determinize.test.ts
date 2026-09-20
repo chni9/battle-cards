@@ -7,7 +7,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CLEAR_SPY_COST,
-  poolCardHasIdentity,
   type ActionLogEntryView,
   type GameState,
   type PlayingStateView,
@@ -50,12 +49,10 @@ function assertDeterminizeConsistency(
   const world = determinizeFromView(view, log.length > 0 ? log : view.actionLog, rng);
 
   expect(world.pool).toHaveLength(state.pool.length);
-  if (view.pool.every(poolCardHasIdentity)) {
-    expect(world.pool.map((card) => card.instanceId)).toEqual(
-      state.pool.map((card) => card.instanceId),
-    );
-    expect(world.pool).toEqual(state.pool);
-  }
+  expect(world.pool.map((card) => card.instanceId)).toEqual(
+    state.pool.map((card) => card.instanceId),
+  );
+  expect(world.pool).toEqual(state.pool);
   expect(world.currentTurnPlayerId).toBe(state.currentTurnPlayerId);
   expect(world.turnSequence).toBe(state.turnSequence);
   const outgoingSubjects = view.players

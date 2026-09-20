@@ -8,7 +8,6 @@ import {
   formatCardLabel,
   getCard,
   getKit,
-  poolCardHasIdentity,
   upgradePointBuyCost,
   upgradePointSellYield,
   type PlayingStateView,
@@ -16,10 +15,9 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-import { getCardBackUrl, getResourceIconUrl } from '../../design/asset-lookup';
+import { getResourceIconUrl } from '../../design/asset-lookup';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
-import { HIDDEN_CARD_CAPTION } from '../../design/components/card-choice-tile';
 import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
 import { CostDisplay } from '../../design/components/cost-display';
 import { Dialog } from '../../design/components/dialog';
@@ -348,30 +346,17 @@ export function ShopDialog({
           <p className="mt-3 text-sm text-ink-muted">The pool is empty.</p>
         ) : (
           <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-            {view.pool.map((instance, index) => {
-              const known = poolCardHasIdentity(instance);
-              const definition = known ? getCard(instance.cardId) : undefined;
-              const name = known
-                ? formatCardLabel(instance.cardId, instance.isUpgraded)
-                : HIDDEN_CARD_CAPTION;
-              const key = known ? instance.instanceId : `fogged-pool-${String(index)}`;
+            {view.pool.map((instance) => {
+              const definition = getCard(instance.cardId);
+              const name = formatCardLabel(instance.cardId, instance.isUpgraded);
               return (
-                <li key={key}>
+                <li key={instance.instanceId}>
                   <div className="flex h-full w-full flex-col items-center rounded-[length:var(--radius-card)] border border-border-soft bg-surface p-1.5">
-                    {known ? (
-                      <Card
-                        instance={instance}
-                        detail="thumb"
-                        className="pointer-events-none w-full max-w-[5.5rem]"
-                      />
-                    ) : (
-                      <img
-                        src={getCardBackUrl('attack')}
-                        alt=""
-                        className="aspect-[2/3] w-full max-w-[5.5rem] object-contain"
-                        draggable={false}
-                      />
-                    )}
+                    <Card
+                      instance={instance}
+                      detail="thumb"
+                      className="pointer-events-none w-full max-w-[5.5rem]"
+                    />
                     <span className="mt-1 w-full truncate text-center text-xs font-semibold text-ink">
                       {name}
                     </span>

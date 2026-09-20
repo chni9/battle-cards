@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  poolCardHasIdentity,
-  type CardId,
-  type PoolCardView,
-} from '@card-battle/shared';
-
-import { poolDeactivatedPersistentEffects } from '../engine/specials/pool-deactivated';
 import { createInitialState } from '../engine/create-initial-state';
-import { makeCounterEffect } from '../testing/factories';
 import {
   buildFinishedViewFor,
   buildGameRecapView,
@@ -17,57 +9,6 @@ import {
   fogBuyPoolCardPlayed,
 } from './build-view-for';
 import { grantSpy } from './visibility-matrix';
-
-/**
- * Reconstruct a named recovered card from occupancy + fogged `instanceId`
- * (designer 2026-09-20 leftover leak). Returns undefined when fogged slots
- * publish no correlatable id.
- */
-function namedCardFromFoggedBuyViaInstanceId(args: {
-  publicEffects: readonly { id: string; cardId: CardId }[];
-  publicDumps: readonly { instanceId: string; cardId: CardId }[];
-  poolBefore: readonly PoolCardView[];
-  poolAfter: readonly PoolCardView[];
-}): CardId | undefined {
-  const foggedInstanceId = (card: PoolCardView): string | undefined => {
-    if (poolCardHasIdentity(card)) {
-      return undefined;
-    }
-
-    const published = card as unknown as Record<string, unknown>;
-    const id = published['instanceId'];
-    return typeof id === 'string' ? id : undefined;
-  };
-
-  const remaining = new Set(
-    args.poolAfter.flatMap((card) => {
-      const id = foggedInstanceId(card);
-      return id === undefined ? [] : [id];
-    }),
-  );
-
-  for (const card of args.poolBefore) {
-    const id = foggedInstanceId(card);
-
-    if (id === undefined || remaining.has(id)) {
-      continue;
-    }
-
-    const dump = args.publicDumps.find((row) => row.instanceId === id);
-
-    if (dump !== undefined) {
-      return dump.cardId;
-    }
-
-    for (const effect of args.publicEffects) {
-      if (id.startsWith(`pool:${effect.id}:`)) {
-        return effect.cardId;
-      }
-    }
-  }
-
-  return undefined;
-}
 
 describe('buildLobbyViewFor (L1-01)', () => {
   const seats = [
@@ -314,11 +255,9 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
       actionLog: [],
     });
 
-    expect(view.pool).toEqual([{ hidden: true }]);
-    expect(view.pool[0]).not.toHaveProperty('cardId');
-    expect(view.pool[0]).not.toHaveProperty('isUpgraded');
-    expect(view.pool[0]).not.toHaveProperty('instanceId');
-    expect(JSON.stringify(view.pool)).not.toContain('tax');
+    expect(view.pool).toEqual([
+      { instanceId: 'pool-1', cardId: 'tax', isUpgraded: false },
+    ]);
   });
 
   it('never puts opponent lives or shield in the public player slice', () => {
@@ -1550,8 +1489,8 @@ describe('buyPoolCard log fog (L63-06)', () => {
   });
 });
 
-describe('pool-list identity fog (L63-06)', () => {
-  it('omits pool cardId and isUpgraded for non-pickers so a diff cannot name the card', () => {
+describe('pool-list faces (L63-06)', () => {
+  it('shows sitting pool cards to every recipient; occupancy stays public', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -1581,13 +1520,16 @@ describe('pool-list identity fog (L63-06)', () => {
       actionLog: [],
     });
 
-    expect(forA.pool).toEqual([{ hidden: true }]);
-    expect(forB.pool).toEqual([{ hidden: true }]);
-    expect(JSON.stringify(forA.pool)).not.toContain('poison');
-    expect(JSON.stringify(forB.pool)).not.toContain('poison');
+    const face = {
+      instanceId: 'pool-secret',
+      cardId: 'poison' as const,
+      isUpgraded: true,
+    };
+    expect(forA.pool).toEqual([face]);
+    expect(forB.pool).toEqual([face]);
   });
 
-  it('keeps pool identity for the pool-pick chooser only', () => {
+  it('keeps pool faces for the pool-pick chooser and everyone else', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -1628,52 +1570,24 @@ describe('pool-list identity fog (L63-06)', () => {
     expect(chooser.pool).toEqual([
       { instanceId: 'pool-pick-1', cardId: 'tax', isUpgraded: false },
     ]);
-    expect(other.pool).toEqual([{ hidden: true }]);
-    expect(other.pool[0]).not.toHaveProperty('cardId');
-    expect(other.pool[0]).not.toHaveProperty('instanceId');
+    expect(other.pool).toEqual([
+      { instanceId: 'pool-pick-1', cardId: 'tax', isUpgraded: false },
+    ]);
   });
 
-  it('does not let a non-private recipient map a fogged buy to a named card via instanceId', () => {
+  it('still fogs buyPoolCard identity while pool faces stay public', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
         { id: 'b', nickname: 'Bob' },
       ],
-      seed: 'l63-06-instance-id',
+      seed: 'l63-06-faces-and-buy',
       kitAssignment: ['untouchable', 'warrior'],
     });
-    const alice = state.players.find((player) => player.id === 'a');
-    expect(alice).toBeDefined();
-    if (alice === undefined) {
-      return;
-    }
-
-    const poison = makeCounterEffect({ id: 'poi-1', cardId: 'poison', counter: 1 });
-    const imposition = makeCounterEffect({ id: 'imp-1', cardId: 'imposition', counter: 1 });
-    alice.activePersistentEffects = [poison, imposition];
-
-    const whileTicking = buildPlayingViewFor({
-      recipientSessionId: 'b',
-      gameCode: 'TEST',
-      state,
-      turnDeadlineMs: null,
-      actionLog: [],
-    });
-    const publicEffects = whileTicking.players.find((player) => player.id === 'a')
-      ?.activePersistentEffects ?? [];
-    expect(publicEffects.map((effect) => ({ id: effect.id, cardId: effect.cardId }))).toEqual([
-      { id: 'poi-1', cardId: 'poison' },
-      { id: 'imp-1', cardId: 'imposition' },
-    ]);
-
-    poolDeactivatedPersistentEffects(state, [poison, imposition]);
-    alice.activePersistentEffects = [];
-    const soldDump = {
-      instanceId: 'tax-dump-1',
-      cardId: 'tax' as const,
-      isUpgraded: false,
-    };
-    state.pool.push(soldDump);
+    state.pool.push(
+      { instanceId: 'pool-poison', cardId: 'poison', isUpgraded: true },
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    );
 
     const beforeBuy = buildPlayingViewFor({
       recipientSessionId: 'b',
@@ -1682,11 +1596,12 @@ describe('pool-list identity fog (L63-06)', () => {
       turnDeadlineMs: null,
       actionLog: [],
     });
-    expect(beforeBuy.pool).toHaveLength(3);
+    expect(beforeBuy.pool).toEqual([
+      { instanceId: 'pool-poison', cardId: 'poison', isUpgraded: true },
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    ]);
 
-    const recovered = state.pool.find((card) => card.cardId === 'poison');
-    expect(recovered).toBeDefined();
-    state.pool = state.pool.filter((card) => card.instanceId !== recovered?.instanceId);
+    state.pool = state.pool.filter((card) => card.instanceId !== 'pool-poison');
 
     const afterBuy = buildPlayingViewFor({
       recipientSessionId: 'b',
@@ -1699,21 +1614,15 @@ describe('pool-list identity fog (L63-06)', () => {
           actorPlayerId: 'a',
           action: 'buyPoolCard',
           cardId: 'poison',
-          isUpgraded: false,
+          isUpgraded: true,
           turnSequence: 1,
         },
       ],
     });
-    expect(afterBuy.pool).toHaveLength(2);
+    expect(afterBuy.pool).toEqual([
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    ]);
     expect(afterBuy.actionLog[0]).not.toHaveProperty('cardId');
-
-    expect(
-      namedCardFromFoggedBuyViaInstanceId({
-        publicEffects,
-        publicDumps: [soldDump],
-        poolBefore: beforeBuy.pool,
-        poolAfter: afterBuy.pool,
-      }),
-    ).toBeUndefined();
+    expect(afterBuy.actionLog[0]).not.toHaveProperty('isUpgraded');
   });
 });

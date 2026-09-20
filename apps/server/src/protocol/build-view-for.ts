@@ -15,10 +15,10 @@
  */
 
 import {
-  FOGGED_POOL_CARD,
   type ActionLogEntryView,
   type ActionPlayedPayload,
   type BotDifficulty,
+  type CardInstance,
   type ClaimableSeatView,
   type EliminationRevealView,
   type ExportTurnRowView,
@@ -33,7 +33,6 @@ import {
   type PersistentEffectView,
   type PlayKind,
   type PlayingStateView,
-  type PoolCardView,
   type PrivateSelfView,
   type PublicPlayerView,
   type SpiedPlayerView,
@@ -237,22 +236,12 @@ export function fogBuyPoolCardPlayed(played: ActionPlayedPayload): ActionPlayedP
 }
 
 /**
- * Occupancy stays public. Identity (including `instanceId`) only for the
- * pool-pick chooser so a list diff cannot name a recovered card
- * (designer 2026-09-20 / L63-06).
+ * Sitting pool cards show their faces to every recipient (designer 2026-09-20
+ * playtest). Occupancy stays public. Recovered `buyPoolCard` identity is
+ * fogged on the action log only.
  */
-export function mapPoolForRecipient(
-  state: GameState,
-  recipientSessionId: string,
-): PoolCardView[] {
-  const showIdentity =
-    state.subChoice?.kind === 'pool-pick' && state.subChoice.playerId === recipientSessionId;
-
-  if (showIdentity) {
-    return state.pool.map((card) => ({ ...card }));
-  }
-
-  return state.pool.map(() => FOGGED_POOL_CARD);
+export function mapPoolForRecipient(state: GameState): CardInstance[] {
+  return state.pool.map((card) => ({ ...card }));
 }
 
 /**
@@ -450,7 +439,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         state,
         walkInSeesPrivate,
       ),
-      pool: mapPoolForRecipient(state, recipientSessionId),
+      pool: mapPoolForRecipient(state),
       poolBuyCost: state.poolBuyCost,
       pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,

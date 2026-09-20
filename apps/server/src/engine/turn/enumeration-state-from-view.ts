@@ -8,8 +8,6 @@
 
 import {
   CLASSIC_LIFE_LIMIT,
-  poolCardHasIdentity,
-  type CardInstance,
   type GameState,
   type KitId,
   type Player,
@@ -151,18 +149,7 @@ export function enumerationStateFromView(
     mode: 'classic',
     lifeLimit: CLASSIC_LIFE_LIMIT,
     players,
-    pool: view.pool.map((card, index): CardInstance => {
-      if (poolCardHasIdentity(card)) {
-        return { ...card };
-      }
-
-      // Occupancy-only: identity is not in this recipient's view (L63-06).
-      return {
-        instanceId: `fogged-pool:${String(index)}`,
-        cardId: 'basic-attack',
-        isUpgraded: false,
-      };
-    }),
+    pool: view.pool.map((card) => ({ ...card })),
     poolBuyCost: view.poolBuyCost,
     pendingSentences: view.pendingSentences.map((entry) => ({ ...entry })),
     nextPoolInstanceSeq: 0,

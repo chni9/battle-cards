@@ -52,10 +52,12 @@ describe('shop buy cells (L44-01 / L58-03)', () => {
     expect(source).toContain('onBuyPoolCard');
   });
 
-  it('renders fogged pool slots without card identity (L63-06)', () => {
+  it('renders sitting pool cards with identity (L63-06)', () => {
     const source = readFileSync(join(dir, 'shop-dialog.tsx'), 'utf8');
-    expect(source).toContain('poolCardHasIdentity');
-    expect(source).toContain('HIDDEN_CARD_CAPTION');
-    expect(source).toContain('fogged-pool-');
+    expect(source).not.toContain('poolCardHasIdentity');
+    expect(source).not.toContain('HIDDEN_CARD_CAPTION');
+    expect(source).not.toContain('fogged-pool-');
+    expect(source).toContain('view.pool.map((instance)');
+    expect(source).toContain('instance.instanceId');
   });
 });

@@ -261,9 +261,9 @@ describe('sampleOpponentHandAndSpecials (L34-04)', () => {
     expect(sampled.specialCards.some((card) => card.cardId === 'poison')).toBe(false);
   });
 
-  it('does not invent a named card from a fogged pool list (L63-06)', () => {
+  it('does not mint a sitting pool instance onto an opponent hand (L63-06)', () => {
     const playing = view({
-      pool: [{ hidden: true }],
+      pool: [{ instanceId: 'pool-secret', cardId: 'poison', isUpgraded: true }],
     });
     const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', playing, []);
     const sampled = sampleOpponentHandAndSpecials({
@@ -275,7 +275,6 @@ describe('sampleOpponentHandAndSpecials (L34-04)', () => {
       prior: uniformZonePrior,
       rng: createRng('l63-06-pool-list'),
     });
-    expect(sampled.specialCards.some((card) => card.cardId === 'poison')).toBe(false);
     expect([...sampled.hand, ...sampled.specialCards].map((card) => card.instanceId)).not.toContain(
       'pool-secret',
     );

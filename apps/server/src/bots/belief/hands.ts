@@ -16,7 +16,6 @@ import {
   getKit,
   isSharedAttackCardId,
   isSpecialCardId,
-  poolCardHasIdentity,
   type ActionLogEntryView,
   type ActionPlayedLogEntry,
   type CardId,
@@ -483,9 +482,7 @@ function collectForbiddenInstanceIds(view: PlayingStateView): Set<string> {
   }
 
   for (const card of view.pool) {
-    if (poolCardHasIdentity(card)) {
-      forbidden.add(card.instanceId);
-    }
+    forbidden.add(card.instanceId);
   }
 
   return forbidden;

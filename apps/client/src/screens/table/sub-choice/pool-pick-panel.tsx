@@ -4,7 +4,6 @@
 
 import {
   formatCardLabel,
-  poolCardHasIdentity,
   type PlayingStateView,
   type PoolPickChoiceRequiredPayload,
   type ResolveSubChoicePayload,
@@ -27,9 +26,9 @@ export function PoolPickPanel({
 }: PoolPickPanelProps): ReactElement {
   const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
 
-  const eligiblePool = view.pool
-    .filter(poolCardHasIdentity)
-    .filter((instance) => subChoice.eligibleInstanceIds.includes(instance.instanceId));
+  const eligiblePool = view.pool.filter((instance) =>
+    subChoice.eligibleInstanceIds.includes(instance.instanceId),
+  );
 
   const toggle = (instanceId: string): void => {
     if (selectedIds.includes(instanceId)) {
