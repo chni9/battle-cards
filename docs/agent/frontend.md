@@ -19,13 +19,14 @@ inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
-labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell).
+labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
+Lot 63 hub What’s new with a **New** additions section).
 
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
@@ -121,7 +122,18 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
+  the shared `Button` `variant="green"` (`bg-cta-green-deep`, same as Play
+  online) with a **red** unread tick when
+  `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
+  First visit of this catalog id auto-opens on the hub — How to play is not a
+  blocker. Closing / Got it writes the latest id. **New** heading lists
+  `additions` (kit portrait or card art + body) for kits/cards that did not
+  exist before; before → after `items` cover nerfs with named-card art.
+  Lot 63 additions: Gambler kit, Factory special. The dialog lists history
+  (every catalog entry). **Update the latest catalog entry in the same commit
+  as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip

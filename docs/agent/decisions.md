@@ -3723,3 +3723,13 @@ Duplicator `draw` still must not copy `drawBust`.
 
 ---
 
+## 2026-09-20 · [P] What’s new New additions (Gambler / Factory)
+
+`RELEASE_NOTES` (`packages/shared/src/release-notes.ts`) is the hub What’s new
+catalog. Each entry has `additions` (heading **New**: kits and new cards) and
+before/after `items` (nerfs). Lot 63 additions: Gambler kit, Factory special.
+Compact green **New** + red unread tick; auto-open this catalog id. Update the
+latest entry in the same commit as player-visible work. No protocol bump.
+
+---
+
