@@ -3658,3 +3658,21 @@ devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
 
 ---
 
+## 2026-09-20 · [P] Never skip Superpowers
+
+Designer Yassine Chenik (this Project). A coordinator skipped
+`using-superpowers`. Locked: invoke Superpowers and any other applicable
+skill **before** any response or action — including clarifying questions,
+exploring the codebase, and checking files. If there is even a 1% chance a
+skill applies, read the current skill file; do not rely on memory.
+Coordinators and workers, not only coding agents. User instructions still
+win on explicit conflict; “go faster / skip process” is not an implicit skip.
+Before plan mode or backlog planning: brainstorming first if not already done.
+
+Surfaces: AGENTS.md absolute rule + §7; playbook `docs/agent/superpowers.md`;
+always-on Cursor rule `.cursor/rules/never-skip-superpowers.mdc`. `CLAUDE.md`
+already re-exports AGENTS — do not duplicate. Do not paste the Superpowers
+skill into the repo. No rule or value change.
+
+---
+

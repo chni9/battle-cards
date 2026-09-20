@@ -1,0 +1,25 @@
+---
+description: Never skip Superpowers — invoke applicable skills before any response or action
+alwaysApply: true
+---
+
+# Never skip Superpowers
+
+Invoke Superpowers (`using-superpowers`) and any other applicable skill
+**before** any response or action — including clarifying questions, exploring
+the codebase, and checking files.
+
+If there is even a 1% chance a skill applies, read the current skill file and
+follow it. Do not rely on memory.
+
+This applies to coordinators and workers, not only coding agents. A plugin
+note that a dispatched subagent may ignore Superpowers does **not** apply on
+this project.
+
+User instructions still win when they explicitly conflict. “Go faster / skip
+process” is not an implicit skip.
+
+Before plan mode or backlog planning: brainstorming first if not already done.
+
+Full wording: `docs/agent/superpowers.md`. Do not paste the Superpowers skill
+into the repo.
