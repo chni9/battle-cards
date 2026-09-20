@@ -176,17 +176,19 @@ Designer: Game over is a white text list. Restyle into visual awards.
 
 Designer: hub What’s new (localStorage, no accounts) plus Classic nerfs.
 
-- **Sentence:** cost 20; 3 of the activator’s turns including activation; then
-  seeded pick; queue elimination for the victim’s turn; cancel if the activator
-  dies first; upgraded never self; invisible excluded. Public
-  `pendingSentences`. Red banner every table turn while it ticks.
+- **Sentence:** cost 20; 3 of the activator’s **later** turns (play does not
+  count); then seeded pick; queue elimination for the victim’s turn; cancel
+  if the activator dies first; upgraded never self; invisible excluded. Public
+  `pendingSentences`. Scary red banner on caster play / decrement / fire only
+  (not on other seats’ turns).
 - **Imposition:** points only; skip if the victim has fewer than 2 (4 upgraded);
   no lives.
 - **Pool buy:** per-recipient log fogs `cardId` / `isUpgraded` unless the
   recipient sees that actor’s private info. `PlayingStateView.pool` occupancy
   is public; identity (`cardId` / `isUpgraded` / `instanceId`) is omitted except
   for the pool-pick chooser.
-- **What’s new:** shared catalog + hub button, red dot, auto-popup, history.
+- **What’s new:** shared catalog + green **New** + red unread tick; auto-open
+  this version; before → after with card art; history.
 - **Super Regeneration:** stays +9 / +18. L63-05 is Super Absorber package 3
   (no snapshot; unupgraded livesLost only; upgraded also spend at ×1).
 - `PROTOCOL_VERSION` **35 → 36** (L63-02). Exception to the V6 single-bump lock
@@ -876,16 +878,18 @@ Designer 2026-09-18. Same `/admin` + `GET /api/admin/*` as §14. No
 Designer 2026-09-20. Classic rules/values change. Exception to the V6
 single-bump lock: `PROTOCOL_VERSION` **35 → 36** in L63-02.
 
-- **Sentence:** 20 points; public `pendingSentences`; 3 activator turns
-  including activation; fire is a seeded pick then queued elimination;
-  cancel if the activator dies first; remaining turns are not card-lives;
-  not `deactivatePersistent`.
+- **Sentence:** 20 points; public `pendingSentences`; 3 later activator
+  turns (play does not count); fire is a seeded pick then queued
+  elimination; cancel if the activator dies first; remaining turns are
+  not card-lives; not `deactivatePersistent`. Table-wide scary banner on
+  caster play / decrement / fire only.
 - **Imposition:** points-only skip; no `applyLifeLoss`.
 - **Pool buy:** fog `cardId` / `isUpgraded` on per-recipient logs unless
-  the recipient sees that actor’s private info. Pool **list** identity is
-  fogged the same way except for the pool-pick chooser. Excel `exportLog`
-  stays full.
-- **What’s new:** `localStorage` hub surface; no protocol fields; no accounts.
+  the recipient sees that actor’s private info. Sitting pool faces stay
+  public. Excel `exportLog` stays full.
+- **What’s new:** `localStorage` hub surface; green New + red unread
+  tick; auto-open this version; before → after with card art; no
+  protocol fields; no accounts.
 - **Super Regeneration:** +9 / +18 unchanged.
 - **Super Absorber (L63-05):** package 3, no upgrade double — no activation
   snapshot; unupgraded `livesLost` only; upgraded also `pointsSpent` +

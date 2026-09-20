@@ -3808,4 +3808,39 @@ player bullet.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 retest — Sentence banners + What’s new
+
+Designer Yassine Chenik retest of PR #43. Classic values still change.
+`PROTOCOL_VERSION` stays **36** (this branch unreleased). Public log kinds
+`sentenceCountdown` / `sentenceFired` already exist; banners reuse them
+(play remaining 3, later caster decrements, fire). No view bump.
+
+**Sentence banners:** restore the table-wide scary red Motion flash
+(`data-banner="sentence"`). Everyone sees it **only when the caster
+plays** (including the activation announcement), not on other seats’
+turns. Seat chip with remaining turns in red under the Sentence card
+beside the caster stays.
+
+- Play: **“Sentence in 3 turns!”** (activation does not decrement;
+  remaining stays 3 and the public countdown still announces).
+- Later caster turns that decrement: **“X turn(s) before Sentence!”**
+- Fire: **“Sentence will kill {nickname}!”**
+- Unchanged log: opponent turns add no announcement, so they do not
+  flash.
+
+Supersedes the “action-log line only / `{nickname} will be killed`”
+lines in the 2026-09-20 playtest-corrections entry for Sentence
+messages. Duration (20 / 3 later turns) and pool-face rulings stay.
+
+**What’s new:** same catalog id `lot-63`. **New** is a green control with
+a red unread tick. First visit of this version auto-opens the dialog
+(How to play is not a blocker). Closing / Got it still writes last-seen
+so it does not loop. Items are **before → after** with named-card art.
+Super Absorber player copy: unupgraded now only absorbs lives and no
+longer absorbs points and upgrade points; upgraded absorbs lives,
+points, and upgrade points but no longer doubles. Super Regeneration
+stays +9/+18 (omit). Superpowers is not a player bullet.
+
+---
+
 
