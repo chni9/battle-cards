@@ -46,7 +46,8 @@ joins that skip set (Lot 63 follow-up).
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
 so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
 the public doubling pool fee and `CLEAR_SPY_COST`, and puts a recovered
-`buyPoolCard` `cardId` into hand/special counts. Do **not** retune `heuristic-v4`
+`buyPoolCard` `cardId` into hand/special counts. A fogged `buyPoolCard` (no
+`cardId`) widens every zone 0–1 instead of pinning a card (L63-06). Do **not** retune `heuristic-v4`
 weights for Lot 63 Sentence 20 / Imposition skip — freeze only if the legal set
 changes. Belief Imposition ticks points only (no lives). Belief
 `visibilityFromActingView` rebuilds outgoing Spy **and** incoming `spyingOnYou`

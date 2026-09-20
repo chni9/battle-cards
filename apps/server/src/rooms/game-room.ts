@@ -155,6 +155,7 @@ import {
   buildFinishedViewFor,
   buildLobbyViewFor,
   buildPlayingViewFor,
+  fogBuyPoolCardPlayed,
 } from '../protocol/build-view-for';
 import { recipientSeesPrivateOf, walkInSpectatorSeesPrivate } from '../protocol/visibility-matrix';
 import {
@@ -1960,6 +1961,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         // Spy-gated live event (designer 2026-08-06) — real to actor + spies;
         // opaque `draw` to everyone else so the turn still surfaces.
         this.sendActivateDuplicationPlayed(played);
+      } else if (played.action === 'buyPoolCard') {
+        // Recovered card is Spy-gated (designer 2026-09-20 / L63-06).
+        this.sendBuyPoolCardPlayed(played);
       } else {
         this.broadcast(ACTION_PLAYED, played);
       }
@@ -3794,39 +3798,56 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
+   * Unicast ACTION_PLAYED with a per-recipient payload. Used when the live
+   * event must not broadcast a Spy-gated field (Duplication, pool-buy identity).
+   */
+  private sendActionPlayedMapped(
+    played: ActionPlayedPayload,
+    mapPayload: (played: ActionPlayedPayload, seesPrivate: boolean) => ActionPlayedPayload,
+  ): void {
+    const state = this.gameState;
+
+    for (const client of this.clients) {
+      const recipientId = this.viewRecipientId(client);
+      const walkInSeesPrivate = this.walkInSeesPrivate(client.sessionId);
+      const seesPrivate =
+        recipientId === played.actorPlayerId ||
+        walkInSeesPrivate ||
+        (state !== null &&
+          recipientSeesPrivateOf(state, recipientId, played.actorPlayerId, walkInSeesPrivate));
+      client.send(ACTION_PLAYED, mapPayload(played, seesPrivate));
+    }
+  }
+
+  /**
    * `activateDuplication` is not a public action (designer 2026-08-06).
    * Unicast the real payload to the actor, current spies, and eliminated
    * spectators; send an opaque `draw` ACTION_PLAYED to everyone else.
    */
   private sendActivateDuplicationPlayed(played: ActionPlayedPayload): void {
-    const state = this.gameState;
-    // Opaque draw is not a real Draw — do not copy `drawBust` or card fields.
-    const opaque: ActionPlayedPayload = {
-      actorPlayerId: played.actorPlayerId,
-      action: 'draw',
-      turnSequence: played.turnSequence,
-      ...(played.botReason !== undefined ? { botReason: played.botReason } : {}),
-    };
-
-    for (const client of this.clients) {
-      const recipientId = this.viewRecipientId(client);
-      const walkInSeesPrivate = this.walkInSeesPrivate(client.sessionId);
-
-      if (recipientId === played.actorPlayerId || walkInSeesPrivate) {
-        client.send(ACTION_PLAYED, played);
-        continue;
+    this.sendActionPlayedMapped(played, (payload, seesPrivate) => {
+      if (seesPrivate) {
+        return payload;
       }
 
-      if (
-        state !== null &&
-        recipientSeesPrivateOf(state, recipientId, played.actorPlayerId, walkInSeesPrivate)
-      ) {
-        client.send(ACTION_PLAYED, played);
-        continue;
-      }
+      // Opaque draw is not a real Draw — do not copy `drawBust` or card fields.
+      return {
+        actorPlayerId: payload.actorPlayerId,
+        action: 'draw',
+        turnSequence: payload.turnSequence,
+        ...(payload.botReason !== undefined ? { botReason: payload.botReason } : {}),
+      };
+    });
+  }
 
-      client.send(ACTION_PLAYED, opaque);
-    }
+  /**
+   * Pool-buy card identity is Spy-gated (designer 2026-09-20 / L63-06).
+   * The action stays `buyPoolCard`; `cardId` / `isUpgraded` drop for others.
+   */
+  private sendBuyPoolCardPlayed(played: ActionPlayedPayload): void {
+    this.sendActionPlayedMapped(played, (payload, seesPrivate) =>
+      seesPrivate ? payload : fogBuyPoolCardPlayed(payload),
+    );
   }
 
   private sendStateToEveryoneExcept(excluded: GameClient): void {

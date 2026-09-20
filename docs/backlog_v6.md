@@ -116,7 +116,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 ## Progress
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
-Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (139 of 139).
+Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -147,7 +147,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
-| 63 · The Gambler + Factory | 5 | 5 |
+| 63 · The Gambler + Factory | 6 | 6 |
 
 
 ---
@@ -518,7 +518,8 @@ action-log card frequencies that Lot 61 left out.
 Classic 16th kit and circulating Factory special. Draw 10 with a 1-in-10
 instant-elimination bust. Placeholder art. `PROTOCOL_VERSION` 35 → 36, then
 36 → 37 for public `pendingSentences`. What’s new Sentence / Imposition /
-Super Absorber copy matches live rules.
+Super Absorber copy matches live rules. Pool-buy recovered identity is
+Spy-gated on the action log (L63-06).
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
@@ -527,6 +528,7 @@ Super Absorber copy matches live rules.
 | L63-03 | `PROTOCOL_VERSION` 35 → 36; public `drawBust` on `actionPlayed`; inspect/lobby copy; placeholder kit + Factory art including activated. **Acceptance:** table log shows a bust; older clients fail the version gate; `pnpm verify` green. | M | Medium | L63-02 | Done |
 | L63-04 | Belief posterior/uniqueness for random-deal Gambler + Factory scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Factory play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | Done |
 | L63-05 | Match advertised What’s new nerfs: delayed Sentence 20, Imposition skip, Super Absorber lives-only unless upgraded; `PROTOCOL_VERSION` 36 → 37 `pendingSentences`. **Acceptance:** What’s new copy matches live handlers; table countdown is public; `pnpm verify` green. | L | **High** | L63-04 | Done |
+| L63-06 | Per-recipient `buyPoolCard` log fog: omit `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer; live `ACTION_PLAYED` unicast; sitting pool faces stay public; Excel `exportLog` stays full; belief widens fogged buys. No protocol bump. No What’s new item. **Acceptance:** opponent log says “bought a card from the pool”; buyer / Spy / overlay still see the card; `pnpm verify` green. | M | **High** | L63-05 | Done |
 
 ---
 
@@ -556,10 +558,10 @@ Super Absorber copy matches live rules.
 | 60 | 5 |
 | 61 | 10 |
 | 62 | 7 |
-| 63 | 5 |
-| **Total** | **139** |
+| 63 | 6 |
+| **Total** | **140** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**.
 
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.

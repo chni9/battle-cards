@@ -124,6 +124,9 @@ These are the spots where a plausible implementation is wrong and silent:
   `log-collapsed` / `opponents-collapsed` / `incoming-collapsed` when the
   expanded panel is unmounted (L53-07). A null measure because the seat or log
   is a button fails the gate.
+- A `buyPoolCard` log or live `ACTION_PLAYED` that names `cardId` for a
+  non-seer (L63-06). Buyer / Spy / spectator overlay still see the card;
+  sitting pool faces stay public.
 
 ## What not to do
 

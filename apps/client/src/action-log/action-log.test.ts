@@ -108,6 +108,33 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
+  it('names a recovered pool card only when cardId is present (L63-06)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'tax',
+          isUpgraded: false,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought Tax from the pool');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought a card from the pool');
+  });
+
   it('logs that the actor got unspied from the spy (L58-07)', () => {
     expect(
       formatActionLogEntry(
@@ -596,6 +623,18 @@ describe('click-to-explain card segments (L56-05)', () => {
       isUpgraded: false,
     });
     expect(formatActionLogEntry(play, nick)).toBe('Alice plays Absorber on Bob');
+  });
+
+  it('does not emit a card segment for a fogged pool buy (L63-06)', () => {
+    const fogged = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 1,
+    } as const;
+    expect(formatActionLogEntrySegments(fogged, nick).some((segment) => segment.type === 'card')).toBe(
+      false,
+    );
   });
 
   it('emits a card segment on persistentDeactivated', () => {

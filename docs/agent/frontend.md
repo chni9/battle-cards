@@ -20,7 +20,8 @@ on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-ro
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
 labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
-Lot 63 hub What’s new with a **New** additions section).
+Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
+action-log fog).
 
 ## Screens
 
@@ -1243,4 +1244,14 @@ Super Absorber before **New** Gambler + Factory. Solo nickname `NerfCheck`,
 Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 20,
 “After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
 tests.
+
+### Lot 63 pool-buy log fog (L63-06) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Two-tab Classic
+online, nicks `AliceFog` / `BobFog`, room **WZAUOW**. Alice Wizard, Bob
+Kamikaze. Alice sold Tax into the shop pool (faces stay public), then **Buy
+random**. Buyer log: **AliceFog bought Tax from the pool**. Opponent log:
+**AliceFog bought a card from the pool**. Live `ACTION_PLAYED` matches.
+`pnpm verify` **1552** tests. No protocol bump.
+
 
