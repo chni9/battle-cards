@@ -431,7 +431,7 @@ export function AdminOverviewModules({
             label: combatOutcomeLabel(row.outcome),
             value: row.count,
           }))}
-          caption="Tax, Suicide, and Imposition life loss is not attack damage."
+          caption="Tax and Suicide life loss is not attack damage."
         />
       </AdminModule>
 

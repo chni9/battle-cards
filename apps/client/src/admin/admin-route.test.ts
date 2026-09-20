@@ -95,7 +95,7 @@ describe('admin route (Lot 61-06)', () => {
     expect(modules).toContain('title="Retention and feedback"');
     expect(modules).toContain('AdminActorsControl');
     expect(modules).toContain('Hours are UTC.');
-    expect(modules).toContain('Tax, Suicide, and Imposition life loss is not attack damage.');
+    expect(modules).toContain('Tax and Suicide life loss is not attack damage.');
     expect(modules).toContain('Ignores the opponents match-mix filter');
     expect(modules).toContain('AdminScatterChart');
     expect(modules).toContain('New matches only');
