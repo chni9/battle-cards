@@ -32,6 +32,7 @@ import type {
   PersistentEffectView,
   PlayKind,
   PlayingStateView,
+  PoolCardView,
   PrivateSelfView,
   PublicPlayerView,
   SpiedPlayerView,
@@ -235,6 +236,24 @@ export function fogBuyPoolCardPlayed(played: ActionPlayedPayload): ActionPlayedP
 }
 
 /**
+ * Occupancy stays public. Identity only for the pool-pick chooser so a list
+ * diff cannot name a recovered card (designer 2026-09-20 / L63-06).
+ */
+export function mapPoolForRecipient(
+  state: GameState,
+  recipientSessionId: string,
+): PoolCardView[] {
+  const showIdentity =
+    state.subChoice?.kind === 'pool-pick' && state.subChoice.playerId === recipientSessionId;
+
+  if (showIdentity) {
+    return state.pool.map((card) => ({ ...card }));
+  }
+
+  return state.pool.map((card) => ({ instanceId: card.instanceId }));
+}
+
+/**
  * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20):
  * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
  * - `buyPoolCard` omits `cardId` / `isUpgraded` unless self, Spy, or spectator overlay
@@ -429,7 +448,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
         state,
         walkInSeesPrivate,
       ),
-      pool: state.pool.map((card) => ({ ...card })),
+      pool: mapPoolForRecipient(state, recipientSessionId),
       poolBuyCost: state.poolBuyCost,
       pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,

@@ -183,7 +183,8 @@ Designer: hub What’s new (localStorage, no accounts) plus Classic nerfs.
 - **Imposition:** points only; skip if the victim has fewer than 2 (4 upgraded);
   no lives.
 - **Pool buy:** per-recipient log fogs `cardId` / `isUpgraded` unless the
-  recipient sees that actor’s private info.
+  recipient sees that actor’s private info. `PlayingStateView.pool` occupancy
+  is public; identity is omitted except for the pool-pick chooser.
 - **What’s new:** shared catalog + hub button, red dot, auto-popup, history.
 - **Super Regeneration:** stays +9 / +18. L63-05 is Super Absorber package 3
   (no snapshot; unupgraded livesLost only; upgraded also spend at ×1).
@@ -880,7 +881,9 @@ single-bump lock: `PROTOCOL_VERSION` **35 → 36** in L63-02.
   not `deactivatePersistent`.
 - **Imposition:** points-only skip; no `applyLifeLoss`.
 - **Pool buy:** fog `cardId` / `isUpgraded` on per-recipient logs unless
-  the recipient sees that actor’s private info. Excel `exportLog` stays full.
+  the recipient sees that actor’s private info. Pool **list** identity is
+  fogged the same way except for the pool-pick chooser. Excel `exportLog`
+  stays full.
 - **What’s new:** `localStorage` hub surface; no protocol fields; no accounts.
 - **Super Regeneration:** +9 / +18 unchanged.
 - **Super Absorber (L63-05):** package 3, no upgrade double — no activation

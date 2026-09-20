@@ -482,6 +482,7 @@ function collectForbiddenInstanceIds(view: PlayingStateView): Set<string> {
   }
 
   for (const card of view.pool) {
+    // Occupancy / instanceId only — fogged slots have no cardId (L63-06).
     forbidden.add(card.instanceId);
   }
 

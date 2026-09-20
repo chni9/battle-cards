@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool, visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
+Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy (how many cards sit there) is visible to all players; **which** cards they are is not, except to a player currently choosing a Card Absorber pool pick. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 

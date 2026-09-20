@@ -233,7 +233,7 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(JSON.stringify(view)).not.toContain('nextPoolInstanceSeq');
   });
 
-  it('includes the shared pool as public state (L20-03)', () => {
+  it('includes the shared pool occupancy as public state (L20-03 / L63-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -255,9 +255,10 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
       actionLog: [],
     });
 
-    expect(view.pool).toEqual([
-      { instanceId: 'pool-1', cardId: 'tax', isUpgraded: false },
-    ]);
+    expect(view.pool).toEqual([{ instanceId: 'pool-1' }]);
+    expect(view.pool[0]).not.toHaveProperty('cardId');
+    expect(view.pool[0]).not.toHaveProperty('isUpgraded');
+    expect(JSON.stringify(view.pool)).not.toContain('tax');
   });
 
   it('never puts opponent lives or shield in the public player slice', () => {
@@ -1486,5 +1487,88 @@ describe('buyPoolCard log fog (L63-06)', () => {
     });
     expect(fogBuyPoolCardPlayed(live)).not.toHaveProperty('cardId');
     expect(fogBuyPoolCardPlayed(live)).not.toHaveProperty('isUpgraded');
+  });
+});
+
+describe('pool-list identity fog (L63-06)', () => {
+  it('omits pool cardId and isUpgraded for non-pickers so a diff cannot name the card', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-pool-list',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    state.pool.push({
+      instanceId: 'pool-secret',
+      cardId: 'poison',
+      isUpgraded: true,
+    });
+
+    const forA = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const forB = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(forA.pool).toEqual([{ instanceId: 'pool-secret' }]);
+    expect(forB.pool).toEqual([{ instanceId: 'pool-secret' }]);
+    expect(JSON.stringify(forA.pool)).not.toContain('poison');
+    expect(JSON.stringify(forB.pool)).not.toContain('poison');
+  });
+
+  it('keeps pool identity for the pool-pick chooser only', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-pool-pick',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    state.pool.push({
+      instanceId: 'pool-pick-1',
+      cardId: 'tax',
+      isUpgraded: false,
+    });
+    state.subChoice = {
+      kind: 'pool-pick',
+      playerId: 'a',
+      maxCount: 1,
+      eligibleInstanceIds: ['pool-pick-1'],
+      cardIsUpgraded: true,
+      deadlineMs: 1,
+    };
+
+    const chooser = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const other = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(chooser.pool).toEqual([
+      { instanceId: 'pool-pick-1', cardId: 'tax', isUpgraded: false },
+    ]);
+    expect(other.pool).toEqual([{ instanceId: 'pool-pick-1' }]);
+    expect(other.pool[0]).not.toHaveProperty('cardId');
   });
 });

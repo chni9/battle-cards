@@ -3751,3 +3751,13 @@ No picker, no extra protocol field (v36 already on the branch).
 
 ---
 
+## 2026-09-20 · [P] Pool-list identity fog (L63-06)
+
+Log fog was not enough: a full `PlayingStateView.pool` let opponents diff
+which card disappeared. Occupancy and `instanceId` stay public; `cardId` /
+`isUpgraded` are omitted unless the recipient is the pool-pick chooser.
+Belief must not learn a named card from a pool diff. Excel `exportLog`
+stays full.
+
+---
+

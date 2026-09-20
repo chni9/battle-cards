@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   KIT_IDS,
+  poolCardHasIdentity,
   type CardId,
   type CardInstance,
   type GameState,
@@ -172,11 +173,15 @@ function publicFieldsAgree(world: GameState, view: PlayingStateView): boolean {
     const left = world.pool[index];
     const right = view.pool[index];
 
-    if (
-      left === undefined ||
-      right?.instanceId !== left.instanceId ||
-      right.cardId !== left.cardId
-    ) {
+    if (left === undefined || right === undefined) {
+      return false;
+    }
+
+    if (right.instanceId !== left.instanceId) {
+      return false;
+    }
+
+    if (poolCardHasIdentity(right) && right.cardId !== left.cardId) {
       return false;
     }
   }

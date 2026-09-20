@@ -268,6 +268,17 @@ export interface PendingEffectView {
  */
 export type PlayKind = 'classic' | 'tutorial';
 
+/** Shared pool slot as seen by a recipient (L63-06). */
+export interface FoggedPoolCard {
+  readonly instanceId: string;
+}
+
+export type PoolCardView = CardInstance | FoggedPoolCard;
+
+export function poolCardHasIdentity(card: PoolCardView): card is CardInstance {
+  return 'cardId' in card;
+}
+
 /** Public Sentence countdown — same shape as `GameState.pendingSentences`. */
 export type PendingSentenceView = PendingSentence;
 
@@ -291,10 +302,12 @@ export interface PlayingStateView {
    */
   actionLog: readonly ActionLogEntryView[];
   /**
-   * Shared pool — rules spec §1 "visible to all players"; technical spec v4 §4.3 / §5.1.
-   * Required so `enumerationStateFromView` can reconstruct pool contents for §10.1.
+   * Shared pool occupancy — rules spec §1; technical spec v4 §4.3 / §5.1.
+   * `cardId` / `isUpgraded` omitted unless the recipient is the pool-pick chooser
+   * (L63-06). Occupancy and `instanceId` stay public so a pool buy cannot be
+   * reverse-engineered from a list diff.
    */
-  pool: readonly CardInstance[];
+  pool: readonly PoolCardView[];
   /**
    * Table-wide pool-buy fee (rules spec §1 / L58-02). Public. Starts at 1 and
    * doubles after every successful `buyPoolCard`. Never resets.

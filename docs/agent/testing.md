@@ -104,6 +104,8 @@ These are the spots where a plausible implementation is wrong and silent:
 - Sentence fire after 3 activator turns; cancel if the activator dies first; remaining
   turns are not shortened by `applyDamage` (L63-03).
 - Fogged `buyPoolCard` log does not pin an opponent card in belief (L63-06).
+- Fogged `PlayingStateView.pool` omits `cardId` / `isUpgraded` except for the
+  pool-pick chooser; belief does not learn the missing card from a pool diff.
 - Two attacks of **different** damage aimed at each other: a stronger *answer* still
   cancels the weaker incoming; a weaker answer is **kept** and the incoming still
   resolves (Lot 54). The tempting bug is to splice the weaker retaliation.

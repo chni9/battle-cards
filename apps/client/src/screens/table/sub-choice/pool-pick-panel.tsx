@@ -4,6 +4,7 @@
 
 import {
   formatCardLabel,
+  poolCardHasIdentity,
   type PlayingStateView,
   type PoolPickChoiceRequiredPayload,
   type ResolveSubChoicePayload,
@@ -11,7 +12,7 @@ import {
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
-import { CardChoiceTile } from '../../../design/components/card-choice-tile';
+import { CardChoiceTile, HIDDEN_CARD_CAPTION } from '../../../design/components/card-choice-tile';
 
 export interface PoolPickPanelProps {
   subChoice: PoolPickChoiceRequiredPayload;
@@ -59,12 +60,15 @@ export function PoolPickPanel({
           {eligiblePool.map((instance) => {
             const selected = selectedIds.includes(instance.instanceId);
             const atCap = !selected && selectedIds.length >= subChoice.maxCount;
-            const name = formatCardLabel(instance.cardId, instance.isUpgraded);
+            const name = poolCardHasIdentity(instance)
+              ? formatCardLabel(instance.cardId, instance.isUpgraded)
+              : HIDDEN_CARD_CAPTION;
+            const tileInstance = poolCardHasIdentity(instance) ? instance : null;
 
             return (
               <li key={instance.instanceId}>
                 <CardChoiceTile
-                  instance={instance}
+                  instance={tileInstance}
                   caption={name}
                   selected={selected}
                   disabled={atCap}
