@@ -59,6 +59,22 @@ describe('asset-lookup (L30-01)', () => {
     }
   });
 
+  it('maps Factory placeholder art including activated (L63-03)', () => {
+    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false }))).toMatch(
+      /Factory\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true }))).toMatch(
+      /Factory \+\.png/,
+    );
+    expect(
+      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false, activated: true })),
+    ).toMatch(/Factory \(activated\)\.png/);
+    expect(
+      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true, activated: true })),
+    ).toMatch(/Factory \+ \(activated\)\.png/);
+    expect(CARDS_WITH_ACTIVATED_ART).toContain('factory');
+  });
+
   it('resolves MEGA ATTACK, Super Mirror and Card Absorber art', () => {
     expect(decodeURIComponent(getCardArtUrl('mega-attack', { isUpgraded: false }))).toMatch(
       /MEGA ATTACK/i,

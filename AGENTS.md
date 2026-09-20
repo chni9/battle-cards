@@ -120,7 +120,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Mirror) and adds pool buy, PG 3/6, and Unspy (`PROTOCOL_VERSION` 34).
  **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
  **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
- (kits + match totals; `PROTOCOL_VERSION` 35). Walk-in claim-picker fog stays.
+ (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
+ adds The Gambler + Factory (`PROTOCOL_VERSION` 36). Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

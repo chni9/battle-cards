@@ -8,18 +8,18 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 60
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 63
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–60 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–63 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
-labels, Lot 60 Game over awards gallery).
+labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell).
 
 ## Screens
 
