@@ -125,7 +125,7 @@ describe('Ghost kit credit (L28-01 / #V4-22)', () => {
     expect(ghost.points).toBe(6);
   });
 
-  it('credits Imposition ceded life and Poison ticks', () => {
+  it('does not credit Imposition skips; still credits Poison ticks', () => {
     const state = createInitialState({
       seats,
       seed: 'ghost-imposition-poison',
@@ -150,15 +150,14 @@ describe('Ghost kit credit (L28-01 / #V4-22)', () => {
       }),
     ];
     applyPersistentEffects(state, ghost.id);
-    expect(ghost.lives).toBe(13);
-    expect(ghost.points).toBe(2);
+    expect(ghost.lives).toBe(14);
+    expect(ghost.points).toBe(0);
 
-    ghost.points = 0;
     other.activePersistentEffects = [
       makeCounterEffect({ id: 'poi', cardId: 'poison', counter: 3 }),
     ];
     applyPersistentEffects(state, ghost.id);
-    expect(ghost.lives).toBe(12);
+    expect(ghost.lives).toBe(13);
     expect(ghost.points).toBe(2);
   });
 

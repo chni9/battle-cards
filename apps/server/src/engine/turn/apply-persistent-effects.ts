@@ -12,7 +12,6 @@
 import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
 
 import {
-  grantLives,
   grantPoints,
 } from '../economy/grant-resources';
 import { applyLifeLoss } from '../life/apply-life-loss';
@@ -25,8 +24,6 @@ import { recordEliminationContributor } from './elimination-rewards';
 
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
-const IMPOSITION_LIVES_BASE = 1;
-const IMPOSITION_LIVES_UPGRADED = 2;
 const POINTS_GENERATOR_BASE = 3;
 const POINTS_GENERATOR_UPGRADED = 6;
 const INVISIBILITY_POINTS_BASE = 4;
@@ -140,19 +137,13 @@ function applyOneImposition(
   effect: PersistentEffect,
 ): void {
   const pointsDue = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
-  const livesDue = effect.isUpgraded ? IMPOSITION_LIVES_UPGRADED : IMPOSITION_LIVES_BASE;
 
-  if (victim.points >= pointsDue) {
-    victim.points -= pointsDue;
-    grantPoints(state, imposer, pointsDue, 'direct');
+  if (victim.points < pointsDue) {
     return;
   }
 
-  const loss = applyLifeLoss(victim, livesDue, 'imposition');
-  victim.turnLedger.livesLost += loss.livesLost;
-  observeLifeLoss(state, victim, loss.livesLost);
-  grantLives(state, imposer, loss.livesLost, 'direct');
-  recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
+  victim.points -= pointsDue;
+  grantPoints(state, imposer, pointsDue, 'direct');
 }
 
 function applyPoisonsOnVictim(state: GameState, victim: Player): void {
