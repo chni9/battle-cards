@@ -39,22 +39,20 @@ export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactEle
               <p className="mt-1 text-xs font-medium text-ink-muted">Latest</p>
             ) : null}
             <ul className="mt-3 list-none space-y-4 p-0">
-              {note.items.map((item) => (
+              {note.items.map((item, itemIndex) => (
                 <li
-                  key={`${note.id}-${item.cardId ?? item.before}`}
+                  key={`${note.id}-${String(itemIndex)}`}
                   className="flex items-start gap-3"
                 >
-                  {item.cardId !== undefined ? (
-                    <Card
-                      instance={{
-                        instanceId: `whats-new-${note.id}-${item.cardId}`,
-                        cardId: item.cardId,
-                        isUpgraded: false,
-                      }}
-                      detail="thumb"
-                      className="w-14 shrink-0 !p-0.5 sm:w-16"
-                    />
-                  ) : null}
+                  <Card
+                    instance={{
+                      instanceId: `whats-new-${note.id}-${item.cardId}`,
+                      cardId: item.cardId,
+                      isUpgraded: false,
+                    }}
+                    detail="thumb"
+                    className="w-14 shrink-0 !p-0.5 sm:w-16"
+                  />
                   <div className="min-w-0 space-y-1.5 text-sm leading-relaxed text-ink">
                     <p>
                       <span className="font-semibold text-ink-muted">Before. </span>
