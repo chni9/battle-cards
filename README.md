@@ -65,7 +65,7 @@ Operator clicks (GitHub default branch, Coolify `staging` environment) →
 | `DATABASE_URL` | yes (image) | Postgres; entrypoint migrates then starts. Staging and production **each** have their own. |
 | `INBOX_PASSWORD` | no | Designer inbox; unset → `GET /api/inbox` is 404; 10 failed guesses / 10 min / IP → 429 |
 | `PORT` | no (default 2567) | Listen port — match Coolify `ports_exposes` |
-| `NODE_ENV` | yes on the VPS | `production` on **both** hosts (runtime mode, not the Git branch) |
+| `NODE_ENV` | yes on the VPS | `production` on **both** hosts (runtime mode, not the Git branch). Coolify: **runtime only** — uncheck Available at Buildtime |
 | `STATIC_DIR` | no | SPA root (image default `/app/apps/client/dist`) |
 | `VITE_SERVER_URL` | no | Leave unset for same-origin Coolify deploys |
 
