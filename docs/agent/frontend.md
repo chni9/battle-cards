@@ -1205,3 +1205,17 @@ guard.
   Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
   not an empty flash. Formatters treat non-finite numbers as **—**.
 
+### Lot 63 verified 2026-09-20 (browser, solo Gambler, PROTOCOL 36)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
+`L63Gate`. Room **JFBMCN**. `pnpm verify` **1504** tests.
+
+- Kit picker last cell is **The Gambler**. Inspect: 1 life, 0 points, 0 UP,
+  Draw +10, action/attack 0, Factory special, Draw risk 1 in 10, ability copy
+  names Factory and the bust.
+- Opening deal: 1 life, 0 points, empty hand, 6 specials including Factory
+  (plus five circulating, none of them a second Factory).
+- First action Draw: log `L63Gate draws` (safe path), points 10. Factory Use
+  −10 arms a persistent with **2 card lives** and grants a shared card into
+  Hand on the same turn. Placeholder kit/Factory art only.
+
