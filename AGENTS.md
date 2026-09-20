@@ -38,6 +38,10 @@ search).
 
 Absolute rules:
 
+- **Never skip Superpowers.** Invoke `using-superpowers` and any other applicable
+  skill **before** any response or action — including clarifying questions, exploring
+  the codebase, and checking files. Coordinators and workers. See
+  `docs/agent/superpowers.md`.
 - Never invent a business rule, product decision, or architectural convention absent from
   sources 1–3. If information is missing, mark it **undefined** and ask.
 - **On a rule the rules spec wins over the technical spec — except where the technical spec
@@ -153,6 +157,7 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 
 | Playbook | Read it when |
 |---|---|
+| `docs/agent/superpowers.md` | Before any response or action — coordinators and workers |
 | `docs/agent/engine.md` | Turn loop, delayed resolution, life loss, mutual attacks, ledger, elimination |
 | `docs/agent/card-handler.md` | Adding or changing any card |
 | `docs/agent/protocol.md` | Colyseus rooms, events, per-recipient views, Spy visibility |
