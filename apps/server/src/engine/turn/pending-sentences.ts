@@ -80,6 +80,12 @@ export function tickPendingSentences(
 
     if (index === skipIndex) {
       next.push(pending);
+      announcements.push({
+        kind: 'sentenceCountdown',
+        sourcePlayerId: actorPlayerId,
+        remainingOwnerTurns: pending.remainingOwnerTurns,
+        turnSequence: state.turnSequence,
+      });
       continue;
     }
 

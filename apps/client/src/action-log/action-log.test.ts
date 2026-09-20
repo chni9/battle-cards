@@ -248,7 +248,18 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card from the pool');
   });
 
-  it('formats Sentence countdown and fire without a table-wide banner (L63-03)', () => {
+  it('formats Sentence play, decrement, and fire announcements (L63-03)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'sentenceCountdown',
+          sourcePlayerId: 'a',
+          remainingOwnerTurns: 3,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Sentence in 3 turns!');
     expect(
       formatActionLogEntry(
         {
@@ -281,7 +292,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Bob will be killed');
+    ).toBe('Sentence will kill Bob!');
   });
 
   it('formats player reanimation without the kit (L50-03)', () => {

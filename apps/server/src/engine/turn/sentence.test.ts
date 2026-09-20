@@ -214,7 +214,7 @@ describe('Sentence (L63-03)', () => {
     expect(b.isEliminated).toBe(true);
   });
 
-  it('logs countdown only when the caster’s remaining count decrements', () => {
+  it('logs countdown on play and later caster decrements, not on opponent turns', () => {
     const { state, a, b } = seatPair('l63-03-countdown-log');
     a.specialCards = [{ instanceId: 'se-1', cardId: 'sentence', isUpgraded: true }];
     a.points = 20;
@@ -225,7 +225,14 @@ describe('Sentence (L63-03)', () => {
     if (!played.ok) {
       return;
     }
-    expect(played.sentenceAnnouncements ?? []).toEqual([]);
+    expect(played.sentenceAnnouncements).toEqual([
+      {
+        kind: 'sentenceCountdown',
+        sourcePlayerId: a.id,
+        remainingOwnerTurns: 3,
+        turnSequence: played.actionPlayed.turnSequence,
+      },
+    ]);
 
     passUntil(state, b.id);
     const other = performTurnAction(state, b.id, { type: 'draw' });

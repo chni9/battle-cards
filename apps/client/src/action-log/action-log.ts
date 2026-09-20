@@ -8,6 +8,7 @@ import {
   formatCardLabel,
   isAttackCardId,
   listedAttackDamage,
+  SENTENCE_OWNER_TURNS,
   type ActionLogEntryKind,
   type ActionLogEntryView,
   type CardId,
@@ -342,13 +343,16 @@ export function formatActionLogEntrySegments(
       ];
     }
     case 'sentenceCountdown': {
+      if (entry.remainingOwnerTurns === SENTENCE_OWNER_TURNS) {
+        return [text('Sentence in 3 turns!')];
+      }
       const unit = entry.remainingOwnerTurns === 1 ? 'turn' : 'turns';
       return [
         text(`${String(entry.remainingOwnerTurns)} ${unit} before Sentence!`),
       ];
     }
     case 'sentenceFired': {
-      return [player(entry.targetPlayerId, nicknameOf), text(' will be killed')];
+      return [text('Sentence will kill '), player(entry.targetPlayerId, nicknameOf), text('!')];
     }
     default: {
       const _exhaustive: never = entry;
