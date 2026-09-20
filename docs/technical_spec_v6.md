@@ -185,8 +185,8 @@ Designer: hub What’s new (localStorage, no accounts) plus Classic nerfs.
 - **Pool buy:** per-recipient log fogs `cardId` / `isUpgraded` unless the
   recipient sees that actor’s private info.
 - **What’s new:** shared catalog + hub button, red dot, auto-popup, history.
-- **Super Regeneration:** stays +9 / +18 until L63-05 (Blocked; options A–D in
-  `decisions.md`).
+- **Super Regeneration:** stays +9 / +18. L63-05 is Super Absorber package 3
+  (no snapshot; unupgraded livesLost only; upgraded also spend at ×1).
 - `PROTOCOL_VERSION` **35 → 36** (L63-02). Exception to the V6 single-bump lock
   (same class as L49 / L56 / L57 / L58 / L60).
 
@@ -736,7 +736,7 @@ Not even partially, even “to lay groundwork”:
   (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
   freeze, designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
   PG 3/6 / Unspy, and designer 2026-09-20 Lot 63 Sentence / Imposition /
-  pool-buy fog; Super Regeneration stays +9/+18 until L63-05)
+  pool-buy fog; Super Regeneration stays +9/+18; Super Absorber package 3)
 - A second Colyseus room type
 - Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
   it reuses eliminated-player vision, not a replay product)
@@ -882,8 +882,10 @@ single-bump lock: `PROTOCOL_VERSION` **35 → 36** in L63-02.
 - **Pool buy:** fog `cardId` / `isUpgraded` on per-recipient logs unless
   the recipient sees that actor’s private info. Excel `exportLog` stays full.
 - **What’s new:** `localStorage` hub surface; no protocol fields; no accounts.
-- **Super Regeneration:** +9 / +18 unchanged until L63-05 (Blocked; options
-  A / B / C / D in `docs/agent/decisions.md`).
+- **Super Regeneration:** +9 / +18 unchanged.
+- **Super Absorber (L63-05):** package 3, no upgrade double — no activation
+  snapshot; unupgraded `livesLost` only; upgraded also `pointsSpent` +
+  `upgradePointsSpent` at ×1.
 - **Out of this lot:** heuristic-v4 weight retune; Team / God / Quick;
   accounts.
 

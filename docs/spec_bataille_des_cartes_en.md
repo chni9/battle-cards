@@ -200,8 +200,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: doubles the damage of the attacks redirected this way.
 
 **Super Absorber** — Price: 8 points
-- Action: absorbs all points, lives and upgrade points spent by all opponents. On activation, immediately captures each opponent's last complete turn (including eliminated opponents still inside the Absorber window described in section 3); then continues to absorb on every later opponent turn as long as the card's dedicated internal counter is not depleted.
-- Upgrade: doubles all gains obtained this way.
+- Action: persistent on the user (counter 2 is card lives). Every living opponent: absorb the lives they lost on their turn. Playing it does not capture opponents' last complete turns (no activation snapshot), including eliminated opponents still inside the Absorber window described in section 3. Invisible opponents are skipped. Theft is never absorbed. Lives gained still cap at 25.
+- Upgrade: also absorb points and upgrade points they actively spent that turn (same split as Absorber). Amounts are not doubled.
 
 **Curse** — Price: 8 points
 - Action: the user chooses an opponent to curse. The effect lives on that opponent (not the user). While cursed, they lose 1 life for every 3 points they spend on their turn. Every life that player actually loses (after the shield, from any cause — including that spend drain) is granted to the **original user** who played that Curse copy. Multiple Curses on the same player stack — each copy ticks and pays independently.

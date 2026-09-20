@@ -15,9 +15,9 @@ full Classic content (15 kits). **V5** adds measurement, fitted evaluation, beli
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
 `docs/backlog_v6.md`); Lots 57–62 are **done**; **Lot 63** (What’s new + Classic
-nerfs: Sentence 20 delayed kill, Imposition points-only, pool-buy fog;
-`PROTOCOL_VERSION` 36) is **in progress**. Super Regeneration stays +9/+18
-until L63-05. V5 may continue in parallel. Audience: the designer and his
+nerfs: Sentence 20 delayed kill, Imposition points-only, pool-buy fog,
+Super Absorber package 3; `PROTOCOL_VERSION` 36) is **in progress**. Super
+Regeneration stays +9/+18. V5 may continue in parallel. Audience: the designer and his
 friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -121,7 +121,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  freeze then pacifist; rematch; pool/PG/Unspy; dock; Game over awards; `/admin`;
  `PROTOCOL_VERSION` through **35**). **Lot 63** (designer 2026-09-20) Sentence 20
  delayed kill, Imposition points-only, pool-buy log fog (`PROTOCOL_VERSION` 36).
- Super Regeneration stays +9/+18 until L63-05. A bot playing badly is never grounds
+ Super Regeneration stays +9/+18. Super Absorber is package 3 (L63-05): no snapshot,
+ unupgraded livesLost only, upgraded spend at ×1. A bot playing badly is never grounds
  for touching a rule. **Search, lookahead, and fitted learning are in scope for V5.**
  Reading hidden information beyond the acting seat's per-recipient view (including
  Spy-revealed fields for seats that seat has Spyed) and the **public** action log is

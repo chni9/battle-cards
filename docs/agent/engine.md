@@ -208,9 +208,10 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Invisibility → (if the player entered this phase invisible) skip Super Absorber /
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
-  (#V4-9a / L58-06). Super Absorber
+  (#V4-9a / L58-06).   Super Absorber
   reads the current seat's ledger
-  (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
+  (`livesLost` always; `pointsSpent` / `upgradePointsSpent` only if upgraded —
+  never theft fields; never a ×2) before life-ticking
   persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
   Poison act on the current player from other seats' active effects. Imposition (L63-04)
   transfers 2 points (4 upgraded) only when the victim has at least that many; otherwise
@@ -288,11 +289,12 @@ The ledger resets at the start of each player's own turn. One ledger per player 
 turn order rotates, so when it is your turn every opponent's last turn is already complete.
 
 **Post-elimination Absorber window (designer 2026-08-07):** eliminated players keep their
-frozen ledger targetable by Absorber (and Super Absorber's activation snapshot) until every
+frozen ledger targetable by Absorber until every
 player who was living at elimination has begun one turn (`absorbWindowPendingPlayerIds`,
 ticked in `beginTurnFor`, opened from elimination). Mid-window deaths prune the pending set.
 When the window closes, the ledger is cleared. Helpers: `absorb-window.ts`. Super Absorber
-activation and ticks share `absorbLedgerFromVictim`.
+(L63-05) has **no** activation snapshot and does not milk corpses; ticks are living victims
+only. `absorbLedgerFromVictim` grants lives always and spend only when upgraded (×1).
 
 ## Match stats (Lot 60)
 

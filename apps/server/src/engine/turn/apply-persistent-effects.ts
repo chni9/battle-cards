@@ -5,6 +5,7 @@
  * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
  * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
  * persistents so it does not re-absorb lives lost later in the same phase.
+ * L63-05: lives always; spend only if upgraded; never a multiplier.
  * Curse still ticks on `pointsSpent` (#V4-20) and siphons those lost lives — and any
  * other actual life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
@@ -108,8 +109,9 @@ function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
         continue;
       }
 
-      const multiplier = effect.isUpgraded ? 2 : 1;
-      absorbLedgerFromVictim(state, owner, victim, multiplier);
+      absorbLedgerFromVictim(state, owner, victim, {
+        includeSpend: effect.isUpgraded,
+      });
     }
   }
 }

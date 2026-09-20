@@ -3732,3 +3732,22 @@ skill into the repo. No rule or value change.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 Super Absorber package 3 (L63-05)
+
+Designer 2026-09-20. Supersedes 2026-08-07 Super Absorber **activation snapshot**
+and upgrade double for Classic. Regular Absorber last-turn window is unchanged.
+Super Regeneration stays +9 / +18.
+
+- Price 8, Specialist, no target, counter 2 = card lives (owner damage).
+- **No** activation snapshot (living or in-window corpses). Future ticks only.
+- Unupgraded: every living opponent; `livesLost` only.
+- Upgraded: same persistence; also `pointsSpent` + `upgradePointsSpent`
+  (Absorber’s upgrade split); multiplier **1** — no doubling.
+- Theft never; lives cap at 25; Invisible skip stays; ticks living victims
+  after they act.
+
+`absorbLedgerFromVictim` grants lives always and spend only if upgraded.
+No picker, no extra protocol field (v36 already on the branch).
+
+---
+

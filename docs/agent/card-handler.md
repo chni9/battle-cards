@@ -161,7 +161,10 @@ agreed for Lot 22). Imposition ticks (L63-04) transfer points only; skip if the 
 has fewer than 2 (4 upgraded) — never `applyLifeLoss`. Sentence (L63-03) is **not** a
 persistent: play starts `pendingSentences` (cost 20; 3 activator turns including play);
 fire queues kill; cancel if the activator dies first. Remaining turns are not card-lives
-and `applyDamage` must not shorten them.
+and `applyDamage` must not shorten them. Super Absorber (L63-05) stays persistent
+counter 2: **no** activation snapshot; unupgraded ticks `livesLost` only; upgraded
+also `pointsSpent` + `upgradePointsSpent` at ×1. Theft never. Regular Absorber
+is still one-shot / one seat.
 
 **Counter cards** ("card lives", rules spec §5): Points Generator 3, Imposition 2, Poison 3,
 Super Absorber 2. Curse has `counter: null`, lives on the cursed seat, stores

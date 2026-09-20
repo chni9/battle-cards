@@ -177,9 +177,9 @@ export const SPECIAL_CARD_CATALOG = {
     'super-absorber',
     'Super Absorber',
     8,
-    'Absorb all points, lives and upgrade points spent by all opponents while the counter holds.',
-    'Absorb all points, lives and upgrade points spent by all opponents while the counter holds, doubled.',
-    'Absorbed amounts are doubled.',
+    'While the counter holds, absorb lives each living opponent lost on their turn. Playing it does not capture past turns.',
+    'While the counter holds, absorb lives each living opponent lost on their turn, plus points and upgrade points they spent. Playing it does not capture past turns.',
+    'Also absorb points and upgrade points they spent.',
   ),
   curse: specialCard(
     'curse',
