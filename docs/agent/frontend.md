@@ -1220,7 +1220,7 @@ guard.
 ### Lot 63 verified 2026-09-20 (browser, solo Gambler, PROTOCOL 36)
 
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
-`L63Gate`. Room **JFBMCN**. `pnpm verify` **1504** tests.
+`L63Gate`. Room **JFBMCN**. `pnpm verify` **1523** tests after What’s new.
 
 - Kit picker last cell is **Gambler**. Inspect: 1 life, 0 points, 0 UP,
   Draw +10, action/attack 0, Factory special, Draw risk 1 in 10, ability copy
@@ -1230,4 +1230,6 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
 - First action Draw: log `L63Gate draws` (safe path), points 10. Factory Use
   −10 arms a persistent with **2 card lives** and grants a shared card into
   Hand on the same turn. Placeholder kit/Factory art only.
+- Hub compact **New** auto-opens What’s new. Heading **New** lists Gambler kit
+  (1 life, Draw 10, 1-in-10 bust) and Factory special (cost 10, 2 card lives).
 
