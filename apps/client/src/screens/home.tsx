@@ -1,5 +1,6 @@
 /**
- * Home screen — hub → Online / Solo paths; How to play primer + first-play soft gate (L42-02).
+ * Home screen — hub → Online / Solo paths; How to play primer + first-play
+ * soft gate (L42-02); What’s new (L63-07).
  * Intents unchanged: create / join / solo = create + N× addBot + startGame (L17-01).
  */
 
@@ -23,8 +24,14 @@ import {
   markHowToPlaySeen,
   type HowToPlayContinueTarget,
 } from '../help/help-storage';
+import {
+  hasUnseenReleaseNotes,
+  markLatestReleaseSeen,
+  shouldAutoOpenWhatsNew,
+} from '../help/release-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
+import { WhatsNewDialog } from './whats-new-dialog';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { homeStatusCopy } from './status-labels';
@@ -73,6 +80,13 @@ export function HomeScreen({
 }: HomeScreenProps): ReactElement {
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
+    shouldAutoOpenWhatsNew({
+      howToPlaySeen: hasSeenHowToPlay(),
+      latestUnseen: hasUnseenReleaseNotes(),
+    }),
+  );
+  const [whatsNewUnread, setWhatsNewUnread] = useState(() => hasUnseenReleaseNotes());
   const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
   const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(1);
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
@@ -112,9 +126,28 @@ export function HomeScreen({
     }
   };
 
+  const closeWhatsNew = (): void => {
+    markLatestReleaseSeen();
+    setWhatsNewUnread(false);
+    setWhatsNewOpen(false);
+  };
+
+  const openWhatsNewIfDue = (): void => {
+    if (
+      !shouldAutoOpenWhatsNew({
+        howToPlaySeen: hasSeenHowToPlay(),
+        latestUnseen: hasUnseenReleaseNotes(),
+      })
+    ) {
+      return;
+    }
+    setWhatsNewOpen(true);
+  };
+
   const goHub = (): void => {
     if (!busy) {
       setMode('hub');
+      openWhatsNewIfDue();
     }
   };
 
@@ -155,6 +188,7 @@ export function HomeScreen({
       markHowToPlaySeen();
     }
     setHowToPlayOpen(false);
+    openWhatsNewIfDue();
   };
 
   return (
@@ -183,6 +217,10 @@ export function HomeScreen({
                 onOpenHowToPlay={() => {
                   setHowToPlayOpen(true);
                 }}
+                onOpenWhatsNew={() => {
+                  setWhatsNewOpen(true);
+                }}
+                whatsNewUnread={whatsNewUnread}
                 onOpenFeedback={() => {
                   setFeedbackOpen(true);
                 }}
@@ -266,6 +304,7 @@ export function HomeScreen({
       </div>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
+      <WhatsNewDialog open={whatsNewOpen} onClose={closeWhatsNew} />
       <FeedbackDialog
         open={feedbackOpen}
         mode="manual"
@@ -295,6 +334,8 @@ interface HubViewProps {
   soloLaunchPending: boolean;
   busy: boolean;
   onOpenHowToPlay: () => void;
+  onOpenWhatsNew: () => void;
+  whatsNewUnread: boolean;
   onOpenFeedback: () => void;
   onChooseOnline: () => void;
   onChooseSolo: () => void;
@@ -307,6 +348,8 @@ function HubView({
   soloLaunchPending,
   busy,
   onOpenHowToPlay,
+  onOpenWhatsNew,
+  whatsNewUnread,
   onOpenFeedback,
   onChooseOnline,
   onChooseSolo,
@@ -339,6 +382,24 @@ function HubView({
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenHowToPlay}>
           How to play
         </Button>
+        <span className="relative inline-flex">
+          <Button
+            type="button"
+            variant="orange"
+            disabled={busy}
+            onClick={onOpenWhatsNew}
+            aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
+          >
+            What's new
+          </Button>
+          {whatsNewUnread ? (
+            <span
+              data-whats-new-unread
+              aria-hidden
+              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
+            />
+          ) : null}
+        </span>
         <Button type="button" variant="orange" disabled={busy} onClick={onOpenFeedback}>
           Feedback
         </Button>

@@ -13,19 +13,19 @@ Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** 
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–60 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–63 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
-labels, Lot 60 Game over awards gallery).
+labels, Lot 60 Game over awards gallery, Lot 63 hub What’s new).
 
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
@@ -121,7 +121,14 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  Esc / overlay only close. **What’s new (L63-07):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first). Hub button + red dot when
+  `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id. Auto-popup
+  on the idle hub if How to play is already seen and the latest note is unread — the
+  How to play first-play gate still wins if both would fire. Closing / Got it writes
+  the latest id. The dialog lists history (every catalog entry). **Update the latest
+  catalog entry in the same commit as player-visible work.** No accounts, no protocol
+  fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
@@ -621,7 +628,7 @@ not a two-human session and not a 6p crowding redo. Clear
 control. `TURN_DURATION_MS=300000 pnpm dev`. Inbox persist needs `DATABASE_URL` (migrated)
 and `INBOX_PASSWORD`. Do not restore pager / Reset help / Spy 4/8 / protocol 29.
 
-1. Hub: **Beta** (word only), Tutorial, How to play, Feedback; **no** Inbox link; **no**
+1. Hub: **Beta** (word only), Tutorial, How to play, What’s new, Feedback; **no** Inbox link; **no**
    `Protocol v`.
 2. First Play online / Play solo / Tutorial click opens How to play (soft gate). Skip and
    Got it both continue. Primer order is spec §5.1 (no delayed-resolution section). Missing
