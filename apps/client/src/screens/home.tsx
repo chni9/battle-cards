@@ -197,19 +197,16 @@ export function HomeScreen({
       />
 
       <BetaCard />
-      <button
+      <Button
         type="button"
+        variant="green"
+        compact
         data-whats-new-button
         aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
         onClick={() => {
           setWhatsNewOpen(true);
         }}
-        className={[
-          'absolute right-[5.75rem] top-4 z-10 inline-flex min-h-9 min-w-9 items-center justify-center',
-          'rounded-full border border-border bg-cta-green px-2.5 font-sans text-[11px] font-semibold text-cta-label-on-dark',
-          'shadow-sm sm:right-28 sm:top-6',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-        ].join(' ')}
+        className="absolute right-[5.75rem] top-4 z-10 min-w-9 sm:right-28 sm:top-6"
       >
         New
         {whatsNewUnread ? (
@@ -219,7 +216,7 @@ export function HomeScreen({
             className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
           />
         ) : null}
-      </button>
+      </Button>
 
       <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
         <section className="order-2 md:order-1">

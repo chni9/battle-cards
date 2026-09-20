@@ -123,7 +123,8 @@ rules above are unchanged — this section only covers how the client looks.
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
   Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
   (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
-  **green** (`bg-cta-green`) with a **red** unread tick when
+  the shared `Button` `variant="green"` (`bg-cta-green-deep`, same as Play
+  online) with a **red** unread tick when
   `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
   First visit of this catalog id auto-opens on the hub — How to play is not a
   blocker. Closing / Got it writes the latest id. Items are before → after
@@ -1227,8 +1228,8 @@ guard.
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
 `protocol v36`. `pnpm verify` **1520** tests (`715b2e1`).
 
-- Hub: compact **green** **New** (`bg-cta-green`, `data-whats-new-button`) with a
-  **red** unread tick. First visit of `lot-63` **auto-opens** What’s new — How
+- Hub: compact **New** is shared `Button` `variant="green"` (`bg-cta-green-deep`,
+  same as Play online) with a **red** unread tick. First visit of `lot-63` **auto-opens** What’s new — How
   to play is not a blocker. Got it writes
   `card-battle.v6.lastSeenReleaseId` = `lot-63`; reload does not loop; red
   tick gone; green New remains. Dialog lists Latest **Sentence, Imposition,

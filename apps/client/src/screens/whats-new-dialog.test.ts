@@ -35,8 +35,11 @@ describe('What’s new dialog (L63-07)', () => {
     expect(home).toContain('markLatestReleaseSeen');
     expect(home).toContain('data-whats-new-unread');
     expect(home).toContain('data-whats-new-button');
-    expect(home).toContain('bg-cta-green');
+    expect(home).toMatch(
+      /<Button[\s\S]{0,400}data-whats-new-button[\s\S]{0,200}variant="green"|<Button[\s\S]{0,400}variant="green"[\s\S]{0,200}data-whats-new-button/,
+    );
     expect(home).toContain('bg-cta-red');
+    expect(home).not.toContain('bg-cta-green');
     expect(home).not.toContain('Super Regeneration');
   });
 
