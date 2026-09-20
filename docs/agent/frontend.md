@@ -1219,10 +1219,10 @@ guard.
   Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
   not an empty flash. Formatters treat non-finite numbers as **—**.
 
-### Lot 63 verified 2026-09-20 (browser, hub What’s new, PROTOCOL 36)
+### Lot 63 verified 2026-09-20 (browser, playtest corrections, PROTOCOL 36)
 
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
-`protocol v36`. `pnpm verify` **1510** tests.
+`protocol v36`. `pnpm verify` **1515** tests.
 
 - Hub: compact **New** control top-right (`data-whats-new-button`) with a red
   unread badge; not a large labeled hub-row block. Dialog did **not** auto-open
@@ -1238,8 +1238,16 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000 pnpm dev`. Server log
   What's new.
 - Solo Specialist rooms **RRXiKT** (inspect) and **WU2JJKY** (Shop). Super
   Absorber inspect: “Playing it does not capture past turns”; upgrade “Also
-  absorb points and upgrade points they spent” (no doubling). Shop **Pool (2)**
-  Shop **Pool** tiles show sitting-card faces. Sentence chip and decrement-only
-  countdown log stay locked by engine tests (needs Assassin 20 pts).
+  absorb points and upgrade points they spent” (no doubling).
+- Shop pool faces (Assassin solo **SFFQYO**): after Super attack sell, Shop
+  **Pool (2)** shows Super attack and Shield **faces** plus names. Helper:
+  “Cards deactivated or dumped here are visible to every player. This is not
+  a hand.”
+- Sentence (Assassin solo **GLOULA** / `L63Play2`): remaining **3** in red under
+  the caster Sentence chip after play (activation does not decrement). Later
+  Draws log `2 turns before Sentence!` then `1 turn before Sentence!` then
+  `L63Play2 will be killed` (Classic self-can-die). No table-wide countdown
+  banner. First play crashed (`Card sentence has no activated art`) — chip now
+  uses the catalog face.
 
 
