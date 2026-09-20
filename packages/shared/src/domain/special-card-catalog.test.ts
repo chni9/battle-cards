@@ -18,7 +18,7 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(SPECIAL_CARD_CATALOG['spy-thief'].cost).toEqual({ points: 5 });
     expect(SPECIAL_CARD_CATALOG.imposition.cost).toEqual({ points: 6 });
     expect(SPECIAL_CARD_CATALOG.cloning.cost).toEqual({ points: 3 });
-    expect(SPECIAL_CARD_CATALOG.sentence.cost).toEqual({ points: 15 });
+    expect(SPECIAL_CARD_CATALOG.sentence.cost).toEqual({ points: 20 });
     expect(SPECIAL_CARD_CATALOG['points-generator'].cost).toEqual({ points: 5 });
     expect(SPECIAL_CARD_CATALOG['points-generator'].effect).toContain('3 points per turn');
     expect(SPECIAL_CARD_CATALOG['points-generator'].upgradeEffect).toContain(

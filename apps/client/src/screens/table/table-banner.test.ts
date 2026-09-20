@@ -11,9 +11,13 @@ import { describe, expect, it } from 'vitest';
 import type { CardId, PendingEffectView } from '@card-battle/shared';
 
 import {
+  emptySentenceBannerWatch,
   emptyTableBannerWatch,
+  formatSentenceBanner,
+  nextSentenceBannerLines,
   nextTableBannerCues,
   povHasWon,
+  sentenceBannerLines,
   TABLE_BANNER_COPY,
 } from './table-banner';
 
@@ -180,5 +184,56 @@ describe('table banners (L51-06)', () => {
       you: 'me',
     });
     expect(next.cues).toEqual([]);
+  });
+});
+
+describe('Sentence countdown banners (L63-03)', () => {
+  it('pluralizes turn/turns and stacks soonest first', () => {
+    expect(formatSentenceBanner(1)).toBe('1 turn before Sentence!');
+    expect(formatSentenceBanner(2)).toBe('2 turns before Sentence!');
+    expect(
+      sentenceBannerLines([
+        { sourcePlayerId: 'b', remainingOwnerTurns: 2, isUpgraded: false },
+        { sourcePlayerId: 'a', remainingOwnerTurns: 1, isUpgraded: true },
+      ]),
+    ).toEqual(['1 turn before Sentence!', '2 turns before Sentence!']);
+  });
+
+  it('flashes on first paint and every later table turn while pendingSentences is non-empty', () => {
+    const first = nextSentenceBannerLines(emptySentenceBannerWatch(), {
+      pendingSentences: [{ sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false }],
+      currentTurnPlayerId: 'a',
+      turnSequence: 1,
+      isEliminated: false,
+      youWon: false,
+    });
+    expect(first.lines).toEqual(['2 turns before Sentence!']);
+
+    const sameTurn = nextSentenceBannerLines(first.next, {
+      pendingSentences: [{ sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false }],
+      currentTurnPlayerId: 'a',
+      turnSequence: 1,
+      isEliminated: false,
+      youWon: false,
+    });
+    expect(sameTurn.lines).toEqual([]);
+
+    const nextTurn = nextSentenceBannerLines(sameTurn.next, {
+      pendingSentences: [{ sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false }],
+      currentTurnPlayerId: 'b',
+      turnSequence: 2,
+      isEliminated: false,
+      youWon: false,
+    });
+    expect(nextTurn.lines).toEqual(['2 turns before Sentence!']);
+  });
+
+  it('locks the scary Sentence banner copy in the Motion flash', () => {
+    const flash = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'your-turn-flash.tsx'),
+      'utf8',
+    );
+    expect(flash).toContain('data-banner="sentence"');
+    expect(flash).toContain('setSentenceQueue((current) => [...current, lines.join(\'\\n\')])');
   });
 });

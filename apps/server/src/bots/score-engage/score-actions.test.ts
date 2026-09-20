@@ -478,7 +478,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
   it('allows selling Super when that yield funds held Sentence', () => {
     const view = baseView({
       self: baseSelf({
-        points: 5,
+        points: 10,
         hand: [
           { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
           { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
@@ -500,7 +500,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
   it('still refuses the last attack even to fund Sentence', () => {
     const view = baseView({
       self: baseSelf({
-        points: 14,
+        points: 19,
         hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
         specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
       }),

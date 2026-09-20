@@ -3,7 +3,7 @@
  * Presentation only. Attack tone matches L39 `threatToneFor`.
  */
 
-import type { PendingEffectView } from '@card-battle/shared';
+import type { PendingEffectView, PendingSentenceView } from '@card-battle/shared';
 
 import {
   incomingTargetingYouIds,
@@ -41,6 +41,78 @@ export interface TableBannerWatch {
   wasEliminated: boolean;
   wasWon: boolean;
   seenIncomingIds: ReadonlySet<string>;
+}
+
+export function formatSentenceBanner(remainingOwnerTurns: number): string {
+  const unit = remainingOwnerTurns === 1 ? 'turn' : 'turns';
+  return `${String(remainingOwnerTurns)} ${unit} before Sentence!`;
+}
+
+/**
+ * One line per live Sentence, soonest first. Empty when none are ticking.
+ */
+export function sentenceBannerLines(
+  pendingSentences: readonly PendingSentenceView[],
+): string[] {
+  if (pendingSentences.length === 0) {
+    return [];
+  }
+
+  return [...pendingSentences]
+    .sort((left, right) => left.remainingOwnerTurns - right.remainingOwnerTurns)
+    .map((entry) => formatSentenceBanner(entry.remainingOwnerTurns));
+}
+
+export interface SentenceBannerInput {
+  pendingSentences: readonly PendingSentenceView[];
+  currentTurnPlayerId: string | null;
+  turnSequence: number;
+  isEliminated: boolean;
+  youWon: boolean;
+}
+
+export interface SentenceBannerWatch {
+  seeded: boolean;
+  turnKey: string;
+  pendingKey: string;
+}
+
+export function emptySentenceBannerWatch(): SentenceBannerWatch {
+  return { seeded: false, turnKey: '', pendingKey: '' };
+}
+
+function sentenceTurnKey(currentTurnPlayerId: string | null, turnSequence: number): string {
+  return `${currentTurnPlayerId ?? 'none'}:${String(turnSequence)}`;
+}
+
+/**
+ * Flash on every table turn while a Sentence ticks, and when the first
+ * countdown appears mid-turn (the play). Skip dead / won POV.
+ */
+export function nextSentenceBannerLines(
+  prev: SentenceBannerWatch,
+  input: SentenceBannerInput,
+): { lines: string[]; next: SentenceBannerWatch } {
+  const lines = sentenceBannerLines(input.pendingSentences);
+  const pendingKey = lines.join('\n');
+  const turnKey = sentenceTurnKey(input.currentTurnPlayerId, input.turnSequence);
+  const next: SentenceBannerWatch = { seeded: true, turnKey, pendingKey };
+
+  if (input.youWon || input.isEliminated || lines.length === 0) {
+    return { lines: [], next };
+  }
+
+  if (!prev.seeded) {
+    return { lines, next };
+  }
+
+  const appeared = prev.pendingKey.length === 0 && pendingKey.length > 0;
+  const newTurn = prev.turnKey !== turnKey;
+  if (appeared || newTurn) {
+    return { lines, next };
+  }
+
+  return { lines: [], next };
 }
 
 export function emptyTableBannerWatch(): TableBannerWatch {

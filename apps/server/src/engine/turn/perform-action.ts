@@ -38,6 +38,7 @@ import { isAbsorberTargetable } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
+import { tickPendingSentences } from './pending-sentences';
 import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
 import {
   ensureAutoDeactivationLog,
@@ -1031,6 +1032,7 @@ function finishTurnPhases(
   ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
   applyPersistentEffects(state, actorPlayerId);
+  tickPendingSentences(state, actorPlayerId);
   const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];

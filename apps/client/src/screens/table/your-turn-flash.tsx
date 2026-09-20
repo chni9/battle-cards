@@ -6,13 +6,15 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-import type { PendingEffectView } from '@card-battle/shared';
+import type { PendingEffectView, PendingSentenceView } from '@card-battle/shared';
 
 import { MOTION_EASE } from '../../fx/motion-timing';
 import { seatColorAlpha, seatColorWash } from '../../design/seat-colors';
 import {
+  emptySentenceBannerWatch,
   emptyTableBannerWatch,
   isFlashierBanner,
+  nextSentenceBannerLines,
   nextTableBannerCues,
   TABLE_BANNER_COPY,
   TABLE_BANNER_MS,
@@ -26,6 +28,9 @@ export interface TableBannerFlashProps {
   isEliminated: boolean;
   youWon: boolean;
   pendingEffects: readonly PendingEffectView[];
+  pendingSentences: readonly PendingSentenceView[];
+  currentTurnPlayerId: string | null;
+  turnSequence: number;
   you: string;
   /** Seat hex color for turn / win chrome. */
   seatColor?: string;
@@ -36,13 +41,19 @@ export function TableBannerFlash({
   isEliminated,
   youWon,
   pendingEffects,
+  pendingSentences,
+  currentTurnPlayerId,
+  turnSequence,
   you,
   seatColor = '#f0c419',
 }: TableBannerFlashProps): ReactElement {
   const reduceMotion = useReducedMotion();
   const watch = useRef(emptyTableBannerWatch());
+  const sentenceWatch = useRef(emptySentenceBannerWatch());
   const [queue, setQueue] = useState<readonly TableBannerCue[]>([]);
+  const [sentenceQueue, setSentenceQueue] = useState<readonly string[]>([]);
   const cue = queue[0];
+  const sentenceLines = sentenceQueue[0];
 
   useEffect(() => {
     const { cues, next } = nextTableBannerCues(watch.current, {
@@ -63,6 +74,22 @@ export function TableBannerFlash({
   }, [isMyTurn, isEliminated, youWon, pendingEffects, you]);
 
   useEffect(() => {
+    const { lines, next } = nextSentenceBannerLines(sentenceWatch.current, {
+      pendingSentences,
+      currentTurnPlayerId,
+      turnSequence,
+      isEliminated,
+      youWon,
+    });
+    sentenceWatch.current = next;
+    if (lines.length === 0) {
+      return undefined;
+    }
+    setSentenceQueue((current) => [...current, lines.join('\n')]);
+    return undefined;
+  }, [pendingSentences, currentTurnPlayerId, turnSequence, isEliminated, youWon]);
+
+  useEffect(() => {
     if (queue.length === 0) {
       return undefined;
     }
@@ -73,6 +100,18 @@ export function TableBannerFlash({
       window.clearTimeout(hideId);
     };
   }, [queue]);
+
+  useEffect(() => {
+    if (sentenceQueue.length === 0) {
+      return undefined;
+    }
+    const hideId = window.setTimeout(() => {
+      setSentenceQueue((current) => current.slice(1));
+    }, TABLE_BANNER_MS);
+    return () => {
+      window.clearTimeout(hideId);
+    };
+  }, [sentenceQueue]);
 
   const flashier = cue !== undefined && isFlashierBanner(cue);
   const chrome = flashier ? ATTACK_RED : seatColor;
@@ -116,6 +155,43 @@ export function TableBannerFlash({
             transition={{ duration: reduceMotion === true ? 0 : 0.4, ease: MOTION_EASE }}
           >
             {TABLE_BANNER_COPY[cue]}
+          </motion.p>
+        </motion.div>
+      ) : null}
+      {sentenceLines !== undefined ? (
+        <motion.div
+          key={`sentence-banner-${sentenceLines}-${String(sentenceQueue.length)}`}
+          role="status"
+          aria-live="assertive"
+          className="pointer-events-none fixed inset-0 z-[91] flex items-center justify-center"
+          initial={reduceMotion === true ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduceMotion === true ? 0.15 : 0.35, ease: MOTION_EASE }}
+        >
+          <motion.p
+            data-banner="sentence"
+            className="whitespace-pre-line rounded-[length:var(--radius-card)] border-8 px-8 py-4 text-center text-3xl font-black tracking-tight text-ink sm:px-12 sm:py-5 sm:text-4xl"
+            style={{
+              borderColor: ATTACK_RED,
+              backgroundColor: seatColorWash(ATTACK_RED, 0.82),
+              boxShadow: `0 0 0 8px ${seatColorAlpha(ATTACK_RED, 0.55)}, 0 20px 56px rgba(214,40,40,0.6)`,
+              color: '#fff8f0',
+            }}
+            initial={
+              reduceMotion === true ? false : { scale: 0.62, y: 18, rotate: -4 }
+            }
+            animate={
+              reduceMotion === true
+                ? { scale: 1, y: 0, rotate: 0 }
+                : { scale: [1.12, 1.04, 1.1], y: 0, rotate: [0, -1.5, 1.5, 0] }
+            }
+            {...(reduceMotion === true
+              ? {}
+              : { exit: { scale: 0.88, y: -10, rotate: 3 } })}
+            transition={{ duration: reduceMotion === true ? 0 : 0.55, ease: MOTION_EASE }}
+          >
+            {sentenceLines}
           </motion.p>
         </motion.div>
       ) : null}

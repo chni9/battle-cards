@@ -212,7 +212,7 @@ export function OpponentZone({
         )}
       </div>
       {!player.isEliminated && (
-        <FlowStatusBadges player={player} compact />
+        <FlowStatusBadges player={player} pendingSentences={view.pendingSentences} compact />
       )}
 
       <div className="mt-1 flex items-start gap-1.5 border-t border-border-soft pt-1 sm:mt-1.5 sm:gap-2 sm:pt-1.5">

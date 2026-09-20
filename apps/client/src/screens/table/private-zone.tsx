@@ -151,7 +151,9 @@ export function PrivateZone({
               />
             </h2>
             {selfPublic !== undefined && <ConnectionBadge player={selfPublic} />}
-            {selfPublic !== undefined && <FlowStatusBadges player={selfPublic} />}
+            {selfPublic !== undefined && (
+              <FlowStatusBadges player={selfPublic} pendingSentences={view.pendingSentences} />
+            )}
           </div>
           {actives.length > 0 && (
             <div

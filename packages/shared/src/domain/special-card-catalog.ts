@@ -80,7 +80,7 @@ export const SPECIAL_CARD_CATALOG = {
   sentence: specialCard(
     'sentence',
     'Sentence',
-    15,
+    20,
     'Eliminate a randomly drawn player among everyone alive, including yourself.',
     'Eliminate a randomly drawn player among everyone alive except yourself.',
     'The random draw never picks you.',

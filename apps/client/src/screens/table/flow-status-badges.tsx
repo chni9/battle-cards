@@ -4,11 +4,12 @@
  * Public fields only; zero rule logic.
  */
 
-import type { PublicPlayerView } from '@card-battle/shared';
+import type { PendingSentenceView, PublicPlayerView } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 export interface FlowStatusBadgesProps {
   player: PublicPlayerView;
+  pendingSentences?: readonly PendingSentenceView[];
   compact?: boolean;
 }
 
@@ -18,7 +19,10 @@ interface BadgeSpec {
   tone: 'muted' | 'accent';
 }
 
-function badgesForPlayer(player: PublicPlayerView): BadgeSpec[] {
+function badgesForPlayer(
+  player: PublicPlayerView,
+  pendingSentences: readonly PendingSentenceView[] = [],
+): BadgeSpec[] {
   const badges: BadgeSpec[] = [];
 
   if (player.blockTurnsRemaining > 0) {
@@ -39,6 +43,18 @@ function badgesForPlayer(player: PublicPlayerView): BadgeSpec[] {
     badges.push({ key: 'invisibility', label: 'Invisible', tone: 'accent' });
   }
 
+  const sentenceTurns = pendingSentences
+    .filter((entry) => entry.sourcePlayerId === player.id)
+    .map((entry) => entry.remainingOwnerTurns);
+  if (sentenceTurns.length > 0) {
+    const soonest = Math.min(...sentenceTurns);
+    badges.push({
+      key: 'sentence',
+      label: `Sentence · ${String(soonest)}`,
+      tone: 'accent',
+    });
+  }
+
   if (player.pendingReanimation !== null) {
     badges.push({ key: 'reanimation', label: 'Reanimating', tone: 'accent' });
   }
@@ -48,9 +64,10 @@ function badgesForPlayer(player: PublicPlayerView): BadgeSpec[] {
 
 export function FlowStatusBadges({
   player,
+  pendingSentences = [],
   compact = false,
 }: FlowStatusBadgesProps): ReactElement | null {
-  const badges = badgesForPlayer(player);
+  const badges = badgesForPlayer(player, pendingSentences);
   if (badges.length === 0) {
     return null;
   }
