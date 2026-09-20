@@ -1,6 +1,7 @@
 /**
- * Super Absorber ledger capture — rules spec §5, #V4-21, designer 2026-08-07.
- * Reads spend + livesLost; never theft fields. Life gains clamp via grantLives.
+ * Super Absorber ledger capture — rules spec §5, designer 2026-09-20 / L63-05.
+ * Lives always; spend only when upgraded. Never theft. Never a multiplier.
+ * Life gains clamp via grantLives.
  */
 
 import type { GameState, Player } from '@card-battle/shared';
@@ -15,10 +16,15 @@ export function absorbLedgerFromVictim(
   state: GameState,
   owner: Player,
   victim: Player,
-  multiplier: number,
+  options: { includeSpend: boolean },
 ): void {
   const ledger = victim.turnLedger;
-  grantPoints(state, owner, ledger.pointsSpent * multiplier, 'direct');
-  grantUpgradePoints(state, owner, ledger.upgradePointsSpent * multiplier, 'direct');
-  grantLives(state, owner, ledger.livesLost * multiplier, 'direct');
+  grantLives(state, owner, ledger.livesLost, 'direct');
+
+  if (!options.includeSpend) {
+    return;
+  }
+
+  grantPoints(state, owner, ledger.pointsSpent, 'direct');
+  grantUpgradePoints(state, owner, ledger.upgradePointsSpent, 'direct');
 }

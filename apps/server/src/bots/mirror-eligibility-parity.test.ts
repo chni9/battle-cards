@@ -71,6 +71,7 @@ function viewWithPending(pendingEffects: readonly PendingEffect[]): PlayingState
     actionLog: [],
     pool: [],
     poolBuyCost: 1,
+    pendingSentences: [],
     playKind: 'classic',
     tutorialIndex: null,
   };

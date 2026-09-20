@@ -5,10 +5,11 @@
  * Tick order (implementation detail, decisions.md 2026-08-05 / Lot 63): Points
  * Generator → Factory → Invisibility → Super Absorber → Imposition → Poison →
  * Curse. Super Absorber runs before life-ticking persistents so it does not
- * re-absorb lives lost later in the same phase. Factory grants a seeded random
- * card (golden rule 5). Curse still ticks on `pointsSpent` (#V4-20) and siphons
- * those lost lives — and any other actual life loss — to the original caster
- * (L50-09; L50-02 siphon stays).
+ * re-absorb lives lost later in the same phase. Lives always; spend only if
+ * upgraded; never a multiplier. Factory grants a seeded random card (golden
+ * rule 5). Imposition skips short victims (no lives). Curse still ticks on
+ * `pointsSpent` (#V4-20) and siphons those lost lives — and any other actual
+ * life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
 
 import {
@@ -20,7 +21,6 @@ import {
 } from '@card-battle/shared';
 
 import {
-  grantLives,
   grantPoints,
 } from '../economy/grant-resources';
 import { acquireCardToHand, acquireSpecialCard } from '../kits/acquire-card';
@@ -35,8 +35,6 @@ import { recordEliminationContributor } from './elimination-rewards';
 
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
-const IMPOSITION_LIVES_BASE = 1;
-const IMPOSITION_LIVES_UPGRADED = 2;
 const POINTS_GENERATOR_BASE = 3;
 const POINTS_GENERATOR_UPGRADED = 6;
 const INVISIBILITY_POINTS_BASE = 4;
@@ -178,8 +176,9 @@ function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
         continue;
       }
 
-      const multiplier = effect.isUpgraded ? 2 : 1;
-      absorbLedgerFromVictim(state, owner, victim, multiplier);
+      absorbLedgerFromVictim(state, owner, victim, {
+        includeSpend: effect.isUpgraded,
+      });
     }
   }
 }
@@ -207,19 +206,13 @@ function applyOneImposition(
   effect: PersistentEffect,
 ): void {
   const pointsDue = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
-  const livesDue = effect.isUpgraded ? IMPOSITION_LIVES_UPGRADED : IMPOSITION_LIVES_BASE;
 
-  if (victim.points >= pointsDue) {
-    victim.points -= pointsDue;
-    grantPoints(state, imposer, pointsDue, 'direct');
+  if (victim.points < pointsDue) {
     return;
   }
 
-  const loss = applyLifeLoss(victim, livesDue, 'imposition');
-  victim.turnLedger.livesLost += loss.livesLost;
-  observeLifeLoss(state, victim, loss.livesLost);
-  grantLives(state, imposer, loss.livesLost, 'direct');
-  recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
+  victim.points -= pointsDue;
+  grantPoints(state, imposer, pointsDue, 'direct');
 }
 
 function applyPoisonsOnVictim(state: GameState, victim: Player): void {

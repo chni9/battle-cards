@@ -11,6 +11,7 @@
  * - `GameState.nextPoolInstanceSeq` (technical spec v4 §5.1)
  * - sub-choice slot/queue (unicast events, not StateView)
  * `GameState.poolBuyCost` is public (L58-02).
+ * `GameState.pendingSentences` is public (PROTOCOL_VERSION 37).
  */
 
 import type {
@@ -396,6 +397,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       ),
       pool: state.pool.map((card) => ({ ...card })),
       poolBuyCost: state.poolBuyCost,
+      pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,
       tutorialIndex,
     },

@@ -3727,9 +3727,24 @@ Duplicator `draw` still must not copy `drawBust`.
 
 `RELEASE_NOTES` (`packages/shared/src/release-notes.ts`) is the hub What’s new
 catalog. Each entry has `additions` (heading **New**: kits and new cards) and
-before/after `items` (nerfs). Lot 63 additions: Gambler kit, Factory special.
+before/after `items` (nerfs). Lot 63 items: Sentence, Imposition, Super
+Absorber, rendered above the New block. Lot 63 additions: Gambler kit, Factory
+special.
 Compact green **New** + red unread tick; auto-open this catalog id. Update the
 latest entry in the same commit as player-visible work. No protocol bump.
+
+---
+
+## 2026-09-20 · [P] What’s new nerfs match live rules
+
+Bugbot on PR #46 (`911fed9d`): hub What’s new announced Sentence, Imposition,
+and Super Absorber changes while handlers still used the old rules. Designer
+copy stays; the engine now matches it. Sentence costs 20 and waits 3 later
+owner turns (`pendingSentences`, remaining turns are not card-lives).
+Imposition skips short victims (no lives). Unupgraded Super Absorber absorbs
+lives only; upgraded also absorbs spend at ×1; no activation snapshot.
+`PROTOCOL_VERSION` **36 → 37** so older clients cannot read the public
+countdown. V6 bump exception, same class as L49 / L56–L60 / L63-03.
 
 ---
 

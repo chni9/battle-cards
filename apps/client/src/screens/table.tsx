@@ -18,6 +18,7 @@ import {
   type KitId,
   type PlayingStateView,
   type ResolveSubChoicePayload,
+  type SentenceAnnouncementLogEntry,
   type SubChoiceRequiredPayload,
   type TutorialTourHighlight,
 } from '@card-battle/shared';
@@ -1230,6 +1231,14 @@ function TableScreenInner({
         isEliminated={selfEliminated}
         youWon={povWon}
         pendingEffects={view.pendingEffects}
+        sentenceAnnouncements={view.actionLog.filter(
+          (entry): entry is SentenceAnnouncementLogEntry =>
+            entry.kind === 'sentenceCountdown' || entry.kind === 'sentenceFired',
+        )}
+        nicknameOf={(id) => {
+          const seat = view.players.find((player) => player.id === id);
+          return seat?.nickname ?? id;
+        }}
         you={view.you}
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />

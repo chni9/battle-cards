@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **36** (L63-03 public `drawBust` on
-> `actionPlayed`; L60-02 recap match totals / optional `kitId` / think time at 35;
+> **Status:** current `PROTOCOL_VERSION` is **37** (public `pendingSentences` and
+> Sentence countdown / fire log kinds; L63-03 public `drawBust` on
+> `actionPlayed` at 36; L60-02 recap match totals / optional `kitId` / think time at 35;
 > L58-02 pool buy / Unspy / `poolBuyCost` / `spyingOnYou` at 34; L57-16
 > `staySpectating` + claim-picker fog at 33; L57-07 lobby Ready / Kick / Play
 > again / `claimSeat` at 32; Mirror redirect fields at 31; V6 teaching fields
@@ -56,6 +57,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
 | Queue of pending effects | **Public** |
+| Ticking Sentence countdown | **Public** as `pendingSentences` plus `sentenceCountdown` / `sentenceFired` log kinds (PROTOCOL_VERSION 37). Remaining turns are not card-lives |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -177,6 +179,11 @@ simulator `appendTurnResultLog`, and the four-bot harness copy optional public
 fields through `toActionPlayedPayload` (`packages/shared/src/protocol/messages.ts`)
 so a new tell cannot be dropped on one path. Opaque `activateDuplication` → `draw`
 must not copy `drawBust`.
+
+PROTOCOL_VERSION 37 adds public `PlayingStateView.pendingSentences` and action-log
+kinds `sentenceCountdown` / `sentenceFired`. Older clients fail the version gate.
+Room and simulator append those announcements from `TurnResult.sentenceAnnouncements`.
+Remaining owner turns are not card-lives.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

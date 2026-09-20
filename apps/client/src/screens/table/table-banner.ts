@@ -3,7 +3,9 @@
  * Presentation only. Attack tone matches L39 `threatToneFor`.
  */
 
-import type { PendingEffectView } from '@card-battle/shared';
+import type { PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
+
+import { formatActionLogEntry } from '../../action-log/action-log';
 
 import {
   incomingTargetingYouIds,
@@ -51,6 +53,56 @@ export function emptyTableBannerWatch(): TableBannerWatch {
     wasWon: false,
     seenIncomingIds: new Set(),
   };
+}
+
+export interface SentenceBannerWatch {
+  seeded: boolean;
+  seenKeys: ReadonlySet<string>;
+}
+
+export function emptySentenceBannerWatch(): SentenceBannerWatch {
+  return { seeded: false, seenKeys: new Set() };
+}
+
+export function sentenceAnnouncementKey(entry: SentenceAnnouncementLogEntry): string {
+  if (entry.kind === 'sentenceFired') {
+    return `fire:${String(entry.turnSequence)}:${entry.sourcePlayerId}:${entry.targetPlayerId}`;
+  }
+
+  return `cd:${String(entry.turnSequence)}:${entry.sourcePlayerId}:${String(entry.remainingOwnerTurns)}`;
+}
+
+export interface SentenceBannerInput {
+  announcements: readonly SentenceAnnouncementLogEntry[];
+  nicknameOf: (id: string) => string;
+  /** POV death/win must not suppress table-wide Sentence banners. */
+  isEliminated: boolean;
+  youWon: boolean;
+}
+
+/**
+ * Flash only when a new public Sentence announcement appears (play, caster
+ * decrement, or fire). Skip historical log on first paint. Other seats’ turns
+ * add no announcement, so they do not flash. Table-wide: eliminated seats,
+ * walk-in spectators, and a won POV still flash — do not gate on death/win.
+ */
+export function nextSentenceBannerLines(
+  prev: SentenceBannerWatch,
+  input: SentenceBannerInput,
+): { lines: string[]; next: SentenceBannerWatch } {
+  const next: SentenceBannerWatch = {
+    seeded: true,
+    seenKeys: new Set(input.announcements.map(sentenceAnnouncementKey)),
+  };
+
+  if (!prev.seeded) {
+    return { lines: [], next };
+  }
+
+  const lines = input.announcements
+    .filter((entry) => !prev.seenKeys.has(sentenceAnnouncementKey(entry)))
+    .map((entry) => formatActionLogEntry(entry, input.nicknameOf));
+  return { lines, next };
 }
 
 /**

@@ -130,8 +130,11 @@ rules above are unchanged — this section only covers how the client looks.
   First visit of this catalog id auto-opens on the hub — How to play is not a
   blocker. Closing / Got it writes the latest id. **New** heading lists
   `additions` (kit portrait or card art + body) for kits/cards that did not
-  exist before; before → after `items` cover nerfs with named-card art.
-  Lot 63 additions: Gambler kit, Factory special. The dialog lists history
+  exist before; before → after `items` cover nerfs with named-card art and
+  render **above** the New block. Lot 63 items: Sentence, Imposition, Super
+  Absorber. Lot 63 additions: Gambler kit, Factory special. Sentence chips sit
+  on the caster (remaining turns in red). Play / later caster ticks / fire flash
+  the table-wide red banner. The dialog lists history
   (every catalog entry). **Update the latest catalog entry in the same commit
   as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
@@ -1232,4 +1235,12 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
   Hand on the same turn. Placeholder kit/Factory art only.
 - Hub compact **New** auto-opens What’s new. Heading **New** lists Gambler kit
   (1 life, Draw 10, 1-in-10 bust) and Factory special (cost 10, 2 card lives).
+
+### Lot 63 nerfs (L63-05) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`. Hub What’s new `lot-63`: Sentence / Imposition /
+Super Absorber before **New** Gambler + Factory. Solo nickname `NerfCheck`,
+Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 20,
+“After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
+tests.
 

@@ -8,6 +8,7 @@ import type { ActionResolutionOutcome } from './action-outcome';
 import type { CardId, CardInstance } from '../domain/card';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { PendingEffectRedirectSource } from '../domain/effect';
+import type { PendingSentence } from '../domain/game-state';
 import type { KitId } from '../domain/kit';
 import type { ConnectionStatus } from '../domain/player';
 
@@ -267,6 +268,11 @@ export interface PendingEffectView {
  */
 export type PlayKind = 'classic' | 'tutorial';
 
+/**
+ * Public Sentence countdown — same shape as `GameState.pendingSentences`.
+ */
+export type PendingSentenceView = PendingSentence;
+
 export interface PlayingStateView {
   phase: 'playing';
   you: string;
@@ -296,6 +302,11 @@ export interface PlayingStateView {
    * doubles after every successful `buyPoolCard`. Never resets.
    */
   poolBuyCost: number;
+  /**
+   * Public ticking Sentences (PROTOCOL_VERSION 37). Remaining owner
+   * turns are not card-lives. Copied from `GameState.pendingSentences`.
+   */
+  pendingSentences: readonly PendingSentenceView[];
   /**
    * Public teaching overlay (technical spec v6 §8). Classic rooms: `'classic'`.
    */
@@ -423,6 +434,26 @@ export interface RewardsClaimedLogEntry {
   botReason?: BotDecisionReason;
 }
 
+/** Caster’s remaining Sentence count actually decremented. */
+export interface SentenceCountdownLogEntry {
+  kind: 'sentenceCountdown';
+  sourcePlayerId: string;
+  remainingOwnerTurns: number;
+  turnSequence: number;
+}
+
+/** Sentence fire queued a kill — names the victim. */
+export interface SentenceFiredLogEntry {
+  kind: 'sentenceFired';
+  sourcePlayerId: string;
+  targetPlayerId: string;
+  turnSequence: number;
+}
+
+export type SentenceAnnouncementLogEntry =
+  | SentenceCountdownLogEntry
+  | SentenceFiredLogEntry;
+
 export type ActionLogEntryView =
   | ActionPlayedLogEntry
   | ActionResolvedLogEntry
@@ -431,7 +462,9 @@ export type ActionLogEntryView =
   | PersistentDeactivatedLogEntry
   | CurseTransferredLogEntry
   | PlayerReanimatedLogEntry
-  | RewardsClaimedLogEntry;
+  | RewardsClaimedLogEntry
+  | SentenceCountdownLogEntry
+  | SentenceFiredLogEntry;
 
 export type ActionLogEntryKind = ActionLogEntryView['kind'];
 

@@ -151,6 +151,7 @@ export function enumerationStateFromView(
     players,
     pool: view.pool.map((card) => ({ ...card })),
     poolBuyCost: view.poolBuyCost,
+    pendingSentences: view.pendingSentences.map((entry) => ({ ...entry })),
     nextPoolInstanceSeq: 0,
     currentTurnPlayerId: view.currentTurnPlayerId,
     turnSequence: view.turnSequence,

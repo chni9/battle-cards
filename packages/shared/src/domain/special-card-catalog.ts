@@ -65,9 +65,9 @@ export const SPECIAL_CARD_CATALOG = {
     'imposition',
     'Imposition',
     6,
-    'Each opponent gives 2 points per turn, or 1 life if they cannot (you gain it).',
-    'Each opponent gives 4 points per turn, or 2 lives if they cannot (you gain it).',
-    '4 points per turn (or 2 lives) instead of 2 points (or 1 life).',
+    'Each opponent with at least 2 points gives you 2 points per turn. If they have fewer, nothing happens.',
+    'Each opponent with at least 4 points gives you 4 points per turn. If they have fewer, nothing happens.',
+    '4 points per turn instead of 2 (skip if they have fewer than 4).',
   ),
   cloning: specialCard(
     'cloning',
@@ -80,9 +80,9 @@ export const SPECIAL_CARD_CATALOG = {
   sentence: specialCard(
     'sentence',
     'Sentence',
-    15,
-    'Eliminate a randomly drawn player among everyone alive, including yourself.',
-    'Eliminate a randomly drawn player among everyone alive except yourself.',
+    20,
+    'After 3 of your later turns (this play does not count), a random living visible player is marked to die on their turn (can be you). Cancelled if you die first.',
+    'After 3 of your later turns (this play does not count), a random living visible player other than you is marked to die on their turn. Cancelled if you die first.',
     'The random draw never picks you.',
   ),
   'points-generator': specialCard(
@@ -177,9 +177,9 @@ export const SPECIAL_CARD_CATALOG = {
     'super-absorber',
     'Super Absorber',
     8,
-    'Absorb all points, lives and upgrade points spent by all opponents while the counter holds.',
-    'Absorb all points, lives and upgrade points spent by all opponents while the counter holds, doubled.',
-    'Absorbed amounts are doubled.',
+    'While the counter holds, absorb lives each living opponent lost on their turn. Playing it does not capture past turns.',
+    'While the counter holds, absorb lives each living opponent lost on their turn, plus points and upgrade points they spent. Playing it does not capture past turns.',
+    'Also absorb points and upgrade points they spent.',
   ),
   curse: specialCard(
     'curse',

@@ -63,6 +63,36 @@ export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactEle
             {index === 0 ? (
               <p className="mt-1 text-xs font-medium text-ink-muted">Latest</p>
             ) : null}
+            {note.items.length > 0 ? (
+              <ul className="mt-3 list-none space-y-4 p-0">
+                {note.items.map((item) => (
+                  <li
+                    key={`${note.id}-${item.cardId}`}
+                    className="flex items-start gap-3"
+                  >
+                    <Card
+                      instance={{
+                        instanceId: `whats-new-${note.id}-${item.cardId}`,
+                        cardId: item.cardId,
+                        isUpgraded: false,
+                      }}
+                      detail="thumb"
+                      className="w-14 shrink-0 !p-0.5 sm:w-16"
+                    />
+                    <div className="min-w-0 space-y-1.5 text-sm leading-relaxed text-ink">
+                      <p>
+                        <span className="font-semibold text-ink-muted">Before. </span>
+                        {item.before}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-ink">After. </span>
+                        {item.after}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             {note.additions.length > 0 ? (
               <section className="mt-3" data-whats-new-section="new">
                 <h4 className="text-sm font-semibold text-ink">New</h4>
@@ -78,38 +108,6 @@ export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactEle
                   ))}
                 </ul>
               </section>
-            ) : null}
-            {note.items.length > 0 ? (
-              <ul className="mt-3 list-none space-y-4 p-0">
-                {note.items.map((item, itemIndex) => (
-                  <li
-                    key={`${note.id}-${item.cardId ?? String(itemIndex)}`}
-                    className="flex items-start gap-3"
-                  >
-                    {item.cardId !== undefined ? (
-                      <Card
-                        instance={{
-                          instanceId: `whats-new-${note.id}-${item.cardId}`,
-                          cardId: item.cardId,
-                          isUpgraded: false,
-                        }}
-                        detail="thumb"
-                        className="w-14 shrink-0 !p-0.5 sm:w-16"
-                      />
-                    ) : null}
-                    <div className="min-w-0 space-y-1.5 text-sm leading-relaxed text-ink">
-                      <p>
-                        <span className="font-semibold text-ink-muted">Before. </span>
-                        {item.before}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-ink">After. </span>
-                        {item.after}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             ) : null}
           </li>
         ))}

@@ -51,6 +51,12 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: 
       turnSequence,
     });
   }
+
+  if (result.sentenceAnnouncements !== undefined) {
+    for (const entry of result.sentenceAnnouncements) {
+      log.push(entry);
+    }
+  }
 }
 
 function playBotTurn(state: GameState, actionLog: ActionLogEntryView[]): void {

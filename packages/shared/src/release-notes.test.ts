@@ -15,6 +15,36 @@ describe('release notes catalog (L63-07)', () => {
     expect(isReleaseNoteId('lot-62')).toBe(false);
   });
 
+  it('puts Sentence, Imposition, and Super Absorber above the New additions', () => {
+    const latest = latestReleaseNote();
+    expect(latest.items.map((item) => item.cardId)).toEqual([
+      'sentence',
+      'imposition',
+      'super-absorber',
+    ]);
+    const body = [
+      latest.title,
+      ...latest.items.map((item) => `${item.before}\n${item.after}`),
+    ].join('\n');
+    expect(body).toMatch(/Sentence/i);
+    expect(body).toMatch(/20/);
+    expect(body).toMatch(/3/);
+    const sentence = latest.items.find((item) => item.cardId === 'sentence');
+    expect(sentence?.before).toMatch(/instant/i);
+    expect(sentence?.after).toMatch(/20/);
+    expect(body).toMatch(/Imposition/i);
+    expect(body).toMatch(/Super Absorber/i);
+    expect(body).toMatch(/only absorbs lives/i);
+    expect(body).toMatch(/no longer doubles/i);
+    expect(body).not.toMatch(/Super Regeneration/i);
+    expect(body).not.toMatch(/Superpowers/i);
+    for (const item of latest.items) {
+      expect(item.before.length).toBeGreaterThan(0);
+      expect(item.after.length).toBeGreaterThan(0);
+      expect(item.before).not.toBe(item.after);
+    }
+  });
+
   it('puts Gambler and Factory in the New additions section', () => {
     const latest = latestReleaseNote();
     expect(latest.title).toMatch(/Gambler/i);

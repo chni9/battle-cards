@@ -290,6 +290,44 @@ export async function buildActionLogWorkbook(
           event.botReason?.code ?? '',
         ]);
         break;
+      case 'sentenceCountdown':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          '',
+          event.sourcePlayerId,
+          '',
+          '',
+          '',
+          '',
+          '',
+          event.remainingOwnerTurns,
+          '',
+          '',
+          '',
+          '',
+          '',
+        ]);
+        break;
+      case 'sentenceFired':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          '',
+          event.sourcePlayerId,
+          event.targetPlayerId,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+        ]);
+        break;
       default: {
         const _exhaustive: never = event;
         void _exhaustive;
