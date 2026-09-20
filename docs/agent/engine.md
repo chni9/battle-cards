@@ -222,7 +222,10 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   victim's turn. Cancel if the activator is already eliminated. Upgraded never picks
   self. Empty candidate pool → fizzle. Public `pendingSentences` on `GameState`.
   Countdown / fire messages are `sentenceCountdown` / `sentenceFired` on the
-  action log (decrement turns only; fire names the victim).
+  public action log: remaining 3 on the play turn (no decrement), later
+  caster decrements, and fire (`Sentence will kill {nickname}!`). Opponent
+  turns do not announce. The client flashes those new keys as a table-wide
+  scary red banner; the caster seat chip stays.
   Curse is
   **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
   (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**

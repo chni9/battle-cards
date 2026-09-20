@@ -121,14 +121,15 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. **What’s new (L63-07):** shared `RELEASE_NOTES`
-  (`packages/shared/src/release-notes.ts`, newest first). Hub button + red dot when
-  `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id. Auto-popup
-  on the idle hub if How to play is already seen and the latest note is unread — the
-  How to play first-play gate still wins if both would fire. Closing / Got it writes
-  the latest id. The dialog lists history (every catalog entry). **Update the latest
-  catalog entry in the same commit as player-visible work.** No accounts, no protocol
-  fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
+  **green** (`bg-cta-green`) with a **red** unread tick when
+  `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
+  First visit of this catalog id auto-opens on the hub — How to play is not a
+  blocker. Closing / Got it writes the latest id. Items are before → after
+  with named-card art (`Card` thumb). The dialog lists history (every catalog
+  entry). **Update the latest catalog entry in the same commit as
+  player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
@@ -436,10 +437,10 @@ rules above are unchanged — this section only covers how the client looks.
     `pointer-events-none`): attacked / dead are flashier red; win copy is `You won!`.
     **Lot 63 Sentence:** `pendingSentences` is public. The caster seat shows the
     Sentence card with remaining turns in **red** under it (`SentenceChip`).
-    Countdown copy `N turn(s) before Sentence!` is an **action-log** line only
-    when the caster’s remaining count decrements — not a table-wide banner.
-    Fire logs `{nickname} will be killed`. Not a persistent; not
-    `deactivatePersistent`.
+    Everyone sees a scary red Motion banner (`data-banner="sentence"`) only
+    when the caster plays: play **“Sentence in 3 turns!”**, later decrements
+    **“N turn(s) before Sentence!”**, fire **“Sentence will kill {nickname}!”**.
+    Other seats’ turns do not flash. Not a persistent; not `deactivatePersistent`.
 
 ## Conventions
 

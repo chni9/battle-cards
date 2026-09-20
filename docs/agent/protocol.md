@@ -57,7 +57,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
-| Ticking Sentence (`pendingSentences`) | **Public** on the playing view (PROTOCOL_VERSION 36 / L63-02). Remaining owner turns are not card-lives. Countdown / fire also appear as public `sentenceCountdown` / `sentenceFired` log kinds when remaining decrements or fire queues |
+| Ticking Sentence (`pendingSentences`) | **Public** on the playing view (PROTOCOL_VERSION 36 / L63-02). Remaining owner turns are not card-lives. Countdown / fire also appear as public `sentenceCountdown` / `sentenceFired` log kinds on the play announcement (remaining 3), later caster decrements, and fire |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -182,7 +182,8 @@ and may omit `buyPoolCard` `cardId` / `isUpgraded` on per-recipient logs and liv
 `ACTION_PLAYED` unless the recipient sees that actor's private info. Sitting pool
 cards keep their faces. Recap / Excel keep the full server log. Playtest 2026-09-20
 adds public `sentenceCountdown` / `sentenceFired` log kinds (still v36 on this
-unreleased branch).
+unreleased branch). Play also emits remaining 3; the client banner is
+presentation of those public keys, not a new view field.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is
