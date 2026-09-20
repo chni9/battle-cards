@@ -14,11 +14,11 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lots 57–60 (feedback + rematch; shop / pool /
-Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**;
-**Lot 61** (password `/admin` insights) is **done**; **Lot 62** (Overview metrics
-modules) is **in progress**. V5 may continue in parallel. Audience: the designer
-and his friends, plus first-time beta testers under V6.
+`docs/backlog_v6.md`); Lots 57–62 are **done**; **Lot 63** (What’s new + Classic
+nerfs: Sentence 20 delayed kill, Imposition points-only, pool-buy fog;
+`PROTOCOL_VERSION` 36) is **in progress**. Super Regeneration stays +9/+18
+until L63-05. V5 may continue in parallel. Audience: the designer and his
+friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
 **cards** / **kits** (Classic catalog) · **protocol and visibility** (per-recipient state, Spy) ·
@@ -113,21 +113,17 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  and no value**, unless the current session's developer instructions explicitly change a
  Classic rule or value. V5 adds a policy registry, arena, belief model, search, and fitted
  evaluation. V6 adds teaching, table readability, and in-game feedback (tutorial is Classic
- with setup overrides, not a new competitive mode). **Lot 56** froze Invisibility;
- **Lot 57** (designer 2026-09-14 / 2026-09-15) converts feedback then lobby/rematch
- (Ready / Kick / Play again / spectate-claim; walk-in kits fog until Stay;
- `PROTOCOL_VERSION` 32 then 33). **Lot 58** (designer 2026-09-15) reactivates
- Invisibility as a timed pacifist (4 / 7 turns, no acting on others including
- Mirror) and adds pool buy, PG 3/6, and Unspy (`PROTOCOL_VERSION` 34).
- **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
- **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
- (kits + match totals; `PROTOCOL_VERSION` 35). Walk-in claim-picker fog stays.
- A bot playing badly is never grounds for touching a rule. **Search,
-   lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
-   the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
-   has Spyed) and the **public** action log is **out** — technical spec v3 decision 2 is
-   **not** reopened: the policy still receives no `GameState`. Opponent modelling is
-   bounded to public fields + that public log within one game (technical spec v5 §2.2).
+ with setup overrides, not a new competitive mode). Lots 56–62 are **done** (Invisibility
+ freeze then pacifist; rematch; pool/PG/Unspy; dock; Game over awards; `/admin`;
+ `PROTOCOL_VERSION` through **35**). **Lot 63** (designer 2026-09-20) Sentence 20
+ delayed kill, Imposition points-only, pool-buy log fog (`PROTOCOL_VERSION` 36).
+ Super Regeneration stays +9/+18 until L63-05. A bot playing badly is never grounds
+ for touching a rule. **Search, lookahead, and fitted learning are in scope for V5.**
+ Reading hidden information beyond the acting seat's per-recipient view (including
+ Spy-revealed fields for seats that seat has Spyed) and the **public** action log is
+ **out** — technical spec v3 decision 2 is **not** reopened: the policy still receives
+ no `GameState`. Opponent modelling is bounded to public fields + that public log
+ within one game (technical spec v5 §2.2).
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.

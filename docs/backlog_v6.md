@@ -66,6 +66,10 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     modules (General, Volume, Gameplay, Economy, Combat, Hidden tools, Bots
     and seats, Endings, Retention and feedback). Action-log frequencies;
     `think_time_ms` persist. No protocol bump.
+21. **What’s new + Classic nerfs (Lot 63).** Designer 2026-09-20. Hub What’s
+    new (localStorage); Sentence 20 delayed kill; Imposition points-only;
+    pool-buy log fog. `PROTOCOL_VERSION` **35 → 36**. Super Regeneration
+    stays +9/+18 (L63-05 Blocked until A/B/C/D).
 
 
 **Execution order**
@@ -505,6 +509,28 @@ action-log card frequencies that Lot 61 left out.
 
 ---
 
+## Lot 63 — What’s new + Classic nerfs (designer 2026-09-20)
+
+Hub What’s new (localStorage, red dot, auto-popup, history) plus Classic
+nerfs: Sentence 20 delayed kill, Imposition points-only, pool-buy log fog.
+`PROTOCOL_VERSION` **35 → 36**. Super Regeneration stays +9/+18 until the
+designer picks A/B/C/D (L63-05 Blocked). Do not retune `heuristic-v4`
+weights. English only.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Sentence / Imposition / pool visibility; technical spec v6 §2.5 + §16 addendum + lot map; AGENTS snapshot + v36 exception; Lot 63 section here; Super Regen options listed. **Acceptance:** agent reading `decisions.md` + backlog knows v36, Sentence 20 delayed kill, Imposition skip, pool fog, What’s new, L63-05 Blocked. | S | Low | — | Done |
+| L63-02 | `PROTOCOL_VERSION` **35 → 36**. Add public `pendingSentences: { sourcePlayerId, remainingOwnerTurns, isUpgraded }[]` on `GameState` and `PlayingStateView`. **Acceptance:** mismatch path rejects v35 clients; playing view type has the new list; `pnpm verify` green. | M | **High** | L63-01 | To do |
+| L63-03 | Sentence cost 20; 3 activator turns including play; fire queues kill; cancel if activator dies first; upgraded never self; invisible excluded; table badge + red animated **“N turn(s) before Sentence!”** every table turn. **Acceptance:** tests lock 3-turn fire, cancel-on-death, upgraded/invisible/empty fizzle, victim-turn life loss, banner copy; `pnpm verify` green. | L | **High** | L63-02 | To do |
+| L63-04 | Imposition points-only; skip if victim has fewer than 2 (4 upgraded); no lives. **Acceptance:** 1 point vs 2-due = no transfer and no `applyLifeLoss`; 2 points = 2 transferred; upgraded 4 analogously; `pnpm verify` green. | M | **High** | L63-01 | To do |
+| L63-05 | Super Regeneration nerf after designer picks A / B / C / D. **Acceptance:** blocked until that pick; do not change +9/+18. | M | Medium | L63-01 | Blocked |
+| L63-06 | `mapActionLogForRecipient` omits `buyPoolCard` `cardId` / `isUpgraded` unless recipient sees that actor’s private info; belief does not invent opponent cards from fogged logs. **Acceptance:** view + belief tests; Excel `exportLog` stays full; `pnpm verify` green. | M | **High** | L63-02 | To do |
+| L63-07 | Shared release-notes catalog; hub What’s new + red dot; auto-popup if unseen (How to play first); history; playbook “update the latest entry in the same commit as player-visible work”. **Acceptance:** localStorage key; latest id unread; first entry covers this lot’s visible changes except Super Regen; `pnpm verify` green. | L | Medium | L63-01 | To do |
+| L63-08 | Catalog, How to play, and bot freeze as needed for Sentence / Imposition / pool fog. No `heuristic-v4` weight retune. **Acceptance:** copy matches rules spec; freeze only if the legal set changed; `pnpm verify` green. | M | Medium | L63-03, L63-04, L63-06 | To do |
+| L63-09 | Playbooks (`engine.md`, `protocol.md`, `frontend.md`, `card-handler.md`, `testing.md`, `bots.md`) + post-lot browser gate (What’s new, Sentence red banner, Imposition skip, pool fog). **Acceptance:** playbooks match code; browser gate recorded; `pnpm verify` green. | M | Low | L63-07, L63-08 | To do |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -531,9 +557,10 @@ action-log card frequencies that Lot 61 left out.
 | 60 | 5 |
 | 61 | 10 |
 | 62 | 7 |
-| **Total** | **134** |
+| 63 | 9 |
+| **Total** | **143** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; treating Sentence countdown as card-lives; Imposition taking lives when the victim is short of points; a fogged pool-buy log inventing an opponent card in belief; changing Super Regeneration +9/+18 without an L63-05 pick.
 
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.

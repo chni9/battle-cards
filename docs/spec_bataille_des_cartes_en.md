@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool, visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn.
+Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool, visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 
@@ -159,9 +159,9 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Action: gain 9 lives.
 - Upgrade: gain 18 lives.
 
-**Sentence** — Price: 15 points
-- Action: eliminates a player chosen at random among all players in the game, potentially including the user themselves.
-- Upgrade: the user can no longer be chosen by their own card.
+**Sentence** — Price: 20 points
+- Action: after **3** of the user's own turns including the activation turn, a seeded random living player is chosen (including the user) and elimination is queued for that victim's next turn. Invisible players are excluded from the draw. If nobody remains eligible, the Sentence fizzles. If the user is eliminated before the draw fires, the Sentence is cancelled and does not queue. Remaining countdown turns are not card lives and are not shortened by damage. Sentence is not a manual deactivate. The table sees a public countdown while it ticks.
+- Upgrade: the random draw never picks the user.
 
 **Points Generator** — Price: 5 points
 - Action: generates 3 points per turn for the user, as long as the card's dedicated internal counter (see General Rules) is not depleted.
@@ -215,8 +215,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: 2 lives lost per turn instead of 1.
 
 **Imposition** — Price: 6 points
-- Action: every turn, each opponent must give 2 points to the user; if they don't have enough points, they give 1 life instead, which the user gains (subject to the game mode's life cap). Effect active as long as the card's dedicated internal counter is not depleted.
-- Upgrade: 4 points or 2 lives instead of 2 points or 1 life.
+- Action: every turn, each opponent with at least 2 points gives 2 points to the user. If they have fewer than 2 points, they give nothing (no lives). Effect active as long as the card's dedicated internal counter is not depleted.
+- Upgrade: 4 points instead of 2 (skip if they have fewer than 4).
 
 **Attack Thief** — Price: 8 points
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.
@@ -234,7 +234,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Visibility
 
-Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, pool buys, and Unspy. The queue of pending effects is public. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A pool buy is public as an action; the recovered card's identity stays private to the buyer (and anyone who already sees that buyer's private information). The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
 
 ### Game Turn
 

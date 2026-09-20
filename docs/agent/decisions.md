@@ -3658,3 +3658,59 @@ devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 What’s new + Classic nerfs (L63-01)
+
+Designer session 2026-09-20. Classic rules/values **do** change. Exception to
+the V6 single-bump lock (same class as L49 / L56 / L57 / L58 / L60):
+`PROTOCOL_VERSION` **35 → 36** in L63-02 (`pendingSentences` public list;
+pool-buy `cardId` / `isUpgraded` omitted on per-recipient logs unless the
+recipient sees that actor’s private info).
+
+**Sentence (L63-03):** play cost **15 → 20**. Not a persistent and not
+`deactivatePersistent`. After play, the table sees a public ticking Sentence
+on the activator (`remainingOwnerTurns`, start **3**, activation counts).
+Remaining turns are **not** card-lives: `applyDamage` must not shorten them.
+After each of the activator’s own actions (including the play turn),
+decrement; on 0, seeded pick among living non-invisible seats (advance RNG
+with `turnSequence` at **fire** time), then `queueEffect` elimination for
+the victim’s turn (golden rule 3). Base can still self-target; upgraded
+never picks the user. Empty candidate pool at fire → fizzle. If the
+activator is eliminated (or the ticking Sentence is lost) **before fire**,
+it does not queue. Reanimation does not restore a cancelled Sentence.
+Every table turn while any Sentence ticks: red scary Motion banner
+**“N turn(s) before Sentence!”** (pluralize; N = soonest
+`remainingOwnerTurns`, or one line per live Sentence).
+
+**Imposition (L63-04):** points only. Each victim tick: if they have ≥2
+points (4 upgraded), transfer that many; if fewer, transfer **nothing**
+(no lives). Persistent still ticks / can burn out. `applyOneImposition`
+must not call `applyLifeLoss`. Golden rule 2 unchanged.
+
+**Pool buy fog (L63-06):** server log still records `cardId`. Per-recipient
+views omit `cardId` / `isUpgraded` on `buyPoolCard` unless
+`recipientSeesPrivateOf` that actor. Buyer and Spy of the buyer still see
+the card. Excel `exportLog` stays full. Belief must not pin an opponent
+card from a fogged log. Rules spec §1 / §6 visibility sentence overridden
+this session.
+
+**What’s new (L63-07):** client-only. Catalog in shared; seen-state
+`localStorage['card-battle.v6.lastSeenReleaseId']`. Hub button + red dot;
+auto-popup if unseen (How to play first-play gate still wins if both would
+fire). Closing / Got it writes the latest id. No accounts.
+
+**Super Regeneration (L63-05) Blocked.** Today it is only +9 / +18 lives
+(`super-regeneration.ts`), not absorb. Do not change those numbers until
+the designer picks:
+
+- **A.** Lower numbers (e.g. +5 / +10)
+- **B.** Heal over three of the user’s turns
+- **C.** Not upgraded cannot exceed kit starting lives; upgraded keeps +18
+  to the 25 cap
+- **D.** Absorb rewrite (overlaps Absorber / Super Absorber — not
+  recommended)
+
+Do not retune `heuristic-v4` weights. Freeze-fixture refresh only if the
+legal set changes (Lot 58 class).
+
+---
+

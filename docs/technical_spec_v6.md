@@ -155,7 +155,7 @@ Still Lot 57 (not a new lot). Classic online only. No combat-value change.
   autodraw on their turns. The **third** autodraw eliminates
   (`eliminateWithoutReward`, `absence`). Eliminated seats are not claimable.
 - `PROTOCOL_VERSION` **31 → 32** (L57-07), **32 → 33** (L57-16), **33 → 34**
-  (L58-02), **34 → 35** (L60-02). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
+  (L58-02), **34 → 35** (L60-02), **35 → 36** (L63-02). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
 
 ### 2.4 Session 2026-09-15 — Game over awards (Lot 60)
 
@@ -171,6 +171,24 @@ Designer: Game over is a white text list. Restyle into visual awards.
   name, value) + compact elim list. Skip an award when every eligible seat is
   tied at 0. Play again and ask-once stay. Tutorial: no Play again.
 - `PROTOCOL_VERSION` **34 → 35** (L60-02). No Classic combat-value change.
+
+### 2.5 Session 2026-09-20 — What’s new + Classic nerfs (Lot 63)
+
+Designer: hub What’s new (localStorage, no accounts) plus Classic nerfs.
+
+- **Sentence:** cost 20; 3 of the activator’s turns including activation; then
+  seeded pick; queue elimination for the victim’s turn; cancel if the activator
+  dies first; upgraded never self; invisible excluded. Public
+  `pendingSentences`. Red banner every table turn while it ticks.
+- **Imposition:** points only; skip if the victim has fewer than 2 (4 upgraded);
+  no lives.
+- **Pool buy:** per-recipient log fogs `cardId` / `isUpgraded` unless the
+  recipient sees that actor’s private info.
+- **What’s new:** shared catalog + hub button, red dot, auto-popup, history.
+- **Super Regeneration:** stays +9 / +18 until L63-05 (Blocked; options A–D in
+  `decisions.md`).
+- `PROTOCOL_VERSION` **35 → 36** (L63-02). Exception to the V6 single-bump lock
+  (same class as L49 / L56 / L57 / L58 / L60).
 
 ---
 
@@ -222,7 +240,8 @@ Hints:     localStorage, first Classic playing view only
   in development; production same-origin Coolify needs none.
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
   later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L57-07 (31 → 32)**,
-  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**.
+  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**,
+  **L63-02 (35 → 36)**.
 
 
 ---
@@ -715,8 +734,9 @@ Not even partially, even “to lay groundwork”:
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
   (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
-  freeze, and designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
-  PG 3/6 / Unspy)
+  freeze, designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
+  PG 3/6 / Unspy, and designer 2026-09-20 Lot 63 Sentence / Imposition /
+  pool-buy fog; Super Regeneration stays +9/+18 until L63-05)
 - A second Colyseus room type
 - Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
   it reuses eliminated-player vision, not a replay product)
@@ -740,7 +760,8 @@ Not even partially, even “to lay groundwork”:
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
 6. **Protocol bump twice** in V6 is forbidden except the documented exceptions
-   (L49, L56, L57-07, L57-16, L58, **L60**); put Lot 60 wire changes in L60-02.
+   (L49, L56, L57-07, L57-16, L58, L60, **L63**); put Lot 63 wire changes in
+   L63-02.
 
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
@@ -773,6 +794,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 | 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
+| 63 | What’s new + Classic nerfs | Hub What’s new; Sentence 20 delayed kill; Imposition points-only; pool-buy fog; 35 → 36 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44
@@ -786,6 +808,8 @@ Invisibility under the Lot 58 text).
 **60** is a designer session follow-up (Game over awards; 34 → 35).
 **61** is a designer session follow-up (admin analytics; no protocol bump).
 **62** is a designer session follow-up (Overview metrics on `/admin`; no protocol bump).
+**63** is a designer session follow-up (What’s new + Classic nerfs; 35 → 36;
+Super Regeneration Blocked until A/B/C/D).
 
 ---
 
@@ -842,4 +866,25 @@ Designer 2026-09-18. Same `/admin` + `GET /api/admin/*` as §14. No
 - **Out of this lot:** kit-vs-kit matrix, mutual-attack cancel rates,
   tutorial funnel, Reanimation / rewards claimed, live rooms, accounts,
   SQL/JSON IDE, recap lives/points/damage/kills columns.
+
+---
+
+## 16. Lot 63 addendum — What’s new + Classic nerfs
+
+Designer 2026-09-20. Classic rules/values change. Exception to the V6
+single-bump lock: `PROTOCOL_VERSION` **35 → 36** in L63-02.
+
+- **Sentence:** 20 points; public `pendingSentences`; 3 activator turns
+  including activation; fire is a seeded pick then queued elimination;
+  cancel if the activator dies first; remaining turns are not card-lives;
+  not `deactivatePersistent`.
+- **Imposition:** points-only skip; no `applyLifeLoss`.
+- **Pool buy:** fog `cardId` / `isUpgraded` on per-recipient logs unless
+  the recipient sees that actor’s private info. Excel `exportLog` stays full.
+- **What’s new:** `localStorage` hub surface; no protocol fields; no accounts.
+- **Super Regeneration:** +9 / +18 unchanged until L63-05 (Blocked; options
+  A / B / C / D in `docs/agent/decisions.md`).
+- **Out of this lot:** heuristic-v4 weight retune; Team / God / Quick;
+  accounts.
+
 
