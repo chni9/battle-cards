@@ -1236,3 +1236,11 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
 - Hub compact **New** auto-opens What’s new. Heading **New** lists Gambler kit
   (1 life, Draw 10, 1-in-10 bust) and Factory special (cost 10, 2 card lives).
 
+### Lot 63 nerfs (L63-05) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`. Hub What’s new `lot-63`: Sentence / Imposition /
+Super Absorber before **New** Gambler + Factory. Solo nickname `NerfCheck`,
+Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 20,
+“After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
+tests.
+
