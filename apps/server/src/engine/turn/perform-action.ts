@@ -18,6 +18,7 @@ import {
   type GameState,
   type KitId,
   type Player,
+  type PublicActionKind,
   type RewardChoice,
   type SpecialCardId,
 } from '@card-battle/shared';
@@ -100,21 +101,6 @@ export type TurnAction =
   | { type: 'clearSpy'; targetPlayerId: string }
   | { type: 'deactivatePersistent'; effectId: string }
   | { type: 'activateDuplication' };
-
-export type PublicActionKind =
-  | 'draw'
-  | 'playCard'
-  | 'playMultipleAttacks'
-  | 'buyCard'
-  | 'sellCard'
-  | 'upgradeCard'
-  | 'buyUpgradePoint'
-  | 'sellUpgradePoint'
-  | 'buySpecialCard'
-  | 'buyPoolCard'
-  | 'clearSpy'
-  | 'deactivatePersistent'
-  | 'activateDuplication';
 
 export interface ActionPlayedEvent {
   actorPlayerId: string;

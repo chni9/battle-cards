@@ -172,7 +172,11 @@ spend (`matchStats`), never theft. The first Play again does not clear match sta
 time; the next `createInitialState` does.
 PROTOCOL_VERSION 36 (L63-03) adds optional `drawBust: true` on `actionPlayed` / the
 matching log entry so a Draw that instantly eliminates is a public table tell.
-Kind stays `'draw'`. Older clients fail the version gate.
+Kind stays `'draw'`. Older clients fail the version gate. Room `applyTurnResult`,
+simulator `appendTurnResultLog`, and the four-bot harness copy optional public
+fields through `toActionPlayedPayload` (`packages/shared/src/protocol/messages.ts`)
+so a new tell cannot be dropped on one path. Opaque `activateDuplication` → `draw`
+must not copy `drawBust`.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PROTOCOL_VERSION } from './protocol-version';
+import type { ActionPlayedPayload } from './protocol/messages';
 import type { ActionPlayedLogEntry } from './protocol/state-view';
 
 describe('PROTOCOL_VERSION (L63-03)', () => {
@@ -22,6 +23,23 @@ describe('PROTOCOL_VERSION (L63-03)', () => {
     };
     const safe: ActionPlayedLogEntry = {
       kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 2,
+    };
+
+    expect(bust.drawBust).toBe(true);
+    expect(safe.drawBust).toBeUndefined();
+  });
+
+  it('allows optional drawBust on ACTION_PLAYED payloads', () => {
+    const bust: ActionPlayedPayload = {
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 1,
+      drawBust: true,
+    };
+    const safe: ActionPlayedPayload = {
       actorPlayerId: 'a',
       action: 'draw',
       turnSequence: 2,

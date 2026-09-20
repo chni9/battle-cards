@@ -2,12 +2,13 @@
  * One headless simulated game — technical spec v3 §8 (L18-04).
  */
 
-import type {
-  ActionLogEntryView,
-  BotDifficulty,
-  GameState,
-  KitId,
-  PlayingStateView,
+import {
+  toActionPlayedPayload,
+  type ActionLogEntryView,
+  type BotDifficulty,
+  type GameState,
+  type KitId,
+  type PlayingStateView,
 } from '@card-battle/shared';
 
 import { applyDifficultyNoise } from '../bots/difficulty-noise';
@@ -146,7 +147,8 @@ function pendingResumeResult(state: GameState, actionPlayed: ActionPlayedEvent):
   };
 }
 
-function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
+/** Exported so tests can prove public tells (e.g. `drawBust`) survive the log copy. */
+export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResult): void {
   const turnSequence = result.actionPlayed.turnSequence;
 
   if (result.mirrorRedirect !== undefined) {
@@ -157,19 +159,7 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult): void {
   } else {
     log.push({
       kind: 'actionPlayed',
-      actorPlayerId: result.actionPlayed.actorPlayerId,
-      action: result.actionPlayed.action,
-      ...(result.actionPlayed.cardId !== undefined ? { cardId: result.actionPlayed.cardId } : {}),
-      ...(result.actionPlayed.isUpgraded !== undefined
-        ? { isUpgraded: result.actionPlayed.isUpgraded }
-        : {}),
-      ...(result.actionPlayed.targetPlayerId !== undefined
-        ? { targetPlayerId: result.actionPlayed.targetPlayerId }
-        : {}),
-      ...(result.actionPlayed.attacks !== undefined
-        ? { attacks: result.actionPlayed.attacks }
-        : {}),
-      turnSequence,
+      ...toActionPlayedPayload(result.actionPlayed),
     });
   }
 
@@ -518,7 +508,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
     let result = performAndCompleteTurn(state, botId, chosen, hooks, {
       nowMs: SIM_NOW_MS,
       onTurnResult: (step) => {
-        appendLog(actionLog, step);
+        appendTurnResultLog(actionLog, step);
 
         for (const event of step.eliminations) {
           eliminations.push({
@@ -542,7 +532,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       result = performAndCompleteTurn(state, botId, { type: 'draw' }, hooks, {
         nowMs: SIM_NOW_MS,
         onTurnResult: (step) => {
-          appendLog(actionLog, step);
+          appendTurnResultLog(actionLog, step);
 
           for (const event of step.eliminations) {
             eliminations.push({
@@ -572,7 +562,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
         {
           rng: createRng(`${state.seed}:bot:${botId}:drain:${state.turnSequence}`),
           onTurnResult: (step) => {
-            appendLog(actionLog, step);
+            appendTurnResultLog(actionLog, step);
             for (const event of step.eliminations) {
               eliminations.push({
                 playerId: event.playerId,

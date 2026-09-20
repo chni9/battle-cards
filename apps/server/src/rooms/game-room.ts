@@ -31,6 +31,7 @@ import {
   ERROR_MESSAGE,
   GAME_OVER,
   isBotDifficulty,
+  toActionPlayedPayload,
   SUB_CHOICE_REQUIRED,
   PLAY_CARD,
   PLAY_MULTIPLE_ATTACKS,
@@ -1950,21 +1951,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     } else {
       const botReason = this.consumePendingBotReason();
       const played: ActionPlayedPayload = {
-        actorPlayerId: result.actionPlayed.actorPlayerId,
-        action: result.actionPlayed.action,
-        turnSequence,
-        ...(result.actionPlayed.cardId !== undefined
-          ? { cardId: result.actionPlayed.cardId }
-          : {}),
-        ...(result.actionPlayed.isUpgraded !== undefined
-          ? { isUpgraded: result.actionPlayed.isUpgraded }
-          : {}),
-        ...(result.actionPlayed.targetPlayerId !== undefined
-          ? { targetPlayerId: result.actionPlayed.targetPlayerId }
-          : {}),
-        ...(result.actionPlayed.attacks !== undefined
-          ? { attacks: result.actionPlayed.attacks }
-          : {}),
+        ...toActionPlayedPayload(result.actionPlayed),
         ...(botReason !== null ? { botReason } : {}),
       };
 
@@ -3807,6 +3794,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
    */
   private sendActivateDuplicationPlayed(played: ActionPlayedPayload): void {
     const state = this.gameState;
+    // Opaque draw is not a real Draw — do not copy `drawBust` or card fields.
     const opaque: ActionPlayedPayload = {
       actorPlayerId: played.actorPlayerId,
       action: 'draw',

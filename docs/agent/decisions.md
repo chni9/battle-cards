@@ -3709,3 +3709,17 @@ white fields with the word **Test** until real art lands.
 
 ---
 
+## 2026-09-20 · [P] Publish Draw-bust on ACTION_PLAYED
+
+Bugbot on PR #45 (`d81f790b`): engine `ActionPlayedEvent.drawBust` and
+`ActionPlayedLogEntry.drawBust` existed, but `ActionPlayedPayload` omitted the
+field and three copy sites dropped it — room `applyTurnResult`, simulator
+`appendLog`, four-bot harness. Table always showed a normal Draw; kit posterior
+never collapsed on the public tell.
+
+Fix: `toActionPlayedPayload` / `actionPlayedPublicFields` in shared protocol.
+PROTOCOL_VERSION stays 36 (the bump already documented the tell). Opaque
+Duplicator `draw` still must not copy `drawBust`.
+
+---
+
