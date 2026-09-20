@@ -22,8 +22,11 @@ describe('release notes catalog (L63-07)', () => {
     expect(body).toMatch(/Imposition/i);
     expect(body).toMatch(/points only/i);
     expect(body).toMatch(/pool/i);
+    expect(body).toMatch(/Super Absorber/i);
+    expect(body).toMatch(/past turns/i);
     expect(body).not.toMatch(/Super Regeneration/i);
     expect(body).not.toMatch(/\+9/);
     expect(body).not.toMatch(/\+18/);
+    expect(body).not.toMatch(/Superpowers/i);
   });
 });
