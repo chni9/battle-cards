@@ -93,8 +93,8 @@ export interface Kit {
   /**
    * When set, deal this many specials via seeded `rng.pick` over circulating
    * specials minus this kit's `specialCards` (with replacement per #V4-27),
-   * then append `specialCards`. Prophet: 2 with an empty list. Gambler: 5
-   * plus Roulette (Lot 63). technical spec v4 §4.8.
+   * then append `specialCards`. Prophet: 2 with an empty list. Gambler: 2
+   * distinct plus Roulette (Lot 64). technical spec v4 §4.8.
    */
   randomStartingSpecialCount?: number;
   traits: KitTraits;

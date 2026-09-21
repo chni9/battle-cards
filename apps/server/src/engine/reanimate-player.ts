@@ -29,8 +29,8 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  *
  * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
  * specials via seeded `rng.pick` with replacement (duplicates OK).
- * Gambler (Lot 63): random draws exclude guaranteed `specialCards`, then the
- * fixed list is appended (Roulette after five randoms).
+ * Gambler (Lot 64): shuffle without replacement, then append guaranteed
+ * `specialCards` (Roulette last).
  */
 export function dealStartingLoadout(
   player: Player,
@@ -55,14 +55,28 @@ export function dealStartingLoadout(
 
   if (randomCount !== undefined && randomCount > 0) {
     const pool = randomStartingSpecialPool(kit);
-    for (let index = 0; index < randomCount; index += 1) {
-      const specialId = rng.pick(pool);
-      acquireSpecialCard(
-        player,
-        specialId,
-        `${instancePrefix}:special:${String(specialIndex)}`,
-      );
-      specialIndex += 1;
+    if (kit.id === 'gambler') {
+      // Without replacement — designer 2026-09-21 / Lot 64. Prophet stays
+      // with-replacement (#V4-27).
+      const drawn = rng.shuffle(pool).slice(0, randomCount);
+      for (const specialId of drawn) {
+        acquireSpecialCard(
+          player,
+          specialId,
+          `${instancePrefix}:special:${String(specialIndex)}`,
+        );
+        specialIndex += 1;
+      }
+    } else {
+      for (let index = 0; index < randomCount; index += 1) {
+        const specialId = rng.pick(pool);
+        acquireSpecialCard(
+          player,
+          specialId,
+          `${instancePrefix}:special:${String(specialIndex)}`,
+        );
+        specialIndex += 1;
+      }
     }
   }
 

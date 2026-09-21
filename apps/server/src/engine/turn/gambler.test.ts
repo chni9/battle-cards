@@ -1,5 +1,5 @@
 /**
- * Gambler starting loadout + Draw bust — rules spec §4, designer 2026-09-20 / L63-01 / L63-02.
+ * Gambler starting loadout + Draw bust — rules spec §4, designer 2026-09-21 / L64-02 / L63-02.
  */
 
 import { getKit, randomStartingSpecialPool } from '@card-battle/shared';
@@ -12,13 +12,13 @@ import { dealStartingLoadout } from '../reanimate-player';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { performTurnAction } from './perform-action';
 
-describe('Gambler kit (L63-01)', () => {
+describe('Gambler kit (L64-02)', () => {
   const seats = [
     { id: 'a', nickname: 'Alice' },
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('matches catalog resources, zero hand cards, Roulette plus five randoms', () => {
+  it('matches catalog resources, zero hand cards, Roulette plus two distinct randoms', () => {
     const kit = getKit('gambler');
     expect(kit.startingResources).toEqual({
       lives: 1,
@@ -28,7 +28,7 @@ describe('Gambler kit (L63-01)', () => {
     });
     expect(kit.startingCardCounts).toEqual({ action: 0, attack: 0 });
     expect(kit.specialCards).toEqual(['roulette']);
-    expect(kit.randomStartingSpecialCount).toBe(5);
+    expect(kit.randomStartingSpecialCount).toBe(2);
     expect(kit.traits.drawBustDenominator).toBe(10);
     expect(randomStartingSpecialPool(kit)).not.toContain('roulette');
 
@@ -47,13 +47,14 @@ describe('Gambler kit (L63-01)', () => {
     expect(player.points).toBe(0);
     expect(player.upgradePoints).toBe(0);
     expect(player.hand).toEqual([]);
-    expect(player.specialCards).toHaveLength(6);
-    const randomIds = player.specialCards.slice(0, 5).map((card) => card.cardId);
+    expect(player.specialCards).toHaveLength(3);
+    const randomIds = player.specialCards.slice(0, 2).map((card) => card.cardId);
     expect(randomIds).not.toContain('roulette');
-    expect(player.specialCards[5]?.cardId).toBe('roulette');
+    expect(new Set(randomIds).size).toBe(2);
+    expect(player.specialCards[2]?.cardId).toBe('roulette');
   });
 
-  it('reproduces the same five randoms for the same seed and never rolls Roulette there', () => {
+  it('reproduces the same two distinct randoms for the same seed and never rolls Roulette there', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-rng-pool',
@@ -66,9 +67,11 @@ describe('Gambler kit (L63-01)', () => {
     }
 
     const dealtIds = player.specialCards.map((card) => card.cardId);
-    expect(dealtIds).toHaveLength(6);
-    expect(dealtIds.slice(0, 5)).not.toContain('roulette');
-    expect(dealtIds[5]).toBe('roulette');
+    expect(dealtIds).toHaveLength(3);
+    expect(dealtIds.slice(0, 2)).not.toContain('roulette');
+    expect(new Set(dealtIds.slice(0, 2)).size).toBe(2);
+    expect(dealtIds[2]).toBe('roulette');
+    expect(dealtIds.filter((id) => id === 'roulette')).toHaveLength(1);
 
     const again = createInitialState({
       seats,
@@ -81,11 +84,17 @@ describe('Gambler kit (L63-01)', () => {
     player.hand = [];
     player.specialCards = [];
     dealStartingLoadout(player, 'gambler', createRng('gambler-forced'), 'forced');
-    expect(player.specialCards).toHaveLength(6);
-    expect(player.specialCards.slice(0, 5).map((card) => card.cardId)).not.toContain(
-      'roulette',
-    );
-    expect(player.specialCards[5]?.cardId).toBe('roulette');
+    expect(player.specialCards).toHaveLength(3);
+    const forcedRandom = player.specialCards.slice(0, 2).map((card) => card.cardId);
+    expect(forcedRandom).not.toContain('roulette');
+    expect(new Set(forcedRandom).size).toBe(2);
+    expect(player.specialCards[2]?.cardId).toBe('roulette');
+  });
+
+  it('keeps Prophet random specials with replacement', () => {
+    const kit = getKit('prophet');
+    expect(kit.randomStartingSpecialCount).toBe(2);
+    expect(kit.specialCards).toEqual([]);
   });
 });
 
@@ -165,7 +174,7 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(result.winnerPlayerId).toBe(other.id);
   });
 
-  it('unplayed Reanimation in the random five cannot save a first-turn bust', () => {
+  it('unplayed Reanimation in the random two cannot save a first-turn bust', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-bust-unplayed-reanim',

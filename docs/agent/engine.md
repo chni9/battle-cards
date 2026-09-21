@@ -133,8 +133,8 @@ server-only; see `protocol.md`) so §10.3 can deep-equal whole states.
   bounds, never specific numbers.
 - `nextInt` rejection-samples rather than taking a modulo, which would favour low indices and
   quietly bias distribution and Sentence.
-- `shuffle` does not exist yet. The first task that needs one adds it here, rather than
-  shuffling by hand with `nextInt`.
+- `shuffle` is Fisher–Yates on a copy (`Rng.shuffle`, L1-03 turn order; Lot 64
+  Gambler start specials without replacement). Do not shuffle by hand with `nextInt`.
 - **`GameState.seed` is server-only.** A client holding it can predict every remaining draw.
   See `protocol.md`.
 
