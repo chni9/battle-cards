@@ -3839,3 +3839,16 @@ locked linear line above.
 
 ---
 
+## 2026-09-21 · [P] Gambler Draw bust skipped in round 1
+
+Designer correction on Lot 64 (PR #50). Engine-only — do **not** write this
+in What’s new, inspect, How to play, kit catalog blurbs, or the rules spec.
+
+While the public action-log round is **1** (`floor(turnSequence / seatCount)
++ 1`, same formula the log uses for “Round N”; seatCount is the seated
+table including eliminated), Draw never busts: skip the 1-in-10 roll and
+grant `drawGain` as a safe Draw. Block extra turns that still sit in round
+1 stay immune. From round 2 the 1-in-10 is unchanged (`dies by Gambling`).
+
+---
+

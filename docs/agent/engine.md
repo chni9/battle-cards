@@ -100,7 +100,7 @@ the grant wrappers.
 | `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
 | `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
 | `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
-| `perform-action.ts` — Draw bust | Instant lethal kit ability (designer 2026-09-20 / Lot 63). `rng.nextInt(drawBustDenominator) === 0` on the Draw action only — not Invisibility ticks. Not `applyLifeLoss` (cannot express die-from-any-life in one step without Ghost siphoning each life) and not `applyDamage`. Ghost credits `livesBefore` then assigns 0. No elimination contributor; no kill reward. |
+| `perform-action.ts` — Draw bust | Instant lethal kit ability (designer 2026-09-20 / Lot 63). `rng.nextInt(drawBustDenominator) === 0` on the Draw action only — not Invisibility ticks. **Skipped while the public action-log round is 1** (`floor(turnSequence / seatCount) + 1`, designer 2026-09-21; engine-only, not player-facing). From round 2 the 1-in-10 is unchanged. Not `applyLifeLoss` (cannot express die-from-any-life in one step without Ghost siphoning each life) and not `applyDamage`. Ghost credits `livesBefore` then assigns 0. No elimination contributor; no kill reward. |
 
 ## Seeded randomness
 

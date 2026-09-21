@@ -38,6 +38,7 @@ import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
+import { actionLogRound } from './action-log-round';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { tickPendingSentences } from './pending-sentences';
@@ -259,8 +260,12 @@ function performPreparedTurnAction(
   if (action.type === 'draw') {
     const kit = getKit(actor.kitId);
     const bustDenominator = kit.traits.drawBustDenominator;
+    // Designer 2026-09-21: skip the 1-in-10 while the public action-log
+    // round is still 1. Engine-only — not written in player-facing copy.
     const busted =
-      bustDenominator !== undefined && rng.nextInt(bustDenominator) === 0;
+      actionLogRound(state) > 1 &&
+      bustDenominator !== undefined &&
+      rng.nextInt(bustDenominator) === 0;
 
     if (busted) {
       const livesBefore = actor.lives;

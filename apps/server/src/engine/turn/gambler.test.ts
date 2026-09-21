@@ -225,6 +225,77 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(result.eliminatedPlayerIds).toEqual([]);
   });
 
+  it('scripted bust RNG still grants points and does not eliminate on round 1', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'gambler-round1-bust-immune',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const actor = state.players.find((player) => player.kitId === 'gambler');
+    expect(actor).toBeDefined();
+    if (actor === undefined) {
+      return;
+    }
+
+    expect(state.turnSequence).toBe(0);
+    state.currentTurnPlayerId = actor.id;
+    actor.lives = 14;
+    actor.points = 0;
+    actor.pendingEffects = [];
+    actor.activePersistentEffects = [];
+    actor.hand = [];
+    actor.specialCards = [];
+    actor.drawGain = 47;
+
+    const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([0]));
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.actionPlayed.drawBust).toBeUndefined();
+    expect(result.actionPlayed.drawGain).toBe(47);
+    expect(actor.lives).toBe(14);
+    expect(actor.points).toBe(47);
+    expect(actor.isEliminated).toBe(false);
+    expect(result.eliminatedPlayerIds).toEqual([]);
+  });
+
+  it('Block extra turns that still sit in round 1 stay immune', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'gambler-round1-extra-turn-immune',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const actor = state.players.find((player) => player.kitId === 'gambler');
+    expect(actor).toBeDefined();
+    if (actor === undefined) {
+      return;
+    }
+
+    // 2 seats: turnSequence 1 is still ROUND 1 on the public action log.
+    state.turnSequence = 1;
+    state.currentTurnPlayerId = actor.id;
+    actor.lives = 14;
+    actor.points = 0;
+    actor.pendingEffects = [];
+    actor.activePersistentEffects = [];
+    actor.hand = [];
+    actor.specialCards = [];
+    actor.drawGain = 22;
+
+    const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([0]));
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.actionPlayed.drawBust).toBeUndefined();
+    expect(actor.lives).toBe(14);
+    expect(actor.points).toBe(22);
+    expect(actor.isEliminated).toBe(false);
+  });
+
   it('forced bust zeros lives at any total, grants no points, and has no eliminator', () => {
     const state = createInitialState({
       seats,
@@ -239,6 +310,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;
@@ -266,7 +338,7 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(result.winnerPlayerId).toBe(other.id);
   });
 
-  it('unplayed Reanimation in the random two cannot save a first-turn bust', () => {
+  it('unplayed Reanimation cannot save a round-2 bust', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-bust-unplayed-reanim',
@@ -277,6 +349,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 1;
     actor.points = 0;
@@ -309,6 +382,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;

@@ -28,6 +28,7 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;
