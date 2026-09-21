@@ -74,8 +74,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
-  / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
+  / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
+  Table Draw (L64-05) reads public `drawGain` for Gambler else catalog Draw; Motion
+  pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
@@ -432,7 +434,8 @@ rules above are unchanged — this section only covers how the client looks.
     card inspect use `CostDisplay`. Card inspect prefixes the play-cost row with
     **Cost** and inlines resource glyphs in effect / `upgradeAdds` copy
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
-    Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
+    red (L64-05); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),

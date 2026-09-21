@@ -20,7 +20,8 @@ describe('table cost chrome contrast (designer 2026-08-21)', () => {
     const shop = source('shop-dialog.tsx');
     const cardDialog = source('card-actions.tsx');
 
-    expect(economy).toContain('variant="green"');
+    expect(economy).toContain("drawValue > 10 ? 'red' : 'green'");
+    expect(economy).toContain('variant={drawVariant}');
     expect(economy).toContain('signed="gain"');
     expect(economy).not.toContain('variant="yellow"');
 

@@ -958,7 +958,8 @@ function TableScreenInner({
     portraitInspected,
   ]);
   const kit = getKit(view.self.kitId);
-  const drawValue = kit.startingResources.draw;
+  const selfPublic = view.players.find((player) => player.isYou);
+  const drawValue = selfPublic?.drawGain ?? kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
   const attackCards = view.self.hand.filter((card) => isSharedAttackCardId(card.cardId));
   const activePlayer = view.players.find(
