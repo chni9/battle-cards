@@ -134,8 +134,11 @@ rules above are unchanged — this section only covers how the client looks.
   blocker. Closing / Got it writes the latest id. **New** heading lists
   `additions` (kit portrait or card art + body) for kits/cards that did not
   exist before; before → after `items` cover nerfs with named-card art and
-  render **above** the New block. Lot 63 items: Sentence, Imposition, Super
-  Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
+  render **above** the New block. Kit-level items may use `kitId` (Gambler
+  portrait) instead of `cardId`. Latest catalog id is `lot-64` (Gambler start
+  specials, weighted Draw 5–100, `{nickname} dies by Gambling`). Lot 63 items:
+  Sentence, Imposition, Super Absorber. Lot 63 additions: Gambler kit, Roulette
+  special. Sentence chips sit
   on the caster (remaining turns in red). Play / later caster ticks / fire flash
   the table-wide red banner. The dialog lists history
   (every catalog entry). **Update the latest catalog entry in the same commit

@@ -1,5 +1,5 @@
 /**
- * Player-facing hub What’s new catalog (L63-07).
+ * Player-facing hub What’s new catalog (L63-07 / L64-06).
  * Newest first. Update the latest entry in the same commit as player-visible work.
  */
 
@@ -13,6 +13,7 @@ export type ReleaseNoteAddition =
 
 export interface ReleaseNoteItem {
   readonly cardId?: CardId;
+  readonly kitId?: KitId;
   readonly before: string;
   readonly after: string;
 }
@@ -27,6 +28,33 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES = [
+  {
+    id: 'lot-64',
+    date: '2026-09-21',
+    title: 'Gambler start specials and Draw',
+    items: [
+      {
+        kitId: 'gambler' as const,
+        before:
+          'Gambler started with 5 random circulating specials plus Roulette.',
+        after:
+          'Gambler starts with 2 distinct random specials (never Roulette) plus Roulette — 3 specials total.',
+      },
+      {
+        kitId: 'gambler' as const,
+        before:
+          'Gambler Draw always granted Draw 10 points, with a 1-in-10 chance to instantly eliminate you and grant no points.',
+        after:
+          'Each of the Gambler’s turns, Draw payout rerolls to 5–100 (weighted toward smaller amounts). Bust is still 1-in-10 with no points.',
+      },
+      {
+        kitId: 'gambler' as const,
+        before: 'A Draw bust logged as is eliminated in combat.',
+        after: 'A Draw bust logs as {nickname} dies by Gambling.',
+      },
+    ],
+    additions: [],
+  },
   {
     id: 'lot-63',
     date: '2026-09-20',

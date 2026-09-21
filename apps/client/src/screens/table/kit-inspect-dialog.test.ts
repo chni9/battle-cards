@@ -75,6 +75,9 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(KIT_ABILITY_COPY.prophet).toMatch(/Invisibility excluded/i);
     expect(KIT_ABILITY_COPY.gambler).toMatch(/1-in-10/i);
     expect(KIT_ABILITY_COPY.gambler).toMatch(/Roulette/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/5–100|5-100/);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/weighted/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/3 specials/i);
   });
 });
 

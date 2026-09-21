@@ -126,7 +126,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
 Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
-Lot 64 is in progress (5 of 6).
+Lot 64 is done (146 of 146).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -159,7 +159,7 @@ opened 2026-09-21.
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
 | 63 · The Gambler + Roulette | 6 | 6 |
-| 64 · Gambler kit tweaks | 6 | 5 |
+| 64 · Gambler kit tweaks | 6 | 6 |
 
 
 ---
@@ -558,7 +558,7 @@ Draw payout rerolls 5–100 weighted at turn start; bust death log
 | L64-03 | Weighted Draw helper `weight(n) = 101 − n` on 5..100 (total 4656); `rollDrawGain` seeded `${seed}:draw-gain:${id}:${turnSequence}` from `beginTurnFor` and first-seat create; safe Draw grants `drawGain ?? catalog`; bust unchanged. Bots read view `drawGain`. Point chips use `entry.drawGain`. **Acceptance:** ticket 0 → 5; last ticket → 100; count(5) > count(50) > count(100); first-seat Gambler has a roll; Block extra turns reroll; `pnpm verify` green. | L | **High** | L64-02 | Done |
 | L64-04 | Draw-bust eliminations use `reason: 'gambling'`; action log `{nick} dies by Gambling`; recap / Excel / admin labels. Keep `{nick} draws and busts` on `actionPlayed`. **Acceptance:** bust log is not `is eliminated in combat`; no eliminator / no kill reward; `pnpm verify` green. | M | Medium | L64-03 | Done |
 | L64-05 | Table Draw button uses view `drawGain` for Gambler; `variant="red"` when `drawValue > 10`; Motion pulse on `drawValue` change while it is your turn. Compact, no word label. **Acceptance:** aria-label includes the gain; disabled off-turn; `pnpm verify` green. | M | Low | L64-03 | Done |
-| L64-06 | What’s new `id: 'lot-64'` (before/after start specials and Draw; death-log line); inspect / How to play / kit row Draw **5–100** (weighted), 3 specials, bust 1-in-10. Playbooks. **Acceptance:** latest catalog id is `lot-64`; inspect copy matches live rules; `pnpm verify` green. | S | Low | L64-05 | To do |
+| L64-06 | What’s new `id: 'lot-64'` (before/after start specials and Draw; death-log line); inspect / How to play / kit row Draw **5–100** (weighted), 3 specials, bust 1-in-10. Playbooks. **Acceptance:** latest catalog id is `lot-64`; inspect copy matches live rules; `pnpm verify` green. | S | Low | L64-05 | Done |
 
 ---
 

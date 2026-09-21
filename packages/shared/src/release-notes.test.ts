@@ -6,37 +6,34 @@ import {
   isReleaseNoteId,
 } from './release-notes';
 
-describe('release notes catalog (L63-07)', () => {
-  it('lists newest first and keeps lot-63 as the latest id', () => {
-    expect(RELEASE_NOTES.length).toBeGreaterThan(0);
-    expect(latestReleaseNote().id).toBe('lot-63');
-    expect(latestReleaseNote().date).toBe('2026-09-20');
+describe('release notes catalog (L64-06)', () => {
+  it('lists newest first and keeps lot-64 as the latest id', () => {
+    expect(RELEASE_NOTES.length).toBeGreaterThan(1);
+    expect(latestReleaseNote().id).toBe('lot-64');
+    expect(latestReleaseNote().date).toBe('2026-09-21');
+    expect(isReleaseNoteId('lot-64')).toBe(true);
     expect(isReleaseNoteId('lot-63')).toBe(true);
-    expect(isReleaseNoteId('lot-62')).toBe(false);
+    expect(RELEASE_NOTES.map((note) => note.id)[1]).toBe('lot-63');
   });
 
-  it('puts Sentence, Imposition, and Super Absorber above the New additions', () => {
+  it('covers Gambler start specials, weighted Draw, and the death-log line', () => {
     const latest = latestReleaseNote();
-    expect(latest.items.map((item) => item.cardId)).toEqual([
-      'sentence',
-      'imposition',
-      'super-absorber',
-    ]);
+    expect(latest.title).toMatch(/Gambler/i);
+    expect(latest.additions).toEqual([]);
+    expect(latest.items.length).toBeGreaterThanOrEqual(2);
+    expect(latest.items.every((item) => item.kitId === 'gambler')).toBe(true);
     const body = [
       latest.title,
       ...latest.items.map((item) => `${item.before}\n${item.after}`),
     ].join('\n');
-    expect(body).toMatch(/Sentence/i);
-    expect(body).toMatch(/20/);
-    expect(body).toMatch(/3/);
-    const sentence = latest.items.find((item) => item.cardId === 'sentence');
-    expect(sentence?.before).toMatch(/instant/i);
-    expect(sentence?.after).toMatch(/20/);
-    expect(body).toMatch(/Imposition/i);
-    expect(body).toMatch(/Super Absorber/i);
-    expect(body).toMatch(/only absorbs lives/i);
-    expect(body).toMatch(/no longer doubles/i);
-    expect(body).not.toMatch(/Super Regeneration/i);
+    expect(body).toMatch(/5 random/i);
+    expect(body).toMatch(/2 distinct/i);
+    expect(body).toMatch(/Roulette/i);
+    expect(body).toMatch(/Draw 10/i);
+    expect(body).toMatch(/5–100|5-100/);
+    expect(body).toMatch(/weighted/i);
+    expect(body).toMatch(/dies by Gambling/);
+    expect(body).toMatch(/1-in-10/);
     expect(body).not.toMatch(/Superpowers/i);
     for (const item of latest.items) {
       expect(item.before.length).toBeGreaterThan(0);
@@ -45,23 +42,18 @@ describe('release notes catalog (L63-07)', () => {
     }
   });
 
-  it('puts Gambler and Roulette in the New additions section', () => {
-    const latest = latestReleaseNote();
-    expect(latest.title).toMatch(/Gambler/i);
-    expect(latest.title).toMatch(/Roulette/i);
-    expect(latest.additions.map((item) => item.kind)).toEqual(['kit', 'card']);
-    const gambler = latest.additions.find((item) => item.kind === 'kit');
-    const roulette = latest.additions.find((item) => item.kind === 'card');
+  it('keeps Lot 63 Sentence / Imposition / Super Absorber and New additions', () => {
+    const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
+    expect(lot63).toBeDefined();
+    expect(lot63?.items.map((item) => item.cardId)).toEqual([
+      'sentence',
+      'imposition',
+      'super-absorber',
+    ]);
+    expect(lot63?.additions.map((item) => item.kind)).toEqual(['kit', 'card']);
+    const gambler = lot63?.additions.find((item) => item.kind === 'kit');
+    const roulette = lot63?.additions.find((item) => item.kind === 'card');
     expect(gambler?.kind === 'kit' ? gambler.kitId : undefined).toBe('gambler');
     expect(roulette?.kind === 'card' ? roulette.cardId : undefined).toBe('roulette');
-    const body = latest.additions.map((item) => item.body).join('\n');
-    expect(body).toMatch(/1-in-10/);
-    expect(body).toMatch(/Draw 10/);
-    expect(body).toMatch(/10 points/);
-    expect(body).toMatch(/2 card lives/);
-    expect(body).not.toMatch(/Superpowers/i);
-    for (const item of latest.additions) {
-      expect(item.body.length).toBeGreaterThan(0);
-    }
   });
 });
