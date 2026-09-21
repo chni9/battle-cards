@@ -7,7 +7,9 @@
  * Curse. Super Absorber runs before life-ticking persistents so it does not
  * re-absorb lives lost later in the same phase. Lives always; spend only if
  * upgraded; never a multiplier. Roulette grants a seeded random card (golden
- * rule 5). Imposition skips short victims (no lives). Curse still ticks on
+ * rule 5): unupgraded only a shared attack/action (10% that copy is upgraded);
+ * upgraded 80% shared / 20% circulating special except Roulette, still 10%
+ * upgraded. Imposition skips short victims (no lives). Curse still ticks on
  * `pointsSpent` (#V4-20) and siphons those lost lives — and any other actual
  * life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
@@ -43,12 +45,8 @@ const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
 const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
-/** Base Roulette: `nextInt(10) < 8` → 80% shared card. */
-const ROULETTE_NORMAL_ROLL_BASE = 8;
-/** Upgraded Roulette: `nextInt(10) < 7` → 70% shared card. */
-const ROULETTE_NORMAL_ROLL_UPGRADED = 7;
-/** Upgraded Roulette: independent `nextInt(10) < 3` → granted copy is upgraded. */
-const ROULETTE_GRANT_UPGRADE_ROLL = 3;
+/** Upgraded Roulette: `nextInt(10) < 8` → 80% shared card. Unupgraded never rolls a special. */
+const ROULETTE_NORMAL_ROLL_UPGRADED = 8;
 
 const ROULETTE_GRANT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
   (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'roulette'> =>
@@ -123,10 +121,9 @@ function grantRouletteCard(
   effect: PersistentEffect,
   rng: Rng,
 ): void {
-  const normalThreshold = effect.isUpgraded
-    ? ROULETTE_NORMAL_ROLL_UPGRADED
-    : ROULETTE_NORMAL_ROLL_BASE;
-  const grantNormal = rng.nextInt(10) < normalThreshold;
+  const grantNormal = effect.isUpgraded
+    ? rng.nextInt(10) < ROULETTE_NORMAL_ROLL_UPGRADED
+    : true;
   const cardId = grantNormal
     ? rng.pick(SHARED_CARD_IDS)
     : rng.pick(ROULETTE_GRANT_SPECIAL_IDS);
@@ -135,7 +132,8 @@ function grantRouletteCard(
     ? acquireCardToHand(owner, cardId, instanceId)
     : acquireSpecialCard(owner, cardId, instanceId);
 
-  if (effect.isUpgraded && rng.nextInt(10) < ROULETTE_GRANT_UPGRADE_ROLL) {
+  // Designer 2026-09-21: 10% upgraded copy on either face, either bucket.
+  if (rng.nextInt(10) === 0) {
     instance.isUpgraded = true;
   }
 }

@@ -231,8 +231,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: steals all attack cards from all opponents.
 
 **Roulette** — Price: 10 points
-- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random card: 80% a shared attack or action card (uniform among the 10 shop types), 20% a circulating special other than Roulette. 2 card lives.
-- Upgrade: still one card per turn; 70% attack or action / 30% special (never Roulette); independent 30% chance the granted copy is already upgraded.
+- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random **normal** (shared attack or action) card — never a special. Independent **10%** chance the granted copy is already upgraded. 2 card lives.
+- Upgrade: still one card per turn; **80%** a shared attack or action / **20%** a circulating special other than Roulette; independent **10%** chance the granted copy is already upgraded (whichever bucket hit).
 
 ## 6. Game Flow and Resolution
 

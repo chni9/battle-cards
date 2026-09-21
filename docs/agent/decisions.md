@@ -3852,3 +3852,19 @@ grant `drawGain` as a safe Draw. Block extra turns that still sit in round
 
 ---
 
+## 2026-09-21 · [P] Roulette grant tables
+
+Designer correction on Lot 64 (PR #50). Classic exception (golden rule 7).
+Update the rules spec; this supersedes Lot 63's 80/20 and 70/30 + 30%
+upgraded-copy tables.
+
+- Unupgraded: **only** a normal (shared attack or action) card. Never a
+  special. Independent **10%** that the granted copy is already upgraded.
+- Upgraded: **80%** normal / **20%** circulating special (still never
+  another Roulette). Independent **10%** that the granted copy is upgraded
+  (whichever bucket hit).
+- Play cost 10, 2 card-lives, persistent tick-after-action, seeded RNG
+  unchanged.
+
+---
+
