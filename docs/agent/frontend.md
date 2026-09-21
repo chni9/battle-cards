@@ -135,10 +135,11 @@ rules above are unchanged — this section only covers how the client looks.
   `additions` (kit portrait or card art + body) for kits/cards that did not
   exist before; before → after `items` cover nerfs with named-card art and
   render **above** the New block. Kit-level items may use `kitId` (Gambler
-  portrait) instead of `cardId`. Latest catalog id is `lot-64` (Gambler start
-  specials, weighted Draw 5–100, `{nickname} dies by Gambling`). Lot 63 items:
-  Sentence, Imposition, Super Absorber. Lot 63 additions: Gambler kit, Roulette
-  special. Sentence chips sit
+  portrait) instead of `cardId`. Latest catalog id is `lot-63`. Gambler and
+  Roulette never shipped on `main`, so later tweaks edit that original New
+  body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
+  of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
+  Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
   on the caster (remaining turns in red). Play / later caster ticks / fire flash
   the table-wide red banner. The dialog lists history
   (every catalog entry). **Update the latest catalog entry in the same commit
@@ -1272,5 +1273,6 @@ Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
   Red when payout `> 10`. Motion pulse is 0.45s at turn start (`MOTION_PULSE_S`);
   reduced-motion / load timing can hide it on capture — source and tests pin it.
 - Bust log: **L64Gate draws and busts** then **L64Gate dies by Gambling**.
-  Hub What’s new latest id `lot-64`.
+  Hub What’s new latest id `lot-63` (Gambler/Roulette folded into the original
+  lot-63 New bodies; no `lot-64` release id).
 

@@ -1,5 +1,5 @@
 /**
- * Hub What’s new wiring — L63-07 / L64-06.
+ * Hub What’s new wiring — L63-07.
  */
 
 import { readFileSync } from 'node:fs';
@@ -16,13 +16,13 @@ function read(rel: string): string {
   return readFileSync(join(here, rel), 'utf8');
 }
 
-describe('What’s new dialog (L63-07 / L64-06)', () => {
+describe('What’s new dialog (L63-07)', () => {
   it('renders the shared catalog newest first with a Latest marker', () => {
     const source = read('whats-new-dialog.tsx');
     expect(source).toContain('RELEASE_NOTES.map');
     expect(source).toContain('Latest');
     expect(source).toContain('Got it');
-    expect(latestReleaseNote().id).toBe('lot-64');
+    expect(latestReleaseNote().id).toBe('lot-63');
     expect(RELEASE_NOTES.map((note) => note.id)[0]).toBe(latestReleaseNote().id);
   });
 
@@ -38,7 +38,7 @@ describe('What’s new dialog (L63-07 / L64-06)', () => {
     expect(source).toContain('item.after');
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
     expect(source).toContain('item.kitId');
-    expect(latestReleaseNote().additions).toHaveLength(0);
+    expect(latestReleaseNote().additions).toHaveLength(2);
     const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
     expect(lot63?.items.map((item) => item.cardId)).toEqual([
       'sentence',

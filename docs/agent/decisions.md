@@ -3868,3 +3868,14 @@ upgraded-copy tables.
 
 ---
 
+## 2026-09-21 · [P] What’s new edits the unshipped original
+
+Standing rule: if a kit or card has **never shipped on `main`**, later
+tweaks **edit that original What’s new entry**. They do not create a new
+log id. Lot 64 therefore has no player-facing `lot-64` release note;
+Gambler / Roulette live on `lot-63` as current truth (3 specials, Draw
+5–100 geometric, new Roulette grant tables). Do not mention round-1 Draw
+bust immunity there.
+
+---
+
