@@ -65,20 +65,24 @@ export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactEle
             ) : null}
             {note.items.length > 0 ? (
               <ul className="mt-3 list-none space-y-4 p-0">
-                {note.items.map((item) => (
+                {note.items.map((item, itemIndex) => (
                   <li
-                    key={`${note.id}-${item.cardId}`}
+                    key={`${note.id}-${item.cardId ?? item.kitId ?? 'item'}-${String(itemIndex)}`}
                     className="flex items-start gap-3"
                   >
-                    <Card
-                      instance={{
-                        instanceId: `whats-new-${note.id}-${item.cardId}`,
-                        cardId: item.cardId,
-                        isUpgraded: false,
-                      }}
-                      detail="thumb"
-                      className="w-14 shrink-0 !p-0.5 sm:w-16"
-                    />
+                    {item.kitId !== undefined ? (
+                      <KitPortrait kitId={item.kitId} className="w-14 shrink-0 sm:w-16" />
+                    ) : item.cardId !== undefined ? (
+                      <Card
+                        instance={{
+                          instanceId: `whats-new-${note.id}-${item.cardId}`,
+                          cardId: item.cardId,
+                          isUpgraded: false,
+                        }}
+                        detail="thumb"
+                        className="w-14 shrink-0 !p-0.5 sm:w-16"
+                      />
+                    ) : null}
                     <div className="min-w-0 space-y-1.5 text-sm leading-relaxed text-ink">
                       <p>
                         <span className="font-semibold text-ink-muted">Before. </span>

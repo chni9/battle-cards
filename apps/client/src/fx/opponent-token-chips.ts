@@ -195,6 +195,22 @@ export function chipsForPublicLogEntry(
 
   switch (entry.action) {
     case 'draw': {
+      if (entry.drawBust === true) {
+        return [];
+      }
+      if (entry.drawGain !== undefined) {
+        if (entry.drawGain <= 0) {
+          return [];
+        }
+        return [
+          {
+            kind: 'point',
+            count: entry.drawGain,
+            from: 'log',
+            to: { playerId: actorId },
+          },
+        ];
+      }
       const kitId = actorId === you ? selfKitId : visibleKitId(actor);
       if (kitId === undefined) {
         return [];

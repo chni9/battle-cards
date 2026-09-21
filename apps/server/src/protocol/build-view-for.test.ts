@@ -1624,3 +1624,49 @@ describe('pool-list faces (L63-06)', () => {
     expect(afterBuy.actionLog[0]).not.toHaveProperty('isUpgraded');
   });
 });
+
+describe('buildPlayingViewFor (L64-01) — public drawGain', () => {
+  it('exposes a living Gambler drawGain to every recipient and omits it for other kits', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l64-01-draw-gain',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const gambler = state.players.find((player) => player.kitId === 'gambler');
+    const other = state.players.find((player) => player.kitId === 'kamikaze');
+    expect(gambler).toBeDefined();
+    expect(other).toBeDefined();
+    if (gambler === undefined || other === undefined) {
+      return;
+    }
+
+    gambler.drawGain = 47;
+
+    const forSelf = buildPlayingViewFor({
+      recipientSessionId: gambler.id,
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const forOpponent = buildPlayingViewFor({
+      recipientSessionId: other.id,
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(forSelf.players.find((player) => player.id === gambler.id)?.drawGain).toBe(47);
+    expect(forOpponent.players.find((player) => player.id === gambler.id)?.drawGain).toBe(
+      47,
+    );
+    expect(forSelf.players.find((player) => player.id === other.id)?.drawGain).toBeUndefined();
+    expect(
+      'drawGain' in (forSelf.players.find((player) => player.id === other.id) ?? {}),
+    ).toBe(false);
+  });
+});

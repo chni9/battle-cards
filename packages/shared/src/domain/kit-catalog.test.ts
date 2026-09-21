@@ -168,5 +168,6 @@ describe('KIT_CATALOG', () => {
     });
     expect(getKit('gambler').startingCardCounts).toEqual({ action: 0, attack: 0 });
     expect(getKit('gambler').specialCards).toEqual(['roulette']);
+    expect(getKit('gambler').randomStartingSpecialCount).toBe(2);
   });
 });

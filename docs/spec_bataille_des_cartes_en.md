@@ -118,7 +118,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Wizard | 10 | 4 | 0 | 2 | 4 | 2 | Thief already upgraded | MEGA ATTACK |
 | Juggernaut | 14 | 4 | 1 | 1 | 4 | 2 | Shield already upgraded | Super Mirror |
 | Duplicator (in testing) | 2 | 0 | 0 | 1 | 1 | 0 | Activatable duplication — see detail below | Imposition, Attack Thief |
-| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Roulette) plus Roulette |
+| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 2 distinct random specials (never Roulette) plus Roulette |
 
 ### Duplicator — Ability Detail
 
@@ -131,9 +131,9 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Gambler — Ability Detail
 
-- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **5** random special cards drawn from the circulating pool excluding Roulette (duplicates allowed), and **Roulette**.
-- The Draw action grants **10** points.
-- Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The roll uses the injected seeded generator. Invisibility's passive point ticks do not roll.
+- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **2** random special cards drawn **without replacement** from the circulating pool excluding Roulette (the two are distinct; never a second Roulette), and **Roulette**.
+- Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with truncated-geometric weight P(n) ∝ r^(n − 5), r = 10^(-1/16) ≈ 0.8660, so P(n > 20) ≤ 0.10 (5 is most likely; each extra point is rarer; 100 stays possible). Other kits keep catalog Draw.
+- Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The death log is `{nickname} dies by Gambling`. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
 - Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
 
 ## 5. Special Cards
@@ -231,8 +231,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: steals all attack cards from all opponents.
 
 **Roulette** — Price: 10 points
-- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random card: 80% a shared attack or action card (uniform among the 10 shop types), 20% a circulating special other than Roulette. 2 card lives.
-- Upgrade: still one card per turn; 70% attack or action / 30% special (never Roulette); independent 30% chance the granted copy is already upgraded.
+- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random **normal** (shared attack or action) card — never a special. Independent **10%** chance the granted copy is already upgraded. 2 card lives.
+- Upgrade: still one card per turn; **80%** a shared attack or action / **20%** a circulating special other than Roulette; independent **10%** chance the granted copy is already upgraded (whichever bucket hit).
 
 ## 6. Game Flow and Resolution
 
@@ -251,7 +251,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 ### Game Turn
 
 - A player can only take one action per turn, whether a classic action (drawing, playing/selling/buying a card, buying an upgrade point, buying a random pool card, Unspy) or using a special card — no exception, except an explicit override from a kit or a card (e.g. Assassin, Block).
-- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead rolls a 1-in-10 instant elimination (section 4); a bust grants no points.
+- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 instant elimination; a bust grants no points.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
 - Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.

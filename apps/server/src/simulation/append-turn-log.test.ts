@@ -28,6 +28,7 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;
@@ -72,6 +73,7 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
     actor.points = 0;
     actor.pendingEffects = [];
     actor.activePersistentEffects = [];
+    actor.drawGain = 47;
 
     const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([1]));
     expect(result.ok).toBe(true);
@@ -89,6 +91,8 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
 
     expect(played.action).toBe('draw');
     expect(played.drawBust).toBeUndefined();
+    expect(played.drawGain).toBe(47);
     expect(toActionPlayedPayload(result.actionPlayed).drawBust).toBeUndefined();
+    expect(toActionPlayedPayload(result.actionPlayed).drawGain).toBe(47);
   });
 });

@@ -209,9 +209,9 @@ export const SPECIAL_CARD_CATALOG = {
     'roulette',
     'Roulette',
     10,
-    'Each of your turns, including this one, gain a random card: 80% attack or action, 20% special (never another Roulette). 2 card lives.',
-    'Each of your turns, including this one, gain a random card: 70% attack or action, 30% special (never another Roulette). 30% chance the granted copy is upgraded. 2 card lives.',
-    '70% normal / 30% special instead of 80/20, and 30% chance the granted copy is upgraded.',
+    'Each of your turns, including this one, gain a random normal attack or action card (never a special). 10% chance the granted copy is upgraded. 2 card lives.',
+    'Each of your turns, including this one, gain a random card: 80% attack or action, 20% special (never another Roulette). 10% chance the granted copy is upgraded. 2 card lives.',
+    '80% normal / 20% special instead of only normal cards. 10% chance the granted copy is upgraded.',
   ),
 } as const satisfies Record<SpecialCardId, Card>;
 

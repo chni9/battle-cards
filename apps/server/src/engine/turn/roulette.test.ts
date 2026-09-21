@@ -60,7 +60,7 @@ describe('Roulette (L63-02)', () => {
     expect(actor.hand.length + actor.specialCards.length).toBe(1);
   });
 
-  it('base grant is 80% shared / 20% circulating special except Roulette', () => {
+  it('base grant is only a shared card, never a special, with 10% upgraded copy', () => {
     const state = createInitialState({
       seats,
       seed: 'l63-02-roulette-8020',
@@ -76,25 +76,20 @@ describe('Roulette (L63-02)', () => {
       makeCounterEffect({ id: 'fac-base', cardId: 'roulette', counter: 2, isUpgraded: false }),
     ];
 
-    applyPersistentEffects(state, owner.id, scriptedRng([0, 0]));
+    applyPersistentEffects(state, owner.id, scriptedRng([8, 1]));
     expect(owner.hand).toHaveLength(1);
-    expect(owner.hand[0]?.cardId).toBe(SHARED_CARD_IDS[0]);
+    expect(owner.hand[0]?.cardId).toBe(SHARED_CARD_IDS[8]);
     expect(owner.specialCards).toHaveLength(0);
     expect(owner.hand[0]?.isUpgraded).toBe(false);
 
     owner.hand = [];
-    applyPersistentEffects(state, owner.id, scriptedRng([7, 1]));
-    expect(owner.hand[0]?.cardId).toBe(SHARED_CARD_IDS[1]);
-
-    owner.hand = [];
-    applyPersistentEffects(state, owner.id, scriptedRng([8, 0]));
-    expect(owner.hand).toHaveLength(0);
-    expect(owner.specialCards).toHaveLength(1);
-    expect(owner.specialCards[0]?.cardId).toBe(ROULETTE_GRANT_SPECIAL_IDS[0]);
-    expect(owner.specialCards[0]?.cardId).not.toBe('roulette');
+    applyPersistentEffects(state, owner.id, scriptedRng([0, 0]));
+    expect(owner.hand[0]?.cardId).toBe(SHARED_CARD_IDS[0]);
+    expect(owner.hand[0]?.isUpgraded).toBe(true);
+    expect(owner.specialCards).toHaveLength(0);
   });
 
-  it('upgraded grant is 70/30 plus an independent 30% upgraded copy', () => {
+  it('upgraded grant is 80/20 plus an independent 10% upgraded copy', () => {
     const state = createInitialState({
       seats,
       seed: 'l63-02-roulette-up',
@@ -115,17 +110,21 @@ describe('Roulette (L63-02)', () => {
     expect(owner.hand[0]?.isUpgraded).toBe(true);
 
     owner.hand = [];
-    applyPersistentEffects(state, owner.id, scriptedRng([6, 2, 3]));
+    applyPersistentEffects(state, owner.id, scriptedRng([7, 2, 1]));
     expect(owner.hand[0]?.cardId).toBe(SHARED_CARD_IDS[2]);
     expect(owner.hand[0]?.isUpgraded).toBe(false);
 
     owner.hand = [];
     owner.specialCards = [];
-    applyPersistentEffects(state, owner.id, scriptedRng([7, 0, 1]));
+    applyPersistentEffects(state, owner.id, scriptedRng([8, 0, 0]));
     expect(owner.hand).toHaveLength(0);
     expect(owner.specialCards[0]?.cardId).toBe(ROULETTE_GRANT_SPECIAL_IDS[0]);
     expect(owner.specialCards[0]?.isUpgraded).toBe(true);
     expect(owner.specialCards[0]?.cardId).not.toBe('roulette');
+
+    owner.specialCards = [];
+    applyPersistentEffects(state, owner.id, scriptedRng([8, 0, 1]));
+    expect(owner.specialCards[0]?.isUpgraded).toBe(false);
   });
 
   it('never grants Roulette from its own special pool', () => {
@@ -141,12 +140,12 @@ describe('Roulette (L63-02)', () => {
     owner.hand = [];
     owner.specialCards = [];
     owner.activePersistentEffects = [
-      makeCounterEffect({ id: 'fac-pool', cardId: 'roulette', counter: 2 }),
+      makeCounterEffect({ id: 'fac-pool', cardId: 'roulette', counter: 2, isUpgraded: true }),
     ];
 
     for (let index = 0; index < ROULETTE_GRANT_SPECIAL_IDS.length; index += 1) {
       owner.specialCards = [];
-      applyPersistentEffects(state, owner.id, scriptedRng([8, index]));
+      applyPersistentEffects(state, owner.id, scriptedRng([8, index, 1]));
       expect(owner.specialCards[0]?.cardId).toBe(ROULETTE_GRANT_SPECIAL_IDS[index]);
       expect(owner.specialCards[0]?.cardId).not.toBe('roulette');
     }
@@ -166,7 +165,7 @@ describe('Roulette (L63-02)', () => {
       makeCounterEffect({ id: 'fac-b', cardId: 'roulette', counter: 2 }),
     ];
 
-    applyPersistentEffects(state, owner.id, scriptedRng([0, 0, 0, 1]));
+    applyPersistentEffects(state, owner.id, scriptedRng([0, 1, 1, 1]));
     expect(owner.hand.map((card) => card.cardId)).toEqual([
       SHARED_CARD_IDS[0],
       SHARED_CARD_IDS[1],

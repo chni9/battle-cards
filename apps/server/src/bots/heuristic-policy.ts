@@ -315,7 +315,8 @@ function scoreAction(
 ): { score: number; code: BotReasonCode } {
   if (action.type === 'draw') {
     const kit = getKit(view.self.kitId);
-    const kitDraw = kit.startingResources.draw;
+    const kitDraw =
+      view.players.find((player) => player.isYou)?.drawGain ?? kit.startingResources.draw;
     const safeScore =
       ctx.weights.action.bands.sustain +
       ctx.weights.action.drawScorePerExtraDraw * Math.max(0, kitDraw - 1);

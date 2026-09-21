@@ -699,11 +699,18 @@
         "turnSequence": 5,
         "action": {
           "type": "upgradeCard",
-          "instanceId": "bot-0:start:special:3"
+          "instanceId": "bot-0:start:special:0"
         }
       },
       {
         "turnSequence": 7,
+        "action": {
+          "type": "buyCard",
+          "cardId": "basic-attack"
+        }
+      },
+      {
+        "turnSequence": 9,
         "action": {
           "type": "draw"
         }

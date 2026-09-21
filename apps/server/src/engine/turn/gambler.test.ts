@@ -1,5 +1,5 @@
 /**
- * Gambler starting loadout + Draw bust — rules spec §4, designer 2026-09-20 / L63-01 / L63-02.
+ * Gambler starting loadout + Draw bust — rules spec §4, designer 2026-09-21 / L64-02 / L63-02.
  */
 
 import { getKit, randomStartingSpecialPool } from '@card-battle/shared';
@@ -10,15 +10,17 @@ import { createInitialState } from '../create-initial-state';
 import { createRng } from '../rng';
 import { dealStartingLoadout } from '../reanimate-player';
 import { applyPersistentEffects } from './apply-persistent-effects';
+import { beginTurnFor } from './advance-turn';
 import { performTurnAction } from './perform-action';
+import { rollDrawGain } from './sample-draw-gain';
 
-describe('Gambler kit (L63-01)', () => {
+describe('Gambler kit (L64-02)', () => {
   const seats = [
     { id: 'a', nickname: 'Alice' },
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('matches catalog resources, zero hand cards, Roulette plus five randoms', () => {
+  it('matches catalog resources, zero hand cards, Roulette plus two distinct randoms', () => {
     const kit = getKit('gambler');
     expect(kit.startingResources).toEqual({
       lives: 1,
@@ -28,7 +30,7 @@ describe('Gambler kit (L63-01)', () => {
     });
     expect(kit.startingCardCounts).toEqual({ action: 0, attack: 0 });
     expect(kit.specialCards).toEqual(['roulette']);
-    expect(kit.randomStartingSpecialCount).toBe(5);
+    expect(kit.randomStartingSpecialCount).toBe(2);
     expect(kit.traits.drawBustDenominator).toBe(10);
     expect(randomStartingSpecialPool(kit)).not.toContain('roulette');
 
@@ -47,13 +49,14 @@ describe('Gambler kit (L63-01)', () => {
     expect(player.points).toBe(0);
     expect(player.upgradePoints).toBe(0);
     expect(player.hand).toEqual([]);
-    expect(player.specialCards).toHaveLength(6);
-    const randomIds = player.specialCards.slice(0, 5).map((card) => card.cardId);
+    expect(player.specialCards).toHaveLength(3);
+    const randomIds = player.specialCards.slice(0, 2).map((card) => card.cardId);
     expect(randomIds).not.toContain('roulette');
-    expect(player.specialCards[5]?.cardId).toBe('roulette');
+    expect(new Set(randomIds).size).toBe(2);
+    expect(player.specialCards[2]?.cardId).toBe('roulette');
   });
 
-  it('reproduces the same five randoms for the same seed and never rolls Roulette there', () => {
+  it('reproduces the same two distinct randoms for the same seed and never rolls Roulette there', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-rng-pool',
@@ -66,9 +69,11 @@ describe('Gambler kit (L63-01)', () => {
     }
 
     const dealtIds = player.specialCards.map((card) => card.cardId);
-    expect(dealtIds).toHaveLength(6);
-    expect(dealtIds.slice(0, 5)).not.toContain('roulette');
-    expect(dealtIds[5]).toBe('roulette');
+    expect(dealtIds).toHaveLength(3);
+    expect(dealtIds.slice(0, 2)).not.toContain('roulette');
+    expect(new Set(dealtIds.slice(0, 2)).size).toBe(2);
+    expect(dealtIds[2]).toBe('roulette');
+    expect(dealtIds.filter((id) => id === 'roulette')).toHaveLength(1);
 
     const again = createInitialState({
       seats,
@@ -81,11 +86,102 @@ describe('Gambler kit (L63-01)', () => {
     player.hand = [];
     player.specialCards = [];
     dealStartingLoadout(player, 'gambler', createRng('gambler-forced'), 'forced');
-    expect(player.specialCards).toHaveLength(6);
-    expect(player.specialCards.slice(0, 5).map((card) => card.cardId)).not.toContain(
-      'roulette',
+    expect(player.specialCards).toHaveLength(3);
+    const forcedRandom = player.specialCards.slice(0, 2).map((card) => card.cardId);
+    expect(forcedRandom).not.toContain('roulette');
+    expect(new Set(forcedRandom).size).toBe(2);
+    expect(player.specialCards[2]?.cardId).toBe('roulette');
+  });
+
+  it('keeps Prophet random specials with replacement', () => {
+    const kit = getKit('prophet');
+    expect(kit.randomStartingSpecialCount).toBe(2);
+    expect(kit.specialCards).toEqual([]);
+  });
+});
+
+describe('Gambler Draw gain (L64-03)', () => {
+  const seats = [
+    { id: 'a', nickname: 'Alice' },
+    { id: 'b', nickname: 'Bob' },
+  ] as const;
+
+  it('rolls first-seat Gambler Draw at create without consuming the deal RNG', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'l64-03-first-seat',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const first = state.players[0];
+    expect(first).toBeDefined();
+    if (first === undefined) {
+      return;
+    }
+
+    if (first.kitId === 'gambler') {
+      expect(first.drawGain).toBeGreaterThanOrEqual(5);
+      expect(first.drawGain).toBeLessThanOrEqual(100);
+    } else {
+      expect(first.drawGain).toBeUndefined();
+    }
+
+    const again = createInitialState({
+      seats,
+      seed: 'l64-03-first-seat',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    expect(again.players[0]?.specialCards.map((card) => card.cardId)).toEqual(
+      state.players[0]?.specialCards.map((card) => card.cardId),
     );
-    expect(player.specialCards[5]?.cardId).toBe('roulette');
+    expect(again.players[0]?.drawGain).toBe(first.drawGain);
+  });
+
+  it('rerolls Draw on beginTurnFor for a Gambler and leaves other kits unset', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'l64-03-begin-turn',
+      kitAssignment: ['kamikaze', 'gambler'],
+    });
+    const gambler = state.players.find((player) => player.kitId === 'gambler');
+    const other = state.players.find((player) => player.kitId === 'kamikaze');
+    expect(gambler).toBeDefined();
+    expect(other).toBeDefined();
+    if (gambler === undefined || other === undefined) {
+      return;
+    }
+
+    state.turnSequence = 4;
+    beginTurnFor(state, gambler);
+    expect(gambler.drawGain).toBeGreaterThanOrEqual(5);
+    expect(gambler.drawGain).toBeLessThanOrEqual(100);
+
+    const firstRoll = gambler.drawGain;
+    state.turnSequence = 5;
+    beginTurnFor(state, gambler);
+    expect(gambler.drawGain).not.toBe(firstRoll);
+
+    beginTurnFor(state, other);
+    expect(other.drawGain).toBeUndefined();
+    expect('drawGain' in other).toBe(false);
+  });
+
+  it('reproduces the same Draw roll from seed, seat, and turnSequence', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'l64-03-repro',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const actor = state.players.find((player) => player.kitId === 'gambler');
+    expect(actor).toBeDefined();
+    if (actor === undefined) {
+      return;
+    }
+
+    state.turnSequence = 9;
+    rollDrawGain(state, actor);
+    const first = actor.drawGain;
+    rollDrawGain(state, actor);
+    expect(actor.drawGain).toBe(first);
   });
 });
 
@@ -95,7 +191,7 @@ describe('Gambler Draw bust (L63-02)', () => {
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('safe Draw grants 10 points and leaves lives intact', () => {
+  it('safe Draw grants the rolled payout and leaves lives intact', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-draw-safe',
@@ -112,6 +208,7 @@ describe('Gambler Draw bust (L63-02)', () => {
     actor.points = 0;
     actor.pendingEffects = [];
     actor.activePersistentEffects = [];
+    actor.drawGain = 47;
 
     const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([1]));
     expect(result.ok).toBe(true);
@@ -121,10 +218,82 @@ describe('Gambler Draw bust (L63-02)', () => {
 
     expect(result.actionPlayed.action).toBe('draw');
     expect(result.actionPlayed.drawBust).toBeUndefined();
+    expect(result.actionPlayed.drawGain).toBe(47);
     expect(actor.lives).toBe(14);
-    expect(actor.points).toBe(10);
+    expect(actor.points).toBe(47);
     expect(actor.isEliminated).toBe(false);
     expect(result.eliminatedPlayerIds).toEqual([]);
+  });
+
+  it('scripted bust RNG still grants points and does not eliminate on round 1', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'gambler-round1-bust-immune',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const actor = state.players.find((player) => player.kitId === 'gambler');
+    expect(actor).toBeDefined();
+    if (actor === undefined) {
+      return;
+    }
+
+    expect(state.turnSequence).toBe(0);
+    state.currentTurnPlayerId = actor.id;
+    actor.lives = 14;
+    actor.points = 0;
+    actor.pendingEffects = [];
+    actor.activePersistentEffects = [];
+    actor.hand = [];
+    actor.specialCards = [];
+    actor.drawGain = 47;
+
+    const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([0]));
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.actionPlayed.drawBust).toBeUndefined();
+    expect(result.actionPlayed.drawGain).toBe(47);
+    expect(actor.lives).toBe(14);
+    expect(actor.points).toBe(47);
+    expect(actor.isEliminated).toBe(false);
+    expect(result.eliminatedPlayerIds).toEqual([]);
+  });
+
+  it('Block extra turns that still sit in round 1 stay immune', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'gambler-round1-extra-turn-immune',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const actor = state.players.find((player) => player.kitId === 'gambler');
+    expect(actor).toBeDefined();
+    if (actor === undefined) {
+      return;
+    }
+
+    // 2 seats: turnSequence 1 is still ROUND 1 on the public action log.
+    state.turnSequence = 1;
+    state.currentTurnPlayerId = actor.id;
+    actor.lives = 14;
+    actor.points = 0;
+    actor.pendingEffects = [];
+    actor.activePersistentEffects = [];
+    actor.hand = [];
+    actor.specialCards = [];
+    actor.drawGain = 22;
+
+    const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([0]));
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.actionPlayed.drawBust).toBeUndefined();
+    expect(actor.lives).toBe(14);
+    expect(actor.points).toBe(22);
+    expect(actor.isEliminated).toBe(false);
   });
 
   it('forced bust zeros lives at any total, grants no points, and has no eliminator', () => {
@@ -141,6 +310,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;
@@ -157,15 +327,18 @@ describe('Gambler Draw bust (L63-02)', () => {
 
     expect(result.actionPlayed.action).toBe('draw');
     expect(result.actionPlayed.drawBust).toBe(true);
+    expect(result.actionPlayed.drawGain).toBeUndefined();
     expect(actor.lives).toBe(0);
     expect(actor.points).toBe(0);
     expect(actor.isEliminated).toBe(true);
     expect(result.eliminatedPlayerIds).toEqual([actor.id]);
-    expect(result.eliminations).toEqual([{ playerId: actor.id, eliminatorPlayerId: null }]);
+    expect(result.eliminations).toEqual([
+      { playerId: actor.id, eliminatorPlayerId: null, reason: 'gambling' },
+    ]);
     expect(result.winnerPlayerId).toBe(other.id);
   });
 
-  it('unplayed Reanimation in the random five cannot save a first-turn bust', () => {
+  it('unplayed Reanimation cannot save a round-2 bust', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-bust-unplayed-reanim',
@@ -176,6 +349,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 1;
     actor.points = 0;
@@ -208,6 +382,7 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
+    state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
     actor.points = 0;

@@ -3792,3 +3792,90 @@ Classic values unchanged.
 
 ---
 
+## 2026-09-21 · [P] Lot 64 Gambler kit tweaks
+
+Designer session: Classic exception (golden rule 7). No God / Team / Quick.
+`PROTOCOL_VERSION` **38 → 39** in L64-01 so older clients cannot read the new
+contract.
+
+Locked:
+
+- Start: exactly **one Roulette** plus **2 other distinct** circulating
+  specials (no second Roulette, no duplicate among the two). Sample without
+  replacement for Gambler only (`rng.shuffle(pool).slice(0, count)` then
+  append Roulette). Prophet stays with-replacement per #V4-27.
+- Draw payout rerolls at the **start of each Gambler’s turn** (including
+  Block extra turns). Other kits keep catalog Draw. Catalog
+  `startingResources.draw: 10` stays the listed / red-threshold number, not
+  the grant.
+- Weights: integer **5..100**, `weight(n) = 101 - n` (5 → 96, 100 → 1,
+  total 4656). Bust stays **1-in-10**, no points.
+- Log death as `{nickname} dies by Gambling` (`EliminationReason`
+  `'gambling'`). No eliminator / no kill reward.
+- Public `PublicPlayerView.drawGain` for a living Gambler; successful
+  `actionPlayed` draw also carries `drawGain` (omit on bust).
+
+---
+
+## 2026-09-21 · [P] Gambler Draw truncated geometric
+
+Designer correction on Lot 64 (PR #50): linear `weight(n) = 101 − n` put
+~70% of mass above 20. That is too high. Weights on integers **5..100**
+inclusive are now truncated geometric:
+
+- P(n) ∝ r^(n − 5)
+- r = 10^(-1/16) ≈ 0.8660 so (1 − r^16) / (1 − r^96) ≥ 0.90, i.e.
+  P(n > 20) ≤ 0.10 (use the 10% cap, not far under it — 21+ still shows
+  in play)
+- Integer weights `round(10^8 · r^(n − 5))`, drawn with `nextInt(total)`
+  through the existing rejection sampler (golden rule 5; no
+  `Math.random`; no modulo bias). Ticket 0 maps to 5; 100 stays possible
+  but vanishingly rare
+- Range, bust **1-in-10**, red `drawGain > 10`, and catalog Draw **10**
+  as inspect / red threshold are unchanged
+
+This entry supersedes the Lot 64 weight formula only. Do not rewrite the
+locked linear line above.
+
+---
+
+## 2026-09-21 · [P] Gambler Draw bust skipped in round 1
+
+Designer correction on Lot 64 (PR #50). Engine-only — do **not** write this
+in What’s new, inspect, How to play, kit catalog blurbs, or the rules spec.
+
+While the public action-log round is **1** (`floor(turnSequence / seatCount)
++ 1`, same formula the log uses for “Round N”; seatCount is the seated
+table including eliminated), Draw never busts: skip the 1-in-10 roll and
+grant `drawGain` as a safe Draw. Block extra turns that still sit in round
+1 stay immune. From round 2 the 1-in-10 is unchanged (`dies by Gambling`).
+
+---
+
+## 2026-09-21 · [P] Roulette grant tables
+
+Designer correction on Lot 64 (PR #50). Classic exception (golden rule 7).
+Update the rules spec; this supersedes Lot 63's 80/20 and 70/30 + 30%
+upgraded-copy tables.
+
+- Unupgraded: **only** a normal (shared attack or action) card. Never a
+  special. Independent **10%** that the granted copy is already upgraded.
+- Upgraded: **80%** normal / **20%** circulating special (still never
+  another Roulette). Independent **10%** that the granted copy is upgraded
+  (whichever bucket hit).
+- Play cost 10, 2 card-lives, persistent tick-after-action, seeded RNG
+  unchanged.
+
+---
+
+## 2026-09-21 · [P] What’s new edits the unshipped original
+
+Standing rule: if a kit or card has **never shipped on `main`**, later
+tweaks **edit that original What’s new entry**. They do not create a new
+log id. Lot 64 therefore has no player-facing `lot-64` release note;
+Gambler / Roulette live on `lot-63` as current truth (3 specials, Draw
+5–100 geometric, new Roulette grant tables). Do not mention round-1 Draw
+bust immunity there.
+
+---
+

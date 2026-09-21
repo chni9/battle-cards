@@ -156,6 +156,11 @@ export interface Player {
    * activation targets. `null` when living, window closed, or never opened.
    */
   absorbWindowPendingPlayerIds: string[] | null;
+  /**
+   * Current rolled Draw payout for a living Gambler (Lot 64 / PROTOCOL_VERSION 39).
+   * Undefined for other kits. Public on `PublicPlayerView`.
+   */
+  drawGain?: number;
 }
 
 /** Queued revive after elim consumed an armed Reanimation — technical spec v4 §11.7. */

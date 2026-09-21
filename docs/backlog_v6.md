@@ -72,6 +72,12 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     then **36 → 37** for public Sentence countdown.
 
 
+22. **Gambler kit tweaks (Lot 64).** Designer 2026-09-21. Start 2 distinct
+    random specials + Roulette; truncated-geometric Draw 5–100 (P(n > 20) ≤ 0.10);
+    `{nickname} dies by Gambling`; red Draw above 10. `PROTOCOL_VERSION` **38 → 39** (exception,
+    same class as L49 / L56–L63).
+
+
 **Execution order**
 
 Follow the ID order when tasks share protocol or the table shell. Independent tasks may
@@ -93,7 +99,9 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
   assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, later superseded
   by Lot 58), designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
-  PG 3/6, Unspy 10), and designer 2026-09-20 Lot 63 (The Gambler + Roulette).
+  PG 3/6, Unspy 10), designer 2026-09-20 Lot 63 (The Gambler + Roulette),
+  and designer 2026-09-21 Lot 64 (Gambler start specials, weighted Draw,
+  gambling death log).
   Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.
@@ -101,11 +109,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **`PROTOCOL_VERSION` bumps exactly once**, in **L41-02**, except documented
   exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**,
   **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, and
-  **L63-03 (35 → 36)**, and **36 → 37** (`pendingSentences`).
+  **L63-03 (35 → 36)**, and **36 → 37** (`pendingSentences`), and
+  **L64-01 (38 → 39)** (`drawGain` / `'gambling'`).
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed for
   catalog-price affordability (L54-01), Lot 58's new legal actions (L58-08), and
-  Lot 63 roster/pool growth (L63-04); keep `weightsHash` unless a new weight
-  constant is unavoidable.
+  Lot 63 roster/pool growth (L63-04), and Lot 64 Gambler start/Draw (L64-03);
+  keep `weightsHash` unless a new weight constant is unavoidable.
 
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).
@@ -117,10 +126,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
 Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
+Lot 64 is done (146 of 146).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
-2026-09-16. Lot 62 opened 2026-09-18. Lot 63 opened 2026-09-20.
+2026-09-16. Lot 62 opened 2026-09-18. Lot 63 opened 2026-09-20. Lot 64
+opened 2026-09-21.
 
 
 | Lot | Tasks | Done |
@@ -148,6 +159,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
 | 63 · The Gambler + Roulette | 6 | 6 |
+| 64 · Gambler kit tweaks | 6 | 6 |
 
 
 ---
@@ -532,6 +544,25 @@ Spy-gated on the action log (L63-06).
 
 ---
 
+## Lot 64 — Gambler kit tweaks (designer 2026-09-21)
+
+Classic exception: Gambler starts with 2 distinct random specials plus Roulette;
+Draw payout rerolls 5–100 truncated-geometric at turn start (P(n > 20) ≤ 0.10);
+bust death log
+`{nickname} dies by Gambling`; red Draw when payout > 10.
+`PROTOCOL_VERSION` 38 → 39.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L64-01 | Dated `[P]` Lot 64 in `decisions.md`; rules spec Gambler tweaks; `PROTOCOL_VERSION` 38 → 39; `PublicPlayerView.drawGain`; successful `actionPlayed` `drawGain`; `EliminationReason` `'gambling'`; classify in `protocol.md`; build fields in `build-view-for.ts`. **Acceptance:** version pin 39; optional `drawGain` copies through `toActionPlayedPayload`; living Gambler `drawGain` is public; `pnpm verify` green. | M | **High** | — | Done |
+| L64-02 | `randomStartingSpecialCount: 2`; Gambler-only without-replacement sample (`rng.shuffle(pool).slice(0, count)` then append Roulette). Prophet stays with-replacement. **Acceptance:** always 3 specials, Roulette once, two others distinct and not Roulette; same seed → same trio; `pnpm verify` green. | M | **High** | L64-01 | Done |
+| L64-03 | Weighted Draw helper: truncated geometric P(n) ∝ r^(n − 5) on 5..100, r = 10^(-1/16) ≈ 0.8660 so P(n > 20) ≤ 0.10 (designer correction; replaced linear `101 − n` / total 4656); `rollDrawGain` seeded `${seed}:draw-gain:${id}:${turnSequence}` from `beginTurnFor` and first-seat create; safe Draw grants `drawGain ?? catalog`; bust unchanged. Bots read view `drawGain`. Point chips use `entry.drawGain`. **Acceptance:** ticket 0 → 5; last ticket → 100; P(>20) ≤ 10% on a large seeded sample; count(5) > count(10) > count(20) > count(50) > count(100); first-seat Gambler has a roll; Block extra turns reroll; `pnpm verify` green. | L | **High** | L64-02 | Done |
+| L64-04 | Draw-bust eliminations use `reason: 'gambling'`; action log `{nick} dies by Gambling`; recap / Excel / admin labels. Keep `{nick} draws and busts` on `actionPlayed`. **Acceptance:** bust log is not `is eliminated in combat`; no eliminator / no kill reward; `pnpm verify` green. | M | Medium | L64-03 | Done |
+| L64-05 | Table Draw button uses view `drawGain` for Gambler; `variant="red"` when `drawValue > 10`; Motion pulse on `drawValue` change while it is your turn. Compact, no word label. **Acceptance:** aria-label includes the gain; disabled off-turn; `pnpm verify` green. | M | Low | L64-03 | Done |
+| L64-06 | Inspect / How to play / kit row Draw **5–100** (weighted), 3 specials, bust 1-in-10. Playbooks. Designer 2026-09-21: player-facing What’s new stays on original `lot-63` (no `lot-64` release id — kit/card never shipped on `main`). **Acceptance:** latest catalog id is `lot-63`; inspect copy matches live rules; `pnpm verify` green. | S | Low | L64-05 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -559,7 +590,8 @@ Spy-gated on the action log (L63-06).
 | 61 | 10 |
 | 62 | 7 |
 | 63 | 6 |
-| **Total** | **140** |
+| 64 | 6 |
+| **Total** | **146** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**.
 

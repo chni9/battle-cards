@@ -13,7 +13,7 @@ Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** 
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–63 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–64 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
@@ -21,7 +21,7 @@ Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool bu
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
 labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
 Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
-action-log fog).
+action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
 ## Screens
 
@@ -74,8 +74,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
-  / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
+  / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
+  Table Draw (L64-05) reads public `drawGain` for Gambler else catalog Draw; Motion
+  pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
@@ -132,7 +134,11 @@ rules above are unchanged — this section only covers how the client looks.
   blocker. Closing / Got it writes the latest id. **New** heading lists
   `additions` (kit portrait or card art + body) for kits/cards that did not
   exist before; before → after `items` cover nerfs with named-card art and
-  render **above** the New block. Lot 63 items: Sentence, Imposition, Super
+  render **above** the New block. Kit-level items may use `kitId` (Gambler
+  portrait) instead of `cardId`. Latest catalog id is `lot-63`. Gambler and
+  Roulette never shipped on `main`, so later tweaks edit that original New
+  body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
+  of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
   Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
   on the caster (remaining turns in red). Play / later caster ticks / fire flash
   the table-wide red banner. The dialog lists history
@@ -432,7 +438,8 @@ rules above are unchanged — this section only covers how the client looks.
     card inspect use `CostDisplay`. Card inspect prefixes the play-cost row with
     **Cost** and inlines resource glyphs in effect / `upgradeAdds` copy
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
-    Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
+    red (L64-05); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
@@ -1254,4 +1261,18 @@ random**. Buyer log: **AliceFog bought Tax from the pool**. Opponent log:
 **AliceFog bought a card from the pool**. Live `ACTION_PLAYED` matches.
 `pnpm verify` **1552** tests. No protocol bump.
 
+### Lot 64 verified 2026-09-21 (browser, PROTOCOL 39)
+
+Vite `:5173`, Colyseus `:2567`. Solo Normal, nicks `L64Gate` / `L64Pulse2`.
+Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
+
+- Opening deal: 1 life, 0 points, empty hand, **3 specials including Roulette**
+  (two circulating, no second Roulette). Compact Draw no word label.
+- Draw payout rerolls each of your turns. `L64Gate` first Draw **+9 green**;
+  later **+21 red**. `L64Pulse2` **+44 red** then **+10**, then **+32 red**.
+  Red when payout `> 10`. Motion pulse is 0.45s at turn start (`MOTION_PULSE_S`);
+  reduced-motion / load timing can hide it on capture — source and tests pin it.
+- Bust log: **L64Gate draws and busts** then **L64Gate dies by Gambling**.
+  Hub What’s new latest id `lot-63` (Gambler/Roulette folded into the original
+  lot-63 New bodies; no `lot-64` release id).
 

@@ -38,6 +38,7 @@ import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
+import { actionLogRound } from './action-log-round';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
 import { tickPendingSentences } from './pending-sentences';
@@ -114,6 +115,8 @@ export interface ActionPlayedEvent {
   turnSequence: number;
   /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
   drawBust?: true;
+  /** Successful Draw payout actually granted — Lot 64. Omit on bust. */
+  drawGain?: number;
 }
 
 export interface ActionResolvedEvent {
@@ -257,8 +260,12 @@ function performPreparedTurnAction(
   if (action.type === 'draw') {
     const kit = getKit(actor.kitId);
     const bustDenominator = kit.traits.drawBustDenominator;
+    // Designer 2026-09-21: skip the 1-in-10 while the public action-log
+    // round is still 1. Engine-only — not written in player-facing copy.
     const busted =
-      bustDenominator !== undefined && rng.nextInt(bustDenominator) === 0;
+      actionLogRound(state) > 1 &&
+      bustDenominator !== undefined &&
+      rng.nextInt(bustDenominator) === 0;
 
     if (busted) {
       const livesBefore = actor.lives;
@@ -276,11 +283,13 @@ function performPreparedTurnAction(
         drawBust: true,
       };
     } else {
-      grantPoints(state, actor, kit.startingResources.draw, 'direct');
+      const gain = actor.drawGain ?? kit.startingResources.draw;
+      grantPoints(state, actor, gain, 'direct');
       actionPlayed = {
         actorPlayerId,
         action: 'draw',
         turnSequence: state.turnSequence,
+        ...(actor.drawGain !== undefined ? { drawGain: actor.drawGain } : {}),
       };
     }
   } else if (action.type === 'buyCard') {
@@ -1037,6 +1046,22 @@ export function expireReanimationKitPick(
   };
 }
 
+function withDrawBustReason(
+  eliminations: readonly EliminationEvent[],
+  actionPlayed: ActionPlayedEvent,
+  actorPlayerId: string,
+): EliminationEvent[] {
+  if (actionPlayed.drawBust !== true) {
+    return [...eliminations];
+  }
+
+  return eliminations.map((entry) =>
+    entry.playerId === actorPlayerId && entry.eliminatorPlayerId === null
+      ? { ...entry, reason: 'gambling' as const }
+      : entry,
+  );
+}
+
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
@@ -1056,7 +1081,12 @@ function finishTurnPhases(
     actorPlayerId,
     skipNewestSentence,
   );
-  const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
+  const { eliminations: rawEliminations, playerReanimated } = processEliminations(
+    state,
+    rng,
+    nowMs,
+  );
+  const eliminations = withDrawBustReason(rawEliminations, actionPlayed, actorPlayerId);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
   const curseTransfers = collectCurseTransfers(

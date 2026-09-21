@@ -274,6 +274,33 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice draws');
   });
 
+  it('logs a Draw-bust death as dies by Gambling (L64-04)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerEliminated',
+          playerId: 'a',
+          reason: 'gambling',
+          eliminatorPlayerId: null,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice dies by Gambling');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerEliminated',
+          playerId: 'a',
+          reason: 'combat',
+          eliminatorPlayerId: null,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice is eliminated in combat');
+  });
+
   it('formats player reanimation without the kit (L50-03)', () => {
     expect(
       formatActionLogEntry(

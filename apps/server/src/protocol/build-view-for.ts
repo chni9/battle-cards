@@ -12,30 +12,33 @@
  * - sub-choice slot/queue (unicast events, not StateView)
  * `GameState.poolBuyCost` is public (L58-02).
  * `GameState.pendingSentences` is public (PROTOCOL_VERSION 37).
+ * `Player.drawGain` is public on living Gamblers (PROTOCOL_VERSION 39).
  */
 
-import type {
-  ActionLogEntryView,
-  ActionPlayedPayload,
-  BotDifficulty,
-  CardInstance,
-  ClaimableSeatView,
-  EliminationRevealView,
-  ExportTurnRowView,
-  FinishedStateView,
-  GameExportLogView,
-  GameRecapView,
-  GameState,
-  LobbyKitSelection,
-  LobbySeatView,
-  LobbyStateView,
-  PendingEffectView,
-  PersistentEffectView,
-  PlayKind,
-  PlayingStateView,
-  PrivateSelfView,
-  PublicPlayerView,
-  SpiedPlayerView,
+import {
+  getKit,
+  type ActionLogEntryView,
+  type ActionPlayedPayload,
+  type BotDifficulty,
+  type CardInstance,
+  type ClaimableSeatView,
+  type EliminationRevealView,
+  type ExportTurnRowView,
+  type FinishedStateView,
+  type GameExportLogView,
+  type GameRecapView,
+  type GameState,
+  type LobbyKitSelection,
+  type LobbySeatView,
+  type LobbyStateView,
+  type PendingEffectView,
+  type PersistentEffectView,
+  type PlayKind,
+  type Player,
+  type PlayingStateView,
+  type PrivateSelfView,
+  type PublicPlayerView,
+  type SpiedPlayerView,
 } from '@card-battle/shared';
 
 import { aggregateActionsForPlayer } from '../db/aggregate-action-log';
@@ -78,6 +81,27 @@ function withSpectatorFields<T extends object>(
   }
 
   return { ...view, ...extra };
+}
+
+/**
+ * Living Gambler Draw payout is public (PROTOCOL_VERSION 39 / Lot 64).
+ * Built directly onto the recipient view — never filtered from a fuller object.
+ */
+function attachPublicDrawGain(view: PublicPlayerView, player: Player): void {
+  if (player.isEliminated) {
+    return;
+  }
+
+  const kit = getKit(player.kitId);
+  if (kit.traits.drawBustDenominator === undefined) {
+    return;
+  }
+
+  if (player.drawGain === undefined) {
+    return;
+  }
+
+  view.drawGain = player.drawGain;
 }
 
 function mapPersistentEffects(
@@ -402,6 +426,8 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       view.spyingOnYou = true;
     }
 
+    attachPublicDrawGain(view, player);
+
     return view;
   });
 
@@ -616,6 +642,8 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
         if (eliminationReveal !== undefined) {
           view.eliminationReveal = eliminationReveal;
         }
+
+        attachPublicDrawGain(view, player);
 
         return view;
       }),

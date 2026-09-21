@@ -211,7 +211,9 @@ function scoreSuperAbsorber(
     bestLivesLost = Math.max(bestLivesLost, ctx.lastCompleteTurnLoss.get(player.id) ?? 0);
   }
 
-  const kitDraw = getKit(view.self.kitId).startingResources.draw;
+  const kitDraw =
+    view.players.find((player) => player.isYou)?.drawGain ??
+    getKit(view.self.kitId).startingResources.draw;
 
   if (isUpgraded && bestUpgradeSpend > 0) {
     return {

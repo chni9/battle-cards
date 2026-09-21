@@ -114,6 +114,11 @@ export interface ActionPlayedOptionalPublicFields {
   attacks?: readonly PublicAttackPlay[];
   /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
   drawBust?: true;
+  /**
+   * Successful Draw payout actually granted (Lot 64 / PROTOCOL_VERSION 39).
+   * Omit on bust and on kits that still use catalog Draw.
+   */
+  drawGain?: number;
 }
 
 export interface ActionPlayedPayload extends ActionPlayedOptionalPublicFields {
@@ -134,6 +139,7 @@ export function actionPlayedPublicFields(source: ActionPlayedOptionalPublicField
   targetPlayerId?: string;
   attacks?: readonly PublicAttackPlay[];
   drawBust?: true;
+  drawGain?: number;
 } {
   return {
     ...(source.cardId !== undefined ? { cardId: source.cardId } : {}),
@@ -143,6 +149,7 @@ export function actionPlayedPublicFields(source: ActionPlayedOptionalPublicField
       : {}),
     ...(source.attacks !== undefined ? { attacks: source.attacks } : {}),
     ...(source.drawBust === true ? { drawBust: true as const } : {}),
+    ...(source.drawGain !== undefined ? { drawGain: source.drawGain } : {}),
   };
 }
 
@@ -180,7 +187,12 @@ export interface ActionResolvedPayload {
   outcome: ActionResolutionOutcome;
 }
 
-export type EliminationReason = 'combat' | 'absence' | 'inactivity' | 'leave';
+export type EliminationReason =
+  | 'combat'
+  | 'absence'
+  | 'inactivity'
+  | 'leave'
+  | 'gambling';
 
 export interface PlayerEliminatedPayload {
   playerId: string;

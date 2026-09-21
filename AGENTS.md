@@ -14,7 +14,7 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lots 57–63 are **done**. Classic now has **16 kits**.
+`docs/backlog_v6.md`); Lots 57–64 are **done**. Classic now has **16 kits**.
 V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
@@ -123,8 +123,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
  adds Gambler + Roulette (`PROTOCOL_VERSION` 36) and Sentence / Imposition /
  Super Absorber nerfs (`PROTOCOL_VERSION` 37). Designer 2026-09-21 renamed
- Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). Walk-in
- claim-picker fog stays.
+ Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). **Lot 64**
+ (designer 2026-09-21) tweaks Gambler start specials, weighted Draw, and
+ gambling death log (`PROTOCOL_VERSION` 39). Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

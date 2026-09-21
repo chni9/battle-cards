@@ -1,6 +1,10 @@
 /**
  * Player-facing hub What’s new catalog (L63-07).
  * Newest first. Update the latest entry in the same commit as player-visible work.
+ *
+ * Standing rule (designer 2026-09-21): if a kit or card has never shipped on
+ * `main`, later tweaks edit that original What’s new entry. They do not add a
+ * new log id.
  */
 
 import type { CardId } from './domain/card';
@@ -13,6 +17,7 @@ export type ReleaseNoteAddition =
 
 export interface ReleaseNoteItem {
   readonly cardId?: CardId;
+  readonly kitId?: KitId;
   readonly before: string;
   readonly after: string;
 }
@@ -26,7 +31,7 @@ export interface ReleaseNote {
   readonly items: readonly ReleaseNoteItem[];
 }
 
-export const RELEASE_NOTES = [
+const RELEASE_NOTES_CATALOG = [
   {
     id: 'lot-63',
     date: '2026-09-20',
@@ -58,20 +63,22 @@ export const RELEASE_NOTES = [
       {
         kind: 'kit' as const,
         kitId: 'gambler' as const,
-        body: 'New kit. Starts at 1 life, 0 points, 0 upgrade points, Draw 10, no attack or action cards, 5 random circulating specials plus Roulette. Each Draw has a 1-in-10 chance to instantly eliminate you with no points.',
+        body: 'New kit. Starts at 1 life, 0 points, 0 upgrade points, listed Draw 10, no attack or action cards, 2 distinct random specials (never Roulette) plus Roulette — 3 specials total. Each of this player’s turns, Draw payout rerolls to 5–100 (weighted; each extra point is rarer). Each Draw has a 1-in-10 chance to instantly eliminate you with no points; a bust logs as {nickname} dies by Gambling.',
       },
       {
         kind: 'card' as const,
         cardId: 'roulette' as const,
-        body: 'New special. Costs 10 points. Persistent: each of your turns, including the turn you play it, you gain one random card — 80% attack or action, 20% circulating special other than Roulette. 2 card lives. Upgrade: 70/30 split and a 30% chance the granted copy is already upgraded.',
+        body: 'New special. Costs 10 points. Persistent: each of your turns, including the turn you play it, you gain one random card. Unupgraded grants only a normal attack or action card, never a special; 10% chance that copy is already upgraded. Upgraded: 80% normal / 20% circulating special other than Roulette, and 10% chance the granted copy is upgraded. 2 card lives.',
       },
     ],
   },
-] satisfies readonly ReleaseNote[];
+] as const satisfies readonly ReleaseNote[];
 
-export type ReleaseNoteId = (typeof RELEASE_NOTES)[number]['id'];
+export const RELEASE_NOTES: readonly ReleaseNote[] = RELEASE_NOTES_CATALOG;
 
-export function latestReleaseNote(): (typeof RELEASE_NOTES)[number] {
+export type ReleaseNoteId = (typeof RELEASE_NOTES_CATALOG)[number]['id'];
+
+export function latestReleaseNote(): ReleaseNote {
   const latest = RELEASE_NOTES[0];
   if (latest === undefined) {
     throw new Error('RELEASE_NOTES is empty');

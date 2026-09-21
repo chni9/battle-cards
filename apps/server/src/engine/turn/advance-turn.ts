@@ -18,6 +18,7 @@ import type { GameState, Player } from '@card-battle/shared';
 
 import { tickAbsorbWindowsOnBeginTurn } from './absorb-window';
 import { endBlockChain } from './grant-block-turns';
+import { rollDrawGain } from './sample-draw-gain';
 
 export function advanceTurn(state: GameState): void {
   const alive = state.players.filter((player) => !player.isEliminated);
@@ -71,6 +72,7 @@ export function beginTurnFor(state: GameState, player: Player): void {
   player.duplicationActive = false;
   resetLedger(player);
   tickAbsorbWindowsOnBeginTurn(state, player.id);
+  rollDrawGain(state, player);
 }
 
 function resetLedger(player: Player): void {

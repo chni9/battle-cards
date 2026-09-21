@@ -289,7 +289,10 @@ export function formatActionLogEntrySegments(
     }
     case 'playerEliminated': {
       const victim = player(entry.playerId, nicknameOf);
-      const reasonLabel: Record<typeof entry.reason, string> = {
+      if (entry.reason === 'gambling') {
+        return [victim, text(' dies by Gambling')];
+      }
+      const reasonLabel: Record<Exclude<typeof entry.reason, 'gambling'>, string> = {
         combat: 'in combat',
         absence: 'by absence',
         inactivity: 'by inactivity',

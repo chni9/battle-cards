@@ -37,12 +37,15 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source).toContain('item.before');
     expect(source).toContain('item.after');
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
-    expect(latestReleaseNote().items.map((item) => item.cardId)).toEqual([
+    expect(source).toContain('item.kitId');
+    expect(latestReleaseNote().additions).toHaveLength(2);
+    const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
+    expect(lot63?.items.map((item) => item.cardId)).toEqual([
       'sentence',
       'imposition',
       'super-absorber',
     ]);
-    expect(latestReleaseNote().additions).toHaveLength(2);
+    expect(lot63?.additions).toHaveLength(2);
   });
 
   it('wires a green New control, red unread badge, and auto-open when unseen', () => {

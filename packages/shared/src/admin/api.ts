@@ -23,7 +23,13 @@ export type AdminDurationBucketId = (typeof ADMIN_DURATION_BUCKET_IDS)[number];
 export const ADMIN_WINNER_LIVES_BUCKET_IDS = ['1to5', '6to10', '11to15', '16plus'] as const;
 export type AdminWinnerLivesBucketId = (typeof ADMIN_WINNER_LIVES_BUCKET_IDS)[number];
 
-export const ADMIN_ELIM_REASON_IDS = ['combat', 'absence', 'inactivity', 'leave'] as const;
+export const ADMIN_ELIM_REASON_IDS = [
+  'combat',
+  'absence',
+  'inactivity',
+  'leave',
+  'gambling',
+] as const;
 export type AdminElimReasonId = (typeof ADMIN_ELIM_REASON_IDS)[number];
 
 export const ADMIN_DURATION_BUCKET_MS = {
