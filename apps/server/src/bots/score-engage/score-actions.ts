@@ -48,7 +48,7 @@ function isWinSpecialId(cardId: string): boolean {
 const HOSTILE_COUNTER_IDS = new Set(['imposition', 'poison']);
 
 /** Economy persistents that do not hit other seats — same skip-unless-threat as PG. */
-const SELFISH_COUNTER_IDS = new Set(['points-generator', 'super-absorber', 'factory']);
+const SELFISH_COUNTER_IDS = new Set(['points-generator', 'super-absorber', 'roulette']);
 
 /** Mirror survive bump vs uncancellable incoming — stays below equal-cancel (+40 + dmg). */
 const MIRROR_UNCANCELLABLE_BONUS = 55;

@@ -41,7 +41,7 @@ L54-01 (Spy catalog price) and **L58-08** (new legal actions `buyPoolCard` /
 set; log it in `decisions.md` and keep `weightsHash` unless a new weight constant
 is unavoidable. Mirror / burn behaviour for room Normal/Hard is the L54-03
 `score-engage` overlay, not a freeze edit. Super Absorber skip-unless-threat
-is L54-04 (`farm-to-engage-v4`), same path as Points Generator. Factory
+is L54-04 (`farm-to-engage-v4`), same path as Points Generator. Roulette
 joins that skip set (Lot 63 follow-up).
 `scoreAction` must give `buyPoolCard` / `clearSpy` their own Invest-band scores
 so they never fall through to `sellUpgradePoint`. Belief reconstruction spends
@@ -125,7 +125,7 @@ rows (L58-07).
   `KIT_IDS` is Bayes-updated from the public log.
 - Tells: special `playCard` / `playMultipleAttacks` (catalog owner likelihood 1;
   random-deal kits `1-(1-1/n)^draws` on that kit's random pool — Prophet n =
-  circulating, Gambler n = circulating minus Factory; impossible → 0);
+  circulating, Gambler n = circulating minus Roulette; impossible → 0);
   `drawBust: true` zeros every kit without `drawBustDenominator`;
   `outcome: 'immune'` only when some kit
   lists that `cardId` in `immuneTo` (thief/spy → Untouchable). Immune on other
@@ -138,7 +138,7 @@ rows (L58-07).
   `kitsOwningSpecial`, `isUniquenessGuaranteedKit`). Kits with
   `randomStartingSpecialCount` (Prophet, Gambler) are never uniqueness-
   guaranteed from specials alone. `imposition` is shared (Untouchable + Duplicator).
-  Factory in `specialCards` still identifies Gambler with Prophet residual.
+  Roulette in `specialCards` still identifies Gambler with Prophet residual.
 - **If we add new kits with shared or random specials, update `kit-uniqueness.ts`
   and this section.**
 
@@ -315,8 +315,8 @@ determinizer is how V5 fails quietly.
   unless it funds a threat. Easy stays v4.
 - **L54-04:** overlay `farm-to-engage-v4` — Super Absorber uses the same skip
   as Points Generator (selfish special, not a direct threat). Imposition /
-  Poison still burn. Easy stays v4. Factory joins that skip set (Lot 63
-  follow-up): do not burn a Factory owner unless 1v1 / attacker / finishable /
+  Poison still burn. Easy stays v4. Roulette joins that skip set (Lot 63
+  follow-up): do not burn a Roulette owner unless 1v1 / attacker / finishable /
   known points ≥ 10.
 - L35-03 “let them fight” stays on `search-v5`. Engage piles on a **finishable**
   weaker seat or the seat attacking you — not a healthy bystander.

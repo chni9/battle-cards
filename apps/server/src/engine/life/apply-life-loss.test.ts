@@ -37,8 +37,8 @@ describe('applyLifeLoss — internal counters are never touched (rules spec §5)
     expect(target.activePersistentEffects).toEqual([effect]);
   });
 
-  it('leaves a Factory counter untouched (L63-02)', () => {
-    const effect = makeCounterEffect({ id: 'fac-1', cardId: 'factory', counter: 2 });
+  it('leaves a Roulette counter untouched (L63-02)', () => {
+    const effect = makeCounterEffect({ id: 'fac-1', cardId: 'roulette', counter: 2 });
     const target = makePlayer({ lives: 10, activePersistentEffects: [effect] });
 
     applyLifeLoss(target, 1, 'tax');

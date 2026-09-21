@@ -1,5 +1,5 @@
 /**
- * Protocol version pin — PROTOCOL_VERSION 37.
+ * Protocol version pin — PROTOCOL_VERSION 38.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -10,8 +10,8 @@ import type { ActionPlayedPayload } from './protocol/messages';
 import type { ActionPlayedLogEntry, PlayingStateView } from './protocol/state-view';
 
 describe('PROTOCOL_VERSION', () => {
-  it('is 37 after public pendingSentences', () => {
-    expect(PROTOCOL_VERSION).toBe(37);
+  it('is 38 after Factory renamed to Roulette', () => {
+    expect(PROTOCOL_VERSION).toBe(38);
     expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 

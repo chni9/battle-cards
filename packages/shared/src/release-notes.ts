@@ -30,7 +30,7 @@ export const RELEASE_NOTES = [
   {
     id: 'lot-63',
     date: '2026-09-20',
-    title: 'Sentence, Imposition, Super Absorber, Gambler, and Factory',
+    title: 'Sentence, Imposition, Super Absorber, Gambler, and Roulette',
     items: [
       {
         cardId: 'sentence' as const,
@@ -58,12 +58,12 @@ export const RELEASE_NOTES = [
       {
         kind: 'kit' as const,
         kitId: 'gambler' as const,
-        body: 'New kit. Starts at 1 life, 0 points, 0 upgrade points, Draw 10, no attack or action cards, 5 random circulating specials plus Factory. Each Draw has a 1-in-10 chance to instantly eliminate you with no points.',
+        body: 'New kit. Starts at 1 life, 0 points, 0 upgrade points, Draw 10, no attack or action cards, 5 random circulating specials plus Roulette. Each Draw has a 1-in-10 chance to instantly eliminate you with no points.',
       },
       {
         kind: 'card' as const,
-        cardId: 'factory' as const,
-        body: 'New special. Costs 10 points. Persistent: each of your turns, including the turn you play it, you gain one random card — 80% attack or action, 20% circulating special other than Factory. 2 card lives. Upgrade: 70/30 split and a 30% chance the granted copy is already upgraded.',
+        cardId: 'roulette' as const,
+        body: 'New special. Costs 10 points. Persistent: each of your turns, including the turn you play it, you gain one random card — 80% attack or action, 20% circulating special other than Roulette. 2 card lives. Upgrade: 70/30 split and a 30% chance the granted copy is already upgraded.',
       },
     ],
   },

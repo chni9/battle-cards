@@ -1,14 +1,14 @@
 /**
- * Factory — rules spec §5, designer 2026-09-20 / Lot 63.
+ * Roulette — rules spec §5, designer 2026-09-20 / Lot 63.
  * Activates persistent counter 2 (tick in applyPersistentEffects).
  */
 
 import { activatePersistentEffect } from '../../engine/specials/activate-persistent';
 import type { CardHandler } from '../handler';
 
-const FACTORY_COUNTER = 2;
+const ROULETTE_COUNTER = 2;
 
-export const factoryHandler: CardHandler = {
+export const rouletteHandler: CardHandler = {
   canPlay(context): boolean {
     return context.targetPlayerId === null;
   },
@@ -17,9 +17,9 @@ export const factoryHandler: CardHandler = {
     activatePersistentEffect({
       state: context.state,
       ownerPlayerId: context.sourcePlayerId,
-      cardId: 'factory',
+      cardId: 'roulette',
       isUpgraded: context.card.isUpgraded,
-      counter: FACTORY_COUNTER,
+      counter: ROULETTE_COUNTER,
     });
   },
 };

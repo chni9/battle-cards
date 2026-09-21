@@ -6,14 +6,14 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **37** (public `pendingSentences` and
-> Sentence countdown / fire log kinds; L63-06 per-recipient `buyPoolCard`
-> identity fog with no bump; L63-03 public `drawBust` on
-> `actionPlayed` at 36; L60-02 recap match totals / optional `kitId` / think time at 35;
-> L58-02 pool buy / Unspy / `poolBuyCost` / `spyingOnYou` at 34; L57-16
-> `staySpectating` + claim-picker fog at 33; L57-07 lobby Ready / Kick / Play
-> again / `claimSeat` at 32; Mirror redirect fields at 31; V6 teaching fields
-> at 29; lobby kit pick at 30).
+> **Status:** current `PROTOCOL_VERSION` is **38** (`factory` renamed `roulette`;
+> public `pendingSentences` and Sentence countdown / fire log kinds at 37;
+> L63-06 per-recipient `buyPoolCard` identity fog with no bump; L63-03 public
+> `drawBust` on `actionPlayed` at 36; L60-02 recap match totals / optional
+> `kitId` / think time at 35; L58-02 pool buy / Unspy / `poolBuyCost` /
+> `spyingOnYou` at 34; L57-16 `staySpectating` + claim-picker fog at 33;
+> L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
+> fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
 > Lobby + playing + finished per-recipient views live in
 > `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts` and
 > `apps/client/src/net/`. Spy visibility matrix lives in

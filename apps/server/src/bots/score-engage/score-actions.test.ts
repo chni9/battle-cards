@@ -788,7 +788,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
     });
   });
 
-  it('does not burn a Factory user when Tax is legal', () => {
+  it('does not burn a Roulette user when Tax is legal', () => {
     const view = baseView({
       turnOrder: ['bot-a', 'bot-b', 'bot-c'],
       self: baseSelf({
@@ -805,7 +805,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
           activePersistentEffects: [
             {
               id: 'fac-1',
-              cardId: 'factory',
+              cardId: 'roulette',
               isUpgraded: false,
               counter: 2,
               targetPlayerId: null,
@@ -820,7 +820,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
       { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
       { type: 'playCard', instanceId: 'tax-1' },
     ];
-    expect(decideEngage(view, actions, createRng('l63-factory-skip')).action).not.toEqual({
+    expect(decideEngage(view, actions, createRng('l63-roulette-skip')).action).not.toEqual({
       type: 'playCard',
       instanceId: 'atk-1',
       targetPlayerId: 'bot-b',

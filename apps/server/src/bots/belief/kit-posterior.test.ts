@@ -159,7 +159,7 @@ describe('kit uniqueness table (L34-02)', () => {
     expect(UNIQUENESS_GUARANTEED_KIT_IDS).not.toContain('prophet');
     expect(UNIQUENESS_GUARANTEED_KIT_IDS).not.toContain('gambler');
     expect(UNIQUENESS_GUARANTEED_KIT_IDS).toHaveLength(14);
-    expect(kitsOwningSpecial('factory')).toEqual(['gambler']);
+    expect(kitsOwningSpecial('roulette')).toEqual(['gambler']);
   });
 });
 
@@ -263,8 +263,8 @@ describe('kitPosteriorForOpponent (L34-02)', () => {
     expect(support(post)).toHaveLength(16);
   });
 
-  it('keeps Prophet residual after a Factory play (L63-04)', () => {
-    const post = posterior([play('playCard', { cardId: 'factory' })]);
+  it('keeps Prophet residual after a Roulette play (L63-04)', () => {
+    const post = posterior([play('playCard', { cardId: 'roulette' })]);
     expect(sum(post)).toBeCloseTo(1, 10);
     expect(post.gambler).toBeGreaterThan(0.8);
     expect(post.prophet).toBeGreaterThan(0);

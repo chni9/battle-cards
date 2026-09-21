@@ -27,5 +27,5 @@ export const KIT_ABILITY_COPY: Partial<Record<KitId, string>> = {
   prophet:
     'Starts with 2 special cards drawn at random from the circulating special pool (Invisibility excluded; duplicates allowed).',
   gambler:
-    'Draw 10 points. Each Draw has a 1-in-10 chance to instantly eliminate you at any life total; a bust grants no points. Starts with 5 random specials (never Factory) plus Factory.',
+    'Draw 10 points. Each Draw has a 1-in-10 chance to instantly eliminate you at any life total; a bust grants no points. Starts with 5 random specials (never Roulette) plus Roulette.',
 };

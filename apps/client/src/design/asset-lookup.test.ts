@@ -59,20 +59,41 @@ describe('asset-lookup (L30-01)', () => {
     }
   });
 
-  it('maps Factory placeholder art including activated (L63-03)', () => {
-    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false }))).toMatch(
-      /Factory\.png/,
+  it('maps Roulette cream/pink faces and activated Test art', () => {
+    expect(decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: false }))).toMatch(
+      /Roulette\.png/,
     );
-    expect(decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true }))).toMatch(
-      /Factory \+\.png/,
+    expect(decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: true }))).toMatch(
+      /Roulette \+\.png/,
     );
     expect(
-      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: false, activated: true })),
-    ).toMatch(/Factory \(activated\)\.png/);
+      decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: false, activated: true })),
+    ).toMatch(/Roulette \(activated\)\.png/);
     expect(
-      decodeURIComponent(getCardArtUrl('factory', { isUpgraded: true, activated: true })),
-    ).toMatch(/Factory \+ \(activated\)\.png/);
-    expect(CARDS_WITH_ACTIVATED_ART).toContain('factory');
+      decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: true, activated: true })),
+    ).toMatch(/Roulette \+ \(activated\)\.png/);
+    expect(CARDS_WITH_ACTIVATED_ART).toContain('roulette');
+  });
+
+  it('maps cream unupgraded and pink upgraded faces for the 2026-09-21 art drop', () => {
+    expect(decodeURIComponent(getCardArtUrl('invisibility', { isUpgraded: false }))).toMatch(
+      /Invisibility\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('invisibility', { isUpgraded: true }))).toMatch(
+      /Invisibility \+\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('points-generator', { isUpgraded: false }))).toMatch(
+      /Generator\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('points-generator', { isUpgraded: true }))).toMatch(
+      /Generator \+\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('sentence', { isUpgraded: false }))).toMatch(
+      /Sentence\.png/,
+    );
+    expect(decodeURIComponent(getCardArtUrl('upgrade-point-thief', { isUpgraded: true }))).toMatch(
+      /Upgrade Point Thief \+\.png/,
+    );
   });
 
   it('resolves MEGA ATTACK, Super Mirror and Card Absorber art', () => {

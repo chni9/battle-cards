@@ -3,10 +3,10 @@
  * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
  *
  * Tick order (implementation detail, decisions.md 2026-08-05 / Lot 63): Points
- * Generator → Factory → Invisibility → Super Absorber → Imposition → Poison →
+ * Generator → Roulette → Invisibility → Super Absorber → Imposition → Poison →
  * Curse. Super Absorber runs before life-ticking persistents so it does not
  * re-absorb lives lost later in the same phase. Lives always; spend only if
- * upgraded; never a multiplier. Factory grants a seeded random card (golden
+ * upgraded; never a multiplier. Roulette grants a seeded random card (golden
  * rule 5). Imposition skips short victims (no lives). Curse still ticks on
  * `pointsSpent` (#V4-20) and siphons those lost lives — and any other actual
  * life loss — to the original caster (L50-09; L50-02 siphon stays).
@@ -43,16 +43,16 @@ const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
 const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
-/** Base Factory: `nextInt(10) < 8` → 80% shared card. */
-const FACTORY_NORMAL_ROLL_BASE = 8;
-/** Upgraded Factory: `nextInt(10) < 7` → 70% shared card. */
-const FACTORY_NORMAL_ROLL_UPGRADED = 7;
-/** Upgraded Factory: independent `nextInt(10) < 3` → granted copy is upgraded. */
-const FACTORY_GRANT_UPGRADE_ROLL = 3;
+/** Base Roulette: `nextInt(10) < 8` → 80% shared card. */
+const ROULETTE_NORMAL_ROLL_BASE = 8;
+/** Upgraded Roulette: `nextInt(10) < 7` → 70% shared card. */
+const ROULETTE_NORMAL_ROLL_UPGRADED = 7;
+/** Upgraded Roulette: independent `nextInt(10) < 3` → granted copy is upgraded. */
+const ROULETTE_GRANT_UPGRADE_ROLL = 3;
 
-const FACTORY_GRANT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
-  (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'factory'> =>
-    id !== 'factory',
+const ROULETTE_GRANT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'roulette'> =>
+    id !== 'roulette',
 );
 
 export function applyPersistentEffects(
@@ -67,7 +67,7 @@ export function applyPersistentEffects(
   }
 
   applyPointsGeneratorTicks(state, player);
-  applyFactoryTicks(state, player, rng);
+  applyRouletteTicks(state, player, rng);
   // Snapshot before last-turn auto-loss: this owner turn still counts as
   // invisible for victim ticks (#V4-9a / L58-06). Manual deactivate already
   // dropped the effect before this function runs, so those turns resume.
@@ -99,9 +99,9 @@ function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
   }
 }
 
-function applyFactoryTicks(state: GameState, owner: Player, rng: Rng | undefined): void {
+function applyRouletteTicks(state: GameState, owner: Player, rng: Rng | undefined): void {
   const effects = owner.activePersistentEffects.filter(
-    (effect) => effect.cardId === 'factory' && effect.counter !== null && effect.counter > 0,
+    (effect) => effect.cardId === 'roulette' && effect.counter !== null && effect.counter > 0,
   );
 
   if (effects.length === 0) {
@@ -109,33 +109,33 @@ function applyFactoryTicks(state: GameState, owner: Player, rng: Rng | undefined
   }
 
   if (rng === undefined) {
-    throw new Error('applyPersistentEffects: Factory tick requires injected rng');
+    throw new Error('applyPersistentEffects: Roulette tick requires injected rng');
   }
 
   for (const effect of effects) {
-    grantFactoryCard(state, owner, effect, rng);
+    grantRouletteCard(state, owner, effect, rng);
   }
 }
 
-function grantFactoryCard(
+function grantRouletteCard(
   state: GameState,
   owner: Player,
   effect: PersistentEffect,
   rng: Rng,
 ): void {
   const normalThreshold = effect.isUpgraded
-    ? FACTORY_NORMAL_ROLL_UPGRADED
-    : FACTORY_NORMAL_ROLL_BASE;
+    ? ROULETTE_NORMAL_ROLL_UPGRADED
+    : ROULETTE_NORMAL_ROLL_BASE;
   const grantNormal = rng.nextInt(10) < normalThreshold;
   const cardId = grantNormal
     ? rng.pick(SHARED_CARD_IDS)
-    : rng.pick(FACTORY_GRANT_SPECIAL_IDS);
-  const instanceId = `${owner.id}:factory:${effect.id}:${String(state.turnSequence)}`;
+    : rng.pick(ROULETTE_GRANT_SPECIAL_IDS);
+  const instanceId = `${owner.id}:roulette:${effect.id}:${String(state.turnSequence)}`;
   const instance = grantNormal
     ? acquireCardToHand(owner, cardId, instanceId)
     : acquireSpecialCard(owner, cardId, instanceId);
 
-  if (effect.isUpgraded && rng.nextInt(10) < FACTORY_GRANT_UPGRADE_ROLL) {
+  if (effect.isUpgraded && rng.nextInt(10) < ROULETTE_GRANT_UPGRADE_ROLL) {
     instance.isUpgraded = true;
   }
 }

@@ -118,7 +118,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Wizard | 10 | 4 | 0 | 2 | 4 | 2 | Thief already upgraded | MEGA ATTACK |
 | Juggernaut | 14 | 4 | 1 | 1 | 4 | 2 | Shield already upgraded | Super Mirror |
 | Duplicator (in testing) | 2 | 0 | 0 | 1 | 1 | 0 | Activatable duplication — see detail below | Imposition, Attack Thief |
-| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Factory) plus Factory |
+| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 5 random specials (never Roulette) plus Roulette |
 
 ### Duplicator — Ability Detail
 
@@ -131,10 +131,10 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Gambler — Ability Detail
 
-- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **5** random special cards drawn from the circulating pool excluding Factory (duplicates allowed), and **Factory**.
+- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **5** random special cards drawn from the circulating pool excluding Roulette (duplicates allowed), and **Roulette**.
 - The Draw action grants **10** points.
 - Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The roll uses the injected seeded generator. Invisibility's passive point ticks do not roll.
-- Factory is otherwise a normal circulating special (shop, Prophet, Card Transformer).
+- Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
 
 ## 5. Special Cards
 
@@ -143,7 +143,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
-- Five cards (Points Generator, Poison, Super Absorber, Imposition, Factory) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Factory 2.
+- Five cards (Points Generator, Poison, Super Absorber, Imposition, Roulette) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Roulette 2.
 
 ### Card List
 
@@ -230,9 +230,9 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.
 - Upgrade: steals all attack cards from all opponents.
 
-**Factory** — Price: 10 points
-- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random card: 80% a shared attack or action card (uniform among the 10 shop types), 20% a circulating special other than Factory. 2 card lives.
-- Upgrade: still one card per turn; 70% attack or action / 30% special (never Factory); independent 30% chance the granted copy is already upgraded.
+**Roulette** — Price: 10 points
+- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random card: 80% a shared attack or action card (uniform among the 10 shop types), 20% a circulating special other than Roulette. 2 card lives.
+- Upgrade: still one card per turn; 70% attack or action / 30% special (never Roulette); independent 30% chance the granted copy is already upgraded.
 
 ## 6. Game Flow and Resolution
 

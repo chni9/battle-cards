@@ -18,7 +18,7 @@ describe('Gambler kit (L63-01)', () => {
     { id: 'b', nickname: 'Bob' },
   ] as const;
 
-  it('matches catalog resources, zero hand cards, Factory plus five randoms', () => {
+  it('matches catalog resources, zero hand cards, Roulette plus five randoms', () => {
     const kit = getKit('gambler');
     expect(kit.startingResources).toEqual({
       lives: 1,
@@ -27,10 +27,10 @@ describe('Gambler kit (L63-01)', () => {
       draw: 10,
     });
     expect(kit.startingCardCounts).toEqual({ action: 0, attack: 0 });
-    expect(kit.specialCards).toEqual(['factory']);
+    expect(kit.specialCards).toEqual(['roulette']);
     expect(kit.randomStartingSpecialCount).toBe(5);
     expect(kit.traits.drawBustDenominator).toBe(10);
-    expect(randomStartingSpecialPool(kit)).not.toContain('factory');
+    expect(randomStartingSpecialPool(kit)).not.toContain('roulette');
 
     const state = createInitialState({
       seats,
@@ -49,11 +49,11 @@ describe('Gambler kit (L63-01)', () => {
     expect(player.hand).toEqual([]);
     expect(player.specialCards).toHaveLength(6);
     const randomIds = player.specialCards.slice(0, 5).map((card) => card.cardId);
-    expect(randomIds).not.toContain('factory');
-    expect(player.specialCards[5]?.cardId).toBe('factory');
+    expect(randomIds).not.toContain('roulette');
+    expect(player.specialCards[5]?.cardId).toBe('roulette');
   });
 
-  it('reproduces the same five randoms for the same seed and never rolls Factory there', () => {
+  it('reproduces the same five randoms for the same seed and never rolls Roulette there', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-rng-pool',
@@ -67,8 +67,8 @@ describe('Gambler kit (L63-01)', () => {
 
     const dealtIds = player.specialCards.map((card) => card.cardId);
     expect(dealtIds).toHaveLength(6);
-    expect(dealtIds.slice(0, 5)).not.toContain('factory');
-    expect(dealtIds[5]).toBe('factory');
+    expect(dealtIds.slice(0, 5)).not.toContain('roulette');
+    expect(dealtIds[5]).toBe('roulette');
 
     const again = createInitialState({
       seats,
@@ -83,9 +83,9 @@ describe('Gambler kit (L63-01)', () => {
     dealStartingLoadout(player, 'gambler', createRng('gambler-forced'), 'forced');
     expect(player.specialCards).toHaveLength(6);
     expect(player.specialCards.slice(0, 5).map((card) => card.cardId)).not.toContain(
-      'factory',
+      'roulette',
     );
-    expect(player.specialCards[5]?.cardId).toBe('factory');
+    expect(player.specialCards[5]?.cardId).toBe('roulette');
   });
 });
 

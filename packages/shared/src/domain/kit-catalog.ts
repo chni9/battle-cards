@@ -203,7 +203,7 @@ export const KIT_CATALOG = {
     name: 'Gambler',
     startingResources: { lives: 1, points: 0, upgradePoints: 0, draw: 10 },
     startingCardCounts: { action: 0, attack: 0 },
-    specialCards: ['factory'],
+    specialCards: ['roulette'],
     randomStartingSpecialCount: 5,
     traits: {
       ...EMPTY_TRAITS,
@@ -214,7 +214,7 @@ export const KIT_CATALOG = {
 
 /**
  * Seeded random-start pool: circulating specials minus this kit's guaranteed
- * `specialCards` (Gambler never rolls a second Factory in the random five).
+ * `specialCards` (Gambler never rolls a second Roulette in the random five).
  * Prophet's empty list uses the full circulating pool.
  */
 export function randomStartingSpecialPool(kit: Kit): readonly SpecialCardId[] {

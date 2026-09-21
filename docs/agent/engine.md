@@ -41,7 +41,7 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 |---|---|---|
 | Used by | Attack cards only | Tax, Suicide, Poison, Curse, every remaining non-attack loss. Imposition no longer calls it (designer 2026-09-20). |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
-| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`, `factory`) | Never touches them |
+| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`, `roulette`) | Never touches them |
 
 ```ts
 // apps/server/src/engine/life/{apply-damage,apply-life-loss,gain-lives}.ts
@@ -118,7 +118,7 @@ function createSeed(): string;         // one per game, stored in GameState.seed
 
 Every draw goes through an **injected** instance: card distribution (L4-02), Sentence (L5-07),
 the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09),
-Draw bust (Lot 63), Factory grants (Lot 63). A module
+Draw bust (Lot 63), Roulette grants (Lot 63). A module
 that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
 downstream of it.
 
@@ -207,7 +207,7 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
   Tick order (implementation detail, `decisions.md` 2026-08-05 / Lot 63): Points Generator →
-  Factory → Invisibility → (if the player entered this phase invisible) skip Super Absorber /
+  Roulette → Invisibility → (if the player entered this phase invisible) skip Super Absorber /
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
   (#V4-9a / L58-06). Super Absorber

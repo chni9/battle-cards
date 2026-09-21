@@ -21,6 +21,7 @@ import {
 } from './card';
 import { KIT_IDS } from './kit';
 import { KIT_CATALOG } from './kit-catalog';
+import { getSpecialCard } from './special-card-catalog';
 
 const ALL_CARD_IDS: readonly CardId[] = [
   ...ATTACK_CARD_IDS,
@@ -57,8 +58,17 @@ describe('content scope — cards (technical spec v4 §8 / §10.5)', () => {
 
   it('treats spec §5 counters as card lives (L58-06 / L63-01)', () => {
     expect([...CARD_LIVES_SPECIAL_IDS].sort()).toEqual(
-      ['factory', 'imposition', 'points-generator', 'poison', 'super-absorber'].sort(),
+      ['imposition', 'points-generator', 'poison', 'roulette', 'super-absorber'].sort(),
     );
+  });
+
+  it('uses roulette as the card id, not factory', () => {
+    expect(SPECIAL_CARD_IDS).toContain('roulette');
+    expect((SPECIAL_CARD_IDS as readonly string[]).includes('factory')).toBe(false);
+    expect(CIRCULATING_SPECIAL_CARD_IDS).toContain('roulette');
+    expect((CIRCULATING_SPECIAL_CARD_IDS as readonly string[]).includes('factory')).toBe(false);
+    expect(getSpecialCard('roulette')?.name).toBe('Roulette');
+    expect(getSpecialCard('factory')).toBeUndefined();
   });
 
   it('marks Mirror and attacks as acting on opponents, not Tax (L58-06)', () => {
