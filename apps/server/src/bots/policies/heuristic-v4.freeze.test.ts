@@ -7,7 +7,7 @@
  * refreshed for affordability only (`weightsHash` unchanged).
  * L58-08: pool buy / Unspy add legal actions; traces refreshed, `weightsHash`
  * unchanged (no new weight constants).
- * L63-02: Factory becomes playable; Gambler Draw can bust — traces refreshed,
+ * L63-02: Roulette becomes playable; Gambler Draw can bust — traces refreshed,
  * `weightsHash` unchanged.
  */
 

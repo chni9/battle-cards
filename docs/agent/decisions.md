@@ -3763,3 +3763,32 @@ Do not invent a What’s new item for this restore.
 
 ---
 
+## 2026-09-21 · [P] Factory renamed Roulette + cream/pink art
+
+Designer Yassine Chenik: card id `factory` → `roulette`, player-facing name
+**Roulette**. `PROTOCOL_VERSION` **37 → 38** because `cardId` is public on
+plays, persistents, inspect, and logs. Historic Postgres rows may still
+contain `factory`; no alias.
+
+Cream faces (`Name.png`) are unupgraded defaults; pink (`Name +.png`) are
+upgraded defaults. Activated `(activated)` faces were not in the drop —
+keep existing table art, except rename Factory Test activated files to
+`Roulette (activated).png` / `Roulette + (activated).png`. Ignore printed
+PNG costs, recycle, and shields; Classic values stay.
+
+Art mapping: Gambler kit portrait; Invisibility (not Unspy); Points
+Generator; Roulette; Sentence; Super Absorber; Upgrade Point Thief
+(hand-plus). What’s new stays `lot-63`; rename the Factory line only.
+
+---
+
+## 2026-09-21 · [P] Roulette activated faces reuse cream/pink art
+
+Designer: an armed Roulette persistent still showed the white **Test**
+placeholder. Copy `Roulette.png` onto `Roulette (activated).png` and
+`Roulette +.png` onto `Roulette + (activated).png` (repo `images/` and
+client `assets/cards/`). Do not invent a thick-red activated border.
+Classic values unchanged.
+
+---
+

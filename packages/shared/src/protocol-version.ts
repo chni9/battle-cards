@@ -66,5 +66,10 @@
  * `sentenceCountdown` / `sentenceFired` action-log kinds. Older clients cannot
  * read the countdown. Exception to the V6 single-bump lock (same class as
  * L49 / L56–L60 / L63); see decisions.md.
+ *
+ * 37 → 38 (designer 2026-09-21): card id `factory` renamed `roulette`
+ * (player-facing name Roulette). Public `cardId` on plays, persistents,
+ * inspect, and logs. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L63); see decisions.md.
  */
-export const PROTOCOL_VERSION = 37;
+export const PROTOCOL_VERSION = 38;

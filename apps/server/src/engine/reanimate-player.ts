@@ -30,7 +30,7 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
  * specials via seeded `rng.pick` with replacement (duplicates OK).
  * Gambler (Lot 63): random draws exclude guaranteed `specialCards`, then the
- * fixed list is appended (Factory after five randoms).
+ * fixed list is appended (Roulette after five randoms).
  */
 export function dealStartingLoadout(
   player: Player,

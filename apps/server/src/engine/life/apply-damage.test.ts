@@ -125,15 +125,15 @@ describe('applyDamage — internal counters (rules spec §5)', () => {
     expect(target.matchStats.livesLost).toBe(3);
   });
 
-  it('decrements Factory card-lives (L63-02)', () => {
-    const effect = makeCounterEffect({ id: 'fac-1', cardId: 'factory', counter: 2 });
+  it('decrements Roulette card-lives (L63-02)', () => {
+    const effect = makeCounterEffect({ id: 'fac-1', cardId: 'roulette', counter: 2 });
     const target = makePlayer({ lives: 10, activePersistentEffects: [effect] });
 
     const outcome = applyDamage(target, 1, 'basic-attack');
 
     expect(effect.counter).toBe(1);
     expect(outcome.countersDecremented).toEqual([
-      { effectId: 'fac-1', cardId: 'factory', amount: 1 },
+      { effectId: 'fac-1', cardId: 'roulette', amount: 1 },
     ]);
   });
 });

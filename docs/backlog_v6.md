@@ -66,8 +66,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     modules (General, Volume, Gameplay, Economy, Combat, Hidden tools, Bots
     and seats, Endings, Retention and feedback). Action-log frequencies;
     `think_time_ms` persist. No protocol bump.
-21. **The Gambler + Factory (Lot 63).** Designer 2026-09-20. Classic 16th kit
-    and circulating Factory special. Draw 10 with 1-in-10 instant-elim bust.
+21. **The Gambler + Roulette (Lot 63).** Designer 2026-09-20. Classic 16th kit
+    and circulating Roulette special. Draw 10 with 1-in-10 instant-elim bust.
     `PROTOCOL_VERSION` **35 → 36** (exception, same class as L49 / L56–L60),
     then **36 → 37** for public Sentence countdown.
 
@@ -93,7 +93,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 - **Classic frozen** except designer 2026-09-01 Lot 54 (Spy 2/4, weaker-answer mutual,
   assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, later superseded
   by Lot 58), designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7,
-  PG 3/6, Unspy 10), and designer 2026-09-20 Lot 63 (The Gambler + Factory).
+  PG 3/6, Unspy 10), and designer 2026-09-20 Lot 63 (The Gambler + Roulette).
   Tutorial-only exceptions remain spec §5.3–§5.4.
   Designer 2026-08-29: Classic occupancy is **2–6** (was 2–4).
   Designer 2026-09-07: Classic occupancy is **2–8**.
@@ -147,7 +147,7 @@ Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 | 60 · Game over awards | 5 | 5 |
 | 61 · Designer admin insights | 10 | 10 |
 | 62 · Overview metrics modules | 7 | 7 |
-| 63 · The Gambler + Factory | 6 | 6 |
+| 63 · The Gambler + Roulette | 6 | 6 |
 
 
 ---
@@ -513,9 +513,9 @@ action-log card frequencies that Lot 61 left out.
 
 ---
 
-## Lot 63 — The Gambler kit + Factory (designer 2026-09-20)
+## Lot 63 — The Gambler kit + Roulette (designer 2026-09-20)
 
-Classic 16th kit and circulating Factory special. Draw 10 with a 1-in-10
+Classic 16th kit and circulating Roulette special. Draw 10 with a 1-in-10
 instant-elimination bust. Placeholder art. `PROTOCOL_VERSION` 35 → 36, then
 36 → 37 for public `pendingSentences`. What’s new Sentence / Imposition /
 Super Absorber copy matches live rules. Pool-buy recovered identity is
@@ -523,10 +523,10 @@ Spy-gated on the action log (L63-06).
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Gambler + Factory; kit/card ids, catalogs, mixed `dealStartingLoadout`, content-scope 16/21; Factory pending in the registry. **Acceptance:** Gambler starts with 5 random specials none of which are Factory plus Factory; Prophet can still roll Factory; `pnpm verify` green aside from freeze traces refreshed in L63-04. | L | **High** | — | Done |
-| L63-02 | Draw bust (1-in-10, `lives = 0`, no points) + Factory handler, card-lives, persistent tick 80/20 and upgraded 70/30 + 30% upgraded grant. **Acceptance:** tests lock bust, safe draw 10, Factory same-turn grant, Tax vs damage counters; `pnpm verify` green. | L | **High** | L63-01 | Done |
-| L63-03 | `PROTOCOL_VERSION` 35 → 36; public `drawBust` on `actionPlayed`; inspect/lobby copy; placeholder kit + Factory art including activated. **Acceptance:** table log shows a bust; older clients fail the version gate; `pnpm verify` green. | M | Medium | L63-02 | Done |
-| L63-04 | Belief posterior/uniqueness for random-deal Gambler + Factory scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Factory play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | Done |
+| L63-01 | Dated `[P]` Lot 63 in `decisions.md`; rules spec Gambler + Roulette; kit/card ids, catalogs, mixed `dealStartingLoadout`, content-scope 16/21; Roulette pending in the registry. **Acceptance:** Gambler starts with 5 random specials none of which are Roulette plus Roulette; Prophet can still roll Roulette; `pnpm verify` green aside from freeze traces refreshed in L63-04. | L | **High** | — | Done |
+| L63-02 | Draw bust (1-in-10, `lives = 0`, no points) + Roulette handler, card-lives, persistent tick 80/20 and upgraded 70/30 + 30% upgraded grant. **Acceptance:** tests lock bust, safe draw 10, Roulette same-turn grant, Tax vs damage counters; `pnpm verify` green. | L | **High** | L63-01 | Done |
+| L63-03 | `PROTOCOL_VERSION` 35 → 36; public `drawBust` on `actionPlayed`; inspect/lobby copy; placeholder kit + Roulette art including activated. **Acceptance:** table log shows a bust; older clients fail the version gate; `pnpm verify` green. | M | Medium | L63-02 | Done |
+| L63-04 | Belief posterior/uniqueness for random-deal Gambler + Roulette scoring + risky-draw score; freeze fixture refresh (`weightsHash` unchanged). **Acceptance:** Roulette play keeps Prophet residual; `drawBust` collapses to Gambler; suicide does not zero Gambler; `pnpm verify` green. | M | **High** | L63-03 | Done |
 | L63-05 | Match advertised What’s new nerfs: delayed Sentence 20, Imposition skip, Super Absorber lives-only unless upgraded; `PROTOCOL_VERSION` 36 → 37 `pendingSentences`. **Acceptance:** What’s new copy matches live handlers; table countdown is public; `pnpm verify` green. | L | **High** | L63-04 | Done |
 | L63-06 | Per-recipient `buyPoolCard` log fog: omit `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer; live `ACTION_PLAYED` unicast; sitting pool faces stay public; Excel `exportLog` stays full; belief widens fogged buys. No protocol bump. No What’s new item. **Acceptance:** opponent log says “bought a card from the pool”; buyer / Spy / overlay still see the card; `pnpm verify` green. | M | **High** | L63-05 | Done |
 

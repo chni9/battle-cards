@@ -39,7 +39,7 @@ export const SPECIAL_CARD_IDS = [
   'curse',
   'poison',
   'attack-thief',
-  'factory',
+  'roulette',
 ] as const;
 
 /**
@@ -123,7 +123,7 @@ export const CARD_LIVES_SPECIAL_IDS = [
   'imposition',
   'poison',
   'super-absorber',
-  'factory',
+  'roulette',
 ] as const satisfies readonly SpecialCardId[];
 
 const CARD_LIVES_SET = new Set<string>(CARD_LIVES_SPECIAL_IDS);

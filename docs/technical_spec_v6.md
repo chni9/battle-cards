@@ -717,7 +717,7 @@ Not even partially, even “to lay groundwork”:
 - Changing Classic prices, damage, starting resources, or mutual-attack math
   (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
   freeze, designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
-  PG 3/6 / Unspy, and designer 2026-09-20 Lot 63 The Gambler + Factory)
+  PG 3/6 / Unspy, and designer 2026-09-20 Lot 63 The Gambler + Roulette)
 - A second Colyseus room type
 - Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
   it reuses eliminated-player vision, not a replay product)
@@ -774,7 +774,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 | 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
-| 63 | The Gambler + Factory | Classic 16th kit, Factory special, Draw bust; Sentence / Imposition / Super Absorber nerfs match What’s new; 35 → 36 then 36 → 37 |
+| 63 | The Gambler + Roulette | Classic 16th kit, Roulette special, Draw bust; Sentence / Imposition / Super Absorber nerfs match What’s new; 35 → 36 then 36 → 37; `factory` renamed `roulette` at 38 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44

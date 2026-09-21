@@ -912,22 +912,22 @@ describe('heuristic decide (L16-04)', () => {
     ).toEqual({ type: 'playCard', instanceId: 'pg-1' });
   });
 
-  it('prefers Factory over Draw and never falls through to sellUpgradePoint (L63-04)', () => {
-    const factoryView = baseView({
+  it('prefers Roulette over Draw and never falls through to sellUpgradePoint (L63-04)', () => {
+    const rouletteView = baseView({
       self: baseSelf({
         kitId: 'gambler',
-        specialCards: [{ instanceId: 'fac-1', cardId: 'factory', isUpgraded: false }],
+        specialCards: [{ instanceId: 'fac-1', cardId: 'roulette', isUpgraded: false }],
       }),
     });
     expect(
       decide(
-        factoryView,
+        rouletteView,
         [
           { type: 'draw' },
           { type: 'sellUpgradePoint' },
           { type: 'playCard', instanceId: 'fac-1' },
         ],
-        createRng('factory-over-draw'),
+        createRng('roulette-over-draw'),
       ),
     ).toEqual({ type: 'playCard', instanceId: 'fac-1' });
   });

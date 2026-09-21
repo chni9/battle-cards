@@ -45,15 +45,15 @@ describe('release notes catalog (L63-07)', () => {
     }
   });
 
-  it('puts Gambler and Factory in the New additions section', () => {
+  it('puts Gambler and Roulette in the New additions section', () => {
     const latest = latestReleaseNote();
     expect(latest.title).toMatch(/Gambler/i);
-    expect(latest.title).toMatch(/Factory/i);
+    expect(latest.title).toMatch(/Roulette/i);
     expect(latest.additions.map((item) => item.kind)).toEqual(['kit', 'card']);
     const gambler = latest.additions.find((item) => item.kind === 'kit');
-    const factory = latest.additions.find((item) => item.kind === 'card');
+    const roulette = latest.additions.find((item) => item.kind === 'card');
     expect(gambler?.kind === 'kit' ? gambler.kitId : undefined).toBe('gambler');
-    expect(factory?.kind === 'card' ? factory.cardId : undefined).toBe('factory');
+    expect(roulette?.kind === 'card' ? roulette.cardId : undefined).toBe('roulette');
     const body = latest.additions.map((item) => item.body).join('\n');
     expect(body).toMatch(/1-in-10/);
     expect(body).toMatch(/Draw 10/);

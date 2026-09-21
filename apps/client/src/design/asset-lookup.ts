@@ -128,11 +128,11 @@ const CARD_FILES = {
     activatedUpgraded: 'Poison + (activated).png',
   },
   'attack-thief': { base: 'Attack Thief.png', upgraded: 'Attack Thief +.png' },
-  factory: {
-    base: 'Factory.png',
-    upgraded: 'Factory +.png',
-    activatedBase: 'Factory (activated).png',
-    activatedUpgraded: 'Factory + (activated).png',
+  roulette: {
+    base: 'Roulette.png',
+    upgraded: 'Roulette +.png',
+    activatedBase: 'Roulette (activated).png',
+    activatedUpgraded: 'Roulette + (activated).png',
   },
 } as const satisfies Record<CardId, CardArtFiles>;
 
@@ -152,7 +152,7 @@ const CARDS_WITH_ACTIVATED_ART = [
   'super-absorber',
   'curse',
   'poison',
-  'factory',
+  'roulette',
 ] as const satisfies readonly CardId[];
 
 const RESOURCE_FILES = {

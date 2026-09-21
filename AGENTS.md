@@ -121,8 +121,10 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
  **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
  (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
- adds Gambler + Factory (`PROTOCOL_VERSION` 36) and Sentence / Imposition /
- Super Absorber nerfs (`PROTOCOL_VERSION` 37). Walk-in claim-picker fog stays.
+ adds Gambler + Roulette (`PROTOCOL_VERSION` 36) and Sentence / Imposition /
+ Super Absorber nerfs (`PROTOCOL_VERSION` 37). Designer 2026-09-21 renamed
+ Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). Walk-in
+ claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

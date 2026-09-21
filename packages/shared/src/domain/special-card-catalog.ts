@@ -205,12 +205,12 @@ export const SPECIAL_CARD_CATALOG = {
     'Block one attack targeting you once, and steal all attack cards from all opponents.',
     'Steal all attack cards from all opponents, not one random each.',
   ),
-  factory: specialCard(
-    'factory',
-    'Factory',
+  roulette: specialCard(
+    'roulette',
+    'Roulette',
     10,
-    'Each of your turns, including this one, gain a random card: 80% attack or action, 20% special (never another Factory). 2 card lives.',
-    'Each of your turns, including this one, gain a random card: 70% attack or action, 30% special (never another Factory). 30% chance the granted copy is upgraded. 2 card lives.',
+    'Each of your turns, including this one, gain a random card: 80% attack or action, 20% special (never another Roulette). 2 card lives.',
+    'Each of your turns, including this one, gain a random card: 70% attack or action, 30% special (never another Roulette). 30% chance the granted copy is upgraded. 2 card lives.',
     '70% normal / 30% special instead of 80/20, and 30% chance the granted copy is upgraded.',
   ),
 } as const satisfies Record<SpecialCardId, Card>;
@@ -223,7 +223,7 @@ export const PERSISTENT_SPECIAL_CARD_IDS = [
   'curse',
   'super-absorber',
   'invisibility',
-  'factory',
+  'roulette',
 ] as const;
 
 export type PersistentSpecialCardId = (typeof PERSISTENT_SPECIAL_CARD_IDS)[number];

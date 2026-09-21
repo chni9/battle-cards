@@ -1,6 +1,6 @@
 /**
  * Persistent specials — Poison, Curse, Super Absorber (L29-06) — plus Sentence,
- * Imposition, Spy Thief, Points Generator and Factory. Factory joined in Lot 63
+ * Imposition, Spy Thief, Points Generator and Roulette. Roulette joined in Lot 63
  * on the Points Generator invest path (no new weight constant).
  */
 
@@ -73,10 +73,10 @@ export function scorePersistentsPlayCard(
     };
   }
 
-  // Factory — same invest family as Points Generator (Lot 63). Multiple copies
-  // tick independently, so a second armed Factory is still worth playing.
+  // Roulette — same invest family as Points Generator (Lot 63). Multiple copies
+  // tick independently, so a second armed Roulette is still worth playing.
   // Reuses the PG bonus: heuristic-v4 weights stay frozen.
-  if (cardId === 'factory') {
+  if (cardId === 'roulette') {
     return {
       score: ctx.weights.action.bands.invest + ctx.weights.action.pointsGeneratorInvestBonus,
       code: 'invest',
