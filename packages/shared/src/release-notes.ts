@@ -27,7 +27,7 @@ export interface ReleaseNote {
   readonly items: readonly ReleaseNoteItem[];
 }
 
-export const RELEASE_NOTES = [
+const RELEASE_NOTES_CATALOG = [
   {
     id: 'lot-64',
     date: '2026-09-21',
@@ -95,11 +95,13 @@ export const RELEASE_NOTES = [
       },
     ],
   },
-] satisfies readonly ReleaseNote[];
+] as const satisfies readonly ReleaseNote[];
 
-export type ReleaseNoteId = (typeof RELEASE_NOTES)[number]['id'];
+export const RELEASE_NOTES: readonly ReleaseNote[] = RELEASE_NOTES_CATALOG;
 
-export function latestReleaseNote(): (typeof RELEASE_NOTES)[number] {
+export type ReleaseNoteId = (typeof RELEASE_NOTES_CATALOG)[number]['id'];
+
+export function latestReleaseNote(): ReleaseNote {
   const latest = RELEASE_NOTES[0];
   if (latest === undefined) {
     throw new Error('RELEASE_NOTES is empty');
