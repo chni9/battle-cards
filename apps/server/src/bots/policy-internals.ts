@@ -557,7 +557,9 @@ export function scoreAbsorber(
   const pointsSpent = ctx.lastTurnPointsSpent.get(targetPlayerId) ?? 0;
   const upgradeSpent = ctx.lastTurnUpgradePointsSpent.get(targetPlayerId) ?? 0;
   const absorberCost = getCard('absorber')?.cost.points ?? 3;
-  const kitDraw = getKit(view.self.kitId).startingResources.draw;
+  const kitDraw =
+    view.players.find((player) => player.isYou)?.drawGain ??
+    getKit(view.self.kitId).startingResources.draw;
   const hasRegen = ownsCardId(view, 'regeneration');
 
   if (isUpgraded && upgradeSpent > 0) {

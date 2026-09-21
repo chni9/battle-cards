@@ -278,11 +278,13 @@ function performPreparedTurnAction(
         drawBust: true,
       };
     } else {
-      grantPoints(state, actor, kit.startingResources.draw, 'direct');
+      const gain = actor.drawGain ?? kit.startingResources.draw;
+      grantPoints(state, actor, gain, 'direct');
       actionPlayed = {
         actorPlayerId,
         action: 'draw',
         turnSequence: state.turnSequence,
+        ...(actor.drawGain !== undefined ? { drawGain: actor.drawGain } : {}),
       };
     }
   } else if (action.type === 'buyCard') {

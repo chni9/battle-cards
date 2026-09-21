@@ -284,7 +284,10 @@ function applyOpponentPlay(
 
   switch (entry.action) {
     case 'draw':
-      addExact(points, getKit(kitId).startingResources.draw);
+      if (entry.drawBust === true) {
+        return;
+      }
+      addExact(points, entry.drawGain ?? getKit(kitId).startingResources.draw);
       return;
     case 'buyCard':
       if (cardId !== undefined && isSharedCardId(cardId)) {

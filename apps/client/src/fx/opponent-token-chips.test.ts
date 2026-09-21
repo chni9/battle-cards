@@ -91,6 +91,27 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     ]);
   });
 
+  it('uses public drawGain on a successful Draw and skips chips on a bust (L64-03)', () => {
+    const bust: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'draw',
+      turnSequence: 2,
+      drawBust: true,
+    };
+    const paid: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'opp',
+      action: 'draw',
+      turnSequence: 3,
+      drawGain: 47,
+    };
+    expect(chipsForPublicLogEntry(bust, 'me', [you, hidden], 'indestructible')).toEqual([]);
+    expect(chipsForPublicLogEntry(paid, 'me', [you, hidden], 'indestructible')).toEqual([
+      { kind: 'point', count: 47, from: 'log', to: { playerId: 'opp' } },
+    ]);
+  });
+
   it('uses catalog play cost as a seat→log spend for unspied seats', () => {
     expect(
       chipsForPublicLogEntry(
