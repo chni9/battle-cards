@@ -113,8 +113,8 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
   **L64-01 (38 → 39)** (`drawGain` / `'gambling'`).
 - **Do not edit `heuristic-v4` scoring.** Freeze fixture refresh is allowed for
   catalog-price affordability (L54-01), Lot 58's new legal actions (L58-08), and
-  Lot 63 roster/pool growth (L63-04); keep `weightsHash` unless a new weight
-  constant is unavoidable.
+  Lot 63 roster/pool growth (L63-04), and Lot 64 Gambler start/Draw (L64-03);
+  keep `weightsHash` unless a new weight constant is unavoidable.
 
 - How to play **screenshots are designer-owned**. Missing files omit `<img>`; agents never
   invent art (spec §1, §5.1).

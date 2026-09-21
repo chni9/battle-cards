@@ -9,6 +9,8 @@
  * unchanged (no new weight constants).
  * L63-02: Roulette becomes playable; Gambler Draw can bust — traces refreshed,
  * `weightsHash` unchanged.
+ * L64-03: Gambler start specials 5→2 plus Roulette and weighted Draw — traces
+ * refreshed, `weightsHash` unchanged (no new weight constants).
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -248,7 +250,7 @@ describe('heuristic-v4 freeze (L32-03)', () => {
 });
 
 if (process.env['REFRESH_HEURISTIC_V4_FREEZE'] === '1') {
-  describe('heuristic-v4 freeze refresh (L63-02)', () => {
+  describe('heuristic-v4 freeze refresh (L63-02 / L64-03)', () => {
     it('rewrites traces while keeping weightsHash', () => {
       const weightsHash = computeHeuristicV4WeightsHash();
       expect(weightsHash).toBe(fixture.weightsHash);
