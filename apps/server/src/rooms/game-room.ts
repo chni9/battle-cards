@@ -2039,7 +2039,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.recordElimination({
         playerId,
         eliminatorPlayerId: elimination?.eliminatorPlayerId ?? null,
-        reason: 'combat',
+        reason: elimination?.reason ?? 'combat',
       });
     }
 

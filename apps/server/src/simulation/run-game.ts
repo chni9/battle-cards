@@ -520,7 +520,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
           eliminations.push({
             playerId: event.playerId,
             eliminatorPlayerId: event.eliminatorPlayerId,
-            reason: 'combat',
+            reason: event.reason ?? 'combat',
           });
         }
       },
@@ -544,7 +544,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
             eliminations.push({
               playerId: event.playerId,
               eliminatorPlayerId: event.eliminatorPlayerId,
-              reason: 'combat',
+              reason: event.reason ?? 'combat',
             });
           }
         },
@@ -573,7 +573,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
               eliminations.push({
                 playerId: event.playerId,
                 eliminatorPlayerId: event.eliminatorPlayerId,
-                reason: 'combat',
+                reason: event.reason ?? 'combat',
               });
             }
           },

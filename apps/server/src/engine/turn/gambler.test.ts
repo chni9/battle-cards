@@ -260,7 +260,9 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(actor.points).toBe(0);
     expect(actor.isEliminated).toBe(true);
     expect(result.eliminatedPlayerIds).toEqual([actor.id]);
-    expect(result.eliminations).toEqual([{ playerId: actor.id, eliminatorPlayerId: null }]);
+    expect(result.eliminations).toEqual([
+      { playerId: actor.id, eliminatorPlayerId: null, reason: 'gambling' },
+    ]);
     expect(result.winnerPlayerId).toBe(other.id);
   });
 

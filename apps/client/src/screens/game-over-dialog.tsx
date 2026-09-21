@@ -20,6 +20,7 @@ import {
   seatIndexOf,
   seatZoneStyle,
 } from '../design/seat-colors';
+import { eliminationReasonLabel } from '../admin/admin-present';
 import {
   buildActionLogWorkbook,
   downloadWorkbookBuffer,
@@ -286,7 +287,7 @@ export function GameOverDialog({
                   playerId={entry.playerId}
                   view={view}
                 />{' '}
-                eliminated ({entry.reason})
+                eliminated ({eliminationReasonLabel(entry.reason)})
                 {entry.eliminatorPlayerId !== null ? (
                   <>
                     {' '}

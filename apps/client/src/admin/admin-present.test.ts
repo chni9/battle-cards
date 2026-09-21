@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  eliminationReasonLabel,
   formatMinutesFromMs,
   formatNullablePercent,
   formatThinkMs,
@@ -29,6 +30,11 @@ describe('admin-present', () => {
 
   it('uses catalog kit names', () => {
     expect(kitDisplayName('kamikaze')).toBe('Kamikaze');
+  });
+
+  it('labels gambling eliminations (L64-04)', () => {
+    expect(eliminationReasonLabel('gambling')).toBe('Gambling');
+    expect(eliminationReasonLabel('combat')).toBe('Combat');
   });
 });
 

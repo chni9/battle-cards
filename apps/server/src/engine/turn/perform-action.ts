@@ -1041,6 +1041,22 @@ export function expireReanimationKitPick(
   };
 }
 
+function withDrawBustReason(
+  eliminations: readonly EliminationEvent[],
+  actionPlayed: ActionPlayedEvent,
+  actorPlayerId: string,
+): EliminationEvent[] {
+  if (actionPlayed.drawBust !== true) {
+    return [...eliminations];
+  }
+
+  return eliminations.map((entry) =>
+    entry.playerId === actorPlayerId && entry.eliminatorPlayerId === null
+      ? { ...entry, reason: 'gambling' as const }
+      : entry,
+  );
+}
+
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
@@ -1060,7 +1076,12 @@ function finishTurnPhases(
     actorPlayerId,
     skipNewestSentence,
   );
-  const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
+  const { eliminations: rawEliminations, playerReanimated } = processEliminations(
+    state,
+    rng,
+    nowMs,
+  );
+  const eliminations = withDrawBustReason(rawEliminations, actionPlayed, actorPlayerId);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
   const curseTransfers = collectCurseTransfers(
