@@ -13,7 +13,7 @@ Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** 
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–63 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–64 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
@@ -21,7 +21,7 @@ Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool bu
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
 labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
 Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
-action-log fog).
+action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
 ## Screens
 
@@ -1260,4 +1260,17 @@ random**. Buyer log: **AliceFog bought Tax from the pool**. Opponent log:
 **AliceFog bought a card from the pool**. Live `ACTION_PLAYED` matches.
 `pnpm verify` **1552** tests. No protocol bump.
 
+### Lot 64 verified 2026-09-21 (browser, PROTOCOL 39)
+
+Vite `:5173`, Colyseus `:2567`. Solo Normal, nicks `L64Gate` / `L64Pulse2`.
+Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
+
+- Opening deal: 1 life, 0 points, empty hand, **3 specials including Roulette**
+  (two circulating, no second Roulette). Compact Draw no word label.
+- Draw payout rerolls each of your turns. `L64Gate` first Draw **+9 green**;
+  later **+21 red**. `L64Pulse2` **+44 red** then **+10**, then **+32 red**.
+  Red when payout `> 10`. Motion pulse is 0.45s at turn start (`MOTION_PULSE_S`);
+  reduced-motion / load timing can hide it on capture — source and tests pin it.
+- Bust log: **L64Gate draws and busts** then **L64Gate dies by Gambling**.
+  Hub What’s new latest id `lot-64`.
 
