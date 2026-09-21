@@ -2,6 +2,10 @@
  * Asset lookup coverage — technical spec v2 §4 / v4 §3.1, L30-01.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { KIT_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -59,7 +63,7 @@ describe('asset-lookup (L30-01)', () => {
     }
   });
 
-  it('maps Roulette cream/pink faces and activated Test art', () => {
+  it('maps Roulette cream/pink faces and copies them onto activated filenames', () => {
     expect(decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: false }))).toMatch(
       /Roulette\.png/,
     );
@@ -73,6 +77,18 @@ describe('asset-lookup (L30-01)', () => {
       decodeURIComponent(getCardArtUrl('roulette', { isUpgraded: true, activated: true })),
     ).toMatch(/Roulette \+ \(activated\)\.png/);
     expect(CARDS_WITH_ACTIVATED_ART).toContain('roulette');
+
+    const here = dirname(fileURLToPath(import.meta.url));
+    const folders = [
+      join(here, '../assets/cards'),
+      join(process.cwd(), 'images'),
+    ] as const;
+    for (const folder of folders) {
+      const cream = readFileSync(join(folder, 'Roulette.png'));
+      const pink = readFileSync(join(folder, 'Roulette +.png'));
+      expect(readFileSync(join(folder, 'Roulette (activated).png')).equals(cream)).toBe(true);
+      expect(readFileSync(join(folder, 'Roulette + (activated).png')).equals(pink)).toBe(true);
+    }
   });
 
   it('maps cream unupgraded and pink upgraded faces for the 2026-09-21 art drop', () => {

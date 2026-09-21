@@ -3782,3 +3782,13 @@ Generator; Roulette; Sentence; Super Absorber; Upgrade Point Thief
 
 ---
 
+## 2026-09-21 · [P] Roulette activated faces reuse cream/pink art
+
+Designer: an armed Roulette persistent still showed the white **Test**
+placeholder. Copy `Roulette.png` onto `Roulette (activated).png` and
+`Roulette +.png` onto `Roulette + (activated).png` (repo `images/` and
+client `assets/cards/`). Do not invent a thick-red activated border.
+Classic values unchanged.
+
+---
+
