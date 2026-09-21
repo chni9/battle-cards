@@ -94,6 +94,7 @@ export function eliminationReasonLabel(reason: string): string {
     absence: 'Absent',
     inactivity: 'Inactive',
     leave: 'Left',
+    gambling: 'Gambling',
   };
   return labels[reason] ?? reason;
 }

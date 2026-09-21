@@ -6,7 +6,8 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **38** (`factory` renamed `roulette`;
+> **Status:** current `PROTOCOL_VERSION` is **39** (Gambler `drawGain` +
+> `'gambling'` elimination; `factory` renamed `roulette` at 38;
 > public `pendingSentences` and Sentence countdown / fire log kinds at 37;
 > L63-06 per-recipient `buyPoolCard` identity fog with no bump; L63-03 public
 > `drawBust` on `actionPlayed` at 36; L60-02 recap match totals / optional
@@ -73,6 +74,8 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
 | Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
+| Living Gambler Draw payout | **Public** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01). Undefined for other kits and eliminated seats. Successful `actionPlayed` draw also carries `drawGain`; omit on bust |
+| Draw-bust elimination reason | **Public** as `EliminationReason` `'gambling'` (PROTOCOL_VERSION 39 / L64-01) |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's
@@ -192,6 +195,13 @@ PROTOCOL_VERSION 37 adds public `PlayingStateView.pendingSentences` and action-l
 kinds `sentenceCountdown` / `sentenceFired`. Older clients fail the version gate.
 Room and simulator append those announcements from `TurnResult.sentenceAnnouncements`.
 Remaining owner turns are not card-lives.
+
+PROTOCOL_VERSION 39 (L64-01 / designer 2026-09-21) adds public
+`PublicPlayerView.drawGain` (living Gambler current Draw payout), optional
+`drawGain` on successful `actionPlayed` draw (omit on bust), and
+`EliminationReason` `'gambling'`. Older clients fail the version gate.
+`Player.drawGain` is classified here as public — never server-only.
+Opaque `activateDuplication` → `draw` must not copy `drawGain`.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

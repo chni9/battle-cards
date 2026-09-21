@@ -223,7 +223,7 @@ Hints:     localStorage, first Classic playing view only
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
   later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L57-07 (31 → 32)**,
   **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, **L63-03 (35 → 36)**,
-  **36 → 37** (`pendingSentences`).
+  **36 → 37** (`pendingSentences`), **L64-01 (38 → 39)** (`drawGain` / `'gambling'`).
 
 
 ---
@@ -717,7 +717,8 @@ Not even partially, even “to lay groundwork”:
 - Changing Classic prices, damage, starting resources, or mutual-attack math
   (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
   freeze, designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
-  PG 3/6 / Unspy, and designer 2026-09-20 Lot 63 The Gambler + Roulette)
+  PG 3/6 / Unspy, designer 2026-09-20 Lot 63 The Gambler + Roulette, and
+  designer 2026-09-21 Lot 64 Gambler kit tweaks)
 - A second Colyseus room type
 - Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
   it reuses eliminated-player vision, not a replay product)
@@ -741,7 +742,7 @@ Not even partially, even “to lay groundwork”:
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
 6. **Protocol bump twice** in V6 is forbidden except the documented exceptions
-   (L49, L56, L57-07, L57-16, L58, **L60**, **L63-03**); put Lot 63 wire changes in L63-03.
+   (L49, L56, L57-07, L57-16, L58, **L60**, **L63-03**, **L64-01**); put Lot 63 wire changes in L63-03.
 
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
@@ -775,6 +776,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 | 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
 | 63 | The Gambler + Roulette | Classic 16th kit, Roulette special, Draw bust; Sentence / Imposition / Super Absorber nerfs match What’s new; 35 → 36 then 36 → 37; `factory` renamed `roulette` at 38 |
+| 64 | Gambler kit tweaks | 2 distinct start specials + Roulette; weighted Draw 5–100; `'gambling'` death log; 38 → 39 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44

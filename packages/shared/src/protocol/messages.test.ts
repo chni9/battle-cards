@@ -17,6 +17,12 @@ describe('actionPlayedPublicFields (L63-03)', () => {
     expect('drawBust' in actionPlayedPublicFields({ cardId: 'tax' })).toBe(false);
   });
 
+  it('copies drawGain on a successful Draw and omits it otherwise', () => {
+    expect(actionPlayedPublicFields({ drawGain: 47 })).toEqual({ drawGain: 47 });
+    expect('drawGain' in actionPlayedPublicFields({ drawBust: true })).toBe(false);
+    expect('drawGain' in actionPlayedPublicFields({})).toBe(false);
+  });
+
   it('copies the other optional public fields', () => {
     expect(
       actionPlayedPublicFields({
@@ -60,5 +66,21 @@ describe('toActionPlayedPayload (L63-03)', () => {
 
     expect(payload.drawBust).toBeUndefined();
     expect('drawBust' in payload).toBe(false);
+  });
+
+  it('puts drawGain on a successful Draw payload', () => {
+    const payload: ActionPlayedPayload = toActionPlayedPayload({
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 4,
+      drawGain: 47,
+    });
+
+    expect(payload).toEqual({
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 4,
+      drawGain: 47,
+    });
   });
 });

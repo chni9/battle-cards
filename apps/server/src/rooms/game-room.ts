@@ -3830,7 +3830,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return payload;
       }
 
-      // Opaque draw is not a real Draw — do not copy `drawBust` or card fields.
+      // Opaque draw is not a real Draw — do not copy `drawBust`, `drawGain`, or card fields.
       return {
         actorPlayerId: payload.actorPlayerId,
         action: 'draw',

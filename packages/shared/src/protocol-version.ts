@@ -71,5 +71,11 @@
  * (player-facing name Roulette). Public `cardId` on plays, persistents,
  * inspect, and logs. Exception to the V6 single-bump lock (same class as
  * L49 / L56–L63); see decisions.md.
+ *
+ * 38 → 39 (L64-01 / designer 2026-09-21): public `PublicPlayerView.drawGain`
+ * for a living Gambler’s current Draw payout; successful `actionPlayed` draw
+ * also carries `drawGain` (omit on bust); `EliminationReason` `'gambling'`.
+ * Older clients cannot read the new contract. Exception to the V6
+ * single-bump lock (same class as L49 / L56–L63); see decisions.md.
  */
-export const PROTOCOL_VERSION = 38;
+export const PROTOCOL_VERSION = 39;

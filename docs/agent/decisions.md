@@ -3792,3 +3792,28 @@ Classic values unchanged.
 
 ---
 
+## 2026-09-21 · [P] Lot 64 Gambler kit tweaks
+
+Designer session: Classic exception (golden rule 7). No God / Team / Quick.
+`PROTOCOL_VERSION` **38 → 39** in L64-01 so older clients cannot read the new
+contract.
+
+Locked:
+
+- Start: exactly **one Roulette** plus **2 other distinct** circulating
+  specials (no second Roulette, no duplicate among the two). Sample without
+  replacement for Gambler only (`rng.shuffle(pool).slice(0, count)` then
+  append Roulette). Prophet stays with-replacement per #V4-27.
+- Draw payout rerolls at the **start of each Gambler’s turn** (including
+  Block extra turns). Other kits keep catalog Draw. Catalog
+  `startingResources.draw: 10` stays the listed / red-threshold number, not
+  the grant.
+- Weights: integer **5..100**, `weight(n) = 101 - n` (5 → 96, 100 → 1,
+  total 4656). Bust stays **1-in-10**, no points.
+- Log death as `{nickname} dies by Gambling` (`EliminationReason`
+  `'gambling'`). No eliminator / no kill reward.
+- Public `PublicPlayerView.drawGain` for a living Gambler; successful
+  `actionPlayed` draw also carries `drawGain` (omit on bust).
+
+---
+

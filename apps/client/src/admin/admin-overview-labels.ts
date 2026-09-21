@@ -56,6 +56,7 @@ const ELIM_REASON_LABELS: Record<AdminElimReasonId, string> = {
   absence: 'Absent',
   inactivity: 'Inactive',
   leave: 'Left',
+  gambling: 'Gambling',
 };
 
 const COMBAT_OUTCOME_LABELS: Record<ActionResolutionOutcome, string> = {

@@ -114,6 +114,8 @@ export interface ActionPlayedEvent {
   turnSequence: number;
   /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
   drawBust?: true;
+  /** Successful Draw payout actually granted — Lot 64. Omit on bust. */
+  drawGain?: number;
 }
 
 export interface ActionResolvedEvent {
