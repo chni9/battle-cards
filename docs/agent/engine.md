@@ -118,7 +118,8 @@ function createSeed(): string;         // one per game, stored in GameState.seed
 
 Every draw goes through an **injected** instance: card distribution (L4-02), Sentence (L5-07),
 the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09),
-Draw bust (Lot 63), Roulette grants (Lot 63), Gambler Draw payout (Lot 64). A module
+Draw bust (Lot 63), Roulette grants (Lot 63), Gambler Draw payout (Lot 64,
+truncated geometric 5–100, P(n > 20) ≤ 0.10). A module
 that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
 downstream of it.
 

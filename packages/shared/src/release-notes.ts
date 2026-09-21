@@ -45,7 +45,7 @@ const RELEASE_NOTES_CATALOG = [
         before:
           'Gambler Draw always granted Draw 10 points, with a 1-in-10 chance to instantly eliminate you and grant no points.',
         after:
-          'Each of the Gambler’s turns, Draw payout rerolls to 5–100 (weighted toward smaller amounts). Bust is still 1-in-10 with no points.',
+          'Each of the Gambler’s turns, Draw payout rerolls to 5–100 (weighted; each extra point is rarer). Bust is still 1-in-10 with no points.',
       },
       {
         kitId: 'gambler' as const,

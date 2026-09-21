@@ -776,7 +776,7 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 | 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
 | 63 | The Gambler + Roulette | Classic 16th kit, Roulette special, Draw bust; Sentence / Imposition / Super Absorber nerfs match What’s new; 35 → 36 then 36 → 37; `factory` renamed `roulette` at 38 |
-| 64 | Gambler kit tweaks | 2 distinct start specials + Roulette; weighted Draw 5–100; `'gambling'` death log; 38 → 39 |
+| 64 | Gambler kit tweaks | 2 distinct start specials + Roulette; truncated-geometric Draw 5–100 (P(n > 20) ≤ 0.10); `'gambling'` death log; 38 → 39 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44

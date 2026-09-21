@@ -3817,3 +3817,25 @@ Locked:
 
 ---
 
+## 2026-09-21 · [P] Gambler Draw truncated geometric
+
+Designer correction on Lot 64 (PR #50): linear `weight(n) = 101 − n` put
+~70% of mass above 20. That is too high. Weights on integers **5..100**
+inclusive are now truncated geometric:
+
+- P(n) ∝ r^(n − 5)
+- r = 10^(-1/16) ≈ 0.8660 so (1 − r^16) / (1 − r^96) ≥ 0.90, i.e.
+  P(n > 20) ≤ 0.10 (use the 10% cap, not far under it — 21+ still shows
+  in play)
+- Integer weights `round(10^8 · r^(n − 5))`, drawn with `nextInt(total)`
+  through the existing rejection sampler (golden rule 5; no
+  `Math.random`; no modulo bias). Ticket 0 maps to 5; 100 stays possible
+  but vanishingly rare
+- Range, bust **1-in-10**, red `drawGain > 10`, and catalog Draw **10**
+  as inspect / red threshold are unchanged
+
+This entry supersedes the Lot 64 weight formula only. Do not rewrite the
+locked linear line above.
+
+---
+

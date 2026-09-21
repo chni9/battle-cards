@@ -73,8 +73,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
 
 
 22. **Gambler kit tweaks (Lot 64).** Designer 2026-09-21. Start 2 distinct
-    random specials + Roulette; weighted Draw 5–100; `{nickname} dies by
-    Gambling`; red Draw above 10. `PROTOCOL_VERSION` **38 → 39** (exception,
+    random specials + Roulette; truncated-geometric Draw 5–100 (P(n > 20) ≤ 0.10);
+    `{nickname} dies by Gambling`; red Draw above 10. `PROTOCOL_VERSION` **38 → 39** (exception,
     same class as L49 / L56–L63).
 
 
@@ -547,7 +547,8 @@ Spy-gated on the action log (L63-06).
 ## Lot 64 — Gambler kit tweaks (designer 2026-09-21)
 
 Classic exception: Gambler starts with 2 distinct random specials plus Roulette;
-Draw payout rerolls 5–100 weighted at turn start; bust death log
+Draw payout rerolls 5–100 truncated-geometric at turn start (P(n > 20) ≤ 0.10);
+bust death log
 `{nickname} dies by Gambling`; red Draw when payout > 10.
 `PROTOCOL_VERSION` 38 → 39.
 
@@ -555,7 +556,7 @@ Draw payout rerolls 5–100 weighted at turn start; bust death log
 |---|---|---|---|---|---|
 | L64-01 | Dated `[P]` Lot 64 in `decisions.md`; rules spec Gambler tweaks; `PROTOCOL_VERSION` 38 → 39; `PublicPlayerView.drawGain`; successful `actionPlayed` `drawGain`; `EliminationReason` `'gambling'`; classify in `protocol.md`; build fields in `build-view-for.ts`. **Acceptance:** version pin 39; optional `drawGain` copies through `toActionPlayedPayload`; living Gambler `drawGain` is public; `pnpm verify` green. | M | **High** | — | Done |
 | L64-02 | `randomStartingSpecialCount: 2`; Gambler-only without-replacement sample (`rng.shuffle(pool).slice(0, count)` then append Roulette). Prophet stays with-replacement. **Acceptance:** always 3 specials, Roulette once, two others distinct and not Roulette; same seed → same trio; `pnpm verify` green. | M | **High** | L64-01 | Done |
-| L64-03 | Weighted Draw helper `weight(n) = 101 − n` on 5..100 (total 4656); `rollDrawGain` seeded `${seed}:draw-gain:${id}:${turnSequence}` from `beginTurnFor` and first-seat create; safe Draw grants `drawGain ?? catalog`; bust unchanged. Bots read view `drawGain`. Point chips use `entry.drawGain`. **Acceptance:** ticket 0 → 5; last ticket → 100; count(5) > count(50) > count(100); first-seat Gambler has a roll; Block extra turns reroll; `pnpm verify` green. | L | **High** | L64-02 | Done |
+| L64-03 | Weighted Draw helper: truncated geometric P(n) ∝ r^(n − 5) on 5..100, r = 10^(-1/16) ≈ 0.8660 so P(n > 20) ≤ 0.10 (designer correction; replaced linear `101 − n` / total 4656); `rollDrawGain` seeded `${seed}:draw-gain:${id}:${turnSequence}` from `beginTurnFor` and first-seat create; safe Draw grants `drawGain ?? catalog`; bust unchanged. Bots read view `drawGain`. Point chips use `entry.drawGain`. **Acceptance:** ticket 0 → 5; last ticket → 100; P(>20) ≤ 10% on a large seeded sample; count(5) > count(10) > count(20) > count(50) > count(100); first-seat Gambler has a roll; Block extra turns reroll; `pnpm verify` green. | L | **High** | L64-02 | Done |
 | L64-04 | Draw-bust eliminations use `reason: 'gambling'`; action log `{nick} dies by Gambling`; recap / Excel / admin labels. Keep `{nick} draws and busts` on `actionPlayed`. **Acceptance:** bust log is not `is eliminated in combat`; no eliminator / no kill reward; `pnpm verify` green. | M | Medium | L64-03 | Done |
 | L64-05 | Table Draw button uses view `drawGain` for Gambler; `variant="red"` when `drawValue > 10`; Motion pulse on `drawValue` change while it is your turn. Compact, no word label. **Acceptance:** aria-label includes the gain; disabled off-turn; `pnpm verify` green. | M | Low | L64-03 | Done |
 | L64-06 | What’s new `id: 'lot-64'` (before/after start specials and Draw; death-log line); inspect / How to play / kit row Draw **5–100** (weighted), 3 specials, bust 1-in-10. Playbooks. **Acceptance:** latest catalog id is `lot-64`; inspect copy matches live rules; `pnpm verify` green. | S | Low | L64-05 | Done |

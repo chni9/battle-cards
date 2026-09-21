@@ -132,7 +132,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 ### Gambler — Ability Detail
 
 - Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **2** random special cards drawn **without replacement** from the circulating pool excluding Roulette (the two are distinct; never a second Roulette), and **Roulette**.
-- Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with weight `101 − n` (5 is most likely, 100 least; total 4656). Other kits keep catalog Draw.
+- Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with truncated-geometric weight P(n) ∝ r^(n − 5), r = 10^(-1/16) ≈ 0.8660, so P(n > 20) ≤ 0.10 (5 is most likely; each extra point is rarer; 100 stays possible). Other kits keep catalog Draw.
 - Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The death log is `{nickname} dies by Gambling`. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
 - Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
 
