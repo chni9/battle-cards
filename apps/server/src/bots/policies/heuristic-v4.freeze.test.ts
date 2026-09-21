@@ -11,6 +11,8 @@
  * `weightsHash` unchanged.
  * L64-03: Gambler start specials 5→2 plus Roulette and weighted Draw — traces
  * refreshed, `weightsHash` unchanged (no new weight constants).
+ * Designer 2026-09-21: truncated-geometric Draw (P(n > 20) ≤ 0.10) changes
+ * Gambler EV — refresh that kit’s trace only; `weightsHash` unchanged.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
