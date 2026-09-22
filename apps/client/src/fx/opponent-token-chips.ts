@@ -195,6 +195,22 @@ export function chipsForPublicLogEntry(
 
   switch (entry.action) {
     case 'draw': {
+      if (entry.drawBust === true) {
+        return [];
+      }
+      if (entry.drawGain !== undefined) {
+        if (entry.drawGain <= 0) {
+          return [];
+        }
+        return [
+          {
+            kind: 'point',
+            count: entry.drawGain,
+            from: 'log',
+            to: { playerId: actorId },
+          },
+        ];
+      }
       const kitId = actorId === you ? selfKitId : visibleKitId(actor);
       if (kitId === undefined) {
         return [];
@@ -734,5 +750,9 @@ export function actionLogFlyoutKey(entry: ActionLogEntryView): string {
       return `reanim:${entry.playerId}:${String(entry.turnSequence)}`;
     case 'rewardsClaimed':
       return `rewards:${entry.eliminatorPlayerId}:${entry.eliminatedPlayerId}:${String(entry.turnSequence)}`;
+    case 'sentenceCountdown':
+      return `sentence-cd:${entry.sourcePlayerId}:${String(entry.remainingOwnerTurns)}:${String(entry.turnSequence)}`;
+    case 'sentenceFired':
+      return `sentence-fire:${entry.sourcePlayerId}:${entry.targetPlayerId}:${String(entry.turnSequence)}`;
   }
 }

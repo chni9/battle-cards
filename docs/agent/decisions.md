@@ -3658,3 +3658,224 @@ devDependency landmine. Operator clicks: `docs/agent/deploy.md` §E.
 
 ---
 
+## 2026-09-20 · [P] Lot 63 The Gambler kit + Factory
+
+Designer session: add Classic kit `gambler` (The Gambler) and circulating
+special `factory`. God / Team / Quick stay out; this is a 16th Classic kit,
+not the God role. Rule + value change (golden rule 7 exception).
+
+Locked:
+
+- Start: 1 life, 0 points, 0 upgrade points, draw 10, 0 action, 0 attack,
+  5 random circulating specials excluding Factory, then one Factory.
+- Draw risk: only the Draw turn action. `rng.nextInt(10) === 0` instantly
+  eliminates at any life total and grants no points. Public `drawBust` on
+  the played-action log. No eliminator reward. Invisibility ticks do not
+  roll. Seeded RNG.
+- Factory: persistent, play cost 10, 2 card-lives (`applyDamage` only).
+  Owner-turn tick including activation. Base 80/20 uniform among 10 shared
+  cards vs circulating specials except Factory. Upgraded: 70/30 and an
+  independent 30% that the granted copy is upgraded.
+- Factory circulates (shop / Prophet / Transformer). Deal path may mix
+  `randomStartingSpecialCount` and `specialCards` (random first, then
+  append; random pool excludes guaranteed ids).
+- Art is test placeholders until design lands.
+- `PROTOCOL_VERSION` 35 → 36 in L63-03 for public `drawBust` (V6 bump
+  exception, same class as L56–L60).
+
+10% bust: first action is always Draw (no affordable special at 0 points).
+Tactician's safe draw 4 is the 1-life comparison; instant elim at 25 lives
+needs a low rate. Retune after playtest; ship 1-in-10.
+
+---
+
+## 2026-09-20 · [P] Gambler name + Factory burn skip
+
+Designer follow-up on Lot 63, same day:
+
+- Display name is **Gambler**, not "The Gambler" (`KIT_CATALOG.gambler.name`).
+- Engage overlay (`farm-to-engage-v4`): Factory is a selfish counter like
+  Points Generator and Super Absorber — skip burning it unless 1v1 /
+  attacker / finishable / known points ≥ 10. Imposition / Poison still burn.
+  Easy stays `heuristic-v4` (same as L54-04). No new weight; freeze unchanged.
+
+---
+
+## 2026-09-20 · [P] Gambler / Factory test-art placeholders
+
+Designer: do not reuse other cards' PNGs as placeholders. Gambler portrait and
+the four Factory faces (base, upgraded, activated, activated-upgraded) are
+white fields with the word **Test** until real art lands.
+
+---
+
+## 2026-09-20 · [P] Publish Draw-bust on ACTION_PLAYED
+
+Bugbot on PR #45 (`d81f790b`): engine `ActionPlayedEvent.drawBust` and
+`ActionPlayedLogEntry.drawBust` existed, but `ActionPlayedPayload` omitted the
+field and three copy sites dropped it — room `applyTurnResult`, simulator
+`appendLog`, four-bot harness. Table always showed a normal Draw; kit posterior
+never collapsed on the public tell.
+
+Fix: `toActionPlayedPayload` / `actionPlayedPublicFields` in shared protocol.
+PROTOCOL_VERSION stays 36 (the bump already documented the tell). Opaque
+Duplicator `draw` still must not copy `drawBust`.
+
+---
+
+## 2026-09-20 · [P] What’s new New additions (Gambler / Factory)
+
+`RELEASE_NOTES` (`packages/shared/src/release-notes.ts`) is the hub What’s new
+catalog. Each entry has `additions` (heading **New**: kits and new cards) and
+before/after `items` (nerfs). Lot 63 items: Sentence, Imposition, Super
+Absorber, rendered above the New block. Lot 63 additions: Gambler kit, Factory
+special.
+Compact green **New** + red unread tick; auto-open this catalog id. Update the
+latest entry in the same commit as player-visible work. No protocol bump.
+
+---
+
+## 2026-09-20 · [P] What’s new nerfs match live rules
+
+Bugbot on PR #46 (`911fed9d`): hub What’s new announced Sentence, Imposition,
+and Super Absorber changes while handlers still used the old rules. Designer
+copy stays; the engine now matches it. Sentence costs 20 and waits 3 later
+owner turns (`pendingSentences`, remaining turns are not card-lives).
+Imposition skips short victims (no lives). Unupgraded Super Absorber absorbs
+lives only; upgraded also absorbs spend at ×1; no activation snapshot.
+`PROTOCOL_VERSION` **36 → 37** so older clients cannot read the public
+countdown. V6 bump exception, same class as L49 / L56–L60 / L63-03.
+
+---
+
+## 2026-09-20 · [P] Fog recovered pool-buy identity on the action log (L63-06)
+
+Designer: a card bought from the pool must not be public on the action log.
+The public tell is only that the actor bought a card from the pool. Buyer,
+Spy of the buyer, eliminated spectators, and Stay walk-in overlay still see
+the recovered `cardId` / `isUpgraded`. Sitting pool faces stay public
+(occupancy and identity of cards still in the pool). Excel `exportLog` stays
+full. No `PROTOCOL_VERSION` bump — optional-field omission, Duplication class.
+Stored server log and `toActionPlayedPayload` keep identity so draw-bust and
+Excel stay honest; live `ACTION_PLAYED` unicasts `fogBuyPoolCardPlayed`.
+Belief widens every zone on a fogged `buyPoolCard` instead of pinning a card.
+Do not invent a What’s new item for this restore.
+
+---
+
+## 2026-09-21 · [P] Factory renamed Roulette + cream/pink art
+
+Designer Yassine Chenik: card id `factory` → `roulette`, player-facing name
+**Roulette**. `PROTOCOL_VERSION` **37 → 38** because `cardId` is public on
+plays, persistents, inspect, and logs. Historic Postgres rows may still
+contain `factory`; no alias.
+
+Cream faces (`Name.png`) are unupgraded defaults; pink (`Name +.png`) are
+upgraded defaults. Activated `(activated)` faces were not in the drop —
+keep existing table art, except rename Factory Test activated files to
+`Roulette (activated).png` / `Roulette + (activated).png`. Ignore printed
+PNG costs, recycle, and shields; Classic values stay.
+
+Art mapping: Gambler kit portrait; Invisibility (not Unspy); Points
+Generator; Roulette; Sentence; Super Absorber; Upgrade Point Thief
+(hand-plus). What’s new stays `lot-63`; rename the Factory line only.
+
+---
+
+## 2026-09-21 · [P] Roulette activated faces reuse cream/pink art
+
+Designer: an armed Roulette persistent still showed the white **Test**
+placeholder. Copy `Roulette.png` onto `Roulette (activated).png` and
+`Roulette +.png` onto `Roulette + (activated).png` (repo `images/` and
+client `assets/cards/`). Do not invent a thick-red activated border.
+Classic values unchanged.
+
+---
+
+## 2026-09-21 · [P] Lot 64 Gambler kit tweaks
+
+Designer session: Classic exception (golden rule 7). No God / Team / Quick.
+`PROTOCOL_VERSION` **38 → 39** in L64-01 so older clients cannot read the new
+contract.
+
+Locked:
+
+- Start: exactly **one Roulette** plus **2 other distinct** circulating
+  specials (no second Roulette, no duplicate among the two). Sample without
+  replacement for Gambler only (`rng.shuffle(pool).slice(0, count)` then
+  append Roulette). Prophet stays with-replacement per #V4-27.
+- Draw payout rerolls at the **start of each Gambler’s turn** (including
+  Block extra turns). Other kits keep catalog Draw. Catalog
+  `startingResources.draw: 10` stays the listed / red-threshold number, not
+  the grant.
+- Weights: integer **5..100**, `weight(n) = 101 - n` (5 → 96, 100 → 1,
+  total 4656). Bust stays **1-in-10**, no points.
+- Log death as `{nickname} dies by Gambling` (`EliminationReason`
+  `'gambling'`). No eliminator / no kill reward.
+- Public `PublicPlayerView.drawGain` for a living Gambler; successful
+  `actionPlayed` draw also carries `drawGain` (omit on bust).
+
+---
+
+## 2026-09-21 · [P] Gambler Draw truncated geometric
+
+Designer correction on Lot 64 (PR #50): linear `weight(n) = 101 − n` put
+~70% of mass above 20. That is too high. Weights on integers **5..100**
+inclusive are now truncated geometric:
+
+- P(n) ∝ r^(n − 5)
+- r = 10^(-1/16) ≈ 0.8660 so (1 − r^16) / (1 − r^96) ≥ 0.90, i.e.
+  P(n > 20) ≤ 0.10 (use the 10% cap, not far under it — 21+ still shows
+  in play)
+- Integer weights `round(10^8 · r^(n − 5))`, drawn with `nextInt(total)`
+  through the existing rejection sampler (golden rule 5; no
+  `Math.random`; no modulo bias). Ticket 0 maps to 5; 100 stays possible
+  but vanishingly rare
+- Range, bust **1-in-10**, red `drawGain > 10`, and catalog Draw **10**
+  as inspect / red threshold are unchanged
+
+This entry supersedes the Lot 64 weight formula only. Do not rewrite the
+locked linear line above.
+
+---
+
+## 2026-09-21 · [P] Gambler Draw bust skipped in round 1
+
+Designer correction on Lot 64 (PR #50). Engine-only — do **not** write this
+in What’s new, inspect, How to play, kit catalog blurbs, or the rules spec.
+
+While the public action-log round is **1** (`floor(turnSequence / seatCount)
++ 1`, same formula the log uses for “Round N”; seatCount is the seated
+table including eliminated), Draw never busts: skip the 1-in-10 roll and
+grant `drawGain` as a safe Draw. Block extra turns that still sit in round
+1 stay immune. From round 2 the 1-in-10 is unchanged (`dies by Gambling`).
+
+---
+
+## 2026-09-21 · [P] Roulette grant tables
+
+Designer correction on Lot 64 (PR #50). Classic exception (golden rule 7).
+Update the rules spec; this supersedes Lot 63's 80/20 and 70/30 + 30%
+upgraded-copy tables.
+
+- Unupgraded: **only** a normal (shared attack or action) card. Never a
+  special. Independent **10%** that the granted copy is already upgraded.
+- Upgraded: **80%** normal / **20%** circulating special (still never
+  another Roulette). Independent **10%** that the granted copy is upgraded
+  (whichever bucket hit).
+- Play cost 10, 2 card-lives, persistent tick-after-action, seeded RNG
+  unchanged.
+
+---
+
+## 2026-09-21 · [P] What’s new edits the unshipped original
+
+Standing rule: if a kit or card has **never shipped on `main`**, later
+tweaks **edit that original What’s new entry**. They do not create a new
+log id. Lot 64 therefore has no player-facing `lot-64` release note;
+Gambler / Roulette live on `lot-63` as current truth (3 specials, Draw
+5–100 geometric, new Roulette grant tables). Do not mention round-1 Draw
+bust immunity there.
+
+---
+

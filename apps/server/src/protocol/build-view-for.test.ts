@@ -6,6 +6,7 @@ import {
   buildGameRecapView,
   buildLobbyViewFor,
   buildPlayingViewFor,
+  fogBuyPoolCardPlayed,
 } from './build-view-for';
 import { grantSpy } from './visibility-matrix';
 
@@ -232,7 +233,7 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     expect(JSON.stringify(view)).not.toContain('nextPoolInstanceSeq');
   });
 
-  it('includes the shared pool as public state (L20-03)', () => {
+  it('includes the shared pool occupancy as public state (L20-03 / L63-06)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -315,6 +316,25 @@ describe('buildPlayingViewFor (L1-09) — hidden information', () => {
     });
 
     expect(view.poolBuyCost).toBe(1);
+  });
+
+  it('exposes empty pendingSentences on a fresh game', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'pending-sentences-empty',
+    });
+    expect(state.pendingSentences).toEqual([]);
+    const view = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(view.pendingSentences).toEqual([]);
   });
 
   it('sets spyingOnYou only on seats that spy the recipient (L58-02)', () => {
@@ -1310,5 +1330,343 @@ describe('buildFinishedViewFor (L60-04)', () => {
     expect(fogged.recap.players.map((row) => row.damageDealt)).toEqual(
       stayed.recap.players.map((row) => row.damageDealt),
     );
+  });
+});
+
+describe('buyPoolCard log fog (L63-06)', () => {
+  const poolBuyLog = [
+    {
+      kind: 'actionPlayed' as const,
+      actorPlayerId: 'a',
+      action: 'buyPoolCard' as const,
+      cardId: 'tax' as const,
+      isUpgraded: false,
+      turnSequence: 1,
+    },
+  ];
+
+  it('omits cardId and isUpgraded unless the recipient sees the buyer', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'l63-06-pool-fog',
+      kitAssignment: ['untouchable', 'warrior', 'kamikaze'],
+    });
+    const carol = state.players.find((player) => player.id === 'c');
+    expect(carol).toBeDefined();
+    if (carol === undefined) {
+      return;
+    }
+
+    carol.isEliminated = true;
+    carol.lives = 0;
+    carol.pendingReanimation = null;
+
+    const forBuyer = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+    });
+    expect(forBuyer.actionLog[0]).toEqual(poolBuyLog[0]);
+
+    const forOther = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+    });
+    expect(forOther.actionLog[0]).toEqual({
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 1,
+    });
+    expect(forOther.actionLog[0]).not.toHaveProperty('cardId');
+    expect(forOther.actionLog[0]).not.toHaveProperty('isUpgraded');
+
+    grantSpy(state, 'b', 'a', 'kit-and-cards');
+    const forSpy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+    });
+    expect(forSpy.actionLog[0]).toEqual(poolBuyLog[0]);
+
+    const forElim = buildPlayingViewFor({
+      recipientSessionId: 'c',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+    });
+    expect(forElim.actionLog[0]).toEqual(poolBuyLog[0]);
+  });
+
+  it('keeps recovered-card identity on Excel exportLog', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-export',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const finished = buildFinishedViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      winnerPlayerId: 'a',
+      actionLog: poolBuyLog,
+      eliminations: [],
+    });
+
+    expect(finished.exportLog.events[0]).toEqual(poolBuyLog[0]);
+    expect(finished.finalTable.actionLog[0]).toEqual({
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 1,
+    });
+    expect(finished.finalTable.actionLog[0]).not.toHaveProperty('cardId');
+  });
+
+  it('fogs a walk-in until Stay and drops live ACTION_PLAYED identity', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-walk-in',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    const foggedWalkIn = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+      walkInSpectator: true,
+      claimableSeats: [{ playerId: 'a', nickname: 'Alice' }],
+    });
+    const stayed = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'WATCH',
+      state,
+      turnDeadlineMs: null,
+      actionLog: poolBuyLog,
+      walkInSpectator: true,
+      walkInSeesPrivate: true,
+      claimableSeats: [{ playerId: 'a', nickname: 'Alice' }],
+    });
+
+    expect(foggedWalkIn.actionLog[0]).not.toHaveProperty('cardId');
+    expect(stayed.actionLog[0]).toEqual(poolBuyLog[0]);
+
+    const live = {
+      actorPlayerId: 'a',
+      action: 'buyPoolCard' as const,
+      cardId: 'tax' as const,
+      isUpgraded: false,
+      turnSequence: 1,
+    };
+    expect(fogBuyPoolCardPlayed(live)).toEqual({
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 1,
+    });
+    expect(fogBuyPoolCardPlayed(live)).not.toHaveProperty('cardId');
+    expect(fogBuyPoolCardPlayed(live)).not.toHaveProperty('isUpgraded');
+  });
+});
+
+describe('pool-list faces (L63-06)', () => {
+  it('shows sitting pool cards to every recipient; occupancy stays public', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-pool-list',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    state.pool.push({
+      instanceId: 'pool-secret',
+      cardId: 'poison',
+      isUpgraded: true,
+    });
+
+    const forA = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const forB = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    const face = {
+      instanceId: 'pool-secret',
+      cardId: 'poison' as const,
+      isUpgraded: true,
+    };
+    expect(forA.pool).toEqual([face]);
+    expect(forB.pool).toEqual([face]);
+  });
+
+  it('keeps pool faces for the pool-pick chooser and everyone else', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-pool-pick',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    state.pool.push({
+      instanceId: 'pool-pick-1',
+      cardId: 'tax',
+      isUpgraded: false,
+    });
+    state.subChoice = {
+      kind: 'pool-pick',
+      playerId: 'a',
+      maxCount: 1,
+      eligibleInstanceIds: ['pool-pick-1'],
+      cardIsUpgraded: true,
+      deadlineMs: 1,
+    };
+
+    const chooser = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const other = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(chooser.pool).toEqual([
+      { instanceId: 'pool-pick-1', cardId: 'tax', isUpgraded: false },
+    ]);
+    expect(other.pool).toEqual([
+      { instanceId: 'pool-pick-1', cardId: 'tax', isUpgraded: false },
+    ]);
+  });
+
+  it('still fogs buyPoolCard identity while pool faces stay public', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l63-06-faces-and-buy',
+      kitAssignment: ['untouchable', 'warrior'],
+    });
+    state.pool.push(
+      { instanceId: 'pool-poison', cardId: 'poison', isUpgraded: true },
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    );
+
+    const beforeBuy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    expect(beforeBuy.pool).toEqual([
+      { instanceId: 'pool-poison', cardId: 'poison', isUpgraded: true },
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    ]);
+
+    state.pool = state.pool.filter((card) => card.instanceId !== 'pool-poison');
+
+    const afterBuy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'poison',
+          isUpgraded: true,
+          turnSequence: 1,
+        },
+      ],
+    });
+    expect(afterBuy.pool).toEqual([
+      { instanceId: 'pool-tax', cardId: 'tax', isUpgraded: false },
+    ]);
+    expect(afterBuy.actionLog[0]).not.toHaveProperty('cardId');
+    expect(afterBuy.actionLog[0]).not.toHaveProperty('isUpgraded');
+  });
+});
+
+describe('buildPlayingViewFor (L64-01) — public drawGain', () => {
+  it('exposes a living Gambler drawGain to every recipient and omits it for other kits', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l64-01-draw-gain',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const gambler = state.players.find((player) => player.kitId === 'gambler');
+    const other = state.players.find((player) => player.kitId === 'kamikaze');
+    expect(gambler).toBeDefined();
+    expect(other).toBeDefined();
+    if (gambler === undefined || other === undefined) {
+      return;
+    }
+
+    gambler.drawGain = 47;
+
+    const forSelf = buildPlayingViewFor({
+      recipientSessionId: gambler.id,
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+    const forOpponent = buildPlayingViewFor({
+      recipientSessionId: other.id,
+      gameCode: 'ABCDEF',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+    });
+
+    expect(forSelf.players.find((player) => player.id === gambler.id)?.drawGain).toBe(47);
+    expect(forOpponent.players.find((player) => player.id === gambler.id)?.drawGain).toBe(
+      47,
+    );
+    expect(forSelf.players.find((player) => player.id === other.id)?.drawGain).toBeUndefined();
+    expect(
+      'drawGain' in (forSelf.players.find((player) => player.id === other.id) ?? {}),
+    ).toBe(false);
   });
 });

@@ -39,9 +39,9 @@ Technical spec §4.2, materialising rules spec §1. One function per file, in
 
 | | `applyDamage` | `applyLifeLoss` |
 |---|---|---|
-| Used by | Attack cards only | Tax, Suicide, Imposition, Poison, every non-attack loss |
+| Used by | Attack cards only | Tax, Suicide, Poison, Curse, every remaining non-attack loss. Imposition no longer calls it (designer 2026-09-20). |
 | Shield | Absorbs first, excess carries to lives | Ignored entirely |
-| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`) | Never touches them |
+| Card counters | Decrements **card-lives** counters only (`points-generator`, `imposition`, `poison`, `super-absorber`, `roulette`) | Never touches them |
 
 ```ts
 // apps/server/src/engine/life/{apply-damage,apply-life-loss,gain-lives}.ts
@@ -76,13 +76,13 @@ from `GameState.lifeLimit`.
 
 ### Direct `player.lives` mutations — exempted
 
-Technical spec v4 §4.6. Five production call sites bypass the three life primitives. Each carries
+Technical spec v4 §4.6. Six production call sites bypass the three life primitives. Each carries
 an inline comment citing why; do not route them through `applyDamage` or `applyLifeLoss` without
 a ruling — golden rule 2 forbids enriching those primitives to absorb these cases. Future kit
 hooks (Ghost, Duplicator) observe outcomes caller-side, not inside the primitives.
 
 **Ghost (#V4-22 / L28-01):** `creditGhostLifeLoss(state, player, livesLost)` after every typed
-loss outcome and after Self-Suicide / Sentence (lives before assignment). Does **not**
+loss outcome and after Self-Suicide / Sentence / Draw bust (lives before assignment). Does **not**
 run on Cloning's resource copy or elimination bookkeeping that zeros already-0 lives.
 Routes through `grantPoints` so an active Duplicator can observe.
 
@@ -100,6 +100,7 @@ the grant wrappers.
 | `elimination-rewards.ts` — `eliminateWithoutReward` | Forfeit / absence elimination (technical spec §5.7). Player may still have lives; administrative marking, not a game-rule loss. No Ghost credit. |
 | `elimination-rewards.ts` — `processEliminations` | Idempotent `lives = 0` when already at 0 from prior typed loss or lethal effect (technical spec §4.3 step 5). Bookkeeping only. No Ghost credit. |
 | `cloning.ts` — resource copy | Snapshot assignment of the target's lives (rules spec §5). Can increase or decrease; neither `gainLives` nor a loss primitive. Upgrade bonus still uses `gainLives`. No Ghost credit (#V4-22). |
+| `perform-action.ts` — Draw bust | Instant lethal kit ability (designer 2026-09-20 / Lot 63). `rng.nextInt(drawBustDenominator) === 0` on the Draw action only — not Invisibility ticks. **Skipped while the public action-log round is 1** (`floor(turnSequence / seatCount) + 1`, designer 2026-09-21; engine-only, not player-facing). From round 2 the 1-in-10 is unchanged. Not `applyLifeLoss` (cannot express die-from-any-life in one step without Ghost siphoning each life) and not `applyDamage`. Ghost credits `livesBefore` then assigns 0. No elimination contributor; no kill reward. |
 
 ## Seeded randomness
 
@@ -116,7 +117,9 @@ function createSeed(): string;         // one per game, stored in GameState.seed
 ```
 
 Every draw goes through an **injected** instance: card distribution (L4-02), Sentence (L5-07),
-the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09). A module
+the 20-point special card purchase (L5-09), Mirror's default target on expiry (L3-09),
+Draw bust (Lot 63), Roulette grants (Lot 63), Gambler Draw payout (Lot 64,
+truncated geometric 5–100, P(n > 20) ≤ 0.10). A module
 that calls `createRng` itself, or `Math.random()`, breaks reproducibility for everything
 downstream of it.
 
@@ -131,8 +134,8 @@ server-only; see `protocol.md`) so §10.3 can deep-equal whole states.
   bounds, never specific numbers.
 - `nextInt` rejection-samples rather than taking a modulo, which would favour low indices and
   quietly bias distribution and Sentence.
-- `shuffle` does not exist yet. The first task that needs one adds it here, rather than
-  shuffling by hand with `nextInt`.
+- `shuffle` is Fisher–Yates on a copy (`Rng.shuffle`, L1-03 turn order; Lot 64
+  Gambler start specials without replacement). Do not shuffle by hand with `nextInt`.
 - **`GameState.seed` is server-only.** A client holding it can predict every remaining draw.
   See `protocol.md`.
 
@@ -204,8 +207,8 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 - Specials are granted at start but unplayable until Lot 5 handlers exist — do not re-deal at
   L5-01.
 - Turn-loop step 4 calls `applyPersistentEffects` after pending resolution (L5-02 / Lot 22).
-  Tick order (implementation detail, `decisions.md` 2026-08-05): Points Generator →
-  Invisibility → (if the player entered this phase invisible) skip Super Absorber /
+  Tick order (implementation detail, `decisions.md` 2026-08-05 / Lot 63): Points Generator →
+  Roulette → Invisibility → (if the player entered this phase invisible) skip Super Absorber /
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
   (#V4-9a / L58-06). Super Absorber

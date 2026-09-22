@@ -6,6 +6,8 @@
 
 import { emptyMatchStats, type PersistentEffect, type Player } from '@card-battle/shared';
 
+import type { Rng } from '../engine/rng';
+
 export function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'player-1',
@@ -58,5 +60,39 @@ export function makeCounterEffect(overrides: Partial<PersistentEffect> = {}): Pe
     counter: 3,
     targetPlayerId: null,
     ...overrides,
+  };
+}
+
+/** Deterministic `Rng` that yields `ints` from `nextInt` in order. */
+export function scriptedRng(ints: readonly number[], fallback?: Rng): Rng {
+  const queue = [...ints];
+  const nextInt = (maxExclusive: number): number => {
+    const value = queue.shift();
+    if (value === undefined) {
+      if (fallback !== undefined) {
+        return fallback.nextInt(maxExclusive);
+      }
+      throw new Error('scriptedRng exhausted');
+    }
+    if (!Number.isInteger(value) || value < 0 || value >= maxExclusive) {
+      throw new RangeError(
+        `scripted nextInt ${String(value)} out of [0, ${String(maxExclusive)})`,
+      );
+    }
+    return value;
+  };
+
+  return {
+    nextInt,
+    pick<T>(items: readonly T[]): T {
+      const item = items[nextInt(items.length)];
+      if (item === undefined) {
+        throw new RangeError('pick received an empty list');
+      }
+      return item;
+    },
+    shuffle<T>(items: readonly T[]): T[] {
+      return [...items];
+    },
   };
 }

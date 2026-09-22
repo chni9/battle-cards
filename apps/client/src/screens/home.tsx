@@ -1,5 +1,6 @@
 /**
- * Home screen — hub → Online / Solo paths; How to play primer + first-play soft gate (L42-02).
+ * Home screen — hub → Online / Solo paths; How to play primer + first-play
+ * soft gate (L42-02); What’s new (L63-07).
  * Intents unchanged: create / join / solo = create + N× addBot + startGame (L17-01).
  */
 
@@ -23,8 +24,14 @@ import {
   markHowToPlaySeen,
   type HowToPlayContinueTarget,
 } from '../help/help-storage';
+import {
+  hasUnseenReleaseNotes,
+  markLatestReleaseSeen,
+  shouldAutoOpenWhatsNew,
+} from '../help/release-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
+import { WhatsNewDialog } from './whats-new-dialog';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { homeStatusCopy } from './status-labels';
@@ -73,6 +80,12 @@ export function HomeScreen({
 }: HomeScreenProps): ReactElement {
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
+    shouldAutoOpenWhatsNew({
+      latestUnseen: hasUnseenReleaseNotes(),
+    }),
+  );
+  const [whatsNewUnread, setWhatsNewUnread] = useState(() => hasUnseenReleaseNotes());
   const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
   const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(1);
   const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
@@ -112,9 +125,27 @@ export function HomeScreen({
     }
   };
 
+  const closeWhatsNew = (): void => {
+    markLatestReleaseSeen();
+    setWhatsNewUnread(false);
+    setWhatsNewOpen(false);
+  };
+
+  const openWhatsNewIfDue = (): void => {
+    if (
+      !shouldAutoOpenWhatsNew({
+        latestUnseen: hasUnseenReleaseNotes(),
+      })
+    ) {
+      return;
+    }
+    setWhatsNewOpen(true);
+  };
+
   const goHub = (): void => {
     if (!busy) {
       setMode('hub');
+      openWhatsNewIfDue();
     }
   };
 
@@ -155,6 +186,7 @@ export function HomeScreen({
       markHowToPlaySeen();
     }
     setHowToPlayOpen(false);
+    openWhatsNewIfDue();
   };
 
   return (
@@ -165,6 +197,26 @@ export function HomeScreen({
       />
 
       <BetaCard />
+      <Button
+        type="button"
+        variant="green"
+        compact
+        data-whats-new-button
+        aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
+        onClick={() => {
+          setWhatsNewOpen(true);
+        }}
+        className="absolute right-[5.75rem] top-4 z-10 min-w-9 sm:right-28 sm:top-6"
+      >
+        New
+        {whatsNewUnread ? (
+          <span
+            data-whats-new-unread
+            aria-hidden
+            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
+          />
+        ) : null}
+      </Button>
 
       <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
         <section className="order-2 md:order-1">
@@ -266,6 +318,7 @@ export function HomeScreen({
       </div>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
+      <WhatsNewDialog open={whatsNewOpen} onClose={closeWhatsNew} />
       <FeedbackDialog
         open={feedbackOpen}
         mode="manual"

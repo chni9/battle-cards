@@ -18,7 +18,9 @@ import {
   type GameState,
   type KitId,
   type Player,
+  type PublicActionKind,
   type RewardChoice,
+  type SentenceAnnouncementLogEntry,
   type SpecialCardId,
 } from '@card-battle/shared';
 
@@ -32,11 +34,14 @@ import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
+import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
+import { actionLogRound } from './action-log-round';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
+import { tickPendingSentences } from './pending-sentences';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import { deactivatePersistentAction } from '../specials/list-legal-deactivate';
 import {
@@ -100,21 +105,6 @@ export type TurnAction =
   | { type: 'deactivatePersistent'; effectId: string }
   | { type: 'activateDuplication' };
 
-export type PublicActionKind =
-  | 'draw'
-  | 'playCard'
-  | 'playMultipleAttacks'
-  | 'buyCard'
-  | 'sellCard'
-  | 'upgradeCard'
-  | 'buyUpgradePoint'
-  | 'sellUpgradePoint'
-  | 'buySpecialCard'
-  | 'buyPoolCard'
-  | 'clearSpy'
-  | 'deactivatePersistent'
-  | 'activateDuplication';
-
 export interface ActionPlayedEvent {
   actorPlayerId: string;
   action: PublicActionKind;
@@ -123,6 +113,10 @@ export interface ActionPlayedEvent {
   targetPlayerId?: string;
   attacks?: readonly { cardId: CardId; targetPlayerId: string; isUpgraded: boolean }[];
   turnSequence: number;
+  /** Public Draw-bust tell — designer 2026-09-20 / Lot 63. Omit when false. */
+  drawBust?: true;
+  /** Successful Draw payout actually granted — Lot 64. Omit on bust. */
+  drawGain?: number;
 }
 
 export interface ActionResolvedEvent {
@@ -177,6 +171,11 @@ export interface TurnResult {
     isUpgraded: boolean;
     turnSequence: number;
   }[];
+  /**
+   * Sentence countdown / fire messages this turn.
+   * Absent when remaining did not decrement and nothing fired.
+   */
+  sentenceAnnouncements?: readonly SentenceAnnouncementLogEntry[];
 }
 
 export type TurnRejection = ActionReject;
@@ -259,12 +258,40 @@ function performPreparedTurnAction(
   let actionPlayed: ActionPlayedEvent;
 
   if (action.type === 'draw') {
-    grantPoints(state, actor, getKit(actor.kitId).startingResources.draw, 'direct');
-    actionPlayed = {
-      actorPlayerId,
-      action: 'draw',
-      turnSequence: state.turnSequence,
-    };
+    const kit = getKit(actor.kitId);
+    const bustDenominator = kit.traits.drawBustDenominator;
+    // Designer 2026-09-21: skip the 1-in-10 while the public action-log
+    // round is still 1. Engine-only — not written in player-facing copy.
+    const busted =
+      actionLogRound(state) > 1 &&
+      bustDenominator !== undefined &&
+      rng.nextInt(bustDenominator) === 0;
+
+    if (busted) {
+      const livesBefore = actor.lives;
+      // Instant lethal Draw bust — designer 2026-09-20 / Lot 63.
+      // Not `applyLifeLoss`: cannot express die-from-any-life in one step
+      // without Ghost siphoning each life. Not `applyDamage` (no shield, no
+      // card-lives). Ghost credits lives before the lethal assignment.
+      // No elimination contributor — no kill reward (rules spec §6).
+      observeLifeLoss(state, actor, livesBefore);
+      actor.lives = 0;
+      actionPlayed = {
+        actorPlayerId,
+        action: 'draw',
+        turnSequence: state.turnSequence,
+        drawBust: true,
+      };
+    } else {
+      const gain = actor.drawGain ?? kit.startingResources.draw;
+      grantPoints(state, actor, gain, 'direct');
+      actionPlayed = {
+        actorPlayerId,
+        action: 'draw',
+        turnSequence: state.turnSequence,
+        ...(actor.drawGain !== undefined ? { drawGain: actor.drawGain } : {}),
+      };
+    }
   } else if (action.type === 'buyCard') {
     const bought = buyCard(state, actorPlayerId, action.cardId);
 
@@ -1019,6 +1046,22 @@ export function expireReanimationKitPick(
   };
 }
 
+function withDrawBustReason(
+  eliminations: readonly EliminationEvent[],
+  actionPlayed: ActionPlayedEvent,
+  actorPlayerId: string,
+): EliminationEvent[] {
+  if (actionPlayed.drawBust !== true) {
+    return [...eliminations];
+  }
+
+  return eliminations.map((entry) =>
+    entry.playerId === actorPlayerId && entry.eliminatorPlayerId === null
+      ? { ...entry, reason: 'gambling' as const }
+      : entry,
+  );
+}
+
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
@@ -1030,8 +1073,20 @@ function finishTurnPhases(
 ): TurnResult {
   ensureAutoDeactivationLog(state);
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
-  applyPersistentEffects(state, actorPlayerId);
-  const { eliminations, playerReanimated } = processEliminations(state, rng, nowMs);
+  applyPersistentEffects(state, actorPlayerId, rng);
+  const skipNewestSentence =
+    actionPlayed.action === 'playCard' && actionPlayed.cardId === 'sentence';
+  const sentenceAnnouncements = tickPendingSentences(
+    state,
+    actorPlayerId,
+    skipNewestSentence,
+  );
+  const { eliminations: rawEliminations, playerReanimated } = processEliminations(
+    state,
+    rng,
+    nowMs,
+  );
+  const eliminations = withDrawBustReason(rawEliminations, actionPlayed, actorPlayerId);
   const eliminatedPlayerIds = eliminations.map((entry) => entry.playerId);
   const resolved = [...immediateResolved, ...toResolvedEvents(resolvedEffects)];
   const curseTransfers = collectCurseTransfers(
@@ -1039,6 +1094,7 @@ function finishTurnPhases(
     actionPlayed.turnSequence,
   );
   const losses = persistentDeactivationFields(state, actionPlayed.turnSequence);
+  const sentences = sentenceAnnouncementFields(sentenceAnnouncements);
 
   const reanimated =
     playerReanimated.length > 0 ? { playerReanimated } : {};
@@ -1060,6 +1116,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1076,6 +1133,7 @@ function finishTurnPhases(
       ...redirects,
       ...transfers,
       ...losses,
+      ...sentences,
     };
   }
 
@@ -1098,6 +1156,7 @@ function finishTurnPhases(
     ...redirects,
     ...transfers,
     ...losses,
+    ...sentences,
   };
 }
 
@@ -1115,6 +1174,16 @@ function persistentDeactivationFields(
   }
 
   return { persistentDeactivations: items };
+}
+
+function sentenceAnnouncementFields(
+  announcements: readonly SentenceAnnouncementLogEntry[],
+): Pick<TurnResult, 'sentenceAnnouncements'> {
+  if (announcements.length === 0) {
+    return {};
+  }
+
+  return { sentenceAnnouncements: announcements };
 }
 
 function collectCurseTransfers(

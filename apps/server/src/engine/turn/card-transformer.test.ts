@@ -229,7 +229,7 @@ describe('Card Transformer (L24-02)', () => {
       throw new Error('expected special-pick');
     }
 
-    expect(state.subChoice.eligibleCardIds).toHaveLength(19);
+    expect(state.subChoice.eligibleCardIds).toHaveLength(20);
     expect(state.subChoice.eligibleCardIds).not.toContain('card-transformer');
     expect(state.subChoice.eligibleCardIds).toContain('invisibility');
     expect(completeSpecialPick(state, a.id, 'card-transformer').ok).toBe(false);

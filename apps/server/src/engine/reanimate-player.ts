@@ -9,9 +9,9 @@
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
-  CIRCULATING_SPECIAL_CARD_IDS,
   getKit,
   KIT_IDS,
+  randomStartingSpecialPool,
   type KitId,
   type Player,
 } from '@card-battle/shared';
@@ -29,6 +29,8 @@ export function pickReanimationKit(rng: Rng, forcedKitId?: KitId): KitId {
  *
  * Prophet (#V4-27 / L27-04): `randomStartingSpecialCount` draws from circulating
  * specials via seeded `rng.pick` with replacement (duplicates OK).
+ * Gambler (Lot 64): shuffle without replacement, then append guaranteed
+ * `specialCards` (Roulette last).
  */
 export function dealStartingLoadout(
   player: Player,
@@ -48,18 +50,43 @@ export function dealStartingLoadout(
     acquireCardToHand(player, cardId, `${instancePrefix}:attack:${String(index)}`);
   }
 
+  let specialIndex = 0;
   const randomCount = kit.randomStartingSpecialCount;
 
   if (randomCount !== undefined && randomCount > 0) {
-    for (let index = 0; index < randomCount; index += 1) {
-      const specialId = rng.pick(CIRCULATING_SPECIAL_CARD_IDS);
-      acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
+    const pool = randomStartingSpecialPool(kit);
+    if (kit.id === 'gambler') {
+      // Without replacement — designer 2026-09-21 / Lot 64. Prophet stays
+      // with-replacement (#V4-27).
+      const drawn = rng.shuffle(pool).slice(0, randomCount);
+      for (const specialId of drawn) {
+        acquireSpecialCard(
+          player,
+          specialId,
+          `${instancePrefix}:special:${String(specialIndex)}`,
+        );
+        specialIndex += 1;
+      }
+    } else {
+      for (let index = 0; index < randomCount; index += 1) {
+        const specialId = rng.pick(pool);
+        acquireSpecialCard(
+          player,
+          specialId,
+          `${instancePrefix}:special:${String(specialIndex)}`,
+        );
+        specialIndex += 1;
+      }
     }
-    return;
   }
 
-  for (const [index, specialId] of kit.specialCards.entries()) {
-    acquireSpecialCard(player, specialId, `${instancePrefix}:special:${String(index)}`);
+  for (const specialId of kit.specialCards) {
+    acquireSpecialCard(
+      player,
+      specialId,
+      `${instancePrefix}:special:${String(specialIndex)}`,
+    );
+    specialIndex += 1;
   }
 }
 
@@ -95,6 +122,7 @@ export function reanimatePlayer(player: Player, kitId: KitId, rng: Rng): void {
   player.eliminationSnapshot = null;
   player.pendingReanimation = null;
   player.absorbWindowPendingPlayerIds = null;
+  delete player.drawGain;
 
   dealStartingLoadout(player, kitId, rng, `${player.id}:reanim`);
 }

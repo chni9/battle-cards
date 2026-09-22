@@ -8,24 +8,26 @@
 ## Status
 
 V1 shipped functional UI. **V2 visual language is shipped** (`docs/technical_spec_v2.md`,
-Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 60
+Lots 10–14). **V6 teaching / feedback / table-crowding surfaces are shipped** through Lot 63
 (`docs/technical_spec_v6.md`, `docs/backlog_v6.md`) — still **one** frontend playbook, never
 a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live under
 `apps/client/src/screens/`. **Keep it current with every client convention change**
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
-visibility rules stay server-side; Lots 49–60 are the current table (kit pick, occupancy 2–8,
+visibility rules stay server-side; Lots 49–64 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
 inspect from log/queue, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
-labels, Lot 60 Game over awards gallery).
+labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
+Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
+action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; How to play + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
@@ -56,7 +58,7 @@ rules above are unchanged — this section only covers how the client looks.
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
   (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG, mid-game `alwaysUpgraded` test. No engine
   change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` locks
-  `KIT_IDS.length === 15` with exhaustive catalog keys; client `KIT_FILES` is asserted in
+  `KIT_IDS.length === 16` with exhaustive catalog keys; client `KIT_FILES` is asserted in
   `asset-lookup.test.ts`. Inspect dialog already renders `alwaysUpgraded` / `specialCards`;
   only duplicate specials need a `${cardId}:${index}` React key (L27-05). New `KitTraits`
   fields need a dialog section + `KIT_TRAIT_SECTION_KEYS` entry (L30-05).
@@ -72,8 +74,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
-  / Draw / Sell), `red` (Leave / return home), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
+  / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
+  Table Draw (L64-05) reads public `drawGain` for Gambler else catalog Draw; Motion
+  pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
@@ -121,7 +125,25 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
+  the shared `Button` `variant="green"` (`bg-cta-green-deep`, same as Play
+  online) with a **red** unread tick when
+  `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
+  First visit of this catalog id auto-opens on the hub — How to play is not a
+  blocker. Closing / Got it writes the latest id. **New** heading lists
+  `additions` (kit portrait or card art + body) for kits/cards that did not
+  exist before; before → after `items` cover nerfs with named-card art and
+  render **above** the New block. Kit-level items may use `kitId` (Gambler
+  portrait) instead of `cardId`. Latest catalog id is `lot-63`. Gambler and
+  Roulette never shipped on `main`, so later tweaks edit that original New
+  body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
+  of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
+  Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
+  on the caster (remaining turns in red). Play / later caster ticks / fire flash
+  the table-wide red banner. The dialog lists history
+  (every catalog entry). **Update the latest catalog entry in the same commit
+  as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
@@ -160,7 +182,7 @@ rules above are unchanged — this section only covers how the client looks.
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
-  **Your kit** (self portrait or Random) + Choose kit Dialog (all 15 kit portraits + Random;
+  **Your kit** (self portrait or Random) + Choose kit Dialog (all 16 kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
   Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
@@ -416,7 +438,8 @@ rules above are unchanged — this section only covers how the client looks.
     card inspect use `CostDisplay`. Card inspect prefixes the play-cost row with
     **Cost** and inlines resource glyphs in effect / `upgradeAdds` copy
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
-    Draw is green (gain); Sell is green (gain); Buy / Upgrade stay
+    Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
+    red (L64-05); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
@@ -1204,4 +1227,52 @@ guard.
 - Empty: Seat count **8** → Finished matches **0**, modules still on screen,
   Volume day **No data**, occupancy pie zeros. First paint uses **Loading…**
   not an empty flash. Formatters treat non-finite numbers as **—**.
+
+### Lot 63 verified 2026-09-20 (browser, solo Gambler, PROTOCOL 36)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Solo Normal, nickname
+`L63Gate`. Room **JFBMCN**. `pnpm verify` **1523** tests after What’s new.
+
+- Kit picker last cell is **Gambler**. Inspect: 1 life, 0 points, 0 UP,
+  Draw +10, action/attack 0, Roulette special, Draw risk 1 in 10, ability copy
+  names Roulette and the bust.
+- Opening deal: 1 life, 0 points, empty hand, 6 specials including Roulette
+  (plus five circulating, none of them a second Roulette).
+- First action Draw: log `L63Gate draws` (safe path), points 10. Roulette Use
+  −10 arms a persistent with **2 card lives** and grants a shared card into
+  Hand on the same turn. Placeholder kit/Roulette art only.
+- Hub compact **New** auto-opens What’s new. Heading **New** lists Gambler kit
+  (1 life, Draw 10, 1-in-10 bust) and Roulette special (cost 10, 2 card lives).
+
+### Lot 63 nerfs (L63-05) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`. Hub What’s new `lot-63`: Sentence / Imposition /
+Super Absorber before **New** Gambler + Roulette. Solo nickname `NerfCheck`,
+Assassin, room **LVPDTD**. Kit inspect Sentence **−20**. Table inspect: Cost 20,
+“After 3 of your later turns (this play does not count)”. `pnpm verify` **1540**
+tests.
+
+### Lot 63 pool-buy log fog (L63-06) verified 2026-09-20 (browser, PROTOCOL 37)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. Two-tab Classic
+online, nicks `AliceFog` / `BobFog`, room **WZAUOW**. Alice Wizard, Bob
+Kamikaze. Alice sold Tax into the shop pool (faces stay public), then **Buy
+random**. Buyer log: **AliceFog bought Tax from the pool**. Opponent log:
+**AliceFog bought a card from the pool**. Live `ACTION_PLAYED` matches.
+`pnpm verify` **1552** tests. No protocol bump.
+
+### Lot 64 verified 2026-09-21 (browser, PROTOCOL 39)
+
+Vite `:5173`, Colyseus `:2567`. Solo Normal, nicks `L64Gate` / `L64Pulse2`.
+Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
+
+- Opening deal: 1 life, 0 points, empty hand, **3 specials including Roulette**
+  (two circulating, no second Roulette). Compact Draw no word label.
+- Draw payout rerolls each of your turns. `L64Gate` first Draw **+9 green**;
+  later **+21 red**. `L64Pulse2` **+44 red** then **+10**, then **+32 red**.
+  Red when payout `> 10`. Motion pulse is 0.45s at turn start (`MOTION_PULSE_S`);
+  reduced-motion / load timing can hide it on capture — source and tests pin it.
+- Bust log: **L64Gate draws and busts** then **L64Gate dies by Gambling**.
+  Hub What’s new latest id `lot-63` (Gambler/Roulette folded into the original
+  lot-63 New bodies; no `lot-64` release id).
 

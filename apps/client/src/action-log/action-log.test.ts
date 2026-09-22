@@ -108,6 +108,33 @@ describe('formatActionLogEntry (L9-02)', () => {
     ).toBe('Alice bought a card');
   });
 
+  it('names a recovered pool card only when cardId is present (L63-06)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          cardId: 'tax',
+          isUpgraded: false,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought Tax from the pool');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'buyPoolCard',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice bought a card from the pool');
+  });
+
   it('logs that the actor got unspied from the spy (L58-07)', () => {
     expect(
       formatActionLogEntry(
@@ -219,6 +246,59 @@ describe('formatActionLogEntry (L9-02)', () => {
         nick,
       ),
     ).toBe('Alice draws');
+  });
+
+  it('shows a public Draw-bust tell (L63-03)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'draw',
+          drawBust: true,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice draws and busts');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionPlayed',
+          actorPlayerId: 'a',
+          action: 'draw',
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice draws');
+  });
+
+  it('logs a Draw-bust death as dies by Gambling (L64-04)', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerEliminated',
+          playerId: 'a',
+          reason: 'gambling',
+          eliminatorPlayerId: null,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice dies by Gambling');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'playerEliminated',
+          playerId: 'a',
+          reason: 'combat',
+          eliminatorPlayerId: null,
+          turnSequence: 1,
+        },
+        nick,
+      ),
+    ).toBe('Alice is eliminated in combat');
   });
 
   it('formats player reanimation without the kit (L50-03)', () => {
@@ -479,6 +559,8 @@ describe('action log kinds (L56-03)', () => {
       curseTransferred: true,
       playerReanimated: true,
       rewardsClaimed: true,
+      sentenceCountdown: true,
+      sentenceFired: true,
     };
     expect([...ACTION_LOG_KINDS].sort()).toEqual(Object.keys(kinds).sort());
   });
@@ -568,6 +650,18 @@ describe('click-to-explain card segments (L56-05)', () => {
       isUpgraded: false,
     });
     expect(formatActionLogEntry(play, nick)).toBe('Alice plays Absorber on Bob');
+  });
+
+  it('does not emit a card segment for a fogged pool buy (L63-06)', () => {
+    const fogged = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'buyPoolCard',
+      turnSequence: 1,
+    } as const;
+    expect(formatActionLogEntrySegments(fogged, nick).some((segment) => segment.type === 'card')).toBe(
+      false,
+    );
   });
 
   it('emits a card segment on persistentDeactivated', () => {

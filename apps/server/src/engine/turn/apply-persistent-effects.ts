@@ -2,21 +2,33 @@
  * Apply persistent effects that act on the current player after their action —
  * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
  *
- * Tick order (implementation detail, decisions.md 2026-08-05): Points Generator →
- * Super Absorber → Imposition → Poison → Curse. Super Absorber runs before life-ticking
- * persistents so it does not re-absorb lives lost later in the same phase.
- * Curse still ticks on `pointsSpent` (#V4-20) and siphons those lost lives — and any
- * other actual life loss — to the original caster (L50-09; L50-02 siphon stays).
+ * Tick order (implementation detail, decisions.md 2026-08-05 / Lot 63): Points
+ * Generator → Roulette → Invisibility → Super Absorber → Imposition → Poison →
+ * Curse. Super Absorber runs before life-ticking persistents so it does not
+ * re-absorb lives lost later in the same phase. Lives always; spend only if
+ * upgraded; never a multiplier. Roulette grants a seeded random card (golden
+ * rule 5): unupgraded only a shared attack/action (10% that copy is upgraded);
+ * upgraded 80% shared / 20% circulating special except Roulette, still 10%
+ * upgraded. Imposition skips short victims (no lives). Curse still ticks on
+ * `pointsSpent` (#V4-20) and siphons those lost lives — and any other actual
+ * life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
 
-import type { GameState, PersistentEffect, Player } from '@card-battle/shared';
+import {
+  CIRCULATING_SPECIAL_CARD_IDS,
+  SHARED_CARD_IDS,
+  type GameState,
+  type PersistentEffect,
+  type Player,
+} from '@card-battle/shared';
 
 import {
-  grantLives,
   grantPoints,
 } from '../economy/grant-resources';
+import { acquireCardToHand, acquireSpecialCard } from '../kits/acquire-card';
 import { applyLifeLoss } from '../life/apply-life-loss';
 import { observeLifeLoss } from '../life/observe-life-loss';
+import type { Rng } from '../rng';
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import { playerIsInvisible } from '../specials/is-invisible';
 import { absorbLedgerFromVictim } from './absorb-ledger';
@@ -25,8 +37,6 @@ import { recordEliminationContributor } from './elimination-rewards';
 
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
-const IMPOSITION_LIVES_BASE = 1;
-const IMPOSITION_LIVES_UPGRADED = 2;
 const POINTS_GENERATOR_BASE = 3;
 const POINTS_GENERATOR_UPGRADED = 6;
 const INVISIBILITY_POINTS_BASE = 4;
@@ -35,8 +45,19 @@ const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
 const CURSE_POINTS_PER_LIFE_UPGRADED = 2;
+/** Upgraded Roulette: `nextInt(10) < 8` → 80% shared card. Unupgraded never rolls a special. */
+const ROULETTE_NORMAL_ROLL_UPGRADED = 8;
 
-export function applyPersistentEffects(state: GameState, playerId: string): void {
+const ROULETTE_GRANT_SPECIAL_IDS = CIRCULATING_SPECIAL_CARD_IDS.filter(
+  (id): id is Exclude<(typeof CIRCULATING_SPECIAL_CARD_IDS)[number], 'roulette'> =>
+    id !== 'roulette',
+);
+
+export function applyPersistentEffects(
+  state: GameState,
+  playerId: string,
+  rng?: Rng,
+): void {
   const player = findPlayer(state, playerId);
 
   if (player === undefined || player.isEliminated) {
@@ -44,6 +65,7 @@ export function applyPersistentEffects(state: GameState, playerId: string): void
   }
 
   applyPointsGeneratorTicks(state, player);
+  applyRouletteTicks(state, player, rng);
   // Snapshot before last-turn auto-loss: this owner turn still counts as
   // invisible for victim ticks (#V4-9a / L58-06). Manual deactivate already
   // dropped the effect before this function runs, so those turns resume.
@@ -72,6 +94,47 @@ function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
       effect.isUpgraded ? POINTS_GENERATOR_UPGRADED : POINTS_GENERATOR_BASE,
       'direct',
     );
+  }
+}
+
+function applyRouletteTicks(state: GameState, owner: Player, rng: Rng | undefined): void {
+  const effects = owner.activePersistentEffects.filter(
+    (effect) => effect.cardId === 'roulette' && effect.counter !== null && effect.counter > 0,
+  );
+
+  if (effects.length === 0) {
+    return;
+  }
+
+  if (rng === undefined) {
+    throw new Error('applyPersistentEffects: Roulette tick requires injected rng');
+  }
+
+  for (const effect of effects) {
+    grantRouletteCard(state, owner, effect, rng);
+  }
+}
+
+function grantRouletteCard(
+  state: GameState,
+  owner: Player,
+  effect: PersistentEffect,
+  rng: Rng,
+): void {
+  const grantNormal = effect.isUpgraded
+    ? rng.nextInt(10) < ROULETTE_NORMAL_ROLL_UPGRADED
+    : true;
+  const cardId = grantNormal
+    ? rng.pick(SHARED_CARD_IDS)
+    : rng.pick(ROULETTE_GRANT_SPECIAL_IDS);
+  const instanceId = `${owner.id}:roulette:${effect.id}:${String(state.turnSequence)}`;
+  const instance = grantNormal
+    ? acquireCardToHand(owner, cardId, instanceId)
+    : acquireSpecialCard(owner, cardId, instanceId);
+
+  // Designer 2026-09-21: 10% upgraded copy on either face, either bucket.
+  if (rng.nextInt(10) === 0) {
+    instance.isUpgraded = true;
   }
 }
 
@@ -111,8 +174,9 @@ function applySuperAbsorbersOnVictim(state: GameState, victim: Player): void {
         continue;
       }
 
-      const multiplier = effect.isUpgraded ? 2 : 1;
-      absorbLedgerFromVictim(state, owner, victim, multiplier);
+      absorbLedgerFromVictim(state, owner, victim, {
+        includeSpend: effect.isUpgraded,
+      });
     }
   }
 }
@@ -140,19 +204,13 @@ function applyOneImposition(
   effect: PersistentEffect,
 ): void {
   const pointsDue = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
-  const livesDue = effect.isUpgraded ? IMPOSITION_LIVES_UPGRADED : IMPOSITION_LIVES_BASE;
 
-  if (victim.points >= pointsDue) {
-    victim.points -= pointsDue;
-    grantPoints(state, imposer, pointsDue, 'direct');
+  if (victim.points < pointsDue) {
     return;
   }
 
-  const loss = applyLifeLoss(victim, livesDue, 'imposition');
-  victim.turnLedger.livesLost += loss.livesLost;
-  observeLifeLoss(state, victim, loss.livesLost);
-  grantLives(state, imposer, loss.livesLost, 'direct');
-  recordEliminationContributor(state, victim.id, imposer.id, loss.livesLost);
+  victim.points -= pointsDue;
+  grantPoints(state, imposer, pointsDue, 'direct');
 }
 
 function applyPoisonsOnVictim(state: GameState, victim: Player): void {

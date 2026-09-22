@@ -76,6 +76,7 @@ function baseView(): PlayingStateView {
     actionLog: [],
     pool: [],
     poolBuyCost: 1,
+    pendingSentences: [],
     playKind: 'classic',
     tutorialIndex: null,
   };

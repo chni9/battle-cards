@@ -30,6 +30,7 @@ import { poolDeactivatedPersistentEffects } from '../specials/pool-deactivated';
 import { onPlayerEliminatedForAbsorbWindow } from './absorb-window';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { beginReanimationKitPick } from './generic-sub-choice';
+import { cancelPendingSentencesFrom } from './pending-sentences';
 import { SUB_CHOICE_MS } from './sub-choice';
 
 /** Re-exports the single `SUB_CHOICE_MS` — technical spec v4 §4.4 (L20-18). */
@@ -40,6 +41,8 @@ export const ELIMINATION_REWARD_POINTS = 8;
 export interface EliminationEvent {
   playerId: string;
   eliminatorPlayerId: string | null;
+  /** Present for Draw bust (Lot 64). Room defaults other combat elims. */
+  reason?: 'gambling';
 }
 
 /** Auto-lost persistents from a leave / forfeit / inactivity dump (L56-07). */
@@ -163,6 +166,7 @@ function candidatesForVictim(state: GameState, victimPlayerId: string): string[]
  * without sharing that collector (L56-07).
  */
 function cleanupEliminatedPlayer(state: GameState, player: Player): AutoDeactivation[] {
+  cancelPendingSentencesFrom(state, player.id);
   player.pendingEffects = [];
   if (player.activePersistentEffects.length === 0) {
     return [];

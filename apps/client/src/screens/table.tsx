@@ -18,6 +18,7 @@ import {
   type KitId,
   type PlayingStateView,
   type ResolveSubChoicePayload,
+  type SentenceAnnouncementLogEntry,
   type SubChoiceRequiredPayload,
   type TutorialTourHighlight,
 } from '@card-battle/shared';
@@ -957,7 +958,7 @@ function TableScreenInner({
     portraitInspected,
   ]);
   const kit = getKit(view.self.kitId);
-  const drawValue = kit.startingResources.draw;
+  const drawValue = selfPublic?.drawGain ?? kit.startingResources.draw;
   const allowsMultiAttack = kit.traits.allowsMultipleAttacksPerTurn;
   const attackCards = view.self.hand.filter((card) => isSharedAttackCardId(card.cardId));
   const activePlayer = view.players.find(
@@ -1230,6 +1231,14 @@ function TableScreenInner({
         isEliminated={selfEliminated}
         youWon={povWon}
         pendingEffects={view.pendingEffects}
+        sentenceAnnouncements={view.actionLog.filter(
+          (entry): entry is SentenceAnnouncementLogEntry =>
+            entry.kind === 'sentenceCountdown' || entry.kind === 'sentenceFired',
+        )}
+        nicknameOf={(id) => {
+          const seat = view.players.find((player) => player.id === id);
+          return seat?.nickname ?? id;
+        }}
         you={view.you}
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />

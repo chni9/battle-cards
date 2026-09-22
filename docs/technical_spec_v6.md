@@ -90,7 +90,7 @@ Recorded here so Lot 41 can copy them into `docs/agent/decisions.md` without re-
 | 12 | **Every** table prompt uses a shop-style visual picker (card faces, seats with name + seat color). Mirror / Incoming-related choices show the **attacking card art** plus the source player’s name and color. |
 | 13 | English only. Open URL. Visible **Beta** badge. No hub password. |
 | 14 | Classic frozen except designer 2026-09-01 Lot 54 (Spy play 2 / shop 4; weaker-answer mutual; assassin volley), designer 2026-09-09 Lot 56 (Invisibility freeze, superseded by Lot 58), and designer 2026-09-15 Lot 58 (pool buy, Invisibility pacifist 4/7, PG 3/6, Unspy 10). Tutorial-only exceptions are listed in §5.3. Client disable is **not** validation (golden rule 8): the server filters tutorial-legal actions. |
-| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**, **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**. |
+| 15 | Architecture: **Approach 1** — one room, one protocol bump (28 → 29), HTTP feedback on the existing Express server, hints in `localStorage`. Documented later exceptions: L49-01 (29 → 30), **L56-03 (30 → 31)**, **L57-07 (31 → 32)**, **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, **L63-03 (35 → 36)**, **36 → 37** (`pendingSentences`). |
 
 
 ### 2.1 Session 2026-08-29 — Classic occupancy
@@ -155,7 +155,7 @@ Still Lot 57 (not a new lot). Classic online only. No combat-value change.
   autodraw on their turns. The **third** autodraw eliminates
   (`eliminateWithoutReward`, `absence`). Eliminated seats are not claimable.
 - `PROTOCOL_VERSION` **31 → 32** (L57-07), **32 → 33** (L57-16), **33 → 34**
-  (L58-02), **34 → 35** (L60-02). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
+  (L58-02), **34 → 35** (L60-02), **35 → 36** (L63-03), **36 → 37** (`pendingSentences`). `maxClients` 8 player seats + 8 spectators. Player occupancy still 2–8.
 
 ### 2.4 Session 2026-09-15 — Game over awards (Lot 60)
 
@@ -222,7 +222,8 @@ Hints:     localStorage, first Classic playing view only
   in development; production same-origin Coolify needs none.
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
   later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L57-07 (31 → 32)**,
-  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**.
+  **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, **L63-03 (35 → 36)**,
+  **36 → 37** (`pendingSentences`), **L64-01 (38 → 39)** (`drawGain` / `'gambling'`).
 
 
 ---
@@ -715,8 +716,9 @@ Not even partially, even “to lay groundwork”:
 - Feedback screenshot upload, ratings, Slack/Notion/email
 - Changing Classic prices, damage, starting resources, or mutual-attack math
   (except designer 2026-09-01 Lot 54, designer 2026-09-09 Lot 56 Invisibility
-  freeze, and designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
-  PG 3/6 / Unspy)
+  freeze, designer 2026-09-15 Lot 58 pool buy / Invisibility pacifist /
+  PG 3/6 / Unspy, designer 2026-09-20 Lot 63 The Gambler + Roulette, and
+  designer 2026-09-21 Lot 64 Gambler kit tweaks)
 - A second Colyseus room type
 - Replay / VOD spectator (Lot 57 walk-in Join-with-code spectate is in scope;
   it reuses eliminated-player vision, not a replay product)
@@ -740,7 +742,7 @@ Not even partially, even “to lay groundwork”:
 4. **Silent feedback success without DB** would make you think testers were quiet. Forbidden.
 5. **`leaveGame()` on Forfeit** repeats today’s bug. Table Forfeit ≠ disconnect.
 6. **Protocol bump twice** in V6 is forbidden except the documented exceptions
-   (L49, L56, L57-07, L57-16, L58, **L60**); put Lot 60 wire changes in L60-02.
+   (L49, L56, L57-07, L57-16, L58, **L60**, **L63-03**, **L64-01**); put Lot 63 wire changes in L63-03.
 
 7. **Cancel-reason copy:** if `actionResolved` has no equal-cancel vs stronger-prevails
    discriminant today, do **not** invent one in copy. File it as a question in
@@ -773,6 +775,8 @@ Detail and acceptance lines: `docs/backlog_v6.md`.
 | 60 | Game over awards | Recap kits + match totals + award tiles; 34 → 35 |
 | 61 | Designer admin insights | Password `/admin`, dashboard/games/kits/data + inbox move; HTTP only |
 | 62 | Overview metrics modules | `/admin` Overview charts; action-log frequencies; think time persist; HTTP only |
+| 63 | The Gambler + Roulette | Classic 16th kit, Roulette special, Draw bust; Sentence / Imposition / Super Absorber nerfs match What’s new; 35 → 36 then 36 → 37; `factory` renamed `roulette` at 38 |
+| 64 | Gambler kit tweaks | 2 distinct start specials + Roulette; truncated-geometric Draw 5–100 (P(n > 20) ≤ 0.10); `'gambling'` death log; 38 → 39 |
 
 
 Lots 42 / 43 / 44 / 47 can overlap after 41. **45 depends on 41** (and should land after 44

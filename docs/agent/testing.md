@@ -80,7 +80,7 @@ one action per turn except Assassin · 25-life cap on every source of gain.
 
 **2 — Hidden information.** No client receives an unspied opponent's kit, hand, or exact
 resources · every action is broadcast to everyone, card identity included · the pending effects
-queue is public · Spy persists to the end of the game · Cloning resets visibility both ways.
+queue is public · ticking Sentence is public · Spy persists to the end of the game · Cloning resets visibility both ways.
 
 **3 — Rulings.** One dedicated test per row of technical spec §6.2, plus the timer and threshold
 rules of §5.
@@ -100,6 +100,9 @@ forfeit at 2 players · last survivor.
 These are the spots where a plausible implementation is wrong and silent:
 
 - A tax paid by a player holding a full shield → life lost, shield untouched, no counter moved.
+- Imposition with 1 point vs 2 due → no transfer and no `applyLifeLoss` (L63-04).
+- Sentence fire after 3 **later** activator turns (play does not count); remaining turns
+  are not shortened by `applyDamage` (L63-03).
 - Two attacks of **different** damage aimed at each other: a stronger *answer* still
   cancels the weaker incoming; a weaker answer is **kept** and the incoming still
   resolves (Lot 54). The tempting bug is to splice the weaker retaliation.
@@ -121,6 +124,9 @@ These are the spots where a plausible implementation is wrong and silent:
   `log-collapsed` / `opponents-collapsed` / `incoming-collapsed` when the
   expanded panel is unmounted (L53-07). A null measure because the seat or log
   is a button fails the gate.
+- A `buyPoolCard` log or live `ACTION_PLAYED` that names `cardId` for a
+  non-seer (L63-06). Buyer / Spy / spectator overlay still see the card;
+  sitting pool faces stay public.
 
 ## What not to do
 

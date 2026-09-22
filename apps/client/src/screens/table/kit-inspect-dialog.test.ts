@@ -37,7 +37,7 @@ describe('kit inspect trait sections (L30-05)', () => {
   it('covers every KitTraits field exactly once', () => {
     // Compile-time: every key is a KitTraits key (satisfies on the export).
     const keys: readonly (keyof KitTraits)[] = KIT_TRAIT_SECTION_KEYS;
-    expect(keys).toHaveLength(5);
+    expect(keys).toHaveLength(6);
     expect([...keys].sort()).toEqual(
       ([
         'alwaysUpgraded',
@@ -45,6 +45,7 @@ describe('kit inspect trait sections (L30-05)', () => {
         'allowsMultipleAttacksPerTurn',
         'upgradePointBuyCost',
         'upgradePointSellYield',
+        'drawBustDenominator',
       ] as const)
         .slice()
         .sort(),
@@ -57,19 +58,26 @@ describe('kit inspect trait sections (L30-05)', () => {
       getKit('untouchable'),
       getKit('assassin'),
       getKit('upgrader'),
+      getKit('gambler'),
     ] as const;
     expect(kits[0].traits.alwaysUpgraded.length).toBeGreaterThan(0);
     expect(kits[1].traits.immuneTo.length).toBeGreaterThan(0);
     expect(kits[2].traits.allowsMultipleAttacksPerTurn).toBe(true);
     expect(kits[3].traits.upgradePointBuyCost).toBe(5);
     expect(kits[3].traits.upgradePointSellYield).toBe(7);
+    expect(kits[4].traits.drawBustDenominator).toBe(10);
   });
 
-  it('documents Ghost, Duplicator and Prophet ability copy', () => {
+  it('documents Ghost, Duplicator, Prophet and Gambler ability copy', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
     expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
     expect(KIT_ABILITY_COPY.prophet).toMatch(/Invisibility excluded/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/1-in-10/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/Roulette/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/5–100|5-100/);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/weighted/i);
+    expect(KIT_ABILITY_COPY.gambler).toMatch(/3 specials/i);
   });
 });
 

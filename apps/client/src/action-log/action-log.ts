@@ -8,6 +8,7 @@ import {
   formatCardLabel,
   isAttackCardId,
   listedAttackDamage,
+  SENTENCE_OWNER_TURNS,
   type ActionLogEntryKind,
   type ActionLogEntryView,
   type CardId,
@@ -22,6 +23,8 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'curseTransferred',
   'playerReanimated',
   'rewardsClaimed',
+  'sentenceCountdown',
+  'sentenceFired',
 ] as const;
 
 export interface ActionLogFilters {
@@ -120,7 +123,9 @@ function formatPlayedActionSegments(
 
   switch (entry.action) {
     case 'draw':
-      return [actor, text(' draws')];
+      return entry.drawBust === true
+        ? [actor, text(' draws and busts')]
+        : [actor, text(' draws')];
     case 'buyCard':
       return [actor, text(' bought a card')];
     case 'sellCard':
@@ -284,7 +289,10 @@ export function formatActionLogEntrySegments(
     }
     case 'playerEliminated': {
       const victim = player(entry.playerId, nicknameOf);
-      const reasonLabel: Record<typeof entry.reason, string> = {
+      if (entry.reason === 'gambling') {
+        return [victim, text(' dies by Gambling')];
+      }
+      const reasonLabel: Record<Exclude<typeof entry.reason, 'gambling'>, string> = {
         combat: 'in combat',
         absence: 'by absence',
         inactivity: 'by inactivity',
@@ -339,6 +347,18 @@ export function formatActionLogEntrySegments(
         player(entry.eliminatedPlayerId, nicknameOf),
       ];
     }
+    case 'sentenceCountdown': {
+      if (entry.remainingOwnerTurns === SENTENCE_OWNER_TURNS) {
+        return [text('Sentence in 3 turns!')];
+      }
+      const unit = entry.remainingOwnerTurns === 1 ? 'turn' : 'turns';
+      return [
+        text(`${String(entry.remainingOwnerTurns)} ${unit} before Sentence!`),
+      ];
+    }
+    case 'sentenceFired': {
+      return [text('Sentence will kill '), player(entry.targetPlayerId, nicknameOf), text('!')];
+    }
     default: {
       const _exhaustive: never = entry;
       return [text(_exhaustive)];
@@ -379,6 +399,10 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
       return entry.playerId === playerId;
     case 'rewardsClaimed':
       return entry.eliminatorPlayerId === playerId || entry.eliminatedPlayerId === playerId;
+    case 'sentenceCountdown':
+      return entry.sourcePlayerId === playerId;
+    case 'sentenceFired':
+      return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

@@ -158,5 +158,16 @@ describe('KIT_CATALOG', () => {
     });
     expect(getKit('duplicator').startingCardCounts).toEqual({ action: 1, attack: 0 });
     expect(getKit('duplicator').specialCards).toEqual(['imposition', 'attack-thief']);
+
+    expect(getKit('gambler').name).toBe('Gambler');
+    expect(getKit('gambler').startingResources).toEqual({
+      lives: 1,
+      points: 0,
+      upgradePoints: 0,
+      draw: 10,
+    });
+    expect(getKit('gambler').startingCardCounts).toEqual({ action: 0, attack: 0 });
+    expect(getKit('gambler').specialCards).toEqual(['roulette']);
+    expect(getKit('gambler').randomStartingSpecialCount).toBe(2);
   });
 });

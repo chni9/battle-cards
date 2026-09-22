@@ -14,10 +14,8 @@ V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulati
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
 beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lots 57–60 (feedback + rematch; shop / pool /
-Invisibility / PG / Unspy; compact Draw/Unspy dock; Game over awards) are **done**;
-**Lot 61** (password `/admin` insights) is **done**; **Lot 62** (Overview metrics
-modules) is **in progress**. V5 may continue in parallel. Audience: the designer
+`docs/backlog_v6.md`); Lots 57–64 are **done**. Classic now has **16 kits**.
+V5 may continue in parallel. Audience: the designer
 and his friends, plus first-time beta testers under V6.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
@@ -88,8 +86,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
-   player's card counters. `applyLifeLoss` is for Tax, Suicide, Imposition and every other
-   non-attack loss: it ignores the shield and touches no counter. This is the project's most
+   player's card counters. `applyLifeLoss` is for Tax, Suicide, and every other
+   non-attack loss: it ignores the shield and touches no counter. Imposition no longer
+   calls it (Lot 63). This is the project's most
    likely silent bug — nothing will flag it. See `docs/agent/engine.md`.
 3. **Nothing resolves before its target has played their own action.** A queued effect
    resolves on its target's turn, *after* that player acts, in ascending `queuedAt` order.
@@ -121,7 +120,12 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Mirror) and adds pool buy, PG 3/6, and Unspy (`PROTOCOL_VERSION` 34).
  **Lot 59** (designer 2026-09-15) compact Draw/Unspy dock: no word labels.
  **Lot 60** (designer 2026-09-15) restyles Game over into public recap awards
- (kits + match totals; `PROTOCOL_VERSION` 35). Walk-in claim-picker fog stays.
+ (kits + match totals; `PROTOCOL_VERSION` 35). **Lot 63** (designer 2026-09-20)
+ adds Gambler + Roulette (`PROTOCOL_VERSION` 36) and Sentence / Imposition /
+ Super Absorber nerfs (`PROTOCOL_VERSION` 37). Designer 2026-09-21 renamed
+ Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). **Lot 64**
+ (designer 2026-09-21) tweaks Gambler start specials, weighted Draw, and
+ gambling death log (`PROTOCOL_VERSION` 39). Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
@@ -131,7 +135,7 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
 8. **The server is authoritative.** Every action is fully revalidated server side: ownership,
    resources, whose turn it is, valid target, kit permission. A greyed-out client button is
    not validation.
-9. **The 25-life cap applies to every source of gain** — Regeneration, Absorber, Imposition,
+9. **The 25-life cap applies to every source of gain** — Regeneration, Absorber,
    elimination rewards, upgraded Cloning. Read it from `GameState.lifeLimit`, never hardcode it.
 
 ## 6. Code conventions

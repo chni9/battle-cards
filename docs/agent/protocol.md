@@ -6,8 +6,12 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **35** (L60-02 recap match totals /
-> optional `kitId` / think time; L58-02 pool buy / Unspy / `poolBuyCost` /
+> **Status:** current `PROTOCOL_VERSION` is **39** (Gambler `drawGain` +
+> `'gambling'` elimination; `factory` renamed `roulette` at 38;
+> public `pendingSentences` and Sentence countdown / fire log kinds at 37;
+> L63-06 per-recipient `buyPoolCard` identity fog with no bump; L63-03 public
+> `drawBust` on `actionPlayed` at 36; L60-02 recap match totals / optional
+> `kitId` / think time at 35; L58-02 pool buy / Unspy / `poolBuyCost` /
 > `spyingOnYou` at 34; L57-16 `staySpectating` + claim-picker fog at 33;
 > L57-07 lobby Ready / Kick / Play again / `claimSeat` at 32; Mirror redirect
 > fields at 31; V6 teaching fields at 29; lobby kit pick at 30).
@@ -33,7 +37,8 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    the recipient sees every other seat as **upgraded Spy** at view time via
    `recipientSeesPrivateOf` / `isEliminatedSpectator` — **no** matrix rows written. Pending
    Reanimation does not qualify; after revive, privacy returns to normal. Same gate covers
-   Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication`.
+   Spy-gated action-log redaction and live `ACTION_PLAYED` for `activateDuplication` **and**
+   `buyPoolCard` identity (L63-06).
    Unspy (`clearSpy`) drops one **real** matrix row; overlay vision is not Unspy-able.
    **Walk-in Classic spectators** (L57-13) reuse this overlay (`walkInSpectator` on the view
    builder) without sitting in `GameState.players`. **L57-16:** the overlay is granted only
@@ -53,8 +58,9 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 |---|---|
 | Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView`. **Finished recap exception (PROTOCOL_VERSION 35 / L60-04):** `recap.players[].kitId` is the seat's **final** kit and is public to seated recipients. Omit that field for L57-16 fogged walk-ins. `finalTable` living seats still follow Spy / elim / walk-in overlay — do not put living kits there |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
-| Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included |
+| Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
+| Ticking Sentence countdown | **Public** as `pendingSentences` plus `sentenceCountdown` / `sentenceFired` log kinds (PROTOCOL_VERSION 37). Remaining turns are not card-lives |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -64,10 +70,12 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
-| `GameState.pool` | **Public** in `PlayingStateView` (rules spec §1; tech v4 §4.3 / §5.1) |
+| `GameState.pool` | **Public** in `PlayingStateView` including sitting-card faces (`cardId` / `isUpgraded` / `instanceId`). Occupancy stays public. Recovered `buyPoolCard` identity stays fogged on the action log (L63-06 playtest: showing pool faces is the rule, not a leak) |
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
 | Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
+| Living Gambler Draw payout | **Public** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01). Undefined for other kits and eliminated seats. Successful `actionPlayed` draw also carries `drawGain`; omit on bust |
+| Draw-bust elimination reason | **Public** as `EliminationReason` `'gambling'` (PROTOCOL_VERSION 39 / L64-01) |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's
@@ -75,7 +83,11 @@ victim, the special card purchase and Mirror's default target. Any field added l
 disclosure would let a client compute a future draw belongs in the same category.
 
 Consequence worth knowing: with fully public actions, a hand can be partly reconstructed by
-deduction, which costs Spy some value. That is accepted, not a bug.
+deduction, which costs Spy some value. That is accepted, not a bug. **L63-06** withholds
+pool-buy identity from that reconstruction unless the recipient already sees the buyer.
+Sitting pool faces stay public (playtest 2026-09-20 — showing them is the rule, not a
+leak). Excel `exportLog` stays full. Belief must not pin an opponent card from a fogged
+`buyPoolCard` log.
 
 Cloning **resets visibility to zero in both directions** — what the user saw of others and what
 others saw of them — and cancels effects pending against the user while inheriting none from the
@@ -169,6 +181,27 @@ walk-ins omit `kitId`. Think time is a **room** wall-clock map, not `GameState` 
 map / headless → `0`. Do not parse `exportLog` for the awards UI. Spend on recap is chosen
 spend (`matchStats`), never theft. The first Play again does not clear match stats or think
 time; the next `createInitialState` does.
+PROTOCOL_VERSION 36 (L63-03) adds optional `drawBust: true` on `actionPlayed` / the
+matching log entry so a Draw that instantly eliminates is a public table tell.
+Kind stays `'draw'`. Older clients fail the version gate. Room `applyTurnResult`,
+simulator `appendTurnResultLog`, and the four-bot harness copy optional public
+fields through `toActionPlayedPayload` (`packages/shared/src/protocol/messages.ts`)
+so a new tell cannot be dropped on one path. Opaque `activateDuplication` → `draw`
+must not copy `drawBust`. Stored `buyPoolCard` rows keep identity; live
+`ACTION_PLAYED` and per-recipient views omit `cardId` / `isUpgraded` unless the
+recipient sees the buyer (L63-06, no protocol bump — optional-field omission).
+
+PROTOCOL_VERSION 37 adds public `PlayingStateView.pendingSentences` and action-log
+kinds `sentenceCountdown` / `sentenceFired`. Older clients fail the version gate.
+Room and simulator append those announcements from `TurnResult.sentenceAnnouncements`.
+Remaining owner turns are not card-lives.
+
+PROTOCOL_VERSION 39 (L64-01 / designer 2026-09-21) adds public
+`PublicPlayerView.drawGain` (living Gambler current Draw payout), optional
+`drawGain` on successful `actionPlayed` draw (omit on bust), and
+`EliminationReason` `'gambling'`. Older clients fail the version gate.
+`Player.drawGain` is classified here as public — never server-only.
+Opaque `activateDuplication` → `draw` must not copy `drawGain`.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is
@@ -193,7 +226,8 @@ knowing before touching `game-room.ts`:
 
 - **`client.send(...)` per recipient, never `broadcast` for state.** A broadcast is one payload
   for everybody, which is the pattern §5.1 rules out. `broadcast` is fine for genuinely public
-  events (`actionPlayed`, `playerEliminated`).
+  events (`actionPlayed`, `playerEliminated`). Unicast `ACTION_PLAYED` for
+  Spy-gated identity (`activateDuplication`, `buyPoolCard`).
 - **A client's first view must be asked for.** The SDK *drops* a message whose handler is not
   registered yet — it only logs `onMessage() not registered for type '...'` — and `onJoin` runs
   before the client's join promise resolves. So the client sends `clientReady` after

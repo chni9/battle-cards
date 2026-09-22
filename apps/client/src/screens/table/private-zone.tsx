@@ -22,6 +22,7 @@ import { ActivePersistentThumb } from './active-persistent-thumb';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
+import { SentenceChipsForSeat } from './sentence-chip';
 import { INCOMING_OPEN_LABEL, WAITING_OPEN_LABEL } from './table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -177,6 +178,10 @@ export function PrivateZone({
               ))}
             </div>
           )}
+          <SentenceChipsForSeat
+            playerId={view.you}
+            pendingSentences={view.pendingSentences}
+          />
         </div>
         {showIncomingButton ? (
           <div data-zone="incoming-collapsed" className="min-w-0 flex-1">

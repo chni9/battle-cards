@@ -27,6 +27,7 @@ import {
 
 import { createRng, createSeed, type Rng } from './rng';
 import { dealStartingLoadout } from './reanimate-player';
+import { rollDrawGain } from './turn/sample-draw-gain';
 
 export interface SeatInput {
   id: string;
@@ -84,12 +85,13 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     throw new Error('createInitialState produced no players');
   }
 
-  return {
+  const state: GameState = {
     mode: 'classic',
     lifeLimit: CLASSIC_LIFE_LIMIT,
     players,
     pool: [],
     poolBuyCost: POOL_BUY_INITIAL_COST,
+    pendingSentences: [],
     nextPoolInstanceSeq: 0,
     currentTurnPlayerId: first.id,
     turnSequence: 0,
@@ -102,6 +104,12 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
     rewardQueue: [],
     rewardChoice: null,
   };
+
+  // First seat never goes through `beginTurnFor` before acting. Do not call
+  // full `beginTurnFor` here (Absorber first-turn ticks). Lot 64 / L64-03.
+  rollDrawGain(state, first);
+
+  return state;
 }
 
 function buildKitBySeatId(

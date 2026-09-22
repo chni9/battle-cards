@@ -314,9 +314,24 @@ function scoreAction(
   ctx: PolicyContext,
 ): { score: number; code: BotReasonCode } {
   if (action.type === 'draw') {
-    const kitDraw = getKit(view.self.kitId).startingResources.draw;
+    const kit = getKit(view.self.kitId);
+    const kitDraw =
+      view.players.find((player) => player.isYou)?.drawGain ?? kit.startingResources.draw;
+    const safeScore =
+      ctx.weights.action.bands.sustain +
+      ctx.weights.action.drawScorePerExtraDraw * Math.max(0, kitDraw - 1);
+    const bustDenominator = kit.traits.drawBustDenominator;
+
+    if (bustDenominator === undefined) {
+      return { score: safeScore, code: 'sustain' };
+    }
+
+    // 1-in-N instant self-elim (Lot 63). Treat the bust as lethal against self
+    // so Draw 10 is not free EV. No new weight constant (heuristic-v4 freeze).
+    const bustP = 1 / bustDenominator;
+    const deathScore = -ctx.weights.action.bands.lethalNow;
     return {
-      score: ctx.weights.action.bands.sustain + ctx.weights.action.drawScorePerExtraDraw * Math.max(0, kitDraw - 1),
+      score: (1 - bustP) * safeScore + bustP * deathScore,
       code: 'sustain',
     };
   }

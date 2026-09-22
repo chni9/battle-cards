@@ -72,8 +72,6 @@ const INVISIBILITY_POINTS_BASE = 4;
 const INVISIBILITY_POINTS_UPGRADED = 6;
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
-const IMPOSITION_LIVES_BASE = 1;
-const IMPOSITION_LIVES_UPGRADED = 2;
 const POISON_LIVES_BASE = 1;
 const POISON_LIVES_UPGRADED = 2;
 const CURSE_POINTS_PER_LIFE_BASE = 3;
@@ -286,7 +284,10 @@ function applyOpponentPlay(
 
   switch (entry.action) {
     case 'draw':
-      addExact(points, getKit(kitId).startingResources.draw);
+      if (entry.drawBust === true) {
+        return;
+      }
+      addExact(points, entry.drawGain ?? getKit(kitId).startingResources.draw);
       return;
     case 'buyCard':
       if (cardId !== undefined && isSharedCardId(cardId)) {
@@ -503,13 +504,7 @@ function applyPersistentTicks(
         const from = play?.turnSequence ?? 0;
         const ticks = countActorTurns(log, opponentPlayerId, from, false);
         const pointsDue = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
-        const livesDue = effect.isUpgraded ? IMPOSITION_LIVES_UPGRADED : IMPOSITION_LIVES_BASE;
         addRange(points, -pointsDue * ticks, 0);
-        addRange(lives, -livesDue * ticks, 0);
-
-        if (kitId === 'ghost') {
-          addRange(points, 0, GHOST_POINTS_PER_LIFE * livesDue * ticks);
-        }
       }
 
       if (effect.cardId === 'poison') {

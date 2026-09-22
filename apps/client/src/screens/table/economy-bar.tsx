@@ -1,7 +1,8 @@
 /**
- * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05 / L58-07 / L59-01.
+ * Economy action bar — L12-06 / L30-02 / L43-02 / L43-05 / L58-07 / L59-01 / L64-05.
  * Draw + Shop + Unspy. Stats only on a finished board (`readOnly`).
- * Draw is green so the point icon is not yellow-on-yellow.
+ * Draw is green so the point icon is not yellow-on-yellow, and red when the
+ * Gambler payout is above catalog 10 (Lot 64).
  * Draw / Unspy omit word labels (designer 2026-09-15): gain CostDisplay and
  * crossed-eye + cost only; names stay on aria-label / title.
  * Shop keeps its word label and uses the same compact Button (L59-02).
@@ -9,11 +10,13 @@
  */
 
 import { CLEAR_SPY_COST } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
 import { costAriaLabel } from '../../design/components/structured-cost';
+import { MOTION_EASE, MOTION_PULSE_S } from '../../fx/motion-timing';
 import {
   DRAW_ACTION_LABEL,
   SHOP_ACTION_LABEL,
@@ -56,6 +59,26 @@ export function EconomyBar({
   const unspyCost = { kind: 'points' as const, amount: CLEAR_SPY_COST };
   const drawLabel = `${DRAW_ACTION_LABEL}, ${costAriaLabel(drawCost, 'gain')}`;
   const unspyLabel = `${UNSPY_ACTION_LABEL}, ${costAriaLabel(unspyCost, 'cost')}`;
+  const drawVariant = drawValue > 10 ? 'red' : 'green';
+  const reduceMotion = useReducedMotion() === true;
+  const [pulseKey, setPulseKey] = useState(0);
+  const prevDraw = useRef(drawValue);
+  const wasMyTurn = useRef(false);
+
+  useEffect(() => {
+    if (!isMyTurn) {
+      prevDraw.current = drawValue;
+      wasMyTurn.current = false;
+      return;
+    }
+    const turnStarted = !wasMyTurn.current;
+    const payoutChanged = prevDraw.current !== drawValue;
+    wasMyTurn.current = true;
+    prevDraw.current = drawValue;
+    if (turnStarted || payoutChanged) {
+      setPulseKey((key) => key + 1);
+    }
+  }, [drawValue, isMyTurn]);
 
   return (
     <section
@@ -70,22 +93,33 @@ export function EconomyBar({
         arrow="top"
         highlightId="draw"
       >
-        <Button
-          variant="green"
-          compact
-          disabled={disabled}
-          onClick={onDraw}
-          data-hint-anchor="draw"
-          aria-label={drawLabel}
-          title={drawLabel}
+        <motion.span
+          key={pulseKey}
+          className="inline-flex"
+          animate={
+            isMyTurn && !reduceMotion && pulseKey > 0
+              ? { scale: [1, 1.12, 1] }
+              : { scale: 1 }
+          }
+          transition={{ duration: MOTION_PULSE_S, ease: MOTION_EASE }}
         >
-          <CostDisplay
-            cost={drawCost}
-            signed="gain"
-            className="text-inherit"
-            title={null}
-          />
-        </Button>
+          <Button
+            variant={drawVariant}
+            compact
+            disabled={disabled}
+            onClick={onDraw}
+            data-hint-anchor="draw"
+            aria-label={drawLabel}
+            title={drawLabel}
+          >
+            <CostDisplay
+              cost={drawCost}
+              signed="gain"
+              className="text-inherit"
+              title={null}
+            />
+          </Button>
+        </motion.span>
       </TutorialCallout>
       <TutorialCallout
         active={spotlight === 'shop'}

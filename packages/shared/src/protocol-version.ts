@@ -57,5 +57,25 @@
  * 34 → 35 (L60-02 / designer 2026-09-15): `GameRecapPlayerView` match totals,
  * optional recap `kitId`, think time. Exception to the V6 single-bump lock
  * (same class as L49 / L56 / L57 / L58); see decisions.md.
+ *
+ * 35 → 36 (L63-03 / designer 2026-09-20): public `drawBust` on `actionPlayed`
+ * so a Draw that instantly eliminates is a table tell. Exception to the V6
+ * single-bump lock (same class as L49 / L56–L60); see decisions.md.
+ *
+ * 36 → 37 (designer 2026-09-20): public `pendingSentences` plus
+ * `sentenceCountdown` / `sentenceFired` action-log kinds. Older clients cannot
+ * read the countdown. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L60 / L63); see decisions.md.
+ *
+ * 37 → 38 (designer 2026-09-21): card id `factory` renamed `roulette`
+ * (player-facing name Roulette). Public `cardId` on plays, persistents,
+ * inspect, and logs. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L63); see decisions.md.
+ *
+ * 38 → 39 (L64-01 / designer 2026-09-21): public `PublicPlayerView.drawGain`
+ * for a living Gambler’s current Draw payout; successful `actionPlayed` draw
+ * also carries `drawGain` (omit on bust); `EliminationReason` `'gambling'`.
+ * Older clients cannot read the new contract. Exception to the V6
+ * single-bump lock (same class as L49 / L56–L63); see decisions.md.
  */
-export const PROTOCOL_VERSION = 35;
+export const PROTOCOL_VERSION = 39;

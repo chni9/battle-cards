@@ -130,7 +130,7 @@ function sizesFromCards(
 
 function startingSpecialCount(kitId: KitId): number {
   const kit = getKit(kitId);
-  return kit.randomStartingSpecialCount ?? kit.specialCards.length;
+  return (kit.randomStartingSpecialCount ?? 0) + kit.specialCards.length;
 }
 
 function resetToKitStart(
@@ -204,9 +204,16 @@ function applyOpponentPlay(
 
   switch (entry.action) {
     case 'buyCard':
+      if (cardId !== undefined) {
+        applyZoneDelta(action, attack, special, cardId, 1);
+      }
+      return;
     case 'buyPoolCard':
       if (cardId !== undefined) {
         applyZoneDelta(action, attack, special, cardId, 1);
+      } else {
+        // L63-06: fogged logs name the buy, not the card — widen every zone.
+        widenUnknownCard(action, attack, special, 0, 1);
       }
       return;
     case 'sellCard':

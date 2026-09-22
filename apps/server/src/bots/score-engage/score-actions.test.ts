@@ -81,6 +81,7 @@ function baseView(overrides: Partial<PlayingStateView> = {}): PlayingStateView {
     actionLog: [],
     pool: [],
     poolBuyCost: 1,
+    pendingSentences: [],
     playKind: 'classic',
     tutorialIndex: null,
   };
@@ -477,7 +478,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
   it('allows selling Super when that yield funds held Sentence', () => {
     const view = baseView({
       self: baseSelf({
-        points: 5,
+        points: 10,
         hand: [
           { instanceId: 'super-1', cardId: 'super-attack', isUpgraded: false },
           { instanceId: 'strong-1', cardId: 'strong-attack', isUpgraded: false },
@@ -499,7 +500,7 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
   it('still refuses the last attack even to fund Sentence', () => {
     const view = baseView({
       self: baseSelf({
-        points: 14,
+        points: 19,
         hand: [{ instanceId: 'basic-1', cardId: 'basic-attack', isUpgraded: false }],
         specialCards: [{ instanceId: 'sent-1', cardId: 'sentence', isUpgraded: false }],
       }),
@@ -781,6 +782,45 @@ describe('heuristic-v5-engage overlay (L40-02)', () => {
       { type: 'playCard', instanceId: 'tax-1' },
     ];
     expect(decideEngage(view, actions, createRng('l54-04-sa')).action).not.toEqual({
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: 'bot-b',
+    });
+  });
+
+  it('does not burn a Roulette user when Tax is legal', () => {
+    const view = baseView({
+      turnOrder: ['bot-a', 'bot-b', 'bot-c'],
+      self: baseSelf({
+        lives: 12,
+        points: 20,
+        hand: [
+          { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+          { instanceId: 'tax-1', cardId: 'tax', isUpgraded: false },
+        ],
+      }),
+      players: [
+        player('bot-a', 'Alpha', true),
+        player('bot-b', 'Bravo', false, {
+          activePersistentEffects: [
+            {
+              id: 'fac-1',
+              cardId: 'roulette',
+              isUpgraded: false,
+              counter: 2,
+              targetPlayerId: null,
+            },
+          ],
+        }),
+        player('bot-c', 'Charlie', false),
+      ],
+    });
+    const actions: TurnAction[] = [
+      { type: 'draw' },
+      { type: 'playCard', instanceId: 'atk-1', targetPlayerId: 'bot-b' },
+      { type: 'playCard', instanceId: 'tax-1' },
+    ];
+    expect(decideEngage(view, actions, createRng('l63-roulette-skip')).action).not.toEqual({
       type: 'playCard',
       instanceId: 'atk-1',
       targetPlayerId: 'bot-b',

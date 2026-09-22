@@ -314,6 +314,8 @@ describe('Elimination rewards (Lot 6)', () => {
         { id: 'c', nickname: 'C' },
       ],
       seed: 'l6-03-default',
+      // Pin kits so a Draw-bust Gambler seat cannot skip the reward queue (L63-02).
+      kitAssignment: ['untouchable', 'kamikaze', 'assassin'],
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');

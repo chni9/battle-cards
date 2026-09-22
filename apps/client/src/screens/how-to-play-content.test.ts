@@ -52,9 +52,15 @@ describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
     expect(byId['upgrade']?.body).toMatch(/1 upgrade point/);
     expect(byId['kits']?.body).toMatch(/Spy/);
     expect(byId['kits']?.body).toMatch(/Random/);
+    expect(byId['kits']?.body).toMatch(/Gambler/);
+    expect(byId['kits']?.body).toMatch(/5–100|5-100/);
+    expect(byId['kits']?.body).toMatch(/weighted/);
+    expect(byId['kits']?.body).toMatch(/3 specials/);
+    expect(byId['kits']?.body).toMatch(/1-in-10/);
     expect(byId['specials']?.body).toMatch(/one use/);
     expect(byId['shop']?.body).toMatch(/buy extra cards or upgrade points/i);
     expect(byId['shop']?.body).toMatch(/pool/i);
+    expect(byId['shop']?.body).toMatch(/others do not see which card/i);
   });
 
   it('omits delayed resolution, shop-price formula, and draw-is-not-a-card', () => {

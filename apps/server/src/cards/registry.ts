@@ -18,6 +18,7 @@ import { cardThiefHandler } from './handlers/card-thief';
 import { cardTransformerHandler } from './handlers/card-transformer';
 import { cloningHandler } from './handlers/cloning';
 import { curseHandler } from './handlers/curse';
+import { rouletteHandler } from './handlers/roulette';
 import { impositionHandler } from './handlers/imposition';
 import { invisibilityHandler } from './handlers/invisibility';
 import { megaAttackHandler } from './handlers/mega-attack';
@@ -72,6 +73,7 @@ export const IMPLEMENTED_CARD_IDS = [
   'block',
   'invisibility',
   'reanimation',
+  'roulette',
 ] as const satisfies readonly CardId[];
 
 export type ImplementedCardId = (typeof IMPLEMENTED_CARD_IDS)[number];
@@ -111,6 +113,7 @@ export const cardHandlers: Record<ImplementedCardId, CardHandler> = {
   block: blockHandler,
   invisibility: invisibilityHandler,
   reanimation: reanimationHandler,
+  roulette: rouletteHandler,
 };
 
 const implementedCardIds = new Set<CardId>(IMPLEMENTED_CARD_IDS);

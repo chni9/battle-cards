@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool, visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn.
+Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy and the faces of cards sitting in the pool are visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 
@@ -34,7 +34,7 @@ A card that inflicts a direct effect on an opponent — meaning it alters their 
 
 ### Kits
 
-Each kit corresponds to a unique card. 15 kits currently exist: 14 finalized and the Duplicator, in testing. In the lobby, each player may choose a kit (or keep Random). The choice stays hidden from opponents. Seats that stay on Random receive a kit drawn at random at the start of the game. Duplicate kits across seats are allowed.
+Each kit corresponds to a unique card. 16 kits currently exist: 15 finalized and the Duplicator, in testing. In the lobby, each player may choose a kit (or keep Random). The choice stays hidden from opponents. Seats that stay on Random receive a kit drawn at random at the start of the game. Duplicate kits across seats are allowed.
 
 ### Number of Players
 
@@ -118,6 +118,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 | Wizard | 10 | 4 | 0 | 2 | 4 | 2 | Thief already upgraded | MEGA ATTACK |
 | Juggernaut | 14 | 4 | 1 | 1 | 4 | 2 | Shield already upgraded | Super Mirror |
 | Duplicator (in testing) | 2 | 0 | 0 | 1 | 1 | 0 | Activatable duplication — see detail below | Imposition, Attack Thief |
+| Gambler | 1 | 0 | 0 | 10 | 0 | 0 | Draw risk — see detail below | 2 distinct random specials (never Roulette) plus Roulette |
 
 ### Duplicator — Ability Detail
 
@@ -128,6 +129,13 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - If they take another action on their turn instead of activating duplication, no gain is duplicated during the interval that follows — activation is not permanent, it must be renewed on every Duplicator turn to stay active.
 - If several players have the Duplicator kit in the same game, they exclude each other for gains obtained through their own duplication power (no loop): only a Duplicator's active gains (obtained directly through their own actions, not those received through duplication) are duplicated by another Duplicator.
 
+### Gambler — Ability Detail
+
+- Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **2** random special cards drawn **without replacement** from the circulating pool excluding Roulette (the two are distinct; never a second Roulette), and **Roulette**.
+- Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with truncated-geometric weight P(n) ∝ r^(n − 5), r = 10^(-1/16) ≈ 0.8660, so P(n > 20) ≤ 0.10 (5 is most likely; each extra point is rarer; 100 stays possible). Other kits keep catalog Draw.
+- Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The death log is `{nickname} dies by Gambling`. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
+- Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
+
 ## 5. Special Cards
 
 ### General Rules
@@ -135,7 +143,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
-- Four cards (Points Generator, Poison, Super Absorber, Imposition) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2.
+- Five cards (Points Generator, Poison, Super Absorber, Imposition, Roulette) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Roulette 2.
 
 ### Card List
 
@@ -159,9 +167,9 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Action: gain 9 lives.
 - Upgrade: gain 18 lives.
 
-**Sentence** — Price: 15 points
-- Action: eliminates a player chosen at random among all players in the game, potentially including the user themselves.
-- Upgrade: the user can no longer be chosen by their own card.
+**Sentence** — Price: 20 points
+- Action: after **3** of the user's own later turns (the activation turn does not count as one of those three), a seeded random living player is chosen (including the user) and elimination is queued for that victim's next turn. Invisible players are excluded from the draw. If nobody remains eligible, the Sentence fizzles. If the user is eliminated before the draw fires, the Sentence is cancelled and does not queue. Remaining countdown turns are not card lives and are not shortened by damage. Sentence is not a manual deactivate. The table sees a public countdown on the caster while it ticks. When the user plays Sentence, everyone sees **Sentence in 3 turns!** When remaining decrements on a later caster turn, everyone sees **X turn(s) before Sentence!** When Sentence fires, everyone sees **Sentence will kill {victim}!** Those table-wide messages do not appear on other players' turns. Eliminated seats and spectators still see them.
+- Upgrade: the random draw never picks the user.
 
 **Points Generator** — Price: 5 points
 - Action: generates 3 points per turn for the user, as long as the card's dedicated internal counter (see General Rules) is not depleted.
@@ -200,8 +208,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: doubles the damage of the attacks redirected this way.
 
 **Super Absorber** — Price: 8 points
-- Action: absorbs all points, lives and upgrade points spent by all opponents. On activation, immediately captures each opponent's last complete turn (including eliminated opponents still inside the Absorber window described in section 3); then continues to absorb on every later opponent turn as long as the card's dedicated internal counter is not depleted.
-- Upgrade: doubles all gains obtained this way.
+- Action: persistent on the user (counter 2 is card lives). Every living opponent: absorb the lives they lost on their turn. Playing it does not capture opponents' last complete turns (no activation snapshot), including eliminated opponents still inside the Absorber window described in section 3. Invisible opponents are skipped. Theft is never absorbed. Lives gained still cap at 25.
+- Upgrade: also absorb points and upgrade points they actively spent that turn (same split as Absorber). Amounts are not doubled.
 
 **Curse** — Price: 8 points
 - Action: the user chooses an opponent to curse. The effect lives on that opponent (not the user). While cursed, they lose 1 life for every 3 points they spend on their turn. Every life that player actually loses (after the shield, from any cause — including that spend drain) is granted to the **original user** who played that Curse copy. Multiple Curses on the same player stack — each copy ticks and pays independently.
@@ -215,12 +223,16 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: 2 lives lost per turn instead of 1.
 
 **Imposition** — Price: 6 points
-- Action: every turn, each opponent must give 2 points to the user; if they don't have enough points, they give 1 life instead, which the user gains (subject to the game mode's life cap). Effect active as long as the card's dedicated internal counter is not depleted.
-- Upgrade: 4 points or 2 lives instead of 2 points or 1 life.
+- Action: every turn, each opponent with at least 2 points gives 2 points to the user. If they have fewer than 2 points, they give nothing (no lives). Effect active as long as the card's dedicated internal counter is not depleted.
+- Upgrade: 4 points instead of 2 (skip if they have fewer than 4).
 
 **Attack Thief** — Price: 8 points
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.
 - Upgrade: steals all attack cards from all opponents.
+
+**Roulette** — Price: 10 points
+- Action: activates a persistent on the user. Each of the user's turns, including the activation turn, they gain one random **normal** (shared attack or action) card — never a special. Independent **10%** chance the granted copy is already upgraded. 2 card lives.
+- Upgrade: still one card per turn; **80%** a shared attack or action / **20%** a circulating special other than Roulette; independent **10%** chance the granted copy is already upgraded (whichever bucket hit).
 
 ## 6. Game Flow and Resolution
 
@@ -234,12 +246,12 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 ### Visibility
 
-Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, pool buys, and Unspy. The queue of pending effects is public. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A pool buy is public as an action; the recovered card's identity stays private to the buyer (and anyone who already sees that buyer's private information). The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
 
 ### Game Turn
 
 - A player can only take one action per turn, whether a classic action (drawing, playing/selling/buying a card, buying an upgrade point, buying a random pool card, Unspy) or using a special card — no exception, except an explicit override from a kit or a card (e.g. Assassin, Block).
-- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name.
+- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 instant elimination; a bust grants no points.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
 - Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
@@ -255,7 +267,7 @@ An attack redirected by Mirror remains a fully pending attack: if the player it 
 - An eliminated player loses all their lives. They become a spectator; all their unclaimed cards join the shared pool (section 1).
 - The eliminator chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's cards (including their unused special cards), or an upgrade point. Both choices can be identical (e.g. "4 lives" twice).
 - When a single effect eliminates several players at once, the eliminator receives two rewards per eliminated player, cumulative.
-- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, their own non-upgraded Suicide — generates no reward for anyone.
+- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, their own non-upgraded Suicide, or the Gambler's Draw bust — generates no reward for anyone.
 - *Case of several simultaneous eliminators: the reward goes to whoever has the fewest lives remaining among the eliminators. In case of a tie, whoever has the fewest points. In case of another tie, a random draw among the tied eliminators.*
 
 ## 7. Game Modes

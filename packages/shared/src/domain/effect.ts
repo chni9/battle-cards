@@ -9,8 +9,9 @@ import type { CardId } from './card';
  * `applyLifeLoss` (technical spec §4.2).
  *
  * Non-attack sources: Tax's play cost (rules spec §3), buying Tax from the shop
- * (Lot 2 ruling: 2 lives), Suicide, Imposition's ceded life, and Poison ticks
- * (rules spec §5). Curse no longer causes life loss (L50-02 siphon). Damage never
+ * (Lot 2 ruling: 2 lives), Suicide, and Poison ticks
+ * (rules spec §5). Imposition no longer cedes lives (designer 2026-09-20).
+ * Curse no longer causes life loss (L50-02 siphon). Damage never
  * appears here — it goes through `applyDamage`.
  */
 export const LIFE_LOSS_REASONS = [
