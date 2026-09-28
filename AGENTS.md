@@ -242,6 +242,12 @@ draft, so staging Preview Deployments start (`docs/agent/deploy.md`). Promote to
 production with a PR `dev` → `main`. Coolify watches `dev` for staging (previews on
 that app only) and `main` for production.
 
+**What’s new.** The hub popup that opens by itself shows only the latest
+`RELEASE_NOTES` entry. The **New** button lists every entry, newest date first.
+While that latest entry is not on `main`, later PRs append to it (one update).
+After it merges to `main`, the next player-facing change starts a new entry, and
+the auto popup shows only that next update. Detail: `docs/agent/frontend.md`.
+
 ## 11. Agent output style
 
 - **Running on Claude Opus → reply in `caveman` style** (`.agents/skills/caveman/`): no

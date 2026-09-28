@@ -10,6 +10,7 @@ import {
   type BotDifficulty,
   type LobbyKitSelection,
   type SoloOpponentCount,
+  type WhatsNewScope,
 } from '@card-battle/shared';
 import { motion } from 'motion/react';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
@@ -80,6 +81,7 @@ export function HomeScreen({
 }: HomeScreenProps): ReactElement {
   const [mode, setMode] = useState<HomeMode>('hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [whatsNewScope, setWhatsNewScope] = useState<WhatsNewScope>('current');
   const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
     shouldAutoOpenWhatsNew({
       latestUnseen: hasUnseenReleaseNotes(),
@@ -139,6 +141,7 @@ export function HomeScreen({
     ) {
       return;
     }
+    setWhatsNewScope('current');
     setWhatsNewOpen(true);
   };
 
@@ -204,6 +207,7 @@ export function HomeScreen({
         data-whats-new-button
         aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
         onClick={() => {
+          setWhatsNewScope('history');
           setWhatsNewOpen(true);
         }}
         className="absolute right-[5.75rem] top-4 z-10 min-w-9 sm:right-28 sm:top-6"
@@ -318,7 +322,7 @@ export function HomeScreen({
       </div>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
-      <WhatsNewDialog open={whatsNewOpen} onClose={closeWhatsNew} />
+      <WhatsNewDialog open={whatsNewOpen} scope={whatsNewScope} onClose={closeWhatsNew} />
       <FeedbackDialog
         open={feedbackOpen}
         mode="manual"

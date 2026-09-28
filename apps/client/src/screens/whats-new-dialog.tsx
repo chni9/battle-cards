@@ -1,8 +1,14 @@
 /**
- * Hub What’s new — L63-07. Catalog in shared; history is every entry, newest first.
+ * Hub What’s new — L63-07 / L65-05.
+ * `current` is the auto popup (latest entry). `history` is the New button
+ * (every dated entry, newest first).
  */
 
-import { RELEASE_NOTES, type ReleaseNoteAddition } from '@card-battle/shared';
+import {
+  releaseNotesForScope,
+  type ReleaseNoteAddition,
+  type WhatsNewScope,
+} from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { Button } from '../design/components/button';
@@ -13,6 +19,8 @@ import { KitPortrait } from '../design/components/kit-portrait';
 export interface WhatsNewDialogProps {
   open: boolean;
   onClose: () => void;
+  /** `current` is the auto popup. `history` is the hub New button. */
+  scope: WhatsNewScope;
 }
 
 function additionKey(noteId: string, item: ReleaseNoteAddition): string {
@@ -39,7 +47,13 @@ function AdditionArt({ item }: { readonly item: ReleaseNoteAddition }): ReactEle
   );
 }
 
-export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactElement {
+export function WhatsNewDialog({
+  open,
+  onClose,
+  scope,
+}: WhatsNewDialogProps): ReactElement {
+  const notes = releaseNotesForScope(scope);
+
   return (
     <Dialog
       open={open}
@@ -53,14 +67,14 @@ export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps): ReactEle
         </Button>
       }
     >
-      <ol className="mt-1 list-none space-y-6 p-0">
-        {RELEASE_NOTES.map((note, index) => (
+      <ol className="mt-1 list-none space-y-6 p-0" data-whats-new-scope={scope}>
+        {notes.map((note, index) => (
           <li key={note.id} data-release-id={note.id}>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
               {note.date}
             </p>
             <h3 className="mt-1 text-base font-semibold text-ink">{note.title}</h3>
-            {index === 0 ? (
+            {scope === 'history' && index === 0 ? (
               <p className="mt-1 text-xs font-medium text-ink-muted">Latest</p>
             ) : null}
             {note.items.length > 0 ? (

@@ -127,25 +127,30 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
-  (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
-  the shared `Button` `variant="green"` (`bg-cta-green-deep`, same as Play
-  online) with a **red** unread tick when
+  Esc / overlay only close.   **What’s new (L63-07, L65-05):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first, each entry dated).
+  Compact **New** is the shared `Button` `variant="green"` (`bg-cta-green-deep`,
+  same as Play online) with a **red** unread tick when
   `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
-  First visit of this catalog id auto-opens on the hub — How to play is not a
-  blocker. Closing / Got it writes the latest id. **New** heading lists
-  `additions` (kit portrait or card art + body) for kits/cards that did not
-  exist before; before → after `items` cover nerfs with named-card art and
-  render **above** the New block. Kit-level items may use `kitId` (Gambler
-  portrait) instead of `cardId`. Latest catalog id is `lot-63`. Gambler and
-  Roulette never shipped on `main`, so later tweaks edit that original New
-  body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
-  of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
-  Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
+  The popup that opens by itself shows **only the latest entry**. The **New**
+  button lists **every** entry, date by date, newest first. How to play is not
+  a blocker. Closing / Got it writes the latest id. While that latest entry is
+  not on `main`, later pull requests **append to the same id** so they show
+  together in the auto popup. Merging `dev` → `main` ships that entry. The next
+  player-facing change opens a **new** id, and the auto popup shows only that
+  next update. Do not delete shipped entries. Do not edit an entry that is
+  already on `main` except to correct that entry's own text. **New** heading
+  lists `additions` (kit portrait or card art + body) for kits/cards that did
+  not exist before; before → after `items` cover changes with named-card art
+  and render **above** the New block. Kit-level items may use `kitId` (Gambler
+  portrait) instead of `cardId`. `lot-63` (2026-09-20) is on `main`: Sentence,
+  Imposition, Super Absorber, plus Gambler and Roulette (no `lot-64` id — those
+  tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is the open
+  update: private Draw, invisible players are not targets, Sentence chip
+  inspect, hand layout stays put. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
-  the table-wide red banner. The dialog lists history
-  (every catalog entry). **Update the latest catalog entry in the same commit
-  as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  the table-wide red banner. Player-visible work updates the open What’s new
+  entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip

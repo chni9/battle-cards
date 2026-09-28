@@ -80,7 +80,8 @@ Feedback (47) only needs HTTP + Postgres and can overlap 42–44.
     and no protocol bump. Hide Gambler Draw payout from seats that cannot
     already see that player; invisible seats are not legal single targets;
     activated Sentence opens inspect; card-band side-by-side stops flipping
-    on small height changes.
+    on small height changes. What’s new auto-opens only this update; the
+    New button keeps the dated log.
 
 
 **Execution order**
@@ -131,7 +132,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
 Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
-Lot 64 is done (146 of 146). Lot 65 is done (150 of 150).
+Lot 64 is done (146 of 146). Lot 65 is done (151 of 151).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -165,7 +166,7 @@ opened 2026-09-21. Lot 65 opened 2026-09-28.
 | 62 · Overview metrics modules | 7 | 7 |
 | 63 · The Gambler + Roulette | 6 | 6 |
 | 64 · Gambler kit tweaks | 6 | 6 |
-| 65 · Player feedback bugs | 4 | 4 |
+| 65 · Player feedback bugs | 5 | 5 |
 
 
 ---
@@ -582,6 +583,7 @@ flipped between stacked and side-by-side.
 | L65-02 | Invisible living seats are not legal single-target or Assassin multi-attack targets. `perform-action` rejects them with `invalid-target`. AoE cards stay playable; immune resolve and skipped ticks stay. **Acceptance:** an attack aimed at an invisible seat is absent from legal actions and rejected if sent; `pnpm verify` green. | M | **High** | — | Done |
 | L65-03 | Activated Sentence chip opens the existing catalog inspect (own seat and opponents), including upgrade tier. **Acceptance:** the chip is a button and the table wires inspect; `pnpm verify` green. | S | Low | — | Done |
 | L65-04 | Card-band side-by-side uses hysteresis so a small height change does not flip Hand and Specials. Both layouts stay. **Acceptance:** crossing back to stacked needs a clearly taller band; `pnpm verify` green. | S | Low | — | Done |
+| L65-05 | What’s new auto popup shows only the current update. The New button lists every dated entry. Unreleased PRs share that entry until `dev` merges to `main`; the next change after that merge starts a new id. **Acceptance:** auto scope is `lot-65` only; history includes `2026-09-28` and `2026-09-20`; `pnpm verify` green. | S | Low | — | Done |
 
 ---
 
@@ -613,10 +615,10 @@ flipped between stacked and side-by-side.
 | 62 | 7 |
 | 63 | 6 |
 | 64 | 6 |
-| 65 | 4 |
-| **Total** | **150** |
+| 65 | 5 |
+| **Total** | **151** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**.
 
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.
