@@ -3,10 +3,13 @@
  * Shield has no activated PNG; use base/upgraded face art.
  */
 
-import type { CardInstance, PersistentEffectView } from '@card-battle/shared';
+import {
+  ACTIVE_SHIELD_INSTANCE_ID,
+  type CardInstance,
+  type PersistentEffectView,
+} from '@card-battle/shared';
 
-/** Stable synthetic instance id for the active Shield thumb / inspect. */
-export const ACTIVE_SHIELD_INSTANCE_ID = 'active-shield';
+export { ACTIVE_SHIELD_INSTANCE_ID };
 
 export function persistentToCardInstance(
   effect: PersistentEffectView,

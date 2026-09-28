@@ -16,6 +16,12 @@ export const CARD_BAND_ABS_MIN_W = 22;
 /** Below this stacked-row width, Hand and Specials sit side by side. */
 export const CARD_BAND_COMFORT_W = 32;
 /**
+ * Extra band height required before a side-by-side dock returns to stacked.
+ * Mobile browser chrome crosses the comfort threshold and otherwise flips
+ * the hand every few pixels (L65-04).
+ */
+export const CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX = 48;
+/**
  * Tailwind `aspect-[2/3]` on the art = width/height.
  * Face also adds a name line + button padding — see `faceCardHeight`.
  */
@@ -74,11 +80,33 @@ export function cardBandSideBySide(
   return maxWidthForRowHeight(split) < CARD_BAND_COMFORT_W;
 }
 
+/**
+ * Enter side-by-side at the comfort threshold. Leave it only after the band
+ * is `CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX` taller than that threshold.
+ */
+export function cardBandSideBySideStable(
+  bandHeight: number,
+  specialsCount: number,
+  currentlySideBySide: boolean,
+): boolean {
+  if (cardBandSideBySide(bandHeight, specialsCount)) {
+    return true;
+  }
+  if (!currentlySideBySide) {
+    return false;
+  }
+  return cardBandSideBySide(
+    bandHeight - CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX,
+    specialsCount,
+  );
+}
+
 export function cardBandFitRowHeight(
   bandHeight: number,
   specialsCount: number,
+  sideBySide = cardBandSideBySide(bandHeight, specialsCount),
 ): number {
-  if (cardBandSideBySide(bandHeight, specialsCount)) {
+  if (sideBySide) {
     return Math.max(1, bandHeight - CARD_BAND_LABEL_PX - CARD_BAND_SECTION_GAP_PX);
   }
   return cardBandRowHeight(bandHeight, specialsCount);

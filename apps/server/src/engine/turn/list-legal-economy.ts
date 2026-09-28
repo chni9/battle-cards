@@ -7,8 +7,10 @@
  */
 
 import {
+  ACTIVE_SHIELD_INSTANCE_ID,
   CLEAR_SPY_COST,
   getSharedCard,
+  isUpgradeableActiveCardId,
   SHARED_CARD_IDS,
   type GameState,
   type Player,
@@ -49,6 +51,22 @@ export function listLegalEconomyActions(
       if (!instance.isUpgraded) {
         actions.push({ type: 'upgradeCard', instanceId: instance.instanceId });
       }
+    }
+
+    for (const effect of actor.activePersistentEffects) {
+      if (!effect.isUpgraded && isUpgradeableActiveCardId(effect.cardId)) {
+        actions.push({ type: 'upgradeCard', instanceId: effect.id });
+      }
+    }
+
+    for (const sentence of state.pendingSentences) {
+      if (sentence.sourcePlayerId === actor.id && !sentence.isUpgraded) {
+        actions.push({ type: 'upgradeCard', instanceId: sentence.id });
+      }
+    }
+
+    if (actor.shield > 0 && !actor.shieldIsUpgraded) {
+      actions.push({ type: 'upgradeCard', instanceId: ACTIVE_SHIELD_INSTANCE_ID });
     }
   }
 

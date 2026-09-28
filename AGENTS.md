@@ -125,7 +125,17 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Super Absorber nerfs (`PROTOCOL_VERSION` 37). Designer 2026-09-21 renamed
  Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). **Lot 64**
  (designer 2026-09-21) tweaks Gambler start specials, weighted Draw, and
- gambling death log (`PROTOCOL_VERSION` 39). Walk-in claim-picker fog stays.
+ gambling death log (`PROTOCOL_VERSION` 39). **Lot 66** (designer 2026-09-28)
+ feedback rules: absorber window through the action, Block cannot stack, Mirror
+ volley siblings resolve, Spy/Thief upgrade counter, Upgrade Point Thief
+ target, Gambler wipe, upgrade active cards and Sentence
+ (`PROTOCOL_VERSION` 40). Action-log resource nets
+ are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
+ **Lot 67** (designer 2026-09-28) reopens the solo
+ menu on Play again (same kit and bot count; the match does not start),
+ upgrades an active Shield without resetting its points, flashes
+ `You gambled too much and lost everything` for that Gambler, and moves
+ Imposition to points above 7. No protocol bump. Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat
@@ -241,6 +251,12 @@ allows it for that pass (e.g. a catch-up commit after a multi-task session).
 draft, so staging Preview Deployments start (`docs/agent/deploy.md`). Promote to
 production with a PR `dev` → `main`. Coolify watches `dev` for staging (previews on
 that app only) and `main` for production.
+
+**What’s new.** The hub popup that opens by itself shows only the latest
+`RELEASE_NOTES` entry. The **New** button lists every entry, newest date first.
+While that latest entry is not on `main`, later PRs append to it (one update).
+After it merges to `main`, the next player-facing change starts a new entry, and
+the auto popup shows only that next update. Detail: `docs/agent/frontend.md`.
 
 ## 11. Agent output style
 

@@ -3,7 +3,8 @@
  * Catalog + public `livesLost` cover the known legs of a transaction.
  * `leftoverLiveFlowChips` flies the other leg when live numbers disagree
  * with that catalog net (spend 3 + absorb 10 → both directions).
- * Unspied seats never invent Draw / absorb totals. Regen quantity is never
+ * Unspied Draw flies one point so the chip count cannot identify a kit
+ * (L65-01). Absorb totals are still never invented. Regen quantity is never
  * invented: live Δ, else the catalog per-life unit.
  * Play-card ghosts: public `cardId` face, seat → felt center (not the log).
  */
@@ -198,34 +199,33 @@ export function chipsForPublicLogEntry(
       if (entry.drawBust === true) {
         return [];
       }
-      if (entry.drawGain !== undefined) {
-        if (entry.drawGain <= 0) {
-          return [];
-        }
+      const kitId = actorId === you ? selfKitId : visibleKitId(actor);
+      // Hidden seats must not learn the payout. One chip still marks the Draw.
+      if (kitId === undefined) {
         return [
           {
             kind: 'point',
-            count: entry.drawGain,
+            count: 1,
             from: 'log',
             to: { playerId: actorId },
           },
         ];
       }
-      const kitId = actorId === you ? selfKitId : visibleKitId(actor);
-      if (kitId === undefined) {
+      const counted =
+        entry.drawGain !== undefined && entry.drawGain > 0
+          ? entry.drawGain
+          : getKit(kitId).startingResources.draw;
+      if (counted <= 0) {
         return [];
       }
-      const count = getKit(kitId).startingResources.draw;
-      if (count <= 0) {
-        return [];
-      }
-      const chip: DirectedTokenChip = {
-        kind: 'point',
-        count,
-        from: 'log',
-        to: { playerId: actorId },
-      };
-      return [chip];
+      return [
+        {
+          kind: 'point',
+          count: counted,
+          from: 'log',
+          to: { playerId: actorId },
+        },
+      ];
     }
     case 'playCard': {
       if (entry.cardId === undefined) {
@@ -754,5 +754,7 @@ export function actionLogFlyoutKey(entry: ActionLogEntryView): string {
       return `sentence-cd:${entry.sourcePlayerId}:${String(entry.remainingOwnerTurns)}:${String(entry.turnSequence)}`;
     case 'sentenceFired':
       return `sentence-fire:${entry.sourcePlayerId}:${entry.targetPlayerId}:${String(entry.turnSequence)}`;
+    case 'resourceChange':
+      return `resource:${entry.playerId}:${String(entry.turnSequence)}:${entry.duplicated === true ? 'copy' : 'tick'}:${entry.deltas.map((delta) => `${delta.kind}:${String(delta.amount ?? delta.direction ?? '?')}`).join(',')}`;
   }
 }

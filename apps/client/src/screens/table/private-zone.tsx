@@ -5,6 +5,7 @@
 
 import type {
   PendingEffectView,
+  PendingSentenceView,
   PlayingStateView,
   PublicPlayerView,
   TutorialTourHighlight,
@@ -44,6 +45,7 @@ export interface PrivateZoneProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   onInspectPending?: (effect: PendingEffectView) => void;
+  onInspectSentence?: (sentence: PendingSentenceView) => void;
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
@@ -66,6 +68,7 @@ export function PrivateZone({
   onDeactivatePersistent,
   onActivateDuplication,
   onInspectPending,
+  onInspectSentence,
   highlightedInstanceIds,
   zoneHighlight,
   collapseIncoming = false,
@@ -137,7 +140,7 @@ export function PrivateZone({
           >
             <KitPortrait
               kitId={view.self.kitId}
-              className="w-10 shrink-0 landscape:w-12 sm:w-14"
+              className="w-12 shrink-0 sm:w-16"
               onClick={onInspectKit}
               ariaLabel="Inspect your kit"
             />
@@ -181,6 +184,7 @@ export function PrivateZone({
           <SentenceChipsForSeat
             playerId={view.you}
             pendingSentences={view.pendingSentences}
+            {...(onInspectSentence !== undefined ? { onInspect: onInspectSentence } : {})}
           />
         </div>
         {showIncomingButton ? (

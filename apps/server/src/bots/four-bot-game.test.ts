@@ -7,6 +7,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  copyPlayerDeltas,
+  copyResourceDeltas,
   toActionPlayedPayload,
   type ActionLogEntryView,
   type GameState,
@@ -35,7 +37,12 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: 
       ...result.actionPlayed,
       turnSequence,
     }),
+    ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
   });
+
+  for (const change of result.playedResourceChanges ?? []) {
+    log.push(change);
+  }
 
   for (const resolved of result.resolved) {
     log.push({
@@ -49,7 +56,12 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: 
       shieldAbsorbed: resolved.shieldAbsorbed,
       outcome: resolved.outcome,
       turnSequence,
+      ...copyPlayerDeltas(resolved.playerDeltas),
     });
+  }
+
+  for (const change of result.resourceChanges ?? []) {
+    log.push(change);
   }
 
   if (result.sentenceAnnouncements !== undefined) {

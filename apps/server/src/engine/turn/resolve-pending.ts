@@ -13,6 +13,7 @@ import {
   type ActionResolutionOutcome,
   type CardId,
   type GameState,
+  type LogPlayerResourceDelta,
   type PendingEffect,
   type Player,
 } from '@card-battle/shared';
@@ -37,6 +38,11 @@ import {
   type CurseTransfer,
 } from '../specials/transfer-curses';
 import { findPlayer } from './advance-turn';
+import {
+  duplicatedGainMark,
+  playerDeltasSince,
+  snapshotAllResources,
+} from './resource-log';
 import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
@@ -51,10 +57,33 @@ export interface ResolvedEffect {
   outcome: ResolveOutcome;
   /** Curse instances moved when this attack dealt ≥1 life (designer 2026-08-07). */
   curseTransfers?: CurseTransfer[];
+  /**
+   * Per-seat nets this effect applied. Duplicator copies are omitted so the
+   * public resolve line does not identify that kit.
+   */
+  playerDeltas?: readonly LogPlayerResourceDelta[];
 }
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
 const SUICIDE_OPPONENT_LIFE_LOSS = 5;
+
+/** Target, then source, then other seats. A steal must not collapse into one net. */
+function orderResolvePlayerDeltas(
+  effect: PendingEffect,
+  deltas: readonly LogPlayerResourceDelta[],
+): LogPlayerResourceDelta[] {
+  const rank = (playerId: string): number => {
+    if (playerId === effect.targetPlayerId) {
+      return 0;
+    }
+    if (playerId === effect.sourcePlayerId) {
+      return 1;
+    }
+    return 2;
+  };
+
+  return [...deltas].sort((left, right) => rank(left.playerId) - rank(right.playerId));
+}
 
 function isCounterableCardId(cardId: CardId): boolean {
   return COUNTERABLE_CARD_IDS.has(cardId);
@@ -73,8 +102,12 @@ function isDeferredSuicideSelf(effect: PendingEffect, turnSequence: number): boo
 }
 
 /**
- * Spy/Thief counter: same card played back at the source cancels both at resolve
- * (rules spec §1, tech §4.7). Mirror is excluded.
+ * Spy/Thief counter (rules spec §1, designer 2026-09-28).
+ * Same upgrade level cancels both. An upgraded incoming removes a basic answer
+ * and still resolves. A basic incoming is cancelled by an upgraded answer, which
+ * stays pending. Mirror is excluded.
+ *
+ * Returns true when the incoming effect should be cancelled.
  */
 function cancelReciprocalCounter(
   state: GameState,
@@ -102,7 +135,22 @@ function cancelReciprocalCounter(
     return false;
   }
 
-  source.pendingEffects.splice(counterIndex, 1);
+  const counter = source.pendingEffects[counterIndex];
+
+  if (counter === undefined) {
+    return false;
+  }
+
+  if (incoming.isUpgraded === counter.isUpgraded) {
+    source.pendingEffects.splice(counterIndex, 1);
+    return true;
+  }
+
+  if (incoming.isUpgraded && !counter.isUpgraded) {
+    source.pendingEffects.splice(counterIndex, 1);
+    return false;
+  }
+
   return true;
 }
 
@@ -153,12 +201,28 @@ function removeEffectsById(player: Player, ids: ReadonlySet<string>): void {
  * Latest reciprocal attack volley on `source` (max `queuedAt` among resolvingPlayer → source).
  * Older leftovers are a different volley and stay out of this compare.
  */
+/**
+ * A Mirror redirect of one hit from this same volley keeps the original
+ * `queuedAt`. It is not a later answer, so it must not cancel the siblings
+ * that still target the Mirror player (designer 2026-09-28). A real
+ * retaliation is queued on a different turn.
+ */
+function isRedirectedFragmentOfIncoming(
+  effect: PendingEffect,
+  incomingQueuedAt: number,
+): boolean {
+  return effect.redirectedBy !== null && effect.queuedAt === incomingQueuedAt;
+}
+
 function latestRetaliationVolley(
   source: Player,
   resolvingPlayerId: string,
+  incomingQueuedAt: number,
 ): PendingEffect[] {
-  const reciprocal = source.pendingEffects.filter((effect) =>
-    isReciprocalAttack(effect, resolvingPlayerId, source.id),
+  const reciprocal = source.pendingEffects.filter(
+    (effect) =>
+      isReciprocalAttack(effect, resolvingPlayerId, source.id) &&
+      !isRedirectedFragmentOfIncoming(effect, incomingQueuedAt),
   );
 
   if (reciprocal.length === 0) {
@@ -197,7 +261,11 @@ function decideMutualAttack(
     return [];
   }
 
-  const retaliationVolley = latestRetaliationVolley(source, resolvingPlayer.id);
+  const retaliationVolley = latestRetaliationVolley(
+    source,
+    resolvingPlayer.id,
+    incoming.queuedAt,
+  );
 
   if (retaliationVolley.length === 0) {
     return [];
@@ -275,8 +343,9 @@ function resolveSpyThief(
 }
 
 /**
- * Upgrade Point Thief — rules spec §5, L21-02.
+ * Upgrade Point Thief — rules spec §5, L21-02, designer 2026-09-28.
  * Not counterable; not blocked by Shield; Untouchable is not immune (#V4-33).
+ * Does not steal points.
  */
 function resolveUpgradePointThief(
   state: GameState,
@@ -292,16 +361,6 @@ function resolveUpgradePointThief(
   stealUpgradePoints(state, source, target);
   const stripped = downgradeAllCards(target);
   grantUpgradePoints(state, source, stripped, 'direct');
-
-  if (effect.isUpgraded) {
-    stealPoints({
-      state,
-      sourcePlayerId: effect.sourcePlayerId,
-      targetPlayerId: target.id,
-      amount: target.points,
-      gainMultiplier: 1,
-    });
-  }
 
   return 'applied';
 }
@@ -431,9 +490,22 @@ export function resolvePendingEffects(
   const appliedVolleyKeys = new Set<string>();
 
   for (const effect of ready) {
+    const beforeResources = snapshotAllResources(state);
+    const gainMark = duplicatedGainMark(state);
+    const pushResolved = (entry: ResolvedEffect): void => {
+      const playerDeltas = orderResolvePlayerDeltas(
+        effect,
+        playerDeltasSince(state, beforeResources, gainMark),
+      );
+      resolved.push({
+        ...entry,
+        ...(playerDeltas.length > 0 ? { playerDeltas } : {}),
+      });
+    };
+
     // Invisibility — #V4-9: all opposing pending resolve as immune before mutual cancel.
     if (playerIsInvisible(player)) {
-      resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+      pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
       continue;
     }
 
@@ -443,13 +515,13 @@ export function resolvePendingEffects(
 
     if (isAttackCardId(effect.cardId)) {
       if (cancelIncomingIds.has(effect.id)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
       // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
       if (consumeAttackBlockCharge(player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
         continue;
       }
 
@@ -476,7 +548,7 @@ export function resolvePendingEffects(
             cancelIncomingIds.add(id);
           }
 
-          resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
           continue;
         }
 
@@ -503,7 +575,7 @@ export function resolvePendingEffects(
           ? transferCursesFromAttacker(state, effect.sourcePlayerId, player.id)
           : [];
 
-      resolved.push({
+      pushResolved({
         effect,
         livesLost,
         shieldAbsorbed,
@@ -513,12 +585,12 @@ export function resolvePendingEffects(
       continue;
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
       if (isImmuneTo(player, effect.cardId)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
         continue;
       }
 
@@ -556,7 +628,7 @@ export function resolvePendingEffects(
         );
       }
       outcome = 'applied';
-      resolved.push({
+      pushResolved({
         effect,
         livesLost: livesBefore,
         shieldAbsorbed: 0,
@@ -565,7 +637,7 @@ export function resolvePendingEffects(
       continue;
     }
 
-    resolved.push({
+    pushResolved({
       effect,
       livesLost,
       shieldAbsorbed,

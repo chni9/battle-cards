@@ -351,4 +351,75 @@ describe('Mirror (rules spec §3, L3-09)', () => {
     expect(completeMirrorChoice(state, 'c', pending.id, 'b').ok).toBe(true);
     expect(carol.points).toBe(0);
   });
+
+  it('redirecting one Assassin volley hit leaves the siblings that still target you', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'mirror-volley-siblings',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const carol = state.players.find((player) => player.id === 'c');
+
+    if (alice === undefined || carol === undefined) {
+      throw new Error('missing players');
+    }
+
+    state.currentTurnPlayerId = 'a';
+    alice.kitId = 'assassin';
+    alice.points = 30;
+    alice.hand = [
+      { instanceId: 'sup', cardId: 'super-attack', isUpgraded: false },
+      { instanceId: 'bas', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'str', cardId: 'strong-attack', isUpgraded: false },
+    ];
+
+    const played = performTurnAction(state, 'a', {
+      type: 'playMultipleAttacks',
+      attacks: [
+        { instanceId: 'sup', targetPlayerId: 'c' },
+        { instanceId: 'bas', targetPlayerId: 'c' },
+        { instanceId: 'str', targetPlayerId: 'c' },
+      ],
+    });
+
+    expect(played.ok).toBe(true);
+    const superEffect = carol.pendingEffects.find((effect) => effect.cardId === 'super-attack');
+    expect(superEffect).toBeDefined();
+    if (superEffect === undefined) {
+      return;
+    }
+
+    state.currentTurnPlayerId = 'c';
+    carol.points = 6;
+    carol.lives = 20;
+    carol.shield = 0;
+    carol.hand = [{ instanceId: 'm-1', cardId: 'mirror', isUpgraded: true }];
+
+    const mirrorPlay = performTurnAction(state, 'c', {
+      type: 'playCard',
+      instanceId: 'm-1',
+    });
+
+    expect(mirrorPlay.ok).toBe(true);
+    if (!mirrorPlay.ok) {
+      return;
+    }
+
+    expect(mirrorPlay.mirrorChoicePending).toBe(true);
+    expect(completeMirrorChoice(state, 'c', superEffect.id, 'a').ok).toBe(true);
+    expect(carol.lives).toBe(17);
+    expect(
+      alice.pendingEffects.some(
+        (effect) => effect.cardId === 'super-attack' && effect.sourcePlayerId === 'c',
+      ),
+    ).toBe(true);
+    expect(
+      carol.pendingEffects.some(
+        (effect) => effect.cardId === 'basic-attack' || effect.cardId === 'strong-attack',
+      ),
+    ).toBe(false);
+  });
 });

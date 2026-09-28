@@ -160,6 +160,11 @@ export type GenericSubChoiceState = Extract<
  * does not consume a countdown turn; later owner turns decrement.
  */
 export interface PendingSentence {
+  /**
+   * Stable id for `upgradeCard` while the countdown is public (designer
+   * 2026-09-28 / PROTOCOL_VERSION 40). Not reset when the Sentence is upgraded.
+   */
+  id: string;
   sourcePlayerId: string;
   remainingOwnerTurns: number;
   isUpgraded: boolean;

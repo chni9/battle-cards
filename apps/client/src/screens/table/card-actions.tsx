@@ -17,6 +17,7 @@ import {
 import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
 
+import { CARDS_WITH_ACTIVATED_ART } from '../../design/asset-lookup';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CardChoiceTile } from '../../design/components/card-choice-tile';
@@ -34,7 +35,7 @@ import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { CardEffectCopy } from '../../design/components/card-effect-copy';
 import { LifeCountBadge } from '../../design/components/life-count-badge';
-import { visibleKitId } from './table-helpers';
+import { activeUpgradeInstanceId, visibleKitId } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
 const REGEN_QUANTITIES = [1, 2, 3, 4] as const;
@@ -124,9 +125,15 @@ export function CardActions(props: CardActionsProps): ReactElement {
     setDialog(null);
   };
 
-  const aliveOpponents = opponents.filter((player) => !player.isEliminated);
+  const seatIsLivingInvisible = (player: PublicPlayerView): boolean =>
+    !player.isEliminated &&
+    player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
+  const aliveOpponents = opponents.filter(
+    (player) => !player.isEliminated && !seatIsLivingInvisible(player),
+  );
   const absorberOpponents = opponents.filter(
-    (player) => !player.isEliminated || player.absorbWindowOpen,
+    (player) =>
+      (!player.isEliminated || player.absorbWindowOpen) && !seatIsLivingInvisible(player),
   );
   const defaultTarget = aliveOpponents[0]?.id ?? '';
 
@@ -177,6 +184,8 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const inspectInstance = dialog?.kind === 'inspect' ? dialog.instance : null;
   const inspectDefinition =
     inspectInstance !== null ? getCard(inspectInstance.cardId) : undefined;
+  const inspectUpgradeId =
+    dialog?.kind === 'inspect' ? activeUpgradeInstanceId(view, dialog.instance) : null;
 
   return (
     <>
@@ -324,9 +333,29 @@ export function CardActions(props: CardActionsProps): ReactElement {
         }
         onClose={close}
         actions={
-          <Button compact variant="green" onClick={close}>
-            Close
-          </Button>
+          <>
+            {inspectUpgradeId !== null && (
+              <Button
+                compact
+                variant="orange"
+                disabled={!isMyTurn || actionsLocked}
+                onClick={() => {
+                  onUpgradeCard(inspectUpgradeId);
+                  close();
+                }}
+              >
+                {CARD_UPGRADE_LABEL}{' '}
+                <CostDisplay
+                  cost={{ kind: 'upgradePoint', amount: 1 }}
+                  signed="cost"
+                  className="text-inherit"
+                />
+              </Button>
+            )}
+            <Button compact variant="green" onClick={close}>
+              Close
+            </Button>
+          </>
         }
       >
         {dialog?.kind === 'inspect' && (
@@ -334,7 +363,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <Card
               instance={dialog.instance}
               detail="face"
-              activated={dialog.activated === true}
+              activated={
+                dialog.activated === true &&
+                (CARDS_WITH_ACTIVATED_ART as readonly string[]).includes(dialog.instance.cardId)
+              }
               className="w-20 shrink-0 sm:w-24"
             />
             <div className="min-w-0 space-y-2 text-center sm:text-left">

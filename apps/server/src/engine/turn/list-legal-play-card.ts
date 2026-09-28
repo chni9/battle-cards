@@ -17,7 +17,7 @@ import {
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
-import { playerIsInvisible } from '../specials/is-invisible';
+import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
 import { isAbsorberTargetable } from './absorb-window';
 import { findPlayer } from './advance-turn';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
@@ -33,10 +33,14 @@ export function listLegalPlayCardActions(
   const actions: TurnAction[] = [];
   const rng = createRng(`${state.seed}:list-legal-canplay`);
   const livingOpponents = state.players.filter(
-    (player) => player.id !== actor.id && !player.isEliminated,
+    (player) =>
+      player.id !== actor.id && !player.isEliminated && !isIllegalOpposingTarget(player),
   );
   const absorberOpponents = state.players.filter(
-    (player) => player.id !== actor.id && isAbsorberTargetable(player),
+    (player) =>
+      player.id !== actor.id &&
+      isAbsorberTargetable(player) &&
+      !isIllegalOpposingTarget(player),
   );
   const held: readonly CardInstance[] = [...actor.hand, ...actor.specialCards];
 
@@ -55,7 +59,10 @@ export function listLegalPlayCardActions(
       continue;
     }
 
-    if (attacksForbiddenDuringBlock(actor) && isAttackCardId(instance.cardId)) {
+    if (
+      attacksForbiddenDuringBlock(actor) &&
+      (isAttackCardId(instance.cardId) || instance.cardId === 'block')
+    ) {
       continue;
     }
 

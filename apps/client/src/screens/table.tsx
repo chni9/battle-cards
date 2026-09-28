@@ -16,6 +16,7 @@ import {
   type CardId,
   type CardInstance,
   type KitId,
+  type PendingSentenceView,
   type PlayingStateView,
   type ResolveSubChoicePayload,
   type SentenceAnnouncementLogEntry,
@@ -72,7 +73,12 @@ import {
   incomingTargetingYouIds,
   newIncomingThreats,
 } from '../fx/incoming-threat-diff';
-import { THREAT_FX_TTL_MS, TOKEN_FLYOUT_DURATION_S, TOKEN_STAGGER_MS } from '../fx/motion-timing';
+import {
+  pointFlyoutCount,
+  THREAT_FX_TTL_MS,
+  TOKEN_FLYOUT_DURATION_S,
+  TOKEN_STAGGER_MS,
+} from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
 import { threatToneFor } from '../fx/threat-tone';
@@ -195,7 +201,8 @@ function enqueueDirectedTokenChips(
   let seq = 0;
   const tryChip = (chip: DirectedTokenChip, startSeq: number): number | null => {
     let nextSeq = startSeq;
-    for (let i = 0; i < chip.count; i++) {
+    const count = pointFlyoutCount(chip.kind, chip.count);
+    for (let i = 0; i < count; i++) {
       const measured = measureDirectedTokenFlyout(chip.kind, chip.from, chip.to, i);
       if (measured === null) {
         return null;
@@ -1208,10 +1215,23 @@ function TableScreenInner({
     });
   }
 
+  function onInspectSentenceChip(sentence: PendingSentenceView): void {
+    setDialog({
+      kind: 'inspect',
+      instance: {
+        instanceId: sentence.id,
+        cardId: 'sentence',
+        isUpgraded: sentence.isUpgraded,
+      },
+      // Sentence has no activated PNG. Requesting it throws and blanks the table.
+      source: 'active',
+    });
+  }
+
   function onInspectCatalogCard(
     cardId: CardId,
     isUpgraded: boolean,
-    source: 'log' | 'queue',
+    source: 'log' | 'queue' | 'active',
   ): void {
     setDialog({
       kind: 'inspect',
@@ -1235,6 +1255,7 @@ function TableScreenInner({
           (entry): entry is SentenceAnnouncementLogEntry =>
             entry.kind === 'sentenceCountdown' || entry.kind === 'sentenceFired',
         )}
+        actionLog={view.actionLog}
         nicknameOf={(id) => {
           const seat = view.players.find((player) => player.id === id);
           return seat?.nickname ?? id;
@@ -1366,6 +1387,7 @@ function TableScreenInner({
               onInspectActive={(effectId) => {
                 onInspectActive(player.id, effectId);
               }}
+              onInspectSentence={onInspectSentenceChip}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {
                     onInspectReveal: () => {
@@ -1441,6 +1463,7 @@ function TableScreenInner({
               onInspectPending={(effect) => {
                 onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
               }}
+              onInspectSentence={onInspectSentenceChip}
               {...(onDeactivatePersistent !== undefined
                 ? {
                     onDeactivatePersistent: (effectId: string) => {
@@ -1610,6 +1633,10 @@ function TableScreenInner({
               onInspectActive={(effectId) => {
                 setChromeOpen(null);
                 onInspectActive(player.id, effectId);
+              }}
+              onInspectSentence={(sentence) => {
+                setChromeOpen(null);
+                onInspectSentenceChip(sentence);
               }}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {

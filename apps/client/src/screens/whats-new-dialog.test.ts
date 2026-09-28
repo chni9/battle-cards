@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { latestReleaseNote, RELEASE_NOTES } from '@card-battle/shared';
+import { latestReleaseNote, RELEASE_NOTES, releaseNotesForScope } from '@card-battle/shared';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -17,12 +17,24 @@ function read(rel: string): string {
 }
 
 describe('What’s new dialog (L63-07)', () => {
-  it('renders the shared catalog newest first with a Latest marker', () => {
+  it('renders the current update alone and the full log date by date', () => {
     const source = read('whats-new-dialog.tsx');
-    expect(source).toContain('RELEASE_NOTES.map');
+    const home = read('home.tsx');
+    expect(source).toContain('releaseNotesForScope');
+    expect(source).toContain('data-whats-new-scope');
+    expect(source).toContain("scope === 'history'");
     expect(source).toContain('Latest');
     expect(source).toContain('Got it');
-    expect(latestReleaseNote().id).toBe('lot-63');
+    expect(home).toContain("useState<WhatsNewScope>('current')");
+    expect(home).toContain("setWhatsNewScope('history')");
+    expect(home).toContain("setWhatsNewScope('current')");
+    expect(home).toContain('scope={whatsNewScope}');
+    expect(latestReleaseNote().id).toBe('lot-65');
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-65']);
+    expect(releaseNotesForScope('history').map((note) => note.date)).toEqual([
+      '2026-09-28',
+      '2026-09-20',
+    ]);
     expect(RELEASE_NOTES.map((note) => note.id)[0]).toBe(latestReleaseNote().id);
   });
 
@@ -38,7 +50,8 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source).toContain('item.after');
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
     expect(source).toContain('item.kitId');
-    expect(latestReleaseNote().additions).toHaveLength(2);
+    expect(latestReleaseNote().additions).toHaveLength(0);
+    expect(latestReleaseNote().items).toHaveLength(15);
     const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
     expect(lot63?.items.map((item) => item.cardId)).toEqual([
       'sentence',

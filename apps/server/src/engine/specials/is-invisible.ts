@@ -15,3 +15,11 @@ export function playerIsInvisible(player: Player): boolean {
 export function isOpposingActionImmune(player: Player): boolean {
   return playerIsInvisible(player);
 }
+
+/**
+ * A living invisible seat cannot be chosen as a single target (L65-02).
+ * Eliminated seats stay eligible for Absorber's death window.
+ */
+export function isIllegalOpposingTarget(player: Player): boolean {
+  return !player.isEliminated && playerIsInvisible(player);
+}

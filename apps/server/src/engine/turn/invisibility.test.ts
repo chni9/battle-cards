@@ -164,7 +164,7 @@ describe('Invisibility (L25-02)', () => {
     expect(a.specialCards).toHaveLength(1);
   });
 
-  it('allows targeting an invisible player and resolves Cloning as immune (#V4-9d)', () => {
+  it('rejects Cloning aimed at an invisible seat (L65-02)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -196,15 +196,13 @@ describe('Invisibility (L25-02)', () => {
       targetPlayerId: b.id,
     });
 
-    expect(result.ok).toBe(true);
-
+    expect(result.ok).toBe(false);
     if (!result.ok) {
-      return;
+      expect(result.code).toBe('invalid-target');
     }
-
-    expect(result.resolved.some((entry) => entry.outcome === 'immune')).toBe(true);
     expect(a.kitId).toBe('kamikaze');
     expect(a.lives).toBe(5);
+    expect(a.specialCards).toHaveLength(1);
   });
 
   it('does not block lifecycle elimination while invisible', () => {
@@ -478,5 +476,71 @@ describe('Invisibility (L25-02)', () => {
 
     applyPersistentEffects(state, a.id);
     expect(a.lives).toBe(9);
+  });
+
+  it('does not offer an invisible seat as a target and rejects the play (L65-02)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l65-02-target',
+      kitAssignment: ['assassin', 'kamikaze', 'warrior'],
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+
+    if (a === undefined || b === undefined) {
+      throw new Error('missing players');
+    }
+
+    b.activePersistentEffects = [
+      makeCounterEffect({ id: 'inv-1', cardId: 'invisibility', counter: 4 }),
+    ];
+    a.hand = [
+      { instanceId: 'atk-1', cardId: 'basic-attack', isUpgraded: false },
+      { instanceId: 'atk-2', cardId: 'strong-attack', isUpgraded: false },
+    ];
+    a.specialCards = [];
+    a.points = 30;
+    state.currentTurnPlayerId = a.id;
+
+    const legal = listLegalActions(state, a.id);
+    const aimsAtInvisible = legal.some((action) => {
+      if (action.type === 'playCard') {
+        return action.targetPlayerId === b.id;
+      }
+      if (action.type === 'playMultipleAttacks') {
+        return action.attacks.some((attack) => attack.targetPlayerId === b.id);
+      }
+      return false;
+    });
+    expect(aimsAtInvisible).toBe(false);
+    expect(
+      legal.some((action) => action.type === 'playCard' && action.targetPlayerId === 'c'),
+    ).toBe(true);
+
+    const rejected = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'atk-1',
+      targetPlayerId: b.id,
+    });
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) {
+      expect(rejected.code).toBe('invalid-target');
+    }
+
+    const rejectedMulti = performTurnAction(state, a.id, {
+      type: 'playMultipleAttacks',
+      attacks: [
+        { instanceId: 'atk-1', targetPlayerId: b.id },
+        { instanceId: 'atk-2', targetPlayerId: 'c' },
+      ],
+    });
+    expect(rejectedMulti.ok).toBe(false);
+    if (!rejectedMulti.ok) {
+      expect(rejectedMulti.code).toBe('invalid-target');
+    }
   });
 });

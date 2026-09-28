@@ -8,7 +8,9 @@ import {
   CARD_BAND_ABS_MIN_W,
   CARD_BAND_MAX_W,
   cardBandRowHeight,
+  CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX,
   cardBandSideBySide,
+  cardBandSideBySideStable,
   faceCardHeight,
   fitCardBand,
   maxWidthForRowHeight,
@@ -61,6 +63,29 @@ describe('cardBandSideBySide (L53-07)', () => {
     expect(cardBandSideBySide(80, 2)).toBe(true);
     expect(cardBandSideBySide(400, 2)).toBe(false);
     expect(cardBandSideBySide(80, 0)).toBe(false);
+  });
+});
+
+describe('cardBandSideBySideStable (L65-04)', () => {
+  it('returns to stacked only after the band is clearly taller than the enter threshold', () => {
+    let releaseAt = 0;
+    for (let height = 1; height < 800; height += 1) {
+      if (!cardBandSideBySide(height, 2)) {
+        releaseAt = height;
+        break;
+      }
+    }
+    expect(releaseAt).toBeGreaterThan(CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX);
+
+    expect(cardBandSideBySideStable(releaseAt - 1, 2, false)).toBe(true);
+    expect(cardBandSideBySideStable(releaseAt, 2, false)).toBe(false);
+    expect(cardBandSideBySideStable(releaseAt, 2, true)).toBe(true);
+    expect(
+      cardBandSideBySideStable(releaseAt + CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX - 1, 2, true),
+    ).toBe(true);
+    expect(
+      cardBandSideBySideStable(releaseAt + CARD_BAND_SIDE_BY_SIDE_HYSTERESIS_PX, 2, true),
+    ).toBe(false);
   });
 });
 

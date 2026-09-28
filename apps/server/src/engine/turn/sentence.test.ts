@@ -76,8 +76,13 @@ describe('Sentence (L63-03)', () => {
     ).toBe(true);
     expect(a.points).toBe(0);
     expect(state.pendingSentences).toEqual([
-      { sourcePlayerId: a.id, remainingOwnerTurns: 3, isUpgraded: false },
+      expect.objectContaining({
+        sourcePlayerId: a.id,
+        remainingOwnerTurns: 3,
+        isUpgraded: false,
+      }),
     ]);
+    expect(state.pendingSentences[0]?.id.length).toBeGreaterThan(0);
     expect([...a.pendingEffects, ...b.pendingEffects].some((effect) => effect.cardId === 'sentence')).toBe(
       false,
     );

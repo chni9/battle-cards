@@ -3879,3 +3879,146 @@ bust immunity there.
 
 ---
 
+## 2026-09-28 · [P] Gambler Draw payout is private
+
+Player reports (protocol 39): the Draw point-chip count identified Gambler,
+because Lot 64 published `drawGain` on every recipient. Rules spec §6 keeps
+exact resources private except Spy. L65-01 narrows that publication. No
+protocol bump — the field stays optional and is omitted for everyone who
+does not already see that seat.
+
+- Self, Spy (any level), eliminated spectators, and Stay walk-ins still
+  receive `PublicPlayerView.drawGain` and `actionPlayed.drawGain`.
+- Other recipients: neither the player view nor the per-recipient log nor
+  the live `ACTION_PLAYED` carries the number. A successful Draw they cannot
+  count flies one point chip.
+- The bust stays public (`drawBust`, `{nickname} dies by Gambling`).
+- Excel `exportLog` keeps the full server log.
+
+---
+
+## 2026-09-28 · [P] What’s new current update vs full log
+
+Designer: the popup that opens by itself shows only the current update. The
+hub **New** button still shows the complete log, one date after another.
+
+Pull requests that are not on `main` yet are one update: append them to the
+latest `RELEASE_NOTES` id so the auto popup shows them together. Merging
+`dev` → `main` ships that entry. The next player-facing change opens a new
+id. That reinitializes the auto popup; it then fills with only those next
+changes. Older ids stay on the New button.
+
+This supersedes the 2026-09-21 “edit the unshipped original” rule once that
+note is on `main`. `lot-63` shipped with Gambler (promote #51). Lot 65 is
+`lot-65` (2026-09-28): private Draw, invisible targets, Sentence inspect,
+hand layout. Those lines are not added to `lot-63`.
+
+---
+
+## 2026-09-28 · [P] Feedback pass (Lot 66)
+
+Designer lock after the production inbox triage. Lot 65 already shipped Draw
+privacy, invisible targeting, Sentence inspect, and hand hysteresis. This
+pass does not redo those. What’s new stays on `lot-65` (not on `main`).
+`PROTOCOL_VERSION` 39 → 40 because a ticking Sentence gained a public `id`.
+
+- Absorber window closes when each living player from the elimination has
+  finished a turn, not when that turn begins. Tick in `advanceTurn`.
+- Block cannot be played while `blockAttacksForbidden` is set.
+- Mirror still redirects one attack. A redirected fragment of the same
+  volley (`redirectedBy` set and the same `queuedAt`) is not a retaliation,
+  so it does not cancel the siblings that still target the Mirror player.
+  Equal / stronger / weaker is unchanged.
+- Solo Play again (exactly one human player seat) restarts that match: same
+  seats, bot difficulties, and that human’s kit. Two humans keep the lobby.
+- Spy and Thief counter compares `isUpgraded` the way attacks compare
+  damage. Same level cancels both. Upgraded incoming removes a basic answer
+  and still resolves. Basic incoming is cancelled by an upgraded answer.
+- Imposition takes only points above 9, capped at 2 (4 if upgraded). Counter
+  stays 2. Missing the payment does not skip the turn.
+- Base Upgrade Point Thief chooses one living opponent. Upgraded hits every
+  living opponent and does not steal points. Living invisible seats are not
+  targets.
+- A Gambler wipe is not a death. Lives become 1 via `applyLifeLoss` for
+  `lives - 1` (`reason: 'gambling'` on that primitive only). Points, upgrade
+  points, and shield go to 0. Hand and unplayed specials join the pool with
+  no refund. Active persistents stay. Public line:
+  `{nickname} gambled too much and lost everything`, from `drawBust`. No
+  `playerEliminated`.
+- One upgrade point and the turn can upgrade your own active Poison, Points
+  Generator, Imposition, Super Absorber, Roulette, Invisibility, or your
+  ticking Sentence. Counters and remaining turns do not reset.
+
+---
+
+## 2026-09-28 · [P] Action-log resource nets and point flyout cap
+
+Designer session. `PROTOCOL_VERSION` **40 → 41** so older clients cannot
+read `resourceChange`. Lot 66 already published 40 for `PendingSentence.id`.
+L65-01 (PR #52) stays: Gambler `drawGain` is still
+Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
+
+- Point token flyouts cap at 50 chips (`MAX_POINT_FLYOUTS`). The numeric
+  float and the resource total stay the real amount. Lives, shield, and
+  upgrade points are not capped.
+- The acting player's own kit portrait is one step larger (`w-12` /
+  `sm:w-16`; landscape `3rem`). Opponent portraits stay `2.35rem` in
+  landscape.
+- The play line appends the acting player's immediate resource net, measured
+  by snapshot before resolution. Same-resource spend and gain collapse.
+  Zeros are omitted. Order: lives, points, upgrade points, shield.
+- Resolve lines keep the hit or resolve wording and append the resources
+  that resolution changed, per seat. An attack shows the target's life
+  and shield loss. A steal shows the target's loss and the source's gain;
+  those two are not netted. Listed attack damage stays on the play line.
+  Duplicator copies stay off this suffix.
+- A persistent tick that changes resources adds a public `resourceChange`
+  line: player name and icon nets, no card name.
+- Elimination rewards stay masked.
+- Duplicator copies are `resourceChange` with `duplicated: true` and are
+  omitted unless the viewer sees that Duplicator. An unspied
+  `activateDuplication` stays a Draw and shows a fake green `+?` point
+  suffix so it matches a real Draw.
+- Unspied Draw conceals the point gain as `+?`. A bust hides the life total
+  unless the viewer sees the actor, who then sees the real life loss.
+  Unspied buy-upgrade conceals the point price as `−?` and keeps `+1`
+  upgrade point visible.
+- Unspied card sales omit the payout. The amount and the resource kind
+  identify the sold card, including an upgrade-point refund on an upgraded
+  sale. Self and Spy still see the real net. Selling an upgrade point is
+  unchanged: it is not a card.
+- Unspied shop buys (`buyCard`) omit the price. Basic attack is 2 points,
+  Spy is 4, Tax is 2 lives, and those amounts name the card. A gain on that
+  same line stays (Ghost's credit when the price is lives). Self and Spy
+  still see the price. A special purchase is always 20 points, and a pool
+  buy uses the public fee, so those lines still show the spend.
+- Gains use green `+` and the number. Losses use red `−` and the number.
+  No parentheses. The icon keeps its normal art.
+- The stored room log and Excel keep real amounts. The broadcast
+  `ACTION_PLAYED` payload does not.
+
+---
+
+## 2026-09-28 · [P] Feedback follow-up (Lot 67)
+
+Designer, same day, after Lot 66. No protocol bump. What’s new stays on
+`lot-65`. This entry supersedes the Lot 66 bullets for solo Play again and
+the Imposition floor. The Lot 66 entry stays as the record of that pass.
+
+- Solo Play again (exactly one human player seat) leaves the room and opens
+  the Home solo menu with that human’s kit, the bot count, and the shared
+  bot difficulty. It does not call `startMatch`. Two humans still reform the
+  lobby. Tutorial and spectators do not get the menu.
+- An active Shield (`shield > 0`, not yet upgraded) can be upgraded for 1
+  upgrade point and the turn. That sets `shieldIsUpgraded` only. Remaining
+  shield points do not change. The synthetic id is `active-shield`. Curse
+  and Reanimation stay excluded.
+- The Gambler who loses everything sees the red table banner
+  `You gambled too much and lost everything` (same chrome as the Sentence
+  banner). Opponents keep the public log line and do not get the banner.
+- Imposition takes only points above 7, capped at 2 (4 if upgraded). 8 pays
+  1. 7 or below pays nothing. Counter stays 2. Missing the payment does not
+  skip the turn.
+
+---
+

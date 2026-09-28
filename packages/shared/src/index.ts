@@ -17,6 +17,7 @@ export * from './domain/shop-actions';
 export * from './protocol/action-outcome';
 export * from './protocol/action-reject';
 export * from './protocol/messages';
+export * from './protocol/resource-delta';
 export * from './protocol/reward-choice';
 export * from './protocol/state-view';
 export { PROTOCOL_VERSION } from './protocol-version';

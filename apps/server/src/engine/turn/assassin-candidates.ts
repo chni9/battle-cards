@@ -16,7 +16,7 @@ import {
 
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
-import { playerIsInvisible } from '../specials/is-invisible';
+import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
 import { playPointsCost } from './play-cost';
@@ -117,7 +117,10 @@ function rankAttackCopies(actor: Player): AttackPick[] {
  */
 function rankOpponentTargets(state: GameState, actor: Player): Player[] {
   return state.players
-    .filter((player) => player.id !== actor.id && !player.isEliminated)
+    .filter(
+      (player) =>
+        player.id !== actor.id && !player.isEliminated && !isIllegalOpposingTarget(player),
+    )
     .sort((left, right) => left.id.localeCompare(right.id));
 }
 
@@ -226,7 +229,12 @@ function isAffordableCandidate(
 
     const target = state.players.find((player) => player.id === slot.targetPlayerId);
 
-    if (target === undefined || target.isEliminated || target.id === actor.id) {
+    if (
+      target === undefined ||
+      target.isEliminated ||
+      target.id === actor.id ||
+      isIllegalOpposingTarget(target)
+    ) {
       return false;
     }
 

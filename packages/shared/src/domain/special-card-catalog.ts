@@ -65,9 +65,9 @@ export const SPECIAL_CARD_CATALOG = {
     'imposition',
     'Imposition',
     6,
-    'Each opponent with at least 2 points gives you 2 points per turn. If they have fewer, nothing happens.',
-    'Each opponent with at least 4 points gives you 4 points per turn. If they have fewer, nothing happens.',
-    '4 points per turn instead of 2 (skip if they have fewer than 4).',
+    'Each turn, take only points an opponent has above 7, capped at 2. 7 or below gives nothing. Missing the payment does not skip their turn.',
+    'Each turn, take only points an opponent has above 7, capped at 4. 7 or below gives nothing. Missing the payment does not skip their turn.',
+    'Cap of 4 points above 7 instead of 2.',
   ),
   cloning: specialCard(
     'cloning',
@@ -97,16 +97,16 @@ export const SPECIAL_CARD_CATALOG = {
     'upgrade-point-thief',
     'Upgrade Point Thief',
     5,
-    'Steal all unspent upgrade points from all opponents and remove the upgrade from all of their currently upgraded cards (1 UP each to you).',
-    'Steal all unspent upgrade points from all opponents, remove the upgrade from all of their currently upgraded cards (1 UP each to you), and steal all of their current points.',
-    'Also steal all of their current points.',
+    'Choose one living opponent. Steal their unspent upgrade points and remove the upgrade from all of their currently upgraded cards (1 UP each to you).',
+    'Steal unspent upgrade points from every living opponent and remove the upgrade from all of their currently upgraded cards (1 UP each to you). Does not steal points.',
+    'Steal from every living opponent instead of one. Does not steal points.',
   ),
   block: specialCard(
     'block',
     'Block',
     5,
-    'Cancel any action pending resolution against you, then play 3 consecutive turns (no attack cards).',
-    'Cancel any action pending resolution against you, then play 7 consecutive turns (no attack cards).',
+    'Cancel any action pending resolution against you, then play 3 consecutive turns (no attack cards, and Block cannot be played again during that chain).',
+    'Cancel any action pending resolution against you, then play 7 consecutive turns (no attack cards, and Block cannot be played again during that chain).',
     '7 consecutive turns instead of 3.',
   ),
   'super-regeneration': specialCard(
@@ -227,6 +227,28 @@ export const PERSISTENT_SPECIAL_CARD_IDS = [
 ] as const;
 
 export type PersistentSpecialCardId = (typeof PERSISTENT_SPECIAL_CARD_IDS)[number];
+
+/**
+ * Active persistents that can be upgraded in play (designer 2026-09-28).
+ * Not Curse or Reanimation. Shield uses `ACTIVE_SHIELD_INSTANCE_ID`.
+ * Sentence is a ticking countdown, not this list.
+ */
+export const UPGRADEABLE_ACTIVE_CARD_IDS = [
+  'poison',
+  'points-generator',
+  'imposition',
+  'super-absorber',
+  'roulette',
+  'invisibility',
+] as const;
+
+export type UpgradeableActiveCardId = (typeof UPGRADEABLE_ACTIVE_CARD_IDS)[number];
+
+export function isUpgradeableActiveCardId(
+  cardId: string,
+): cardId is UpgradeableActiveCardId {
+  return (UPGRADEABLE_ACTIVE_CARD_IDS as readonly string[]).includes(cardId);
+}
 
 export function isPersistentSpecialCardId(cardId: string): cardId is PersistentSpecialCardId {
   return (PERSISTENT_SPECIAL_CARD_IDS as readonly string[]).includes(cardId);

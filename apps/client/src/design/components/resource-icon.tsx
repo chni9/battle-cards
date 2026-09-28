@@ -13,6 +13,7 @@ import { shouldSkipResourceIconFlyout } from '../../fx/token-flyout-skip';
 import {
   MOTION_EASE,
   MOTION_PULSE_S,
+  pointFlyoutCount,
   RESOURCE_FLASH_MS,
   TOKEN_FLYOUT_DURATION_S,
   TOKEN_STAGGER_MS,
@@ -100,7 +101,7 @@ export function ResourceIcon({
 
     if (flyToken && enqueue !== undefined && reduceMotion !== true) {
       const direction = d > 0 ? 'gain' : 'loss';
-      const count = Math.abs(d);
+      const count = pointFlyoutCount(kind, Math.abs(d));
       for (let i = 0; i < count; i++) {
         const measured = measureTokenFlyout(kind, direction, i, playerId);
         if (measured === null) {

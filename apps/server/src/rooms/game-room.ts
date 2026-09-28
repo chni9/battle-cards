@@ -30,6 +30,8 @@ import {
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
+  copyPlayerDeltas,
+  copyResourceDeltas,
   isBotDifficulty,
   toActionPlayedPayload,
   SUB_CHOICE_REQUIRED,
@@ -156,6 +158,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
   fogBuyPoolCardPlayed,
+  fogDrawGainPlayed,
 } from '../protocol/build-view-for';
 import { recipientSeesPrivateOf, walkInSpectatorSeesPrivate } from '../protocol/visibility-matrix';
 import {
@@ -473,40 +476,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
-      this.reforming = false;
-      this.playAgainOptedIn.clear();
-      this.matchPersisted = false;
-      this.winnerPlayerId = null;
-      this.hasStarted = true;
-      this.startedAtMs = Date.now();
-      this.eliminations = [];
-      this.matchHostSessionId = hostSessionId;
-      this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
-      const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
-      const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
-      this.gameState = createInitialState(
-        forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
-      );
-      this.thinkTime.clear();
-      if (this.playKind === 'tutorial') {
-        const tutorialSeats = this.tutorialSeatIds();
-
-        if (tutorialSeats !== null) {
-          applyTutorialSetup(this.gameState, tutorialSeats);
-          this.tutorialIndex = 0;
-        }
-      }
-      this.actionTakenThisTurn = false;
-      this.actionLog = [];
-      this.refreshJoinLock();
-      console.log(
-        `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
-      );
-      this.refreshAutoDispose();
-      this.refreshJoinLock();
-      this.beginTurnOrAbsentAutoPlay();
-      this.sendStateToEveryone();
-      this.broadcastTurnStarted();
+      this.startMatch();
     },
 
     [ADD_BOT]: (client: GameClient, payload: unknown): void => {
@@ -1139,6 +1109,49 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.guestReady.set(playerId, parsed.value.ready);
     this.sendStateToEveryone();
+  }
+
+  /**
+   * Deal a new match on the current seats. Host Start lands here.
+   * Solo Play again does not: the client reopens the solo menu.
+   */
+  private startMatch(): void {
+    const hostSessionId = this.hostSessionId;
+
+    this.reforming = false;
+    this.playAgainOptedIn.clear();
+    this.matchPersisted = false;
+    this.winnerPlayerId = null;
+    this.hasStarted = true;
+    this.startedAtMs = Date.now();
+    this.eliminations = [];
+    this.matchHostSessionId = hostSessionId;
+    this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
+    const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
+    const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
+    this.gameState = createInitialState(
+      forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
+    );
+    this.thinkTime.clear();
+    if (this.playKind === 'tutorial') {
+      const tutorialSeats = this.tutorialSeatIds();
+
+      if (tutorialSeats !== null) {
+        applyTutorialSetup(this.gameState, tutorialSeats);
+        this.tutorialIndex = 0;
+      }
+    }
+    this.actionTakenThisTurn = false;
+    this.actionLog = [];
+    this.refreshJoinLock();
+    console.log(
+      `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
+    );
+    this.refreshAutoDispose();
+    this.refreshJoinLock();
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
   }
 
   private handlePlayAgain(client: GameClient): void {
@@ -1948,6 +1961,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         kind: 'mirrorRedirected',
         ...result.mirrorRedirect,
         ...(botReason !== null ? { botReason } : {}),
+        ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
       });
     } else {
       const botReason = this.consumePendingBotReason();
@@ -1956,7 +1970,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ...(botReason !== null ? { botReason } : {}),
       };
 
-      this.actionLog.push({ kind: 'actionPlayed', ...played });
+      this.actionLog.push({
+        kind: 'actionPlayed',
+        ...played,
+        ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
+      });
       if (played.action === 'activateDuplication') {
         // Spy-gated live event (designer 2026-08-06) — real to actor + spies;
         // opaque `draw` to everyone else so the turn still surfaces.
@@ -1964,9 +1982,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
       } else if (played.action === 'buyPoolCard') {
         // Recovered card is Spy-gated (designer 2026-09-20 / L63-06).
         this.sendBuyPoolCardPlayed(played);
+      } else if (played.action === 'draw' && played.drawGain !== undefined) {
+        // Numeric payout is Spy-gated (L65-01). Bust stays on the broadcast path.
+        this.sendDrawGainPlayed(played);
       } else {
         this.broadcast(ACTION_PLAYED, played);
       }
+    }
+
+    for (const change of result.playedResourceChanges ?? []) {
+      this.actionLog.push(change);
     }
 
     if (result.mirrorRedirects !== undefined) {
@@ -1994,8 +2019,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
         shieldAbsorbed: resolved.shieldAbsorbed,
         outcome: resolved.outcome,
         turnSequence,
+        ...copyPlayerDeltas(resolved.playerDeltas),
       });
       this.broadcast(ACTION_RESOLVED, resolved);
+    }
+
+    for (const change of result.resourceChanges ?? []) {
+      this.actionLog.push(change);
     }
 
     if (result.curseTransfers !== undefined) {
@@ -3847,6 +3877,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private sendBuyPoolCardPlayed(played: ActionPlayedPayload): void {
     this.sendActionPlayedMapped(played, (payload, seesPrivate) =>
       seesPrivate ? payload : fogBuyPoolCardPlayed(payload),
+    );
+  }
+
+  /**
+   * Gambler Draw payout is Spy-gated (L65-01 / rules spec §6).
+   * The action stays `draw`; `drawGain` drops for everyone who cannot
+   * already see that seat's resources.
+   */
+  private sendDrawGainPlayed(played: ActionPlayedPayload): void {
+    this.sendActionPlayedMapped(played, (payload, seesPrivate) =>
+      seesPrivate ? payload : fogDrawGainPlayed(payload),
     );
   }
 

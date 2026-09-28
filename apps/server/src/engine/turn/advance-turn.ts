@@ -16,7 +16,7 @@
 
 import type { GameState, Player } from '@card-battle/shared';
 
-import { tickAbsorbWindowsOnBeginTurn } from './absorb-window';
+import { tickAbsorbWindowsOnEndTurn } from './absorb-window';
 import { endBlockChain } from './grant-block-turns';
 import { rollDrawGain } from './sample-draw-gain';
 
@@ -29,6 +29,11 @@ export function advanceTurn(state: GameState): void {
   }
 
   const currentId = state.currentTurnPlayerId;
+
+  if (currentId !== null) {
+    tickAbsorbWindowsOnEndTurn(state, currentId);
+  }
+
   const currentPlayer = currentId === null ? undefined : findPlayer(state, currentId);
 
   if (
@@ -71,7 +76,6 @@ export function advanceTurn(state: GameState): void {
 export function beginTurnFor(state: GameState, player: Player): void {
   player.duplicationActive = false;
   resetLedger(player);
-  tickAbsorbWindowsOnBeginTurn(state, player.id);
   rollDrawGain(state, player);
 }
 

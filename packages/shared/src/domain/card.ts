@@ -8,6 +8,13 @@
 
 export const ATTACK_CARD_IDS = ['basic-attack', 'strong-attack', 'super-attack'] as const;
 
+/**
+ * `upgradeCard` id for the combat shield while `shield > 0`.
+ * Not a hand instance. Designer 2026-09-28: upgrading it sets
+ * `shieldIsUpgraded` and leaves the remaining points alone.
+ */
+export const ACTIVE_SHIELD_INSTANCE_ID = 'active-shield';
+
 export const ACTION_CARD_IDS = [
   'absorber',
   'spy',

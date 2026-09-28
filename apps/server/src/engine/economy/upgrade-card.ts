@@ -1,11 +1,19 @@
 /**
- * Spend 1 upgrade point to permanently upgrade one held copy — rules spec §1, L2-03.
+ * Spend 1 upgrade point to permanently upgrade one held copy, one legal active
+ * persistent, an active Shield, or the actor's ticking Sentence — rules spec §1,
+ * designer 2026-09-28.
+ *
+ * Active upgrade does not reset counters, Sentence remaining turns, or
+ * remaining shield points. The upgraded rate applies from the next tick.
+ * Shield only sets `shieldIsUpgraded`. Sentence only flips `isUpgraded`.
  *
  * `alwaysUpgraded` kit trait is applied at acquisition (`acquireCardToHand`), not here.
  */
 
 import {
   actionReject,
+  ACTIVE_SHIELD_INSTANCE_ID,
+  isUpgradeableActiveCardId,
   type ActionReject,
   type CardId,
   type GameState,
@@ -37,17 +45,65 @@ export function upgradeCard(
     actor.hand.find((card) => card.instanceId === instanceId) ??
     actor.specialCards.find((card) => card.instanceId === instanceId);
 
-  if (instance === undefined) {
-    return actionReject('card-not-held');
+  if (instance !== undefined) {
+    if (instance.isUpgraded) {
+      return actionReject('already-upgraded');
+    }
+
+    actor.upgradePoints -= 1;
+    recordChosenUpgradePointsSpent(actor, 1);
+    instance.isUpgraded = true;
+
+    return { ok: true, cardId: instance.cardId };
   }
 
-  if (instance.isUpgraded) {
-    return actionReject('already-upgraded');
+  const persistent = actor.activePersistentEffects.find((effect) => effect.id === instanceId);
+
+  if (persistent !== undefined) {
+    if (!isUpgradeableActiveCardId(persistent.cardId)) {
+      return actionReject('card-not-held');
+    }
+
+    if (persistent.isUpgraded) {
+      return actionReject('already-upgraded');
+    }
+
+    actor.upgradePoints -= 1;
+    recordChosenUpgradePointsSpent(actor, 1);
+    persistent.isUpgraded = true;
+
+    return { ok: true, cardId: persistent.cardId };
   }
 
-  actor.upgradePoints -= 1;
-  recordChosenUpgradePointsSpent(actor, 1);
-  instance.isUpgraded = true;
+  const sentence = state.pendingSentences.find((entry) => entry.id === instanceId);
 
-  return { ok: true, cardId: instance.cardId };
+  if (sentence?.sourcePlayerId === actorPlayerId) {
+    if (sentence.isUpgraded) {
+      return actionReject('already-upgraded');
+    }
+
+    actor.upgradePoints -= 1;
+    recordChosenUpgradePointsSpent(actor, 1);
+    sentence.isUpgraded = true;
+
+    return { ok: true, cardId: 'sentence' };
+  }
+
+  if (instanceId === ACTIVE_SHIELD_INSTANCE_ID) {
+    if (actor.shield <= 0) {
+      return actionReject('card-not-held');
+    }
+
+    if (actor.shieldIsUpgraded) {
+      return actionReject('already-upgraded');
+    }
+
+    actor.upgradePoints -= 1;
+    recordChosenUpgradePointsSpent(actor, 1);
+    actor.shieldIsUpgraded = true;
+
+    return { ok: true, cardId: 'shield' };
+  }
+
+  return actionReject('card-not-held');
 }

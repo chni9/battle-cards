@@ -30,7 +30,7 @@ Sold cards, used special cards (a special card has only one use), and eliminated
 
 ### Counter Rule
 
-A card that inflicts a direct effect on an opponent — meaning it alters their resources or state against their will (Spy, Thief) — can be countered by the same card played back against the source of the effect: both effects cancel out. Playing the same card against a third party counters nothing. This rule does not apply to attack cards (see the mutual attacks rule, section 6), nor to cards that inflict no effect on the opponent, even when they target them to choose who to act on (Absorber: the user chooses which opponent to absorb from, but that opponent suffers no additional consequence from this card), nor to strictly personal cards (Shield, Regeneration, Tax). Mirror follows a distinct mechanic, one of chain redirection rather than cancellation (see section 3).
+A card that inflicts a direct effect on an opponent — meaning it alters their resources or state against their will (Spy, Thief) — can be countered by the same card played back against the source of the effect. The same upgrade level cancels both. An upgraded incoming Spy or Thief removes a basic answer and still resolves. A basic incoming Spy or Thief is cancelled by an upgraded answer, and that upgraded card stays pending. Playing the same card against a third party counters nothing. This rule does not apply to attack cards (see the mutual attacks rule, section 6), nor to cards that inflict no effect on the opponent, even when they target them to choose who to act on (Absorber: the user chooses which opponent to absorb from, but that opponent suffers no additional consequence from this card), nor to strictly personal cards (Shield, Regeneration, Tax). Mirror follows a distinct mechanic, one of chain redirection rather than cancellation (see section 3).
 
 ### Kits
 
@@ -61,16 +61,16 @@ The cost/damage ratio is not linear across cards: a high-damage attack is a deli
 Action cards follow the general Card Economy rules (section 1). The Counter Rule (section 1) applies to Spy and Thief; it does not apply to Mirror (which follows its own chain-redirection mechanic, detailed below), nor to Absorber (which targets an opponent but inflicts no effect on them), nor to Shield, Tax and Regeneration (strictly personal effects).
 
 **Absorber** — Price: 3 points
-- Action: the user chooses an opponent; they gain all the lives that opponent lost during their last move — their most recent complete turn, from their action to the end of their resolution phase —, regardless of the cause of that loss. Does not allow absorbing one's own lost lives. An eliminated opponent remains a valid choice until every player who was still alive at that elimination has begun one turn; after that window closes, they can no longer be absorbed.
+- Action: the user chooses an opponent; they gain all the lives that opponent lost during their last move — their most recent complete turn, from their action to the end of their resolution phase —, regardless of the cause of that loss. Does not allow absorbing one's own lost lives. An eliminated opponent remains a valid choice until every player who was still alive at that elimination has finished one turn, through their own action; after that window closes, they can no longer be absorbed. The last living player from that elimination can still choose the corpse on their turn.
 - Upgrade: also captures the points and upgrade points actively spent by that opponent during their last move (does not include points stolen by a third party).
 
 **Spy** — Price: 2 points
-- Action: allows you to see the opponent's kit and cards for the rest of the game. Can be countered by another Spy.
+- Action: allows you to see the opponent's kit and cards for the rest of the game. Can be countered by another Spy of the same upgrade level. An upgraded Spy is not cancelled by a basic Spy; a basic Spy is cancelled by an upgraded Spy, which stays pending.
 - Upgrade: also allows you to see all of the opponent's resources.
 - The spied player may, as their turn action, pay 10 points to drop **one** living opponent's Spy on them (Unspy). That action is public. An eliminated spectator's overlay vision is not a Spy and cannot be Unspied.
 
 **Thief** — Price: 5 points
-- Action: steals 10 points from an opponent, capped at the amount the target has. Can be countered by another Thief.
+- Action: steals 10 points from an opponent, capped at the amount the target has. Can be countered by another Thief of the same upgrade level. An upgraded Thief is not cancelled by a basic Thief; a basic Thief is cancelled by an upgraded Thief, which stays pending.
 - Upgrade: the target always loses the stolen amount (capped as in the base version), but the user gains double that amount.
 
 **Mirror** — Price: 6 points
@@ -79,7 +79,7 @@ Action cards follow the general Card Economy rules (section 1). The Counter Rule
 
 **Shield** — Price: 7 points
 - Action: grants 4 shield points. A player can only have one active shield at a time; it must be destroyed before creating a new one.
-- Upgrade: grants 7 shield points and blocks Thief and Spy at no cost in shield points while active.
+- Upgrade: grants 7 shield points and blocks Thief and Spy at no cost in shield points while active. While a shield is already up and not yet upgraded, spending 1 upgrade point and the turn sets that upgraded flag. Remaining shield points stay as they are.
 
 **Tax** — Price: 1 life (this cost always applies; the shield only protects against attacks)
 - Action: allows you to gain 4 points.
@@ -133,7 +133,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 - Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **2** random special cards drawn **without replacement** from the circulating pool excluding Roulette (the two are distinct; never a second Roulette), and **Roulette**.
 - Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with truncated-geometric weight P(n) ∝ r^(n − 5), r = 10^(-1/16) ≈ 0.8660, so P(n > 20) ≤ 0.10 (5 is most likely; each extra point is rarer; 100 stays possible). Other kits keep catalog Draw.
-- Each Draw has a **1-in-10** chance to instantly eliminate this player, at any current life total. A bust grants no points. No opponent is the eliminator. The death log is `{nickname} dies by Gambling`. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
+- Each Draw has a **1-in-10** chance that this player gambled too much. Lives drop to 1 (real life loss, not damage, so the drop cannot reach 0). Points become 0. Upgrade points become 0. Shield is lost, including an upgraded shield. Every card in hand and every unplayed special moves to the shared pool with no sell refund. Active persistent cards stay. The player is not eliminated, no Absorber window opens, and nobody is paid a kill reward. The table says `{nickname} gambled too much and lost everything`. That player also sees the red table banner `You gambled too much and lost everything`. Other seats do not get the banner. The Draw number stays hidden from seats that cannot already see it. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
 - Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
 
 ## 5. Special Cards
@@ -142,14 +142,15 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
+- Spending 1 upgrade point can also upgrade one of your own active Poison, Points Generator, Imposition, Super Absorber, Roulette, Invisibility, or Shield cards, or your own ticking Sentence. That spends the turn. Counters, Sentence remaining turns, and remaining Shield points do not reset; the upgraded rate applies from the next tick. An upgraded Shield blocks Thief and Spy at no shield cost while it is still up. Sentence only becomes upgraded, so the later draw cannot pick you. Curse, Reanimation, and a card that is already upgraded cannot be upgraded this way.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
 - Five cards (Points Generator, Poison, Super Absorber, Imposition, Roulette) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Roulette 2.
 
 ### Card List
 
 **Upgrade Point Thief** — Price: 5 points
-- Action: steals all unspent upgrade points from all opponents, and removes the upgrade from all of their currently upgraded cards, including those whose upgrade comes from a permanent kit ability. Each upgrade lost this way transfers 1 upgrade point to the user; the victim gets nothing back. This effect only removes the upgrade from copies held at the moment the card is played: if a kit ability makes a card type always upgraded, any new copy acquired afterward (purchase, elimination reward, theft) arrives upgraded again normally.
-- Upgrade: also steals all of all opponents' current points.
+- Action: the user chooses one living opponent (a living invisible player cannot be chosen). Steals all unspent upgrade points from that opponent, and removes the upgrade from all of their currently upgraded cards, including those whose upgrade comes from a permanent kit ability. Each upgrade lost this way transfers 1 upgrade point to the user; the victim gets nothing back. This effect only removes the upgrade from copies held at the moment the card resolves: if a kit ability makes a card type always upgraded, any new copy acquired afterward (purchase, elimination reward, theft) arrives upgraded again normally. It does not steal points.
+- Upgrade: the same steal hits every living opponent (still not a living invisible player) and still does not steal points.
 
 **Spy Thief** — Price: 5 points
 - Action: steals all points from all opponents (no cap), and spies on all opponents (like Spy, for the rest of the game).
@@ -160,7 +161,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: the user is no longer eliminated by their own card. They remain the eliminator of every opponent killed by this effect, and receive the corresponding rewards normally.
 
 **Block** — Price: 5 points
-- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards.
+- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards. Block itself cannot be played during an active Block chain.
 - Upgrade: 7 consecutive turns instead of 3.
 
 **Super Regeneration** — Price: 6 points
@@ -223,8 +224,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: 2 lives lost per turn instead of 1.
 
 **Imposition** — Price: 6 points
-- Action: every turn, each opponent with at least 2 points gives 2 points to the user. If they have fewer than 2 points, they give nothing (no lives). Effect active as long as the card's dedicated internal counter is not depleted.
-- Upgrade: 4 points instead of 2 (skip if they have fewer than 4).
+- Action: every turn, only points an opponent has above 7 can be taken, capped at 2. 7 or below gives nothing; 8 gives 1; 9 gives 2. If nothing can be taken, nothing happens (no lives, and the turn is not skipped). The counter stays 2. Effect active as long as the card's dedicated internal counter is not depleted.
+- Upgrade: the cap is 4. 11 points gives 4. 7 or below still gives nothing.
 
 **Attack Thief** — Price: 8 points
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.
@@ -251,14 +252,14 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 ### Game Turn
 
 - A player can only take one action per turn, whether a classic action (drawing, playing/selling/buying a card, buying an upgrade point, buying a random pool card, Unspy) or using a special card — no exception, except an explicit override from a kit or a card (e.g. Assassin, Block).
-- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 instant elimination; a bust grants no points.
+- Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 wipe (section 4). A wipe does not eliminate.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
 - Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
 
 ### Mutual Attacks
 
-When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated, using each side's **volley** damage (an Assassin multi-attack aimed at that same opponent counts as one attack whose damage is the sum of those hits). If both volleys deal exactly the same damage, they both cancel out. If the retaliating volley is stronger, the incoming volley is cancelled and the stronger attack stays pending — it resolves normally on its target's turn. If the retaliating volley is weaker, it is **not** cancelled: the incoming attack still resolves on this turn, and the weaker attack stays pending until the opponent's turn. Mirror still redirects only one pending attack at a time, not a whole volley.
+When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated, using each side's **volley** damage (an Assassin multi-attack aimed at that same opponent counts as one attack whose damage is the sum of those hits). If both volleys deal exactly the same damage, they both cancel out. If the retaliating volley is stronger, the incoming volley is cancelled and the stronger attack stays pending — it resolves normally on its target's turn. If the retaliating volley is weaker, it is **not** cancelled: the incoming attack still resolves on this turn, and the weaker attack stays pending until the opponent's turn. Mirror still redirects only one pending attack at a time, not a whole volley. Redirecting one hit of a volley does not cancel the other hits from that volley that still target the Mirror player.
 
 An attack redirected by Mirror remains a fully pending attack: if the player it is redirected to has their own attack pending against the one who redirected it, both attacks are evaluated as mutual attacks between them, following the same rule. Example: player A attacks player C, and player B also attacks player C with the same card. On C's turn, C uses Mirror to redirect A's attack toward B. B's attack against C and A's attack (redirected by C) toward B face off as mutual attacks between B and C, and cancel out since they deal the same damage.
 
@@ -267,7 +268,7 @@ An attack redirected by Mirror remains a fully pending attack: if the player it 
 - An eliminated player loses all their lives. They become a spectator; all their unclaimed cards join the shared pool (section 1).
 - The eliminator chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's cards (including their unused special cards), or an upgrade point. Both choices can be identical (e.g. "4 lives" twice).
 - When a single effect eliminates several players at once, the eliminator receives two rewards per eliminated player, cumulative.
-- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, their own non-upgraded Suicide, or the Gambler's Draw bust — generates no reward for anyone.
+- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, or their own non-upgraded Suicide — generates no reward for anyone. A Gambler wipe is not an elimination and pays no reward.
 - *Case of several simultaneous eliminators: the reward goes to whoever has the fewest lives remaining among the eliminators. In case of a tie, whoever has the fewest points. In case of another tie, a random draw among the tied eliminators.*
 
 ## 7. Game Modes

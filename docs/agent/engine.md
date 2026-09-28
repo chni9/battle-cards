@@ -194,7 +194,10 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   (**7** upgraded), counting the activation turn; remaining turns live in
   `PersistentEffect.counter` but are **not** card-lives (`applyDamage` must not eat them).
   While active it is illegal to play anything that acts on another player, including
-  Mirror / Super Mirror (`cardActsOnOpponents`). Last-turn income still pays, then
+  Mirror / Super Mirror (`cardActsOnOpponents`). A living invisible seat is also not a
+  legal single target (L65-02): `listLegalPlayCardActions`, Assassin candidates, and
+  `perform-action` reject that target. AoE cards stay playable; the invisible seat
+  still resolves `'immune'` and skips victim ticks. Last-turn income still pays, then
   auto-loss emits `persistentDeactivated`. Manual deactivate still consumes the action
   (#V4-10).
 - **Block (L25-01):** `grantBlockTurns` sets `blockTurnsRemaining` and
@@ -283,10 +286,11 @@ never sum them into one "points lost".
 The ledger resets at the start of each player's own turn. One ledger per player is enough:
 turn order rotates, so when it is your turn every opponent's last turn is already complete.
 
-**Post-elimination Absorber window (designer 2026-08-07):** eliminated players keep their
-frozen ledger targetable by Absorber (and Super Absorber's activation snapshot) until every
-player who was living at elimination has begun one turn (`absorbWindowPendingPlayerIds`,
-ticked in `beginTurnFor`, opened from elimination). Mid-window deaths prune the pending set.
+**Post-elimination Absorber window (designer 2026-08-07, retimed 2026-09-28):** eliminated
+players keep their frozen ledger targetable by Absorber until every player who was living
+at elimination has finished one turn (`absorbWindowPendingPlayerIds`, ticked in
+`advanceTurn` after the action, opened from elimination). The seat about to act is still
+in the set. Mid-window deaths prune the pending set.
 When the window closes, the ledger is cleared. Helpers: `absorb-window.ts`. Super Absorber
 activation and ticks share `absorbLedgerFromVictim`.
 

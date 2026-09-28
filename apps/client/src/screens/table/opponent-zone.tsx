@@ -5,7 +5,11 @@
  * Resources stack beside the portrait; activated cards sit under it (L51-10).
  */
 
-import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
+import type {
+  PendingSentenceView,
+  PlayingStateView,
+  PublicPlayerView,
+} from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
@@ -29,6 +33,7 @@ export interface OpponentZoneProps {
   view: PlayingStateView;
   player: PublicPlayerView;
   onInspectActive?: (effectId: string) => void;
+  onInspectSentence?: (sentence: PendingSentenceView) => void;
   /** Spy or death reveal — opens the opponent info dialog. */
   onInspectReveal?: () => void;
   /** Tutorial spotlight after Spy (L45-05). */
@@ -145,6 +150,7 @@ export function OpponentZone({
   view,
   player,
   onInspectActive,
+  onInspectSentence,
   onInspectReveal,
   highlightPortrait = false,
   compact = false,
@@ -249,6 +255,7 @@ export function OpponentZone({
             playerId={player.id}
             pendingSentences={view.pendingSentences}
             compact
+            {...(onInspectSentence !== undefined ? { onInspect: onInspectSentence } : {})}
           />
         </div>
         <OpponentSeatResourceColumn player={player} />
