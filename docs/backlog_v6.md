@@ -133,11 +133,12 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
 Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
 Lot 64 is done (146 of 146). Lot 65 is done (151 of 151). Lot 66 is done (152 of 152).
+Lot 67 is done (153 of 153).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
 2026-09-16. Lot 62 opened 2026-09-18. Lot 63 opened 2026-09-20. Lot 64
-opened 2026-09-21. Lot 65 opened 2026-09-28.
+opened 2026-09-21. Lot 65 opened 2026-09-28. Lot 67 opened 2026-09-28.
 
 
 | Lot | Tasks | Done |
@@ -599,6 +600,18 @@ redo Draw privacy, invisible targeting, Sentence inspect, or hand hysteresis.
 
 ---
 
+## Lot 67 — Feedback follow-up (designer 2026-09-28)
+
+Tracker only. Player-facing What’s new stays on `lot-65` (not on `main`).
+No protocol bump. Supersedes Lot 66’s instant solo restart and Imposition
+floor of 9.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L67-01 | Solo Play again reopens the solo menu with the same kit, bot count, and shared difficulty and does not start the match. An active Shield upgrades for 1 upgrade point and the turn; remaining points stay. The Gambler who loses everything sees the red banner `You gambled too much and lost everything`. Imposition takes points above 7 (8 pays 1), still capped at 2/4. Rules spec, decisions, `lot-65` What’s new. **Acceptance:** engine and client tests lock each case; `pnpm verify` green. | L | **High** | L66-01 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -629,9 +642,10 @@ redo Draw privacy, invisible targeting, Sentence inspect, or hand hysteresis.
 | 64 | 6 |
 | 65 | 5 |
 | 66 | 1 |
-| **Total** | **152** |
+| 67 | 1 |
+| **Total** | **153** |
 
-**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**.
+**Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**; **solo Play again dealing the next match without the menu**.
 
 
 **Designer-owned:** PNG files listed in technical spec v6 §5.1. L42-01 must ship without them. Drop files in `apps/client/src/assets/how-to-play/` anytime; no task id required for adding binaries if L42-01 already skips missing paths.

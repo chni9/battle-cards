@@ -1255,6 +1255,7 @@ function TableScreenInner({
           (entry): entry is SentenceAnnouncementLogEntry =>
             entry.kind === 'sentenceCountdown' || entry.kind === 'sentenceFired',
         )}
+        actionLog={view.actionLog}
         nicknameOf={(id) => {
           const seat = view.players.find((player) => player.id === id);
           return seat?.nickname ?? id;

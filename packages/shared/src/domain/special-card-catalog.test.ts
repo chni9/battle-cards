@@ -22,7 +22,7 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(SPECIAL_CARD_CATALOG.sentence.effect).toMatch(/3 of your later turns/i);
     expect(SPECIAL_CARD_CATALOG.sentence.effect).toMatch(/does not count/i);
     expect(SPECIAL_CARD_CATALOG.sentence.effect).not.toMatch(/Eliminate a randomly drawn/i);
-    expect(SPECIAL_CARD_CATALOG.imposition.effect).toMatch(/above 9/i);
+    expect(SPECIAL_CARD_CATALOG.imposition.effect).toMatch(/above 7/i);
     expect(SPECIAL_CARD_CATALOG.imposition.effect).not.toMatch(/life/i);
     expect(SPECIAL_CARD_CATALOG.imposition.upgradeEffect).not.toMatch(/lives/i);
     expect(SPECIAL_CARD_CATALOG['super-absorber'].effect).toMatch(/does not capture past turns/i);

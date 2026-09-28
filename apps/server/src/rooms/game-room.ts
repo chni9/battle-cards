@@ -199,7 +199,6 @@ import {
   recapHumanSeats,
   reformingLobbySeats,
   resolveReformingHost,
-  shouldInstantSoloRematch,
   shouldPersistFinishedGame,
 } from './play-again-rules';
 import { ThinkTimeAccumulator } from './think-time';
@@ -1113,9 +1112,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   /**
-   * Deal a new match on the current seats. Host Start and a solo Play again
-   * both land here. Solo keeps bot difficulties on the seats and forces the
-   * human kit via `kitSelections` before this call.
+   * Deal a new match on the current seats. Host Start lands here.
+   * Solo Play again does not: the client reopens the solo menu.
    */
   private startMatch(): void {
     const hostSessionId = this.hostSessionId;
@@ -1169,20 +1167,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const playerId = this.playerIdFor(client);
-
-    if (
-      shouldInstantSoloRematch(this.seats, playerId) &&
-      this.gameState !== null
-    ) {
-      const kitId = this.gameState.players.find((player) => player.id === playerId)?.kitId;
-
-      if (kitId !== undefined) {
-        this.kitSelections.set(playerId, kitId);
-      }
-
-      this.startMatch();
-      return;
-    }
 
     if (this.playAgainOptedIn.has(playerId)) {
       this.sendStateTo(client);

@@ -35,7 +35,7 @@ import { absorbLedgerFromVictim } from './absorb-ledger';
 import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
-const IMPOSITION_POINTS_FLOOR = 9;
+const IMPOSITION_POINTS_FLOOR = 7;
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
 const POINTS_GENERATOR_BASE = 3;

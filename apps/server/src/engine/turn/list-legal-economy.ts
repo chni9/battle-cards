@@ -7,6 +7,7 @@
  */
 
 import {
+  ACTIVE_SHIELD_INSTANCE_ID,
   CLEAR_SPY_COST,
   getSharedCard,
   isUpgradeableActiveCardId,
@@ -62,6 +63,10 @@ export function listLegalEconomyActions(
       if (sentence.sourcePlayerId === actor.id && !sentence.isUpgraded) {
         actions.push({ type: 'upgradeCard', instanceId: sentence.id });
       }
+    }
+
+    if (actor.shield > 0 && !actor.shieldIsUpgraded) {
+      actions.push({ type: 'upgradeCard', instanceId: ACTIVE_SHIELD_INSTANCE_ID });
     }
   }
 

@@ -13,7 +13,7 @@ import {
   type WhatsNewScope,
 } from '@card-battle/shared';
 import { motion } from 'motion/react';
-import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { formatBotDifficulty } from '../bots/format-bot-difficulty';
 import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
@@ -36,6 +36,7 @@ import { WhatsNewDialog } from './whats-new-dialog';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { homeStatusCopy } from './status-labels';
+import type { SoloMenuSeed } from './solo-menu-seed';
 
 export interface HomeScreenProps {
   nickname: string;
@@ -53,6 +54,9 @@ export interface HomeScreenProps {
     kitSelection: LobbyKitSelection,
   ) => void;
   onStartTutorial: () => void;
+  /** Finished solo match: open this menu instead of dealing immediately. */
+  soloMenuSeed?: SoloMenuSeed;
+  onSoloMenuSeedApplied?: () => void;
 }
 
 type HomeMode = 'hub' | 'online' | 'solo' | 'tutorial';
@@ -78,8 +82,10 @@ export function HomeScreen({
   onJoin,
   onStartSolo,
   onStartTutorial,
+  soloMenuSeed,
+  onSoloMenuSeedApplied,
 }: HomeScreenProps): ReactElement {
-  const [mode, setMode] = useState<HomeMode>('hub');
+  const [mode, setMode] = useState<HomeMode>(soloMenuSeed !== undefined ? 'solo' : 'hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [whatsNewScope, setWhatsNewScope] = useState<WhatsNewScope>('current');
   const [whatsNewOpen, setWhatsNewOpen] = useState(() =>
@@ -89,11 +95,23 @@ export function HomeScreen({
   );
   const [whatsNewUnread, setWhatsNewUnread] = useState(() => hasUnseenReleaseNotes());
   const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
-  const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(1);
-  const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>('normal');
-  const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>('random');
+  const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(
+    soloMenuSeed?.opponentCount ?? 1,
+  );
+  const [soloDifficulty, setSoloDifficulty] = useState<BotDifficulty>(
+    soloMenuSeed?.difficulty ?? 'normal',
+  );
+  const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>(
+    soloMenuSeed?.kitSelection ?? 'random',
+  );
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    if (soloMenuSeed !== undefined) {
+      onSoloMenuSeedApplied?.();
+    }
+  }, [onSoloMenuSeedApplied, soloMenuSeed]);
 
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;

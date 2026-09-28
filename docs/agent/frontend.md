@@ -521,12 +521,18 @@ rules above are unchanged — this section only covers how the client looks.
   Classic Game over also has **Play again** (L57-12) next to Return home. If this
   `gameCode` is not yet asked, Play again opens the same ask-once ticket
   (`playAgainPending`) then sends `playAgain` after Skip or a successful send.
-  Already-asked sends `playAgain` immediately. Cancel does not rematch. The first
+  Already-asked sends `playAgain` immediately. Cancel does not rematch. A solo
+  table (exactly one human player seat) does not send `playAgain`: after the
+  same ask-once it leaves and opens the Home solo menu with that human’s kit,
+  the bot count, and the shared bot difficulty (L67-01). The next match starts
+  only from **Start solo game**. Two humans still send `playAgain`. The first
   `playAgain` in the room reforms the lobby **without yanking** other recap views;
   walk-in spectators become unready lobby guests (L57-14). Tutorial finished views
   use title **Tutorial complete** and CTA **Play a real game**
   (still `onLeave` → hub only; no Play again). Table banners (L51-06): **Your turn** (seat color);
   **You are being attacked** once per new attack-tone Incoming (flashier, red);
+  **You gambled too much and lost everything** for the Gambler who just wiped
+  (`data-banner="wipe"`, same red chrome as Sentence; opponents do not get it);
   **You are dead** on the POV elimination edge (flashier, red); **You won!** on POV
   win. Game over Dialog opens after the ~1.6s banner. Won and dead never share a seat. **Download action log** renders only when
   `import.meta.env.DEV` (every mode).
@@ -1290,8 +1296,15 @@ Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
 
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`.
 
-- Solo Play again (one human seat) deals the next match in the same room. No Ready / Start lobby.
+- Solo Play again (one human seat) left the room and opened the solo menu in Lot 67. The Lot 66 instant restart is superseded.
 - Base Upgrade Point Thief opens Choose target. The upgraded copy does not. Upgrade spends the turn.
 - Active Poison inspect offers Upgrade and spends the turn and the upgrade point.
 - Ticking Sentence: chip inspect uses the catalog face. Activated art throws and blanks the table, so the dialog must not request it. With 1 upgrade point the same dialog shows Upgrade. Room **XXDIJM** (Ada Assassin, Bea). Click logs **Ada upgraded a card**, drops the upgrade point to 0, leaves the chip at 3, and passes the turn.
+
+### Lot 67 verified 2026-09-28 (browser, PROTOCOL 40)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
+
+- Solo Play again, room **IKDWUN** (L67Solo, Assassin, 2 Easy bots). Forfeit, then Play again. Home opens **Play solo** with Assassin, opponent **2**, and **Easy**. **Start solo game** stays up. The next match does not deal itself.
+- Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `table-banner.test.ts`, `imposition.test.ts`).
 

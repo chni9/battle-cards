@@ -3,7 +3,12 @@
  * Presentation only. Attack tone matches L39 `threatToneFor`.
  */
 
-import type { PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
+import type {
+  ActionLogEntryView,
+  ActionPlayedLogEntry,
+  PendingEffectView,
+  SentenceAnnouncementLogEntry,
+} from '@card-battle/shared';
 
 import { formatActionLogEntry } from '../../action-log/action-log';
 
@@ -24,6 +29,9 @@ export const TABLE_BANNER_COPY: Record<TableBannerCue, string> = {
   dead: 'You are dead',
   won: 'You won!',
 };
+
+/** Center flash for the Gambler who just wiped. Same chrome as a Sentence banner. */
+export const WIPE_BANNER_COPY = 'You gambled too much and lost everything';
 
 export function isFlashierBanner(cue: TableBannerCue): boolean {
   return cue === 'attacked' || cue === 'dead';
@@ -102,6 +110,44 @@ export function nextSentenceBannerLines(
   const lines = input.announcements
     .filter((entry) => !prev.seenKeys.has(sentenceAnnouncementKey(entry)))
     .map((entry) => formatActionLogEntry(entry, input.nicknameOf));
+  return { lines, next };
+}
+
+function isOwnDrawWipe(entry: ActionLogEntryView, you: string): entry is ActionPlayedLogEntry {
+  return (
+    entry.kind === 'actionPlayed' &&
+    entry.action === 'draw' &&
+    entry.drawBust === true &&
+    entry.actorPlayerId === you
+  );
+}
+
+function wipeBannerKey(entry: ActionPlayedLogEntry): string {
+  return `wipe:${String(entry.turnSequence)}:${entry.actorPlayerId}`;
+}
+
+/**
+ * Flash only for the player who just wiped. Opponents keep the public log
+ * line and do not get this banner. Skip historical log on first paint.
+ */
+export function nextWipeBannerLines(
+  prev: SentenceBannerWatch,
+  entries: readonly ActionLogEntryView[],
+  you: string,
+): { lines: string[]; next: SentenceBannerWatch } {
+  const mine = entries.filter((entry): entry is ActionPlayedLogEntry => isOwnDrawWipe(entry, you));
+  const next: SentenceBannerWatch = {
+    seeded: true,
+    seenKeys: new Set(mine.map(wipeBannerKey)),
+  };
+
+  if (!prev.seeded) {
+    return { lines: [], next };
+  }
+
+  const lines = mine
+    .filter((entry) => !prev.seenKeys.has(wipeBannerKey(entry)))
+    .map(() => WIPE_BANNER_COPY);
   return { lines, next };
 }
 
