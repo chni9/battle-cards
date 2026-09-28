@@ -38,6 +38,11 @@ describe('Sentence chip (L63-03)', () => {
     const table = read('../table.tsx');
     expect(table).toContain('onInspectSentenceChip');
     expect(table).toContain('sentence.id');
+    const inspect = table.slice(table.indexOf('function onInspectSentenceChip'));
+    const inspectBody = inspect.slice(0, inspect.indexOf('function onInspectCatalogCard'));
+    expect(inspectBody).not.toMatch(/activated\s*:/);
+    const actions = read('card-actions.tsx');
+    expect(actions).toContain('CARDS_WITH_ACTIVATED_ART');
     expect(badges).not.toContain('Sentence ·');
     expect(badges).not.toContain('pendingSentences');
   });

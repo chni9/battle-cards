@@ -1284,3 +1284,12 @@ Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
   Hub What’s new latest id `lot-63` (Gambler/Roulette folded into the original
   lot-63 New bodies; no `lot-64` release id).
 
+### Lot 66 verified 2026-09-28 (browser, PROTOCOL 40)
+
+Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`.
+
+- Solo Play again (one human seat) deals the next match in the same room. No Ready / Start lobby.
+- Base Upgrade Point Thief opens Choose target. The upgraded copy does not. Upgrade spends the turn.
+- Active Poison inspect offers Upgrade and spends the turn and the upgrade point.
+- Ticking Sentence: chip inspect uses the catalog face. Activated art throws and blanks the table, so the dialog must not request it. With 1 upgrade point the same dialog shows Upgrade. Room **XXDIJM** (Ada Assassin, Bea). Click logs **Ada upgraded a card**, drops the upgrade point to 0, leaves the chip at 3, and passes the turn.
+

@@ -1217,7 +1217,7 @@ function TableScreenInner({
         cardId: 'sentence',
         isUpgraded: sentence.isUpgraded,
       },
-      activated: true,
+      // Sentence has no activated PNG. Requesting it throws and blanks the table.
       source: 'active',
     });
   }

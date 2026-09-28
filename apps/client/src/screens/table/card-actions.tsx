@@ -17,6 +17,7 @@ import {
 import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
 
+import { CARDS_WITH_ACTIVATED_ART } from '../../design/asset-lookup';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CardChoiceTile } from '../../design/components/card-choice-tile';
@@ -362,7 +363,10 @@ export function CardActions(props: CardActionsProps): ReactElement {
             <Card
               instance={dialog.instance}
               detail="face"
-              activated={dialog.activated === true}
+              activated={
+                dialog.activated === true &&
+                (CARDS_WITH_ACTIVATED_ART as readonly string[]).includes(dialog.instance.cardId)
+              }
               className="w-20 shrink-0 sm:w-24"
             />
             <div className="min-w-0 space-y-2 text-center sm:text-left">
