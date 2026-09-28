@@ -7,6 +7,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
   fogBuyPoolCardPlayed,
+  fogDrawGainPlayed,
 } from './build-view-for';
 import { grantSpy } from './visibility-matrix';
 
@@ -1625,8 +1626,8 @@ describe('pool-list faces (L63-06)', () => {
   });
 });
 
-describe('buildPlayingViewFor (L64-01) — public drawGain', () => {
-  it('exposes a living Gambler drawGain to every recipient and omits it for other kits', () => {
+describe('buildPlayingViewFor (L64-01 / L65-01) — private drawGain', () => {
+  it('shows a living Gambler drawGain only to seats that already see that player', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -1644,29 +1645,76 @@ describe('buildPlayingViewFor (L64-01) — public drawGain', () => {
     }
 
     gambler.drawGain = 47;
+    grantSpy(state, other.id, gambler.id, 'kit-and-cards');
+
+    const drawPlayed = {
+      kind: 'actionPlayed' as const,
+      actorPlayerId: gambler.id,
+      action: 'draw' as const,
+      turnSequence: 1,
+      drawGain: 47,
+    };
 
     const forSelf = buildPlayingViewFor({
       recipientSessionId: gambler.id,
       gameCode: 'ABCDEF',
       state,
       turnDeadlineMs: null,
-      actionLog: [],
+      actionLog: [drawPlayed],
     });
-    const forOpponent = buildPlayingViewFor({
+    const forSpy = buildPlayingViewFor({
       recipientSessionId: other.id,
       gameCode: 'ABCDEF',
       state,
       turnDeadlineMs: null,
-      actionLog: [],
+      actionLog: [drawPlayed],
     });
 
     expect(forSelf.players.find((player) => player.id === gambler.id)?.drawGain).toBe(47);
-    expect(forOpponent.players.find((player) => player.id === gambler.id)?.drawGain).toBe(
-      47,
-    );
+    expect(forSpy.players.find((player) => player.id === gambler.id)?.drawGain).toBe(47);
+    expect(forSelf.actionLog[0]).toHaveProperty('drawGain', 47);
+    expect(forSpy.actionLog[0]).toHaveProperty('drawGain', 47);
     expect(forSelf.players.find((player) => player.id === other.id)?.drawGain).toBeUndefined();
     expect(
       'drawGain' in (forSelf.players.find((player) => player.id === other.id) ?? {}),
     ).toBe(false);
+
+    const stranger = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l65-01-draw-hidden',
+      kitAssignment: ['gambler', 'kamikaze'],
+    });
+    const hiddenGambler = stranger.players.find((player) => player.kitId === 'gambler');
+    const hiddenOther = stranger.players.find((player) => player.kitId === 'kamikaze');
+    expect(hiddenGambler).toBeDefined();
+    expect(hiddenOther).toBeDefined();
+    if (hiddenGambler === undefined || hiddenOther === undefined) {
+      return;
+    }
+    hiddenGambler.drawGain = 47;
+
+    const forStranger = buildPlayingViewFor({
+      recipientSessionId: hiddenOther.id,
+      gameCode: 'ABCDEF',
+      state: stranger,
+      turnDeadlineMs: null,
+      actionLog: [{ ...drawPlayed, actorPlayerId: hiddenGambler.id }],
+    });
+    const strangerSeat = forStranger.players.find((player) => player.id === hiddenGambler.id);
+    expect(strangerSeat).toBeDefined();
+    expect(strangerSeat !== undefined && 'drawGain' in strangerSeat).toBe(false);
+    expect(forStranger.actionLog[0]).not.toHaveProperty('drawGain');
+    expect(forStranger.actionLog[0]).toMatchObject({ action: 'draw' });
+    expect(
+      fogDrawGainPlayed({
+        actorPlayerId: hiddenGambler.id,
+        action: 'draw',
+        turnSequence: 1,
+        drawGain: 47,
+      }),
+    ).not.toHaveProperty('drawGain');
   });
 });

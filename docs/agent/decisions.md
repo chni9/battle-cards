@@ -3879,3 +3879,21 @@ bust immunity there.
 
 ---
 
+## 2026-09-28 · [P] Gambler Draw payout is private
+
+Player reports (protocol 39): the Draw point-chip count identified Gambler,
+because Lot 64 published `drawGain` on every recipient. Rules spec §6 keeps
+exact resources private except Spy. L65-01 narrows that publication. No
+protocol bump — the field stays optional and is omitted for everyone who
+does not already see that seat.
+
+- Self, Spy (any level), eliminated spectators, and Stay walk-ins still
+  receive `PublicPlayerView.drawGain` and `actionPlayed.drawGain`.
+- Other recipients: neither the player view nor the per-recipient log nor
+  the live `ACTION_PLAYED` carries the number. A successful Draw they cannot
+  count flies one point chip.
+- The bust stays public (`drawBust`, `{nickname} dies by Gambling`).
+- Excel `exportLog` keeps the full server log.
+
+---
+

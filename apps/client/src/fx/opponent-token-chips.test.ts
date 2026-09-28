@@ -78,20 +78,22 @@ const live = opponent({
 });
 
 describe('opponent public-log token chips (L51-09 / L51-11)', () => {
-  it('skips Draw when kit Draw is hidden, and draws toward the seat when visible', () => {
+  it('flies one point when kit Draw is hidden, and the catalog amount when visible', () => {
     const entry: ActionLogEntryView = {
       kind: 'actionPlayed',
       actorPlayerId: 'opp',
       action: 'draw',
       turnSequence: 2,
     };
-    expect(chipsForPublicLogEntry(entry, 'me', [you, hidden], 'indestructible')).toEqual([]);
+    expect(chipsForPublicLogEntry(entry, 'me', [you, hidden], 'indestructible')).toEqual([
+      { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
+    ]);
     expect(chipsForPublicLogEntry(entry, 'me', [you, { ...spied, id: 'opp' }], 'indestructible')).toEqual([
       { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
     ]);
   });
 
-  it('uses public drawGain on a successful Draw and skips chips on a bust (L64-03)', () => {
+  it('uses private drawGain on a successful Draw and skips chips on a bust (L64-03 / L65-01)', () => {
     const bust: ActionLogEntryView = {
       kind: 'actionPlayed',
       actorPlayerId: 'opp',
@@ -108,8 +110,19 @@ describe('opponent public-log token chips (L51-09 / L51-11)', () => {
     };
     expect(chipsForPublicLogEntry(bust, 'me', [you, hidden], 'indestructible')).toEqual([]);
     expect(chipsForPublicLogEntry(paid, 'me', [you, hidden], 'indestructible')).toEqual([
+      { kind: 'point', count: 1, from: 'log', to: { playerId: 'opp' } },
+    ]);
+    expect(chipsForPublicLogEntry(paid, 'me', [you, { ...spied, id: 'opp' }], 'indestructible')).toEqual([
       { kind: 'point', count: 47, from: 'log', to: { playerId: 'opp' } },
     ]);
+    expect(
+      chipsForPublicLogEntry(
+        { ...paid, actorPlayerId: 'me' },
+        'me',
+        [you, hidden],
+        'gambler',
+      ),
+    ).toEqual([{ kind: 'point', count: 47, from: 'log', to: { playerId: 'me' } }]);
   });
 
   it('uses catalog play cost as a seat→log spend for unspied seats', () => {

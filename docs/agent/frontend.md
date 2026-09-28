@@ -76,8 +76,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
   / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-  Table Draw (L64-05) reads public `drawGain` for Gambler else catalog Draw; Motion
+  Table Draw (L64-05) reads the recipient's own `drawGain` for Gambler else catalog Draw; Motion
   pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
+  Opponent Draw chips (L65-01) fly **one** point unless that seat is already Spyed
+  (or it is your own Draw), so the count cannot identify a kit.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
