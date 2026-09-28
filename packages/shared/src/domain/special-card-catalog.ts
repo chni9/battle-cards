@@ -65,9 +65,9 @@ export const SPECIAL_CARD_CATALOG = {
     'imposition',
     'Imposition',
     6,
-    'Each turn, take only points an opponent has above 9, capped at 2. 9 or below gives nothing. Missing the payment does not skip their turn.',
-    'Each turn, take only points an opponent has above 9, capped at 4. 9 or below gives nothing. Missing the payment does not skip their turn.',
-    'Cap of 4 points above 9 instead of 2.',
+    'Each turn, take only points an opponent has above 7, capped at 2. 7 or below gives nothing. Missing the payment does not skip their turn.',
+    'Each turn, take only points an opponent has above 7, capped at 4. 7 or below gives nothing. Missing the payment does not skip their turn.',
+    'Cap of 4 points above 7 instead of 2.',
   ),
   cloning: specialCard(
     'cloning',
@@ -229,8 +229,9 @@ export const PERSISTENT_SPECIAL_CARD_IDS = [
 export type PersistentSpecialCardId = (typeof PERSISTENT_SPECIAL_CARD_IDS)[number];
 
 /**
- * Active cards that can be upgraded in play (designer 2026-09-28).
- * Not Curse, Reanimation, or Shield. Sentence is a ticking countdown, not this list.
+ * Active persistents that can be upgraded in play (designer 2026-09-28).
+ * Not Curse or Reanimation. Shield uses `ACTIVE_SHIELD_INSTANCE_ID`.
+ * Sentence is a ticking countdown, not this list.
  */
 export const UPGRADEABLE_ACTIVE_CARD_IDS = [
   'poison',

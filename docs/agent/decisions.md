@@ -3951,3 +3951,26 @@ pass does not redo those. What’s new stays on `lot-65` (not on `main`).
 
 ---
 
+## 2026-09-28 · [P] Feedback follow-up (Lot 67)
+
+Designer, same day, after Lot 66. No protocol bump. What’s new stays on
+`lot-65`. This entry supersedes the Lot 66 bullets for solo Play again and
+the Imposition floor. The Lot 66 entry stays as the record of that pass.
+
+- Solo Play again (exactly one human player seat) leaves the room and opens
+  the Home solo menu with that human’s kit, the bot count, and the shared
+  bot difficulty. It does not call `startMatch`. Two humans still reform the
+  lobby. Tutorial and spectators do not get the menu.
+- An active Shield (`shield > 0`, not yet upgraded) can be upgraded for 1
+  upgrade point and the turn. That sets `shieldIsUpgraded` only. Remaining
+  shield points do not change. The synthetic id is `active-shield`. Curse
+  and Reanimation stay excluded.
+- The Gambler who loses everything sees the red table banner
+  `You gambled too much and lost everything` (same chrome as the Sentence
+  banner). Opponents keep the public log line and do not get the banner.
+- Imposition takes only points above 7, capped at 2 (4 if upgraded). 8 pays
+  1. 7 or below pays nothing. Counter stays 2. Missing the payment does not
+  skip the turn.
+
+---
+

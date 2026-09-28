@@ -13,6 +13,7 @@ import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home';
 import { LobbyScreen } from './screens/lobby';
+import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen } from './screens/table';
 
@@ -74,6 +75,7 @@ function GameApp() {
   const [joinCode, setJoinCode] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [claimDismissedKey, setClaimDismissedKey] = useState<string | null>(null);
+  const [pendingSoloMenu, setPendingSoloMenu] = useState<SoloMenuSeed | null>(null);
 
   const claimableSeats = view?.claimableSeats ?? [];
   const claimableKey = claimableSeats.map((seat) => seat.playerId).join('|');
@@ -141,6 +143,18 @@ function GameApp() {
           {...(view.playKind === 'classic' && !walkInSpectator
             ? {
                 onPlayAgain: () => {
+                  // One human seat reopens the solo menu. Two humans reform the lobby.
+                  const seed = soloMenuSeed({
+                    playKind: view.playKind,
+                    ...(view.isSpectator === true ? { isSpectator: true as const } : {}),
+                    players: view.players,
+                    kitId: view.finalTable.self.kitId,
+                  });
+                  if (seed !== null) {
+                    setPendingSoloMenu(seed);
+                    void leaveGame();
+                    return;
+                  }
                   playAgain();
                 },
               }
@@ -230,6 +244,14 @@ function GameApp() {
       onStartTutorial={() => {
         void startTutorialGame(nickname);
       }}
+      {...(pendingSoloMenu !== null
+        ? {
+            soloMenuSeed: pendingSoloMenu,
+            onSoloMenuSeedApplied: () => {
+              setPendingSoloMenu(null);
+            },
+          }
+        : {})}
     />
   );
 }

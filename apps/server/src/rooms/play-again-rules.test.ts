@@ -8,7 +8,6 @@ import {
   recapHumanSeats,
   reformingLobbySeats,
   resolveReformingHost,
-  shouldInstantSoloRematch,
   shouldPersistFinishedGame,
 } from './play-again-rules';
 import type { Seat } from './seats';
@@ -89,14 +88,5 @@ describe('play again (L57-10)', () => {
     expect(canSeatSpectatorAsLobbyGuest(1)).toBe(true);
     expect(canSeatSpectatorAsLobbyGuest(7)).toBe(true);
     expect(canSeatSpectatorAsLobbyGuest(8)).toBe(false);
-  });
-
-  it('restarts immediately only for the sole human player seat', () => {
-    const solo = [human('ada', 'Ada'), bot('bot-1', 'Alpha')];
-    expect(shouldInstantSoloRematch(solo, 'ada')).toBe(true);
-    expect(shouldInstantSoloRematch(solo, 'spectator')).toBe(false);
-    expect(
-      shouldInstantSoloRematch([human('ada', 'Ada'), human('bea', 'Bea'), bot('bot-1', 'Alpha')], 'ada'),
-    ).toBe(false);
   });
 });

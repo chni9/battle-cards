@@ -49,7 +49,7 @@ const RELEASE_NOTES_CATALOG = [
         before:
           'A Draw flew every point that was gained, so a large pile identified Gambler.',
         after:
-          'If that player’s kit is hidden from you, a Draw flies one point. Your own Draw still shows the real payout. Gambling too much leaves you at 1 life. The table says you lost everything.',
+          'If that player’s kit is hidden from you, a Draw flies one point. Your own Draw still shows the real payout. Gambling too much leaves you at 1 life. The table says you lost everything, and you see that on the table.',
       },
       {
         cardId: 'invisibility' as const,
@@ -72,7 +72,7 @@ const RELEASE_NOTES_CATALOG = [
         cardId: 'imposition' as const,
         before: 'Opponents with 2 points (4 if upgraded) paid that many points.',
         after:
-          'Only points above 9 can be taken, capped at 2 (4 if upgraded). 9 or below pays nothing. The turn is not skipped.',
+          'Only points above 7 can be taken, capped at 2 (4 if upgraded). 7 or below pays nothing. 8 pays 1. The turn is not skipped.',
       },
       {
         cardId: 'upgrade-point-thief' as const,
@@ -98,12 +98,13 @@ const RELEASE_NOTES_CATALOG = [
       },
       {
         before: 'Play again after a solo match opened the online lobby.',
-        after: 'A solo match starts again with the same bots and your kit.',
+        after:
+          'Play again opens the solo menu with the same kit and the same number of bots. The next match starts when you start it.',
       },
       {
         before: 'An upgrade point could only upgrade a card still in hand.',
         after:
-          'You can also upgrade your active Poison, Points Generator, Imposition, Super Absorber, Roulette, or Invisibility. The counter does not reset.',
+          'You can also upgrade your active Poison, Points Generator, Imposition, Super Absorber, Roulette, Invisibility, or Shield. Counters do not reset. An active Shield keeps its remaining points.',
       },
     ],
   },

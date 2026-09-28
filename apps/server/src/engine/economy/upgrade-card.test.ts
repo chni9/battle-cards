@@ -153,4 +153,30 @@ describe('upgradeCard (rules spec §1, L2-03)', () => {
     expect(state.pendingSentences[0]?.remainingOwnerTurns).toBe(2);
     expect(actor.upgradePoints).toBe(0);
   });
+
+  it('upgrades an active shield without changing remaining points', () => {
+    const state = createInitialState({
+      seats,
+      seed: 'upgrade-shield',
+      kitAssignment: ['untouchable', 'untouchable'],
+    });
+    const actor = state.players[0];
+
+    if (actor === undefined) {
+      return;
+    }
+
+    actor.upgradePoints = 1;
+    actor.shield = 3;
+    actor.shieldIsUpgraded = false;
+
+    expect(upgradeCard(state, actor.id, 'active-shield')).toEqual({
+      ok: true,
+      cardId: 'shield',
+    });
+    expect(actor.shield).toBe(3);
+    expect(actor.shieldIsUpgraded).toBe(true);
+    expect(actor.upgradePoints).toBe(0);
+    expect(upgradeCard(state, actor.id, 'active-shield').ok).toBe(false);
+  });
 });

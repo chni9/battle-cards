@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import type { CardId, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
+import type { ActionLogEntryView, CardId, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
 
 import { formatActionLogEntry } from '../../action-log/action-log';
 import {
@@ -16,8 +16,10 @@ import {
   emptyTableBannerWatch,
   nextSentenceBannerLines,
   nextTableBannerCues,
+  nextWipeBannerLines,
   povHasWon,
   TABLE_BANNER_COPY,
+  WIPE_BANNER_COPY,
 } from './table-banner';
 
 function pending(
@@ -344,5 +346,29 @@ describe('Sentence countdown banners (L63-03)', () => {
     expect(flash).toContain('data-banner="sentence"');
     expect(flash).toContain('nextSentenceBannerLines');
     expect(flash).toContain('setSentenceQueue');
+    expect(flash).toContain('data-banner="wipe"');
+    expect(flash).toContain('nextWipeBannerLines');
+  });
+
+  it('flashes a wipe only for the player who lost everything', () => {
+    const bust: ActionLogEntryView = {
+      kind: 'actionPlayed',
+      actorPlayerId: 'a',
+      action: 'draw',
+      turnSequence: 4,
+      drawBust: true,
+    };
+    const seeded = nextWipeBannerLines(emptySentenceBannerWatch(), [], 'a');
+    expect(seeded.lines).toEqual([]);
+
+    const mine = nextWipeBannerLines(seeded.next, [bust], 'a');
+    expect(mine.lines).toEqual([WIPE_BANNER_COPY]);
+    expect(WIPE_BANNER_COPY).toBe('You gambled too much and lost everything');
+
+    const again = nextWipeBannerLines(mine.next, [bust], 'a');
+    expect(again.lines).toEqual([]);
+
+    const opponent = nextWipeBannerLines(seeded.next, [bust], 'b');
+    expect(opponent.lines).toEqual([]);
   });
 });

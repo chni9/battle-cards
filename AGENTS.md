@@ -127,9 +127,13 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  (designer 2026-09-21) tweaks Gambler start specials, weighted Draw, and
  gambling death log (`PROTOCOL_VERSION` 39). **Lot 66** (designer 2026-09-28)
  feedback rules: absorber window through the action, Block cannot stack, Mirror
- volley siblings resolve, solo Play again restarts, Spy/Thief upgrade counter,
- Imposition above 9, Upgrade Point Thief target, Gambler wipe, upgrade active
- cards and Sentence (`PROTOCOL_VERSION` 40). Walk-in claim-picker fog stays.
+ volley siblings resolve, Spy/Thief upgrade counter, Upgrade Point Thief
+ target, Gambler wipe, upgrade active cards and Sentence
+ (`PROTOCOL_VERSION` 40). **Lot 67** (designer 2026-09-28) reopens the solo
+ menu on Play again (same kit and bot count; the match does not start),
+ upgrades an active Shield without resetting its points, flashes
+ `You gambled too much and lost everything` for that Gambler, and moves
+ Imposition to points above 7. No protocol bump. Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

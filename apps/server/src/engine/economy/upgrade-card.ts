@@ -1,15 +1,18 @@
 /**
  * Spend 1 upgrade point to permanently upgrade one held copy, one legal active
- * persistent, or the actor's ticking Sentence — rules spec §1, designer 2026-09-28.
+ * persistent, an active Shield, or the actor's ticking Sentence — rules spec §1,
+ * designer 2026-09-28.
  *
- * Active upgrade does not reset counters or Sentence remaining turns. The
- * upgraded rate applies from the next tick. Sentence only flips `isUpgraded`.
+ * Active upgrade does not reset counters, Sentence remaining turns, or
+ * remaining shield points. The upgraded rate applies from the next tick.
+ * Shield only sets `shieldIsUpgraded`. Sentence only flips `isUpgraded`.
  *
  * `alwaysUpgraded` kit trait is applied at acquisition (`acquireCardToHand`), not here.
  */
 
 import {
   actionReject,
+  ACTIVE_SHIELD_INSTANCE_ID,
   isUpgradeableActiveCardId,
   type ActionReject,
   type CardId,
@@ -84,6 +87,22 @@ export function upgradeCard(
     sentence.isUpgraded = true;
 
     return { ok: true, cardId: 'sentence' };
+  }
+
+  if (instanceId === ACTIVE_SHIELD_INSTANCE_ID) {
+    if (actor.shield <= 0) {
+      return actionReject('card-not-held');
+    }
+
+    if (actor.shieldIsUpgraded) {
+      return actionReject('already-upgraded');
+    }
+
+    actor.upgradePoints -= 1;
+    recordChosenUpgradePointsSpent(actor, 1);
+    actor.shieldIsUpgraded = true;
+
+    return { ok: true, cardId: 'shield' };
   }
 
   return actionReject('card-not-held');

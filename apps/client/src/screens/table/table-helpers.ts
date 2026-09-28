@@ -4,6 +4,7 @@
  */
 
 import {
+  ACTIVE_SHIELD_INSTANCE_ID,
   ATTACK_CARD_IDS,
   formatCardEffectText,
   getCard,
@@ -115,6 +116,10 @@ export function activeUpgradeInstanceId(
     );
 
     return sentence !== undefined && !sentence.isUpgraded ? sentence.id : null;
+  }
+
+  if (instance.instanceId === ACTIVE_SHIELD_INSTANCE_ID) {
+    return view.self.shield > 0 ? ACTIVE_SHIELD_INSTANCE_ID : null;
   }
 
   if (!isUpgradeableActiveCardId(instance.cardId)) {

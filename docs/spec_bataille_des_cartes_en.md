@@ -79,7 +79,7 @@ Action cards follow the general Card Economy rules (section 1). The Counter Rule
 
 **Shield** — Price: 7 points
 - Action: grants 4 shield points. A player can only have one active shield at a time; it must be destroyed before creating a new one.
-- Upgrade: grants 7 shield points and blocks Thief and Spy at no cost in shield points while active.
+- Upgrade: grants 7 shield points and blocks Thief and Spy at no cost in shield points while active. While a shield is already up and not yet upgraded, spending 1 upgrade point and the turn sets that upgraded flag. Remaining shield points stay as they are.
 
 **Tax** — Price: 1 life (this cost always applies; the shield only protects against attacks)
 - Action: allows you to gain 4 points.
@@ -133,7 +133,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 - Starts with 1 life, 0 points, 0 upgrade points, no attack or action cards, **2** random special cards drawn **without replacement** from the circulating pool excluding Roulette (the two are distinct; never a second Roulette), and **Roulette**.
 - Catalog Draw stays **10** as the listed kit number. At the start of each of this player's turns (including Block extra turns), Draw payout is rerolled to an integer **5–100** inclusive with truncated-geometric weight P(n) ∝ r^(n − 5), r = 10^(-1/16) ≈ 0.8660, so P(n > 20) ≤ 0.10 (5 is most likely; each extra point is rarer; 100 stays possible). Other kits keep catalog Draw.
-- Each Draw has a **1-in-10** chance that this player gambled too much. Lives drop to 1 (real life loss, not damage, so the drop cannot reach 0). Points become 0. Upgrade points become 0. Shield is lost, including an upgraded shield. Every card in hand and every unplayed special moves to the shared pool with no sell refund. Active persistent cards stay. The player is not eliminated, no Absorber window opens, and nobody is paid a kill reward. The table says `{nickname} gambled too much and lost everything`. The Draw number stays hidden from seats that cannot already see it. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
+- Each Draw has a **1-in-10** chance that this player gambled too much. Lives drop to 1 (real life loss, not damage, so the drop cannot reach 0). Points become 0. Upgrade points become 0. Shield is lost, including an upgraded shield. Every card in hand and every unplayed special moves to the shared pool with no sell refund. Active persistent cards stay. The player is not eliminated, no Absorber window opens, and nobody is paid a kill reward. The table says `{nickname} gambled too much and lost everything`. That player also sees the red table banner `You gambled too much and lost everything`. Other seats do not get the banner. The Draw number stays hidden from seats that cannot already see it. The rolls use the injected seeded generator. Invisibility's passive point ticks do not roll.
 - Roulette is otherwise a normal circulating special (shop, Prophet, Card Transformer).
 
 ## 5. Special Cards
@@ -142,7 +142,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
-- Spending 1 upgrade point can also upgrade one of your own active Poison, Points Generator, Imposition, Super Absorber, Roulette, or Invisibility cards, or your own ticking Sentence. That spends the turn. Counters and Sentence remaining turns do not reset; the upgraded rate applies from the next tick. Sentence only becomes upgraded, so the later draw cannot pick you. Curse, Reanimation, Shield, and a card that is already upgraded cannot be upgraded this way.
+- Spending 1 upgrade point can also upgrade one of your own active Poison, Points Generator, Imposition, Super Absorber, Roulette, Invisibility, or Shield cards, or your own ticking Sentence. That spends the turn. Counters, Sentence remaining turns, and remaining Shield points do not reset; the upgraded rate applies from the next tick. An upgraded Shield blocks Thief and Spy at no shield cost while it is still up. Sentence only becomes upgraded, so the later draw cannot pick you. Curse, Reanimation, and a card that is already upgraded cannot be upgraded this way.
 - A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
 - Five cards (Points Generator, Poison, Super Absorber, Imposition, Roulette) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Roulette 2.
 
@@ -224,8 +224,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: 2 lives lost per turn instead of 1.
 
 **Imposition** — Price: 6 points
-- Action: every turn, only points an opponent has above 9 can be taken, capped at 2. 9 or below gives nothing; 10 gives 1; 12 gives 2. If nothing can be taken, nothing happens (no lives, and the turn is not skipped). The counter stays 2. Effect active as long as the card's dedicated internal counter is not depleted.
-- Upgrade: the cap is 4. 14 points gives 4. 9 or below still gives nothing.
+- Action: every turn, only points an opponent has above 7 can be taken, capped at 2. 7 or below gives nothing; 8 gives 1; 9 gives 2. If nothing can be taken, nothing happens (no lives, and the turn is not skipped). The counter stays 2. Effect active as long as the card's dedicated internal counter is not depleted.
+- Upgrade: the cap is 4. 11 points gives 4. 7 or below still gives nothing.
 
 **Attack Thief** — Price: 8 points
 - Action: blocks, once, any attack targeting the user, and steals a random attack card from each opponent.

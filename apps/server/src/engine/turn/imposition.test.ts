@@ -41,13 +41,13 @@ describe('Imposition (L63-04)', () => {
     expect(a.activePersistentEffects).toHaveLength(1);
   });
 
-  it('takes only points above 9, capped at 2, and does not skip the turn', () => {
+  it('takes only points above 7, capped at 2, and does not skip the turn', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l66-imposition-floor',
+      seed: 'l67-imposition-floor',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -60,19 +60,19 @@ describe('Imposition (L63-04)', () => {
       { id: 'imp', cardId: 'imposition', isUpgraded: false, counter: 2, targetPlayerId: null },
     ];
     a.points = 0;
-    b.points = 9;
+    b.points = 7;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(9);
+    expect(b.points).toBe(7);
     expect(a.points).toBe(0);
+
+    b.points = 8;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(7);
+    expect(a.points).toBe(1);
 
     b.points = 10;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(9);
-    expect(a.points).toBe(1);
-
-    b.points = 12;
-    applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(10);
+    expect(b.points).toBe(8);
     expect(a.points).toBe(3);
 
     b.pendingEffects = [];
@@ -82,7 +82,7 @@ describe('Imposition (L63-04)', () => {
     expect(state.currentTurnPlayerId).not.toBe(b.id);
   });
 
-  it('upgraded cap is 4 points above 9', () => {
+  it('upgraded cap is 4 points above 7', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -103,15 +103,15 @@ describe('Imposition (L63-04)', () => {
     a.points = 0;
     a.lives = 10;
     b.lives = 10;
-    b.points = 9;
+    b.points = 7;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(9);
+    expect(b.points).toBe(7);
     expect(b.lives).toBe(10);
     expect(a.points).toBe(0);
 
-    b.points = 14;
+    b.points = 11;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(10);
+    expect(b.points).toBe(7);
     expect(b.lives).toBe(10);
     expect(a.points).toBe(4);
   });
