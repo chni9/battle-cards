@@ -139,7 +139,7 @@ export function PrivateZone({
           >
             <KitPortrait
               kitId={view.self.kitId}
-              className="w-10 shrink-0 landscape:w-12 sm:w-14"
+              className="w-12 shrink-0 sm:w-16"
               onClick={onInspectKit}
               ariaLabel="Inspect your kit"
             />

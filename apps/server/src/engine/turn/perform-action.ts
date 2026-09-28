@@ -14,6 +14,8 @@ import {
   type ActionReject,
   type ActionResolutionOutcome,
   type CardId,
+  type LogResourceDelta,
+  type ResourceChangeLogEntry,
   type CardInstance,
   type GameState,
   type KitId,
@@ -25,6 +27,16 @@ import {
 } from '@card-battle/shared';
 
 import { findHandler } from '../../cards/registry';
+import {
+  duplicatedResourceChanges,
+  publicPersistentChanges,
+  setActorResourceBaseline,
+  snapshotAllResources,
+  snapshotPlayerResources,
+  stampPlayedWindow,
+  takeActorResourceBaseline,
+  takeDuplicatedGains,
+} from './resource-log';
 import { buyCard } from '../economy/buy-card';
 import { buyPoolCard } from '../economy/buy-pool-card';
 import { buySpecialCard } from '../economy/buy-special-card';
@@ -117,6 +129,8 @@ export interface ActionPlayedEvent {
   drawBust?: true;
   /** Successful Draw payout actually granted — Lot 64. Omit on bust. */
   drawGain?: number;
+  /** Acting player's net resource change before resolution (PROTOCOL_VERSION 40). */
+  resourceDeltas?: readonly LogResourceDelta[];
 }
 
 export interface ActionResolvedEvent {
@@ -176,6 +190,16 @@ export interface TurnResult {
    * Absent when remaining did not decrement and nothing fired.
    */
   sentenceAnnouncements?: readonly SentenceAnnouncementLogEntry[];
+  /**
+   * Duplicator copies from the action window. Logged immediately after the play.
+   * PROTOCOL_VERSION 40.
+   */
+  playedResourceChanges?: readonly ResourceChangeLogEntry[];
+  /**
+   * Resolve-window Duplicator copies, then public persistent ticks, then
+   * persistent-window Duplicator copies. PROTOCOL_VERSION 40.
+   */
+  resourceChanges?: readonly ResourceChangeLogEntry[];
 }
 
 export type TurnRejection = ActionReject;
@@ -244,6 +268,8 @@ export function performTurnAction(
     // Reject / sub-choice-pending returns never take the collector. Drop leftovers
     // so a later leave/forfeit dump cannot attach to this WeakMap (L56-07).
     takeAutoDeactivationLog(state);
+    takeDuplicatedGains(state);
+    takeActorResourceBaseline(state);
   }
 }
 
@@ -256,6 +282,7 @@ function performPreparedTurnAction(
   nowMs: number,
 ): PerformActionResult {
   let actionPlayed: ActionPlayedEvent;
+  setActorResourceBaseline(state, snapshotPlayerResources(actor));
 
   if (action.type === 'draw') {
     const kit = getKit(actor.kitId);
@@ -449,39 +476,33 @@ function performPreparedTurnAction(
 
     // Mirror / steal-pick / pool-pick start a sub-choice: paid, but resolve/advance wait.
     if (state.mirrorChoice !== null) {
-      return {
-        ok: true,
-        actionPlayed,
+      return stampedPendingResult(state, actor, actionPlayed, {
         resolved: playResult.immediateResolved,
         winnerPlayerId: null,
         eliminatedPlayerIds: [],
         eliminations: [],
         mirrorChoicePending: true,
-      };
+      });
     }
 
     if (state.stealChoice !== null) {
-      return {
-        ok: true,
-        actionPlayed,
+      return stampedPendingResult(state, actor, actionPlayed, {
         resolved: playResult.immediateResolved,
         winnerPlayerId: null,
         eliminatedPlayerIds: [],
         eliminations: [],
         stealChoicePending: true,
-      };
+      });
     }
 
     if (state.subChoice !== null) {
-      return {
-        ok: true,
-        actionPlayed,
+      return stampedPendingResult(state, actor, actionPlayed, {
         resolved: playResult.immediateResolved,
         winnerPlayerId: null,
         eliminatedPlayerIds: [],
         eliminations: [],
         subChoicePending: true,
-      };
+      });
     }
 
     return finishTurnPhases(
@@ -497,39 +518,33 @@ function performPreparedTurnAction(
 
   // Mirror / steal-pick start a sub-choice: paid, but resolve/advance wait.
   if (state.mirrorChoice !== null) {
-    return {
-      ok: true,
-      actionPlayed,
+    return stampedPendingResult(state, actor, actionPlayed, {
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
       eliminations: [],
       mirrorChoicePending: true,
-    };
+    });
   }
 
   if (state.stealChoice !== null) {
-    return {
-      ok: true,
-      actionPlayed,
+    return stampedPendingResult(state, actor, actionPlayed, {
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
       eliminations: [],
       stealChoicePending: true,
-    };
+    });
   }
 
   if (state.subChoice !== null) {
-    return {
-      ok: true,
-      actionPlayed,
+    return stampedPendingResult(state, actor, actionPlayed, {
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
       eliminations: [],
       subChoicePending: true,
-    };
+    });
   }
 
   return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
@@ -599,6 +614,7 @@ export function completeMirrorChoice(
     return redirected;
   }
 
+  setActorResourceBaseline(state, snapshotPlayerResources(actor));
   chargeDeferredMirrorPayment(actor);
 
   const turnSequence = state.turnSequence;
@@ -650,6 +666,7 @@ export function expireMirrorChoice(
     return applied;
   }
 
+  setActorResourceBaseline(state, snapshotPlayerResources(actor));
   chargeDeferredMirrorPayment(actor);
 
   const turnSequence = state.turnSequence;
@@ -694,27 +711,48 @@ export function completeStealChoice(
     return actionReject('not-your-turn');
   }
 
+  const thief = findPlayer(state, actorPlayerId);
+  if (thief !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(thief));
+  }
+
   const applied = applyStealPick(state, instanceId, nowMs);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
   if (applied.stillPending) {
-    return {
-      ok: true,
-      actionPlayed: {
-        actorPlayerId,
-        action: 'playCard',
-        cardId: 'card-thief',
-        turnSequence: state.turnSequence,
-      },
+    const pendingPlayed: ActionPlayedEvent = {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-thief',
+      turnSequence: state.turnSequence,
+    };
+
+    if (thief === undefined) {
+      takeActorResourceBaseline(state);
+      takeDuplicatedGains(state);
+      return {
+        ok: true,
+        actionPlayed: pendingPlayed,
+        resolved: [],
+        winnerPlayerId: null,
+        eliminatedPlayerIds: [],
+        eliminations: [],
+        stealChoicePending: true,
+      };
+    }
+
+    return stampedPendingResult(state, thief, pendingPlayed, {
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
       eliminations: [],
       stealChoicePending: true,
-    };
+    });
   }
 
   return finishTurnPhases(
@@ -747,27 +785,48 @@ export function expireStealChoice(
   }
 
   const actorPlayerId = choice.playerId;
+  const thief = findPlayer(state, actorPlayerId);
+  if (thief !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(thief));
+  }
+
   const applied = applyDefaultStealPick(state, rng, nowMs);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
   if (applied.stillPending) {
-    return {
-      ok: true,
-      actionPlayed: {
-        actorPlayerId,
-        action: 'playCard',
-        cardId: 'card-thief',
-        turnSequence: state.turnSequence,
-      },
+    const pendingPlayed: ActionPlayedEvent = {
+      actorPlayerId,
+      action: 'playCard',
+      cardId: 'card-thief',
+      turnSequence: state.turnSequence,
+    };
+
+    if (thief === undefined) {
+      takeActorResourceBaseline(state);
+      takeDuplicatedGains(state);
+      return {
+        ok: true,
+        actionPlayed: pendingPlayed,
+        resolved: [],
+        winnerPlayerId: null,
+        eliminatedPlayerIds: [],
+        eliminations: [],
+        stealChoicePending: true,
+      };
+    }
+
+    return stampedPendingResult(state, thief, pendingPlayed, {
       resolved: [],
       winnerPlayerId: null,
       eliminatedPlayerIds: [],
       eliminations: [],
       stealChoicePending: true,
-    };
+    });
   }
 
   return finishTurnPhases(
@@ -804,9 +863,16 @@ export function completePoolPick(
     return actionReject('not-your-turn');
   }
 
+  const absorber = findPlayer(state, actorPlayerId);
+  if (absorber !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(absorber));
+  }
+
   const applied = applyPoolPick(state, instanceIds);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
@@ -839,9 +905,16 @@ export function expirePoolPick(
   }
 
   const actorPlayerId = choice.playerId;
+  const absorber = findPlayer(state, actorPlayerId);
+  if (absorber !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(absorber));
+  }
+
   const applied = applyDefaultPoolPick(state, rng);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
@@ -879,9 +952,16 @@ export function completeSpecialPick(
     return actionReject('not-your-turn');
   }
 
+  const transformer = findPlayer(state, actorPlayerId);
+  if (transformer !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(transformer));
+  }
+
   const applied = applySpecialPick(state, cardId);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
@@ -914,9 +994,16 @@ export function expireSpecialPick(
   }
 
   const actorPlayerId = choice.playerId;
+  const transformer = findPlayer(state, actorPlayerId);
+  if (transformer !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(transformer));
+  }
+
   const applied = applyDefaultSpecialPick(state, rng);
 
   if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
     return applied;
   }
 
@@ -1062,18 +1149,81 @@ function withDrawBustReason(
   );
 }
 
+function playedChangeFields(
+  changes: readonly ResourceChangeLogEntry[],
+): Pick<TurnResult, 'playedResourceChanges'> {
+  if (changes.length === 0) {
+    return {};
+  }
+
+  return { playedResourceChanges: changes };
+}
+
+function phaseChangeFields(
+  changes: readonly ResourceChangeLogEntry[],
+): Pick<TurnResult, 'resourceChanges'> {
+  if (changes.length === 0) {
+    return {};
+  }
+
+  return { resourceChanges: changes };
+}
+
+function stampedPendingResult(
+  state: GameState,
+  actor: Player,
+  actionPlayed: ActionPlayedEvent,
+  rest: Omit<TurnResult, 'ok' | 'actionPlayed' | 'playedResourceChanges'>,
+): TurnResult {
+  const stamped = stampPlayedWindow(state, actor, actionPlayed);
+
+  return {
+    ok: true,
+    ...rest,
+    actionPlayed: stamped.actionPlayed,
+    ...playedChangeFields(stamped.playedResourceChanges),
+  };
+}
+
 function finishTurnPhases(
   state: GameState,
   actorPlayerId: string,
-  actionPlayed: ActionPlayedEvent,
+  actionPlayedInput: ActionPlayedEvent,
   rng: Rng,
   nowMs: number,
   immediateResolved: readonly ActionResolvedEvent[] = [],
   mirrorRedirects?: readonly (MirrorRedirectInfo & { turnSequence: number })[],
 ): TurnResult {
   ensureAutoDeactivationLog(state);
+  const actor = findPlayer(state, actorPlayerId);
+  const stamped = actor === undefined
+    ? {
+        actionPlayed: actionPlayedInput,
+        playedResourceChanges: duplicatedResourceChanges(
+          takeDuplicatedGains(state),
+          actionPlayedInput.turnSequence,
+        ),
+      }
+    : stampPlayedWindow(state, actor, actionPlayedInput);
+  if (actor === undefined) {
+    takeActorResourceBaseline(state);
+  }
+  const actionPlayed = stamped.actionPlayed;
   const resolvedEffects = resolvePendingEffects(state, actorPlayerId, rng);
+  const resolveCopies = takeDuplicatedGains(state);
+  const beforePersistent = snapshotAllResources(state);
   applyPersistentEffects(state, actorPlayerId, rng);
+  const persistentCopies = takeDuplicatedGains(state);
+  const resourceChanges = [
+    ...duplicatedResourceChanges(resolveCopies, actionPlayed.turnSequence),
+    ...publicPersistentChanges(
+      state,
+      beforePersistent,
+      persistentCopies,
+      actionPlayed.turnSequence,
+    ),
+    ...duplicatedResourceChanges(persistentCopies, actionPlayed.turnSequence),
+  ];
   const skipNewestSentence =
     actionPlayed.action === 'playCard' && actionPlayed.cardId === 'sentence';
   const sentenceAnnouncements = tickPendingSentences(
@@ -1112,6 +1262,8 @@ function finishTurnPhases(
       eliminatedPlayerIds,
       eliminations,
       rewardChoicePending: true,
+      ...playedChangeFields(stamped.playedResourceChanges),
+      ...phaseChangeFields(resourceChanges),
       ...reanimated,
       ...redirects,
       ...transfers,
@@ -1129,6 +1281,8 @@ function finishTurnPhases(
       eliminatedPlayerIds,
       eliminations,
       subChoicePending: true,
+      ...playedChangeFields(stamped.playedResourceChanges),
+      ...phaseChangeFields(resourceChanges),
       ...reanimated,
       ...redirects,
       ...transfers,
@@ -1152,6 +1306,8 @@ function finishTurnPhases(
     winnerPlayerId,
     eliminatedPlayerIds,
     eliminations,
+    ...playedChangeFields(stamped.playedResourceChanges),
+    ...phaseChangeFields(resourceChanges),
     ...reanimated,
     ...redirects,
     ...transfers,

@@ -13,11 +13,13 @@ import type {
 import { formatCardLabel } from '@card-battle/shared';
 import { Fragment, useEffect, useRef, type ReactElement } from 'react';
 
+import { getResourceIconUrl } from '../design/asset-lookup';
 import { LifeCountBadge } from '../design/components/life-count-badge';
 import { PlayerName } from '../design/components/player-name';
 import {
   formatActionLogEntrySegments,
   groupByRound,
+  resourceDeltaClass,
   type ActionLogSegment,
 } from './action-log';
 
@@ -128,6 +130,17 @@ const KIND_META: Record<
         <path
           fill="currentColor"
           d="M8 1.5 9.2 5.2 13 6l-2.8 2.5.8 3.8L8 10.6 5 12.3l.8-3.8L3 6l3.8-.8L8 1.5Z"
+        />
+      </svg>
+    ),
+  },
+  resourceChange: {
+    label: 'Resources',
+    icon: (
+      <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M8 1.5 9.2 6H14l-3.8 2.8 1.5 4.7L8 10.8 4.3 13.5l1.5-4.7L2 6h4.8L8 1.5Z"
         />
       </svg>
     ),
@@ -292,6 +305,27 @@ function LogSegments({
             />
           );
         }
+        if (segment.type === 'resource') {
+          return (
+            <span
+              key={`r-${segment.kind}-${String(index)}`}
+              className="ml-1 inline-flex items-center gap-px align-text-bottom"
+              aria-label={segment.spoken}
+            >
+              <span aria-hidden className={`font-semibold tabular-nums ${resourceDeltaClass(segment.direction)}`}>
+                {segment.label}
+              </span>
+              <img
+                src={getResourceIconUrl(segment.kind)}
+                alt=""
+                width={12}
+                height={12}
+                className="shrink-0 object-contain"
+                aria-hidden
+              />
+            </span>
+          );
+        }
         if (segment.type === 'card') {
           const label = formatCardLabel(segment.cardId, segment.isUpgraded);
           if (onInspectCard === undefined) {
@@ -347,6 +381,8 @@ function entryKey(entry: ActionLogEntryView, index: number): string {
       return `${entry.kind}-${entry.turnSequence}-${entry.sourcePlayerId}-${String(entry.remainingOwnerTurns)}-${String(index)}`;
     case 'sentenceFired':
       return `${entry.kind}-${entry.turnSequence}-${entry.sourcePlayerId}-${entry.targetPlayerId}-${String(index)}`;
+    case 'resourceChange':
+      return `${entry.kind}-${entry.turnSequence}-${entry.playerId}-${entry.duplicated === true ? 'copy' : 'tick'}-${String(index)}`;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

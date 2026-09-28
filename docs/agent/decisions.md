@@ -3915,3 +3915,38 @@ hand layout. Those lines are not added to `lot-63`.
 
 ---
 
+## 2026-09-28 · [P] Action-log resource nets and point flyout cap
+
+Designer session. `PROTOCOL_VERSION` **39 → 40** so older clients cannot
+read `resourceChange`. L65-01 (PR #52) stays: Gambler `drawGain` is still
+Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
+
+- Point token flyouts cap at 50 chips (`MAX_POINT_FLYOUTS`). The numeric
+  float and the resource total stay the real amount. Lives, shield, and
+  upgrade points are not capped.
+- The acting player's own kit portrait is one step larger (`w-12` /
+  `sm:w-16`; landscape `3rem`). Opponent portraits stay `2.35rem` in
+  landscape.
+- The play line appends the acting player's immediate resource net, measured
+  by snapshot before resolution. Same-resource spend and gain collapse.
+  Zeros are omitted. Order: lives, points, upgrade points, shield.
+- Resolve sentences keep the hit or resolve wording and drop written life
+  and shield numbers. Listed attack damage stays on the play line.
+- A persistent tick that changes resources adds a public `resourceChange`
+  line: player name and icon nets, no card name.
+- Elimination rewards stay masked.
+- Duplicator copies are `resourceChange` with `duplicated: true` and are
+  omitted unless the viewer sees that Duplicator. An unspied
+  `activateDuplication` stays a Draw and shows a fake green `+?` point
+  suffix so it matches a real Draw.
+- Unspied Draw conceals the point gain as `+?`. A bust hides the life total
+  unless the viewer sees the actor, who then sees the real life loss.
+  Unspied buy-upgrade conceals the point price as `−?` and keeps `+1`
+  upgrade point visible.
+- Gains use green `+` and the number. Losses use red `−` and the number.
+  No parentheses. The icon keeps its normal art.
+- The stored room log and Excel keep real amounts. The broadcast
+  `ACTION_PLAYED` payload does not.
+
+---
+

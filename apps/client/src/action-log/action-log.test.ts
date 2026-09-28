@@ -9,6 +9,7 @@ import {
   formatActionLogEntrySegments,
   groupByRound,
   groupByTurn,
+  resourceDeltaClass,
   roundOfTurn,
 } from './action-log';
 
@@ -61,7 +62,7 @@ describe('formatActionLogEntry (L9-02)', () => {
       'Alice attacks Bob with Basic attack (1)',
     );
     expect(formatActionLogEntry(resolved, nick)).toBe(
-      "Alice's Basic attack hits Bob (−1 life)",
+      "Alice's Basic attack hits Bob",
     );
     expect(formatActionLogEntry(rewards, nick)).toBe(
       'Alice claims elimination rewards from Bob',
@@ -218,7 +219,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe("Alice's Super attack + hits Bob (−10 life)");
+    ).toBe("Alice's Super attack + hits Bob");
   });
 
   it('formats deactivation and duplication activation (L30-06)', () => {
@@ -477,7 +478,24 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe("Alice's MEGA ATTACK hits Bob (−0 life, 20 absorbed by shield)");
+    ).toBe("Alice's MEGA ATTACK hits Bob");
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-mega',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'mega-attack',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 20,
+          outcome: 'applied',
+          turnSequence: 2,
+        },
+        nick,
+      ),
+    ).not.toMatch(/life|absorbed by shield/);
   });
 
   it('groups consecutive entries by turnSequence', () => {
@@ -543,7 +561,7 @@ describe('formatActionLogEntrySegments (L39-03)', () => {
       possessive: true,
     });
     expect(formatActionLogEntry(resolved, nick)).toBe(
-      "Alice's Basic attack hits Bob (−1 life)",
+      "Alice's Basic attack hits Bob",
     );
   });
 });
@@ -561,6 +579,7 @@ describe('action log kinds (L56-03)', () => {
       rewardsClaimed: true,
       sentenceCountdown: true,
       sentenceFired: true,
+      resourceChange: true,
     };
     expect([...ACTION_LOG_KINDS].sort()).toEqual(Object.keys(kinds).sort());
   });
@@ -705,5 +724,148 @@ describe('click-to-explain card segments (L56-05)', () => {
     );
     expect(draw.some((segment) => segment.type === 'card')).toBe(false);
     expect(elim.some((segment) => segment.type === 'card')).toBe(false);
+  });
+});
+
+describe('action log resource suffixes', () => {
+  it('ends a basic attack with a red point loss and no parentheses', () => {
+    const segments = formatActionLogEntrySegments(
+      {
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'playCard',
+        cardId: 'basic-attack',
+        isUpgraded: false,
+        targetPlayerId: 'b',
+        turnSequence: 1,
+        resourceDeltas: [{ kind: 'point', amount: -1 }],
+      },
+      nick,
+    );
+    const suffix = segments[segments.length - 1];
+    expect(suffix).toEqual({
+      type: 'resource',
+      kind: 'point',
+      direction: 'loss',
+      label: '\u22121',
+      spoken: '\u22121 point',
+    });
+    expect(suffix?.type === 'resource' ? resourceDeltaClass(suffix.direction) : '').toBe(
+      'text-cta-red',
+    );
+    const line = formatActionLogEntry(
+      {
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'playCard',
+        cardId: 'basic-attack',
+        isUpgraded: false,
+        targetPlayerId: 'b',
+        turnSequence: 1,
+        resourceDeltas: [{ kind: 'point', amount: -1 }],
+      },
+      nick,
+    );
+    expect(line.endsWith(' \u22121')).toBe(true);
+    expect(line).not.toMatch(/\(\u22121|\(-1\)/);
+  });
+
+  it('colors a gain green and shows both resources on a sell', () => {
+    const gain = formatActionLogEntrySegments(
+      {
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'draw',
+        turnSequence: 1,
+        resourceDeltas: [{ kind: 'point', amount: 4 }],
+      },
+      nick,
+    ).at(-1);
+    expect(gain).toMatchObject({
+      type: 'resource',
+      direction: 'gain',
+      label: '+4',
+      kind: 'point',
+    });
+    expect(gain?.type === 'resource' ? resourceDeltaClass(gain.direction) : '').toBe(
+      'text-cta-green',
+    );
+
+    const sell = formatActionLogEntrySegments(
+      {
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'sellUpgradePoint',
+        turnSequence: 2,
+        resourceDeltas: [
+          { kind: 'point', amount: 7 },
+          { kind: 'upgradePoint', amount: -1 },
+        ],
+      },
+      nick,
+    );
+    expect(sell.filter((segment) => segment.type === 'resource')).toEqual([
+      {
+        type: 'resource',
+        kind: 'point',
+        direction: 'gain',
+        label: '+7',
+        spoken: '+7 points',
+      },
+      {
+        type: 'resource',
+        kind: 'upgradePoint',
+        direction: 'loss',
+        label: '\u22121',
+        spoken: '\u22121 upgrade point',
+      },
+    ]);
+  });
+
+  it('formats a persistent tick as a name plus icons and leaves rewards opaque', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'resourceChange',
+          playerId: 'a',
+          turnSequence: 3,
+          deltas: [{ kind: 'point', amount: 3 }],
+        },
+        nick,
+      ),
+    ).toBe('Alice +3');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'rewardsClaimed',
+          eliminatorPlayerId: 'a',
+          eliminatedPlayerId: 'b',
+          turnSequence: 4,
+        },
+        nick,
+      ),
+    ).not.toMatch(/\+|\u2212|life|point/i);
+  });
+
+  it('shows a concealed Draw as a green +?', () => {
+    const concealed = formatActionLogEntrySegments(
+      {
+        kind: 'actionPlayed',
+        actorPlayerId: 'a',
+        action: 'draw',
+        turnSequence: 1,
+        resourceDeltas: [{ kind: 'point', concealed: true, direction: 'gain' }],
+      },
+      nick,
+    ).at(-1);
+    expect(concealed).toMatchObject({
+      type: 'resource',
+      kind: 'point',
+      direction: 'gain',
+      label: '+?',
+    });
+    expect(concealed?.type === 'resource' ? resourceDeltaClass(concealed.direction) : '').toBe(
+      'text-cta-green',
+    );
   });
 });

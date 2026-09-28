@@ -338,6 +338,27 @@ export interface PlayingStateView {
   claimableSeats?: readonly ClaimableSeatView[];
 }
 
+/**
+ * One resource kind on an action-log suffix (PROTOCOL_VERSION 40).
+ * Order when several change together: life, point, upgrade point, shield.
+ */
+export const LOG_RESOURCE_KINDS = ['life', 'point', 'upgradePoint', 'shield'] as const;
+
+export type LogResourceKind = (typeof LOG_RESOURCE_KINDS)[number];
+
+export type LogResourceDirection = 'gain' | 'loss';
+
+/**
+ * Net change of one resource. `amount` is signed (positive gained).
+ * `concealed` withholds the number (Draw / buy-upgrade points) but keeps the sign.
+ */
+export interface LogResourceDelta {
+  kind: LogResourceKind;
+  amount?: number;
+  concealed?: true;
+  direction?: LogResourceDirection;
+}
+
 /** Played action — same public fields as `actionPlayed` wire payload. */
 export interface ActionPlayedLogEntry {
   kind: 'actionPlayed';
@@ -358,6 +379,12 @@ export interface ActionPlayedLogEntry {
   drawGain?: number;
   /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
   botReason?: BotDecisionReason;
+  /**
+   * Acting player's net resource change for this play (PROTOCOL_VERSION 40).
+   * Real amounts on the stored log. Per-recipient views may conceal Draw and
+   * buy-upgrade point totals.
+   */
+  resourceDeltas?: readonly LogResourceDelta[];
 }
 
 /** Effect resolution outcome — durable copy of `actionResolved`. */
@@ -398,6 +425,11 @@ export interface MirrorRedirectedLogEntry {
   turnSequence: number;
   /** Bot explanatory reason only — L17-05 / #V3-2. Absent for humans. */
   botReason?: BotDecisionReason;
+  /**
+   * Acting player's net resource change when this redirect is the logged play
+   * (deferred Mirror payment). PROTOCOL_VERSION 40.
+   */
+  resourceDeltas?: readonly LogResourceDelta[];
 }
 
 /**
@@ -469,6 +501,19 @@ export type SentenceAnnouncementLogEntry =
   | SentenceCountdownLogEntry
   | SentenceFiredLogEntry;
 
+/**
+ * Resource change that is not the acting player's play-line suffix
+ * (PROTOCOL_VERSION 40): a persistent tick, or a Duplicator copy.
+ * `duplicated` lines are omitted unless the viewer sees that player.
+ */
+export interface ResourceChangeLogEntry {
+  kind: 'resourceChange';
+  playerId: string;
+  turnSequence: number;
+  deltas: readonly LogResourceDelta[];
+  duplicated?: true;
+}
+
 export type ActionLogEntryView =
   | ActionPlayedLogEntry
   | ActionResolvedLogEntry
@@ -479,7 +524,8 @@ export type ActionLogEntryView =
   | PlayerReanimatedLogEntry
   | RewardsClaimedLogEntry
   | SentenceCountdownLogEntry
-  | SentenceFiredLogEntry;
+  | SentenceFiredLogEntry
+  | ResourceChangeLogEntry;
 
 export type ActionLogEntryKind = ActionLogEntryView['kind'];
 

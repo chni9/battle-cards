@@ -67,6 +67,20 @@ const RELEASE_NOTES_CATALOG = [
           'On a phone, Hand and Specials sometimes swapped sides when the browser bar moved.',
         after: 'They keep their places unless there is clearly more room.',
       },
+      {
+        before: 'A huge point gain flew one chip per point and could freeze the table.',
+        after: 'Point chips stop at 50. The number next to them still shows the real total.',
+      },
+      {
+        before: 'Your own kit portrait was the same size as an opponent’s in landscape.',
+        after: 'Your kit portrait is a step larger. Opponents stay the same size.',
+      },
+      {
+        before:
+          'The action log named a card but not what that play spent or gained.',
+        after:
+          'Each play ends with the lives, points, upgrade points, or shield that changed, as a green gain or a red loss next to the icon. A Draw or an upgrade-point purchase you cannot see shows ? instead of the point total. A ticking card that changes resources adds a short line with the player’s name and those icons.',
+      },
     ],
   },
   {

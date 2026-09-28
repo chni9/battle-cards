@@ -3,6 +3,7 @@
  */
 
 import {
+  copyResourceDeltas,
   toActionPlayedPayload,
   type ActionLogEntryView,
   type BotDifficulty,
@@ -155,12 +156,18 @@ export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResul
     log.push({
       kind: 'mirrorRedirected',
       ...result.mirrorRedirect,
+      ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
     });
   } else {
     log.push({
       kind: 'actionPlayed',
       ...toActionPlayedPayload(result.actionPlayed),
+      ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
     });
+  }
+
+  for (const change of result.playedResourceChanges ?? []) {
+    log.push(change);
   }
 
   if (result.mirrorRedirects !== undefined) {
@@ -196,6 +203,10 @@ export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResul
       outcome: resolved.outcome,
       turnSequence,
     });
+  }
+
+  for (const change of result.resourceChanges ?? []) {
+    log.push(change);
   }
 
   if (result.curseTransfers !== undefined) {

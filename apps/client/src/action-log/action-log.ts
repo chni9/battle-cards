@@ -12,6 +12,9 @@ import {
   type ActionLogEntryKind,
   type ActionLogEntryView,
   type CardId,
+  type LogResourceDelta,
+  type LogResourceDirection,
+  type LogResourceKind,
 } from '@card-battle/shared';
 
 export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
@@ -25,6 +28,7 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'rewardsClaimed',
   'sentenceCountdown',
   'sentenceFired',
+  'resourceChange',
 ] as const;
 
 export interface ActionLogFilters {
@@ -55,11 +59,83 @@ export interface ActionLogCardSegment {
   cardId: CardId;
   isUpgraded: boolean;
 }
+/** Icon-only resource net. Sign and number are colored; the icon keeps its art. */
+export interface ActionLogResourceSegment {
+  type: 'resource';
+  kind: LogResourceKind;
+  direction: LogResourceDirection;
+  /** `+7`, `−1`, `+?`, or `−?`. Minus is U+2212. No parentheses. */
+  label: string;
+  spoken: string;
+}
 export type ActionLogSegment =
   | ActionLogTextSegment
   | ActionLogPlayerSegment
   | ActionLogDamageSegment
-  | ActionLogCardSegment;
+  | ActionLogCardSegment
+  | ActionLogResourceSegment;
+
+const MINUS = '\u2212';
+
+export function resourceDeltaClass(direction: LogResourceDirection): string {
+  return direction === 'gain' ? 'text-cta-green' : 'text-cta-red';
+}
+
+function resourceDirection(delta: LogResourceDelta): LogResourceDirection {
+  if (delta.direction !== undefined) {
+    return delta.direction;
+  }
+
+  return (delta.amount ?? 0) < 0 ? 'loss' : 'gain';
+}
+
+function resourceNoun(kind: LogResourceKind, plural: boolean): string {
+  switch (kind) {
+    case 'life':
+      return plural ? 'lives' : 'life';
+    case 'point':
+      return plural ? 'points' : 'point';
+    case 'upgradePoint':
+      return plural ? 'upgrade points' : 'upgrade point';
+    case 'shield':
+      return 'shield';
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
+
+export function resourceSegment(delta: LogResourceDelta): ActionLogResourceSegment {
+  const direction = resourceDirection(delta);
+  const sign = direction === 'gain' ? '+' : MINUS;
+  const concealed = delta.concealed === true || delta.amount === undefined;
+  const label = concealed ? `${sign}?` : `${sign}${String(Math.abs(delta.amount ?? 0))}`;
+  const noun = resourceNoun(delta.kind, concealed || Math.abs(delta.amount ?? 0) !== 1);
+  const spoken = concealed
+    ? direction === 'gain'
+      ? `concealed ${noun} gain`
+      : `concealed ${noun} loss`
+    : `${label} ${noun}`;
+
+  return { type: 'resource', kind: delta.kind, direction, label, spoken };
+}
+
+function resourceSegments(deltas: readonly LogResourceDelta[] | undefined): ActionLogResourceSegment[] {
+  if (deltas === undefined || deltas.length === 0) {
+    return [];
+  }
+
+  return deltas.map(resourceSegment);
+}
+
+function withResourceSuffix(
+  segments: ActionLogSegment[],
+  deltas: readonly LogResourceDelta[] | undefined,
+): ActionLogSegment[] {
+  const suffix = resourceSegments(deltas);
+  return suffix.length === 0 ? segments : [...segments, ...suffix];
+}
 
 function text(value: string): ActionLogTextSegment {
   return { type: 'text', text: value };
@@ -109,6 +185,9 @@ function joinSegments(segments: readonly ActionLogSegment[]): string {
       }
       if (segment.type === 'card') {
         return formatCardLabel(segment.cardId, segment.isUpgraded);
+      }
+      if (segment.type === 'resource') {
+        return ` ${segment.label}`;
       }
       return segment.possessive === true ? `${segment.nickname}'s` : segment.nickname;
     })
@@ -228,7 +307,7 @@ export function formatActionLogEntrySegments(
 ): ActionLogSegment[] {
   switch (entry.kind) {
     case 'actionPlayed':
-      return formatPlayedActionSegments(entry, nicknameOf);
+      return withResourceSuffix(formatPlayedActionSegments(entry, nicknameOf), entry.resourceDeltas);
     case 'actionResolved': {
       const source = player(entry.sourcePlayerId, nicknameOf);
       const target = player(entry.targetPlayerId, nicknameOf);
@@ -255,10 +334,8 @@ export function formatActionLogEntrySegments(
             text(' is blocked'),
           ];
         case 'applied': {
-          const shield =
-            entry.shieldAbsorbed > 0
-              ? `, ${String(entry.shieldAbsorbed)} absorbed by shield`
-              : '';
+          // Lives lost and shield absorbed stay off this sentence. The play
+          // line above already carries the actor's immediate net (PROTOCOL_VERSION 40).
           if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
             return [
               player(entry.sourcePlayerId, nicknameOf, true),
@@ -266,17 +343,6 @@ export function formatActionLogEntrySegments(
               nameCard,
               text(' hits '),
               target,
-              text(` (−${String(entry.livesLost)} life${shield})`),
-            ];
-          }
-          if (entry.shieldAbsorbed > 0) {
-            return [
-              nameCard,
-              text(' from '),
-              source,
-              text(' resolves on '),
-              target,
-              text(` (${String(entry.shieldAbsorbed)} absorbed by shield)`),
             ];
           }
           return [nameCard, text(' from '), source, text(' resolves on '), target];
@@ -309,16 +375,19 @@ export function formatActionLogEntrySegments(
       return [victim, text(` is eliminated ${reasonLabel[entry.reason]}`)];
     }
     case 'mirrorRedirected': {
-      return [
-        player(entry.actorPlayerId, nicknameOf),
-        text(' redirects '),
-        cardName(entry.cardId, entry.isUpgraded),
-        ...listedDamageSegments(entry.cardId, entry.isUpgraded, entry.damageMultiplier),
-        text(' from '),
-        player(entry.previousTargetPlayerId, nicknameOf),
-        text(' to '),
-        player(entry.newTargetPlayerId, nicknameOf),
-      ];
+      return withResourceSuffix(
+        [
+          player(entry.actorPlayerId, nicknameOf),
+          text(' redirects '),
+          cardName(entry.cardId, entry.isUpgraded),
+          ...listedDamageSegments(entry.cardId, entry.isUpgraded, entry.damageMultiplier),
+          text(' from '),
+          player(entry.previousTargetPlayerId, nicknameOf),
+          text(' to '),
+          player(entry.newTargetPlayerId, nicknameOf),
+        ],
+        entry.resourceDeltas,
+      );
     }
     case 'persistentDeactivated': {
       return [
@@ -358,6 +427,9 @@ export function formatActionLogEntrySegments(
     }
     case 'sentenceFired': {
       return [text('Sentence will kill '), player(entry.targetPlayerId, nicknameOf), text('!')];
+    }
+    case 'resourceChange': {
+      return [player(entry.playerId, nicknameOf), ...resourceSegments(entry.deltas)];
     }
     default: {
       const _exhaustive: never = entry;
@@ -403,6 +475,8 @@ export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string)
       return entry.sourcePlayerId === playerId;
     case 'sentenceFired':
       return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
+    case 'resourceChange':
+      return entry.playerId === playerId;
     default: {
       const _exhaustive: never = entry;
       return _exhaustive;

@@ -328,6 +328,28 @@ export async function buildActionLogWorkbook(
           '',
         ]);
         break;
+      case 'resourceChange':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          event.playerId,
+          '',
+          '',
+          JSON.stringify({
+            duplicated: event.duplicated === true,
+            deltas: event.deltas,
+          }),
+        ]);
+        break;
       default: {
         const _exhaustive: never = event;
         void _exhaustive;

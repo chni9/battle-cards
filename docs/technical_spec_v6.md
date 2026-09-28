@@ -223,7 +223,8 @@ Hints:     localStorage, first Classic playing view only
 - **One** `PROTOCOL_VERSION` bump for the whole of V6: **28 → 29**, in L41-02. Documented
   later exceptions: L49-01 (29 → 30), L56-03 (30 → 31), **L57-07 (31 → 32)**,
   **L57-16 (32 → 33)**, **L58-02 (33 → 34)**, **L60-02 (34 → 35)**, **L63-03 (35 → 36)**,
-  **36 → 37** (`pendingSentences`), **L64-01 (38 → 39)** (`drawGain` / `'gambling'`).
+  **36 → 37** (`pendingSentences`), **L64-01 (38 → 39)** (`drawGain` / `'gambling'`),
+  **39 → 40** (action-log resource nets). L65-01 narrowed `drawGain` with no bump.
 
 
 ---

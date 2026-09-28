@@ -1,5 +1,5 @@
 /**
- * Protocol version pin — PROTOCOL_VERSION 39.
+ * Protocol version pin — PROTOCOL_VERSION 40.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -15,8 +15,8 @@ import type {
 } from './protocol/state-view';
 
 describe('PROTOCOL_VERSION', () => {
-  it('is 39 after Gambler drawGain and gambling elimination', () => {
-    expect(PROTOCOL_VERSION).toBe(39);
+  it('is 40 after action-log resource nets', () => {
+    expect(PROTOCOL_VERSION).toBe(40);
     expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 

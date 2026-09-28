@@ -6,8 +6,9 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **39** (Gambler `drawGain` is
-> Spy-gated since L65-01, no bump; `'gambling'` elimination; `factory`
+> **Status:** current `PROTOCOL_VERSION` is **40** (action-log resource nets;
+> Gambler `drawGain` is Spy-gated since L65-01, no bump at 39; `'gambling'`
+> elimination; `factory`
 > renamed `roulette` at 38;
 > public `pendingSentences` and Sentence countdown / fire log kinds at 37;
 > L63-06 per-recipient `buyPoolCard` identity fog with no bump; L63-03 public
@@ -77,6 +78,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
 | Living Gambler Draw payout | **Spy-gated** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01, narrowed L65-01). Self, Spy, eliminated spectator, and Stay walk-in only. Undefined for other kits, eliminated seats, and everyone else. Successful `actionPlayed` draw carries `drawGain` for those same recipients; omit on bust and for everyone who cannot already see that seat. The bust itself stays public |
 | Draw-bust elimination reason | **Public** as `EliminationReason` `'gambling'` (PROTOCOL_VERSION 39 / L64-01) |
+| Action-log resource nets | **Public** on the stored log and Excel, then fogged per recipient (PROTOCOL_VERSION 40). The play line carries the acting player's immediate net (lives, points, upgrade points, shield). Draw point totals and buy-upgrade point prices are concealed (`+?` / `−?`) unless the viewer sees that actor (L65-01 still strips `drawGain` for the same seats). `+1` upgrade point stays visible. Persistent ticks are a public `resourceChange` line (name + nets, no card). Duplicator copies are the same kind with `duplicated` and are omitted unless the viewer sees that Duplicator. Unspied `activateDuplication` stays a Draw and adds a fake `+?` point suffix. Elimination rewards stay masked. Resolve sentences do not repeat life or shield numbers. Live `ACTION_PLAYED` does not carry `resourceDeltas` |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's
@@ -206,6 +208,15 @@ through `recipientSeesPrivateOf` — same gate as pool-buy identity. Opponents
 do not receive the number on the player view, the per-recipient action log,
 or the live `ACTION_PLAYED`. Excel `exportLog` stays full. Opaque
 `activateDuplication` → `draw` must not copy `drawGain`.
+
+PROTOCOL_VERSION 40 (designer 2026-09-28) adds `resourceDeltas` on stored
+`actionPlayed` and on the Mirror redirect that replaces that play, plus log
+kind `resourceChange`. Amounts on the canonical log and Excel are real.
+`mapActionLogForRecipient` conceals Draw and buy-upgrade point totals and
+drops `duplicated` lines unless `recipientSeesPrivateOf`. L65-01 `drawGain`
+fog still applies on that same pass. The broadcast `ACTION_PLAYED` payload
+stays `toActionPlayedPayload` — no resource nets on the live event. Older
+clients fail the version gate.
 
 `resolveSubChoice`'s elimination-reward variant: `{ kind: 'elimination-reward', eliminationId,
 choices: [RewardChoice, RewardChoice] }` where each choice is

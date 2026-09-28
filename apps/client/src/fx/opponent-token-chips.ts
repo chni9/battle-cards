@@ -754,5 +754,7 @@ export function actionLogFlyoutKey(entry: ActionLogEntryView): string {
       return `sentence-cd:${entry.sourcePlayerId}:${String(entry.remainingOwnerTurns)}:${String(entry.turnSequence)}`;
     case 'sentenceFired':
       return `sentence-fire:${entry.sourcePlayerId}:${entry.targetPlayerId}:${String(entry.turnSequence)}`;
+    case 'resourceChange':
+      return `resource:${entry.playerId}:${String(entry.turnSequence)}:${entry.duplicated === true ? 'copy' : 'tick'}:${entry.deltas.map((delta) => `${delta.kind}:${String(delta.amount ?? delta.direction ?? '?')}`).join(',')}`;
   }
 }
