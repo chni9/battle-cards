@@ -83,9 +83,9 @@ const RELEASE_NOTES_CATALOG = [
       },
       {
         before:
-          'Selling a card showed the payout, which identified the card. A hit or a steal did not show what changed when it resolved.',
+          'Selling or buying a card showed the payout or the price, which identified the card. A hit or a steal did not show what changed when it resolved.',
         after:
-          'A sale you cannot see no longer shows the payout. When an attack hits or a steal resolves, the lives, points, upgrade points, or shield that changed appear on that line.',
+          'A sale or a shop purchase you cannot see no longer shows that payout or price. When an attack hits or a steal resolves, the lives, points, upgrade points, or shield that changed appear on that line.',
       },
     ],
   },

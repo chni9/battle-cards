@@ -388,7 +388,8 @@ export interface ActionPlayedLogEntry {
   /**
    * Acting player's net resource change for this play (PROTOCOL_VERSION 40).
    * Real amounts on the stored log. Per-recipient views may conceal Draw and
-   * buy-upgrade point totals, and omit a card sale's payout.
+   * buy-upgrade point totals, omit a card sale's payout, and omit a shop
+   * buy's price.
    */
   resourceDeltas?: readonly LogResourceDelta[];
 }

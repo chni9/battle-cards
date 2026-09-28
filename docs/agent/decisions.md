@@ -3950,6 +3950,11 @@ Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
   identify the sold card, including an upgrade-point refund on an upgraded
   sale. Self and Spy still see the real net. Selling an upgrade point is
   unchanged: it is not a card.
+- Unspied shop buys (`buyCard`) omit the price. Basic attack is 2 points,
+  Spy is 4, Tax is 2 lives, and those amounts name the card. A gain on that
+  same line stays (Ghost's credit when the price is lives). Self and Spy
+  still see the price. A special purchase is always 20 points, and a pool
+  buy uses the public fee, so those lines still show the spend.
 - Gains use green `+` and the number. Losses use red `−` and the number.
   No parentheses. The icon keeps its normal art.
 - The stored room log and Excel keep real amounts. The broadcast

@@ -67,6 +67,37 @@ describe('fogPlayedResourceDeltas', () => {
     ).toEqual([{ kind: 'life', amount: -14 }]);
   });
 
+  it('omits an unspied shop-buy price and keeps a gain on that line', () => {
+    expect(
+      fogPlayedResourceDeltas('buyCard', [{ kind: 'point', amount: -2 }], false, false),
+    ).toBeUndefined();
+    expect(
+      fogPlayedResourceDeltas(
+        'buyCard',
+        [
+          { kind: 'life', amount: -2 },
+          { kind: 'point', amount: 4 },
+        ],
+        false,
+        false,
+      ),
+    ).toEqual([{ kind: 'point', amount: 4 }]);
+    expect(
+      fogPlayedResourceDeltas(
+        'buyCard',
+        [
+          { kind: 'life', amount: -2 },
+          { kind: 'point', amount: 4 },
+        ],
+        true,
+        false,
+      ),
+    ).toEqual([
+      { kind: 'life', amount: -2 },
+      { kind: 'point', amount: 4 },
+    ]);
+  });
+
   it('omits an unspied card-sale payout and keeps it for a viewer who sees the seller', () => {
     const payout = [
       { kind: 'point' as const, amount: 6 },

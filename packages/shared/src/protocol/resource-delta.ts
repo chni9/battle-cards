@@ -126,6 +126,7 @@ export function copyPlayerDeltas(
  * Unspied Draw conceals the point gain (`+?`) and hides a bust's life total.
  * Unspied buy-upgrade conceals the point price (`−?`) and keeps `+1` upgrade point.
  * Unspied card sales omit the payout: the amount and the resource kind identify the card.
+ * Unspied shop buys omit the price for the same reason. A gain on that line stays.
  */
 export function fogPlayedResourceDeltas(
   action: PublicActionKind,
@@ -159,6 +160,17 @@ export function fogPlayedResourceDeltas(
 
   if (action === 'sellCard') {
     return undefined;
+  }
+
+  if (action === 'buyCard') {
+    const kept = current.filter((delta) => {
+      if (delta.amount === undefined) {
+        return delta.direction !== 'loss';
+      }
+
+      return delta.amount > 0;
+    });
+    return kept.length > 0 ? kept : undefined;
   }
 
   return current.length > 0 ? current : undefined;

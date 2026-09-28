@@ -378,6 +378,64 @@ describe('per-recipient Draw and buy-upgrade fog', () => {
       resourceDeltas: [{ kind: 'point', amount: 1 }],
     });
   });
+
+  it('omits a shop-buy price unless the viewer sees the buyer', () => {
+    const { state, alice } = twoPlayers('log-buy-card', ['warrior', 'kamikaze']);
+    alice.points = 5;
+
+    const bought = performTurnAction(state, alice.id, {
+      type: 'buyCard',
+      cardId: 'basic-attack',
+    });
+    expect(bought.ok).toBe(true);
+    if (!bought.ok) {
+      return;
+    }
+    expect(bought.actionPlayed.resourceDeltas).toEqual([{ kind: 'point', amount: -2 }]);
+
+    const log = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: alice.id,
+        action: 'buyCard' as const,
+        turnSequence: bought.actionPlayed.turnSequence,
+        ...(bought.actionPlayed.resourceDeltas !== undefined
+          ? { resourceDeltas: bought.actionPlayed.resourceDeltas }
+          : {}),
+      },
+    ];
+    const hidden = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(hidden.actionLog[0]).not.toHaveProperty('resourceDeltas');
+
+    const self = buildPlayingViewFor({
+      recipientSessionId: alice.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(self.actionLog[0]).toMatchObject({
+      resourceDeltas: [{ kind: 'point', amount: -2 }],
+    });
+
+    grantSpy(state, 'b', alice.id, 'kit-and-cards');
+    const spy = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(spy.actionLog[0]).toMatchObject({
+      resourceDeltas: [{ kind: 'point', amount: -2 }],
+    });
+  });
 });
 
 describe('resolve-line resource nets', () => {
