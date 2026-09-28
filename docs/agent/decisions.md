@@ -3951,6 +3951,54 @@ pass does not redo those. What’s new stays on `lot-65` (not on `main`).
 
 ---
 
+## 2026-09-28 · [P] Action-log resource nets and point flyout cap
+
+Designer session. `PROTOCOL_VERSION` **40 → 41** so older clients cannot
+read `resourceChange`. Lot 66 already published 40 for `PendingSentence.id`.
+L65-01 (PR #52) stays: Gambler `drawGain` is still
+Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
+
+- Point token flyouts cap at 50 chips (`MAX_POINT_FLYOUTS`). The numeric
+  float and the resource total stay the real amount. Lives, shield, and
+  upgrade points are not capped.
+- The acting player's own kit portrait is one step larger (`w-12` /
+  `sm:w-16`; landscape `3rem`). Opponent portraits stay `2.35rem` in
+  landscape.
+- The play line appends the acting player's immediate resource net, measured
+  by snapshot before resolution. Same-resource spend and gain collapse.
+  Zeros are omitted. Order: lives, points, upgrade points, shield.
+- Resolve lines keep the hit or resolve wording and append the resources
+  that resolution changed, per seat. An attack shows the target's life
+  and shield loss. A steal shows the target's loss and the source's gain;
+  those two are not netted. Listed attack damage stays on the play line.
+  Duplicator copies stay off this suffix.
+- A persistent tick that changes resources adds a public `resourceChange`
+  line: player name and icon nets, no card name.
+- Elimination rewards stay masked.
+- Duplicator copies are `resourceChange` with `duplicated: true` and are
+  omitted unless the viewer sees that Duplicator. An unspied
+  `activateDuplication` stays a Draw and shows a fake green `+?` point
+  suffix so it matches a real Draw.
+- Unspied Draw conceals the point gain as `+?`. A bust hides the life total
+  unless the viewer sees the actor, who then sees the real life loss.
+  Unspied buy-upgrade conceals the point price as `−?` and keeps `+1`
+  upgrade point visible.
+- Unspied card sales omit the payout. The amount and the resource kind
+  identify the sold card, including an upgrade-point refund on an upgraded
+  sale. Self and Spy still see the real net. Selling an upgrade point is
+  unchanged: it is not a card.
+- Unspied shop buys (`buyCard`) omit the price. Basic attack is 2 points,
+  Spy is 4, Tax is 2 lives, and those amounts name the card. A gain on that
+  same line stays (Ghost's credit when the price is lives). Self and Spy
+  still see the price. A special purchase is always 20 points, and a pool
+  buy uses the public fee, so those lines still show the spend.
+- Gains use green `+` and the number. Losses use red `−` and the number.
+  No parentheses. The icon keeps its normal art.
+- The stored room log and Excel keep real amounts. The broadcast
+  `ACTION_PLAYED` payload does not.
+
+---
+
 ## 2026-09-28 · [P] Feedback follow-up (Lot 67)
 
 Designer, same day, after Lot 66. No protocol bump. What’s new stays on

@@ -191,9 +191,12 @@
     box-shadow: none;
   }
 
-  [data-zone="private-zone"] [data-zone="kit-portrait"],
   [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
     width: 2.35rem;
+  }
+
+  [data-zone="private-zone"] [data-zone="kit-portrait"] {
+    width: 3rem;
   }
 
   [data-zone="card-band"] {

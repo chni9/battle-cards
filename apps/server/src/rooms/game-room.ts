@@ -30,6 +30,8 @@ import {
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
+  copyPlayerDeltas,
+  copyResourceDeltas,
   isBotDifficulty,
   toActionPlayedPayload,
   SUB_CHOICE_REQUIRED,
@@ -1959,6 +1961,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         kind: 'mirrorRedirected',
         ...result.mirrorRedirect,
         ...(botReason !== null ? { botReason } : {}),
+        ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
       });
     } else {
       const botReason = this.consumePendingBotReason();
@@ -1967,7 +1970,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
         ...(botReason !== null ? { botReason } : {}),
       };
 
-      this.actionLog.push({ kind: 'actionPlayed', ...played });
+      this.actionLog.push({
+        kind: 'actionPlayed',
+        ...played,
+        ...copyResourceDeltas(result.actionPlayed.resourceDeltas),
+      });
       if (played.action === 'activateDuplication') {
         // Spy-gated live event (designer 2026-08-06) — real to actor + spies;
         // opaque `draw` to everyone else so the turn still surfaces.
@@ -1981,6 +1988,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
       } else {
         this.broadcast(ACTION_PLAYED, played);
       }
+    }
+
+    for (const change of result.playedResourceChanges ?? []) {
+      this.actionLog.push(change);
     }
 
     if (result.mirrorRedirects !== undefined) {
@@ -2008,8 +2019,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
         shieldAbsorbed: resolved.shieldAbsorbed,
         outcome: resolved.outcome,
         turnSequence,
+        ...copyPlayerDeltas(resolved.playerDeltas),
       });
       this.broadcast(ACTION_RESOLVED, resolved);
+    }
+
+    for (const change of result.resourceChanges ?? []) {
+      this.actionLog.push(change);
     }
 
     if (result.curseTransfers !== undefined) {

@@ -17,8 +17,11 @@
  */
 
 import {
+  copyResourceDeltas,
+  fogPlayedResourceDeltas,
   getKit,
   type ActionLogEntryView,
+  type ActionPlayedLogEntry,
   type ActionPlayedPayload,
   type BotDifficulty,
   type CardInstance,
@@ -303,12 +306,28 @@ export function mapPoolForRecipient(state: GameState): CardInstance[] {
   return state.pool.map((card) => ({ ...card }));
 }
 
+function withPlayedDeltas(
+  entry: ActionPlayedLogEntry,
+  deltas: ActionPlayedLogEntry['resourceDeltas'],
+): ActionPlayedLogEntry {
+  const next: ActionPlayedLogEntry = { ...entry };
+  delete next.resourceDeltas;
+
+  if (deltas === undefined || deltas.length === 0) {
+    return next;
+  }
+
+  return { ...next, resourceDeltas: deltas };
+}
+
 /**
- * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20):
+ * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20 / 2026-09-28):
  * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
  * - `buyPoolCard` omits `cardId` / `isUpgraded` unless self, Spy, or spectator overlay
  * - `draw` omits `drawGain` unless self, Spy, or spectator overlay (L65-01)
  * - `playerReanimated.kitId` omitted for every in-game recipient
+ * - Draw and buy-upgrade point totals are concealed unless the viewer sees the actor
+ * - Duplicator copy lines are omitted unless the viewer sees that Duplicator
  * Excel `exportLog` keeps the full server log.
  */
 function mapActionLogForRecipient(
@@ -317,64 +336,92 @@ function mapActionLogForRecipient(
   state: GameState,
   walkInSpectator = false,
 ): ActionLogEntryView[] {
-  return actionLog.map((entry) => {
-    if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
-      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
-        return entry;
-      }
+  return actionLog.flatMap((entry) => {
+    const mapped = mapActionLogEntry(entry, recipientSessionId, state, walkInSpectator);
+    return mapped === null ? [] : [mapped];
+  });
+}
 
-      const opaque: ActionLogEntryView = {
-        kind: 'actionPlayed',
-        actorPlayerId: entry.actorPlayerId,
-        action: 'draw',
-        turnSequence: entry.turnSequence,
-      };
-
-      if (entry.botReason !== undefined) {
-        return { ...opaque, botReason: entry.botReason };
-      }
-
-      return opaque;
-    }
-
-    if (
-      entry.kind === 'actionPlayed' &&
-      entry.action === 'draw' &&
-      entry.drawGain !== undefined &&
-      !recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)
-    ) {
-      return fogDrawGainOnLogEntry(entry);
-    }
-
-    if (entry.kind === 'actionPlayed' && entry.action === 'buyPoolCard') {
-      if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
-        return entry;
-      }
-
-      const fogged: ActionLogEntryView = {
-        kind: 'actionPlayed',
-        actorPlayerId: entry.actorPlayerId,
-        action: 'buyPoolCard',
-        turnSequence: entry.turnSequence,
-      };
-
-      if (entry.botReason !== undefined) {
-        return { ...fogged, botReason: entry.botReason };
-      }
-
-      return fogged;
-    }
-
-    if (entry.kind === 'playerReanimated') {
-      return {
-        kind: 'playerReanimated',
-        playerId: entry.playerId,
-        turnSequence: entry.turnSequence,
-      };
+function mapActionLogEntry(
+  entry: ActionLogEntryView,
+  recipientSessionId: string,
+  state: GameState,
+  walkInSpectator: boolean,
+): ActionLogEntryView | null {
+  if (entry.kind === 'resourceChange' && entry.duplicated === true) {
+    if (!recipientSeesPrivateOf(state, recipientSessionId, entry.playerId, walkInSpectator)) {
+      return null;
     }
 
     return entry;
-  });
+  }
+
+  if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
+    if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
+      return entry;
+    }
+
+    return {
+      kind: 'actionPlayed',
+      actorPlayerId: entry.actorPlayerId,
+      action: 'draw',
+      turnSequence: entry.turnSequence,
+      resourceDeltas: [{ kind: 'point', concealed: true, direction: 'gain' }],
+      ...(entry.botReason !== undefined ? { botReason: entry.botReason } : {}),
+    };
+  }
+
+  if (entry.kind === 'actionPlayed' && entry.action === 'buyPoolCard') {
+    if (recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)) {
+      return entry;
+    }
+
+    return {
+      kind: 'actionPlayed',
+      actorPlayerId: entry.actorPlayerId,
+      action: 'buyPoolCard',
+      turnSequence: entry.turnSequence,
+      ...(entry.botReason !== undefined ? { botReason: entry.botReason } : {}),
+      ...copyResourceDeltas(entry.resourceDeltas),
+    };
+  }
+
+  if (entry.kind === 'actionPlayed') {
+    const seesPrivate = recipientSeesPrivateOf(
+      state,
+      recipientSessionId,
+      entry.actorPlayerId,
+      walkInSpectator,
+    );
+
+    const withDeltas = withPlayedDeltas(
+      entry,
+      fogPlayedResourceDeltas(
+        entry.action,
+        entry.resourceDeltas,
+        seesPrivate,
+        entry.drawBust === true,
+      ),
+    );
+
+    // L65-01: the numeric Gambler payout stays off the log unless this
+    // recipient already sees that seat. Resource suffixes are fogged above.
+    if (!seesPrivate && withDeltas.action === 'draw' && withDeltas.drawGain !== undefined) {
+      return fogDrawGainOnLogEntry(withDeltas);
+    }
+
+    return withDeltas;
+  }
+
+  if (entry.kind === 'playerReanimated') {
+    return {
+      kind: 'playerReanimated',
+      playerId: entry.playerId,
+      turnSequence: entry.turnSequence,
+    };
+  }
+
+  return entry;
 }
 
 /** Duplicator window: self, Spy, or eliminated spectator (designer 2026-08-06). */

@@ -13,6 +13,7 @@ import {
   grantPoints,
   grantUpgradePoints,
 } from '../economy/grant-resources';
+import { recordDuplicatedGain } from '../turn/resource-log';
 
 export type DirectGainKind = 'lives' | 'points' | 'upgradePoints';
 
@@ -38,10 +39,13 @@ export function observeDirectGain(
 
     if (kind === 'points') {
       grantPoints(state, player, amount, 'duplicated');
+      recordDuplicatedGain(state, { playerId: player.id, kind: 'point', amount });
     } else if (kind === 'upgradePoints') {
       grantUpgradePoints(state, player, amount, 'duplicated');
+      recordDuplicatedGain(state, { playerId: player.id, kind: 'upgradePoint', amount });
     } else {
       grantLives(state, player, amount, 'duplicated');
+      recordDuplicatedGain(state, { playerId: player.id, kind: 'life', amount });
     }
   }
 }

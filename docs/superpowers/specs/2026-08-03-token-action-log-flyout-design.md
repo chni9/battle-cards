@@ -4,7 +4,7 @@ Presentational Table FX polish. No protocol, rules, or intent gating.
 
 ## Locked choices
 
-- Exact chip count = `|Δ|` (no cap).
+- Exact chip count = `|Δ|`, except point chips, which stop at `MAX_POINT_FLYOUTS` (50). The numeric float still shows the real total.
 - Anchor = `[data-zone="action-log-panel"]` chrome (open or closed).
 - Stagger ≈ 70ms between chips.
 - Own resources only (`flyToken`); opponents / kit inspect unchanged.

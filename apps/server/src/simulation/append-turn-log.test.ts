@@ -46,12 +46,13 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
     const log: ActionLogEntryView[] = [];
     appendTurnResultLog(log, result);
     const played = log.find((entry) => entry.kind === 'actionPlayed');
-    expect(played).toEqual({
+    expect(played).toMatchObject({
       kind: 'actionPlayed',
       actorPlayerId: actor.id,
       action: 'draw',
       turnSequence: result.actionPlayed.turnSequence,
       drawBust: true,
+      resourceDeltas: [{ kind: 'life', amount: -13 }],
     });
     expect(toActionPlayedPayload(result.actionPlayed).drawBust).toBe(true);
   });

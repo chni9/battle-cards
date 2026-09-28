@@ -24,6 +24,21 @@ export const TOKEN_FLYOUT_DURATION_S = 0.6;
 /** Stagger between multi-chip token flyouts (ms) — gap between coins, not travel time. */
 export const TOKEN_STAGGER_MS = 35;
 
+/**
+ * Visual cap for point chips. One DOM node per point plus stagger crashes the
+ * table on huge gains (Gambler Draw, Duplicator copies). The numeric float
+ * still shows the real total. Other resources are not capped.
+ */
+export const MAX_POINT_FLYOUTS = 50;
+
+/** How many token chips to enqueue for a resource delta. */
+export function pointFlyoutCount(kind: string, count: number): number {
+  if (kind !== 'point' || count <= MAX_POINT_FLYOUTS) {
+    return count;
+  }
+  return MAX_POINT_FLYOUTS;
+}
+
 /** Ease used across Table FX and card motion. */
 export const MOTION_EASE = [0.16, 1, 0.3, 1] as const;
 

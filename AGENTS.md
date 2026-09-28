@@ -129,7 +129,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  feedback rules: absorber window through the action, Block cannot stack, Mirror
  volley siblings resolve, Spy/Thief upgrade counter, Upgrade Point Thief
  target, Gambler wipe, upgrade active cards and Sentence
- (`PROTOCOL_VERSION` 40). **Lot 67** (designer 2026-09-28) reopens the solo
+ (`PROTOCOL_VERSION` 40). Action-log resource nets
+ are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
+ **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes
  `You gambled too much and lost everything` for that Gambler, and moves
