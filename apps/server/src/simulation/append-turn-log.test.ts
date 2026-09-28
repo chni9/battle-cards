@@ -52,7 +52,7 @@ describe('appendTurnResultLog public drawBust (L63-03)', () => {
       action: 'draw',
       turnSequence: result.actionPlayed.turnSequence,
       drawBust: true,
-      resourceDeltas: [{ kind: 'life', amount: -14 }],
+      resourceDeltas: [{ kind: 'life', amount: -13 }],
     });
     expect(toActionPlayedPayload(result.actionPlayed).drawBust).toBe(true);
   });

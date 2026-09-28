@@ -59,7 +59,10 @@ export function listLegalPlayCardActions(
       continue;
     }
 
-    if (attacksForbiddenDuringBlock(actor) && isAttackCardId(instance.cardId)) {
+    if (
+      attacksForbiddenDuringBlock(actor) &&
+      (isAttackCardId(instance.cardId) || instance.cardId === 'block')
+    ) {
       continue;
     }
 

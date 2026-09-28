@@ -1,5 +1,5 @@
 /**
- * Measure resource nets for the action log — PROTOCOL_VERSION 40.
+ * Measure resource nets for the action log — PROTOCOL_VERSION 41.
  *
  * The actor's play-line suffix is a snapshot diff taken before resolution.
  * Duplicator copies are recorded separately (Spy-gated). Persistent ticks are

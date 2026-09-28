@@ -3915,10 +3915,47 @@ hand layout. Those lines are not added to `lot-63`.
 
 ---
 
+## 2026-09-28 · [P] Feedback pass (Lot 66)
+
+Designer lock after the production inbox triage. Lot 65 already shipped Draw
+privacy, invisible targeting, Sentence inspect, and hand hysteresis. This
+pass does not redo those. What’s new stays on `lot-65` (not on `main`).
+`PROTOCOL_VERSION` 39 → 40 because a ticking Sentence gained a public `id`.
+
+- Absorber window closes when each living player from the elimination has
+  finished a turn, not when that turn begins. Tick in `advanceTurn`.
+- Block cannot be played while `blockAttacksForbidden` is set.
+- Mirror still redirects one attack. A redirected fragment of the same
+  volley (`redirectedBy` set and the same `queuedAt`) is not a retaliation,
+  so it does not cancel the siblings that still target the Mirror player.
+  Equal / stronger / weaker is unchanged.
+- Solo Play again (exactly one human player seat) restarts that match: same
+  seats, bot difficulties, and that human’s kit. Two humans keep the lobby.
+- Spy and Thief counter compares `isUpgraded` the way attacks compare
+  damage. Same level cancels both. Upgraded incoming removes a basic answer
+  and still resolves. Basic incoming is cancelled by an upgraded answer.
+- Imposition takes only points above 9, capped at 2 (4 if upgraded). Counter
+  stays 2. Missing the payment does not skip the turn.
+- Base Upgrade Point Thief chooses one living opponent. Upgraded hits every
+  living opponent and does not steal points. Living invisible seats are not
+  targets.
+- A Gambler wipe is not a death. Lives become 1 via `applyLifeLoss` for
+  `lives - 1` (`reason: 'gambling'` on that primitive only). Points, upgrade
+  points, and shield go to 0. Hand and unplayed specials join the pool with
+  no refund. Active persistents stay. Public line:
+  `{nickname} gambled too much and lost everything`, from `drawBust`. No
+  `playerEliminated`.
+- One upgrade point and the turn can upgrade your own active Poison, Points
+  Generator, Imposition, Super Absorber, Roulette, Invisibility, or your
+  ticking Sentence. Counters and remaining turns do not reset.
+
+---
+
 ## 2026-09-28 · [P] Action-log resource nets and point flyout cap
 
-Designer session. `PROTOCOL_VERSION` **39 → 40** so older clients cannot
-read `resourceChange`. L65-01 (PR #52) stays: Gambler `drawGain` is still
+Designer session. `PROTOCOL_VERSION` **40 → 41** so older clients cannot
+read `resourceChange`. Lot 66 already published 40 for `PendingSentence.id`.
+L65-01 (PR #52) stays: Gambler `drawGain` is still
 Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
 
 - Point token flyouts cap at 50 chips (`MAX_POINT_FLYOUTS`). The numeric

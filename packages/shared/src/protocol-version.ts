@@ -78,12 +78,18 @@
  * Older clients cannot read the new contract. Exception to the V6
  * single-bump lock (same class as L49 / L56–L63); see decisions.md.
  *
- * 39 → 40 (designer 2026-09-28): action-log resource nets. `actionPlayed` and
+ * 39 → 40 (designer 2026-09-28 / Lot 66): each public `PendingSentence` carries
+ * a stable `id` so `upgradeCard` can target a ticking Sentence. Older clients
+ * cannot read that id. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L64); see decisions.md.
+ *
+ * 40 → 41 (designer 2026-09-28): action-log resource nets. `actionPlayed` and
  * the Mirror redirect that replaces it may carry `resourceDeltas`. New log
  * kind `resourceChange` for persistent ticks and Spy-gated Duplicator copies.
  * `actionResolved` may carry `playerDeltas` (per seat, not netted). Unspied
  * card-sale payouts and shop-buy prices are omitted from the recipient view.
- * Older clients cannot read the new kind. Exception to the V6 single-bump lock (same class as
+ * Older clients cannot read the new kind. Lot 66 already published 40, so
+ * this bump is 41. Exception to the V6 single-bump lock (same class as
  * L49 / L56–L64); see decisions.md.
  */
-export const PROTOCOL_VERSION = 40;
+export const PROTOCOL_VERSION = 41;

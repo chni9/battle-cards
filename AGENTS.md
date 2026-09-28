@@ -125,7 +125,13 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  Super Absorber nerfs (`PROTOCOL_VERSION` 37). Designer 2026-09-21 renamed
  Factory → Roulette (`cardId` `roulette`, `PROTOCOL_VERSION` 38). **Lot 64**
  (designer 2026-09-21) tweaks Gambler start specials, weighted Draw, and
- gambling death log (`PROTOCOL_VERSION` 39). Walk-in claim-picker fog stays.
+ gambling death log (`PROTOCOL_VERSION` 39). **Lot 66** (designer 2026-09-28)
+ feedback rules: absorber window through the action, Block cannot stack, Mirror
+ volley siblings resolve, solo Play again restarts, Spy/Thief upgrade counter,
+ Imposition above 9, Upgrade Point Thief target, Gambler wipe, upgrade active
+ cards and Sentence (`PROTOCOL_VERSION` 40). Action-log resource nets
+ are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
+ Walk-in claim-picker fog stays.
  A bot playing badly is never grounds for touching a rule. **Search,
    lookahead, and fitted learning are in scope for V5.** Reading hidden information beyond
    the acting seat's per-recipient view (including Spy-revealed fields for seats that seat

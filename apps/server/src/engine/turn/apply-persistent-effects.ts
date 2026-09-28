@@ -35,6 +35,7 @@ import { absorbLedgerFromVictim } from './absorb-ledger';
 import { findPlayer } from './advance-turn';
 import { recordEliminationContributor } from './elimination-rewards';
 
+const IMPOSITION_POINTS_FLOOR = 9;
 const IMPOSITION_POINTS_BASE = 2;
 const IMPOSITION_POINTS_UPGRADED = 4;
 const POINTS_GENERATOR_BASE = 3;
@@ -203,14 +204,16 @@ function applyOneImposition(
   victim: Player,
   effect: PersistentEffect,
 ): void {
-  const pointsDue = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
+  const cap = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
+  const aboveFloor = victim.points - IMPOSITION_POINTS_FLOOR;
+  const taken = Math.min(cap, Math.max(0, aboveFloor));
 
-  if (victim.points < pointsDue) {
+  if (taken === 0) {
     return;
   }
 
-  victim.points -= pointsDue;
-  grantPoints(state, imposer, pointsDue, 'direct');
+  victim.points -= taken;
+  grantPoints(state, imposer, taken, 'direct');
 }
 
 function applyPoisonsOnVictim(state: GameState, victim: Player): void {

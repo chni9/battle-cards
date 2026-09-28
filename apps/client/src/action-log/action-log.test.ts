@@ -261,7 +261,7 @@ describe('formatActionLogEntry (L9-02)', () => {
         },
         nick,
       ),
-    ).toBe('Alice draws and busts');
+    ).toBe('Alice gambled too much and lost everything');
     expect(
       formatActionLogEntry(
         {

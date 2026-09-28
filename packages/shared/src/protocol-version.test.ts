@@ -1,5 +1,5 @@
 /**
- * Protocol version pin — PROTOCOL_VERSION 40.
+ * Protocol version pin — PROTOCOL_VERSION 41.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -15,8 +15,8 @@ import type {
 } from './protocol/state-view';
 
 describe('PROTOCOL_VERSION', () => {
-  it('is 40 after action-log resource nets', () => {
-    expect(PROTOCOL_VERSION).toBe(40);
+  it('is 41 after action-log resource nets', () => {
+    expect(PROTOCOL_VERSION).toBe(41);
     expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 
@@ -58,7 +58,7 @@ describe('PROTOCOL_VERSION', () => {
 
   it('requires pendingSentences on PlayingStateView', () => {
     const pendingSentences: PlayingStateView['pendingSentences'] = [
-      { sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false },
+      { id: 'sentence:1:a:0', sourcePlayerId: 'a', remainingOwnerTurns: 2, isUpgraded: false },
     ];
     expect(pendingSentences[0]?.remainingOwnerTurns).toBe(2);
   });

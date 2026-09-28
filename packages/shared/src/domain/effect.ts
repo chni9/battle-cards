@@ -13,6 +13,8 @@ import type { CardId } from './card';
  * (rules spec §5). Imposition no longer cedes lives (designer 2026-09-20).
  * Curse no longer causes life loss (L50-02 siphon). Damage never
  * appears here — it goes through `applyDamage`.
+ * Gambler wipe (designer 2026-09-28) drops lives to 1 through this path so
+ * Ghost and Curse still observe the loss. It is not an elimination.
  */
 export const LIFE_LOSS_REASONS = [
   'tax',
@@ -21,6 +23,7 @@ export const LIFE_LOSS_REASONS = [
   'imposition',
   'poison',
   'curse',
+  'gambling',
 ] as const;
 
 export type LifeLossReason = (typeof LIFE_LOSS_REASONS)[number];

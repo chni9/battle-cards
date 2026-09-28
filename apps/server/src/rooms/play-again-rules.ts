@@ -86,6 +86,20 @@ export function recapHumanSeats(
   return seats.filter(isHumanSeat).filter((seat) => !optedInHumanIds.has(seat.sessionId));
 }
 
+/**
+ * A finished Classic match with exactly one human player seat restarts in
+ * place (designer 2026-09-28). Spectators are not seats. Two humans keep the
+ * reforming lobby. Only that human's Play again triggers the restart.
+ */
+export function shouldInstantSoloRematch(
+  seats: readonly Seat[],
+  requesterSessionId: string,
+): boolean {
+  const humans = seats.filter(isHumanSeat);
+
+  return humans.length === 1 && humans[0]?.sessionId === requesterSessionId;
+}
+
 /** One write per finished match; the next Start is a new persist. */
 export function shouldPersistFinishedGame(alreadyPersisted: boolean): boolean {
   return !alreadyPersisted;

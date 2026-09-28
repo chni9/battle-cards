@@ -228,7 +228,7 @@ function formatPlayedActionSegments(
   switch (entry.action) {
     case 'draw':
       return entry.drawBust === true
-        ? [actor, text(' draws and busts')]
+        ? [actor, text(' gambled too much and lost everything')]
         : [actor, text(' draws')];
     case 'buyCard':
       return [actor, text(' bought a card')];

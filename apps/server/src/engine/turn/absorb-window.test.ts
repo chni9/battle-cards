@@ -10,11 +10,12 @@ import {
   isAbsorberTargetable,
   isAbsorbWindowOpen,
   onPlayerEliminatedForAbsorbWindow,
-  tickAbsorbWindowsOnBeginTurn,
+  tickAbsorbWindowsOnEndTurn,
 } from './absorb-window';
+import { advanceTurn, beginTurnFor } from './advance-turn';
 
 describe('absorb window', () => {
-  it('opens with every other living seat and closes after each has begun a turn', () => {
+  it('opens with every other living seat and closes after each has finished a turn', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -41,11 +42,11 @@ describe('absorb window', () => {
     expect(isAbsorbWindowOpen(d)).toBe(true);
     expect(isAbsorberTargetable(d)).toBe(true);
 
-    tickAbsorbWindowsOnBeginTurn(state, 'a');
+    tickAbsorbWindowsOnEndTurn(state, 'a');
     expect(d.absorbWindowPendingPlayerIds).toEqual(['b', 'c']);
-    tickAbsorbWindowsOnBeginTurn(state, 'b');
+    tickAbsorbWindowsOnEndTurn(state, 'b');
     expect(d.absorbWindowPendingPlayerIds).toEqual(['c']);
-    tickAbsorbWindowsOnBeginTurn(state, 'c');
+    tickAbsorbWindowsOnEndTurn(state, 'c');
     expect(d.absorbWindowPendingPlayerIds).toBeNull();
     expect(isAbsorberTargetable(d)).toBe(false);
     expect(d.turnLedger.livesLost).toBe(0);
@@ -77,7 +78,7 @@ describe('absorb window', () => {
     expect(c.absorbWindowPendingPlayerIds).toEqual(['a']);
     expect(b.absorbWindowPendingPlayerIds).toEqual(['a']);
 
-    tickAbsorbWindowsOnBeginTurn(state, 'a');
+    tickAbsorbWindowsOnEndTurn(state, 'a');
     expect(c.absorbWindowPendingPlayerIds).toBeNull();
     expect(b.absorbWindowPendingPlayerIds).toBeNull();
   });
@@ -102,5 +103,37 @@ describe('absorb window', () => {
     clearAbsorbWindow(b);
     expect(b.absorbWindowPendingPlayerIds).toBeNull();
     expect(b.turnLedger.livesLost).toBe(2);
+  });
+
+  it('keeps the window open through the last living player action', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'absorb-window-end-turn',
+    });
+    const c = state.players.find((player) => player.id === 'c');
+
+    if (c === undefined) {
+      return;
+    }
+
+    c.isEliminated = true;
+    onPlayerEliminatedForAbsorbWindow(state, c);
+    state.currentTurnPlayerId = 'b';
+    const last = state.players.find((player) => player.id === 'b');
+
+    if (last === undefined) {
+      return;
+    }
+
+    beginTurnFor(state, last);
+    expect(c.absorbWindowPendingPlayerIds).toEqual(['a', 'b']);
+    expect(isAbsorberTargetable(c)).toBe(true);
+
+    advanceTurn(state);
+    expect(c.absorbWindowPendingPlayerIds).toEqual(['a']);
   });
 });

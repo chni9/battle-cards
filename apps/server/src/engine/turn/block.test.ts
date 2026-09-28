@@ -284,4 +284,40 @@ describe('Block (L25-01)', () => {
     expect(state.currentTurnPlayerId).toBe('b');
     expect(alice.blockAttacksForbidden).toBe(false);
   });
+
+  it('refuses Block while a Block chain is active', () => {
+    const state = createInitialState({
+      seats: stableSeats,
+      seed: 'l66-block-stack',
+      kitAssignment: stableKits,
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+
+    if (alice === undefined) {
+      throw new Error('missing alice');
+    }
+
+    alice.specialCards = [{ instanceId: 'block-2', cardId: 'block', isUpgraded: false }];
+    alice.points = 10;
+    grantBlockTurns(alice, 2);
+    state.currentTurnPlayerId = alice.id;
+
+    expect(
+      listLegalPlayCardActions(state, alice).some(
+        (action) => action.type === 'playCard' && action.instanceId === 'block-2',
+      ),
+    ).toBe(false);
+
+    const played = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'block-2',
+    });
+
+    expect(played.ok).toBe(false);
+    if (played.ok) {
+      return;
+    }
+
+    expect(played.code).toBe('play-not-legal');
+  });
 });

@@ -11,7 +11,7 @@ import {
   cancelPendingEffect,
   toBlockedActionResolved,
 } from '../../engine/turn/cancel-pending-effect';
-import { grantBlockTurns } from '../../engine/turn/grant-block-turns';
+import { attacksForbiddenDuringBlock, grantBlockTurns } from '../../engine/turn/grant-block-turns';
 import type { CardHandler } from '../handler';
 
 const BLOCK_TURNS_BASE = 3;
@@ -19,7 +19,19 @@ const BLOCK_TURNS_UPGRADED = 7;
 
 export const blockHandler: CardHandler = {
   canPlay(context): boolean {
-    return context.targetPlayerId === null;
+    if (context.targetPlayerId !== null) {
+      return false;
+    }
+
+    const actor = findPlayer(context.state, context.sourcePlayerId);
+
+    if (actor === undefined) {
+      return false;
+    }
+
+    // A Block chain already bans attacks. Playing Block again would stack
+    // another chain (designer 2026-09-28).
+    return !attacksForbiddenDuringBlock(actor);
   },
 
   play(context): void {

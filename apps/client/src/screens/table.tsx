@@ -16,6 +16,7 @@ import {
   type CardId,
   type CardInstance,
   type KitId,
+  type PendingSentenceView,
   type PlayingStateView,
   type ResolveSubChoicePayload,
   type SentenceAnnouncementLogEntry,
@@ -1214,6 +1215,19 @@ function TableScreenInner({
     });
   }
 
+  function onInspectSentenceChip(sentence: PendingSentenceView): void {
+    setDialog({
+      kind: 'inspect',
+      instance: {
+        instanceId: sentence.id,
+        cardId: 'sentence',
+        isUpgraded: sentence.isUpgraded,
+      },
+      // Sentence has no activated PNG. Requesting it throws and blanks the table.
+      source: 'active',
+    });
+  }
+
   function onInspectCatalogCard(
     cardId: CardId,
     isUpgraded: boolean,
@@ -1372,9 +1386,7 @@ function TableScreenInner({
               onInspectActive={(effectId) => {
                 onInspectActive(player.id, effectId);
               }}
-              onInspectSentence={(isUpgraded) => {
-                onInspectCatalogCard('sentence', isUpgraded, 'active');
-              }}
+              onInspectSentence={onInspectSentenceChip}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {
                     onInspectReveal: () => {
@@ -1450,9 +1462,7 @@ function TableScreenInner({
               onInspectPending={(effect) => {
                 onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
               }}
-              onInspectSentence={(isUpgraded) => {
-                onInspectCatalogCard('sentence', isUpgraded, 'active');
-              }}
+              onInspectSentence={onInspectSentenceChip}
               {...(onDeactivatePersistent !== undefined
                 ? {
                     onDeactivatePersistent: (effectId: string) => {
@@ -1623,9 +1633,9 @@ function TableScreenInner({
                 setChromeOpen(null);
                 onInspectActive(player.id, effectId);
               }}
-              onInspectSentence={(isUpgraded) => {
+              onInspectSentence={(sentence) => {
                 setChromeOpen(null);
-                onInspectCatalogCard('sentence', isUpgraded, 'active');
+                onInspectSentenceChip(sentence);
               }}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {

@@ -1,5 +1,5 @@
 /**
- * Measured action-log resource nets — PROTOCOL_VERSION 40.
+ * Measured action-log resource nets — PROTOCOL_VERSION 41.
  */
 
 import { getKit, type KitId } from '@card-battle/shared';
@@ -35,7 +35,7 @@ function twoPlayers(seed: string, kits?: readonly [KitId, KitId]) {
   return { state, alice, bob };
 }
 
-describe('actor resource nets (PROTOCOL_VERSION 40)', () => {
+describe('actor resource nets (PROTOCOL_VERSION 41)', () => {
   it('records a basic attack as a one-point loss', () => {
     const { state, alice, bob } = twoPlayers('log-basic');
     alice.hand = [{ instanceId: 'ba-1', cardId: 'basic-attack', isUpgraded: false }];

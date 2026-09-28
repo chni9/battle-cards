@@ -1,5 +1,5 @@
 /**
- * Action-log resource nets — PROTOCOL_VERSION 40.
+ * Action-log resource nets — PROTOCOL_VERSION 41.
  * Pure helpers shared by the engine (measurement) and the view builder (fog).
  */
 

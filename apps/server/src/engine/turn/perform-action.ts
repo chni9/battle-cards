@@ -47,6 +47,7 @@ import { sellCard } from '../economy/sell-card';
 import { upgradeCard } from '../economy/upgrade-card';
 import { grantPoints } from '../economy/grant-resources';
 import { buyUpgradePoint, sellUpgradePoint } from '../economy/upgrade-points';
+import { applyLifeLoss } from '../life/apply-life-loss';
 import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
@@ -130,7 +131,7 @@ export interface ActionPlayedEvent {
   drawBust?: true;
   /** Successful Draw payout actually granted — Lot 64. Omit on bust. */
   drawGain?: number;
-  /** Acting player's net resource change before resolution (PROTOCOL_VERSION 40). */
+  /** Acting player's net resource change before resolution (PROTOCOL_VERSION 41). */
   resourceDeltas?: readonly LogResourceDelta[];
 }
 
@@ -195,12 +196,12 @@ export interface TurnResult {
   sentenceAnnouncements?: readonly SentenceAnnouncementLogEntry[];
   /**
    * Duplicator copies from the action window. Logged immediately after the play.
-   * PROTOCOL_VERSION 40.
+   * PROTOCOL_VERSION 41.
    */
   playedResourceChanges?: readonly ResourceChangeLogEntry[];
   /**
    * Resolve-window Duplicator copies, then public persistent ticks, then
-   * persistent-window Duplicator copies. PROTOCOL_VERSION 40.
+   * persistent-window Duplicator copies. PROTOCOL_VERSION 41.
    */
   resourceChanges?: readonly ResourceChangeLogEntry[];
 }
@@ -298,14 +299,23 @@ function performPreparedTurnAction(
       rng.nextInt(bustDenominator) === 0;
 
     if (busted) {
-      const livesBefore = actor.lives;
-      // Instant lethal Draw bust — designer 2026-09-20 / Lot 63.
-      // Not `applyLifeLoss`: cannot express die-from-any-life in one step
-      // without Ghost siphoning each life. Not `applyDamage` (no shield, no
-      // card-lives). Ghost credits lives before the lethal assignment.
-      // No elimination contributor — no kill reward (rules spec §6).
-      observeLifeLoss(state, actor, livesBefore);
-      actor.lives = 0;
+      // Wipe, not a death — designer 2026-09-28. Drop to 1 life through
+      // `applyLifeLoss` so Ghost and Curse still see the loss, and so the
+      // result cannot reach 0. Not `applyDamage` (no shield, no card-lives).
+      // No elimination, no Absorber window, no kill reward.
+      const drop = Math.max(0, actor.lives - 1);
+      const loss = applyLifeLoss(actor, drop, 'gambling');
+      actor.turnLedger.livesLost += loss.livesLost;
+      observeLifeLoss(state, actor, loss.livesLost);
+      actor.points = 0;
+      actor.upgradePoints = 0;
+      actor.shield = 0;
+      actor.shieldIsUpgraded = false;
+      if (actor.hand.length > 0 || actor.specialCards.length > 0) {
+        state.pool.push(...actor.hand, ...actor.specialCards);
+        actor.hand = [];
+        actor.specialCards = [];
+      }
       actionPlayed = {
         actorPlayerId,
         action: 'draw',

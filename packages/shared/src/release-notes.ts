@@ -49,7 +49,7 @@ const RELEASE_NOTES_CATALOG = [
         before:
           'A Draw flew every point that was gained, so a large pile identified Gambler.',
         after:
-          'If that player’s kit is hidden from you, a Draw flies one point. Your own Draw still shows the real payout. Dying by Gambling is still announced.',
+          'If that player’s kit is hidden from you, a Draw flies one point. Your own Draw still shows the real payout. Gambling too much leaves you at 1 life. The table says you lost everything.',
       },
       {
         cardId: 'invisibility' as const,
@@ -60,7 +60,8 @@ const RELEASE_NOTES_CATALOG = [
       {
         cardId: 'sentence' as const,
         before: 'A Sentence that was counting down could not be opened.',
-        after: 'Tap the Sentence chip to read the card, including whether it is upgraded.',
+        after:
+          'Tap the Sentence chip to read the card, including whether it is upgraded. On your turn, with an upgrade point, that same chip can upgrade your Sentence. The countdown does not reset.',
       },
       {
         before:
@@ -86,6 +87,43 @@ const RELEASE_NOTES_CATALOG = [
           'Selling or buying a card showed the payout or the price, which identified the card. A hit or a steal did not show what changed when it resolved.',
         after:
           'A sale or a shop purchase you cannot see no longer shows that payout or price. When an attack hits or a steal resolves, the lives, points, upgrade points, or shield that changed appear on that line.',
+      },
+      {
+        cardId: 'imposition' as const,
+        before: 'Opponents with 2 points (4 if upgraded) paid that many points.',
+        after:
+          'Only points above 9 can be taken, capped at 2 (4 if upgraded). 9 or below pays nothing. The turn is not skipped.',
+      },
+      {
+        cardId: 'upgrade-point-thief' as const,
+        before: 'Stole upgrade points from every opponent. Upgraded also stole their points.',
+        after:
+          'Choose one living opponent. Upgraded steals from every living opponent and no longer steals points.',
+      },
+      {
+        cardId: 'block' as const,
+        before: 'Block could be played again during its own extra turns.',
+        after: 'Block cannot be played while a Block chain is active.',
+      },
+      {
+        cardId: 'spy' as const,
+        before: 'A basic Spy or Thief cancelled the upgraded copy.',
+        after:
+          'Same upgrade level still cancels both. An upgraded Spy or Thief beats the basic copy.',
+      },
+      {
+        cardId: 'absorber' as const,
+        before: 'The last living player lost the chance to absorb someone who had just died.',
+        after: 'That player can still absorb on their turn. The window closes after they act.',
+      },
+      {
+        before: 'Play again after a solo match opened the online lobby.',
+        after: 'A solo match starts again with the same bots and your kit.',
+      },
+      {
+        before: 'An upgrade point could only upgrade a card still in hand.',
+        after:
+          'You can also upgrade your active Poison, Points Generator, Imposition, Super Absorber, Roulette, or Invisibility. The counter does not reset.',
       },
     ],
   },

@@ -1,5 +1,5 @@
 /**
- * Action-log resource nets — PROTOCOL_VERSION 40.
+ * Action-log resource nets — PROTOCOL_VERSION 41.
  */
 
 import { describe, expect, it } from 'vitest';
