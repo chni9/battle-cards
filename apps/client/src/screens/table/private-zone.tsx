@@ -44,6 +44,7 @@ export interface PrivateZoneProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   onInspectPending?: (effect: PendingEffectView) => void;
+  onInspectSentence?: (isUpgraded: boolean) => void;
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;
@@ -66,6 +67,7 @@ export function PrivateZone({
   onDeactivatePersistent,
   onActivateDuplication,
   onInspectPending,
+  onInspectSentence,
   highlightedInstanceIds,
   zoneHighlight,
   collapseIncoming = false,
@@ -181,6 +183,7 @@ export function PrivateZone({
           <SentenceChipsForSeat
             playerId={view.you}
             pendingSentences={view.pendingSentences}
+            {...(onInspectSentence !== undefined ? { onInspect: onInspectSentence } : {})}
           />
         </div>
         {showIncomingButton ? (

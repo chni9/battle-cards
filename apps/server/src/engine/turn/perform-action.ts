@@ -48,7 +48,7 @@ import {
   ensureAutoDeactivationLog,
   takeAutoDeactivationLog,
 } from '../specials/auto-deactivation-log';
-import { playerIsInvisible } from '../specials/is-invisible';
+import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
 import { activateDuplicationAction } from '../kits/activate-duplication';
 import {
   applyDefaultMirrorRedirect,
@@ -1270,7 +1270,12 @@ function playMultipleAttacksAction(
 
     const target = findPlayer(state, attack.targetPlayerId);
 
-    if (target === undefined || target.isEliminated || target.id === actorPlayerId) {
+    if (
+      target === undefined ||
+      target.isEliminated ||
+      target.id === actorPlayerId ||
+      isIllegalOpposingTarget(target)
+    ) {
       return actionReject('invalid-target');
     }
 
@@ -1459,7 +1464,8 @@ function playCardAction(
     if (
       target === undefined ||
       target.id === actorPlayerId ||
-      (target.isEliminated && !absorberCorpseOk)
+      (target.isEliminated && !absorberCorpseOk) ||
+      isIllegalOpposingTarget(target)
     ) {
       return actionReject('invalid-target');
     }

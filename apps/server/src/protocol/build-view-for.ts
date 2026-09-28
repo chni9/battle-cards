@@ -12,7 +12,8 @@
  * - sub-choice slot/queue (unicast events, not StateView)
  * `GameState.poolBuyCost` is public (L58-02).
  * `GameState.pendingSentences` is public (PROTOCOL_VERSION 37).
- * `Player.drawGain` is public on living Gamblers (PROTOCOL_VERSION 39).
+ * `Player.drawGain` is on a living Gambler (PROTOCOL_VERSION 39) and reaches
+ * only recipients who already see that seat's private info (L65-01).
  */
 
 import {
@@ -84,10 +85,18 @@ function withSpectatorFields<T extends object>(
 }
 
 /**
- * Living Gambler Draw payout is public (PROTOCOL_VERSION 39 / Lot 64).
- * Built directly onto the recipient view — never filtered from a fuller object.
+ * Living Gambler Draw payout (PROTOCOL_VERSION 39 / Lot 64).
+ * Rules spec §6: exact resources stay private. L65-01 keeps the number for
+ * recipients who already see that seat (self, Spy, eliminated spectator,
+ * Stay walk-in). Everyone else must not learn the roll from the view.
  */
-function attachPublicDrawGain(view: PublicPlayerView, player: Player): void {
+function attachDrawGainForRecipient(
+  view: PublicPlayerView,
+  player: Player,
+  recipientSessionId: string,
+  state: GameState,
+  seesPrivateOverlay: boolean,
+): void {
   if (player.isEliminated) {
     return;
   }
@@ -98,6 +107,10 @@ function attachPublicDrawGain(view: PublicPlayerView, player: Player): void {
   }
 
   if (player.drawGain === undefined) {
+    return;
+  }
+
+  if (!recipientSeesPrivateOf(state, recipientSessionId, player.id, seesPrivateOverlay)) {
     return;
   }
 
@@ -260,6 +273,28 @@ export function fogBuyPoolCardPlayed(played: ActionPlayedPayload): ActionPlayedP
 }
 
 /**
+ * Drop the numeric Draw payout from a live `draw` ACTION_PLAYED.
+ * L65-01 — actor + Spy + spectator overlay still get `drawGain`. Bust stays.
+ */
+export function fogDrawGainPlayed(played: ActionPlayedPayload): ActionPlayedPayload {
+  if (played.drawGain === undefined) {
+    return played;
+  }
+
+  const fogged: ActionPlayedPayload = { ...played };
+  delete fogged.drawGain;
+  return fogged;
+}
+
+function fogDrawGainOnLogEntry(
+  entry: Extract<ActionLogEntryView, { kind: 'actionPlayed' }>,
+): ActionLogEntryView {
+  const fogged: Extract<ActionLogEntryView, { kind: 'actionPlayed' }> = { ...entry };
+  delete fogged.drawGain;
+  return fogged;
+}
+
+/**
  * Sitting pool cards show their faces to every recipient (designer 2026-09-20
  * playtest). Occupancy stays public. Recovered `buyPoolCard` identity is
  * fogged on the action log only.
@@ -272,6 +307,7 @@ export function mapPoolForRecipient(state: GameState): CardInstance[] {
  * Per-recipient action-log redaction (designer 2026-08-06 / 2026-09-20):
  * - `activateDuplication` → opaque `draw` unless self, Spy, or eliminated spectator
  * - `buyPoolCard` omits `cardId` / `isUpgraded` unless self, Spy, or spectator overlay
+ * - `draw` omits `drawGain` unless self, Spy, or spectator overlay (L65-01)
  * - `playerReanimated.kitId` omitted for every in-game recipient
  * Excel `exportLog` keeps the full server log.
  */
@@ -299,6 +335,15 @@ function mapActionLogForRecipient(
       }
 
       return opaque;
+    }
+
+    if (
+      entry.kind === 'actionPlayed' &&
+      entry.action === 'draw' &&
+      entry.drawGain !== undefined &&
+      !recipientSeesPrivateOf(state, recipientSessionId, entry.actorPlayerId, walkInSpectator)
+    ) {
+      return fogDrawGainOnLogEntry(entry);
     }
 
     if (entry.kind === 'actionPlayed' && entry.action === 'buyPoolCard') {
@@ -426,7 +471,7 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       view.spyingOnYou = true;
     }
 
-    attachPublicDrawGain(view, player);
+    attachDrawGainForRecipient(view, player, recipientSessionId, state, walkInSeesPrivate);
 
     return view;
   });
@@ -643,7 +688,13 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
           view.eliminationReveal = eliminationReveal;
         }
 
-        attachPublicDrawGain(view, player);
+        attachDrawGainForRecipient(
+          view,
+          player,
+          recipientSessionId,
+          state,
+          walkInSeesPrivate,
+        );
 
         return view;
       }),

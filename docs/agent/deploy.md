@@ -80,6 +80,9 @@ and promote `dev` → `main`. Coolify Preview Deployments listen to `pull_reques
    PR page → **Edit** next to the title → change base from `main` to `dev` → **Change base**.
 4. **Promote to production:** GitHub → **Pull requests → New** → base `main`, compare `dev`
    → merge when staging looks right. Coolify production (still watching `main`) deploys.
+   That merge ships the current What’s new entry. Leave it in the catalog. The next
+   player-facing change on `dev` opens a new entry so the auto popup shows only
+   that next update (`docs/agent/frontend.md`).
 
 Do not push feature work straight to `main`. Do not point the production Coolify app at
 `dev`.

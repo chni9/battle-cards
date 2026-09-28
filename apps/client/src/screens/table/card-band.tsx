@@ -16,7 +16,7 @@ import {
   CARD_BAND_ABS_MIN_W,
   CARD_BAND_GAP_PX,
   cardBandFitRowHeight,
-  cardBandSideBySide,
+  cardBandSideBySideStable,
   fitCardBand,
 } from './card-band-fit';
 import { TutorialCallout } from './tutorial-callout';
@@ -164,6 +164,7 @@ export function CardBand({
   highlightedSection,
 }: CardBandProps): ReactElement {
   const bandRef = useRef<HTMLDivElement>(null);
+  const sideBySideRef = useRef(false);
   const [cardWidth, setCardWidth] = useState(CARD_BAND_ABS_MIN_W);
   const [sideBySide, setSideBySide] = useState(false);
   const sectionLit = highlightedSection !== undefined;
@@ -180,9 +181,10 @@ export function CardBand({
       if (w <= 0 || h <= 0) {
         return;
       }
-      const side = cardBandSideBySide(h, specials.length);
+      const side = cardBandSideBySideStable(h, specials.length, sideBySideRef.current);
+      sideBySideRef.current = side;
       setSideBySide((prev) => (prev === side ? prev : side));
-      const rowHeight = cardBandFitRowHeight(h, specials.length);
+      const rowHeight = cardBandFitRowHeight(h, specials.length, side);
       const fit = fitCardBand(Math.max(hand.length, 1), w, rowHeight);
       setCardWidth((prev) =>
         Math.abs(prev - fit.cardWidth) < 0.5 ? prev : fit.cardWidth,

@@ -3879,3 +3879,39 @@ bust immunity there.
 
 ---
 
+## 2026-09-28 · [P] Gambler Draw payout is private
+
+Player reports (protocol 39): the Draw point-chip count identified Gambler,
+because Lot 64 published `drawGain` on every recipient. Rules spec §6 keeps
+exact resources private except Spy. L65-01 narrows that publication. No
+protocol bump — the field stays optional and is omitted for everyone who
+does not already see that seat.
+
+- Self, Spy (any level), eliminated spectators, and Stay walk-ins still
+  receive `PublicPlayerView.drawGain` and `actionPlayed.drawGain`.
+- Other recipients: neither the player view nor the per-recipient log nor
+  the live `ACTION_PLAYED` carries the number. A successful Draw they cannot
+  count flies one point chip.
+- The bust stays public (`drawBust`, `{nickname} dies by Gambling`).
+- Excel `exportLog` keeps the full server log.
+
+---
+
+## 2026-09-28 · [P] What’s new current update vs full log
+
+Designer: the popup that opens by itself shows only the current update. The
+hub **New** button still shows the complete log, one date after another.
+
+Pull requests that are not on `main` yet are one update: append them to the
+latest `RELEASE_NOTES` id so the auto popup shows them together. Merging
+`dev` → `main` ships that entry. The next player-facing change opens a new
+id. That reinitializes the auto popup; it then fills with only those next
+changes. Older ids stay on the New button.
+
+This supersedes the 2026-09-21 “edit the unshipped original” rule once that
+note is on `main`. `lot-63` shipped with Gambler (promote #51). Lot 65 is
+`lot-65` (2026-09-28): private Draw, invisible targets, Sentence inspect,
+hand layout. Those lines are not added to `lot-63`.
+
+---
+

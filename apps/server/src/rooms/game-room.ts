@@ -156,6 +156,7 @@ import {
   buildLobbyViewFor,
   buildPlayingViewFor,
   fogBuyPoolCardPlayed,
+  fogDrawGainPlayed,
 } from '../protocol/build-view-for';
 import { recipientSeesPrivateOf, walkInSpectatorSeesPrivate } from '../protocol/visibility-matrix';
 import {
@@ -1964,6 +1965,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
       } else if (played.action === 'buyPoolCard') {
         // Recovered card is Spy-gated (designer 2026-09-20 / L63-06).
         this.sendBuyPoolCardPlayed(played);
+      } else if (played.action === 'draw' && played.drawGain !== undefined) {
+        // Numeric payout is Spy-gated (L65-01). Bust stays on the broadcast path.
+        this.sendDrawGainPlayed(played);
       } else {
         this.broadcast(ACTION_PLAYED, played);
       }
@@ -3847,6 +3851,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private sendBuyPoolCardPlayed(played: ActionPlayedPayload): void {
     this.sendActionPlayedMapped(played, (payload, seesPrivate) =>
       seesPrivate ? payload : fogBuyPoolCardPlayed(payload),
+    );
+  }
+
+  /**
+   * Gambler Draw payout is Spy-gated (L65-01 / rules spec §6).
+   * The action stays `draw`; `drawGain` drops for everyone who cannot
+   * already see that seat's resources.
+   */
+  private sendDrawGainPlayed(played: ActionPlayedPayload): void {
+    this.sendActionPlayedMapped(played, (payload, seesPrivate) =>
+      seesPrivate ? payload : fogDrawGainPlayed(payload),
     );
   }
 

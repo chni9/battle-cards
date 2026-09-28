@@ -15,7 +15,7 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–64 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives, Game over full Feedback ticket
+inspect from log/queue/Sentence chip, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
@@ -76,8 +76,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
   / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
-  Table Draw (L64-05) reads public `drawGain` for Gambler else catalog Draw; Motion
+  Table Draw (L64-05) reads the recipient's own `drawGain` for Gambler else catalog Draw; Motion
   pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
+  Opponent Draw chips (L65-01) fly **one** point unless that seat is already Spyed
+  (or it is your own Draw), so the count cannot identify a kit.
 - **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
   decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
@@ -125,25 +127,30 @@ rules above are unchanged — this section only covers how the client looks.
   Upgrade / Shield. **Soft gate** on the first hub Play online / Play solo / Tutorial
   click (`localStorage['card-battle.v6.howToPlaySeen']`); Skip, Got it, Esc, and overlay
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
-  Esc / overlay only close.   **What’s new (L63-07):** shared `RELEASE_NOTES`
-  (`packages/shared/src/release-notes.ts`, newest first). Compact **New** is
-  the shared `Button` `variant="green"` (`bg-cta-green-deep`, same as Play
-  online) with a **red** unread tick when
+  Esc / overlay only close.   **What’s new (L63-07, L65-05):** shared `RELEASE_NOTES`
+  (`packages/shared/src/release-notes.ts`, newest first, each entry dated).
+  Compact **New** is the shared `Button` `variant="green"` (`bg-cta-green-deep`,
+  same as Play online) with a **red** unread tick when
   `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
-  First visit of this catalog id auto-opens on the hub — How to play is not a
-  blocker. Closing / Got it writes the latest id. **New** heading lists
-  `additions` (kit portrait or card art + body) for kits/cards that did not
-  exist before; before → after `items` cover nerfs with named-card art and
-  render **above** the New block. Kit-level items may use `kitId` (Gambler
-  portrait) instead of `cardId`. Latest catalog id is `lot-63`. Gambler and
-  Roulette never shipped on `main`, so later tweaks edit that original New
-  body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
-  of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
-  Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
-  on the caster (remaining turns in red). Play / later caster ticks / fire flash
-  the table-wide red banner. The dialog lists history
-  (every catalog entry). **Update the latest catalog entry in the same commit
-  as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
+  The popup that opens by itself shows **only the latest entry**. The **New**
+  button lists **every** entry, date by date, newest first. How to play is not
+  a blocker. Closing / Got it writes the latest id. While that latest entry is
+  not on `main`, later pull requests **append to the same id** so they show
+  together in the auto popup. Merging `dev` → `main` ships that entry. The next
+  player-facing change opens a **new** id, and the auto popup shows only that
+  next update. Do not delete shipped entries. Do not edit an entry that is
+  already on `main` except to correct that entry's own text. **New** heading
+  lists `additions` (kit portrait or card art + body) for kits/cards that did
+  not exist before; before → after `items` cover changes with named-card art
+  and render **above** the New block. Kit-level items may use `kitId` (Gambler
+  portrait) instead of `cardId`. `lot-63` (2026-09-20) is on `main`: Sentence,
+  Imposition, Super Absorber, plus Gambler and Roulette (no `lot-64` id — those
+  tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is the open
+  update: private Draw, invisible players are not targets, Sentence chip
+  inspect, hand layout stays put. Sentence chips sit
+  on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
+  the table-wide red banner. Player-visible work updates the open What’s new
+  entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
   card (word Beta only). No protocol footer, no Reset help control, no delayed-resolution
   pitch. **Tutorial** opens a nickname-only path
   (`create({ tutorial: true })` then `startGame`; no `addBot`, no kit picker). Table **How to play** is a compact **?** `IconButton` on the turn strip
@@ -301,7 +308,8 @@ rules above are unchanged — this section only covers how the client looks.
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
   shown) with one line per action. Hand/specials are **one row each** and **scroll
   horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
-  height so the name line stays on-screen.
+  height so the name line stays on-screen. Side-by-side (short docks) does not flip
+  back to stacked until the band is 48px taller than the enter threshold (L65-04).
 - **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
   `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
   Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips

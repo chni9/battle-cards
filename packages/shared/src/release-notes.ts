@@ -1,10 +1,13 @@
 /**
- * Player-facing hub What’s new catalog (L63-07).
- * Newest first. Update the latest entry in the same commit as player-visible work.
+ * Player-facing hub What’s new catalog (L63-07, L65-05).
+ * Newest first. The auto popup shows only the latest entry. The hub New
+ * button lists every entry, date by date.
  *
- * Standing rule (designer 2026-09-21): if a kit or card has never shipped on
- * `main`, later tweaks edit that original What’s new entry. They do not add a
- * new log id.
+ * While the latest entry is not on `main`, later pull requests append to
+ * that same id (one update). After it merges to `main`, the next
+ * player-facing change adds a new entry above it. Do not edit an entry
+ * that is already on `main` except to correct that entry's own text.
+ * `lot-63` shipped on `main` (promote #51). `lot-65` is the open update.
  */
 
 import type { CardId } from './domain/card';
@@ -31,7 +34,41 @@ export interface ReleaseNote {
   readonly items: readonly ReleaseNoteItem[];
 }
 
+/** Auto popup vs the hub New button (L65-05). */
+export type WhatsNewScope = 'current' | 'history';
+
 const RELEASE_NOTES_CATALOG = [
+  {
+    id: 'lot-65',
+    date: '2026-09-28',
+    title: 'Private Draw, invisible players, Sentence, and the hand',
+    additions: [],
+    items: [
+      {
+        kitId: 'gambler' as const,
+        before:
+          'A Draw flew every point that was gained, so a large pile identified Gambler.',
+        after:
+          'If that player’s kit is hidden from you, a Draw flies one point. Your own Draw still shows the real payout. Dying by Gambling is still announced.',
+      },
+      {
+        cardId: 'invisibility' as const,
+        before: 'You could target an invisible player. The card did not affect them.',
+        after:
+          'You can no longer choose an invisible player as the target. Cards that hit the whole table can still be played; that player is unaffected.',
+      },
+      {
+        cardId: 'sentence' as const,
+        before: 'A Sentence that was counting down could not be opened.',
+        after: 'Tap the Sentence chip to read the card, including whether it is upgraded.',
+      },
+      {
+        before:
+          'On a phone, Hand and Specials sometimes swapped sides when the browser bar moved.',
+        after: 'They keep their places unless there is clearly more room.',
+      },
+    ],
+  },
   {
     id: 'lot-63',
     date: '2026-09-20',
@@ -84,6 +121,14 @@ export function latestReleaseNote(): ReleaseNote {
     throw new Error('RELEASE_NOTES is empty');
   }
   return latest;
+}
+
+/** Current update for the auto popup, or the full dated log for the New button. */
+export function releaseNotesForScope(scope: WhatsNewScope): readonly ReleaseNote[] {
+  if (scope === 'history') {
+    return RELEASE_NOTES;
+  }
+  return [latestReleaseNote()];
 }
 
 export function isReleaseNoteId(value: unknown): value is ReleaseNoteId {

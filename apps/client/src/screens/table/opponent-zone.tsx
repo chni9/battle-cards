@@ -29,6 +29,7 @@ export interface OpponentZoneProps {
   view: PlayingStateView;
   player: PublicPlayerView;
   onInspectActive?: (effectId: string) => void;
+  onInspectSentence?: (isUpgraded: boolean) => void;
   /** Spy or death reveal — opens the opponent info dialog. */
   onInspectReveal?: () => void;
   /** Tutorial spotlight after Spy (L45-05). */
@@ -145,6 +146,7 @@ export function OpponentZone({
   view,
   player,
   onInspectActive,
+  onInspectSentence,
   onInspectReveal,
   highlightPortrait = false,
   compact = false,
@@ -249,6 +251,7 @@ export function OpponentZone({
             playerId={player.id}
             pendingSentences={view.pendingSentences}
             compact
+            {...(onInspectSentence !== undefined ? { onInspect: onInspectSentence } : {})}
           />
         </div>
         <OpponentSeatResourceColumn player={player} />
