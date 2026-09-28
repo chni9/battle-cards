@@ -303,7 +303,8 @@ rules above are unchanged — this section only covers how the client looks.
   (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
   shown) with one line per action. Hand/specials are **one row each** and **scroll
   horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
-  height so the name line stays on-screen.
+  height so the name line stays on-screen. Side-by-side (short docks) does not flip
+  back to stacked until the band is 48px taller than the enter threshold (L65-04).
 - **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
   `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
   Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips
