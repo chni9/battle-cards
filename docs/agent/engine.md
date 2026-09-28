@@ -194,7 +194,10 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   (**7** upgraded), counting the activation turn; remaining turns live in
   `PersistentEffect.counter` but are **not** card-lives (`applyDamage` must not eat them).
   While active it is illegal to play anything that acts on another player, including
-  Mirror / Super Mirror (`cardActsOnOpponents`). Last-turn income still pays, then
+  Mirror / Super Mirror (`cardActsOnOpponents`). A living invisible seat is also not a
+  legal single target (L65-02): `listLegalPlayCardActions`, Assassin candidates, and
+  `perform-action` reject that target. AoE cards stay playable; the invisible seat
+  still resolves `'immune'` and skips victim ticks. Last-turn income still pays, then
   auto-loss emits `persistentDeactivated`. Manual deactivate still consumes the action
   (#V4-10).
 - **Block (L25-01):** `grantBlockTurns` sets `blockTurnsRemaining` and
