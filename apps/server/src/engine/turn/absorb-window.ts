@@ -3,8 +3,8 @@
  *
  * After elimination, the corpse stays Absorber-targetable (and Super Absorber
  * activation-absorbable) until every player who was living at that elimination
- * has begun one turn. Mid-window deaths prune the pending set so windows cannot
- * stick forever.
+ * has finished one turn (through their action). Mid-window deaths prune the
+ * pending set so windows cannot stick forever.
  */
 
 import type { GameState, Player } from '@card-battle/shared';
@@ -72,10 +72,13 @@ export function onPlayerEliminatedForAbsorbWindow(state: GameState, victim: Play
   victim.absorbWindowPendingPlayerIds = livingIds;
 }
 
-/** Call from `beginTurnFor` after the seat becomes current. */
-export function tickAbsorbWindowsOnBeginTurn(state: GameState, beginningPlayerId: string): void {
+/**
+ * Call when a seat finishes a turn (`advanceTurn`), after they have acted.
+ * The player who is about to act is still in the pending set.
+ */
+export function tickAbsorbWindowsOnEndTurn(state: GameState, finishedPlayerId: string): void {
   for (const player of state.players) {
-    removeFromPending(player, beginningPlayerId);
+    removeFromPending(player, finishedPlayerId);
   }
 }
 

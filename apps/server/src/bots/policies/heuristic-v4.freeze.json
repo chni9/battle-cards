@@ -285,9 +285,7 @@
       {
         "turnSequence": 11,
         "action": {
-          "type": "playCard",
-          "instanceId": "buy:bot-0:6:4",
-          "targetPlayerId": "bot-1"
+          "type": "buyPoolCard"
         }
       }
     ],
@@ -711,6 +709,12 @@
       },
       {
         "turnSequence": 9,
+        "action": {
+          "type": "draw"
+        }
+      },
+      {
+        "turnSequence": 11,
         "action": {
           "type": "draw"
         }

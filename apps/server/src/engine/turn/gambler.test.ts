@@ -296,7 +296,7 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(actor.isEliminated).toBe(false);
   });
 
-  it('forced bust zeros lives at any total, grants no points, and has no eliminator', () => {
+  it('forced wipe leaves 1 life, clears resources and unplayed cards, and keeps persistents', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-draw-bust',
@@ -313,11 +313,24 @@ describe('Gambler Draw bust (L63-02)', () => {
     state.turnSequence = state.players.length;
     state.currentTurnPlayerId = actor.id;
     actor.lives = 14;
-    actor.points = 0;
+    actor.points = 8;
+    actor.upgradePoints = 2;
+    actor.shield = 4;
+    actor.shieldIsUpgraded = true;
     actor.pendingEffects = [];
-    actor.activePersistentEffects = [];
-    actor.hand = [];
-    actor.specialCards = [];
+    actor.activePersistentEffects = [
+      {
+        id: 'poison-1',
+        cardId: 'poison',
+        isUpgraded: false,
+        counter: 3,
+        targetPlayerId: null,
+      },
+    ];
+    actor.hand = [{ instanceId: 'hand-1', cardId: 'tax', isUpgraded: false }];
+    actor.specialCards = [
+      { instanceId: 'spec-1', cardId: 'block', isUpgraded: false },
+    ];
 
     const result = performTurnAction(state, actor.id, { type: 'draw' }, scriptedRng([0]));
     expect(result.ok).toBe(true);
@@ -328,14 +341,20 @@ describe('Gambler Draw bust (L63-02)', () => {
     expect(result.actionPlayed.action).toBe('draw');
     expect(result.actionPlayed.drawBust).toBe(true);
     expect(result.actionPlayed.drawGain).toBeUndefined();
-    expect(actor.lives).toBe(0);
+    expect(actor.lives).toBe(1);
     expect(actor.points).toBe(0);
-    expect(actor.isEliminated).toBe(true);
-    expect(result.eliminatedPlayerIds).toEqual([actor.id]);
-    expect(result.eliminations).toEqual([
-      { playerId: actor.id, eliminatorPlayerId: null, reason: 'gambling' },
-    ]);
-    expect(result.winnerPlayerId).toBe(other.id);
+    expect(actor.upgradePoints).toBe(0);
+    expect(actor.shield).toBe(0);
+    expect(actor.shieldIsUpgraded).toBe(false);
+    expect(actor.hand).toEqual([]);
+    expect(actor.specialCards).toEqual([]);
+    expect(state.pool.map((card) => card.instanceId).sort()).toEqual(['hand-1', 'spec-1']);
+    expect(actor.activePersistentEffects.map((effect) => effect.id)).toEqual(['poison-1']);
+    expect(actor.isEliminated).toBe(false);
+    expect(result.eliminatedPlayerIds).toEqual([]);
+    expect(result.eliminations).toEqual([]);
+    expect(result.winnerPlayerId).toBeNull();
+    expect(other.isEliminated).toBe(false);
   });
 
   it('unplayed Reanimation cannot save a round-2 bust', () => {
@@ -366,12 +385,16 @@ describe('Gambler Draw bust (L63-02)', () => {
       return;
     }
 
-    expect(actor.isEliminated).toBe(true);
+    expect(actor.isEliminated).toBe(false);
+    expect(actor.lives).toBe(1);
+    expect(actor.specialCards).toEqual([]);
+    expect(state.pool.some((card) => card.instanceId === 're-1')).toBe(true);
     expect(actor.pendingReanimation).toBeNull();
     expect(result.actionPlayed.drawBust).toBe(true);
+    expect(result.eliminatedPlayerIds).toEqual([]);
   });
 
-  it('armed Reanimation on a later bust follows the normal revive path', () => {
+  it('armed Reanimation stays active because a wipe does not eliminate', () => {
     const state = createInitialState({
       seats,
       seed: 'gambler-bust-armed-reanim',
@@ -411,10 +434,10 @@ describe('Gambler Draw bust (L63-02)', () => {
     }
 
     expect(result.actionPlayed.drawBust).toBe(true);
-    expect(result.eliminatedPlayerIds).toEqual([actor.id]);
+    expect(result.eliminatedPlayerIds).toEqual([]);
     expect(actor.isEliminated).toBe(false);
-    expect(actor.pendingReanimation).toBeNull();
-    expect(actor.lives).toBeGreaterThan(0);
+    expect(actor.lives).toBe(1);
+    expect(actor.activePersistentEffects.map((effect) => effect.id)).toEqual(['reanim-armed']);
     expect(result.winnerPlayerId).toBeNull();
   });
 

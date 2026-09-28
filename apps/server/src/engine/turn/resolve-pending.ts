@@ -73,8 +73,12 @@ function isDeferredSuicideSelf(effect: PendingEffect, turnSequence: number): boo
 }
 
 /**
- * Spy/Thief counter: same card played back at the source cancels both at resolve
- * (rules spec §1, tech §4.7). Mirror is excluded.
+ * Spy/Thief counter (rules spec §1, designer 2026-09-28).
+ * Same upgrade level cancels both. An upgraded incoming removes a basic answer
+ * and still resolves. A basic incoming is cancelled by an upgraded answer, which
+ * stays pending. Mirror is excluded.
+ *
+ * Returns true when the incoming effect should be cancelled.
  */
 function cancelReciprocalCounter(
   state: GameState,
@@ -102,7 +106,22 @@ function cancelReciprocalCounter(
     return false;
   }
 
-  source.pendingEffects.splice(counterIndex, 1);
+  const counter = source.pendingEffects[counterIndex];
+
+  if (counter === undefined) {
+    return false;
+  }
+
+  if (incoming.isUpgraded === counter.isUpgraded) {
+    source.pendingEffects.splice(counterIndex, 1);
+    return true;
+  }
+
+  if (incoming.isUpgraded && !counter.isUpgraded) {
+    source.pendingEffects.splice(counterIndex, 1);
+    return false;
+  }
+
   return true;
 }
 
@@ -153,12 +172,28 @@ function removeEffectsById(player: Player, ids: ReadonlySet<string>): void {
  * Latest reciprocal attack volley on `source` (max `queuedAt` among resolvingPlayer → source).
  * Older leftovers are a different volley and stay out of this compare.
  */
+/**
+ * A Mirror redirect of one hit from this same volley keeps the original
+ * `queuedAt`. It is not a later answer, so it must not cancel the siblings
+ * that still target the Mirror player (designer 2026-09-28). A real
+ * retaliation is queued on a different turn.
+ */
+function isRedirectedFragmentOfIncoming(
+  effect: PendingEffect,
+  incomingQueuedAt: number,
+): boolean {
+  return effect.redirectedBy !== null && effect.queuedAt === incomingQueuedAt;
+}
+
 function latestRetaliationVolley(
   source: Player,
   resolvingPlayerId: string,
+  incomingQueuedAt: number,
 ): PendingEffect[] {
-  const reciprocal = source.pendingEffects.filter((effect) =>
-    isReciprocalAttack(effect, resolvingPlayerId, source.id),
+  const reciprocal = source.pendingEffects.filter(
+    (effect) =>
+      isReciprocalAttack(effect, resolvingPlayerId, source.id) &&
+      !isRedirectedFragmentOfIncoming(effect, incomingQueuedAt),
   );
 
   if (reciprocal.length === 0) {
@@ -197,7 +232,11 @@ function decideMutualAttack(
     return [];
   }
 
-  const retaliationVolley = latestRetaliationVolley(source, resolvingPlayer.id);
+  const retaliationVolley = latestRetaliationVolley(
+    source,
+    resolvingPlayer.id,
+    incoming.queuedAt,
+  );
 
   if (retaliationVolley.length === 0) {
     return [];
@@ -275,8 +314,9 @@ function resolveSpyThief(
 }
 
 /**
- * Upgrade Point Thief — rules spec §5, L21-02.
+ * Upgrade Point Thief — rules spec §5, L21-02, designer 2026-09-28.
  * Not counterable; not blocked by Shield; Untouchable is not immune (#V4-33).
+ * Does not steal points.
  */
 function resolveUpgradePointThief(
   state: GameState,
@@ -292,16 +332,6 @@ function resolveUpgradePointThief(
   stealUpgradePoints(state, source, target);
   const stripped = downgradeAllCards(target);
   grantUpgradePoints(state, source, stripped, 'direct');
-
-  if (effect.isUpgraded) {
-    stealPoints({
-      state,
-      sourcePlayerId: effect.sourcePlayerId,
-      targetPlayerId: target.id,
-      amount: target.points,
-      gainMultiplier: 1,
-    });
-  }
 
   return 'applied';
 }

@@ -77,8 +77,8 @@ export interface KitTraits {
   upgradePointSellYield?: number;
   /**
    * When set, the Draw action rolls `rng.nextInt(denominator) === 0` and on a
-   * hit instantly eliminates the actor (any life total, no points granted).
-   * Gambler: 10 (designer 2026-09-20 / Lot 63). Absent → Draw is safe.
+   * hit wipes the actor to 1 life (designer 2026-09-28). Not an elimination.
+   * Gambler: 10. Absent → Draw is safe.
    */
   drawBustDenominator?: number;
 }

@@ -36,7 +36,8 @@ describe('Sentence chip (L63-03)', () => {
     expect(opponent).toContain('onInspectSentence');
     expect(priv).toContain('onInspectSentence');
     const table = read('../table.tsx');
-    expect(table).toContain("onInspectCatalogCard('sentence', isUpgraded, 'active')");
+    expect(table).toContain('onInspectSentenceChip');
+    expect(table).toContain('sentence.id');
     expect(badges).not.toContain('Sentence ·');
     expect(badges).not.toContain('pendingSentences');
   });

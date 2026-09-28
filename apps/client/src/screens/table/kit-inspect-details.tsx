@@ -238,7 +238,7 @@ export function KitInspectDetails({ kitId }: KitInspectDetailsProps): ReactEleme
         <Group title="Draw risk" trait>
           <p className="text-sm leading-snug text-ink">
             {traits.drawBustDenominator !== undefined
-              ? `1 in ${String(traits.drawBustDenominator)} chance each Draw instantly eliminates this player (no points).`
+              ? `1 in ${String(traits.drawBustDenominator)} chance each Draw drops this player to 1 life, 0 points, 0 upgrade points, and no shield, and moves their hand and unplayed specials to the pool. Active cards stay. They are not eliminated.`
               : 'None'}
           </p>
         </Group>

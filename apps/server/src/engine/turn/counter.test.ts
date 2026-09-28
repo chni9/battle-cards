@@ -131,4 +131,40 @@ describe('Spy/Thief counter (L3-06)', () => {
 
     expect(state.visibility.some((r) => r.viewerId === 'a' && r.subjectId === 'b')).toBe(true);
   });
+
+  it('an upgraded Spy beats a basic answer and a basic Spy loses to an upgraded answer', () => {
+    const state = createInitialState({ seats, seed: 'counter-upgrade' });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    if (alice === undefined || bob === undefined) {
+      return;
+    }
+
+    alice.points = 4;
+    alice.hand = [{ instanceId: 'spy-a', cardId: 'spy', isUpgraded: false }];
+    bob.points = 4;
+    bob.hand = [{ instanceId: 'spy-b', cardId: 'spy', isUpgraded: true }];
+
+    state.currentTurnPlayerId = 'a';
+    performTurnAction(state, 'a', {
+      type: 'playCard',
+      instanceId: 'spy-a',
+      targetPlayerId: 'b',
+    });
+
+    state.currentTurnPlayerId = 'b';
+    performTurnAction(state, 'b', {
+      type: 'playCard',
+      instanceId: 'spy-b',
+      targetPlayerId: 'a',
+    });
+
+    expect(state.visibility.some((row) => row.viewerId === 'a' && row.subjectId === 'b')).toBe(
+      false,
+    );
+    expect(alice.pendingEffects.some((effect) => effect.cardId === 'spy' && effect.isUpgraded)).toBe(
+      true,
+    );
+  });
 });

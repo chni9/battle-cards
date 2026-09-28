@@ -1280,7 +1280,7 @@ Rooms **KTECTTG**, **LAWADL**. `pnpm verify` **1570** tests.
   later **+21 red**. `L64Pulse2` **+44 red** then **+10**, then **+32 red**.
   Red when payout `> 10`. Motion pulse is 0.45s at turn start (`MOTION_PULSE_S`);
   reduced-motion / load timing can hide it on capture — source and tests pin it.
-- Bust log: **L64Gate draws and busts** then **L64Gate dies by Gambling**.
+- Wipe log: **L64Gate gambled too much and lost everything**. No elimination line.
   Hub What’s new latest id `lot-63` (Gambler/Roulette folded into the original
   lot-63 New bodies; no `lot-64` release id).
 

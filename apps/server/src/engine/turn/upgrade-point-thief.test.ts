@@ -41,7 +41,11 @@ describe('Upgrade Point Thief (L21-02)', () => {
 
     state.currentTurnPlayerId = a.id;
     expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'upt-1' }).ok,
+      performTurnAction(state, a.id, {
+        type: 'playCard',
+        instanceId: 'upt-1',
+        targetPlayerId: 'b',
+      }).ok,
     ).toBe(true);
     expect(b.pendingEffects).toHaveLength(1);
     expect(b.pendingEffects[0]?.cardId).toBe('upgrade-point-thief');
@@ -92,7 +96,11 @@ describe('Upgrade Point Thief (L21-02)', () => {
 
     state.currentTurnPlayerId = a.id;
     expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'upt-1' }).ok,
+      performTurnAction(state, a.id, {
+        type: 'playCard',
+        instanceId: 'upt-1',
+        targetPlayerId: 'b',
+      }).ok,
     ).toBe(true);
 
     state.currentTurnPlayerId = b.id;
@@ -103,7 +111,7 @@ describe('Upgrade Point Thief (L21-02)', () => {
     expect(a.upgradePoints).toBe(2);
   });
 
-  it('upgraded also steals all points via theft ledger', () => {
+  it('upgraded steals upgrade points from every opponent and does not steal points', () => {
     const state = createInitialState({ seats, seed: 'l21-02-upt-up' });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -133,12 +141,11 @@ describe('Upgrade Point Thief (L21-02)', () => {
     state.currentTurnPlayerId = b.id;
     expect(performTurnAction(state, b.id, { type: 'draw' }).ok).toBe(true);
 
-    expect(b.points).toBe(0);
+    expect(b.points).toBeGreaterThanOrEqual(17);
     expect(b.upgradePoints).toBe(0);
     expect(a.upgradePoints).toBe(2);
-    // a paid 5 to play (→0); gains b's 17 + 1 draw = 18 via theft
-    expect(a.points).toBe(18);
-    expect(b.turnLedger.pointsLostToTheft).toBe(18);
+    expect(a.points).toBe(0);
+    expect(b.turnLedger.pointsLostToTheft).toBe(0);
     expect(b.turnLedger.pointsSpent).toBe(0);
   });
 
@@ -169,13 +176,21 @@ describe('Upgrade Point Thief (L21-02)', () => {
 
     state.currentTurnPlayerId = a.id;
     expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'upt-a' }).ok,
+      performTurnAction(state, a.id, {
+        type: 'playCard',
+        instanceId: 'upt-a',
+        targetPlayerId: 'b',
+      }).ok,
     ).toBe(true);
     expect(b.pendingEffects).toHaveLength(1);
 
     state.currentTurnPlayerId = b.id;
     expect(
-      performTurnAction(state, b.id, { type: 'playCard', instanceId: 'upt-b' }).ok,
+      performTurnAction(state, b.id, {
+        type: 'playCard',
+        instanceId: 'upt-b',
+        targetPlayerId: 'a',
+      }).ok,
     ).toBe(true);
     // a's UPT resolved on b's turn (applied, not cancelled); b's UPT stays pending on a
     expect(b.pendingEffects.filter((effect) => effect.cardId === 'upgrade-point-thief')).toEqual(

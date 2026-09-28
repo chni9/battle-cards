@@ -123,6 +123,7 @@ export function startPendingSentence(
   isUpgraded: boolean,
 ): void {
   state.pendingSentences.push({
+    id: `sentence:${String(state.turnSequence)}:${sourcePlayerId}:${String(state.pendingSentences.length)}`,
     sourcePlayerId,
     remainingOwnerTurns: SENTENCE_OWNER_TURNS,
     isUpgraded,
