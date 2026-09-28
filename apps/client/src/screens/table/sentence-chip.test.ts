@@ -21,6 +21,8 @@ describe('Sentence chip (L63-03)', () => {
     expect(chip).toContain("cardId: 'sentence'");
     expect(chip).toContain('text-cta-red');
     expect(chip).toContain('remainingOwnerTurns');
+    expect(chip).toContain('onSelect');
+    expect(chip).toContain('onInspect');
     // Sentence has no activated PNG — Card(activated) throws and blanks the table.
     expect(chip).not.toMatch(/detail="thumb"\s+activated/);
   });
@@ -31,6 +33,10 @@ describe('Sentence chip (L63-03)', () => {
     const badges = read('flow-status-badges.tsx');
     expect(opponent).toContain('SentenceChip');
     expect(priv).toContain('SentenceChip');
+    expect(opponent).toContain('onInspectSentence');
+    expect(priv).toContain('onInspectSentence');
+    const table = read('../table.tsx');
+    expect(table).toContain("onInspectCatalogCard('sentence', isUpgraded, 'active')");
     expect(badges).not.toContain('Sentence ·');
     expect(badges).not.toContain('pendingSentences');
   });

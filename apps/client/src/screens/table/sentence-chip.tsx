@@ -13,12 +13,15 @@ export interface SentenceChipProps {
   remainingOwnerTurns: number;
   isUpgraded: boolean;
   compact?: boolean;
+  /** Opens catalog inspect. Sentence is not an `activePersistentEffects` row. */
+  onInspect?: () => void;
 }
 
 export function SentenceChip({
   remainingOwnerTurns,
   isUpgraded,
   compact = false,
+  onInspect,
 }: SentenceChipProps): ReactElement {
   return (
     <span data-sentence-chip className="inline-flex flex-col items-center">
@@ -30,6 +33,13 @@ export function SentenceChip({
         }}
         detail="thumb"
         className={compact ? 'w-6 !p-0 sm:w-7' : 'w-7 !p-0.5 sm:w-8'}
+        {...(onInspect !== undefined
+          ? {
+              onSelect: () => {
+                onInspect();
+              },
+            }
+          : {})}
       />
       <span className="mt-px font-sans text-[9px] font-semibold tabular-nums text-cta-red">
         {remainingOwnerTurns}
@@ -42,12 +52,14 @@ export interface SentenceChipsForSeatProps {
   playerId: string;
   pendingSentences: readonly PendingSentenceView[];
   compact?: boolean;
+  onInspect?: (isUpgraded: boolean) => void;
 }
 
 export function SentenceChipsForSeat({
   playerId,
   pendingSentences,
   compact = false,
+  onInspect,
 }: SentenceChipsForSeatProps): ReactElement | null {
   const mine = pendingSentences.filter((entry) => entry.sourcePlayerId === playerId);
   if (mine.length === 0) {
@@ -62,6 +74,13 @@ export function SentenceChipsForSeat({
           remainingOwnerTurns={entry.remainingOwnerTurns}
           isUpgraded={entry.isUpgraded}
           compact={compact}
+          {...(onInspect !== undefined
+            ? {
+                onInspect: () => {
+                  onInspect(entry.isUpgraded);
+                },
+              }
+            : {})}
         />
       ))}
     </div>

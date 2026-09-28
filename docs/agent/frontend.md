@@ -15,7 +15,7 @@ a fork. `App.tsx` is the phase router; Home, Lobby, Table, End, and Inbox live u
 (AGENTS.md §12) — same commit as the code, never a later cleanup. Intents, payloads, and
 visibility rules stay server-side; Lots 49–64 are the current table (kit pick, occupancy 2–8,
 no Reset help, horizontal card scroll, Spy 2/4, weaker-answer mutual, listed attack damage,
-inspect from log/queue, card lives under actives, Game over full Feedback ticket
+inspect from log/queue/Sentence chip, card lives under actives, Game over full Feedback ticket
 on every hub leave, table `!` not the word Feedback, lobby Ready / Kick, same-room
 Play again, join-by-code spectate + claim picker, Lot 58 shop UP icons / pool buy /
 Unspy / Invisibility turns badge, Lot 59 compact Draw/Unspy dock with no word
@@ -142,7 +142,7 @@ rules above are unchanged — this section only covers how the client looks.
   body (3 specials, Draw 5–100 weighted, new Roulette grant tables) instead
   of adding a `lot-64` wave. Lot 63 items: Sentence, Imposition, Super
   Absorber. Lot 63 additions: Gambler kit, Roulette special. Sentence chips sit
-  on the caster (remaining turns in red). Play / later caster ticks / fire flash
+  on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. The dialog lists history
   (every catalog entry). **Update the latest catalog entry in the same commit
   as player-visible work.** No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

@@ -131,7 +131,7 @@ Engine / DoD → `technical_spec_v1.md`. Playbooks: `docs/agent/frontend.md`, `p
 
 117 of 117 tasks done through Lot 60. Lot 61 is done (127 of 127 through
 Lot 61). Lot 62 is done (134 of 134). Lot 63 is done (140 of 140).
-Lot 64 is done (146 of 146). Lot 65 is in progress (148 of 150).
+Lot 64 is done (146 of 146). Lot 65 is in progress (149 of 150).
 Lot 56 opened 2026-09-09. Lot 57 opened 2026-09-14; lobby/rematch add-on 2026-09-15.
 Lot 58 opened 2026-09-15. Lot 59 opened 2026-09-15. Lot 60 opened 2026-09-15
 (retargeted from Lot 59 after the dock landed on main). Lot 61 opened
@@ -165,7 +165,7 @@ opened 2026-09-21. Lot 65 opened 2026-09-28.
 | 62 · Overview metrics modules | 7 | 7 |
 | 63 · The Gambler + Roulette | 6 | 6 |
 | 64 · Gambler kit tweaks | 6 | 6 |
-| 65 · Player feedback bugs | 4 | 2 |
+| 65 · Player feedback bugs | 4 | 3 |
 
 
 ---
@@ -580,7 +580,7 @@ flipped between stacked and side-by-side.
 |---|---|---|---|---|---|
 | L65-01 | Spy-gate Gambler `drawGain` (view, per-recipient log, live `ACTION_PLAYED`). Hidden Draw chips fly one point. Bust stays public. Decisions + `protocol.md`. **Acceptance:** a stranger's view and log omit `drawGain`; self and Spy still see 47; hidden chip count is 1; `pnpm verify` green. | M | **High** | — | Done |
 | L65-02 | Invisible living seats are not legal single-target or Assassin multi-attack targets. `perform-action` rejects them with `invalid-target`. AoE cards stay playable; immune resolve and skipped ticks stay. **Acceptance:** an attack aimed at an invisible seat is absent from legal actions and rejected if sent; `pnpm verify` green. | M | **High** | — | Done |
-| L65-03 | Activated Sentence chip opens the existing catalog inspect (own seat and opponents), including upgrade tier. **Acceptance:** the chip is a button and the table wires inspect; `pnpm verify` green. | S | Low | — | To do |
+| L65-03 | Activated Sentence chip opens the existing catalog inspect (own seat and opponents), including upgrade tier. **Acceptance:** the chip is a button and the table wires inspect; `pnpm verify` green. | S | Low | — | Done |
 | L65-04 | Card-band side-by-side uses hysteresis so a small height change does not flip Hand and Specials. Both layouts stay. **Acceptance:** crossing back to stacked needs a clearly taller band; `pnpm verify` green. | S | Low | — | To do |
 
 ---

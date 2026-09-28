@@ -1211,7 +1211,7 @@ function TableScreenInner({
   function onInspectCatalogCard(
     cardId: CardId,
     isUpgraded: boolean,
-    source: 'log' | 'queue',
+    source: 'log' | 'queue' | 'active',
   ): void {
     setDialog({
       kind: 'inspect',
@@ -1366,6 +1366,9 @@ function TableScreenInner({
               onInspectActive={(effectId) => {
                 onInspectActive(player.id, effectId);
               }}
+              onInspectSentence={(isUpgraded) => {
+                onInspectCatalogCard('sentence', isUpgraded, 'active');
+              }}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {
                     onInspectReveal: () => {
@@ -1440,6 +1443,9 @@ function TableScreenInner({
               }}
               onInspectPending={(effect) => {
                 onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
+              }}
+              onInspectSentence={(isUpgraded) => {
+                onInspectCatalogCard('sentence', isUpgraded, 'active');
               }}
               {...(onDeactivatePersistent !== undefined
                 ? {
@@ -1610,6 +1616,10 @@ function TableScreenInner({
               onInspectActive={(effectId) => {
                 setChromeOpen(null);
                 onInspectActive(player.id, effectId);
+              }}
+              onInspectSentence={(isUpgraded) => {
+                setChromeOpen(null);
+                onInspectCatalogCard('sentence', isUpgraded, 'active');
               }}
               {...(player.eliminationReveal !== undefined || player.spied !== undefined
                 ? {
