@@ -173,7 +173,9 @@ export async function buildActionLogWorkbook(
           '',
           '',
           '',
-          event.effectId,
+          event.playerDeltas !== undefined
+            ? JSON.stringify({ effectId: event.effectId, playerDeltas: event.playerDeltas })
+            : event.effectId,
         ]);
         break;
       case 'playerEliminated':
@@ -326,6 +328,28 @@ export async function buildActionLogWorkbook(
           '',
           '',
           '',
+        ]);
+        break;
+      case 'resourceChange':
+        eventsSheet.addRow([
+          event.kind,
+          event.turnSequence,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          event.playerId,
+          '',
+          '',
+          JSON.stringify({
+            duplicated: event.duplicated === true,
+            deltas: event.deltas,
+          }),
         ]);
         break;
       default: {

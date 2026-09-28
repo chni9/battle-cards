@@ -147,7 +147,9 @@ rules above are unchanged — this section only covers how the client looks.
   Imposition, Super Absorber, plus Gambler and Roulette (no `lot-64` id — those
   tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is the open
   update: private Draw, invisible players are not targets, Sentence chip
-  inspect, hand layout stays put. Sentence chips sit
+  inspect, hand layout stays put, point chips cap at 50, your kit portrait
+  is one step larger, and the action log shows icon-only resource nets
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

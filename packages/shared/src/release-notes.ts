@@ -69,6 +69,26 @@ const RELEASE_NOTES_CATALOG = [
         after: 'They keep their places unless there is clearly more room.',
       },
       {
+        before: 'A huge point gain flew one chip per point and could freeze the table.',
+        after: 'Point chips stop at 50. The number next to them still shows the real total.',
+      },
+      {
+        before: 'Your own kit portrait was the same size as an opponent’s in landscape.',
+        after: 'Your kit portrait is a step larger. Opponents stay the same size.',
+      },
+      {
+        before:
+          'The action log named a card but not what that play spent or gained.',
+        after:
+          'Each play ends with the lives, points, upgrade points, or shield that changed, as a green gain or a red loss next to the icon. A Draw or an upgrade-point purchase you cannot see shows ? instead of the point total. A ticking card that changes resources adds a short line with the player’s name and those icons.',
+      },
+      {
+        before:
+          'Selling or buying a card showed the payout or the price, which identified the card. A hit or a steal did not show what changed when it resolved.',
+        after:
+          'A sale or a shop purchase you cannot see no longer shows that payout or price. When an attack hits or a steal resolves, the lives, points, upgrade points, or shield that changed appear on that line.',
+      },
+      {
         cardId: 'imposition' as const,
         before: 'Opponents with 2 points (4 if upgraded) paid that many points.',
         after:

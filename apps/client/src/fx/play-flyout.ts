@@ -71,6 +71,7 @@ function tokenRect(center: DomRectLite, size = 28): DomRectLite {
  * Token chip flyout — gain: action log → resource; loss: resource → action log.
  * Optional `playerId` scopes the resource origin to an opponent seat (L51-09).
  * Callers enqueue one event per unit of |Δ| with staggered delayMs.
+ * Point chips stop at `MAX_POINT_FLYOUTS` so a huge gain cannot stall the table.
  */
 export function tokenFlyoutResourceSelector(
   kind: ResourceKind,
