@@ -13,6 +13,9 @@
  * refreshed, `weightsHash` unchanged (no new weight constants).
  * Designer 2026-09-21: truncated-geometric Draw (P(n > 20) ≤ 0.10) changes
  * Gambler EV — refresh that kit’s trace only; `weightsHash` unchanged.
+ * L66-01: rule changes (wipe instead of bust death, targeted Upgrade
+ * Point Thief, Imposition floor) change simulated games — traces refreshed,
+ * `weightsHash` unchanged (no new weight constants).
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';

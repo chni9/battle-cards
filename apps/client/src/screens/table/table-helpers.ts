@@ -7,6 +7,7 @@ import {
   ATTACK_CARD_IDS,
   formatCardEffectText,
   getCard,
+  isUpgradeableActiveCardId,
   type CardInstance,
   type KitId,
   type PlayingStateView,
@@ -82,7 +83,7 @@ export function buildRewardChoice(
 
 /** Cards that Table sends with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning, base Card Thief). */
 export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean {
-  if (cardId === 'card-thief') {
+  if (cardId === 'card-thief' || cardId === 'upgrade-point-thief') {
     return !isUpgraded;
   }
 
@@ -94,6 +95,37 @@ export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean
     cardId === 'cloning' ||
     cardId === 'curse'
   );
+}
+
+/**
+ * Upgrade control on an already-active card or your ticking Sentence.
+ * Hand copies keep the actions dialog. Returns the `upgradeCard` instance id.
+ */
+export function activeUpgradeInstanceId(
+  view: PlayingStateView,
+  instance: CardInstance,
+): string | null {
+  if (instance.isUpgraded || view.self.upgradePoints < 1) {
+    return null;
+  }
+
+  if (instance.cardId === 'sentence') {
+    const sentence = view.pendingSentences.find(
+      (entry) => entry.id === instance.instanceId && entry.sourcePlayerId === view.you,
+    );
+
+    return sentence !== undefined && !sentence.isUpgraded ? sentence.id : null;
+  }
+
+  if (!isUpgradeableActiveCardId(instance.cardId)) {
+    return null;
+  }
+
+  const effect = view.self.activePersistentEffects.find(
+    (entry) => entry.id === instance.instanceId,
+  );
+
+  return effect !== undefined && !effect.isUpgraded ? effect.id : null;
 }
 
 /** Card Transformer needs a hand card to consume (`consumeInstanceId`). */

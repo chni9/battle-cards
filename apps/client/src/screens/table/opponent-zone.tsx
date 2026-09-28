@@ -5,7 +5,11 @@
  * Resources stack beside the portrait; activated cards sit under it (L51-10).
  */
 
-import type { PlayingStateView, PublicPlayerView } from '@card-battle/shared';
+import type {
+  PendingSentenceView,
+  PlayingStateView,
+  PublicPlayerView,
+} from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { BotSeatLabel } from '../../design/components/bot-seat-label';
@@ -29,7 +33,7 @@ export interface OpponentZoneProps {
   view: PlayingStateView;
   player: PublicPlayerView;
   onInspectActive?: (effectId: string) => void;
-  onInspectSentence?: (isUpgraded: boolean) => void;
+  onInspectSentence?: (sentence: PendingSentenceView) => void;
   /** Spy or death reveal — opens the opponent info dialog. */
   onInspectReveal?: () => void;
   /** Tutorial spotlight after Spy (L45-05). */

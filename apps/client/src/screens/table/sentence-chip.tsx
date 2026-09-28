@@ -52,7 +52,7 @@ export interface SentenceChipsForSeatProps {
   playerId: string;
   pendingSentences: readonly PendingSentenceView[];
   compact?: boolean;
-  onInspect?: (isUpgraded: boolean) => void;
+  onInspect?: (sentence: PendingSentenceView) => void;
 }
 
 export function SentenceChipsForSeat({
@@ -68,16 +68,16 @@ export function SentenceChipsForSeat({
 
   return (
     <div data-zone="sentence-chips" className="flex items-start gap-0.5">
-      {mine.map((entry, index) => (
+      {mine.map((entry) => (
         <SentenceChip
-          key={`${entry.sourcePlayerId}-${String(index)}`}
+          key={entry.id}
           remainingOwnerTurns={entry.remainingOwnerTurns}
           isUpgraded={entry.isUpgraded}
           compact={compact}
           {...(onInspect !== undefined
             ? {
                 onInspect: () => {
-                  onInspect(entry.isUpgraded);
+                  onInspect(entry);
                 },
               }
             : {})}

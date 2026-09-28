@@ -41,13 +41,13 @@ describe('Imposition (L63-04)', () => {
     expect(a.activePersistentEffects).toHaveLength(1);
   });
 
-  it('transfers 2 points when the target can pay', () => {
+  it('takes only points above 9, capped at 2, and does not skip the turn', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
         { id: 'b', nickname: 'B' },
       ],
-      seed: 'l63-04-pts',
+      seed: 'l66-imposition-floor',
     });
     const a = state.players.find((player) => player.id === 'a');
     const b = state.players.find((player) => player.id === 'b');
@@ -56,26 +56,33 @@ describe('Imposition (L63-04)', () => {
       throw new Error('missing seats');
     }
 
-    a.specialCards = [{ instanceId: 'imp-1', cardId: 'imposition', isUpgraded: false }];
-    a.points = 6;
-    a.pendingEffects = [];
+    a.activePersistentEffects = [
+      { id: 'imp', cardId: 'imposition', isUpgraded: false, counter: 2, targetPlayerId: null },
+    ];
+    a.points = 0;
+    b.points = 9;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(9);
+    expect(a.points).toBe(0);
+
     b.points = 10;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(9);
+    expect(a.points).toBe(1);
+
+    b.points = 12;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(10);
+    expect(a.points).toBe(3);
+
     b.pendingEffects = [];
-
-    state.currentTurnPlayerId = a.id;
-    expect(
-      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'imp-1' }).ok,
-    ).toBe(true);
-
+    b.hand = [];
     state.currentTurnPlayerId = b.id;
-    const before = b.points;
     expect(performTurnAction(state, b.id, { type: 'draw' }).ok).toBe(true);
-    expect(b.points).toBe(before + 1 - 2);
-    expect(a.points).toBe(2);
-    expect(b.lives).toBeGreaterThan(0);
+    expect(state.currentTurnPlayerId).not.toBe(b.id);
   });
 
-  it('upgraded skips below 4 points and takes 4 when they can pay', () => {
+  it('upgraded cap is 4 points above 9', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -96,15 +103,15 @@ describe('Imposition (L63-04)', () => {
     a.points = 0;
     a.lives = 10;
     b.lives = 10;
-    b.points = 3;
+    b.points = 9;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(3);
+    expect(b.points).toBe(9);
     expect(b.lives).toBe(10);
     expect(a.points).toBe(0);
 
-    b.points = 4;
+    b.points = 14;
     applyPersistentEffects(state, b.id);
-    expect(b.points).toBe(0);
+    expect(b.points).toBe(10);
     expect(b.lives).toBe(10);
     expect(a.points).toBe(4);
   });

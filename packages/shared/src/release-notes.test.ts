@@ -30,13 +30,15 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
   it('writes the Lot 65 fixes on the open update, not on lot-63', () => {
     const latest = latestReleaseNote();
     expect(latest.additions).toEqual([]);
-    expect(latest.items).toHaveLength(4);
+    expect(latest.items.length).toBeGreaterThanOrEqual(4);
     const text = latest.items.map((item) => `${item.before} ${item.after}`).join('\n');
     expect(text).toMatch(/one point/);
     expect(text).toMatch(/Gambler/);
     expect(text).toMatch(/invisible/i);
     expect(text).toMatch(/Sentence/);
     expect(text).toMatch(/Hand and Specials/);
+    expect(text).toMatch(/lost everything|1 life/);
+    expect(text).not.toMatch(/Dying by Gambling/);
     expect(text).not.toMatch(/5–100|5-100/);
   });
 

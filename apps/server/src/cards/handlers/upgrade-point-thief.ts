@@ -1,35 +1,64 @@
 /**
- * Upgrade Point Thief — rules spec §5, backlog L21-02.
+ * Upgrade Point Thief — rules spec §5, backlog L21-02, designer 2026-09-28.
  *
- * Queues one pending effect per alive opponent. Resolve: steal all unspent UP,
- * strip upgrades (hand, specials, shield, active persistents — #V4-17), grant 1 UP
- * per strip; upgraded also steals all points. Not counterable (#V4-33).
+ * Base: one chosen living opponent. Upgraded: every living opponent.
+ * Resolve steals unspent upgrade points and strips upgrades (1 UP per strip).
+ * Neither tier steals points. Invisible living seats are not targets (L65-02).
+ * Not counterable (#V4-33).
  */
 
 import type { GameState } from '@card-battle/shared';
 
+import { isIllegalOpposingTarget } from '../../engine/specials/is-invisible';
+import { findPlayer } from '../../engine/turn/advance-turn';
 import { queueEffect } from '../../engine/turn/queue-effect';
 import type { CardHandler, EffectContext } from '../handler';
 
-function aliveOpponents(state: GameState, sourcePlayerId: string): string[] {
+function livingTargets(state: GameState, sourcePlayerId: string): string[] {
   return state.players
-    .filter((player) => !player.isEliminated && player.id !== sourcePlayerId)
+    .filter(
+      (player) =>
+        player.id !== sourcePlayerId &&
+        !player.isEliminated &&
+        !isIllegalOpposingTarget(player),
+    )
     .map((player) => player.id);
 }
 
 export const upgradePointThiefHandler: CardHandler = {
   canPlay(context: EffectContext): boolean {
-    return context.targetPlayerId === null;
+    const { state, sourcePlayerId, card, targetPlayerId } = context;
+
+    if (card.isUpgraded) {
+      return targetPlayerId === null && livingTargets(state, sourcePlayerId).length > 0;
+    }
+
+    if (targetPlayerId === null || targetPlayerId === sourcePlayerId) {
+      return false;
+    }
+
+    const target = findPlayer(state, targetPlayerId);
+
+    return (
+      target !== undefined &&
+      !target.isEliminated &&
+      !isIllegalOpposingTarget(target)
+    );
   },
 
   play(context: EffectContext): void {
-    const { state, sourcePlayerId, card } = context;
+    const { state, sourcePlayerId, card, targetPlayerId } = context;
+    const targets = card.isUpgraded
+      ? livingTargets(state, sourcePlayerId)
+      : targetPlayerId === null
+        ? []
+        : [targetPlayerId];
 
-    for (const targetPlayerId of aliveOpponents(state, sourcePlayerId)) {
+    for (const targetId of targets) {
       queueEffect({
         state,
         sourcePlayerId,
-        targetPlayerId,
+        targetPlayerId: targetId,
         cardId: 'upgrade-point-thief',
         isUpgraded: card.isUpgraded,
       });

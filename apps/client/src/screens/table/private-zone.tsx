@@ -5,6 +5,7 @@
 
 import type {
   PendingEffectView,
+  PendingSentenceView,
   PlayingStateView,
   PublicPlayerView,
   TutorialTourHighlight,
@@ -44,7 +45,7 @@ export interface PrivateZoneProps {
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   onInspectPending?: (effect: PendingEffectView) => void;
-  onInspectSentence?: (isUpgraded: boolean) => void;
+  onInspectSentence?: (sentence: PendingSentenceView) => void;
   highlightedInstanceIds?: readonly string[];
   /** Board-tour region (client overlay; not a script highlight). */
   zoneHighlight?: TutorialTourHighlight;

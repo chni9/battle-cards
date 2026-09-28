@@ -77,5 +77,10 @@
  * also carries `drawGain` (omit on bust); `EliminationReason` `'gambling'`.
  * Older clients cannot read the new contract. Exception to the V6
  * single-bump lock (same class as L49 / L56–L63); see decisions.md.
+ *
+ * 39 → 40 (designer 2026-09-28 / Lot 66): each public `PendingSentence` carries
+ * a stable `id` so `upgradeCard` can target a ticking Sentence. Older clients
+ * cannot read that id. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L64); see decisions.md.
  */
-export const PROTOCOL_VERSION = 39;
+export const PROTOCOL_VERSION = 40;

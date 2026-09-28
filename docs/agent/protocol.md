@@ -6,7 +6,8 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **39** (Gambler `drawGain` is
+> **Status:** current `PROTOCOL_VERSION` is **40** (`PendingSentence.id` is
+> public so `upgradeCard` can target a ticking Sentence). Gambler `drawGain` is
 > Spy-gated since L65-01, no bump; `'gambling'` elimination; `factory`
 > renamed `roulette` at 38;
 > public `pendingSentences` and Sentence countdown / fire log kinds at 37;
@@ -61,7 +62,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
-| Ticking Sentence countdown | **Public** as `pendingSentences` plus `sentenceCountdown` / `sentenceFired` log kinds (PROTOCOL_VERSION 37). Remaining turns are not card-lives |
+| Ticking Sentence countdown | **Public** as `pendingSentences` plus `sentenceCountdown` / `sentenceFired` log kinds (PROTOCOL_VERSION 37). Each entry has a stable `id` (PROTOCOL_VERSION 40) so `upgradeCard` can target it. Remaining turns are not card-lives |
 | Active persistent effects (Imposition, Points Generator) | **Public** on every seat (PROTOCOL_VERSION 19) |
 | Combat Shield is up (presence + upgrade tier only) | **Public** as `activeShield` (PROTOCOL_VERSION 20); remaining points stay private |
 | Attack Thief block armed (presence only) | **Public** as `activeAttackBlock`; exact `attackBlockCharges` stays private on self (tech v4 §5.1 / L23-03) |
@@ -75,8 +76,8 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
 | Who currently spies the recipient | **Public** as `PublicPlayerView.spyingOnYou` on **living** viewers with a real matrix row (PROTOCOL_VERSION 34). Never on `isYou`. Never inferred from the eliminated-spectator overlay |
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
-| Living Gambler Draw payout | **Spy-gated** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01, narrowed L65-01). Self, Spy, eliminated spectator, and Stay walk-in only. Undefined for other kits, eliminated seats, and everyone else. Successful `actionPlayed` draw carries `drawGain` for those same recipients; omit on bust and for everyone who cannot already see that seat. The bust itself stays public |
-| Draw-bust elimination reason | **Public** as `EliminationReason` `'gambling'` (PROTOCOL_VERSION 39 / L64-01) |
+| Living Gambler Draw payout | **Spy-gated** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01, narrowed L65-01). Self, Spy, eliminated spectator, and Stay walk-in only. Undefined for other kits, eliminated seats, and everyone else. Successful `actionPlayed` draw carries `drawGain` for those same recipients; omit on a wipe and for everyone who cannot already see that seat. The wipe stays public as `drawBust` |
+| Draw wipe | **Public** as `actionPlayed.drawBust` (no second field). The table line is `{nickname} gambled too much and lost everything`. Draw no longer emits `EliminationReason` `'gambling'`. That reason remains on the union for older logs |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's

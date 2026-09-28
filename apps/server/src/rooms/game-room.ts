@@ -197,6 +197,7 @@ import {
   recapHumanSeats,
   reformingLobbySeats,
   resolveReformingHost,
+  shouldInstantSoloRematch,
   shouldPersistFinishedGame,
 } from './play-again-rules';
 import { ThinkTimeAccumulator } from './think-time';
@@ -474,40 +475,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         return;
       }
 
-      this.reforming = false;
-      this.playAgainOptedIn.clear();
-      this.matchPersisted = false;
-      this.winnerPlayerId = null;
-      this.hasStarted = true;
-      this.startedAtMs = Date.now();
-      this.eliminations = [];
-      this.matchHostSessionId = hostSessionId;
-      this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
-      const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
-      const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
-      this.gameState = createInitialState(
-        forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
-      );
-      this.thinkTime.clear();
-      if (this.playKind === 'tutorial') {
-        const tutorialSeats = this.tutorialSeatIds();
-
-        if (tutorialSeats !== null) {
-          applyTutorialSetup(this.gameState, tutorialSeats);
-          this.tutorialIndex = 0;
-        }
-      }
-      this.actionTakenThisTurn = false;
-      this.actionLog = [];
-      this.refreshJoinLock();
-      console.log(
-        `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
-      );
-      this.refreshAutoDispose();
-      this.refreshJoinLock();
-      this.beginTurnOrAbsentAutoPlay();
-      this.sendStateToEveryone();
-      this.broadcastTurnStarted();
+      this.startMatch();
     },
 
     [ADD_BOT]: (client: GameClient, payload: unknown): void => {
@@ -1142,6 +1110,50 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.sendStateToEveryone();
   }
 
+  /**
+   * Deal a new match on the current seats. Host Start and a solo Play again
+   * both land here. Solo keeps bot difficulties on the seats and forces the
+   * human kit via `kitSelections` before this call.
+   */
+  private startMatch(): void {
+    const hostSessionId = this.hostSessionId;
+
+    this.reforming = false;
+    this.playAgainOptedIn.clear();
+    this.matchPersisted = false;
+    this.winnerPlayerId = null;
+    this.hasStarted = true;
+    this.startedAtMs = Date.now();
+    this.eliminations = [];
+    this.matchHostSessionId = hostSessionId;
+    this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
+    const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
+    const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
+    this.gameState = createInitialState(
+      forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
+    );
+    this.thinkTime.clear();
+    if (this.playKind === 'tutorial') {
+      const tutorialSeats = this.tutorialSeatIds();
+
+      if (tutorialSeats !== null) {
+        applyTutorialSetup(this.gameState, tutorialSeats);
+        this.tutorialIndex = 0;
+      }
+    }
+    this.actionTakenThisTurn = false;
+    this.actionLog = [];
+    this.refreshJoinLock();
+    console.log(
+      `[${this.roomId}] game started — ${this.gameState.players.map((player) => player.nickname).join(', ')}`,
+    );
+    this.refreshAutoDispose();
+    this.refreshJoinLock();
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
   private handlePlayAgain(client: GameClient): void {
     const rejection = canPlayAgain({
       playKind: this.playKind,
@@ -1155,6 +1167,20 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const playerId = this.playerIdFor(client);
+
+    if (
+      shouldInstantSoloRematch(this.seats, playerId) &&
+      this.gameState !== null
+    ) {
+      const kitId = this.gameState.players.find((player) => player.id === playerId)?.kitId;
+
+      if (kitId !== undefined) {
+        this.kitSelections.set(playerId, kitId);
+      }
+
+      this.startMatch();
+      return;
+    }
 
     if (this.playAgainOptedIn.has(playerId)) {
       this.sendStateTo(client);
