@@ -868,4 +868,47 @@ describe('action log resource suffixes', () => {
       'text-cta-green',
     );
   });
+
+  it('shows resolve-time life loss on the target and both sides of a steal', () => {
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-hit',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'basic-attack',
+          isUpgraded: false,
+          livesLost: 1,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 2,
+          playerDeltas: [{ playerId: 'b', deltas: [{ kind: 'life', amount: -1 }] }],
+        },
+        nick,
+      ),
+    ).toBe("Alice's Basic attack hits Bob \u22121");
+
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
+          effectId: 'e-thief',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'thief',
+          isUpgraded: false,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'applied',
+          turnSequence: 4,
+          playerDeltas: [
+            { playerId: 'b', deltas: [{ kind: 'point', amount: -5 }] },
+            { playerId: 'a', deltas: [{ kind: 'point', amount: 5 }] },
+          ],
+        },
+        nick,
+      ),
+    ).toBe('Thief from Alice resolves on Bob \u22125 Alice +5');
+  });
 });

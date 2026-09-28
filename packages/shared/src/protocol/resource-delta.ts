@@ -5,6 +5,7 @@
 
 import type { PublicActionKind } from './messages';
 import type {
+  LogPlayerResourceDelta,
   LogResourceDelta,
   LogResourceDirection,
   LogResourceKind,
@@ -110,10 +111,21 @@ function sortDeltas(deltas: readonly LogResourceDelta[]): LogResourceDelta[] {
   );
 }
 
+export function copyPlayerDeltas(
+  deltas: readonly LogPlayerResourceDelta[] | undefined,
+): { playerDeltas: readonly LogPlayerResourceDelta[] } | Record<string, never> {
+  if (deltas === undefined || deltas.length === 0) {
+    return {};
+  }
+
+  return { playerDeltas: deltas };
+}
+
 /**
  * Per-recipient fog for a play line. Self / Spy keep the real nets.
  * Unspied Draw conceals the point gain (`+?`) and hides a bust's life total.
  * Unspied buy-upgrade conceals the point price (`−?`) and keeps `+1` upgrade point.
+ * Unspied card sales omit the payout: the amount and the resource kind identify the card.
  */
 export function fogPlayedResourceDeltas(
   action: PublicActionKind,
@@ -143,6 +155,10 @@ export function fogPlayedResourceDeltas(
 
   if (action === 'buyUpgradePoint') {
     return concealKind(current, 'point', 'loss');
+  }
+
+  if (action === 'sellCard') {
+    return undefined;
   }
 
   return current.length > 0 ? current : undefined;

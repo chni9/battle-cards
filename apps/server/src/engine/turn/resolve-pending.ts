@@ -13,6 +13,7 @@ import {
   type ActionResolutionOutcome,
   type CardId,
   type GameState,
+  type LogPlayerResourceDelta,
   type PendingEffect,
   type Player,
 } from '@card-battle/shared';
@@ -37,6 +38,11 @@ import {
   type CurseTransfer,
 } from '../specials/transfer-curses';
 import { findPlayer } from './advance-turn';
+import {
+  duplicatedGainMark,
+  playerDeltasSince,
+  snapshotAllResources,
+} from './resource-log';
 import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
@@ -51,10 +57,33 @@ export interface ResolvedEffect {
   outcome: ResolveOutcome;
   /** Curse instances moved when this attack dealt ≥1 life (designer 2026-08-07). */
   curseTransfers?: CurseTransfer[];
+  /**
+   * Per-seat nets this effect applied. Duplicator copies are omitted so the
+   * public resolve line does not identify that kit.
+   */
+  playerDeltas?: readonly LogPlayerResourceDelta[];
 }
 
 const COUNTERABLE_CARD_IDS = new Set<CardId>(['spy', 'thief']);
 const SUICIDE_OPPONENT_LIFE_LOSS = 5;
+
+/** Target, then source, then other seats. A steal must not collapse into one net. */
+function orderResolvePlayerDeltas(
+  effect: PendingEffect,
+  deltas: readonly LogPlayerResourceDelta[],
+): LogPlayerResourceDelta[] {
+  const rank = (playerId: string): number => {
+    if (playerId === effect.targetPlayerId) {
+      return 0;
+    }
+    if (playerId === effect.sourcePlayerId) {
+      return 1;
+    }
+    return 2;
+  };
+
+  return [...deltas].sort((left, right) => rank(left.playerId) - rank(right.playerId));
+}
 
 function isCounterableCardId(cardId: CardId): boolean {
   return COUNTERABLE_CARD_IDS.has(cardId);
@@ -431,9 +460,22 @@ export function resolvePendingEffects(
   const appliedVolleyKeys = new Set<string>();
 
   for (const effect of ready) {
+    const beforeResources = snapshotAllResources(state);
+    const gainMark = duplicatedGainMark(state);
+    const pushResolved = (entry: ResolvedEffect): void => {
+      const playerDeltas = orderResolvePlayerDeltas(
+        effect,
+        playerDeltasSince(state, beforeResources, gainMark),
+      );
+      resolved.push({
+        ...entry,
+        ...(playerDeltas.length > 0 ? { playerDeltas } : {}),
+      });
+    };
+
     // Invisibility — #V4-9: all opposing pending resolve as immune before mutual cancel.
     if (playerIsInvisible(player)) {
-      resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+      pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
       continue;
     }
 
@@ -443,13 +485,13 @@ export function resolvePendingEffects(
 
     if (isAttackCardId(effect.cardId)) {
       if (cancelIncomingIds.has(effect.id)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
       // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
       if (consumeAttackBlockCharge(player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
         continue;
       }
 
@@ -476,7 +518,7 @@ export function resolvePendingEffects(
             cancelIncomingIds.add(id);
           }
 
-          resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
           continue;
         }
 
@@ -503,7 +545,7 @@ export function resolvePendingEffects(
           ? transferCursesFromAttacker(state, effect.sourcePlayerId, player.id)
           : [];
 
-      resolved.push({
+      pushResolved({
         effect,
         livesLost,
         shieldAbsorbed,
@@ -513,12 +555,12 @@ export function resolvePendingEffects(
       continue;
     } else if (effect.cardId === 'thief' || effect.cardId === 'spy') {
       if (cancelReciprocalCounter(state, player, effect)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
         continue;
       }
 
       if (isImmuneTo(player, effect.cardId)) {
-        resolved.push({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
+        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'immune' });
         continue;
       }
 
@@ -556,7 +598,7 @@ export function resolvePendingEffects(
         );
       }
       outcome = 'applied';
-      resolved.push({
+      pushResolved({
         effect,
         livesLost: livesBefore,
         shieldAbsorbed: 0,
@@ -565,7 +607,7 @@ export function resolvePendingEffects(
       continue;
     }
 
-    resolved.push({
+    pushResolved({
       effect,
       livesLost,
       shieldAbsorbed,

@@ -9,7 +9,9 @@ import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { grantSpy } from '../../protocol/visibility-matrix';
 import { makeCounterEffect } from '../../testing/factories';
 import { createInitialState } from '../create-initial-state';
+import { createRng } from '../rng';
 import { performTurnAction } from './perform-action';
+import { resolvePendingEffects } from './resolve-pending';
 
 function twoPlayers(seed: string, kits?: readonly [KitId, KitId]) {
   const state = createInitialState({
@@ -328,5 +330,143 @@ describe('per-recipient Draw and buy-upgrade fog', () => {
         { kind: 'upgradePoint', amount: 1 },
       ],
     });
+  });
+
+  it('omits a card-sale payout unless the viewer sees the seller', () => {
+    const { state, alice } = twoPlayers('log-sell-card');
+    alice.hand = [{ instanceId: 'ba-sell', cardId: 'basic-attack', isUpgraded: false }];
+    alice.points = 0;
+
+    const sold = performTurnAction(state, alice.id, {
+      type: 'sellCard',
+      instanceId: 'ba-sell',
+    });
+    expect(sold.ok).toBe(true);
+    if (!sold.ok) {
+      return;
+    }
+    expect(sold.actionPlayed.resourceDeltas).toEqual([{ kind: 'point', amount: 1 }]);
+
+    const log = [
+      {
+        kind: 'actionPlayed' as const,
+        actorPlayerId: alice.id,
+        action: 'sellCard' as const,
+        turnSequence: sold.actionPlayed.turnSequence,
+        ...(sold.actionPlayed.resourceDeltas !== undefined
+          ? { resourceDeltas: sold.actionPlayed.resourceDeltas }
+          : {}),
+      },
+    ];
+    const hidden = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(hidden.actionLog[0]).not.toHaveProperty('resourceDeltas');
+
+    const self = buildPlayingViewFor({
+      recipientSessionId: alice.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(self.actionLog[0]).toMatchObject({
+      resourceDeltas: [{ kind: 'point', amount: 1 }],
+    });
+  });
+});
+
+describe('resolve-line resource nets', () => {
+  it('records the target life loss on an attack and both sides of a Thief', () => {
+    const attack = twoPlayers('log-resolve-atk', ['warrior', 'kamikaze']);
+    attack.bob.shield = 0;
+    const lives = attack.bob.lives;
+    attack.bob.pendingEffects = [
+      {
+        id: 'atk',
+        sourcePlayerId: attack.alice.id,
+        targetPlayerId: attack.bob.id,
+        cardId: 'basic-attack',
+        isUpgraded: false,
+        queuedAt: 0,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+    const hit = resolvePendingEffects(attack.state, attack.bob.id, createRng('log-resolve-atk'));
+    expect(attack.bob.lives).toBe(lives - 1);
+    expect(hit[0]?.playerDeltas).toEqual([
+      { playerId: attack.bob.id, deltas: [{ kind: 'life', amount: -1 }] },
+    ]);
+
+    const steal = twoPlayers('log-resolve-thief', ['warrior', 'kamikaze']);
+    steal.bob.points = 12;
+    steal.alice.points = 0;
+    steal.bob.pendingEffects = [
+      {
+        id: 'th',
+        sourcePlayerId: steal.alice.id,
+        targetPlayerId: steal.bob.id,
+        cardId: 'thief',
+        isUpgraded: false,
+        queuedAt: 0,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+    const taken = resolvePendingEffects(steal.state, steal.bob.id, createRng('log-resolve-thief'));
+    expect(taken[0]?.playerDeltas).toEqual([
+      { playerId: steal.bob.id, deltas: [{ kind: 'point', amount: -10 }] },
+      { playerId: steal.alice.id, deltas: [{ kind: 'point', amount: 10 }] },
+    ]);
+  });
+
+  it('keeps a Duplicator copy off the public resolve line', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Carol' },
+      ],
+      seed: 'log-resolve-dup',
+      kitAssignment: ['warrior', 'kamikaze', 'duplicator'],
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const dup = state.players.find((player) => player.id === 'c');
+    if (alice === undefined || bob === undefined || dup === undefined) {
+      throw new Error('missing players');
+    }
+    dup.duplicationActive = true;
+    bob.points = 10;
+    alice.points = 0;
+    const dupPoints = dup.points;
+    bob.pendingEffects = [
+      {
+        id: 'th-dup',
+        sourcePlayerId: alice.id,
+        targetPlayerId: bob.id,
+        cardId: 'thief',
+        isUpgraded: false,
+        queuedAt: 0,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+
+    const resolved = resolvePendingEffects(state, bob.id, createRng('log-resolve-dup'));
+    expect(resolved[0]?.playerDeltas).toEqual([
+      { playerId: bob.id, deltas: [{ kind: 'point', amount: -10 }] },
+      { playerId: alice.id, deltas: [{ kind: 'point', amount: 10 }] },
+    ]);
+    expect(resolved[0]?.playerDeltas?.some((entry) => entry.playerId === dup.id)).toBe(false);
+    expect(dup.points).toBe(dupPoints + 10);
   });
 });

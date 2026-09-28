@@ -68,6 +68,47 @@ export function takeDuplicatedGains(state: GameState): DuplicatedGainRecord[] {
   return list;
 }
 
+export function duplicatedGainMark(state: GameState): number {
+  return duplicatedGains.get(state)?.length ?? 0;
+}
+
+export function duplicatedGainsSince(
+  state: GameState,
+  mark: number,
+): DuplicatedGainRecord[] {
+  return (duplicatedGains.get(state) ?? []).slice(mark);
+}
+
+/**
+ * Per-seat nets since `before`, with Duplicator copies recorded after `mark`
+ * removed. Copies stay in the scratch list for the later Spy-gated line.
+ */
+export function playerDeltasSince(
+  state: GameState,
+  before: ReadonlyMap<string, ResourceNets>,
+  mark: number,
+): { playerId: string; deltas: LogResourceDelta[] }[] {
+  const copies = duplicatedGainsSince(state, mark);
+  const entries: { playerId: string; deltas: LogResourceDelta[] }[] = [];
+
+  for (const player of state.players) {
+    const prior = before.get(player.id);
+    if (prior === undefined) {
+      continue;
+    }
+
+    const raw = deltasFromSnapshots(prior, snapshotPlayerResources(player));
+    const mine = copies.filter((copy) => copy.playerId === player.id);
+    const deltas = subtractDuplicatedGains(raw, mine);
+
+    if (deltas.length > 0) {
+      entries.push({ playerId: player.id, deltas });
+    }
+  }
+
+  return entries;
+}
+
 export function deltasFromSnapshots(before: ResourceNets, after: ResourceNets): LogResourceDelta[] {
   return logResourceDeltasFromNets({
     lives: after.lives - before.lives,

@@ -81,6 +81,12 @@ const RELEASE_NOTES_CATALOG = [
         after:
           'Each play ends with the lives, points, upgrade points, or shield that changed, as a green gain or a red loss next to the icon. A Draw or an upgrade-point purchase you cannot see shows ? instead of the point total. A ticking card that changes resources adds a short line with the player’s name and those icons.',
       },
+      {
+        before:
+          'Selling a card showed the payout, which identified the card. A hit or a steal did not show what changed when it resolved.',
+        after:
+          'A sale you cannot see no longer shows the payout. When an attack hits or a steal resolves, the lives, points, upgrade points, or shield that changed appear on that line.',
+      },
     ],
   },
   {

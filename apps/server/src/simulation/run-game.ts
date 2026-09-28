@@ -3,6 +3,7 @@
  */
 
 import {
+  copyPlayerDeltas,
   copyResourceDeltas,
   toActionPlayedPayload,
   type ActionLogEntryView,
@@ -202,6 +203,7 @@ export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResul
       shieldAbsorbed: resolved.shieldAbsorbed,
       outcome: resolved.outcome,
       turnSequence,
+      ...copyPlayerDeltas(resolved.playerDeltas),
     });
   }
 

@@ -3930,8 +3930,11 @@ Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
 - The play line appends the acting player's immediate resource net, measured
   by snapshot before resolution. Same-resource spend and gain collapse.
   Zeros are omitted. Order: lives, points, upgrade points, shield.
-- Resolve sentences keep the hit or resolve wording and drop written life
-  and shield numbers. Listed attack damage stays on the play line.
+- Resolve lines keep the hit or resolve wording and append the resources
+  that resolution changed, per seat. An attack shows the target's life
+  and shield loss. A steal shows the target's loss and the source's gain;
+  those two are not netted. Listed attack damage stays on the play line.
+  Duplicator copies stay off this suffix.
 - A persistent tick that changes resources adds a public `resourceChange`
   line: player name and icon nets, no card name.
 - Elimination rewards stay masked.
@@ -3943,6 +3946,10 @@ Spy-gated, with no extra field on the live `ACTION_PLAYED` payload.
   unless the viewer sees the actor, who then sees the real life loss.
   Unspied buy-upgrade conceals the point price as `−?` and keeps `+1`
   upgrade point visible.
+- Unspied card sales omit the payout. The amount and the resource kind
+  identify the sold card, including an upgrade-point refund on an upgraded
+  sale. Self and Spy still see the real net. Selling an upgrade point is
+  unchanged: it is not a card.
 - Gains use green `+` and the number. Losses use red `−` and the number.
   No parentheses. The icon keeps its normal art.
 - The stored room log and Excel keep real amounts. The broadcast

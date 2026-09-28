@@ -309,10 +309,10 @@ function LogSegments({
           return (
             <span
               key={`r-${segment.kind}-${String(index)}`}
-              className="ml-1 inline-flex items-center gap-px align-text-bottom"
+              className="ml-1 inline-flex items-center gap-px align-middle leading-none"
               aria-label={segment.spoken}
             >
-              <span aria-hidden className={`font-semibold tabular-nums ${resourceDeltaClass(segment.direction)}`}>
+              <span aria-hidden className={`font-semibold tabular-nums leading-none ${resourceDeltaClass(segment.direction)}`}>
                 {segment.label}
               </span>
               <img
@@ -320,7 +320,7 @@ function LogSegments({
                 alt=""
                 width={12}
                 height={12}
-                className="shrink-0 object-contain"
+                className="size-3 shrink-0 object-contain"
                 aria-hidden
               />
             </span>

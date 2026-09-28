@@ -30,6 +30,7 @@ import {
   DRAW_CARD,
   ERROR_MESSAGE,
   GAME_OVER,
+  copyPlayerDeltas,
   copyResourceDeltas,
   isBotDifficulty,
   toActionPlayedPayload,
@@ -2008,6 +2009,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         shieldAbsorbed: resolved.shieldAbsorbed,
         outcome: resolved.outcome,
         turnSequence,
+        ...copyPlayerDeltas(resolved.playerDeltas),
       });
       this.broadcast(ACTION_RESOLVED, resolved);
     }

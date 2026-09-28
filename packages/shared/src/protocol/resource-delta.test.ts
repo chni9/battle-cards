@@ -67,6 +67,16 @@ describe('fogPlayedResourceDeltas', () => {
     ).toEqual([{ kind: 'life', amount: -14 }]);
   });
 
+  it('omits an unspied card-sale payout and keeps it for a viewer who sees the seller', () => {
+    const payout = [
+      { kind: 'point' as const, amount: 6 },
+      { kind: 'upgradePoint' as const, amount: 1 },
+    ];
+    expect(fogPlayedResourceDeltas('sellCard', payout, false, false)).toBeUndefined();
+    expect(fogPlayedResourceDeltas('sellCard', [{ kind: 'life', amount: 1 }], false, false)).toBeUndefined();
+    expect(fogPlayedResourceDeltas('sellCard', payout, true, false)).toEqual(payout);
+  });
+
   it('conceals an unspied upgrade-point price and keeps the upgrade point', () => {
     expect(
       fogPlayedResourceDeltas(

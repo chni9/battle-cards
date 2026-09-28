@@ -173,7 +173,9 @@ export async function buildActionLogWorkbook(
           '',
           '',
           '',
-          event.effectId,
+          event.playerDeltas !== undefined
+            ? JSON.stringify({ effectId: event.effectId, playerDeltas: event.playerDeltas })
+            : event.effectId,
         ]);
         break;
       case 'playerEliminated':

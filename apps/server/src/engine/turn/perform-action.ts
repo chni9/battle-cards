@@ -14,6 +14,7 @@ import {
   type ActionReject,
   type ActionResolutionOutcome,
   type CardId,
+  type LogPlayerResourceDelta,
   type LogResourceDelta,
   type ResourceChangeLogEntry,
   type CardInstance,
@@ -142,6 +143,8 @@ export interface ActionResolvedEvent {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
+  /** Per-seat nets this resolution applied. Omit when nothing changed. */
+  playerDeltas?: readonly LogPlayerResourceDelta[];
 }
 
 export interface TurnResult {
@@ -1713,6 +1716,9 @@ function toResolvedEvents(resolved: ResolvedEffect[]): ActionResolvedEvent[] {
     livesLost: entry.livesLost,
     shieldAbsorbed: entry.shieldAbsorbed,
     outcome: entry.outcome,
+    ...(entry.playerDeltas !== undefined && entry.playerDeltas.length > 0
+      ? { playerDeltas: entry.playerDeltas }
+      : {}),
   }));
 }
 

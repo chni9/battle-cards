@@ -137,6 +137,31 @@ function withResourceSuffix(
   return suffix.length === 0 ? segments : [...segments, ...suffix];
 }
 
+/**
+ * Target's nets sit on the sentence (it already names them). Anyone else is
+ * named so a steal's gain is not read as the target's loss.
+ */
+function withResolveResources(
+  segments: ActionLogSegment[],
+  entry: Extract<ActionLogEntryView, { kind: 'actionResolved' }>,
+  nicknameOf: NicknameResolver,
+): ActionLogSegment[] {
+  const changes = entry.playerDeltas;
+  if (changes === undefined || changes.length === 0) {
+    return segments;
+  }
+
+  const extra: ActionLogSegment[] = [];
+  for (const change of changes) {
+    if (change.playerId !== entry.targetPlayerId) {
+      extra.push(text(' '), player(change.playerId, nicknameOf));
+    }
+    extra.push(...resourceSegments(change.deltas));
+  }
+
+  return extra.length === 0 ? segments : [...segments, ...extra];
+}
+
 function text(value: string): ActionLogTextSegment {
   return { type: 'text', text: value };
 }
@@ -312,11 +337,13 @@ export function formatActionLogEntrySegments(
       const source = player(entry.sourcePlayerId, nicknameOf);
       const target = player(entry.targetPlayerId, nicknameOf);
       const nameCard = cardName(entry.cardId, entry.isUpgraded);
+      let sentence: ActionLogSegment[];
       switch (entry.outcome) {
         case 'immune':
-          return [nameCard, text(' from '), source, text(' resolves on '), target, text(' — immune')];
+          sentence = [nameCard, text(' from '), source, text(' resolves on '), target, text(' — immune')];
+          break;
         case 'cancelled':
-          return [
+          sentence = [
             nameCard,
             text(' from '),
             source,
@@ -324,8 +351,9 @@ export function formatActionLogEntrySegments(
             target,
             text(' is cancelled'),
           ];
+          break;
         case 'blocked':
-          return [
+          sentence = [
             nameCard,
             text(' from '),
             source,
@@ -333,25 +361,27 @@ export function formatActionLogEntrySegments(
             target,
             text(' is blocked'),
           ];
+          break;
         case 'applied': {
-          // Lives lost and shield absorbed stay off this sentence. The play
-          // line above already carries the actor's immediate net (PROTOCOL_VERSION 40).
           if (isAttackCardId(entry.cardId) || entry.livesLost > 0) {
-            return [
+            sentence = [
               player(entry.sourcePlayerId, nicknameOf, true),
               text(' '),
               nameCard,
               text(' hits '),
               target,
             ];
+            break;
           }
-          return [nameCard, text(' from '), source, text(' resolves on '), target];
+          sentence = [nameCard, text(' from '), source, text(' resolves on '), target];
+          break;
         }
         default: {
           const _exhaustive: never = entry.outcome;
           return [text(_exhaustive)];
         }
       }
+      return withResolveResources(sentence, entry, nicknameOf);
     }
     case 'playerEliminated': {
       const victim = player(entry.playerId, nicknameOf);

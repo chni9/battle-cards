@@ -81,7 +81,9 @@
  * 39 → 40 (designer 2026-09-28): action-log resource nets. `actionPlayed` and
  * the Mirror redirect that replaces it may carry `resourceDeltas`. New log
  * kind `resourceChange` for persistent ticks and Spy-gated Duplicator copies.
- * Older clients cannot read the new kind. Exception to the V6 single-bump
- * lock (same class as L49 / L56–L64); see decisions.md.
+ * `actionResolved` may carry `playerDeltas` (per seat, not netted). Unspied
+ * card-sale payouts are omitted from the recipient view. Older clients cannot
+ * read the new kind. Exception to the V6 single-bump lock (same class as
+ * L49 / L56–L64); see decisions.md.
  */
 export const PROTOCOL_VERSION = 40;

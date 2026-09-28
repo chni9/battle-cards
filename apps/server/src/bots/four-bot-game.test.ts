@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  copyPlayerDeltas,
   copyResourceDeltas,
   toActionPlayedPayload,
   type ActionLogEntryView,
@@ -55,6 +56,7 @@ function appendLog(log: ActionLogEntryView[], result: TurnResult, turnSequence: 
       shieldAbsorbed: resolved.shieldAbsorbed,
       outcome: resolved.outcome,
       turnSequence,
+      ...copyPlayerDeltas(resolved.playerDeltas),
     });
   }
 

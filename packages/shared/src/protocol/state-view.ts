@@ -359,6 +359,12 @@ export interface LogResourceDelta {
   direction?: LogResourceDirection;
 }
 
+/** One seat's nets on a resolve line. Not summed with other seats. */
+export interface LogPlayerResourceDelta {
+  playerId: string;
+  deltas: readonly LogResourceDelta[];
+}
+
 /** Played action — same public fields as `actionPlayed` wire payload. */
 export interface ActionPlayedLogEntry {
   kind: 'actionPlayed';
@@ -382,7 +388,7 @@ export interface ActionPlayedLogEntry {
   /**
    * Acting player's net resource change for this play (PROTOCOL_VERSION 40).
    * Real amounts on the stored log. Per-recipient views may conceal Draw and
-   * buy-upgrade point totals.
+   * buy-upgrade point totals, and omit a card sale's payout.
    */
   resourceDeltas?: readonly LogResourceDelta[];
 }
@@ -399,6 +405,12 @@ export interface ActionResolvedLogEntry {
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
   turnSequence: number;
+  /**
+   * Per-seat nets this resolution actually applied (PROTOCOL_VERSION 40).
+   * Target, then source, then anyone else. A steal lists both sides.
+   * Duplicator copies are excluded.
+   */
+  playerDeltas?: readonly LogPlayerResourceDelta[];
 }
 
 /** Public elimination — durable copy of `playerEliminated`. */
