@@ -748,4 +748,92 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(bob.lives).toBe(18);
     expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual(['basic-attack']);
   });
+
+  it('two Strongs cancel the Strong+ and the normal Strong still hits', () => {
+    const state = twoPlayers('mutual-two-strong-vs-strong-plus-and-strong');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(18);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('a stronger defensive bundle cancels Strong+ and both answers stay', () => {
+    const state = twoPlayers('mutual-bundle-strong-and-basic-plus');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'basic-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual([
+      'strong-attack',
+      'basic-attack',
+    ]);
+    expect(alice.pendingEffects[1]?.isUpgraded).toBe(true);
+
+    state.currentTurnPlayerId = alice.id;
+    const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
+    expect(onAlice.ok).toBe(true);
+    expect(alice.lives).toBe(15);
+  });
 });

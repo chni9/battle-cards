@@ -175,13 +175,12 @@ Two attacks directed at each other between two players, both still pending. Comp
 the turn of the player who retaliated. Each attack stays its own hit (designer 2026-09-29).
 This supersedes Lot 54's summed Assassin volley for this compare only.
 
-- **Equal damage** → those two hits cancel each other. A Strong played with a Basic
-  still cancels one Strong; the Basic goes through alone.
-- **Exact sum** → several answers are spent together only when they add up exactly to
-  one bigger hit (two Strongs cancel one Strong+).
-- **One answer covers every remaining hit** → it cancels all of them. It stays pending
-  when it is stronger (Super+ against Strong+ and Basic).
-- **Otherwise a stronger answer** → it cancels one weaker hit and stays pending.
+- **Exact group, largest hit first** → those answers are spent. Two Strongs cancel
+  one Strong+ even when a normal Strong is also incoming; that Strong still hits.
+  A Strong played with a Basic spends only the Strong; the Basic goes through alone.
+- **No exact split** → the remaining answers are one defensive bundle. Leftover
+  damage keeps every attack in the bundle pending (a Strong and a Basic+ cancel
+  one Strong+ and both go through). A bundle used up exactly is cancelled.
 - **Weaker answer** → the incoming hit still resolves; the weaker answer stays pending
   (designer 2026-09-01 / Lot 54). Mirror still redirects a single pending effect.
 

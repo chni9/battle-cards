@@ -4116,3 +4116,18 @@ keeps the whole lot pending."
 
 ---
 
+## 2026-09-29 · [P] Biggest hit is paid before an equal pair
+
+Designer, same day. This supersedes "equal hits cancel first" when those
+cards are the exact cost of a bigger hit, and it supersedes "no exact split
+means the hit still lands" for a defensive bundle.
+
+- Two Strongs against a Strong+ and a Strong cancel the Strong+. Both
+  Strongs are spent. The normal Strong still hits.
+- A Strong (2) and a Basic+ (3) cannot split into 4. They are one defensive
+  bundle. They cancel a Strong+ and both stay pending.
+- An exact group is still spent. A Strong played with a Basic still spends
+  only the Strong. Two Strongs against a Strong+ alone are still both spent.
+
+---
+

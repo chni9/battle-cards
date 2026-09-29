@@ -244,17 +244,17 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 
 The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
 (designer 2026-09-01 / Lot 54: weaker answers survive; designer 2026-09-29:
-equal hits cancel first, extras go through alone, and answers sum only when
-they match one bigger hit exactly).
+exact groups pay the largest hit first; a remainder with no exact split is
+one defensive bundle, and leftover damage keeps that whole bundle pending).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
-- The latest retaliation that shares `queuedAt` is the answer set. Pair equal
-  damage first and remove those answers. Then spend a subset that sums exactly
-  to one remaining hit. Then one answer that covers the sum of what is left
-  cancels all of it and stays when it is stronger. Then each remaining stronger
-  answer cancels one weaker hit and stays.
+- The latest retaliation that shares `queuedAt` is the answer set. Spend an
+  exact subset on incoming hits, largest first. Two Strongs pay for a Strong+
+  before either of them pairs with a normal Strong. Then the answers left are
+  one bundle: cover remaining hits while the damage lasts. Leftover damage
+  keeps every attack in the bundle. A bundle used up exactly is removed.
 - Remove only the answers that were spent. An unused Basic stays queued.
 - A hit that is not covered still applies this turn.
 - An eliminated source can still be answered. The answer is compared, then removed

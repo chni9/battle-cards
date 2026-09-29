@@ -80,11 +80,12 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    player's turn: *equal damage cancels both*; *a stronger answer cancels the weaker
    incoming* and stays pending until its target's turn; *a weaker answer is not
    cancelled* — the incoming still resolves and the weaker attack stays queued.
-   A defending multi-attack still pairs equals first, so a Strong played with a
-   Basic cancels one Strong and the Basic goes through alone. Several answers
-   are spent together only when they sum exactly to one bigger hit. One answer
-   that covers every remaining incoming hit cancels them all and stays when it
-   is stronger. Otherwise a stronger answer cancels one weaker hit and stays.
+   A defending multi-attack spends an exact group on the largest incoming hit
+   first. Two Strongs cancel a Strong+ even when a normal Strong is also
+   incoming; that Strong still hits. A Strong played with a Basic spends only
+   the Strong, and the Basic goes through alone. Answers that cannot make an
+   exact match are one bundle: leftover damage keeps every attack in it
+   pending, so a Strong and a Basic+ cancel a Strong+ and both go through.
    Mirror still redirects a single pending effect. Designer 2026-09-29. See
    `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**

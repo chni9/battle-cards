@@ -288,11 +288,11 @@ function exactDamageSubset(
 
 /**
  * Mutual attacks (rules spec §6, designer 2026-09-29).
- * Equal hits cancel each other first, so a Strong in a multi-attack still
- * cancels one Strong and the extra Basic goes through alone. Several answers
- * sum only to match one bigger hit exactly. One answer that covers every
- * remaining incoming hit cancels all of them and stays when it is stronger.
- * Otherwise a stronger answer cancels one weaker hit and stays pending.
+ * Largest incoming hits are paid first by an exact group of answers, so two
+ * Strongs cancel a Strong+ even when a normal Strong is also incoming, and
+ * that Strong still hits. A Strong played with a Basic spends only the
+ * Strong. If the answers left cannot make an exact match, they are one
+ * defensive bundle: leftover damage keeps every attack in the bundle pending.
  */
 function decideMutualAttack(
   state: GameState,
@@ -326,23 +326,6 @@ function decideMutualAttack(
   let answersLeft = [...retaliationVolley];
 
   incomingLeft.sort(byDamageDescending);
-  const afterEquals: PendingEffect[] = [];
-  for (const hit of incomingLeft) {
-    const matchIndex = answersLeft.findIndex(
-      (answer) => attackFinalDamage(answer) === attackFinalDamage(hit),
-    );
-    const match = matchIndex >= 0 ? answersLeft[matchIndex] : undefined;
-    if (match !== undefined) {
-      answersLeft.splice(matchIndex, 1);
-      cancelIncoming.push(hit.id);
-      cancelRetaliation.add(match.id);
-    } else {
-      afterEquals.push(hit);
-    }
-  }
-  incomingLeft = afterEquals;
-
-  incomingLeft.sort(byDamageDescending);
   const afterSubsets: PendingEffect[] = [];
   for (const hit of incomingLeft) {
     const subset = exactDamageSubset(answersLeft, attackFinalDamage(hit));
@@ -359,39 +342,30 @@ function decideMutualAttack(
   }
   incomingLeft = afterSubsets;
 
+  // No exact split: the remaining answers are one bundle. Cover hits largest
+  // first. Leftover damage keeps the whole bundle; a bundle used up exactly is spent.
   if (incomingLeft.length > 0 && answersLeft.length > 0) {
-    let incomingSum = 0;
+    let budget = 0;
+    for (const answer of answersLeft) {
+      budget += attackFinalDamage(answer);
+    }
+    const covered: string[] = [];
     for (const hit of incomingLeft) {
-      incomingSum += attackFinalDamage(hit);
-    }
-    const covers = answersLeft
-      .filter((answer) => attackFinalDamage(answer) >= incomingSum)
-      .sort((left, right) => attackFinalDamage(left) - attackFinalDamage(right));
-    const cover = covers[0];
-    if (cover !== undefined) {
-      for (const hit of incomingLeft) {
-        cancelIncoming.push(hit.id);
-      }
-      incomingLeft = [];
-      if (attackFinalDamage(cover) === incomingSum) {
-        cancelRetaliation.add(cover.id);
-        answersLeft = answersLeft.filter((answer) => answer.id !== cover.id);
+      const damage = attackFinalDamage(hit);
+      if (budget >= damage) {
+        covered.push(hit.id);
+        budget -= damage;
       }
     }
-  }
-
-  incomingLeft.sort(byDamageDescending);
-  answersLeft.sort(byDamageDescending);
-  const usedStronger = new Set<string>();
-  for (const hit of incomingLeft) {
-    const answer = answersLeft.find(
-      (candidate) =>
-        !usedStronger.has(candidate.id) &&
-        attackFinalDamage(candidate) > attackFinalDamage(hit),
-    );
-    if (answer !== undefined) {
-      usedStronger.add(answer.id);
-      cancelIncoming.push(hit.id);
+    if (covered.length > 0) {
+      for (const id of covered) {
+        cancelIncoming.push(id);
+      }
+      if (budget === 0) {
+        for (const answer of answersLeft) {
+          cancelRetaliation.add(answer.id);
+        }
+      }
     }
   }
 
