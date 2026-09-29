@@ -251,7 +251,7 @@ function decideMutualAttack(
 
   const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
 
-  if (source === undefined || source.isEliminated) {
+  if (source === undefined) {
     return [];
   }
 
@@ -291,6 +291,14 @@ function decideMutualAttack(
 
   if (cancelRetaliation.length > 0) {
     removeEffectsById(source, new Set(cancelRetaliation));
+  }
+
+  // A corpse never takes a turn, so an answer must not stay queued on them.
+  if (source.isEliminated) {
+    const leftover = source.pendingEffects.filter((effect) =>
+      isReciprocalAttack(effect, resolvingPlayer.id, source.id),
+    );
+    removeEffectsById(source, new Set(leftover.map((effect) => effect.id)));
   }
 
   return cancelIncoming;

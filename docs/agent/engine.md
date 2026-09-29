@@ -250,6 +250,8 @@ Mechanics that rule does not cover:
 - Stronger answer: that incoming hit is cancelled; the answer stays queued.
 - Weaker answer: that incoming hit still applies this turn; the answer stays queued for the
   opponent's turn. Do **not** splice the weaker retaliation.
+- An eliminated source can still be answered. The answer is compared, then removed
+  from their queue. It does not damage the corpse (Lot 68).
 - Assassin `playMultipleAttacks` aimed at the same opponent share `queuedAt` only so
   Mirror can tell siblings apart. They pair one-to-one, highest damage first.
   Mirror / Super Mirror still address a **single** pending effect id (`chooseMirrorTarget`).
