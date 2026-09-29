@@ -6,7 +6,8 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **41** (action-log resource nets).
+> **Status:** current `PROTOCOL_VERSION` is **42** (`actionResolved.blockedBy`
+> names Attack Thief or Block). **41** is action-log resource nets.
 > **40** publishes each public `PendingSentence.id` so `upgradeCard` can target
 > a ticking Sentence. Gambler `drawGain` is Spy-gated since L65-01, no bump at
 > 39. A Draw wipe is public `drawBust` and is not an elimination; `'gambling'`

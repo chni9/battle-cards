@@ -10,7 +10,7 @@ import { performTurnAction } from './perform-action';
 import { queueEffect } from './queue-effect';
 
 describe('Attack Thief (L23-03)', () => {
-  it('charge is spent before mutual cancel (#V4-5); later attack is not blocked', () => {
+  it('blocks every attack already pending and does not arm a later charge (L68-03)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -27,12 +27,22 @@ describe('Attack Thief (L23-03)', () => {
 
     alice.lives = 20;
     bob.lives = 20;
-    alice.attackBlockCharges = 1;
+    alice.points = 8;
+    alice.hand = [];
+    alice.specialCards = [
+      { instanceId: 'at-1', cardId: 'attack-thief', isUpgraded: false },
+    ];
     for (const player of state.players) {
       player.pendingEffects = [];
     }
 
-    // Equal basics: without charge, mutual would cancel both.
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
     queueEffect({
       state,
       sourcePlayerId: bob.id,
@@ -42,26 +52,31 @@ describe('Attack Thief (L23-03)', () => {
     });
     queueEffect({
       state,
-      sourcePlayerId: alice.id,
-      targetPlayerId: bob.id,
-      cardId: 'basic-attack',
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'spy',
       isUpgraded: false,
     });
 
     state.currentTurnPlayerId = alice.id;
-    const first = performTurnAction(state, alice.id, { type: 'draw' });
+    const first = performTurnAction(state, alice.id, {
+      type: 'playCard',
+      instanceId: 'at-1',
+    });
     expect(first.ok).toBe(true);
     if (!first.ok) {
       return;
     }
 
-    expect(first.resolved.some((entry) => entry.outcome === 'blocked')).toBe(true);
+    const blocked = first.resolved.filter((entry) => entry.outcome === 'blocked');
+    expect(blocked.map((entry) => entry.cardId).sort()).toEqual(['basic-attack', 'super-attack']);
+    expect(blocked.every((entry) => entry.blockedBy === 'attack-thief')).toBe(true);
     expect(alice.attackBlockCharges).toBe(0);
+    expect(first.resolved.some((entry) => entry.cardId === 'spy' && entry.outcome === 'applied')).toBe(
+      true,
+    );
     expect(alice.lives).toBe(20);
-    // Retaliation was not consumed by mutual (incoming was blocked first).
-    expect(bob.pendingEffects).toHaveLength(1);
 
-    // Second incoming attack with no charge left.
     queueEffect({
       state,
       sourcePlayerId: bob.id,
@@ -121,7 +136,7 @@ describe('Attack Thief (L23-03)', () => {
     expect(
       performTurnAction(state, alice.id, { type: 'playCard', instanceId: 'at-1' }).ok,
     ).toBe(true);
-    expect(alice.attackBlockCharges).toBe(1);
+    expect(alice.attackBlockCharges).toBe(0);
     expect(bob.pendingEffects.some((e) => e.cardId === 'attack-thief')).toBe(true);
     expect(carol.pendingEffects.some((e) => e.cardId === 'attack-thief')).toBe(true);
 
@@ -260,6 +275,6 @@ describe('Attack Thief (L23-03)', () => {
     state.currentTurnPlayerId = bob.id;
     expect(performTurnAction(state, bob.id, { type: 'draw' }).ok).toBe(true);
     expect(alice.hand).toHaveLength(0);
-    expect(alice.attackBlockCharges).toBe(1);
+    expect(alice.attackBlockCharges).toBe(0);
   });
 });

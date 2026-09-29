@@ -43,7 +43,6 @@ import {
   playerDeltasSince,
   snapshotAllResources,
 } from './resource-log';
-import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = ActionResolutionOutcome;
@@ -516,12 +515,6 @@ export function resolvePendingEffects(
     if (isAttackCardId(effect.cardId)) {
       if (cancelIncomingIds.has(effect.id)) {
         pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
-        continue;
-      }
-
-      // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
-      if (consumeAttackBlockCharge(player, effect)) {
-        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
         continue;
       }
 

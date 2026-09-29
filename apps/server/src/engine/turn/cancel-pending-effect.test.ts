@@ -58,6 +58,7 @@ describe('cancelPendingEffect (technical spec v4 §4.2, L20-12)', () => {
       livesLost: 0,
       shieldAbsorbed: 0,
       outcome: 'blocked',
+      blockedBy: 'attack-thief',
     });
   });
 

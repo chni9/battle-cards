@@ -173,8 +173,12 @@ export async function buildActionLogWorkbook(
           '',
           '',
           '',
-          event.playerDeltas !== undefined
-            ? JSON.stringify({ effectId: event.effectId, playerDeltas: event.playerDeltas })
+          event.playerDeltas !== undefined || event.blockedBy !== undefined
+            ? JSON.stringify({
+                effectId: event.effectId,
+                ...(event.blockedBy !== undefined ? { blockedBy: event.blockedBy } : {}),
+                ...(event.playerDeltas !== undefined ? { playerDeltas: event.playerDeltas } : {}),
+              })
             : event.effectId,
         ]);
         break;

@@ -131,6 +131,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  target, Gambler wipe, upgrade active cards and Sentence
  (`PROTOCOL_VERSION` 40). Action-log resource nets
  are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
+ **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
+ (`PROTOCOL_VERSION` 42).
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes

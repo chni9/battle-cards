@@ -13,6 +13,7 @@ import {
   isTemporarilyUnavailableCardId,
   type ActionReject,
   type ActionResolutionOutcome,
+  type BlockedByCardId,
   type CardId,
   type LogPlayerResourceDelta,
   type LogResourceDelta,
@@ -144,6 +145,8 @@ export interface ActionResolvedEvent {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
+  /** Set when `outcome` is `blocked` (PROTOCOL_VERSION 42). */
+  blockedBy?: BlockedByCardId;
   /** Per-seat nets this resolution applied. Omit when nothing changed. */
   playerDeltas?: readonly LogPlayerResourceDelta[];
 }

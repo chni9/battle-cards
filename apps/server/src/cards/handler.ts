@@ -6,7 +6,13 @@
  * (see `docs/agent/decisions.md`, and `docs/agent/card-handler.md` for the workflow).
  */
 
-import type { ActionResolutionOutcome, CardId, CardInstance, GameState } from '@card-battle/shared';
+import type {
+  ActionResolutionOutcome,
+  BlockedByCardId,
+  CardId,
+  CardInstance,
+  GameState,
+} from '@card-battle/shared';
 
 import type { Rng } from '../engine/rng';
 
@@ -31,6 +37,7 @@ export interface ImmediateResolvedEffect {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
+  blockedBy?: BlockedByCardId;
 }
 
 export interface EffectContext {
