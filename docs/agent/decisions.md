@@ -4022,3 +4022,39 @@ the Imposition floor. The Lot 66 entry stays as the record of that pass.
 
 ---
 
+## 2026-09-29 · [P] Inbox triage and 28 Sep feedback (Lot 68)
+
+Designer lock after the production inbox reports from 28 Sep. This
+supersedes Lot 54's "Assassin multi-attack is one volley (sum of final
+damage)" for the mutual compare only. Mirror still redirects one pending
+attack. What's new is a new id (`lot-65` is on `main`). `blockedBy` on
+`actionResolved` is `PROTOCOL_VERSION` 41 → 42 (L68-03). Inbox status is
+HTTP only.
+
+- Attack Thief blocks every attack already pending against the user, each
+  one on its own, when the card is played. It does not keep a charge that
+  blocks an attack played on a later turn. A leftover charge was blocking
+  Supers during Sentence turns (`RCCHCM` turn 131 charge, turn 142 Super)
+  and a redirected Strong many turns later (`HTGFDM`). The public log names
+  Attack Thief or Block.
+- Upgraded Absorber and upgraded Super Absorber copy every life, point, and
+  upgrade point that left the target that turn, including a sale and a
+  theft. Shield never counts. Base cards stay lives-only. Selling an
+  upgrade point is a spend.
+- Mutual attacks pair one-to-one, highest damage first. Equal / stronger /
+  weaker is unchanged per pair. Unpaired hits resolve alone. A Super+
+  cancels only the opposing Super+; Strong and Basic in the same Assassin
+  action still land.
+- Sentence does not count the turn Block is played or the extra turns from
+  that Block. A normal turn before that still counts.
+- A living player may attack an eliminated player only while that player
+  still has a pending attack on them. The answer is compared, then
+  discarded. It does not damage the corpse and does not stay queued.
+- Reanimation clears every Spy relation where that player is viewer or
+  subject. The spectator overlay is not a stored Spy.
+- An upgraded Shield stops Imposition's point drain and spends no shield.
+- Ghost starts with Tax already upgraded and 1 upgrade point.
+  Indestructible's Tax+ is unchanged.
+
+---
+
