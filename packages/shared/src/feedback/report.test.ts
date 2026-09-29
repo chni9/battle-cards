@@ -6,7 +6,9 @@ import {
   FEEDBACK_SCREENS,
   FEEDBACK_TOPICS,
   formatFeedbackTopics,
+  FEEDBACK_TRIAGE_STATUSES,
   isFeedbackKind,
+  isFeedbackTriageStatus,
   isFeedbackScreen,
   isFeedbackTopicsComplete,
   normalizeFeedbackTopics,
@@ -20,6 +22,14 @@ describe('feedback report unions (technical spec v6 §7 / L47-01)', () => {
     expect(isFeedbackKind('confusion')).toBe(true);
     expect(isFeedbackKind('idea')).toBe(true);
     expect(isFeedbackKind('rating')).toBe(false);
+  });
+
+  it('accepts pending, done, and eliminated triage statuses', () => {
+    expect(FEEDBACK_TRIAGE_STATUSES).toEqual(['pending', 'done', 'eliminated']);
+    expect(isFeedbackTriageStatus('pending')).toBe(true);
+    expect(isFeedbackTriageStatus('done')).toBe(true);
+    expect(isFeedbackTriageStatus('eliminated')).toBe(true);
+    expect(isFeedbackTriageStatus('closed')).toBe(false);
   });
 
   it('accepts the spec screen union including lobby and tutorial', () => {

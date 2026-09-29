@@ -116,9 +116,10 @@ rules above are unchanged — this section only covers how the client looks.
   From/To `datetime-local` values are converted to UTC ISO on the client so the
   VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
-  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
-  client-side; row detail with contact, nickname, game code, screen, playKind, protocol,
-  user agent, and log tail; no edit or delete.
+  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind, About, and triage
+  status filters client-side (default Pending). Row detail can `PATCH /api/inbox/:id`
+  to `pending` / `done` / `eliminated` (eliminated = won't do). Detail still shows
+  contact, nickname, game code, screen, playKind, protocol, user agent, and log tail.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under

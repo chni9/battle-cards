@@ -11,6 +11,7 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
     expect(LIST_FEEDBACK_REPORTS_SQL).toContain('ORDER BY created_at DESC');
     expect(LIST_FEEDBACK_REPORTS_SQL).toContain('log_tail');
     expect(LIST_FEEDBACK_REPORTS_SQL).toContain('topics');
+    expect(LIST_FEEDBACK_REPORTS_SQL).toContain('status');
     expect(LIST_FEEDBACK_REPORTS_SQL).not.toMatch(/\bseed\b/);
   });
 
@@ -54,6 +55,7 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
         logTail: [{ kind: 'actionPlayed' }],
         userAgent: 'vitest',
         topics: ['ui', 'gameplay'],
+        status: 'pending',
       },
     ]);
     expect(JSON.stringify(rows)).not.toContain('seed');
@@ -95,5 +97,26 @@ describe('listFeedbackReports (technical spec v6 §7.3 / L47-04)', () => {
       user_agent: null,
     });
     expect(mapped?.topics).toEqual([]);
+    expect(mapped?.status).toBe('pending');
+  });
+
+  it('keeps a done row and drops an unknown status', () => {
+    const base = {
+      id: 'done',
+      created_at: '2026-09-01T12:00:00.000Z',
+      kind: 'bug',
+      message: 'fixed',
+      contact: null,
+      nickname: null,
+      game_code: null,
+      screen: 'home',
+      protocol_version: 30,
+      play_kind: null,
+      log_tail: null,
+      user_agent: null,
+      topics: [],
+    };
+    expect(mapFeedbackInboxRow({ ...base, status: 'done' })?.status).toBe('done');
+    expect(mapFeedbackInboxRow({ ...base, status: 'archived' })).toBeNull();
   });
 });

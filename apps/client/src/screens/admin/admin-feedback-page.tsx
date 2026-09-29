@@ -6,16 +6,19 @@ import {
   FEEDBACK_KINDS,
   FEEDBACK_TOPICS,
   FEEDBACK_TOPIC_LABEL,
+  FEEDBACK_TRIAGE_STATUSES,
+  FEEDBACK_TRIAGE_STATUS_LABEL,
   formatFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
   type FeedbackTopic,
+  type FeedbackTriageStatus,
 } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
-import { fetchInbox, filterInbox } from '../../inbox/fetch-inbox';
+import { fetchInbox, filterInbox, updateInboxStatus } from '../../inbox/fetch-inbox';
 import { adminErrorCopy, lockAdminSession } from '../../admin/fetch-admin';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
@@ -40,7 +43,9 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const [error, setError] = useState<string | null>(null);
   const [kindFilter, setKindFilter] = useState<FeedbackKind | 'all'>('all');
   const [topicFilter, setTopicFilter] = useState<FeedbackTopic | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<FeedbackTriageStatus | 'all'>('pending');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [savingStatus, setSavingStatus] = useState(false);
 
   useEffect(() => {
     void fetchInbox(password).then((result) => {
@@ -55,7 +60,28 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
     });
   }, [password]);
 
-  const visible = rows === null ? [] : filterInbox(rows, kindFilter, topicFilter);
+  const visible =
+    rows === null ? [] : filterInbox(rows, kindFilter, topicFilter, statusFilter);
+
+  function applyStatus(id: string, status: FeedbackTriageStatus): void {
+    setSavingStatus(true);
+    setError(null);
+    void updateInboxStatus(password, id, status).then((result) => {
+      setSavingStatus(false);
+      if (!result.ok) {
+        if (result.status === 401) {
+          lockAdminSession();
+        }
+        setError(adminErrorCopy(result.status));
+        return;
+      }
+      setRows((current) =>
+        current === null
+          ? current
+          : current.map((row) => (row.id === id ? { ...row, status } : row)),
+      );
+    });
+  }
   const selected = rows?.find((row) => row.id === openId) ?? null;
 
   return (
@@ -85,6 +111,31 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                 }}
               >
                 {KIND_LABEL[kind]}
+              </Button>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              compact
+              type="button"
+              variant={statusFilter === 'all' ? 'green' : 'orange'}
+              onClick={() => {
+                setStatusFilter('all');
+              }}
+            >
+              Any status
+            </Button>
+            {FEEDBACK_TRIAGE_STATUSES.map((status) => (
+              <Button
+                key={status}
+                compact
+                type="button"
+                variant={statusFilter === status ? 'green' : 'orange'}
+                onClick={() => {
+                  setStatusFilter(status);
+                }}
+              >
+                {FEEDBACK_TRIAGE_STATUS_LABEL[status]}
               </Button>
             ))}
           </div>
@@ -124,7 +175,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                   }}
                 >
                   <p className="text-xs text-ink-muted">
-                    {row.createdAt} · {KIND_LABEL[row.kind]}
+                    {row.createdAt} · {KIND_LABEL[row.kind]} · {FEEDBACK_TRIAGE_STATUS_LABEL[row.status]}
                     {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
                     {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
                     {row.nickname !== null ? ` · ${row.nickname}` : ''}
@@ -158,7 +209,25 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
       >
         {selected !== null ? (
           <div className="space-y-3 text-sm text-ink">
-            <p className="text-xs text-ink-muted">{selected.createdAt}</p>
+            <p className="text-xs text-ink-muted">
+              {selected.createdAt} · {FEEDBACK_TRIAGE_STATUS_LABEL[selected.status]}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {FEEDBACK_TRIAGE_STATUSES.map((status) => (
+                <Button
+                  key={status}
+                  compact
+                  type="button"
+                  variant={selected.status === status ? 'green' : 'orange'}
+                  disabled={savingStatus}
+                  onClick={() => {
+                    applyStatus(selected.id, status);
+                  }}
+                >
+                  {FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+                </Button>
+              ))}
+            </div>
             {selected.topics.length > 0 ? (
               <p>About: {formatFeedbackTopics(selected.topics)}</p>
             ) : null}

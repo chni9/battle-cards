@@ -6,10 +6,12 @@
 import {
   isFeedbackKind,
   isFeedbackScreen,
+  isFeedbackTriageStatus,
   normalizeFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
   type FeedbackTopic,
+  type FeedbackTriageStatus,
   type PlayKind,
 } from '@card-battle/shared';
 
@@ -98,6 +100,16 @@ export function parseInboxRow(value: unknown): FeedbackInboxRow | null {
   if (topics === null) {
     return null;
   }
+  const rawStatus: unknown = Reflect.get(value, 'status');
+  const status: FeedbackTriageStatus | null =
+    rawStatus === undefined || rawStatus === null
+      ? 'pending'
+      : isFeedbackTriageStatus(rawStatus)
+        ? rawStatus
+        : null;
+  if (status === null) {
+    return null;
+  }
   return {
     id,
     createdAt,
@@ -112,6 +124,7 @@ export function parseInboxRow(value: unknown): FeedbackInboxRow | null {
     logTail: Reflect.get(value, 'logTail') ?? null,
     userAgent,
     topics,
+    status,
   };
 }
 
@@ -141,13 +154,42 @@ export function filterInbox(
   rows: readonly FeedbackInboxRow[],
   kind: FeedbackKind | 'all',
   topic: FeedbackTopic | 'all',
+  status: FeedbackTriageStatus | 'all' = 'all',
 ): readonly FeedbackInboxRow[] {
   return rows.filter((row) => {
     if (kind !== 'all' && row.kind !== kind) {
       return false;
     }
+    if (status !== 'all' && row.status !== status) {
+      return false;
+    }
     return topic === 'all' || row.topics.includes(topic);
   });
+}
+
+export async function updateInboxStatus(
+  password: string,
+  id: string,
+  status: FeedbackTriageStatus,
+  fetchImpl: InboxFetcher = fetch,
+): Promise<{ ok: true } | { ok: false; status: number }> {
+  const url = `${resolveServerUrl(import.meta.env.VITE_SERVER_URL, pageLocation())}/api/inbox/${id}`;
+  try {
+    const response = await fetchImpl(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': password,
+      },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      return { ok: false, status: response.status };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, status: 0 };
+  }
 }
 
 export async function fetchInbox(

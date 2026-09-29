@@ -6,6 +6,7 @@ import {
   filterInbox,
   filterInboxByKind,
   parseInboxRow,
+  updateInboxStatus,
   type InboxFetcher,
 } from './fetch-inbox';
 
@@ -23,6 +24,7 @@ const sample: FeedbackInboxRow = {
   logTail: [{ kind: 'actionPlayed' }],
   userAgent: 'vitest',
   topics: ['ui', 'card'],
+  status: 'pending',
 };
 
 describe('fetchInbox (technical spec v6 §7.3 / L47-05)', () => {
@@ -74,6 +76,35 @@ describe('inbox row parse and kind filter (technical spec v6 §7.3 / L47-05)', (
     const shop: FeedbackInboxRow = { ...sample, id: 'row-3', topics: ['shop'] };
     expect(filterInbox([sample, shop], 'all', 'card')).toEqual([sample]);
     expect(filterInbox([sample, shop], 'all', 'shop')).toEqual([shop]);
+  });
+
+  it('filters by triage status and defaults a missing status to pending', () => {
+    const done: FeedbackInboxRow = { ...sample, id: 'row-done', status: 'done' };
+    expect(filterInbox([sample, done], 'all', 'all', 'pending')).toEqual([sample]);
+    expect(filterInbox([sample, done], 'all', 'all', 'all')).toEqual([sample, done]);
+    expect(parseInboxRow({ ...sample, status: 'closed' })).toBeNull();
+    const withoutStatus: Record<string, unknown> = { ...sample };
+    Reflect.deleteProperty(withoutStatus, 'status');
+    expect(parseInboxRow(withoutStatus)?.status).toBe('pending');
+  });
+
+  it('PATCHes /api/inbox/:id with the password and status', async () => {
+    let capturedUrl = '';
+    let capturedInit: RequestInit | undefined;
+    const fetchImpl: InboxFetcher = (url, init) => {
+      capturedUrl = url;
+      capturedInit = init;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ ok: true, status: 'done' }),
+      });
+    };
+    const result = await updateInboxStatus('inbox-secret', sample.id, 'done', fetchImpl);
+    expect(result).toEqual({ ok: true });
+    expect(capturedUrl).toMatch(/\/api\/inbox\/row-1$/);
+    expect(capturedInit?.method).toBe('PATCH');
+    expect(capturedInit?.body).toBe(JSON.stringify({ status: 'done' }));
   });
 
   it('defaults a missing topics field to an empty list', () => {

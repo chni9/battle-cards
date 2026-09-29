@@ -32,6 +32,7 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
         return Promise.resolve('id');
       },
       listReports: () => Promise.resolve([]),
+      updateStatus: () => Promise.resolve(true),
       lookupLive: () => null,
       lookupFinished: () => Promise.resolve(null),
       isProduction: () => false,
@@ -106,6 +107,7 @@ describe('feedback mount order (technical spec v6 §4 / L47-02)', () => {
       'utf8',
     );
     expect(source).toContain("app.get('/api/inbox'");
+    expect(source).toContain("app.patch('/api/inbox/:id'");
     expect(source).toContain("app.options('/api/inbox'");
   });
 });
