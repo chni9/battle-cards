@@ -514,4 +514,48 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(bob.lives).toBe(16);
     expect(alice.pendingEffects).toHaveLength(3);
   });
+
+  it('Super+ cancels only the opposing Super+ in an Assassin action (L68-05)', () => {
+    const state = twoPlayers('mutual-super-pair');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(17);
+    expect(alice.pendingEffects).toHaveLength(0);
+    expect(bob.pendingEffects).toHaveLength(0);
+  });
 });
