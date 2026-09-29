@@ -45,7 +45,8 @@ SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
 `005_feedback_reports.sql`, `006_feedback_topics.sql`,
 `007_finished_game_player_nickname.sql`,
 `008_finished_game_player_think_time.sql`,
-`009_feedback_triage_status.sql`.  
+`009_feedback_triage_status.sql`,
+`010_feedback_triage_mark_lot_68.sql` (sets this pass’s rows to `done` or `eliminated`; older rows stay `pending`).  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
