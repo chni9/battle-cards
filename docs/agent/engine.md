@@ -27,10 +27,10 @@ What follows is what those rules do not say.
    resolution phase follows immediately.
 4. **Mutual cancellation compares final damage** (base/upgraded damage × `damageMultiplier`),
    not card identity (#V4-2). Equal final damage cancels both even when the cards differ
-   (e.g. Mirror-doubled basic = 2 cancels strong = 2). A stronger *answer* cancels that
-   one incoming hit; a weaker answer is kept and that hit still resolves (Lot 54 /
-   AGENTS golden rule 1). Hits pair one-to-one, highest damage first (Lot 68). They
-   are not summed.
+   (e.g. Mirror-doubled basic = 2 cancels strong = 2). A defending multi-attack
+   sums into one lot and is spent on incoming hits, largest first (designer
+   2026-09-29). Covered hits cancel. Uncovered hits still resolve. A fully
+   spent lot is cancelled. Leftover damage keeps the whole lot pending.
 
 ## The two life-loss primitives
 
@@ -241,20 +241,21 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 ## Mutual attacks — mechanics
 
 The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
-(designer 2026-09-01 / Lot 54: weaker answers survive; Lot 68: pair hits, do not sum).
+(designer 2026-09-01 / Lot 54: weaker answers survive; designer 2026-09-29:
+the defender's same-turn attacks sum, incoming hits stay separate).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
-- Equal damage: that pair is removed (`outcome: 'cancelled'`).
-- Stronger answer: that incoming hit is cancelled; the answer stays queued.
-- Weaker answer: that incoming hit still applies this turn; the answer stays queued for the
-  opponent's turn. Do **not** splice the weaker retaliation.
+- The latest retaliation that shares `queuedAt` is one damage budget. Spend it on
+  incoming hits of that same action, largest first. Cancel a hit only when the
+  remaining budget is at least that hit's final damage, then subtract it.
+- Budget ends at 0: remove the whole retaliation lot (`outcome: 'cancelled'`).
+- Budget left over: keep the whole lot queued. Do not cancel only some of its attacks.
+- A hit the budget does not cover still applies this turn.
 - An eliminated source can still be answered. The answer is compared, then removed
   from their queue. It does not damage the corpse (Lot 68).
-- Assassin `playMultipleAttacks` aimed at the same opponent share `queuedAt` only so
-  Mirror can tell siblings apart. They pair one-to-one, highest damage first.
-  Mirror / Super Mirror still address a **single** pending effect id (`chooseMirrorTarget`).
+- Mirror / Super Mirror still address a **single** pending effect id (`chooseMirrorTarget`).
 - A Mirror redirection produces a fully pending attack at its new target, so it can create a new
   mutual pair, and can be redirected again with no chain limit (rules spec §3).
 - **Attribution:** after Mirror / Super Mirror redirect, `sourcePlayerId` becomes the

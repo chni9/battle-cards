@@ -234,10 +234,11 @@ function latestRetaliationVolley(
 }
 
 /**
- * Mutual attacks (rules spec §6, Lot 68): pair one incoming hit with one
- * answer, highest damage first. Equal cancels that pair. A stronger answer
- * cancels that incoming hit and stays pending. A weaker answer stays pending
- * and that incoming hit still resolves. Unpaired hits are not a sum.
+ * Mutual attacks (rules spec §6, designer 2026-09-29).
+ * The retaliation played in one turn is one lot: its damage adds up.
+ * Incoming hits stay separate and are covered largest first. A hit is
+ * cancelled only while the remaining lot damage is at least that hit.
+ * A fully spent lot is cancelled. Leftover damage keeps the whole lot pending.
  */
 function decideMutualAttack(
   state: GameState,
@@ -265,32 +266,24 @@ function decideMutualAttack(
     return [];
   }
 
-  const incomingSorted = [...remainingIncomingVolley].sort(byDamageDescending);
-  const retaliationSorted = [...retaliationVolley].sort(byDamageDescending);
-  const pairCount = Math.min(incomingSorted.length, retaliationSorted.length);
-  const cancelIncoming: string[] = [];
-  const cancelRetaliation: string[] = [];
+  let budget = 0;
+  for (const answer of retaliationVolley) {
+    budget += attackFinalDamage(answer);
+  }
 
-  for (let index = 0; index < pairCount; index += 1) {
-    const incomingHit = incomingSorted[index];
-    const answer = retaliationSorted[index];
-    if (incomingHit === undefined || answer === undefined) {
-      continue;
-    }
-    const incomingDamage = attackFinalDamage(incomingHit);
-    const answerDamage = attackFinalDamage(answer);
-    if (incomingDamage === answerDamage) {
-      cancelIncoming.push(incomingHit.id);
-      cancelRetaliation.push(answer.id);
-      continue;
-    }
-    if (answerDamage > incomingDamage) {
-      cancelIncoming.push(incomingHit.id);
+  const incomingSorted = [...remainingIncomingVolley].sort(byDamageDescending);
+  const cancelIncoming: string[] = [];
+
+  for (const hit of incomingSorted) {
+    const damage = attackFinalDamage(hit);
+    if (budget >= damage) {
+      cancelIncoming.push(hit.id);
+      budget -= damage;
     }
   }
 
-  if (cancelRetaliation.length > 0) {
-    removeEffectsById(source, new Set(cancelRetaliation));
+  if (budget === 0 && cancelIncoming.length > 0) {
+    removeEffectsById(source, new Set(retaliationVolley.map((effect) => effect.id)));
   }
 
   // A corpse never takes a turn, so an answer must not stay queued on them.
@@ -553,16 +546,16 @@ export function resolvePendingEffects(
           remainingIncomingVolley,
         );
 
-        if (cancelled.length > 0) {
-          for (const id of cancelled) {
-            cancelIncomingIds.add(id);
-          }
-
-          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
-          continue;
+        for (const id of cancelled) {
+          cancelIncomingIds.add(id);
         }
 
         appliedVolleyKeys.add(key);
+
+        if (cancelIncomingIds.has(effect.id)) {
+          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+          continue;
+        }
       }
 
       const amount =

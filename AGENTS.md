@@ -80,10 +80,11 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    player's turn: *equal damage cancels both*; *a stronger answer cancels the weaker
    incoming* and stays pending until its target's turn; *a weaker answer is not
    cancelled* — the incoming still resolves and the weaker attack stays queued.
-   Each hit pairs with one answer, highest damage first (Lot 68). An Assassin
-   multi-attack is not one summed body. Mirror still redirects a single pending
-   effect. Designer 2026-09-01 (Lot 54) superseded Lot 19's "unequal always
-   cancels the weaker"; Lot 68 supersedes the volley sum. See `docs/agent/decisions.md`.
+   A defending multi-attack in one turn is one lot: its damage adds up and is
+   spent on the incoming hits, largest first. Incoming hits stay separate, so
+   only the covered part is cancelled and the rest still lands. A fully spent
+   lot is cancelled. Leftover damage keeps the whole lot pending. Mirror still
+   redirects a single pending effect. Designer 2026-09-29. See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
    player's card counters. `applyLifeLoss` is for Tax, Suicide, and every other

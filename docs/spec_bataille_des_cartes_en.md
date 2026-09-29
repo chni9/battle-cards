@@ -54,7 +54,7 @@ An attack card targets an opponent of choice and inflicts damage on them, reduci
 | Strong attack | 2 points | 2 | 4 |
 | Super attack | 10 points | 7 | 10 |
 
-The cost/damage ratio is not linear across cards: a high-damage attack is a deliberate design choice. Each pending attack is compared on its own (section 6): an equal answer cancels that one hit, a stronger answer cancels it, and a weaker answer does **not** — Super still resolves and the weaker attack stays pending. Once upgraded, it can only be redirected by an upgraded Mirror.
+The cost/damage ratio is not linear across cards: a high-damage attack is a deliberate design choice. A defending multi-attack adds its damage together (section 6). Incoming hits stay separate: the defense cancels only the hits it can cover, largest first, and the rest still resolve. Once upgraded, Super can only be redirected by an upgraded Mirror.
 
 ## 3. Action Cards
 
@@ -259,7 +259,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 
 ### Mutual Attacks
 
-When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated, **one attack against one attack**. An Assassin multi-attack is not one body: its hits are paired with the answer one-to-one, highest damage first. If a pair deals exactly the same damage, both of those attacks cancel. If the answer in the pair is stronger, that incoming attack is cancelled and the stronger attack stays pending — it resolves normally on its target's turn. If the answer is weaker, it is **not** cancelled: that incoming attack still resolves on this turn, and the weaker attack stays pending until the opponent's turn. Unpaired hits resolve on their own. Mirror still redirects only one pending attack at a time. Redirecting one hit does not cancel the other hits from that same action that still target the Mirror player.
+When two attacks target each other mutually between two players and are both still pending resolution, the comparison happens on the turn of the player who retaliated. Attacks that player used in that one turn against that opponent are **one lot**: their damage adds up. The incoming hits stay separate. The lot is spent on those hits, largest first. A hit is cancelled when the damage still in the lot is at least that hit's damage, and that amount is then spent. Hits that are not covered still resolve. If the lot is fully spent, every attack in it is cancelled. If damage is left over, the whole lot stays pending and resolves on the attacker's later turn. A single attack against a single attack is the same rule. Two Strongs (2 + 2) cancel one Strong+ (4). A Super+ (10) against a Strong+ (4) and a Basic (1) cancels both, and the Super+ stays pending. An answer of 3 against two attacks of 2 cancels one of them and stays pending; the other 2 still hits. Mirror still redirects only one pending attack at a time. Redirecting one hit does not cancel the other hits from that same action that still target the Mirror player.
 
 A living player may attack an eliminated player only while that player still has a pending attack on them, and only to answer it. The answer is compared the same way, then discarded: it does not damage the corpse and does not stay queued. An attack on an eliminated player who has nothing pending against you is illegal.
 

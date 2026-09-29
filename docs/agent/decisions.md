@@ -4077,3 +4077,24 @@ Tax+ and the starting upgrade point. Bug fixes: After is
 
 ---
 
+## 2026-09-29 · [P] Defending multi-attack is one lot
+
+Designer, same day. This supersedes the Lot 68 one-to-one pairing for the
+mutual compare.
+
+- Attacks the retaliating player played in that one turn at that opponent
+  are one lot. Their final damage adds up.
+- Incoming hits from the other multi-attack stay separate. The lot is spent
+  on them, largest first. A hit is cancelled only when the damage still in
+  the lot is at least that hit. The rest still resolve.
+- A fully spent lot is cancelled. Leftover damage keeps the whole lot
+  pending. A weaker lot that covers nothing stays pending, and the incoming
+  still hits.
+- Two Strongs (2 + 2) cancel one Strong+ (4). A Super+ (10) against a
+  Strong+ (4) and a Basic (1) cancels both and stays pending. An answer of
+  3 against two attacks of 2 cancels one of them and stays pending; the
+  other 2 hits.
+- Mirror still redirects one pending attack.
+
+---
+
