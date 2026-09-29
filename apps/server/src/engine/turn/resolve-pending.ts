@@ -182,14 +182,8 @@ function isReciprocalAttack(
   );
 }
 
-function sumAttackDamage(effects: readonly PendingEffect[]): number {
-  let total = 0;
-
-  for (const effect of effects) {
-    total += attackFinalDamage(effect);
-  }
-
-  return total;
+function byDamageDescending(left: PendingEffect, right: PendingEffect): number {
+  return attackFinalDamage(right) - attackFinalDamage(left);
 }
 
 function removeEffectsById(player: Player, ids: ReadonlySet<string>): void {
@@ -240,9 +234,10 @@ function latestRetaliationVolley(
 }
 
 /**
- * Mutual attacks (tech §4.6 / Lot 19 / L54-02): equal volley damage cancels both volleys;
- * stronger answer cancels the weaker incoming volley; weaker answer stays pending and the
- * incoming volley still resolves. Returns incoming ids to cancel (possibly the whole volley).
+ * Mutual attacks (rules spec §6, Lot 68): pair one incoming hit with one
+ * answer, highest damage first. Equal cancels that pair. A stronger answer
+ * cancels that incoming hit and stays pending. A weaker answer stays pending
+ * and that incoming hit still resolves. Unpaired hits are not a sum.
  */
 function decideMutualAttack(
   state: GameState,
@@ -270,21 +265,35 @@ function decideMutualAttack(
     return [];
   }
 
-  const incomingDamage = sumAttackDamage(remainingIncomingVolley);
-  const retaliationDamage = sumAttackDamage(retaliationVolley);
+  const incomingSorted = [...remainingIncomingVolley].sort(byDamageDescending);
+  const retaliationSorted = [...retaliationVolley].sort(byDamageDescending);
+  const pairCount = Math.min(incomingSorted.length, retaliationSorted.length);
+  const cancelIncoming: string[] = [];
+  const cancelRetaliation: string[] = [];
 
-  if (incomingDamage === retaliationDamage) {
-    removeEffectsById(source, new Set(retaliationVolley.map((effect) => effect.id)));
-    return remainingIncomingVolley.map((effect) => effect.id);
+  for (let index = 0; index < pairCount; index += 1) {
+    const incomingHit = incomingSorted[index];
+    const answer = retaliationSorted[index];
+    if (incomingHit === undefined || answer === undefined) {
+      continue;
+    }
+    const incomingDamage = attackFinalDamage(incomingHit);
+    const answerDamage = attackFinalDamage(answer);
+    if (incomingDamage === answerDamage) {
+      cancelIncoming.push(incomingHit.id);
+      cancelRetaliation.push(answer.id);
+      continue;
+    }
+    if (answerDamage > incomingDamage) {
+      cancelIncoming.push(incomingHit.id);
+    }
   }
 
-  if (incomingDamage > retaliationDamage) {
-    // Weaker answer survives; incoming volley still applies (designer 2026-09-01).
-    return [];
+  if (cancelRetaliation.length > 0) {
+    removeEffectsById(source, new Set(cancelRetaliation));
   }
 
-  // Stronger answer: cancel the whole incoming volley; retaliation stays pending.
-  return remainingIncomingVolley.map((effect) => effect.id);
+  return cancelIncoming;
 }
 
 function resolveThief(state: GameState, target: Player, effect: PendingEffect): ResolveOutcome {

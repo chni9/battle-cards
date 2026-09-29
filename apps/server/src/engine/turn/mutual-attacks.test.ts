@@ -316,9 +316,9 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(alice.lives).toBe(13);
   });
 
-  it('same-action incoming volley sums vs a weaker answer and both sides persist (L54-02)', () => {
-    // Two Alice→Bob basics share queuedAt (one Assassin volley). Bob answers with one Basic.
-    // Incoming 2 > 1: both basics apply; Bob's weaker answer stays for Alice.
+  it('pairs one incoming basic with one answer and lets the spare hit (L68-05)', () => {
+    // Two Alice→Bob basics share queuedAt. Bob answers with one Basic.
+    // The equal pair cancels. The unpaired basic still hits.
     const state = twoPlayers('mutual-volley-weaker-answer');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -351,10 +351,9 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
-    expect(bob.lives).toBe(18);
+    expect(bob.lives).toBe(19);
     expect(alice.lives).toBe(20);
-    expect(alice.pendingEffects).toHaveLength(1);
-    expect(alice.pendingEffects[0]?.cardId).toBe('basic-attack');
+    expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
@@ -398,7 +397,7 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
-  it('four basics equal-cancel upgraded Strong as one volley (L54-02)', () => {
+  it('four basics do not sum into one answer against upgraded Strong (L68-05)', () => {
     const state = twoPlayers('mutual-volley-equal-strong');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -427,13 +426,12 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
-    expect(bob.lives).toBe(20);
-    expect(alice.lives).toBe(20);
-    expect(alice.pendingEffects).toHaveLength(0);
+    expect(bob.lives).toBe(16);
+    expect(alice.pendingEffects).toHaveLength(4);
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
-  it('Super cannot cancel a 20-basic answer volley (L54-02)', () => {
+  it('one Super is not cancelled by a pile of basics (L68-05)', () => {
     const state = twoPlayers('mutual-volley-super-vs-20');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -462,7 +460,7 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
-    expect(bob.lives).toBe(25);
+    expect(bob.lives).toBe(18);
     expect(alice.pendingEffects).toHaveLength(20);
     expect(bob.pendingEffects).toHaveLength(0);
 
@@ -472,7 +470,7 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(alice.lives).toBe(0);
   });
 
-  it('mixed 2 basic + 1 strong volley equal-cancels upgraded Strong', () => {
+  it('pairs the strongest answer with upgraded Strong and lets the rest hit', () => {
     const state = twoPlayers('mutual-volley-mixed');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -512,7 +510,8 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
-    expect(bob.lives).toBe(20);
-    expect(alice.pendingEffects).toHaveLength(0);
+    // Upgraded Strong is 4. Bob's Strong is 2 and does not cancel it. Both basics stay.
+    expect(bob.lives).toBe(16);
+    expect(alice.pendingEffects).toHaveLength(3);
   });
 });

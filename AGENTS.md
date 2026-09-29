@@ -80,10 +80,10 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    player's turn: *equal damage cancels both*; *a stronger answer cancels the weaker
    incoming* and stays pending until its target's turn; *a weaker answer is not
    cancelled* — the incoming still resolves and the weaker attack stays queued.
-   Assassin multi-attack aimed at the same opponent is **one volley** (sum of final
-   damage) for this compare; Mirror still redirects a single pending effect.
-   Designer 2026-09-01 (Lot 54) supersedes Lot 19's "unequal always cancels the weaker".
-   See `docs/agent/decisions.md`.
+   Each hit pairs with one answer, highest damage first (Lot 68). An Assassin
+   multi-attack is not one summed body. Mirror still redirects a single pending
+   effect. Designer 2026-09-01 (Lot 54) superseded Lot 19's "unequal always
+   cancels the weaker"; Lot 68 supersedes the volley sum. See `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
    player's card counters. `applyLifeLoss` is for Tax, Suicide, and every other
