@@ -28,9 +28,11 @@ What follows is what those rules do not say.
 4. **Mutual cancellation compares final damage** (base/upgraded damage × `damageMultiplier`),
    not card identity (#V4-2). Equal final damage cancels both even when the cards differ
    (e.g. Mirror-doubled basic = 2 cancels strong = 2). A defending multi-attack
-   sums into one lot and is spent on incoming hits, largest first (designer
-   2026-09-29). Covered hits cancel. Uncovered hits still resolve. A fully
-   spent lot is cancelled. Leftover damage keeps the whole lot pending.
+   still pairs equals first, so a Strong played with a Basic cancels one Strong
+   and the Basic goes through alone (designer 2026-09-29). Several answers are
+   spent together only when they sum exactly to one bigger hit. One answer that
+   covers every remaining incoming hit cancels them all and stays when it is
+   stronger. Otherwise a stronger answer cancels one weaker hit and stays.
 
 ## The two life-loss primitives
 
@@ -242,17 +244,19 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 
 The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
 (designer 2026-09-01 / Lot 54: weaker answers survive; designer 2026-09-29:
-the defender's same-turn attacks sum, incoming hits stay separate).
+equal hits cancel first, extras go through alone, and answers sum only when
+they match one bigger hit exactly).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
-- The latest retaliation that shares `queuedAt` is one damage budget. Spend it on
-  incoming hits of that same action, largest first. Cancel a hit only when the
-  remaining budget is at least that hit's final damage, then subtract it.
-- Budget ends at 0: remove the whole retaliation lot (`outcome: 'cancelled'`).
-- Budget left over: keep the whole lot queued. Do not cancel only some of its attacks.
-- A hit the budget does not cover still applies this turn.
+- The latest retaliation that shares `queuedAt` is the answer set. Pair equal
+  damage first and remove those answers. Then spend a subset that sums exactly
+  to one remaining hit. Then one answer that covers the sum of what is left
+  cancels all of it and stays when it is stronger. Then each remaining stronger
+  answer cancels one weaker hit and stays.
+- Remove only the answers that were spent. An unused Basic stays queued.
+- A hit that is not covered still applies this turn.
 - An eliminated source can still be answered. The answer is compared, then removed
   from their queue. It does not damage the corpse (Lot 68).
 - Mirror / Super Mirror still address a **single** pending effect id (`chooseMirrorTarget`).

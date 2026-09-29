@@ -4098,3 +4098,21 @@ mutual compare.
 
 ---
 
+## 2026-09-29 · [P] Extra attacks in a multi-attack go through
+
+Designer, same day, after a table test. This supersedes "leftover damage
+keeps the whole lot pending."
+
+- Equal hits cancel first. A Strong played with a Basic cancels one incoming
+  Strong. The Basic is not part of that cancel and goes through alone.
+- Several answers are spent together only when they add up exactly to one
+  bigger hit. Two Strongs still cancel one Strong+. Seven Basics cancel one
+  Super; the other Basics stay pending.
+- One answer that is at least the sum of every remaining incoming hit
+  cancels all of them. It stays pending when it is stronger (Super+ 10
+  against Strong+ and Basic). It is spent when it matches that sum exactly.
+- Otherwise a stronger answer cancels one weaker hit and stays. An answer of
+  3 against two attacks of 2 still cancels only one of them.
+
+---
+

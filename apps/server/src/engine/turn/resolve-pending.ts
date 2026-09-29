@@ -234,11 +234,65 @@ function latestRetaliationVolley(
 }
 
 /**
+ * Answers whose damage adds up to `target`, or null when no subset does.
+ * Used so several small attacks can cancel one bigger hit (designer 2026-09-29).
+ */
+function exactDamageSubset(
+  answers: readonly PendingEffect[],
+  target: number,
+): PendingEffect[] | null {
+  if (target <= 0) {
+    return null;
+  }
+
+  const cameFrom = new Array<number>(target + 1).fill(-2);
+  cameFrom[0] = -1;
+
+  for (let index = 0; index < answers.length; index += 1) {
+    const answer = answers[index];
+    if (answer === undefined) {
+      continue;
+    }
+    const damage = attackFinalDamage(answer);
+    if (damage <= 0 || damage > target) {
+      continue;
+    }
+    for (let sum = target; sum >= damage; sum -= 1) {
+      if (cameFrom[sum] === -2 && cameFrom[sum - damage] !== -2) {
+        cameFrom[sum] = index;
+      }
+    }
+  }
+
+  if (cameFrom[target] === -2) {
+    return null;
+  }
+
+  const picked: PendingEffect[] = [];
+  let sum = target;
+  while (sum > 0) {
+    const index = cameFrom[sum];
+    if (index === undefined || index < 0) {
+      return null;
+    }
+    const answer = answers[index];
+    if (answer === undefined) {
+      return null;
+    }
+    picked.push(answer);
+    sum -= attackFinalDamage(answer);
+  }
+
+  return picked;
+}
+
+/**
  * Mutual attacks (rules spec §6, designer 2026-09-29).
- * The retaliation played in one turn is one lot: its damage adds up.
- * Incoming hits stay separate and are covered largest first. A hit is
- * cancelled only while the remaining lot damage is at least that hit.
- * A fully spent lot is cancelled. Leftover damage keeps the whole lot pending.
+ * Equal hits cancel each other first, so a Strong in a multi-attack still
+ * cancels one Strong and the extra Basic goes through alone. Several answers
+ * sum only to match one bigger hit exactly. One answer that covers every
+ * remaining incoming hit cancels all of them and stays when it is stronger.
+ * Otherwise a stronger answer cancels one weaker hit and stays pending.
  */
 function decideMutualAttack(
   state: GameState,
@@ -266,24 +320,83 @@ function decideMutualAttack(
     return [];
   }
 
-  let budget = 0;
-  for (const answer of retaliationVolley) {
-    budget += attackFinalDamage(answer);
-  }
-
-  const incomingSorted = [...remainingIncomingVolley].sort(byDamageDescending);
   const cancelIncoming: string[] = [];
+  const cancelRetaliation = new Set<string>();
+  let incomingLeft = [...remainingIncomingVolley];
+  let answersLeft = [...retaliationVolley];
 
-  for (const hit of incomingSorted) {
-    const damage = attackFinalDamage(hit);
-    if (budget >= damage) {
+  incomingLeft.sort(byDamageDescending);
+  const afterEquals: PendingEffect[] = [];
+  for (const hit of incomingLeft) {
+    const matchIndex = answersLeft.findIndex(
+      (answer) => attackFinalDamage(answer) === attackFinalDamage(hit),
+    );
+    const match = matchIndex >= 0 ? answersLeft[matchIndex] : undefined;
+    if (match !== undefined) {
+      answersLeft.splice(matchIndex, 1);
       cancelIncoming.push(hit.id);
-      budget -= damage;
+      cancelRetaliation.add(match.id);
+    } else {
+      afterEquals.push(hit);
+    }
+  }
+  incomingLeft = afterEquals;
+
+  incomingLeft.sort(byDamageDescending);
+  const afterSubsets: PendingEffect[] = [];
+  for (const hit of incomingLeft) {
+    const subset = exactDamageSubset(answersLeft, attackFinalDamage(hit));
+    if (subset !== null) {
+      cancelIncoming.push(hit.id);
+      for (const answer of subset) {
+        cancelRetaliation.add(answer.id);
+      }
+      const spent = new Set(subset.map((answer) => answer.id));
+      answersLeft = answersLeft.filter((answer) => !spent.has(answer.id));
+    } else {
+      afterSubsets.push(hit);
+    }
+  }
+  incomingLeft = afterSubsets;
+
+  if (incomingLeft.length > 0 && answersLeft.length > 0) {
+    let incomingSum = 0;
+    for (const hit of incomingLeft) {
+      incomingSum += attackFinalDamage(hit);
+    }
+    const covers = answersLeft
+      .filter((answer) => attackFinalDamage(answer) >= incomingSum)
+      .sort((left, right) => attackFinalDamage(left) - attackFinalDamage(right));
+    const cover = covers[0];
+    if (cover !== undefined) {
+      for (const hit of incomingLeft) {
+        cancelIncoming.push(hit.id);
+      }
+      incomingLeft = [];
+      if (attackFinalDamage(cover) === incomingSum) {
+        cancelRetaliation.add(cover.id);
+        answersLeft = answersLeft.filter((answer) => answer.id !== cover.id);
+      }
     }
   }
 
-  if (budget === 0 && cancelIncoming.length > 0) {
-    removeEffectsById(source, new Set(retaliationVolley.map((effect) => effect.id)));
+  incomingLeft.sort(byDamageDescending);
+  answersLeft.sort(byDamageDescending);
+  const usedStronger = new Set<string>();
+  for (const hit of incomingLeft) {
+    const answer = answersLeft.find(
+      (candidate) =>
+        !usedStronger.has(candidate.id) &&
+        attackFinalDamage(candidate) > attackFinalDamage(hit),
+    );
+    if (answer !== undefined) {
+      usedStronger.add(answer.id);
+      cancelIncoming.push(hit.id);
+    }
+  }
+
+  if (cancelRetaliation.size > 0) {
+    removeEffectsById(source, cancelRetaliation);
   }
 
   // A corpse never takes a turn, so an answer must not stay queued on them.

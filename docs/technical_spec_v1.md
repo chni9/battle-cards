@@ -171,14 +171,18 @@ traits: {
 
 ### 4.6 Mutual attacks
 
-Two attacks directed at each other between two players, both still pending. Assassin
-multi-attack hits that share a target and were queued in the same action are **one volley**
-(sum of final damage) for this compare only.
+Two attacks directed at each other between two players, both still pending. Compared on
+the turn of the player who retaliated. Each attack stays its own hit (designer 2026-09-29).
+This supersedes Lot 54's summed Assassin volley for this compare only.
 
-- **Equal volley damage** → both volleys are cancelled, on the turn of the player who retaliated.
-- **Stronger answer** → the weaker incoming volley is cancelled; the stronger stays pending
-  and resolves on its target's turn.
-- **Weaker answer** → incoming still resolves this turn; the weaker answer stays pending
+- **Equal damage** → those two hits cancel each other. A Strong played with a Basic
+  still cancels one Strong; the Basic goes through alone.
+- **Exact sum** → several answers are spent together only when they add up exactly to
+  one bigger hit (two Strongs cancel one Strong+).
+- **One answer covers every remaining hit** → it cancels all of them. It stays pending
+  when it is stronger (Super+ against Strong+ and Basic).
+- **Otherwise a stronger answer** → it cancels one weaker hit and stays pending.
+- **Weaker answer** → the incoming hit still resolves; the weaker answer stays pending
   (designer 2026-09-01 / Lot 54). Mirror still redirects a single pending effect.
 
 Designer ruling 2026-08-04 (Lot 19) restored stronger-answer-cancels-weaker-incoming over

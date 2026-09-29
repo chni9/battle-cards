@@ -431,7 +431,7 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
-  it('twenty basics sum over one Super and stay pending (designer 2026-09-29)', () => {
+  it('spends only the basics that sum to a Super and lets the rest through', () => {
     const state = twoPlayers('mutual-volley-super-vs-20');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -461,13 +461,47 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
     expect(bob.lives).toBe(25);
-    expect(alice.pendingEffects).toHaveLength(20);
+    expect(alice.pendingEffects).toHaveLength(13);
     expect(bob.pendingEffects).toHaveLength(0);
 
     state.currentTurnPlayerId = alice.id;
     const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
     expect(onAlice.ok).toBe(true);
-    expect(alice.lives).toBe(0);
+    expect(alice.lives).toBe(7);
+  });
+
+  it('cancels Strong against Strong and lets the extra Basic through', () => {
+    const state = twoPlayers('mutual-strong-plus-basic');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    for (const cardId of ['strong-attack', 'basic-attack'] as const) {
+      queueEffect({
+        state,
+        sourcePlayerId: bob.id,
+        targetPlayerId: alice.id,
+        cardId,
+        isUpgraded: false,
+      });
+    }
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual(['basic-attack']);
+    expect(bob.pendingEffects).toHaveLength(0);
   });
 
   it('pairs the strongest answer with upgraded Strong and lets the rest hit', () => {
