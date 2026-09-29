@@ -204,6 +204,10 @@ function applyOneImposition(
   victim: Player,
   effect: PersistentEffect,
 ): void {
+  if (victim.shield > 0 && victim.shieldIsUpgraded) {
+    return;
+  }
+
   const cap = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
   const aboveFloor = victim.points - IMPOSITION_POINTS_FLOOR;
   const taken = Math.min(cap, Math.max(0, aboveFloor));
