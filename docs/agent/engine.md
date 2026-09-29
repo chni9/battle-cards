@@ -215,9 +215,8 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
   (#V4-9a / L58-06). Super Absorber
-  reads the current seat's ledger
-  (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
-  persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
+  reads the current seat's ledger after Imposition, Poison, and Curse so the
+  upgraded copy includes those outflows (Lot 68). Imposition /
   Poison act on the current player from other seats' active effects. Curse is
   **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
   (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**
@@ -278,10 +277,11 @@ attack cards — those follow mutual attacks above.
 Technical spec §4.4, ruling §6.2 #12. Absorber needs to know what an opponent lost and spent
 during their **most recent complete turn, resolution phase included**.
 
-A state diff is not enough: what a player **actively spent** must stay distinct from what a
-third party **stole** from them, because upgraded Absorber captures the former and not the
-latter. `TurnLedger` therefore keeps `pointsSpent` and `pointsLostToTheft` as separate fields —
-never sum them into one "points lost".
+`TurnLedger` keeps `pointsSpent` and `pointsLostToTheft` (and the upgrade-point
+pair) as separate fields. Curse still reads `pointsSpent` only. Upgraded Absorber
+and upgraded Super Absorber sum both pairs: every point and upgrade point that
+left, including a sale and a theft (Lot 68). Shield is not on the ledger. Selling
+an upgrade point writes `upgradePointsSpent`. Imposition writes `pointsLostToTheft`.
 
 The ledger resets at the start of each player's own turn. One ledger per player is enough:
 turn order rotates, so when it is your turn every opponent's last turn is already complete.

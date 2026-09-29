@@ -69,6 +69,7 @@ describe('Imposition (L63-04)', () => {
     applyPersistentEffects(state, b.id);
     expect(b.points).toBe(7);
     expect(a.points).toBe(1);
+    expect(b.turnLedger.pointsLostToTheft).toBe(1);
 
     b.points = 10;
     applyPersistentEffects(state, b.id);
