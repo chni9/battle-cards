@@ -627,8 +627,8 @@ New What’s new id (not an append to `lot-65`; that note is on `main`).
 | L68-06 | Sentence countdown does not move on the turn Block is played or on Block extra turns. **Acceptance:** a normal turn still ticks; the activation turn does not; `pnpm verify` green. | M | Medium | L68-02 | Done |
 | L68-07 | A living player may attack an eliminated player only while that player still has a pending attack on them. The answer does not damage the corpse and does not stay queued. **Acceptance:** a legal riposte cancels; an attack on a corpse with nothing pending is rejected; `pnpm verify` green. | M | **High** | L68-02 | Done |
 | L68-08 | Reanimation removes every Spy relation where that player is viewer or subject. **Acceptance:** both directions are gone after revive; `pnpm verify` green. | S | Medium | L68-02 | Done |
-| L68-09 | An upgraded Shield stops Imposition’s point drain and does not spend shield points. **Acceptance:** base Shield does not; upgraded Shield does; `pnpm verify` green. | S | Medium | L68-02 | To do |
-| L68-10 | Ghost starts with Tax already upgraded and 1 upgrade point. **Acceptance:** a new Ghost seat has both; Indestructible is unchanged; `pnpm verify` green. | S | Medium | L68-02 | To do |
+| L68-09 | An upgraded Shield stops Imposition’s point drain and does not spend shield points. **Acceptance:** base Shield does not; upgraded Shield does; `pnpm verify` green. | S | Medium | L68-02 | Done |
+| L68-10 | Ghost starts with Tax already upgraded and 1 upgrade point. **Acceptance:** a new Ghost seat has both; Indestructible is unchanged; `pnpm verify` green. | S | Medium | L68-02 | Done |
 | L68-11 | New What’s new entry for this pass. **Acceptance:** auto popup scope is the new id only; `pnpm verify` green. | S | Low | L68-03 | To do |
 | L68-12 | Mark this pass’s production and staging inbox rows done or eliminated. Older rows stay pending. **Acceptance:** the insult row is eliminated; the fixed reports are done. | S | Low | L68-01 | To do |
 

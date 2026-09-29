@@ -21,7 +21,7 @@ export const KIT_TRAIT_SECTION_KEYS = [
 /** Kit-id abilities that are not `KitTraits` fields (Ghost, Duplicator, …). */
 export const KIT_ABILITY_COPY: Partial<Record<KitId, string>> = {
   ghost:
-    "Every life this player loses (any cause except Cloning's resource copy) grants 2 points — after shield absorption.",
+    "Tax is already upgraded. Every life this player loses (any cause except Cloning's resource copy) grants 2 points — after shield absorption.",
   duplicator:
     "Instead of a normal action, activate duplication for the following table round: copy opponents' life, point, and upgrade-point gains (not shield, not Cloning's resource copy). Renew each turn. Two Duplicators do not loop.",
   prophet:
