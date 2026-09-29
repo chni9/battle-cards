@@ -10,9 +10,9 @@
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
  * (promote #56). `lot-68` is the open update.
  *
- * Player copy (designer 2026-09-29): one sentence per gameplay change.
- * Leave `before` empty so the popup shows that sentence alone. Bug fixes
- * are one line, `Fixed some bugs.` Detail: `docs/agent/frontend.md`.
+ * Player copy (designer 2026-09-29): keep Before and After. Each side is
+ * one short sentence about the gameplay change. Bug fixes: After is
+ * `Fixed some bugs.` Detail: `docs/agent/frontend.md`.
  */
 
 import type { CardId } from './domain/card';
@@ -51,16 +51,16 @@ const RELEASE_NOTES_CATALOG = [
     items: [
       {
         kitId: 'ghost' as const,
-        before: '',
-        after: 'Ghost starts with Tax+.',
+        before: 'Ghost started with a normal Tax and no upgrade point.',
+        after: 'Ghost starts with Tax+ and 1 upgrade point.',
       },
       {
         cardId: 'shield' as const,
-        before: '',
+        before: 'Shield+ did not block Imposition.',
         after: 'Shield+ blocks Imposition.',
       },
       {
-        before: '',
+        before: 'Some bugs were in the game.',
         after: 'Fixed some bugs.',
       },
     ],

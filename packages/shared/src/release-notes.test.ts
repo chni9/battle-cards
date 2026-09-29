@@ -36,12 +36,16 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
   it('writes lot-68 as three short gameplay lines', () => {
     const latest = latestReleaseNote();
     expect(latest.additions).toEqual([]);
+    expect(latest.items.map((item) => item.before)).toEqual([
+      'Ghost started with a normal Tax and no upgrade point.',
+      'Shield+ did not block Imposition.',
+      'Some bugs were in the game.',
+    ]);
     expect(latest.items.map((item) => item.after)).toEqual([
-      'Ghost starts with Tax+.',
+      'Ghost starts with Tax+ and 1 upgrade point.',
       'Shield+ blocks Imposition.',
       'Fixed some bugs.',
     ]);
-    expect(latest.items.every((item) => item.before === '')).toBe(true);
   });
 
   it('writes the Lot 65 fixes on lot-65, not on lot-63', () => {

@@ -142,20 +142,19 @@ rules above are unchanged — this section only covers how the client looks.
   next update. Do not delete shipped entries. Do not edit an entry that is
   already on `main` except to correct that entry's own text. **New** heading
   lists `additions` (kit portrait or card art + body) for kits/cards that did
-  not exist before;   before → after `items` cover changes with named-card art
-  and render **above** the New block. **Copy (designer 2026-09-29):** one
-  sentence per gameplay change the player will feel (the kit or card, and
-  what changes at the table). Leave `before` empty so the popup shows that
-  sentence alone, with no Before / After labels. Bug fixes are one line:
-  `Fixed some bugs.` Small mechanics stay out of the popup. Older shipped
-  entries stay as written. Kit-level items may use `kitId` (Gambler
+  not exist before; before → after `items` cover changes with named-card art
+  and render **above** the New block. **Copy (designer 2026-09-29):** keep
+  Before and After. Each side is one short sentence about the gameplay
+  change the player will feel. Bug fixes: After is `Fixed some bugs.`
+  Small mechanics stay out of the popup. Older shipped entries stay as
+  written. Kit-level items may use `kitId` (Gambler
   portrait) instead of `cardId`. `lot-63` (2026-09-20) is on `main`: Sentence,
   Imposition, Super Absorber, plus Gambler and Roulette (no `lot-64` id — those
   tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is on
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) is the open update: Ghost starts with Tax+, Shield+ blocks Imposition, and fixed some bugs. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) is the open update: Ghost starts with Tax+ and 1 upgrade point, Shield+ blocks Imposition, and fixed some bugs. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

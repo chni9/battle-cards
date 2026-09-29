@@ -4068,3 +4068,12 @@ Older shipped entries stay as written. Detail: `docs/agent/frontend.md`.
 
 ---
 
+## 2026-09-29 · [P] What’s new keeps Before and After
+
+Same day. The one-sentence rule stays. The popup still shows **Before**
+and **After**. Each side is one short sentence. Ghost’s line includes
+Tax+ and the starting upgrade point. Bug fixes: After is
+`Fixed some bugs.` This supersedes the “leave `before` empty” line above.
+
+---
+
