@@ -258,7 +258,9 @@ that app only) and `main` for production.
 `RELEASE_NOTES` entry. The **New** button lists every entry, newest date first.
 While that latest entry is not on `main`, later PRs append to it (one update).
 After it merges to `main`, the next player-facing change starts a new entry, and
-the auto popup shows only that next update. Detail: `docs/agent/frontend.md`.
+the auto popup shows only that next update. Write one sentence per gameplay
+change the player will feel. Bug fixes are one line: `Fixed some bugs.`
+Leave `before` empty for that sentence. Detail: `docs/agent/frontend.md`.
 
 ## 11. Agent output style
 

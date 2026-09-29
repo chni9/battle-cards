@@ -33,15 +33,15 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     ]);
   });
 
-  it('writes the 28 Sep fixes on lot-68', () => {
+  it('writes lot-68 as three short gameplay lines', () => {
     const latest = latestReleaseNote();
     expect(latest.additions).toEqual([]);
-    const text = latest.items.map((item) => `${item.before} ${item.after}`).join('\n');
-    expect(text).toMatch(/Attack Thief/);
-    expect(text).toMatch(/Shield/);
-    expect(text).toMatch(/Ghost/);
-    expect(text).toMatch(/Sentence/);
-    expect(text).not.toMatch(/lot-65/);
+    expect(latest.items.map((item) => item.after)).toEqual([
+      'Ghost starts with Tax+.',
+      'Shield+ blocks Imposition.',
+      'Fixed some bugs.',
+    ]);
+    expect(latest.items.every((item) => item.before === '')).toBe(true);
   });
 
   it('writes the Lot 65 fixes on lot-65, not on lot-63', () => {

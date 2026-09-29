@@ -98,14 +98,20 @@ export function WhatsNewDialog({
                       />
                     ) : null}
                     <div className="min-w-0 space-y-1.5 text-sm leading-relaxed text-ink">
-                      <p>
-                        <span className="font-semibold text-ink-muted">Before. </span>
-                        {item.before}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-ink">After. </span>
-                        {item.after}
-                      </p>
+                      {item.before.length > 0 ? (
+                        <>
+                          <p>
+                            <span className="font-semibold text-ink-muted">Before. </span>
+                            {item.before}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-ink">After. </span>
+                            {item.after}
+                          </p>
+                        </>
+                      ) : (
+                        <p>{item.after}</p>
+                      )}
                     </div>
                   </li>
                 ))}

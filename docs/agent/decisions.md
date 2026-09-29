@@ -4058,3 +4058,13 @@ HTTP only.
 
 ---
 
+## 2026-09-29 · [P] What’s new copy stays one sentence
+
+Designer. The hub popup is for players. Each gameplay change is one
+sentence: the kit or card, and what they will feel at the table. Leave
+`before` empty so the popup shows that sentence alone. Bug fixes are one
+line: `Fixed some bugs.` Counters, windows, logs, and edge cases stay out.
+Older shipped entries stay as written. Detail: `docs/agent/frontend.md`.
+
+---
+
