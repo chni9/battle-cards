@@ -7,7 +7,8 @@
  * that same id (one update). After it merges to `main`, the next
  * player-facing change adds a new entry above it. Do not edit an entry
  * that is already on `main` except to correct that entry's own text.
- * `lot-63` shipped on `main` (promote #51). `lot-65` is the open update.
+ * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
+ * (promote #56). `lot-68` is the open update.
  */
 
 import type { CardId } from './domain/card';
@@ -38,6 +39,57 @@ export interface ReleaseNote {
 export type WhatsNewScope = 'current' | 'history';
 
 const RELEASE_NOTES_CATALOG = [
+  {
+    id: 'lot-68',
+    date: '2026-09-29',
+    title: 'Blocks, absorbs, and answers',
+    additions: [],
+    items: [
+      {
+        cardId: 'attack-thief' as const,
+        before: 'Attack Thief blocked one attack, sometimes many turns later, and the log only said blocked.',
+        after:
+          'Attack Thief blocks every attack already waiting on you. It does not block an attack played later. The log says Attack Thief or Block.',
+      },
+      {
+        cardId: 'absorber' as const,
+        before: 'An upgraded Absorber missed a sold upgrade point and anything that was stolen.',
+        after:
+          'An upgraded Absorber or Super Absorber copies every life, point, and upgrade point that left that turn, including a sale and a theft. Shield is not copied.',
+      },
+      {
+        kitId: 'assassin' as const,
+        before: 'Several attacks in one turn added together when someone answered them.',
+        after:
+          'Each attack is answered on its own. A Super+ cancels only the other Super+. The rest of that turn still lands.',
+      },
+      {
+        cardId: 'sentence' as const,
+        before: 'Sentence kept counting down while Block was active.',
+        after: 'The turn you play Block, and the extra turns, do not count. A normal turn still does.',
+      },
+      {
+        before: 'You could not answer an attack from someone who had just died.',
+        after:
+          'You can attack that player only to answer the attack they still have on you. It does not hurt them.',
+      },
+      {
+        cardId: 'reanimation' as const,
+        before: 'Coming back kept every Spy.',
+        after: 'Coming back clears every Spy on you and every Spy you had.',
+      },
+      {
+        cardId: 'shield' as const,
+        before: 'An upgraded Shield blocked Thief and Spy, not Imposition.',
+        after: 'An upgraded Shield also stops Imposition. It does not spend shield points.',
+      },
+      {
+        kitId: 'ghost' as const,
+        before: 'Ghost started with no upgrade point, and Tax was not upgraded.',
+        after: 'Ghost starts with Tax already upgraded and 1 upgrade point.',
+      },
+    ],
+  },
   {
     id: 'lot-65',
     date: '2026-09-28',

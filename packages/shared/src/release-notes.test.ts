@@ -8,27 +8,48 @@ import {
 } from './release-notes';
 
 describe('release notes catalog (L63-07 / L65-05)', () => {
-  it('lists newest first and keeps lot-65 as the open update', () => {
+  it('lists newest first and keeps lot-68 as the open update', () => {
     expect(RELEASE_NOTES.length).toBeGreaterThan(0);
-    expect(latestReleaseNote().id).toBe('lot-65');
-    expect(latestReleaseNote().date).toBe('2026-09-28');
+    expect(latestReleaseNote().id).toBe('lot-68');
+    expect(latestReleaseNote().date).toBe('2026-09-29');
     expect(isReleaseNoteId('lot-63')).toBe(true);
     expect(isReleaseNoteId('lot-65')).toBe(true);
+    expect(isReleaseNoteId('lot-68')).toBe(true);
     expect(isReleaseNoteId('lot-64')).toBe(false);
     expect(RELEASE_NOTES.some((note) => note.id === 'lot-64')).toBe(false);
-    expect(RELEASE_NOTES.map((note) => note.date)).toEqual(['2026-09-28', '2026-09-20']);
+    expect(RELEASE_NOTES.map((note) => note.date)).toEqual([
+      '2026-09-29',
+      '2026-09-28',
+      '2026-09-20',
+    ]);
   });
 
   it('shows only the current update in the auto popup and every date on New', () => {
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-65']);
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-68']);
     expect(releaseNotesForScope('history').map((note) => note.id)).toEqual([
+      'lot-68',
       'lot-65',
       'lot-63',
     ]);
   });
 
-  it('writes the Lot 65 fixes on the open update, not on lot-63', () => {
+  it('writes the 28 Sep fixes on lot-68', () => {
     const latest = latestReleaseNote();
+    expect(latest.additions).toEqual([]);
+    const text = latest.items.map((item) => `${item.before} ${item.after}`).join('\n');
+    expect(text).toMatch(/Attack Thief/);
+    expect(text).toMatch(/Shield/);
+    expect(text).toMatch(/Ghost/);
+    expect(text).toMatch(/Sentence/);
+    expect(text).not.toMatch(/lot-65/);
+  });
+
+  it('writes the Lot 65 fixes on lot-65, not on lot-63', () => {
+    const latest = RELEASE_NOTES.find((note) => note.id === 'lot-65');
+    expect(latest).toBeDefined();
+    if (latest === undefined) {
+      return;
+    }
     expect(latest.additions).toEqual([]);
     expect(latest.items).toHaveLength(15);
     const text = latest.items.map((item) => `${item.before} ${item.after}`).join('\n');
