@@ -199,6 +199,8 @@ remain in hand (attack/action cards are reusable).
 
 Does not apply to attack cards: those fall under 4.6.
 
+A Thief may target an eliminated player only while that player still has a pending Thief on the actor (designer 2026-09-30). The compare is the same. The answer is then discarded and does not stay queued on the corpse. Spy stays living targets only.
+
 ---
 
 ## 5. Client-server protocol

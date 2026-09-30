@@ -4131,3 +4131,19 @@ means the hit still lands" for a defensive bundle.
 
 ---
 
+## 2026-09-30 · [P] Thief counters a dead player's Thief
+
+Designer. Same compare as a living Thief. Spy stays living targets only.
+
+- A living player may play Thief against an eliminated player only while
+  that player still has a pending Thief on them.
+- Equal level cancels the incoming Thief. An upgraded incoming Thief still
+  steals and removes a basic answer. An upgraded answer cancels a basic
+  incoming Thief.
+- The answer is then discarded. It does not stay queued on the corpse.
+- A Thief aimed at a corpse with no Thief pending is illegal. An attack
+  pending on you does not make Thief legal, and a Thief pending on you
+  does not make an attack legal.
+
+---
+

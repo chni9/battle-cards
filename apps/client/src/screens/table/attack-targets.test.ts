@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { attackTargetOpponents, type AttackTargetSeat } from './attack-targets';
+import {
+  attackTargetOpponents,
+  thiefTargetOpponents,
+  type AttackTargetSeat,
+} from './attack-targets';
 
 function seat(id: string, eliminated: boolean): AttackTargetSeat {
   return { id, isEliminated: eliminated, activePersistentEffects: [] };
@@ -47,5 +51,24 @@ describe('attackTargetOpponents', () => {
       you,
     );
     expect(targets.map((player) => player.id)).toEqual(['bravo']);
+  });
+
+  it('includes an eliminated player who still has a Thief on you', () => {
+    const pending = [
+      {
+        id: 'fx-thief',
+        cardId: 'thief' as const,
+        sourcePlayerId: 'alpha',
+        targetPlayerId: you,
+      },
+    ];
+    expect(
+      thiefTargetOpponents([living, corpse, otherCorpse], pending, you).map(
+        (player) => player.id,
+      ),
+    ).toEqual(['bravo', 'alpha']);
+    expect(attackTargetOpponents([living, corpse], pending, you).map((player) => player.id)).toEqual([
+      'bravo',
+    ]);
   });
 });

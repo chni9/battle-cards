@@ -1313,5 +1313,5 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
 - Solo Play again, room **IKDWUN** (L67Solo, Assassin, 2 Easy bots). Forfeit, then Play again. Home opens **Play solo** with Assassin, opponent **2**, and **Easy**. **Start solo game** stays up. The next match does not deal itself.
 - Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `table-banner.test.ts`, `imposition.test.ts`).
 
-Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Spy, Thief, and the other living-only pickers stay living-only. The server still rejects an attack on a corpse with nothing pending.
+Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Thief Choose target also includes an eliminated player who still has a Thief pending on you. Spy and the other living-only pickers stay living-only. The server still rejects an attack or Thief on a corpse with nothing of that kind pending.
 

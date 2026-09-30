@@ -53,7 +53,10 @@ import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
-import { eliminatedPlayerHasPendingAttackOn } from './riposte-target';
+import {
+  eliminatedPlayerHasPendingAttackOn,
+  eliminatedPlayerHasPendingThiefOn,
+} from './riposte-target';
 import { actionLogRound } from './action-log-round';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
@@ -1639,11 +1642,15 @@ function playCardAction(
       target !== undefined &&
       isAttackCardId(cardId) &&
       eliminatedPlayerHasPendingAttackOn(actor, target.id);
+    const thiefOk =
+      target !== undefined &&
+      cardId === 'thief' &&
+      eliminatedPlayerHasPendingThiefOn(actor, target.id);
 
     if (
       target === undefined ||
       target.id === actorPlayerId ||
-      (target.isEliminated && !absorberCorpseOk && !riposteOk) ||
+      (target.isEliminated && !absorberCorpseOk && !riposteOk && !thiefOk) ||
       isIllegalOpposingTarget(target)
     ) {
       return actionReject('invalid-target');

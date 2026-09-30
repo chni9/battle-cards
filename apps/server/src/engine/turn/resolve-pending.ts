@@ -119,7 +119,12 @@ function cancelReciprocalCounter(
 
   const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
 
-  if (source === undefined || source.isEliminated) {
+  if (source === undefined) {
+    return false;
+  }
+
+  // A corpse's Spy is not answered here. Their Thief is (designer 2026-09-30).
+  if (source.isEliminated && incoming.cardId !== 'thief') {
     return false;
   }
 
@@ -140,17 +145,32 @@ function cancelReciprocalCounter(
     return false;
   }
 
+  let cancelIncoming: boolean;
+
   if (incoming.isUpgraded === counter.isUpgraded) {
     source.pendingEffects.splice(counterIndex, 1);
-    return true;
-  }
-
-  if (incoming.isUpgraded && !counter.isUpgraded) {
+    cancelIncoming = true;
+  } else if (incoming.isUpgraded && !counter.isUpgraded) {
     source.pendingEffects.splice(counterIndex, 1);
-    return false;
+    cancelIncoming = false;
+  } else {
+    cancelIncoming = true;
   }
 
-  return true;
+  // A corpse never takes a turn, so the answer must not stay queued on them.
+  if (source.isEliminated) {
+    const leftover = source.pendingEffects.findIndex(
+      (effect) =>
+        effect.cardId === incoming.cardId &&
+        effect.sourcePlayerId === resolvingPlayer.id &&
+        effect.targetPlayerId === source.id,
+    );
+    if (leftover >= 0) {
+      source.pendingEffects.splice(leftover, 1);
+    }
+  }
+
+  return cancelIncoming;
 }
 
 /** Final attack damage for mutual compare (#V4-2). */

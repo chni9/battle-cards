@@ -36,7 +36,7 @@ import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { CardEffectCopy } from '../../design/components/card-effect-copy';
 import { LifeCountBadge } from '../../design/components/life-count-badge';
-import { attackTargetOpponents } from './attack-targets';
+import { attackTargetOpponents, thiefTargetOpponents } from './attack-targets';
 import { activeUpgradeInstanceId, visibleKitId } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -138,6 +138,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
       (!player.isEliminated || player.absorbWindowOpen) && !seatIsLivingInvisible(player),
   );
   const attackOpponents = attackTargetOpponents(opponents, view.pendingEffects, view.you);
+  const thiefOpponents = thiefTargetOpponents(opponents, view.pendingEffects, view.you);
   const defaultTarget = aliveOpponents[0]?.id ?? attackOpponents[0]?.id ?? '';
 
   const transformableHand = view.self.hand.filter((card) =>
@@ -155,7 +156,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
       ? absorberOpponents
       : dialog?.kind === 'target' && isAttackCardId(dialog.instance.cardId)
         ? attackOpponents
-        : aliveOpponents;
+        : dialog?.kind === 'target' && dialog.instance.cardId === 'thief'
+          ? thiefOpponents
+          : aliveOpponents;
   const targetDialogDefault = targetDialogOpponents[0]?.id ?? '';
   const resolvedTarget = targetDialogOpponents.some((p) => p.id === targetId)
     ? targetId
