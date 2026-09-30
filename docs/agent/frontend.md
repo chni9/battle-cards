@@ -117,8 +117,10 @@ rules above are unchanged — this section only covers how the client looks.
   VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind, About, and triage
-  status filters client-side (default Pending). Row detail can `PATCH /api/inbox/:id`
-  to `pending` / `done` / `eliminated` (eliminated = won't do). Detail still shows
+  status filters client-side (default Pending). Each row shows status as a colored
+  stripe and three icons (clock / check / cross), not buttons. Clicking an icon
+  `PATCH`es `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do)
+  without opening the report. The open report uses the same icons. Detail still shows
   contact, nickname, game code, screen, playKind, protocol, user agent, and log tail.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);

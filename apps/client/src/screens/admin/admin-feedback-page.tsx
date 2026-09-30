@@ -27,6 +27,107 @@ const KIND_LABEL: Record<FeedbackKind, string> = {
   idea: 'Idea',
 };
 
+const STATUS_TONE: Record<FeedbackTriageStatus, { idle: string; active: string; stripe: string }> = {
+  pending: {
+    idle: 'text-cta-orange',
+    active: 'bg-cta-orange text-cta-label-on-dark',
+    stripe: 'border-l-cta-orange',
+  },
+  done: {
+    idle: 'text-cta-green-deep',
+    active: 'bg-cta-green-deep text-cta-label-on-dark',
+    stripe: 'border-l-cta-green-deep',
+  },
+  eliminated: {
+    idle: 'text-cta-red',
+    active: 'bg-cta-red text-cta-label-on-dark',
+    stripe: 'border-l-cta-red',
+  },
+};
+
+function StatusGlyph({ status }: { status: FeedbackTriageStatus }): ReactElement {
+  if (status === 'done') {
+    return (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <path
+          d="M6 12.5 10.2 17 18 7.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  if (status === 'eliminated') {
+    return (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <path
+          d="M8 8l8 8M16 8l-8 8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" strokeWidth="2.2" />
+      <path
+        d="M12 8.5V12l2.5 2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StatusMarks(props: {
+  current: FeedbackTriageStatus;
+  disabled: boolean;
+  onSelect: (status: FeedbackTriageStatus) => void;
+}): ReactElement {
+  const { current, disabled, onSelect } = props;
+  return (
+    <div className="flex items-center gap-1">
+      {FEEDBACK_TRIAGE_STATUSES.map((status) => {
+        const selected = status === current;
+        const tone = STATUS_TONE[status];
+        return (
+          <button
+            key={status}
+            type="button"
+            aria-label={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+            aria-pressed={selected}
+            disabled={disabled}
+            title={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+            className={[
+              'inline-flex h-8 w-8 items-center justify-center rounded-full',
+              selected ? tone.active : `${tone.idle} hover:bg-surface`,
+              disabled ? 'opacity-50' : '',
+            ].join(' ')}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (selected || disabled) {
+                return;
+              }
+              onSelect(status);
+            }}
+          >
+            <StatusGlyph status={status} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function messagePreview(message: string): string {
   if (message.length <= 96) {
     return message;
@@ -114,30 +215,42 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
               </Button>
             ))}
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              compact
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
               type="button"
-              variant={statusFilter === 'all' ? 'green' : 'orange'}
+              aria-pressed={statusFilter === 'all'}
+              className={[
+                'rounded-full px-2 py-1 text-xs',
+                statusFilter === 'all' ? 'bg-ink text-cta-label-on-dark' : 'text-ink-muted',
+              ].join(' ')}
               onClick={() => {
                 setStatusFilter('all');
               }}
             >
               Any status
-            </Button>
-            {FEEDBACK_TRIAGE_STATUSES.map((status) => (
-              <Button
-                key={status}
-                compact
-                type="button"
-                variant={statusFilter === status ? 'green' : 'orange'}
-                onClick={() => {
-                  setStatusFilter(status);
-                }}
-              >
-                {FEEDBACK_TRIAGE_STATUS_LABEL[status]}
-              </Button>
-            ))}
+            </button>
+            {FEEDBACK_TRIAGE_STATUSES.map((status) => {
+              const selected = statusFilter === status;
+              const tone = STATUS_TONE[status];
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  aria-label={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+                  aria-pressed={selected}
+                  title={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+                  className={[
+                    'inline-flex h-8 w-8 items-center justify-center rounded-full',
+                    selected ? tone.active : tone.idle,
+                  ].join(' ')}
+                  onClick={() => {
+                    setStatusFilter(status);
+                  }}
+                >
+                  <StatusGlyph status={status} />
+                </button>
+              );
+            })}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
@@ -166,22 +279,31 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
           </div>
           <ul className="mt-6 divide-y divide-border-soft rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
             {visible.map((row) => (
-              <li key={row.id}>
+              <li key={row.id} className={`flex items-center border-l-4 ${STATUS_TONE[row.status].stripe}`}>
                 <button
                   type="button"
-                  className="block w-full px-3 py-3 text-left"
+                  className="block min-w-0 flex-1 px-3 py-3 text-left"
                   onClick={() => {
                     setOpenId(row.id);
                   }}
                 >
                   <p className="text-xs text-ink-muted">
-                    {row.createdAt} · {KIND_LABEL[row.kind]} · {FEEDBACK_TRIAGE_STATUS_LABEL[row.status]}
+                    {row.createdAt} · {KIND_LABEL[row.kind]}
                     {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
                     {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
                     {row.nickname !== null ? ` · ${row.nickname}` : ''}
                   </p>
                   <p className="mt-1 text-sm text-ink">{messagePreview(row.message)}</p>
                 </button>
+                <div className="shrink-0 pr-2">
+                  <StatusMarks
+                    current={row.status}
+                    disabled={savingStatus}
+                    onSelect={(status) => {
+                      applyStatus(row.id, status);
+                    }}
+                  />
+                </div>
               </li>
             ))}
           </ul>
@@ -209,24 +331,15 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
       >
         {selected !== null ? (
           <div className="space-y-3 text-sm text-ink">
-            <p className="text-xs text-ink-muted">
-              {selected.createdAt} · {FEEDBACK_TRIAGE_STATUS_LABEL[selected.status]}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {FEEDBACK_TRIAGE_STATUSES.map((status) => (
-                <Button
-                  key={status}
-                  compact
-                  type="button"
-                  variant={selected.status === status ? 'green' : 'orange'}
-                  disabled={savingStatus}
-                  onClick={() => {
-                    applyStatus(selected.id, status);
-                  }}
-                >
-                  {FEEDBACK_TRIAGE_STATUS_LABEL[status]}
-                </Button>
-              ))}
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-ink-muted">{selected.createdAt}</p>
+              <StatusMarks
+                current={selected.status}
+                disabled={savingStatus}
+                onSelect={(status) => {
+                  applyStatus(selected.id, status);
+                }}
+              />
             </div>
             {selected.topics.length > 0 ? (
               <p>About: {formatFeedbackTopics(selected.topics)}</p>
