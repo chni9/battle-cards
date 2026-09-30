@@ -203,6 +203,7 @@ export function appendTurnResultLog(log: ActionLogEntryView[], result: TurnResul
       shieldAbsorbed: resolved.shieldAbsorbed,
       outcome: resolved.outcome,
       turnSequence,
+      ...(resolved.blockedBy !== undefined ? { blockedBy: resolved.blockedBy } : {}),
       ...copyPlayerDeltas(resolved.playerDeltas),
     });
   }

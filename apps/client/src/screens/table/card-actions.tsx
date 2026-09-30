@@ -9,6 +9,7 @@ import {
   cardActsOnOpponents,
   formatCardLabel,
   getCard,
+  isAttackCardId,
   isTemporarilyUnavailableCardId,
   type CardInstance,
   type PlayingStateView,
@@ -35,6 +36,7 @@ import type { PlayCardOptions } from '../../net/use-room-connection';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from './chrome-labels';
 import { CardEffectCopy } from '../../design/components/card-effect-copy';
 import { LifeCountBadge } from '../../design/components/life-count-badge';
+import { attackTargetOpponents, thiefTargetOpponents } from './attack-targets';
 import { activeUpgradeInstanceId, visibleKitId } from './table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -135,7 +137,9 @@ export function CardActions(props: CardActionsProps): ReactElement {
     (player) =>
       (!player.isEliminated || player.absorbWindowOpen) && !seatIsLivingInvisible(player),
   );
-  const defaultTarget = aliveOpponents[0]?.id ?? '';
+  const attackOpponents = attackTargetOpponents(opponents, view.pendingEffects, view.you);
+  const thiefOpponents = thiefTargetOpponents(opponents, view.pendingEffects, view.you);
+  const defaultTarget = aliveOpponents[0]?.id ?? attackOpponents[0]?.id ?? '';
 
   const transformableHand = view.self.hand.filter((card) =>
     (SHARED_CARD_IDS as readonly string[]).includes(card.cardId),
@@ -150,7 +154,11 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const targetDialogOpponents =
     dialog?.kind === 'target' && dialog.instance.cardId === 'absorber'
       ? absorberOpponents
-      : aliveOpponents;
+      : dialog?.kind === 'target' && isAttackCardId(dialog.instance.cardId)
+        ? attackOpponents
+        : dialog?.kind === 'target' && dialog.instance.cardId === 'thief'
+          ? thiefOpponents
+          : aliveOpponents;
   const targetDialogDefault = targetDialogOpponents[0]?.id ?? '';
   const resolvedTarget = targetDialogOpponents.some((p) => p.id === targetId)
     ? targetId
@@ -625,7 +633,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 </div>
                 {checked ? (
                   <ul className="grid min-w-0 flex-1 grid-cols-2 gap-3 p-2">
-                    {aliveOpponents.map((player) => (
+                    {attackOpponents.map((player) => (
                       <li key={player.id}>
                         <SeatTile
                           view={view}

@@ -7,7 +7,12 @@
  * that same id (one update). After it merges to `main`, the next
  * player-facing change adds a new entry above it. Do not edit an entry
  * that is already on `main` except to correct that entry's own text.
- * `lot-63` shipped on `main` (promote #51). `lot-65` is the open update.
+ * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
+ * (promote #56). `lot-68` is the open update.
+ *
+ * Player copy (designer 2026-09-29): keep Before and After. Each side is
+ * one short sentence about the gameplay change. Bug fixes: After is
+ * `Fixed some bugs.` Detail: `docs/agent/frontend.md`.
  */
 
 import type { CardId } from './domain/card';
@@ -38,6 +43,28 @@ export interface ReleaseNote {
 export type WhatsNewScope = 'current' | 'history';
 
 const RELEASE_NOTES_CATALOG = [
+  {
+    id: 'lot-68',
+    date: '2026-09-29',
+    title: 'Ghost and Shield',
+    additions: [],
+    items: [
+      {
+        kitId: 'ghost' as const,
+        before: 'Ghost started with a normal Tax and no upgrade point.',
+        after: 'Ghost starts with Tax+ and 1 upgrade point.',
+      },
+      {
+        cardId: 'shield' as const,
+        before: 'Shield+ did not block Imposition.',
+        after: 'Shield+ blocks Imposition.',
+      },
+      {
+        before: 'Some bugs were in the game.',
+        after: 'Fixed some bugs.',
+      },
+    ],
+  },
   {
     id: 'lot-65',
     date: '2026-09-28',

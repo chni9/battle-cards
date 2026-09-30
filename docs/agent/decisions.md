@@ -4022,3 +4022,128 @@ the Imposition floor. The Lot 66 entry stays as the record of that pass.
 
 ---
 
+## 2026-09-29 · [P] Inbox triage and 28 Sep feedback (Lot 68)
+
+Designer lock after the production inbox reports from 28 Sep. This
+supersedes Lot 54's "Assassin multi-attack is one volley (sum of final
+damage)" for the mutual compare only. Mirror still redirects one pending
+attack. What's new is a new id (`lot-65` is on `main`). `blockedBy` on
+`actionResolved` is `PROTOCOL_VERSION` 41 → 42 (L68-03). Inbox status is
+HTTP only.
+
+- Attack Thief blocks every attack already pending against the user, each
+  one on its own, when the card is played. It does not keep a charge that
+  blocks an attack played on a later turn. A leftover charge was blocking
+  Supers during Sentence turns (`RCCHCM` turn 131 charge, turn 142 Super)
+  and a redirected Strong many turns later (`HTGFDM`). The public log names
+  Attack Thief or Block.
+- Upgraded Absorber and upgraded Super Absorber copy every life, point, and
+  upgrade point that left the target that turn, including a sale and a
+  theft. Shield never counts. Base cards stay lives-only. Selling an
+  upgrade point is a spend.
+- Mutual attacks pair one-to-one, highest damage first. Equal / stronger /
+  weaker is unchanged per pair. Unpaired hits resolve alone. A Super+
+  cancels only the opposing Super+; Strong and Basic in the same Assassin
+  action still land.
+- Sentence does not count the turn Block is played or the extra turns from
+  that Block. A normal turn before that still counts.
+- A living player may attack an eliminated player only while that player
+  still has a pending attack on them. The answer is compared, then
+  discarded. It does not damage the corpse and does not stay queued.
+- Reanimation clears every Spy relation where that player is viewer or
+  subject. The spectator overlay is not a stored Spy.
+- An upgraded Shield stops Imposition's point drain and spends no shield.
+- Ghost starts with Tax already upgraded and 1 upgrade point.
+  Indestructible's Tax+ is unchanged.
+
+---
+
+## 2026-09-29 · [P] What’s new copy stays one sentence
+
+Designer. The hub popup is for players. Each gameplay change is one
+sentence: the kit or card, and what they will feel at the table. Leave
+`before` empty so the popup shows that sentence alone. Bug fixes are one
+line: `Fixed some bugs.` Counters, windows, logs, and edge cases stay out.
+Older shipped entries stay as written. Detail: `docs/agent/frontend.md`.
+
+---
+
+## 2026-09-29 · [P] What’s new keeps Before and After
+
+Same day. The one-sentence rule stays. The popup still shows **Before**
+and **After**. Each side is one short sentence. Ghost’s line includes
+Tax+ and the starting upgrade point. Bug fixes: After is
+`Fixed some bugs.` This supersedes the “leave `before` empty” line above.
+
+---
+
+## 2026-09-29 · [P] Defending multi-attack is one lot
+
+Designer, same day. This supersedes the Lot 68 one-to-one pairing for the
+mutual compare.
+
+- Attacks the retaliating player played in that one turn at that opponent
+  are one lot. Their final damage adds up.
+- Incoming hits from the other multi-attack stay separate. The lot is spent
+  on them, largest first. A hit is cancelled only when the damage still in
+  the lot is at least that hit. The rest still resolve.
+- A fully spent lot is cancelled. Leftover damage keeps the whole lot
+  pending. A weaker lot that covers nothing stays pending, and the incoming
+  still hits.
+- Two Strongs (2 + 2) cancel one Strong+ (4). A Super+ (10) against a
+  Strong+ (4) and a Basic (1) cancels both and stays pending. An answer of
+  3 against two attacks of 2 cancels one of them and stays pending; the
+  other 2 hits.
+- Mirror still redirects one pending attack.
+
+---
+
+## 2026-09-29 · [P] Extra attacks in a multi-attack go through
+
+Designer, same day, after a table test. This supersedes "leftover damage
+keeps the whole lot pending."
+
+- Equal hits cancel first. A Strong played with a Basic cancels one incoming
+  Strong. The Basic is not part of that cancel and goes through alone.
+- Several answers are spent together only when they add up exactly to one
+  bigger hit. Two Strongs still cancel one Strong+. Seven Basics cancel one
+  Super; the other Basics stay pending.
+- One answer that is at least the sum of every remaining incoming hit
+  cancels all of them. It stays pending when it is stronger (Super+ 10
+  against Strong+ and Basic). It is spent when it matches that sum exactly.
+- Otherwise a stronger answer cancels one weaker hit and stays. An answer of
+  3 against two attacks of 2 still cancels only one of them.
+
+---
+
+## 2026-09-29 · [P] Biggest hit is paid before an equal pair
+
+Designer, same day. This supersedes "equal hits cancel first" when those
+cards are the exact cost of a bigger hit, and it supersedes "no exact split
+means the hit still lands" for a defensive bundle.
+
+- Two Strongs against a Strong+ and a Strong cancel the Strong+. Both
+  Strongs are spent. The normal Strong still hits.
+- A Strong (2) and a Basic+ (3) cannot split into 4. They are one defensive
+  bundle. They cancel a Strong+ and both stay pending.
+- An exact group is still spent. A Strong played with a Basic still spends
+  only the Strong. Two Strongs against a Strong+ alone are still both spent.
+
+---
+
+## 2026-09-30 · [P] Thief counters a dead player's Thief
+
+Designer. Same compare as a living Thief. Spy stays living targets only.
+
+- A living player may play Thief against an eliminated player only while
+  that player still has a pending Thief on them.
+- Equal level cancels the incoming Thief. An upgraded incoming Thief still
+  steals and removes a basic answer. An upgraded answer cancels a basic
+  incoming Thief.
+- The answer is then discarded. It does not stay queued on the corpse.
+- A Thief aimed at a corpse with no Thief pending is illegal. An attack
+  pending on you does not make Thief legal, and a Thief pending on you
+  does not make an attack legal.
+
+---
+

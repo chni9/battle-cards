@@ -12,10 +12,12 @@ import {
   getKit,
   KIT_IDS,
   randomStartingSpecialPool,
+  type GameState,
   type KitId,
   type Player,
 } from '@card-battle/shared';
 
+import { clearSpiesInvolving } from '../protocol/visibility-matrix';
 import { acquireCardToHand, acquireSpecialCard } from './kits/acquire-card';
 import type { Rng } from './rng';
 
@@ -94,7 +96,12 @@ export function dealStartingLoadout(
  * Reset an eliminated player into a fresh kit loadout (#V4-36).
  * Caller must already have dumped leftovers to the pool and consumed the charge.
  */
-export function reanimatePlayer(player: Player, kitId: KitId, rng: Rng): void {
+export function reanimatePlayer(
+  state: GameState,
+  player: Player,
+  kitId: KitId,
+  rng: Rng,
+): void {
   const kit = getKit(kitId);
 
   player.kitId = kitId;
@@ -123,6 +130,7 @@ export function reanimatePlayer(player: Player, kitId: KitId, rng: Rng): void {
   player.pendingReanimation = null;
   player.absorbWindowPendingPlayerIds = null;
   delete player.drawGain;
+  clearSpiesInvolving(state, player.id);
 
   dealStartingLoadout(player, kitId, rng, `${player.id}:reanim`);
 }

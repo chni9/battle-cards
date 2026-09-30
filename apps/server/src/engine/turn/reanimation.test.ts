@@ -9,7 +9,9 @@ import { getKit, KIT_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { createInitialState } from '../create-initial-state';
+import { reanimatePlayer } from '../reanimate-player';
 import { createRng } from '../rng';
+import { grantSpy } from '../../protocol/visibility-matrix';
 import {
   applyDefaultEliminationRewards,
   eliminateWithoutReward,
@@ -18,6 +20,36 @@ import {
 import { performTurnAction } from './perform-action';
 
 describe('Reanimation base (L26-01 / §10.3)', () => {
+  it('clears Spies in both directions (L68-08)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l68-08-spy',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    if (a === undefined) {
+      throw new Error('missing a');
+    }
+    grantSpy(state, 'a', 'b', 'kit-and-cards');
+    grantSpy(state, 'c', 'a', 'full-resources');
+    grantSpy(state, 'b', 'c', 'kit-and-cards');
+    a.isEliminated = true;
+    a.pendingReanimation = { isUpgraded: false };
+
+    reanimatePlayer(state, a, 'ghost', createRng('l68-08-spy'));
+
+    expect(state.visibility.some((row) => row.viewerId === 'a' || row.subjectId === 'a')).toBe(
+      false,
+    );
+    expect(state.visibility).toEqual([
+      expect.objectContaining({ viewerId: 'b', subjectId: 'c' }),
+    ]);
+    expect(a.isEliminated).toBe(false);
+  });
+
   it('arms on play and rejects a second armed play (#V4-12c)', () => {
     const state = createInitialState({
       seats: [

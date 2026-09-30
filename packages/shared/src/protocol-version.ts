@@ -91,5 +91,10 @@
  * Older clients cannot read the new kind. Lot 66 already published 40, so
  * this bump is 41. Exception to the V6 single-bump lock (same class as
  * L49 / L56–L64); see decisions.md.
+ *
+ * 41 → 42 (designer 2026-09-29 / Lot 68): `actionResolved.blockedBy` names
+ * Attack Thief or Block. Older clients cannot tell those apart from a bare
+ * "blocked". Exception to the V6 single-bump lock (same class as L49 /
+ * L56–L66); see decisions.md.
  */
-export const PROTOCOL_VERSION = 41;
+export const PROTOCOL_VERSION = 42;

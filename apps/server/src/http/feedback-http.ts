@@ -11,17 +11,20 @@ import {
   isFeedbackKind,
   isFeedbackScreen,
   isFeedbackTopicsComplete,
+  isFeedbackTriageStatus,
   normalizeFeedbackTopics,
   type FeedbackInboxRow,
   type FeedbackKind,
   type FeedbackScreen,
   type FeedbackTopic,
+  type FeedbackTriageStatus,
   type PlayKind,
 } from '@card-battle/shared';
 
 import type { FeedbackReportInsert } from '../db/feedback-types';
 import { insertFeedbackReport } from '../db/insert-feedback-report';
 import { listFeedbackReports } from '../db/list-feedback-reports';
+import { isFeedbackReportId, updateFeedbackStatus } from '../db/update-feedback-status';
 import {
   lookupFinishedFeedbackContext,
   type FinishedFeedbackContext,
@@ -59,6 +62,7 @@ export interface FeedbackApiDeps {
   getPool: () => Pool | null;
   insertReport: (pool: Pool, report: FeedbackReportInsert) => Promise<string>;
   listReports: (pool: Pool) => Promise<readonly FeedbackInboxRow[]>;
+  updateStatus: (pool: Pool, id: string, status: FeedbackTriageStatus) => Promise<boolean>;
   lookupLive: (gameCode: string) => LiveFeedbackContext | null;
   lookupFinished: (
     pool: Pool,
@@ -78,6 +82,7 @@ export function defaultFeedbackApiDeps(inboxAuthLimiter: IpRateLimiter): Feedbac
     getPool,
     insertReport: insertFeedbackReport,
     listReports: listFeedbackReports,
+    updateStatus: updateFeedbackStatus,
     lookupLive: lookupLiveFeedbackContext,
     lookupFinished: lookupFinishedFeedbackContext,
     isProduction: () => process.env['NODE_ENV'] === 'production',
@@ -268,6 +273,14 @@ export function mountFeedbackApi(app: Application, deps: FeedbackApiDeps): void 
       }
     });
   });
+
+  app.patch('/api/inbox/:id', (req, res) => {
+    void handleInboxPatch(req, res, deps).catch(() => {
+      if (!res.headersSent) {
+        res.status(503).json({ ok: false });
+      }
+    });
+  });
 }
 
 async function handleFeedbackPost(
@@ -352,6 +365,65 @@ async function handleInboxGet(
 
     const rows = await deps.listReports(pool);
     res.status(200).json(rows);
+  } catch {
+    if (!res.headersSent) {
+      res.status(503).json({ ok: false });
+    }
+  }
+}
+
+function inboxParamId(value: string | string[] | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function handleInboxPatch(
+  req: Request,
+  res: Response,
+  deps: FeedbackApiDeps,
+): Promise<void> {
+  try {
+    applyInboxDevCors(req, res, deps.isProduction());
+
+    const auth = checkInboxPassword(req, {
+      readInboxPassword: deps.readInboxPassword,
+      inboxAuthLimiter: deps.inboxAuthLimiter,
+    });
+    if (!('ok' in auth)) {
+      respondInboxAuthFailure(res, auth);
+      return;
+    }
+
+    const body: unknown = req.body;
+    const status: unknown =
+      typeof body === 'object' && body !== null && !Array.isArray(body)
+        ? Reflect.get(body, 'status')
+        : undefined;
+    if (!isFeedbackTriageStatus(status)) {
+      res.status(400).json({ ok: false });
+      return;
+    }
+
+    const id = inboxParamId(req.params['id']);
+    if (id === undefined || !isFeedbackReportId(id)) {
+      res.status(404).json({ ok: false });
+      return;
+    }
+
+    const pool = deps.getPool();
+    if (pool === null) {
+      res.status(503).json({ ok: false });
+      return;
+    }
+
+    const updated = await deps.updateStatus(pool, id, status);
+    if (!updated) {
+      res.status(404).json({ ok: false });
+      return;
+    }
+    res.status(200).json({ ok: true, status });
   } catch {
     if (!res.headersSent) {
       res.status(503).json({ ok: false });

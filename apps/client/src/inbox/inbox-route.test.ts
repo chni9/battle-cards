@@ -19,6 +19,8 @@ describe('inbox redirect (Lot 61-09)', () => {
     expect(app).toContain("window.location.replace('/admin/feedback')");
     expect(fetchInbox).toContain('/api/inbox');
     expect(feedback).toContain('fetchInbox');
+    expect(feedback).toContain('applyStatus(row.id, status)');
+    expect(feedback).toContain('aria-pressed');
     expect(feedback).toContain('selected.contact');
     expect(feedback).toContain('selected.nickname');
     expect(feedback).toContain('selected.gameCode');

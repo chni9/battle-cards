@@ -171,14 +171,17 @@ traits: {
 
 ### 4.6 Mutual attacks
 
-Two attacks directed at each other between two players, both still pending. Assassin
-multi-attack hits that share a target and were queued in the same action are **one volley**
-(sum of final damage) for this compare only.
+Two attacks directed at each other between two players, both still pending. Compared on
+the turn of the player who retaliated. Each attack stays its own hit (designer 2026-09-29).
+This supersedes Lot 54's summed Assassin volley for this compare only.
 
-- **Equal volley damage** → both volleys are cancelled, on the turn of the player who retaliated.
-- **Stronger answer** → the weaker incoming volley is cancelled; the stronger stays pending
-  and resolves on its target's turn.
-- **Weaker answer** → incoming still resolves this turn; the weaker answer stays pending
+- **Exact group, largest hit first** → those answers are spent. Two Strongs cancel
+  one Strong+ even when a normal Strong is also incoming; that Strong still hits.
+  A Strong played with a Basic spends only the Strong; the Basic goes through alone.
+- **No exact split** → the remaining answers are one defensive bundle. Leftover
+  damage keeps every attack in the bundle pending (a Strong and a Basic+ cancel
+  one Strong+ and both go through). A bundle used up exactly is cancelled.
+- **Weaker answer** → the incoming hit still resolves; the weaker answer stays pending
   (designer 2026-09-01 / Lot 54). Mirror still redirects a single pending effect.
 
 Designer ruling 2026-08-04 (Lot 19) restored stronger-answer-cancels-weaker-incoming over
@@ -195,6 +198,8 @@ of the pending effect. Both effects cancel out, both costs are paid, and both ca
 remain in hand (attack/action cards are reusable).
 
 Does not apply to attack cards: those fall under 4.6.
+
+A Thief may target an eliminated player only while that player still has a pending Thief on the actor (designer 2026-09-30). The compare is the same. The answer is then discarded and does not stay queued on the corpse. Spy stays living targets only.
 
 ---
 

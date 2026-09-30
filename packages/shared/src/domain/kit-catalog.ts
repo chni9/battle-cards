@@ -185,10 +185,14 @@ export const KIT_CATALOG = {
   ghost: {
     id: 'ghost',
     name: 'Ghost',
-    startingResources: { lives: 14, points: 0, upgradePoints: 0, draw: 1 },
+    startingResources: { lives: 14, points: 0, upgradePoints: 1, draw: 1 },
     startingCardCounts: { action: 4, attack: 2 },
     specialCards: ['curse'],
-    traits: { ...EMPTY_TRAITS },
+    traits: {
+      alwaysUpgraded: ['tax'],
+      immuneTo: [],
+      allowsMultipleAttacksPerTurn: false,
+    },
   },
   duplicator: {
     id: 'duplicator',

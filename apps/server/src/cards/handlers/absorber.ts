@@ -1,14 +1,10 @@
 /**
  * Absorber — rules spec §3. Immediate: gain lives the target lost last complete turn.
- * Upgraded also captures points/upgrade points actively spent (not theft).
+ * Upgraded also captures every point and upgrade point that left (Lot 68).
  */
 
-import {
-  grantLives,
-  grantPoints,
-  grantUpgradePoints,
-} from '../../engine/economy/grant-resources';
 import { findPlayer } from '../../engine/turn/advance-turn';
+import { absorbLedgerFromVictim } from '../../engine/turn/absorb-ledger';
 import type { CardHandler, EffectContext } from '../handler';
 
 export const absorberHandler: CardHandler = {
@@ -30,12 +26,8 @@ export const absorberHandler: CardHandler = {
       return;
     }
 
-    const ledger = target.turnLedger;
-    grantLives(context.state, actor, ledger.livesLost, 'direct');
-
-    if (context.card.isUpgraded) {
-      grantPoints(context.state, actor, ledger.pointsSpent, 'direct');
-      grantUpgradePoints(context.state, actor, ledger.upgradePointsSpent, 'direct');
-    }
+    absorbLedgerFromVictim(context.state, actor, target, {
+      includeSpend: context.card.isUpgraded,
+    });
   },
 };

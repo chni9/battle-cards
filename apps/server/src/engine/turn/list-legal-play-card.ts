@@ -19,6 +19,10 @@ import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
 import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
 import { isAbsorberTargetable } from './absorb-window';
+import {
+  eliminatedPlayerHasPendingAttackOn,
+  eliminatedPlayerHasPendingThiefOn,
+} from './riposte-target';
 import { findPlayer } from './advance-turn';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
@@ -126,7 +130,26 @@ export function listLegalPlayCardActions(
       continue;
     }
 
-    const opponents = instance.cardId === 'absorber' ? absorberOpponents : livingOpponents;
+    const opponents =
+      instance.cardId === 'absorber'
+        ? absorberOpponents
+        : isAttackCardId(instance.cardId)
+          ? state.players.filter(
+              (player) =>
+                player.id !== actor.id &&
+                !isIllegalOpposingTarget(player) &&
+                (!player.isEliminated ||
+                  eliminatedPlayerHasPendingAttackOn(actor, player.id)),
+            )
+          : instance.cardId === 'thief'
+            ? state.players.filter(
+                (player) =>
+                  player.id !== actor.id &&
+                  !isIllegalOpposingTarget(player) &&
+                  (!player.isEliminated ||
+                    eliminatedPlayerHasPendingThiefOn(actor, player.id)),
+              )
+            : livingOpponents;
 
     // Self-only attempt (no target).
     {

@@ -2,11 +2,11 @@
  * Apply persistent effects that act on the current player after their action —
  * technical spec §4.3 step 4, rules spec §5–§6, Lot 22.
  *
- * Tick order (implementation detail, decisions.md 2026-08-05 / Lot 63): Points
- * Generator → Roulette → Invisibility → Super Absorber → Imposition → Poison →
- * Curse. Super Absorber runs before life-ticking persistents so it does not
- * re-absorb lives lost later in the same phase. Lives always; spend only if
- * upgraded; never a multiplier. Roulette grants a seeded random card (golden
+ * Tick order (Lot 68): Points Generator → Roulette → Invisibility →
+ * Imposition → Poison → Curse → Super Absorber. Super Absorber runs last so
+ * it copies every life, point, and upgrade point that left on this turn,
+ * including those ticks. Shield is not on the ledger. Lives always; points
+ * and upgrade points only if upgraded; never a multiplier. Roulette grants a seeded random card (golden
  * rule 5): unupgraded only a shared attack/action (10% that copy is upgraded);
  * upgraded 80% shared / 20% circulating special except Roulette, still 10%
  * upgraded. Imposition skips short victims (no lives). Curse still ticks on
@@ -77,10 +77,10 @@ export function applyPersistentEffects(
     return;
   }
 
-  applySuperAbsorbersOnVictim(state, player);
   applyImpositionsOnVictim(state, player);
   applyPoisonsOnVictim(state, player);
   applyCursesOnVictim(state, player);
+  applySuperAbsorbersOnVictim(state, player);
 }
 
 function applyPointsGeneratorTicks(state: GameState, owner: Player): void {
@@ -204,6 +204,10 @@ function applyOneImposition(
   victim: Player,
   effect: PersistentEffect,
 ): void {
+  if (victim.shield > 0 && victim.shieldIsUpgraded) {
+    return;
+  }
+
   const cap = effect.isUpgraded ? IMPOSITION_POINTS_UPGRADED : IMPOSITION_POINTS_BASE;
   const aboveFloor = victim.points - IMPOSITION_POINTS_FLOOR;
   const taken = Math.min(cap, Math.max(0, aboveFloor));
@@ -213,6 +217,7 @@ function applyOneImposition(
   }
 
   victim.points -= taken;
+  victim.turnLedger.pointsLostToTheft += taken;
   grantPoints(state, imposer, taken, 'direct');
 }
 

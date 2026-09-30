@@ -360,6 +360,9 @@ export function formatActionLogEntrySegments(
             text(' against '),
             target,
             text(' is blocked'),
+            ...(entry.blockedBy !== undefined
+              ? [text(' by '), text(formatCardLabel(entry.blockedBy, false))]
+              : []),
           ];
           break;
         case 'applied': {

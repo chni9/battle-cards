@@ -15,7 +15,10 @@ import {
 
 import { findPlayer } from '../turn/advance-turn';
 import { grantPoints, grantUpgradePoints } from './grant-resources';
-import { recordChosenPointsSpent } from './record-chosen-spend';
+import {
+  recordChosenPointsSpent,
+  recordChosenUpgradePointsSpent,
+} from './record-chosen-spend';
 
 export type UpgradePointResult = { ok: true } | ActionReject;
 
@@ -53,6 +56,7 @@ export function sellUpgradePoint(state: GameState, actorPlayerId: string): Upgra
   }
 
   actor.upgradePoints -= 1;
+  recordChosenUpgradePointsSpent(actor, 1);
   grantPoints(state, actor, upgradePointSellYield(actor.kitId), 'direct');
 
   return { ok: true };

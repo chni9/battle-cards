@@ -612,6 +612,28 @@ floor of 9.
 
 ---
 
+## Lot 68 — Inbox triage and 28 Sep feedback (designer 2026-09-29)
+
+New What’s new id (not an append to `lot-65`; that note is on `main`).
+`PROTOCOL_VERSION` 41 → 42 only for `blockedBy` (L68-03). Inbox status is HTTP only.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L68-01 | `feedback_reports.status` (`pending` / `done` / `eliminated`, default pending). `GET /api/inbox` returns it. `PATCH /api/inbox/:id` sets it. Admin feedback filters, default Pending. **Acceptance:** unknown status is 400; missing row is 404; `pnpm verify` green. | M | Medium | — | Done |
+| L68-02 | Dated `[P]` Lot 68 in `decisions.md` and rules spec: absorber outflows except shield, per-attack volleys, Sentence skips Block turns, dead riposte, reanimation clears Spies, Shield+ blocks Imposition, Ghost Tax+ and 1 upgrade point, Attack Thief blocks every already-pending attack. **Acceptance:** spec matches the designer lock; `pnpm verify` green. | M | Medium | — | Done |
+| L68-03 | Attack Thief blocks each attack already pending against the user and does not keep a charge. Log `blockedBy` for Attack Thief and Block. `PROTOCOL_VERSION` 41 → 42. **Acceptance:** a later attack is not blocked by an old charge; the log names the card; `pnpm verify` green. | L | **High** | L68-02 | Done |
+| L68-04 | Upgraded Absorber and upgraded Super Absorber copy every life, point, and upgrade-point outflow, including a sold upgrade point and theft. Shield is not copied. Base cards stay lives-only. **Acceptance:** engine tests lock the sale and a theft; `pnpm verify` green. | M | **High** | L68-02 | Done |
+| L68-05 | Mutual attacks pair one-to-one, highest damage first. An Assassin volley is not one summed body. **Acceptance:** Super+ cancels only the opposing Super+; Strong and Basic in that action still resolve; `pnpm verify` green. | L | **High** | L68-02 | Done |
+| L68-06 | Sentence countdown does not move on the turn Block is played or on Block extra turns. **Acceptance:** a normal turn still ticks; the activation turn does not; `pnpm verify` green. | M | Medium | L68-02 | Done |
+| L68-07 | A living player may attack an eliminated player only while that player still has a pending attack on them. The answer does not damage the corpse and does not stay queued. **Acceptance:** a legal riposte cancels; an attack on a corpse with nothing pending is rejected; `pnpm verify` green. | M | **High** | L68-02 | Done |
+| L68-08 | Reanimation removes every Spy relation where that player is viewer or subject. **Acceptance:** both directions are gone after revive; `pnpm verify` green. | S | Medium | L68-02 | Done |
+| L68-09 | An upgraded Shield stops Imposition’s point drain and does not spend shield points. **Acceptance:** base Shield does not; upgraded Shield does; `pnpm verify` green. | S | Medium | L68-02 | Done |
+| L68-10 | Ghost starts with Tax already upgraded and 1 upgrade point. **Acceptance:** a new Ghost seat has both; Indestructible is unchanged; `pnpm verify` green. | S | Medium | L68-02 | Done |
+| L68-11 | New What’s new entry for this pass. **Acceptance:** auto popup scope is the new id only; `pnpm verify` green. | S | Low | L68-03 | Done |
+| L68-12 | Mark this pass’s production and staging inbox rows done or eliminated. Older rows stay pending. **Acceptance:** the insult row is eliminated; the fixed reports are done. | S | Low | L68-01 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -643,7 +665,8 @@ floor of 9.
 | 65 | 5 |
 | 66 | 1 |
 | 67 | 1 |
-| **Total** | **153** |
+| 68 | 12 |
+| **Total** | **165** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**; **solo Play again dealing the next match without the menu**.
 

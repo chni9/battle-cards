@@ -61,6 +61,7 @@ describe('upgrade points (rules spec §1, L2-02)', () => {
     expect(result.ok).toBe(true);
     expect(player.upgradePoints).toBe(0);
     expect(player.points).toBe(UPGRADE_POINT_ECONOMY.sellYieldPoints);
+    expect(player.turnLedger.upgradePointsSpent).toBe(1);
   });
 
   it('rejects sell with no upgrade points', () => {

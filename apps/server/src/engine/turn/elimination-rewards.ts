@@ -492,6 +492,7 @@ function consumeArmedReanimation(state: GameState, player: Player): void {
  * `processPendingReanimations` (#V4-13 / L26-02).
  */
 function completePendingReanimationIfReady(
+  state: GameState,
   player: Player,
   rng: Rng,
 ): { playerId: string; kitId: KitId } | null {
@@ -500,7 +501,7 @@ function completePendingReanimationIfReady(
   }
 
   const kitId = pickReanimationKit(rng);
-  reanimatePlayer(player, kitId, rng);
+  reanimatePlayer(state, player, kitId, rng);
   return { playerId: player.id, kitId };
 }
 
@@ -516,7 +517,7 @@ export function processPendingReanimations(
   const reanimated: { playerId: string; kitId: KitId }[] = [];
 
   for (const player of state.players) {
-    const entry = completePendingReanimationIfReady(player, rng);
+    const entry = completePendingReanimationIfReady(state, player, rng);
 
     if (entry !== null) {
       reanimated.push(entry);

@@ -339,6 +339,7 @@ describe('shared inboxAuthLimiter (Lot 61)', () => {
       getPool: () => ({ query: vi.fn() }) as never,
       insertReport: () => Promise.resolve('id'),
       listReports: () => Promise.resolve([]),
+      updateStatus: () => Promise.resolve(true),
       lookupLive: () => null,
       lookupFinished: () => Promise.resolve(null),
       isProduction: () => false,

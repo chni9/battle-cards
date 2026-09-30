@@ -43,7 +43,6 @@ import {
   playerDeltasSince,
   snapshotAllResources,
 } from './resource-log';
-import { consumeAttackBlockCharge } from './consume-attack-block';
 import { recordEliminationContributor } from './elimination-rewards';
 
 export type ResolveOutcome = ActionResolutionOutcome;
@@ -120,7 +119,12 @@ function cancelReciprocalCounter(
 
   const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
 
-  if (source === undefined || source.isEliminated) {
+  if (source === undefined) {
+    return false;
+  }
+
+  // A corpse's Spy is not answered here. Their Thief is (designer 2026-09-30).
+  if (source.isEliminated && incoming.cardId !== 'thief') {
     return false;
   }
 
@@ -141,17 +145,32 @@ function cancelReciprocalCounter(
     return false;
   }
 
+  let cancelIncoming: boolean;
+
   if (incoming.isUpgraded === counter.isUpgraded) {
     source.pendingEffects.splice(counterIndex, 1);
-    return true;
-  }
-
-  if (incoming.isUpgraded && !counter.isUpgraded) {
+    cancelIncoming = true;
+  } else if (incoming.isUpgraded && !counter.isUpgraded) {
     source.pendingEffects.splice(counterIndex, 1);
-    return false;
+    cancelIncoming = false;
+  } else {
+    cancelIncoming = true;
   }
 
-  return true;
+  // A corpse never takes a turn, so the answer must not stay queued on them.
+  if (source.isEliminated) {
+    const leftover = source.pendingEffects.findIndex(
+      (effect) =>
+        effect.cardId === incoming.cardId &&
+        effect.sourcePlayerId === resolvingPlayer.id &&
+        effect.targetPlayerId === source.id,
+    );
+    if (leftover >= 0) {
+      source.pendingEffects.splice(leftover, 1);
+    }
+  }
+
+  return cancelIncoming;
 }
 
 /** Final attack damage for mutual compare (#V4-2). */
@@ -183,14 +202,8 @@ function isReciprocalAttack(
   );
 }
 
-function sumAttackDamage(effects: readonly PendingEffect[]): number {
-  let total = 0;
-
-  for (const effect of effects) {
-    total += attackFinalDamage(effect);
-  }
-
-  return total;
+function byDamageDescending(left: PendingEffect, right: PendingEffect): number {
+  return attackFinalDamage(right) - attackFinalDamage(left);
 }
 
 function removeEffectsById(player: Player, ids: ReadonlySet<string>): void {
@@ -241,9 +254,65 @@ function latestRetaliationVolley(
 }
 
 /**
- * Mutual attacks (tech §4.6 / Lot 19 / L54-02): equal volley damage cancels both volleys;
- * stronger answer cancels the weaker incoming volley; weaker answer stays pending and the
- * incoming volley still resolves. Returns incoming ids to cancel (possibly the whole volley).
+ * Answers whose damage adds up to `target`, or null when no subset does.
+ * Used so several small attacks can cancel one bigger hit (designer 2026-09-29).
+ */
+function exactDamageSubset(
+  answers: readonly PendingEffect[],
+  target: number,
+): PendingEffect[] | null {
+  if (target <= 0) {
+    return null;
+  }
+
+  const cameFrom = new Array<number>(target + 1).fill(-2);
+  cameFrom[0] = -1;
+
+  for (let index = 0; index < answers.length; index += 1) {
+    const answer = answers[index];
+    if (answer === undefined) {
+      continue;
+    }
+    const damage = attackFinalDamage(answer);
+    if (damage <= 0 || damage > target) {
+      continue;
+    }
+    for (let sum = target; sum >= damage; sum -= 1) {
+      if (cameFrom[sum] === -2 && cameFrom[sum - damage] !== -2) {
+        cameFrom[sum] = index;
+      }
+    }
+  }
+
+  if (cameFrom[target] === -2) {
+    return null;
+  }
+
+  const picked: PendingEffect[] = [];
+  let sum = target;
+  while (sum > 0) {
+    const index = cameFrom[sum];
+    if (index === undefined || index < 0) {
+      return null;
+    }
+    const answer = answers[index];
+    if (answer === undefined) {
+      return null;
+    }
+    picked.push(answer);
+    sum -= attackFinalDamage(answer);
+  }
+
+  return picked;
+}
+
+/**
+ * Mutual attacks (rules spec §6, designer 2026-09-29).
+ * Largest incoming hits are paid first by an exact group of answers, so two
+ * Strongs cancel a Strong+ even when a normal Strong is also incoming, and
+ * that Strong still hits. A Strong played with a Basic spends only the
+ * Strong. If the answers left cannot make an exact match, they are one
+ * defensive bundle: leftover damage keeps every attack in the bundle pending.
  */
 function decideMutualAttack(
   state: GameState,
@@ -257,7 +326,7 @@ function decideMutualAttack(
 
   const source = state.players.find((player) => player.id === incoming.sourcePlayerId);
 
-  if (source === undefined || source.isEliminated) {
+  if (source === undefined) {
     return [];
   }
 
@@ -271,21 +340,68 @@ function decideMutualAttack(
     return [];
   }
 
-  const incomingDamage = sumAttackDamage(remainingIncomingVolley);
-  const retaliationDamage = sumAttackDamage(retaliationVolley);
+  const cancelIncoming: string[] = [];
+  const cancelRetaliation = new Set<string>();
+  let incomingLeft = [...remainingIncomingVolley];
+  let answersLeft = [...retaliationVolley];
 
-  if (incomingDamage === retaliationDamage) {
-    removeEffectsById(source, new Set(retaliationVolley.map((effect) => effect.id)));
-    return remainingIncomingVolley.map((effect) => effect.id);
+  incomingLeft.sort(byDamageDescending);
+  const afterSubsets: PendingEffect[] = [];
+  for (const hit of incomingLeft) {
+    const subset = exactDamageSubset(answersLeft, attackFinalDamage(hit));
+    if (subset !== null) {
+      cancelIncoming.push(hit.id);
+      for (const answer of subset) {
+        cancelRetaliation.add(answer.id);
+      }
+      const spent = new Set(subset.map((answer) => answer.id));
+      answersLeft = answersLeft.filter((answer) => !spent.has(answer.id));
+    } else {
+      afterSubsets.push(hit);
+    }
+  }
+  incomingLeft = afterSubsets;
+
+  // No exact split: the remaining answers are one bundle. Cover hits largest
+  // first. Leftover damage keeps the whole bundle; a bundle used up exactly is spent.
+  if (incomingLeft.length > 0 && answersLeft.length > 0) {
+    let budget = 0;
+    for (const answer of answersLeft) {
+      budget += attackFinalDamage(answer);
+    }
+    const covered: string[] = [];
+    for (const hit of incomingLeft) {
+      const damage = attackFinalDamage(hit);
+      if (budget >= damage) {
+        covered.push(hit.id);
+        budget -= damage;
+      }
+    }
+    if (covered.length > 0) {
+      for (const id of covered) {
+        cancelIncoming.push(id);
+      }
+      if (budget === 0) {
+        for (const answer of answersLeft) {
+          cancelRetaliation.add(answer.id);
+        }
+      }
+    }
   }
 
-  if (incomingDamage > retaliationDamage) {
-    // Weaker answer survives; incoming volley still applies (designer 2026-09-01).
-    return [];
+  if (cancelRetaliation.size > 0) {
+    removeEffectsById(source, cancelRetaliation);
   }
 
-  // Stronger answer: cancel the whole incoming volley; retaliation stays pending.
-  return remainingIncomingVolley.map((effect) => effect.id);
+  // A corpse never takes a turn, so an answer must not stay queued on them.
+  if (source.isEliminated) {
+    const leftover = source.pendingEffects.filter((effect) =>
+      isReciprocalAttack(effect, resolvingPlayer.id, source.id),
+    );
+    removeEffectsById(source, new Set(leftover.map((effect) => effect.id)));
+  }
+
+  return cancelIncoming;
 }
 
 function resolveThief(state: GameState, target: Player, effect: PendingEffect): ResolveOutcome {
@@ -519,12 +635,6 @@ export function resolvePendingEffects(
         continue;
       }
 
-      // Attack Thief charge before mutual cancel — #V4-5 / L23-03.
-      if (consumeAttackBlockCharge(player, effect)) {
-        pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'blocked' });
-        continue;
-      }
-
       const key = incomingVolleyKey(effect);
 
       if (!appliedVolleyKeys.has(key) && !cancelIncomingIds.has(effect.id)) {
@@ -543,16 +653,16 @@ export function resolvePendingEffects(
           remainingIncomingVolley,
         );
 
-        if (cancelled.length > 0) {
-          for (const id of cancelled) {
-            cancelIncomingIds.add(id);
-          }
-
-          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
-          continue;
+        for (const id of cancelled) {
+          cancelIncomingIds.add(id);
         }
 
         appliedVolleyKeys.add(key);
+
+        if (cancelIncomingIds.has(effect.id)) {
+          pushResolved({ effect, livesLost: 0, shieldAbsorbed: 0, outcome: 'cancelled' });
+          continue;
+        }
       }
 
       const amount =

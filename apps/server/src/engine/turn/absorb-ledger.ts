@@ -1,6 +1,7 @@
 /**
- * Super Absorber ledger capture — rules spec §5, designer 2026-09-20 / L63-05.
- * Lives always; spend only when upgraded. Never theft. Never a multiplier.
+ * Absorber ledger capture — rules spec §3 / §5, designer 2026-09-29 / Lot 68.
+ * Lives always. Upgraded also copies every point and upgrade point that left,
+ * including sales and theft. Shield is not on this ledger. Never a multiplier.
  * Life gains clamp via grantLives.
  */
 
@@ -25,6 +26,11 @@ export function absorbLedgerFromVictim(
     return;
   }
 
-  grantPoints(state, owner, ledger.pointsSpent, 'direct');
-  grantUpgradePoints(state, owner, ledger.upgradePointsSpent, 'direct');
+  grantPoints(state, owner, ledger.pointsSpent + ledger.pointsLostToTheft, 'direct');
+  grantUpgradePoints(
+    state,
+    owner,
+    ledger.upgradePointsSpent + ledger.upgradePointsLostToTheft,
+    'direct',
+  );
 }

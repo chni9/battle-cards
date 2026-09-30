@@ -1,12 +1,12 @@
 /**
- * Protocol version pin — PROTOCOL_VERSION 41.
+ * Protocol version pin — PROTOCOL_VERSION 42.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import { SENTENCE_OWNER_TURNS } from './domain/game-state';
 import { PROTOCOL_VERSION } from './protocol-version';
-import type { ActionPlayedPayload, EliminationReason } from './protocol/messages';
+import type { ActionPlayedPayload, ActionResolvedPayload, EliminationReason } from './protocol/messages';
 import type {
   ActionLogEliminationReason,
   ActionPlayedLogEntry,
@@ -15,8 +15,20 @@ import type {
 } from './protocol/state-view';
 
 describe('PROTOCOL_VERSION', () => {
-  it('is 41 after action-log resource nets', () => {
-    expect(PROTOCOL_VERSION).toBe(41);
+  it('is 42 after blockedBy on actionResolved', () => {
+    expect(PROTOCOL_VERSION).toBe(42);
+    const blocked: ActionResolvedPayload = {
+      effectId: 'e',
+      sourcePlayerId: 'a',
+      targetPlayerId: 'b',
+      cardId: 'super-attack',
+      isUpgraded: true,
+      livesLost: 0,
+      shieldAbsorbed: 0,
+      outcome: 'blocked',
+      blockedBy: 'attack-thief',
+    };
+    expect(blocked.blockedBy).toBe('attack-thief');
     expect(SENTENCE_OWNER_TURNS).toBe(3);
   });
 

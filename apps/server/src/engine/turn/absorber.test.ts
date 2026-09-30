@@ -104,8 +104,8 @@ describe('Absorber (rules spec §3, L3-08)', () => {
 
     expect(absorb.ok).toBe(true);
     expect(alice.lives).toBe(12);
-    expect(alice.points).toBe(7);
-    expect(alice.upgradePoints).toBe(1);
+    expect(alice.points).toBe(17);
+    expect(alice.upgradePoints).toBe(5);
   });
 
   it('rejects absorbing oneself', () => {

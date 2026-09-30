@@ -7,7 +7,7 @@
 
 import type { CardId, SpecialCardId } from '../domain/card';
 import type { KitId } from '../domain/kit';
-import type { ActionResolutionOutcome } from './action-outcome';
+import type { ActionResolutionOutcome, BlockedByCardId } from './action-outcome';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { ActionRejectCode } from './action-reject';
 import type {
@@ -185,6 +185,8 @@ export interface ActionResolvedPayload {
    * `applied`: effect ran (damage / steal / Spy grant).
    */
   outcome: ActionResolutionOutcome;
+  /** Present when `outcome` is `blocked` (PROTOCOL_VERSION 42). */
+  blockedBy?: BlockedByCardId;
 }
 
 export type EliminationReason =

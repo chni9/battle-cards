@@ -119,6 +119,13 @@ export function grantSpy(
  * Drop one Spy matrix row. Returns false when that pair is absent.
  * Overlay spectator vision is not a row — Unspy cannot call this for it (L58-07).
  */
+/** Drop every stored Spy where `playerId` is viewer or subject (Lot 68). */
+export function clearSpiesInvolving(state: GameState, playerId: string): void {
+  state.visibility = state.visibility.filter(
+    (relation) => relation.viewerId !== playerId && relation.subjectId !== playerId,
+  );
+}
+
 export function revokeSpy(
   state: GameState,
   viewerId: string,
