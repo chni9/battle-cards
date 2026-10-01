@@ -316,9 +316,9 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(alice.lives).toBe(13);
   });
 
-  it('same-action incoming volley sums vs a weaker answer and both sides persist (L54-02)', () => {
-    // Two Alice→Bob basics share queuedAt (one Assassin volley). Bob answers with one Basic.
-    // Incoming 2 > 1: both basics apply; Bob's weaker answer stays for Alice.
+  it('pairs one incoming basic with one answer and lets the spare hit (L68-05)', () => {
+    // Two Alice→Bob basics share queuedAt. Bob answers with one Basic.
+    // The equal pair cancels. The unpaired basic still hits.
     const state = twoPlayers('mutual-volley-weaker-answer');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -351,10 +351,9 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
-    expect(bob.lives).toBe(18);
+    expect(bob.lives).toBe(19);
     expect(alice.lives).toBe(20);
-    expect(alice.pendingEffects).toHaveLength(1);
-    expect(alice.pendingEffects[0]?.cardId).toBe('basic-attack');
+    expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
@@ -398,7 +397,7 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
-  it('four basics equal-cancel upgraded Strong as one volley (L54-02)', () => {
+  it('four basics sum to cancel one upgraded Strong (designer 2026-09-29)', () => {
     const state = twoPlayers('mutual-volley-equal-strong');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -428,12 +427,11 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
     expect(bob.lives).toBe(20);
-    expect(alice.lives).toBe(20);
     expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(0);
   });
 
-  it('Super cannot cancel a 20-basic answer volley (L54-02)', () => {
+  it('spends only the basics that sum to a Super and lets the rest through', () => {
     const state = twoPlayers('mutual-volley-super-vs-20');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -463,16 +461,50 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
     expect(bob.lives).toBe(25);
-    expect(alice.pendingEffects).toHaveLength(20);
+    expect(alice.pendingEffects).toHaveLength(13);
     expect(bob.pendingEffects).toHaveLength(0);
 
     state.currentTurnPlayerId = alice.id;
     const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
     expect(onAlice.ok).toBe(true);
-    expect(alice.lives).toBe(0);
+    expect(alice.lives).toBe(7);
   });
 
-  it('mixed 2 basic + 1 strong volley equal-cancels upgraded Strong', () => {
+  it('cancels Strong against Strong and lets the extra Basic through', () => {
+    const state = twoPlayers('mutual-strong-plus-basic');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    for (const cardId of ['strong-attack', 'basic-attack'] as const) {
+      queueEffect({
+        state,
+        sourcePlayerId: bob.id,
+        targetPlayerId: alice.id,
+        cardId,
+        isUpgraded: false,
+      });
+    }
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual(['basic-attack']);
+    expect(bob.pendingEffects).toHaveLength(0);
+  });
+
+  it('pairs the strongest answer with upgraded Strong and lets the rest hit', () => {
     const state = twoPlayers('mutual-volley-mixed');
     const alice = requirePlayer(state, 'a');
     const bob = requirePlayer(state, 'b');
@@ -512,7 +544,296 @@ describe('mutual attacks (technical spec §4.6, L19-01)', () => {
     state.currentTurnPlayerId = bob.id;
     const result = performTurnAction(state, bob.id, { type: 'draw' });
     expect(result.ok).toBe(true);
+    // Two basics and one Strong sum to 4 and spend the lot on the upgraded Strong.
     expect(bob.lives).toBe(20);
     expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('Super+ cancels only the opposing Super+ in an Assassin action (L68-05)', () => {
+    const state = twoPlayers('mutual-super-pair');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(17);
+    expect(alice.pendingEffects).toHaveLength(0);
+    expect(bob.pendingEffects).toHaveLength(0);
+  });
+
+  it('two Strongs sum to cancel one Strong+ (designer 2026-09-29)', () => {
+    const state = twoPlayers('mutual-two-strong-vs-strong-plus');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('a summed 4 cancels Strong+ and lets the Basic hit (designer 2026-09-29)', () => {
+    const state = twoPlayers('mutual-partial-strong-plus-basic');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(19);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('Super+ covers a Strong+ and a Basic and stays pending (designer 2026-09-29)', () => {
+    const state = twoPlayers('mutual-super-covers-both');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'basic-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'super-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual(['super-attack']);
+
+    state.currentTurnPlayerId = alice.id;
+    const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
+    expect(onAlice.ok).toBe(true);
+    expect(alice.lives).toBe(10);
+  });
+
+  it('an answer of 3 cancels one 2 and the other 2 hits (designer 2026-09-29)', () => {
+    const state = twoPlayers('mutual-three-vs-two-twos');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'basic-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(18);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual(['basic-attack']);
+  });
+
+  it('two Strongs cancel the Strong+ and the normal Strong still hits', () => {
+    const state = twoPlayers('mutual-two-strong-vs-strong-plus-and-strong');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(18);
+    expect(alice.pendingEffects).toHaveLength(0);
+  });
+
+  it('a stronger defensive bundle cancels Strong+ and both answers stay', () => {
+    const state = twoPlayers('mutual-bundle-strong-and-basic-plus');
+    const alice = requirePlayer(state, 'a');
+    const bob = requirePlayer(state, 'b');
+    alice.lives = 20;
+    bob.lives = 20;
+
+    queueEffect({
+      state,
+      sourcePlayerId: alice.id,
+      targetPlayerId: bob.id,
+      cardId: 'strong-attack',
+      isUpgraded: true,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'strong-attack',
+      isUpgraded: false,
+    });
+    queueEffect({
+      state,
+      sourcePlayerId: bob.id,
+      targetPlayerId: alice.id,
+      cardId: 'basic-attack',
+      isUpgraded: true,
+    });
+
+    state.currentTurnPlayerId = bob.id;
+    const result = performTurnAction(state, bob.id, { type: 'draw' });
+    expect(result.ok).toBe(true);
+    expect(bob.lives).toBe(20);
+    expect(alice.pendingEffects.map((effect) => effect.cardId)).toEqual([
+      'strong-attack',
+      'basic-attack',
+    ]);
+    expect(alice.pendingEffects[1]?.isUpgraded).toBe(true);
+
+    state.currentTurnPlayerId = alice.id;
+    const onAlice = performTurnAction(state, alice.id, { type: 'draw' });
+    expect(onAlice.ok).toBe(true);
+    expect(alice.lives).toBe(15);
   });
 });

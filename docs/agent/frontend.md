@@ -116,9 +116,12 @@ rules above are unchanged — this section only covers how the client looks.
   From/To `datetime-local` values are converted to UTC ISO on the client so the
   VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
   browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
-  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind and About filters
-  client-side; row detail with contact, nickname, game code, screen, playKind, protocol,
-  user agent, and log tail; no edit or delete.
+  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind, About, and triage
+  status filters client-side (default Pending). Each row shows status as a colored
+  stripe and three icons (clock / check / cross), not buttons. Clicking an icon
+  `PATCH`es `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do)
+  without opening the report. The open report uses the same icons. Detail still shows
+  contact, nickname, game code, screen, playKind, protocol, user agent, and log tail.
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under
@@ -142,14 +145,18 @@ rules above are unchanged — this section only covers how the client looks.
   already on `main` except to correct that entry's own text. **New** heading
   lists `additions` (kit portrait or card art + body) for kits/cards that did
   not exist before; before → after `items` cover changes with named-card art
-  and render **above** the New block. Kit-level items may use `kitId` (Gambler
+  and render **above** the New block. **Copy (designer 2026-09-29):** keep
+  Before and After. Each side is one short sentence about the gameplay
+  change the player will feel. Bug fixes: After is `Fixed some bugs.`
+  Small mechanics stay out of the popup. Older shipped entries stay as
+  written. Kit-level items may use `kitId` (Gambler
   portrait) instead of `cardId`. `lot-63` (2026-09-20) is on `main`: Sentence,
   Imposition, Super Absorber, plus Gambler and Roulette (no `lot-64` id — those
-  tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is the open
-  update: private Draw, invisible players are not targets, Sentence chip
+  tweaks edited `lot-63` before it shipped). `lot-65` (2026-09-28) is on
+  `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) is the open update: Ghost starts with Tax+ and 1 upgrade point, Shield+ blocks Imposition, and fixed some bugs. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -1307,4 +1314,6 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
 
 - Solo Play again, room **IKDWUN** (L67Solo, Assassin, 2 Easy bots). Forfeit, then Play again. Home opens **Play solo** with Assassin, opponent **2**, and **Easy**. **Start solo game** stays up. The next match does not deal itself.
 - Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `table-banner.test.ts`, `imposition.test.ts`).
+
+Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Thief Choose target also includes an eliminated player who still has a Thief pending on you. Spy and the other living-only pickers stay living-only. The server still rejects an attack or Thief on a corpse with nothing of that kind pending.
 

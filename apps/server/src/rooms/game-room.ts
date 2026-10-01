@@ -2019,6 +2019,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         shieldAbsorbed: resolved.shieldAbsorbed,
         outcome: resolved.outcome,
         turnSequence,
+        ...(resolved.blockedBy !== undefined ? { blockedBy: resolved.blockedBy } : {}),
         ...copyPlayerDeltas(resolved.playerDeltas),
       });
       this.broadcast(ACTION_RESOLVED, resolved);

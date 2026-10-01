@@ -138,12 +138,22 @@ describe('matchStats (L60-03)', () => {
   });
 
   it('keeps matchStats across Reanimation while resetting the turn ledger', () => {
-    const player = makePlayer({ lives: 4, points: 9 });
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l59-03-reanim',
+    });
+    const player = state.players[0];
+    if (player === undefined) {
+      throw new Error('missing player');
+    }
     applyLifeLoss(player, 2, 'tax');
     gainPoints(player, 5, 'direct');
     player.matchStats.pointsSpent = 8;
 
-    reanimatePlayer(player, 'ghost', createRng('l59-03-reanim'));
+    reanimatePlayer(state, player, 'ghost', createRng('l59-03-reanim'));
 
     expect(player.matchStats.livesLost).toBe(2);
     expect(player.matchStats.pointsGained).toBe(5);

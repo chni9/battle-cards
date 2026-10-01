@@ -45,7 +45,7 @@ describe('Super Absorber (L63-05)', () => {
     expect(a.lives).toBe(12);
   });
 
-  it('upgraded tick absorbs livesLost plus spend at multiplier 1, never theft', () => {
+  it('upgraded tick absorbs lives plus every point and upgrade-point outflow', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -78,7 +78,7 @@ describe('Super Absorber (L63-05)', () => {
 
     applyPersistentEffects(state, b.id);
     expect(a.points).toBe(4);
-    expect(a.upgradePoints).toBe(1);
+    expect(a.upgradePoints).toBe(4);
     expect(a.lives).toBe(12);
   });
 
@@ -107,7 +107,7 @@ describe('Super Absorber (L63-05)', () => {
     expect(a.lives).toBe(state.lifeLimit);
   });
 
-  it('does not absorb lives lost later in the same phase by Poison', () => {
+  it('absorbs Poison lives lost in the same phase (Lot 68)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -143,7 +143,7 @@ describe('Super Absorber (L63-05)', () => {
 
     applyPersistentEffects(state, b.id);
     expect(a.points).toBe(3);
-    expect(a.lives).toBe(10);
+    expect(a.lives).toBe(11);
     expect(b.lives).toBe(9);
     expect(b.turnLedger.livesLost).toBe(1);
   });

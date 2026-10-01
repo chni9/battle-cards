@@ -616,22 +616,22 @@
       {
         "turnSequence": 1,
         "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:action:3"
+          "type": "upgradeCard",
+          "instanceId": "bot-0:start:action:1"
         }
       },
       {
         "turnSequence": 3,
         "action": {
-          "type": "buyCard",
-          "cardId": "spy"
+          "type": "playCard",
+          "instanceId": "bot-0:start:action:3"
         }
       },
       {
         "turnSequence": 5,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:3:6",
+          "instanceId": "bot-0:start:special:0",
           "targetPlayerId": "bot-1"
         }
       },
@@ -646,15 +646,14 @@
         "turnSequence": 9,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:3:6",
-          "targetPlayerId": "bot-1"
+          "instanceId": "bot-0:start:action:3"
         }
       },
       {
         "turnSequence": 11,
         "action": {
           "type": "playCard",
-          "instanceId": "buy:bot-0:3:6",
+          "instanceId": "bot-0:start:attack:0",
           "targetPlayerId": "bot-1"
         }
       }

@@ -247,7 +247,7 @@ export function applyReanimationKitPick(
   }
 
   state.subChoice = null;
-  reanimatePlayer(player, kitId, rng);
+  reanimatePlayer(state, player, kitId, rng);
   return { ok: true, playerReanimated: { playerId: player.id, kitId } };
 }
 

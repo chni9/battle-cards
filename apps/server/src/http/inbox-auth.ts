@@ -27,7 +27,7 @@ export function applyInboxDevCors(req: Request, res: Response, isProduction: boo
   if (origin !== undefined && DEV_CORS_ORIGINS.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Inbox-Password');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   }
 }
 

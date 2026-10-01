@@ -17,6 +17,7 @@ import {
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
 import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
+import { eliminatedPlayerHasPendingAttackOn } from './riposte-target';
 import { attacksForbiddenDuringBlock } from './grant-block-turns';
 import type { TurnAction } from './perform-action';
 import { playPointsCost } from './play-cost';
@@ -119,7 +120,9 @@ function rankOpponentTargets(state: GameState, actor: Player): Player[] {
   return state.players
     .filter(
       (player) =>
-        player.id !== actor.id && !player.isEliminated && !isIllegalOpposingTarget(player),
+        player.id !== actor.id &&
+        !isIllegalOpposingTarget(player) &&
+        (!player.isEliminated || eliminatedPlayerHasPendingAttackOn(actor, player.id)),
     )
     .sort((left, right) => left.id.localeCompare(right.id));
 }
@@ -231,7 +234,7 @@ function isAffordableCandidate(
 
     if (
       target === undefined ||
-      target.isEliminated ||
+      (target.isEliminated && !eliminatedPlayerHasPendingAttackOn(actor, target.id)) ||
       target.id === actor.id ||
       isIllegalOpposingTarget(target)
     ) {

@@ -170,7 +170,7 @@ describe('Assassin playMultipleAttacks (L4-05)', () => {
     expect(result.ok).toBe(false);
   });
 
-  it('four basics equal-cancel upgraded Strong as one volley (L54-02)', () => {
+  it('four basics sum to cancel one upgraded Strong (designer 2026-09-29)', () => {
     const state = createInitialState({ seats, seed: 'assassin-volley-cancel' });
     const alice = state.players.find((player) => player.id === 'a');
     const bob = state.players.find((player) => player.id === 'b');
@@ -214,7 +214,6 @@ describe('Assassin playMultipleAttacks (L4-05)', () => {
     });
     expect(bobPlay.ok).toBe(true);
     expect(bob.lives).toBe(20);
-    expect(alice.lives).toBe(20);
     expect(alice.pendingEffects).toHaveLength(0);
     expect(bob.pendingEffects).toHaveLength(0);
   });

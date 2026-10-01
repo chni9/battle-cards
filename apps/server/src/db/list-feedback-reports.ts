@@ -7,8 +7,10 @@ import type { Pool } from 'pg';
 import {
   isFeedbackKind,
   isFeedbackScreen,
+  isFeedbackTriageStatus,
   normalizeFeedbackTopics,
   type FeedbackInboxRow,
+  type FeedbackTriageStatus,
   type PlayKind,
 } from '@card-battle/shared';
 
@@ -16,7 +18,7 @@ import { stripSeed } from '../http/strip-seed';
 
 export const LIST_FEEDBACK_REPORTS_SQL = `SELECT
   id, created_at, kind, message, contact, nickname, game_code, screen,
-  protocol_version, play_kind, log_tail, user_agent, topics
+  protocol_version, play_kind, log_tail, user_agent, topics, status
 FROM feedback_reports
 ORDER BY created_at DESC`;
 
@@ -34,6 +36,7 @@ interface FeedbackReportPgRow {
   log_tail: unknown;
   user_agent: string | null;
   topics?: unknown;
+  status?: unknown;
 }
 
 function isoTimestamp(value: Date | string): string {
@@ -47,12 +50,24 @@ function playKindOf(value: string | null): PlayKind | null {
   return value === 'classic' || value === 'tutorial' ? value : null;
 }
 
+/** Pre-009 rows and omitted test fixtures stay pending. */
+function triageStatusOf(value: unknown): FeedbackTriageStatus | null {
+  if (value === undefined || value === null) {
+    return 'pending';
+  }
+  return isFeedbackTriageStatus(value) ? value : null;
+}
+
 export function mapFeedbackInboxRow(row: FeedbackReportPgRow): FeedbackInboxRow | null {
   if (!isFeedbackKind(row.kind) || !isFeedbackScreen(row.screen)) {
     return null;
   }
   const topics = normalizeFeedbackTopics(row.topics ?? []);
   if (topics === null) {
+    return null;
+  }
+  const status = triageStatusOf(row.status);
+  if (status === null) {
     return null;
   }
   return {
@@ -69,6 +84,7 @@ export function mapFeedbackInboxRow(row: FeedbackReportPgRow): FeedbackInboxRow 
     logTail: row.log_tail === null ? null : stripSeed(row.log_tail),
     userAgent: row.user_agent,
     topics,
+    status,
   };
 }
 

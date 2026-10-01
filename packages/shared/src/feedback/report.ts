@@ -42,8 +42,29 @@ export const FEEDBACK_TOPIC_LABEL: Record<FeedbackTopic, string> = {
 /** Public action-log tail stored with a report (technical spec v6 §7.1). */
 export const FEEDBACK_LOG_TAIL_MAX = 30;
 
+/**
+ * Designer triage on an inbox row (Lot 68). Eliminated means disqualified / won't do.
+ * New and pre-migration rows are pending.
+ */
+export const FEEDBACK_TRIAGE_STATUSES = ['pending', 'done', 'eliminated'] as const;
+
+export type FeedbackTriageStatus = (typeof FEEDBACK_TRIAGE_STATUSES)[number];
+
+export const FEEDBACK_TRIAGE_STATUS_LABEL: Record<FeedbackTriageStatus, string> = {
+  pending: 'Pending',
+  done: 'Done',
+  eliminated: 'Eliminated',
+};
+
 export function isFeedbackKind(value: unknown): value is FeedbackKind {
   return typeof value === 'string' && (FEEDBACK_KINDS as readonly string[]).includes(value);
+}
+
+export function isFeedbackTriageStatus(value: unknown): value is FeedbackTriageStatus {
+  return (
+    typeof value === 'string' &&
+    (FEEDBACK_TRIAGE_STATUSES as readonly string[]).includes(value)
+  );
 }
 
 export function isFeedbackScreen(value: unknown): value is FeedbackScreen {
@@ -136,4 +157,5 @@ export interface FeedbackInboxRow {
   logTail: unknown;
   userAgent: string | null;
   topics: readonly FeedbackTopic[];
+  status: FeedbackTriageStatus;
 }

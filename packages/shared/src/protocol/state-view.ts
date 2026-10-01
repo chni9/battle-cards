@@ -4,7 +4,7 @@
  * The server builds one of these **per recipient**. No complete-state type exists to filter.
  */
 
-import type { ActionResolutionOutcome } from './action-outcome';
+import type { ActionResolutionOutcome, BlockedByCardId } from './action-outcome';
 import type { CardId, CardInstance } from '../domain/card';
 import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { PendingEffectRedirectSource } from '../domain/effect';
@@ -405,6 +405,8 @@ export interface ActionResolvedLogEntry {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
+  /** Present when `outcome` is `blocked` (PROTOCOL_VERSION 42). */
+  blockedBy?: BlockedByCardId;
   turnSequence: number;
   /**
    * Per-seat nets this resolution actually applied (PROTOCOL_VERSION 41).

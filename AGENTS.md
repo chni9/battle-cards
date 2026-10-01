@@ -80,10 +80,14 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    player's turn: *equal damage cancels both*; *a stronger answer cancels the weaker
    incoming* and stays pending until its target's turn; *a weaker answer is not
    cancelled* — the incoming still resolves and the weaker attack stays queued.
-   Assassin multi-attack aimed at the same opponent is **one volley** (sum of final
-   damage) for this compare; Mirror still redirects a single pending effect.
-   Designer 2026-09-01 (Lot 54) supersedes Lot 19's "unequal always cancels the weaker".
-   See `docs/agent/decisions.md`.
+   A defending multi-attack spends an exact group on the largest incoming hit
+   first. Two Strongs cancel a Strong+ even when a normal Strong is also
+   incoming; that Strong still hits. A Strong played with a Basic spends only
+   the Strong, and the Basic goes through alone. Answers that cannot make an
+   exact match are one bundle: leftover damage keeps every attack in it
+   pending, so a Strong and a Basic+ cancel a Strong+ and both go through.
+   Mirror still redirects a single pending effect. Designer 2026-09-29. See
+   `docs/agent/decisions.md`.
 2. **`applyDamage` and `applyLifeLoss` are two functions and must never be merged.**
    `applyDamage` is for attack cards only: it goes through the shield and decrements the hit
    player's card counters. `applyLifeLoss` is for Tax, Suicide, and every other
@@ -131,6 +135,8 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  target, Gambler wipe, upgrade active cards and Sentence
  (`PROTOCOL_VERSION` 40). Action-log resource nets
  are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
+ **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
+ (`PROTOCOL_VERSION` 42).
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes
@@ -256,7 +262,9 @@ that app only) and `main` for production.
 `RELEASE_NOTES` entry. The **New** button lists every entry, newest date first.
 While that latest entry is not on `main`, later PRs append to it (one update).
 After it merges to `main`, the next player-facing change starts a new entry, and
-the auto popup shows only that next update. Detail: `docs/agent/frontend.md`.
+the auto popup shows only that next update. Keep Before and After. Each
+side is one short sentence about the gameplay change. Bug fixes: After is
+`Fixed some bugs.` Detail: `docs/agent/frontend.md`.
 
 ## 11. Agent output style
 

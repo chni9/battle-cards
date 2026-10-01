@@ -13,6 +13,7 @@ import {
   isTemporarilyUnavailableCardId,
   type ActionReject,
   type ActionResolutionOutcome,
+  type BlockedByCardId,
   type CardId,
   type LogPlayerResourceDelta,
   type LogResourceDelta,
@@ -52,6 +53,10 @@ import { observeLifeLoss } from '../life/observe-life-loss';
 import type { Rng } from '../rng';
 import { createRng } from '../rng';
 import { isAbsorberTargetable } from './absorb-window';
+import {
+  eliminatedPlayerHasPendingAttackOn,
+  eliminatedPlayerHasPendingThiefOn,
+} from './riposte-target';
 import { actionLogRound } from './action-log-round';
 import { advanceTurn, findPlayer } from './advance-turn';
 import { applyPersistentEffects } from './apply-persistent-effects';
@@ -144,6 +149,8 @@ export interface ActionResolvedEvent {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: ActionResolutionOutcome;
+  /** Set when `outcome` is `blocked` (PROTOCOL_VERSION 42). */
+  blockedBy?: BlockedByCardId;
   /** Per-seat nets this resolution applied. Omit when nothing changed. */
   playerDeltas?: readonly LogPlayerResourceDelta[];
 }
@@ -1438,10 +1445,12 @@ function playMultipleAttacksAction(
     }
 
     const target = findPlayer(state, attack.targetPlayerId);
+    const riposteOk =
+      target !== undefined && eliminatedPlayerHasPendingAttackOn(actor, target.id);
 
     if (
       target === undefined ||
-      target.isEliminated ||
+      (target.isEliminated && !riposteOk) ||
       target.id === actorPlayerId ||
       isIllegalOpposingTarget(target)
     ) {
@@ -1629,11 +1638,19 @@ function playCardAction(
     const target = findPlayer(state, targetPlayerId);
     const absorberCorpseOk =
       cardId === 'absorber' && target !== undefined && isAbsorberTargetable(target);
+    const riposteOk =
+      target !== undefined &&
+      isAttackCardId(cardId) &&
+      eliminatedPlayerHasPendingAttackOn(actor, target.id);
+    const thiefOk =
+      target !== undefined &&
+      cardId === 'thief' &&
+      eliminatedPlayerHasPendingThiefOn(actor, target.id);
 
     if (
       target === undefined ||
       target.id === actorPlayerId ||
-      (target.isEliminated && !absorberCorpseOk) ||
+      (target.isEliminated && !absorberCorpseOk && !riposteOk && !thiefOk) ||
       isIllegalOpposingTarget(target)
     ) {
       return actionReject('invalid-target');

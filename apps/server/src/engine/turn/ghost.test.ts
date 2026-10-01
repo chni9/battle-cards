@@ -35,7 +35,7 @@ describe('Ghost kit credit (L28-01 / #V4-22)', () => {
 
     expect(ghost.lives).toBe(14);
     expect(ghost.points).toBe(0);
-    expect(ghost.upgradePoints).toBe(0);
+    expect(ghost.upgradePoints).toBe(1);
     expect(ghost.specialCards.map((card) => card.cardId)).toEqual(['curse']);
   });
 

@@ -144,9 +144,10 @@ describe('KIT_CATALOG', () => {
     expect(getKit('ghost').startingResources).toEqual({
       lives: 14,
       points: 0,
-      upgradePoints: 0,
+      upgradePoints: 1,
       draw: 1,
     });
+    expect(getKit('ghost').traits.alwaysUpgraded).toEqual(['tax']);
     expect(getKit('ghost').startingCardCounts).toEqual({ action: 4, attack: 2 });
     expect(getKit('ghost').specialCards).toEqual(['curse']);
 

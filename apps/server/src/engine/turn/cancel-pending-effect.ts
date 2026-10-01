@@ -6,7 +6,7 @@
  * for a reasoned removal with `outcome: 'blocked'`.
  */
 
-import type { ActionResolutionOutcome, GameState, PendingEffect } from '@card-battle/shared';
+import type { ActionResolutionOutcome, BlockedByCardId, GameState, PendingEffect } from '@card-battle/shared';
 
 export interface BlockedPendingEffect {
   effect: PendingEffect;
@@ -22,6 +22,7 @@ export interface BlockedActionResolved {
   livesLost: number;
   shieldAbsorbed: number;
   outcome: Extract<ActionResolutionOutcome, 'blocked'>;
+  blockedBy?: BlockedByCardId;
 }
 
 /**
@@ -63,5 +64,8 @@ export function toBlockedActionResolved(blocked: BlockedPendingEffect): BlockedA
     livesLost: 0,
     shieldAbsorbed: 0,
     outcome: 'blocked',
+    ...(blocked.reason === 'attack-thief' || blocked.reason === 'block'
+      ? { blockedBy: blocked.reason }
+      : {}),
   };
 }

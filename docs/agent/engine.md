@@ -27,10 +27,12 @@ What follows is what those rules do not say.
    resolution phase follows immediately.
 4. **Mutual cancellation compares final damage** (base/upgraded damage × `damageMultiplier`),
    not card identity (#V4-2). Equal final damage cancels both even when the cards differ
-   (e.g. Mirror-doubled basic = 2 cancels strong = 2). A stronger *answer* cancels the weaker
-   incoming volley; a weaker answer is kept and the incoming still resolves (Lot 54 /
-   AGENTS golden rule 1). Assassin attacks that share `sourcePlayerId` + `targetPlayerId` +
-   `queuedAt` sum as one volley.
+   (e.g. Mirror-doubled basic = 2 cancels strong = 2). A defending multi-attack
+   still pairs equals first, so a Strong played with a Basic cancels one Strong
+   and the Basic goes through alone (designer 2026-09-29). Several answers are
+   spent together only when they sum exactly to one bigger hit. One answer that
+   covers every remaining incoming hit cancels them all and stays when it is
+   stronger. Otherwise a stronger answer cancels one weaker hit and stays.
 
 ## The two life-loss primitives
 
@@ -149,16 +151,16 @@ Technical spec §4.3. Steps 3 and 4 are where the invariant lives.
    (Assassin: several attack cards still count as ONE action)
    Timer expires → automatic draw
 3. Resolve P's pendingEffects, ascending queuedAt
-   Before each attack resolution: Attack Thief charge (#V4-5) then mutual cancellation
+   Before each attack resolution: mutual cancellation (one hit against one hit)
 4. Apply persistent effects targeting P
 5. Check elimination and victory
 6. Next turn
 ```
 
-Attack Thief (`Player.attackBlockCharges`, L23-03): if `attackBlockCharges > 0` when an
-attack is about to resolve on P, spend one charge and emit `outcome: 'blocked'` **before**
-mutual cancel — even when mutual would have cancelled that attack. Do not store the charge
-in `PersistentEffect.counter` (`applyDamage` eats **card-lives** counters only).
+Attack Thief (Lot 68): on play, cancel every attack already pending against the
+user (`outcome: 'blocked'`, `blockedBy: 'attack-thief'`). Do not store
+`attackBlockCharges` for a later turn. A non-attack pending effect stays.
+Block still cancels every pending effect and sets `blockedBy: 'block'`.
 
 Invariant to hold at every step: **a player never suffers a loss of life or resources outside
 their own turn, and never before playing their action.** "Drawing" grants no card — it gains
@@ -215,9 +217,8 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
   Imposition / Poison / Curse. Last-turn auto-loss pays income then drops the
   effect *after* that skip, so victim persistents resume on the next owner turn
   (#V4-9a / L58-06). Super Absorber
-  reads the current seat's ledger
-  (`pointsSpent`, `upgradePointsSpent`, `livesLost` — never theft fields) before life-ticking
-  persistents so it does not re-absorb same-phase Imposition/Poison losses. Imposition /
+  reads the current seat's ledger after Imposition, Poison, and Curse so the
+  upgraded copy includes those outflows (Lot 68). Imposition /
   Poison act on the current player from other seats' active effects. Curse is
   **victim-owned** (designer 2026-08-07), still **ticks** 1 life per 3 points spent
   (`pointsSpent` only, remainder discarded, floor at 1 life — #V4-20), and **siphons**
@@ -242,18 +243,23 @@ Roster: `packages/shared/src/domain/kit-catalog.ts`. Assignment at start is **wi
 ## Mutual attacks — mechanics
 
 The rule itself is `/AGENTS.md` golden rule 1, technical spec §4.6, and rules spec §6
-(designer 2026-09-01 / Lot 54: weaker answers survive; assassin volley sums).
+(designer 2026-09-01 / Lot 54: weaker answers survive; designer 2026-09-29:
+exact groups pay the largest hit first; a remainder with no exact split is
+one defensive bundle, and leftover damage keeps that whole bundle pending).
 
 Mechanics that rule does not cover:
 
 - The comparison runs **before** each attack resolution in step 3 of the loop, not at queue time.
-- Equal damage: both volleys are removed (`outcome: 'cancelled'`).
-- Stronger answer: the incoming volley is cancelled; the answer stays queued.
-- Weaker answer: incoming still applies this turn; the answer stays queued for the
-  opponent's turn. Do **not** splice the weaker retaliation.
-- Assassin `playMultipleAttacks` aimed at the same opponent share `queuedAt` and compare
-  as one damage total. Hits still resolve one by one. Mirror / Super Mirror still
-  address a **single** pending effect id (`chooseMirrorTarget`).
+- The latest retaliation that shares `queuedAt` is the answer set. Spend an
+  exact subset on incoming hits, largest first. Two Strongs pay for a Strong+
+  before either of them pairs with a normal Strong. Then the answers left are
+  one bundle: cover remaining hits while the damage lasts. Leftover damage
+  keeps every attack in the bundle. A bundle used up exactly is removed.
+- Remove only the answers that were spent. An unused Basic stays queued.
+- A hit that is not covered still applies this turn.
+- An eliminated source can still be answered. The answer is compared, then removed
+  from their queue. It does not damage the corpse (Lot 68).
+- Mirror / Super Mirror still address a **single** pending effect id (`chooseMirrorTarget`).
 - A Mirror redirection produces a fully pending attack at its new target, so it can create a new
   mutual pair, and can be redirected again with no chain limit (rules spec §3).
 - **Attribution:** after Mirror / Super Mirror redirect, `sourcePlayerId` becomes the
@@ -278,10 +284,11 @@ attack cards — those follow mutual attacks above.
 Technical spec §4.4, ruling §6.2 #12. Absorber needs to know what an opponent lost and spent
 during their **most recent complete turn, resolution phase included**.
 
-A state diff is not enough: what a player **actively spent** must stay distinct from what a
-third party **stole** from them, because upgraded Absorber captures the former and not the
-latter. `TurnLedger` therefore keeps `pointsSpent` and `pointsLostToTheft` as separate fields —
-never sum them into one "points lost".
+`TurnLedger` keeps `pointsSpent` and `pointsLostToTheft` (and the upgrade-point
+pair) as separate fields. Curse still reads `pointsSpent` only. Upgraded Absorber
+and upgraded Super Absorber sum both pairs: every point and upgrade point that
+left, including a sale and a theft (Lot 68). Shield is not on the ledger. Selling
+an upgrade point writes `upgradePointsSpent`. Imposition writes `pointsLostToTheft`.
 
 The ledger resets at the start of each player's own turn. One ledger per player is enough:
 turn order rotates, so when it is your turn every opponent's last turn is already complete.

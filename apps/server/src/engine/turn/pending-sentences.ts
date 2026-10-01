@@ -69,6 +69,25 @@ export function tickPendingSentences(
   const skipIndex = skipNewestForActor
     ? lastIndexForActor(state.pendingSentences, actorPlayerId)
     : -1;
+
+  // Block's activation turn and extra turns are not Sentence turns (Lot 68).
+  if (actor.blockAttacksForbidden) {
+    if (skipIndex < 0) {
+      return [];
+    }
+    const newest = state.pendingSentences[skipIndex];
+    if (newest?.sourcePlayerId === actorPlayerId) {
+      return [
+        {
+          kind: 'sentenceCountdown',
+          sourcePlayerId: actorPlayerId,
+          remainingOwnerTurns: newest.remainingOwnerTurns,
+          turnSequence: state.turnSequence,
+        },
+      ];
+    }
+    return [];
+  }
   const announcements: SentenceAnnouncementLogEntry[] = [];
   const next: PendingSentence[] = [];
 

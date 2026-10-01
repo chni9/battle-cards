@@ -32,6 +32,7 @@ function testDeps(overrides: Partial<FeedbackApiDeps> = {}): FeedbackApiDeps {
     rateLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
     inboxAuthLimiter: createIpRateLimiter(10, 60_000, () => Date.now()),
     listReports: () => Promise.resolve([]),
+    updateStatus: () => Promise.resolve(true),
     readInboxPassword: () => 'inbox-secret',
     ...overrides,
   };
@@ -484,6 +485,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
         logTail: [{ kind: 'actionPlayed' }],
         userAgent: 'vitest',
         topics: [],
+        status: 'pending',
       },
       {
         id: 'older',
@@ -499,6 +501,7 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
         logTail: null,
         userAgent: null,
         topics: ['ui'],
+        status: 'pending',
       },
     ];
     const listReports = vi.fn(() => Promise.resolve(rows));
@@ -539,5 +542,93 @@ describe('GET /api/inbox (technical spec v6 §7.3 / L47-04)', () => {
     expect(response.headers.get('Access-Control-Allow-Headers')).toContain(
       'X-Inbox-Password',
     );
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('PATCH');
+  });
+});
+
+describe('PATCH /api/inbox/:id (Lot 68)', () => {
+  const closers: (() => void)[] = [];
+  const reportId = '5067fa0f-825c-4f0a-b2c7-9a71cb805a28';
+
+  afterEach(() => {
+    for (const close of closers) close();
+    closers.length = 0;
+  });
+
+  async function start(deps: FeedbackApiDeps = testDeps()): Promise<string> {
+    const app = express();
+    app.use('/api', express.json());
+    mountFeedbackApi(app, deps);
+    const server = await listen(app);
+    closers.push(server.close);
+    return server.base;
+  }
+
+  it('returns 400 for a status outside pending, done, and eliminated', async () => {
+    const base = await start();
+    const response = await fetch(`${base}/api/inbox/${reportId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': 'inbox-secret',
+      },
+      body: JSON.stringify({ status: 'closed' }),
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 404 for a non-uuid and for a missing row', async () => {
+    const updateStatus = vi.fn(() => Promise.resolve(false));
+    const base = await start(testDeps({ updateStatus }));
+    const bad = await fetch(`${base}/api/inbox/RCCHCM`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': 'inbox-secret',
+      },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    expect(bad.status).toBe(404);
+    expect(updateStatus).not.toHaveBeenCalled();
+
+    const missing = await fetch(`${base}/api/inbox/${reportId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': 'inbox-secret',
+      },
+      body: JSON.stringify({ status: 'eliminated' }),
+    });
+    expect(missing.status).toBe(404);
+    expect(updateStatus).toHaveBeenCalledOnce();
+  });
+
+  it('stores done when the password matches', async () => {
+    const updateStatus = vi.fn(() => Promise.resolve(true));
+    const base = await start(testDeps({ updateStatus }));
+    const response = await fetch(`${base}/api/inbox/${reportId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': 'inbox-secret',
+      },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, status: 'done' });
+    expect(updateStatus).toHaveBeenCalledOnce();
+  });
+
+  it('returns 401 when the password is wrong', async () => {
+    const base = await start();
+    const response = await fetch(`${base}/api/inbox/${reportId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Inbox-Password': 'nope',
+      },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    expect(response.status).toBe(401);
   });
 });

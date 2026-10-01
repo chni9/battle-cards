@@ -405,6 +405,24 @@ describe('formatActionLogEntry (L9-02)', () => {
       formatActionLogEntry(
         {
           kind: 'actionResolved',
+          effectId: 'e-blocked-by',
+          sourcePlayerId: 'a',
+          targetPlayerId: 'b',
+          cardId: 'super-attack',
+          isUpgraded: true,
+          livesLost: 0,
+          shieldAbsorbed: 0,
+          outcome: 'blocked',
+          blockedBy: 'attack-thief',
+          turnSequence: 6,
+        },
+        nick,
+      ),
+    ).toBe('Super attack + from Alice against Bob is blocked by Attack Thief');
+    expect(
+      formatActionLogEntry(
+        {
+          kind: 'actionResolved',
           effectId: 'e-blocked',
           sourcePlayerId: 'a',
           targetPlayerId: 'b',

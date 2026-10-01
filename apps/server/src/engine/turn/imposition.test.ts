@@ -69,6 +69,7 @@ describe('Imposition (L63-04)', () => {
     applyPersistentEffects(state, b.id);
     expect(b.points).toBe(7);
     expect(a.points).toBe(1);
+    expect(b.turnLedger.pointsLostToTheft).toBe(1);
 
     b.points = 10;
     applyPersistentEffects(state, b.id);
@@ -114,5 +115,37 @@ describe('Imposition (L63-04)', () => {
     expect(b.points).toBe(7);
     expect(b.lives).toBe(10);
     expect(a.points).toBe(4);
+  });
+
+  it('upgraded Shield stops the drain and spends no shield (L68-09)', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+      ],
+      seed: 'l68-09-shield',
+    });
+    const a = state.players.find((player) => player.id === 'a');
+    const b = state.players.find((player) => player.id === 'b');
+    if (a === undefined || b === undefined) {
+      throw new Error('missing seats');
+    }
+
+    a.activePersistentEffects = [
+      { id: 'imp', cardId: 'imposition', isUpgraded: false, counter: 2, targetPlayerId: null },
+    ];
+    b.points = 12;
+    b.shield = 4;
+    b.shieldIsUpgraded = false;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(10);
+    expect(b.shield).toBe(4);
+
+    b.points = 12;
+    b.shieldIsUpgraded = true;
+    applyPersistentEffects(state, b.id);
+    expect(b.points).toBe(12);
+    expect(b.shield).toBe(4);
+    expect(a.points).toBe(2);
   });
 });

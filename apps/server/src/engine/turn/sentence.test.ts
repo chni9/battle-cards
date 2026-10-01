@@ -308,4 +308,35 @@ describe('Sentence (L63-03)', () => {
     ]);
     expect(b.pendingEffects.some((effect) => effect.cardId === 'sentence')).toBe(true);
   });
+
+  it('does not count the Block activation turn or the extra turns (L68-06)', () => {
+    const { state, a } = seatPair('l68-06-block');
+    a.specialCards = [
+      { instanceId: 'se-1', cardId: 'sentence', isUpgraded: false },
+      { instanceId: 'bl-1', cardId: 'block', isUpgraded: false },
+    ];
+    a.points = 25;
+    state.currentTurnPlayerId = a.id;
+
+    expect(
+      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'se-1' }).ok,
+    ).toBe(true);
+    expect(state.pendingSentences[0]?.remainingOwnerTurns).toBe(3);
+
+    passUntil(state, a.id);
+    expect(
+      performTurnAction(state, a.id, { type: 'playCard', instanceId: 'bl-1' }).ok,
+    ).toBe(true);
+    expect(state.pendingSentences[0]?.remainingOwnerTurns).toBe(3);
+
+    for (let i = 0; i < 3; i += 1) {
+      expect(state.currentTurnPlayerId).toBe(a.id);
+      expect(performTurnAction(state, a.id, { type: 'draw' }).ok).toBe(true);
+      expect(state.pendingSentences[0]?.remainingOwnerTurns).toBe(3);
+    }
+
+    passUntil(state, a.id);
+    expect(performTurnAction(state, a.id, { type: 'draw' }).ok).toBe(true);
+    expect(state.pendingSentences[0]?.remainingOwnerTurns).toBe(2);
+  });
 });
