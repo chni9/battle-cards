@@ -26,6 +26,7 @@ import {
   lobbyStartEnabled,
 } from './lobby-ready';
 import { LobbyReadyCheckIcon, LobbyReadyStatusMark } from './lobby-ready-mark';
+import { CardthagoSkinToggle } from '../design/cardthago-skin-toggle';
 import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
@@ -89,10 +90,17 @@ export function LobbyScreen({
   return (
     <main className="h-full overflow-y-auto bg-surface font-sans text-ink">
       <div className="mx-auto max-w-lg px-4 py-8 md:px-6">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
-          Lobby
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Card Battle</h1>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <CardthagoSkinToggle />
+        </div>
+        <div className="cardthago-lobby-banner">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
+            Lobby
+          </p>
+          <h1 className="cardthago-inscription mt-1 text-3xl font-semibold tracking-tight text-ink">
+            Cardthago
+          </h1>
+        </div>
         <p className="mt-1 text-sm text-ink-muted">{STATUS_LABELS[status]}</p>
         {error !== null && (
           <p className="mt-2 text-sm font-medium text-cta-red" role="alert">

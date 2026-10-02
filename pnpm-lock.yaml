@@ -44,6 +44,9 @@ importers:
       '@colyseus/sdk':
         specifier: ^0.17.43
         version: 0.17.43(@colyseus/core@0.17.45)(typescript@5.9.3)(zod@4.4.3)
+      '@fontsource/cinzel':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/outfit':
         specifier: ^5.3.0
         version: 5.3.0
@@ -507,6 +510,9 @@ packages:
 
   '@fast-csv/parse@4.3.6':
     resolution: {integrity: sha512-uRsLYksqpbDmWaSmzvJcuApSEe38+6NQZBUsuAyMZKqHxH0g1wcJgsKUvN3WC8tewaqFjBMMGrkHmC+T7k8LvA==}
+
+  '@fontsource/cinzel@5.3.0':
+    resolution: {integrity: sha512-KEOYTsrRppW0uRIPWBDPrQgunCS6f8u4nzZxYRBfo9SCknKojLYjK7B0ZoVmJhyVLefz271ZQRF9EOpHZlfhRw==}
 
   '@fontsource/outfit@5.3.0':
     resolution: {integrity: sha512-0AVHzTTVJSxWDOxPKSfMeHhZeBFDU3cmgrcOb76ZEyhGo0+xgyG3GsLF3h9+X8w0IX7G4jzjJgFQEBiWdX6VgA==}
@@ -3007,6 +3013,8 @@ snapshots:
       lodash.isnil: 4.0.0
       lodash.isundefined: 3.0.1
       lodash.uniq: 4.5.0
+
+  '@fontsource/cinzel@5.3.0': {}
 
   '@fontsource/outfit@5.3.0': {}
 

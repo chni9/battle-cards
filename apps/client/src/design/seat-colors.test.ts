@@ -59,21 +59,21 @@ describe('seatIndexOf (L39-03)', () => {
 });
 
 describe('seatColorHex / styles (L39-03)', () => {
-  it('exposes an 8-seat hex palette (blue/red/green/yellow/violet/orange/teal/pink)', () => {
+  it('exposes an 8-seat pigment hex palette', () => {
     expect(SEAT_COLORS).toEqual([
-      '#1d6fd8',
-      '#d62828',
-      '#1a9b3c',
-      '#ffd400',
-      '#7c3aed',
-      '#ea580c',
-      '#0d9488',
-      '#db2777',
+      '#2b5f8a',
+      '#a63d3d',
+      '#3d7c47',
+      '#c9a227',
+      '#6b4c8a',
+      '#c4763a',
+      '#2a7b78',
+      '#9e4a6f',
     ]);
-    expect(seatColorHex(3)).toBe('#ffd400');
-    expect(seatColorHex(5)).toBe('#ea580c');
-    expect(seatColorHex(6)).toBe('#0d9488');
-    expect(seatColorHex(7)).toBe('#db2777');
+    expect(seatColorHex(3)).toBe('#c9a227');
+    expect(seatColorHex(5)).toBe('#c4763a');
+    expect(seatColorHex(6)).toBe('#2a7b78');
+    expect(seatColorHex(7)).toBe('#9e4a6f');
     expect(seatColorVar(2)).toBe(SEAT_COLORS[2]);
   });
 
@@ -88,11 +88,11 @@ describe('seatColorHex / styles (L39-03)', () => {
   });
 
   it('builds tint and name styles from hex', () => {
-    expect(seatNameStyle(1)).toEqual({ color: '#d62828' });
+    expect(seatNameStyle(1)).toEqual({ color: '#a63d3d' });
     const zone = seatZoneStyle(0);
-    expect(zone.borderColor).toBe('#1d6fd8');
+    expect(zone.borderColor).toBe('#2b5f8a');
     expect(zone.backgroundColor).toMatch(/^rgb\(/);
-    expect(zone.boxShadow).toContain('#1d6fd8');
+    expect(zone.boxShadow).toContain('#2b5f8a');
     expect(zone.boxShadow).not.toContain('0 0 0 3px');
   });
 

@@ -31,6 +31,8 @@ import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { IconButton } from '../design/components/icon-button';
 import { readVisualViewportBox } from '../design/components/visual-viewport';
+import { useCardthagoSkin } from '../design/use-cardthago-skin';
+import { CardthagoSkinToggle } from '../design/cardthago-skin-toggle';
 import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
 import {
@@ -392,6 +394,7 @@ function TableScreenInner({
   onOpenFeedback,
   youWon = false,
 }: TableScreenProps): ReactElement {
+  const { skin } = useCardthagoSkin();
   const { enqueue } = useTableFx();
   const reduceMotion = useReducedMotion();
   const [dialog, setDialog] = useState<TableDialog>(null);
@@ -1264,6 +1267,7 @@ function TableScreenInner({
         {...(povSeat !== null ? { seatColor: seatColorHex(povSeat) } : {})}
       />
       <TableShell
+        skin={skin}
         feltRef={feltRef}
         collapse={collapse}
         waitingCount={othersPending.length}
@@ -1285,6 +1289,7 @@ function TableScreenInner({
           : {})}
         turn={
           <div className="flex items-stretch gap-1 overflow-visible p-1 sm:p-1.5">
+            <CardthagoSkinToggle className="shrink-0 self-center" />
             <IconButton
               aria-label={HOW_TO_PLAY_ARIA_LABEL}
               onClick={() => {

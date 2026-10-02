@@ -1,8 +1,8 @@
 /**
  * Seat-index identity colors — Table UX polish L39-03.
  * Index is `view.players` array position (not turnOrder). Client-only; no wire field.
- * Palette: 0 blue · 1 red · 2 green · 3 yellow · 4 violet · 5 orange ·
- * 6 teal · 7 pink.
+ * Palette (Cardthago pigments): 0 lapis · 1 cinnabar · 2 malachite · 3 saffron ·
+ * 4 Tyrian · 5 ochre · 6 turquoise · 7 madder.
  *
  * Hex values are used in inline styles (not `var(--color-seat-*)` / `color-mix`) so
  * mobile Safari always paints them — theme CSS vars alone were falling through to gray.
@@ -19,14 +19,14 @@ export type SeatIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /** Concrete hex palette — single source for inline styles. */
 export const SEAT_COLORS = [
-  '#1d6fd8',
-  '#d62828',
-  '#1a9b3c',
-  '#ffd400',
-  '#7c3aed',
-  '#ea580c',
-  '#0d9488',
-  '#db2777',
+  '#2b5f8a',
+  '#a63d3d',
+  '#3d7c47',
+  '#c9a227',
+  '#6b4c8a',
+  '#c4763a',
+  '#2a7b78',
+  '#9e4a6f',
 ] as const satisfies readonly [
   string,
   string,

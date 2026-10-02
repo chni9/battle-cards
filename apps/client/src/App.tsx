@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { CardthagoSkinProvider } from './design/cardthago-skin-context';
 import { useRoomConnection } from './net/use-room-connection';
 import { AdminApp } from './screens/admin/admin-app';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
@@ -26,7 +27,11 @@ export function App() {
   if (path === '/admin' || path.startsWith('/admin/')) {
     return <AdminApp />;
   }
-  return <GameApp />;
+  return (
+    <CardthagoSkinProvider>
+      <GameApp />
+    </CardthagoSkinProvider>
+  );
 }
 
 function GameApp() {
