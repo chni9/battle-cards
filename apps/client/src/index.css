@@ -40,14 +40,14 @@
   --color-cta-label-on-dark: #f7f4f2;
 
   /* Seat identity — mirrored in seat-colors.ts SEAT_COLORS for mobile-safe inline styles */
-  --color-seat-0: #1d6fd8;
-  --color-seat-1: #d62828;
-  --color-seat-2: #1a9b3c;
-  --color-seat-3: #ffd400;
-  --color-seat-4: #7c3aed;
-  --color-seat-5: #ea580c;
-  --color-seat-6: #0d9488;
-  --color-seat-7: #db2777;
+  --color-seat-0: #2b5f8a;
+  --color-seat-1: #a63d3d;
+  --color-seat-2: #3d7c47;
+  --color-seat-3: #c9a227;
+  --color-seat-4: #6b4c8a;
+  --color-seat-5: #c4763a;
+  --color-seat-6: #2a7b78;
+  --color-seat-7: #9e4a6f;
 
   /* Radius — thin card border language; controls and CTAs slightly softer */
   --radius-card: 0.375rem;
@@ -88,14 +88,14 @@
    * even if @theme utilities are tree-shaken (mobile gray names/fills bug).
    */
   :root {
-    --color-seat-0: #1d6fd8;
-    --color-seat-1: #d62828;
-    --color-seat-2: #1a9b3c;
-    --color-seat-3: #ffd400;
-    --color-seat-4: #7c3aed;
-    --color-seat-5: #ea580c;
-    --color-seat-6: #0d9488;
-    --color-seat-7: #db2777;
+    --color-seat-0: #2b5f8a;
+    --color-seat-1: #a63d3d;
+    --color-seat-2: #3d7c47;
+    --color-seat-3: #c9a227;
+    --color-seat-4: #6b4c8a;
+    --color-seat-5: #c4763a;
+    --color-seat-6: #2a7b78;
+    --color-seat-7: #9e4a6f;
   }
 }
 

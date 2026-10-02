@@ -35,6 +35,9 @@ import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog
 import { WhatsNewDialog } from './whats-new-dialog';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
+import { AtelierHubChrome, FresqueHubChrome } from '../cardthago/hub-chrome';
+import { useCardthagoSkin } from '../design/use-cardthago-skin';
+import { CardthagoSkinToggle } from '../design/cardthago-skin-toggle';
 import { homeStatusCopy } from './status-labels';
 import type { SoloMenuSeed } from './solo-menu-seed';
 
@@ -85,6 +88,7 @@ export function HomeScreen({
   soloMenuSeed,
   onSoloMenuSeedApplied,
 }: HomeScreenProps): ReactElement {
+  const { skin } = useCardthagoSkin();
   const [mode, setMode] = useState<HomeMode>(soloMenuSeed !== undefined ? 'solo' : 'hub');
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [whatsNewScope, setWhatsNewScope] = useState<WhatsNewScope>('current');
@@ -210,12 +214,40 @@ export function HomeScreen({
     openWhatsNewIfDue();
   };
 
+  const hubChromeProps = {
+    status,
+    error,
+    soloLaunchPending,
+    busy,
+    onOpenHowToPlay: () => {
+      setHowToPlayOpen(true);
+    },
+    onOpenFeedback: () => {
+      setFeedbackOpen(true);
+    },
+    onChooseOnline: () => {
+      requestPath('online');
+    },
+    onChooseSolo: () => {
+      requestPath('solo');
+    },
+    onChooseTutorial: () => {
+      requestPath('tutorial');
+    },
+  };
+
   return (
     <main className="relative h-full min-h-full overflow-y-auto overscroll-contain bg-surface font-sans text-ink">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,var(--color-surface-kit)_0%,transparent_55%),radial-gradient(ellipse_at_90%_20%,var(--color-slate-soft)_0%,transparent_45%)]"
-      />
+      {mode !== 'hub' ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,var(--color-surface-kit)_0%,transparent_55%),radial-gradient(ellipse_at_90%_20%,var(--color-slate-soft)_0%,transparent_45%)]"
+        />
+      ) : null}
+
+      <div className="absolute left-4 top-4 z-20 sm:left-8 sm:top-6">
+        <CardthagoSkinToggle />
+      </div>
 
       <BetaCard />
       <Button
@@ -240,38 +272,30 @@ export function HomeScreen({
         ) : null}
       </Button>
 
-      <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
-        <section className="order-2 md:order-1">
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            {mode === 'hub' ? (
-              <HubView
-                status={status}
-                error={error}
-                soloLaunchPending={soloLaunchPending}
-                busy={busy}
-                onOpenHowToPlay={() => {
-                  setHowToPlayOpen(true);
-                }}
-                onOpenFeedback={() => {
-                  setFeedbackOpen(true);
-                }}
-                onChooseOnline={() => {
-                  requestPath('online');
-                }}
-                onChooseSolo={() => {
-                  requestPath('solo');
-                }}
-                onChooseTutorial={() => {
-                  requestPath('tutorial');
-                }}
-              />
-            ) : null}
-
+      {mode === 'hub' ? (
+        <motion.div
+          key={`hub-${skin}`}
+          className="relative min-h-full px-4 pb-8 pt-16 sm:px-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          {skin === 'atelier' ? (
+            <AtelierHubChrome {...hubChromeProps} />
+          ) : (
+            <FresqueHubChrome {...hubChromeProps} />
+          )}
+        </motion.div>
+      ) : (
+        <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
+          <section className="order-2 md:order-1">
+            <motion.div
+              key={mode}
+              className="cardthago-path-panel"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+            >
             {mode === 'online' ? (
               <OnlinePath
                 nickname={nickname}
@@ -333,11 +357,12 @@ export function HomeScreen({
                 }}
               />
             ) : null}
-          </motion.div>
-        </section>
+            </motion.div>
+          </section>
 
-        <HomeArt />
-      </div>
+          <HomeArt />
+        </div>
+      )}
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
       <WhatsNewDialog open={whatsNewOpen} scope={whatsNewScope} onClose={closeWhatsNew} />
@@ -361,68 +386,6 @@ export function HomeScreen({
         }}
       />
     </main>
-  );
-}
-
-interface HubViewProps {
-  status: RoomConnectionStatus;
-  error: string | null;
-  soloLaunchPending: boolean;
-  busy: boolean;
-  onOpenHowToPlay: () => void;
-  onOpenFeedback: () => void;
-  onChooseOnline: () => void;
-  onChooseSolo: () => void;
-  onChooseTutorial: () => void;
-}
-
-function HubView({
-  status,
-  error,
-  soloLaunchPending,
-  busy,
-  onOpenHowToPlay,
-  onOpenFeedback,
-  onChooseOnline,
-  onChooseSolo,
-  onChooseTutorial,
-}: HubViewProps): ReactElement {
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
-        Turn-based card battle
-      </p>
-      <h1 className="mt-2 font-sans text-4xl font-semibold tracking-tight text-ink md:text-5xl">
-        Card Battle
-      </h1>
-      <StatusBlock
-        status={status}
-        error={error}
-        soloLaunchPending={soloLaunchPending}
-      />
-
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Button type="button" variant="green" disabled={busy} onClick={onChooseOnline}>
-          Play online
-        </Button>
-        <Button type="button" variant="green" disabled={busy} onClick={onChooseSolo}>
-          Play solo
-        </Button>
-        <Button type="button" variant="green" disabled={busy} onClick={onChooseTutorial}>
-          Tutorial
-        </Button>
-        <Button type="button" variant="orange" disabled={busy} onClick={onOpenHowToPlay}>
-          How to play
-        </Button>
-        <Button type="button" variant="orange" disabled={busy} onClick={onOpenFeedback}>
-          Feedback
-        </Button>
-      </div>
-
-      <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
-        New here? Open How to play once, then pick Tutorial, Online, or Solo.
-      </p>
-    </div>
   );
 }
 
@@ -723,9 +686,9 @@ function PathHeader({
         </Button>
       </div>
       <p className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
-        Card Battle
+        Cardthago
       </p>
-      <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+      <h1 className="cardthago-inscription mt-2 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
         {title}
       </h1>
       <p className="mt-3 max-w-[40ch] text-base leading-relaxed text-ink-muted">{subtitle}</p>
