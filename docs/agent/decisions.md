@@ -4152,7 +4152,10 @@ Designer. Same compare as a living Thief. Spy stays living targets only.
 Designer. `PROTOCOL_VERSION` 42 → 43. Block skips Imposition on the Block
 turn and while `blockTurnsRemaining > 0`. Basic Spy shows live resources only;
 Spy+ adds kit, hand, and specials. Every living lethal contributor gets two
-reward picks in tie-break order. Shield refills without a second slot. Card
+reward picks in tie-break order. Pending attacks that **resolve** on the
+victim's lethal turn count as contributors even when the shield absorbed all
+damage (`attackResolved` on `recordEliminationContributor`); non-attack sources
+still require `livesLost > 0`. Shield refills without a second slot. Card
 Absorber never enters the pool. Four active slots with forced drop on a fifth;
 free deactivate for persistent specials on your turn (not Shield or Sentence).
 Curse on a target who already has four actives: the Curse user picks which
