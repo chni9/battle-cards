@@ -57,7 +57,11 @@ const RELEASE_NOTES_CATALOG = [
       {
         cardId: 'shield' as const,
         before: 'You could not play Shield while a shield was up.',
-        after: 'Shield refills your shield and you may hold four active cards.',
+        after: 'Playing Shield refills your shield while one is up.',
+      },
+      {
+        before: 'Any number of persistent specials and shields could stay active.',
+        after: 'You can have at most four active cards at once; a fifth makes you drop one.',
       },
       {
         before: 'Only one player got rewards for a shared kill.',
