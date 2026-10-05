@@ -2399,7 +2399,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
     }
 
-    this.sendSlotDropSubChoiceRequired(client, choice.eligibleSlots, effectiveDeadline);
+    this.sendSlotDropSubChoiceRequired(
+      client,
+      choice.slotOwnerId,
+      choice.eligibleSlots,
+      effectiveDeadline,
+    );
 
     this.subChoiceTimers.set(
       'slot-drop',
@@ -4107,7 +4112,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
         });
         break;
       case 'slot-drop':
-        this.sendSlotDropSubChoiceRequired(client, choice.eligibleSlots, choice.deadlineMs);
+        this.sendSlotDropSubChoiceRequired(
+          client,
+          choice.slotOwnerId,
+          choice.eligibleSlots,
+          choice.deadlineMs,
+        );
         break;
       default:
         break;
@@ -4116,6 +4126,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   private sendSlotDropSubChoiceRequired(
     client: GameClient,
+    slotOwnerPlayerId: string,
     eligibleSlots: Extract<
       NonNullable<GameState['subChoice']>,
       { kind: 'slot-drop' }
@@ -4124,6 +4135,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   ): void {
     client.send(SUB_CHOICE_REQUIRED, {
       kind: 'slot-drop',
+      slotOwnerPlayerId,
       eligibleSlots,
       deadlineMs,
     });

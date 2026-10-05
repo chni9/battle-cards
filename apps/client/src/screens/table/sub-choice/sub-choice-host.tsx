@@ -100,7 +100,13 @@ function renderKindPanel(
     case 'reanimation-kit':
       return <ReanimationKitPanel subChoice={subChoice} onResolve={onResolve} />;
     case 'slot-drop':
-      return <SlotDropPanel subChoice={subChoice} onResolve={onResolve} />;
+      return (
+        <SlotDropPanel
+          subChoice={subChoice}
+          view={view}
+          onResolve={onResolve}
+        />
+      );
     default: {
       const exhaustive: never = subChoice;
       return exhaustive;

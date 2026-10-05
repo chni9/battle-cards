@@ -53,7 +53,7 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
     expect(source).toContain('item.kitId');
     expect(latestReleaseNote().additions).toHaveLength(0);
-    expect(latestReleaseNote().items).toHaveLength(4);
+    expect(latestReleaseNote().items).toHaveLength(5);
     const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
     expect(lot63?.items.map((item) => item.cardId)).toEqual([
       'sentence',

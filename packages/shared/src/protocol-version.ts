@@ -97,4 +97,8 @@
  * "blocked". Exception to the V6 single-bump lock (same class as L49 /
  * L56–L66); see decisions.md.
  */
-export const PROTOCOL_VERSION = 43;
+/**
+ * 43 → 44 (Lot 69): `subChoiceRequired` slot-drop includes
+ * `slotOwnerPlayerId` (chooser may differ for Curse on a full target).
+ */
+export const PROTOCOL_VERSION = 44;

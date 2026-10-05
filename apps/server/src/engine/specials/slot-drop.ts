@@ -19,9 +19,15 @@ import {
   oldestActiveSlot,
 } from './active-slots';
 
-/** Bots drop the oldest occupied slot when forced (Lot 69). */
-export function botDefaultSlotDropId(state: GameState, playerId: string): string {
-  const drop = oldestActiveSlot(listActiveSlots(state, playerId));
+/** Bots drop the oldest occupied slot on the pending victim (Lot 69). */
+export function botDefaultSlotDropId(state: GameState, chooserPlayerId: string): string {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop' || choice.playerId !== chooserPlayerId) {
+    throw new Error('slot drop pending but no active slots');
+  }
+
+  const drop = oldestActiveSlot(listActiveSlots(state, choice.slotOwnerId));
 
   if (drop === null) {
     throw new Error('slot drop pending but no active slots');
@@ -77,16 +83,18 @@ export function applyPendingSlotActivation(
 export function beginSlotDrop(
   state: GameState,
   input: {
-    playerId: string;
+    chooserPlayerId: string;
+    slotOwnerId: string;
     pending: PendingSlotActivationPayload;
     nowMs: number;
   },
 ): void {
-  const slots = listActiveSlots(state, input.playerId);
+  const slots = listActiveSlots(state, input.slotOwnerId);
 
   state.subChoice = {
     kind: 'slot-drop',
-    playerId: input.playerId,
+    playerId: input.chooserPlayerId,
+    slotOwnerId: input.slotOwnerId,
     eligibleSlots: slots.map((slot) => ({
       kind: slot.kind,
       id: slot.id,
@@ -115,12 +123,12 @@ export function applySlotDrop(
     return actionReject('slot-drop-invalid');
   }
 
-  clearActiveSlot(state, playerId, {
+  clearActiveSlot(state, choice.slotOwnerId, {
     ...slot,
     slotQueuedAt: 0,
   });
 
-  applyPendingSlotActivation(state, playerId, choice.pendingActivation);
+  applyPendingSlotActivation(state, choice.slotOwnerId, choice.pendingActivation);
   state.subChoice = null;
   return { ok: true };
 }
@@ -135,7 +143,7 @@ export function applyDefaultSlotDrop(
     return actionReject('no-slot-drop-pending');
   }
 
-  const slots = listActiveSlots(state, playerId);
+  const slots = listActiveSlots(state, choice.slotOwnerId);
   const drop = oldestActiveSlot(slots);
 
   if (drop === null) {

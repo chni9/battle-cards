@@ -58,6 +58,7 @@ function pendingFromSlot(
 export function reconcileSlotCapAfterPlay(
   state: GameState,
   slotOwnerId: string,
+  chooserPlayerId: string,
   nowMs: number,
 ): boolean {
   const owner = state.players.find((player) => player.id === slotOwnerId);
@@ -82,7 +83,8 @@ export function reconcileSlotCapAfterPlay(
   clearActiveSlot(state, slotOwnerId, newest);
 
   beginSlotDrop(state, {
-    playerId: slotOwnerId,
+    chooserPlayerId,
+    slotOwnerId,
     pending,
     nowMs,
   });

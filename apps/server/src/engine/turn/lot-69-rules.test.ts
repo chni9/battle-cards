@@ -219,11 +219,59 @@ describe('Lot 69 — active slot cap', () => {
       throw new Error('expected slot-drop');
     }
 
+    expect(state.subChoice.playerId).toBe(a.id);
+    expect(state.subChoice.slotOwnerId).toBe(a.id);
     expect(state.subChoice.eligibleSlots).toHaveLength(4);
     expect(state.subChoice.pendingActivation.kind).toBe('persistent');
     if (state.subChoice.pendingActivation.kind === 'persistent') {
       expect(state.subChoice.pendingActivation.cardId).toBe('roulette');
     }
+  });
+
+  it('lets the Curse caster pick the victim slot to drop at four actives', () => {
+    const state = createInitialState({
+      seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],
+      seed: 'l69-curse-cap',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    if (a === undefined || b === undefined) {
+      throw new Error('missing seats');
+    }
+
+    state.currentTurnPlayerId = a.id;
+    state.turnSequence = 10;
+    b.shield = 4;
+    b.shieldIsUpgraded = false;
+    b.shieldSlotQueuedAt = 1;
+    b.activePersistentEffects = [
+      makeCounterEffect({ id: 'p1', cardId: 'poison', counter: 3, slotQueuedAt: 2 }),
+      makeCounterEffect({ id: 'p2', cardId: 'imposition', counter: 2, slotQueuedAt: 3 }),
+      makeCounterEffect({ id: 'p3', cardId: 'points-generator', counter: 3, slotQueuedAt: 4 }),
+    ];
+    a.points = 20;
+    a.specialCards = [{ instanceId: 'curse-1', cardId: 'curse', isUpgraded: false }];
+
+    const play = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'curse-1',
+      targetPlayerId: b.id,
+    });
+    expect(play.ok).toBe(true);
+
+    if (!play.ok) {
+      return;
+    }
+
+    expect(play.subChoicePending).toBe(true);
+    expect(state.subChoice?.kind).toBe('slot-drop');
+    if (state.subChoice?.kind !== 'slot-drop') {
+      throw new Error('expected slot-drop');
+    }
+
+    expect(state.subChoice.playerId).toBe(a.id);
+    expect(state.subChoice.slotOwnerId).toBe(b.id);
+    expect(state.subChoice.eligibleSlots).toHaveLength(4);
   });
 
   it('counts shield and persistents toward four slots', () => {

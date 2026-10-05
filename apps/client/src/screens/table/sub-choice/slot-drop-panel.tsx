@@ -5,15 +5,18 @@
 import {
   formatCardLabel,
   type CardInstance,
+  type PlayingStateView,
   type ResolveSubChoicePayload,
   type SlotDropChoiceRequiredPayload,
 } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
 import { CardChoiceTile } from '../../../design/components/card-choice-tile';
+import { nicknameOf } from '../table-helpers';
 
 export interface SlotDropPanelProps {
   subChoice: SlotDropChoiceRequiredPayload;
+  view: PlayingStateView;
   onResolve: (payload: Extract<ResolveSubChoicePayload, { kind: 'slot-drop' }>) => void;
 }
 
@@ -43,11 +46,20 @@ function slotInstance(
   };
 }
 
-export function SlotDropPanel({ subChoice, onResolve }: SlotDropPanelProps): ReactElement {
+export function SlotDropPanel({
+  subChoice,
+  view,
+  onResolve,
+}: SlotDropPanelProps): ReactElement {
+  const victimIsSelf = subChoice.slotOwnerPlayerId === view.you;
+  const victimName = nicknameOf(view, subChoice.slotOwnerPlayerId);
+
   return (
     <>
       <p className="text-sm text-ink-muted">
-        You have four active cards. Pick one to remove so the new card can stay.
+        {victimIsSelf
+          ? 'You have four active cards. Pick one to remove so the new card can stay.'
+          : `${victimName} has four active cards. Pick one of theirs to remove so your Curse can land.`}
       </p>
       <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
         {subChoice.eligibleSlots.map((slot) => {

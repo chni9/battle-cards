@@ -10,6 +10,7 @@ describe('subChoiceRequired slot-drop (Lot 69)', () => {
   it('accepts server-shaped slot-drop payloads', () => {
     const payload = {
       kind: 'slot-drop' as const,
+      slotOwnerPlayerId: 'victim-seat',
       deadlineMs: Date.now() + 40_000,
       eligibleSlots: [
         {
@@ -34,6 +35,7 @@ describe('subChoiceRequired slot-drop (Lot 69)', () => {
     expect(
       isSubChoiceRequired({
         kind: 'slot-drop',
+        slotOwnerPlayerId: 'victim-seat',
         deadlineMs: Date.now() + 40_000,
         eligibleSlots: [{ id: 'x', cardId: 'tax' }],
       }),

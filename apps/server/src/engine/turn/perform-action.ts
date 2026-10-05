@@ -1851,6 +1851,7 @@ function playCardAction(
   reconcileSlotCapAfterPlay(
     state,
     slotOwnerForCardPlay(actorPlayerId, cardId, resolvedTargetId),
+    actorPlayerId,
     nowMs,
   );
 

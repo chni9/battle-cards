@@ -44,6 +44,14 @@ export function isSubChoiceRequired(payload: unknown): payload is SubChoiceRequi
     case 'reanimation-kit':
       return 'eligibleKitIds' in payload && Array.isArray(payload.eligibleKitIds);
     case 'slot-drop': {
+      if (
+        !('slotOwnerPlayerId' in payload) ||
+        typeof payload.slotOwnerPlayerId !== 'string' ||
+        payload.slotOwnerPlayerId.length === 0
+      ) {
+        return false;
+      }
+
       if (!('eligibleSlots' in payload) || !Array.isArray(payload.eligibleSlots)) {
         return false;
       }

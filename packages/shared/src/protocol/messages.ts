@@ -318,6 +318,8 @@ export type SubChoiceRequiredPayload =
 
 export interface SlotDropChoiceRequiredPayload {
   kind: 'slot-drop';
+  /** Victim whose active slots are shown (chooser may be another seat — Curse). */
+  slotOwnerPlayerId: string;
   eligibleSlots: readonly {
     kind: 'shield' | 'persistent' | 'sentence';
     id: string;

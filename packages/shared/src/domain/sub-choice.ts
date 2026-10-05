@@ -79,7 +79,10 @@ export type PendingSlotActivationPayload =
 
 /** Lot 69 — drop one occupied slot before a fifth activation sticks. */
 export interface SlotDropSubChoicePayload {
+  /** Seat that must resolve the pick. */
   playerId: string;
+  /** Whose active slots are listed and cleared (may differ for Curse on a full target). */
+  slotOwnerId: string;
   eligibleSlots: readonly {
     kind: 'shield' | 'persistent' | 'sentence';
     id: string;
