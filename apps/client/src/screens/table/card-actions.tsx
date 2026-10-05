@@ -19,6 +19,10 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
 
 import { CARDS_WITH_ACTIVATED_ART } from '../../design/asset-lookup';
+import {
+  DEACTIVATE_CONFIRM_BODY,
+  DEACTIVATE_CONFIRM_TITLE,
+} from './table-copy';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CardChoiceTile } from '../../design/components/card-choice-tile';
@@ -136,9 +140,13 @@ export function CardActions(props: CardActionsProps): ReactElement {
   const [consumeInstanceId, setConsumeInstanceId] = useState('');
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+  const [deactivateConfirmEffectId, setDeactivateConfirmEffectId] = useState<string | null>(
+    null,
+  );
 
   const close = (): void => {
     setConsumeInstanceId('');
+    setDeactivateConfirmEffectId(null);
     setDialog(null);
   };
 
@@ -380,8 +388,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 compact
                 variant="purple"
                 onClick={() => {
-                  onDeactivatePersistent(dialog.instance.instanceId);
-                  close();
+                  setDeactivateConfirmEffectId(dialog.instance.instanceId);
                 }}
               >
                 Deactivate
@@ -683,6 +690,42 @@ export function CardActions(props: CardActionsProps): ReactElement {
             );
           })}
         </ul>
+      </Dialog>
+
+      <Dialog
+        open={deactivateConfirmEffectId !== null}
+        title={DEACTIVATE_CONFIRM_TITLE}
+        onClose={() => {
+          setDeactivateConfirmEffectId(null);
+        }}
+        actions={
+          <>
+            <Button
+              compact
+              variant="green"
+              onClick={() => {
+                setDeactivateConfirmEffectId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              compact
+              variant="purple"
+              onClick={() => {
+                if (deactivateConfirmEffectId !== null) {
+                  onDeactivatePersistent?.(deactivateConfirmEffectId);
+                }
+                setDeactivateConfirmEffectId(null);
+                close();
+              }}
+            >
+              Deactivate
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink">{DEACTIVATE_CONFIRM_BODY}</p>
       </Dialog>
     </>
   );

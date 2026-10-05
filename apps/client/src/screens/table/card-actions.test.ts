@@ -54,6 +54,15 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).toContain('view.self.activePersistentEffects.some');
   });
 
+  it('confirms voluntary Deactivate before deactivatePersistent (Lot 69)', () => {
+    expect(source).toContain('deactivateConfirmEffectId');
+    expect(source).toContain('DEACTIVATE_CONFIRM_TITLE');
+    expect(source).toContain('DEACTIVATE_CONFIRM_BODY');
+    expect(source).not.toMatch(
+      /onDeactivatePersistent\(dialog\.instance\.instanceId\);\s*\n\s*close\(\)/,
+    );
+  });
+
   it('opens log and queue inspect without a Spy footer (L56-05)', () => {
     expect(source).toContain("source: 'spy' | 'active' | 'log' | 'queue'");
     expect(source).toContain("dialog.source === 'spy'");

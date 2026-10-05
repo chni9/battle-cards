@@ -32,6 +32,10 @@ export const SKIP_TUTORIAL_ARIA_LABEL = 'Skip tutorial';
 export const SKIP_TUTORIAL_ACTION_LABEL = 'Skip tutorial';
 export const SKIP_TUTORIAL_CONFIRM_TITLE = 'Skip the tutorial?';
 export const SKIP_TUTORIAL_CONFIRM_BODY = 'You will return to the hub. This is not a forfeit.';
+/** Voluntary persistent deactivate — inspect dialog only (Lot 69). */
+export const DEACTIVATE_CONFIRM_TITLE = 'Are you sure?';
+export const DEACTIVATE_CONFIRM_BODY =
+  'This card will be lost. This does not cost a turn.';
 export const HIDE_COACH_ARIA_LABEL = 'Hide coach';
 export const OPEN_COACH_ARIA_LABEL = 'Show coach';
 export const GOT_IT_ACTION_LABEL = 'Got it';
