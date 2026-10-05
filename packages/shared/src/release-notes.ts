@@ -64,11 +64,6 @@ const RELEASE_NOTES_CATALOG = [
         after: 'You can have at most four active cards at once; a fifth makes you drop one.',
       },
       {
-        cardId: 'curse' as const,
-        before: 'Curse on a full target let them choose what to drop.',
-        after: 'Curse on a full target lets the Curse user choose what they drop.',
-      },
-      {
         before: 'Only one player got rewards for a shared kill.',
         after: 'Every player who helped eliminate someone gets reward picks.',
       },

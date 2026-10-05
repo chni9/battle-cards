@@ -43,14 +43,12 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
       'Basic Spy showed kit and cards; Spy+ showed live resources.',
       'You could not play Shield while a shield was up.',
       'Any number of persistent specials and shields could stay active.',
-      'Curse on a full target let them choose what to drop.',
       'Only one player got rewards for a shared kill.',
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
       'Basic Spy shows live resources; Spy+ also shows kit and cards.',
       'Playing Shield refills your shield while one is up.',
       'You can have at most four active cards at once; a fifth makes you drop one.',
-      'Curse on a full target lets the Curse user choose what they drop.',
       'Every player who helped eliminate someone gets reward picks.',
     ]);
   });
