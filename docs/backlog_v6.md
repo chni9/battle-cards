@@ -636,7 +636,7 @@ New What’s new id (not an append to `lot-65`; that note is on `main`).
 
 ## Lot 69 — Feedback rules (designer 2026-10-05)
 
-`PROTOCOL_VERSION` **42 → 43**. What’s new id `lot-69`.
+`PROTOCOL_VERSION` **42 → 44** (43 slot-drop; 44 Curse chooser + `slotOwnerPlayerId`). What’s new id `lot-69`.
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
