@@ -15,7 +15,8 @@ import { SUB_CHOICE_MS } from '../turn/sub-choice';
 import { activatePersistentEffect } from './activate-persistent';
 import {
   clearActiveSlot,
-  listActiveSlots,
+  isForcedSlotDropEligible,
+  listForcedSlotDropEligibleSlots,
   oldestActiveSlot,
 } from './active-slots';
 
@@ -27,7 +28,7 @@ export function botDefaultSlotDropId(state: GameState, chooserPlayerId: string):
     throw new Error('slot drop pending but no active slots');
   }
 
-  const drop = oldestActiveSlot(listActiveSlots(state, choice.slotOwnerId));
+  const drop = oldestActiveSlot(listForcedSlotDropEligibleSlots(state, choice.slotOwnerId));
 
   if (drop === null) {
     throw new Error('slot drop pending but no active slots');
@@ -89,7 +90,7 @@ export function beginSlotDrop(
     nowMs: number;
   },
 ): void {
-  const slots = listActiveSlots(state, input.slotOwnerId);
+  const slots = listForcedSlotDropEligibleSlots(state, input.slotOwnerId);
 
   state.subChoice = {
     kind: 'slot-drop',
@@ -123,6 +124,10 @@ export function applySlotDrop(
     return actionReject('slot-drop-invalid');
   }
 
+  if (!isForcedSlotDropEligible({ ...slot, slotQueuedAt: 0 })) {
+    return actionReject('slot-drop-invalid');
+  }
+
   clearActiveSlot(state, choice.slotOwnerId, {
     ...slot,
     slotQueuedAt: 0,
@@ -143,7 +148,7 @@ export function applyDefaultSlotDrop(
     return actionReject('no-slot-drop-pending');
   }
 
-  const slots = listActiveSlots(state, choice.slotOwnerId);
+  const slots = listForcedSlotDropEligibleSlots(state, choice.slotOwnerId);
   const drop = oldestActiveSlot(slots);
 
   if (drop === null) {

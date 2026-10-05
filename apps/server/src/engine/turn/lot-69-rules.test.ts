@@ -274,6 +274,53 @@ describe('Lot 69 — active slot cap', () => {
     expect(state.subChoice.eligibleSlots).toHaveLength(4);
   });
 
+  it('never offers Curse in forced slot-drop picks', () => {
+    const state = createInitialState({
+      seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],
+      seed: 'l69-curse-not-droppable',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    if (a === undefined) {
+      throw new Error('missing a');
+    }
+
+    state.currentTurnPlayerId = a.id;
+    state.turnSequence = 10;
+    a.shield = 4;
+    a.shieldIsUpgraded = false;
+    a.shieldSlotQueuedAt = 1;
+    a.activePersistentEffects = [
+      makeCounterEffect({
+        id: 'curse-on-me',
+        cardId: 'curse',
+        counter: null,
+        slotQueuedAt: 2,
+        targetPlayerId: a.id,
+      }),
+      makeCounterEffect({ id: 'p1', cardId: 'poison', counter: 3, slotQueuedAt: 3 }),
+      makeCounterEffect({ id: 'p2', cardId: 'imposition', counter: 2, slotQueuedAt: 4 }),
+      makeCounterEffect({ id: 'p3', cardId: 'points-generator', counter: 3, slotQueuedAt: 5 }),
+    ];
+    a.points = 20;
+    a.hand = [{ instanceId: 'rou-1', cardId: 'roulette', isUpgraded: false }];
+
+    const play = performTurnAction(state, a.id, { type: 'playCard', instanceId: 'rou-1' });
+    expect(play.ok).toBe(true);
+
+    if (!play.ok) {
+      return;
+    }
+
+    expect(state.subChoice?.kind).toBe('slot-drop');
+    if (state.subChoice?.kind !== 'slot-drop') {
+      throw new Error('expected slot-drop');
+    }
+
+    expect(state.subChoice.eligibleSlots.some((slot) => slot.cardId === 'curse')).toBe(false);
+    expect(state.subChoice.eligibleSlots.length).toBeGreaterThan(0);
+    expect(state.subChoice.eligibleSlots.some((slot) => slot.kind === 'shield')).toBe(true);
+  });
+
   it('counts shield and persistents toward four slots', () => {
     const state = createInitialState({
       seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],

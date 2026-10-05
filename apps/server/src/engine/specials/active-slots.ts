@@ -19,6 +19,18 @@ export interface ActiveSlotRef {
   slotQueuedAt: number;
 }
 
+/** Curse is not cleared via forced fifth-slot pick (rules spec §5 — Curse end). */
+export function isForcedSlotDropEligible(slot: ActiveSlotRef): boolean {
+  return !(slot.kind === 'persistent' && slot.cardId === 'curse');
+}
+
+export function listForcedSlotDropEligibleSlots(
+  state: GameState,
+  playerId: string,
+): ActiveSlotRef[] {
+  return listActiveSlots(state, playerId).filter(isForcedSlotDropEligible);
+}
+
 export function listActiveSlots(state: GameState, playerId: string): ActiveSlotRef[] {
   const player = findPlayer(state, playerId);
 
