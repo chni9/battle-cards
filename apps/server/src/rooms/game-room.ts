@@ -2728,6 +2728,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.sendStateToEveryone();
         return;
       }
+
+      if (state !== null && choice?.kind === 'slot-drop') {
+        const chooser = this.clientForPlayerId(choice.playerId);
+
+        if (chooser !== undefined) {
+          this.beginSlotDropTimer(chooser, choice);
+        }
+
+        this.sendStateToEveryone();
+        return;
+      }
     }
 
     this.actionTakenThisTurn = false;
