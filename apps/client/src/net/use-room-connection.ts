@@ -60,6 +60,7 @@ import {
 import { Client, type Room } from '@colyseus/sdk';
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
+import { isSubChoiceRequired } from './is-sub-choice-required';
 import { resolveServerUrl } from './resolve-server-url';
 
 const RECONNECT_TOKEN_KEY = 'card-battle:reconnection-token';
@@ -280,11 +281,16 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onMessage(TURN_STARTED, (payload: unknown) => {
       if (isTurnStarted(payload)) {
-        setConnection((previous) => ({
-          ...previous,
-          lastTurnStarted: payload,
-          subChoice: null,
-        }));
+        setConnection((previous) => {
+          const keepSubChoice =
+            previous.subChoice !== null && previous.subChoice.deadlineMs > Date.now();
+
+          return {
+            ...previous,
+            lastTurnStarted: payload,
+            subChoice: keepSubChoice ? previous.subChoice : null,
+          };
+        });
       }
     });
 
@@ -828,83 +834,6 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
       payload.outcome === 'cancelled' ||
       payload.outcome === 'blocked')
   );
-}
-
-function isSubChoiceRequired(payload: unknown): payload is SubChoiceRequiredPayload {
-  if (typeof payload !== 'object' || payload === null || !('kind' in payload)) {
-    return false;
-  }
-
-  if (!('deadlineMs' in payload) || typeof payload.deadlineMs !== 'number') {
-    return false;
-  }
-
-  switch (payload.kind) {
-    case 'mirror':
-      return 'eligibleEffectIds' in payload && Array.isArray(payload.eligibleEffectIds);
-    case 'elimination-reward':
-      return (
-        'eliminationId' in payload &&
-        typeof payload.eliminationId === 'string' &&
-        'eliminatedPlayerId' in payload &&
-        typeof payload.eliminatedPlayerId === 'string' &&
-        'availableCards' in payload &&
-        Array.isArray(payload.availableCards)
-      );
-    case 'steal-pick':
-      return (
-        'victimPlayerId' in payload &&
-        typeof payload.victimPlayerId === 'string' &&
-        'eligibleInstanceIds' in payload &&
-        Array.isArray(payload.eligibleInstanceIds)
-      );
-    case 'pool-pick':
-      return (
-        'eligibleInstanceIds' in payload &&
-        Array.isArray(payload.eligibleInstanceIds) &&
-        'maxCount' in payload &&
-        typeof payload.maxCount === 'number'
-      );
-    case 'special-pick':
-      return 'eligibleCardIds' in payload && Array.isArray(payload.eligibleCardIds);
-    case 'reanimation-kit':
-      return 'eligibleKitIds' in payload && Array.isArray(payload.eligibleKitIds);
-    case 'slot-drop': {
-      if (!('eligibleSlots' in payload) || !Array.isArray(payload.eligibleSlots)) {
-        return false;
-      }
-
-      for (const slot of payload.eligibleSlots) {
-        if (typeof slot !== 'object' || slot === null) {
-          return false;
-        }
-
-        const record = slot as Record<string, unknown>;
-
-        if (typeof record['id'] !== 'string' || record['id'].length === 0) {
-          return false;
-        }
-
-        if (typeof record['cardId'] !== 'string' || record['cardId'].length === 0) {
-          return false;
-        }
-
-        const kind = record['kind'];
-
-        if (kind !== 'shield' && kind !== 'persistent' && kind !== 'sentence') {
-          return false;
-        }
-
-        if (typeof record['isUpgraded'] !== 'boolean') {
-          return false;
-        }
-      }
-
-      return true;
-    }
-    default:
-      return false;
-  }
 }
 
 function isGameOver(payload: unknown): payload is GameOverPayload {

@@ -454,6 +454,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   override messages = {
     [CLIENT_READY]: (client: GameClient): void => {
       this.sendStateTo(client);
+      this.resyncSubChoiceRequiredFor(client);
     },
 
     [START_GAME]: (client: GameClient): void => {
@@ -753,6 +754,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     markReconnected(player);
     this.clearAbsentTimer(playerId);
     this.resumeTimersOwnedBy(playerId);
+    this.resyncSubChoiceRequiredFor(client);
     this.sendStateToEveryone();
   }
 
@@ -1675,6 +1677,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.sendStateToEveryone();
+      if (choice.kind === 'slot-drop' && chooser !== undefined) {
+        this.resyncSubChoiceRequiredFor(chooser);
+      }
       return;
     }
 
@@ -2394,11 +2399,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
     }
 
-    client.send(SUB_CHOICE_REQUIRED, {
-      kind: 'slot-drop',
-      eligibleSlots: choice.eligibleSlots,
-      deadlineMs: effectiveDeadline,
-    });
+    this.sendSlotDropSubChoiceRequired(client, choice.eligibleSlots, effectiveDeadline);
 
     this.subChoiceTimers.set(
       'slot-drop',
@@ -2737,6 +2738,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
 
         this.sendStateToEveryone();
+        if (chooser !== undefined) {
+          this.resyncSubChoiceRequiredFor(chooser);
+        }
         return;
       }
     }
@@ -3716,6 +3720,21 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
     }
 
+    const pausedSlotDropRemainingMs = this.pausedSubChoiceRemainingMs.get('slot-drop');
+
+    if (
+      state.subChoice?.kind === 'slot-drop' &&
+      state.subChoice.playerId === sessionId &&
+      pausedSlotDropRemainingMs !== undefined
+    ) {
+      this.pausedSubChoiceRemainingMs.delete('slot-drop');
+      const client = this.clientForPlayerId(sessionId);
+
+      if (client !== undefined) {
+        this.beginSlotDropTimer(client, state.subChoice, pausedSlotDropRemainingMs);
+      }
+    }
+
     const pausedRewardRemainingMs = this.pausedSubChoiceRemainingMs.get('elimination-reward');
 
     if (
@@ -4044,6 +4063,70 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.sendStateTo(client);
       }
     }
+  }
+
+  /**
+   * Re-arm the sub-choice UI after reconnect or `CLIENT_READY` without resetting an
+   * active server timer (Lot 69 slot-drop).
+   */
+  private resyncSubChoiceRequiredFor(client: GameClient): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+    const choice = state.subChoice;
+
+    if (choice?.playerId !== playerId) {
+      return;
+    }
+
+    switch (choice.kind) {
+      case 'pool-pick':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'pool-pick',
+          eligibleInstanceIds: choice.eligibleInstanceIds,
+          maxCount: choice.maxCount,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'special-pick':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'special-pick',
+          eligibleCardIds: choice.eligibleCardIds,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'reanimation-kit':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'reanimation-kit',
+          eligibleKitIds: choice.eligibleKitIds,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'slot-drop':
+        this.sendSlotDropSubChoiceRequired(client, choice.eligibleSlots, choice.deadlineMs);
+        break;
+      default:
+        break;
+    }
+  }
+
+  private sendSlotDropSubChoiceRequired(
+    client: GameClient,
+    eligibleSlots: Extract<
+      NonNullable<GameState['subChoice']>,
+      { kind: 'slot-drop' }
+    >['eligibleSlots'],
+    deadlineMs: number,
+  ): void {
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'slot-drop',
+      eligibleSlots,
+      deadlineMs,
+    });
   }
 
   private sendStateTo(client: GameClient): void {
