@@ -42,7 +42,7 @@ type RecapStatField =
   | 'specialsPlayedCount'
   | 'sellCardCount'
   | 'buyCardCount'
-  | 'thinkTimeMs'
+  | 'thinkTimeMsPerTurn'
   | 'damageDealt'
   | 'attacksPlayedCount'
   | 'drawCount'
@@ -131,7 +131,7 @@ const AWARD_SPECS: readonly AwardSpec[] = [
   {
     id: 'slowest',
     title: 'Slowest',
-    field: 'thinkTimeMs',
+    field: 'thinkTimeMsPerTurn',
     rank: 'max',
     valueKind: 'time',
     humansOnly: true,
@@ -139,7 +139,7 @@ const AWARD_SPECS: readonly AwardSpec[] = [
   {
     id: 'fastest',
     title: 'Fastest',
-    field: 'thinkTimeMs',
+    field: 'thinkTimeMsPerTurn',
     rank: 'min',
     valueKind: 'time',
     humansOnly: true,
@@ -282,6 +282,14 @@ function pickOneAward(
   };
 }
 
+function averageThinkTimeMsPerTurn(row: GameRecapPlayerView): number {
+  if (row.turnActionsCount <= 0 || row.thinkTimeMs <= 0) {
+    return 0;
+  }
+
+  return row.thinkTimeMs / row.turnActionsCount;
+}
+
 function recapStat(row: GameRecapPlayerView, field: RecapStatField): number {
   switch (field) {
     case 'pointsSpent':
@@ -302,8 +310,8 @@ function recapStat(row: GameRecapPlayerView, field: RecapStatField): number {
       return row.sellCardCount;
     case 'buyCardCount':
       return row.buyCardCount;
-    case 'thinkTimeMs':
-      return row.thinkTimeMs;
+    case 'thinkTimeMsPerTurn':
+      return averageThinkTimeMsPerTurn(row);
     case 'damageDealt':
       return row.damageDealt;
     case 'attacksPlayedCount':

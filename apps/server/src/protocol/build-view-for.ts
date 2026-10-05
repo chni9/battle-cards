@@ -633,6 +633,7 @@ export function buildGameRecapView(
         damageDealt: aggregates.damageDealt,
         kills: aggregates.kills,
         thinkTimeMs: thinkTimeMsByPlayerId?.get(player.id) ?? 0,
+        turnActionsCount: aggregates.turnActionsCount,
       };
     }),
     eliminations: eliminations.map((entry) => ({

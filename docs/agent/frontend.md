@@ -545,7 +545,8 @@ rules above are unchanged — this section only covers how the client looks.
   `import.meta.env.DEV` (every mode).
   **Lot 60 gallery:** winner header + award tiles (seat color, kit portrait, nickname, kit
   name, value) + compact elim list. Skip an award when every eligible seat is tied at 0.
-  Slowest / Fastest count humans only (≥2). Bots compete for every other award. Recap
+  Slowest / Fastest count humans only (≥2), ranked by average think time per turn
+  action (`thinkTimeMs` / `turnActionsCount`). Bots compete for every other award. Recap
   `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
   Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
   Client ranks recap numbers only (`game-over-awards.ts`); do not parse `exportLog`.
