@@ -72,6 +72,7 @@ describe('aggregateActionsForPlayer (L8 / L9)', () => {
       attacksPlayedCount: 1,
       damageDealt: 1,
       kills: 1,
+      turnActionsCount: 2,
     });
   });
 });
@@ -260,6 +261,7 @@ describe('aggregateActionsForPlayer (L60-04)', () => {
       cardsPlayedCount: 0,
       drawCount: 0,
       specialsPlayedCount: 0,
+      turnActionsCount: 1,
     });
   });
 });

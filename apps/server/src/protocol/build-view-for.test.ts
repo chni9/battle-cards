@@ -1208,6 +1208,7 @@ describe('buildGameRecapView (L60-04)', () => {
       damageDealt: 2,
       kills: 1,
       thinkTimeMs: 1_500,
+      turnActionsCount: 4,
     });
     expect(recap.players.find((row) => row.playerId === 'b')).toMatchObject({
       kitId: bob.kitId,

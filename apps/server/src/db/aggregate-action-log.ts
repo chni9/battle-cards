@@ -32,6 +32,8 @@ export interface ActionLogPlayerAggregates {
   damageDealt: number;
   /** Combat eliminations credited to this seat. */
   kills: number;
+  /** One per `actionPlayed` row — turn timer denominator for recap clocks. */
+  turnActionsCount: number;
 }
 
 export function aggregateActionsForPlayer(
@@ -50,6 +52,7 @@ export function aggregateActionsForPlayer(
   let attacksPlayedCount = 0;
   let damageDealt = 0;
   let kills = 0;
+  let turnActionsCount = 0;
 
   for (const entry of actionLog) {
     if (entry.kind === 'actionResolved') {
@@ -71,6 +74,8 @@ export function aggregateActionsForPlayer(
     if (entry.kind !== 'actionPlayed' || entry.actorPlayerId !== playerId) {
       continue;
     }
+
+    turnActionsCount += 1;
 
     switch (entry.action) {
       case 'playCard': {
@@ -164,6 +169,7 @@ export function aggregateActionsForPlayer(
     attacksPlayedCount,
     damageDealt,
     kills,
+    turnActionsCount,
   };
 }
 
