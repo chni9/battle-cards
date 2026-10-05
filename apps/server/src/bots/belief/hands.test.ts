@@ -170,6 +170,20 @@ describe('accountOpponentHandSizes (L34-04)', () => {
     expect(intervalWidth(sizes.actionCount)).toBeGreaterThan(0);
     expect(intervalWidth(sizes.attackCount)).toBeGreaterThan(0);
   });
+
+  it('does not treat base Spy resources-only as an empty hand (Lot 69)', () => {
+    const playing = view({
+      players: [
+        player(SELF_ID, true),
+        player(OPP_ID, false, {
+          spied: { lives: 12, points: 4, upgradePoints: 1, shield: 0 },
+        }),
+      ],
+    });
+    const sizes = accountOpponentHandSizes(OPP_ID, 'kamikaze', playing, []);
+    expect(sizes.actionCount).toEqual({ lo: 7, hi: 7 });
+    expect(sizes.specialCount).toEqual({ lo: 1, hi: 1 });
+  });
 });
 
 describe('sampleOpponentHandAndSpecials (L34-04)', () => {

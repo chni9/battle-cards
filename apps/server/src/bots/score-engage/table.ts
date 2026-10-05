@@ -9,6 +9,7 @@
 import {
   attackDamageFor,
   isAttackCardId,
+  spiedRevealsCards,
   type PlayingStateView,
 } from '@card-battle/shared';
 
@@ -61,7 +62,7 @@ export function pendingAttackDamageOn(
 function spiedCannotRetaliate(view: PlayingStateView, opponentId: string): boolean {
   const spied = view.players.find((player) => player.id === opponentId)?.spied;
 
-  if (spied === undefined) {
+  if (spied === undefined || !spiedRevealsCards(spied)) {
     return false;
   }
 

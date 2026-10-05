@@ -119,9 +119,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onDeactivatePersistent,
   } = props;
 
+  const ownsInspectedActive =
+    dialog?.kind === 'inspect' &&
+    view.self.activePersistentEffects.some((effect) => effect.id === dialog.instance.instanceId);
+
   const canDeactivateInspect =
     dialog?.kind === 'inspect' &&
     dialog.source === 'active' &&
+    ownsInspectedActive &&
     dialog.instance.cardId !== 'shield' &&
     dialog.instance.cardId !== 'sentence' &&
     isMyTurn &&
