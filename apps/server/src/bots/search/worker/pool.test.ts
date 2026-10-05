@@ -150,6 +150,8 @@ describe('search worker fallback (L32-08)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, pool);
@@ -248,6 +250,8 @@ describe('search worker fallback (L32-08)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, pool);
@@ -340,6 +344,8 @@ describe('search worker fallback (L32-08)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, pool);

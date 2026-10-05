@@ -334,6 +334,41 @@ describe('Lot 69 — active slot cap', () => {
     expect(state.subChoice.eligibleSlots).toHaveLength(4);
   });
 
+  it('rejects a fifth slot-opening play when only Curse slots can drop', () => {
+    const state = createInitialState({
+      seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],
+      seed: 'l69-curse-cap',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    if (a === undefined || b === undefined) {
+      throw new Error('missing seats');
+    }
+
+    state.currentTurnPlayerId = a.id;
+    b.activePersistentEffects = [
+      makeCounterEffect({ id: 'c1', cardId: 'curse', counter: null, slotQueuedAt: 1, targetPlayerId: b.id }),
+      makeCounterEffect({ id: 'c2', cardId: 'curse', counter: null, slotQueuedAt: 2, targetPlayerId: b.id }),
+      makeCounterEffect({ id: 'c3', cardId: 'curse', counter: null, slotQueuedAt: 3, targetPlayerId: b.id }),
+      makeCounterEffect({ id: 'c4', cardId: 'curse', counter: null, slotQueuedAt: 4, targetPlayerId: b.id }),
+    ];
+    a.points = 20;
+    a.specialCards = [{ instanceId: 'curse-1', cardId: 'curse', isUpgraded: false }];
+
+    const play = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'curse-1',
+      targetPlayerId: b.id,
+    });
+    expect(play.ok).toBe(false);
+    if (play.ok) {
+      return;
+    }
+
+    expect(play.code).toBe('play-not-legal');
+    expect(state.subChoice).toBeNull();
+  });
+
   it('never offers Curse in forced slot-drop picks', () => {
     const state = createInitialState({
       seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],

@@ -31,6 +31,26 @@ export function listForcedSlotDropEligibleSlots(
   return listActiveSlots(state, playerId).filter(isForcedSlotDropEligible);
 }
 
+/**
+ * Whether a play that opens an active slot is legal at the current cap — Lot 69.
+ * At four slots, at least one occupied slot must be droppable (Curse never is).
+ */
+export function hasForcedSlotDropOutlet(
+  state: GameState,
+  slotOwnerId: string,
+  cardId: CardId,
+): boolean {
+  if (!playAddsActiveSlot(state, slotOwnerId, cardId)) {
+    return true;
+  }
+
+  if (countActiveSlots(state, slotOwnerId) < MAX_ACTIVE_SLOTS) {
+    return true;
+  }
+
+  return listForcedSlotDropEligibleSlots(state, slotOwnerId).length > 0;
+}
+
 export function listActiveSlots(state: GameState, playerId: string): ActiveSlotRef[] {
   const player = findPlayer(state, playerId);
 

@@ -99,6 +99,7 @@ import {
   type ResolvedEffect,
 } from './resolve-pending';
 import { hasActiveSubChoice } from './sub-choice';
+import { hasForcedSlotDropOutlet } from '../specials/active-slots';
 import {
   reconcileSlotCapAfterPlay,
   slotOwnerForCardPlay,
@@ -1805,6 +1806,12 @@ function playCardAction(
   };
 
   if (!handler.canPlay(context)) {
+    return actionReject('play-not-legal');
+  }
+
+  const slotOwnerId = slotOwnerForCardPlay(actorPlayerId, cardId, resolvedTargetId);
+
+  if (!hasForcedSlotDropOutlet(state, slotOwnerId, cardId)) {
     return actionReject('play-not-legal');
   }
 

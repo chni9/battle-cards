@@ -281,16 +281,11 @@ export function useRoomConnection(): UseRoomConnectionResult {
 
     room.onMessage(TURN_STARTED, (payload: unknown) => {
       if (isTurnStarted(payload)) {
-        setConnection((previous) => {
-          const keepSubChoice =
-            previous.subChoice !== null && previous.subChoice.deadlineMs > Date.now();
-
-          return {
-            ...previous,
-            lastTurnStarted: payload,
-            subChoice: keepSubChoice ? previous.subChoice : null,
-          };
-        });
+        setConnection((previous) => ({
+          ...previous,
+          lastTurnStarted: payload,
+          subChoice: null,
+        }));
       }
     });
 

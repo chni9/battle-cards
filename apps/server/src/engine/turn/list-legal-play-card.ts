@@ -17,7 +17,9 @@ import {
 import { MAX_LIVES_PER_USE } from '../../cards/handlers/regeneration';
 import { findHandler } from '../../cards/registry';
 import { createRng } from '../rng';
+import { hasForcedSlotDropOutlet } from '../specials/active-slots';
 import { isIllegalOpposingTarget, playerIsInvisible } from '../specials/is-invisible';
+import { slotOwnerForCardPlay } from '../specials/reconcile-slot-cap';
 import { isAbsorberTargetable } from './absorb-window';
 import {
   eliminatedPlayerHasPendingAttackOn,
@@ -165,7 +167,15 @@ export function listLegalPlayCardActions(
         immediateResolved: [],
       };
 
-      if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {
+      if (
+        handler.canPlay(context) &&
+        canAffordPlayPoints(actor, instance.cardId) &&
+        hasForcedSlotDropOutlet(
+          state,
+          slotOwnerForCardPlay(actor.id, instance.cardId, null),
+          instance.cardId,
+        )
+      ) {
         actions.push({ type: 'playCard', instanceId: instance.instanceId });
       }
     }
@@ -183,7 +193,15 @@ export function listLegalPlayCardActions(
         immediateResolved: [],
       };
 
-      if (handler.canPlay(context) && canAffordPlayPoints(actor, instance.cardId)) {
+      if (
+        handler.canPlay(context) &&
+        canAffordPlayPoints(actor, instance.cardId) &&
+        hasForcedSlotDropOutlet(
+          state,
+          slotOwnerForCardPlay(actor.id, instance.cardId, opponent.id),
+          instance.cardId,
+        )
+      ) {
         actions.push({
           type: 'playCard',
           instanceId: instance.instanceId,

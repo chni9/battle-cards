@@ -198,6 +198,12 @@ describe('BotDriver (L16-06)', () => {
       failBotReanimationKit: () => {
         throw new Error('unexpected failBotReanimationKit');
       },
+      completeBotSlotDrop: () => {
+        throw new Error('unexpected slot drop');
+      },
+      failBotSlotDrop: () => {
+        throw new Error('unexpected failBotSlotDrop');
+      },
     };
 
     const driver = new BotDriver(host, 0, new SyncSearchPool());
@@ -296,6 +302,8 @@ describe('BotDriver (L16-06)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, new SyncSearchPool());
@@ -336,6 +344,8 @@ describe('BotDriver (L16-06)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, new SyncSearchPool());
@@ -436,6 +446,8 @@ describe('BotDriver (L16-06)', () => {
       failBotReward: () => undefined,
       completeBotReanimationKit: () => undefined,
       failBotReanimationKit: () => undefined,
+      completeBotSlotDrop: () => undefined,
+      failBotSlotDrop: () => undefined,
     };
 
     const driver = new BotDriver(host, 0, new SyncSearchPool());

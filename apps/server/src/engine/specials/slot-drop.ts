@@ -92,6 +92,10 @@ export function beginSlotDrop(
 ): void {
   const slots = listForcedSlotDropEligibleSlots(state, input.slotOwnerId);
 
+  if (slots.length === 0) {
+    throw new Error('forced slot drop with no eligible slots');
+  }
+
   state.subChoice = {
     kind: 'slot-drop',
     playerId: input.chooserPlayerId,
