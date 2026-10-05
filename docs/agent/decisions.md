@@ -4158,7 +4158,9 @@ free deactivate for persistent specials on your turn (not Shield or Sentence).
 Curse on a target who already has four actives: the Curse user picks which
 victim slot to drop (`slotOwnerId` on slot-drop sub-choice; `PROTOCOL_VERSION`
 44 adds `slotOwnerPlayerId` on the client payload). Forced fifth-slot picks
-never list Curse — only transfer or the 1-life floor removes it.
+never list Curse — only transfer or the 1-life floor removes it. Bots use
+`listLegalActionsForBot` (no voluntary deactivate); fifth-slot pressure is the
+forced pick on play only.
 
 ---
 
