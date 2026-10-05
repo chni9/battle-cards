@@ -16,6 +16,7 @@ export const ACTION_REJECT_CODES = [
   'finish-pool-pick',
   'finish-special-pick',
   'finish-reanimation-kit-pick',
+  'finish-slot-drop',
   'finish-elimination-rewards',
 
   // Ownership / target / play
@@ -75,6 +76,8 @@ export const ACTION_REJECT_CODES = [
   'no-reanimation-kit-pick-pending',
   'kit-unavailable',
   'no-pending-reanimation',
+  'no-slot-drop-pending',
+  'slot-drop-invalid',
   'sub-choice-missing',
 
   // Elimination rewards
@@ -153,6 +156,9 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'finish-pool-pick': 'Finish your pool pick first.',
   'finish-special-pick': 'Finish your special pick first.',
   'finish-reanimation-kit-pick': 'Finish your reanimation kit pick first.',
+  'finish-slot-drop': 'Choose which active card to drop first.',
+  'no-slot-drop-pending': 'No slot drop pending.',
+  'slot-drop-invalid': 'That slot cannot be dropped.',
   'finish-elimination-rewards': 'Finish elimination rewards first.',
 
   'unknown-player': 'Unknown player.',

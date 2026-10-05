@@ -69,7 +69,22 @@ export function listSearchDecisions(state: GameState): readonly SearchDecision[]
       return listReanimationDecisions(state);
     case 'elimination-reward':
       return listRewardDecisions(state);
+    case 'slot-drop':
+      return listSlotDropDecisions(state);
   }
+}
+
+function listSlotDropDecisions(state: GameState): readonly SearchDecision[] {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop') {
+    return [];
+  }
+
+  return choice.eligibleSlots.map((slot) => ({
+    kind: 'slot-drop' as const,
+    slotId: slot.id,
+  }));
 }
 
 function listMirrorDecisions(state: GameState): readonly SearchDecision[] {

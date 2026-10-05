@@ -97,4 +97,4 @@
  * "blocked". Exception to the V6 single-bump lock (same class as L49 /
  * L56–L66); see decisions.md.
  */
-export const PROTOCOL_VERSION = 42;
+export const PROTOCOL_VERSION = 43;

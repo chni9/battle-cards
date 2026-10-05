@@ -16,6 +16,7 @@ export const SEARCH_SUB_CHOICE_KINDS = [
   'steal-pick',
   'special-pick',
   'reanimation-kit',
+  'slot-drop',
 ] as const satisfies readonly SubChoiceKind[];
 
 export type SearchSubChoiceKind = (typeof SEARCH_SUB_CHOICE_KINDS)[number];
@@ -31,6 +32,7 @@ export const SEARCH_SUB_CHOICE_HANDLERS = {
   'steal-pick': true,
   'special-pick': true,
   'reanimation-kit': true,
+  'slot-drop': true,
 } as const satisfies Record<SubChoiceKind, true>;
 
 export function assertSearchSubChoiceCoverage(): void {

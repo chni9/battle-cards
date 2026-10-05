@@ -8,16 +8,18 @@ import {
 } from './release-notes';
 
 describe('release notes catalog (L63-07 / L65-05)', () => {
-  it('lists newest first and keeps lot-68 as the open update', () => {
+  it('lists newest first and keeps lot-69 as the open update', () => {
     expect(RELEASE_NOTES.length).toBeGreaterThan(0);
-    expect(latestReleaseNote().id).toBe('lot-68');
-    expect(latestReleaseNote().date).toBe('2026-09-29');
+    expect(latestReleaseNote().id).toBe('lot-69');
+    expect(latestReleaseNote().date).toBe('2026-10-05');
     expect(isReleaseNoteId('lot-63')).toBe(true);
     expect(isReleaseNoteId('lot-65')).toBe(true);
     expect(isReleaseNoteId('lot-68')).toBe(true);
+    expect(isReleaseNoteId('lot-69')).toBe(true);
     expect(isReleaseNoteId('lot-64')).toBe(false);
     expect(RELEASE_NOTES.some((note) => note.id === 'lot-64')).toBe(false);
     expect(RELEASE_NOTES.map((note) => note.date)).toEqual([
+      '2026-10-05',
       '2026-09-29',
       '2026-09-28',
       '2026-09-20',
@@ -25,23 +27,43 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
   });
 
   it('shows only the current update in the auto popup and every date on New', () => {
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-68']);
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-69']);
     expect(releaseNotesForScope('history').map((note) => note.id)).toEqual([
+      'lot-69',
       'lot-68',
       'lot-65',
       'lot-63',
     ]);
   });
 
-  it('writes lot-68 as three short gameplay lines', () => {
+  it('writes lot-69 as short gameplay lines', () => {
     const latest = latestReleaseNote();
     expect(latest.additions).toEqual([]);
     expect(latest.items.map((item) => item.before)).toEqual([
+      'Basic Spy showed kit and cards; Spy+ showed live resources.',
+      'You could not play Shield while a shield was up.',
+      'Only one player got rewards for a shared kill.',
+    ]);
+    expect(latest.items.map((item) => item.after)).toEqual([
+      'Basic Spy shows live resources; Spy+ also shows kit and cards.',
+      'Shield refills your shield and you may hold four active cards.',
+      'Every player who helped eliminate someone gets reward picks.',
+    ]);
+  });
+
+  it('writes lot-68 as three short gameplay lines', () => {
+    const lot68 = RELEASE_NOTES.find((note) => note.id === 'lot-68');
+    expect(lot68).toBeDefined();
+    if (lot68 === undefined) {
+      return;
+    }
+    expect(lot68.additions).toEqual([]);
+    expect(lot68.items.map((item) => item.before)).toEqual([
       'Ghost started with a normal Tax and no upgrade point.',
       'Shield+ did not block Imposition.',
       'Some bugs were in the game.',
     ]);
-    expect(latest.items.map((item) => item.after)).toEqual([
+    expect(lot68.items.map((item) => item.after)).toEqual([
       'Ghost starts with Tax+ and 1 upgrade point.',
       'Shield+ blocks Imposition.',
       'Fixed some bugs.',

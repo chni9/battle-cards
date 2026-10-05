@@ -8,7 +8,7 @@
  * player-facing change adds a new entry above it. Do not edit an entry
  * that is already on `main` except to correct that entry's own text.
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
- * (promote #56). `lot-68` is the open update.
+ * (promote #56). `lot-68` shipped on `main`. `lot-69` is the open update.
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -43,6 +43,28 @@ export interface ReleaseNote {
 export type WhatsNewScope = 'current' | 'history';
 
 const RELEASE_NOTES_CATALOG = [
+  {
+    id: 'lot-69',
+    date: '2026-10-05',
+    title: 'Active cards and Spy',
+    additions: [],
+    items: [
+      {
+        cardId: 'spy' as const,
+        before: 'Basic Spy showed kit and cards; Spy+ showed live resources.',
+        after: 'Basic Spy shows live resources; Spy+ also shows kit and cards.',
+      },
+      {
+        cardId: 'shield' as const,
+        before: 'You could not play Shield while a shield was up.',
+        after: 'Shield refills your shield and you may hold four active cards.',
+      },
+      {
+        before: 'Only one player got rewards for a shared kill.',
+        after: 'Every player who helped eliminate someone gets reward picks.',
+      },
+    ],
+  },
   {
     id: 'lot-68',
     date: '2026-09-29',

@@ -142,7 +142,7 @@ function scoreAttackThief(
   }
 
   const likelyHoldsSharedAttack = living.some((player) =>
-    player.spied?.hand.some((card) => isSharedAttackCardId(card.cardId)),
+    (player.spied?.hand ?? []).some((card) => isSharedAttackCardId(card.cardId)),
   );
 
   return {

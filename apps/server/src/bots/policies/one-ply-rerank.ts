@@ -29,6 +29,7 @@ import {
   findSoleSurvivorId,
   listAvailableRewardCards,
 } from '../../engine/turn/elimination-rewards';
+import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
 import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { determinizeFromView } from '../belief/determinize';
@@ -339,6 +340,15 @@ function onePlyHooks(
           createRng(`${state.seed}:bot:${actorId}:special:${String(state.turnSequence)}`),
         ),
       };
+    },
+    resolveSlotDrop: (state, actorId) => {
+      const choice = state.subChoice;
+
+      if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+        throw new Error('slot drop pending without subChoice');
+      }
+
+      return { slotId: botDefaultSlotDropId(state, actorId) };
     },
     resolveReanimationKit: (state, playerId) => {
       const choice = state.subChoice;

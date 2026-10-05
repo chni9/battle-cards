@@ -21,6 +21,8 @@ export function searchDecisionKey(decision: SearchDecision): string {
       return `reanim:${decision.kitId}`;
     case 'elimination-reward':
       return `reward:${decision.chooserPlayerId}:${decision.eliminationId}:${JSON.stringify(decision.choices)}`;
+    case 'slot-drop':
+      return `slot-drop:${decision.slotId}`;
   }
 }
 

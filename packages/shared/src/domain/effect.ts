@@ -87,6 +87,8 @@ export interface PersistentEffect {
   id: string;
   cardId: CardId;
   isUpgraded: boolean;
+  /** Global `turnSequence` when this slot was opened — Lot 69 slot-cap ordering. */
+  slotQueuedAt?: number;
   /**
    * The card's dedicated internal counter, its "card lives" (rules spec §5): it
    * decrements by 1 whenever the *user* loses a life to damage, and the card

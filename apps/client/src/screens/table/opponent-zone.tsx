@@ -158,7 +158,7 @@ export function OpponentZone({
   const reveal = player.eliminationReveal;
   const spied = player.spied;
   const shownKitId =
-    reveal !== undefined ? reveal.kitId : spied !== undefined ? spied.kitId : null;
+    reveal !== undefined ? reveal.kitId : spied?.kitId ?? null;
   const revealMode =
     reveal !== undefined ? 'elimination' : spied !== undefined ? 'spy' : null;
 

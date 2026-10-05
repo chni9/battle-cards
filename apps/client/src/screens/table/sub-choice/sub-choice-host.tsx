@@ -13,6 +13,7 @@ import { PoolPickPanel } from './pool-pick-panel';
 import { ReanimationKitPanel } from './reanimation-kit-panel';
 import { RewardPanel } from './reward-panel';
 import { SpecialPickPanel } from './special-pick-panel';
+import { SlotDropPanel } from './slot-drop-panel';
 import { StealPickPanel } from './steal-pick-panel';
 
 const SUB_CHOICE_COPY: Record<
@@ -47,6 +48,10 @@ const SUB_CHOICE_COPY: Record<
   'reanimation-kit': {
     title: 'Choose a kit',
     expiryHint: 'On expiry: a random kit',
+  },
+  'slot-drop': {
+    title: 'Drop an active card',
+    expiryHint: 'On expiry: your oldest active card is dropped',
   },
 };
 
@@ -94,6 +99,8 @@ function renderKindPanel(
       return <SpecialPickPanel subChoice={subChoice} onResolve={onResolve} />;
     case 'reanimation-kit':
       return <ReanimationKitPanel subChoice={subChoice} onResolve={onResolve} />;
+    case 'slot-drop':
+      return <SlotDropPanel subChoice={subChoice} onResolve={onResolve} />;
     default: {
       const exhaustive: never = subChoice;
       return exhaustive;

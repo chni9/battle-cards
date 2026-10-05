@@ -79,7 +79,7 @@ describe('formatCardEffectText (L51-05)', () => {
       'Deal 10 damage instead of 7.',
     );
     expect(SHARED_CARD_CATALOG.spy.upgradeAdds).toBe(
-      'Also see live lives, points, upgrade points, and shield. An upgraded Spy is not cancelled by a basic Spy.',
+      'Also see kit, hand, and special cards. An upgraded Spy is not cancelled by a basic Spy.',
     );
     expect(SPECIAL_CARD_CATALOG.sentence.upgradeAdds).toBe(
       'The random draw never picks you.',

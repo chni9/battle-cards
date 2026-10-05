@@ -35,6 +35,7 @@ export function activatePersistentEffect(input: ActivatePersistentInput): Persis
     isUpgraded: input.isUpgraded,
     counter: input.counter,
     targetPlayerId: input.targetPlayerId ?? null,
+    slotQueuedAt: input.state.turnSequence,
     ...(input.originalCasterPlayerId !== undefined && input.originalCasterPlayerId !== null
       ? { originalCasterPlayerId: input.originalCasterPlayerId }
       : {}),

@@ -302,6 +302,10 @@ export interface ChooseReanimationKitPayload {
   kitId: KitId;
 }
 
+export interface ChooseSlotDropPayload {
+  slotId: string;
+}
+
 /** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type SubChoiceRequiredPayload =
   | MirrorChoiceRequiredPayload
@@ -309,7 +313,19 @@ export type SubChoiceRequiredPayload =
   | StealPickChoiceRequiredPayload
   | PoolPickChoiceRequiredPayload
   | SpecialPickChoiceRequiredPayload
-  | ReanimationKitChoiceRequiredPayload;
+  | ReanimationKitChoiceRequiredPayload
+  | SlotDropChoiceRequiredPayload;
+
+export interface SlotDropChoiceRequiredPayload {
+  kind: 'slot-drop';
+  eligibleSlots: readonly {
+    kind: 'shield' | 'persistent' | 'sentence';
+    id: string;
+    cardId: import('../domain/card').CardId;
+    isUpgraded: boolean;
+  }[];
+  deadlineMs: number;
+}
 
 /** `resolveSubChoice`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type ResolveSubChoicePayload =
@@ -318,7 +334,8 @@ export type ResolveSubChoicePayload =
   | ({ kind: 'steal-pick' } & ChooseStealPickPayload)
   | ({ kind: 'pool-pick' } & ChoosePoolPickPayload)
   | ({ kind: 'special-pick' } & ChooseSpecialPickPayload)
-  | ({ kind: 'reanimation-kit' } & ChooseReanimationKitPayload);
+  | ({ kind: 'reanimation-kit' } & ChooseReanimationKitPayload)
+  | ({ kind: 'slot-drop' } & ChooseSlotDropPayload);
 
 export interface AddBotPayload {
   difficulty: BotDifficulty;

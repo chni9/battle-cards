@@ -54,7 +54,7 @@ export function visibleKitId(player: PublicPlayerView): KitId | null {
   if (player.eliminationReveal !== undefined) {
     return player.eliminationReveal.kitId;
   }
-  if (player.spied !== undefined) {
+  if (player.spied?.kitId !== undefined) {
     return player.spied.kitId;
   }
   return null;

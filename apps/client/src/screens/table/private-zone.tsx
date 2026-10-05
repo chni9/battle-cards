@@ -42,7 +42,6 @@ export interface PrivateZoneProps {
   onInspectKit: () => void;
   onSelectOwnCard?: (instanceId: string) => void;
   onSelectActive?: (instanceId: string) => void;
-  onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   onInspectPending?: (effect: PendingEffectView) => void;
   onInspectSentence?: (sentence: PendingSentenceView) => void;
@@ -65,7 +64,6 @@ export function PrivateZone({
   onInspectKit,
   onSelectOwnCard,
   onSelectActive,
-  onDeactivatePersistent,
   onActivateDuplication,
   onInspectPending,
   onInspectSentence,
@@ -304,18 +302,6 @@ export function PrivateZone({
           data-zone="turn-flow-controls"
           className="flex shrink-0 flex-wrap items-center gap-1 border-t border-border-soft pt-0.5 sm:gap-1.5 sm:pt-1"
         >
-          {invisibilityEffect !== undefined && onDeactivatePersistent !== undefined && (
-            <Button
-              variant="purple"
-              disabled={controlsDisabled}
-              className="min-h-8 min-w-0 px-2.5 py-1 text-[11px] sm:text-xs"
-              onClick={() => {
-                onDeactivatePersistent(invisibilityEffect.id);
-              }}
-            >
-              Deactivate invisibility
-            </Button>
-          )}
           {showActivateDuplication && onActivateDuplication !== undefined && (
             <Button
               variant="purple"

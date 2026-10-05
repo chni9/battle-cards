@@ -153,8 +153,8 @@ export const SPECIAL_CARD_CATALOG = {
     'card-absorber',
     'Card Absorber',
     4,
-    'Recover 4 random cards from the shared pool.',
-    'Recover 4 chosen cards from the shared pool.',
+    'Recover 4 random cards from the shared pool. This card is consumed and never enters the pool.',
+    'Recover 4 chosen cards from the shared pool. This card is consumed and never enters the pool.',
     'Choose the 4 pool cards instead of drawing them at random.',
   ),
   'mega-attack': specialCard(

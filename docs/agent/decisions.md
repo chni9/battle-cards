@@ -4147,3 +4147,14 @@ Designer. Same compare as a living Thief. Spy stays living targets only.
 
 ---
 
+## 2026-10-05 · [P] Lot 69 feedback rules
+
+Designer. `PROTOCOL_VERSION` 42 → 43. Block skips Imposition on the Block
+turn and while `blockTurnsRemaining > 0`. Basic Spy shows live resources only;
+Spy+ adds kit, hand, and specials. Every living lethal contributor gets two
+reward picks in tie-break order. Shield refills without a second slot. Card
+Absorber never enters the pool. Four active slots with forced drop on a fifth;
+free deactivate for persistent specials on your turn (not Shield or Sentence).
+
+---
+

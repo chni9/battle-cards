@@ -3,7 +3,7 @@
  * special-pick (Lot 24), and reanimation-kit (Lot 26).
  */
 
-import type { SpecialCardId } from './card';
+import type { CardId, SpecialCardId } from './card';
 import type { KitId } from './kit';
 
 export type SubChoiceKind =
@@ -12,7 +12,8 @@ export type SubChoiceKind =
   | 'pool-pick'
   | 'steal-pick'
   | 'special-pick'
-  | 'reanimation-kit';
+  | 'reanimation-kit'
+  | 'slot-drop';
 
 export interface MirrorSubChoicePayload {
   playerId: string;
@@ -63,6 +64,31 @@ export interface ReanimationKitSubChoicePayload {
   eligibleKitIds: readonly KitId[];
 }
 
+export type PendingSlotActivationPayload =
+  | { kind: 'shield'; isUpgraded: boolean }
+  | {
+      kind: 'persistent';
+      ownerPlayerId: string;
+      cardId: CardId;
+      isUpgraded: boolean;
+      counter: number | null;
+      targetPlayerId?: string | null;
+      originalCasterPlayerId?: string | null;
+    }
+  | { kind: 'sentence'; sourcePlayerId: string; isUpgraded: boolean };
+
+/** Lot 69 — drop one occupied slot before a fifth activation sticks. */
+export interface SlotDropSubChoicePayload {
+  playerId: string;
+  eligibleSlots: readonly {
+    kind: 'shield' | 'persistent' | 'sentence';
+    id: string;
+    cardId: CardId;
+    isUpgraded: boolean;
+  }[];
+  pendingActivation: PendingSlotActivationPayload;
+}
+
 /**
  * Discriminated on `kind`.
  */
@@ -72,4 +98,5 @@ export type SubChoiceState =
   | ({ kind: 'steal-pick'; deadlineMs: number } & StealPickSubChoicePayload)
   | ({ kind: 'pool-pick'; deadlineMs: number } & PoolPickSubChoicePayload)
   | ({ kind: 'special-pick'; deadlineMs: number } & SpecialPickSubChoicePayload)
-  | ({ kind: 'reanimation-kit'; deadlineMs: number } & ReanimationKitSubChoicePayload);
+  | ({ kind: 'reanimation-kit'; deadlineMs: number } & ReanimationKitSubChoicePayload)
+  | ({ kind: 'slot-drop'; deadlineMs: number } & SlotDropSubChoicePayload);

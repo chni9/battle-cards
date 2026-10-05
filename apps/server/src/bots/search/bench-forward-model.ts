@@ -14,6 +14,7 @@ import type { ActionLogEntryView, GameState } from '@card-battle/shared';
 import { createInitialState } from '../../engine/create-initial-state';
 import { createRng } from '../../engine/rng';
 import { listAvailableRewardCards } from '../../engine/turn/elimination-rewards';
+import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
 import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { performAndCompleteTurn } from '../../engine/turn/orchestrate-turn';
 import { makeCounterEffect } from '../../testing/factories';
@@ -165,6 +166,15 @@ function policyHooks(_root: GameState, actionLog: ActionLogEntryView[]) {
           createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`),
         ),
       };
+    },
+    resolveSlotDrop: (s: GameState, actorId: string) => {
+      const choice = s.subChoice;
+
+      if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+        throw new Error('slot-drop');
+      }
+
+      return { slotId: botDefaultSlotDropId(s, actorId) };
     },
     resolveReanimationKit: (s: GameState, playerId: string) => {
       const choice = s.subChoice;

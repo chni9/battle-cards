@@ -27,6 +27,7 @@ import {
   findSoleSurvivorId,
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
+import { botDefaultSlotDropId } from '../engine/specials/slot-drop';
 import { listLegalActions } from '../engine/turn/list-legal-actions';
 import {
   continuePendingSubChoices,
@@ -465,6 +466,17 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
             choice.eligibleCardIds,
             createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`),
           ),
+        };
+      },
+      resolveSlotDrop: (s: typeof state, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+          throw new Error('slot drop pending without subChoice');
+        }
+
+        return {
+          slotId: botDefaultSlotDropId(s, actorId),
         };
       },
       resolveReanimationKit: (s: typeof state, playerId: string) => {

@@ -29,9 +29,10 @@ describe('What’s new dialog (L63-07)', () => {
     expect(home).toContain("setWhatsNewScope('history')");
     expect(home).toContain("setWhatsNewScope('current')");
     expect(home).toContain('scope={whatsNewScope}');
-    expect(latestReleaseNote().id).toBe('lot-68');
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-68']);
+    expect(latestReleaseNote().id).toBe('lot-69');
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-69']);
     expect(releaseNotesForScope('history').map((note) => note.date)).toEqual([
+      '2026-10-05',
       '2026-09-29',
       '2026-09-28',
       '2026-09-20',

@@ -32,6 +32,7 @@ import { listLegalActions } from '../../engine/turn/list-legal-actions';
 import { performAndCompleteTurn } from '../../engine/turn/orchestrate-turn';
 import type { TurnAction } from '../../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
+import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
 import { SIM_NOW_MS } from '../../simulation/run-game';
 import { HEURISTIC_V4_POLICY_ID, getPolicy } from '../registry';
 import { computeHeuristicV4WeightsHash } from '../weights-hash';
@@ -164,6 +165,15 @@ function collectBot0Trace(kit: KitId): FreezeTraceStep[] {
             createRng(`${s.seed}:bot:${actorId}:special:${s.turnSequence}`),
           ),
         };
+      },
+      resolveSlotDrop: (s: typeof state, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+          throw new Error('slot drop pending without subChoice');
+        }
+
+        return { slotId: botDefaultSlotDropId(s, actorId) };
       },
       resolveReanimationKit: (s: typeof state, playerId: string) => {
         const choice = s.subChoice;

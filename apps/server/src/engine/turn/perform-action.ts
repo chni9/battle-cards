@@ -99,6 +99,11 @@ import {
   type ResolvedEffect,
 } from './resolve-pending';
 import { hasActiveSubChoice } from './sub-choice';
+import {
+  reconcileSlotCapAfterPlay,
+  slotOwnerForCardPlay,
+} from '../specials/reconcile-slot-cap';
+import { applyDefaultSlotDrop, applySlotDrop } from '../specials/slot-drop';
 
 export type TurnAction =
   | { type: 'draw' }
@@ -186,6 +191,8 @@ export interface TurnResult {
   playerReanimated?: readonly { playerId: string; kitId: KitId }[];
   /** Curse instances passed by successful attacks this resolve (designer 2026-08-07). */
   curseTransfers?: readonly (CurseTransfer & { turnSequence: number })[];
+  /** False for free mid-turn deactivations (Lot 69). Defaults to true. */
+  consumesTurn?: boolean;
   /**
    * Auto-lost persistents this turn (counter 0, Curse floor, death dump) — L56-07.
    * Manual `deactivatePersistent` is not included.
@@ -236,6 +243,10 @@ function subChoiceGateReject(state: GameState): ActionReject {
 
   if (state.subChoice?.kind === 'reanimation-kit') {
     return actionReject('finish-reanimation-kit-pick');
+  }
+
+  if (state.subChoice?.kind === 'slot-drop') {
+    return actionReject('finish-slot-drop');
   }
 
   return actionReject('finish-elimination-rewards');
@@ -455,6 +466,19 @@ function performPreparedTurnAction(
       cardId: deactivated.cardId,
       isUpgraded: deactivated.isUpgraded,
       turnSequence: state.turnSequence,
+    };
+
+    const stamped = stampPlayedWindow(state, actor, actionPlayed);
+
+    return {
+      ok: true,
+      actionPlayed: stamped.actionPlayed,
+      resolved: [],
+      winnerPlayerId: null,
+      eliminatedPlayerIds: [],
+      eliminations: [],
+      consumesTurn: false,
+      ...playedChangeFields(stamped.playedResourceChanges),
     };
   } else if (action.type === 'activateDuplication') {
     const activated = activateDuplicationAction(state, actorPlayerId);
@@ -1002,6 +1026,99 @@ export function completeSpecialPick(
 /**
  * Apply special-pick default on sub-choice expiry, then finish the turn.
  */
+export function completeSlotDrop(
+  state: GameState,
+  actorPlayerId: string,
+  slotId: string,
+  rng: Rng = createRng(`${state.seed}:turn:${state.turnSequence}`),
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop' || choice.playerId !== actorPlayerId) {
+    return actionReject('no-slot-drop-pending');
+  }
+
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(actor));
+  }
+
+  const applied = applySlotDrop(state, actorPlayerId, slotId);
+
+  if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
+    return applied;
+  }
+
+  const actionPlayed: ActionPlayedEvent = {
+    actorPlayerId,
+    action: 'playCard',
+    cardId: choice.pendingActivation.kind === 'persistent'
+      ? choice.pendingActivation.cardId
+      : choice.pendingActivation.kind === 'sentence'
+        ? 'sentence'
+        : 'shield',
+    isUpgraded:
+      choice.pendingActivation.kind === 'persistent'
+        ? choice.pendingActivation.isUpgraded
+        : choice.pendingActivation.kind === 'sentence'
+          ? choice.pendingActivation.isUpgraded
+          : choice.pendingActivation.isUpgraded,
+    turnSequence: state.turnSequence,
+  };
+
+  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
+}
+
+export function expireSlotDrop(
+  state: GameState,
+  rng: Rng,
+  nowMs: number = Date.now(),
+): PerformActionResult {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop') {
+    return actionReject('no-slot-drop-pending');
+  }
+
+  const actorPlayerId = choice.playerId;
+  const actor = findPlayer(state, actorPlayerId);
+
+  if (actor !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(actor));
+  }
+
+  const applied = applyDefaultSlotDrop(state, actorPlayerId);
+
+  if (!applied.ok) {
+    takeActorResourceBaseline(state);
+    takeDuplicatedGains(state);
+    return applied;
+  }
+
+  const actionPlayed: ActionPlayedEvent = {
+    actorPlayerId,
+    action: 'playCard',
+    cardId: choice.pendingActivation.kind === 'persistent'
+      ? choice.pendingActivation.cardId
+      : choice.pendingActivation.kind === 'sentence'
+        ? 'sentence'
+        : 'shield',
+    isUpgraded:
+      choice.pendingActivation.kind === 'persistent'
+        ? choice.pendingActivation.isUpgraded
+        : choice.pendingActivation.kind === 'sentence'
+          ? choice.pendingActivation.isUpgraded
+          : choice.pendingActivation.isUpgraded,
+    turnSequence: state.turnSequence,
+  };
+
+  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
+}
+
 export function expireSpecialPick(
   state: GameState,
   rng: Rng,
@@ -1292,7 +1409,10 @@ function finishTurnPhases(
     };
   }
 
-  if (state.subChoice?.kind === 'reanimation-kit') {
+  if (
+    state.subChoice?.kind === 'reanimation-kit' ||
+    state.subChoice?.kind === 'slot-drop'
+  ) {
     return {
       ok: true,
       actionPlayed,
@@ -1711,10 +1831,16 @@ function playCardAction(
     actor.specialCards = actor.specialCards.filter((card) => card.instanceId !== instanceId);
 
     // Persistent specials stay active via activePersistentEffects until deactivated.
-    if (!isPersistentSpecialCardId(cardId)) {
+    if (!isPersistentSpecialCardId(cardId) && cardId !== 'card-absorber') {
       state.pool.push(instance);
     }
   }
+
+  reconcileSlotCapAfterPlay(
+    state,
+    slotOwnerForCardPlay(actorPlayerId, cardId, resolvedTargetId),
+    nowMs,
+  );
 
   return {
     ok: true,

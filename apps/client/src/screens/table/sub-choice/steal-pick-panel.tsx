@@ -34,7 +34,7 @@ function resolveEligibleCards(
   const victim = opponents.find((player) => player.id === subChoice.victimPlayerId);
   const spiedCards =
     victim?.spied !== undefined
-      ? [...victim.spied.hand, ...victim.spied.specialCards]
+      ? [...(victim.spied.hand ?? []), ...(victim.spied.specialCards ?? [])]
       : [];
 
   return subChoice.eligibleInstanceIds.map((instanceId) => {
