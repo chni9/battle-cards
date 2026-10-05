@@ -150,6 +150,14 @@ export function CardActions(props: CardActionsProps): ReactElement {
     setDialog(null);
   };
 
+  const closeInspectDialog = (): void => {
+    if (deactivateConfirmEffectId !== null) {
+      setDeactivateConfirmEffectId(null);
+      return;
+    }
+    close();
+  };
+
   const seatIsLivingInvisible = (player: PublicPlayerView): boolean =>
     !player.isEliminated &&
     player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
@@ -362,7 +370,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
             ? (getCard(dialog.instance.cardId)?.name ?? 'Card')
             : 'Inspect'
         }
-        onClose={close}
+        onClose={closeInspectDialog}
         actions={
           <>
             {inspectUpgradeId !== null && (

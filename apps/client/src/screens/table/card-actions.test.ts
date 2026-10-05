@@ -63,6 +63,11 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     );
   });
 
+  it('keeps inspect open when Escape dismisses deactivate confirm (Lot 69)', () => {
+    expect(source).toContain('closeInspectDialog');
+    expect(source).toMatch(/open=\{dialog\?\.kind === 'inspect'\}[\s\S]*onClose=\{closeInspectDialog\}/);
+  });
+
   it('opens log and queue inspect without a Spy footer (L56-05)', () => {
     expect(source).toContain("source: 'spy' | 'active' | 'log' | 'queue'");
     expect(source).toContain("dialog.source === 'spy'");
