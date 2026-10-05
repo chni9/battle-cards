@@ -4157,7 +4157,8 @@ Absorber never enters the pool. Four active slots with forced drop on a fifth;
 free deactivate for persistent specials on your turn (not Shield or Sentence).
 Curse on a target who already has four actives: the Curse user picks which
 victim slot to drop (`slotOwnerId` on slot-drop sub-choice; `PROTOCOL_VERSION`
-44 adds `slotOwnerPlayerId` on the client payload).
+44 adds `slotOwnerPlayerId` on the client payload). Forced fifth-slot picks
+never list Curse — only transfer or the 1-life floor removes it.
 
 ---
 
