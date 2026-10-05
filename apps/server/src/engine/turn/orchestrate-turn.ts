@@ -286,7 +286,14 @@ export function continuePendingSubChoices(
       }
 
       if (kind === 'slot-drop') {
-        const pick = hooks.resolveSlotDrop?.(state, actorPlayerId) ?? null;
+        const slotChoice = state.subChoice;
+
+        if (slotChoice?.kind !== 'slot-drop') {
+          return result;
+        }
+
+        const pick =
+          hooks.resolveSlotDrop?.(state, slotChoice.playerId) ?? null;
 
         if (pick === null) {
           return result;
@@ -294,7 +301,7 @@ export function continuePendingSubChoices(
 
         const slotResult = completeSlotDrop(
           state,
-          actorPlayerId,
+          slotChoice.playerId,
           pick.slotId,
           rng,
           nowMs,

@@ -34,10 +34,11 @@ export const SLOT_DROP_SUB_CHOICE_MS = SUB_CHOICE_MS;
 
 export function applyPendingSlotActivation(
   state: GameState,
+  slotOwnerId: string,
   pending: PendingSlotActivationPayload,
 ): void {
   if (pending.kind === 'shield') {
-    const actor = findPlayer(state, state.currentTurnPlayerId ?? '');
+    const actor = findPlayer(state, slotOwnerId);
 
     if (actor === undefined) {
       return;
@@ -119,7 +120,7 @@ export function applySlotDrop(
     slotQueuedAt: 0,
   });
 
-  applyPendingSlotActivation(state, choice.pendingActivation);
+  applyPendingSlotActivation(state, playerId, choice.pendingActivation);
   state.subChoice = null;
   return { ok: true };
 }

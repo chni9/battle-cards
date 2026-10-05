@@ -22,6 +22,7 @@ import {
   persistentToCardInstance,
   shieldActiveInstance,
 } from './active-display';
+import { hasFullSpyCardReveal, visibleKitId } from './table-helpers';
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
 import { opponentResourceDisplay } from './opponent-seat-resources';
@@ -156,11 +157,13 @@ export function OpponentZone({
   compact = false,
 }: OpponentZoneProps): ReactElement {
   const reveal = player.eliminationReveal;
-  const spied = player.spied;
-  const shownKitId =
-    reveal !== undefined ? reveal.kitId : spied?.kitId ?? null;
+  const shownKitId = visibleKitId(player);
   const revealMode =
-    reveal !== undefined ? 'elimination' : spied !== undefined ? 'spy' : null;
+    reveal !== undefined
+      ? 'elimination'
+      : hasFullSpyCardReveal(player)
+        ? 'spy'
+        : null;
 
   const seat = seatIndexOf(view, player.id);
   const isActiveSeat = view.currentTurnPlayerId === player.id;

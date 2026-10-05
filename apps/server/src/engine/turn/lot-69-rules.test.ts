@@ -7,8 +7,13 @@ import { describe, expect, it } from 'vitest';
 import { makeCounterEffect } from '../../testing/factories';
 import { createInitialState } from '../create-initial-state';
 import { applyPersistentEffects } from './apply-persistent-effects';
-import { orderEliminators, recordEliminationContributor } from './elimination-rewards';
-import { performTurnAction } from './perform-action';
+import {
+  listAvailableRewardCards,
+  orderEliminators,
+  processEliminations,
+  recordEliminationContributor,
+} from './elimination-rewards';
+import { completeEliminationRewardChoice, performTurnAction } from './perform-action';
 import { createRng } from '../rng';
 import { countActiveSlots } from '../specials/active-slots';
 
@@ -112,6 +117,68 @@ describe('Lot 69 — elimination rewards', () => {
 
     const ordered = orderEliminators([a.id, b.id], state, createRng('l69-order'));
     expect(ordered).toEqual([a.id, b.id]);
+  });
+});
+
+describe('Lot 69 — shared-kill rewards', () => {
+  it('keeps victim cards until every contributor has picked', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'v', nickname: 'V' },
+      ],
+      seed: 'l69-shared-reward',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    const v = state.players.find((p) => p.id === 'v');
+    if (a === undefined || b === undefined || v === undefined) {
+      throw new Error('missing seats');
+    }
+
+    v.lives = 0;
+    v.hand = [{ instanceId: 'card-1', cardId: 'tax', isUpgraded: false }];
+    v.specialCards = [];
+    recordEliminationContributor(state, v.id, a.id, 2);
+    recordEliminationContributor(state, v.id, b.id, 1);
+    a.lives = 5;
+    b.lives = 5;
+
+    processEliminations(state, createRng('l69-shared-reward'), Date.now());
+
+    expect(state.rewardQueue).toHaveLength(2);
+    expect(listAvailableRewardCards(state, v.id)).toHaveLength(1);
+
+    const firstJob = state.rewardQueue[0];
+    if (firstJob === undefined || state.rewardChoice === null) {
+      throw new Error('missing reward job');
+    }
+
+    const first = completeEliminationRewardChoice(
+      state,
+      firstJob.eliminatorPlayerId,
+      firstJob.eliminationId,
+      [{ type: 'points' }, { type: 'points' }],
+    );
+    expect(first.ok).toBe(true);
+    expect(listAvailableRewardCards(state, v.id)).toHaveLength(1);
+    expect(state.pool.some((card) => card.instanceId === 'card-1')).toBe(false);
+
+    expect(state.rewardChoice).not.toBeNull();
+    const secondJob = state.rewardChoice;
+
+    const second = completeEliminationRewardChoice(
+      state,
+      secondJob.eliminatorPlayerId,
+      secondJob.eliminationId,
+      [{ type: 'card', instanceId: 'card-1' }, { type: 'lives' }],
+    );
+    expect(second.ok).toBe(true);
+    const cardHolder = state.players.find((p) =>
+      p.hand.some((card) => card.instanceId === 'card-1'),
+    );
+    expect(cardHolder?.id).toBe(secondJob.eliminatorPlayerId);
   });
 });
 

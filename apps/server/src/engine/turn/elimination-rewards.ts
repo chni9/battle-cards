@@ -507,10 +507,16 @@ function finishRewardJob(state: GameState, nowMs: number): void {
     return;
   }
 
-  const eliminated = findPlayer(state, job.eliminatedPlayerId);
+  const victimStillHasRewardJobs = state.rewardQueue.some(
+    (queued) => queued.eliminatedPlayerId === job.eliminatedPlayerId,
+  );
 
-  if (eliminated !== undefined) {
-    dumpCardsToPool(state, eliminated);
+  if (!victimStillHasRewardJobs) {
+    const eliminated = findPlayer(state, job.eliminatedPlayerId);
+
+    if (eliminated !== undefined) {
+      dumpCardsToPool(state, eliminated);
+    }
   }
 
   state.rewardChoice = null;

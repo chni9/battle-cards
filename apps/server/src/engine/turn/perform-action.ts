@@ -1039,10 +1039,16 @@ export function completeSlotDrop(
     return actionReject('no-slot-drop-pending');
   }
 
-  const actor = findPlayer(state, actorPlayerId);
+  const turnActorId = state.currentTurnPlayerId;
 
-  if (actor !== undefined) {
-    setActorResourceBaseline(state, snapshotPlayerResources(actor));
+  if (turnActorId === null) {
+    return actionReject('game-not-in-progress');
+  }
+
+  const turnActor = findPlayer(state, turnActorId);
+
+  if (turnActor !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(turnActor));
   }
 
   const applied = applySlotDrop(state, actorPlayerId, slotId);
@@ -1054,7 +1060,7 @@ export function completeSlotDrop(
   }
 
   const actionPlayed: ActionPlayedEvent = {
-    actorPlayerId,
+    actorPlayerId: turnActorId,
     action: 'playCard',
     cardId: choice.pendingActivation.kind === 'persistent'
       ? choice.pendingActivation.cardId
@@ -1070,7 +1076,7 @@ export function completeSlotDrop(
     turnSequence: state.turnSequence,
   };
 
-  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
+  return finishTurnPhases(state, turnActorId, actionPlayed, rng, nowMs);
 }
 
 export function expireSlotDrop(
@@ -1084,14 +1090,20 @@ export function expireSlotDrop(
     return actionReject('no-slot-drop-pending');
   }
 
-  const actorPlayerId = choice.playerId;
-  const actor = findPlayer(state, actorPlayerId);
+  const chooserPlayerId = choice.playerId;
+  const turnActorId = state.currentTurnPlayerId;
 
-  if (actor !== undefined) {
-    setActorResourceBaseline(state, snapshotPlayerResources(actor));
+  if (turnActorId === null) {
+    return actionReject('game-not-in-progress');
   }
 
-  const applied = applyDefaultSlotDrop(state, actorPlayerId);
+  const turnActor = findPlayer(state, turnActorId);
+
+  if (turnActor !== undefined) {
+    setActorResourceBaseline(state, snapshotPlayerResources(turnActor));
+  }
+
+  const applied = applyDefaultSlotDrop(state, chooserPlayerId);
 
   if (!applied.ok) {
     takeActorResourceBaseline(state);
@@ -1100,7 +1112,7 @@ export function expireSlotDrop(
   }
 
   const actionPlayed: ActionPlayedEvent = {
-    actorPlayerId,
+    actorPlayerId: turnActorId,
     action: 'playCard',
     cardId: choice.pendingActivation.kind === 'persistent'
       ? choice.pendingActivation.cardId
@@ -1116,7 +1128,7 @@ export function expireSlotDrop(
     turnSequence: state.turnSequence,
   };
 
-  return finishTurnPhases(state, actorPlayerId, actionPlayed, rng, nowMs);
+  return finishTurnPhases(state, turnActorId, actionPlayed, rng, nowMs);
 }
 
 export function expireSpecialPick(
