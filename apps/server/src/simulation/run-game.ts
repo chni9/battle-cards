@@ -28,7 +28,7 @@ import {
   listAvailableRewardCards,
 } from '../engine/turn/elimination-rewards';
 import { botDefaultSlotDropId } from '../engine/specials/slot-drop';
-import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { listLegalActionsForBot } from '../engine/turn/list-legal-actions';
 import {
   continuePendingSubChoices,
   performAndCompleteTurn,
@@ -332,7 +332,7 @@ export function runSimulatedGame(input: RunGameInput): SimulationGameRow {
       actionLog,
       actingPlayerId: botId,
     });
-    const actions = listLegalActions(state, botId);
+    const actions = listLegalActionsForBot(state, botId);
     const rng = createRng(`${state.seed}:bot:${botId}:${state.turnSequence}`);
     const searchIterations = input.searchIterations ?? OFFLINE_SEARCH_ITERATIONS;
     const decision = policy.decide(view, actions, rng, {

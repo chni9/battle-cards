@@ -14,7 +14,7 @@ import {
   listAvailableRewardCards,
 } from '../../engine/turn/elimination-rewards';
 import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import {
   performAndCompleteTurn,
   type TurnSubChoiceHooks,
@@ -267,7 +267,7 @@ export function rolloutHeuristic(
       turnDeadlineMs: null,
       actionLog,
     });
-    const legal = listLegalActions(state, actorId);
+    const legal = listLegalActionsForBot(state, actorId);
 
     if (legal.length === 0) {
       return;

@@ -15,7 +15,7 @@ import { createInitialState } from '../../engine/create-initial-state';
 import { createRng } from '../../engine/rng';
 import { listAvailableRewardCards } from '../../engine/turn/elimination-rewards';
 import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import { performAndCompleteTurn } from '../../engine/turn/orchestrate-turn';
 import { makeCounterEffect } from '../../testing/factories';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
@@ -288,7 +288,7 @@ export function runForwardModelBench(options?: {
       turnDeadlineMs: null,
       actionLog,
     });
-    const actions = listLegalActions(state, botId);
+    const actions = listLegalActionsForBot(state, botId);
     const rng = createRng(`${state.seed}:bench-turn:${String(i)}`);
     const action =
       actions.length === 0
@@ -332,7 +332,7 @@ export function runForwardModelBench(options?: {
         turnDeadlineMs: null,
         actionLog,
       });
-      const actions = listLegalActions(state, botId);
+      const actions = listLegalActionsForBot(state, botId);
       const rng = createRng(`${state.seed}:bench-playout:${String(i)}:${String(depth)}`);
       const action =
         actions.length === 0

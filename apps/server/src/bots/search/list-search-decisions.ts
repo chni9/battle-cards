@@ -11,7 +11,7 @@ import {
 } from '@card-battle/shared';
 
 import { listAvailableRewardCards } from '../../engine/turn/elimination-rewards';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import { activeSubChoiceKind } from '../../engine/turn/sub-choice';
 import type { SearchDecision } from './search-types';
 
@@ -50,7 +50,7 @@ export function listSearchDecisions(state: GameState): readonly SearchDecision[]
       return [];
     }
 
-    return listLegalActions(state, owner).map((action) => ({
+    return listLegalActionsForBot(state, owner).map((action) => ({
       kind: 'action' as const,
       action,
     }));
