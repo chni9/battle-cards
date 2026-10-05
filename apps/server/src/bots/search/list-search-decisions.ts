@@ -11,7 +11,7 @@ import {
 } from '@card-battle/shared';
 
 import { listAvailableRewardCards } from '../../engine/turn/elimination-rewards';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import { activeSubChoiceKind } from '../../engine/turn/sub-choice';
 import type { SearchDecision } from './search-types';
 
@@ -50,7 +50,7 @@ export function listSearchDecisions(state: GameState): readonly SearchDecision[]
       return [];
     }
 
-    return listLegalActions(state, owner).map((action) => ({
+    return listLegalActionsForBot(state, owner).map((action) => ({
       kind: 'action' as const,
       action,
     }));
@@ -69,7 +69,22 @@ export function listSearchDecisions(state: GameState): readonly SearchDecision[]
       return listReanimationDecisions(state);
     case 'elimination-reward':
       return listRewardDecisions(state);
+    case 'slot-drop':
+      return listSlotDropDecisions(state);
   }
+}
+
+function listSlotDropDecisions(state: GameState): readonly SearchDecision[] {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop') {
+    return [];
+  }
+
+  return choice.eligibleSlots.map((slot) => ({
+    kind: 'slot-drop' as const,
+    slotId: slot.id,
+  }));
 }
 
 function listMirrorDecisions(state: GameState): readonly SearchDecision[] {

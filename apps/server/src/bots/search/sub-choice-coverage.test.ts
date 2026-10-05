@@ -31,6 +31,7 @@ describe('sub-choice search coverage (L35-06)', () => {
       'special-pick': 'special-pick',
       'reanimation-kit': 'reanimation-kit',
       'elimination-reward': 'elimination-reward',
+      'slot-drop': 'slot-drop',
     };
 
     for (const kind of SEARCH_SUB_CHOICE_KINDS) {

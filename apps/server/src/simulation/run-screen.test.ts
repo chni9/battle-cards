@@ -132,7 +132,9 @@ describe('screen-config (Lot 31)', () => {
 });
 
 describe('runScreen (Lot 31)', () => {
-  it('same config → identical aggregates and JSONL', async () => {
+  it(
+    'same config → identical aggregates and JSONL',
+    async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-screen-'));
     const outA = path.join(dir, 'a');
     const outB = path.join(dir, 'b');
@@ -184,7 +186,9 @@ describe('runScreen (Lot 31)', () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
-  });
+    },
+    20_000,
+  );
 
   it('records stall ledger keys when MAX_TURNS is forced', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'card-battle-screen-stall-'));

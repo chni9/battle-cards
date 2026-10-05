@@ -84,8 +84,8 @@ export function enumerationStateFromView(
       upgradePoints: spied?.upgradePoints ?? spied?.resourcesSnapshot?.upgradePoints ?? 0,
       shield: spied?.shield ?? spied?.resourcesSnapshot?.shield ?? 0,
       shieldIsUpgraded: false,
-      hand: spied !== undefined ? [...spied.hand] : [],
-      specialCards: spied !== undefined ? [...spied.specialCards] : [],
+      hand: spied !== undefined ? [...(spied.hand ?? [])] : [],
+      specialCards: spied !== undefined ? [...(spied.specialCards ?? [])] : [],
       pendingEffects: [],
       activePersistentEffects: publicPlayer.activePersistentEffects.map((effect) => ({
         ...effect,

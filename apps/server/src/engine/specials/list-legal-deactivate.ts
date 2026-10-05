@@ -1,7 +1,8 @@
 /**
- * Manual-deactivate persistent TurnActions — L25-02 / #V4-10.
+ * Manual-deactivate persistent TurnActions — L25-02 / Lot 69.
  *
- * Only `invisibility` is deactivatable today; L28-02 may widen the set.
+ * Any persistent special on the actor (including Curse on them). Shield and Sentence
+ * are not hand-deactivated.
  */
 
 import {
@@ -15,22 +16,14 @@ import {
 import { deactivatePersistentEffect } from '../specials/deactivate-persistent';
 import type { TurnAction } from '../turn/perform-action';
 
-export const MANUAL_DEACTIVATE_CARD_IDS = ['invisibility'] as const satisfies readonly CardId[];
-
-const MANUAL_SET = new Set<string>(MANUAL_DEACTIVATE_CARD_IDS);
-
-export function isManualDeactivateCardId(cardId: string): boolean {
-  return MANUAL_SET.has(cardId);
+export function isManualDeactivateCardId(): boolean {
+  return true;
 }
 
 export function listLegalDeactivateActions(actor: Player): readonly TurnAction[] {
   const actions: TurnAction[] = [];
 
   for (const effect of actor.activePersistentEffects) {
-    if (!isManualDeactivateCardId(effect.cardId)) {
-      continue;
-    }
-
     actions.push({ type: 'deactivatePersistent', effectId: effect.id });
   }
 
@@ -52,10 +45,6 @@ export function deactivatePersistentAction(
 
   if (effect === undefined) {
     return actionReject('persistent-not-active');
-  }
-
-  if (!isManualDeactivateCardId(effect.cardId)) {
-    return actionReject('persistent-not-manual');
   }
 
   const cardId = effect.cardId;

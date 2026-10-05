@@ -51,6 +51,18 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
     title: 'Special pick pending',
     body: 'Finish choosing your special card before taking another action.',
   },
+  'finish-slot-drop': {
+    title: 'Finish your drop pick',
+    body: 'Choose which active card to remove before playing another action.',
+  },
+  'no-slot-drop-pending': {
+    title: 'No drop pick',
+    body: 'There is no active slot drop waiting.',
+  },
+  'slot-drop-invalid': {
+    title: 'Invalid slot',
+    body: 'That active card cannot be dropped right now.',
+  },
   'finish-reanimation-kit-pick': {
     title: 'Kit pick pending',
     body: 'Choose a kit for reanimation before taking another action.',

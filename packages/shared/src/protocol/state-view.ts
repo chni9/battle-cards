@@ -184,9 +184,9 @@ export interface PublicPlayerView {
  * Upgraded (`full-resources`): live lives, points, upgrade points, shield.
  */
 export interface SpiedPlayerView {
-  kitId: KitId;
-  hand: readonly CardInstance[];
-  specialCards: readonly CardInstance[];
+  kitId?: KitId;
+  hand?: readonly CardInstance[];
+  specialCards?: readonly CardInstance[];
   /** Live resources — upgraded Spy only. */
   lives?: number;
   points?: number;

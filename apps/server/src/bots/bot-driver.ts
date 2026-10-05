@@ -19,7 +19,8 @@ import type {
   RewardChoice,
 } from '@card-battle/shared';
 
-import { listLegalActions } from '../engine/turn/list-legal-actions';
+import { botDefaultSlotDropId } from '../engine/specials/slot-drop';
+import { listLegalActionsForBot } from '../engine/turn/list-legal-actions';
 import { intersectTutorialLegalActions } from '../engine/tutorial/intersect-tutorial-legal';
 import { listAvailableRewardCards } from '../engine/turn/elimination-rewards';
 import type { TurnAction } from '../engine/turn/perform-action';
@@ -80,6 +81,12 @@ export interface BotDriverHost {
     reason?: BotDecisionReason,
   ): void;
   failBotReanimationKit(botId: string): void;
+  completeBotSlotDrop(
+    botId: string,
+    slotId: string,
+    reason?: BotDecisionReason,
+  ): void;
+  failBotSlotDrop(botId: string): void;
 }
 
 /** Margin so a finishing ISMCTS iteration cannot push past the think envelope. */
@@ -232,6 +239,28 @@ export class BotDriver {
     }
   }
 
+  /** Inline slot-drop pick — no `subChoiceRequired` timer (Lot 69). */
+  handleSlotDropChoice(botId: string): void {
+    const state = this.host.getGameState();
+    const choice = state?.subChoice;
+
+    if (state === null || choice?.kind !== 'slot-drop' || this.host.isGameOver()) {
+      return;
+    }
+
+    if (choice.playerId !== botId || choice.eligibleSlots.length === 0) {
+      this.host.failBotSlotDrop(botId);
+      return;
+    }
+
+    try {
+      const slotId = botDefaultSlotDropId(state, botId);
+      this.host.completeBotSlotDrop(botId, slotId, { code: 'policy-fallback' });
+    } catch {
+      this.host.failBotSlotDrop(botId);
+    }
+  }
+
   /** Inline upgraded Reanimation kit pick — no `subChoiceRequired` timer (L26-02). */
   handleReanimationKitChoice(botId: string): void {
     const state = this.host.getGameState();
@@ -301,7 +330,7 @@ export class BotDriver {
       const actions =
         view.playKind === 'tutorial' && view.tutorialIndex !== null
           ? intersectTutorialLegalActions(state, botId, view.tutorialIndex)
-          : listLegalActions(state, botId);
+          : listLegalActionsForBot(state, botId);
 
       if (actions.length === 0) {
         this.host.performBotDraw(botId, { code: 'policy-fallback' });

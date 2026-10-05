@@ -14,6 +14,7 @@ import {
   completeMirrorChoice,
   completePoolPick,
   completeReanimationKitPick,
+  completeSlotDrop,
   completeSpecialPick,
   completeStealChoice,
   performTurnAction,
@@ -42,6 +43,10 @@ export interface SpecialResolvePick {
 
 export interface ReanimationKitResolvePick {
   kitId: KitId;
+}
+
+export interface SlotDropResolvePick {
+  slotId: string;
 }
 
 export interface RewardResolvePick {
@@ -73,6 +78,11 @@ export interface TurnSubChoiceHooks {
     state: GameState,
     playerId: string,
   ): ReanimationKitResolvePick | null;
+  /**
+   * Return a slot id to drop before a fifth activation sticks, or `null` to leave
+   * `subChoice` pending (human UI / room timer). Bots drop the oldest slot.
+   */
+  resolveSlotDrop?(state: GameState, actorPlayerId: string): SlotDropResolvePick | null;
   /**
    * Return picks to complete the active reward job, or `null` to leave
    * `rewardChoice` pending for an external handler (human UI / room timer).
@@ -272,6 +282,37 @@ export function continuePendingSubChoices(
           rewardChoicePending: kitResult.rewardChoicePending,
           ...(kitResult.subChoicePending === true ? { subChoicePending: true } : {}),
         };
+        continue;
+      }
+
+      if (kind === 'slot-drop') {
+        const slotChoice = state.subChoice;
+
+        if (slotChoice?.kind !== 'slot-drop') {
+          return result;
+        }
+
+        const pick =
+          hooks.resolveSlotDrop?.(state, slotChoice.playerId) ?? null;
+
+        if (pick === null) {
+          return result;
+        }
+
+        const slotResult = completeSlotDrop(
+          state,
+          slotChoice.playerId,
+          pick.slotId,
+          rng,
+          nowMs,
+        );
+
+        if (!slotResult.ok) {
+          return slotResult;
+        }
+
+        options.onTurnResult?.(slotResult);
+        result = slotResult;
         continue;
       }
 

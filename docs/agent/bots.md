@@ -32,6 +32,10 @@ A policy reachable from the room must be reachable from the headless simulator
 with the same hooks (Mirror, steal, pool, special, reanimation kit, rewards).
 Screens measure what players face only when that holds.
 
+**Lot 69 slot cap:** room and simulator bots use `listLegalActionsForBot` — no
+voluntary `deactivatePersistent`. A fifth active opens the forced slot-drop
+sub-choice on play; humans still get free hand-deactivate via `listLegalActions`.
+
 ## Freeze
 
 `heuristic-v4` is the yardstick (L32-03). If its freeze test fails, **do not**

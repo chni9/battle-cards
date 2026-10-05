@@ -676,7 +676,9 @@ export function resolvePendingEffects(
         recordAutoDeactivation(state, player.id, deactivated);
       }
       poolDeactivatedPersistentEffects(state, damageOutcome.deactivatedEffects);
-      recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost);
+      recordEliminationContributor(state, player.id, effect.sourcePlayerId, livesLost, {
+        attackResolved: true,
+      });
       outcome = 'applied';
 
       // Pass every Curse on the attacker when the hit deals life (designer 2026-08-07).

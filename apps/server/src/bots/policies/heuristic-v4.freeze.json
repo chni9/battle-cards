@@ -373,14 +373,6 @@
           "type": "playCard",
           "instanceId": "bot-0:start:action:3"
         }
-      },
-      {
-        "turnSequence": 11,
-        "action": {
-          "type": "playCard",
-          "instanceId": "bot-0:start:attack:1",
-          "targetPlayerId": "bot-1"
-        }
       }
     ],
     "specialist": [
@@ -709,13 +701,8 @@
       {
         "turnSequence": 9,
         "action": {
-          "type": "draw"
-        }
-      },
-      {
-        "turnSequence": 11,
-        "action": {
-          "type": "draw"
+          "type": "sellCard",
+          "instanceId": "buy:bot-0:7:0"
         }
       }
     ]

@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { createInitialState } from '../engine/create-initial-state';
 import { createRng } from '../engine/rng';
 import { applyDefaultEliminationRewards } from '../engine/turn/elimination-rewards';
+import { botDefaultSlotDropId } from '../engine/specials/slot-drop';
 import { performAndCompleteTurn, type TurnSubChoiceHooks } from '../engine/turn/orchestrate-turn';
 import { completeReanimationKitPick, performTurnAction } from '../engine/turn/perform-action';
 import { buildPlayingViewFor } from '../protocol/build-view-for';
@@ -76,6 +77,15 @@ function noThrowHooks(seed: string): TurnSubChoiceHooks {
           createRng(`${seed}:special`),
         ),
       };
+    },
+    resolveSlotDrop: (state, actorId) => {
+      const choice = state.subChoice;
+
+      if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+        return null;
+      }
+
+      return { slotId: botDefaultSlotDropId(state, actorId) };
     },
     resolveReanimationKit: (state, playerId) => {
       const choice = state.subChoice;

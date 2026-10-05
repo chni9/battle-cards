@@ -29,7 +29,8 @@ import {
   findSoleSurvivorId,
   listAvailableRewardCards,
 } from '../../engine/turn/elimination-rewards';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
 import { determinizeFromView } from '../belief/determinize';
 import { evaluate } from '../eval/evaluate';
@@ -221,7 +222,7 @@ function advanceOpponentsGreedy(
       turnDeadlineMs: null,
       actionLog,
     });
-    const legal = listLegalActions(state, actorId);
+    const legal = listLegalActionsForBot(state, actorId);
 
     if (legal.length === 0) {
       return;
@@ -339,6 +340,15 @@ function onePlyHooks(
           createRng(`${state.seed}:bot:${actorId}:special:${String(state.turnSequence)}`),
         ),
       };
+    },
+    resolveSlotDrop: (state, actorId) => {
+      const choice = state.subChoice;
+
+      if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+        throw new Error('slot drop pending without subChoice');
+      }
+
+      return { slotId: botDefaultSlotDropId(state, actorId) };
     },
     resolveReanimationKit: (state, playerId) => {
       const choice = state.subChoice;

@@ -95,6 +95,8 @@ export interface Player {
    * `shield` reaches 0.
    */
   shieldIsUpgraded: boolean;
+  /** `turnSequence` when shield last opened a slot — Lot 69. */
+  shieldSlotQueuedAt?: number;
   /** Attack and action cards held. */
   hand: CardInstance[];
   /** Special cards held. Single use each (rules spec §5). */

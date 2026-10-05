@@ -60,6 +60,7 @@ import {
 import { Client, type Room } from '@colyseus/sdk';
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
+import { isSubChoiceRequired } from './is-sub-choice-required';
 import { resolveServerUrl } from './resolve-server-url';
 
 const RECONNECT_TOKEN_KEY = 'card-battle:reconnection-token';
@@ -828,50 +829,6 @@ function isActionResolved(payload: unknown): payload is ActionResolvedPayload {
       payload.outcome === 'cancelled' ||
       payload.outcome === 'blocked')
   );
-}
-
-function isSubChoiceRequired(payload: unknown): payload is SubChoiceRequiredPayload {
-  if (typeof payload !== 'object' || payload === null || !('kind' in payload)) {
-    return false;
-  }
-
-  if (!('deadlineMs' in payload) || typeof payload.deadlineMs !== 'number') {
-    return false;
-  }
-
-  switch (payload.kind) {
-    case 'mirror':
-      return 'eligibleEffectIds' in payload && Array.isArray(payload.eligibleEffectIds);
-    case 'elimination-reward':
-      return (
-        'eliminationId' in payload &&
-        typeof payload.eliminationId === 'string' &&
-        'eliminatedPlayerId' in payload &&
-        typeof payload.eliminatedPlayerId === 'string' &&
-        'availableCards' in payload &&
-        Array.isArray(payload.availableCards)
-      );
-    case 'steal-pick':
-      return (
-        'victimPlayerId' in payload &&
-        typeof payload.victimPlayerId === 'string' &&
-        'eligibleInstanceIds' in payload &&
-        Array.isArray(payload.eligibleInstanceIds)
-      );
-    case 'pool-pick':
-      return (
-        'eligibleInstanceIds' in payload &&
-        Array.isArray(payload.eligibleInstanceIds) &&
-        'maxCount' in payload &&
-        typeof payload.maxCount === 'number'
-      );
-    case 'special-pick':
-      return 'eligibleCardIds' in payload && Array.isArray(payload.eligibleCardIds);
-    case 'reanimation-kit':
-      return 'eligibleKitIds' in payload && Array.isArray(payload.eligibleKitIds);
-    default:
-      return false;
-  }
 }
 
 function isGameOver(payload: unknown): payload is GameOverPayload {

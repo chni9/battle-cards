@@ -373,7 +373,7 @@ export function accountOpponentHandSizes(
   const spied = player.spied;
 
   if (spied !== undefined) {
-    return sizesFromCards(spied.hand, spied.specialCards);
+    return sizesFromCards(spied.hand ?? [], spied.specialCards ?? []);
   }
 
   if (player.isEliminated) {
@@ -648,8 +648,8 @@ export function sampleOpponentHandAndSpecials(args: {
 
   if (spied !== undefined) {
     return {
-      hand: copyInstances(spied.hand),
-      specialCards: copyInstances(spied.specialCards),
+      hand: copyInstances(spied.hand ?? []),
+      specialCards: copyInstances(spied.specialCards ?? []),
     };
   }
 

@@ -14,7 +14,8 @@ import type { ActionLogEntryView, GameState } from '@card-battle/shared';
 import { createInitialState } from '../../engine/create-initial-state';
 import { createRng } from '../../engine/rng';
 import { listAvailableRewardCards } from '../../engine/turn/elimination-rewards';
-import { listLegalActions } from '../../engine/turn/list-legal-actions';
+import { botDefaultSlotDropId } from '../../engine/specials/slot-drop';
+import { listLegalActionsForBot } from '../../engine/turn/list-legal-actions';
 import { performAndCompleteTurn } from '../../engine/turn/orchestrate-turn';
 import { makeCounterEffect } from '../../testing/factories';
 import { buildPlayingViewFor } from '../../protocol/build-view-for';
@@ -166,6 +167,15 @@ function policyHooks(_root: GameState, actionLog: ActionLogEntryView[]) {
         ),
       };
     },
+    resolveSlotDrop: (s: GameState, actorId: string) => {
+      const choice = s.subChoice;
+
+      if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+        throw new Error('slot-drop');
+      }
+
+      return { slotId: botDefaultSlotDropId(s, actorId) };
+    },
     resolveReanimationKit: (s: GameState, playerId: string) => {
       const choice = s.subChoice;
 
@@ -278,7 +288,7 @@ export function runForwardModelBench(options?: {
       turnDeadlineMs: null,
       actionLog,
     });
-    const actions = listLegalActions(state, botId);
+    const actions = listLegalActionsForBot(state, botId);
     const rng = createRng(`${state.seed}:bench-turn:${String(i)}`);
     const action =
       actions.length === 0
@@ -322,7 +332,7 @@ export function runForwardModelBench(options?: {
         turnDeadlineMs: null,
         actionLog,
       });
-      const actions = listLegalActions(state, botId);
+      const actions = listLegalActionsForBot(state, botId);
       const rng = createRng(`${state.seed}:bench-playout:${String(i)}:${String(depth)}`);
       const action =
         actions.length === 0

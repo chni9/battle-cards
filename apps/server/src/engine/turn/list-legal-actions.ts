@@ -39,3 +39,16 @@ export function listLegalActions(state: GameState, playerId: string): readonly T
     ...listLegalActivateDuplicationActions(actor),
   ];
 }
+
+/**
+ * Bot policies (Lot 69): no voluntary `deactivatePersistent`. At four actives,
+ * playing a fifth card opens the forced slot-drop sub-choice instead.
+ */
+export function listLegalActionsForBot(
+  state: GameState,
+  playerId: string,
+): readonly TurnAction[] {
+  return listLegalActions(state, playerId).filter(
+    (action) => action.type !== 'deactivatePersistent',
+  );
+}

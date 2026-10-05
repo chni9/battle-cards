@@ -65,7 +65,7 @@ function spiedCannotRetaliate(view: PlayingStateView, opponentId: string): boole
     return false;
   }
 
-  const cards = [...spied.hand, ...spied.specialCards];
+  const cards = [...(spied.hand ?? []), ...(spied.specialCards ?? [])];
   return !cards.some((card) => isAttackCardId(card.cardId));
 }
 

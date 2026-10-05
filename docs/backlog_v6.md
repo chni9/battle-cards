@@ -634,6 +634,16 @@ New What’s new id (not an append to `lot-65`; that note is on `main`).
 
 ---
 
+## Lot 69 — Feedback rules (designer 2026-10-05)
+
+`PROTOCOL_VERSION` **42 → 44** (43 slot-drop; 44 Curse chooser + `slotOwnerPlayerId`). What’s new id `lot-69`.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L69-01 | Block skips Imposition; Spy / Spy+ inverted reveal; every lethal contributor rewarded; Shield refill; Card Absorber never pools; four active slots with drop picker and free deactivate. Rules spec, decisions, catalog copy, `lot-69` What’s new. **Acceptance:** tests beside each rule; `pnpm verify` green. | XL | **High** | L68-02 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |

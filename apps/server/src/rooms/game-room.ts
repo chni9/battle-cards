@@ -134,6 +134,7 @@ import {
   SPECIAL_SUB_CHOICE_MS,
 } from '../engine/turn/generic-sub-choice';
 import { STEAL_SUB_CHOICE_MS } from '../engine/turn/steal-choice';
+import { botDefaultSlotDropId, SLOT_DROP_SUB_CHOICE_MS } from '../engine/specials/slot-drop';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import {
   completeEliminationRewardChoice,
@@ -142,7 +143,9 @@ import {
   completeReanimationKitPick,
   completeSpecialPick,
   completeStealChoice,
+  completeSlotDrop,
   expireEliminationRewardChoice,
+  expireSlotDrop,
   expireMirrorChoice,
   expirePoolPick,
   expireReanimationKitPick,
@@ -349,6 +352,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     failBotReanimationKit: (botId) => {
       this.failBotReanimationKitChoice(botId);
     },
+    completeBotSlotDrop: (botId, slotId, reason) => {
+      this.applyBotSlotDropChoice(botId, slotId, reason);
+    },
+    failBotSlotDrop: (botId) => {
+      this.failBotSlotDropChoice(botId);
+    },
   });
   /** Wall-clock start of the match (not lobby create). Feeds the finished-game log. */
   private startedAtMs: number | null = null;
@@ -451,6 +460,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
   override messages = {
     [CLIENT_READY]: (client: GameClient): void => {
       this.sendStateTo(client);
+      this.resyncSubChoiceRequiredFor(client);
     },
 
     [START_GAME]: (client: GameClient): void => {
@@ -750,6 +760,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     markReconnected(player);
     this.clearAbsentTimer(playerId);
     this.resumeTimersOwnedBy(playerId);
+    this.resyncSubChoiceRequiredFor(client);
     this.sendStateToEveryone();
   }
 
@@ -1614,6 +1625,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.recordTurnHistory(before, result);
     this.applyTurnResult(result);
 
+    if (result.consumesTurn === false) {
+      this.sendStateToEveryone();
+      return;
+    }
+
     if (result.mirrorChoicePending === true) {
       const choice = state.mirrorChoice;
 
@@ -1658,11 +1674,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
         if (chooser !== undefined) {
           this.beginSpecialTimer(chooser, choice);
         }
+      } else if (choice.kind === 'slot-drop') {
+        this.beginSlotDropTimer(choice, chooser);
       } else {
         this.beginReanimationKitTimer(choice, chooser);
       }
 
       this.sendStateToEveryone();
+      if (choice.kind === 'slot-drop' && chooser !== undefined) {
+        this.resyncSubChoiceRequiredFor(chooser);
+      }
       return;
     }
 
@@ -1717,6 +1738,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (parsed.kind === 'reanimation-kit') {
       this.handleReanimationKitPick(client, parsed);
+      return;
+    }
+
+    if (parsed.kind === 'slot-drop') {
+      this.handleSlotDrop(client, parsed);
       return;
     }
 
@@ -1949,9 +1975,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private applyTurnResult(result: TurnResult): void {
-    this.thinkTime.creditAndClose(Date.now());
-    this.actionTakenThisTurn = true;
-    this.clearTurnTimer();
+    if (result.consumesTurn !== false) {
+      this.thinkTime.creditAndClose(Date.now());
+      this.actionTakenThisTurn = true;
+      this.clearTurnTimer();
+    }
 
     const turnSequence = result.actionPlayed.turnSequence;
 
@@ -2320,6 +2348,122 @@ export class GameRoom extends Room<{ client: GameClient }> {
     );
   }
 
+  private handleSlotDrop(
+    client: GameClient,
+    parsed: { slotId: string },
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
+      return;
+    }
+
+    const result = completeSlotDrop(state, this.playerIdFor(client), parsed.slotId);
+
+    if (!result.ok) {
+      client.send(ERROR_MESSAGE, result);
+      return;
+    }
+
+    this.clearSubChoiceTimer('slot-drop');
+    this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
+  private beginSlotDropTimer(
+    choice: Extract<NonNullable<GameState['subChoice']>, { kind: 'slot-drop' }>,
+    client?: GameClient,
+    durationMs?: number,
+  ): void {
+    this.clearSubChoiceTimer('slot-drop');
+
+    const seat = this.seats.find((entry) => entry.sessionId === choice.playerId);
+    const hasClient =
+      client !== undefined || this.clients.some((c) => c.sessionId === choice.playerId);
+    const route = classifyRewardRoute(seat, hasClient);
+
+    if (route === 'bot') {
+      this.botDriver.handleSlotDropChoice(choice.playerId);
+      return;
+    }
+
+    const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
+    const ms =
+      durationMs ??
+      (remainingFromDeadline === 0 ? SLOT_DROP_SUB_CHOICE_MS : remainingFromDeadline);
+    const effectiveDeadline = durationMs !== undefined ? Date.now() + ms : choice.deadlineMs;
+
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind === 'slot-drop' && durationMs !== undefined) {
+      state.subChoice = { ...state.subChoice, deadlineMs: effectiveDeadline };
+    }
+
+    const target = client ?? this.clientForPlayerId(choice.playerId);
+
+    if (target !== undefined) {
+      this.sendSlotDropSubChoiceRequired(
+        target,
+        choice.slotOwnerId,
+        choice.eligibleSlots,
+        effectiveDeadline,
+      );
+    }
+
+    this.subChoiceTimers.set(
+      'slot-drop',
+      setTimeout(() => {
+        this.onSlotDropTimeout();
+      }, ms > 0 ? ms : SLOT_DROP_SUB_CHOICE_MS),
+    );
+  }
+
+  private onSlotDropTimeout(): void {
+    const state = this.gameState;
+
+    if (state?.subChoice?.kind !== 'slot-drop' || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const result = expireSlotDrop(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      return;
+    }
+
+    this.clearSubChoiceTimer('slot-drop');
+    this.applyTurnResult(result);
+
+    if (result.rewardChoicePending === true) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+      return;
+    }
+
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.beginTurnOrAbsentAutoPlay();
+    this.sendStateToEveryone();
+    this.broadcastTurnStarted();
+  }
+
   private onPoolTimeout(): void {
     const state = this.gameState;
 
@@ -2608,6 +2752,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.sendStateToEveryone();
         return;
       }
+
+      if (state !== null && choice?.kind === 'slot-drop') {
+        const chooser = this.clientForPlayerId(choice.playerId);
+        this.beginSlotDropTimer(choice, chooser);
+        this.sendStateToEveryone();
+        if (chooser !== undefined) {
+          this.resyncSubChoiceRequiredFor(chooser);
+        }
+        return;
+      }
     }
 
     this.actionTakenThisTurn = false;
@@ -2876,6 +3030,16 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.setPendingBotReason({ code: 'policy-fallback' });
         return { kitId };
       },
+      resolveSlotDrop: (s: GameState, actorId: string) => {
+        const choice = s.subChoice;
+
+        if (choice?.kind !== 'slot-drop' || choice.playerId !== actorId) {
+          throw new Error('slot drop pending without subChoice');
+        }
+
+        this.setPendingBotReason({ code: 'policy-fallback' });
+        return { slotId: botDefaultSlotDropId(s, actorId) };
+      },
       resolveReward: (s: GameState) => {
         const choice = s.rewardChoice;
 
@@ -3014,12 +3178,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     if (state.subChoice !== null) {
       const kind = state.subChoice.kind;
+      const rng = createRng(state.seed);
       const expired =
         kind === 'pool-pick'
-          ? expirePoolPick(state, createRng(state.seed))
-          : expireSpecialPick(state, createRng(state.seed));
+          ? expirePoolPick(state, rng)
+          : kind === 'special-pick'
+            ? expireSpecialPick(state, rng)
+            : kind === 'slot-drop'
+              ? expireSlotDrop(state, rng)
+              : null;
 
-      if (expired.ok) {
+      if (expired?.ok === true) {
         this.clearSubChoiceTimer(kind);
         this.applyTurnResult(expired);
 
@@ -3278,6 +3447,59 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('reanimation-kit');
     this.continueAfterRewards(result);
+  }
+
+  private applyBotSlotDropChoice(
+    botId: string,
+    slotId: string,
+    reason?: BotDecisionReason,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    this.setPendingBotReason(reason);
+    const result = completeSlotDrop(state, botId, slotId, createRng(state.seed));
+
+    if (!result.ok) {
+      this.pendingBotReason = null;
+      this.failBotSlotDropChoice(botId);
+      return;
+    }
+
+    this.clearSubChoiceTimer('slot-drop');
+    this.applyTurnResult(result);
+  }
+
+  private failBotSlotDropChoice(botId: string): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const choice = state.subChoice;
+
+    if (choice?.kind !== 'slot-drop' || choice.playerId !== botId) {
+      return;
+    }
+
+    console.error(`[${this.roomId}] bot slot drop failed for ${botId} — expiring default`);
+    const result = expireSlotDrop(state, createRng(state.seed));
+
+    if (!result.ok) {
+      state.subChoice = null;
+      this.actionTakenThisTurn = false;
+      this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
+      this.broadcastTurnStarted();
+      return;
+    }
+
+    this.clearSubChoiceTimer('slot-drop');
+    this.applyTurnResult(result);
   }
 
   private failBotReanimationKitChoice(botId: string): void {
@@ -3568,6 +3790,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
       if (client !== undefined) {
         this.beginSpecialTimer(client, state.subChoice, pausedSpecialRemainingMs);
       }
+    }
+
+    const pausedSlotDropRemainingMs = this.pausedSubChoiceRemainingMs.get('slot-drop');
+
+    if (
+      state.subChoice?.kind === 'slot-drop' &&
+      state.subChoice.playerId === sessionId &&
+      pausedSlotDropRemainingMs !== undefined
+    ) {
+      this.pausedSubChoiceRemainingMs.delete('slot-drop');
+      const client = this.clientForPlayerId(sessionId);
+      this.beginSlotDropTimer(state.subChoice, client, pausedSlotDropRemainingMs);
     }
 
     const pausedRewardRemainingMs = this.pausedSubChoiceRemainingMs.get('elimination-reward');
@@ -3898,6 +4132,77 @@ export class GameRoom extends Room<{ client: GameClient }> {
         this.sendStateTo(client);
       }
     }
+  }
+
+  /**
+   * Re-arm the sub-choice UI after reconnect or `CLIENT_READY` without resetting an
+   * active server timer (Lot 69 slot-drop).
+   */
+  private resyncSubChoiceRequiredFor(client: GameClient): void {
+    const state = this.gameState;
+
+    if (state === null || this.winnerPlayerId !== null) {
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+    const choice = state.subChoice;
+
+    if (choice?.playerId !== playerId) {
+      return;
+    }
+
+    switch (choice.kind) {
+      case 'pool-pick':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'pool-pick',
+          eligibleInstanceIds: choice.eligibleInstanceIds,
+          maxCount: choice.maxCount,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'special-pick':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'special-pick',
+          eligibleCardIds: choice.eligibleCardIds,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'reanimation-kit':
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'reanimation-kit',
+          eligibleKitIds: choice.eligibleKitIds,
+          deadlineMs: choice.deadlineMs,
+        });
+        break;
+      case 'slot-drop':
+        this.sendSlotDropSubChoiceRequired(
+          client,
+          choice.slotOwnerId,
+          choice.eligibleSlots,
+          choice.deadlineMs,
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  private sendSlotDropSubChoiceRequired(
+    client: GameClient,
+    slotOwnerPlayerId: string,
+    eligibleSlots: Extract<
+      NonNullable<GameState['subChoice']>,
+      { kind: 'slot-drop' }
+    >['eligibleSlots'],
+    deadlineMs: number,
+  ): void {
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'slot-drop',
+      slotOwnerPlayerId,
+      eligibleSlots,
+      deadlineMs,
+    });
   }
 
   private sendStateTo(client: GameClient): void {
@@ -4344,6 +4649,14 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
     }
 
     return { kind: 'reanimation-kit', kitId: payload.kitId };
+  }
+
+  if (kind === 'slot-drop') {
+    if (!('slotId' in payload) || typeof payload.slotId !== 'string' || payload.slotId.length === 0) {
+      return null;
+    }
+
+    return { kind: 'slot-drop', slotId: payload.slotId };
   }
 
   return null;

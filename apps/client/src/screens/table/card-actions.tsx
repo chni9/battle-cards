@@ -97,6 +97,7 @@ export interface CardActionsProps {
   onBeginUse: (instance: CardInstance) => void;
   /** Tutorial spotlight on Use / Upgrade / Sell (L45-05). */
   tutorialAction?: 'use' | 'upgrade' | 'sell';
+  onDeactivatePersistent?: (effectId: string) => void;
 }
 
 export function CardActions(props: CardActionsProps): ReactElement {
@@ -115,7 +116,16 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onSellCard,
     onBeginUse,
     tutorialAction,
+    onDeactivatePersistent,
   } = props;
+
+  const canDeactivateInspect =
+    dialog?.kind === 'inspect' &&
+    dialog.source === 'active' &&
+    dialog.instance.cardId !== 'shield' &&
+    dialog.instance.cardId !== 'sentence' &&
+    isMyTurn &&
+    onDeactivatePersistent !== undefined;
 
   const [targetId, setTargetId] = useState('');
   const [consumeInstanceId, setConsumeInstanceId] = useState('');
@@ -360,6 +370,18 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 />
               </Button>
             )}
+            {canDeactivateInspect ? (
+              <Button
+                compact
+                variant="purple"
+                onClick={() => {
+                  onDeactivatePersistent(dialog.instance.instanceId);
+                  close();
+                }}
+              >
+                Deactivate
+              </Button>
+            ) : null}
             <Button compact variant="green" onClick={close}>
               Close
             </Button>

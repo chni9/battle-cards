@@ -2,6 +2,7 @@ import {
   type PlayingStateView,
   type PublicPlayerView,
   type ResolveSubChoicePayload,
+  type SlotDropChoiceRequiredPayload,
   type SubChoiceRequiredPayload,
 } from '@card-battle/shared';
 import type { ReactElement, ReactNode } from 'react';
@@ -13,7 +14,9 @@ import { PoolPickPanel } from './pool-pick-panel';
 import { ReanimationKitPanel } from './reanimation-kit-panel';
 import { RewardPanel } from './reward-panel';
 import { SpecialPickPanel } from './special-pick-panel';
+import { SlotDropPanel } from './slot-drop-panel';
 import { StealPickPanel } from './steal-pick-panel';
+import { nicknameOf } from '../table-helpers';
 
 const SUB_CHOICE_COPY: Record<
   SubChoiceRequiredPayload['kind'],
@@ -48,7 +51,23 @@ const SUB_CHOICE_COPY: Record<
     title: 'Choose a kit',
     expiryHint: 'On expiry: a random kit',
   },
+  'slot-drop': {
+    title: 'Drop an active card',
+    expiryHint: 'On expiry: oldest droppable active card is dropped',
+  },
 };
+
+function slotDropExpiryHint(
+  subChoice: SlotDropChoiceRequiredPayload,
+  view: PlayingStateView,
+): string {
+  if (subChoice.slotOwnerPlayerId === view.you) {
+    return 'On expiry: your oldest droppable active card is dropped';
+  }
+
+  const victimName = nicknameOf(view, subChoice.slotOwnerPlayerId);
+  return `On expiry: ${victimName}'s oldest droppable active card is dropped`;
+}
 
 export interface SubChoiceHostProps {
   subChoice: SubChoiceRequiredPayload;
@@ -94,6 +113,14 @@ function renderKindPanel(
       return <SpecialPickPanel subChoice={subChoice} onResolve={onResolve} />;
     case 'reanimation-kit':
       return <ReanimationKitPanel subChoice={subChoice} onResolve={onResolve} />;
+    case 'slot-drop':
+      return (
+        <SlotDropPanel
+          subChoice={subChoice}
+          view={view}
+          onResolve={onResolve}
+        />
+      );
     default: {
       const exhaustive: never = subChoice;
       return exhaustive;
@@ -102,9 +129,13 @@ function renderKindPanel(
 }
 
 export function SubChoiceHost(props: SubChoiceHostProps): ReactElement {
-  const { subChoice, nowMs } = props;
+  const { subChoice, view, nowMs } = props;
   const copy = SUB_CHOICE_COPY[subChoice.kind];
   const secondsLeft = Math.max(0, Math.ceil((subChoice.deadlineMs - nowMs) / 1000));
+  const expiryHint =
+    subChoice.kind === 'slot-drop'
+      ? slotDropExpiryHint(subChoice, view)
+      : copy.expiryHint;
 
   return (
     <Dialog
@@ -118,7 +149,7 @@ export function SubChoiceHost(props: SubChoiceHostProps): ReactElement {
         : {})}
     >
       <p className="text-sm text-ink-muted">
-        {copy.expiryHint} · {String(secondsLeft)}s left
+        {expiryHint} · {String(secondsLeft)}s left
       </p>
       <div className="mt-3">{renderKindPanel(props)}</div>
     </Dialog>

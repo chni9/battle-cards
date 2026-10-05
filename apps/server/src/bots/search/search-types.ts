@@ -24,7 +24,8 @@ export type SearchDecision =
       readonly chooserPlayerId: string;
       readonly eliminationId: string;
       readonly choices: readonly [RewardChoice, RewardChoice];
-    };
+    }
+  | { readonly kind: 'slot-drop'; readonly slotId: string };
 
 export type SearchDecisionKind = SearchDecision['kind'] | SubChoiceKind;
 
