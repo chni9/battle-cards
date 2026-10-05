@@ -2714,6 +2714,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
     });
   }
 
+  /** Post-`applyTurnResult` slice — omits fields already logged by the turn apply. */
+  private turnContinuationFrom(result: TurnResult): {
+    rewardChoicePending: boolean;
+    subChoicePending?: boolean;
+    winnerPlayerId: string | null;
+  } {
+    return {
+      rewardChoicePending: result.rewardChoicePending === true,
+      winnerPlayerId: result.winnerPlayerId,
+      ...(result.subChoicePending === true ? { subChoicePending: true } : {}),
+    };
+  }
+
   private continueAfterRewards(result: {
     rewardChoicePending: boolean;
     subChoicePending?: boolean;
@@ -3471,6 +3484,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('slot-drop');
     this.applyTurnResult(result);
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+    this.continueAfterRewards(this.turnContinuationFrom(result));
   }
 
   private failBotSlotDropChoice(botId: string): void {
@@ -3500,6 +3517,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.clearSubChoiceTimer('slot-drop');
     this.applyTurnResult(result);
+    if (result.winnerPlayerId !== null) {
+      return;
+    }
+    this.continueAfterRewards(this.turnContinuationFrom(result));
   }
 
   private failBotReanimationKitChoice(botId: string): void {

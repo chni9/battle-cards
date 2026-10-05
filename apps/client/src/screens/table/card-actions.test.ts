@@ -49,6 +49,11 @@ describe('card-actions visual pickers (L44-02 / L44-04 / L44-05 / L44-06)', () =
     expect(source).toContain('<Button compact variant="red" onClick={close}>');
   });
 
+  it('shows Deactivate only for own active persistents (Lot 69)', () => {
+    expect(source).toContain('ownsInspectedActive');
+    expect(source).toContain('view.self.activePersistentEffects.some');
+  });
+
   it('opens log and queue inspect without a Spy footer (L56-05)', () => {
     expect(source).toContain("source: 'spy' | 'active' | 'log' | 'queue'");
     expect(source).toContain("dialog.source === 'spy'");

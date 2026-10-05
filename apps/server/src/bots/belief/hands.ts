@@ -23,6 +23,7 @@ import {
   type KitId,
   type PlayingStateView,
   type PublicPlayerView,
+  spiedRevealsCards,
 } from '@card-battle/shared';
 
 import type { Rng } from '../../engine/rng';
@@ -372,7 +373,7 @@ export function accountOpponentHandSizes(
 
   const spied = player.spied;
 
-  if (spied !== undefined) {
+  if (spied !== undefined && spiedRevealsCards(spied)) {
     return sizesFromCards(spied.hand ?? [], spied.specialCards ?? []);
   }
 
@@ -646,7 +647,7 @@ export function sampleOpponentHandAndSpecials(args: {
   const player = playerView(view, opponentPlayerId);
   const spied = player?.spied;
 
-  if (spied !== undefined) {
+  if (spied !== undefined && spiedRevealsCards(spied)) {
     return {
       hand: copyInstances(spied.hand ?? []),
       specialCards: copyInstances(spied.specialCards ?? []),
