@@ -59,16 +59,21 @@ export interface EliminateWithoutRewardResult {
 }
 
 /**
- * Record a third-party source that dealt life loss or a lethal effect this phase.
+ * Record a third-party source that contributed to an elimination this resolution.
  * Self sources are ignored. Distinct sources only.
+ *
+ * `attackResolved` (Lot 69): pending attack that applied on the victim's lethal
+ * turn counts even when the shield absorbed all damage — delayed turns must not
+ * hide contributors who attacked before the finishing hit.
  */
 export function recordEliminationContributor(
   state: GameState,
   victimPlayerId: string,
   sourcePlayerId: string,
   livesLostOrLethal: number,
+  options?: { readonly attackResolved?: true },
 ): void {
-  if (livesLostOrLethal <= 0) {
+  if (livesLostOrLethal <= 0 && options?.attackResolved !== true) {
     return;
   }
 

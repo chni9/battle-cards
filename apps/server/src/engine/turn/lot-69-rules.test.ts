@@ -93,6 +93,66 @@ describe('Lot 69 — Card Absorber pool', () => {
 });
 
 describe('Lot 69 — elimination rewards', () => {
+  it('rewards attackers whose hits resolved on the kill turn with zero life loss', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'A' },
+        { id: 'b', nickname: 'B' },
+        { id: 'c', nickname: 'C' },
+      ],
+      seed: 'l69-shield-contrib',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    const c = state.players.find((p) => p.id === 'c');
+    if (a === undefined || b === undefined || c === undefined) {
+      throw new Error('missing seats');
+    }
+
+    b.lives = 1;
+    b.shield = 1;
+    b.shieldIsUpgraded = false;
+    a.lives = 5;
+    c.lives = 5;
+    b.pendingEffects = [
+      {
+        id: 'hit-a',
+        cardId: 'basic-attack',
+        sourcePlayerId: a.id,
+        targetPlayerId: b.id,
+        queuedAt: 0,
+        isUpgraded: false,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+      {
+        id: 'hit-c',
+        cardId: 'basic-attack',
+        sourcePlayerId: c.id,
+        targetPlayerId: b.id,
+        queuedAt: 1,
+        isUpgraded: false,
+        damageMultiplier: 1,
+        redirectedBy: null,
+        chosenInstanceId: null,
+      },
+    ];
+    state.currentTurnPlayerId = b.id;
+
+    const turn = performTurnAction(state, b.id, { type: 'draw' });
+    expect(turn.ok).toBe(true);
+
+    if (!turn.ok) {
+      return;
+    }
+
+    expect(b.isEliminated).toBe(true);
+    expect(state.rewardQueue).toHaveLength(2);
+    const rewarded = state.rewardQueue.map((job) => job.eliminatorPlayerId).toSorted();
+    expect(rewarded).toEqual([a.id, c.id].toSorted());
+  });
+
   it('orders every contributor for rewards', () => {
     const state = createInitialState({
       seats: [
