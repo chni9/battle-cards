@@ -13,6 +13,7 @@ import {
   completeReanimationKitPick,
   completeSpecialPick,
   completeStealChoice,
+  completeSlotDrop,
   performTurnAction,
 } from '../../engine/turn/perform-action';
 import type { SearchDecision } from './search-types';
@@ -113,6 +114,19 @@ export function applySearchDecision(
       }
 
       const result = completeReanimationKitPick(state, owner, decision.kitId, rng, nowMs);
+      return {
+        ok: result.ok,
+        terminal: result.ok && result.winnerPlayerId !== null,
+      };
+    }
+    case 'slot-drop': {
+      const owner = state.subChoice?.playerId;
+
+      if (owner === undefined || state.subChoice?.kind !== 'slot-drop') {
+        return { ok: false, terminal: false };
+      }
+
+      const result = completeSlotDrop(state, owner, decision.slotId, rng, nowMs);
       return {
         ok: result.ok,
         terminal: result.ok && result.winnerPlayerId !== null,

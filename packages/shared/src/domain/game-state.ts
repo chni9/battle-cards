@@ -151,7 +151,10 @@ export type StealChoiceState = Omit<Extract<SubChoiceState, { kind: 'steal-pick'
  */
 export type GenericSubChoiceState = Extract<
   SubChoiceState,
-  { kind: 'pool-pick' } | { kind: 'special-pick' } | { kind: 'reanimation-kit' }
+  | { kind: 'pool-pick' }
+  | { kind: 'special-pick' }
+  | { kind: 'reanimation-kit' }
+  | { kind: 'slot-drop' }
 >;
 
 /**
@@ -168,6 +171,8 @@ export interface PendingSentence {
   sourcePlayerId: string;
   remainingOwnerTurns: number;
   isUpgraded: boolean;
+  /** `turnSequence` when this Sentence opened a slot — Lot 69. */
+  slotQueuedAt?: number;
 }
 
 /** Activator turns until fire, not including the play turn (rules spec §5). */

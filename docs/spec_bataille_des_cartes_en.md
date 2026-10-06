@@ -26,7 +26,7 @@
 
 ### Shared Pool
 
-Sold cards, used special cards (a special card has only one use), and eliminated players' cards join a common pool. Occupancy and the faces of cards sitting in the pool are visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
+Sold cards, used special cards (a special card has only one use, except Card Absorber — see section 5), and eliminated players' cards join a common pool. Occupancy and the faces of cards sitting in the pool are visible to all players. Card Absorber recovers four cards from it. Independently, on their turn a player may buy **one random** card from the pool: the table-wide fee starts at 1 point and **doubles after every such buy** (never resets, including when the pool is empty). Card Absorber does not change that fee. An empty pool cannot be bought from. The buy consumes the turn. Other players see that a pool buy happened; they do **not** see which card was recovered unless they already see that buyer's private information (self, Spy of the buyer, or an eliminated / walk-in spectator overlay). The buyer still sees the card.
 
 ### Counter Rule
 
@@ -65,8 +65,8 @@ Action cards follow the general Card Economy rules (section 1). The Counter Rule
 - Upgrade: also captures every point and every upgrade point that left that opponent during their last move, whatever the way (a spend, a sale, or a theft). Shield points that leave are never captured. Base Absorber stays lives only.
 
 **Spy** — Price: 2 points
-- Action: allows you to see the opponent's kit and cards for the rest of the game. Can be countered by another Spy of the same upgrade level. An upgraded Spy is not cancelled by a basic Spy; a basic Spy is cancelled by an upgraded Spy, which stays pending.
-- Upgrade: also allows you to see all of the opponent's resources.
+- Action: allows you to see the opponent's lives, points, upgrade points, and shield live for the rest of the game (not their kit or cards). Can be countered by another Spy of the same upgrade level. An upgraded Spy is not cancelled by a basic Spy; a basic Spy is cancelled by an upgraded Spy, which stays pending.
+- Upgrade: also allows you to see the opponent's kit, hand, and special cards, in addition to those live resources.
 - The spied player may, as their turn action, pay 10 points to drop **one** living opponent's Spy on them (Unspy). That action is public. An eliminated spectator's overlay vision is not a Spy and cannot be Unspied.
 
 **Thief** — Price: 5 points
@@ -78,8 +78,8 @@ Action cards follow the general Card Economy rules (section 1). The Counter Rule
 - Upgrade: also allows redirecting upgraded attacks, and doubles the damage of the redirected attack.
 
 **Shield** — Price: 7 points
-- Action: grants 4 shield points. A player can only have one active shield at a time; it must be destroyed before creating a new one.
-- Upgrade: grants 7 shield points and blocks Thief, Spy, and Imposition at no cost in shield points while active. While a shield is already up and not yet upgraded, spending 1 upgrade point and the turn sets that upgraded flag. Remaining shield points stay as they are.
+- Action: grants 4 shield points. A player can only have one active shield at a time. Playing Shield while a shield is already up spends the turn and sets the total from the card just played: basic becomes 4 and not upgraded; Shield+ becomes 7 and upgraded. A basic Shield played onto an upgraded shield drops it to 4 and clears the upgraded flag. The Shield card stays in hand (action cards are reusable). Refilling a shield does not open a second shield or an extra active slot.
+- Upgrade: grants 7 shield points and blocks Thief, Spy, and Imposition at no cost in shield points while active. While a shield is already up and not yet upgraded, spending 1 upgrade point and the turn sets that upgraded flag. Remaining shield points stay as they are until replaced by playing Shield again as above.
 
 **Tax** — Price: 1 life (this cost always applies; the shield only protects against attacks)
 - Action: allows you to gain 4 points.
@@ -143,7 +143,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - A special card cannot be bought or sold individually. It is possible to pay 20 points to get a random special card (the player does not choose which one).
 - A special card has only one use. As with attack and action cards, upgrading it costs 1 upgrade point. An upgrade placed before use is lost once the card is played.
 - Spending 1 upgrade point can also upgrade one of your own active Poison, Points Generator, Imposition, Super Absorber, Roulette, Invisibility, or Shield cards, or your own ticking Sentence. That spends the turn. Counters, Sentence remaining turns, and remaining Shield points do not reset; the upgraded rate applies from the next tick. An upgraded Shield blocks Thief, Spy, and Imposition at no shield cost while it is still up. Sentence only becomes upgraded, so the later draw cannot pick you. Curse, Reanimation, and a card that is already upgraded cannot be upgraded this way.
-- A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card.
+- A special card with a persistent effect (activated once, then active until a deactivation condition) is permanently lost once deactivated, just like any other special card — except voluntary deactivate (below) returns it to the shared pool.
+- **Active slots (max 4):** a slot is an up shield, your Poison, Points Generator, Imposition, Super Absorber, Roulette, or Invisibility, a Curse sitting on you, or your own ticking Sentence. One-shots, pending attacks, and Attack Thief charges do not count. Curse occupies the cursed player, not the caster. Upgrading an already-active persistent card, and refilling a shield, do not add a slot. At four slots, a new activation does not stick until someone drops one existing slot from a list (same timeout as other picks); they cannot refuse the new card. The activating player chooses which slot to drop, except when Curse lands on an opponent who already has four actives — then the Curse user picks which of the victim's slots to remove. Clearing a dropped shield sets shield points to 0; clearing Sentence cancels the countdown (its card is already in the pool). A forced drop cannot remove a Curse on you — only transfer on a successful attack or dropping to 1 life ends it. On your turn you may deactivate as many of your persistent specials as you want, including a Curse on you, without spending your action or ending the turn; those cards go to the pool. Shield and a ticking Sentence still occupy a slot but cannot be hand-deactivated (only a forced drop clears them).
 - Five cards (Points Generator, Poison, Super Absorber, Imposition, Roulette) are tied to a **dedicated internal counter** ("card lives"), independent of the combat shield: it does not protect the user (damage continues to reach them normally, following the usual shield/lives rules). In parallel, every time the user loses a life to damage, this counter also loses 1 point. When it reaches 0, the card deactivates and is permanently lost. Starting counter values: Points Generator 3, Poison 3, Super Absorber 2, Imposition 2, Roulette 2.
 
 ### Card List
@@ -161,7 +162,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: the user is no longer eliminated by their own card. They remain the eliminator of every opponent killed by this effect, and receive the corresponding rewards normally.
 
 **Block** — Price: 5 points
-- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards. Block itself cannot be played during an active Block chain.
+- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards. Block itself cannot be played during an active Block chain. While Block is active (the turn it is played and every extra turn in the chain), Imposition does not drain that player; Poison, Curse, and attacks are unchanged.
 - Upgrade: 7 consecutive turns instead of 3.
 
 **Super Regeneration** — Price: 6 points
@@ -189,7 +190,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: also gains 10 points, 2 upgrade points and 4 lives.
 
 **Invisibility** — Price: 10 points
-- Action: the user becomes immune to any opposing action and draws 4 points per turn while invisibility is active (designer 2026-09-15 / Lot 58). Lasts **4** of the user's turns including the activation turn, then the card is lost. While it is active the user cannot play anything that acts on another player (attacks, MEGA ATTACK, Spy, Thief, Card Thief, Spy Thief, Upgrade Point Thief, Poison, Curse, Imposition, Super Absorber, Absorber, Cloning, Suicide, Sentence, Mirror, Super Mirror). Self-economy stays legal (draw, shop, buy/sell/upgrade, Super Regeneration, Card Transformer, Card Absorber, Block, Reanimation, Duplicator). Remaining turns are not card lives: damage does not shorten the duration. The user may still deactivate it manually as their turn action (the card is lost).
+- Action: the user becomes immune to any opposing action and draws 4 points per turn while invisibility is active (designer 2026-09-15 / Lot 58). Lasts **4** of the user's turns including the activation turn, then the card is lost. While it is active the user cannot play anything that acts on another player (attacks, MEGA ATTACK, Spy, Thief, Card Thief, Spy Thief, Upgrade Point Thief, Poison, Curse, Imposition, Super Absorber, Absorber, Cloning, Suicide, Sentence, Mirror, Super Mirror). Self-economy stays legal (draw, shop, buy/sell/upgrade, Super Regeneration, Card Transformer, Card Absorber, Block, Reanimation, Duplicator). Remaining turns are not card lives: damage does not shorten the duration. On their turn the user may deactivate it without spending their action (the card goes to the pool).
 - Upgrade: lasts **7** of the user's turns instead of 4, and draws 6 points per turn.
 
 **Reanimation** — Price: 8 points
@@ -197,7 +198,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: allows choosing the reanimation kit instead of a random draw.
 
 **Card Absorber** — Price: 4 points
-- Action: recovers 4 random cards from the shared pool (sold cards, used special cards, eliminated players' cards).
+- Action: recovers 4 random cards from the shared pool (sold cards, used special cards except Card Absorber itself, eliminated players' cards). The Card Absorber card is consumed and never joins the pool.
 - Upgrade: allows choosing the 4 recovered cards instead of a random draw.
 
 **MEGA ATTACK** — Price: 16 points
@@ -255,7 +256,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 - Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 wipe (section 4). A wipe does not eliminate.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
-- Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
+- Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Imposition does not drain on the turn Block is played against that player, nor during that player's Block extra turns. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
 
 ### Mutual Attacks
 
@@ -268,10 +269,8 @@ An attack redirected by Mirror remains a fully pending attack: if the player it 
 ### Elimination
 
 - An eliminated player loses all their lives. They become a spectator; all their unclaimed cards join the shared pool (section 1).
-- The eliminator chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's cards (including their unused special cards), or an upgrade point. Both choices can be identical (e.g. "4 lives" twice).
-- When a single effect eliminates several players at once, the eliminator receives two rewards per eliminated player, cumulative.
-- A player eliminated without a third-party eliminator — through Tax's life cost, their own Sentence, or their own non-upgraded Suicide — generates no reward for anyone. A Gambler wipe is not an elimination and pays no reward.
-- *Case of several simultaneous eliminators: the reward goes to whoever has the fewest lives remaining among the eliminators. In case of a tie, whoever has the fewest points. In case of another tie, a random draw among the tied eliminators.*
+- Each living player who contributed to the kill on the turn the victim dies chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's remaining cards (including unused special cards), or an upgrade point. That includes every attacker whose pending hit **resolved** on that turn against the victim, even when the shield absorbed all damage or a later hit dealt the finishing blow — delayed resolution must not strip credit from earlier attackers. Non-attack life loss (Poison, Imposition, Tax, and so on) still requires actual lives taken. Both reward choices can be identical. A card already taken is gone before the next picker. Rewards are claimed in order: fewest lives among contributors, then fewest points, then a seeded random draw among ties. Pending attacks that never resolved do not count. When several players die in one resolution, each contributor gets two full reward picks per victim they helped kill, in that order.
+- A player eliminated without a third-party contributor — through Tax's life cost, their own Sentence, or their own non-upgraded Suicide — generates no reward for anyone. A Gambler wipe is not an elimination and pays no reward.
 
 ## 7. Game Modes
 

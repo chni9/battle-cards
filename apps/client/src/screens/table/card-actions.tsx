@@ -19,6 +19,10 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useState, type ReactElement } from 'react';
 
 import { CARDS_WITH_ACTIVATED_ART } from '../../design/asset-lookup';
+import {
+  DEACTIVATE_CONFIRM_BODY,
+  DEACTIVATE_CONFIRM_TITLE,
+} from './table-copy';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { CardChoiceTile } from '../../design/components/card-choice-tile';
@@ -97,6 +101,7 @@ export interface CardActionsProps {
   onBeginUse: (instance: CardInstance) => void;
   /** Tutorial spotlight on Use / Upgrade / Sell (L45-05). */
   tutorialAction?: 'use' | 'upgrade' | 'sell';
+  onDeactivatePersistent?: (effectId: string) => void;
 }
 
 export function CardActions(props: CardActionsProps): ReactElement {
@@ -115,16 +120,42 @@ export function CardActions(props: CardActionsProps): ReactElement {
     onSellCard,
     onBeginUse,
     tutorialAction,
+    onDeactivatePersistent,
   } = props;
+
+  const ownsInspectedActive =
+    dialog?.kind === 'inspect' &&
+    view.self.activePersistentEffects.some((effect) => effect.id === dialog.instance.instanceId);
+
+  const canDeactivateInspect =
+    dialog?.kind === 'inspect' &&
+    dialog.source === 'active' &&
+    ownsInspectedActive &&
+    dialog.instance.cardId !== 'shield' &&
+    dialog.instance.cardId !== 'sentence' &&
+    isMyTurn &&
+    onDeactivatePersistent !== undefined;
 
   const [targetId, setTargetId] = useState('');
   const [consumeInstanceId, setConsumeInstanceId] = useState('');
   const [multiIds, setMultiIds] = useState<string[]>([]);
   const [multiTargets, setMultiTargets] = useState<Record<string, string>>({});
+  const [deactivateConfirmEffectId, setDeactivateConfirmEffectId] = useState<string | null>(
+    null,
+  );
 
   const close = (): void => {
     setConsumeInstanceId('');
+    setDeactivateConfirmEffectId(null);
     setDialog(null);
+  };
+
+  const closeInspectDialog = (): void => {
+    if (deactivateConfirmEffectId !== null) {
+      setDeactivateConfirmEffectId(null);
+      return;
+    }
+    close();
   };
 
   const seatIsLivingInvisible = (player: PublicPlayerView): boolean =>
@@ -339,7 +370,7 @@ export function CardActions(props: CardActionsProps): ReactElement {
             ? (getCard(dialog.instance.cardId)?.name ?? 'Card')
             : 'Inspect'
         }
-        onClose={close}
+        onClose={closeInspectDialog}
         actions={
           <>
             {inspectUpgradeId !== null && (
@@ -360,6 +391,17 @@ export function CardActions(props: CardActionsProps): ReactElement {
                 />
               </Button>
             )}
+            {canDeactivateInspect ? (
+              <Button
+                compact
+                variant="purple"
+                onClick={() => {
+                  setDeactivateConfirmEffectId(dialog.instance.instanceId);
+                }}
+              >
+                Deactivate
+              </Button>
+            ) : null}
             <Button compact variant="green" onClick={close}>
               Close
             </Button>
@@ -656,6 +698,42 @@ export function CardActions(props: CardActionsProps): ReactElement {
             );
           })}
         </ul>
+      </Dialog>
+
+      <Dialog
+        open={deactivateConfirmEffectId !== null}
+        title={DEACTIVATE_CONFIRM_TITLE}
+        onClose={() => {
+          setDeactivateConfirmEffectId(null);
+        }}
+        actions={
+          <>
+            <Button
+              compact
+              variant="green"
+              onClick={() => {
+                setDeactivateConfirmEffectId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              compact
+              variant="purple"
+              onClick={() => {
+                if (deactivateConfirmEffectId !== null) {
+                  onDeactivatePersistent?.(deactivateConfirmEffectId);
+                }
+                setDeactivateConfirmEffectId(null);
+                close();
+              }}
+            >
+              Deactivate
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink">{DEACTIVATE_CONFIRM_BODY}</p>
       </Dialog>
     </>
   );

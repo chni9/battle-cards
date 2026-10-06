@@ -184,9 +184,9 @@ export interface PublicPlayerView {
  * Upgraded (`full-resources`): live lives, points, upgrade points, shield.
  */
 export interface SpiedPlayerView {
-  kitId: KitId;
-  hand: readonly CardInstance[];
-  specialCards: readonly CardInstance[];
+  kitId?: KitId;
+  hand?: readonly CardInstance[];
+  specialCards?: readonly CardInstance[];
   /** Live resources — upgraded Spy only. */
   lives?: number;
   points?: number;
@@ -574,6 +574,8 @@ export interface GameRecapPlayerView {
   /** Combat eliminations credited to this seat. */
   kills: number;
   thinkTimeMs: number;
+  /** `actionPlayed` rows by this seat — average think-time denominator. */
+  turnActionsCount: number;
 }
 
 export interface GameRecapEliminationView {

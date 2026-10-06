@@ -7,14 +7,27 @@ import { describe, expect, it } from 'vitest';
 import { livingSpiesOnYou, visibleKitId } from './table-helpers';
 
 describe('visibleKitId (L44-02)', () => {
-  it('returns death-reveal kit, else Spy kit, else null', () => {
+  it('returns death-reveal kit, else Spy+ kit, else null (Lot 69)', () => {
     expect(
       visibleKitId({
         eliminationReveal: { kitId: 'assassin' },
-        spied: { kitId: 'ghost' },
+        spied: {
+          kitId: 'ghost',
+          hand: [],
+          specialCards: [],
+        },
       } as never),
     ).toBe('assassin');
-    expect(visibleKitId({ spied: { kitId: 'ghost' } } as never)).toBe('ghost');
+    expect(
+      visibleKitId({
+        spied: {
+          kitId: 'ghost',
+          hand: [],
+          specialCards: [],
+        },
+      } as never),
+    ).toBe('ghost');
+    expect(visibleKitId({ spied: { kitId: 'ghost', lives: 10 } } as never)).toBeNull();
     expect(visibleKitId({} as never)).toBeNull();
   });
 

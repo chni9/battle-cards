@@ -146,6 +146,7 @@ export function startPendingSentence(
     sourcePlayerId,
     remainingOwnerTurns: SENTENCE_OWNER_TURNS,
     isUpgraded,
+    slotQueuedAt: state.turnSequence,
   });
 }
 

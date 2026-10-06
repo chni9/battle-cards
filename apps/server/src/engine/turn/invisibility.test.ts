@@ -98,8 +98,9 @@ describe('Invisibility (L25-02)', () => {
     expect(a.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')).toBe(
       false,
     );
-    // Deactivate turn already ran applyPersistentEffects after the action — Poison ticks once.
-    expect(a.lives).toBe(9);
+    // Lot 69: free deactivate does not finish the turn or run persistents.
+    expect(a.lives).toBe(10);
+    expect(state.currentTurnPlayerId).toBe('a');
   });
 
   it('resolves pending attacks as immune including MEGA (#V4-9b)', () => {
@@ -226,7 +227,7 @@ describe('Invisibility (L25-02)', () => {
     expect(a.isEliminated).toBe(true);
   });
 
-  it('deactivate consumes the turn action (#V4-10)', () => {
+  it('deactivate does not consume the turn action (Lot 69)', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'A' },
@@ -254,7 +255,7 @@ describe('Invisibility (L25-02)', () => {
       false,
     );
     expect(state.pool.length).toBeGreaterThan(beforePool);
-    expect(state.currentTurnPlayerId).toBe('b');
+    expect(state.currentTurnPlayerId).toBe('a');
   });
 
   it('plays a seeded copy and starts a 4-turn counter (L58-06)', () => {

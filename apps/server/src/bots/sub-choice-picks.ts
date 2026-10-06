@@ -50,7 +50,7 @@ export function pickStealInstanceId(
       continue;
     }
 
-    for (const card of [...spied.hand, ...spied.specialCards]) {
+    for (const card of [...(spied.hand ?? []), ...(spied.specialCards ?? [])]) {
       if (eligible.has(card.instanceId)) {
         known.push(card);
       }

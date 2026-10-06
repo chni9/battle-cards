@@ -1081,7 +1081,9 @@ function TableScreenInner({
           upgradePoints: inspectOpponent.eliminationReveal.upgradePoints,
           shield: inspectOpponent.eliminationReveal.shield,
         }
-      : inspectOpponent?.spied !== undefined
+      : inspectOpponent?.spied?.kitId !== undefined &&
+          inspectOpponent.spied.hand !== undefined &&
+          inspectOpponent.spied.specialCards !== undefined
         ? {
             mode: 'spy' as const,
             kitId: inspectOpponent.spied.kitId,
@@ -1155,8 +1157,8 @@ function TableScreenInner({
     const instance =
       player?.eliminationReveal?.hand.find((c) => c.instanceId === instanceId) ??
       player?.eliminationReveal?.specialCards.find((c) => c.instanceId === instanceId) ??
-      player?.spied?.hand.find((c) => c.instanceId === instanceId) ??
-      player?.spied?.specialCards.find((c) => c.instanceId === instanceId);
+      (player?.spied?.hand ?? []).find((c) => c.instanceId === instanceId) ??
+      (player?.spied?.specialCards ?? []).find((c) => c.instanceId === instanceId);
     if (instance === undefined) {
       return;
     }
@@ -1464,16 +1466,6 @@ function TableScreenInner({
                 onInspectCatalogCard(effect.cardId, effect.isUpgraded, 'queue');
               }}
               onInspectSentence={onInspectSentenceChip}
-              {...(onDeactivatePersistent !== undefined
-                ? {
-                    onDeactivatePersistent: (effectId: string) => {
-                      if (!allowTutorialSend({ kind: 'other' })) {
-                        return;
-                      }
-                      onDeactivatePersistent(effectId);
-                    },
-                  }
-                : {})}
               {...(onActivateDuplication !== undefined
                 ? {
                     onActivateDuplication: () => {
@@ -1743,6 +1735,9 @@ function TableScreenInner({
         onUpgradeCard={upgradeCardGuarded}
         onSellCard={sellCardWithFx}
         onBeginUse={onBeginUse}
+        {...(onDeactivatePersistent !== undefined
+          ? { onDeactivatePersistent }
+          : {})}
         {...(cardActionSpotlight !== undefined ? { tutorialAction: cardActionSpotlight } : {})}
       />
 

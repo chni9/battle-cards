@@ -21,7 +21,7 @@ export const shieldHandler: CardHandler = {
       return false;
     }
 
-    return actor.shield === 0;
+    return true;
   },
 
   play(context: EffectContext): void {
@@ -31,7 +31,12 @@ export const shieldHandler: CardHandler = {
       return;
     }
 
+    const openingNewSlot = actor.shield === 0;
     actor.shield = context.card.isUpgraded ? SHIELD_POINTS_UPGRADED : SHIELD_POINTS_BASE;
     actor.shieldIsUpgraded = context.card.isUpgraded;
+
+    if (openingNewSlot) {
+      actor.shieldSlotQueuedAt = context.state.turnSequence;
+    }
   },
 };

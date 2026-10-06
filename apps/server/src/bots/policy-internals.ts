@@ -316,7 +316,7 @@ export function rankThreatOpponents(view: PlayingStateView, rng: Rng): string[] 
   const decorated = living.map((player) => {
     const cardsKnown =
       player.spied !== undefined
-        ? player.spied.hand.length + player.spied.specialCards.length
+        ? (player.spied.hand ?? []).length + (player.spied.specialCards ?? []).length
         : Number.POSITIVE_INFINITY;
     return {
       id: player.id,

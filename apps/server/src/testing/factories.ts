@@ -59,6 +59,7 @@ export function makeCounterEffect(overrides: Partial<PersistentEffect> = {}): Pe
     isUpgraded: false,
     counter: 3,
     targetPlayerId: null,
+    slotQueuedAt: 0,
     ...overrides,
   };
 }

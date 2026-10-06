@@ -77,7 +77,7 @@ describe('Shield (rules spec §3, L3-03)', () => {
     expect(actor.shieldIsUpgraded).toBe(true);
   });
 
-  it('rejects recreation while a shield is active', () => {
+  it('refills shield while a shield is active (Lot 69)', () => {
     const state = createInitialState({ seats, seed: 'shield-reject' });
     const actorId = state.currentTurnPlayerId;
 
@@ -105,9 +105,9 @@ describe('Shield (rules spec §3, L3-03)', () => {
       instanceId: 'sh-1',
     });
 
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
     expect(actor.shield).toBe(4);
-    expect(actor.points).toBe(14);
+    expect(actor.points).toBe(7);
   });
 
   it('clears shieldIsUpgraded when damage reduces shield to 0', () => {

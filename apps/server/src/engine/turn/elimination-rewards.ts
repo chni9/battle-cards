@@ -59,16 +59,21 @@ export interface EliminateWithoutRewardResult {
 }
 
 /**
- * Record a third-party source that dealt life loss or a lethal effect this phase.
+ * Record a third-party source that contributed to an elimination this resolution.
  * Self sources are ignored. Distinct sources only.
+ *
+ * `attackResolved` (Lot 69): pending attack that applied on the victim's lethal
+ * turn counts even when the shield absorbed all damage — delayed turns must not
+ * hide contributors who attacked before the finishing hit.
  */
 export function recordEliminationContributor(
   state: GameState,
   victimPlayerId: string,
   sourcePlayerId: string,
   livesLostOrLethal: number,
+  options?: { readonly attackResolved?: true },
 ): void {
-  if (livesLostOrLethal <= 0) {
+  if (livesLostOrLethal <= 0 && options?.attackResolved !== true) {
     return;
   }
 
@@ -92,6 +97,61 @@ export function recordEliminationContributor(
  * Pick the reward recipient among simultaneous eliminators — rules spec §6 italic.
  * Fewest lives, then fewest points, then seeded random among remaining ties.
  */
+/**
+ * Every lethal contributor receives rewards in this order (Lot 69).
+ * Fewest lives, then fewest points, then seeded shuffle within ties.
+ */
+export function orderEliminators(
+  candidateIds: readonly string[],
+  state: GameState,
+  rng: Rng,
+): string[] {
+  if (candidateIds.length === 0) {
+    return [];
+  }
+
+  const candidates = candidateIds
+    .map((id) => findPlayer(state, id))
+    .filter((player): player is Player => player !== undefined);
+
+  const groups = new Map<string, Player[]>();
+
+  for (const player of candidates) {
+    const key = `${String(player.lives)}:${String(player.points)}`;
+    const bucket = groups.get(key);
+
+    if (bucket === undefined) {
+      groups.set(key, [player]);
+    } else {
+      bucket.push(player);
+    }
+  }
+
+  const sortedKeys = [...groups.keys()].sort((left, right) => {
+    const leftParts = left.split(':');
+    const rightParts = right.split(':');
+    const leftLives = Number(leftParts[0] ?? 0);
+    const leftPoints = Number(leftParts[1] ?? 0);
+    const rightLives = Number(rightParts[0] ?? 0);
+    const rightPoints = Number(rightParts[1] ?? 0);
+
+    if (leftLives !== rightLives) {
+      return leftLives - rightLives;
+    }
+
+    return leftPoints - rightPoints;
+  });
+
+  const ordered: string[] = [];
+
+  for (const key of sortedKeys) {
+    const bucket = groups.get(key) ?? [];
+    ordered.push(...rng.shuffle(bucket).map((player) => player.id));
+  }
+
+  return ordered;
+}
+
 export function selectEliminator(
   candidateIds: readonly string[],
   state: GameState,
@@ -341,19 +401,16 @@ export function processEliminations(
     }
 
     const candidates = candidatesForVictim(state, player.id);
-    const eliminatorPlayerId = selectEliminator(candidates, state, rng);
+    const eliminators = orderEliminators(candidates, state, rng);
+    const eliminatorPlayerId = eliminators[0] ?? null;
 
     events.push({ playerId: player.id, eliminatorPlayerId });
 
-    if (eliminatorPlayerId === null) {
+    if (eliminators.length === 0) {
       dumpCardsToPool(state, player);
-      // Defer upgraded kit pick until after the loop so multiple dumps finish first;
-      // processPendingReanimations at the end of processEliminations when no rewards.
       continue;
     }
 
-    // Game-ending elim (sole survivor left, victim not reviving): skip rewards —
-    // designer 2026-08-06. Cards still dump to the pool.
     const skipRewardsForGameEnd =
       player.pendingReanimation === null &&
       countContendersAfterElim(state, player) === 1;
@@ -363,11 +420,13 @@ export function processEliminations(
       continue;
     }
 
-    state.rewardQueue.push({
-      eliminationId: `elim:${state.turnSequence}:${player.id}`,
-      eliminatedPlayerId: player.id,
-      eliminatorPlayerId,
-    });
+    for (const rewardedEliminatorId of eliminators) {
+      state.rewardQueue.push({
+        eliminationId: `elim:${state.turnSequence}:${player.id}:${rewardedEliminatorId}`,
+        eliminatedPlayerId: player.id,
+        eliminatorPlayerId: rewardedEliminatorId,
+      });
+    }
   }
 
   state.eliminationContributors = [];
@@ -453,10 +512,16 @@ function finishRewardJob(state: GameState, nowMs: number): void {
     return;
   }
 
-  const eliminated = findPlayer(state, job.eliminatedPlayerId);
+  const victimStillHasRewardJobs = state.rewardQueue.some(
+    (queued) => queued.eliminatedPlayerId === job.eliminatedPlayerId,
+  );
 
-  if (eliminated !== undefined) {
-    dumpCardsToPool(state, eliminated);
+  if (!victimStillHasRewardJobs) {
+    const eliminated = findPlayer(state, job.eliminatedPlayerId);
+
+    if (eliminated !== undefined) {
+      dumpCardsToPool(state, eliminated);
+    }
   }
 
   state.rewardChoice = null;

@@ -204,6 +204,11 @@ function applyOneImposition(
   victim: Player,
   effect: PersistentEffect,
 ): void {
+  // Block activation turn and extra turns — Lot 69.
+  if (victim.blockAttacksForbidden || victim.blockTurnsRemaining > 0) {
+    return;
+  }
+
   if (victim.shield > 0 && victim.shieldIsUpgraded) {
     return;
   }

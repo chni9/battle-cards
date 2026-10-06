@@ -22,6 +22,17 @@ export interface SpyResourcesSnapshot {
   turnSequence: number;
 }
 
+/**
+ * True when Spy+ (or spectator full vision) exposed kit/hand lists on `spied`.
+ * Base Spy (Lot 69) may set lives/points/UP/shield only — not card intel.
+ */
+export function spiedRevealsCards(spied: {
+  hand?: readonly unknown[] | undefined;
+  specialCards?: readonly unknown[] | undefined;
+}): boolean {
+  return spied.hand !== undefined || spied.specialCards !== undefined;
+}
+
 export interface SpyRelation {
   viewerId: string;
   subjectId: string;

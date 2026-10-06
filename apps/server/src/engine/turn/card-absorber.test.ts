@@ -91,9 +91,9 @@ describe('Card Absorber (L24-01)', () => {
       );
 
       const expected = Math.min(4, poolSize);
-      // Absorber itself joins the pool after play (instant special).
-      expect(state.pool).toHaveLength(poolSize - expected + 1);
-      expect(state.pool.some((card) => card.instanceId === 'ca-1')).toBe(true);
+      // Lot 69: Card Absorber never re-enters the pool.
+      expect(state.pool).toHaveLength(poolSize - expected);
+      expect(state.pool.some((card) => card.instanceId === 'ca-1')).toBe(false);
       expect(a.hand.length + a.specialCards.length).toBe(expected);
       expect(state.subChoice).toBeNull();
 
@@ -156,9 +156,9 @@ describe('Card Absorber (L24-01)', () => {
     expect(play.subChoicePending).toBe(true);
     expect(state.subChoice?.kind).toBe('pool-pick');
     expect(state.subChoice?.kind === 'pool-pick' ? state.subChoice.maxCount : 0).toBe(4);
-    // Absorber joined the pool after play; pick eligibility was snapshotted before that.
-    expect(state.pool).toHaveLength(7);
-    expect(state.pool.some((card) => card.instanceId === 'ca-1')).toBe(true);
+    // Lot 69: Card Absorber never re-enters the pool.
+    expect(state.pool).toHaveLength(6);
+    expect(state.pool.some((card) => card.instanceId === 'ca-1')).toBe(false);
 
     const pickIds =
       state.subChoice?.kind === 'pool-pick'
@@ -167,7 +167,7 @@ describe('Card Absorber (L24-01)', () => {
     expect(
       completePoolPick(state, a.id, pickIds).ok,
     ).toBe(true);
-    expect(state.pool).toHaveLength(3);
+    expect(state.pool).toHaveLength(2);
     expect(a.hand.length + a.specialCards.length).toBe(4);
     expect(state.subChoice).toBeNull();
   });

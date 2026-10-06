@@ -37,6 +37,7 @@ function recapRow(
     damageDealt: 0,
     kills: 0,
     thinkTimeMs: 0,
+    turnActionsCount: 1,
   };
 
   const { kitId, ...rest } = patch;
@@ -111,6 +112,32 @@ describe('pickGameOverAwards (L60-05)', () => {
     expect(twoHumans.find((award) => award.id === 'fastest')?.winners[0]?.playerId).toBe(
       'fast',
     );
+  });
+
+  it('ranks Slowest / Fastest by average think time per turn action', () => {
+    const awards = pickGameOverAwards(
+      recapOf([
+        recapRow('more-turns', {
+          thinkTimeMs: 6_000,
+          turnActionsCount: 6,
+          kitId: 'untouchable',
+        }),
+        recapRow('fewer-turns', {
+          thinkTimeMs: 5_000,
+          turnActionsCount: 2,
+          kitId: 'warrior',
+        }),
+      ]),
+    );
+
+    expect(awards.find((award) => award.id === 'slowest')?.winners[0]?.playerId).toBe(
+      'fewer-turns',
+    );
+    expect(awards.find((award) => award.id === 'fastest')?.winners[0]?.playerId).toBe(
+      'more-turns',
+    );
+    expect(awards.find((award) => award.id === 'slowest')?.winners[0]?.value).toBe(2_500);
+    expect(awards.find((award) => award.id === 'fastest')?.winners[0]?.value).toBe(1_000);
   });
 
   it('skips Slowest / Fastest when both humans are tied at 0', () => {

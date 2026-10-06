@@ -3,8 +3,8 @@
  *
  * One function, one recipient. No "full view" builder to filter down from.
  *
- * Spy (2026-07-30 resources ruling): kit + card lists always; base adds frozen
- * full-resource snapshot; upgraded adds live lives/points/UP/shield (rules §3).
+ * Spy (Lot 69): base Spy shows live lives/points/UP/shield only; Spy+ also
+ * shows kit, hand, and specials (rules spec §3).
  *
  * Server-only fields omitted from every view (never defaulted; classified here):
  * - `GameState.seed`
@@ -244,19 +244,21 @@ function buildSpiedView(
     return undefined;
   }
 
-  const spied: SpiedPlayerView = {
-    kitId: subject.kitId,
-    hand: subject.hand.map((card) => ({ ...card })),
-    specialCards: subject.specialCards.map((card) => ({ ...card })),
-  };
+  const spied: SpiedPlayerView = {};
 
   if (spectatorFullVision || relation?.level === 'full-resources') {
+    spied.kitId = subject.kitId;
+    spied.hand = subject.hand.map((card) => ({ ...card }));
+    spied.specialCards = subject.specialCards.map((card) => ({ ...card }));
     spied.lives = subject.lives;
     spied.points = subject.points;
     spied.upgradePoints = subject.upgradePoints;
     spied.shield = subject.shield;
-  } else if (relation?.resourcesSnapshot !== undefined) {
-    spied.resourcesSnapshot = { ...relation.resourcesSnapshot };
+  } else if (relation !== undefined) {
+    spied.lives = subject.lives;
+    spied.points = subject.points;
+    spied.upgradePoints = subject.upgradePoints;
+    spied.shield = subject.shield;
   }
 
   return spied;
@@ -631,6 +633,7 @@ export function buildGameRecapView(
         damageDealt: aggregates.damageDealt,
         kills: aggregates.kills,
         thinkTimeMs: thinkTimeMsByPlayerId?.get(player.id) ?? 0,
+        turnActionsCount: aggregates.turnActionsCount,
       };
     }),
     eliminations: eliminations.map((entry) => ({

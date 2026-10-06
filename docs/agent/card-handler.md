@@ -24,7 +24,9 @@
    at once. If the primitive you need does not exist, add it — do not inline it.
 4. **An effect aimed at an opponent is queued, not applied.** The handler's job is to queue;
    the engine resolves it on the target's turn (`engine.md`).
-5. **`alwaysUpgraded` is checked on every card acquisition** — distribution, purchase,
+5. **When a card’s effect changes, update its player-facing description in the same change**
+   (catalog, How to play, inspect copy).
+6. **`alwaysUpgraded` is checked on every card acquisition** — distribution, purchase,
    elimination reward, theft — and applies to every copy held. It is never a flag written once
    at distribution, and it consumes no upgrade point (technical spec §4.5). Server helper:
    `acquireCardToHand` / `acquireSpecialCard` in `apps/server/src/engine/kits/acquire-card.ts`.

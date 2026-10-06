@@ -94,8 +94,8 @@ function scoreUpgradePointThief(
     }
 
     const hasUpgradedCard =
-      spied.hand.some((card) => card.isUpgraded) ||
-      spied.specialCards.some((card) => card.isUpgraded);
+      (spied.hand ?? []).some((card) => card.isUpgraded) ||
+      (spied.specialCards ?? []).some((card) => card.isUpgraded);
 
     if ((spied.upgradePoints !== undefined && spied.upgradePoints > 0) || hasUpgradedCard) {
       intelBonus += 20;
@@ -146,7 +146,10 @@ function scoreCardThief(
   const target = view.players.find((player) => player.id === action.targetPlayerId);
   const spied = target?.spied;
   const knownCardsBonus =
-    spied !== undefined && spied.hand.length + spied.specialCards.length > 0 ? 15 : 0;
+    spied !== undefined &&
+    (spied.hand ?? []).length + (spied.specialCards ?? []).length > 0
+      ? 15
+      : 0;
 
   return {
     score: ctx.weights.action.bands.deny + ctx.weights.action.cardThiefDenyBonus + knownCardsBonus,
