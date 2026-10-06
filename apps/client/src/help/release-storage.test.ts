@@ -54,7 +54,7 @@ describe('release storage (L63-07)', () => {
     });
     expect(readLastSeenReleaseId()).toBeNull();
     expect(hasUnseenReleaseNotes()).toBe(true);
-    expect(latestReleaseNote().id).toBe('lot-69');
+    expect(latestReleaseNote().id).toBe('lot-70');
   });
 
   it('Got it writes the latest id so a second visit is read', () => {
@@ -63,7 +63,7 @@ describe('release storage (L63-07)', () => {
       value: new MemoryStorage(),
     });
     markLatestReleaseSeen();
-    expect(globalThis.localStorage.getItem(LAST_SEEN_RELEASE_ID_KEY)).toBe('lot-69');
+    expect(globalThis.localStorage.getItem(LAST_SEEN_RELEASE_ID_KEY)).toBe('lot-70');
     expect(hasUnseenReleaseNotes()).toBe(false);
   });
 

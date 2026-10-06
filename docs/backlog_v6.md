@@ -644,6 +644,16 @@ New What’s new id (not an append to `lot-65`; that note is on `main`).
 
 ---
 
+## Lot 70 — Lobby rules and table chat (designer 2026-10-06)
+
+`PROTOCOL_VERSION` **44 → 45**. What’s new id `lot-70`. Tutorial does not use the rules. Spy Thief and forfeit rewards stay out of this lot.
+
+| ID | Task | Cx | Risk | Depends on | Status |
+|---|---|---|---|---|---|
+| L70-01 | Host excludes kits, Random only, and human turn seconds (5–180, default 60) in the online lobby and the solo menu. Guests see the rules before Ready. Play again keeps them. In-game chat sits next to Forfeit: living stream vs eliminated/spectator stream, unread on the client, persisted on `game_chat_messages` in the finished-game write. Rules spec, decisions, `lot-70` What’s new. **Acceptance:** tests beside the code; `pnpm verify` green. | L | **High** | L69-01 | Done |
+
+---
+
 ## Task count and honest sizing
 
 | Lot | Tasks |
@@ -676,7 +686,9 @@ New What’s new id (not an append to `lot-65`; that note is on `main`).
 | 66 | 1 |
 | 67 | 1 |
 | 68 | 12 |
-| **Total** | **165** |
+| 69 | 1 |
+| 70 | 1 |
+| **Total** | **167** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**; **solo Play again dealing the next match without the menu**.
 

@@ -292,6 +292,12 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   'invalid-choose-kit-payload': {
     body: 'The kit choice was malformed. Open Choose kit and pick again.',
   },
+  'invalid-set-lobby-rules-payload': {
+    body: 'Those table rules were malformed. Set them again from the lobby.',
+  },
+  'invalid-send-chat-payload': {
+    body: 'That chat message was empty or malformed.',
+  },
 
   'start-not-host': {
     title: 'Host only',
@@ -344,6 +350,41 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
   'choose-kit-already-started': {
     title: 'Game already started',
     body: 'You cannot change your kit after the host has started the game.',
+  },
+  'choose-kit-random-only': {
+    title: 'Kits are dealt',
+    body: 'The host is dealing kits at random. Nobody picks a kit.',
+  },
+  'choose-kit-excluded': {
+    title: 'Kit hidden',
+    body: 'The host has excluded that kit. Pick one that is still allowed.',
+  },
+  'set-lobby-rules-not-host': {
+    title: 'Host only',
+    body: 'Only the host can change the table rules.',
+  },
+  'set-lobby-rules-not-in-lobby': {
+    body: 'Table rules can only be set before the game starts.',
+  },
+  'set-lobby-rules-tutorial': {
+    body: 'The tutorial does not use table rules.',
+  },
+  'set-lobby-rules-no-kit': {
+    title: 'Need a kit',
+    body: 'At least one kit must stay allowed.',
+  },
+  'set-lobby-rules-turn-time': {
+    title: 'Turn time',
+    body: 'Turn time must be a whole number of seconds from 5 to 180.',
+  },
+  'send-chat-not-in-game': {
+    body: 'Chat is only available during the game.',
+  },
+  'send-chat-bot': {
+    body: 'Bots do not chat.',
+  },
+  'send-chat-too-long': {
+    body: 'A chat message is at most 200 characters.',
   },
 
   'start-not-all-ready': {

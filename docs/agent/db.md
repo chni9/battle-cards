@@ -35,7 +35,8 @@
 
 | Table | Role |
 |---|---|
-| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false) |
+| `finished_games` | One row per match: room id, mode, seed, winner, `turn_sequence`, timestamps, `duration_ms`, public `action_log` JSONB (Events), `export_log` JSONB (full Excel-parity Turns+Events, nullable on pre-migrate rows), `has_bots` (L17-04), `is_tutorial` (L41-04, default false). Lot 70 adds `excluded_kit_ids text[]`, `random_only boolean`, `turn_time_seconds integer` on the same row (all null for the tutorial; otherwise all present, `turn_time_seconds >= 5`) |
+| `game_chat_messages` | Lot 70. One row per in-game message, inserted in the same transaction as `finished_games`: `game_id` FK, `order_index`, `sender_id`, `nickname`, `role` (`living` \| `eliminated` \| `spectator`), `body` (1–200). Nothing is written if the room dies before the game finishes |
 | `finished_game_players` | Per-player kits, final resources/holdings, denormalized play/buy/sell/upgrade aggregates (Approach B), `is_bot` / `bot_difficulty` (L17-04), `nickname` at game end (L61-02; display-only), `think_time_ms` recap clock (L62-02; null on pre-migrate rows) |
 | `finished_game_eliminations` | Ordered elim list with `reason` (`combat` \| `absence` \| `inactivity` \| `leave`) |
 | `feedback_reports` | Tester Bug / Confusion / Idea rows (L47-01 / L47-06 / technical spec v6 §7.2). No seed column. `kind` CHECK ∈ (`bug`,`confusion`,`idea`). `topics text[]` CHECK contained-by (`ui`,`gameplay`,`card`,`shop`,`bot`,`tutorial`,`other`); bug ≥1 topic is POST-only so pre-chip rows still list. `status` CHECK ∈ (`pending`,`done`,`eliminated`), default `pending` (L68-01; eliminated = disqualified / won't do). `log_tail` is a public action-log slice, nullable; `game_code` nullable (Home). |
@@ -46,7 +47,8 @@ SQL: `apps/server/db/migrations/001_finished_games.sql`, `002_bot_seats.sql`,
 `007_finished_game_player_nickname.sql`,
 `008_finished_game_player_think_time.sql`,
 `009_feedback_triage_status.sql`,
-`010_feedback_triage_mark_lot_68.sql` (sets this pass’s rows to `done` or `eliminated`; older rows stay `pending`).  
+`010_feedback_triage_mark_lot_68.sql` (sets this pass’s rows to `done` or `eliminated`; older rows stay `pending`),
+`011_lobby_rules_and_chat.sql` (Lot 70 rule columns + `game_chat_messages`).  
 Types + builder + writer: `apps/server/src/db/`.
 
 `export_log` matches `FinishedStateView.exportLog` / the Excel workbook (`turns` =
@@ -112,3 +114,6 @@ plays). Persistent deactivations include auto-loss (`persistentDeactivated`)
 and manual `deactivatePersistent`. Rematch room-code counts use the same
 match-filter `WHERE` as the outer query, so a tutorial in a reused Play-again
 room does not mark the first real match as a rematch.
+
+The admin table browser allowlist includes `game_chat_messages` (Lot 70). Chat
+rows are not overview metrics.

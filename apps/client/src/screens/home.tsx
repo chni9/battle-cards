@@ -5,10 +5,14 @@
  */
 
 import {
+  allowedKitIds,
   BOT_DIFFICULTIES,
+  defaultLobbyRules,
+  isTurnTimeSeconds,
   SOLO_OPPONENT_COUNTS,
   type BotDifficulty,
   type LobbyKitSelection,
+  type LobbyRules,
   type SoloOpponentCount,
   type WhatsNewScope,
 } from '@card-battle/shared';
@@ -34,6 +38,7 @@ import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
 import { WhatsNewDialog } from './whats-new-dialog';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
+import { LobbyRulesPanel } from './lobby-rules-panel';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { homeStatusCopy } from './status-labels';
 import type { SoloMenuSeed } from './solo-menu-seed';
@@ -52,6 +57,7 @@ export interface HomeScreenProps {
     opponentCount: SoloOpponentCount,
     difficulty: BotDifficulty,
     kitSelection: LobbyKitSelection,
+    rules: { lobbyRules: LobbyRules; includeTurnTime: boolean },
   ) => void;
   onStartTutorial: () => void;
   /** Finished solo match: open this menu instead of dealing immediately. */
@@ -104,6 +110,12 @@ export function HomeScreen({
   const [soloKitSelection, setSoloKitSelection] = useState<LobbyKitSelection>(
     soloMenuSeed?.kitSelection ?? 'random',
   );
+  const [soloRules, setSoloRules] = useState<LobbyRules>(
+    soloMenuSeed?.lobbyRules ?? defaultLobbyRules(),
+  );
+  const [includeTurnTime, setIncludeTurnTime] = useState(
+    soloMenuSeed !== undefined && isTurnTimeSeconds(soloMenuSeed.lobbyRules.turnTimeSeconds),
+  );
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -134,7 +146,11 @@ export function HomeScreen({
   const onSoloSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartSolo(soloOpponents, soloDifficulty, soloKitSelection);
+      const kitSelection = soloRules.randomOnly ? 'random' : soloKitSelection;
+      onStartSolo(soloOpponents, soloDifficulty, kitSelection, {
+        lobbyRules: soloRules,
+        includeTurnTime,
+      });
     }
   };
 
@@ -303,6 +319,22 @@ export function HomeScreen({
                 soloOpponents={soloOpponents}
                 soloDifficulty={soloDifficulty}
                 soloKitSelection={soloKitSelection}
+                soloRules={soloRules}
+                onSoloRulesChange={(next, turnTimeChanged) => {
+                  setSoloRules(next);
+                  if (
+                    turnTimeChanged &&
+                    isTurnTimeSeconds(next.turnTimeSeconds)
+                  ) {
+                    setIncludeTurnTime(true);
+                  }
+                  if (
+                    soloKitSelection !== 'random' &&
+                    !allowedKitIds(next).includes(soloKitSelection)
+                  ) {
+                    setSoloKitSelection('random');
+                  }
+                }}
                 onBack={goHub}
                 onNicknameChange={onNicknameChange}
                 onSoloOpponentsChange={setSoloOpponents}
@@ -353,6 +385,7 @@ export function HomeScreen({
       <LobbyKitPickerDialog
         open={kitPickerOpen}
         current={soloKitSelection}
+        allowedKitIds={allowedKitIds(soloRules)}
         onClose={() => {
           setKitPickerOpen(false);
         }}
@@ -523,6 +556,8 @@ interface SoloPathProps {
   soloOpponents: SoloOpponentCount;
   soloDifficulty: BotDifficulty;
   soloKitSelection: LobbyKitSelection;
+  soloRules: LobbyRules;
+  onSoloRulesChange: (rules: LobbyRules, turnTimeChanged: boolean) => void;
   onBack: () => void;
   onNicknameChange: (value: string) => void;
   onSoloOpponentsChange: (count: SoloOpponentCount) => void;
@@ -542,6 +577,8 @@ function SoloPath({
   soloOpponents,
   soloDifficulty,
   soloKitSelection,
+  soloRules,
+  onSoloRulesChange,
   onBack,
   onNicknameChange,
   onSoloOpponentsChange,
@@ -608,6 +645,21 @@ function SoloPath({
           </div>
         </fieldset>
 
+        <LobbyRulesPanel
+          rules={soloRules}
+          editable
+          onExcludedChange={(excludedKitIds) => {
+            onSoloRulesChange({ ...soloRules, excludedKitIds }, false);
+          }}
+          onRandomOnlyChange={(randomOnly) => {
+            onSoloRulesChange({ ...soloRules, randomOnly }, false);
+          }}
+          onTurnTimeChange={(turnTimeSeconds) => {
+            onSoloRulesChange({ ...soloRules, turnTimeSeconds }, true);
+          }}
+        />
+
+        {soloRules.randomOnly ? null : (
         <div className="space-y-2">
           <p className="text-sm font-medium text-ink">Your kit</p>
           <p className="text-sm text-ink-muted">Hidden from opponents. Random is the default.</p>
@@ -630,6 +682,7 @@ function SoloPath({
             </div>
           </div>
         </div>
+        )}
 
         <Button type="submit" variant="green" disabled={!canSubmit}>
           Start solo game

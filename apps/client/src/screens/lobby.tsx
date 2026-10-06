@@ -4,11 +4,14 @@
  */
 
 import {
+  allowedKitIds,
   BOT_DIFFICULTIES,
+  defaultLobbyRules,
   MAX_PLAYERS,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
+  type SetLobbyRulesPayload,
 } from '@card-battle/shared';
 import { useCallback, useState, type ReactElement } from 'react';
 
@@ -20,6 +23,7 @@ import { KitPortrait } from '../design/components/kit-portrait';
 import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
+import { LobbyRulesPanel } from './lobby-rules-panel';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
   lobbyShowsReadyToggle,
@@ -39,6 +43,7 @@ export interface LobbyScreenProps {
   onSetReady: (ready: boolean) => void;
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   onChooseKit: (selection: LobbyKitSelection) => void;
+  onSetLobbyRules: (payload: SetLobbyRulesPayload) => void;
 }
 
 export function LobbyScreen({
@@ -52,6 +57,7 @@ export function LobbyScreen({
   onSetReady,
   onSetBotDifficulty,
   onChooseKit,
+  onSetLobbyRules,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
   const walkInSpectator = view.isSpectator === true;
@@ -68,6 +74,7 @@ export function LobbyScreen({
     null,
   );
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
+  const rules = view.lobbyRules ?? defaultLobbyRules();
 
   const closeCopyDialog = useCallback(() => {
     setCopyOpen(false);
@@ -115,6 +122,24 @@ export function LobbyScreen({
           )}
         </section>
 
+        <LobbyRulesPanel
+          rules={rules}
+          editable={isHost}
+          onExcludedChange={(excludedKitIds) => {
+            onSetLobbyRules({ excludedKitIds, randomOnly: rules.randomOnly });
+          }}
+          onRandomOnlyChange={(randomOnly) => {
+            onSetLobbyRules({ excludedKitIds: rules.excludedKitIds, randomOnly });
+          }}
+          onTurnTimeChange={(turnTimeSeconds) => {
+            onSetLobbyRules({
+              excludedKitIds: rules.excludedKitIds,
+              randomOnly: rules.randomOnly,
+              turnTimeSeconds,
+            });
+          }}
+        />
+
         {walkInSpectator ? (
           <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
             <h2 className="text-sm font-medium text-ink-muted">Watching the lobby</h2>
@@ -122,7 +147,7 @@ export function LobbyScreen({
               Claim a disconnected seat if one is listed, or leave and join again later.
             </p>
           </section>
-        ) : (
+        ) : rules.randomOnly ? null : (
         <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
           <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
           <p className="mt-1 text-sm text-ink-muted">Hidden from opponents until Spy or death.</p>
@@ -350,6 +375,7 @@ export function LobbyScreen({
       <LobbyKitPickerDialog
         open={kitPickerOpen}
         current={view.yourKitSelection}
+        allowedKitIds={allowedKitIds(rules)}
         onClose={() => {
           setKitPickerOpen(false);
         }}

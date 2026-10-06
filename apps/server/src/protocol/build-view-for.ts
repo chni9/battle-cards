@@ -17,7 +17,9 @@
  */
 
 import {
+  chatMessagesForReader,
   copyResourceDeltas,
+  defaultLobbyRules,
   fogPlayedResourceDeltas,
   getKit,
   type ActionLogEntryView,
@@ -25,6 +27,7 @@ import {
   type ActionPlayedPayload,
   type BotDifficulty,
   type CardInstance,
+  type ChatMessageView,
   type ClaimableSeatView,
   type EliminationRevealView,
   type ExportTurnRowView,
@@ -33,6 +36,7 @@ import {
   type GameRecapView,
   type GameState,
   type LobbyKitSelection,
+  type LobbyRules,
   type LobbySeatView,
   type LobbyStateView,
   type PendingEffectView,
@@ -164,6 +168,8 @@ export interface LobbyViewInput {
   /** Walk-in lobby watcher (L57-13). Omit for seated recipients. */
   isSpectator?: true;
   claimableSeats?: readonly ClaimableSeatView[];
+  /** Host rules for this lobby (PROTOCOL_VERSION 45). Default is every kit, 60s. */
+  lobbyRules?: LobbyRules;
 }
 
 export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
@@ -181,6 +187,7 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
       gameCode,
       hostPlayerId,
       yourKitSelection,
+      lobbyRules: input.lobbyRules ?? defaultLobbyRules(),
       players: seats.map((seat) => {
         const view: LobbySeatView = {
           id: seat.id,
@@ -223,6 +230,8 @@ export interface PlayingViewInput {
    */
   walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
+  /** Full room transcript. Filtered per recipient (rules spec §6 Chat). */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 function buildSpiedView(
@@ -564,6 +573,11 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,
       tutorialIndex,
+      chatMessages: chatMessagesForReader({
+        messages: input.chatMessages ?? [],
+        readerIsSpectator: walkInSpectator,
+        readerIsEliminated: selfPlayer?.isEliminated === true,
+      }),
     },
     {
       walkInSpectator,
@@ -591,6 +605,9 @@ export interface FinishedViewInput {
   claimableSeats?: readonly ClaimableSeatView[];
   /** Room wall-clock map — omitted / missing seat → `thinkTimeMs: 0` (L60-04). */
   thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
+  /** Classic host rules. Omit for the tutorial. */
+  lobbyRules?: LobbyRules;
+  chatMessages?: readonly ChatMessageView[];
 }
 
 export function buildGameRecapView(
@@ -683,6 +700,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     ...(walkInSpectator ? { walkInSpectator: true } : {}),
     ...(walkInSeesPrivate ? { walkInSeesPrivate: true } : {}),
     ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
+    ...(input.chatMessages !== undefined ? { chatMessages: input.chatMessages } : {}),
   });
 
   return withSpectatorFields(
@@ -758,6 +776,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
       exportLog,
       playKind,
       tutorialIndex,
+      ...(input.lobbyRules !== undefined ? { lobbyRules: input.lobbyRules } : {}),
     },
     {
       walkInSpectator,

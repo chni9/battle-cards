@@ -1719,3 +1719,83 @@ describe('buildPlayingViewFor (L64-01 / L65-01) — private drawGain', () => {
     ).not.toHaveProperty('drawGain');
   });
 });
+
+describe('buildPlayingViewFor (Lot 70) — chat streams', () => {
+  const chat = [
+    {
+      order: 0,
+      senderId: 'a',
+      nickname: 'Alice',
+      role: 'living' as const,
+      body: 'hi',
+    },
+    {
+      order: 1,
+      senderId: 'b',
+      nickname: 'Bob',
+      role: 'eliminated' as const,
+      body: 'out',
+    },
+    {
+      order: 2,
+      senderId: 'watcher',
+      nickname: 'Sam',
+      role: 'spectator' as const,
+      body: 'watching',
+    },
+  ];
+
+  it('shows living readers only the living stream', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'chat-living',
+    });
+    const bob = state.players.find((player) => player.id === 'b');
+    expect(bob).toBeDefined();
+    if (bob === undefined) {
+      return;
+    }
+    bob.isEliminated = true;
+
+    const living = buildPlayingViewFor({
+      recipientSessionId: 'a',
+      gameCode: 'CHAT',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      chatMessages: chat,
+    });
+    const eliminated = buildPlayingViewFor({
+      recipientSessionId: 'b',
+      gameCode: 'CHAT',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      chatMessages: chat,
+    });
+    const spectator = buildPlayingViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'CHAT',
+      state,
+      turnDeadlineMs: null,
+      actionLog: [],
+      walkInSpectator: true,
+      chatMessages: chat,
+    });
+
+    expect(living.chatMessages?.map((message) => message.body)).toEqual(['hi']);
+    expect(eliminated.chatMessages?.map((message) => message.role)).toEqual([
+      'living',
+      'eliminated',
+      'spectator',
+    ]);
+    expect(spectator.chatMessages?.map((message) => message.body)).toEqual([
+      'hi',
+      'out',
+      'watching',
+    ]);
+  });
+});

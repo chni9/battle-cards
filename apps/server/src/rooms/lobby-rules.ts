@@ -9,15 +9,23 @@
 
 import {
   actionReject,
+  allowedKitIds,
+  CHAT_BODY_MAX_LENGTH,
   isKitId,
+  isTurnTimeSeconds,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  parseExcludedKitIds,
   type ActionReject,
   type ActionRejectCode,
   type ChooseKitPayload,
   type KickPlayerPayload,
   type KitId,
   type LobbyKitSelection,
+  type LobbyRules,
+  type PlayKind,
+  type SendChatPayload,
+  type SetLobbyRulesPayload,
   type SetReadyPayload,
 } from '@card-battle/shared';
 
@@ -54,7 +62,16 @@ export type SetBotDifficultyRejection =
   | 'unknown-bot'
   | 'target-is-human';
 
-export type ChooseKitRejection = 'already-started';
+export type ChooseKitRejection = 'already-started' | 'random-only' | 'excluded';
+
+export type SetLobbyRulesRejection =
+  | 'not-host'
+  | 'not-in-lobby'
+  | 'tutorial'
+  | 'no-kit'
+  | 'turn-time';
+
+export type SendChatRejection = 'not-in-game' | 'bot' | 'too-long';
 
 export function guestBlocksStart(guest: HumanGuestReadyState): boolean {
   return !guest.isConnected || !guest.isReady;
@@ -307,9 +324,22 @@ export function setBotDifficultyRejectionMessage(
   }
 }
 
-export function canChooseKit(input: { hasStarted: boolean }): ChooseKitRejection | null {
+export function canChooseKit(input: {
+  hasStarted: boolean;
+  randomOnly: boolean;
+  selection: LobbyKitSelection;
+  allowedKitIds: readonly KitId[];
+}): ChooseKitRejection | null {
   if (input.hasStarted) {
     return 'already-started';
+  }
+
+  if (input.randomOnly) {
+    return 'random-only';
+  }
+
+  if (input.selection !== 'random' && !input.allowedKitIds.includes(input.selection)) {
+    return 'excluded';
   }
 
   return null;
@@ -318,8 +348,187 @@ export function canChooseKit(input: { hasStarted: boolean }): ChooseKitRejection
 export function chooseKitRejectionMessage(reason: ChooseKitRejection): ActionReject {
   const codes = {
     'already-started': 'choose-kit-already-started',
+    'random-only': 'choose-kit-random-only',
+    excluded: 'choose-kit-excluded',
   } as const satisfies Record<ChooseKitRejection, ActionRejectCode>;
   return actionReject(codes[reason]);
+}
+
+export function canSetLobbyRules(input: {
+  requesterIsHost: boolean;
+  hasStarted: boolean;
+  playKind: PlayKind;
+}): SetLobbyRulesRejection | null {
+  if (input.playKind === 'tutorial') {
+    return 'tutorial';
+  }
+
+  if (input.hasStarted) {
+    return 'not-in-lobby';
+  }
+
+  if (!input.requesterIsHost) {
+    return 'not-host';
+  }
+
+  return null;
+}
+
+export function setLobbyRulesRejectionMessage(reason: SetLobbyRulesRejection): ActionReject {
+  const codes = {
+    'not-host': 'set-lobby-rules-not-host',
+    'not-in-lobby': 'set-lobby-rules-not-in-lobby',
+    tutorial: 'set-lobby-rules-tutorial',
+    'no-kit': 'set-lobby-rules-no-kit',
+    'turn-time': 'set-lobby-rules-turn-time',
+  } as const satisfies Record<SetLobbyRulesRejection, ActionRejectCode>;
+  return actionReject(codes[reason]);
+}
+
+/**
+ * Parse `setLobbyRules`. `turnTimeSeconds` may be omitted so the server
+ * default clock stays in place until the host sets one.
+ */
+export function parseSetLobbyRulesPayload(
+  payload: unknown,
+): { ok: true; value: SetLobbyRulesPayload } | { ok: false; code: ActionRejectCode } {
+  if (typeof payload !== 'object' || payload === null) {
+    return { ok: false, code: 'invalid-set-lobby-rules-payload' };
+  }
+
+  if (!('excludedKitIds' in payload) || !('randomOnly' in payload)) {
+    return { ok: false, code: 'invalid-set-lobby-rules-payload' };
+  }
+
+  const { excludedKitIds, randomOnly } = payload;
+
+  if (typeof randomOnly !== 'boolean') {
+    return { ok: false, code: 'invalid-set-lobby-rules-payload' };
+  }
+
+  const excluded = parseExcludedKitIds(excludedKitIds);
+
+  if (!excluded.ok) {
+    if (excluded.reason === 'none-allowed') {
+      return { ok: false, code: 'set-lobby-rules-no-kit' };
+    }
+
+    return { ok: false, code: 'invalid-set-lobby-rules-payload' };
+  }
+
+  if (!('turnTimeSeconds' in payload) || payload.turnTimeSeconds === undefined) {
+    return {
+      ok: true,
+      value: { excludedKitIds: excluded.excludedKitIds, randomOnly },
+    };
+  }
+
+  const { turnTimeSeconds } = payload;
+
+  if (typeof turnTimeSeconds !== 'number' || !isTurnTimeSeconds(turnTimeSeconds)) {
+    return { ok: false, code: 'set-lobby-rules-turn-time' };
+  }
+
+  return {
+    ok: true,
+    value: {
+      excludedKitIds: excluded.excludedKitIds,
+      randomOnly,
+      turnTimeSeconds,
+    },
+  };
+}
+
+export function canSendChat(input: {
+  inGame: boolean;
+  senderIsBot: boolean;
+  body: string;
+}): SendChatRejection | null {
+  if (!input.inGame) {
+    return 'not-in-game';
+  }
+
+  if (input.senderIsBot) {
+    return 'bot';
+  }
+
+  if (input.body.length > CHAT_BODY_MAX_LENGTH) {
+    return 'too-long';
+  }
+
+  return null;
+}
+
+export function sendChatRejectionMessage(reason: SendChatRejection): ActionReject {
+  const codes = {
+    'not-in-game': 'send-chat-not-in-game',
+    bot: 'send-chat-bot',
+    'too-long': 'send-chat-too-long',
+  } as const satisfies Record<SendChatRejection, ActionRejectCode>;
+  return actionReject(codes[reason]);
+}
+
+export function parseSendChatPayload(
+  payload: unknown,
+): { ok: true; value: SendChatPayload } | { ok: false; code: ActionRejectCode } {
+  if (typeof payload !== 'object' || payload === null || !('body' in payload)) {
+    return { ok: false, code: 'invalid-send-chat-payload' };
+  }
+
+  const { body } = payload;
+
+  if (typeof body !== 'string' || body.trim().length === 0) {
+    return { ok: false, code: 'invalid-send-chat-payload' };
+  }
+
+  if (body.length > CHAT_BODY_MAX_LENGTH) {
+    return { ok: false, code: 'send-chat-too-long' };
+  }
+
+  return { ok: true, value: { body } };
+}
+
+/**
+ * Classic deal. Tutorial ignores host rules. Random only ignores picks.
+ * A pick of an excluded kit is dropped and that seat draws from the allowed list.
+ */
+export function startDealOptions(input: {
+  tutorial: boolean;
+  rules: LobbyRules;
+  selections: ReadonlyMap<string, LobbyKitSelection>;
+}): {
+  allowedKitIds?: readonly KitId[];
+  forcedKitsBySeatId?: ReadonlyMap<string, KitId>;
+} {
+  if (input.tutorial) {
+    return {};
+  }
+
+  const allowed = allowedKitIds(input.rules);
+
+  if (input.rules.randomOnly) {
+    return { allowedKitIds: allowed };
+  }
+
+  const forced = collectForcedKitsBySeatId(input.selections);
+
+  if (forced === undefined) {
+    return { allowedKitIds: allowed };
+  }
+
+  const filtered = new Map<string, KitId>();
+
+  for (const [seatId, kitId] of forced) {
+    if (allowed.includes(kitId)) {
+      filtered.set(seatId, kitId);
+    }
+  }
+
+  if (filtered.size === 0) {
+    return { allowedKitIds: allowed };
+  }
+
+  return { allowedKitIds: allowed, forcedKitsBySeatId: filtered };
 }
 
 /**

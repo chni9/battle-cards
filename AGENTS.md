@@ -137,6 +137,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
  **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
  (`PROTOCOL_VERSION` 42).
+ **Lot 70** (designer 2026-10-06) lets the host exclude kits, deal kits at
+ random, and set human turn seconds, and adds in-game chat
+ (`PROTOCOL_VERSION` 45).
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes

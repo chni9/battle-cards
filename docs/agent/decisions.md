@@ -4167,3 +4167,45 @@ forced pick on play only.
 
 ---
 
+## 2026-10-06 · [P] Lot 70 lobby rules and table chat
+
+Designer. `PROTOCOL_VERSION` 44 → 45.
+
+Lobby rules:
+
+- The host sets excluded kits, random-only, and human turn seconds (a whole
+  number from 5 to 180; default 60) before start, in the online lobby and on
+  the solo menu. Guests see the same rules before Ready. Play again keeps
+  them. The tutorial does not use them: `setLobbyRules` is rejected, and the
+  finished-game rule columns stay NULL.
+- Every Classic kit starts allowed. An excluded kit cannot be chosen. Random
+  draws, including Random only, use the existing seeded draw with replacement,
+  restricted to kits still allowed. A forced pick outside the allowed set is
+  dropped and that seat draws. At least one kit must stay allowed.
+- `TURN_DURATION_MS` (minimum 5000, default 60000) remains the human clock
+  until the host sends `turnTimeSeconds`. The view's `turnTimeSeconds` is the
+  effective rounded seconds and may exceed 180 when that env override is
+  longer. `finished_games.turn_time_seconds` stores the seconds actually used
+  (`>= 5`, no upper bound) so a playtest clock still persists. Bots keep
+  their own think time.
+
+Table chat:
+
+- The control sits next to Forfeit. Unread is how many messages arrived since
+  the popup was closed, and that count stays on the client.
+- Role is frozen at send time (`living`, `eliminated`, or `spectator`).
+  Living readers receive only living messages. Eliminated players and
+  spectators receive both streams and can still read the living stream.
+  The filter is in the per-recipient view, not a filtered full broadcast.
+- A message is at most 200 characters. Empty or whitespace-only text is
+  rejected. Bots cannot send. The lobby has no chat. The transcript stays in
+  the room and is copied onto the finished holdout. The finished board does
+  not accept new messages.
+- The finished-game write inserts `excluded_kit_ids`, `random_only`, and
+  `turn_time_seconds` on `finished_games`, then one `game_chat_messages` row
+  per message in that same transaction (`game_id`, `order_index`,
+  `sender_id`, `nickname`, `role`, `body`). Nothing is saved if the room
+  dies before the game finishes.
+
+---
+

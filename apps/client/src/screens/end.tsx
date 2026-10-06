@@ -166,6 +166,7 @@ export function EndScreen({
         onSellUpgradePoint={noop}
         onLeave={requestLeave}
         onForfeit={noop}
+        onSendChat={noop}
       />
       <GameOverDialog
         open={statsOpen}

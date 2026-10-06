@@ -246,9 +246,19 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 4. Each player receives their kit's special cards.
 5. Turn order is determined, then the game begins.
 
+The host sets the table rules before the match starts, in the online lobby and on the solo menu. Guests see those rules before they press Ready. Play again keeps them. The tutorial does not use them.
+
+- Every Classic kit starts allowed. The host may exclude kits. An excluded kit cannot be chosen. A random draw uses only kits that are still allowed. At least one kit stays allowed.
+- Random only: nobody picks a kit. Seats are dealt from the allowed kits.
+- Turn time is a whole number of seconds from 5 to 180. The default is 60. Human turns use that length. Bots keep their own think time.
+
 ### Visibility
 
 Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A pool buy is public as an action; the recovered card's identity stays private to the buyer (and anyone who already sees that buyer's private information). The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+
+### Chat
+
+During a game, living players write to the living stream. Only living players' messages appear there for living readers. Eliminated players and spectators can write. Those messages are labeled eliminated or spectator, and only eliminated players and spectators can read them. They can still read the living stream. A message is at most 200 characters. Bots do not chat. The lobby has no chat. Messages stay in the room during the game and are stored with the finished game. Nothing is saved if the room dies before the game finishes.
 
 ### Game Turn
 

@@ -229,6 +229,39 @@ describe('createInitialState forcedKitsBySeatId (L49-01)', () => {
     expect(KIT_IDS).toContain(bob?.kitId);
   });
 
+  it('draws random kits only from the allowed list (rules spec §6 Setup)', () => {
+    const allowed = ['assassin', 'ghost'] as const;
+    const first = createInitialState({
+      seats,
+      seed: 'allowed-kits',
+      allowedKitIds: allowed,
+    });
+    const second = createInitialState({
+      seats,
+      seed: 'allowed-kits',
+      allowedKitIds: allowed,
+    });
+
+    expect(first.players.map((player) => player.kitId)).toEqual(
+      second.players.map((player) => player.kitId),
+    );
+    for (const player of first.players) {
+      expect(allowed).toContain(player.kitId);
+    }
+  });
+
+  it('a full allowed list matches omitting allowedKitIds for the same seed', () => {
+    const omitted = createInitialState({ seats, seed: 'allowed-parity' });
+    const listed = createInitialState({
+      seats,
+      seed: 'allowed-parity',
+      allowedKitIds: [...KIT_IDS],
+    });
+    expect(listed.players.map((player) => player.kitId)).toEqual(
+      omitted.players.map((player) => player.kitId),
+    );
+  });
+
   it('omitting forcedKitsBySeatId matches a fully random deal for a seed', () => {
     const first = createInitialState({ seats, seed: 'lobby-omit-parity' });
     const second = createInitialState({ seats, seed: 'lobby-omit-parity' });

@@ -8,7 +8,8 @@
  * player-facing change adds a new entry above it. Do not edit an entry
  * that is already on `main` except to correct that entry's own text.
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
- * (promote #56). `lot-68` shipped on `main`. `lot-69` is the open update.
+ * (promote #56). `lot-68` shipped on `main`. `lot-69` stays as written.
+ * `lot-70` is the open update.
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -43,6 +44,25 @@ export interface ReleaseNote {
 export type WhatsNewScope = 'current' | 'history';
 
 const RELEASE_NOTES_CATALOG = [
+  {
+    id: 'lot-70',
+    date: '2026-10-06',
+    title: 'Table rules and chat',
+    additions: [],
+    items: [
+      {
+        before:
+          'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',
+        after:
+          'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
+      },
+      {
+        before: 'The table had no chat.',
+        after:
+          'Living players chat together. Eliminated players and spectators share a separate chat that living players cannot read.',
+      },
+    ],
+  },
   {
     id: 'lot-69',
     date: '2026-10-05',

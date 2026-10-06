@@ -6,7 +6,10 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **42** (`actionResolved.blockedBy`
+> **Status:** current `PROTOCOL_VERSION` is **45** (Lot 70: lobby
+> `setLobbyRules` / `lobbyRules`, in-game `sendChat`, per-recipient
+> `chatMessages`). **44** adds `slotOwnerPlayerId` on the Curse slot-drop
+> chooser. **42** (`actionResolved.blockedBy`
 > names Attack Thief or Block). **41** is action-log resource nets.
 > **40** publishes each public `PendingSentence.id` so `upgradeCard` can target
 > a ticking Sentence. Gambler `drawGain` is Spy-gated since L65-01, no bump at
@@ -81,6 +84,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
 | Living Gambler Draw payout | **Spy-gated** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01, narrowed L65-01). Self, Spy, eliminated spectator, and Stay walk-in only. Undefined for other kits, eliminated seats, and everyone else. Successful `actionPlayed` draw carries `drawGain` for those same recipients; omit on a wipe and for everyone who cannot already see that seat. The wipe stays public as `drawBust` |
 | Draw wipe | **Public** as `actionPlayed.drawBust` (no second field). The table line is `{nickname} gambled too much and lost everything`. Draw no longer emits `EliminationReason` `'gambling'`. That reason remains on the union for older logs |
+| In-game chat | **Per recipient** (PROTOCOL_VERSION 45 / Lot 70). Living readers receive only messages whose role at send time is `living`. Eliminated players and spectators receive the living stream and the side stream. The room keeps the full transcript; the view builder filters it. Not on the lobby view. Persisted with the finished game |
 | Action-log resource nets | **Public** on the stored log and Excel, then fogged per recipient (PROTOCOL_VERSION 41). The play line carries the acting player's immediate net (lives, points, upgrade points, shield). Draw point totals and buy-upgrade point prices are concealed (`+?` / `−?`) unless the viewer sees that actor (L65-01 still strips `drawGain` for the same seats). `+1` upgrade point stays visible. A card sale's payout is omitted unless the viewer sees the seller. A shop buy's price is omitted unless the viewer sees the buyer; a gain on that line stays. Special and pool purchases still show their spend. Persistent ticks are a public `resourceChange` line (name + nets, no card). Duplicator copies are the same kind with `duplicated` and are omitted unless the viewer sees that Duplicator. Unspied `activateDuplication` stays a Draw and adds a fake `+?` point suffix. Elimination rewards stay masked. Resolve lines append `playerDeltas`: each seat's nets, target then source, not summed. Duplicator copies are excluded from that suffix. Live `ACTION_PLAYED` does not carry `resourceDeltas` |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
@@ -121,6 +125,11 @@ min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buySpecialCard` · `buyPoolCard` (PROTOCOL_VERSION 34 / L58-05 — no payload) ·
 `clearSpy` (PROTOCOL_VERSION 34 / L58-07 — `{ targetPlayerId }`) ·
 `forfeit` (PROTOCOL_VERSION 29 / L43-06 — payload `undefined`; client stays connected) ·
+`setLobbyRules` (PROTOCOL_VERSION 45 / Lot 70 — host, lobby only, not the tutorial;
+`{ excludedKitIds, randomOnly, turnTimeSeconds? }`; omitting `turnTimeSeconds` leaves
+`TURN_DURATION_MS` in force) ·
+`sendChat` (PROTOCOL_VERSION 45 / Lot 70 — `{ body }`, in progress only, max 200
+characters; bots and the lobby cannot send) ·
 `resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
 `kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
 (`instanceIds`), `special-pick` (`cardId`). Replaces the former

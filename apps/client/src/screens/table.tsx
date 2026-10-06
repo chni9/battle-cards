@@ -96,6 +96,7 @@ import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
 import { EconomyBar } from './table/economy-bar';
 import { feltCollapseFromCounts } from './table/felt-collapse';
 import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
+import { TableChat } from './table/table-chat';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
 import { collectLiveResourceSnaps, type OpponentLiveResources } from './table/opponent-seat-resources';
@@ -176,6 +177,8 @@ export interface TableScreenProps {
   onLeave: () => void;
   /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
   onForfeit: () => void;
+  /** In-game chat. The table ignores it while the finished board is read-only. */
+  onSendChat: (body: string) => void;
   onDeactivatePersistent?: (effectId: string) => void;
   onActivateDuplication?: () => void;
   /**
@@ -385,6 +388,7 @@ function TableScreenInner({
   onSellUpgradePoint,
   onLeave,
   onForfeit,
+  onSendChat,
   onDeactivatePersistent,
   onActivateDuplication,
   readOnly = false,
@@ -1329,6 +1333,11 @@ function TableScreenInner({
                 />
               </TutorialZoneCallout>
             </div>
+            <TableChat
+              messages={view.chatMessages ?? []}
+              canWrite={!readOnly}
+              onSend={onSendChat}
+            />
             {flagAria !== null && flagIntent !== 'hidden' ? (
               <TutorialCallout
                 active={tourHighlight === 'flag'}

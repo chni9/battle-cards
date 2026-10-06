@@ -17,6 +17,8 @@ import {
   STAY_SPECTATING,
   KICK_PLAYER,
   CHOOSE_KIT,
+  SET_LOBBY_RULES,
+  SEND_CHAT,
   DEACTIVATE_PERSISTENT,
   ACTIVATE_DUPLICATION,
   RESOLVE_SUB_CHOICE,
@@ -48,6 +50,8 @@ import {
   type CardId,
   type GameOverPayload,
   type LobbyKitSelection,
+  type LobbyRules,
+  type SetLobbyRulesPayload,
   type SoloOpponentCount,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
@@ -135,6 +139,9 @@ export interface StartSoloGameOptions {
   opponentCount: SoloOpponentCount;
   difficulty: BotDifficulty;
   kitSelection?: LobbyKitSelection;
+  lobbyRules: LobbyRules;
+  /** When false, the room keeps `TURN_DURATION_MS` until the host sets a time. */
+  includeTurnTime: boolean;
 }
 
 const INITIAL: RoomConnection = {
@@ -170,6 +177,8 @@ export interface UseRoomConnectionResult extends RoomConnection {
   setReady: (ready: boolean) => void;
   setBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   chooseKit: (selection: LobbyKitSelection) => void;
+  setLobbyRules: (payload: SetLobbyRulesPayload) => void;
+  sendChat: (body: string) => void;
   drawCard: () => void;
   playCard: (instanceId: string, options?: PlayCardOptions) => void;
   playMultipleAttacks: (
@@ -529,6 +538,14 @@ export function useRoomConnection(): UseRoomConnectionResult {
     roomRef.current?.send(CHOOSE_KIT, { kitId: selection });
   }, []);
 
+  const setLobbyRules = useCallback((payload: SetLobbyRulesPayload): void => {
+    roomRef.current?.send(SET_LOBBY_RULES, payload);
+  }, []);
+
+  const sendChat = useCallback((body: string): void => {
+    roomRef.current?.send(SEND_CHAT, { body });
+  }, []);
+
   const startSoloGame = useCallback(
     async (options: StartSoloGameOptions): Promise<void> => {
       intentionalLeaveRef.current = true;
@@ -548,7 +565,20 @@ export function useRoomConnection(): UseRoomConnectionResult {
         const room = await client.create(GAME_ROOM_NAME, joinOptions);
         attachRoom(room);
 
-        if (options.kitSelection !== undefined && options.kitSelection !== 'random') {
+        const rulesPayload: SetLobbyRulesPayload = {
+          excludedKitIds: options.lobbyRules.excludedKitIds,
+          randomOnly: options.lobbyRules.randomOnly,
+          ...(options.includeTurnTime
+            ? { turnTimeSeconds: options.lobbyRules.turnTimeSeconds }
+            : {}),
+        };
+        room.send(SET_LOBBY_RULES, rulesPayload);
+
+        if (
+          !options.lobbyRules.randomOnly &&
+          options.kitSelection !== undefined &&
+          options.kitSelection !== 'random'
+        ) {
           room.send(CHOOSE_KIT, { kitId: options.kitSelection });
         }
 
@@ -693,6 +723,8 @@ export function useRoomConnection(): UseRoomConnectionResult {
     setReady,
     setBotDifficulty,
     chooseKit,
+    setLobbyRules,
+    sendChat,
     drawCard,
     playCard,
     playMultipleAttacks,
