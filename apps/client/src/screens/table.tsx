@@ -1335,6 +1335,7 @@ function TableScreenInner({
             </div>
             <TableChat
               messages={view.chatMessages ?? []}
+              players={view.players}
               canWrite={!readOnly}
               onSend={onSendChat}
             />

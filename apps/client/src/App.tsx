@@ -223,6 +223,7 @@ function GameApp() {
           onSetBotDifficulty={setBotDifficulty}
           onChooseKit={chooseKit}
           onSetLobbyRules={setLobbyRules}
+          onSendChat={sendChat}
         />
         {claimDialog}
       </>

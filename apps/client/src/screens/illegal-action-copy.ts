@@ -378,7 +378,7 @@ export const ILLEGAL_ACTION_COPY: Record<ActionRejectCode, IllegalActionCopy> = 
     body: 'Turn time must be a whole number of seconds from 5 to 180.',
   },
   'send-chat-not-in-game': {
-    body: 'Chat is only available during the game.',
+    body: 'Chat is available in the lobby and during the game.',
   },
   'send-chat-bot': {
     body: 'Bots do not chat.',

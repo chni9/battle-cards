@@ -50,7 +50,7 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
       'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
-      'Living players chat together. Eliminated players and spectators share a separate chat that living players cannot read.',
+      'Players chat in the lobby and at the table with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
     ]);
   });
 

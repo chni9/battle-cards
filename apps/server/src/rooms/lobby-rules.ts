@@ -441,10 +441,11 @@ export function parseSetLobbyRulesPayload(
 
 export function canSendChat(input: {
   inGame: boolean;
+  inLobby: boolean;
   senderIsBot: boolean;
   body: string;
 }): SendChatRejection | null {
-  if (!input.inGame) {
+  if (!input.inGame && !input.inLobby) {
     return 'not-in-game';
   }
 

@@ -71,6 +71,7 @@ import {
   type DeactivatePersistentPayload,
   isKitId,
   isSpecialCardId,
+  tableRound,
   type KitId,
   type EliminationReason,
   type GameState,
@@ -1182,6 +1183,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const seat = this.seats.find((entry) => entry.sessionId === playerId);
     const rejection = canSendChat({
       inGame: this.hasStarted && this.winnerPlayerId === null && this.gameState !== null,
+      inLobby: !this.hasStarted && this.playKind !== 'tutorial',
       senderIsBot: seat !== undefined && isBotSeat(seat),
       body: parsed.value.body,
     });
@@ -1204,6 +1206,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       nickname: author.nickname,
       role: author.role,
       body: parsed.value.body,
+      round: this.chatRound(),
     });
     this.sendStateToEveryone();
   }
@@ -1235,6 +1238,17 @@ export class GameRoom extends Room<{ client: GameClient }> {
       nickname: player.nickname,
       role: player.isEliminated ? 'eliminated' : 'living',
     };
+  }
+
+  /** Lobby is 0. In a match, the same round number as the action log. */
+  private chatRound(): number {
+    const state = this.gameState;
+
+    if (!this.hasStarted || state === null) {
+      return 0;
+    }
+
+    return tableRound(state.turnSequence, state.players.length);
   }
 
   /** Seconds human turns will last. Server default until the host sets one. */
@@ -1313,7 +1327,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
       rules: this.lobbyRules,
       selections: this.kitSelections,
     });
-    this.chatMessages = [];
     this.gameState = createInitialState({
       seats,
       ...(deal.allowedKitIds !== undefined ? { allowedKitIds: deal.allowedKitIds } : {}),
@@ -1368,6 +1381,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.playAgainOptedIn.add(playerId);
 
     if (first) {
+      this.chatMessages = [];
       this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
       this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
       this.seatWalkInSpectatorsAsLobbyGuests();
@@ -4463,6 +4477,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
           seats: this.seatViews(),
           yourKitSelection: this.kitSelections.get(recipientId) ?? 'random',
           lobbyRules: this.viewLobbyRules(),
+          chatMessages: this.chatMessages,
           ...lobbySpectatorOpt,
           ...claimableOpt,
         }),

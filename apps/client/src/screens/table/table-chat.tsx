@@ -4,22 +4,23 @@
  */
 
 import type { ChatMessageView } from '@card-battle/shared';
-import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { IconButton } from '../../design/components/icon-button';
 import { chatUnreadCount } from './chat-unread';
+import { ChatLog } from './chat-log';
 
 export interface TableChatProps {
   messages: readonly ChatMessageView[];
+  players: readonly { id: string }[];
   canWrite: boolean;
   onSend: (body: string) => void;
 }
 
-export function TableChat({ messages, canWrite, onSend }: TableChatProps): ReactElement {
+export function TableChat({ messages, players, canWrite, onSend }: TableChatProps): ReactElement {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState('');
   const [seenCount, setSeenCount] = useState(messages.length);
 
   const unread = chatUnreadCount({
@@ -31,18 +32,6 @@ export function TableChat({ messages, canWrite, onSend }: TableChatProps): React
   const closeChat = (): void => {
     setSeenCount(messages.length);
     setOpen(false);
-  };
-
-  const send = (event: SyntheticEvent): void => {
-    event.preventDefault();
-    const body = draft.trim();
-
-    if (body.length === 0 || !canWrite) {
-      return;
-    }
-
-    onSend(draft);
-    setDraft('');
   };
 
   return (
@@ -72,57 +61,12 @@ export function TableChat({ messages, canWrite, onSend }: TableChatProps): React
         onClose={closeChat}
         panelClassName="max-w-md"
         actions={
-          <Button
-            compact
-            type="button"
-            variant="orange"
-            onClick={closeChat}
-          >
+          <Button compact type="button" variant="orange" onClick={closeChat}>
             Close
           </Button>
         }
       >
-        <ul className="max-h-64 space-y-2 overflow-y-auto">
-          {messages.length === 0 ? (
-            <li className="text-sm text-ink-muted">No messages yet.</li>
-          ) : (
-            messages.map((message) => {
-              const side = message.role !== 'living';
-
-              return (
-                <li
-                  key={message.order}
-                  className={side ? 'text-sm italic text-ink-muted' : 'text-sm text-ink'}
-                >
-                  <span className="font-semibold not-italic">
-                    {message.nickname}
-                    {side ? ` (${message.role})` : ''}
-                  </span>
-                  {': '}
-                  {message.body}
-                </li>
-              );
-            })
-          )}
-        </ul>
-        {canWrite ? (
-          <form className="mt-3 flex gap-2" onSubmit={send}>
-            <input
-              type="text"
-              maxLength={200}
-              value={draft}
-              aria-label="Message"
-              placeholder="Message"
-              className="min-h-11 min-w-0 flex-1 rounded-[length:var(--radius-control)] border border-border bg-surface px-3 py-2 text-sm text-ink"
-              onChange={(event) => {
-                setDraft(event.target.value);
-              }}
-            />
-            <Button compact type="submit" variant="green" disabled={draft.trim().length === 0}>
-              Send
-            </Button>
-          </form>
-        ) : null}
+        <ChatLog messages={messages} players={players} canWrite={canWrite} onSend={onSend} />
       </Dialog>
     </div>
   );

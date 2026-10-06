@@ -4209,3 +4209,21 @@ Table chat:
 
 ---
 
+## 2026-10-06 · [P] Rules chrome and lobby chat
+
+Same day, after the table pass. This supersedes "the lobby has no chat."
+
+- Host rules open from a settings control only the host sees, in the online
+  lobby and on the solo menu. Guests see a clock with the seconds, the kit
+  faces (excluded kits gray), and a random-kit face when kits are dealt at
+  random. The turn control is a slider from 5 to 180. All allows every kit.
+  None excludes every kit except the first Classic kit, because one kit must
+  stay allowed.
+- Chat is also at the bottom of the lobby player list. A line is
+  `Round N` plus the seat-colored nickname, using the same round count as
+  the action log. Lobby lines are stamped `Lobby` (`round` 0). The transcript
+  from that lobby stays when the match starts. The first Play again clears
+  it for the next gathering. The finished-game row stores `round_index`.
+
+---
+

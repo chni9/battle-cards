@@ -98,6 +98,11 @@ export interface LobbyStateView {
    * Omitted only when a caller did not supply them; the room always sends them.
    */
   lobbyRules?: LobbyRules;
+  /**
+   * Chat this recipient may read (PROTOCOL_VERSION 45 / Lot 70).
+   * The lobby uses the same two streams as the table.
+   */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 /** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */

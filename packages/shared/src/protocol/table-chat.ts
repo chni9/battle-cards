@@ -16,6 +16,25 @@ export interface ChatMessageView {
   nickname: string;
   role: ChatAuthorRole;
   body: string;
+  /**
+   * Table round at send time, same count as the action log.
+   * `0` is the lobby, before the match starts.
+   */
+  round: number;
+}
+
+/**
+ * Action-log round: one pass around the table.
+ * `floor(turnSequence / seatCount) + 1`.
+ */
+export function tableRound(turnSequence: number, seatCount: number): number {
+  const seats = Math.max(1, seatCount);
+  return Math.floor(turnSequence / seats) + 1;
+}
+
+/** Stamp on a chat line. Lobby messages are not a round yet. */
+export function chatRoundLabel(round: number): string {
+  return round === 0 ? 'Lobby' : `Round ${String(round)}`;
 }
 
 export function isChatAuthorRole(value: unknown): value is ChatAuthorRole {

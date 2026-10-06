@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { KIT_IDS } from '../domain/kit';
 import {
+  allowEveryKit,
   allowedKitIds,
   defaultLobbyRules,
+  excludeEveryKitButFirst,
   isTurnTimeSeconds,
   MAX_TURN_TIME_SECONDS,
   MIN_TURN_TIME_SECONDS,
@@ -55,6 +57,12 @@ describe('lobby rules (rules spec §6 Setup)', () => {
       ok: false,
       reason: 'invalid',
     });
+  });
+
+  it('selects every kit and unselects down to the first', () => {
+    const excluded = excludeEveryKitButFirst(defaultLobbyRules());
+    expect(allowedKitIds(excluded)).toEqual([KIT_IDS[0]]);
+    expect(allowedKitIds(allowEveryKit(excluded))).toEqual(KIT_IDS);
   });
 
   it('stores excluded kits in catalog order', () => {

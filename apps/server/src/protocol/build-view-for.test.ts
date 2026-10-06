@@ -1728,6 +1728,7 @@ describe('buildPlayingViewFor (Lot 70) — chat streams', () => {
       nickname: 'Alice',
       role: 'living' as const,
       body: 'hi',
+      round: 1,
     },
     {
       order: 1,
@@ -1735,6 +1736,7 @@ describe('buildPlayingViewFor (Lot 70) — chat streams', () => {
       nickname: 'Bob',
       role: 'eliminated' as const,
       body: 'out',
+      round: 2,
     },
     {
       order: 2,
@@ -1742,6 +1744,7 @@ describe('buildPlayingViewFor (Lot 70) — chat streams', () => {
       nickname: 'Sam',
       role: 'spectator' as const,
       body: 'watching',
+      round: 2,
     },
   ];
 
@@ -1797,5 +1800,52 @@ describe('buildPlayingViewFor (Lot 70) — chat streams', () => {
       'out',
       'watching',
     ]);
+  });
+});
+
+describe('buildLobbyViewFor (Lot 70) — chat streams', () => {
+  it('hides the side stream from a seated guest and shows it to a walk-in', () => {
+    const messages = [
+      {
+        order: 0,
+        senderId: 'session-a',
+        nickname: 'Alice',
+        role: 'living' as const,
+        body: 'ready',
+        round: 0,
+      },
+      {
+        order: 1,
+        senderId: 'watcher',
+        nickname: 'Sam',
+        role: 'spectator' as const,
+        body: 'watching',
+        round: 0,
+      },
+    ];
+    const seats = [
+      { id: 'session-a', nickname: 'Alice', isBot: false, isReady: true },
+      { id: 'session-b', nickname: 'Bob', isBot: false, isReady: false },
+    ];
+    const guest = buildLobbyViewFor({
+      recipientSessionId: 'session-b',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+      chatMessages: messages,
+    });
+    const watcher = buildLobbyViewFor({
+      recipientSessionId: 'watcher',
+      gameCode: 'ABCDEF',
+      hostPlayerId: 'session-a',
+      seats,
+      yourKitSelection: 'random',
+      isSpectator: true,
+      chatMessages: messages,
+    });
+
+    expect(guest.chatMessages?.map((message) => message.body)).toEqual(['ready']);
+    expect(watcher.chatMessages?.map((message) => message.body)).toEqual(['ready', 'watching']);
   });
 });

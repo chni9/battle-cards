@@ -9,6 +9,7 @@ import {
   isAttackCardId,
   listedAttackDamage,
   SENTENCE_OWNER_TURNS,
+  tableRound,
   type ActionLogEntryKind,
   type ActionLogEntryView,
   type CardId,
@@ -573,8 +574,7 @@ export interface RoundGroup {
 }
 
 export function roundOfTurn(turnSequence: number, seatCount: number): number {
-  const n = Math.max(1, seatCount);
-  return Math.floor(turnSequence / n) + 1;
+  return tableRound(turnSequence, seatCount);
 }
 
 export function groupByRound(

@@ -170,6 +170,8 @@ export interface LobbyViewInput {
   claimableSeats?: readonly ClaimableSeatView[];
   /** Host rules for this lobby (PROTOCOL_VERSION 45). Default is every kit, 60s. */
   lobbyRules?: LobbyRules;
+  /** Room transcript. Filtered per recipient (rules spec §6 Chat). */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
@@ -188,6 +190,11 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
       hostPlayerId,
       yourKitSelection,
       lobbyRules: input.lobbyRules ?? defaultLobbyRules(),
+      chatMessages: chatMessagesForReader({
+        messages: input.chatMessages ?? [],
+        readerIsSpectator: walkInSpectator,
+        readerIsEliminated: false,
+      }),
       players: seats.map((seat) => {
         const view: LobbySeatView = {
           id: seat.id,

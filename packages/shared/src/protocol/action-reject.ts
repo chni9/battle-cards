@@ -271,7 +271,7 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'set-lobby-rules-tutorial': 'The tutorial does not use table rules.',
   'set-lobby-rules-no-kit': 'At least one kit must stay allowed.',
   'set-lobby-rules-turn-time': 'Turn time must be a whole number of seconds from 5 to 180.',
-  'send-chat-not-in-game': 'Chat is only available during the game.',
+  'send-chat-not-in-game': 'Chat is available in the lobby and during the game.',
   'send-chat-bot': 'Bots do not chat.',
   'send-chat-too-long': 'A chat message is at most 200 characters.',
 

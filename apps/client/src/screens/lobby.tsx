@@ -24,6 +24,7 @@ import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
 import { LobbyRulesPanel } from './lobby-rules-panel';
+import { ChatLog } from './table/chat-log';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
   lobbyShowsReadyToggle,
@@ -44,6 +45,7 @@ export interface LobbyScreenProps {
   onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
   onChooseKit: (selection: LobbyKitSelection) => void;
   onSetLobbyRules: (payload: SetLobbyRulesPayload) => void;
+  onSendChat: (body: string) => void;
 }
 
 export function LobbyScreen({
@@ -58,6 +60,7 @@ export function LobbyScreen({
   onSetBotDifficulty,
   onChooseKit,
   onSetLobbyRules,
+  onSendChat,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
   const walkInSpectator = view.isSpectator === true;
@@ -228,6 +231,17 @@ export function LobbyScreen({
               </li>
             ))}
           </ul>
+          <div className="mt-3">
+            <h3 className="text-sm font-medium text-ink-muted">Chat</h3>
+            <div className="mt-2">
+              <ChatLog
+                messages={view.chatMessages ?? []}
+                players={view.players}
+                canWrite
+                onSend={onSendChat}
+              />
+            </div>
+          </div>
         </section>
 
         {isHost && (

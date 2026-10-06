@@ -150,8 +150,8 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
   for (const message of snapshot.chatMessages) {
     await client.query(
       `INSERT INTO game_chat_messages (
-        game_id, order_index, sender_id, nickname, role, body
-      ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        game_id, order_index, sender_id, nickname, role, body, round_index
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         gameId,
         message.order,
@@ -159,6 +159,7 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         message.nickname,
         message.role,
         message.body,
+        message.round,
       ],
     );
   }

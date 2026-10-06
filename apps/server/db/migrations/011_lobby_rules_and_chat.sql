@@ -27,11 +27,13 @@ CREATE TABLE game_chat_messages (
   nickname text NOT NULL,
   role text NOT NULL,
   body text NOT NULL,
+  round_index integer NOT NULL,
   PRIMARY KEY (game_id, order_index),
   CONSTRAINT game_chat_messages_role_check CHECK (
     role IN ('living', 'eliminated', 'spectator')
   ),
   CONSTRAINT game_chat_messages_body_check CHECK (
     char_length(body) >= 1 AND char_length(body) <= 200
-  )
+  ),
+  CONSTRAINT game_chat_messages_round_check CHECK (round_index >= 0)
 );

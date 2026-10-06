@@ -66,6 +66,23 @@ export function toggleExcludedKit(rules: LobbyRules, kitId: KitId): LobbyRules |
   };
 }
 
+/** Select all. Every Classic kit is allowed again. */
+export function allowEveryKit(rules: LobbyRules): LobbyRules {
+  return { ...rules, excludedKitIds: [] };
+}
+
+/**
+ * Unselect all, except the first Classic kit. At least one kit must stay allowed.
+ */
+export function excludeEveryKitButFirst(rules: LobbyRules): LobbyRules {
+  const keep = KIT_IDS[0];
+
+  return {
+    ...rules,
+    excludedKitIds: KIT_IDS.filter((kitId) => kitId !== keep),
+  };
+}
+
 export function parseExcludedKitIds(
   value: unknown,
 ): { ok: true; excludedKitIds: readonly KitId[] } | { ok: false; reason: 'invalid' | 'none-allowed' } {

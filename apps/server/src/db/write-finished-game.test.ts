@@ -30,6 +30,7 @@ function sampleSnapshot(): FinishedGameSnapshot {
         nickname: 'Alice',
         role: 'living',
         body: 'gl',
+        round: 4,
       },
     ],
     players: [
@@ -318,8 +319,8 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     expect(rules?.[12]).toEqual(['ghost']);
     expect(rules?.[13]).toBe(false);
     expect(rules?.[14]).toBe(45);
-    const chat = bound.find((params) => params.length === 6);
-    expect(chat).toEqual(['game-uuid', 0, 'alice', 'Alice', 'living', 'gl']);
+    const chat = bound.find((params) => params.length === 7);
+    expect(chat).toEqual(['game-uuid', 0, 'alice', 'Alice', 'living', 'gl', 4]);
   });
 });
 

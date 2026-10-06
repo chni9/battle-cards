@@ -258,7 +258,7 @@ Remain private: each player's kit, the contents of their hand, and the exact val
 
 ### Chat
 
-During a game, living players write to the living stream. Only living players' messages appear there for living readers. Eliminated players and spectators can write. Those messages are labeled eliminated or spectator, and only eliminated players and spectators can read them. They can still read the living stream. A message is at most 200 characters. Bots do not chat. The lobby has no chat. Messages stay in the room during the game and are stored with the finished game. Nothing is saved if the room dies before the game finishes.
+Living players write to the living stream, in the lobby and during the game. Only living players' messages appear there for living readers. Eliminated players and spectators can write. Those messages are labeled eliminated or spectator, and only eliminated players and spectators can read them. They can still read the living stream. Each message shows the table round it was sent in, or that it was sent in the lobby. A message is at most 200 characters. Bots do not chat. Messages stay in the room and are stored with the finished game, including lines sent in the lobby before that match started. A new lobby after the match clears them. Nothing is saved if the room dies before the game finishes.
 
 ### Game Turn
 
