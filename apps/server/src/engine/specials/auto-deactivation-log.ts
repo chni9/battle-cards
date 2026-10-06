@@ -3,7 +3,8 @@
  *
  * Keyed by `GameState` so concurrent rooms and search clones never mix.
  * Manual `deactivatePersistent` does not record here — that stays `actionPlayed`.
- * Leave / forfeit / inactivity dumps return from `eliminateWithoutReward` instead
+ * Leave / forfeit (`eliminateForForfeit`) and inactivity
+ * (`eliminateWithoutReward`) dumps return on the elimination result instead
  * of this map, so they cannot attach to a leftover turn collector.
  */
 

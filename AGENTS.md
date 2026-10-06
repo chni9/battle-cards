@@ -137,6 +137,10 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
  **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
  (`PROTOCOL_VERSION` 42).
+ **Lot 71** (designer 2026-10-06) makes base Spy Thief one living target with a
+ Spy+ reveal; the upgrade hits every living opponent and does not double stolen
+ points. Forfeit and leaving the table pay queued attackers and active Poison.
+ The turn timer and inactivity do not. No protocol bump.
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes

@@ -261,7 +261,9 @@ describe('persistentDeactivated log (L56-07)', () => {
     const forfeit = readFileSync(join(dir, '../../rooms/playing-forfeit.ts'), 'utf8');
     expect(room).toContain("kind: 'persistentDeactivated'");
     expect(room).toContain('appendPersistentDeactivations');
-    expect(room).toContain('left.persistentDeactivations');
+    // Leave and the Forfeit button share one settle that logs the dump (Lot 71).
+    expect(room).toContain('settleVoluntaryElimination');
+    expect(room).toContain('result.persistentDeactivations');
     expect(forfeit).toContain('persistentDeactivations');
     expect(sim).toContain("kind: 'persistentDeactivated'");
   });

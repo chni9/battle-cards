@@ -4167,3 +4167,31 @@ forced pick on play only.
 
 ---
 
+## 2026-10-06 · [P] Lot 71 Spy Thief and forfeit rewards
+
+Designer. No protocol bump. The existing Spy+ view (`full-resources`: kit,
+cards, and live resources) and the existing elimination-reward dialog carry
+both changes.
+
+- Base Spy Thief chooses one living opponent. It steals all of that
+  opponent's points, with no cap and no doubling, and leaves a Spy+ reveal
+  for the rest of the game.
+- Upgraded Spy Thief does that same effect to every living opponent. Stolen
+  points are not doubled.
+- A living invisible player is not a legal target. The card stays
+  not counterable. An upgraded Shield does not block it. Untouchable is
+  not immune.
+- The Forfeit button and leaving the table while the game is playing pay
+  the same two kill picks (4 lives, 8 points, one remaining card, or an
+  upgrade point; both picks may match). Each living player with an attack
+  still queued on the forfeiter is paid once. Each living player with an
+  active Poison is paid once. One reward per player, not per card. Order
+  is fewest lives, then fewest points, then a seeded draw. A taken card is
+  gone. Picks happen before the forfeiter's cards dump into the pool.
+- Pending Thief, Imposition, Sentence, and Curse do not pay. No queued
+  attack and no active Poison pays nobody.
+- The turn timer and inactivity elimination do not pay. They stay on
+  `eliminateWithoutReward`.
+
+---
+

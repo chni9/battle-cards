@@ -123,9 +123,11 @@ import { advanceTurn, findPlayer } from '../engine/turn/advance-turn';
 import { endBlockChain } from '../engine/turn/grant-block-turns';
 import {
   REWARD_SUB_CHOICE_MS,
+  eliminateForForfeit,
   eliminateWithoutReward,
   findSoleSurvivorId,
   listAvailableRewardCards,
+  type ForfeitEliminationResult,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
 import {
@@ -851,14 +853,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
-    this.clearAbsentTimer(sessionId);
-    const left = eliminateWithoutReward(state, sessionId);
-    this.appendPersistentDeactivations(left.persistentDeactivations);
-    this.recordElimination({
-      playerId: sessionId,
-      eliminatorPlayerId: null,
-      reason: 'leave',
-    });
+    const hadRewards = state.rewardChoice !== null || state.rewardQueue.length > 0;
+    const left = eliminateForForfeit(state, sessionId);
+
+    if (!left.eliminated) {
+      return;
+    }
 
     const afterLeave = findPlayer(state, sessionId);
 
@@ -870,36 +870,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.rejectReconnection(sessionId, new Error('Player left'));
     }
 
-    if (this.finishIfSoleSurvivor(state)) {
-      return;
-    }
-
-    if (state.subChoice?.kind === 'reanimation-kit') {
-      const kitChoice = state.subChoice;
-      const chooser = this.clientForPlayerId(kitChoice.playerId);
-      this.beginReanimationKitTimer(kitChoice, chooser);
-      this.sendStateToEveryone();
-      return;
-    }
-
-    this.refreshAutoDispose();
-
-    if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
-      this.clearTurnTimer();
-      advanceTurn(state);
-      this.actionTakenThisTurn = false;
-      this.beginTurnOrAbsentAutoPlay();
-      this.sendStateToEveryone();
-      this.broadcastTurnStarted();
-      return;
-    }
-
-    this.sendStateToEveryone();
+    this.settleVoluntaryElimination(sessionId, left, hadRewards);
   }
 
   /**
    * FORFEIT while playing: same elim as consented leave, keep the live socket
-   * (L43-06 / technical spec v6 §6.3). Do not `leave` or reject the forfeiter.
+   * (L43-06 / technical spec v6 §6.3, Lot 71). Do not `leave` or reject the forfeiter.
    */
   private handlePlayingForfeit(client: GameClient): void {
     const state = this.gameState;
@@ -908,7 +884,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-      const playerId = this.playerIdFor(client);
+    const playerId = this.playerIdFor(client);
+    const hadRewards = state.rewardChoice !== null || state.rewardQueue.length > 0;
     const result = applyPlayingForfeit(state, playerId);
 
     if (!result.eliminated) {
@@ -916,6 +893,25 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     console.log(`[${this.roomId}] ${playerId} forfeit — stay connected`);
+    this.settleVoluntaryElimination(playerId, result, hadRewards);
+  }
+
+  /**
+   * Shared tail for the Forfeit button and leaving the table (Lot 71).
+   * Reward picks use the existing elimination dialog. The turn timer and
+   * inactivity never enter this path.
+   */
+  private settleVoluntaryElimination(
+    playerId: string,
+    result: ForfeitEliminationResult,
+    hadRewards: boolean,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
     this.clearAbsentTimer(playerId);
     this.appendPersistentDeactivations(result.persistentDeactivations);
     this.recordElimination({
@@ -923,6 +919,24 @@ export class GameRoom extends Room<{ client: GameClient }> {
       eliminatorPlayerId: null,
       reason: 'leave',
     });
+
+    if (result.rewardChoicePending) {
+      if (
+        !hadRewards &&
+        state.currentTurnPlayerId !== null &&
+        state.currentTurnPlayerId !== playerId
+      ) {
+        state.suppressTurnAdvanceAfterRewards = true;
+      }
+
+      if (!hadRewards) {
+        this.clearTurnTimer();
+        this.beginRewardTimer(state);
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
 
     if (this.finishIfSoleSurvivor(state)) {
       return;
@@ -2731,6 +2745,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     rewardChoicePending: boolean;
     subChoicePending?: boolean;
     winnerPlayerId: string | null;
+    turnAdvanced?: boolean;
     playerReanimated?: readonly { playerId: string; kitId: KitId }[];
   }): void {
     if (result.playerReanimated !== undefined) {
@@ -2775,6 +2790,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
         return;
       }
+    }
+
+    if (result.turnAdvanced === false) {
+      const playing = this.gameState;
+
+      if (playing?.currentTurnPlayerId != null && !this.actionTakenThisTurn) {
+        this.beginTurnOrAbsentAutoPlay();
+        this.broadcastTurnStarted();
+      }
+
+      this.sendStateToEveryone();
+      return;
     }
 
     this.actionTakenThisTurn = false;

@@ -57,9 +57,9 @@ export const SPECIAL_CARD_CATALOG = {
     'spy-thief',
     'Spy Thief',
     5,
-    'Steal all points from all opponents and spy on all of them.',
-    'Steal all points from all opponents (doubled) and spy on all of them, seeing all of their resources.',
-    'Stolen points are doubled, and you see all of their resources.',
+    'Choose one living opponent. Steal all their points and see their kit, cards, and resources for the rest of the game.',
+    'Steal all points from every living opponent (not doubled) and see each of their kits, cards, and resources for the rest of the game.',
+    'Hits every living opponent instead of one. Stolen points are not doubled.',
   ),
   imposition: specialCard(
     'imposition',

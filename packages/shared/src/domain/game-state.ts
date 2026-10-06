@@ -108,6 +108,12 @@ export interface GameState {
    * game-over are paused (Mirror-shaped gate).
    */
   rewardChoice: RewardChoiceState | null;
+  /**
+   * Server-only. Set when forfeit rewards interrupt another living seat's turn
+   * (Lot 71). `resumeAfterRewards` must not call `advanceTurn` while that seat
+   * is still alive. Never placed on a client view.
+   */
+  suppressTurnAdvanceAfterRewards?: boolean;
 }
 
 /** One third-party contributor to a potential elimination this phase. */

@@ -424,7 +424,10 @@ function applyTheftOnResolve(
     }
 
     if (asSource && !asTarget) {
-      addRange(points, 0, POINTS_UNCERTAINTY_CAP * others * (upgraded ? 2 : 1));
+      // Lot 71: base hits the named seat only; upgraded hits every living opponent.
+      // Neither tier doubles the stolen points.
+      const victims = upgraded ? others : 1;
+      addRange(points, 0, POINTS_UNCERTAINTY_CAP * victims);
     }
 
     return;
