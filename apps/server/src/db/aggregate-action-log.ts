@@ -3,8 +3,9 @@
  * L9-03 recap, L60-04 award counts.
  * `actionPlayed` drives play / buy / sell / upgrade / draw / attack / special
  * totals. `actionResolved` attack `livesLost` is damage dealt. Combat
- * `playerEliminated` rows are kills. Resolutions / Mirror / rewards never
- * inflate play counts.
+ * `playerEliminated` rows are kills. A forfeit or leave that pays kill
+ * rewards credits each `rewardsClaimed` eliminator (Lot 71). Resolutions /
+ * Mirror never inflate play counts.
  */
 
 import {
@@ -30,7 +31,7 @@ export interface ActionLogPlayerAggregates {
   attacksPlayedCount: number;
   /** Attack-source `actionResolved.livesLost` — not Tax / Suicide. */
   damageDealt: number;
-  /** Combat eliminations credited to this seat. */
+  /** Combat eliminations, plus forfeit rewards credited on `rewardsClaimed` (Lot 71). */
   kills: number;
   /** One per `actionPlayed` row — turn timer denominator for recap clocks. */
   turnActionsCount: number;
@@ -65,6 +66,14 @@ export function aggregateActionsForPlayer(
 
     if (entry.kind === 'playerEliminated') {
       if (entry.reason === 'combat' && entry.eliminatorPlayerId === playerId) {
+        kills += 1;
+      }
+
+      continue;
+    }
+
+    if (entry.kind === 'rewardsClaimed' && entry.eliminatorPlayerId === playerId) {
+      if (forfeitRewardKill(actionLog, entry.eliminatedPlayerId, entry.turnSequence)) {
         kills += 1;
       }
 
@@ -171,6 +180,32 @@ export function aggregateActionsForPlayer(
     kills,
     turnActionsCount,
   };
+}
+
+/**
+ * The leave that this claim pays, not an earlier or later death of the same seat.
+ * Reanimation can log `leave` and later `combat` for one `playerId` (Lot 71).
+ */
+function forfeitRewardKill(
+  actionLog: readonly ActionLogEntryView[],
+  eliminatedPlayerId: string,
+  claimedAt: number,
+): boolean {
+  let matchedLeave = false;
+
+  for (const row of actionLog) {
+    if (
+      row.kind !== 'playerEliminated' ||
+      row.playerId !== eliminatedPlayerId ||
+      row.turnSequence > claimedAt
+    ) {
+      continue;
+    }
+
+    matchedLeave = row.reason === 'leave';
+  }
+
+  return matchedLeave;
 }
 
 function bumpCardCount(map: Record<string, number>, cardId: CardId | undefined): void {

@@ -4167,3 +4167,76 @@ forced pick on play only.
 
 ---
 
+## 2026-10-06 · [P] Lot 71 Spy Thief and forfeit rewards
+
+Designer. No protocol bump. The existing Spy+ view (`full-resources`: kit,
+cards, and live resources) and the existing elimination-reward dialog carry
+both changes.
+
+- Base Spy Thief chooses one living opponent. It steals all of that
+  opponent's points, with no cap and no doubling, and leaves a Spy+ reveal
+  for the rest of the game.
+- Upgraded Spy Thief does that same effect to every living opponent. Stolen
+  points are not doubled.
+- A living invisible player is not a legal target. The card stays
+  not counterable. An upgraded Shield does not block it. Untouchable is
+  not immune.
+- The Forfeit button and leaving the table while the game is playing pay
+  the same two kill picks (4 lives, 8 points, one remaining card, or an
+  upgrade point; both picks may match). Each living player with an attack
+  still queued on the forfeiter is paid once. Each living player with an
+  active Poison is paid once. One reward per player, not per card. Order
+  is fewest lives, then fewest points, then a seeded draw. A taken card is
+  gone. Picks happen before the forfeiter's cards dump into the pool.
+- Pending Thief, Imposition, Sentence, and Curse do not pay. No queued
+  attack and no active Poison pays nobody.
+- The turn timer and inactivity elimination do not pay. They stay on
+  `eliminateWithoutReward`.
+
+---
+
+## 2026-10-06 · [P] Lot 71 forfeit: active Poison does not pay
+
+Designer correction the same day. Forfeit and leaving the table pay only
+each living player who still has an attack queued on the forfeiter. An
+active Poison does not earn those kill picks, including when that player
+also has a queued attack (still one reward, from the attack). Pending
+Thief, Imposition, Sentence, and Curse stay unpaid. The turn timer and
+inactivity stay unpaid.
+
+---
+
+## 2026-10-06 · [P] Lot 71 forfeit pickers, last player, kills
+
+Designer the same day.
+
+- Upgraded Spy Thief copy does not mention doubling. The steal is still
+  not doubled.
+- Base Spy Thief is a targeted play. The table must ask for one living
+  opponent. The upgrade still has no target.
+- When more than one player is owed forfeit or elimination rewards, each
+  of them gets the reward picker at the same time. A card taken by one
+  is gone for the others.
+- If a forfeit leaves one player in the match, that player has won and
+  is not prompted, even when they had an attack queued on the forfeiter.
+- Each player who actually receives those forfeit rewards is credited one
+  kill on the end-of-game recap. A forfeit that pays nobody does not.
+- Slowest and Fastest show the average as `x s/turn`.
+
+---
+
+## 2026-10-06 · [P] Lot 71 shared reward deadline
+
+Same-day correction of the simultaneous picker.
+
+- The shared countdown defaults every remaining picker when it fires.
+  Bots answer with their policy once they are the head. Humans and
+  dropped humans take the 2×4 life default. A later seat is not given
+  a deadline that has already passed.
+- A forfeit that adds jobs onto an open reward queue prompts those
+  players on the countdown already running.
+- A forfeit kill on the recap matches the leave at or before that
+  claim. A later combat death of the same seat is a separate kill.
+
+---
+

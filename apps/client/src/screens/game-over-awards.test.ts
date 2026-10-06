@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { GameRecapPlayerView, GameRecapView } from '@card-battle/shared';
 
 import {
+  formatAwardValue,
   formatThinkTimeMs,
   pickGameOverAwards,
 } from './game-over-awards';
@@ -200,5 +201,13 @@ describe('formatThinkTimeMs (L60-05)', () => {
   it('rolls rounded 60 seconds into the next minute', () => {
     expect(formatThinkTimeMs(59_950)).toBe('1m 0s');
     expect(formatThinkTimeMs(119_600)).toBe('2m 0s');
+  });
+});
+
+describe('formatAwardValue time (Lot 71)', () => {
+  it('labels slowest and fastest as seconds per turn', () => {
+    expect(formatAwardValue('time', 1_500)).toBe('1.5 s/turn');
+    expect(formatAwardValue('time', 65_000)).toBe('1m 5 s/turn');
+    expect(formatAwardValue('count', 2)).toBe('2');
   });
 });

@@ -4,6 +4,7 @@
 
 import {
   actionReject,
+  isAttackCardId,
   type ActionReject,
   type CardId,
   type CardInstance,
@@ -56,6 +57,11 @@ export interface PersistentDeactivation {
 export interface EliminateWithoutRewardResult {
   eliminated: boolean;
   persistentDeactivations: readonly PersistentDeactivation[];
+}
+
+/** Voluntary forfeit / consented leave — may open the existing reward dialog (Lot 71). */
+export interface ForfeitEliminationResult extends EliminateWithoutRewardResult {
+  rewardChoicePending: boolean;
 }
 
 /**
@@ -277,43 +283,131 @@ function captureEliminationSnapshot(player: Player, turnSequence: number): void 
   };
 }
 
+function lifecycleElimRng(state: GameState, playerId: string): Rng {
+  return createRng(`${state.seed}:lifecycle-elim:${state.turnSequence}:${playerId}`);
+}
+
 /**
- * Eliminate a player who still has lives (absence, inactivity, or Leave forfeit).
- * No eliminator → cards to the pool immediately — technical spec §5.7, L7-02…L7-04.
- * Armed Reanimation consumes and revives after the dump (#V4-12a / L26-01).
+ * Living seats paid when someone forfeits or leaves the table (rules spec §6, Lot 71).
+ * One seat once: a queued attack on the forfeiter. Active Poison does not pay.
+ * Captured before cleanup clears the queue and dumps persistents.
+ */
+function forfeitRewardRecipientIds(state: GameState, forfeiter: Player): string[] {
+  const ids: string[] = [];
+
+  const add = (playerId: string): void => {
+    if (playerId === forfeiter.id || ids.includes(playerId)) {
+      return;
+    }
+
+    const candidate = findPlayer(state, playerId);
+
+    if (candidate === undefined || candidate.isEliminated) {
+      return;
+    }
+
+    ids.push(playerId);
+  };
+
+  for (const effect of forfeiter.pendingEffects) {
+    if (isAttackCardId(effect.cardId)) {
+      add(effect.sourcePlayerId);
+    }
+  }
+
+  return ids;
+}
+
+/**
+ * Eliminate a player who still has lives (absence, inactivity, or voluntary leave).
+ * Absence and inactivity pass `payForfeitRewards: false` and dump cards immediately
+ * (technical spec §5.7). The Forfeit button and leaving the table pass true: queued
+ * attackers pick before the card dump (Lot 71). Active Poison does not pay.
+ * Armed Reanimation consumes and revives after the dump, or after rewards drain.
  *
- * @returns whether the player was newly eliminated (even if immediately revived)
- * and any persistents dumped as lost (not consumed Reanimation).
+ * Not a typed loss: the player may still have lives; this is administrative state only.
+ */
+function eliminateAdministrative(
+  state: GameState,
+  playerId: string,
+  rng: Rng,
+  nowMs: number,
+  payForfeitRewards: boolean,
+): ForfeitEliminationResult {
+  const player = findPlayer(state, playerId);
+
+  if (player === undefined || player.isEliminated) {
+    return { eliminated: false, persistentDeactivations: [], rewardChoicePending: false };
+  }
+
+  const rewardRecipients = payForfeitRewards
+    ? orderEliminators(forfeitRewardRecipientIds(state, player), state, rng)
+    : [];
+
+  consumeArmedReanimation(state, player);
+  captureEliminationSnapshot(player, state.turnSequence);
+  player.isEliminated = true;
+  // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
+  // Not a typed loss: the player may still have lives; this is administrative state only.
+  player.lives = 0;
+  onPlayerEliminatedForAbsorbWindow(state, player);
+  const persistentDeactivations = stampPersistentDeactivations(
+    state,
+    cleanupEliminatedPlayer(state, player),
+  );
+
+  const gameEndingForfeit =
+    payForfeitRewards &&
+    player.pendingReanimation === null &&
+    countContendersAfterElim(state, player) === 1;
+
+  if (rewardRecipients.length === 0 || gameEndingForfeit) {
+    dumpCardsToPool(state, player);
+    processPendingReanimations(state, rng, nowMs);
+    return { eliminated: true, persistentDeactivations, rewardChoicePending: false };
+  }
+
+  for (const rewardedEliminatorId of rewardRecipients) {
+    state.rewardQueue.push({
+      eliminationId: `elim:${state.turnSequence}:${player.id}:${rewardedEliminatorId}`,
+      eliminatedPlayerId: player.id,
+      eliminatorPlayerId: rewardedEliminatorId,
+    });
+  }
+
+  if (state.rewardChoice === null) {
+    activateRewardHead(state, nowMs);
+  }
+
+  return { eliminated: true, persistentDeactivations, rewardChoicePending: true };
+}
+
+/**
+ * Absence or inactivity. No forfeit rewards — technical spec §5.7, L7-02…L7-04.
  */
 export function eliminateWithoutReward(
   state: GameState,
   playerId: string,
-  rng: Rng = createRng(`${state.seed}:lifecycle-elim:${state.turnSequence}:${playerId}`),
+  rng: Rng = lifecycleElimRng(state, playerId),
 ): EliminateWithoutRewardResult {
-  const player = findPlayer(state, playerId);
+  const result = eliminateAdministrative(state, playerId, rng, Date.now(), false);
+  return {
+    eliminated: result.eliminated,
+    persistentDeactivations: result.persistentDeactivations,
+  };
+}
 
-  if (player === undefined || player.isEliminated) {
-    return { eliminated: false, persistentDeactivations: [] };
-  }
-
-    consumeArmedReanimation(state, player);
-    captureEliminationSnapshot(player, state.turnSequence);
-    player.isEliminated = true;
-    // Forfeit/absence elimination — technical spec §5.7, rules spec §6.
-    // Not a typed loss: the player may still have lives; this is administrative state only.
-    player.lives = 0;
-    onPlayerEliminatedForAbsorbWindow(state, player);
-    const persistentDeactivations = stampPersistentDeactivations(
-      state,
-      cleanupEliminatedPlayer(state, player),
-    );
-  dumpCardsToPool(state, player);
-  processPendingReanimations(
-    state,
-    rng,
-    Date.now(),
-  );
-  return { eliminated: true, persistentDeactivations };
+/**
+ * Forfeit button or leaving the table while playing (Lot 71).
+ * Queued attackers receive kill picks before cards hit the pool. Active Poison does not.
+ */
+export function eliminateForForfeit(
+  state: GameState,
+  playerId: string,
+  rng: Rng = lifecycleElimRng(state, playerId),
+  nowMs: number = Date.now(),
+): ForfeitEliminationResult {
+  return eliminateAdministrative(state, playerId, rng, nowMs, true);
 }
 
 /**
@@ -504,13 +598,16 @@ function applyOneChoice(
   }
 }
 
-function finishRewardJob(state: GameState, nowMs: number): void {
-  const job = state.rewardQueue.shift();
+function finishRewardJob(state: GameState, eliminationId: string, nowMs: number): void {
+  const index = state.rewardQueue.findIndex((job) => job.eliminationId === eliminationId);
+  const job = index >= 0 ? state.rewardQueue[index] : undefined;
 
   if (job === undefined) {
     state.rewardChoice = null;
     return;
   }
+
+  state.rewardQueue.splice(index, 1);
 
   const victimStillHasRewardJobs = state.rewardQueue.some(
     (queued) => queued.eliminatedPlayerId === job.eliminatedPlayerId,
@@ -524,8 +621,27 @@ function finishRewardJob(state: GameState, nowMs: number): void {
     }
   }
 
-  state.rewardChoice = null;
-  activateRewardHead(state, nowMs);
+  const carriedDeadline = state.rewardChoice?.deadlineMs;
+  // A shared picker must not hand the next seat a deadline that already fired.
+  const deadlineMs =
+    carriedDeadline !== undefined && carriedDeadline > nowMs
+      ? carriedDeadline
+      : nowMs + REWARD_SUB_CHOICE_MS;
+  const head = state.rewardQueue[0];
+
+  if (head === undefined) {
+    state.rewardChoice = null;
+    return;
+  }
+
+  if (state.rewardChoice?.eliminationId === eliminationId || state.rewardChoice === null) {
+    state.rewardChoice = {
+      eliminationId: head.eliminationId,
+      eliminatorPlayerId: head.eliminatorPlayerId,
+      eliminatedPlayerId: head.eliminatedPlayerId,
+      deadlineMs,
+    };
+  }
 }
 
 /**
@@ -609,6 +725,11 @@ export type ApplyRewardResult =
       /** True when upgraded Reanimation kit pick is waiting (L26-02). */
       subChoicePending?: boolean;
       winnerPlayerId: string | null;
+      /**
+       * False when forfeit rewards end and the interrupted living seat keeps
+       * the turn (Lot 71). Omitted while another reward job is still queued.
+       */
+      turnAdvanced?: boolean;
       /** Reanimation revives completed when rewards drain (L30-06). */
       playerReanimated?: readonly { playerId: string; kitId: KitId }[];
       /** Opaque public history — picks never included (L9-02). */
@@ -632,22 +753,18 @@ export function applyEliminationRewardChoices(
 ): ApplyRewardResult {
   const active = state.rewardChoice;
 
-  if (active?.eliminationId !== eliminationId) {
+  const job = state.rewardQueue.find((entry) => entry.eliminationId === eliminationId);
+
+  if (active?.eliminationId !== eliminationId && job?.eliminationId !== eliminationId) {
     return actionReject('no-matching-elimination-reward');
   }
 
-  if (active.eliminatorPlayerId !== chooserPlayerId) {
+  if (job?.eliminatorPlayerId !== chooserPlayerId) {
     return actionReject('only-eliminator-chooses-rewards');
   }
 
-  const head = state.rewardQueue[0];
-
-  if (head?.eliminationId !== eliminationId) {
-    return actionReject('no-matching-elimination-reward');
-  }
-
-  const eliminator = findPlayer(state, active.eliminatorPlayerId);
-  const eliminated = findPlayer(state, active.eliminatedPlayerId);
+  const eliminator = findPlayer(state, job.eliminatorPlayerId);
+  const eliminated = findPlayer(state, job.eliminatedPlayerId);
 
   if (eliminator === undefined || eliminated === undefined) {
     return actionReject('unknown-player');
@@ -667,14 +784,14 @@ export function applyEliminationRewardChoices(
   }
 
   const rewardsClaimed = {
-    eliminatorPlayerId: active.eliminatorPlayerId,
-    eliminatedPlayerId: active.eliminatedPlayerId,
+    eliminatorPlayerId: job.eliminatorPlayerId,
+    eliminatedPlayerId: job.eliminatedPlayerId,
   };
 
   applyOneChoice(state, eliminator, eliminated, choices[0]);
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
-  finishRewardJob(state, nowMs);
+  finishRewardJob(state, eliminationId, nowMs);
   return { ...resumeAfterRewards(state, rng, nowMs), rewardsClaimed };
 }
 
@@ -711,6 +828,7 @@ export function resumeAfterRewards(
   rewardChoicePending: boolean;
   subChoicePending?: boolean;
   winnerPlayerId: string | null;
+  turnAdvanced?: boolean;
   playerReanimated?: readonly { playerId: string; kitId: KitId }[];
 } {
   if (state.rewardChoice !== null || state.rewardQueue.length > 0) {
@@ -725,22 +843,53 @@ export function resumeAfterRewards(
       rewardChoicePending: false,
       subChoicePending: true,
       winnerPlayerId: null,
+      turnAdvanced: false,
       ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
     };
   }
 
   const winnerPlayerId = findSoleSurvivorId(state);
 
-  if (winnerPlayerId === null) {
-    advanceTurn(state);
-  } else {
+  if (winnerPlayerId !== null) {
+    delete state.suppressTurnAdvanceAfterRewards;
     state.currentTurnPlayerId = null;
+    return {
+      ok: true,
+      rewardChoicePending: false,
+      winnerPlayerId,
+      turnAdvanced: false,
+      ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
+    };
   }
+
+  const current =
+    state.currentTurnPlayerId === null
+      ? undefined
+      : findPlayer(state, state.currentTurnPlayerId);
+  const holdTurn =
+    state.suppressTurnAdvanceAfterRewards === true &&
+    current !== undefined &&
+    !current.isEliminated;
+
+  delete state.suppressTurnAdvanceAfterRewards;
+
+  if (holdTurn) {
+    return {
+      ok: true,
+      rewardChoicePending: false,
+      winnerPlayerId: null,
+      turnAdvanced: false,
+      ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
+    };
+  }
+
+  advanceTurn(state);
 
   return {
     ok: true,
     rewardChoicePending: false,
-    winnerPlayerId,
+    winnerPlayerId: null,
+    turnAdvanced: true,
     ...(playerReanimated.length > 0 ? { playerReanimated } : {}),
   };
 }
