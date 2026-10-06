@@ -59,7 +59,7 @@ const RELEASE_NOTES_CATALOG = [
       {
         before: 'The table had no chat.',
         after:
-          'Players chat in the lobby and at the table with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
+          'Players chat in the lobby and at the table until the room closes, with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
       },
     ],
   },

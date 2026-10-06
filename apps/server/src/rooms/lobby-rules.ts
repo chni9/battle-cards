@@ -442,10 +442,12 @@ export function parseSetLobbyRulesPayload(
 export function canSendChat(input: {
   inGame: boolean;
   inLobby: boolean;
+  /** Still looking at the finished board after someone else pressed Play again. */
+  onFinishedBoard: boolean;
   senderIsBot: boolean;
   body: string;
 }): SendChatRejection | null {
-  if (!input.inGame && !input.inLobby) {
+  if (input.onFinishedBoard || (!input.inGame && !input.inLobby)) {
     return 'not-in-game';
   }
 

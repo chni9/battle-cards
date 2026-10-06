@@ -478,10 +478,31 @@ describe('host table rules and chat (Lot 70 / rules spec §6)', () => {
     expect(sendChatRejectionMessage('not-in-game').code).toBe('send-chat-not-in-game');
     expect(sendChatRejectionMessage('bot').code).toBe('send-chat-bot');
     expect(
-      canSendChat({ inGame: false, inLobby: true, senderIsBot: false, body: 'hi' }),
+      canSendChat({
+        inGame: false,
+        inLobby: true,
+        onFinishedBoard: false,
+        senderIsBot: false,
+        body: 'hi',
+      }),
     ).toBeNull();
     expect(
-      canSendChat({ inGame: false, inLobby: false, senderIsBot: false, body: 'hi' }),
+      canSendChat({
+        inGame: false,
+        inLobby: false,
+        onFinishedBoard: false,
+        senderIsBot: false,
+        body: 'hi',
+      }),
+    ).toBe('not-in-game');
+    expect(
+      canSendChat({
+        inGame: false,
+        inLobby: true,
+        onFinishedBoard: true,
+        senderIsBot: false,
+        body: 'hi',
+      }),
     ).toBe('not-in-game');
   });
 });

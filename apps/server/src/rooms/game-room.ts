@@ -1184,6 +1184,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const rejection = canSendChat({
       inGame: this.hasStarted && this.winnerPlayerId === null && this.gameState !== null,
       inLobby: !this.hasStarted && this.playKind !== 'tutorial',
+      onFinishedBoard: this.recapSeats.some((entry) => entry.sessionId === playerId),
       senderIsBot: seat !== undefined && isBotSeat(seat),
       body: parsed.value.body,
     });
@@ -1227,6 +1228,19 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     const playerId = this.playerIdFor(client);
+
+    // Play again keeps the previous GameState for the finished board. A seat
+    // in the next gathering is living again, even after a forfeit.
+    if (!this.hasStarted) {
+      const seat = this.seats.find((entry) => entry.sessionId === playerId);
+
+      if (seat === undefined || isBotSeat(seat)) {
+        return null;
+      }
+
+      return { senderId: playerId, nickname: seat.nickname, role: 'living' };
+    }
+
     const player = this.gameState?.players.find((entry) => entry.id === playerId);
 
     if (player !== undefined) {
@@ -1235,13 +1249,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
         nickname: player.nickname,
         role: player.isEliminated ? 'eliminated' : 'living',
       };
-    }
-
-    // The lobby has seats and no GameState yet.
-    const seat = this.seats.find((entry) => entry.sessionId === playerId);
-
-    if (seat !== undefined && !this.hasStarted) {
-      return { senderId: playerId, nickname: seat.nickname, role: 'living' };
     }
 
     return null;
@@ -1388,7 +1395,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.playAgainOptedIn.add(playerId);
 
     if (first) {
-      this.chatMessages = [];
+      // The transcript lasts until the room is gone. Designer 2026-10-06.
       this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
       this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
       this.seatWalkInSpectatorsAsLobbyGuests();

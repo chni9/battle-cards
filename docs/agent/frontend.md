@@ -156,7 +156,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-70` (2026-10-06) is the open update: the host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table, and eliminated players and spectators share a separate chat. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-70` (2026-10-06) is the open update: the host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -207,7 +207,8 @@ rules above are unchanged — this section only covers how the client looks.
   first Classic kit. Play again keeps the rules. The tutorial path does not show
   them. Solo uses the same panel. An untouched slider does not send a time, so
   `TURN_DURATION_MS` still applies until the host moves it. Chat sits under the
-  player list.
+  player list and stays when Play again opens the next gathering. The lines
+  last until the room is gone.
   Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
   Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
   nickname (`font-sans`). Host and bots are ready on the wire; human **guests** toggle with
@@ -268,8 +269,9 @@ rules above are unchanged — this section only covers how the client looks.
   right (inline SVGs). Chat opens and closes a fixed-height popup that scrolls to
   the newest line. Each line is the round (or Lobby) and the seat-colored nickname.
   Unread is how many messages arrived since it was closed (client-local).
-  Eliminated and spectator lines stay gray italic and labeled. The finished board
-  can open the transcript and cannot send. Flag `aria-label` Forfeit / Leave table / Return home. Alive flag opens Stay / Forfeit
+  Eliminated and spectator lines stay gray italic and labeled. Play again keeps
+  the lines in the next gathering. The finished board can open the snapshot
+  from that game's end and cannot send. Flag `aria-label` Forfeit / Leave table / Return home. Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
   (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
   2026-08-21 follow-up — the flag stays on inspect; Game over **Return home** also stays).

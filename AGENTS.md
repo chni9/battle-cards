@@ -138,7 +138,7 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
  (`PROTOCOL_VERSION` 42).
  **Lot 70** (designer 2026-10-06) lets the host exclude kits, deal kits at
- random, and set human turn seconds, and adds in-game chat
+ random, and set human turn seconds, and adds chat for the life of the room
  (`PROTOCOL_VERSION` 45).
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),

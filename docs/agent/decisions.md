@@ -4227,3 +4227,25 @@ Same day, after the table pass. This supersedes "the lobby has no chat."
 
 ---
 
+## 2026-10-06 · [P] Room chat outlives one match
+
+Same day. This supersedes "The first Play again clears it for the next gathering."
+
+- The transcript stays in memory for the life of the room. Play again does
+  not clear it. A new lobby after the match keeps every earlier line, and
+  new lobby lines append with `round` 0.
+- People still on the finished board see the holdout snapshot from that
+  game's end and cannot send. People in the next gathering see the
+  continuing room transcript.
+- Solo Play again leaves the room, so that transcript ends with the room.
+  Online Play again stays in the same room and keeps the lines.
+- A seated human in the next gathering writes as living again, even after
+  a forfeit in the match that just ended. Someone still looking at that
+  finished board cannot send.
+- Each finished-game write stores the room transcript as of that game's
+  end, so a later match's `game_chat_messages` rows include lines already
+  stored on earlier games in the same room. `order_index` stays unique per
+  `game_id`. Nothing is saved if the room dies before a game finishes.
+
+---
+
