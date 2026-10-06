@@ -1229,15 +1229,22 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const playerId = this.playerIdFor(client);
     const player = this.gameState?.players.find((entry) => entry.id === playerId);
 
-    if (player === undefined) {
-      return null;
+    if (player !== undefined) {
+      return {
+        senderId: playerId,
+        nickname: player.nickname,
+        role: player.isEliminated ? 'eliminated' : 'living',
+      };
     }
 
-    return {
-      senderId: playerId,
-      nickname: player.nickname,
-      role: player.isEliminated ? 'eliminated' : 'living',
-    };
+    // The lobby has seats and no GameState yet.
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+
+    if (seat !== undefined && !this.hasStarted) {
+      return { senderId: playerId, nickname: seat.nickname, role: 'living' };
+    }
+
+    return null;
   }
 
   /** Lobby is 0. In a match, the same round number as the action log. */
