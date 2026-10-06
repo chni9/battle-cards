@@ -4225,3 +4225,18 @@ Designer the same day.
 
 ---
 
+## 2026-10-06 · [P] Lot 71 shared reward deadline
+
+Same-day correction of the simultaneous picker.
+
+- The shared countdown defaults every remaining picker when it fires.
+  Bots answer with their policy once they are the head. Humans and
+  dropped humans take the 2×4 life default. A later seat is not given
+  a deadline that has already passed.
+- A forfeit that adds jobs onto an open reward queue prompts those
+  players on the countdown already running.
+- A forfeit kill on the recap matches the leave at or before that
+  claim. A later combat death of the same seat is a separate kill.
+
+---
+

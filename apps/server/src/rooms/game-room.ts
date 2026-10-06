@@ -932,6 +932,9 @@ export class GameRoom extends Room<{ client: GameClient }> {
       if (!hadRewards) {
         this.clearTurnTimer();
         this.beginRewardTimer(state);
+      } else {
+        // Jobs joined an open queue. Prompt them on the deadline already running.
+        this.sendOpenRewardPrompts(state);
       }
 
       this.sendStateToEveryone();
@@ -2674,30 +2677,32 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    this.sendOpenRewardPrompts(state);
-
-    if (this.subChoiceTimers.has('elimination-reward') && durationMs === undefined) {
-      return;
-    }
-
-    this.clearSubChoiceTimer('elimination-reward');
-
     const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
-    const ms =
-      durationMs ??
-      (remainingFromDeadline === 0 ? REWARD_SUB_CHOICE_MS : remainingFromDeadline);
+    const timerStillRunning =
+      this.subChoiceTimers.has('elimination-reward') &&
+      durationMs === undefined &&
+      remainingFromDeadline > 0;
 
-    if (durationMs !== undefined) {
-      choice.deadlineMs = Date.now() + ms;
-      this.sendOpenRewardPrompts(state);
+    if (!timerStillRunning) {
+      this.clearSubChoiceTimer('elimination-reward');
+
+      const ms =
+        durationMs ??
+        (remainingFromDeadline === 0 ? REWARD_SUB_CHOICE_MS : remainingFromDeadline);
+
+      if (durationMs !== undefined || remainingFromDeadline === 0) {
+        choice.deadlineMs = Date.now() + ms;
+      }
+
+      this.subChoiceTimers.set(
+        'elimination-reward',
+        setTimeout(() => {
+          this.onRewardTimeout();
+        }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS),
+      );
     }
 
-    this.subChoiceTimers.set(
-      'elimination-reward',
-      setTimeout(() => {
-        this.onRewardTimeout();
-      }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS),
-    );
+    this.sendOpenRewardPrompts(state);
   }
 
   /**
@@ -2737,16 +2742,89 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = expireEliminationRewardChoice(state);
+    this.clearSubChoiceTimer('elimination-reward');
 
-    if (!result.ok) {
-      state.rewardChoice = null;
+    const steps = state.rewardQueue.length;
+    let lastResult: ReturnType<typeof expireEliminationRewardChoice> | null = null;
+    const gameOver = (): boolean => this.winnerPlayerId !== null;
+
+    for (let step = 0; step < steps; step += 1) {
+      const open = this.openRewardChoice(state);
+
+      if (open === null || state.rewardQueue.length === 0 || gameOver()) {
+        break;
+      }
+
+      const before = state.rewardQueue.length;
+      const result = this.resolveTimeoutHead(open.eliminatorPlayerId);
+
+      if (result?.ok !== true) {
+        break;
+      }
+
+      this.appendRewardsClaimed(result.rewardsClaimed);
+      lastResult = result;
+
+      if (state.rewardQueue.length >= before) {
+        break;
+      }
+
+      if (!result.rewardChoicePending) {
+        this.continueAfterRewards(result);
+        return;
+      }
+    }
+
+    if (lastResult?.ok === true) {
+      this.continueAfterRewards(lastResult);
       return;
     }
 
-    this.clearSubChoiceTimer('elimination-reward');
-    this.appendRewardsClaimed(result.rewardsClaimed);
-    this.continueAfterRewards(result);
+    if (this.openRewardChoice(state) !== null) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+    }
+  }
+
+  private openRewardChoice(state: GameState): GameState['rewardChoice'] {
+    return state.rewardChoice;
+  }
+
+  /** One shared-deadline seat: bot policy, otherwise the 2×4 life default. */
+  private resolveTimeoutHead(
+    playerId: string,
+  ): ReturnType<typeof expireEliminationRewardChoice> | null {
+    const state = this.gameState;
+
+    if (state === null) {
+      return null;
+    }
+
+    if (this.rewardRouteFor(playerId) === 'bot') {
+      const picks = this.botDriver.pickRewardChoices(playerId);
+
+      if (picks !== null) {
+        const picked = completeEliminationRewardChoice(
+          state,
+          playerId,
+          picks.eliminationId,
+          picks.choices,
+        );
+
+        if (picked.ok) {
+          this.setPendingBotReason(picks.reason);
+          return picked;
+        }
+      }
+    }
+
+    return expireEliminationRewardChoice(state);
+  }
+
+  private rewardRouteFor(playerId: string): ReturnType<typeof classifyRewardRoute> {
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+    const hasClient = this.clients.some((client) => client.sessionId === playerId);
+    return classifyRewardRoute(seat, hasClient);
   }
 
   private turnContinuationFrom(result: TurnResult): {

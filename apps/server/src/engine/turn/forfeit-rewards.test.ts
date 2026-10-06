@@ -348,6 +348,56 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
     expect(alice.hand.length + alice.specialCards.length).toBeGreaterThan(0);
   });
 
+  it('does not leave the next picker on a deadline that already fired', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Cara' },
+      ],
+      seed: 'l71-forfeit-deadline',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const cara = state.players.find((player) => player.id === 'c');
+
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    expect(cara).toBeDefined();
+    if (alice === undefined || bob === undefined || cara === undefined) {
+      return;
+    }
+
+    alice.pendingEffects = [
+      pendingAttack(cara.id, alice.id, 'hit-c'),
+      pendingAttack(bob.id, alice.id, 'hit-b'),
+    ];
+    cara.lives = 3;
+    bob.lives = 8;
+
+    eliminateForForfeit(state, alice.id, undefined, 1_000);
+
+    expect(state.rewardChoice).not.toBeNull();
+    if (state.rewardChoice === null) {
+      return;
+    }
+
+    state.rewardChoice.deadlineMs = 1;
+    const headId = state.rewardChoice.eliminationId;
+    const headPlayerId = state.rewardChoice.eliminatorPlayerId;
+
+    const paid = applyEliminationRewardChoices(
+      state,
+      headPlayerId,
+      headId,
+      [{ type: 'lives' }, { type: 'lives' }],
+      5_000,
+    );
+
+    expect(paid.ok).toBe(true);
+    expect(state.rewardChoice.deadlineMs).toBeGreaterThan(5_000);
+  });
+
   it('pays nobody when nothing queued is an attack', () => {
     const state = createInitialState({
       seats: [

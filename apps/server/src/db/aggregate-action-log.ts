@@ -73,11 +73,7 @@ export function aggregateActionsForPlayer(
     }
 
     if (entry.kind === 'rewardsClaimed' && entry.eliminatorPlayerId === playerId) {
-      const elimination = actionLog.find(
-        (row) => row.kind === 'playerEliminated' && row.playerId === entry.eliminatedPlayerId,
-      );
-
-      if (elimination?.kind === 'playerEliminated' && elimination.reason === 'leave') {
+      if (forfeitRewardKill(actionLog, entry.eliminatedPlayerId, entry.turnSequence)) {
         kills += 1;
       }
 
@@ -184,6 +180,32 @@ export function aggregateActionsForPlayer(
     kills,
     turnActionsCount,
   };
+}
+
+/**
+ * The leave that this claim pays, not an earlier or later death of the same seat.
+ * Reanimation can log `leave` and later `combat` for one `playerId` (Lot 71).
+ */
+function forfeitRewardKill(
+  actionLog: readonly ActionLogEntryView[],
+  eliminatedPlayerId: string,
+  claimedAt: number,
+): boolean {
+  let matchedLeave = false;
+
+  for (const row of actionLog) {
+    if (
+      row.kind !== 'playerEliminated' ||
+      row.playerId !== eliminatedPlayerId ||
+      row.turnSequence > claimedAt
+    ) {
+      continue;
+    }
+
+    matchedLeave = row.reason === 'leave';
+  }
+
+  return matchedLeave;
 }
 
 function bumpCardCount(map: Record<string, number>, cardId: CardId | undefined): void {

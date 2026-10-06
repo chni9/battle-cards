@@ -621,7 +621,12 @@ function finishRewardJob(state: GameState, eliminationId: string, nowMs: number)
     }
   }
 
-  const deadlineMs = state.rewardChoice?.deadlineMs ?? nowMs + REWARD_SUB_CHOICE_MS;
+  const carriedDeadline = state.rewardChoice?.deadlineMs;
+  // A shared picker must not hand the next seat a deadline that already fired.
+  const deadlineMs =
+    carriedDeadline !== undefined && carriedDeadline > nowMs
+      ? carriedDeadline
+      : nowMs + REWARD_SUB_CHOICE_MS;
   const head = state.rewardQueue[0];
 
   if (head === undefined) {
