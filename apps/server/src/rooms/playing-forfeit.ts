@@ -2,7 +2,7 @@
  * Playing-phase FORFEIT — technical spec v6 §6.3 / L43-06, Lot 71.
  * Same elim as consented leave (`eliminateForForfeit` + leave reason);
  * the room keeps the live socket (no `leave`, no reject on the forfeiter).
- * Queued attackers and active Poisoners pick before cards hit the pool.
+ * Queued attackers pick before cards hit the pool. Active Poison does not pay.
  */
 
 import type { GameState } from '@card-battle/shared';

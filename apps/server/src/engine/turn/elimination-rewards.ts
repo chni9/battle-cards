@@ -289,7 +289,7 @@ function lifecycleElimRng(state: GameState, playerId: string): Rng {
 
 /**
  * Living seats paid when someone forfeits or leaves the table (rules spec §6, Lot 71).
- * One seat once: a queued attack on the forfeiter, or any active Poison.
+ * One seat once: a queued attack on the forfeiter. Active Poison does not pay.
  * Captured before cleanup clears the queue and dumps persistents.
  */
 function forfeitRewardRecipientIds(state: GameState, forfeiter: Player): string[] {
@@ -315,12 +315,6 @@ function forfeitRewardRecipientIds(state: GameState, forfeiter: Player): string[
     }
   }
 
-  for (const other of state.players) {
-    if (other.activePersistentEffects.some((effect) => effect.cardId === 'poison')) {
-      add(other.id);
-    }
-  }
-
   return ids;
 }
 
@@ -328,7 +322,7 @@ function forfeitRewardRecipientIds(state: GameState, forfeiter: Player): string[
  * Eliminate a player who still has lives (absence, inactivity, or voluntary leave).
  * Absence and inactivity pass `payForfeitRewards: false` and dump cards immediately
  * (technical spec §5.7). The Forfeit button and leaving the table pass true: queued
- * attackers and active Poisoners pick before the card dump (Lot 71).
+ * attackers pick before the card dump (Lot 71). Active Poison does not pay.
  * Armed Reanimation consumes and revives after the dump, or after rewards drain.
  *
  * Not a typed loss: the player may still have lives; this is administrative state only.
@@ -400,7 +394,7 @@ export function eliminateWithoutReward(
 
 /**
  * Forfeit button or leaving the table while playing (Lot 71).
- * Queued attackers and active Poisoners receive kill picks before cards hit the pool.
+ * Queued attackers receive kill picks before cards hit the pool. Active Poison does not.
  */
 export function eliminateForForfeit(
   state: GameState,

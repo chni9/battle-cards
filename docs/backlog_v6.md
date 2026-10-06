@@ -650,7 +650,7 @@ No protocol bump. What’s new id `lot-71`. Lobby rules and chat stay out of thi
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L71-01 | Base Spy Thief chooses one living opponent and leaves a Spy+ reveal; the upgrade hits every living opponent and does not double stolen points. Forfeit and leaving the table pay two kill picks to each living player with a queued attack on the forfeiter and to each living player with active Poison, before cards dump. Turn timer and inactivity pay nobody. Rules spec, decisions, catalog, How to play, inspect copy. **Acceptance:** tests beside the rules; `pnpm verify` green. | L | **High** | L69-01 | Done |
+| L71-01 | Base Spy Thief chooses one living opponent and leaves a Spy+ reveal; the upgrade hits every living opponent and does not double stolen points. Forfeit and leaving the table pay two kill picks to each living player with a queued attack on the forfeiter, before cards dump. Active Poison does not pay. Turn timer and inactivity pay nobody. Rules spec, decisions, catalog, How to play, inspect copy. **Acceptance:** tests beside the rules; `pnpm verify` green. | L | **High** | L69-01 | Done |
 
 ---
 

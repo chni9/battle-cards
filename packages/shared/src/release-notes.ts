@@ -59,7 +59,7 @@ const RELEASE_NOTES_CATALOG = [
       {
         before: 'Forfeiting or leaving the table paid nobody.',
         after:
-          'Forfeiting or leaving pays kill rewards to players with an attack waiting on you and to players with Poison active.',
+          'Forfeiting or leaving pays kill rewards to players with an attack waiting on you.',
       },
     ],
   },

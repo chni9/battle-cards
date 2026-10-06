@@ -49,7 +49,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'lives',
     title: 'Lives',
-    body: 'Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. Forfeiting, or leaving the table during a game, pays kill rewards to each living player who has an attack waiting on you and to each living player with Poison active. The turn timer and inactivity do not.',
+    body: 'Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. Forfeiting, or leaving the table during a game, pays kill rewards to each living player who has an attack waiting on you. The turn timer and inactivity do not.',
     screenshotFile: HOW_TO_PLAY_SCREENSHOT_FILES.lives,
   },
   {

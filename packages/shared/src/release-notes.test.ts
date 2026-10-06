@@ -49,7 +49,7 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
       'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent, without doubling.',
-      'Forfeiting or leaving pays kill rewards to players with an attack waiting on you and to players with Poison active.',
+      'Forfeiting or leaving pays kill rewards to players with an attack waiting on you.',
     ]);
   });
 

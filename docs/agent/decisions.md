@@ -4195,3 +4195,14 @@ both changes.
 
 ---
 
+## 2026-10-06 · [P] Lot 71 forfeit: active Poison does not pay
+
+Designer correction the same day. Forfeit and leaving the table pay only
+each living player who still has an attack queued on the forfeiter. An
+active Poison does not earn those kill picks, including when that player
+also has a queued attack (still one reward, from the attack). Pending
+Thief, Imposition, Sentence, and Curse stay unpaid. The turn timer and
+inactivity stay unpaid.
+
+---
+

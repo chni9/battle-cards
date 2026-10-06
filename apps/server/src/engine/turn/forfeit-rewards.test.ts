@@ -1,6 +1,6 @@
 /**
  * Forfeit rewards — rules spec §6, Lot 71.
- * The Forfeit button and leaving the table pay queued attackers and active Poison.
+ * The Forfeit button and leaving the table pay queued attackers. Active Poison does not.
  * The turn timer and inactivity stay on eliminateWithoutReward and pay nobody.
  */
 
@@ -162,7 +162,7 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
     expect(alice.hand).toHaveLength(0);
   });
 
-  it('pays active Poison once, and ignores Thief, Imposition, Sentence, and Curse', () => {
+  it('does not pay active Poison, and ignores Thief, Imposition, Sentence, and Curse', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -222,19 +222,20 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
       makeCounterEffect({ id: 'self-poison', cardId: 'poison', counter: 3 }),
     ];
     dee.lives = 2;
-    bob.lives = 4;
-    cara.lives = 4;
-    const handSize = alice.hand.length;
+    const held = alice.hand.length + alice.specialCards.length;
 
     const result = eliminateForForfeit(state, alice.id, undefined, 1_000);
 
-    expect(result.rewardChoicePending).toBe(true);
-    expect(state.rewardQueue.map((job) => job.eliminatorPlayerId)).toEqual([dee.id]);
-    expect(alice.hand).toHaveLength(handSize);
+    expect(result.rewardChoicePending).toBe(false);
+    expect(state.rewardQueue).toHaveLength(0);
+    expect(alice.hand).toHaveLength(0);
+    expect(alice.specialCards).toHaveLength(0);
+    expect(state.pool).toHaveLength(held + 1);
+    expect(dee.lives).toBe(2);
     expect(state.pool.some((card) => card.cardId === 'poison')).toBe(true);
   });
 
-  it('pays one player who both attacked and has Poison', () => {
+  it('pays the queued attacker once even when they also have Poison', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },
@@ -272,7 +273,7 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
     expect(bob.lives).toBe(18);
   });
 
-  it('pays nobody when nothing queued is an attack and nobody has Poison', () => {
+  it('pays nobody when nothing queued is an attack', () => {
     const state = createInitialState({
       seats: [
         { id: 'a', nickname: 'Alice' },

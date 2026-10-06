@@ -139,7 +139,7 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  (`PROTOCOL_VERSION` 42).
  **Lot 71** (designer 2026-10-06) makes base Spy Thief one living target with a
  Spy+ reveal; the upgrade hits every living opponent and does not double stolen
- points. Forfeit and leaving the table pay queued attackers and active Poison.
+ points. Forfeit and leaving the table pay queued attackers. Active Poison does not.
  The turn timer and inactivity do not. No protocol bump.
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
