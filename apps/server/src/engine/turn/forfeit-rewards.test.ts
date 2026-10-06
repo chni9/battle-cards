@@ -10,7 +10,6 @@ import { createInitialState } from '../create-initial-state';
 import { makeCounterEffect } from '../../testing/factories';
 import { applyPlayingForfeit } from '../../rooms/playing-forfeit';
 import {
-  applyDefaultEliminationRewards,
   applyEliminationRewardChoices,
   eliminateForForfeit,
   eliminateWithoutReward,
@@ -240,6 +239,7 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
       seats: [
         { id: 'a', nickname: 'Alice' },
         { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Cara' },
       ],
       seed: 'l71-forfeit-once',
     });
@@ -262,15 +262,90 @@ describe('forfeit rewards (rules spec §6, Lot 71)', () => {
 
     expect(state.rewardQueue).toHaveLength(1);
     expect(state.rewardQueue[0]?.eliminatorPlayerId).toBe(bob.id);
-    expect(findSoleSurvivorId(state)).toBe(bob.id);
+    expect(findSoleSurvivorId(state)).toBeNull();
+  });
 
-    const settled = applyDefaultEliminationRewards(state, 1_000);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) {
+  it('does not prompt the last remaining player when the forfeiter was the last opponent', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+      ],
+      seed: 'l71-forfeit-last',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    if (alice === undefined || bob === undefined) {
       return;
     }
-    expect(settled.winnerPlayerId).toBe(bob.id);
-    expect(bob.lives).toBe(18);
+
+    alice.pendingEffects = [pendingAttack(bob.id, alice.id, 'hit')];
+    bob.lives = 10;
+    const held = alice.hand.length + alice.specialCards.length;
+
+    const result = eliminateForForfeit(state, alice.id, undefined, 1_000);
+
+    expect(result.rewardChoicePending).toBe(false);
+    expect(state.rewardQueue).toHaveLength(0);
+    expect(state.rewardChoice).toBeNull();
+    expect(bob.lives).toBe(10);
+    expect(findSoleSurvivorId(state)).toBe(bob.id);
+    expect(state.pool).toHaveLength(held);
+  });
+
+  it('lets every queued attacker choose before the earlier picker finishes', () => {
+    const state = createInitialState({
+      seats: [
+        { id: 'a', nickname: 'Alice' },
+        { id: 'b', nickname: 'Bob' },
+        { id: 'c', nickname: 'Cara' },
+      ],
+      seed: 'l71-forfeit-together',
+    });
+    const alice = state.players.find((player) => player.id === 'a');
+    const bob = state.players.find((player) => player.id === 'b');
+    const cara = state.players.find((player) => player.id === 'c');
+
+    expect(alice).toBeDefined();
+    expect(bob).toBeDefined();
+    expect(cara).toBeDefined();
+    if (alice === undefined || bob === undefined || cara === undefined) {
+      return;
+    }
+
+    alice.pendingEffects = [
+      pendingAttack(cara.id, alice.id, 'hit-c'),
+      pendingAttack(bob.id, alice.id, 'hit-b'),
+    ];
+    cara.lives = 3;
+    bob.lives = 8;
+    bob.upgradePoints = 0;
+
+    eliminateForForfeit(state, alice.id, undefined, 1_000);
+
+    expect(state.rewardQueue.map((job) => job.eliminatorPlayerId)).toEqual([cara.id, bob.id]);
+    const bobJob = state.rewardQueue.find((job) => job.eliminatorPlayerId === bob.id);
+    expect(bobJob).toBeDefined();
+    if (bobJob === undefined) {
+      return;
+    }
+
+    const early = applyEliminationRewardChoices(
+      state,
+      bob.id,
+      bobJob.eliminationId,
+      [{ type: 'upgradePoint' }, { type: 'upgradePoint' }],
+      1_000,
+    );
+
+    expect(early.ok).toBe(true);
+    expect(bob.upgradePoints).toBe(2);
+    expect(state.rewardChoice?.eliminatorPlayerId).toBe(cara.id);
+    expect(state.rewardQueue.map((job) => job.eliminatorPlayerId)).toEqual([cara.id]);
+    expect(alice.hand.length + alice.specialCards.length).toBeGreaterThan(0);
   });
 
   it('pays nobody when nothing queued is an attack', () => {

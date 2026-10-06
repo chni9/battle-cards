@@ -3,8 +3,9 @@
  * L9-03 recap, L60-04 award counts.
  * `actionPlayed` drives play / buy / sell / upgrade / draw / attack / special
  * totals. `actionResolved` attack `livesLost` is damage dealt. Combat
- * `playerEliminated` rows are kills. Resolutions / Mirror / rewards never
- * inflate play counts.
+ * `playerEliminated` rows are kills. A forfeit or leave that pays kill
+ * rewards credits each `rewardsClaimed` eliminator (Lot 71). Resolutions /
+ * Mirror never inflate play counts.
  */
 
 import {
@@ -30,7 +31,7 @@ export interface ActionLogPlayerAggregates {
   attacksPlayedCount: number;
   /** Attack-source `actionResolved.livesLost` — not Tax / Suicide. */
   damageDealt: number;
-  /** Combat eliminations credited to this seat. */
+  /** Combat eliminations, plus forfeit rewards credited on `rewardsClaimed` (Lot 71). */
   kills: number;
   /** One per `actionPlayed` row — turn timer denominator for recap clocks. */
   turnActionsCount: number;
@@ -65,6 +66,18 @@ export function aggregateActionsForPlayer(
 
     if (entry.kind === 'playerEliminated') {
       if (entry.reason === 'combat' && entry.eliminatorPlayerId === playerId) {
+        kills += 1;
+      }
+
+      continue;
+    }
+
+    if (entry.kind === 'rewardsClaimed' && entry.eliminatorPlayerId === playerId) {
+      const elimination = actionLog.find(
+        (row) => row.kind === 'playerEliminated' && row.playerId === entry.eliminatedPlayerId,
+      );
+
+      if (elimination?.kind === 'playerEliminated' && elimination.reason === 'leave') {
         kills += 1;
       }
 

@@ -54,12 +54,12 @@ const RELEASE_NOTES_CATALOG = [
         cardId: 'spy-thief' as const,
         before: 'Spy Thief stole every opponent’s points, and the upgrade doubled them.',
         after:
-          'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent, without doubling.',
+          'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent.',
       },
       {
         before: 'Forfeiting or leaving the table paid nobody.',
         after:
-          'Forfeiting or leaving pays kill rewards to players with an attack waiting on you.',
+          'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
       },
     ],
   },

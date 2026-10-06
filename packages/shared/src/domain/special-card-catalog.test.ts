@@ -19,8 +19,9 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(SPECIAL_CARD_CATALOG['spy-thief'].effect).toMatch(/one living opponent/i);
     expect(SPECIAL_CARD_CATALOG['spy-thief'].effect).toMatch(/kit, cards, and resources/i);
     expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeEffect).toMatch(/every living opponent/i);
-    expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeEffect).toMatch(/not doubled/i);
-    expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeAdds).toMatch(/not doubled/i);
+    expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeEffect).not.toMatch(/doubl/i);
+    expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeAdds).toMatch(/every living opponent/i);
+    expect(SPECIAL_CARD_CATALOG['spy-thief'].upgradeAdds).not.toMatch(/doubl/i);
     expect(SPECIAL_CARD_CATALOG.imposition.cost).toEqual({ points: 6 });
     expect(SPECIAL_CARD_CATALOG.cloning.cost).toEqual({ points: 3 });
     expect(SPECIAL_CARD_CATALOG.sentence.cost).toEqual({ points: 20 });

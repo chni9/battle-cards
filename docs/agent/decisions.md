@@ -4206,3 +4206,22 @@ inactivity stay unpaid.
 
 ---
 
+## 2026-10-06 · [P] Lot 71 forfeit pickers, last player, kills
+
+Designer the same day.
+
+- Upgraded Spy Thief copy does not mention doubling. The steal is still
+  not doubled.
+- Base Spy Thief is a targeted play. The table must ask for one living
+  opponent. The upgrade still has no target.
+- When more than one player is owed forfeit or elimination rewards, each
+  of them gets the reward picker at the same time. A card taken by one
+  is gone for the others.
+- If a forfeit leaves one player in the match, that player has won and
+  is not prompted, even when they had an attack queued on the forfeiter.
+- Each player who actually receives those forfeit rewards is credited one
+  kill on the end-of-game recap. A forfeit that pays nobody does not.
+- Slowest and Fastest show the average as `x s/turn`.
+
+---
+

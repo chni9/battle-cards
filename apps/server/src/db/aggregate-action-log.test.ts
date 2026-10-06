@@ -264,4 +264,32 @@ describe('aggregateActionsForPlayer (L60-04)', () => {
       turnActionsCount: 1,
     });
   });
+
+  it('credits a kill to each player who is paid for a forfeit', () => {
+    const log: ActionLogEntryView[] = [
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: null,
+        reason: 'leave',
+        turnSequence: 4,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'alice',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 4,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'bob',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 4,
+      },
+    ];
+
+    expect(aggregateActionsForPlayer('alice', log).kills).toBe(1);
+    expect(aggregateActionsForPlayer('bob', log).kills).toBe(1);
+    expect(aggregateActionsForPlayer('cara', log).kills).toBe(0);
+  });
 });

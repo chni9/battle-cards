@@ -48,8 +48,8 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
       'Forfeiting or leaving the table paid nobody.',
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
-      'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent, without doubling.',
-      'Forfeiting or leaving pays kill rewards to players with an attack waiting on you.',
+      'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent.',
+      'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
     ]);
   });
 

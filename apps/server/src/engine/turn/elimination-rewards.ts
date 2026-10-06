@@ -356,7 +356,12 @@ function eliminateAdministrative(
     cleanupEliminatedPlayer(state, player),
   );
 
-  if (rewardRecipients.length === 0) {
+  const gameEndingForfeit =
+    payForfeitRewards &&
+    player.pendingReanimation === null &&
+    countContendersAfterElim(state, player) === 1;
+
+  if (rewardRecipients.length === 0 || gameEndingForfeit) {
     dumpCardsToPool(state, player);
     processPendingReanimations(state, rng, nowMs);
     return { eliminated: true, persistentDeactivations, rewardChoicePending: false };
@@ -593,13 +598,16 @@ function applyOneChoice(
   }
 }
 
-function finishRewardJob(state: GameState, nowMs: number): void {
-  const job = state.rewardQueue.shift();
+function finishRewardJob(state: GameState, eliminationId: string, nowMs: number): void {
+  const index = state.rewardQueue.findIndex((job) => job.eliminationId === eliminationId);
+  const job = index >= 0 ? state.rewardQueue[index] : undefined;
 
   if (job === undefined) {
     state.rewardChoice = null;
     return;
   }
+
+  state.rewardQueue.splice(index, 1);
 
   const victimStillHasRewardJobs = state.rewardQueue.some(
     (queued) => queued.eliminatedPlayerId === job.eliminatedPlayerId,
@@ -613,8 +621,22 @@ function finishRewardJob(state: GameState, nowMs: number): void {
     }
   }
 
-  state.rewardChoice = null;
-  activateRewardHead(state, nowMs);
+  const deadlineMs = state.rewardChoice?.deadlineMs ?? nowMs + REWARD_SUB_CHOICE_MS;
+  const head = state.rewardQueue[0];
+
+  if (head === undefined) {
+    state.rewardChoice = null;
+    return;
+  }
+
+  if (state.rewardChoice?.eliminationId === eliminationId || state.rewardChoice === null) {
+    state.rewardChoice = {
+      eliminationId: head.eliminationId,
+      eliminatorPlayerId: head.eliminatorPlayerId,
+      eliminatedPlayerId: head.eliminatedPlayerId,
+      deadlineMs,
+    };
+  }
 }
 
 /**
@@ -726,22 +748,18 @@ export function applyEliminationRewardChoices(
 ): ApplyRewardResult {
   const active = state.rewardChoice;
 
-  if (active?.eliminationId !== eliminationId) {
+  const job = state.rewardQueue.find((entry) => entry.eliminationId === eliminationId);
+
+  if (active?.eliminationId !== eliminationId && job?.eliminationId !== eliminationId) {
     return actionReject('no-matching-elimination-reward');
   }
 
-  if (active.eliminatorPlayerId !== chooserPlayerId) {
+  if (job?.eliminatorPlayerId !== chooserPlayerId) {
     return actionReject('only-eliminator-chooses-rewards');
   }
 
-  const head = state.rewardQueue[0];
-
-  if (head?.eliminationId !== eliminationId) {
-    return actionReject('no-matching-elimination-reward');
-  }
-
-  const eliminator = findPlayer(state, active.eliminatorPlayerId);
-  const eliminated = findPlayer(state, active.eliminatedPlayerId);
+  const eliminator = findPlayer(state, job.eliminatorPlayerId);
+  const eliminated = findPlayer(state, job.eliminatedPlayerId);
 
   if (eliminator === undefined || eliminated === undefined) {
     return actionReject('unknown-player');
@@ -761,14 +779,14 @@ export function applyEliminationRewardChoices(
   }
 
   const rewardsClaimed = {
-    eliminatorPlayerId: active.eliminatorPlayerId,
-    eliminatedPlayerId: active.eliminatedPlayerId,
+    eliminatorPlayerId: job.eliminatorPlayerId,
+    eliminatedPlayerId: job.eliminatedPlayerId,
   };
 
   applyOneChoice(state, eliminator, eliminated, choices[0]);
   applyOneChoice(state, eliminator, eliminated, choices[1]);
 
-  finishRewardJob(state, nowMs);
+  finishRewardJob(state, eliminationId, nowMs);
   return { ...resumeAfterRewards(state, rng, nowMs), rewardsClaimed };
 }
 
