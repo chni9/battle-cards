@@ -140,6 +140,10 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  **Lot 70** (designer 2026-10-06) lets the host exclude kits, deal kits at
  random, and set human turn seconds, and adds chat for the life of the room
  (`PROTOCOL_VERSION` 45).
+ **Lot 71** (designer 2026-10-06) makes base Spy Thief one living target with a
+ Spy+ reveal; the upgrade hits every living opponent and does not double stolen
+ points. Forfeit and leaving the table pay queued attackers. Active Poison does not.
+ The turn timer and inactivity do not. No protocol bump.
  **Lot 67** (designer 2026-09-28) reopens the solo
  menu on Play again (same kit and bot count; the match does not start),
  upgrades an active Shield without resetting its points, flashes

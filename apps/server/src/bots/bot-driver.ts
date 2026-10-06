@@ -216,11 +216,40 @@ export class BotDriver {
       return;
     }
 
+    const picks = this.pickRewardChoices(botId);
+
+    if (picks === null) {
+      this.host.failBotReward(botId);
+      return;
+    }
+
+    this.host.completeBotReward(botId, picks.eliminationId, picks.choices, picks.reason);
+  }
+
+  /**
+   * Policy picks for the reward head. `null` when the view is missing or the
+   * policy throws — the caller defaults that seat (Lot 71 timeout drain).
+   */
+  pickRewardChoices(botId: string): {
+    eliminationId: string;
+    choices: [RewardChoice, RewardChoice];
+    reason: BotDecisionReason;
+  } | null {
+    const state = this.host.getGameState();
+    const choice = state?.rewardChoice;
+
+    if (state === null || choice === null || choice === undefined || this.host.isGameOver()) {
+      return null;
+    }
+
+    if (choice.eliminatorPlayerId !== botId) {
+      return null;
+    }
+
     const view = this.host.getPlayingView(botId);
 
     if (view === null) {
-      this.host.failBotReward(botId);
-      return;
+      return null;
     }
 
     try {
@@ -232,10 +261,13 @@ export class BotDriver {
         state.lifeLimit,
         rng,
       );
-      this.host.completeBotReward(botId, choice.eliminationId, picks.choices, picks.reason);
+      return {
+        eliminationId: choice.eliminationId,
+        choices: picks.choices,
+        reason: picks.reason,
+      };
     } catch {
-      // Do not draw during a pending reward — that leaves rewardChoice set and freezes the room.
-      this.host.failBotReward(botId);
+      return null;
     }
   }
 

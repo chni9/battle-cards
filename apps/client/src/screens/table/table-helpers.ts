@@ -93,9 +93,9 @@ export function buildRewardChoice(
   return { type: kind };
 }
 
-/** Cards that Table sends with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning, base Card Thief). */
+/** Cards that Table sends with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning, base Card Thief / Spy Thief). */
 export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean {
-  if (cardId === 'card-thief' || cardId === 'upgrade-point-thief') {
+  if (cardId === 'card-thief' || cardId === 'upgrade-point-thief' || cardId === 'spy-thief') {
     return !isUpgraded;
   }
 

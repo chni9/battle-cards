@@ -9,7 +9,8 @@
  * that is already on `main` except to correct that entry's own text.
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
  * (promote #56). `lot-68` shipped on `main`. `lot-69` stays as written.
- * `lot-70` is the open update.
+ * `lot-71` is the open update. Lobby rules, room chat, and unspied Ghost
+ * point gains append onto it (no `lot-70` id).
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -45,11 +46,22 @@ export type WhatsNewScope = 'current' | 'history';
 
 const RELEASE_NOTES_CATALOG = [
   {
-    id: 'lot-70',
+    id: 'lot-71',
     date: '2026-10-06',
-    title: 'Table rules and chat',
+    title: 'Spy Thief, forfeit, and chat',
     additions: [],
     items: [
+      {
+        cardId: 'spy-thief' as const,
+        before: 'Spy Thief stole every opponent’s points, and the upgrade doubled them.',
+        after:
+          'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent.',
+      },
+      {
+        before: 'Forfeiting or leaving the table paid nobody.',
+        after:
+          'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
+      },
       {
         before:
           'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',

@@ -83,7 +83,8 @@ export function scorePersistentsPlayCard(
     };
   }
 
-  // Spy Thief — steal all points + Spy all (Untouchable is not immune). Deny band.
+  // Spy Thief — base steals one seat; upgraded steals every living opponent.
+  // Neither tier doubles points (Lot 71). Untouchable is not immune. Deny band.
   if (cardId === 'spy-thief') {
     const living = view.players.filter(
       (player) => player.id !== view.you && !player.isEliminated,

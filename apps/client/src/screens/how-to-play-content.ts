@@ -49,7 +49,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'lives',
     title: 'Lives',
-    body: 'Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it.',
+    body: 'Lives are your health. At 0 lives you are eliminated and become a spectator. Attacks deal damage to lives. A shield only absorbs attack damage; other life loss ignores it. Forfeiting, or leaving the table during a game, pays kill rewards at the same time to each living player who has an attack waiting on you. If that leaves one player, they win without choosing. The turn timer and inactivity do not.',
     screenshotFile: HOW_TO_PLAY_SCREENSHOT_FILES.lives,
   },
   {
@@ -79,7 +79,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'specials',
     title: 'Special cards',
-    body: 'Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards.',
+    body: 'Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards. Spy Thief steals every point from one living opponent and shows you their kit, cards, and resources. The upgraded card does that to every living opponent.',
     screenshotFile: null,
   },
   {
