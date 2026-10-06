@@ -50,6 +50,11 @@ export interface CreateInitialStateOptions {
    * from the map stay random. Ignored when `kitAssignment` is set.
    */
   forcedKitsBySeatId?: ReadonlyMap<string, KitId>;
+  /**
+   * Kits a random seat may draw (rules spec §6 Setup). Omitted → `KIT_IDS`.
+   * Same order as `KIT_IDS` keeps a full list bit-for-bit with the omit path.
+   */
+  allowedKitIds?: readonly KitId[];
 }
 
 export function createInitialState(options: CreateInitialStateOptions): GameState {
@@ -75,8 +80,9 @@ export function createInitialState(options: CreateInitialStateOptions): GameStat
   const rng = options.rng ?? createRng(seed);
   const orderedSeats = rng.shuffle(options.seats);
 
+  const kitPool = resolveAllowedKitIds(options.allowedKitIds);
   const players: Player[] = orderedSeats.map((seat) =>
-    makePlayer(seat, rng, kitBySeatId?.get(seat.id)),
+    makePlayer(seat, rng, kitBySeatId?.get(seat.id), kitPool),
   );
 
   const first = players[0];
@@ -146,8 +152,31 @@ function buildKitBySeatId(
   return forcedKitsBySeatId;
 }
 
-function makePlayer(seat: SeatInput, rng: Rng, forcedKitId: KitId | undefined): Player {
-  const kitId = forcedKitId ?? rng.pick(KIT_IDS);
+function resolveAllowedKitIds(allowedKitIds: readonly KitId[] | undefined): readonly KitId[] {
+  if (allowedKitIds === undefined) {
+    return KIT_IDS;
+  }
+
+  if (allowedKitIds.length === 0) {
+    throw new RangeError('allowedKitIds must keep at least one kit');
+  }
+
+  for (const kitId of allowedKitIds) {
+    if (!isKitId(kitId)) {
+      throw new RangeError('allowedKitIds contains a value that is not a KitId');
+    }
+  }
+
+  return allowedKitIds;
+}
+
+function makePlayer(
+  seat: SeatInput,
+  rng: Rng,
+  forcedKitId: KitId | undefined,
+  kitPool: readonly KitId[],
+): Player {
+  const kitId = forcedKitId ?? rng.pick(kitPool);
   const kit = getKit(kitId);
 
   const player: Player = {

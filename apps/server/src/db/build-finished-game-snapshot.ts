@@ -36,6 +36,8 @@ export function buildFinishedGameSnapshot(
     },
     hasBots,
     isTutorial: input.isTutorial ?? false,
+    lobbyRules: input.isTutorial === true ? null : (input.lobbyRules ?? null),
+    chatMessages: input.chatMessages ?? [],
     players: input.gameState.players.map((player, seatIndex) =>
       buildPlayerRecord(
         player,

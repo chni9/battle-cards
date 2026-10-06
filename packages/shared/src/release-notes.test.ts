@@ -42,31 +42,39 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
 
   it('writes lot-71 as short gameplay lines', () => {
     const latest = latestReleaseNote();
+    expect(latest.title).toBe('Spy Thief, forfeit, and chat');
     expect(latest.additions).toEqual([]);
+    expect(latest.items).toHaveLength(5);
     expect(latest.items.map((item) => item.before)).toEqual([
       'Spy Thief stole every opponent’s points, and the upgrade doubled them.',
       'Forfeiting or leaving the table paid nobody.',
+      'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',
+      'The table had no chat.',
+      'A Ghost gained 2 points per life lost in front of the whole table.',
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
       'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent.',
       'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
+      'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
+      'Players chat in the lobby and at the table until the room closes, with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
+      'Those points show as a hidden amount until someone spies that Ghost.',
     ]);
   });
 
   it('writes lot-69 as short gameplay lines', () => {
-    const latest = RELEASE_NOTES.find((note) => note.id === 'lot-69');
-    expect(latest).toBeDefined();
-    if (latest === undefined) {
+    const lot69 = RELEASE_NOTES.find((note) => note.id === 'lot-69');
+    expect(lot69).toBeDefined();
+    if (lot69 === undefined) {
       return;
     }
-    expect(latest.additions).toEqual([]);
-    expect(latest.items.map((item) => item.before)).toEqual([
+    expect(lot69.additions).toEqual([]);
+    expect(lot69.items.map((item) => item.before)).toEqual([
       'Basic Spy showed kit and cards; Spy+ showed live resources.',
       'You could not play Shield while a shield was up.',
       'Any number of persistent specials and shields could stay active.',
       'Only one player got rewards for a shared kill.',
     ]);
-    expect(latest.items.map((item) => item.after)).toEqual([
+    expect(lot69.items.map((item) => item.after)).toEqual([
       'Basic Spy shows live resources; Spy+ also shows kit and cards.',
       'Playing Shield refills your shield while one is up.',
       'You can have at most four active cards at once; a fifth makes you drop one.',

@@ -156,7 +156,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-71` (2026-10-06) is the open update: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. `lot-69` stays as written. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) is the open update: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -198,8 +198,17 @@ rules above are unchanged — this section only covers how the client looks.
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
-  **Your kit** (self portrait or Random) + Choose kit Dialog (all 16 kit portraits + Random;
+  **Your kit** (self portrait or Random) + Choose kit Dialog (allowed kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
+  **Table rules (Lot 70):** everyone sees a clock with the seconds and small kit
+  faces (excluded kits gray). Random only adds the random-kit face and hides the
+  kit picker. Only the host gets a settings icon. The popup puts a 5–180 second
+  slider on top, then All / None / Random, then kit portraits. None keeps the
+  first Classic kit. Play again keeps the rules. The tutorial path does not show
+  them. Solo uses the same panel. An untouched slider does not send a time, so
+  `TURN_DURATION_MS` still applies until the host moves it. Chat sits under the
+  player list and stays when Play again opens the next gathering. The lines
+  last until the room is gone.
   Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
   Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
   nickname (`font-sans`). Host and bots are ready on the wire; human **guests** toggle with
@@ -256,8 +265,13 @@ rules above are unchanged — this section only covers how the client looks.
   (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
   (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
-  left of timers, **flag**
-  right (inline SVG, `aria-label` Forfeit / Leave table / Return home). Alive flag opens Stay / Forfeit
+  left of timers, **Chat** then **flag**
+  right (inline SVGs). Chat opens and closes a fixed-height popup that scrolls to
+  the newest line. Each line is the round (or Lobby) and the seat-colored nickname.
+  Unread is how many messages arrived since it was closed (client-local).
+  Eliminated and spectator lines stay gray italic and labeled. Play again keeps
+  the lines in the next gathering. The finished board can open the snapshot
+  from that game's end and cannot send. Flag `aria-label` Forfeit / Leave table / Return home. Alive flag opens Stay / Forfeit
   (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
   (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
   2026-08-21 follow-up — the flag stays on inspect; Game over **Return home** also stays).
@@ -577,6 +591,8 @@ rules above are unchanged — this section only covers how the client looks.
   when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
   seat until rewards finish. Reward picks stay opaque in the action log.
 - Dev override: server `TURN_DURATION_MS` env (ms, min 5000) — default 60s.
+  Lot 70: that env stays the human clock until the host sends `turnTimeSeconds`.
+  Bots keep their own think time.
   `RECONNECT_GRACE_MS` env (ms, min 1000) — default **30s** (L57-13; overrides
   technical spec v1 §5.7 60s). Invalid env falls back to 30s.
 - Finish client tasks with a Conventional Commit (AGENTS.md §10) — same rule as server work.

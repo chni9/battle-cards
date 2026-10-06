@@ -8,11 +8,13 @@ import type {
   ActionLogEntryView,
   BotDifficulty,
   CardInstance,
+  ChatMessageView,
   EliminationReason,
   ExportTurnRowView,
   GameExportLogView,
   GameMode,
   KitId,
+  LobbyRules,
 } from '@card-battle/shared';
 
 export interface FinishedGameEliminationRecord {
@@ -73,6 +75,13 @@ export interface FinishedGameSnapshot {
   hasBots: boolean;
   /** L41-04 — true when the room overlay was tutorial. */
   isTutorial: boolean;
+  /**
+   * Host table rules (Lot 70). Null for the tutorial and for rows written
+   * before the columns existed. Not a separate rules table.
+   */
+  lobbyRules: LobbyRules | null;
+  /** In-game chat, one row per message, same write as the finished game. */
+  chatMessages: readonly ChatMessageView[];
 }
 
 export interface BuildFinishedGameSnapshotInput {
@@ -113,4 +122,8 @@ export interface BuildFinishedGameSnapshotInput {
    * L62-02 — Game over recap think-time map. Omitted / missing seat → `thinkTimeMs: 0`.
    */
   thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
+  /** Lot 70 — null for the tutorial. */
+  lobbyRules?: LobbyRules | null;
+  /** Lot 70 — empty when nobody spoke, or when the caller is headless. */
+  chatMessages?: readonly ChatMessageView[];
 }

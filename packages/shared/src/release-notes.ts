@@ -9,7 +9,8 @@
  * that is already on `main` except to correct that entry's own text.
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
  * (promote #56). `lot-68` shipped on `main`. `lot-69` stays as written.
- * `lot-71` is the open update.
+ * `lot-71` is the open update. Lobby rules, room chat, and unspied Ghost
+ * point gains append onto it (no `lot-70` id).
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -47,7 +48,7 @@ const RELEASE_NOTES_CATALOG = [
   {
     id: 'lot-71',
     date: '2026-10-06',
-    title: 'Spy Thief and forfeit',
+    title: 'Spy Thief, forfeit, and chat',
     additions: [],
     items: [
       {
@@ -60,6 +61,22 @@ const RELEASE_NOTES_CATALOG = [
         before: 'Forfeiting or leaving the table paid nobody.',
         after:
           'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
+      },
+      {
+        before:
+          'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',
+        after:
+          'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
+      },
+      {
+        before: 'The table had no chat.',
+        after:
+          'Players chat in the lobby and at the table until the room closes, with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
+      },
+      {
+        kitId: 'ghost' as const,
+        before: 'A Ghost gained 2 points per life lost in front of the whole table.',
+        after: 'Those points show as a hidden amount until someone spies that Ghost.',
       },
     ],
   },

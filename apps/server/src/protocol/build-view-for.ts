@@ -17,7 +17,10 @@
  */
 
 import {
+  chatMessagesForReader,
   copyResourceDeltas,
+  defaultLobbyRules,
+  fogGhostLifePointGains,
   fogPlayedResourceDeltas,
   getKit,
   type ActionLogEntryView,
@@ -25,6 +28,7 @@ import {
   type ActionPlayedPayload,
   type BotDifficulty,
   type CardInstance,
+  type ChatMessageView,
   type ClaimableSeatView,
   type EliminationRevealView,
   type ExportTurnRowView,
@@ -33,8 +37,10 @@ import {
   type GameRecapView,
   type GameState,
   type LobbyKitSelection,
+  type LobbyRules,
   type LobbySeatView,
   type LobbyStateView,
+  type LogResourceDelta,
   type PendingEffectView,
   type PersistentEffectView,
   type PlayKind,
@@ -164,6 +170,10 @@ export interface LobbyViewInput {
   /** Walk-in lobby watcher (L57-13). Omit for seated recipients. */
   isSpectator?: true;
   claimableSeats?: readonly ClaimableSeatView[];
+  /** Host rules for this lobby (PROTOCOL_VERSION 45). Default is every kit, 60s. */
+  lobbyRules?: LobbyRules;
+  /** Room transcript. Filtered per recipient (rules spec §6 Chat). */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
@@ -181,6 +191,12 @@ export function buildLobbyViewFor(input: LobbyViewInput): LobbyStateView {
       gameCode,
       hostPlayerId,
       yourKitSelection,
+      lobbyRules: input.lobbyRules ?? defaultLobbyRules(),
+      chatMessages: chatMessagesForReader({
+        messages: input.chatMessages ?? [],
+        readerIsSpectator: walkInSpectator,
+        readerIsEliminated: false,
+      }),
       players: seats.map((seat) => {
         const view: LobbySeatView = {
           id: seat.id,
@@ -223,6 +239,8 @@ export interface PlayingViewInput {
    */
   walkInSeesPrivate?: true;
   claimableSeats?: readonly ClaimableSeatView[];
+  /** Full room transcript. Filtered per recipient (rules spec §6 Chat). */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 function buildSpiedView(
@@ -329,9 +347,29 @@ function withPlayedDeltas(
  * - `draw` omits `drawGain` unless self, Spy, or spectator overlay (L65-01)
  * - `playerReanimated.kitId` omitted for every in-game recipient
  * - Draw and buy-upgrade point totals are concealed unless the viewer sees the actor
+ * - A Ghost's points from lives lost on the same nets are `+?` unless the viewer sees that Ghost
  * - Duplicator copy lines are omitted unless the viewer sees that Duplicator
  * Excel `exportLog` keeps the full server log.
  */
+function fogGhostDeltasForSeat(
+  deltas: readonly LogResourceDelta[] | undefined,
+  playerId: string,
+  recipientSessionId: string,
+  state: GameState,
+  walkInSpectator: boolean,
+): readonly LogResourceDelta[] | undefined {
+  const player = state.players.find((entry) => entry.id === playerId);
+
+  if (player?.kitId !== 'ghost') {
+    return deltas;
+  }
+
+  return fogGhostLifePointGains(
+    deltas,
+    recipientSeesPrivateOf(state, recipientSessionId, playerId, walkInSpectator),
+  );
+}
+
 function mapActionLogForRecipient(
   actionLog: readonly ActionLogEntryView[],
   recipientSessionId: string,
@@ -356,6 +394,22 @@ function mapActionLogEntry(
     }
 
     return entry;
+  }
+
+  if (entry.kind === 'resourceChange') {
+    const deltas = fogGhostDeltasForSeat(
+      entry.deltas,
+      entry.playerId,
+      recipientSessionId,
+      state,
+      walkInSpectator,
+    );
+
+    if (deltas === undefined) {
+      return null;
+    }
+
+    return { ...entry, deltas };
   }
 
   if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
@@ -398,11 +452,17 @@ function mapActionLogEntry(
 
     const withDeltas = withPlayedDeltas(
       entry,
-      fogPlayedResourceDeltas(
-        entry.action,
-        entry.resourceDeltas,
-        seesPrivate,
-        entry.drawBust === true,
+      fogGhostDeltasForSeat(
+        fogPlayedResourceDeltas(
+          entry.action,
+          entry.resourceDeltas,
+          seesPrivate,
+          entry.drawBust === true,
+        ),
+        entry.actorPlayerId,
+        recipientSessionId,
+        state,
+        walkInSpectator,
       ),
     );
 
@@ -413,6 +473,32 @@ function mapActionLogEntry(
     }
 
     return withDeltas;
+  }
+
+  if (entry.kind === 'actionResolved' && entry.playerDeltas !== undefined) {
+    const playerDeltas = entry.playerDeltas.flatMap((change) => {
+      const deltas = fogGhostDeltasForSeat(
+        change.deltas,
+        change.playerId,
+        recipientSessionId,
+        state,
+        walkInSpectator,
+      );
+
+      if (deltas === undefined || deltas.length === 0) {
+        return [];
+      }
+
+      return [{ playerId: change.playerId, deltas }];
+    });
+    const next: Extract<ActionLogEntryView, { kind: 'actionResolved' }> = { ...entry };
+    delete next.playerDeltas;
+
+    if (playerDeltas.length === 0) {
+      return next;
+    }
+
+    return { ...next, playerDeltas };
   }
 
   if (entry.kind === 'playerReanimated') {
@@ -564,6 +650,11 @@ export function buildPlayingViewFor(input: PlayingViewInput): PlayingStateView {
       pendingSentences: state.pendingSentences.map((entry) => ({ ...entry })),
       playKind,
       tutorialIndex,
+      chatMessages: chatMessagesForReader({
+        messages: input.chatMessages ?? [],
+        readerIsSpectator: walkInSpectator,
+        readerIsEliminated: selfPlayer?.isEliminated === true,
+      }),
     },
     {
       walkInSpectator,
@@ -591,6 +682,9 @@ export interface FinishedViewInput {
   claimableSeats?: readonly ClaimableSeatView[];
   /** Room wall-clock map — omitted / missing seat → `thinkTimeMs: 0` (L60-04). */
   thinkTimeMsByPlayerId?: ReadonlyMap<string, number>;
+  /** Classic host rules. Omit for the tutorial. */
+  lobbyRules?: LobbyRules;
+  chatMessages?: readonly ChatMessageView[];
 }
 
 export function buildGameRecapView(
@@ -683,6 +777,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
     ...(walkInSpectator ? { walkInSpectator: true } : {}),
     ...(walkInSeesPrivate ? { walkInSeesPrivate: true } : {}),
     ...(input.claimableSeats !== undefined ? { claimableSeats: input.claimableSeats } : {}),
+    ...(input.chatMessages !== undefined ? { chatMessages: input.chatMessages } : {}),
   });
 
   return withSpectatorFields(
@@ -758,6 +853,7 @@ export function buildFinishedViewFor(input: FinishedViewInput): FinishedStateVie
       exportLog,
       playKind,
       tutorialIndex,
+      ...(input.lobbyRules !== undefined ? { lobbyRules: input.lobbyRules } : {}),
     },
     {
       walkInSpectator,

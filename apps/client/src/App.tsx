@@ -4,6 +4,7 @@
  * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
  */
 
+import { defaultLobbyRules } from '@card-battle/shared';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useRoomConnection } from './net/use-room-connection';
@@ -53,6 +54,8 @@ function GameApp() {
     staySpectating,
     setBotDifficulty,
     chooseKit,
+    setLobbyRules,
+    sendChat,
     drawCard,
     playCard,
     playMultipleAttacks,
@@ -149,6 +152,7 @@ function GameApp() {
                     ...(view.isSpectator === true ? { isSpectator: true as const } : {}),
                     players: view.players,
                     kitId: view.finalTable.self.kitId,
+                    lobbyRules: view.lobbyRules ?? defaultLobbyRules(),
                   });
                   if (seed !== null) {
                     setPendingSoloMenu(seed);
@@ -195,6 +199,7 @@ function GameApp() {
             void leaveGame();
           }}
           onForfeit={forfeit}
+          onSendChat={sendChat}
         />
         {claimDialog}
       </>
@@ -217,6 +222,8 @@ function GameApp() {
           onSetReady={setReady}
           onSetBotDifficulty={setBotDifficulty}
           onChooseKit={chooseKit}
+          onSetLobbyRules={setLobbyRules}
+          onSendChat={sendChat}
         />
         {claimDialog}
       </>
@@ -238,8 +245,15 @@ function GameApp() {
       onJoin={() => {
         void joinGame(joinCode, nickname);
       }}
-      onStartSolo={(opponentCount, difficulty, kitSelection) => {
-        void startSoloGame({ nickname, opponentCount, difficulty, kitSelection });
+      onStartSolo={(opponentCount, difficulty, kitSelection, rules) => {
+        void startSoloGame({
+          nickname,
+          opponentCount,
+          difficulty,
+          kitSelection,
+          lobbyRules: rules.lobbyRules,
+          includeTurnTime: rules.includeTurnTime,
+        });
       }}
       onStartTutorial={() => {
         void startTutorialGame(nickname);

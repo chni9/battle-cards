@@ -137,6 +137,9 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
  are `PROTOCOL_VERSION` 41 so a v40 client cannot read `resourceChange`.
  **Lot 68** (designer 2026-09-29) names the blocker on `actionResolved.blockedBy`
  (`PROTOCOL_VERSION` 42).
+ **Lot 70** (designer 2026-10-06) lets the host exclude kits, deal kits at
+ random, and set human turn seconds, and adds chat for the life of the room
+ (`PROTOCOL_VERSION` 45).
  **Lot 71** (designer 2026-10-06) makes base Spy Thief one living target with a
  Spy+ reveal; the upgrade hits every living opponent and does not double stolen
  points. Forfeit and leaving the table pay queued attackers. Active Poison does not.

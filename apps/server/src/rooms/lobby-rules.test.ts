@@ -4,12 +4,18 @@ import {
   addBotRejectionMessage,
   canAddBot,
   canChooseKit,
+  canSendChat,
   canKickPlayer,
   canRemoveBot,
   canSetBotDifficulty,
   canSetReady,
   canStartGame,
   chooseKitRejectionMessage,
+  parseSendChatPayload,
+  parseSetLobbyRulesPayload,
+  sendChatRejectionMessage,
+  setLobbyRulesRejectionMessage,
+  startDealOptions,
   collectForcedKitsBySeatId,
   kickPlayerRejectionMessage,
   MAX_PLAYERS,
@@ -180,13 +186,29 @@ describe('bot lobby rules (L15-03)', () => {
   });
 
   describe('chooseKit (L49-01)', () => {
+    const openPick = {
+      hasStarted: false,
+      randomOnly: false,
+      selection: 'assassin' as const,
+      allowedKitIds: ['assassin' as const, 'ghost' as const],
+    };
+
     it('allows a pick while the lobby is open', () => {
-      expect(canChooseKit({ hasStarted: false })).toBeNull();
+      expect(canChooseKit(openPick)).toBeNull();
     });
 
     it('rejects a pick after start', () => {
-      expect(canChooseKit({ hasStarted: true })).toBe('already-started');
+      expect(canChooseKit({ ...openPick, hasStarted: true })).toBe('already-started');
       expect(chooseKitRejectionMessage('already-started').code).toBe('choose-kit-already-started');
+    });
+
+    it('rejects an excluded kit and any pick when the host deals at random (Lot 70)', () => {
+      expect(canChooseKit({ ...openPick, selection: 'warrior' })).toBe('excluded');
+      expect(chooseKitRejectionMessage('excluded').code).toBe('choose-kit-excluded');
+      expect(canChooseKit({ ...openPick, randomOnly: true, selection: 'random' })).toBe(
+        'random-only',
+      );
+      expect(chooseKitRejectionMessage('random-only').code).toBe('choose-kit-random-only');
     });
 
     it('parses a catalog kit and random', () => {
@@ -372,5 +394,115 @@ describe('lobby kick (L57-09)', () => {
       ok: false,
       code: 'invalid-kick-payload',
     });
+  });
+});
+
+describe('host table rules and chat (Lot 70 / rules spec §6)', () => {
+  const rules = {
+    excludedKitIds: ['ghost' as const],
+    randomOnly: false,
+    turnTimeSeconds: 45,
+  };
+
+  it('rejects a tutorial, a guest, and a started room', () => {
+    expect(
+      setLobbyRulesRejectionMessage('tutorial').code,
+    ).toBe('set-lobby-rules-tutorial');
+    expect(setLobbyRulesRejectionMessage('not-host').code).toBe('set-lobby-rules-not-host');
+    expect(setLobbyRulesRejectionMessage('not-in-lobby').code).toBe('set-lobby-rules-not-in-lobby');
+    expect(setLobbyRulesRejectionMessage('no-kit').code).toBe('set-lobby-rules-no-kit');
+    expect(setLobbyRulesRejectionMessage('turn-time').code).toBe('set-lobby-rules-turn-time');
+  });
+
+  it('parses excluded kits and an optional turn time', () => {
+    expect(
+      parseSetLobbyRulesPayload({
+        excludedKitIds: ['ghost'],
+        randomOnly: true,
+      }),
+    ).toEqual({
+      ok: true,
+      value: { excludedKitIds: ['ghost'], randomOnly: true },
+    });
+    expect(
+      parseSetLobbyRulesPayload({
+        excludedKitIds: ['ghost'],
+        randomOnly: false,
+        turnTimeSeconds: 4,
+      }),
+    ).toEqual({ ok: false, code: 'set-lobby-rules-turn-time' });
+    expect(parseSetLobbyRulesPayload({ excludedKitIds: ['nope'], randomOnly: false })).toEqual({
+      ok: false,
+      code: 'invalid-set-lobby-rules-payload',
+    });
+  });
+
+  it('deals only allowed kits and ignores picks when random only', () => {
+    const selections = new Map([
+      ['a', 'assassin' as const],
+      ['b', 'ghost' as const],
+    ]);
+    const dealt = startDealOptions({ tutorial: false, rules, selections });
+    expect(dealt.allowedKitIds).not.toContain('ghost');
+    expect(dealt.forcedKitsBySeatId).toEqual(new Map([['a', 'assassin']]));
+
+    const randomOnly = startDealOptions({
+      tutorial: false,
+      rules: { ...rules, randomOnly: true },
+      selections,
+    });
+    expect(randomOnly.forcedKitsBySeatId).toBeUndefined();
+    expect(randomOnly.allowedKitIds).not.toContain('ghost');
+  });
+
+  it('does not apply host rules to the tutorial', () => {
+    expect(
+      startDealOptions({
+        tutorial: true,
+        rules,
+        selections: new Map([['a', 'assassin' as const]]),
+      }),
+    ).toEqual({});
+  });
+
+  it('rejects an empty chat body, a bot, and a message over 200 characters', () => {
+    expect(parseSendChatPayload({ body: '   ' })).toEqual({
+      ok: false,
+      code: 'invalid-send-chat-payload',
+    });
+    expect(parseSendChatPayload({ body: 'a'.repeat(201) })).toEqual({
+      ok: false,
+      code: 'send-chat-too-long',
+    });
+    expect(parseSendChatPayload({ body: 'hi' })).toEqual({ ok: true, value: { body: 'hi' } });
+    expect(sendChatRejectionMessage('not-in-game').code).toBe('send-chat-not-in-game');
+    expect(sendChatRejectionMessage('bot').code).toBe('send-chat-bot');
+    expect(
+      canSendChat({
+        inGame: false,
+        inLobby: true,
+        onFinishedBoard: false,
+        senderIsBot: false,
+        body: 'hi',
+      }),
+    ).toBeNull();
+    expect(
+      canSendChat({
+        inGame: false,
+        inLobby: false,
+        onFinishedBoard: false,
+        senderIsBot: false,
+        body: 'hi',
+      }),
+    ).toBe('not-in-game');
+    expect(
+      canSendChat({
+        inGame: false,
+        inLobby: true,
+        onFinishedBoard: true,
+        senderIsBot: false,
+        body: 'hi',
+      }),
+    ).toBe('not-in-game');
   });
 });

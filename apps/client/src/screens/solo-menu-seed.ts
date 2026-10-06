@@ -9,6 +9,7 @@ import {
   type BotDifficulty,
   type KitId,
   type LobbyKitSelection,
+  type LobbyRules,
   type PlayKind,
   type SoloOpponentCount,
 } from '@card-battle/shared';
@@ -17,6 +18,7 @@ export interface SoloMenuSeed {
   opponentCount: SoloOpponentCount;
   difficulty: BotDifficulty;
   kitSelection: LobbyKitSelection;
+  lobbyRules: LobbyRules;
 }
 
 export interface SoloMenuSeedPlayer {
@@ -30,6 +32,7 @@ export function soloMenuSeed(input: {
   isSpectator?: true;
   players: readonly SoloMenuSeedPlayer[];
   kitId: KitId;
+  lobbyRules: LobbyRules;
 }): SoloMenuSeed | null {
   if (input.playKind !== 'classic' || input.isSpectator === true) {
     return null;
@@ -58,6 +61,7 @@ export function soloMenuSeed(input: {
     opponentCount: bots.length,
     difficulty,
     kitSelection: input.kitId,
+    lobbyRules: input.lobbyRules,
   };
 }
 
