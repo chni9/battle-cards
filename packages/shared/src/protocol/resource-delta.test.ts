@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  fogGhostLifePointGains,
   fogPlayedResourceDeltas,
   logResourceDeltasFromNets,
   subtractDuplicatedGains,
@@ -106,6 +107,21 @@ describe('fogPlayedResourceDeltas', () => {
     expect(fogPlayedResourceDeltas('sellCard', payout, false, false)).toBeUndefined();
     expect(fogPlayedResourceDeltas('sellCard', [{ kind: 'life', amount: 1 }], false, false)).toBeUndefined();
     expect(fogPlayedResourceDeltas('sellCard', payout, true, false)).toEqual(payout);
+  });
+
+  it('fogs a Ghost point gain that shares nets with a life loss', () => {
+    const nets = [
+      { kind: 'life' as const, amount: -1 },
+      { kind: 'point' as const, amount: 2 },
+    ];
+    expect(fogGhostLifePointGains(nets, false)).toEqual([
+      { kind: 'life', amount: -1 },
+      { kind: 'point', concealed: true, direction: 'gain' },
+    ]);
+    expect(fogGhostLifePointGains(nets, true)).toEqual(nets);
+    expect(
+      fogGhostLifePointGains([{ kind: 'point', amount: -8 }], false),
+    ).toEqual([{ kind: 'point', amount: -8 }]);
   });
 
   it('conceals an unspied upgrade-point price and keeps the upgrade point', () => {

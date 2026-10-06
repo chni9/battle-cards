@@ -175,3 +175,38 @@ export function fogPlayedResourceDeltas(
 
   return current.length > 0 ? current : undefined;
 }
+
+/**
+ * Ghost credits 2 points per life actually lost (rules spec §4). That gain is
+ * private, like the rest of the seat's points. Unspied readers keep the life
+ * loss and see `+?` instead of the amount. A point loss, or a point gain with
+ * no life loss on the same nets, stays.
+ */
+export function fogGhostLifePointGains(
+  deltas: readonly LogResourceDelta[] | undefined,
+  seesPrivate: boolean,
+): readonly LogResourceDelta[] | undefined {
+  const current = deltas ?? [];
+
+  if (current.length === 0) {
+    return undefined;
+  }
+
+  if (seesPrivate) {
+    return current;
+  }
+
+  const lostLife = current.some((delta) => delta.kind === 'life' && (delta.amount ?? 0) < 0);
+  const points = current.find((delta) => delta.kind === 'point');
+
+  if (
+    !lostLife ||
+    points === undefined ||
+    points.concealed === true ||
+    (points.amount ?? 0) <= 0
+  ) {
+    return current;
+  }
+
+  return concealKind(current, 'point', 'gain');
+}

@@ -4249,3 +4249,17 @@ Same day. This supersedes "The first Play again clears it for the next gathering
 
 ---
 
+## 2026-10-06 · [P] Ghost life-point gains stay private
+
+Designer. Out of scope for lobby chat, same branch.
+
+- Ghost still gains 2 points per life actually lost. The stored log and the
+  Excel export keep that amount.
+- A recipient who does not see that Ghost (not self, not Spy, not the
+  eliminated-spectator or Stay overlay) sees `+?` on the action log wherever
+  those points share nets with the life loss. The life loss stays. A point
+  loss, and a point gain with no life loss on the same nets, stay.
+- Self and anyone who spies that Ghost see the number.
+
+---
+

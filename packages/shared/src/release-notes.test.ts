@@ -43,14 +43,16 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     const latest = latestReleaseNote();
     expect(latest.title).toBe('Table rules and chat');
     expect(latest.additions).toEqual([]);
-    expect(latest.items).toHaveLength(2);
+    expect(latest.items).toHaveLength(3);
     expect(latest.items.map((item) => item.before)).toEqual([
       'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',
       'The table had no chat.',
+      'A Ghost gained 2 points per life lost in front of the whole table.',
     ]);
     expect(latest.items.map((item) => item.after)).toEqual([
       'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
       'Players chat in the lobby and at the table until the room closes, with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
+      'Those points show as a hidden amount until someone spies that Ghost.',
     ]);
   });
 

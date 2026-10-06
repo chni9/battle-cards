@@ -20,6 +20,7 @@ import {
   chatMessagesForReader,
   copyResourceDeltas,
   defaultLobbyRules,
+  fogGhostLifePointGains,
   fogPlayedResourceDeltas,
   getKit,
   type ActionLogEntryView,
@@ -39,6 +40,7 @@ import {
   type LobbyRules,
   type LobbySeatView,
   type LobbyStateView,
+  type LogResourceDelta,
   type PendingEffectView,
   type PersistentEffectView,
   type PlayKind,
@@ -345,9 +347,29 @@ function withPlayedDeltas(
  * - `draw` omits `drawGain` unless self, Spy, or spectator overlay (L65-01)
  * - `playerReanimated.kitId` omitted for every in-game recipient
  * - Draw and buy-upgrade point totals are concealed unless the viewer sees the actor
+ * - A Ghost's points from lives lost on the same nets are `+?` unless the viewer sees that Ghost
  * - Duplicator copy lines are omitted unless the viewer sees that Duplicator
  * Excel `exportLog` keeps the full server log.
  */
+function fogGhostDeltasForSeat(
+  deltas: readonly LogResourceDelta[] | undefined,
+  playerId: string,
+  recipientSessionId: string,
+  state: GameState,
+  walkInSpectator: boolean,
+): readonly LogResourceDelta[] | undefined {
+  const player = state.players.find((entry) => entry.id === playerId);
+
+  if (player?.kitId !== 'ghost') {
+    return deltas;
+  }
+
+  return fogGhostLifePointGains(
+    deltas,
+    recipientSeesPrivateOf(state, recipientSessionId, playerId, walkInSpectator),
+  );
+}
+
 function mapActionLogForRecipient(
   actionLog: readonly ActionLogEntryView[],
   recipientSessionId: string,
@@ -372,6 +394,22 @@ function mapActionLogEntry(
     }
 
     return entry;
+  }
+
+  if (entry.kind === 'resourceChange') {
+    const deltas = fogGhostDeltasForSeat(
+      entry.deltas,
+      entry.playerId,
+      recipientSessionId,
+      state,
+      walkInSpectator,
+    );
+
+    if (deltas === undefined) {
+      return null;
+    }
+
+    return { ...entry, deltas };
   }
 
   if (entry.kind === 'actionPlayed' && entry.action === 'activateDuplication') {
@@ -414,11 +452,17 @@ function mapActionLogEntry(
 
     const withDeltas = withPlayedDeltas(
       entry,
-      fogPlayedResourceDeltas(
-        entry.action,
-        entry.resourceDeltas,
-        seesPrivate,
-        entry.drawBust === true,
+      fogGhostDeltasForSeat(
+        fogPlayedResourceDeltas(
+          entry.action,
+          entry.resourceDeltas,
+          seesPrivate,
+          entry.drawBust === true,
+        ),
+        entry.actorPlayerId,
+        recipientSessionId,
+        state,
+        walkInSpectator,
       ),
     );
 
@@ -429,6 +473,32 @@ function mapActionLogEntry(
     }
 
     return withDeltas;
+  }
+
+  if (entry.kind === 'actionResolved' && entry.playerDeltas !== undefined) {
+    const playerDeltas = entry.playerDeltas.flatMap((change) => {
+      const deltas = fogGhostDeltasForSeat(
+        change.deltas,
+        change.playerId,
+        recipientSessionId,
+        state,
+        walkInSpectator,
+      );
+
+      if (deltas === undefined || deltas.length === 0) {
+        return [];
+      }
+
+      return [{ playerId: change.playerId, deltas }];
+    });
+    const next: Extract<ActionLogEntryView, { kind: 'actionResolved' }> = { ...entry };
+    delete next.playerDeltas;
+
+    if (playerDeltas.length === 0) {
+      return next;
+    }
+
+    return { ...next, playerDeltas };
   }
 
   if (entry.kind === 'playerReanimated') {

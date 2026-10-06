@@ -61,6 +61,11 @@ const RELEASE_NOTES_CATALOG = [
         after:
           'Players chat in the lobby and at the table until the room closes, with the round on each line, and eliminated players and spectators share a separate chat that living players cannot read.',
       },
+      {
+        kitId: 'ghost' as const,
+        before: 'A Ghost gained 2 points per life lost in front of the whole table.',
+        after: 'Those points show as a hidden amount until someone spies that Ghost.',
+      },
     ],
   },
   {
