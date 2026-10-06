@@ -169,7 +169,7 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
       ],
     });
 
-    const gameInsert = bound.find((params) => params.length === 12);
+    const gameInsert = bound.find((params) => params.length === 15);
     expect(gameInsert?.[9]).toBe(JSON.stringify(snapshot.exportLog));
     expect(gameInsert?.[10]).toBe(true);
     expect(gameInsert?.[11]).toBe(false);
@@ -209,7 +209,7 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     await writeFinishedGame(pool as never, sampleSnapshot());
 
     expect(queries.some((sql) => sql.includes('is_tutorial'))).toBe(true);
-    const gameInsert = bound.find((params) => params.length === 12);
+    const gameInsert = bound.find((params) => params.length === 15);
     expect(gameInsert?.[11]).toBe(false);
   });
 
