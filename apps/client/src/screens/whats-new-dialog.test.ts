@@ -29,9 +29,10 @@ describe('What’s new dialog (L63-07)', () => {
     expect(home).toContain("setWhatsNewScope('history')");
     expect(home).toContain("setWhatsNewScope('current')");
     expect(home).toContain('scope={whatsNewScope}');
-    expect(latestReleaseNote().id).toBe('lot-71');
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-71']);
+    expect(latestReleaseNote().id).toBe('lot-72');
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72']);
     expect(releaseNotesForScope('history').map((note) => note.date)).toEqual([
+      '2026-10-07',
       '2026-10-06',
       '2026-10-05',
       '2026-09-29',
@@ -54,7 +55,9 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
     expect(source).toContain('item.kitId');
     expect(latestReleaseNote().additions).toHaveLength(0);
-    expect(latestReleaseNote().items).toHaveLength(5);
+    expect(latestReleaseNote().items).toHaveLength(1);
+    const lot71 = RELEASE_NOTES.find((note) => note.id === 'lot-71');
+    expect(lot71?.items).toHaveLength(5);
     const lot69 = RELEASE_NOTES.find((note) => note.id === 'lot-69');
     expect(lot69?.items).toHaveLength(4);
     const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');

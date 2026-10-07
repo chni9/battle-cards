@@ -11,6 +11,7 @@ import {
 } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
+import { Button } from '../../../design/components/button';
 import { CardChoiceTile } from '../../../design/components/card-choice-tile';
 import { nicknameOf } from '../table-helpers';
 
@@ -81,6 +82,17 @@ export function SlotDropPanel({
           );
         })}
       </ul>
+      <div className="mt-4 flex justify-end">
+        <Button
+          compact
+          variant="red"
+          onClick={() => {
+            onResolve({ kind: 'slot-drop', cancel: true });
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
     </>
   );
 }
