@@ -101,6 +101,8 @@ export const ACTION_REJECT_CODES = [
   'invalid-remove-bot-payload',
   'invalid-set-bot-difficulty-payload',
   'invalid-choose-kit-payload',
+  'invalid-set-lobby-rules-payload',
+  'invalid-send-chat-payload',
 
   // Lobby (still sent on ERROR_MESSAGE)
   'start-not-host',
@@ -118,6 +120,18 @@ export const ACTION_REJECT_CODES = [
   'set-bot-difficulty-unknown',
   'set-bot-difficulty-target-is-human',
   'choose-kit-already-started',
+  'choose-kit-random-only',
+  'choose-kit-excluded',
+
+  // Lobby rules + table chat (PROTOCOL_VERSION 45 / Lot 70)
+  'set-lobby-rules-not-host',
+  'set-lobby-rules-not-in-lobby',
+  'set-lobby-rules-tutorial',
+  'set-lobby-rules-no-kit',
+  'set-lobby-rules-turn-time',
+  'send-chat-not-in-game',
+  'send-chat-bot',
+  'send-chat-too-long',
 
   // Lobby rematch (PROTOCOL_VERSION 32 / L57-07)
   'start-not-all-ready',
@@ -232,6 +246,8 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'invalid-remove-bot-payload': 'Invalid removeBot payload.',
   'invalid-set-bot-difficulty-payload': 'Invalid setBotDifficulty payload.',
   'invalid-choose-kit-payload': 'Invalid chooseKit payload.',
+  'invalid-set-lobby-rules-payload': 'Invalid setLobbyRules payload.',
+  'invalid-send-chat-payload': 'Invalid chat message.',
 
   'start-not-host': 'Only the host can start the game.',
   'start-already-started': 'The game has already started.',
@@ -248,6 +264,16 @@ export const ACTION_REJECT_MESSAGE: Record<ActionRejectCode, string> = {
   'set-bot-difficulty-unknown': 'That bot seat was not found.',
   'set-bot-difficulty-target-is-human': 'That seat is a human player, not a bot.',
   'choose-kit-already-started': 'Cannot change kit after the game has started.',
+  'choose-kit-random-only': 'The host is dealing kits at random.',
+  'choose-kit-excluded': 'The host has excluded that kit.',
+  'set-lobby-rules-not-host': 'Only the host can set table rules.',
+  'set-lobby-rules-not-in-lobby': 'Table rules can only be set in the lobby.',
+  'set-lobby-rules-tutorial': 'The tutorial does not use table rules.',
+  'set-lobby-rules-no-kit': 'At least one kit must stay allowed.',
+  'set-lobby-rules-turn-time': 'Turn time must be a whole number of seconds from 5 to 180.',
+  'send-chat-not-in-game': 'Chat is available in the lobby and during the game.',
+  'send-chat-bot': 'Bots do not chat.',
+  'send-chat-too-long': 'A chat message is at most 200 characters.',
 
   'start-not-all-ready': 'Every connected guest must be ready before start.',
   'ready-not-in-lobby': 'Ready is only used in the lobby.',

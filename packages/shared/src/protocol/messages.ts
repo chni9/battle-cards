@@ -66,6 +66,10 @@ export const PLAY_AGAIN = 'playAgain';
 export const CLAIM_SEAT = 'claimSeat';
 /** PROTOCOL_VERSION 33 / L57-16 — walk-in confirms Stay spectating; unfogs Spy overlay. */
 export const STAY_SPECTATING = 'staySpectating';
+/** PROTOCOL_VERSION 45 / Lot 70 — host lobby rules. Payload `SetLobbyRulesPayload`. */
+export const SET_LOBBY_RULES = 'setLobbyRules';
+/** PROTOCOL_VERSION 45 / Lot 70 — in-game chat. Payload `SendChatPayload`. */
+export const SEND_CHAT = 'sendChat';
 
 export type {
   ChooseEliminationRewardPayload,
@@ -355,6 +359,21 @@ export interface SetBotDifficultyPayload {
 /** Lobby kit pick — PROTOCOL_VERSION 30 / L49-01. `kitId: 'random'` restores the default. */
 export interface ChooseKitPayload {
   kitId: KitId | 'random';
+}
+
+/**
+ * Host table rules — PROTOCOL_VERSION 45 / Lot 70.
+ * Omit `turnTimeSeconds` to leave the human clock on the server default.
+ */
+export interface SetLobbyRulesPayload {
+  excludedKitIds: readonly KitId[];
+  randomOnly: boolean;
+  turnTimeSeconds?: number;
+}
+
+/** In-game chat — PROTOCOL_VERSION 45 / Lot 70. At most 200 characters. */
+export interface SendChatPayload {
+  body: string;
 }
 
 /** Human guest ready toggle — PROTOCOL_VERSION 32 / L57-07. */

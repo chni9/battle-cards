@@ -64,8 +64,8 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
     `INSERT INTO finished_games (
       room_id, mode, seed, winner_player_id, turn_sequence,
       started_at, ended_at, duration_ms, action_log, export_log, has_bots,
-      is_tutorial
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      is_tutorial, excluded_kit_ids, random_only, turn_time_seconds
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     RETURNING id`,
     [
       snapshot.roomId,
@@ -80,6 +80,9 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
       JSON.stringify(snapshot.exportLog),
       snapshot.hasBots,
       snapshot.isTutorial,
+      snapshot.lobbyRules === null ? null : [...snapshot.lobbyRules.excludedKitIds],
+      snapshot.lobbyRules?.randomOnly ?? null,
+      snapshot.lobbyRules?.turnTimeSeconds ?? null,
     ],
   );
 
@@ -140,6 +143,23 @@ async function insertFinishedGame(client: PoolClient, snapshot: FinishedGameSnap
         elimination.playerId,
         elimination.eliminatorPlayerId,
         elimination.reason,
+      ],
+    );
+  }
+
+  for (const message of snapshot.chatMessages) {
+    await client.query(
+      `INSERT INTO game_chat_messages (
+        game_id, order_index, sender_id, nickname, role, body, round_index
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        gameId,
+        message.order,
+        message.senderId,
+        message.nickname,
+        message.role,
+        message.body,
+        message.round,
       ],
     );
   }

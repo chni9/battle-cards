@@ -16,7 +16,7 @@ import type {
 
 describe('PROTOCOL_VERSION', () => {
   it('is 42 after blockedBy on actionResolved', () => {
-    expect(PROTOCOL_VERSION).toBe(44);
+    expect(PROTOCOL_VERSION).toBe(45);
     const blocked: ActionResolvedPayload = {
       effectId: 'e',
       sourcePlayerId: 'a',

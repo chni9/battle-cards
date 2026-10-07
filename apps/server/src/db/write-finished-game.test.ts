@@ -18,6 +18,21 @@ function sampleSnapshot(): FinishedGameSnapshot {
     exportLog: { turns: [], events: [] },
     hasBots: false,
     isTutorial: false,
+    lobbyRules: {
+      excludedKitIds: ['ghost'],
+      randomOnly: false,
+      turnTimeSeconds: 45,
+    },
+    chatMessages: [
+      {
+        order: 0,
+        senderId: 'alice',
+        nickname: 'Alice',
+        role: 'living',
+        body: 'gl',
+        round: 4,
+      },
+    ],
     players: [
       {
         playerId: 'alice',
@@ -155,7 +170,7 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
       ],
     });
 
-    const gameInsert = bound.find((params) => params.length === 12);
+    const gameInsert = bound.find((params) => params.length === 15);
     expect(gameInsert?.[9]).toBe(JSON.stringify(snapshot.exportLog));
     expect(gameInsert?.[10]).toBe(true);
     expect(gameInsert?.[11]).toBe(false);
@@ -195,7 +210,7 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
     await writeFinishedGame(pool as never, sampleSnapshot());
 
     expect(queries.some((sql) => sql.includes('is_tutorial'))).toBe(true);
-    const gameInsert = bound.find((params) => params.length === 12);
+    const gameInsert = bound.find((params) => params.length === 15);
     expect(gameInsert?.[11]).toBe(false);
   });
 
@@ -257,10 +272,55 @@ describe('writeFinishedGame (technical spec §3, L8-02)', () => {
       connect: vi.fn(() => Promise.resolve(client)),
     };
 
-    await writeFinishedGame(pool as never, { ...sampleSnapshot(), isTutorial: true });
+    await writeFinishedGame(pool as never, {
+      ...sampleSnapshot(),
+      isTutorial: true,
+      lobbyRules: null,
+      chatMessages: [],
+    });
 
-    const gameInsert = bound.find((params) => params.length === 12);
+    const gameInsert = bound.find((params) => params.length === 15);
     expect(gameInsert?.[11]).toBe(true);
+    expect(gameInsert?.[12]).toBeNull();
+    expect(gameInsert?.[13]).toBeNull();
+    expect(gameInsert?.[14]).toBeNull();
+  });
+
+  it('writes host rules and chat in the same transaction (Lot 70)', async () => {
+    const queries: string[] = [];
+    const bound: unknown[][] = [];
+    const client = {
+      query: vi.fn((sql: string, params?: unknown[]) => {
+        queries.push(sql);
+        if (params !== undefined) {
+          bound.push(params);
+        }
+
+        if (sql.includes('RETURNING id')) {
+          return Promise.resolve({ rows: [{ id: 'game-uuid' }] });
+        }
+
+        return Promise.resolve({ rows: [] });
+      }),
+      release: vi.fn(),
+    };
+    const pool = {
+      connect: vi.fn(() => Promise.resolve(client)),
+    };
+
+    await writeFinishedGame(pool as never, sampleSnapshot());
+
+    const gameInsert = queries.findIndex((sql) => sql.includes('INSERT INTO finished_games'));
+    const chatInsert = queries.findIndex((sql) => sql.includes('INSERT INTO game_chat_messages'));
+    expect(gameInsert).toBeGreaterThan(0);
+    expect(chatInsert).toBeGreaterThan(gameInsert);
+    expect(queries.at(-1)).toBe('COMMIT');
+    const rules = bound.find((params) => params.length === 15);
+    expect(rules?.[12]).toEqual(['ghost']);
+    expect(rules?.[13]).toBe(false);
+    expect(rules?.[14]).toBe(45);
+    const chat = bound.find((params) => params.length === 7);
+    expect(chat).toEqual(['game-uuid', 0, 'alice', 'Alice', 'living', 'gl', 4]);
   });
 });
 

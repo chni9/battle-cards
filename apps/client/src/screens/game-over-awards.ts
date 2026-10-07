@@ -229,7 +229,11 @@ export function formatThinkTimeMs(ms: number): string {
 }
 
 export function formatAwardValue(kind: AwardValueKind, value: number): string {
-  return kind === 'time' ? formatThinkTimeMs(value) : String(value);
+  if (kind !== 'time') {
+    return String(value);
+  }
+
+  return formatThinkTimeMs(value).replace(/s$/, ' s/turn');
 }
 
 function pickOneAward(

@@ -3,7 +3,7 @@
  * Grid of portraits; click opens description then Select. Opponents never see the pick.
  */
 
-import { getKit, type LobbyKitSelection } from '@card-battle/shared';
+import { getKit, type KitId, type LobbyKitSelection } from '@card-battle/shared';
 import { useState, type ReactElement } from 'react';
 
 import { getOpponentPlaceholderUrl } from '../design/asset-lookup';
@@ -19,6 +19,8 @@ import { KitInspectDetails } from './table/kit-inspect-details';
 export interface LobbyKitPickerDialogProps {
   open: boolean;
   current: LobbyKitSelection;
+  /** Kits the host still allows. Random stays in the grid. */
+  allowedKitIds: readonly KitId[];
   onClose: () => void;
   onSelect: (selection: LobbyKitSelection) => void;
 }
@@ -26,6 +28,7 @@ export interface LobbyKitPickerDialogProps {
 export function LobbyKitPickerDialog({
   open,
   current,
+  allowedKitIds,
   onClose,
   onSelect,
 }: LobbyKitPickerDialogProps): ReactElement {
@@ -88,7 +91,7 @@ export function LobbyKitPickerDialog({
       }
     >
       {preview === null ? (
-        <KitGrid current={current} onPreview={setPreview} />
+        <KitGrid current={current} allowedKitIds={allowedKitIds} onPreview={setPreview} />
       ) : preview === 'random' ? (
         <RandomKitDetails />
       ) : (
@@ -100,9 +103,11 @@ export function LobbyKitPickerDialog({
 
 function KitGrid({
   current,
+  allowedKitIds,
   onPreview,
 }: {
   current: LobbyKitSelection;
+  allowedKitIds: readonly KitId[];
   onPreview: (selection: LobbyKitSelection) => void;
 }): ReactElement {
   return (
@@ -111,7 +116,9 @@ function KitGrid({
         Opponents cannot see your kit. Random is the default.
       </p>
       <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
-        {LOBBY_KIT_PICKER_SELECTIONS.map((selection) => {
+        {LOBBY_KIT_PICKER_SELECTIONS.filter(
+          (selection) => selection === 'random' || allowedKitIds.includes(selection),
+        ).map((selection) => {
           const selected = current === selection;
           const label = lobbyKitSelectionLabel(selection);
 

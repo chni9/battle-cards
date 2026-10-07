@@ -6,7 +6,10 @@
 > Sources: technical spec §3, §5 (whole section), §6.2 rulings #7 and #11, §7 ·
 > rules spec §6 (Visibility).
 >
-> **Status:** current `PROTOCOL_VERSION` is **42** (`actionResolved.blockedBy`
+> **Status:** current `PROTOCOL_VERSION` is **45** (Lot 70: lobby
+> `setLobbyRules` / `lobbyRules`, in-game `sendChat`, per-recipient
+> `chatMessages`). **44** adds `slotOwnerPlayerId` on the Curse slot-drop
+> chooser. **42** (`actionResolved.blockedBy`
 > names Attack Thief or Block). **41** is action-log resource nets.
 > **40** publishes each public `PendingSentence.id` so `upgradeCard` can target
 > a ticking Sentence. Gambler `drawGain` is Spy-gated since L65-01, no bump at
@@ -61,7 +64,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 
 | Category | Visibility |
 |---|---|
-| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief, an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView`. **Finished recap exception (PROTOCOL_VERSION 35 / L60-04):** `recap.players[].kitId` is the seat's **final** kit and is public to seated recipients. Omit that field for L57-16 fogged walk-ins. `finalTable` living seats still follow Spy / elim / walk-in overlay — do not put living kits there |
+| Kit, hand contents, exact resource values, **hand card count** | **Private.** Revealed only by Spy, Spy Thief (Lot 71 grants Spy+ / `full-resources` — kit, cards, and live resources — on each victim it hits, base and upgraded; no protocol bump), an **eliminated spectator** (dead seat with no `pendingReanimation` — designer 2026-08-06), or a **walk-in spectator** (`isSpectator`, L57-13) **after** Stay spectating / empty claim list (L57-16). After Reanimation, the new kit stays private the same way — in-game `playerReanimated` never includes `kitId` for any recipient (L50-03); Excel `exportLog` keeps the kit. **Lobby kit pick** (PROTOCOL_VERSION 30): `LobbyStateView.yourKitSelection` is the recipient's own choice only — never placed on `LobbySeatView`. **Finished recap exception (PROTOCOL_VERSION 35 / L60-04):** `recap.players[].kitId` is the seat's **final** kit and is public to seated recipients. Omit that field for L57-16 fogged walk-ins. `finalTable` living seats still follow Spy / elim / walk-in overlay — do not put living kits there |
 | Lives, shield, points, upgrade points | **Private** without Spy / eliminated-spectator overlay. Base Spy: frozen `resourcesSnapshot` at resolve. Upgraded Spy **and** eliminated spectators: live values (rules §3) |
 | Every action played, **including card identity** | **Public** — purchases, sales, upgrades and draws included. **Exception (L63-06):** `buyPoolCard` omits `cardId` / `isUpgraded` unless `recipientSeesPrivateOf` the buyer (self, Spy, eliminated / Stay walk-in overlay). Live `ACTION_PLAYED` unicasts the same fog. Excel `exportLog` stays full |
 | Queue of pending effects | **Public** |
@@ -74,6 +77,7 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | Elimination status | **Public** |
 | Eliminated seat kit / death-hand / tokens | **Public** as `eliminationReveal` (PROTOCOL_VERSION 22) — frozen at death |
 | `GameState.seed` | **Server-only.** Reaches no client, spied or not |
+| `GameState.suppressTurnAdvanceAfterRewards` | **Server-only.** Lot 71 forfeit rewards that interrupt another living seat's turn. Omitted from every view |
 | `GameState.nextPoolInstanceSeq` | **Server-only.** Pure id plumbing for pool minting (tech v4 §5.1); never in a view |
 | `GameState.pool` | **Public** in `PlayingStateView` including sitting-card faces (`cardId` / `isUpgraded` / `instanceId`). Occupancy stays public. Recovered `buyPoolCard` identity stays fogged on the action log (L63-06 playtest: showing pool faces is the rule, not a leak) |
 | `GameState.poolBuyCost` | **Public** in `PlayingStateView` (PROTOCOL_VERSION 34 / L58-02). Starts at 1; doubles after each successful `buyPoolCard`; never resets |
@@ -81,7 +85,8 @@ Technical spec §5.1, ruling §6.2 #7, rules spec §6.
 | `playKind` / `tutorialIndex` | **Public** on playing and finished views (PROTOCOL_VERSION 29 / L41-02). Classic rooms: `'classic'` / `null`. Room-owned overlay, not on `GameState` (decisions.md 2026-08-20) |
 | Living Gambler Draw payout | **Spy-gated** as `PublicPlayerView.drawGain` (PROTOCOL_VERSION 39 / L64-01, narrowed L65-01). Self, Spy, eliminated spectator, and Stay walk-in only. Undefined for other kits, eliminated seats, and everyone else. Successful `actionPlayed` draw carries `drawGain` for those same recipients; omit on a wipe and for everyone who cannot already see that seat. The wipe stays public as `drawBust` |
 | Draw wipe | **Public** as `actionPlayed.drawBust` (no second field). The table line is `{nickname} gambled too much and lost everything`. Draw no longer emits `EliminationReason` `'gambling'`. That reason remains on the union for older logs |
-| Action-log resource nets | **Public** on the stored log and Excel, then fogged per recipient (PROTOCOL_VERSION 41). The play line carries the acting player's immediate net (lives, points, upgrade points, shield). Draw point totals and buy-upgrade point prices are concealed (`+?` / `−?`) unless the viewer sees that actor (L65-01 still strips `drawGain` for the same seats). `+1` upgrade point stays visible. A card sale's payout is omitted unless the viewer sees the seller. A shop buy's price is omitted unless the viewer sees the buyer; a gain on that line stays. Special and pool purchases still show their spend. Persistent ticks are a public `resourceChange` line (name + nets, no card). Duplicator copies are the same kind with `duplicated` and are omitted unless the viewer sees that Duplicator. Unspied `activateDuplication` stays a Draw and adds a fake `+?` point suffix. Elimination rewards stay masked. Resolve lines append `playerDeltas`: each seat's nets, target then source, not summed. Duplicator copies are excluded from that suffix. Live `ACTION_PLAYED` does not carry `resourceDeltas` |
+| Chat | **Per recipient** (PROTOCOL_VERSION 45 / Lot 70). Living readers receive only messages whose role at send time is `living`. Eliminated players and spectators receive both streams. Lobby and playing views both carry `chatMessages`. Each message stores `round` (`0` in the lobby; otherwise the action-log table round). The room keeps the full transcript across Play again until the room is gone; the view builder filters it. Each finished game stores that transcript as of game end |
+| Action-log resource nets | **Public** on the stored log and Excel, then fogged per recipient (PROTOCOL_VERSION 41). The play line carries the acting player's immediate net (lives, points, upgrade points, shield). Draw point totals and buy-upgrade point prices are concealed (`+?` / `−?`) unless the viewer sees that actor (L65-01 still strips `drawGain` for the same seats). `+1` upgrade point stays visible. A card sale's payout is omitted unless the viewer sees the seller. A shop buy's price is omitted unless the viewer sees the buyer; a gain on that line stays. Special and pool purchases still show their spend. Persistent ticks are a public `resourceChange` line (name + nets, no card). Duplicator copies are the same kind with `duplicated` and are omitted unless the viewer sees that Duplicator. Unspied `activateDuplication` stays a Draw and adds a fake `+?` point suffix. Elimination rewards stay masked. Resolve lines append `playerDeltas`: each seat's nets, target then source, not summed. Duplicator copies are excluded from that suffix. A Ghost's point gain on the same nets as a life loss is `+?` unless the viewer sees that Ghost; the life loss stays. Live `ACTION_PLAYED` does not carry `resourceDeltas` |
 
 The fourth category is not in technical spec §5.1: it exists because the seed is not private
 data about a player but the game's entire future. A client holding it predicts Sentence's
@@ -121,6 +126,11 @@ min 2 attacks, `[{ instanceId, targetPlayerId }]`) ·
 `buySpecialCard` · `buyPoolCard` (PROTOCOL_VERSION 34 / L58-05 — no payload) ·
 `clearSpy` (PROTOCOL_VERSION 34 / L58-07 — `{ targetPlayerId }`) ·
 `forfeit` (PROTOCOL_VERSION 29 / L43-06 — payload `undefined`; client stays connected) ·
+`setLobbyRules` (PROTOCOL_VERSION 45 / Lot 70 — host, lobby only, not the tutorial;
+`{ excludedKitIds, randomOnly, turnTimeSeconds? }`; omitting `turnTimeSeconds` leaves
+`TURN_DURATION_MS` in force) ·
+`sendChat` (PROTOCOL_VERSION 45 / Lot 70 — `{ body }`, lobby or in progress, max 200
+characters; bots cannot send; not after the match ends) ·
 `resolveSubChoice` (technical spec v4 §4.4, PROTOCOL_VERSION 23, backlog L20-18 / L21-03 / L24) —
 `kind`-discriminated: `mirror`, `elimination-reward`, `steal-pick`, `pool-pick`
 (`instanceIds`), `special-pick` (`cardId`). Replaces the former

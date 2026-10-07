@@ -9,6 +9,7 @@ const ALLOWED_TABLES = new Set([
   'finished_games',
   'finished_game_players',
   'finished_game_eliminations',
+  'game_chat_messages',
   'feedback_reports',
 ]);
 

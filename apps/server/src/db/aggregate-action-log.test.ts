@@ -264,4 +264,98 @@ describe('aggregateActionsForPlayer (L60-04)', () => {
       turnActionsCount: 1,
     });
   });
+
+  it('credits a kill to each player who is paid for a forfeit', () => {
+    const log: ActionLogEntryView[] = [
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: null,
+        reason: 'leave',
+        turnSequence: 4,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'alice',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 4,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'bob',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 4,
+      },
+    ];
+
+    expect(aggregateActionsForPlayer('alice', log).kills).toBe(1);
+    expect(aggregateActionsForPlayer('bob', log).kills).toBe(1);
+    expect(aggregateActionsForPlayer('cara', log).kills).toBe(0);
+  });
+
+  it('matches a forfeit claim to that leave, not an earlier or later death', () => {
+    const revived: ActionLogEntryView[] = [
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: null,
+        reason: 'leave',
+        turnSequence: 4,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'alice',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 4,
+      },
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: 'bob',
+        reason: 'combat',
+        turnSequence: 9,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'alice',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 9,
+      },
+    ];
+
+    expect(aggregateActionsForPlayer('alice', revived).kills).toBe(1);
+    expect(aggregateActionsForPlayer('bob', revived).kills).toBe(1);
+
+    const combatFirst: ActionLogEntryView[] = [
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: 'bob',
+        reason: 'combat',
+        turnSequence: 2,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'bob',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 2,
+      },
+      {
+        kind: 'playerEliminated',
+        playerId: 'cara',
+        eliminatorPlayerId: null,
+        reason: 'leave',
+        turnSequence: 8,
+      },
+      {
+        kind: 'rewardsClaimed',
+        eliminatorPlayerId: 'alice',
+        eliminatedPlayerId: 'cara',
+        turnSequence: 8,
+      },
+    ];
+
+    expect(aggregateActionsForPlayer('alice', combatFirst).kills).toBe(1);
+    expect(aggregateActionsForPlayer('bob', combatFirst).kills).toBe(1);
+  });
 });

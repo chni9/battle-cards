@@ -4,7 +4,11 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { defaultLobbyRules } from '@card-battle/shared';
+
 import { soloMenuSeed } from './solo-menu-seed';
+
+const rules = defaultLobbyRules();
 
 const ada = { isYou: true, isBot: false };
 const alpha = { isYou: false, isBot: true, botDifficulty: 'easy' as const };
@@ -17,11 +21,13 @@ describe('solo Play again menu (L67-01)', () => {
         playKind: 'classic',
         players: [ada, alpha, beta],
         kitId: 'assassin',
+        lobbyRules: rules,
       }),
     ).toEqual({
       opponentCount: 2,
       difficulty: 'easy',
       kitSelection: 'assassin',
+      lobbyRules: rules,
     });
   });
 
@@ -31,6 +37,7 @@ describe('solo Play again menu (L67-01)', () => {
         playKind: 'classic',
         players: [ada, { isYou: false, isBot: false }, alpha],
         kitId: 'assassin',
+        lobbyRules: rules,
       }),
     ).toBeNull();
   });
@@ -42,6 +49,7 @@ describe('solo Play again menu (L67-01)', () => {
         isSpectator: true,
         players: [ada, alpha],
         kitId: 'assassin',
+        lobbyRules: rules,
       }),
     ).toBeNull();
     expect(
@@ -49,7 +57,24 @@ describe('solo Play again menu (L67-01)', () => {
         playKind: 'tutorial',
         players: [ada, alpha],
         kitId: 'assassin',
+        lobbyRules: rules,
       }),
     ).toBeNull();
+  });
+
+  it('keeps the host rules on Play again', () => {
+    const kept = {
+      excludedKitIds: ['ghost' as const],
+      randomOnly: true,
+      turnTimeSeconds: 45,
+    };
+    expect(
+      soloMenuSeed({
+        playKind: 'classic',
+        players: [ada, alpha],
+        kitId: 'assassin',
+        lobbyRules: kept,
+      })?.lobbyRules,
+    ).toEqual(kept);
   });
 });

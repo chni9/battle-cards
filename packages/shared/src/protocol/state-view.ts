@@ -10,6 +10,8 @@ import type { BotDecisionReason, BotDifficulty } from '../domain/bot';
 import type { PendingEffectRedirectSource } from '../domain/effect';
 import type { PendingSentence } from '../domain/game-state';
 import type { KitId } from '../domain/kit';
+import type { LobbyRules } from './lobby-rules';
+import type { ChatMessageView } from './table-chat';
 import type { ConnectionStatus } from '../domain/player';
 
 /** Mirrors `EliminationReason` in messages.ts — kept local to avoid a circular import. */
@@ -91,6 +93,16 @@ export interface LobbyStateView {
    * Empty / omitted when none.
    */
   claimableSeats?: readonly ClaimableSeatView[];
+  /**
+   * Host table rules (PROTOCOL_VERSION 45 / Lot 70). Guests see them before Ready.
+   * Omitted only when a caller did not supply them; the room always sends them.
+   */
+  lobbyRules?: LobbyRules;
+  /**
+   * Chat this recipient may read (PROTOCOL_VERSION 45 / Lot 70).
+   * The lobby uses the same two streams as the table.
+   */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 /** Public connection slice — technical spec §5.7, L7 / L9-01. Readable by every seat. */
@@ -336,6 +348,11 @@ export interface PlayingStateView {
    * Empty / omitted when none.
    */
   claimableSeats?: readonly ClaimableSeatView[];
+  /**
+   * Chat this recipient may read (PROTOCOL_VERSION 45 / Lot 70).
+   * Living readers receive only living messages.
+   */
+  chatMessages?: readonly ChatMessageView[];
 }
 
 /**
@@ -668,6 +685,11 @@ export interface FinishedStateView {
   isSpectator?: true;
   /** Living disconnected seats this recipient may `claimSeat`. */
   claimableSeats?: readonly ClaimableSeatView[];
+  /**
+   * Host rules for this match (PROTOCOL_VERSION 45). Classic only.
+   * Play again and the solo menu read them from here. Tutorial omits the field.
+   */
+  lobbyRules?: LobbyRules;
 }
 
 export type StateView = LobbyStateView | PlayingStateView | FinishedStateView;

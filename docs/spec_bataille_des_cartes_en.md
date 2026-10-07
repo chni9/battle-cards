@@ -154,8 +154,8 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: the same steal hits every living opponent (still not a living invisible player) and still does not steal points.
 
 **Spy Thief** — Price: 5 points
-- Action: steals all points from all opponents (no cap), and spies on all opponents (like Spy, for the rest of the game).
-- Upgrade: all stolen points are doubled; also allows you to see all resources of all opponents.
+- Action: the user chooses one living opponent (a living invisible player cannot be chosen). Steals all of that opponent's points (no cap, and the stolen points are not doubled) and leaves a Spy+ reveal on them for the rest of the game: kit, cards, and live resources. Not counterable. An upgraded Shield does not block it. Untouchable is not immune.
+- Upgrade: that same steal and Spy+ reveal hit every living opponent (still not a living invisible player).
 
 **Suicide** — Price: 3 points
 - Action: the user is eliminated on their next turn. All opponents lose 5 lives and all their points (each on that opponent's turn, after they act). The user is the eliminator of every opponent killed by this effect and receives the corresponding rewards (even though they may still be eliminated later by their own pending Suicide). No reward is granted for the user's own elimination.
@@ -246,9 +246,19 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 4. Each player receives their kit's special cards.
 5. Turn order is determined, then the game begins.
 
+The host sets the table rules before the match starts, in the online lobby and on the solo menu. Guests see those rules before they press Ready. Play again keeps them. The tutorial does not use them.
+
+- Every Classic kit starts allowed. The host may exclude kits. An excluded kit cannot be chosen. A random draw uses only kits that are still allowed. At least one kit stays allowed.
+- Random only: nobody picks a kit. Seats are dealt from the allowed kits.
+- Turn time is a whole number of seconds from 5 to 180. The default is 60. Human turns use that length. Bots keep their own think time.
+
 ### Visibility
 
 Remain private: each player's kit, the contents of their hand, and the exact value of their resources — except for a specific effect (Spy and equivalents). Every action played is public, including the card's identity, including purchases, sales, upgrades, draws, and Unspy. A pool buy is public as an action; the recovered card's identity stays private to the buyer (and anyone who already sees that buyer's private information). The queue of pending effects is public, as is a ticking Sentence countdown. A player who is being Spyed sees which living opponents currently spy them (eye on those seats) and may Unspy one of them for 10 points (section 3).
+
+### Chat
+
+Living players write to the living stream, in the lobby and during the game. Only living players' messages appear there for living readers. Eliminated players and spectators can write. Those messages are labeled eliminated or spectator, and only eliminated players and spectators can read them. They can still read the living stream. Each message shows the table round it was sent in, or that it was sent in the lobby. A message is at most 200 characters. Bots do not chat. Messages stay for the life of the room. Play again keeps them, and new lines in the next gathering append. A player seated there writes as living again. Someone still looking at the finished board cannot send. Each finished game stores the room transcript as of that game's end, including lines sent before that match. Nothing is saved if the room dies before the game finishes.
 
 ### Game Turn
 
@@ -271,6 +281,7 @@ An attack redirected by Mirror remains a fully pending attack: if the player it 
 - An eliminated player loses all their lives. They become a spectator; all their unclaimed cards join the shared pool (section 1).
 - Each living player who contributed to the kill on the turn the victim dies chooses two rewards among: 4 lives, 8 points, a card of choice among the eliminated player's remaining cards (including unused special cards), or an upgrade point. That includes every attacker whose pending hit **resolved** on that turn against the victim, even when the shield absorbed all damage or a later hit dealt the finishing blow — delayed resolution must not strip credit from earlier attackers. Non-attack life loss (Poison, Imposition, Tax, and so on) still requires actual lives taken. Both reward choices can be identical. A card already taken is gone before the next picker. Rewards are claimed in order: fewest lives among contributors, then fewest points, then a seeded random draw among ties. Pending attacks that never resolved do not count. When several players die in one resolution, each contributor gets two full reward picks per victim they helped kill, in that order.
 - A player eliminated without a third-party contributor — through Tax's life cost, their own Sentence, or their own non-upgraded Suicide — generates no reward for anyone. A Gambler wipe is not an elimination and pays no reward.
+- Forfeiting with the Forfeit button, or leaving the table while the game is playing, pays those same two reward picks to each living player who still has an attack queued on the forfeiter. One reward per player, not per queued card. Every rewarded player chooses at the same time. A card already taken is gone. Those picks happen before the forfeiter's remaining cards join the pool. Pending Thief, Imposition, Sentence, and Curse do not pay. Active Poison does not pay. If nobody has a queued attack, nobody is paid. If the forfeit leaves only one player in the match, that player has won and does not choose rewards. Each player who receives these rewards is credited a kill on the end-of-game recap. The turn timer and inactivity elimination do not pay these rewards.
 
 ## 7. Game Modes
 

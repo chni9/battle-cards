@@ -441,20 +441,16 @@ function resolveSpyThief(
   effect: PendingEffect,
 ): ResolveOutcome {
   // Not blocked by upgraded Shield; not covered by Untouchable immuneTo (Lot 5 ruling).
+  // Lot 71: both tiers steal every point with no cap and no doubling, and leave Spy+.
   const amount = target.points;
   stealPoints({
     state,
     sourcePlayerId: effect.sourcePlayerId,
     targetPlayerId: target.id,
     amount,
-    gainMultiplier: effect.isUpgraded ? 2 : 1,
+    gainMultiplier: 1,
   });
-  grantSpy(
-    state,
-    effect.sourcePlayerId,
-    target.id,
-    effect.isUpgraded ? 'full-resources' : 'kit-and-cards',
-  );
+  grantSpy(state, effect.sourcePlayerId, target.id, 'full-resources');
   return 'applied';
 }
 

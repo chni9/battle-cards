@@ -100,5 +100,10 @@
 /**
  * 43 → 44 (Lot 69): `subChoiceRequired` slot-drop includes
  * `slotOwnerPlayerId` (chooser may differ for Curse on a full target).
+ *
+ * 44 → 45 (Lot 70): lobby `setLobbyRules` and `LobbyStateView.lobbyRules`
+ * (excluded kits, random only, human turn seconds) plus in-game `sendChat`.
+ * Playing and finished-board views carry the recipient's visible chat.
+ * Older clients cannot read the host rules or the table chat.
  */
-export const PROTOCOL_VERSION = 44;
+export const PROTOCOL_VERSION = 45;

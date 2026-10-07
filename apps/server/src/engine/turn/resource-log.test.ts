@@ -438,6 +438,107 @@ describe('per-recipient Draw and buy-upgrade fog', () => {
   });
 });
 
+describe('Ghost life-point gains on the action log', () => {
+  it('fogs the points unless the viewer spies that Ghost', () => {
+    const { state, alice, bob } = twoPlayers('log-ghost-fog', ['warrior', 'ghost']);
+    bob.shield = 0;
+    const log = [
+      {
+        kind: 'actionResolved' as const,
+        effectId: 'hit',
+        sourcePlayerId: alice.id,
+        targetPlayerId: bob.id,
+        cardId: 'basic-attack' as const,
+        isUpgraded: false,
+        livesLost: 1,
+        shieldAbsorbed: 0,
+        outcome: 'applied' as const,
+        turnSequence: 1,
+        playerDeltas: [
+          {
+            playerId: bob.id,
+            deltas: [
+              { kind: 'life' as const, amount: -1 },
+              { kind: 'point' as const, amount: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'resourceChange' as const,
+        playerId: bob.id,
+        turnSequence: 2,
+        deltas: [
+          { kind: 'life' as const, amount: -1 },
+          { kind: 'point' as const, amount: 2 },
+        ],
+      },
+    ];
+
+    const hidden = buildPlayingViewFor({
+      recipientSessionId: alice.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(hidden.actionLog[0]).toMatchObject({
+      playerDeltas: [
+        {
+          playerId: bob.id,
+          deltas: [
+            { kind: 'life', amount: -1 },
+            { kind: 'point', concealed: true, direction: 'gain' },
+          ],
+        },
+      ],
+    });
+    expect(hidden.actionLog[1]).toMatchObject({
+      deltas: [
+        { kind: 'life', amount: -1 },
+        { kind: 'point', concealed: true, direction: 'gain' },
+      ],
+    });
+
+    const self = buildPlayingViewFor({
+      recipientSessionId: bob.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(self.actionLog[0]).toMatchObject({
+      playerDeltas: [
+        {
+          deltas: [
+            { kind: 'life', amount: -1 },
+            { kind: 'point', amount: 2 },
+          ],
+        },
+      ],
+    });
+
+    grantSpy(state, alice.id, bob.id, 'kit-and-cards');
+    const spied = buildPlayingViewFor({
+      recipientSessionId: alice.id,
+      gameCode: 'TEST',
+      state,
+      turnDeadlineMs: null,
+      actionLog: log,
+    });
+    expect(spied.actionLog[0]).toMatchObject({
+      playerDeltas: [
+        {
+          deltas: [
+            { kind: 'life', amount: -1 },
+            { kind: 'point', amount: 2 },
+          ],
+        },
+      ],
+    });
+  });
+});
+
 describe('resolve-line resource nets', () => {
   it('records the target life loss on an attack and both sides of a Thief', () => {
     const attack = twoPlayers('log-resolve-atk', ['warrior', 'kamikaze']);

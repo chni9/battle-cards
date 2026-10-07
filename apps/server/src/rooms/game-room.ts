@@ -17,6 +17,10 @@ import {
   BUY_SPECIAL_CARD,
   BUY_UPGRADE_POINT,
   CHOOSE_KIT,
+  SET_LOBBY_RULES,
+  SEND_CHAT,
+  allowedKitIds,
+  defaultLobbyRules,
   CLAIM_SEAT,
   CLEAR_SPY,
   KICK_PLAYER,
@@ -67,11 +71,14 @@ import {
   type DeactivatePersistentPayload,
   isKitId,
   isSpecialCardId,
+  tableRound,
   type KitId,
   type EliminationReason,
   type GameState,
   type LobbySeatView,
+  type ChatMessageView,
   type LobbyKitSelection,
+  type LobbyRules,
   type PlayCardPayload,
   type PlayMultipleAttacksPayload,
   type RemoveBotPayload,
@@ -123,9 +130,11 @@ import { advanceTurn, findPlayer } from '../engine/turn/advance-turn';
 import { endBlockChain } from '../engine/turn/grant-block-turns';
 import {
   REWARD_SUB_CHOICE_MS,
+  eliminateForForfeit,
   eliminateWithoutReward,
   findSoleSurvivorId,
   listAvailableRewardCards,
+  type ForfeitEliminationResult,
 } from '../engine/turn/elimination-rewards';
 import { MIRROR_SUB_CHOICE_MS } from '../engine/turn/mirror-choice';
 import {
@@ -177,8 +186,14 @@ import {
   canSetBotDifficulty,
   canSetReady,
   canStartGame,
+  canSendChat,
+  canSetLobbyRules,
   chooseKitRejectionMessage,
-  collectForcedKitsBySeatId,
+  parseSendChatPayload,
+  parseSetLobbyRulesPayload,
+  sendChatRejectionMessage,
+  setLobbyRulesRejectionMessage,
+  startDealOptions,
   kickPlayerRejectionMessage,
   MAX_PLAYERS,
   parseChooseKitPayload,
@@ -236,6 +251,8 @@ interface FinishedHoldout {
   playKind: PlayKind;
   tutorialIndex: number | null;
   thinkTimeMsByPlayerId: ReadonlyMap<string, number>;
+  chatMessages: readonly ChatMessageView[];
+  lobbyRules: LobbyRules | null;
 }
 
 const TURN_DURATION_MS = (() => {
@@ -280,6 +297,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
   private matchHostSessionId: string | null = null;
   private matchHumanSeatOrder: string[] = [];
   private matchPersisted = false;
+  /** Host table rules. Kept across Play again. Tutorial does not apply them. */
+  private lobbyRules: LobbyRules = defaultLobbyRules();
+  /** True after the host sets a 5–180s turn. Until then the clock is `TURN_DURATION_MS`. */
+  private turnTimeOverridden = false;
+  /** In-game chat. Cleared when the next match starts. Not written if the room dies first. */
+  private chatMessages: ChatMessageView[] = [];
   private readonly botDriver = new BotDriver({
     isBotSeat: (playerId) => {
       const seat = this.seats.find((entry) => entry.sessionId === playerId);
@@ -303,6 +326,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botDifficulties: this.botDifficulties(),
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
+        chatMessages: this.chatMessages,
       });
     },
     getActionLog: () => this.actionLog,
@@ -503,6 +527,14 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     [CHOOSE_KIT]: (client: GameClient, payload: unknown): void => {
       this.handleChooseKit(client, payload);
+    },
+
+    [SET_LOBBY_RULES]: (client: GameClient, payload: unknown): void => {
+      this.handleSetLobbyRules(client, payload);
+    },
+
+    [SEND_CHAT]: (client: GameClient, payload: unknown): void => {
+      this.handleSendChat(client, payload);
     },
 
     [SET_READY]: (client: GameClient, payload: unknown): void => {
@@ -851,14 +883,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     console.log(`[${this.roomId}] ${sessionId} consented leave — forfeit`);
-    this.clearAbsentTimer(sessionId);
-    const left = eliminateWithoutReward(state, sessionId);
-    this.appendPersistentDeactivations(left.persistentDeactivations);
-    this.recordElimination({
-      playerId: sessionId,
-      eliminatorPlayerId: null,
-      reason: 'leave',
-    });
+    const hadRewards = state.rewardChoice !== null || state.rewardQueue.length > 0;
+    const left = eliminateForForfeit(state, sessionId);
+
+    if (!left.eliminated) {
+      return;
+    }
 
     const afterLeave = findPlayer(state, sessionId);
 
@@ -870,36 +900,12 @@ export class GameRoom extends Room<{ client: GameClient }> {
       this.rejectReconnection(sessionId, new Error('Player left'));
     }
 
-    if (this.finishIfSoleSurvivor(state)) {
-      return;
-    }
-
-    if (state.subChoice?.kind === 'reanimation-kit') {
-      const kitChoice = state.subChoice;
-      const chooser = this.clientForPlayerId(kitChoice.playerId);
-      this.beginReanimationKitTimer(kitChoice, chooser);
-      this.sendStateToEveryone();
-      return;
-    }
-
-    this.refreshAutoDispose();
-
-    if (state.currentTurnPlayerId === sessionId && !this.actionTakenThisTurn) {
-      this.clearTurnTimer();
-      advanceTurn(state);
-      this.actionTakenThisTurn = false;
-      this.beginTurnOrAbsentAutoPlay();
-      this.sendStateToEveryone();
-      this.broadcastTurnStarted();
-      return;
-    }
-
-    this.sendStateToEveryone();
+    this.settleVoluntaryElimination(sessionId, left, hadRewards);
   }
 
   /**
    * FORFEIT while playing: same elim as consented leave, keep the live socket
-   * (L43-06 / technical spec v6 §6.3). Do not `leave` or reject the forfeiter.
+   * (L43-06 / technical spec v6 §6.3, Lot 71). Do not `leave` or reject the forfeiter.
    */
   private handlePlayingForfeit(client: GameClient): void {
     const state = this.gameState;
@@ -908,7 +914,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-      const playerId = this.playerIdFor(client);
+    const playerId = this.playerIdFor(client);
+    const hadRewards = state.rewardChoice !== null || state.rewardQueue.length > 0;
     const result = applyPlayingForfeit(state, playerId);
 
     if (!result.eliminated) {
@@ -916,6 +923,25 @@ export class GameRoom extends Room<{ client: GameClient }> {
     }
 
     console.log(`[${this.roomId}] ${playerId} forfeit — stay connected`);
+    this.settleVoluntaryElimination(playerId, result, hadRewards);
+  }
+
+  /**
+   * Shared tail for the Forfeit button and leaving the table (Lot 71).
+   * Reward picks use the existing elimination dialog. The turn timer and
+   * inactivity never enter this path.
+   */
+  private settleVoluntaryElimination(
+    playerId: string,
+    result: ForfeitEliminationResult,
+    hadRewards: boolean,
+  ): void {
+    const state = this.gameState;
+
+    if (state === null) {
+      return;
+    }
+
     this.clearAbsentTimer(playerId);
     this.appendPersistentDeactivations(result.persistentDeactivations);
     this.recordElimination({
@@ -923,6 +949,27 @@ export class GameRoom extends Room<{ client: GameClient }> {
       eliminatorPlayerId: null,
       reason: 'leave',
     });
+
+    if (result.rewardChoicePending) {
+      if (
+        !hadRewards &&
+        state.currentTurnPlayerId !== null &&
+        state.currentTurnPlayerId !== playerId
+      ) {
+        state.suppressTurnAdvanceAfterRewards = true;
+      }
+
+      if (!hadRewards) {
+        this.clearTurnTimer();
+        this.beginRewardTimer(state);
+      } else {
+        // Jobs joined an open queue. Prompt them on the deadline already running.
+        this.sendOpenRewardPrompts(state);
+      }
+
+      this.sendStateToEveryone();
+      return;
+    }
 
     if (this.finishIfSoleSurvivor(state)) {
       return;
@@ -1077,7 +1124,13 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const rejection = canChooseKit({ hasStarted: this.hasStarted });
+    const rejection = canChooseKit({
+      hasStarted: this.hasStarted,
+      randomOnly: this.playKind !== 'tutorial' && this.lobbyRules.randomOnly,
+      selection: parsed.value.kitId,
+      allowedKitIds:
+        this.playKind === 'tutorial' ? allowedKitIds(defaultLobbyRules()) : allowedKitIds(this.lobbyRules),
+    });
 
     if (rejection !== null) {
       client.send(ERROR_MESSAGE, chooseKitRejectionMessage(rejection));
@@ -1091,6 +1144,167 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
     this.kitSelections.set(this.playerIdFor(client), parsed.value.kitId);
     this.sendStateTo(client);
+  }
+
+  private handleSetLobbyRules(client: GameClient, payload: unknown): void {
+    const parsed = parseSetLobbyRulesPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const rejection = canSetLobbyRules({
+      requesterIsHost: this.playerIdFor(client) === this.hostSessionId,
+      hasStarted: this.hasStarted,
+      playKind: this.playKind,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, setLobbyRulesRejectionMessage(rejection));
+      return;
+    }
+
+    const turnTimeSeconds = parsed.value.turnTimeSeconds;
+
+    if (turnTimeSeconds !== undefined) {
+      this.turnTimeOverridden = true;
+    }
+
+    this.lobbyRules = {
+      excludedKitIds: parsed.value.excludedKitIds,
+      randomOnly: parsed.value.randomOnly,
+      turnTimeSeconds: turnTimeSeconds ?? this.lobbyRules.turnTimeSeconds,
+    };
+
+    const allowed = allowedKitIds(this.lobbyRules);
+
+    for (const [seatId, selection] of this.kitSelections) {
+      if (selection !== 'random' && !allowed.includes(selection)) {
+        this.kitSelections.set(seatId, 'random');
+      }
+    }
+
+    this.sendStateToEveryone();
+  }
+
+  private handleSendChat(client: GameClient, payload: unknown): void {
+    const parsed = parseSendChatPayload(payload);
+
+    if (!parsed.ok) {
+      client.send(ERROR_MESSAGE, actionReject(parsed.code));
+      return;
+    }
+
+    const playerId = this.playerIdFor(client);
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+    const rejection = canSendChat({
+      inGame: this.hasStarted && this.winnerPlayerId === null && this.gameState !== null,
+      inLobby: !this.hasStarted && this.playKind !== 'tutorial',
+      onFinishedBoard: this.recapSeats.some((entry) => entry.sessionId === playerId),
+      senderIsBot: seat !== undefined && isBotSeat(seat),
+      body: parsed.value.body,
+    });
+
+    if (rejection !== null) {
+      client.send(ERROR_MESSAGE, sendChatRejectionMessage(rejection));
+      return;
+    }
+
+    const author = this.chatAuthor(client);
+
+    if (author === null) {
+      client.send(ERROR_MESSAGE, actionReject('send-chat-not-in-game'));
+      return;
+    }
+
+    this.chatMessages.push({
+      order: this.chatMessages.length,
+      senderId: author.senderId,
+      nickname: author.nickname,
+      role: author.role,
+      body: parsed.value.body,
+      round: this.chatRound(),
+    });
+    this.sendStateToEveryone();
+  }
+
+  private chatAuthor(client: GameClient): {
+    senderId: string;
+    nickname: string;
+    role: ChatMessageView['role'];
+  } | null {
+    if (this.spectators.has(client.sessionId)) {
+      const nickname = this.spectatorNicknames.get(client.sessionId);
+
+      if (nickname === undefined) {
+        return null;
+      }
+
+      return { senderId: client.sessionId, nickname, role: 'spectator' };
+    }
+
+    const playerId = this.playerIdFor(client);
+
+    // Play again keeps the previous GameState for the finished board. A seat
+    // in the next gathering is living again, even after a forfeit.
+    if (!this.hasStarted) {
+      const seat = this.seats.find((entry) => entry.sessionId === playerId);
+
+      if (seat === undefined || isBotSeat(seat)) {
+        return null;
+      }
+
+      return { senderId: playerId, nickname: seat.nickname, role: 'living' };
+    }
+
+    const player = this.gameState?.players.find((entry) => entry.id === playerId);
+
+    if (player !== undefined) {
+      return {
+        senderId: playerId,
+        nickname: player.nickname,
+        role: player.isEliminated ? 'eliminated' : 'living',
+      };
+    }
+
+    return null;
+  }
+
+  /** Lobby is 0. In a match, the same round number as the action log. */
+  private chatRound(): number {
+    const state = this.gameState;
+
+    if (!this.hasStarted || state === null) {
+      return 0;
+    }
+
+    return tableRound(state.turnSequence, state.players.length);
+  }
+
+  /** Seconds human turns will last. Server default until the host sets one. */
+  private humanTurnDurationMs(): number {
+    if (this.playKind !== 'tutorial' && this.turnTimeOverridden) {
+      return this.lobbyRules.turnTimeSeconds * 1000;
+    }
+
+    return TURN_DURATION_MS;
+  }
+
+  private viewLobbyRules(): LobbyRules {
+    return {
+      excludedKitIds: this.lobbyRules.excludedKitIds,
+      randomOnly: this.lobbyRules.randomOnly,
+      turnTimeSeconds: Math.max(1, Math.round(this.humanTurnDurationMs() / 1000)),
+    };
+  }
+
+  private classicLobbyRules(): LobbyRules | null {
+    if (this.playKind === 'tutorial') {
+      return null;
+    }
+
+    return this.viewLobbyRules();
   }
 
   private handleSetReady(client: GameClient, payload: unknown): void {
@@ -1139,10 +1353,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.matchHostSessionId = hostSessionId;
     this.matchHumanSeatOrder = this.seats.filter(isHumanSeat).map((seat) => seat.sessionId);
     const seats = this.seats.map((seat) => ({ id: seat.sessionId, nickname: seat.nickname }));
-    const forcedKitsBySeatId = collectForcedKitsBySeatId(this.kitSelections);
-    this.gameState = createInitialState(
-      forcedKitsBySeatId === undefined ? { seats } : { seats, forcedKitsBySeatId },
-    );
+    const deal = startDealOptions({
+      tutorial: this.playKind === 'tutorial',
+      rules: this.lobbyRules,
+      selections: this.kitSelections,
+    });
+    this.gameState = createInitialState({
+      seats,
+      ...(deal.allowedKitIds !== undefined ? { allowedKitIds: deal.allowedKitIds } : {}),
+      ...(deal.forcedKitsBySeatId !== undefined
+        ? { forcedKitsBySeatId: deal.forcedKitsBySeatId }
+        : {}),
+    });
     this.thinkTime.clear();
     if (this.playKind === 'tutorial') {
       const tutorialSeats = this.tutorialSeatIds();
@@ -1190,6 +1412,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.playAgainOptedIn.add(playerId);
 
     if (first) {
+      // The transcript lasts until the room is gone. Designer 2026-10-06.
       this.recapSeats = recapHumanSeats(this.seats, this.playAgainOptedIn);
       this.seats = reformingLobbySeats(this.seats, this.playAgainOptedIn);
       this.seatWalkInSpectatorsAsLobbyGuests();
@@ -1927,19 +2150,39 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
+    const submitterId = this.playerIdFor(client);
+    const wasHead =
+      state.rewardChoice?.eliminatorPlayerId === submitterId &&
+      state.rewardChoice.eliminationId === parsed.eliminationId;
     const result = completeEliminationRewardChoice(
       state,
-      this.playerIdFor(client),
+      submitterId,
       parsed.eliminationId,
       parsed.choices,
     );
 
     if (!result.ok) {
       client.send(ERROR_MESSAGE, result);
+      const job = state.rewardQueue.find((entry) => entry.eliminatorPlayerId === submitterId);
+      const deadlineMs = state.rewardChoice?.deadlineMs;
+
+      if (job !== undefined && deadlineMs !== undefined) {
+        client.send(SUB_CHOICE_REQUIRED, {
+          kind: 'elimination-reward',
+          eliminationId: job.eliminationId,
+          eliminatedPlayerId: job.eliminatedPlayerId,
+          availableCards: listAvailableRewardCards(state, job.eliminatedPlayerId),
+          deadlineMs,
+        });
+      }
+
       return;
     }
 
-    this.clearSubChoiceTimer('elimination-reward');
+    if (!result.rewardChoicePending || wasHead) {
+      this.clearSubChoiceTimer('elimination-reward');
+    }
+
     this.appendRewardsClaimed(result.rewardsClaimed);
     this.continueAfterRewards(result);
   }
@@ -2623,8 +2866,6 @@ export class GameRoom extends Room<{ client: GameClient }> {
   }
 
   private beginRewardTimer(state: GameState, durationMs?: number): void {
-    this.clearSubChoiceTimer('elimination-reward');
-
     const choice = state.rewardChoice;
 
     if (choice === null) {
@@ -2636,29 +2877,68 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const route = classifyRewardRoute(seat, hasClient);
 
     if (route === 'bot') {
+      this.clearSubChoiceTimer('elimination-reward');
       // No subChoiceRequired timer for bots — driver answers inline (v3 §4.6).
       this.botDriver.handleRewardChoice(choice.eliminatorPlayerId);
       return;
     }
 
-    this.sendRewardChoiceRequired(state);
-
     const remainingFromDeadline = Math.max(0, choice.deadlineMs - Date.now());
-    const ms =
-      durationMs ??
-      (remainingFromDeadline === 0 ? REWARD_SUB_CHOICE_MS : remainingFromDeadline);
+    const timerStillRunning =
+      this.subChoiceTimers.has('elimination-reward') &&
+      durationMs === undefined &&
+      remainingFromDeadline > 0;
 
-    if (durationMs !== undefined) {
-      choice.deadlineMs = Date.now() + ms;
-      this.sendRewardChoiceRequired(state);
+    if (!timerStillRunning) {
+      this.clearSubChoiceTimer('elimination-reward');
+
+      const ms =
+        durationMs ??
+        (remainingFromDeadline === 0 ? REWARD_SUB_CHOICE_MS : remainingFromDeadline);
+
+      if (durationMs !== undefined || remainingFromDeadline === 0) {
+        choice.deadlineMs = Date.now() + ms;
+      }
+
+      this.subChoiceTimers.set(
+        'elimination-reward',
+        setTimeout(() => {
+          this.onRewardTimeout();
+        }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS),
+      );
     }
 
-    this.subChoiceTimers.set(
-      'elimination-reward',
-      setTimeout(() => {
-        this.onRewardTimeout();
-      }, ms > 0 ? ms : REWARD_SUB_CHOICE_MS),
-    );
+    this.sendOpenRewardPrompts(state);
+  }
+
+  /**
+   * Every living reward recipient gets the picker together (Lot 71).
+   * Bots stay on the head and answer inline; humans do not wait for each other.
+   */
+  private sendOpenRewardPrompts(state: GameState): void {
+    const deadlineMs = state.rewardChoice?.deadlineMs;
+
+    if (deadlineMs === undefined) {
+      return;
+    }
+
+    for (const job of state.rewardQueue) {
+      const seat = this.seats.find((entry) => entry.sessionId === job.eliminatorPlayerId);
+      const client = this.clientForPlayerId(job.eliminatorPlayerId);
+      const route = classifyRewardRoute(seat, client !== undefined);
+
+      if (route !== 'human-client' || client === undefined) {
+        continue;
+      }
+
+      client.send(SUB_CHOICE_REQUIRED, {
+        kind: 'elimination-reward',
+        eliminationId: job.eliminationId,
+        eliminatedPlayerId: job.eliminatedPlayerId,
+        availableCards: listAvailableRewardCards(state, job.eliminatedPlayerId),
+        deadlineMs,
+      });
+    }
   }
 
   private onRewardTimeout(): void {
@@ -2668,53 +2948,91 @@ export class GameRoom extends Room<{ client: GameClient }> {
       return;
     }
 
-    const result = expireEliminationRewardChoice(state);
-
-    if (!result.ok) {
-      state.rewardChoice = null;
-      return;
-    }
-
     this.clearSubChoiceTimer('elimination-reward');
-    this.appendRewardsClaimed(result.rewardsClaimed);
-    this.continueAfterRewards(result);
+
+    const steps = state.rewardQueue.length;
+    let lastResult: ReturnType<typeof expireEliminationRewardChoice> | null = null;
+    const gameOver = (): boolean => this.winnerPlayerId !== null;
+
+    for (let step = 0; step < steps; step += 1) {
+      const open = this.openRewardChoice(state);
+
+      if (open === null || state.rewardQueue.length === 0 || gameOver()) {
+        break;
+      }
+
+      const before = state.rewardQueue.length;
+      const result = this.resolveTimeoutHead(open.eliminatorPlayerId);
+
+      if (result?.ok !== true) {
+        break;
+      }
+
+      this.appendRewardsClaimed(result.rewardsClaimed);
+      lastResult = result;
+
+      if (state.rewardQueue.length >= before) {
+        break;
+      }
+
+      if (!result.rewardChoicePending) {
+        this.continueAfterRewards(result);
+        return;
+      }
+    }
+
+    if (lastResult?.ok === true) {
+      this.continueAfterRewards(lastResult);
+      return;
+    }
+
+    if (this.openRewardChoice(state) !== null) {
+      this.beginRewardTimer(state);
+      this.sendStateToEveryone();
+    }
   }
 
-  private sendRewardChoiceRequired(state: GameState): void {
-    const choice = state.rewardChoice;
-
-    if (choice === null) {
-      return;
-    }
-
-    const seat = this.seats.find((entry) => entry.sessionId === choice.eliminatorPlayerId);
-    const client = this.clientForPlayerId(choice.eliminatorPlayerId);
-    const route = classifyRewardRoute(seat, client !== undefined);
-
-    if (route === 'bot') {
-      this.botDriver.handleRewardChoice(choice.eliminatorPlayerId);
-      return;
-    }
-
-    if (route === 'human-dropped') {
-      // Dropped human: keep today's timer default (armed by beginRewardTimer).
-      return;
-    }
-
-    if (client === undefined) {
-      return;
-    }
-
-    client.send(SUB_CHOICE_REQUIRED, {
-      kind: 'elimination-reward',
-      eliminationId: choice.eliminationId,
-      eliminatedPlayerId: choice.eliminatedPlayerId,
-      availableCards: listAvailableRewardCards(state, choice.eliminatedPlayerId),
-      deadlineMs: choice.deadlineMs,
-    });
+  private openRewardChoice(state: GameState): GameState['rewardChoice'] {
+    return state.rewardChoice;
   }
 
-  /** Post-`applyTurnResult` slice — omits fields already logged by the turn apply. */
+  /** One shared-deadline seat: bot policy, otherwise the 2×4 life default. */
+  private resolveTimeoutHead(
+    playerId: string,
+  ): ReturnType<typeof expireEliminationRewardChoice> | null {
+    const state = this.gameState;
+
+    if (state === null) {
+      return null;
+    }
+
+    if (this.rewardRouteFor(playerId) === 'bot') {
+      const picks = this.botDriver.pickRewardChoices(playerId);
+
+      if (picks !== null) {
+        const picked = completeEliminationRewardChoice(
+          state,
+          playerId,
+          picks.eliminationId,
+          picks.choices,
+        );
+
+        if (picked.ok) {
+          this.setPendingBotReason(picks.reason);
+          return picked;
+        }
+      }
+    }
+
+    return expireEliminationRewardChoice(state);
+  }
+
+  private rewardRouteFor(playerId: string): ReturnType<typeof classifyRewardRoute> {
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+    const hasClient = this.clients.some((client) => client.sessionId === playerId);
+    return classifyRewardRoute(seat, hasClient);
+  }
+
   private turnContinuationFrom(result: TurnResult): {
     rewardChoicePending: boolean;
     subChoicePending?: boolean;
@@ -2731,6 +3049,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
     rewardChoicePending: boolean;
     subChoicePending?: boolean;
     winnerPlayerId: string | null;
+    turnAdvanced?: boolean;
     playerReanimated?: readonly { playerId: string; kitId: KitId }[];
   }): void {
     if (result.playerReanimated !== undefined) {
@@ -2775,6 +3094,18 @@ export class GameRoom extends Room<{ client: GameClient }> {
         }
         return;
       }
+    }
+
+    if (result.turnAdvanced === false) {
+      const playing = this.gameState;
+
+      if (playing?.currentTurnPlayerId != null && !this.actionTakenThisTurn) {
+        this.beginTurnOrAbsentAutoPlay();
+        this.broadcastTurnStarted();
+      }
+
+      this.sendStateToEveryone();
+      return;
     }
 
     this.actionTakenThisTurn = false;
@@ -2828,11 +3159,11 @@ export class GameRoom extends Room<{ client: GameClient }> {
       // Grace window: do not start the turn timer — wait for reconnect or absent.
       this.clearTurnTimer();
       this.turnDeadlineMs = null;
-      this.pausedTurnRemainingMs = TURN_DURATION_MS;
+      this.pausedTurnRemainingMs = this.humanTurnDurationMs();
       return;
     }
 
-    this.beginTurnTimer(TURN_DURATION_MS);
+    this.beginTurnTimer(this.humanTurnDurationMs());
   }
 
   private beginTurnTimer(durationMs: number): void {
@@ -3272,6 +3603,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
       botDifficulties: this.botDifficulties(),
       playKind: this.playKind,
       tutorialIndex: this.tutorialIndex,
+      chatMessages: this.chatMessages,
     });
   }
 
@@ -3945,6 +4277,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
         thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
+        chatMessages: [...this.chatMessages],
+        lobbyRules: this.classicLobbyRules(),
       };
     }
 
@@ -3972,6 +4306,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botDifficultiesByPlayerId: this.botDifficulties(),
         isTutorial: this.playKind === 'tutorial',
         thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
+        lobbyRules: this.classicLobbyRules(),
+        chatMessages: this.chatMessages,
       });
 
       void persistFinishedGame(snapshot);
@@ -4157,7 +4493,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   /**
    * Re-arm the sub-choice UI after reconnect or `CLIENT_READY` without resetting an
-   * active server timer (Lot 69 slot-drop).
+   * active server timer (Lot 69 slot-drop). A queued reward picker is resent even
+   * when this seat is not the head (Lot 71).
    */
   private resyncSubChoiceRequiredFor(client: GameClient): void {
     const state = this.gameState;
@@ -4169,44 +4506,64 @@ export class GameRoom extends Room<{ client: GameClient }> {
     const playerId = this.playerIdFor(client);
     const choice = state.subChoice;
 
-    if (choice?.playerId !== playerId) {
+    if (choice?.playerId === playerId) {
+      switch (choice.kind) {
+        case 'pool-pick':
+          client.send(SUB_CHOICE_REQUIRED, {
+            kind: 'pool-pick',
+            eligibleInstanceIds: choice.eligibleInstanceIds,
+            maxCount: choice.maxCount,
+            deadlineMs: choice.deadlineMs,
+          });
+          break;
+        case 'special-pick':
+          client.send(SUB_CHOICE_REQUIRED, {
+            kind: 'special-pick',
+            eligibleCardIds: choice.eligibleCardIds,
+            deadlineMs: choice.deadlineMs,
+          });
+          break;
+        case 'reanimation-kit':
+          client.send(SUB_CHOICE_REQUIRED, {
+            kind: 'reanimation-kit',
+            eligibleKitIds: choice.eligibleKitIds,
+            deadlineMs: choice.deadlineMs,
+          });
+          break;
+        case 'slot-drop':
+          this.sendSlotDropSubChoiceRequired(
+            client,
+            choice.slotOwnerId,
+            choice.eligibleSlots,
+            choice.deadlineMs,
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    const job = state.rewardQueue.find((entry) => entry.eliminatorPlayerId === playerId);
+    const deadlineMs = state.rewardChoice?.deadlineMs;
+
+    if (job === undefined || deadlineMs === undefined) {
       return;
     }
 
-    switch (choice.kind) {
-      case 'pool-pick':
-        client.send(SUB_CHOICE_REQUIRED, {
-          kind: 'pool-pick',
-          eligibleInstanceIds: choice.eligibleInstanceIds,
-          maxCount: choice.maxCount,
-          deadlineMs: choice.deadlineMs,
-        });
-        break;
-      case 'special-pick':
-        client.send(SUB_CHOICE_REQUIRED, {
-          kind: 'special-pick',
-          eligibleCardIds: choice.eligibleCardIds,
-          deadlineMs: choice.deadlineMs,
-        });
-        break;
-      case 'reanimation-kit':
-        client.send(SUB_CHOICE_REQUIRED, {
-          kind: 'reanimation-kit',
-          eligibleKitIds: choice.eligibleKitIds,
-          deadlineMs: choice.deadlineMs,
-        });
-        break;
-      case 'slot-drop':
-        this.sendSlotDropSubChoiceRequired(
-          client,
-          choice.slotOwnerId,
-          choice.eligibleSlots,
-          choice.deadlineMs,
-        );
-        break;
-      default:
-        break;
+    const seat = this.seats.find((entry) => entry.sessionId === playerId);
+    const route = classifyRewardRoute(seat, true);
+
+    if (route !== 'human-client') {
+      return;
     }
+
+    client.send(SUB_CHOICE_REQUIRED, {
+      kind: 'elimination-reward',
+      eliminationId: job.eliminationId,
+      eliminatedPlayerId: job.eliminatedPlayerId,
+      availableCards: listAvailableRewardCards(state, job.eliminatedPlayerId),
+      deadlineMs,
+    });
   }
 
   private sendSlotDropSubChoiceRequired(
@@ -4256,6 +4613,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
           playKind: holdout.playKind,
           tutorialIndex: holdout.tutorialIndex,
           thinkTimeMsByPlayerId: holdout.thinkTimeMsByPlayerId,
+          chatMessages: holdout.chatMessages,
+          ...(holdout.lobbyRules !== null ? { lobbyRules: holdout.lobbyRules } : {}),
           ...walkInOpt,
           ...walkInPrivateOpt,
           ...claimableOpt,
@@ -4277,6 +4636,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
           hostPlayerId,
           seats: this.seatViews(),
           yourKitSelection: this.kitSelections.get(recipientId) ?? 'random',
+          lobbyRules: this.viewLobbyRules(),
+          chatMessages: this.chatMessages,
           ...lobbySpectatorOpt,
           ...claimableOpt,
         }),
@@ -4299,6 +4660,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
           playKind: this.playKind,
           tutorialIndex: this.tutorialIndex,
           thinkTimeMsByPlayerId: this.thinkTime.snapshot(),
+          chatMessages: this.chatMessages,
+          ...(this.classicLobbyRules() !== null
+            ? { lobbyRules: this.viewLobbyRules() }
+            : {}),
           ...walkInOpt,
           ...walkInPrivateOpt,
           ...claimableOpt,
@@ -4318,6 +4683,7 @@ export class GameRoom extends Room<{ client: GameClient }> {
         botDifficulties: this.botDifficulties(),
         playKind: this.playKind,
         tutorialIndex: this.tutorialIndex,
+        chatMessages: this.chatMessages,
         ...walkInOpt,
         ...walkInPrivateOpt,
         ...claimableOpt,

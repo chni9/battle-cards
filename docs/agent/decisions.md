@@ -4167,3 +4167,172 @@ forced pick on play only.
 
 ---
 
+## 2026-10-06 · [P] Lot 70 lobby rules and table chat
+
+Designer. `PROTOCOL_VERSION` 44 → 45.
+
+Lobby rules:
+
+- The host sets excluded kits, random-only, and human turn seconds (a whole
+  number from 5 to 180; default 60) before start, in the online lobby and on
+  the solo menu. Guests see the same rules before Ready. Play again keeps
+  them. The tutorial does not use them: `setLobbyRules` is rejected, and the
+  finished-game rule columns stay NULL.
+- Every Classic kit starts allowed. An excluded kit cannot be chosen. Random
+  draws, including Random only, use the existing seeded draw with replacement,
+  restricted to kits still allowed. A forced pick outside the allowed set is
+  dropped and that seat draws. At least one kit must stay allowed.
+- `TURN_DURATION_MS` (minimum 5000, default 60000) remains the human clock
+  until the host sends `turnTimeSeconds`. The view's `turnTimeSeconds` is the
+  effective rounded seconds and may exceed 180 when that env override is
+  longer. `finished_games.turn_time_seconds` stores the seconds actually used
+  (`>= 5`, no upper bound) so a playtest clock still persists. Bots keep
+  their own think time.
+
+Table chat:
+
+- The control sits next to Forfeit. Unread is how many messages arrived since
+  the popup was closed, and that count stays on the client.
+- Role is frozen at send time (`living`, `eliminated`, or `spectator`).
+  Living readers receive only living messages. Eliminated players and
+  spectators receive both streams and can still read the living stream.
+  The filter is in the per-recipient view, not a filtered full broadcast.
+- A message is at most 200 characters. Empty or whitespace-only text is
+  rejected. Bots cannot send. The lobby has no chat. The transcript stays in
+  the room and is copied onto the finished holdout. The finished board does
+  not accept new messages.
+- The finished-game write inserts `excluded_kit_ids`, `random_only`, and
+  `turn_time_seconds` on `finished_games`, then one `game_chat_messages` row
+  per message in that same transaction (`game_id`, `order_index`,
+  `sender_id`, `nickname`, `role`, `body`). Nothing is saved if the room
+  dies before the game finishes.
+
+---
+
+## 2026-10-06 · [P] Rules chrome and lobby chat
+
+Same day, after the table pass. This supersedes "the lobby has no chat."
+
+- Host rules open from a settings control only the host sees, in the online
+  lobby and on the solo menu. Guests see a clock with the seconds, the kit
+  faces (excluded kits gray), and a random-kit face when kits are dealt at
+  random. The turn control is a slider from 5 to 180. All allows every kit.
+  None excludes every kit except the first Classic kit, because one kit must
+  stay allowed.
+- Chat is also at the bottom of the lobby player list. A line is
+  `Round N` plus the seat-colored nickname, using the same round count as
+  the action log. Lobby lines are stamped `Lobby` (`round` 0). The transcript
+  from that lobby stays when the match starts. The first Play again clears
+  it for the next gathering. The finished-game row stores `round_index`.
+
+---
+
+## 2026-10-06 · [P] Room chat outlives one match
+
+Same day. This supersedes "The first Play again clears it for the next gathering."
+
+- The transcript stays in memory for the life of the room. Play again does
+  not clear it. A new lobby after the match keeps every earlier line, and
+  new lobby lines append with `round` 0.
+- People still on the finished board see the holdout snapshot from that
+  game's end and cannot send. People in the next gathering see the
+  continuing room transcript.
+- Solo Play again leaves the room, so that transcript ends with the room.
+  Online Play again stays in the same room and keeps the lines.
+- A seated human in the next gathering writes as living again, even after
+  a forfeit in the match that just ended. Someone still looking at that
+  finished board cannot send.
+- Each finished-game write stores the room transcript as of that game's
+  end, so a later match's `game_chat_messages` rows include lines already
+  stored on earlier games in the same room. `order_index` stays unique per
+  `game_id`. Nothing is saved if the room dies before a game finishes.
+
+---
+
+## 2026-10-06 · [P] Ghost life-point gains stay private
+
+Designer. Out of scope for lobby chat, same branch.
+
+- Ghost still gains 2 points per life actually lost. The stored log and the
+  Excel export keep that amount.
+- A recipient who does not see that Ghost (not self, not Spy, not the
+  eliminated-spectator or Stay overlay) sees `+?` on the action log wherever
+  those points share nets with the life loss. The life loss stays. A point
+  loss, and a point gain with no life loss on the same nets, stay.
+- Self and anyone who spies that Ghost see the number.
+
+---
+
+## 2026-10-06 · [P] Lot 71 Spy Thief and forfeit rewards
+
+Designer. No protocol bump. The existing Spy+ view (`full-resources`: kit,
+cards, and live resources) and the existing elimination-reward dialog carry
+both changes.
+
+- Base Spy Thief chooses one living opponent. It steals all of that
+  opponent's points, with no cap and no doubling, and leaves a Spy+ reveal
+  for the rest of the game.
+- Upgraded Spy Thief does that same effect to every living opponent. Stolen
+  points are not doubled.
+- A living invisible player is not a legal target. The card stays
+  not counterable. An upgraded Shield does not block it. Untouchable is
+  not immune.
+- The Forfeit button and leaving the table while the game is playing pay
+  the same two kill picks (4 lives, 8 points, one remaining card, or an
+  upgrade point; both picks may match). Each living player with an attack
+  still queued on the forfeiter is paid once. Each living player with an
+  active Poison is paid once. One reward per player, not per card. Order
+  is fewest lives, then fewest points, then a seeded draw. A taken card is
+  gone. Picks happen before the forfeiter's cards dump into the pool.
+- Pending Thief, Imposition, Sentence, and Curse do not pay. No queued
+  attack and no active Poison pays nobody.
+- The turn timer and inactivity elimination do not pay. They stay on
+  `eliminateWithoutReward`.
+
+---
+
+## 2026-10-06 · [P] Lot 71 forfeit: active Poison does not pay
+
+Designer correction the same day. Forfeit and leaving the table pay only
+each living player who still has an attack queued on the forfeiter. An
+active Poison does not earn those kill picks, including when that player
+also has a queued attack (still one reward, from the attack). Pending
+Thief, Imposition, Sentence, and Curse stay unpaid. The turn timer and
+inactivity stay unpaid.
+
+---
+
+## 2026-10-06 · [P] Lot 71 forfeit pickers, last player, kills
+
+Designer the same day.
+
+- Upgraded Spy Thief copy does not mention doubling. The steal is still
+  not doubled.
+- Base Spy Thief is a targeted play. The table must ask for one living
+  opponent. The upgrade still has no target.
+- When more than one player is owed forfeit or elimination rewards, each
+  of them gets the reward picker at the same time. A card taken by one
+  is gone for the others.
+- If a forfeit leaves one player in the match, that player has won and
+  is not prompted, even when they had an attack queued on the forfeiter.
+- Each player who actually receives those forfeit rewards is credited one
+  kill on the end-of-game recap. A forfeit that pays nobody does not.
+- Slowest and Fastest show the average as `x s/turn`.
+
+---
+
+## 2026-10-06 · [P] Lot 71 shared reward deadline
+
+Same-day correction of the simultaneous picker.
+
+- The shared countdown defaults every remaining picker when it fires.
+  Bots answer with their policy once they are the head. Humans and
+  dropped humans take the 2×4 life default. A later seat is not given
+  a deadline that has already passed.
+- A forfeit that adds jobs onto an open reward queue prompts those
+  players on the countdown already running.
+- A forfeit kill on the recap matches the leave at or before that
+  claim. A later combat death of the same seat is a separate kill.
+
+---
+

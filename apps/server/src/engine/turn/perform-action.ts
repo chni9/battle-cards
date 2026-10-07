@@ -1177,6 +1177,8 @@ export type EliminationRewardTurnResult =
       rewardChoicePending: boolean;
       subChoicePending?: boolean;
       winnerPlayerId: string | null;
+      /** False when a forfeit reward drain leaves the current living seat in place (Lot 71). */
+      turnAdvanced?: boolean;
       rewardsClaimed: {
         eliminatorPlayerId: string;
         eliminatedPlayerId: string;
