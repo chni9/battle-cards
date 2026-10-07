@@ -8,19 +8,21 @@ import {
 } from './release-notes';
 
 describe('release notes catalog (L63-07 / L65-05)', () => {
-  it('lists newest first and keeps lot-71 as the open update', () => {
+  it('lists newest first and keeps lot-72 as the open update', () => {
     expect(RELEASE_NOTES.length).toBeGreaterThan(0);
-    expect(latestReleaseNote().id).toBe('lot-71');
-    expect(latestReleaseNote().date).toBe('2026-10-06');
+    expect(latestReleaseNote().id).toBe('lot-72');
+    expect(latestReleaseNote().date).toBe('2026-10-07');
     expect(isReleaseNoteId('lot-63')).toBe(true);
     expect(isReleaseNoteId('lot-65')).toBe(true);
     expect(isReleaseNoteId('lot-68')).toBe(true);
     expect(isReleaseNoteId('lot-69')).toBe(true);
     expect(isReleaseNoteId('lot-71')).toBe(true);
+    expect(isReleaseNoteId('lot-72')).toBe(true);
     expect(isReleaseNoteId('lot-64')).toBe(false);
     expect(isReleaseNoteId('lot-70')).toBe(false);
     expect(RELEASE_NOTES.some((note) => note.id === 'lot-64')).toBe(false);
     expect(RELEASE_NOTES.map((note) => note.date)).toEqual([
+      '2026-10-07',
       '2026-10-06',
       '2026-10-05',
       '2026-09-29',
@@ -30,8 +32,9 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
   });
 
   it('shows only the current update in the auto popup and every date on New', () => {
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-71']);
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72']);
     expect(releaseNotesForScope('history').map((note) => note.id)).toEqual([
+      'lot-72',
       'lot-71',
       'lot-69',
       'lot-68',
@@ -40,19 +43,33 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     ]);
   });
 
-  it('writes lot-71 as short gameplay lines', () => {
+  it('writes lot-72 as short gameplay lines', () => {
     const latest = latestReleaseNote();
-    expect(latest.title).toBe('Spy Thief, forfeit, and chat');
+    expect(latest.id).toBe('lot-72');
+    expect(latest.title).toBe('Active slot drop');
     expect(latest.additions).toEqual([]);
-    expect(latest.items).toHaveLength(5);
-    expect(latest.items.map((item) => item.before)).toEqual([
+    expect(latest.items).toHaveLength(1);
+    expect(latest.items[0]?.before).toContain('forced you to drop');
+    expect(latest.items[0]?.after).toContain('cancel');
+  });
+
+  it('writes lot-71 as short gameplay lines', () => {
+    const lot71 = RELEASE_NOTES.find((note) => note.id === 'lot-71');
+    expect(lot71).toBeDefined();
+    if (lot71 === undefined) {
+      return;
+    }
+    expect(lot71.title).toBe('Spy Thief, forfeit, and chat');
+    expect(lot71.additions).toEqual([]);
+    expect(lot71.items).toHaveLength(5);
+    expect(lot71.items.map((item) => item.before)).toEqual([
       'Spy Thief stole every opponent’s points, and the upgrade doubled them.',
       'Forfeiting or leaving the table paid nobody.',
       'Every Classic kit could be chosen, and every human turn lasted 60 seconds.',
       'The table had no chat.',
       'A Ghost gained 2 points per life lost in front of the whole table.',
     ]);
-    expect(latest.items.map((item) => item.after)).toEqual([
+    expect(lot71.items.map((item) => item.after)).toEqual([
       'Spy Thief steals one opponent’s points and shows their kit, cards, and resources. The upgrade does that to every opponent.',
       'Forfeiting or leaving pays kill rewards at the same time to every player with an attack waiting on you, unless they are the last one left.',
       'The host can hide kits, deal every kit at random, and set human turns from 5 to 180 seconds.',
