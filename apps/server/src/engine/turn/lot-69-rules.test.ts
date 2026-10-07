@@ -16,6 +16,7 @@ import {
 import { completeEliminationRewardChoice, performTurnAction } from './perform-action';
 import { createRng } from '../rng';
 import { countActiveSlots } from '../specials/active-slots';
+import { cancelSlotDrop } from '../specials/slot-drop';
 
 describe('Lot 69 — Imposition during Block', () => {
   it('skips Imposition while Block extra turns are active', () => {
@@ -414,6 +415,58 @@ describe('Lot 69 — active slot cap', () => {
     expect(state.subChoice.eligibleSlots.some((slot) => slot.cardId === 'curse')).toBe(false);
     expect(state.subChoice.eligibleSlots.length).toBeGreaterThan(0);
     expect(state.subChoice.eligibleSlots.some((slot) => slot.kind === 'shield')).toBe(true);
+  });
+
+  it('cancel restores specials and leaves four actives without spending the turn', () => {
+    const state = createInitialState({
+      seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],
+      seed: 'l69-slot-cancel',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    if (a === undefined || b === undefined) {
+      throw new Error('missing seats');
+    }
+
+    state.currentTurnPlayerId = a.id;
+    state.turnSequence = 10;
+    b.shield = 4;
+    b.shieldIsUpgraded = false;
+    b.shieldSlotQueuedAt = 1;
+    b.activePersistentEffects = [
+      makeCounterEffect({ id: 'p1', cardId: 'poison', counter: 3, slotQueuedAt: 2 }),
+      makeCounterEffect({ id: 'p2', cardId: 'imposition', counter: 2, slotQueuedAt: 3 }),
+      makeCounterEffect({ id: 'p3', cardId: 'points-generator', counter: 3, slotQueuedAt: 4 }),
+    ];
+    a.points = 20;
+    a.specialCards = [{ instanceId: 'curse-1', cardId: 'curse', isUpgraded: false }];
+
+    const play = performTurnAction(state, a.id, {
+      type: 'playCard',
+      instanceId: 'curse-1',
+      targetPlayerId: b.id,
+    });
+    expect(play.ok).toBe(true);
+
+    if (!play.ok) {
+      return;
+    }
+
+    expect(state.subChoice?.kind).toBe('slot-drop');
+    expect(a.specialCards).toHaveLength(0);
+    expect(countActiveSlots(state, b.id)).toBe(4);
+
+    const cancelled = cancelSlotDrop(state, a.id);
+    expect(cancelled.ok).toBe(true);
+    expect(state.subChoice).toBeNull();
+    expect(a.specialCards).toEqual([
+      { instanceId: 'curse-1', cardId: 'curse', isUpgraded: false },
+    ]);
+    expect(countActiveSlots(state, b.id)).toBe(4);
+    expect(b.activePersistentEffects.some((effect) => effect.cardId === 'curse')).toBe(false);
+
+    const draw = performTurnAction(state, a.id, { type: 'draw' });
+    expect(draw.ok).toBe(true);
   });
 
   it('counts shield and persistents toward four slots', () => {
