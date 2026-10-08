@@ -105,8 +105,8 @@ export const SPECIAL_CARD_CATALOG = {
     'block',
     'Block',
     5,
-    'Cancel any action pending resolution against you, then play 3 consecutive turns (no attack cards, and Block cannot be played again during that chain).',
-    'Cancel any action pending resolution against you, then play 7 consecutive turns (no attack cards, and Block cannot be played again during that chain).',
+    'Cancel any action pending resolution against you, then play 3 consecutive turns (no attack cards, and Block cannot be played again during that chain). While Block is active, Imposition does not drain you and Poison does not tick on you.',
+    'Cancel any action pending resolution against you, then play 7 consecutive turns (no attack cards, and Block cannot be played again during that chain). While Block is active, Imposition does not drain you and Poison does not tick on you.',
     '7 consecutive turns instead of 3.',
   ),
   'super-regeneration': specialCard(
@@ -193,8 +193,8 @@ export const SPECIAL_CARD_CATALOG = {
     'poison',
     'Poison',
     8,
-    'All opponents lose 1 life per turn while the counter holds.',
-    'All opponents lose 2 lives per turn while the counter holds.',
+    'All opponents lose 1 life per turn while the counter holds. Does not tick opponents during their active Block chain.',
+    'All opponents lose 2 lives per turn while the counter holds. Does not tick opponents during their active Block chain.',
     '2 lives per turn instead of 1.',
   ),
   'attack-thief': specialCard(
