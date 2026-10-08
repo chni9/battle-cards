@@ -79,7 +79,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'specials',
     title: 'Special cards',
-    body: 'Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards. Spy Thief steals every point from one living opponent and shows you their kit, cards, and resources. The upgraded card does that to every living opponent.',
+    body: 'Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards. While your Block chain is active, Imposition does not drain you and Poison does not tick on you. Spy Thief steals every point from one living opponent and shows you their kit, cards, and resources. The upgraded card does that to every living opponent.',
     screenshotFile: null,
   },
   {
