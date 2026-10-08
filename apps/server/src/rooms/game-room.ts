@@ -143,7 +143,11 @@ import {
   SPECIAL_SUB_CHOICE_MS,
 } from '../engine/turn/generic-sub-choice';
 import { STEAL_SUB_CHOICE_MS } from '../engine/turn/steal-choice';
-import { botDefaultSlotDropId, SLOT_DROP_SUB_CHOICE_MS } from '../engine/specials/slot-drop';
+import {
+  botDefaultSlotDropId,
+  cancelSlotDrop,
+  SLOT_DROP_SUB_CHOICE_MS,
+} from '../engine/specials/slot-drop';
 import { performAndCompleteTurn } from '../engine/turn/orchestrate-turn';
 import {
   completeEliminationRewardChoice,
@@ -2593,12 +2597,27 @@ export class GameRoom extends Room<{ client: GameClient }> {
 
   private handleSlotDrop(
     client: GameClient,
-    parsed: { slotId: string },
+    parsed: Extract<ResolveSubChoicePayload, { kind: 'slot-drop' }>,
   ): void {
     const state = this.gameState;
 
     if (state === null || this.winnerPlayerId !== null) {
       client.send(ERROR_MESSAGE, actionReject('game-not-in-progress'));
+      return;
+    }
+
+    if (parsed.cancel === true) {
+      const cancelled = cancelSlotDrop(state, this.playerIdFor(client));
+
+      if (!cancelled.ok) {
+        client.send(ERROR_MESSAGE, cancelled);
+        return;
+      }
+
+      this.clearSubChoiceTimer('slot-drop');
+      this.sendStateToEveryone();
+      this.beginTurnOrAbsentAutoPlay();
+      this.broadcastTurnStarted();
       return;
     }
 
@@ -5039,6 +5058,10 @@ function readResolveSubChoicePayload(payload: unknown): ResolveSubChoicePayload 
   }
 
   if (kind === 'slot-drop') {
+    if ('cancel' in payload && payload.cancel === true) {
+      return { kind: 'slot-drop', cancel: true };
+    }
+
     if (!('slotId' in payload) || typeof payload.slotId !== 'string' || payload.slotId.length === 0) {
       return null;
     }
