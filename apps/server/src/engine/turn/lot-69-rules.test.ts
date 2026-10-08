@@ -41,6 +41,29 @@ describe('Lot 69 — Imposition during Block', () => {
     expect(b.points).toBe(10);
     expect(a.points).toBe(0);
   });
+
+  it('skips Poison while Block extra turns are active', () => {
+    const state = createInitialState({
+      seats: [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }],
+      seed: 'l72-poi-block',
+    });
+    const a = state.players.find((p) => p.id === 'a');
+    const b = state.players.find((p) => p.id === 'b');
+    if (a === undefined || b === undefined) {
+      throw new Error('missing seats');
+    }
+
+    a.activePersistentEffects = [
+      makeCounterEffect({ id: 'poi', cardId: 'poison', counter: 3 }),
+    ];
+    b.lives = 10;
+    b.blockAttacksForbidden = true;
+    b.blockTurnsRemaining = 2;
+
+    applyPersistentEffects(state, b.id);
+
+    expect(b.lives).toBe(10);
+  });
 });
 
 describe('Lot 69 — Shield refill', () => {
