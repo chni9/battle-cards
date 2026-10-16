@@ -162,7 +162,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: the user is no longer eliminated by their own card. They remain the eliminator of every opponent killed by this effect, and receive the corresponding rewards normally.
 
 **Block** — Price: 5 points
-- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards. Block itself cannot be played during an active Block chain. While Block is active (the turn it is played and every extra turn in the chain), Imposition does not drain that player; Poison, Curse, and attacks are unchanged.
+- Action: cancels any action pending resolution against the user, then they play 3 consecutive turns (other players wait). They can play any action during these turns, except attack cards. Block itself cannot be played during an active Block chain. While Block is active (the turn it is played and every extra turn in the chain), Imposition does not drain that player and Poison does not tick on them; Curse and attacks are unchanged.
 - Upgrade: 7 consecutive turns instead of 3.
 
 **Super Regeneration** — Price: 6 points
@@ -221,7 +221,7 @@ Some kits apply an ability that makes a specific card type always upgraded, for 
 - Upgrade: 1 life lost per 2 points spent instead of 3, and each life the victim loses grants 2 lives to the original user instead of 1.
 
 **Poison** — Price: 8 points
-- Action: all opponents lose 1 life per turn, as long as the card's dedicated internal counter is not depleted.
+- Action: all opponents lose 1 life per turn, as long as the card's dedicated internal counter is not depleted. Does not tick an opponent on the turn they play Block against themselves, nor during that opponent's Block extra turns. An upgraded Shield on the victim does not stop Poison ticks.
 - Upgrade: 2 lives lost per turn instead of 1.
 
 **Imposition** — Price: 6 points
@@ -266,7 +266,7 @@ Living players write to the living stream, in the lobby and during the game. Onl
 - Drawing: the player gains a number of points equal to their kit's "Draw" value (section 4). That's all this action does — it does not grant any card, despite its name. Gambler's Draw instead grants the payout rolled at the start of that turn (section 4) and rolls a 1-in-10 wipe (section 4). A wipe does not eliminate.
 - An action targeted at an opponent takes effect on that opponent's next turn, never before. A player can therefore never suffer a loss of life or resources outside of their own turn.
 - A player's turn is only considered over once they have played their single action. Pending actions targeting them only resolve **after** they have played that action — giving them a chance to react before the effects apply (riposte, buy lives, use Mirror, etc.). Example: player A attacks player B (2 lives) with a Super attack. B does not die automatically upon reaching their turn: they first play their action (for example Regeneration to gain lives), then A's attack resolves. If their action neither modifies nor cancels the attack, it then applies normally.
-- Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Imposition does not drain on the turn Block is played against that player, nor during that player's Block extra turns. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
+- Periodic effects targeting an opponent (Poison, Imposition) follow the same logic: they trigger on the target's turn, after they have played their action. Imposition does not drain on the turn Block is played against that player, nor during that player's Block extra turns; Poison does not tick in that same window. Curse drains 1 life per 3 points spent on that turn and siphons lives the cursed player actually loses, including on that turn after they act.
 
 ### Mutual Attacks
 

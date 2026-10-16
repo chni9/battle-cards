@@ -9,7 +9,8 @@
  * and upgrade points only if upgraded; never a multiplier. Roulette grants a seeded random card (golden
  * rule 5): unupgraded only a shared attack/action (10% that copy is upgraded);
  * upgraded 80% shared / 20% circulating special except Roulette, still 10%
- * upgraded. Imposition skips short victims (no lives). Curse still ticks on
+ * upgraded. Imposition and Poison skip victims in an active Block chain (Lot 69;
+ * Poison aligned 2026-10-08). Imposition skips short victims (no lives). Curse still ticks on
  * `pointsSpent` (#V4-20) and siphons those lost lives — and any other actual
  * life loss — to the original caster (L50-09; L50-02 siphon stays).
  */
@@ -198,14 +199,18 @@ function applyImpositionsOnVictim(state: GameState, victim: Player): void {
   }
 }
 
+/** Block activation turn and every extra turn in the chain — Lot 69 / 2026-10-08 Poison. */
+function victimPersistentTicksPausedByBlock(victim: Player): boolean {
+  return victim.blockAttacksForbidden || victim.blockTurnsRemaining > 0;
+}
+
 function applyOneImposition(
   state: GameState,
   imposer: Player,
   victim: Player,
   effect: PersistentEffect,
 ): void {
-  // Block activation turn and extra turns — Lot 69.
-  if (victim.blockAttacksForbidden || victim.blockTurnsRemaining > 0) {
+  if (victimPersistentTicksPausedByBlock(victim)) {
     return;
   }
 
@@ -227,6 +232,10 @@ function applyOneImposition(
 }
 
 function applyPoisonsOnVictim(state: GameState, victim: Player): void {
+  if (victimPersistentTicksPausedByBlock(victim)) {
+    return;
+  }
+
   for (const poisoner of state.players) {
     if (poisoner.id === victim.id || poisoner.isEliminated) {
       continue;

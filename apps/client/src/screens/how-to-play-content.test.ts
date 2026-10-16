@@ -58,6 +58,8 @@ describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
     expect(byId['kits']?.body).toMatch(/3 specials/);
     expect(byId['kits']?.body).toMatch(/1-in-10/);
     expect(byId['specials']?.body).toMatch(/one use/);
+    expect(byId['specials']?.body).toMatch(/Block chain/i);
+    expect(byId['specials']?.body).toMatch(/Poison does not tick/i);
     expect(byId['shop']?.body).toMatch(/buy extra cards or upgrade points/i);
     expect(byId['shop']?.body).toMatch(/pool/i);
     expect(byId['shop']?.body).toMatch(/others do not see which card/i);
