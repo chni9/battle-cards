@@ -237,6 +237,7 @@ import {
   createBotSeat,
   isBotSeat,
   isHumanSeat,
+  nextLobbyHostId,
   shouldLockForOccupancy,
   shouldUnlockForOccupancy,
   type HumanSeat,
@@ -1541,7 +1542,10 @@ export class GameRoom extends Room<{ client: GameClient }> {
     this.guestReady.delete(sessionId);
 
     if (this.hostSessionId === sessionId) {
-      this.hostSessionId = this.seats[0]?.sessionId ?? null;
+      this.hostSessionId = nextLobbyHostId({
+        remainingSeats: this.seats,
+        connectedPlayerIds: this.connectedSeatedPlayerIds(),
+      });
     }
 
     if (!this.hasStarted && shouldUnlockForOccupancy(this.seats.length)) {

@@ -7,6 +7,7 @@ import {
   createBotSessionId,
   isBotSeat,
   isHumanSeat,
+  nextLobbyHostId,
   occupancyIsFull,
   pickBotNickname,
   shouldLockForOccupancy,
@@ -82,5 +83,62 @@ describe('seats (L15-02)', () => {
     seats.pop();
     expect(shouldUnlockForOccupancy(seats.length)).toBe(true);
     expect(shouldLockForOccupancy(seats.length)).toBe(false);
+  });
+});
+
+describe('lobby host after the host leaves (L1-02, technical spec v3 §6)', () => {
+  it('passes the host to the human guest, not to a bot seated before them', () => {
+    const host = human('host', 'Host');
+    const bot = createBotSeat([host], 'normal');
+    const guest = human('guest', 'Guest');
+
+    expect(
+      nextLobbyHostId({
+        remainingSeats: [bot, guest],
+        connectedPlayerIds: new Set([guest.sessionId]),
+      }),
+    ).toBe(guest.sessionId);
+  });
+
+  it('prefers a connected human over an earlier human who dropped', () => {
+    const dropped = human('dropped', 'Dropped');
+    const bot = createBotSeat([dropped], 'easy');
+    const online = human('online', 'Online');
+
+    expect(
+      nextLobbyHostId({
+        remainingSeats: [dropped, bot, online],
+        connectedPlayerIds: new Set([online.sessionId]),
+      }),
+    ).toBe(online.sessionId);
+  });
+
+  it('falls back to the earliest human seat when no human is connected', () => {
+    const bot = createBotSeat([], 'hard');
+    const first = human('first', 'First');
+    const second = human('second', 'Second');
+
+    expect(
+      nextLobbyHostId({
+        remainingSeats: [bot, first, second],
+        connectedPlayerIds: new Set(),
+      }),
+    ).toBe(first.sessionId);
+  });
+
+  it('keeps the earliest seat when only bots remain (the room then disposes, L15-06)', () => {
+    const bot = createBotSeat([], 'normal');
+    const other = createBotSeat([bot], 'easy');
+
+    expect(
+      nextLobbyHostId({
+        remainingSeats: [bot, other],
+        connectedPlayerIds: new Set(),
+      }),
+    ).toBe(bot.sessionId);
+  });
+
+  it('has no host when no seat remains', () => {
+    expect(nextLobbyHostId({ remainingSeats: [], connectedPlayerIds: new Set() })).toBeNull();
   });
 });
