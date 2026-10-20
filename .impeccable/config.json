@@ -1,0 +1,206 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-20T17:04:32.609Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-20T17:04:32.630Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-20T17:04:32.652Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-20T17:04:32.676Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-20T17:04:32.702Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-20T17:09:16.053Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-20T17:09:16.077Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-20T17:09:16.099Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-20T17:09:16.122Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-20T17:09:16.145Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.262Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.286Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.307Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.329Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.352Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-20T17:22:16.375Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:14.673Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:14.693Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:14.712Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "tight-leading",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:14.734Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:14.754Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-20T17:28:44.404Z",
+        "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      }
+    ]
+  }
+}
