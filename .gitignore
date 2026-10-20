@@ -12,3 +12,6 @@ coverage/
 
 # Office lock files
 ~$*
+
+.superpowers/
+.impeccable/hook.cache.json
