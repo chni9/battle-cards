@@ -10,7 +10,7 @@
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
  * (promote #56). `lot-68` shipped on `main`. `lot-69` stays as written.
  * `lot-71` shipped on `main`. `lot-72` is the open update (active-slot drop cancel;
- * Block / Poison).
+ * Block / Poison; lobby host never passes to a bot).
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -61,6 +61,10 @@ const RELEASE_NOTES_CATALOG = [
         cardId: 'poison' as const,
         before: 'Poison still ticked on you during an active Block chain.',
         after: 'Poison does not tick on you during Block, like Imposition.',
+      },
+      {
+        before: 'When the host left the lobby, a bot could become host and nobody could start.',
+        after: 'Fixed some bugs.',
       },
     ],
   },

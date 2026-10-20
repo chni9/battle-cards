@@ -48,7 +48,7 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     expect(latest.id).toBe('lot-72');
     expect(latest.title).toBe('Active slot drop');
     expect(latest.additions).toEqual([]);
-    expect(latest.items).toHaveLength(2);
+    expect(latest.items).toHaveLength(3);
     expect(latest.items[0]?.before).toContain('forced you to drop');
     expect(latest.items[0]?.after).toContain('cancel');
     expect(latest.items[1]?.before).toBe(
@@ -57,6 +57,8 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     expect(latest.items[1]?.after).toBe(
       'Poison does not tick on you during Block, like Imposition.',
     );
+    expect(latest.items[2]?.before).toContain('a bot could become host');
+    expect(latest.items[2]?.after).toBe('Fixed some bugs.');
   });
 
   it('writes lot-71 as short gameplay lines', () => {
