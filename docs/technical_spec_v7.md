@@ -81,14 +81,13 @@ Designer brainstorm session, in the order asked.
 | — | Lobby house rules and chat (Lot 70) | kept and redesigned (§7.4); house rules also recalled in game and on Game over (§6.11) |
 | — | Card descriptions | kept from the shared catalog (with §10.5 corrections), shown in the card sheet and on long-press (§6.6.1) |
 | — | Subagents | Claude models allowed under Claude Code (AGENTS.md §9, 2026-10-20) |
+| Q12 | Branches and promotion | **A** — one ready-for-review PR per lot into `dev`; pending `dev` fixes promoted to `main` before L72 merges; promotion freeze until the player path is fully V7 (§4.6). Replaces the earlier "Lot 72 recolors every screen at once" idea (§4.4) |
 
 Section approvals (architecture §4, design system §5, arena §6, juice/sound §8–9, other
 screens §7, tests and lots §12/§15): approved in the same session. Placements set by earlier
 designer decisions are **kept**: the visible table `!` (Lot 57), Chat next to the
 forfeit flag (Lot 70), Unspy always rendered and disabled with its reason (L58-07).
 
-**Pending designer confirmation (Q12):** the branch and promotion model of §4.6, which also
-replaces the earlier "Lot 72 recolors every screen at once" idea (§4.4).
 
 ---
 
@@ -221,9 +220,9 @@ rule logic (AGENTS.md §4, golden rule 8). Server revalidation stays the only va
 - Every addition goes through `pnpm add` (`--filter @card-battle/client`, `-D` for dev) so the
   lockfile records it (AGENTS.md §3).
 
-### 4.6 Branches and promotion (pending Q12)
+### 4.6 Branches and promotion (Q12 = A)
 
-Recommended model, within the existing gitflow (`docs/agent/deploy.md`):
+Within the existing gitflow (`docs/agent/deploy.md`):
 
 - Each lot is developed on its own branch cut from `dev` (the first is `claude/v7-redesign`,
   which carries the V7 docs and L72) and opened as **one ready-for-review PR into `dev`**, so
@@ -1045,7 +1044,6 @@ music.
 - **`claimableSeats` on finished**: verify in L77; if the server can send it, define stacking.
 - **Tutorial anchors**: every `data-zone` / `data-hint-anchor` / tour highlight id listed in
   Appendix A must exist on an equivalent V7 element before L75 flips the default.
-- **Promotion freeze** (§4.6): pending designer confirmation (Q12).
 
 ---
 
