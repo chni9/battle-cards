@@ -638,10 +638,15 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   overlay keeps covering the whole box, hit-testable and `aria-hidden`, with handlers that check
   the sheet is still open; only its panel turns `inert`. So a double tap closes one sheet and
   never reaches the sheet or the table below; a deliberate press within ~220ms is absorbed and
-  simply repeated. When a panel collapses to its bar (Minimize, L74 "Use" → targeting), a
-  transparent no-op shield covers the box for `--dur-base` (none under reduced motion); the bar
-  shows at once and paints above it. A closing toast stays click-through instead: it covers a
-  small area, and blocking the dock under it would be less predictable.
+  simply repeated. Only the sheet that was live when it started closing shields: a covered
+  sheet closing under it stays inert and click-through, one z-index below the live sheet, so it
+  never swallows the live sheet's presses. When a panel really collapses to its bar (Minimize,
+  L74 "Use" → targeting) or a bar restores its panel, a transparent no-op shield covers the box,
+  bar included, for `--dur-base` (none under reduced motion), and Minimize and restore ignore
+  presses in that window: the bar shows at once, but a double tap neither re-expands nor
+  re-minimizes. A sheet that mounts already collapsed raises no shield. A closing toast stays
+  click-through instead: it covers a small area, and blocking the dock under it would be less
+  predictable.
 - **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
   only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
   in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial
