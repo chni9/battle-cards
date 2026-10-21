@@ -165,9 +165,13 @@ apps/client/src/
 ```
 
 **Shared pieces first.** Components that other screens import from `screens/table/` or
-`design/` — `ChatLog`, `KitInspectDetails`, the rules sheet, `coach-panel`, the hint overlay's
-table copy, `TableBannerFlash` cues — are rebuilt in `ui/` (or their logic moved to
-`view-model/`) in L72/L73, **before** any lot deletes `screens/table/`. `design/` and
+`design/` — `ChatLog`, `KitInspectDetails`, the read-only rules strip and sheet, `coach-panel`,
+the hint overlay's table copy, `TableBannerFlash` cues, `BotSeatLabel`, `PlayerName`,
+`ConnectionBadge` — are rebuilt in `ui/` (or their logic moved to `view-model/`) in L72,
+**before** any lot deletes `screens/table/`. L72 also ships the primitives the parallel lots
+share: `TextField` (16 px floor), `Carousel` (How to play, awards) and a kit tile. A DEV-only
+gallery route (`/dev/ui`, behind `import.meta.env.DEV`, never in production builds) renders
+every `ui/` component for the design gate and critiques. `design/` and
 `screens/table/` (V2/V6 look) are then deleted as V7 replaces them, ending in Lot 81. No file
 outlives its replacement by more than the lot that replaces it.
 
@@ -196,6 +200,8 @@ rule logic (AGENTS.md §4, golden rule 8). Server revalidation stays the only va
 
 ### 4.4 Switching
 
+- **Lot 72 performs the pure-module moves of §4.1**, so the lots that run in parallel
+  (76, 80) start from the moved paths.
 - **Lot 72 adds V7 tokens and fonts side by side**; it does **not** recolor the old screens.
   The old light-theme tokens (`ink`, `surface`, `surface-raised`…) keep their values until the
   lot that migrates each screen, because mapping them onto a dark ground breaks contrast on
@@ -212,7 +218,8 @@ rule logic (AGENTS.md §4, golden rule 8). Server revalidation stays the only va
 - Runtime: `@fontsource/lilita-one`, `@fontsource/fredoka`, `@fontsource/nunito` (self-hosted,
   like Outfit today). `@fontsource/outfit` is removed in Lot 81.
 - Dev: `@testing-library/react`, `@testing-library/user-event`, `happy-dom` (component
-  behavior tests, §12.2); `sharp` for the one-off art extraction script (§5.5).
+  behavior tests, §12.2); `sharp` and `tsx` (same version as the server's, 4.23.1) for the
+  one-off art extraction script (§5.5).
 - Config: the client Vitest project includes `src/**/*.test.{ts,tsx}`; component tests set
   `// @vitest-environment happy-dom` per file; `apps/client/tsconfig.json` includes `scripts`
   so the art script passes typecheck and typed lint.
@@ -414,10 +421,12 @@ count as "kit hidden" for the `hidden-kit` hint (Appendix A Q66).
 
 ### 6.4 Layout modes, arc and grid
 
-- **Modes** (by visible box): **portrait** (height > width); **landscape-compact** (visible
-  height < 500 px: seats in a top band, plate centered, hand and dock on one row, no full
-  ellipse, hand size bound to height); **desktop** (width ≥ 1024 px and height ≥ 700 px). A
-  768×1024 tablet is portrait. No mode page-scrolls (L53-07).
+- **Modes** (by visible box, checked in this order): **landscape-compact** — visible height
+  < 500 px (seats in a top band, plate centered, hand and dock on one row, no full ellipse,
+  hand size bound to height); **desktop** — width > height (and height ≥ 500 px); **portrait**
+  — every other box. A 768×1024 tablet is portrait; 1024×600 and 1440×900 are desktop; an
+  844×390 phone is landscape-compact. No mode page-scrolls (L53-07). On desktop the log panel
+  replaces the ticker, and card, shop and seat sheets open as centered dialogs.
 - **Arc** (portrait and desktop): seats on the upper half of an ellipse centered on the plate
   (desktop: full ellipse around a larger plate, log as a collapsible right panel, dock next to
   the hand). Order follows `turnOrder` rotated so the next player after the POV is first
@@ -451,9 +460,12 @@ count as "kit hidden" for the `hidden-kit` hint (Appendix A Q66).
 - **Recurring chips** for persistent periodic effects that tick on the POV (Curse on you,
   opponent Poison / Imposition), built from public `activePersistentEffects` (replaces the
   unwired `persistent-incoming.ts`, Q35). A chip shows as **paused** when the POV's own view
-  says it will not apply this turn (own Invisibility active; own `blockTurnsRemaining > 0` or
-  `blockAttacksForbidden`; own upgraded Shield, for Imposition; own points ≤ 7, for Imposition).
-  Its amount is the catalog rate for that tier, not a prediction.
+  says it will not apply this turn (own Invisibility active, for all three; own
+  `blockTurnsRemaining > 0` or `blockAttacksForbidden`, for Poison and Imposition; own upgraded
+  Shield, for Imposition; own points ≤ 7, for Imposition).
+  Its amount is the catalog rate for that tier, not a prediction. Engine truth
+  (`apply-persistent-effects.ts`): own Invisibility pauses Poison, Imposition and Curse; an
+  own Block chain pauses Poison and Imposition only — **Curse keeps draining** during Block.
 - Tapping a seat highlights its in/out arrows and opens the seat sheet (kit if visible,
   statuses, pending effects, Spy hand).
 
@@ -550,9 +562,10 @@ Full-height sheet, tabs **Cards / Special / Pool / Upgrade points**, large tiles
 off-turn (pool is public) with actions disabled. Tile interaction: **tap selects** (aria-pressed)
 and the footer **Buy** commits; **double-tap buys instantly** (kept from today, Appendix A keep,
 with `touch-action: manipulation`); long-press or the tile's info button opens the read-only
-card sheet. In the tutorial, a step that highlights a shop item opens the Shop on the tab that
-contains it (Upgrade points for `shop-upgrade-point`, Cards with Absorber preselected for
-`shop-absorber`) and keeps select-then-Buy (`shop-absorber` → `shop-absorber-buy`).
+card sheet. In the tutorial the Shop never opens by itself: when the player opens it during a
+step that highlights a shop item, it opens on the tab that contains it (Upgrade points for
+`shop-upgrade-point`, Cards for `shop-absorber`) with that tile highlighted, not preselected,
+and keeps select-then-Buy (`shop-absorber` → `shop-absorber-buy`).
 
 Every Lot 54/58 rule stays: shop faces use catalog costs (Spy play 2 / buy 4), upgrade point
 Buy/Sell values computed at render time from `upgradePointBuyCost` / `upgradePointSellYield`,
@@ -704,8 +717,10 @@ complete" variant. Feedback ask-once semantics unchanged (L57).
 
 Claim seat (any dismissal — Esc, backdrop, swipe — is **Stay**, and for a walk-in sends
 `staySpectating`), Feedback (manual and ask modes, Kind as a radio group, About chips, contact;
-send locks dismiss and ends with a "Sent" confirmation, Q6/Q68/Q69), leave confirm, connection
-errors: bottom sheets on phones, centered dialogs on desktop, following the §6.7 stack contract.
+send locks dismiss — with a 15 s client timeout that re-enables it with an error — and ends
+with a "Sent" confirmation, Q6/Q68/Q69), leave confirm: bottom sheets on phones, centered
+dialogs on desktop, following the §6.7 stack contract. Connection errors on Home and in the
+lobby stay inline status blocks (`role="alert"`, retry in place), restyled.
 Dialog sizing keeps the visual-viewport rule (L53-02/07).
 
 ### 7.8 Admin (`/admin`)
@@ -820,14 +835,16 @@ updated to the corrected strings.
 - `packages/shared/src/protocol/state-view.ts` `SpiedPlayerView` comments and client modules
   that still describe pre-Lot-69 Spy (`opponent-seat-resources.ts`, `opponent-reveal-dialog.tsx`,
   `resource-icon.tsx`) are corrected (L73).
-- **AGENTS.md golden rule 1** still carries Lot 54's "Assassin multi-attack … is one volley (sum
-  of final damage)", superseded on 2026-09-29 (incoming hits stay separate). L72's docs task
-  corrects it to the current rule (code and rules spec are truth, AGENTS.md §2).
+- **AGENTS.md golden rule 1** already carries the 2026-09-29 rule on `dev` (commit 14a5ce9);
+  L72's docs task only verifies it against rules spec §2 / §6.
 
 ### 10.4 What's new
 
-V7 player-facing changes **append Before / After items to the open What's new entry** — today
-`lot-72`, which is on `dev` and not on `main` — in the same commit as the change
+V7 player-facing changes **append Before / After items to the open What's new entry**. Because
+`lot-72` is promoted to `main` before L72 merges (§4.6), the **first V7 PR with a player-facing
+change opens one V7 entry** (`lot-<its lot>`, titled "New look") and updates the tests that pin
+the latest id; every later V7 PR appends to it during the freeze. One Before / After item per
+screen area, not per task. Changes land in the same commit as the change
 (`docs/agent/frontend.md`), updating the entry's title when its scope changes. If `dev` is
 promoted to `main` during V7, the next player-facing V7 PR starts a new entry. Lots with no
 player-facing change (L73, L80) add nothing. Bug fixes such as the turn-clock bar use After =
@@ -852,8 +869,10 @@ If the designer prefers to keep catalog text frozen, the conflict is recorded in
 V7 keeps existing labels ("Use", "{Nick}'s turn", "Your turn"…). Strings it **adds** are listed
 in each lot's PR for designer review: "Choose a target", "Time's up", "CANCELLED", "Server
 default", "Excluded", "Spectators only see this", "Reanimating", "Watching", "Sent", "Claim a
-seat", "Table rules", "Minimize", "Rules changed", "Your pick was reset to Random", and the
-disabled reasons of §11.
+seat", "Table rules", "Minimize", "Rules changed", "Your pick was reset to Random", "Link
+copied", "Chat is closed for this game", "{NAME} ELIMINATED", the admin strings of §7.8 ("Sign
+out", the 429 copy, pager labels), and the disabled reasons of §11. Mode tiles keep their
+current labels ("Play solo", "Play online", "Tutorial").
 
 ---
 
@@ -901,8 +920,9 @@ classified **in the lot that deletes or rewrites the code it reads**:
   "Incoming on the identity row") → retired **in the same commit that deletes the code**, with a
   `docs/agent/decisions.md` entry citing the V7 section that supersedes it.
 
-The classification table (file, assertion, class, replacement test) lives in
-`docs/backlog_v7.md`. This is not weakening (AGENTS.md DoD): every protected behavior keeps a
+The classification table (file, assertion, class, owner lot, replacement test) lives in
+`docs/backlog_v7_test_classification.md`, linked from `docs/backlog_v7.md`; each lot's first
+task re-checks its rows against the regenerated file list. This is not weakening (AGENTS.md DoD): every protected behavior keeps a
 test.
 
 ### 12.2 New tests
@@ -1051,8 +1071,8 @@ music.
 
 | Lot | Goal | Depends on |
 |---|---|---|
-| **72 · Foundations** | Docs: this spec, `docs/backlog_v7.md` (with the §4.1 module list and §12.1 classification), `PRODUCT.md` / `DESIGN.md`, AGENTS.md (§1 V7 status, §2 V7 docs and V6 closed at 71, golden rule 1 fix, golden rule 7 "V7 changes no rule, value or protocol field", §9 open backlog and DoD → `backlog_v7.md`, `.test.tsx` location, subagent rule), one `decisions.md` entry recording the V7 architecture and what it supersedes. Code: V7 tokens + fonts side by side, ground, primitives, SVG icons, art extraction (contact sheet sign-off), **Card**, shared pieces rebuilt in `ui/` (§4.2), testing-library + Vitest config, `?ui=next` switch | — |
-| **73 · View-model** | pure layer + tests (§4.3, §6.3, §6.10), pure-module moves (§4.1); Spy doc-comment fixes (§10.3) | 72 |
+| **72 · Foundations** | Pure-module moves (§4.1) and the §12.1 classification. Docs: this spec, `docs/backlog_v7.md` (with the §4.1 module list and §12.1 classification), `PRODUCT.md` / `DESIGN.md`, AGENTS.md (§1 V7 status, §2 V7 docs and V6 closed at 71, golden rule 1 check, golden rule 7 "V7 changes no rule, value or protocol field", §9 open backlog and DoD → `backlog_v7.md`, `.test.tsx` location, subagent rule), one `decisions.md` entry recording the V7 architecture and what it supersedes. Code: V7 tokens + fonts side by side, ground, primitives, SVG icons, art extraction (contact sheet sign-off), **Card**, shared pieces rebuilt in `ui/` (§4.2), testing-library + Vitest config, `?ui=next` switch | — |
+| **73 · View-model** | pure layer + tests (§4.3, §6.3, §6.10); Spy doc-comment fixes (§10.3) | 72 |
 | **74 · Arena I** | top bar, seats + layout modes, arrows, plate, self strip, hand fan, dock, card sheet, tap-tap + drag, shop, sub-choices + sheet stack, log, chat, rules recall, clock, spectator/eliminated, finished board, reconnect, reject toast, existing FX and banners hosted on arena anchors (§6.12) | 73 |
 | **75 · Arena II** | tutorial + hints re-anchored (id map), table copy fixes (§10.1 Lot 75 rows, §10.2), desktop + landscape-compact, FX parity check, **default flip**, old table and switch deleted, its tests classified (§12.1) | 74 |
 | **76 · Home & lobby** | home, Solo / Online / Tutorial, How to play, What's new, Feedback, lobby (rules, chat, kit picker, claim), invite link, §10.1 Lot 76 copy rows | 72 (parallel with 73–75) |
@@ -1064,4 +1084,7 @@ music.
 
 Lots 76 and 80 can run in separate sessions in parallel with the Arena lots once Lot 72 is
 merged; they must not edit `screens/table/` or `screens/arena/`, and anything they need from the
-table comes from `ui/` or `view-model/` (§4.2). Each lot is one PR into `dev` (§4.6).
+table comes from `ui/` or `view-model/` (§4.2). Files every lot touches (`App.tsx`,
+`packages/shared/src/release-notes.ts`, `docs/agent/frontend.md`, `docs/backlog_v7.md`) are
+reconciled by rebasing on `dev` before each PR. L75 deletes old dialogs that the lobby still
+imports only after the matching L76 tasks merge. Each lot is one PR into `dev` (§4.6).
