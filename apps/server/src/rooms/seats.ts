@@ -102,3 +102,22 @@ export function createBotSeat(
 
   return { kind: 'bot', sessionId, nickname, difficulty };
 }
+
+/**
+ * Lobby host after the host leaves — decisions.md L1-02 promotes the earliest remaining seat;
+ * since bots (technical spec v3 §6) that means the earliest connected human, else the
+ * earliest human. A bot has no client, so it can never Start, Kick, or add a bot.
+ * Only bots left: earliest seat, and the room disposes anyway (L15-06).
+ */
+export function nextLobbyHostId(input: {
+  remainingSeats: readonly Seat[];
+  connectedPlayerIds: ReadonlySet<string>;
+}): string | null {
+  const humans = input.remainingSeats.filter(isHumanSeat);
+  const next =
+    humans.find((seat) => input.connectedPlayerIds.has(seat.sessionId)) ??
+    humans[0] ??
+    input.remainingSeats[0];
+
+  return next?.sessionId ?? null;
+}

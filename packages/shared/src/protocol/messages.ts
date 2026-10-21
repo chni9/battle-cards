@@ -306,9 +306,9 @@ export interface ChooseReanimationKitPayload {
   kitId: KitId;
 }
 
-export interface ChooseSlotDropPayload {
-  slotId: string;
-}
+export type ChooseSlotDropPayload =
+  | { slotId: string; cancel?: undefined }
+  | { cancel: true };
 
 /** `subChoiceRequired`'s payload — discriminated on `kind` (technical spec v4 §4.4). */
 export type SubChoiceRequiredPayload =
