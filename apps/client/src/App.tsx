@@ -2,11 +2,14 @@
  * Phase router — Home / Lobby / Table / End / Admin.
  * Conventions: docs/agent/frontend.md · technical spec v2 §6 · L17-01 solo skip-lobby.
  * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
+ * `/dev/ui` is the DEV-only V7 component gallery (technical spec v7 §4.2): it is lazily
+ * imported behind `import.meta.env.DEV`, so production builds carry no gallery chunk.
  */
 
 import { defaultLobbyRules } from '@card-battle/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 
+import { isDevUiRoute } from './dev/dev-ui-route';
 import { useRoomConnection } from './net/use-room-connection';
 import { AdminApp } from './screens/admin/admin-app';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
@@ -18,6 +21,10 @@ import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen } from './screens/table';
 
+const UiGallery = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import('./dev/ui-gallery')).UiGallery }))
+  : null;
+
 export function App() {
   const path = window.location.pathname;
   if (path === '/inbox' || path.startsWith('/inbox/')) {
@@ -26,6 +33,13 @@ export function App() {
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
     return <AdminApp />;
+  }
+  if (isDevUiRoute(path, import.meta.env.DEV) && UiGallery !== null) {
+    return (
+      <Suspense fallback={null}>
+        <UiGallery />
+      </Suspense>
+    );
   }
   return <GameApp />;
 }

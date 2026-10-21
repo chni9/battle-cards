@@ -140,6 +140,43 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.
 
+### V7 primitives (L72-08)
+
+- **Imports:** one file per primitive in `ui/primitives/` (`button`, `icon-button`, `pill`,
+  `badge`, `avatar`, `tabs`, `segmented`, `slider`, `toggle`, `tooltip`, `scroll-area`,
+  `text-field`, `carousel`, `kit-tile`), each a named export of the same PascalCase name
+  (`import { Button } from '../ui/primitives/button'`). There is no barrel file. Details per
+  primitive: `/DESIGN.md` › Primitives.
+- **Chrome helpers:** `ui/primitives/chrome-classes.ts` is the only source of the chrome shape,
+  focus, disabled, variant and press classes (`chromePressClass(reduced)`,
+  `motionAttribute(reduced)`) and of the icon-well rule (`iconNeedsWell(variant)`,
+  `ICON_WELL_CLASS`: on `--cta`, `--cta-2` and `--danger` fills an icon sits in a `--bg-0`
+  well). New chrome reuses these constants instead of restating `border-v7-ink` or
+  `shadow-v7-chrome` combinations. `avatar-initial.ts` holds the grapheme initial.
+- **Keyboard model:** `ui/primitives/roving-focus.ts` (`rovingKeyFor(key, 'tabs' | 'radios')`,
+  `nextEnabledIndex`, `edgeEnabledIndex`) backs Tabs and Segmented. A new roving widget reuses
+  it rather than writing its own arrow-key switch.
+- **`data-motion`:** every animated primitive puts `data-motion="reduced" | "full"` on the
+  element that moves (Button, IconButton and Toggle on the `<button>`, Carousel on its scroll
+  track, whose `scroll-smooth` class and `scrollTo` behavior follow it) and applies transition
+  or press classes only when full. Tests assert the attribute or the class, never
+  a media query (happy-dom cannot evaluate one).
+- **Viewport rule:** layout mode comes only from `viewportModeFor({ width, height })`
+  (`ui/viewport-mode.ts`) or the hooks `useViewportMode()` / `useVisualViewportBox()`
+  (`ui/use-visual-viewport-box.ts`, `useSyncExternalStore` on `visualViewport`). Never write a
+  second height or aspect breakpoint. happy-dom has no `visualViewport`, so a component test
+  that renders a hook consumer either stubs `window.visualViewport` or mocks
+  `ui/use-visual-viewport-box` (see `carousel.test.tsx`).
+- **Copy scope:** `ui/ui-copy.ts` holds only the spec v7 §10.6 strings a `ui/` component adds
+  (`EXCLUDED_LABEL` now; `MINIMIZE_LABEL` in L72-09, `TABLE_RULES_LABEL` in L72-16). Any other
+  label is a prop the caller fills from existing copy.
+- **Gallery registration:** add `ui/<area>/<area>.gallery.tsx` exporting
+  `const gallery: GallerySection = { id: '<area>', title, entries: [{ id, title, render }] }`
+  (`dev/gallery-registry.ts`). `dev/ui-gallery.tsx` picks it up through `import.meta.glob`; no
+  central file is edited, and a duplicate section id throws. Keep stateful demo components in
+  a components-only sibling `.tsx` (react-refresh). The route is `/dev/ui`
+  (`dev/dev-ui-route.ts`), DEV only and absent from production builds.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
