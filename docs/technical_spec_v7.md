@@ -237,8 +237,9 @@ Within the existing gitflow (`docs/agent/deploy.md`):
 - **Before L72 merges**, the fixes already waiting on `dev` (open What's new `lot-72`) are
   promoted to `main`.
 - **Promotion freeze:** no `dev` → `main` promotion from the first V7 merge until the player
-  path is fully V7 (L75 flip + L76 + L77 merged), unless the designer approves one. Hotfixes
-  during the freeze use a branch cut from `main` (a documented `deploy.md` exception).
+  path is fully V7 (L75 flip + L76 + L77 merged), unless the designer approves one. **Q13
+  (designer 2026-10-21): strict freeze** — no hotfix path during the freeze, and
+  `.github/workflows/prod-from-dev.yml` stays unchanged; urgent fixes wait for the freeze to lift.
 - L78–L81 ship after the freeze lifts, one PR each.
 
 ---
