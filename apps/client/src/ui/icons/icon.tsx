@@ -75,7 +75,7 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   // Statuses.
   'spied-by-you': (
     <>
-      {outlinedLine('M15.5 15.5 20.5 20.5', paint.mine, 3.5)}
+      {outlinedLine('M15.5 15.5 20 20', paint.mine, 3.5)}
       <circle cx="9.5" cy="9.5" r="7" fill={paint.mine} />
       <path d="M6 8.8a3.8 3.8 0 0 1 2.8-2.8" stroke={paint.text} strokeWidth={1.5} />
     </>
@@ -164,9 +164,9 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   // UI controls.
   menu: (
     <>
-      <rect x="3" y="2.5" width="18" height="4" rx="2" fill={paint.text} />
-      <rect x="3" y="10" width="18" height="4" rx="2" fill={paint.text} />
-      <rect x="3" y="17.5" width="18" height="4" rx="2" fill={paint.text} />
+      <rect x="3" y="1.5" width="18" height="5" rx="2.5" fill={paint.text} />
+      <rect x="3" y="9.5" width="18" height="5" rx="2.5" fill={paint.text} />
+      <rect x="3" y="17.5" width="18" height="5" rx="2.5" fill={paint.text} />
     </>
   ),
   shop: (
