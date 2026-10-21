@@ -4453,3 +4453,83 @@ chevrons.
   Never toggle native `disabled` on a control that can hold focus while it changes.
 
 ---
+
+## 2026-10-21 · [P] V7 sheet stack (L72-09)
+
+Source: `docs/technical_spec_v7.md` §6.7, §6.12, §7.7, §10.6 (Q49, Q59), Appendix A
+`global-dialog-interaction-contract`, `claim-seat-dismiss-stay`,
+`table-sub-choice-non-dismissible`; the L72-09 brief.
+
+- **One stack.** Every open V7 `Sheet` registers in one store (`ui/primitives/sheet-stack.ts`,
+  pure; `sheet-stack-context.ts`), which decides paint order, z-index, inertness and the Esc
+  target. The default store is a module singleton (no provider at the app root);
+  `SheetStackProvider` isolates a subtree and `renderUi` uses it per render.
+- **Paint order:** read-only < expanded blocking < Minimize bars, inside the `Z_INDEX` layers
+  (`ui/layers.ts`: sheet 50, sheetBar 80, banner 90, toast 95). Expanded sheets get
+  `min(50 + n, 79)`, bars `min(80 + n, 89)`, unknown or unpainted ids 50.
+- **"Stack one level"** means: only the newest `MAX_READ_ONLY_DEPTH` (2) expanded read-only
+  sheets paint. An older one stays registered and hidden, and paints again when a newer one
+  closes. The spec left the third sheet undefined.
+- **Restore to top:** restoring a minimized sheet re-stamps its open order, so it rises to the
+  top of its group. Otherwise restoring the earlier of two Lot 71 reward pickers would leave it
+  hidden under the other.
+- **Collapsed on the bar layer:** a sheet its caller marks `collapsed` (L74 targeting) is
+  stored as minimized: it joins the bar group and layer, Esc skips it, its focus trap is
+  released, and it shows the caller's `collapsedBar`.
+- **Stack-aware Esc** replaces V2's "one Esc closes every open Dialog" for V7 surfaces. Each
+  read-only sheet has a bubble-phase `document` keydown listener that acts only when
+  `escTargetId(state)` is its own id and the event is not `defaultPrevented`; a dismiss-locked
+  top sheet absorbs Esc instead of passing it down. So an Esc meant for a lower sheet can never
+  reach a claim picker on top (Appendix A `claim-seat-dismiss-stay`, consumer L76), and an open
+  tooltip (capture phase) closes first.
+- **`closeOnBackdrop`** is added to `ReadOnlySheetProps` (default true) beyond the brief's
+  contract rows, because `DialogProps` exposes it and Sheet had no other way to drop backdrop
+  dismissal while keeping Esc.
+- **Portal:** Sheet and Toast render into `document.body`, so the layers are global and no
+  transformed ancestor or `<form>` captures a fixed overlay. This retires the V2 `type="button"`
+  form hazard for V7 sheets.
+- **Dialog width** is a static `max-w-*` class read through `dialogPreferredMaxWidth` and
+  applied inline as `min(<rem>, 100%)`, not `dialogPanelClassName`, whose
+  `DIALOG_PANEL_BASE_CLASS` would bring V2 chrome into a V7 panel; restyling that constant would
+  recolor every V2 Dialog (§4.4).
+- **Focus:** the opener persists across a re-activation that starts with focus nowhere
+  (Minimize, then restore); nothing is focused under `[inert]` or `[hidden]`; focus is restored
+  only while it is lost or still in the sheet, with one `requestAnimationFrame` retry while the
+  opener is still inert. A press on the bare backdrop cancels its `mousedown`, so it never moves
+  focus to `body` behind the modal (the V2 Dialog did). Minimize is the last control in a
+  blocking panel, so initial focus lands on the first body control.
+- **Toast without `timeoutMs`** stays until dismissed by hand: the spec sets no duration, so a
+  caller that wants a timeout passes one (the gallery uses 4000 ms).
+- **Motion props:** `motionPropsFor(spec, reduced)` (`ui/motion/reduced-motion.ts`) copies each
+  target into an object literal, because motion's target type has a `--${string}` index
+  signature that the `V7MotionTarget` interface cannot satisfy.
+- **Fix outside the brief:** `readVisualViewportBox()` now takes the window-size fallback when
+  `window.visualViewport` is `undefined` (a browser without the API, and happy-dom), not only
+  when it is `null`. Before, the documented fallback threw in exactly the case it was for.
+
+---
+
+## 2026-10-21 · [P] Component-test harness shims (L72-06, L72-09)
+
+Source: `apps/client/src/test/render.tsx`, technical spec v7 §12.2, L72-06 review carry-overs.
+
+- **`globalThis.jest.advanceTimersByTime` (L72-06):** RTL's async drain advances fake clocks
+  only when it sees a global `jest`, so the harness installs one that calls
+  `vi.advanceTimersByTime`. Without it, user-event under fake timers never resolves. It relies
+  on Vitest's per-file isolation (each test file gets a fresh global scope), so
+  `test.isolate: false` must never be set.
+- **`IS_REACT_ACT_ENVIRONMENT` (L72-09):** RTL sets it in its own `beforeAll`, which never
+  registers because Vitest runs without globals, so React silently dropped its "not wrapped in
+  act(...)" warnings. The harness sets it to `true`. Turning it on surfaced no warning in the
+  existing suite. A warning is fixed in the test (await, or wrap in `act`), never by unsetting
+  the flag.
+- **`Animation.prototype.cancel` (L72-09):** happy-dom rejects `Animation.finished` on cancel
+  without marking the promise handled, so every motion animation interrupted by an unmount or
+  a new target failed the run with an unhandled AbortError. Browsers mark it handled (Web
+  Animations, "cancel an animation"); the harness wraps `cancel` on the class happy-dom's
+  `Element.animate` builds to do the same. `window.Animation` is a Vitest getter onto that
+  class, so it is patched, not replaced.
+- The shared `afterEach` also calls `vi.useRealTimers()`, so a test that forgets to restore
+  real timers cannot leak fake ones into the next test.
+
+---

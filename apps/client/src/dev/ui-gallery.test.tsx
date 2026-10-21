@@ -5,8 +5,12 @@ import { renderUi } from '../test/render';
 import { ICON_NAMES } from '../ui/icons/icon-names';
 import { UiGallery } from './ui-gallery';
 
-// happy-dom has no visualViewport; the Carousel demos read the layout mode through this hook.
-vi.mock('../ui/use-visual-viewport-box', () => ({ useViewportMode: () => 'portrait' }));
+// happy-dom has no visualViewport; the Carousel demos read the layout mode and the overlay
+// demos the visible box through these hooks. Both describe the same 390×844 phone.
+vi.mock('../ui/use-visual-viewport-box', () => ({
+  useViewportMode: () => 'portrait',
+  useVisualViewportBox: () => ({ offsetTop: 0, offsetLeft: 0, width: 390, height: 844 }),
+}));
 
 const PRIMITIVE_TITLES = [
   'Button',
@@ -58,6 +62,15 @@ describe('/dev/ui gallery (technical spec v7 §4.2)', () => {
       .getAllByRole('heading', { level: 3 })
       .map((heading) => heading.textContent);
     expect(titles).toEqual(expect.arrayContaining(PRIMITIVE_TITLES));
+  });
+
+  it('shows every L72-09 overlay demo', () => {
+    renderUi(<UiGallery />);
+    const region = screen.getByRole('region', { name: 'Overlays' });
+    const titles = within(region)
+      .getAllByRole('heading', { level: 3 })
+      .map((heading) => heading.textContent);
+    expect(titles).toEqual(['Read-only stack', 'Blocking sheet', 'Dialog', 'Toast']);
   });
 
   it('shows the full icon set', () => {

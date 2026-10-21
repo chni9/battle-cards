@@ -1,6 +1,7 @@
+import type { HTMLMotionProps } from 'motion/react';
 import { describe, expect, it } from 'vitest';
 import { CARD_SPRING, durationS } from './motion-tokens';
-import { motionSpecFor, reduceMotionSpec, type V7MotionSpec, type V7MotionTarget } from './reduced-motion';
+import { motionPropsFor, motionSpecFor, reduceMotionSpec, type V7MotionSpec, type V7MotionTarget } from './reduced-motion';
 
 const FAST_TWEEN = { type: 'tween', duration: durationS('fast') };
 const slam: V7MotionSpec = {
@@ -47,5 +48,16 @@ describe('motionSpecFor', () => {
   });
   it('returns the reduced spec when the user prefers reduced motion', () => {
     expect(motionSpecFor(slam, true)).toStrictEqual(reduceMotionSpec(slam));
+  });
+});
+
+describe('motionPropsFor (L72-09)', () => {
+  it('returns motionSpecFor as props a motion element accepts', () => {
+    const full: Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'> = motionPropsFor(slam, false);
+    expect(full).toStrictEqual(slam);
+    expect(motionPropsFor(slam, true)).toStrictEqual(reduceMotionSpec(slam));
+  });
+  it('omits absent targets instead of setting them to undefined', () => {
+    expect(Object.keys(motionPropsFor({ animate: { opacity: 1 } }, false))).toEqual(['animate']);
   });
 });

@@ -12,3 +12,6 @@ export const EXCLUDED_LABEL = 'Excluded';
 export function carouselPositionLabel(label: string, position: number, count: number): string {
   return `${label}, ${String(position)} of ${String(count)}`;
 }
+
+/** Blocking sub-choice sheets collapse to a bar (spec v7 §6.7, §10.6, Q59). */
+export const MINIMIZE_LABEL = 'Minimize';

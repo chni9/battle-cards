@@ -13,7 +13,9 @@ export interface VisualViewportBox {
 }
 
 export function readVisualViewportBox(): VisualViewportBox {
-  const vv = window.visualViewport;
+  // The DOM typings say `VisualViewport | null`, but a browser without the API (and happy-dom)
+  // leaves the property `undefined`: `?? null` sends both to the window-size fallback.
+  const vv = window.visualViewport ?? null;
   if (vv === null) {
     return {
       offsetTop: 0,
