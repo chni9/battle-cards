@@ -14,7 +14,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Icon } from '../icons/icon';
 import type { IconName } from '../icons/icon-names';
 import { EXCLUDED_LABEL } from '../ui-copy';
-import { CHROME_FOCUS_CLASS } from './chrome-classes';
+import { CHROME_FOCUS_CLASS, CHROME_SHAPE_CLASS } from './chrome-classes';
 import { IconButton } from './icon-button';
 
 export interface KitTileStat {
@@ -71,8 +71,8 @@ export function KitTile({
       data-excluded={excluded ? 'true' : 'false'}
       data-selected={showSelected ? 'true' : 'false'}
       className={[
-        'relative flex min-w-0 flex-col gap-2 p-2',
-        'rounded-v7-chrome border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel shadow-v7-chrome',
+        'relative flex min-w-0 flex-col gap-2 bg-v7-panel p-2',
+        CHROME_SHAPE_CLASS,
         showSelected ? 'ring-(length:--chrome-outline-width) ring-v7-cta' : '',
       ].join(' ')}
     >
@@ -101,10 +101,7 @@ export function KitTile({
         ))}
       </dl>
       {onInfo !== undefined && infoLabel !== undefined ? (
-        // IconButton is `relative` for its count badge, so the corner placement lives on a wrapper.
-        <span className="absolute top-3 right-3">
-          <IconButton aria-label={infoLabel} icon="help" onClick={onInfo} />
-        </span>
+        <IconButton aria-label={infoLabel} icon="help" onClick={onInfo} className="absolute top-3 right-3" />
       ) : null}
     </div>
   );

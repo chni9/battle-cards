@@ -46,6 +46,35 @@ describe('Tooltip (parity global-tooltip-unused)', () => {
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
+  it('stays open while its trigger keeps focus, even after the pointer leaves', async () => {
+    const { user } = renderUi(<BuyWithTooltip />);
+    const buy = screen.getByRole('button', { name: 'Buy' });
+    await user.tab();
+    await user.hover(buy);
+    await user.unhover(buy);
+    expect(screen.getByRole('tooltip')).toBeTruthy();
+  });
+
+  it('stays open while hovered, even after its trigger loses focus', async () => {
+    const { user } = renderUi(<BuyWithTooltip />);
+    await user.hover(screen.getByRole('button', { name: 'Buy' }));
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Other' }));
+    expect(screen.getByRole('tooltip')).toBeTruthy();
+  });
+
+  it('is hoverable: the pointer can move onto the bubble without closing it (WCAG 1.4.13)', async () => {
+    const { user } = renderUi(<BuyWithTooltip />);
+    await user.hover(screen.getByRole('button', { name: 'Buy' }));
+    const bubble = screen.getByRole('tooltip');
+    expect(bubble.className).not.toMatch(/pointer-events-none/);
+    // The 8 px gap to the trigger is padding inside the hover region, never a margin outside it.
+    expect(bubble.parentElement?.classList.contains('pb-2')).toBe(true);
+    await user.hover(bubble);
+    expect(screen.getByRole('tooltip')).toBeTruthy();
+  });
+
   it('Esc closes it, and that press reaches nothing underneath (Q49)', async () => {
     const onKeyDown = vi.fn();
     const { user } = renderUi(

@@ -9,8 +9,14 @@
  */
 
 import { useId, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
-import { CHROME_FOCUS_CLASS } from './chrome-classes';
-import { edgeEnabledIndex, nextEnabledIndex, rovingKeyFor } from './roving-focus';
+import {
+  CHROME_FOCUS_CLASS,
+  CHROME_TRACK_CLASS,
+  CHROME_TRACK_IDLE_CLASS,
+  CHROME_TRACK_ITEM_CLASS,
+  CHROME_TRACK_SELECTED_CLASS,
+} from './chrome-classes';
+import { edgeEnabledIndex, hasCommandModifier, nextEnabledIndex, rovingKeyFor } from './roving-focus';
 
 export interface TabItem<T extends string> {
   readonly id: T;
@@ -45,6 +51,7 @@ export function Tabs<T extends string>({
     selectedIndex >= 0 && disabled[selectedIndex] !== true ? selectedIndex : edgeEnabledIndex(disabled, 'first');
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
+    if (hasCommandModifier(event)) return;
     const key = rovingKeyFor(event.key, 'tabs');
     if (key === null) return;
     event.preventDefault();
@@ -63,7 +70,7 @@ export function Tabs<T extends string>({
       <div
         role="tablist"
         aria-label={label}
-        className="inline-flex max-w-full gap-1 self-start rounded-v7-chrome border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel p-1"
+        className={`${CHROME_TRACK_CLASS} self-start`}
       >
         {tabs.map((tab, index) => {
           const selected = tab.id === selectedId;
@@ -83,12 +90,9 @@ export function Tabs<T extends string>({
               onKeyDown={(event) => {
                 onKeyDown(event, index);
               }}
-              className={[
-                'min-h-11 shrink-0 rounded-v7-chrome-sm px-4 font-v7-display text-v7-body leading-none',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-                CHROME_FOCUS_CLASS,
-                selected ? 'bg-v7-cta text-v7-text-on-cta' : 'text-v7-text-2 enabled:hover:text-v7-text',
-              ].join(' ')}
+              className={`${CHROME_TRACK_ITEM_CLASS} shrink-0 px-4 ${
+                selected ? CHROME_TRACK_SELECTED_CLASS : CHROME_TRACK_IDLE_CLASS
+              }`}
             >
               {tab.label}
             </button>

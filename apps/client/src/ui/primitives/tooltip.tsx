@@ -1,13 +1,19 @@
 /**
  * Hover and focus tooltip (parity `global-tooltip-unused`: the V2 tooltip had no caller, so
- * this is the first real one). It opens on focus or hover and closes on blur, pointer leave
- * or Esc.
+ * this is the first real one). It shows while its trigger is hovered or focused, tracked
+ * separately, so leaving with the pointer never closes a tooltip whose trigger still has focus
+ * and a blur never closes one still hovered.
  *
- * The bubble is always rendered, `hidden` while closed, and its id is appended to the
- * trigger's own `aria-describedby`, so the description resolves even when nothing is shown.
- * While open, a capture-phase `document` keydown listener swallows the Esc that closes it: one
- * press dismisses one layer, never the sheet underneath as well (Q49). Once open, the bubble
- * is nudged back inside the viewport so it never adds a horizontal page scroll.
+ * The bubble is hoverable (WCAG 1.4.13): it takes pointer events and sits inside the hover
+ * region, and the 8 px gap to the trigger is padding on its positioning span, so the pointer
+ * can cross onto it. It is always rendered, `hidden` while closed, and its id is appended to
+ * the trigger's own `aria-describedby`, so the description resolves even when nothing shows.
+ *
+ * Esc closes it through a capture-phase `document` keydown listener that stops propagation:
+ * that press never reaches bubble-phase listeners or React handlers (a sheet's Esc, Q49). It
+ * cannot stop `window` capture listeners or `document` capture listeners registered before it,
+ * so sheet Esc handling (L72-09) listens in the bubble phase or through React. Once open, the
+ * bubble is nudged inside the viewport so it never adds a horizontal page scroll.
  */
 
 import {
@@ -19,6 +25,7 @@ import {
   useState,
   type ReactElement,
 } from 'react';
+import { CHROME_SHAPE_SM_CLASS } from './chrome-classes';
 
 export interface TooltipProps {
   content: string;
@@ -28,7 +35,8 @@ export interface TooltipProps {
 
 const VIEWPORT_GUTTER_PX = 8;
 
-const PLACEMENT_CLASS = { top: 'bottom-full mb-2', bottom: 'top-full mt-2' } as const;
+/** Padding, not margin, bridges the gap so the pointer stays inside the hover region. */
+const PLACEMENT_CLASS = { top: 'bottom-full pb-2', bottom: 'top-full pt-2' } as const;
 
 function describedByOf(element: ReactElement): string | undefined {
   const props: unknown = element.props;
@@ -39,15 +47,18 @@ function describedByOf(element: ReactElement): string | undefined {
 
 export function Tooltip({ content, children, placement = 'top' }: TooltipProps): ReactElement {
   const id = useId();
-  const [open, setOpen] = useState(false);
-  const bubbleRef = useRef<HTMLSpanElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const open = hovered || focused;
+  const positionerRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key !== 'Escape') return;
       event.stopPropagation();
-      setOpen(false);
+      setHovered(false);
+      setFocused(false);
     }
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
@@ -56,13 +67,13 @@ export function Tooltip({ content, children, placement = 'top' }: TooltipProps):
   }, [open]);
 
   useLayoutEffect(() => {
-    const bubble = bubbleRef.current;
-    if (!open || bubble === null) return;
-    bubble.style.removeProperty('margin-left');
-    const rect = bubble.getBoundingClientRect();
+    const positioner = positionerRef.current;
+    if (!open || positioner === null) return;
+    positioner.style.removeProperty('margin-left');
+    const rect = positioner.getBoundingClientRect();
     const right = document.documentElement.clientWidth - VIEWPORT_GUTTER_PX;
-    if (rect.left < VIEWPORT_GUTTER_PX) bubble.style.marginLeft = `${VIEWPORT_GUTTER_PX - rect.left}px`;
-    else if (rect.right > right) bubble.style.marginLeft = `${right - rect.right}px`;
+    if (rect.left < VIEWPORT_GUTTER_PX) positioner.style.marginLeft = `${VIEWPORT_GUTTER_PX - rect.left}px`;
+    else if (rect.right > right) positioner.style.marginLeft = `${right - rect.right}px`;
   }, [open]);
 
   const describedBy = [describedByOf(children), id].filter((value) => value !== undefined).join(' ');
@@ -72,33 +83,32 @@ export function Tooltip({ content, children, placement = 'top' }: TooltipProps):
     <span
       className="relative inline-flex"
       onFocus={() => {
-        setOpen(true);
+        setFocused(true);
       }}
       onBlur={() => {
-        setOpen(false);
+        setFocused(false);
       }}
       onPointerEnter={() => {
-        setOpen(true);
+        setHovered(true);
       }}
       onPointerLeave={() => {
-        setOpen(false);
+        setHovered(false);
       }}
     >
       {cloneElement(children, triggerProps)}
       <span
-        ref={bubbleRef}
-        id={id}
-        role="tooltip"
+        ref={positionerRef}
         hidden={!open}
-        data-placement={placement}
-        className={[
-          'pointer-events-none absolute left-1/2 z-10 w-max max-w-56 -translate-x-1/2 px-2 py-1',
-          'rounded-v7-chrome-sm border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel-2 shadow-v7-chrome',
-          'font-v7-body text-v7-caption font-bold text-v7-text',
-          PLACEMENT_CLASS[placement],
-        ].join(' ')}
+        className={`absolute left-1/2 z-10 w-max max-w-56 -translate-x-1/2 ${PLACEMENT_CLASS[placement]}`}
       >
-        {content}
+        <span
+          id={id}
+          role="tooltip"
+          data-placement={placement}
+          className={`block bg-v7-panel-2 px-2 py-1 font-v7-body text-v7-caption font-bold text-v7-text ${CHROME_SHAPE_SM_CLASS}`}
+        >
+          {content}
+        </span>
       </span>
     </span>
   );

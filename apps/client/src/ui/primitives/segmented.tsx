@@ -8,8 +8,14 @@
  */
 
 import { useRef, type KeyboardEvent, type ReactElement } from 'react';
-import { CHROME_FOCUS_CLASS } from './chrome-classes';
-import { edgeEnabledIndex, nextEnabledIndex, rovingKeyFor } from './roving-focus';
+import {
+  CHROME_TRACK_CLASS,
+  CHROME_TRACK_IDLE_CLASS,
+  CHROME_TRACK_ITEM_CLASS,
+  CHROME_TRACK_SELECTED_CLASS,
+  CHROME_TRACK_SELECTED_LOCKED_CLASS,
+} from './chrome-classes';
+import { edgeEnabledIndex, hasCommandModifier, nextEnabledIndex, rovingKeyFor } from './roving-focus';
 
 export interface SegmentedOption<T extends string | number> {
   readonly value: T;
@@ -41,6 +47,7 @@ export function Segmented<T extends string | number>({
       : edgeEnabledIndex(optionDisabled, 'first');
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
+    if (hasCommandModifier(event)) return;
     const key = rovingKeyFor(event.key, 'radios');
     if (key === null) return;
     event.preventDefault();
@@ -57,7 +64,7 @@ export function Segmented<T extends string | number>({
       role="radiogroup"
       aria-label={label}
       {...(disabled ? { 'aria-disabled': true } : {})}
-      className="inline-flex max-w-full gap-1 rounded-v7-chrome border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel p-1"
+      className={CHROME_TRACK_CLASS}
     >
       {options.map((option, index) => {
         const checked = index === checkedIndex;
@@ -75,12 +82,13 @@ export function Segmented<T extends string | number>({
             onKeyDown={(event) => {
               onKeyDown(event, index);
             }}
-            className={[
-              'min-h-11 min-w-11 flex-1 rounded-v7-chrome-sm px-3 font-v7-display text-v7-body leading-none',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              CHROME_FOCUS_CLASS,
-              checked ? 'bg-v7-cta text-v7-text-on-cta' : 'text-v7-text-2 enabled:hover:text-v7-text',
-            ].join(' ')}
+            className={`${CHROME_TRACK_ITEM_CLASS} min-w-11 flex-1 px-3 ${
+              checked
+                ? optionDisabled[index] === true
+                  ? CHROME_TRACK_SELECTED_LOCKED_CLASS
+                  : CHROME_TRACK_SELECTED_CLASS
+                : CHROME_TRACK_IDLE_CLASS
+            }`}
           >
             {option.label}
           </button>

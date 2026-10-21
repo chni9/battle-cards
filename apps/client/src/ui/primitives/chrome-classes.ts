@@ -9,13 +9,34 @@
 
 import type { ButtonVariant } from './button';
 
-export const CHROME_SHAPE_CLASS =
-  'border-(length:--chrome-outline-width) border-v7-ink rounded-v7-chrome shadow-v7-chrome';
-export const CHROME_SHAPE_SM_CLASS =
-  'border-(length:--chrome-outline-width) border-v7-ink rounded-v7-chrome-sm shadow-v7-chrome';
+/** The 3 px ink outline every chrome shape starts from. */
+export const CHROME_OUTLINE_CLASS = 'border-(length:--chrome-outline-width) border-v7-ink';
+export const CHROME_SHAPE_CLASS = `${CHROME_OUTLINE_CLASS} rounded-v7-chrome shadow-v7-chrome`;
+export const CHROME_SHAPE_SM_CLASS = `${CHROME_OUTLINE_CLASS} rounded-v7-chrome-sm shadow-v7-chrome`;
+/** Outlined and flat, with no drop shadow: badges and text inputs sit on a surface, not above it. */
+export const CHROME_FLAT_SM_CLASS = `${CHROME_OUTLINE_CLASS} rounded-v7-chrome-sm`;
+/** The round chrome frame of an avatar. */
+export const CHROME_DISC_CLASS = `${CHROME_OUTLINE_CLASS} rounded-full shadow-v7-chrome`;
 export const CHROME_FOCUS_CLASS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v7-text';
-export const CHROME_DISABLED_CLASS = 'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none';
+
+/**
+ * Disabled chrome reads "off" rather than faded: `--panel-2` fill, `--text-2` label, a dashed
+ * outline, no drop shadow and dimmed icons. A faded `--cta` turned muddy olive on `--panel`.
+ * The same look applies to `aria-disabled="true"`, which keeps a control focusable (Carousel
+ * end-stops, Button `focusableWhenDisabled`).
+ */
+export const CHROME_DISABLED_CLASS =
+  'disabled:cursor-not-allowed disabled:border-dashed disabled:bg-v7-panel-2 disabled:text-v7-text-2 disabled:shadow-none disabled:[&_svg]:opacity-50 ' +
+  'aria-disabled:cursor-not-allowed aria-disabled:border-dashed aria-disabled:bg-v7-panel-2 aria-disabled:text-v7-text-2 aria-disabled:shadow-none aria-disabled:[&_svg]:opacity-50';
+
+/** The outlined track that holds Tabs and Segmented items. */
+export const CHROME_TRACK_CLASS = `${CHROME_OUTLINE_CLASS} inline-flex max-w-full gap-1 rounded-v7-chrome bg-v7-panel p-1`;
+export const CHROME_TRACK_ITEM_CLASS = `min-h-11 rounded-v7-chrome-sm font-v7-display text-v7-body leading-none disabled:cursor-not-allowed ${CHROME_FOCUS_CLASS}`;
+export const CHROME_TRACK_SELECTED_CLASS = 'bg-v7-cta text-v7-text-on-cta';
+/** The selected item of a locked track keeps its place in `--text-2`, not a faded `--cta`. */
+export const CHROME_TRACK_SELECTED_LOCKED_CLASS = 'bg-v7-text-2 text-v7-text-on-cta';
+export const CHROME_TRACK_IDLE_CLASS = 'text-v7-text-2 enabled:hover:text-v7-text disabled:opacity-50';
 
 /** Fill and label per variant. Labels on the three CTA fills use `--text-on-cta` (§5.1). */
 export const BUTTON_VARIANT_CLASS: Readonly<Record<ButtonVariant, string>> = {

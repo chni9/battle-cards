@@ -430,13 +430,21 @@ The icon set is in Icons; the L72-08 chrome primitives are in Primitives below.
 
 ## Primitives (apps/client/src/ui/primitives/, L72-08)
 
-Chrome classes come only from `ui/primitives/chrome-classes.ts` (`CHROME_SHAPE_CLASS`,
-`CHROME_SHAPE_SM_CLASS`, `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `BUTTON_VARIANT_CLASS`,
-`chromePressClass`, `motionAttribute`, `iconNeedsWell`, `ICON_WELL_CLASS`): a primitive never
-restates the outline, shadow, radius or press offset as a literal, and every class map is a
-literal string. Focus is a 2px `--text` outline, offset 2px, on `:focus-visible`. Each
-animated control carries `data-motion="reduced" | "full"`.
+Chrome classes come only from `ui/primitives/chrome-classes.ts`. Shape: `CHROME_OUTLINE_CLASS`
+(the 3px ink outline), `CHROME_SHAPE_CLASS`, `CHROME_SHAPE_SM_CLASS`, `CHROME_FLAT_SM_CLASS`
+(outline and small radius, no shadow: badges, inputs), `CHROME_DISC_CLASS` (avatars).
+State: `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `chromePressClass`, `motionAttribute`.
+Fills: `BUTTON_VARIANT_CLASS`, `iconNeedsWell`, `ICON_WELL_CLASS`. Tracks: `CHROME_TRACK_*`
+for Tabs and Segmented. A primitive never restates the outline, shadow, radius or press offset
+as a literal; every class map is a literal string, and composed constants are template
+literals of those strings, so Tailwind still sees each class. Focus is a 2px `--text` outline,
+offset 2px, on `:focus-visible`. Each animated control carries `data-motion="reduced" | "full"`.
 
+- **Disabled look:** disabled chrome reads "off", not faded. The fill turns `--panel-2`, the
+  label `--text-2`, the outline dashed; the drop shadow goes and icons dim to 50%. The same
+  look applies to `aria-disabled="true"`, which keeps a control focusable. A faded `--cta`
+  turned muddy olive on `--panel`. A locked Segmented keeps its selected option in `--text-2`.
+  A disabled Slider thumb turns `--text-2` and its readout dims.
 - **Button:** `primary` (`--cta`), `secondary` (`--cta-2`) and `danger` (`--danger`) fills are
   labelled in `--text-on-cta` at 13.7 / 7.7 / 6.0 : 1; `quiet` is `--panel-2` with `--text`.
   Lilita One, 44px floor (`md`) or 56px (`lg`), `type="button"` by default. Press rule: the
@@ -444,53 +452,91 @@ animated control carries `data-motion="reduced" | "full"`.
   motion it only dims (`brightness-90`), with no translate. A disabled button shows
   `disabledReason` as visible `--text-2` caption text under it, joined to its
   `aria-describedby` (§11); `reserveReasonSlot` keeps that line, empty and aria-hidden.
+  `className` lands on the outermost element: the button, or the wrapper holding the button
+  and its reason line.
+- **Focusable disabled actions (Q39):** a natively disabled button leaves the Tab order, so its
+  reason is reachable only by sight. When the reason matters to keyboard and screen-reader
+  users (Draw, Shop and Unspy in L74), the caller passes `disabled` with
+  `focusableWhenDisabled`. The button then renders `aria-disabled="true"` instead of
+  `disabled`, stays focusable with its reason described, swallows activation (click, Enter,
+  Space) and has no press.
 - **Icon wells:** on the three CTA fills an icon always sits in a round `--bg-0` well
   (`ICON_WELL_CLASS`), whatever its name, so no icon can meet a fill within CIEDE2000 20 of its
   body (Icons › Accessibility and use) and a later icon cannot either. On `quiet` the icon sits
   on the fill. Button and IconButton apply it; Pill, Badge, Toggle and KitTile put icons only
   on `--panel` or `--panel-2`, and Avatar draws its cross in a well.
 - **IconButton:** a 44px square, `quiet` by default. Its `title` defaults to the `aria-label`
-  (L59-01); `title={null}` removes it. `count > 0` draws an aria-hidden `--cta` badge, so the
-  label carries the number. The root is `relative`: position it with a wrapper.
+  (L59-01); `title={null}` removes it. `count > 0` draws a `--cta` badge that is aria-hidden,
+  so the caller must put the number in `aria-label` ("Chat, 3 unread"). Icon and badge share
+  one grid cell, so the root is not `relative` and `className` (`absolute top-3 right-3`)
+  positions the button itself. `aria-disabled` gives the disabled look without a press and
+  keeps focus; the caller's handler must be a no-op then.
 - **Pill:** icon plus a Lilita value, read as "{label} {value}". A hidden value shows `?` and
   reads "{label} unknown", which is also its `title`. The tone is a 2px inset ring (`life`,
   `point`, `upgrade`, `shield`; `neutral` has none), never the value's color. `lg` puts the
   value on `--type-vital` (own lives at least 20px). The caption word shows with
   `captionVisible` and is screen-reader only otherwise.
 - **Badge:** a Nunito caption label (or screen-reader only), a Lilita value, the tone as an
-  inset ring. **BadgeGroup** shows 2 badges, then `+n`; the marker is a 44px button only with
-  `onOverflowClick`.
+  inset ring. **BadgeGroup** shows 2 badges, then `+n`. The marker is a 44px button only with
+  `onOverflowClick`, and then carries the chrome shadow so it reads as pressable.
+  `overflowLabel` adds screen-reader words after `+n` (name "+2 more statuses"). The name keeps
+  starting with the visible text (WCAG 2.5.3); without it the name is just `+n`.
 - **Avatar:** a round chrome frame holding the portrait, or a seat-hued disc (`v7SeatColor`,
   `--text-2` for an unknown seat) with the name's first grapheme in `--text-on-cta`. The
   accessible name is `alt`, else the name. Eliminated: a grayscale face and the `eliminated`
   cross in a `--bg-0` well outside the filter, so it keeps its color on every seat hue.
 - **Tabs:** a tablist on `--panel`, the selected tab `--cta` with `--text-on-cta`, a roving
   tabindex. ArrowLeft and ArrowRight move and select (wrapping, skipping disabled tabs), Home
-  and End jump to the first and last enabled tab; one labelled tabpanel.
+  and End jump to the first and last enabled tab; one labelled tabpanel. Ids come from
+  `idPrefix` (`{prefix}-tab-{id}`, `{prefix}-panel`) or `useId`.
 - **Segmented:** a radiogroup of `aria-checked` radios, the checked one `--cta`. Arrow keys on
   both axes move and select; `disabled` locks the group (`aria-disabled`). Tabs and Segmented
-  share `roving-focus.ts`.
+  share `roving-focus.ts`. Both ignore Alt, Ctrl and Meta chords (`hasCommandModifier`), which
+  belong to the browser; Shift is left alone.
 - **Slider:** a native range, `--bg-0` track and `--cta` thumb in the chrome outline, with a
   Lilita readout. Commit rule: `onChange` is live, and `onCommit` fires once per gesture, on
   pointer release, on keyup after a step key, on blur, or on a native `change` outside a
   gesture. It never fires for the latest known value: the last commit, or the `value` prop
-  when that changed after it.
+  once that changed after it. Each new prop bumps a version, so a prop that returns to an old
+  value (60, commit 90, prop 90, prop 60) still lets 90 be sent again.
 - **Toggle:** an `aria-pressed` button. The state reads from the knob position
   (`data-toggle-knob`); the `--cta-2` track is a second cue. The knob slides only when motion
   is full.
 - **Tooltip:** a `--panel-2` bubble, always rendered (`hidden` while closed) and appended to
-  the trigger's `aria-describedby`; it opens on focus or hover. Esc closes it, and a
-  capture-phase listener swallows that press, so one Esc dismisses one layer (Q49). Once open,
-  it is nudged inside an 8px viewport gutter.
+  the trigger's `aria-describedby`. It shows while the trigger is hovered or focused, tracked
+  separately: leaving with the pointer keeps a focused one open, and a blur keeps a hovered
+  one open. It is hoverable (WCAG 1.4.13): the bubble takes pointer events, and the 8px gap is
+  padding on its positioning span inside the hover region. Once open, it is nudged inside an
+  8px viewport gutter. Esc: a capture-phase `document` keydown listener closes it and stops
+  propagation. That press never reaches bubble-phase listeners or React handlers, so one Esc
+  dismisses one layer (Q49). It cannot stop `window` capture listeners, or `document` capture
+  listeners registered earlier, so sheet Esc handling (L72-09) listens in the bubble phase or
+  through React.
 - **ScrollArea:** `y` (default), `x` or `both`, overscroll contained, the cross axis clipped. A
-  `label` makes it a focusable named region.
+  `label` makes it a focusable named region. Without one, Chromium still makes an overflowing
+  scroller with nothing focusable inside a Tab stop, but an unnamed one, so pass a `label`
+  whenever the content can overflow.
 - **TextField:** 16px (`--type-input`) Nunito on `--panel-2`, 44px tall, so iOS never zooms on
   focus. The hint is `--text-2`. An error sets `aria-invalid`, turns the border `--danger` and
-  prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`).
-- **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons and
-  aria-hidden dots. Paging scrolls smoothly, or instantly under reduced motion (§8.3); a swipe
-  reports its index from the scroll position; the chevrons stop click and pointerdown from
-  reaching a dismiss handler. `gridAtDesktop` shows a grid with no controls in desktop mode.
+  prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
+  live region that is always present, so an error that appears later is announced. The
+  placeholder is `--text-2` at 70% opacity: 5.20:1 on `--panel-2` (`ui/contrast.ts`; 60%
+  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1).
+- **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons, aria-hidden
+  dots and a screen-reader status line, "{label}, {n} of {m}" (`role="status"`).
+  - Paging scrolls smoothly, or instantly under reduced motion (§8.3). A swipe reports its
+    index from the scroll position.
+  - A starting slide (initial `index`, or a grid-to-track switch) is placed with
+    `scrollTo({ behavior: 'instant' })`. That overrides the track's `scroll-smooth`, which a
+    plain `scrollLeft` assignment would follow, and reports nothing while it lands.
+  - At either end the chevron is `aria-disabled`, not `disabled`, so keyboard focus stays on it
+    (WCAG 2.4.3), and activating it changes nothing.
+  - The chevrons stop click and pointerdown from reaching a dismiss handler.
+  - The track is `tabIndex={-1}`, out of the Tab order, because the chevrons and the status
+    line already page it and name the position; content inside the slides stays reachable.
+  - `gridAtDesktop` shows a grid with no controls and no carousel semantics in desktop mode.
+    Its columns follow the slide count (2, 3, 4 → 2, 3, 2 columns; 5+ → 3, or 4 when 3 would
+    leave one alone).
 - **KitTile:** a `--panel` chrome card with a decorative portrait, the Lilita name and icon
   stats with screen-reader labels. Selected: a `--cta` ring outside the outline and
   `aria-pressed`. Excluded: a grayscale portrait and the word "Excluded" (`EXCLUDED_LABEL`),
@@ -506,16 +552,20 @@ scroll, with the window as the fallback. Carousel `gridAtDesktop`, Sheet placeme
 and the L73 seat layout reuse it.
 
 ### Copy
-`ui/ui-copy.ts` holds only the spec v7 §10.6 new strings a `ui/` component needs:
-`EXCLUDED_LABEL` "Excluded" (L72-08); L72-09 adds `MINIMIZE_LABEL` and L72-16
-`TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and next, the
-KitTile info control) comes from the caller's existing copy.
+`ui/ui-copy.ts` holds only the new strings a `ui/` component needs, each listed in the PR for
+designer review (spec v7 §10.6): `EXCLUDED_LABEL` "Excluded" and `carouselPositionLabel`
+("{label}, {n} of {m}", the Carousel status line), both L72-08. L72-09 adds `MINIMIZE_LABEL`
+and L72-16 adds `TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and
+next, the KitTile info control, the BadgeGroup `overflowLabel`) comes from the caller's
+existing copy.
 
 ### /dev/ui gallery
 DEV only: `isDevUiRoute` (`dev/dev-ui-route.ts`) matches `/dev/ui` and below, and `App.tsx`
 imports `dev/ui-gallery.tsx` lazily behind `import.meta.env.DEV`, so production builds carry
-no gallery chunk. The page paints on `.v7-ground`, links each section from a nav and renders
-each entry on a `--panel` card, flowing with the page (no `vh` or `dvh`). Each `ui/` area adds
+no gallery chunk. html, body and `#root` clip their overflow (`index.css`), so the
+`.v7-ground` root is the scroll container (`h-full overflow-y-auto overscroll-contain`, as on
+Home, never `vh` or `dvh`). Its halos therefore size to the visible box. The page links each
+section from a nav and renders each entry on a `--panel` card. Each `ui/` area adds
 `ui/<area>/<area>.gallery.tsx` exporting `gallery: GallerySection`; `import.meta.glob` finds
 it, and `collectGallerySections` sorts the sections by id and rejects a duplicate id.
 Stateful demos live in a components-only sibling (`primitives-gallery-demos.tsx`). Demo copy

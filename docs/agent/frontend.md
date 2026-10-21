@@ -147,15 +147,35 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `text-field`, `carousel`, `kit-tile`), each a named export of the same PascalCase name
   (`import { Button } from '../ui/primitives/button'`). There is no barrel file. Details per
   primitive: `/DESIGN.md` › Primitives.
-- **Chrome helpers:** `ui/primitives/chrome-classes.ts` is the only source of the chrome shape,
-  focus, disabled, variant and press classes (`chromePressClass(reduced)`,
-  `motionAttribute(reduced)`) and of the icon-well rule (`iconNeedsWell(variant)`,
-  `ICON_WELL_CLASS`: on `--cta`, `--cta-2` and `--danger` fills an icon sits in a `--bg-0`
-  well). New chrome reuses these constants instead of restating `border-v7-ink` or
-  `shadow-v7-chrome` combinations. `avatar-initial.ts` holds the grapheme initial.
-- **Keyboard model:** `ui/primitives/roving-focus.ts` (`rovingKeyFor(key, 'tabs' | 'radios')`,
-  `nextEnabledIndex`, `edgeEnabledIndex`) backs Tabs and Segmented. A new roving widget reuses
-  it rather than writing its own arrow-key switch.
+- **Chrome helpers:** `ui/primitives/chrome-classes.ts` is the only source of the chrome
+  classes:
+  - shape: `CHROME_OUTLINE_CLASS`, `CHROME_SHAPE_CLASS`, `CHROME_SHAPE_SM_CLASS`,
+    `CHROME_FLAT_SM_CLASS`, `CHROME_DISC_CLASS`, and `CHROME_TRACK_*` for Tabs and Segmented;
+  - state: focus, the "off" disabled look (`CHROME_DISABLED_CLASS`, which covers `disabled` and
+    `aria-disabled="true"`), variants and press (`chromePressClass(reduced)`,
+    `motionAttribute(reduced)`);
+  - the icon-well rule: `iconNeedsWell(variant)` and `ICON_WELL_CLASS`. On `--cta`, `--cta-2`
+    and `--danger` fills an icon sits in a `--bg-0` well.
+
+  New chrome composes these constants instead of restating the outline, radius or shadow
+  (`border-v7-ink`, `shadow-v7-chrome` and so on). `avatar-initial.ts` holds the grapheme
+  initial.
+- **`className` target:** a primitive puts `className` on its outermost element. That is the
+  Button wrapper when a reason line is present; IconButton has no `relative` root, so
+  `absolute top-3 right-3` positions it directly.
+- **Disabled but focusable:** where a disabled reason must reach keyboard and screen-reader
+  users (Q39), pass `disabled` with `focusableWhenDisabled` to Button: it renders
+  `aria-disabled="true"`, stays in the Tab order and swallows activation. The Carousel
+  end-stops use `aria-disabled` on IconButton, so paging to an end keeps focus (WCAG 2.4.3,
+  `docs/agent/decisions.md` 2026-10-21). Never toggle native `disabled` on a focused control.
+- **Keyboard model:** `ui/primitives/roving-focus.ts` backs Tabs and Segmented:
+  `rovingKeyFor(key, 'tabs' | 'radios')`, `nextEnabledIndex`, `edgeEnabledIndex`, and
+  `hasCommandModifier(event)`, which leaves Alt, Ctrl and Meta chords to the browser. A new
+  roving widget reuses it rather than writing its own arrow-key switch.
+- **Esc layering:** Tooltip swallows its closing Esc with a capture-phase `document` listener,
+  which stops bubble-phase listeners and React handlers but not `window` capture listeners or
+  `document` capture listeners registered earlier. Sheet Esc handling (L72-09) therefore
+  listens in the bubble phase or through React.
 - **`data-motion`:** every animated primitive puts `data-motion="reduced" | "full"` on the
   element that moves (Button, IconButton and Toggle on the `<button>`, Carousel on its scroll
   track, whose `scroll-smooth` class and `scrollTo` behavior follow it) and applies transition

@@ -259,7 +259,7 @@ export function ScrollAreaDemo(): ReactElement {
           ))}
         </ol>
       </ScrollArea>
-      <ScrollArea axis="x" className="pb-2">
+      <ScrollArea axis="x" label="Lives strip" className="pb-2">
         <div className="flex w-max gap-2">
           {Array.from({ length: 12 }, (_, index) => (
             <Pill key={index} icon="life" label="Lives" value={index + 1} resourceKind="life" />

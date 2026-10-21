@@ -1,14 +1,21 @@
 /**
  * Paged carousel for How to play and the Game over awards (technical spec v7 §4.2), following
- * the WAI-ARIA APG carousel: a region with `aria-roledescription="carousel"` and one named
- * `group` per slide (`aria-roledescription="slide"`).
+ * the WAI-ARIA APG carousel: a region with `aria-roledescription="carousel"`, one named
+ * `group` per slide (`aria-roledescription="slide"`) and a polite status line that reads
+ * "{label}, {n} of {m}" as the slide changes.
  *
  * The track is a horizontal scroll-snap strip of full-width slides, so a swipe works natively.
+ * It stays out of the Tab order: the chevrons page it and the status line names the position.
  * Previous and Next scroll the track from their click handler, smoothly unless motion is
- * reduced (§8.3); a swipe reports its index from the scroll position. The chevrons stop click
- * and pointerdown from reaching an enclosing dismiss handler (a sheet backdrop). With
- * `gridAtDesktop`, the desktop layout mode (`viewportModeFor`, §6.4) shows every slide in a
- * grid with no paging controls.
+ * reduced (§8.3); a swipe reports its index from the scroll position. A starting slide is
+ * placed with an instant scroll, which overrides the track's `scroll-smooth`, so it neither
+ * animates nor reports the slides in between. At either end the chevron is `aria-disabled`
+ * rather than `disabled`, so keyboard focus stays on it (WCAG 2.4.3). The chevrons stop click
+ * and pointerdown from reaching an enclosing dismiss handler (a sheet backdrop).
+ *
+ * With `gridAtDesktop`, the desktop layout mode (`viewportModeFor`, §6.4) shows every slide in
+ * a grid with no paging controls and no carousel semantics; the column count follows the slide
+ * count so no slide is left alone on a row (four make two by two).
  */
 
 import {
@@ -21,6 +28,7 @@ import {
   type SyntheticEvent,
 } from 'react';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
+import { carouselPositionLabel } from '../ui-copy';
 import { useViewportMode } from '../use-visual-viewport-box';
 import { motionAttribute } from './chrome-classes';
 import { IconButton } from './icon-button';
@@ -51,15 +59,42 @@ function slideOffset(track: HTMLElement, index: number): number | null {
   return slide instanceof HTMLElement ? slide.offsetLeft : null;
 }
 
+/**
+ * Scroll the track to a slide. When the track really moves, `pending` holds the target until
+ * a scroll event lands on it, so intermediate positions never report the slides passed over.
+ * A track already in place sets no guard, because no scroll event would come to clear it.
+ */
+function scrollTrackTo(
+  track: HTMLElement,
+  index: number,
+  pending: { current: number | null },
+  behavior: ScrollBehavior,
+): void {
+  const left = slideOffset(track, index);
+  if (left === null) return;
+  if (Math.abs(track.scrollLeft - left) >= 1) pending.current = index;
+  track.scrollTo({ left, behavior });
+}
+
 function stopPropagation(event: SyntheticEvent): void {
   event.stopPropagation();
 }
 
-function Slide({ slide }: { slide: CarouselSlide }): ReactElement {
+/** Desktop grid columns that never leave one slide alone on the last row. */
+const GRID_COLUMNS_CLASS = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' } as const;
+
+function gridColumnsFor(count: number): keyof typeof GRID_COLUMNS_CLASS {
+  if (count <= 1) return 1;
+  if (count === 2 || count === 4) return 2;
+  if (count === 3) return 3;
+  return count % 3 === 1 ? 4 : 3;
+}
+
+function Slide({ slide, inCarousel }: { slide: CarouselSlide; inCarousel: boolean }): ReactElement {
   return (
     <div
       role="group"
-      aria-roledescription="slide"
+      {...(inCarousel ? { 'aria-roledescription': 'slide' } : {})}
       aria-label={slide.label}
       {...slide.dataAttributes}
       className="w-full min-w-0 shrink-0 snap-start"
@@ -86,9 +121,11 @@ export function Carousel({
   const current = clampIndex(index ?? ownIndex, slides.length);
   /** The index last scrolled to or reported, so neither a scroll nor a prop echo repeats it. */
   const lastRequested = useRef(current);
-  /** A paging scroll in flight: intermediate scroll positions must not report the old slide. */
+  /** A scroll in flight: intermediate scroll positions must not report the slides passed over. */
   const pendingTarget = useRef<number | null>(null);
   const behavior = reduced ? 'auto' : 'smooth';
+  const atStart = current === 0;
+  const atEnd = current === slides.length - 1;
 
   function report(next: number): void {
     lastRequested.current = next;
@@ -96,24 +133,21 @@ export function Carousel({
     onIndexChange?.(next);
   }
 
+  // An end-stop chevron is aria-disabled, never disabled, so activating it lands here and stays put.
   function page(step: 1 | -1): void {
     const target = clampIndex(current + step, slides.length);
     if (target === current) return;
     const track = trackRef.current;
-    const left = track === null ? null : slideOffset(track, target);
-    if (track !== null && left !== null) {
-      pendingTarget.current = target;
-      track.scrollTo({ left, behavior });
-    }
+    if (track !== null) scrollTrackTo(track, target, pendingTarget, behavior);
     report(target);
   }
 
-  // Place a non-zero starting slide before paint, with no animation.
+  // Place a non-zero starting slide before paint. 'instant' overrides the track's scroll-smooth,
+  // which a plain scrollLeft assignment would follow (animating from 0 and reporting 0, 1, ...).
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (layout !== 'track' || track === null || lastRequested.current === 0) return;
-    const left = slideOffset(track, lastRequested.current);
-    if (left !== null) track.scrollLeft = left;
+    scrollTrackTo(track, lastRequested.current, pendingTarget, 'instant');
   }, [layout]);
 
   // A controlled index the carousel did not request itself scrolls the track to it.
@@ -121,18 +155,15 @@ export function Carousel({
     if (index === undefined || index === lastRequested.current) return;
     lastRequested.current = index;
     const track = trackRef.current;
-    const left = track === null ? null : slideOffset(track, index);
-    if (track === null || left === null) return;
-    pendingTarget.current = index;
-    track.scrollTo({ left, behavior: reduced ? 'auto' : 'smooth' });
+    if (track !== null) scrollTrackTo(track, index, pendingTarget, reduced ? 'auto' : 'smooth');
   }, [index, reduced]);
 
   if (layout === 'grid') {
     return (
-      <section aria-roledescription="carousel" aria-label={label} data-carousel-layout="grid">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-4">
+      <section aria-label={label} data-carousel-layout="grid">
+        <div className={`grid gap-4 ${GRID_COLUMNS_CLASS[gridColumnsFor(slides.length)]}`}>
           {slides.map((slide) => (
-            <Slide key={slide.id} slide={slide} />
+            <Slide key={slide.id} slide={slide} inCarousel={false} />
           ))}
         </div>
       </section>
@@ -148,6 +179,7 @@ export function Carousel({
     >
       <div
         ref={trackRef}
+        tabIndex={-1}
         data-carousel-track
         data-motion={motionAttribute(reduced)}
         onScroll={(event) => {
@@ -167,20 +199,23 @@ export function Carousel({
           pendingTarget.current = null;
         }}
         className={[
-          'relative flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain',
+          'relative flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain outline-none',
           '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           reduced ? '' : 'scroll-smooth',
         ].join(' ')}
       >
         {slides.map((slide) => (
-          <Slide key={slide.id} slide={slide} />
+          <Slide key={slide.id} slide={slide} inCarousel />
         ))}
       </div>
+      <p role="status" className="sr-only">
+        {carouselPositionLabel(label, current + 1, slides.length)}
+      </p>
       <div className="flex items-center justify-between gap-3">
         <IconButton
           aria-label={previousLabel}
           icon="chevron-left"
-          disabled={current === 0}
+          {...(atStart ? { 'aria-disabled': true } : {})}
           onPointerDown={stopPropagation}
           onClick={(event) => {
             event.stopPropagation();
@@ -200,7 +235,7 @@ export function Carousel({
         <IconButton
           aria-label={nextLabel}
           icon="chevron-right"
-          disabled={current === slides.length - 1}
+          {...(atEnd ? { 'aria-disabled': true } : {})}
           onPointerDown={stopPropagation}
           onClick={(event) => {
             event.stopPropagation();

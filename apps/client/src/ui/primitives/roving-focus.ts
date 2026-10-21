@@ -36,6 +36,18 @@ const RADIO_KEYS: Readonly<Record<string, RovingKey>> = {
   ArrowLeft: 'previous',
 };
 
+/**
+ * Alt, Ctrl and Meta chords belong to the browser and the OS (history, tab switching, word
+ * jumps), so roving handlers ignore them. Shift is left alone.
+ */
+export function hasCommandModifier(event: {
+  readonly altKey: boolean;
+  readonly ctrlKey: boolean;
+  readonly metaKey: boolean;
+}): boolean {
+  return event.altKey || event.ctrlKey || event.metaKey;
+}
+
 export function rovingKeyFor(key: string, pattern: 'tabs' | 'radios'): RovingKey | null {
   return (pattern === 'tabs' ? TAB_KEYS : RADIO_KEYS)[key] ?? null;
 }

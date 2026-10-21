@@ -4431,3 +4431,25 @@ Source: `docs/technical_spec_v7.md` §5.1 (normative), L72-05 review.
   `--panel`, 3:1 on `--panel-2`), which keeps large text safe on those grounds. No code change.
 
 ---
+
+## 2026-10-21 · [P] · [DISCREPANCY] Carousel end-stops are `aria-disabled`, not `disabled` (L72-08 review)
+
+Source: L72-08 fix round 1 (three reviews of `acd3398` plus skeptics), WCAG 2.2 SC 2.4.3 Focus
+Order and 2.4.7 Focus Visible; the L72-08 brief pinned `hasAttribute('disabled')` on the
+chevrons.
+
+- Paging a Carousel to its first or last slide used to set native `disabled` on the chevron
+  that had just been pressed. The browser's focus fixup then moved keyboard focus to `<body>`;
+  inside the L76/L77 sheets, focus would have left the trap.
+- Ruling: the end-stop chevron carries `aria-disabled="true"`, stays focusable and keeps the
+  disabled look (`CHROME_DISABLED_CLASS` now also styles `aria-disabled`, and IconButton drops
+  its press there). `page()` is a no-op at the ends, so activating an end-stop changes nothing.
+- The brief's carousel assertions moved from `hasAttribute('disabled')` to
+  `aria-disabled="true"`. Each now also asserts that activating the end-stop leaves the index
+  unchanged, and a keyboard test pins focus on Next at the last slide. No assertion was
+  weakened.
+- Follow-on: Button gains the optional `focusableWhenDisabled` for actions whose disabled
+  reason must stay reachable by keyboard (Q39). Native `disabled` stays the default elsewhere.
+  Never toggle native `disabled` on a control that can hold focus while it changes.
+
+---
