@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 1 |
+| 72 · Foundations | 21 | 2 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **1** |
+| **Total** | **134** | **2** |
 
 ## Designer questions still open
 
@@ -49,7 +49,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L72-01 | **Record V7 in AGENTS, decisions, deploy and PRODUCT.md.** **Acceptance:** An agent reading only `AGENTS.md` + `decisions.md` can tell that V7 is in progress and client-only, that the protocol stays 45, that the open backlog is `backlog_v7.md` and that the promotion freeze applies. Golden rule 1 has the same meaning as rules spec §2 (no Lot 54 summed-volley wording). `PRODUCT.md` exists at the repo root. `deploy.md` describes the freeze and the hotfix path. No code changes. `pnpm verify` green. | M | Low | — | Done |
-| L72-02 | **Split cross-screen source-text tests and record the classification.** **Acceptance:** Every React-free module under `design/` and `screens/table/` has a disposition row. Every `readFileSync` test file appears in the classification with an owner lot. No test file reads sources owned by two lots. The number of `expect()` assertions is unchanged (moved verbatim, not dropped); the `it()` count rises only where a multi-screen `it()` is split by owner. `pnpm verify` green. | M | Medium | L72-01 | To do |
+| L72-02 | **Split cross-screen source-text tests and record the classification.** **Acceptance:** Every React-free module under `design/` and `screens/table/` has a disposition row. Every `readFileSync` test file appears in the classification with an owner lot. No test file reads sources owned by two lots. The number of `expect()` assertions is unchanged (moved verbatim, not dropped); the `it()` count rises only where a multi-screen `it()` is split by owner. `pnpm verify` green. | M | Medium | L72-01 | Done |
 | L72-03 | **Move fx, help, action-log and awards pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions. No moved module or shim is left under `fx/`, `help/` or `action-log/`. The lint override rejects a React import and `Date.now()` under `src/view-model/`. The old table, Home, What's new and Game over behave as before. `pnpm verify` green. | M | Low | L72-02 | To do |
 | L72-04 | **Move design and table pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions, including the Roulette art byte checks and the no-`100dvh` viewport test. The old table and lobby render as before. No file under `design/` or `screens/table/` still exports a moved function. `pnpm verify` green. | M | Low | L72-03 | To do |
 | L72-05 | **Add V7 tokens, fonts and ground side by side.** **Acceptance:** Tests: a WCAG ratio helper. `--text` and `--text-2` reach ≥ 4.5:1 on `--bg-0`, `--bg-1`, `--panel` and `--panel-2`. `--text-on-card` reaches ≥ 4.5:1 on both card-face stops. Every seat hue reaches ≥ 4.5:1 on the four grounds (seat names are text), and the hues are pairwise distinct by the metric recorded in `DESIGN.md`. CTA label/fill pairs (`--cta`, `--cta-2`, `--danger`) reach ≥ 4.5:1. A parity test shows `palette.ts` and `tokens.css` declare the same values. The reduced-motion helper returns no transform or scale. No V2 `@theme` value changes. `DESIGN.md` exists. Fonts are added with `pnpm add --filter @card-battle/client`. `pnpm verify` green. | M | Medium | L72-01, L72-04 | To do |
@@ -69,6 +69,55 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-19 | **Rebuild BotSeatLabel, PlayerName and ConnectionBadge in ui/.** **Acceptance:** Component tests render each state from a fake seat and assert the visible text and `aria` labels match today's copy. Added to the `/dev/ui` gallery. `pnpm verify` green. | S | Low | L72-08 | To do |
 | L72-20 | **Add the ?ui=next table switch.** **Acceptance:** Resolver tests: next, classic, stored, tutorial and a throwing storage. With the switch on or off the same table renders today. The literals asserted by the `inbox-route`, `admin-route`, `claim-seat-dialog`, `tutorial-hints-independence` and `feedback-surfaces` source-text tests stay in place; no code is deleted, so nothing needs classifying. `pnpm verify` green. | S | Medium | L72-01 | To do |
 | L72-21 | **Run the Lot 72 design and browser gate.** **Acceptance:** The detector is clean on V7 files. Critique notes are in the PR. "Lot 72 verified" with room codes is in `frontend.md`. Contact-sheet sign-off is recorded, or marked pending before any screen uses the new art. `pnpm verify` green. | M | Low | L72-01…L72-20 | To do |
+
+### §4.1 pure-module dispositions
+
+Regenerated by L72-02 at 6e4575a: the 26 non-test .ts modules under design/ and screens/table/ plus the §4.1 modules elsewhere. L72-03/L72-04 move exactly these with git mv (basename kept, tests beside their module, only import and readFileSync paths change, no shim).
+
+| Module | React import | Disposition | Destination | Task | Tests that move with it |
+|---|---|---|---|---|---|
+| `fx/incoming-threat-diff.ts` | none | Move | `view-model/incoming-threat-diff.ts` | L72-03 | `fx/incoming-threat-diff.test.ts` |
+| `fx/threat-tone.ts` | none | Move; keeps `import type { ThreatTone } from '../fx/table-fx-types'` | `view-model/threat-tone.ts` | L72-03 | `fx/threat-tone.test.ts` |
+| `fx/opponent-token-chips.ts` | none | Move | `view-model/opponent-token-chips.ts` | L72-03 | `fx/opponent-token-chips.test.ts` |
+| `action-log/action-log.ts` | none | Move | `view-model/action-log.ts` | L72-03 | `action-log/action-log.test.ts` |
+| `help/select-hint.ts` | none | Move | `view-model/select-hint.ts` | L72-03 | `help/select-hint.test.ts` |
+| `screens/game-over-awards.ts` | none | Move | `view-model/game-over-awards.ts` | L72-03 | `screens/game-over-awards.test.ts` |
+| `fx/play-flyout.ts` | none | Extract the five `*_ZONE` constants, `DECK_CARD_FLYOUT_WIDTH/HEIGHT`, `escapeSelector` and `tokenFlyout{Resource,Seat,Pov}Selector`; `visibleClientRect` and the `query*`/`measure*` functions stay in the file | `ui/fx-anchors.ts` (extracted part) | L72-03 | none move; `fx/play-flyout.test.ts` stays in `fx/` and L72-03 edits only its imports, never its `readFileSync(join(dir, 'play-flyout.ts'))` literals |
+| `help/hint-ids.ts` | none | Move | `ui/hint-ids.ts` | L72-03 | `help/hint-ids.test.ts` |
+| `help/release-storage.ts` | none | Move | `ui/release-storage.ts` | L72-03 | `help/release-storage.test.ts` |
+| `help/help-storage.ts` | none | Move | `ui/help-storage.ts` | L72-03 | `help/help-storage.test.ts`; `help/tutorial-hints-independence.test.ts` (logic-only after L72-02) moves to `ui/tutorial-hints-independence.test.ts` and its select-hint import becomes `../view-model/select-hint` |
+| `design/asset-lookup.ts` | none | Move | `ui/asset-lookup.ts` | L72-04 | `design/asset-lookup.test.ts` |
+| `design/seat-colors.ts` | type-only (`CSSProperties`) | Move | `ui/seat-colors.ts` | L72-04 | `design/seat-colors.test.ts` |
+| `design/components/effect-text-tokens.ts` | none | Move | `ui/effect-text-tokens.ts` | L72-04 | `design/components/effect-text-tokens.test.ts` |
+| `design/components/structured-cost.ts` | none | Move | `ui/structured-cost.ts` | L72-04 | `design/components/structured-cost.test.ts` |
+| `design/components/resource-captions.ts` | none | Move | `ui/resource-captions.ts` | L72-04 | `design/components/resource-captions.test.ts` |
+| `design/components/visual-viewport.ts` | none | Move | `ui/visual-viewport.ts` | L72-04 | none |
+| `design/components/dialog-width.ts` | none | Move | `ui/primitives/dialog-width.ts` | L72-04 | `design/components/dialog-width.test.ts`; `design/components/dialog.dialog-width.test.ts` stays (reads `dialog.tsx`) |
+| `screens/table/table-helpers.ts` | none | Move | `view-model/table-helpers.ts` | L72-04 | `screens/table/table-helpers.test.ts`, `screens/table/table-helpers-kit.test.ts` |
+| `screens/table/opponent-seat-resources.ts` | none | Move | `view-model/opponent-seat-resources.ts` | L72-04 | `screens/table/opponent-seat-resources.test.ts`; `screens/table/opponent-zone.opponent-seat-resources.test.ts` stays (reads `opponent-zone.tsx`) |
+| `screens/table/pending-chip-tone.ts` | none | Move | `view-model/pending-chip-tone.ts` | L72-04 | its `it()` moves out of `screens/table/pending-queue.test.ts` into `view-model/pending-chip-tone.test.ts` |
+| `screens/table/attack-targets.ts` | none | Move | `view-model/attack-targets.ts` | L72-04 | `screens/table/attack-targets.test.ts` |
+| `screens/table/chat-unread.ts` | none | Move | `view-model/chat-unread.ts` | L72-04 | `screens/table/chat-unread.test.ts` |
+| `screens/table/table-banner.ts` | none | Move | `view-model/table-banner.ts` | L72-04 | `screens/table/table-banner.test.ts`; `screens/table/your-turn-flash.table-banner.test.ts` stays (reads `your-turn-flash.tsx`) |
+| `screens/table/tutorial-coach-copy.ts` | none | Move | `view-model/tutorial-coach-copy.ts` | L72-04 | `screens/table/tutorial-coach-copy.test.ts` |
+| `screens/table/table-copy.ts` | none | Move | `view-model/table-copy.ts` | L72-04 | `screens/table/table-copy.test.ts` |
+| `screens/table/kit-inspect-traits.ts` | none | Move | `view-model/kit-inspect-traits.ts` | L72-04 | none; `screens/table/kit-inspect-dialog.test.ts` stays and its imports are edited |
+| `screens/table/kit-special-card-key.ts` | none | Move | `view-model/kit-special-card-key.ts` | L72-04 | none; `screens/table/kit-inspect-dialog.test.ts` stays and its imports are edited |
+| `screens/table/chrome-labels.ts` | none | Move | `view-model/chrome-labels.ts` | L72-04 | `screens/table/chrome-labels.test.ts`; `help/hint-copy.test.ts` import updated; `screens/table/economy-bar.chrome-labels.test.ts` stays (reads `economy-bar.tsx`) |
+| `screens/table/table-flag-intent.ts` | none | Move | `view-model/table-flag-intent.ts` | L72-04 | `screens/table/table-flag-intent.test.ts` |
+| `screens/table/active-display.ts` | none | Move | `view-model/active-display.ts` | L72-04 | none |
+| `screens/table/sub-choice/sub-choice-constants.ts` | none | Move | `view-model/sub-choice-constants.ts` | L72-04 | none; its only importer is `screens/table.tsx`, through `sub-choice/index.ts` |
+| `screens/table/persistent-incoming.ts` | none | Delete with its test | — | L73-05 | `screens/table/persistent-incoming.test.ts` is deleted with it |
+| `screens/table/card-band-fit.ts` | none | Retire with its consumers | — | L75-10 | `screens/table/card-band-fit.test.ts` retires with it (classification, Owner lot 75) |
+| `screens/table/felt-collapse.ts` | none | Retire with its consumers | — | L75-10 | `screens/table/felt-collapse.test.ts` retires with it |
+| `screens/table/sub-choice/index.ts` | none (React barrel: re-exports `SubChoiceHost`) | Retire with its consumers; L72-04 drops its `CLIENT_SUB_CHOICE_MS` re-export | — | L75-11 | none |
+| `design/components/choice-tile-chrome.ts` | type-only (`CSSProperties`) | Not pure, stays; goes with its last importers | stays in `design/components/` | L81-02 at the latest | `design/components/choice-tile-chrome.test.ts` stays |
+| `fx/motion-timing.ts` | none | Stays | — | Lot 78 | `fx/motion-timing.test.ts` stays |
+| `fx/resource-flow-flash.ts` | none | Stays | — | Lot 78 | `fx/resource-flow-flash.test.ts` stays |
+| `fx/table-fx-types.ts` | none | Stays | — | Lot 78 | none |
+| `fx/token-flyout-skip.ts` | none | Stays | — | Lot 78 | none |
+| `help/hint-copy.ts` | none | Stays | — | L75 | `help/hint-copy.test.ts` stays |
+| `help/place-hint-card.ts` | none | Stays | — | L75 | `help/place-hint-card.test.ts` stays |
 
 ---
 
@@ -183,7 +232,7 @@ Game over in V7: static winner hero, awards gallery, read-only chat, rules recal
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L77-01 | **Lock finished-board orchestration with behavior tests.** **Acceptance:** Every `end.tsx` source-text assertion of `feedback-surfaces.test.ts` has a behavior test with the same outcome: ask-once on the first close, leave or rematch only after Skip or sent, no stacking, and the flag goes through `requestLeave`. `end-feedback.test.ts` assertions are unchanged. No `readFileSync` reads `end.tsx`. Classification rows are filled in. `pnpm verify` green. | M | Low | Lot 73, Lot 75 | To do |
+| L77-01 | **Lock finished-board orchestration with behavior tests.** **Acceptance:** Every `end.tsx` source-text assertion of `screens/end.feedback-surfaces.test.ts` has a behavior test with the same outcome: ask-once on the first close, leave or rematch only after Skip or sent, no stacking, and the flag goes through `requestLeave`. `end-feedback.test.ts` assertions are unchanged. No `readFileSync` reads `end.tsx`. Classification rows are filled in. `pnpm verify` green. | M | Low | Lot 73, Lot 75 | To do |
 | L77-02 | **Rebuild Game over as an Arcade Holo sheet.** **Acceptance:** Component tests (happy-dom, fake `FinishedStateView`): - the meta line reads "Code ABC123 · 14 turns" and contains no "Protocol" - Play again renders only for Classic with `onPlayAgain`, and is absent for tutorial and walk-ins - the tutorial view shows "Tutorial complete" and "Play a real game" - Feedback calls `onOpenFeedback` - View board, Esc and backdrop each call `onClose` once - Download action log renders only when DEV is stubbed true - a fogged kit shows "Hidden kit" in the hero and on tiles, and ties list every co-winner - the tutorial Game over buttons never write hint `skipAll`  No `readFileSync` reads the Game over file. The L77-01 EndScreen tests stay green. The release-notes test matches the open entry. `pnpm verify` green. | L | Medium | L77-01 | To do |
 | L77-03 | **Make the awards a swipeable gallery.** **Acceptance:** Component tests: - tiles render in `GAME_OVER_AWARD_IDS` order with `data-award-id` - an empty recap still shows "No awards this match." - with reduced motion emulated, the gallery uses no smooth-scroll behavior  At 375×812 in the browser, swiping goes tile to tile with no horizontal page scroll. `pnpm verify` green. | M | Low | L77-02 | To do |
 | L77-04 | **Recall the table rules on Game over.** **Acceptance:** Component tests: - rules from a fake `FinishedStateView.lobbyRules` (45 s, Random only, two excluded kits) appear in the sheet with "Excluded" labels - there is no Table rules control on a tutorial view or a view without `lobbyRules` - Esc on the open rules sheet closes it, leaves Game over open, and opens no Feedback - the finished-board menu item shows the same rules with no cached lobby view  `pnpm verify` green. | S | Low | L77-02 | To do |

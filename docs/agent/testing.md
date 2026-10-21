@@ -33,6 +33,16 @@ Tests sit beside the code: `src/**/*.test.ts`. Vitest projects are declared in t
 `node` (source-read / helper tests — not a full jsdom table). `pnpm test` runs all
 projects once; `pnpm verify` is the full gate.
 
+**Source-text tests (V7, technical spec v7 §12.1).** A `readFileSync` test reads the code of
+one V7 owner lot only (see `docs/backlog_v7_test_classification.md`). A file whose assertions
+span several lots is split into `<read-source-basename>.<original-test-basename>.test.ts`,
+placed beside the source it reads (precedent: `net/use-room-connection.forfeit.test.ts`).
+Each `expect()` moves verbatim, and a split-off part of an `it()` takes the title suffix
+` (<read-source-basename>)`. Compare `expect()` counts, not `it()` counts: a split raises the
+`it()` count and never lowers the `expect()` count. Split a module test's source-text `it()`s
+out before the module moves, so the module test stays source-free and moves with a plain
+`git mv`.
+
 Name the test after the rule and cite its source, so a failure points at a spec section:
 
 ```ts

@@ -4380,3 +4380,21 @@ Lot 71; any later V6-style lot takes a number from 82.
 - **Supersedes**: spec v2 visual language, Lot 39, V6 Lots 43/53 table layout; all functions kept (Appendix A).
 
 ---
+
+## 2026-10-21 · [P] L72-02 splits source-text tests by owner lot
+
+Source: `docs/technical_spec_v7.md` §12.1 and `docs/backlog_v7_test_classification.md`.
+
+- Every source-text test whose assertions read code of two V7 owner lots is split into
+  `<read-source-basename>.<original-test-basename>.test.ts` files beside the source they read
+  (naming rule in `docs/agent/testing.md`), so each lot later classifies only its own files.
+- The invariant is the `expect()` count: 287 before and 287 after, every call moved
+  verbatim (only `readFileSync` paths changed). The `it()` count rises by 12 (client tests
+  435 → 447) because five multi-screen `it()`s are split by owner: full-bleed viewport,
+  feedback surfaces, tutorial hints independence, admin route and token flyout overlay chrome.
+  The L72-02 acceptance line in `docs/backlog_v7.md` states this.
+- Module tests that L72-04 moves with `git mv` (`dialog-width`, `opponent-seat-resources`,
+  `chrome-labels`, `table-banner`) lost their source-text `it()`s to sibling files first, and
+  `help/tutorial-hints-independence.test.ts` is logic-only, so L72-03 moves it unchanged.
+
+---
