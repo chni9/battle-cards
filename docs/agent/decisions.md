@@ -4417,3 +4417,23 @@ Source: `docs/technical_spec_v7.md` §12.1 and `docs/backlog_v7_test_classificat
   `help/tutorial-hints-independence.test.ts` is logic-only, so L72-03 moves it unchanged.
 
 ---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 tokens: `--text-on-cta` and the seat-hue metric (L72-05)
+
+Source: `docs/technical_spec_v7.md` §5.1, `DESIGN.md`, `apps/client/src/ui/contrast.test.ts`.
+
+- Spec §5.1 keeps `--ink` as a non-text color and names no label color for CTA fills.
+  `--danger` (`#ff4d4d`) gets 4.34:1 with `--text-on-card`, 2.88:1 with `--text` and 3.27:1
+  with white, so no existing text token labels it. V7 adds `--text-on-cta: #0c0920`, which
+  reaches 13.70 / 7.73 / 5.97:1 on `--cta` / `--cta-2` / `--danger` (5.79:1 on `--life`
+  chips). `ui/contrast.test.ts` asserts it; `--ink` stays outline and shadow only.
+- Seat hues: the eight values are pairwise CIEDE2000 (sRGB, D65, kL = kC = kH = 1) at least
+  20 apart (measured minimum 21.33, `--seat-4` / `--seat-7`) and at least 4.5:1 on all four
+  grounds (lowest 4.77:1, `--seat-7` on `--panel-2`). The metric and values are recorded in
+  `DESIGN.md`, `SEAT_HUE_MIN_DELTA_E = 20` in `ui/contrast.ts`; the hues stay provisional
+  until the L72/L74 playtests (spec §14.3).
+- `--life` (4.25:1) and `--danger` (4.38:1) on `--panel-2` miss 4.5:1: resource and threat
+  colors are body text only on `--bg-*` and `--panel`, and large text only on `--panel-2`
+  (asserted in `ui/contrast.test.ts`, recorded in `DESIGN.md`).
+
+---

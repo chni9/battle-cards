@@ -200,6 +200,24 @@
         ],
         "createdAt": "2026-10-20T17:28:44.404Z",
         "reason": "Claude: throwaway brainstorm moodboard, phone mockups scaled down for side-by-side comparison; not shipped UI"
+      },
+      {
+        "rule": "radial-spotlight-glow",
+        "value": "*",
+        "files": [
+          "apps/client/src/ui/tokens.css"
+        ],
+        "createdAt": "2026-10-21T09:20:38.100Z",
+        "reason": "Designer-approved V7 ground halos (technical spec v7 §5.1, §12.4; Q3b 2026-10-20). Scoped to ui/tokens.css only."
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "apps/client/src/ui/tokens.css"
+        ],
+        "createdAt": "2026-10-21T09:20:38.114Z",
+        "reason": "Designer-approved V7 ground halos (technical spec v7 §5.1, §12.4; Q3b 2026-10-20). Scoped to ui/tokens.css only."
       }
     ]
   }
