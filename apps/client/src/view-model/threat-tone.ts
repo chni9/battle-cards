@@ -6,7 +6,7 @@
 
 import { isAttackCardId } from '@card-battle/shared';
 
-import type { ThreatTone } from './table-fx-types';
+import type { ThreatTone } from '../fx/table-fx-types';
 
 /** Non-attack cards that still read as aggressive Incoming (locked L39-05). */
 const ATTACK_LIKE_CARD_IDS = new Set<string>(['sentence', 'mirror', 'super-mirror']);

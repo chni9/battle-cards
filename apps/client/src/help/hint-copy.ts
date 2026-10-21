@@ -3,7 +3,7 @@
  * Titles are existing table chrome words, not new lore.
  */
 
-import type { HintId } from './hint-ids';
+import type { HintId } from '../ui/hint-ids';
 
 export const SKIP_ALL_HINTS_LABEL = 'Skip all';
 

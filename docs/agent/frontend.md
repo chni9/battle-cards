@@ -37,12 +37,38 @@ design-system record: `/DESIGN.md` (created in L72-05). On conflict, **code > sp
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
+| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
 
 Shared status copy: `screens/status-labels.ts`.
+
+## View-model layer (V7 · Lot 72+)
+
+Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table in
+`docs/backlog_v7.md`.
+
+- Modules are **moved, not rewritten** (L72-03): `git mv` with the basename unchanged,
+  assertions verbatim, importers repointed directly, and **no shim or re-export** stays at an
+  old path. `view-model/` holds `incoming-threat-diff`, `threat-tone`, `opponent-token-chips`,
+  `action-log`, `select-hint` and `game-over-awards`; L72-04 moves the pure `design/` and
+  `screens/table/` modules in next.
+- `view-model/` has **no** React, react-dom or motion import and **no clock read**
+  (`Date.now`, `performance.now`); callers pass `nowMs`. The purity block in
+  `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
+- `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
+  structured-cost, hint-ids), never a `ui/` component. Until L72-04 moves them,
+  `view-model/opponent-token-chips.ts` still imports from `../design/*` and
+  `../screens/table/*` (temporary exception).
+- `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
+  (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
+  `import type`; nothing else in `view-model/` imports from `fx/`.
+- The four non-component `ui/` helpers are `hint-ids`, `help-storage`, `release-storage` and
+  `fx-anchors`. The `card-battle.v6.*` storage keys in `help-storage` and `release-storage` are
+  unchanged. `ui/fx-anchors.ts` holds the FX zone names, the deck-card flyout size and the
+  `data-zone` selector builders; until L72-04 moves `design/asset-lookup` it takes a
+  type-only `ResourceKind` import from it.
 
 ## Design system (V2 · Lots 10+)
 
@@ -423,6 +449,8 @@ rules above are unchanged — this section only covers how the client looks.
   travel; not cards from Draw), buy/sell card ghosts, resolution, elim, rewards. Resource
   flash clears after ~1.6s. Shared timing in `fx/motion-timing.ts` (~0.55s). Dialogs animate
   open/close. Intents must never await FX. `useReducedMotion` skips choreography.
+  Pure FX decisions live in `view-model/`, zone names and selector builders in
+  `ui/fx-anchors.ts`; `fx/play-flyout.ts` keeps the DOM measuring (L72-03).
 - **Table UX polish (Lot 39 · `docs/backlog_ux.md`):** client readability only — no rule
   change. Task IDs are **L39-** so they never collide with V5 Lot 32 search work.
   - **IllegalActionDialog (L39-02):** `error` is `{ code, message }` (PROTOCOL 27). Table
@@ -480,7 +508,7 @@ rules above are unchanged — this section only covers how the client looks.
     red (L64-05); Sell is green (gain); Buy / Upgrade stay
     orange (pay).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
-    (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
+    (diff in `view-model/incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
     not a line). Tone via `threatToneFor`: **red**
     `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
@@ -570,7 +598,7 @@ rules above are unchanged — this section only covers how the client looks.
   action (`thinkTimeMs` / `turnActionsCount`). Bots compete for every other award. Recap
   `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
   Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
-  Client ranks recap numbers only (`game-over-awards.ts`); do not parse `exportLog`.
+  Client ranks recap numbers only (`view-model/game-over-awards.ts`); do not parse `exportLog`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens

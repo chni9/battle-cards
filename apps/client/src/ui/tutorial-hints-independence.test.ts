@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { EMPTY_HINT_STATE, resetHelpStorage } from './help-storage';
-import { selectHint } from './select-hint';
+import { selectHint } from '../view-model/select-hint';
 
 describe('tutorial does not skip first-game hints (L46-03)', () => {
   it('Classic Solo/Online stays eligible after an empty tutorial-complete blob', () => {

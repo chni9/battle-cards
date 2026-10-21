@@ -21,7 +21,7 @@ import {
   groupByRound,
   resourceDeltaClass,
   type ActionLogSegment,
-} from './action-log';
+} from '../view-model/action-log';
 
 const KIND_META: Record<
   ActionLogEntryKind,

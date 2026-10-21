@@ -5,7 +5,7 @@
 
 import type { PlayKind } from '@card-battle/shared';
 
-import type { HintId } from './hint-ids';
+import type { HintId } from '../ui/hint-ids';
 
 export interface SelectHintInput {
   readonly playKind: PlayKind;
