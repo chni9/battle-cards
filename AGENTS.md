@@ -186,7 +186,10 @@ Derived from `tsconfig.base.json`, `eslint.config.mjs`, `vitest.config.ts`.
 - ESM everywhere. `kebab-case` file names, `kebab-case` card and kit ids.
 - **Doc comments cite their source** — `rules spec §3`, `technical spec §4.6`. An uncited rule
   looks invented and the next reader cannot check it. Comments explain *why*, never *what*.
-- Tests sit beside the code they cover: `src/**/*.test.ts`.
+- Tests sit beside the code they cover: `src/**/*.test.ts` runs in node; client component tests
+  are `src/**/*.test.tsx`, open with `// @vitest-environment happy-dom` and render through
+  `renderUi` (`apps/client/src/test/render.tsx`). V7 code gets behavior tests, never new
+  source-text tests (technical spec v7 §12; `docs/agent/testing.md`).
 
 ## 7. Domain playbooks — read before coding
 
