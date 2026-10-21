@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 0 |
+| 72 · Foundations | 21 | 1 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,12 +30,15 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **0** |
+| **Total** | **134** | **1** |
 
 ## Designer questions still open
 
-- **Q13 — Hotfix path during the freeze.** `.github/workflows/prod-from-dev.yml` rejects any PR into `main` whose head is not `dev`, so the §4.6 "hotfix from `main`" exception cannot pass as written. Options: allow a `hotfix/*` head pattern in that workflow (CI change, recorded in `deploy.md`), or no hotfix path (fixes wait for the freeze to lift). Blocks the `deploy.md` part of L72-01 only.
 - **L79 — Sound sources.** Downloading the Kenney CC0 packs needs the developer's explicit OK at execution time; the designer signs off the clips by listening in the PR.
+
+## Designer questions resolved
+
+- **Q13 — Hotfix path during the freeze.** Resolved by the designer on 2026-10-21: strict promotion freeze, no hotfix path, `prod-from-dev.yml` unchanged. Recorded in `docs/agent/deploy.md` ("V7 promotion freeze") and `docs/agent/decisions.md`; it replaces the §4.6 "hotfix from `main`" sentence.
 
 ---
 
@@ -45,7 +48,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
-| L72-01 | **Record V7 in AGENTS, decisions, deploy and PRODUCT.md.** **Acceptance:** An agent reading only `AGENTS.md` + `decisions.md` can tell that V7 is in progress and client-only, that the protocol stays 45, that the open backlog is `backlog_v7.md` and that the promotion freeze applies. Golden rule 1 has the same meaning as rules spec §2 (no Lot 54 summed-volley wording). `PRODUCT.md` exists at the repo root. `deploy.md` describes the freeze and the hotfix path. No code changes. `pnpm verify` green. | M | Low | — | To do |
+| L72-01 | **Record V7 in AGENTS, decisions, deploy and PRODUCT.md.** **Acceptance:** An agent reading only `AGENTS.md` + `decisions.md` can tell that V7 is in progress and client-only, that the protocol stays 45, that the open backlog is `backlog_v7.md` and that the promotion freeze applies. Golden rule 1 has the same meaning as rules spec §2 (no Lot 54 summed-volley wording). `PRODUCT.md` exists at the repo root. `deploy.md` describes the freeze and the hotfix path. No code changes. `pnpm verify` green. | M | Low | — | Done |
 | L72-02 | **Split cross-screen source-text tests and record the classification.** **Acceptance:** Every React-free module under `design/` and `screens/table/` has a disposition row. Every `readFileSync` test file appears in the classification with an owner lot. No test file reads sources owned by two lots. The number of `expect()` assertions is unchanged (moved verbatim, not dropped); the `it()` count rises only where a multi-screen `it()` is split by owner. `pnpm verify` green. | M | Medium | L72-01 | To do |
 | L72-03 | **Move fx, help, action-log and awards pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions. No moved module or shim is left under `fx/`, `help/` or `action-log/`. The lint override rejects a React import and `Date.now()` under `src/view-model/`. The old table, Home, What's new and Game over behave as before. `pnpm verify` green. | M | Low | L72-02 | To do |
 | L72-04 | **Move design and table pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions, including the Roulette art byte checks and the no-`100dvh` viewport test. The old table and lobby render as before. No file under `design/` or `screens/table/` still exports a moved function. `pnpm verify` green. | M | Low | L72-03 | To do |

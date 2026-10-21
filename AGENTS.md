@@ -13,10 +13,12 @@ opponent's next turn, after they have played their own action, giving them a cha
 V1 proved the engine; V2 the visual layer; V3 heuristic bots, solo, and simulation; V4 the
 full Classic content (15 kits). **V5** adds measurement, fitted evaluation, belief, and search
 bots on the same rules — no value or rule changes. **V6** (readability, stranger onboarding,
-beta feedback) is **in progress** (`docs/technical_spec_v6.md` /
-`docs/backlog_v6.md`); Lots 57–64 are **done**. Classic now has **16 kits**.
-V5 may continue in parallel. Audience: the designer
-and his friends, plus first-time beta testers under V6.
+beta feedback) is **closed at Lot 71** (`docs/technical_spec_v6.md` /
+`docs/backlog_v6.md`, now archives); Classic has **16 kits**. **V7** (visual redesign
+"Arcade Holo") is **in progress**: a **client-only** redesign, Lots 72–81
+(`docs/technical_spec_v7.md` + Appendix A `docs/technical_spec_v7_parity.md`,
+`docs/backlog_v7.md`). V5 may continue in parallel. Audience: the designer
+and his friends, plus first-time beta testers.
 
 Domains: **engine** (turn loop, resolution, elimination, legal-action enumeration) ·
 **cards** / **kits** (Classic catalog) · **protocol and visibility** (per-recipient state, Spy) ·
@@ -28,8 +30,12 @@ search).
 1. **Code + lock files** — operational truth.
 2. **`docs/spec_bataille_des_cartes_en.md`** (rules) and **`docs/technical_spec_v1.md`**
    (scope, architecture, protocol, Definition of Done) — functional and business truth.
-   `docs/backlog_v5.md` sequences V5 (Lots 32–40); `docs/backlog_v6.md` sequences V6
-   (Lots 41+); `docs/backlog_v1.md` … `docs/backlog_v4.md` are closed archives.
+   `docs/backlog_v5.md` sequences V5 (Lots 32–40); `docs/backlog_v7.md` sequences V7
+   (Lots 72–81) under spec v7 + Appendix A `docs/technical_spec_v7_parity.md`, with
+   `docs/backlog_v7_test_classification.md` and `docs/superpowers/plans/2026-10-21-v7-lot-*.md`;
+   `docs/backlog_v1.md` … `docs/backlog_v4.md` and `docs/backlog_v6.md` (Lots 41–71) are
+   closed archives, and any later V6-style lot takes a number from 82. `PRODUCT.md` and
+   `DESIGN.md` sit at the repo root (code > spec v7 §5 > `DESIGN.md`, spec v7 §5.8).
    **English only** — the French versions were deleted, do not reintroduce them.
 3. **Explicit developer instructions in the current session.**
 4. **Up-to-date framework docs via Context7** (§8) — external libraries only.
@@ -69,7 +75,7 @@ apps/server         Authoritative game server. ALL rule logic lives here.
 apps/client         React client. Renders state, sends intents. Zero rule logic.
 packages/shared     Domain types shared by both. One definition, never duplicated.
   src/domain/       card · kit · effect · player · game-state
-docs/               Rules spec, technical specs, backlog_v1/v2.md (archives), backlog_v3.md (active).
+docs/               Rules spec, technical specs v1–v7, backlogs (v5 and v7 open; v1–v4 and v6 archived).
 docs/agent/         Playbooks for agents. Read the relevant one before coding.
 ```
 
@@ -108,9 +114,11 @@ docs/agent/         Playbooks for agents. Read the relevant one before coding.
    #1, #2 and #3 are closed. **Exception:** when the current session's developer instructions
    explicitly change a Classic rule or value, that instruction wins — record it in
    `docs/agent/decisions.md` and update the rules spec in the same change.
-7. **V1–V4 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
- `docs/backlog_v5.md`). **V6 is in progress** from Lot 41 (`docs/technical_spec_v6.md`,
- `docs/backlog_v6.md`).
+7. **V1–V4 and V6 are closed; V5 is in progress** (`docs/technical_spec_v5.md`,
+ `docs/backlog_v5.md`). **V6** ran Lots 41–71 (`docs/technical_spec_v6.md`,
+ `docs/backlog_v6.md`). **V7 is in progress** (Lots 72–81, `docs/technical_spec_v7.md`,
+ `docs/backlog_v7.md`), client-only:
+ V7 changes no rule, no value and no protocol field (`PROTOCOL_VERSION` stays 45).
  Team/God/Quick modes, accounts, in-progress persistence and
  monetization stay out (technical spec v1 §9) — not even partially. V5 and V6 change **no rule
  and no value**, unless the current session's developer instructions explicitly change a
@@ -202,12 +210,13 @@ writing framework-specific code — never code a framework API from memory.
 
 ## 9. Workflow & commands
 
-Work through the **open** backlogs: `docs/backlog_v6.md` (Lot 41 onward) and, in
-parallel, `docs/backlog_v5.md` (Lots 32–40). V1–V4 are closed archives
-(`docs/backlog_v1.md` … `docs/backlog_v4.md`). V5 sequencing:
+Work through the **open** backlogs: `docs/backlog_v7.md` (Lots 72–81) and, in
+parallel, `docs/backlog_v5.md` (Lots 32–40). V1–V4 and V6 are closed archives
+(`docs/backlog_v1.md` … `docs/backlog_v4.md`, `docs/backlog_v6.md`). V5 sequencing:
 **Instrument (Lot 32) before Fitting (33), Belief (34), Search (35)** — nothing that cannot
-be measured gets built. See `docs/backlog_v5.md` "How to read this". V6 sequencing: protocol
-(41) before tutorial (45); pickers (44) before tutorial; one protocol bump in L41-02.
+be measured gets built. See `docs/backlog_v5.md` "How to read this". V7 sequencing, one PR
+per lot into `dev` and the V7 promotion freeze: `docs/backlog_v7.md` "How to read this" and
+`docs/agent/deploy.md`.
 
 **Keep the backlog current.** `In progress` when you start a task, `Done` once it passes the
 gate below, `Blocked` when it needs a ruling (reason in `docs/agent/decisions.md`) — in the same
@@ -234,8 +243,9 @@ the Grok/Composer-only rule on 2026-10-20 for the UI redesign work.
 - [ ] No test skipped, disabled, or weakened to pass
 - [ ] Every card or rule touched has its test created or updated
 - [ ] The task's own **Acceptance** line in the open backlog is satisfied
-      (`docs/backlog_v6.md` for V6)
-- [ ] That task's status set to `Done` in the open backlog (`docs/backlog_v6.md` for V6)
+      (`docs/backlog_v7.md` for V7)
+- [ ] That task's status set to `Done` in the open backlog (`docs/backlog_v7.md` for V7)
+- [ ] Touching tokens or `ui/` updates `DESIGN.md` in the same commit (spec v7 §5.8, §12.5)
 - [ ] **Committed** — Conventional Commit referencing the task ID (see §10). Never leave a
       `Done` task uncommitted in the working tree
 - [ ] No dependency added outside `pnpm-lock.yaml`
