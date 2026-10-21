@@ -258,6 +258,7 @@ designer 2026-10-20 (Q3b). Reference boards: `.superpowers/brainstorm/` (local, 
 | `--ink` | `#0c0920` | arcade outline + hard shadow color (not a text color) |
 | `--text` / `--text-2` | `#f3eeff` / `#cfc6ff` | primary / secondary text on dark |
 | `--text-on-card` | `#2a2550` | text on white cards |
+| `--text-on-cta` | `#0c0920` | labels on `--cta`, `--cta-2`, `--danger` fills and on `--life` chips (only token reaching AA on `--danger`: 5.97:1) |
 | `--life` | `#ff3d7f` | lives, damage, "aimed at you" |
 | `--point` | `#ffc93d` | points |
 | `--upgrade` | `#3dcf8f` | upgrade points |
@@ -269,7 +270,10 @@ designer 2026-10-20 (Q3b). Reference boards: `.superpowers/brainstorm/` (local, 
 | `--seat-0..7` | 8 hues re-tuned for the dark ground | seat identity (avatar fill, name, third-party arrows) |
 
 Rules: a resource keeps its color everywhere; seat colors never collide with `--life` /
-`--threat-*` in the same element; text contrast meets WCAG AA (4.5:1 body, 3:1 large). The 8
+`--threat-*` in the same element; text contrast meets WCAG AA (4.5:1 body, 3:1 large).
+Resource colors are used as fills, rings and icons; as text they appear only at large size
+(`--life` on `--panel-2` is 4.25:1). The seat hues pass ≥ 4.5:1 on every ground and are
+pairwise distinct by CIEDE2000 ≥ 20 (L72-05). The 8
 seat hues are finalized in L72 with a contrast check against `--bg-*` and against each other.
 Subtle static scanlines (`rgba(255,255,255,.03)`, 1 px every 3 px) on the page ground only.
 
@@ -343,8 +347,8 @@ assertions.
 A hand-made SVG set in the arcade style (2 px ink stroke, palette fills): resources (life,
 point, upgrade, shield), statuses (spied-by-you, spying-on-you eye, shield active, Block,
 persistent, Invisibility + turns, Reanimation armed, Duplication active, eliminated, bot,
-disconnected, absorb window, ticking Sentence), UI (menu, shop, draw, log, help, coach, chat,
-feedback `!`, leave/forfeit flag, sound, vibration, rules, share, copy, minimize). Emojis are
+disconnected, absorb window, ticking Sentence), UI (menu, shop, draw, unspy (crossed eye, L58-07), log, help, coach,
+chat, feedback `!`, leave/forfeit flag, sound, vibration, rules, share, copy, minimize). Emojis are
 not used in shipped UI. Every icon-only control keeps an `aria-label` / `title` (L59-01).
 
 ### 5.7 Motion tokens
@@ -842,7 +846,8 @@ updated to the corrected strings.
 
 V7 player-facing changes **append Before / After items to the open What's new entry**. Because
 `lot-72` is promoted to `main` before L72 merges (§4.6), the **first V7 PR with a player-facing
-change opens one V7 entry** (`lot-<its lot>`, titled "New look") and updates the tests that pin
+change opens one V7 entry** (`lot-72-v7`, titled "New look" — distinct from `lot-72`, whose
+"seen" key players may already hold) and updates the tests that pin
 the latest id; every later V7 PR appends to it during the freeze. One Before / After item per
 screen area, not per task. Changes land in the same commit as the change
 (`docs/agent/frontend.md`), updating the entry's title when its scope changes. If `dev` is
