@@ -21,9 +21,10 @@
  *   every sheet under it is inert. Focus follows the live sheet (`use-focus-trap.ts`): it moves
  *   into a sheet that becomes live, and on close returns to the opener only when the opener is
  *   reachable, otherwise into the new top sheet, otherwise up the opener chain.
- * - A closing sheet keeps its fade, but every dismissal path checks that the sheet is still
- *   open, and the exiting overlay is inert and takes no pointer events, so a second press or a
- *   press meant for the sheet below never reaches it.
+ * - A press during a sheet's exit does nothing (spec v7 §1, §6.6.4): the exiting overlay stays
+ *   a hit-testable, `aria-hidden` shield over the whole box whose handlers check the sheet is
+ *   still open, and only its panel turns inert. A panel collapsing to its bar leaves a no-op
+ *   shield over the box for `DUR_BASE_MS` (none under reduced motion), under the bar.
  * - A body that overflows becomes a named, focusable scroll region in the Tab cycle (WCAG
  *   2.1.1), so a text-only sheet scrolls by keyboard; initial focus still prefers a control.
  *
@@ -41,6 +42,7 @@ import {
   useId,
   useLayoutEffect,
   useRef,
+  useState,
   type MouseEvent,
   type PointerEvent,
   type ReactElement,
@@ -49,7 +51,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../icons/icon';
-import { durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
+import { DUR_BASE_MS, durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
 import { motionPropsFor, type V7MotionSpec } from '../motion/reduced-motion';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { V7_COLORS } from '../palette';
@@ -67,9 +69,9 @@ import {
   liveSheetId,
   sheetPaintOrder,
   sheetZIndex,
-  type SheetStackState,
 } from './sheet-stack';
 import { useSheetStackState, useSheetStackStore } from './sheet-stack-context';
+import { livePanel, reachableIn } from './sheet-focus';
 import { SCROLL_REGION_ATTRIBUTE, useFocusTrap } from './use-focus-trap';
 
 interface SheetBaseProps {
@@ -143,41 +145,6 @@ const PANEL_PLACEMENT_CLASS: Readonly<Record<SheetPlacement, string>> = {
   bottom: 'mt-auto rounded-t-v7-chrome',
   center: 'my-auto rounded-v7-chrome',
 };
-
-/** The sheet (overlay or bar) an element belongs to, by its `data-sheet-id`. */
-function ownerOf(element: Element): { readonly id: string; readonly bar: boolean } | null {
-  const owner = element.closest('[data-sheet-id]');
-  const id = owner?.getAttribute('data-sheet-id') ?? null;
-  if (owner === null || id === null) return null;
-  return { id, bar: owner.getAttribute('data-zone') === 'sheet-bar' };
-}
-
-/**
- * Whether focus may sit on `element` in `state`: inside the live sheet, on a bar that is not
- * covered, or on the page while no expanded sheet is painted (an open modal sheet covers it).
- * A closing, hidden or inert sheet is never reachable, even before its DOM catches up.
- */
-function reachableIn(state: SheetStackState, element: HTMLElement): boolean {
-  if (!element.isConnected) return false;
-  const owner = ownerOf(element);
-  if (owner === null) return liveSheetId(state) === null;
-  const entry = state.entries.find((candidate) => candidate.id === owner.id);
-  if (entry === undefined) return false;
-  if (owner.bar) return entry.minimized && !isSheetInert(state, owner.id);
-  return liveSheetId(state) === owner.id;
-}
-
-/** The panel of the sheet that is live in `state`, if it is not `exceptId`. */
-function livePanel(state: SheetStackState, exceptId: string): HTMLElement | null {
-  const live = liveSheetId(state);
-  if (live === null || live === exceptId) return null;
-  for (const overlay of document.querySelectorAll<HTMLElement>('[data-zone="sheet-overlay"]')) {
-    if (overlay.getAttribute('data-sheet-id') === live) {
-      return overlay.querySelector<HTMLElement>('[data-zone="sheet-panel"]');
-    }
-  }
-  return null;
-}
 
 /** An overflowing body is a named, focusable scroll region; otherwise it is plain. */
 function syncScrollRegion(body: HTMLElement, titleId: string): void {
@@ -268,8 +235,30 @@ export function Sheet(props: SheetProps): ReactElement | null {
     active: open && liveSheetId(stack) === id,
     isReachable: (element) => reachableIn(store.getSnapshot(), element),
     fallbackContainer: () => livePanel(store.getSnapshot(), id),
+    standIn: () => barRef.current?.querySelector<HTMLElement>('button') ?? null,
+    // Minimize or collapse puts the user back where they were in the sheet that takes over.
+    handOverOnRelease: barMode,
     ...(initialFocusRef !== undefined ? { initialFocusRef } : {}),
   });
+
+  // Collapse shield (fix round 2): when the panel collapses to its bar, a no-op layer covers the
+  // overlay box for the panel's exit time, so a fast second tap on "Use" never lands on the
+  // table (§1, §6.6.4). Derived from the previous render, so it starts in the same commit.
+  const [wasBar, setWasBar] = useState(barMode);
+  const [collapseShield, setCollapseShield] = useState(false);
+  if (wasBar !== barMode) {
+    setWasBar(barMode);
+    setCollapseShield(barMode && !reduced);
+  }
+  useEffect(() => {
+    if (!collapseShield) return;
+    const timer = window.setTimeout(() => {
+      setCollapseShield(false);
+    }, DUR_BASE_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [collapseShield]);
 
   // Minimize hands focus to the bar, unless another sheet is now the live one (it takes focus).
   useEffect(() => {
@@ -382,8 +371,10 @@ export function Sheet(props: SheetProps): ReactElement | null {
       data-sheet-id={id}
       role="presentation"
       hidden={!painted}
-      // An exiting overlay keeps its last props; `present` turns it inert and click-through.
-      inert={inert || !present}
+      // An exiting overlay keeps its last props. It stays hit-testable as a no-op press shield
+      // (its handlers check `live`) while only its panel turns inert (fix round 2, §1, §6.6.4).
+      inert={inert && present}
+      {...(present ? {} : { 'aria-hidden': true })}
       className={`flex items-start justify-center overflow-hidden ${OVERLAY_PLACEMENT_CLASS[resolvedPlacement]}`}
       style={{
         position: 'fixed',
@@ -394,7 +385,6 @@ export function Sheet(props: SheetProps): ReactElement | null {
         zIndex,
         backgroundColor: seatColorAlpha(V7_COLORS['bg-0'], 0.6),
         ...bottomPadding,
-        ...(present ? {} : { pointerEvents: 'none' as const }),
       }}
       onPointerDown={onOverlayPointerDown}
       onPointerUp={onOverlayPointerUp}
@@ -405,6 +395,7 @@ export function Sheet(props: SheetProps): ReactElement | null {
       <motion.div
         ref={panelRef}
         role="dialog"
+        inert={!present}
         aria-modal={!barMode}
         aria-labelledby={titleId}
         tabIndex={-1}
@@ -468,6 +459,24 @@ export function Sheet(props: SheetProps): ReactElement | null {
   return createPortal(
     <>
       <AnimatePresence>{open ? <PresenceLayer key="sheet-overlay" render={renderLayer} /> : null}</AnimatePresence>
+      {barMode && collapseShield ? (
+        <div
+          data-zone="sheet-shield"
+          aria-hidden="true"
+          // A press on the shield does nothing, and its mousedown must not move focus either.
+          onMouseDown={(event) => {
+            event.preventDefault();
+          }}
+          style={{
+            position: 'fixed',
+            top: box.offsetTop,
+            left: box.offsetLeft,
+            width: box.width,
+            height: box.height,
+            zIndex,
+          }}
+        />
+      ) : null}
       {barMode ? (
         <div
           ref={barRef}

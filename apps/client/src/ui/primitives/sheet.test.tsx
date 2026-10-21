@@ -362,17 +362,26 @@ function ClosingCardAndKit({ closeCard, closeKit }: { closeCard: () => void; clo
 const clickThrough = (element: HTMLElement): void => { fireEvent.pointerDown(element); fireEvent.pointerUp(element); fireEvent.click(element); };
 
 describe('Sheet exit guard (fix round 1, A3)', () => {
-  it('lets a backdrop click meant for the lower sheet pass through the exiting top one (P9e)', async () => {
+  it('absorbs a backdrop press during the top sheet exit, and the lower sheet takes the next one (P9e, fix round 2)', async () => {
     const [closeCard, closeKit] = [vi.fn(), vi.fn()];
     const { user } = renderUi(<ClosingCardAndKit closeCard={closeCard} closeKit={closeKit} />);
-    const kitOverlay = overlayOf(dialog('Kit'));
+    const kitPanel = dialog('Kit');
+    const kitOverlay = overlayOf(kitPanel);
     await user.keyboard('{Escape}');
     expect(kitOverlay.isConnected).toBe(true);
-    expect([kitOverlay.style.pointerEvents, inert(kitOverlay)]).toEqual(['none', true]);
-    clickThrough(kitOverlay);
-    expect(closeKit).toHaveBeenCalledTimes(1);
+    expect([kitOverlay.style.pointerEvents, inert(kitOverlay), kitOverlay.getAttribute('aria-hidden'), inert(kitPanel)])
+      .toEqual(['', false, 'true', true]);
+    await user.click(kitOverlay);
+    expect([closeKit.mock.calls.length, closeCard.mock.calls.length]).toEqual([1, 0]);
+    await waitFor(() => { expect(kitOverlay.isConnected).toBe(false); });
     await user.click(overlayOf(dialog('Card')));
     expect(closeCard).toHaveBeenCalledTimes(1);
+  });
+  it('closes only the top sheet on a double-click on its backdrop (fix round 2)', async () => {
+    const [closeCard, closeKit] = [vi.fn(), vi.fn()];
+    const { user } = renderUi(<ClosingCardAndKit closeCard={closeCard} closeKit={closeKit} />);
+    await user.dblClick(overlayOf(dialog('Kit')));
+    expect([closeKit.mock.calls.length, closeCard.mock.calls.length]).toEqual([1, 0]);
   });
   it('ignores a second swipe on the exiting handle (P12c)', () => {
     const onClose = vi.fn();
@@ -431,5 +440,124 @@ describe('Sheet fix round 1: stack order and minors', () => {
     expect(strip instanceof HTMLElement ? strip.style.pointerEvents : null).toBe('auto');
     expect(restore.getAttribute('aria-expanded')).toBe('false');
     expect(restore.querySelector('svg[data-icon="chevron-right"]')).not.toBeNull();
+  });
+});
+
+function TargetingHarness(): ReactElement {
+  const [collapsed, setCollapsed] = useState(false);
+  return <Sheet open collapsed={collapsed} collapsedBar={<button type="button">Cancel</button>} mode="read-only" title="Basic attack" onClose={noop}>
+    <button type="button" onClick={() => { setCollapsed(true); }}>Use</button></Sheet>;
+}
+
+describe('Sheet collapse shield (fix round 2, §1, §6.6.4)', () => {
+  it('covers the box with a no-op shield for the panel exit time while the bar shows at once', async () => {
+    const onPagePress = vi.fn();
+    const { user } = renderUi(<><button type="button" onClick={onPagePress}>Draw</button><TargetingHarness /></>);
+    await user.click(button('Use'));
+    const shield = zone(document.body, 'sheet-shield');
+    const bar = zone(document.body, 'sheet-bar');
+    expect(button('Cancel').closest('[data-zone="sheet-bar"]')).toBe(bar);
+    // happy-dom has no hit testing: a press anywhere in the box reaches the shield, a fixed,
+    // hit-testable layer over the whole box; the bar paints above it (same layer, later in the DOM).
+    expect([shield.style.position, shield.style.pointerEvents, shield.getAttribute('aria-hidden')]).toEqual(['fixed', '', 'true']);
+    expect(z(shield)).toBe(z(bar));
+    expect(shield.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(shield);
+    expect(onPagePress).not.toHaveBeenCalled();
+    await waitFor(() => { expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull(); });
+  });
+  it('drops the shield under reduced motion, where the panel does not animate out', async () => {
+    const { user } = renderUi(<TargetingHarness />, { reducedMotion: true });
+    await user.click(button('Use'));
+    expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull();
+    expect(button('Cancel')).toBeTruthy();
+  });
+});
+
+describe('Sheet opener chain (fix round 2)', () => {
+  it('re-parents an opener when the sheet that held it closes first (a: Card closes under Kit)', () => {
+    const ui = (cardOpen: boolean, kitOpen: boolean): ReactElement => <><button type="button">Open card</button>
+      <Ro title="Card" open={cardOpen}><button type="button">Show kit</button></Ro>
+      <Ro title="Kit" open={kitOpen}><button type="button">Kit info</button></Ro></>;
+    const { rerender } = renderUi(ui(false, false));
+    act(() => { button('Open card').focus(); });
+    rerender(ui(true, false));
+    expect(focused()).toBe(button('Show kit'));
+    rerender(ui(true, true));
+    expect(focused()).toBe(button('Kit info'));
+    rerender(ui(false, true));
+    expect(focused()).toBe(button('Kit info'));
+    rerender(ui(false, false));
+    expect(focused()).toBe(button('Open card'));
+  });
+  it('re-parents a blocking sheet opener when the card it came from closes underneath (b)', () => {
+    const ui = (cardOpen: boolean, rewardOpen: boolean): ReactElement => <><button type="button">Open card</button>
+      <Ro title="Card" open={cardOpen}><button type="button">Use</button></Ro>
+      <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button">Confirm</button></Sheet></>;
+    const { rerender } = renderUi(ui(false, false));
+    act(() => { button('Open card').focus(); });
+    rerender(ui(true, false));
+    rerender(ui(true, true));
+    expect(focused()).toBe(button('Confirm'));
+    rerender(ui(false, true));
+    rerender(ui(false, false));
+    expect(focused()).toBe(button('Open card'));
+  });
+  it('re-parents the opener of a sheet that mounted under a blocking sheet (c)', () => {
+    const ui = (rewardOpen: boolean, cardOpen: boolean): ReactElement => <><button type="button">Draw</button>
+      <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet>
+      <Ro title="Card" open={cardOpen}><button type="button">Use</button></Ro></>;
+    const { rerender } = renderUi(ui(false, false));
+    act(() => { button('Draw').focus(); });
+    rerender(ui(true, false));
+    rerender(ui(true, true));
+    expect(focused()).toBe(button('4 lives'));
+    rerender(ui(false, true));
+    expect(focused()).toBe(button('Use'));
+    rerender(ui(false, false));
+    expect(focused()).toBe(button('Draw'));
+  });
+  it('re-parents openers even when the closing sheet leaves focus where it is (c, early return)', async () => {
+    const ui = (rewardOpen: boolean, cardOpen: boolean): ReactElement => <><button type="button">Draw</button>
+      <Sheet open mode="blocking" title="Steal a card"><button type="button">Take</button></Sheet>
+      <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet>
+      <Ro title="Card" open={cardOpen}><button type="button">Use</button></Ro></>;
+    const { user, rerender } = renderUi(ui(false, false));
+    await user.click(button(MINIMIZE_LABEL));
+    act(() => { button('Draw').focus(); });
+    rerender(ui(true, false));
+    rerender(ui(true, true));
+    expect(focused()).toBe(button('4 lives'));
+    // Focus sits on an uncovered bar, a reachable place, so the reward's close returns early.
+    act(() => { button('Steal a card').focus(); });
+    rerender(ui(false, true));
+    expect(focused()).toBe(button('Use'));
+    rerender(ui(false, false));
+    expect(focused()).toBe(button('Draw'));
+  });
+  it('reaches a minimized sheet through its bar when the chain leads into it', async () => {
+    const ui = (cardOpen: boolean): ReactElement => <>{REWARD}<Ro title="Card" open={cardOpen}><button type="button">Use</button></Ro></>;
+    const { user, rerender } = renderUi(ui(false));
+    rerender(ui(true));
+    await user.click(button(MINIMIZE_LABEL));
+    expect(focused()).toBe(button('Use'));
+    rerender(ui(false));
+    expect(focused()).toBe(button('Choose a reward'));
+  });
+  it('puts focus back where it was in the sheet that becomes live on Minimize (Chat message field)', async () => {
+    const ui = (rewardOpen: boolean): ReactElement => <>
+      <Ro title="Chat"><button type="button">Emoji</button><input aria-label="Message" /></Ro>
+      <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet></>;
+    const { user, rerender } = renderUi(ui(false));
+    const message = screen.getByRole('textbox', { name: 'Message' });
+    act(() => { message.focus(); });
+    rerender(ui(true));
+    expect(focused()).toBe(button('4 lives'));
+    await user.click(button(MINIMIZE_LABEL));
+    expect(focused()).toBe(message);
+    await user.click(button('Choose a reward'));
+    expect(focused()).toBe(button('4 lives'));
+    rerender(ui(false));
+    expect(focused()).toBe(message);
   });
 });

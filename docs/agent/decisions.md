@@ -4572,3 +4572,32 @@ Source: `docs/technical_spec_v7.md` §6.7 (normative), WAI-ARIA Authoring Practi
   rules; new cases cover each change.
 
 ---
+
+## 2026-10-21 · [P] V7 sheets absorb presses while they close (L72-09 fix round 2)
+
+Source: `docs/technical_spec_v7.md` §1 and `PRODUCT.md` ("an accidental tap never spends the
+turn"), §6.6.4 (commit rule); the L72-09 fix-round-2 review (three lenses reproduced the
+click-through in the browser). Amends the "Exit guard" bullet of the fix-round-1 entry above.
+
+- **Ruling: a press during a sheet's exit does nothing, whether or not another sheet remains
+  beneath.** Round 1 made the exiting overlay click-through, so a double tap on a backdrop or on
+  a picker's Confirm reached the page under the scrim (at 1440 it reopened the Dialog 9 ms
+  later) or closed the lower sheet too. Now the exiting overlay root stays hit-testable as a
+  no-op shield over the whole box (`aria-hidden`, handlers gated on `live`) and only its panel
+  turns `inert`. Cost: a deliberate press on the lower sheet within ~220 ms of the top one
+  closing is absorbed and has to be repeated.
+- **Collapse shield.** When a panel collapses to its bar (Minimize, L74 "Use" → targeting), the
+  overlay hides at once, so a no-op shield covers the box for `DUR_BASE_MS` (none under reduced
+  motion, where the panel does not animate). The bar appears immediately and paints above it.
+- **Toast stays click-through** while it fades: it covers a small area, and absorbing presses
+  there would block the dock less predictably.
+- **Opener chain.** A closing trap re-parents every other open trap whose opener sits inside its
+  container to its own opener, before any early return. The chain walk reaches a minimized sheet
+  through its bar. Minimize hands the blocking sheet's opener to the trap that becomes live, and
+  a manual Toast dismissal returns focus to the live sheet, else to the element focused before.
+- **Test change mandated by the ruling:** the fix-round-1 P9e test (exiting Kit overlay
+  click-through, `pointer-events: none`, inert) and the P9d assertion `pointerEvents === 'none'`
+  now assert the shield (hit-testable, `aria-hidden`, panel inert) and that the press does
+  nothing; a lower-sheet backdrop press works again once the exit completes.
+
+---

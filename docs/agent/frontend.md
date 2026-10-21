@@ -230,12 +230,31 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   caller-collapsed read-only sheet (L74 targeting) is a bar on the sheet layer: under an
   expanded blocking sheet it is inert (§6.7), and while it is the newest read-only sheet no
   sheet handles Esc, so L74's targeting handler receives an unhandled Esc and cancels
-  targeting (§6.6.5). Closing sheets and toasts are inert and click-through while they fade.
+  targeting (§6.6.5). A closing sheet is a no-op press shield until its exit ends (its panel is
+  inert), and so is the box for `--dur-base` after a panel collapses to its bar; a closing toast
+  stays click-through.
+- **`useFocusTrap` contract** (`ui/primitives/use-focus-trap.ts`, a superset of the brief's
+  row): `useFocusTrap(containerRef, { active, initialFocusRef?, restoreFocus?, open?,
+  isReachable?, fallbackContainer?, standIn?, handOverOnRelease? })`. `active` is the live
+  trap; `open` (default `active`) is the open cycle that keeps the opener; `isReachable`,
+  `fallbackContainer` and `standIn` steer the restore on close; `handOverOnRelease` hands the
+  opener to the next trap when it is released mid-cycle. `focusIntoTrap(container)` moves
+  focus into an open trap the way its activation would. Sheet wires all of it; another caller
+  can pass only `active`.
+- **L74 carry-overs (not code yet):**
+  - collapsing a read-only sheet for targeting releases its trap, but nothing moves focus to the
+    caller's `collapsedBar`: L74 owns targeting focus (§6.6.5);
+  - under the B2 ruling, an older expanded read-only sheet (Seat) under a collapsed targeting
+    sheet becomes the live modal sheet; L74 decides whether entering targeting closes or
+    collapses covering read-only sheets;
+  - `#root` stays non-inert (deferred), so a programmatic `.focus()` can still leave a modal
+    sheet.
 - **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
   inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
   `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
   `sheet.tsx`, `dialog.tsx`, `toast.tsx`, `presence-layer.tsx` (tells an AnimatePresence child
-  whether it is exiting); layers in `ui/layers.ts` (`Z_INDEX`). The default
+  whether it is exiting), `sheet-focus.ts` (`reachableIn`, `livePanel`: where focus may go in
+  a stack state); layers in `ui/layers.ts` (`Z_INDEX`). The default
   store is a module singleton, so the app root needs no provider; `<SheetStackProvider>` exists
   for isolation.
 - **Portals:** sheets and toasts render into `document.body`. A sheet opened from inside a
