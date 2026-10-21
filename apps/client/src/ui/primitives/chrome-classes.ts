@@ -19,6 +19,9 @@ export const CHROME_FLAT_SM_CLASS = `${CHROME_OUTLINE_CLASS} rounded-v7-chrome-s
 export const CHROME_DISC_CLASS = `${CHROME_OUTLINE_CLASS} rounded-full shadow-v7-chrome`;
 export const CHROME_FOCUS_CLASS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v7-text';
+/** The same ring drawn inside the edge, for a scroll region whose neighbors sit flush against it. */
+export const CHROME_FOCUS_INSET_CLASS =
+  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-v7-text';
 
 /**
  * Disabled chrome reads "off" rather than faded: `--panel-2` fill, `--text-2` label, a dashed

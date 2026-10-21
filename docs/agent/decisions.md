@@ -4552,3 +4552,42 @@ Source: `apps/client/src/test/render.tsx`, technical spec v7 §12.2, L72-06 revi
   real timers cannot leak fake ones into the next test.
 
 ---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 sheet stack: blocking on top, one live sheet (L72-09 fix round 1)
+
+Source: `docs/technical_spec_v7.md` §6.7 (normative), WAI-ARIA Authoring Practices "Dialog
+(Modal)" pattern, three reviews of `316d4fa`; amends the "V7 sheet stack (L72-09)" entry above.
+
+- **Spec wins over the brief on collapsed bars (§6.7).** The brief put a caller-collapsed
+  read-only sheet (L74 targeting) in the bar group, so it painted at z 80 above an expanded
+  blocking sheet at 50 and was never inert. §6.7: blocking sub-choices "always sit on top; any
+  other open sheet ... is pushed underneath". Ruling: the bar group splits. Minimize bars of
+  blocking sheets keep the `sheetBar` layer, above everything. A collapsed read-only bar paints
+  on the `sheet` layer, above expanded read-only sheets and below expanded blocking sheets, and
+  is inert while one is expanded above it.
+- **One live sheet (WAI-ARIA modal dialog).** Every painted expanded sheet with another expanded
+  sheet above it is inert, read-only ones included (before: only under a blocking sheet, so a
+  lower aria-modal sheet stayed in the keyboard path). `liveSheetId` names the top expanded
+  sheet; only it holds the focus trap.
+- **Focus follows reachability.** The trap is active only for the live sheet and moves focus in
+  each time it becomes live. The opener is recorded when the sheet opens, kept across minimize
+  and cover, cleared on close. On close, focus goes to the opener only when it is reachable in
+  the new stack (page with no modal sheet painted, an uncovered bar, or the new live sheet),
+  else into the new live sheet, else up the opener chain; it never stays in a closing panel.
+  A reachable opener still under a stale `inert` is handed to the trap that activates around it.
+- **Esc during targeting (§6.6.5).** While the newest read-only sheet (by open order) is
+  collapsed, `escTargetId` is `null`: the Esc stays unhandled, so the L74 targeting handler can
+  cancel targeting instead of the sheet underneath closing.
+- **Exit guard.** Dismissal handlers check a live ref, and an exiting overlay or toast card
+  (`useIsPresent`, `ui/primitives/presence-layer.tsx`) is inert with `pointer-events: none`.
+- **Keyboard scroll.** An overflowing sheet body becomes a focusable region named by the title,
+  in the Tab cycle; initial focus still prefers the first control.
+- **Minors:** a press ending inside the panel no longer closes; the bar strip is click-through
+  outside the bar; the restore control has `aria-expanded="false"` and a chevron-up; both Toast
+  live regions stay mounted (empty) so polite toasts are announced; `ui/tokens.css` exempts V7
+  panels from the V2 `index.css` short-viewport `[role="dialog"]` padding rule until
+  `design/components/dialog.tsx` is deleted.
+- No brief assertion changed: the L72-09 pure and component tests still hold under the new
+  rules; new cases cover each change.
+
+---

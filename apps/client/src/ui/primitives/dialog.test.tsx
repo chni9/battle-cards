@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
-import { act, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
 import { Dialog } from './dialog';
@@ -26,7 +27,7 @@ const noop = (): void => undefined;
 const panelOf = (name: string): HTMLElement => screen.getByRole('dialog', { name });
 
 describe('Dialog (spec v7 §7.7, L53-02 / L53-07)', () => {
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
   it('bounds the panel to an 844×390 landscape box and keeps the footer outside the scrolling body', () => {
     stubVisualViewport(844, 390);
@@ -80,5 +81,64 @@ describe('Dialog (spec v7 §7.7, L53-02 / L53-07)', () => {
     renderUi(<Dialog open title="Choose a reward" hintAnchor="elimination-reward" dataAttributes={{ 'data-sub-choice': 'reward' }} onClose={noop}><p>Pick</p></Dialog>);
     expect(panelOf('Choose a reward').getAttribute('data-hint-anchor')).toBe('elimination-reward');
     expect(panelOf('Choose a reward').getAttribute('data-sub-choice')).toBe('reward');
+  });
+});
+
+function ClosingDialog({ onClose }: { readonly onClose: () => void }): ReactElement {
+  const [open, setOpen] = useState(true);
+  return <Dialog open={open} title="Shop" onClose={() => { onClose(); setOpen(false); }}><p>Cards</p></Dialog>;
+}
+/** happy-dom has no layout: make every sheet body report more content than it shows. */
+function stubOverflowingBody(): void {
+  const isBody = (element: HTMLElement): boolean => element.getAttribute('data-zone') === 'sheet-body';
+  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) { return isBody(this) ? 2000 : 0; });
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) { return isBody(this) ? 300 : 0; });
+}
+const rules = Array.from({ length: 40 }, (_, index) => <p key={index}>Rule line {index + 1}</p>);
+
+describe('Dialog fix round 1', () => {
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('makes an overflowing text-only body a named scroll region in the Tab cycle (A2, WCAG 2.1.1)', async () => {
+    stubOverflowingBody();
+    const { user } = renderUi(<Dialog open title="How to play" width="3xl" onClose={noop} actions={<button type="button">Close</button>}>{rules}</Dialog>);
+    const panel = panelOf('How to play');
+    const body = zone(panel, 'sheet-body');
+    const close = screen.getByRole('button', { name: 'Close' });
+    expect([body.getAttribute('role'), body.tabIndex]).toEqual(['region', 0]);
+    expect(body.getAttribute('aria-labelledby')).toBe(panel.getAttribute('aria-labelledby'));
+    expect(screen.getByRole('region', { name: 'How to play' })).toBe(body);
+    expect(document.activeElement).toBe(close);
+    await user.tab();
+    expect(document.activeElement).toBe(body);
+    await user.tab();
+    expect(document.activeElement).toBe(close);
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(body);
+  });
+  it('keeps a body that fits out of the Tab order', () => {
+    renderUi(<Dialog open title="Feedback" onClose={noop}><p>Short</p></Dialog>);
+    const body = zone(panelOf('Feedback'), 'sheet-body');
+    expect([body.hasAttribute('tabindex'), body.hasAttribute('role')]).toEqual([false, false]);
+  });
+  it('closes once on a double backdrop click (A3, P9d)', async () => {
+    const onClose = vi.fn();
+    const { user } = renderUi(<ClosingDialog onClose={onClose} />);
+    const overlay = overlayOf(panelOf('Shop'));
+    await user.click(overlay);
+    fireEvent.pointerDown(overlay);
+    fireEvent.click(overlay);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(overlay.isConnected).toBe(true);
+    expect(overlay.style.pointerEvents).toBe('none');
+  });
+  it('closes once on a double backdrop click under reduced motion (A3, P12b)', async () => {
+    const onClose = vi.fn();
+    const { user } = renderUi(<ClosingDialog onClose={onClose} />, { reducedMotion: true });
+    const overlay = overlayOf(panelOf('Shop'));
+    await user.click(overlay);
+    fireEvent.pointerDown(overlay);
+    fireEvent.click(overlay);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

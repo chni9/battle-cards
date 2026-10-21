@@ -260,3 +260,176 @@ describe('Sheet motion (spec v7 §8.3)', () => {
     expect(dialog('Card').getAttribute('data-motion')).toBe('full');
   });
 });
+
+function Q59Harness(): ReactElement {
+  const [rewardOpen, setRewardOpen] = useState(true);
+  const [cardOpen, setCardOpen] = useState(false);
+  return <><button type="button" onClick={() => { setCardOpen(true); }}>Open card</button>
+    <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button" onClick={() => { setRewardOpen(false); }}>Confirm</button></Sheet>
+    <Ro title="Card" open={cardOpen} onClose={() => { setCardOpen(false); }}><button type="button">Use</button><button type="button">Sell</button></Ro></>;
+}
+function CardAndKitHarness(): ReactElement {
+  const [cardOpen, setCardOpen] = useState(false);
+  const [kitOpen, setKitOpen] = useState(false);
+  return <><button type="button" onClick={() => { setCardOpen(true); }}>Open card</button>
+    <Ro title="Card" open={cardOpen} onClose={() => { setCardOpen(false); }}><button type="button" onClick={() => { setKitOpen(true); }}>Show kit</button></Ro>
+    <Ro title="Kit" open={cardOpen && kitOpen} onClose={() => { setKitOpen(false); setCardOpen(false); }}><button type="button">Kit info</button></Ro></>;
+}
+
+describe('Sheet focus follows the live sheet (fix round 1, A1)', () => {
+  it('keeps focus in the card sheet after the restored reward picker is confirmed (Q59 flow)', async () => {
+    const { user } = renderUi(<Q59Harness />);
+    expect(focused()).toBe(button('Confirm'));
+    await user.click(button(MINIMIZE_LABEL));
+    await user.click(button('Open card'));
+    expect(focused()).toBe(button('Use'));
+    await user.click(button('Choose a reward'));
+    expect(focused()).toBe(button('Confirm'));
+    expect(inert(overlayOf(dialog('Card')))).toBe(true);
+    await user.click(button('Confirm'));
+    expect(focused()).toBe(button('Use'));
+    await user.tab();
+    expect(focused()).toBe(button('Sell'));
+    await user.tab();
+    expect(focused()).toBe(button('Use'));
+  });
+  it('moves focus into a read-only sheet that opened under a blocking sheet once that sheet closes', () => {
+    const ui = (rewardOpen: boolean): ReactElement => <>
+      <Sheet open={rewardOpen} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet>
+      <Ro title="Card"><button type="button">Use</button></Ro></>;
+    const { rerender } = renderUi(ui(true));
+    expect(focused()).toBe(button('4 lives'));
+    expect(inert(overlayOf(dialog('Card')))).toBe(true);
+    rerender(ui(false));
+    expect(focused()).toBe(button('Use'));
+  });
+  it('moves focus into that read-only sheet, not the bar, when the blocking sheet minimizes', async () => {
+    const { user } = renderUi(<>{REWARD}<Ro title="Card"><button type="button">Use</button></Ro></>);
+    await user.click(button(MINIMIZE_LABEL));
+    expect(focused()).toBe(button('Use'));
+    expect(inert(overlayOf(dialog('Card')))).toBe(false);
+  });
+  it('returns focus to the opener when a minimized sheet closes while its bar holds focus', async () => {
+    const ui = (open: boolean): ReactElement => <><button type="button">Draw</button>
+      <Sheet open={open} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet></>;
+    const { user, rerender } = renderUi(ui(false));
+    act(() => { button('Draw').focus(); });
+    rerender(ui(true));
+    await user.click(button(MINIMIZE_LABEL));
+    expect(focused()).toBe(button('Choose a reward'));
+    rerender(ui(false));
+    expect(focused()).toBe(button('Draw'));
+  });
+  it('returns focus to the page opener when one update closes two stacked sheets', async () => {
+    const { user } = renderUi(<CardAndKitHarness />);
+    await user.click(button('Open card'));
+    await user.click(button('Show kit'));
+    expect(focused()).toBe(button('Kit info'));
+    await user.keyboard('{Escape}');
+    expect(focused()).toBe(button('Open card'));
+  });
+  it('forgets the opener when a sheet closes, so a later cycle never reuses it', () => {
+    const ui = (open: boolean): ReactElement => <><button type="button">Open card</button>
+      <Ro title="Card" open={open}><button type="button">Use</button></Ro></>;
+    const { rerender } = renderUi(ui(false));
+    act(() => { button('Open card').focus(); });
+    rerender(ui(true));
+    rerender(ui(false));
+    expect(focused()).toBe(button('Open card'));
+    act(() => { button('Open card').blur(); });
+    rerender(ui(true));
+    expect(focused()).toBe(button('Use'));
+    rerender(ui(false));
+    expect(focused()).toBe(document.body);
+  });
+  it('makes a read-only sheet under another expanded sheet inert (A5, WAI-ARIA modal dialog)', () => {
+    renderUi(<><Ro title="Card"><button type="button">Use</button></Ro><Ro title="Kit"><button type="button">Info</button></Ro></>);
+    expect([inert(overlayOf(dialog('Card'))), inert(overlayOf(dialog('Kit')))]).toEqual([true, false]);
+    expect(focused()).toBe(button('Info'));
+  });
+});
+
+function ClosingSheet({ title, onClose }: { title: string; onClose: () => void }): ReactElement {
+  const [open, setOpen] = useState(true);
+  return <Ro title={title} open={open} onClose={() => { onClose(); setOpen(false); }} />;
+}
+function ClosingCardAndKit({ closeCard, closeKit }: { closeCard: () => void; closeKit: () => void }): ReactElement {
+  const [cardOpen, setCardOpen] = useState(true);
+  const [kitOpen, setKitOpen] = useState(true);
+  return <><Ro title="Card" open={cardOpen} onClose={() => { closeCard(); setCardOpen(false); }} />
+    <Ro title="Kit" open={kitOpen} onClose={() => { closeKit(); setKitOpen(false); }} /></>;
+}
+const clickThrough = (element: HTMLElement): void => { fireEvent.pointerDown(element); fireEvent.pointerUp(element); fireEvent.click(element); };
+
+describe('Sheet exit guard (fix round 1, A3)', () => {
+  it('lets a backdrop click meant for the lower sheet pass through the exiting top one (P9e)', async () => {
+    const [closeCard, closeKit] = [vi.fn(), vi.fn()];
+    const { user } = renderUi(<ClosingCardAndKit closeCard={closeCard} closeKit={closeKit} />);
+    const kitOverlay = overlayOf(dialog('Kit'));
+    await user.keyboard('{Escape}');
+    expect(kitOverlay.isConnected).toBe(true);
+    expect([kitOverlay.style.pointerEvents, inert(kitOverlay)]).toEqual(['none', true]);
+    clickThrough(kitOverlay);
+    expect(closeKit).toHaveBeenCalledTimes(1);
+    await user.click(overlayOf(dialog('Card')));
+    expect(closeCard).toHaveBeenCalledTimes(1);
+  });
+  it('ignores a second swipe on the exiting handle (P12c)', () => {
+    const onClose = vi.fn();
+    renderUi(<ClosingSheet title="Card" onClose={onClose} />);
+    const panel = dialog('Card');
+    swipeDown(panel, 120);
+    swipeDown(panel, 120);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(zone(panel, 'sheet-handle').isConnected).toBe(true);
+  });
+});
+
+describe('Sheet fix round 1: stack order and minors', () => {
+  it('keeps a collapsed targeting bar under an expanded blocking sheet, inert (A4, §6.7)', () => {
+    renderUi(<><Sheet open collapsed collapsedBar={<button type="button">Cancel</button>} mode="read-only" title="Basic attack" onClose={noop}>
+      <button type="button">Use</button></Sheet>{REWARD}</>);
+    const bar = zone(document.body, 'sheet-bar');
+    expect(z(bar)).toBeLessThan(z(overlayOf(dialog('Choose a reward'))));
+    expect(inert(bar)).toBe(true);
+    expect(focused()).toBe(button('4 lives'));
+  });
+  it('does not close on a press that starts on the backdrop and ends inside the panel (B1)', () => {
+    const onClose = vi.fn();
+    renderUi(<Ro title="Card" onClose={onClose}><p>Deal 3 damage.</p></Ro>);
+    const overlay = overlayOf(dialog('Card'));
+    fireEvent.pointerDown(overlay);
+    fireEvent.pointerUp(screen.getByText('Deal 3 damage.'));
+    fireEvent.click(overlay);
+    expect(onClose).not.toHaveBeenCalled();
+    clickThrough(overlay);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+  it('leaves Esc unhandled for the caller while a collapsed targeting sheet is the newest (B2, §6.6.5)', async () => {
+    const [closeSeat, closeCard] = [vi.fn(), vi.fn()];
+    const { user } = renderUi(<><Ro title="Seat" onClose={closeSeat} />
+      <Sheet open collapsed collapsedBar={<button type="button">Cancel</button>} mode="read-only" title="Basic attack" onClose={closeCard}>
+        <button type="button">Use</button></Sheet></>);
+    const seen: boolean[] = [];
+    const onKeyDown = (event: KeyboardEvent): void => { seen.push(event.defaultPrevented); };
+    document.addEventListener('keydown', onKeyDown);
+    try {
+      await user.keyboard('{Escape}');
+    } finally {
+      document.removeEventListener('keydown', onKeyDown);
+    }
+    expect([closeSeat.mock.calls.length, closeCard.mock.calls.length]).toEqual([0, 0]);
+    expect(seen).toEqual([false]);
+  });
+  it('lets presses through the bar strip and marks the restore control collapsed (B3, B5)', async () => {
+    const { user } = renderUi(REWARD);
+    await user.click(button(MINIMIZE_LABEL));
+    const bar = zone(document.body, 'sheet-bar');
+    const restore = button('Choose a reward');
+    expect(bar.style.pointerEvents).toBe('none');
+    const strip = bar.firstElementChild;
+    expect(strip instanceof HTMLElement ? strip.style.pointerEvents : null).toBe('auto');
+    expect(restore.getAttribute('aria-expanded')).toBe('false');
+    expect(restore.querySelector('svg[data-icon="chevron-right"]')).not.toBeNull();
+  });
+});

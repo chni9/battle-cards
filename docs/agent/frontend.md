@@ -224,10 +224,18 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   swipe-down; `dismissLocked` (the Feedback send lock) blocks all three, `closeOnBackdrop`
   only the backdrop. Esc closes only the top sheet. Toasts are dismissed only by hand or by
   timeout, both through `onDismiss`, never by a prop or state change.
+- **One live sheet** (fix round 1): only the top expanded sheet is live; every sheet under it
+  is inert, and focus follows it (`use-focus-trap.ts`: move in on becoming live, restore on
+  close only to a reachable opener, else the new live sheet, else the opener chain). A
+  caller-collapsed read-only sheet (L74 targeting) is a bar on the sheet layer: under an
+  expanded blocking sheet it is inert (§6.7), and while it is the newest read-only sheet no
+  sheet handles Esc, so L74's targeting handler receives an unhandled Esc and cancels
+  targeting (§6.6.5). Closing sheets and toasts are inert and click-through while they fade.
 - **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
   inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
   `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
-  `sheet.tsx`, `dialog.tsx`, `toast.tsx`; layers in `ui/layers.ts` (`Z_INDEX`). The default
+  `sheet.tsx`, `dialog.tsx`, `toast.tsx`, `presence-layer.tsx` (tells an AnimatePresence child
+  whether it is exiting); layers in `ui/layers.ts` (`Z_INDEX`). The default
   store is a module singleton, so the app root needs no provider; `<SheetStackProvider>` exists
   for isolation.
 - **Portals:** sheets and toasts render into `document.body`. A sheet opened from inside a
