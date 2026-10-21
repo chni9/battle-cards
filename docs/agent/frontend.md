@@ -130,9 +130,12 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `RESOURCE_ICON[kind]`. Decorative (`aria-hidden`) unless given a non-empty `label`.
   Icon-only controls use `IconButton` (L72-08) for the aria-label and title (L59-01), never a
   bare `Icon`. Glyph paints are `V7_COLORS` hex only, with a 2-unit ink outline and a non-ink
-  body. No emoji and no U+2715 cross in `ui/` (`ui/icons/no-emoji.test.ts`); use
-  `Icon name="eliminated"` or `"close"`. The classic `SpyEyeIcon` and `ForfeitFlagIcon`
-  (`screens/table/`) stay until L75. Details: `/DESIGN.md` › Icons.
+  body. Never put an icon directly on a fill within CIEDE2000 20 of its body or motif token
+  (for example `point`, `shop`, `coach` or `feedback` on `--cta`, or `help` on `--cta-2`):
+  put it in a `--bg-0` or `--panel` well. No emoji and no U+2715 cross in `ui/`
+  (`ui/icons/no-emoji.test.ts`); use `Icon name="eliminated"` or `"close"`. The classic
+  `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75. Details:
+  `/DESIGN.md` › Icons.
 - **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.
