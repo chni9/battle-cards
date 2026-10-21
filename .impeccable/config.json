@@ -218,6 +218,42 @@
         ],
         "createdAt": "2026-10-21T09:20:38.114Z",
         "reason": "Designer-approved V7 ground halos (technical spec v7 §5.1, §12.4; Q3b 2026-10-20). Scoped to ui/tokens.css only."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance.html"
+        ],
+        "createdAt": "2026-10-21T09:41:29.842Z",
+        "reason": "Claude: throwaway brainstorm moodboard (spec v7 §12.4 exempts .superpowers boards); fonts predate DESIGN.md"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/ambiance-v2.html"
+        ],
+        "createdAt": "2026-10-21T09:41:29.868Z",
+        "reason": "Claude: throwaway brainstorm moodboard (spec v7 §12.4 exempts .superpowers boards); fonts predate DESIGN.md"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/direction-b-variantes.html"
+        ],
+        "createdAt": "2026-10-21T09:41:29.893Z",
+        "reason": "Claude: throwaway brainstorm moodboard (spec v7 §12.4 exempts .superpowers boards); fonts predate DESIGN.md"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/5551-1792515680/content/table-8-joueurs.html"
+        ],
+        "createdAt": "2026-10-21T09:41:29.911Z",
+        "reason": "Claude: throwaway brainstorm moodboard (spec v7 §12.4 exempts .superpowers boards); fonts predate DESIGN.md"
       }
     ]
   }
