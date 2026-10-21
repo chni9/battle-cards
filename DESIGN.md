@@ -411,7 +411,8 @@ components render them.
 ## Components
 
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
-The icon set is in Icons; the L72-08 chrome primitives are in Primitives below.
+The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, and the L72-09
+Sheet, Dialog and Toast in Overlays.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -421,7 +422,9 @@ The icon set is in Icons; the L72-08 chrome primitives are in Primitives below.
 - **Entrance ease** (`EASE_ENTRANCE`, `--ease-entrance`, `ease-v7-entrance`):
   `cubic-bezier(0.16, 1, 0.3, 1)`, the same curve as V2 `MOTION_EASE`. Ease-out for entrances.
 - **Reduced motion** (`prefers-reduced-motion: reduce`): components read only
-  `usePrefersReducedMotion()` and run every motion prop through `motionSpecFor(spec, reduced)`.
+  `usePrefersReducedMotion()` and run every motion prop through `motionSpecFor(spec, reduced)`,
+  or spread `motionPropsFor(spec, reduced)` on a motion element (the same spec, typed as
+  motion's props).
   `reduceMotionSpec` keeps opacity, color, background color and box shadow, drops every
   `x`, `y`, `scale` and `rotate`, and replaces the spring with a 120ms tween. The animated
   root carries `data-motion="reduced" | "full"`, and CSS animation or press classes are
@@ -437,16 +440,19 @@ State: `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `chromePressClass`, `motio
 Fills: `BUTTON_VARIANT_CLASS`, `iconNeedsWell`, `ICON_WELL_CLASS`. Tracks: `CHROME_TRACK_*`
 for Tabs and Segmented. A primitive never restates the outline, shadow, radius or press offset
 as a literal; every class map is a literal string, and composed constants are template
-literals of those strings, so Tailwind still sees each class. The one allowed exception is
-the Slider's `[&::-webkit-…]:` / `[&::-moz-…]:` pseudo-element variants, which restate the
-outline because a constant cannot sit behind such a prefix. Focus is a 2px `--text` outline,
-offset 2px, on `:focus-visible`. Each animated control carries `data-motion="reduced" | "full"`.
+literals of those strings, so Tailwind still sees each class. Only the 3px chrome outline is
+ever restated, and only in one place: the Slider thumb's `[&::-webkit-…]:` / `[&::-moz-…]:`
+pseudo-element variants, because a constant cannot sit behind such a prefix. Token utilities
+such as `rounded-v7-chrome-sm`, and the 2px outlines of small parts (count badges, Carousel
+dots, the Slider track, the KitTile tag), are not the chrome outline, so they are not
+exceptions. Focus is a 2px `--text` outline, offset 2px, on `:focus-visible`. Each animated control carries `data-motion="reduced" | "full"`.
 
-**Every scroll container is `relative`** (the `/dev/ui` ground, ScrollArea, the Carousel
-track). `sr-only` labels and other absolutely positioned descendants then resolve against it
-and stay inside its clip. Otherwise they keep the initial containing block, stretch `#root`
-(which clips and cannot be scrolled back), and a screen reader's focus-follows can scroll the
-screen blank. Later screens follow the same rule.
+**Every V7 scroll container is `relative`** (the `/dev/ui` ground, ScrollArea, the Carousel
+track, the Sheet body). `sr-only` labels and other absolutely positioned descendants then
+resolve against it and stay inside its clip. Otherwise they keep the initial containing block,
+stretch `#root` (which clips and cannot be scrolled back), and a screen reader's focus-follows
+can scroll the screen blank. Every new V7 screen follows the rule; pre-V7 screens adopt it when
+their lot restyles them.
 
 - **Disabled look:** disabled chrome reads "off", not faded. The fill turns `--panel-2`, the
   label `--text-2`, the outline dashed; the drop shadow goes and icons dim to 50%. The same
@@ -523,11 +529,14 @@ screen blank. Later screens follow the same rule.
     the first open tooltip installed the shared one.
   - Stopped: later `document` capture listeners, every listener below `document`, every
     bubble-phase listener, and React handlers.
-  - So sheet Esc handling (L72-09) listens in the bubble phase or through React.
+  - So the Sheet's Esc listener (L72-09) is a bubble-phase `document` listener: a tooltip
+    open inside a sheet takes the first Esc, and the sheet the next one.
 - **ScrollArea:** `y` (default), `x` or `both`, overscroll contained, the cross axis clipped. A
   `label` makes it a focusable named region. Without one, Chromium still makes an overflowing
   scroller with nothing focusable inside a Tab stop, but an unnamed one, so pass a `label`
-  whenever the content can overflow.
+  whenever the content can overflow. It is always `relative`, and a `className` of `absolute`
+  or `fixed` loses to it (Tailwind emits `.relative` after `.absolute` and `.fixed`), so a
+  caller that needs to position the scroller wraps it in a positioned element.
 - **TextField:** 16px (`--type-input`) Nunito on `--panel-2`, 44px tall, so iOS never zooms on
   focus. The hint is `--text-2`. An error sets `aria-invalid`, turns the border `--danger` and
   prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
@@ -567,8 +576,8 @@ and the L73 seat layout reuse it.
 ### Copy
 `ui/ui-copy.ts` holds only the new strings a `ui/` component needs, each listed in the PR for
 designer review (spec v7 §10.6): `EXCLUDED_LABEL` "Excluded" and `carouselPositionLabel`
-("{label}, {n} of {m}", the Carousel status line), both L72-08. L72-09 adds `MINIMIZE_LABEL`
-and L72-16 adds `TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and
+("{label}, {n} of {m}", the Carousel status line), both L72-08, and `MINIMIZE_LABEL`
+"Minimize" (L72-09). L72-16 adds `TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and
 next, the KitTile info control, the BadgeGroup `overflowLabel`) comes from the caller's
 existing copy.
 
@@ -579,12 +588,74 @@ no gallery chunk. html, body and `#root` clip their overflow (`index.css`), so t
 `.v7-ground` root is the scroll container (`relative h-full overflow-y-auto
 overscroll-contain`, as on Home, never `vh` or `dvh`). Its halos therefore size to the visible
 box. `relative` keeps its `sr-only` descendants inside its clip, so `#root` stays exactly the
-viewport size. The page links each
-section from a nav and renders each entry on a `--panel` card. Each `ui/` area adds
-`ui/<area>/<area>.gallery.tsx` exporting `gallery: GallerySection`; `import.meta.glob` finds
-it, and `collectGallerySections` sorts the sections by id and rejects a duplicate id.
-Stateful demos live in a components-only sibling (`primitives-gallery-demos.tsx`). Demo copy
-is DEV-only, never a shipped string.
+viewport size. The page links each section from a nav and renders each entry on a `--panel`
+card. Each `ui/` area adds `ui/<area>/<area>.gallery.tsx` exporting `gallery: GallerySection`;
+`import.meta.glob` finds it, and `collectGallerySections` sorts the sections by id and rejects
+a duplicate id. Stateful demos live in a components-only sibling
+(`primitives-gallery-demos.tsx`, `overlays.gallery-demos.tsx`). Demo copy is DEV-only, never a
+shipped string.
+
+## Overlays — Sheet, Dialog, Toast (L72-09)
+
+`ui/primitives/sheet.tsx`, `dialog.tsx` and `toast.tsx`, on one sheet stack
+(`sheet-stack.ts`, pure; `sheet-stack-context.ts`, the store) that implements spec v7 §6.7.
+The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
+
+- **Layers** (`ui/layers.ts`, `Z_INDEX`): `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
+  Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
+  `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
+  `sheet + n` to expanded sheets and `sheetBar + n` to bars, clamped below the next layer.
+- **Paint order**, bottom to top: read-only sheets, expanded blocking sheets, Minimize bars. A
+  blocking sub-choice always paints above every read-only sheet, whatever opened first, and
+  every sheet under it turns `inert`. Two blocking sheets (simultaneous Lot 71 reward pickers)
+  stack in open order: the later one on top, the earlier one inert.
+- **Depth:** read-only sheets "stack one level": only the newest two (`MAX_READ_ONLY_DEPTH`)
+  paint. A third stays registered and hidden, and the oldest returns when a newer one closes.
+- **Restore to top:** a sheet restored from its bar rises to the top of its group, so restoring
+  the earlier of two pickers never leaves it under the other.
+- **Esc (Q49):** only the top expanded sheet reacts, and only when it is read-only and not
+  dismiss-locked. A locked top sheet absorbs Esc instead of passing it to the sheet below, so
+  an Esc meant for one sheet never reaches another (a claim picker, Appendix A
+  `claim-seat-dismiss-stay`). An Esc a child control already handled (`defaultPrevented`), or
+  one pressed during an IME composition, is ignored. A tooltip inside a sheet closes first.
+- **Read-only dismissal:** Esc, a backdrop press that starts and ends on the overlay, and a
+  swipe-down of at least 80px on the handle, all through `onClose`. A press inside the panel, or
+  a drag that starts in the panel and ends on the backdrop, never closes it.
+  `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
+  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
+- **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
+  only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
+  in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial
+  focus lands on the first body control. It collapses the sheet to a full-width `--cta-2` bar
+  labelled with the sheet title, which restores it. The caller keeps intents locked while it is
+  minimized (`onMinimizedChange`).
+- **Bars:** 44px bars in 52px slots stacked up from the bottom of the visible box, centered
+  and capped at 28rem. A caller-collapsed sheet (`collapsed` with `collapsedBar`, L74
+  targeting) joins the bar layer the same way, Esc skips it and its focus trap is released.
+  Every expanded overlay adds 52px of bottom padding per bar, so its content stays above them.
+- **Focus** (L11-03 kept, `use-focus-trap.ts`): focus moves in on open (`initialFocusRef`, else
+  the first focusable, else the panel); Tab and Shift+Tab wrap; on close it returns to the
+  opener, but only when nothing else took focus meanwhile. Nothing is focused inside an inert
+  or hidden sheet. Minimize hands focus to the bar, and restoring returns it to the panel.
+- **Placement and size:** `Sheet` defaults to `bottom`. `Dialog` is a read-only Sheet with
+  placement `auto`, so it is centered only in desktop mode (`viewportModeFor`) and is a bottom
+  sheet on phones, landscape phones and portrait tablets. The overlay is `position: fixed` at
+  the live `visualViewport` box (offsets and size; L53-02/07), never `100dvh`, `vh` or
+  `inset-0`, with a 60% `--bg-0` scrim. The panel is `max-height: 100%` of that box and
+  `max-width: min(<width>, 100%)` (Dialog `md` 28rem through `3xl` 48rem, via
+  `dialogPreferredMaxWidth`). The body is the only scroller (`relative`, overscroll
+  contained); the actions row sits outside it, so Close never scrolls away. Panels are
+  `--panel` with the chrome outline and shadow, top corners rounded at the bottom edge, all
+  corners when centered.
+- **Toast** (§6.12): a `--panel-2` chrome card at the top of the visible box, on the toast
+  layer, with a tone accent on its leading edge (`--cta-2` info, `--upgrade` success,
+  `--danger` error) and a `close` IconButton named by the caller's `dismissLabel`. Errors are
+  `role="alert"`, the rest `role="status"`. Every dismissal goes through
+  `onDismiss('manual' | 'timeout')`, once per open; a rerender or prop change never dismisses
+  or restarts the timer, which starts when `open` turns true (no `timeoutMs`: no timer).
+- **Motion:** the scrim fades over `--dur-fast`; a bottom panel rises 24px and a centered one
+  scales from 0.98, with opacity, over `--dur-base` on the entrance ease; the toast drops 12px.
+  Under reduced motion all three only fade.
 
 ## Do's and Don'ts
 

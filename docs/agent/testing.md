@@ -74,8 +74,10 @@ behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
   for it, so never write that text in a node test, not even in a string or a comment.
 - Render only through `renderUi` (import it relatively from `src/test/render.tsx`). Importing
   that module registers an after-each that unmounts every tree and resets reduced motion
-  (Vitest runs without globals, so RTL never cleans up on its own). `renderUi` returns
-  `{ user, ...result }`, where `user` is a `user-event` instance.
+  (Vitest runs without globals, so RTL never cleans up on its own) and switches fake timers
+  back to real ones. `renderUi` returns `{ ...result, user }`, where `user` is a `user-event`
+  instance. `renderUi` gives every call its own `SheetStackProvider` store (L72-09), kept
+  across `rerender`; a caller's own `wrapper` renders inside it.
 - Assert with plain DOM (`textContent`, `getAttribute`, `toBeNull`, `screen.getByRole`). There
   is no jest-dom.
 - Reduced motion: call `setReducedMotion(true)` or `renderUi(ui, { reducedMotion: true })`
@@ -85,7 +87,14 @@ behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
 - Fake timers: `vi.useFakeTimers()`, then
   `renderUi(ui, { advanceTimers: vi.advanceTimersByTime })`, and wrap manual advances in RTL
   `act`. `render.tsx` installs a minimal `globalThis.jest.advanceTimersByTime` so RTL's async
-  drain moves Vitest's clock; without it user-event never resolves.
+  drain moves Vitest's clock; without it user-event never resolves. That global relies on
+  Vitest's per-file isolation, so never set `test.isolate: false`.
+- `render.tsx` also sets `IS_REACT_ACT_ENVIRONMENT` (RTL's own `beforeAll` never runs without
+  globals), so React reports an update outside `act` as a warning. Keep the output clean: await
+  user-event calls and wrap manual timer or event dispatches in `act`; never unset the flag.
+- happy-dom rejects a cancelled animation's `finished` promise without marking it handled, so
+  every interrupted `motion` animation would fail the run as an unhandled AbortError.
+  `render.tsx` marks it handled, as browsers do; motion components need no stub of their own.
 - happy-dom has no layout: sizes, positions and resolved `clamp()` values are zero or
   unresolved. Assert structure, roles and data attributes here, and leave pixel checks to the
   browser gate (`frontend.md` · Post-lot browser gate).

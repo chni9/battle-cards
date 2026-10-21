@@ -179,11 +179,16 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
     the shared one was installed.
   - Stopped: later `document` capture listeners, everything below `document`, every
     bubble-phase listener, and React handlers.
-  - Sheet Esc handling (L72-09) therefore listens in the bubble phase or through React.
+  - The Sheet's Esc listener (L72-09) is therefore a bubble-phase `document` listener, so a
+    tooltip open inside a sheet takes the first Esc and the sheet the next.
 - **Scroll containers are positioned:** every V7 scroll container (a screen's scrolling ground,
-  ScrollArea, the Carousel track) carries `relative`. Absolutely positioned descendants,
-  `sr-only` labels included, then stay inside its clip. Without it they stretch `#root`, which
-  clips and cannot scroll back, and a screen reader's focus-follows can leave a blank screen.
+  ScrollArea, the Carousel track, the Sheet body) carries `relative`. Absolutely positioned
+  descendants, `sr-only` labels included, then stay inside its clip. Without it they stretch
+  `#root`, which clips and cannot scroll back, and a screen reader's focus-follows can leave a
+  blank screen. The rule covers V7 containers; a pre-V7 screen adopts it when its lot restyles
+  it. ScrollArea is always `relative`, and a `className` of `absolute` or `fixed` loses to it
+  (Tailwind emits `.relative` after `.absolute` and `.fixed`), so a caller that must position
+  the scroller wraps it in a positioned element.
 - **`data-motion`:** every animated primitive puts `data-motion="reduced" | "full"` on the
   element that moves (Button, IconButton and Toggle on the `<button>`, Carousel on its scroll
   track, whose `scroll-smooth` class and `scrollTo` behavior follow it) and applies transition
@@ -192,18 +197,48 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Viewport rule:** layout mode comes only from `viewportModeFor({ width, height })`
   (`ui/viewport-mode.ts`) or the hooks `useViewportMode()` / `useVisualViewportBox()`
   (`ui/use-visual-viewport-box.ts`, `useSyncExternalStore` on `visualViewport`). Never write a
-  second height or aspect breakpoint. happy-dom has no `visualViewport`, so a component test
-  that renders a hook consumer either stubs `window.visualViewport` or mocks
-  `ui/use-visual-viewport-box` (see `carousel.test.tsx`).
+  second height or aspect breakpoint. happy-dom has no `visualViewport`, so
+  `readVisualViewportBox()` falls back to the window size (1024×768 there); a component test
+  that needs a given box stubs it (`vi.stubGlobal('visualViewport', …)`, see
+  `dialog.test.tsx`) or mocks `ui/use-visual-viewport-box` (see `carousel.test.tsx`; a mock
+  must then provide every hook the rendered tree calls).
 - **Copy scope:** `ui/ui-copy.ts` holds only the spec v7 §10.6 strings a `ui/` component adds
-  (`EXCLUDED_LABEL` now; `MINIMIZE_LABEL` in L72-09, `TABLE_RULES_LABEL` in L72-16). Any other
-  label is a prop the caller fills from existing copy.
+  (`EXCLUDED_LABEL` and `MINIMIZE_LABEL` now, `TABLE_RULES_LABEL` in L72-16). Any other label
+  is a prop the caller fills from existing copy.
 - **Gallery registration:** add `ui/<area>/<area>.gallery.tsx` exporting
   `const gallery: GallerySection = { id: '<area>', title, entries: [{ id, title, render }] }`
   (`dev/gallery-registry.ts`). `dev/ui-gallery.tsx` picks it up through `import.meta.glob`; no
   central file is edited, and a duplicate section id throws. Keep stateful demo components in
   a components-only sibling `.tsx` (react-refresh). The route is `/dev/ui`
   (`dev/dev-ui-route.ts`), DEV only and absent from production builds.
+
+### V7 overlays (L72-09)
+
+- **Contract** (spec v7 §6.7, Q49, Q59; details in `/DESIGN.md` › Overlays):
+  `<Sheet mode="read-only" onClose …>` or `<Sheet mode="blocking" …>` (a discriminated union:
+  blocking has no `onClose`), `<Dialog>` (a read-only Sheet with placement `auto`) and
+  `<Toast onDismiss={(cause) => …} dismissLabel …>`. Blocking sheets paint above every
+  read-only sheet, ignore Esc, backdrop and swipe, and leave only through an answer or
+  Minimize, which collapses them to a bar above every sheet while the caller keeps intents
+  locked. Read-only sheets paint at most two deep and close on Esc, a backdrop press or a
+  swipe-down; `dismissLocked` (the Feedback send lock) blocks all three, `closeOnBackdrop`
+  only the backdrop. Esc closes only the top sheet. Toasts are dismissed only by hand or by
+  timeout, both through `onDismiss`, never by a prop or state change.
+- **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
+  inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
+  `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
+  `sheet.tsx`, `dialog.tsx`, `toast.tsx`; layers in `ui/layers.ts` (`Z_INDEX`). The default
+  store is a module singleton, so the app root needs no provider; `<SheetStackProvider>` exists
+  for isolation.
+- **Portals:** sheets and toasts render into `document.body`. A sheet opened from inside a
+  `<form>` therefore leaves the form, which retires the V2 hazard where a raw `<button>` in a
+  Dialog inside the solo menu form had to keep `type="button"` (Appendix A
+  `global-dialog-interaction-contract`): a button outside the form's DOM has no form to
+  submit. React events still bubble through the React tree, so a caller's `onKeyDown` or
+  `onClick` above the sheet still sees them.
+- **Tests:** `renderUi` gives every render its own sheet stack, kept across `rerender`, so one
+  test's sheets never sit above another's. The swipe on a real touch screen and the placement
+  at 375×812, 844×390 and 1440×900 are checked in the L72-21 browser gate.
 
 ## Design system (V2 · Lots 10+)
 
@@ -238,7 +273,9 @@ rules above are unchanged — this section only covers how the client looks.
   `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
   `dialogPanelClassName` (L53-02 / L53-07). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
-  extra npm dependency unless separately ruled.
+  extra npm dependency unless separately ruled. V2 only: V7 surfaces use `ui/primitives`
+  `Sheet` / `Dialog` / `Toast` (L72-09), where Esc closes only the top sheet (Q49); see
+  DESIGN.md.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join

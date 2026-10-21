@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
 /** V7 component-test harness self-test (technical spec v7 §12.2; L72-06). */
 import { screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { usePrefersReducedMotion } from '../ui/motion/use-prefers-reduced-motion';
+import { useSheetStackState, useSheetStackStore } from '../ui/primitives/sheet-stack-context';
 import { renderUi, setReducedMotion } from './render';
 
 function MotionProbe() {
@@ -16,6 +17,10 @@ function NamedRegion({ children }: { children: ReactNode }) {
 }
 
 describe('renderUi (technical spec v7 §12.2)', () => {
+  it('tells React it runs in an act environment, so unwrapped updates warn', () => {
+    expect(Reflect.get(globalThis, 'IS_REACT_ACT_ENVIRONMENT')).toBe(true);
+  });
+
   it('returns a user-event instance that drives the rendered tree', async () => {
     const onClick = vi.fn<() => void>();
     const { user } = renderUi(<button type="button" onClick={onClick}>Go</button>);
@@ -92,15 +97,33 @@ describe('reduced-motion stub (technical spec v7 §5.7, §8.3)', () => {
 
 // Run order is declaration order: the second test sees what afterEach left behind.
 describe('reset between tests (Vitest globals are off, so RTL does not auto-clean)', () => {
-  it('leaves a mounted tree and reduced motion on', () => {
+  it('leaves a mounted tree, reduced motion and fake timers on', () => {
     setReducedMotion(true);
+    vi.useFakeTimers();
     renderUi(<p>left behind</p>);
     expect(screen.getByText('left behind').tagName).toBe('P');
   });
 
-  it('starts the next test with an empty body and full motion', () => {
+  it('starts the next test with an empty body, full motion and real timers', () => {
     expect(document.body.childElementCount).toBe(0);
     expect(screen.queryByText('left behind')).toBeNull();
     expect(window.matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(false);
+    expect(vi.isFakeTimers()).toBe(false);
   });
+});
+
+function RegistersSheet({ id }: { readonly id: string }): null {
+  const store = useSheetStackStore();
+  useEffect(() => { store.open({ id, mode: 'read-only' }); return () => { store.close(id); }; }, [store, id]);
+  return null;
+}
+function SheetCount(): ReactElement {
+  return <output>{useSheetStackState().entries.length}</output>;
+}
+it('gives every renderUi call its own sheet stack and keeps it across rerender (L72-09)', () => {
+  const first = renderUi(<><RegistersSheet id="card" /><SheetCount /></>);
+  expect(first.container.textContent).toBe('1');
+  expect(renderUi(<SheetCount />).container.textContent).toBe('0');
+  first.rerender(<><RegistersSheet id="card" /><RegistersSheet id="kit" /><SheetCount /></>);
+  expect(first.container.textContent).toBe('2');
 });

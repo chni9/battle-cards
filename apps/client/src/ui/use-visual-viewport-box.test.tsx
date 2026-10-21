@@ -79,6 +79,14 @@ describe('useViewportMode (technical spec v7 §6.4)', () => {
     expect(screen.getByTestId('mode').textContent).toBe('desktop');
   });
 
+  it('falls back to the window size when the visualViewport API is absent (L72-09)', () => {
+    stubWindow('visualViewport', undefined);
+    stubWindow('innerWidth', 1440);
+    stubWindow('innerHeight', 900);
+    renderUi(<BoxProbe />);
+    expect(screen.getByTestId('box').textContent).toBe('1440x900+0');
+  });
+
   it('falls back to the window size when visualViewport is null', () => {
     stubWindow('visualViewport', null);
     stubWindow('innerWidth', 1440);
