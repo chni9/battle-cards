@@ -83,6 +83,18 @@ describe('Tabs (technical spec v7 §11, WAI-ARIA tabs)', () => {
     expect(latest.getAttribute('aria-selected')).toBe('true');
   });
 
+  it('a selected tab that is disabled keeps a locked look instead of the live --cta fill', () => {
+    renderUi(
+      <Tabs label="Release notes" tabs={TABS} selectedId="archive" onSelect={vi.fn()}>
+        Archived
+      </Tabs>,
+    );
+    const archive = screen.getByRole('tab', { name: 'Archive' });
+    expect(archive.getAttribute('aria-selected')).toBe('true');
+    expect(archive.classList.contains('bg-v7-text-2')).toBe(true);
+    expect(archive.classList.contains('bg-v7-cta')).toBe(false);
+  });
+
   it('uses idPrefix for its ids, so two instances never collide', () => {
     renderUi(
       <>

@@ -15,6 +15,7 @@ import {
   CHROME_TRACK_IDLE_CLASS,
   CHROME_TRACK_ITEM_CLASS,
   CHROME_TRACK_SELECTED_CLASS,
+  CHROME_TRACK_SELECTED_LOCKED_CLASS,
 } from './chrome-classes';
 import { edgeEnabledIndex, hasCommandModifier, nextEnabledIndex, rovingKeyFor } from './roving-focus';
 
@@ -91,7 +92,11 @@ export function Tabs<T extends string>({
                 onKeyDown(event, index);
               }}
               className={`${CHROME_TRACK_ITEM_CLASS} shrink-0 px-4 ${
-                selected ? CHROME_TRACK_SELECTED_CLASS : CHROME_TRACK_IDLE_CLASS
+                selected
+                  ? tab.disabled === true
+                    ? CHROME_TRACK_SELECTED_LOCKED_CLASS
+                    : CHROME_TRACK_SELECTED_CLASS
+                  : CHROME_TRACK_IDLE_CLASS
               }`}
             >
               {tab.label}

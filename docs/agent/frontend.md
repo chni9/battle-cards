@@ -172,10 +172,18 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `rovingKeyFor(key, 'tabs' | 'radios')`, `nextEnabledIndex`, `edgeEnabledIndex`, and
   `hasCommandModifier(event)`, which leaves Alt, Ctrl and Meta chords to the browser. A new
   roving widget reuses it rather than writing its own arrow-key switch.
-- **Esc layering:** Tooltip swallows its closing Esc with a capture-phase `document` listener,
-  which stops bubble-phase listeners and React handlers but not `window` capture listeners or
-  `document` capture listeners registered earlier. Sheet Esc handling (L72-09) therefore
-  listens in the bubble phase or through React.
+- **Esc layering:** each Esc closes one layer. Open tooltips form a stack, and one shared
+  capture-phase `document` listener closes only the most recent one, then calls
+  `stopImmediatePropagation`.
+  - Still run: `window` capture listeners, and `document` capture listeners registered before
+    the shared one was installed.
+  - Stopped: later `document` capture listeners, everything below `document`, every
+    bubble-phase listener, and React handlers.
+  - Sheet Esc handling (L72-09) therefore listens in the bubble phase or through React.
+- **Scroll containers are positioned:** every V7 scroll container (a screen's scrolling ground,
+  ScrollArea, the Carousel track) carries `relative`. Absolutely positioned descendants,
+  `sr-only` labels included, then stay inside its clip. Without it they stretch `#root`, which
+  clips and cannot scroll back, and a screen reader's focus-follows can leave a blank screen.
 - **`data-motion`:** every animated primitive puts `data-motion="reduced" | "full"` on the
   element that moves (Button, IconButton and Toggle on the `<button>`, Carousel on its scroll
   track, whose `scroll-smooth` class and `scrollTo` behavior follow it) and applies transition

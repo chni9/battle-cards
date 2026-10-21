@@ -24,6 +24,15 @@ describe('ScrollArea (L53-07: overlays and logs scroll inside, never the page)',
     expectClasses(container.querySelector(`[data-scroll-axis="${axis}"]`), `${overflow} ${overscroll}`);
   });
 
+  it('is positioned, so sr-only and absolute descendants stay inside its clip', () => {
+    const { container } = renderUi(
+      <ScrollArea axis="x">
+        <span className="sr-only">Lives 4</span>
+      </ScrollArea>,
+    );
+    expect(container.querySelector('[data-scroll-axis="x"]')?.classList.contains('relative')).toBe(true);
+  });
+
   it('a label makes it a focusable named region', () => {
     renderUi(<ScrollArea label="Action log">Lines</ScrollArea>);
     expect(screen.getByRole('region', { name: 'Action log' }).tabIndex).toBe(0);

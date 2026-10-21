@@ -91,6 +91,38 @@ describe('Tooltip (parity global-tooltip-unused)', () => {
     expect(onKeyDown).toHaveBeenCalledTimes(1);
   });
 
+  it('one Esc closes exactly one tooltip, the most recently opened, even with two open (Q49)', async () => {
+    // Counts only Esc: the Tab presses below also bubble through this wrapper.
+    const onEscape = vi.fn();
+    const { user } = renderUi(
+      <div
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onEscape();
+        }}
+      >
+        <Tooltip content="Hover help">
+          <button type="button">Hover me</button>
+        </Tooltip>
+        <Tooltip content="Focus help">
+          <button type="button">Focus me</button>
+        </Tooltip>
+      </div>,
+    );
+    await user.hover(screen.getByRole('button', { name: 'Hover me' }));
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Focus me' }));
+    const open = () => screen.queryAllByRole('tooltip').map((tooltip) => tooltip.textContent);
+    expect(open()).toEqual(['Hover help', 'Focus help']);
+    await user.keyboard('{Escape}');
+    expect(open()).toEqual(['Hover help']);
+    await user.keyboard('{Escape}');
+    expect(open()).toEqual([]);
+    expect(onEscape).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onEscape).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps an aria-describedby the trigger already has', () => {
     renderUi(<BuyWithTooltip describedBy="buy-help" />);
     const ids = describedByIds(screen.getByRole('button', { name: 'Buy' }));

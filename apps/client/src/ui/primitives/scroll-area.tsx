@@ -7,6 +7,10 @@
  * (WCAG 2.1.1). Without one it is still a Tab stop whenever it overflows and holds nothing
  * focusable, because Chromium makes such scrollers keyboard-focusable on its own, and that
  * stop has no name. Pass a `label` whenever the content can overflow.
+ *
+ * It is `relative`, like every V7 scroll container, so `sr-only` labels and other absolutely
+ * positioned descendants resolve against it and stay inside its clip instead of stretching an
+ * ancestor's scroll size.
  */
 
 import type { ReactElement, ReactNode, Ref } from 'react';
@@ -32,7 +36,7 @@ export function ScrollArea({ children, axis = 'y', label, className, ref }: Scro
       ref={ref}
       data-scroll-axis={axis}
       {...(label !== undefined ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}
-      className={['min-h-0 min-w-0', AXIS_CLASS[axis], CHROME_FOCUS_CLASS, className ?? ''].join(' ')}
+      className={['relative min-h-0 min-w-0', AXIS_CLASS[axis], CHROME_FOCUS_CLASS, className ?? ''].join(' ')}
     >
       {children}
     </div>

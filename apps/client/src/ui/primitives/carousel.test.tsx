@@ -156,12 +156,14 @@ describe('Carousel (technical spec v7 §4.2: How to play, awards)', () => {
     expect(track?.getAttribute('data-motion')).toBe('reduced');
   });
 
-  it('a swipe updates the index from the scroll position', () => {
-    const { track, onIndexChange } = setup();
+  it('a swipe updates the index from the scroll position', async () => {
+    const { user, track, onIndexChange } = setup();
     if (track === null) throw new Error('no carousel track');
     scrollTrack(track, 600);
     expect(onIndexChange.mock.calls).toEqual([[2]]);
     expect(isEndStop(next())).toBe(true);
+    await user.click(next());
+    expect(onIndexChange.mock.calls).toEqual([[2]]);
   });
 
   it('renders a grid with no paging controls at desktop when gridAtDesktop is set', () => {

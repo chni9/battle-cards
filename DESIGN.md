@@ -437,8 +437,16 @@ State: `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `chromePressClass`, `motio
 Fills: `BUTTON_VARIANT_CLASS`, `iconNeedsWell`, `ICON_WELL_CLASS`. Tracks: `CHROME_TRACK_*`
 for Tabs and Segmented. A primitive never restates the outline, shadow, radius or press offset
 as a literal; every class map is a literal string, and composed constants are template
-literals of those strings, so Tailwind still sees each class. Focus is a 2px `--text` outline,
+literals of those strings, so Tailwind still sees each class. The one allowed exception is
+the Slider's `[&::-webkit-…]:` / `[&::-moz-…]:` pseudo-element variants, which restate the
+outline because a constant cannot sit behind such a prefix. Focus is a 2px `--text` outline,
 offset 2px, on `:focus-visible`. Each animated control carries `data-motion="reduced" | "full"`.
+
+**Every scroll container is `relative`** (the `/dev/ui` ground, ScrollArea, the Carousel
+track). `sr-only` labels and other absolutely positioned descendants then resolve against it
+and stay inside its clip. Otherwise they keep the initial containing block, stretch `#root`
+(which clips and cannot be scrolled back), and a screen reader's focus-follows can scroll the
+screen blank. Later screens follow the same rule.
 
 - **Disabled look:** disabled chrome reads "off", not faded. The fill turns `--panel-2`, the
   label `--text-2`, the outline dashed; the drop shadow goes and icons dim to 50%. The same
@@ -488,7 +496,8 @@ offset 2px, on `:focus-visible`. Each animated control carries `data-motion="red
 - **Tabs:** a tablist on `--panel`, the selected tab `--cta` with `--text-on-cta`, a roving
   tabindex. ArrowLeft and ArrowRight move and select (wrapping, skipping disabled tabs), Home
   and End jump to the first and last enabled tab; one labelled tabpanel. Ids come from
-  `idPrefix` (`{prefix}-tab-{id}`, `{prefix}-panel`) or `useId`.
+  `idPrefix` (`{prefix}-tab-{id}`, `{prefix}-panel`) or `useId`. A selected tab that is
+  disabled takes the locked look (`--text-2` fill), as in a locked Segmented.
 - **Segmented:** a radiogroup of `aria-checked` radios, the checked one `--cta`. Arrow keys on
   both axes move and select; `disabled` locks the group (`aria-disabled`). Tabs and Segmented
   share `roving-focus.ts`. Both ignore Alt, Ctrl and Meta chords (`hasCommandModifier`), which
@@ -507,11 +516,14 @@ offset 2px, on `:focus-visible`. Each animated control carries `data-motion="red
   separately: leaving with the pointer keeps a focused one open, and a blur keeps a hovered
   one open. It is hoverable (WCAG 1.4.13): the bubble takes pointer events, and the 8px gap is
   padding on its positioning span inside the hover region. Once open, it is nudged inside an
-  8px viewport gutter. Esc: a capture-phase `document` keydown listener closes it and stops
-  propagation. That press never reaches bubble-phase listeners or React handlers, so one Esc
-  dismisses one layer (Q49). It cannot stop `window` capture listeners, or `document` capture
-  listeners registered earlier, so sheet Esc handling (L72-09) listens in the bubble phase or
-  through React.
+  8px viewport gutter. Esc closes one layer per press (Q49). Open tooltips form a stack, and
+  one shared capture-phase `document` keydown listener closes only the most recently opened
+  one, then calls `stopImmediatePropagation`.
+  - Still run: `window` capture listeners, and `document` capture listeners registered before
+    the first open tooltip installed the shared one.
+  - Stopped: later `document` capture listeners, every listener below `document`, every
+    bubble-phase listener, and React handlers.
+  - So sheet Esc handling (L72-09) listens in the bubble phase or through React.
 - **ScrollArea:** `y` (default), `x` or `both`, overscroll contained, the cross axis clipped. A
   `label` makes it a focusable named region. Without one, Chromium still makes an overflowing
   scroller with nothing focusable inside a Tab stop, but an unnamed one, so pass a `label`
@@ -536,7 +548,8 @@ offset 2px, on `:focus-visible`. Each animated control carries `data-motion="red
     line already page it and name the position; content inside the slides stays reachable.
   - `gridAtDesktop` shows a grid with no controls and no carousel semantics in desktop mode.
     Its columns follow the slide count (2, 3, 4 → 2, 3, 2 columns; 5+ → 3, or 4 when 3 would
-    leave one alone).
+    leave one alone). No slide is left alone on a row for up to 12 slides; 13 is the first
+    count where both 3 and 4 columns leave one.
 - **KitTile:** a `--panel` chrome card with a decorative portrait, the Lilita name and icon
   stats with screen-reader labels. Selected: a `--cta` ring outside the outline and
   `aria-pressed`. Excluded: a grayscale portrait and the word "Excluded" (`EXCLUDED_LABEL`),
@@ -563,8 +576,10 @@ existing copy.
 DEV only: `isDevUiRoute` (`dev/dev-ui-route.ts`) matches `/dev/ui` and below, and `App.tsx`
 imports `dev/ui-gallery.tsx` lazily behind `import.meta.env.DEV`, so production builds carry
 no gallery chunk. html, body and `#root` clip their overflow (`index.css`), so the
-`.v7-ground` root is the scroll container (`h-full overflow-y-auto overscroll-contain`, as on
-Home, never `vh` or `dvh`). Its halos therefore size to the visible box. The page links each
+`.v7-ground` root is the scroll container (`relative h-full overflow-y-auto
+overscroll-contain`, as on Home, never `vh` or `dvh`). Its halos therefore size to the visible
+box. `relative` keeps its `sr-only` descendants inside its clip, so `#root` stays exactly the
+viewport size. The page links each
 section from a nav and renders each entry on a `--panel` card. Each `ui/` area adds
 `ui/<area>/<area>.gallery.tsx` exporting `gallery: GallerySection`; `import.meta.glob` finds
 it, and `collectGallerySections` sorts the sections by id and rejects a duplicate id.
