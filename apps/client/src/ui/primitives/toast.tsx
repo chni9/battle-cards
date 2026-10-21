@@ -7,14 +7,18 @@
  * - The timer starts when `open` turns true, with the `timeoutMs` of that moment, and survives
  *   rerenders: a new title, body, tone, `timeoutMs` or `onDismiss` never restarts or fires it.
  *   It calls the latest `onDismiss`. Without `timeoutMs` the toast stays until closed by hand.
- * - Errors are `role="alert"`, everything else `role="status"`. The toast portals to
- *   `document.body` on the `Z_INDEX.toast` layer, above sheets and banners, sized to the
- *   visual viewport; only its card takes pointer events, so the table stays usable around it.
+ * - Errors go to a `role="alert"` region, everything else to a `role="status"` one. Both
+ *   regions stay mounted while the Toast is, empty when closed, and only their content swaps,
+ *   so screen readers announce a polite toast too. They portal to `document.body` on the
+ *   `Z_INDEX.toast` layer, above sheets and banners, sized to the visual viewport; only the card
+ *   takes pointer events, so the table stays usable around it.
+ * - A closing toast keeps its fade, but its OK button no longer dismisses: the exiting card is
+ *   inert and click-through, and a manual dismissal needs `open` to still be true.
  * - It slides down 12 px while fading in; under reduced motion it only fades (§8.3).
  */
 
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useEffectEvent, useRef, type ReactElement } from 'react';
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 import { Z_INDEX } from '../layers';
 import { durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
@@ -23,6 +27,7 @@ import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { useVisualViewportBox } from '../use-visual-viewport-box';
 import { CHROME_SHAPE_SM_CLASS, motionAttribute } from './chrome-classes';
 import { IconButton } from './icon-button';
+import { PresenceLayer } from './presence-layer';
 
 export type ToastTone = 'info' | 'success' | 'error';
 export type ToastDismissCause = 'manual' | 'timeout';
@@ -91,8 +96,13 @@ export function Toast({
     };
   }, [open]);
 
+  const live = useRef(open);
+  useLayoutEffect(() => {
+    live.current = open;
+  });
+
   const dismissByHand = (): void => {
-    if (dismissed.current) return;
+    if (!live.current || dismissed.current) return;
     dismissed.current = true;
     if (timer.current !== null) {
       window.clearTimeout(timer.current);
@@ -101,42 +111,48 @@ export function Toast({
     onDismiss('manual');
   };
 
+  const regionStyle = {
+    position: 'fixed',
+    top: box.offsetTop + TOP_GAP_PX,
+    left: box.offsetLeft,
+    width: box.width,
+    zIndex: Z_INDEX.toast,
+    pointerEvents: 'none',
+  } as const;
+
+  const renderCard = (present: boolean): ReactElement => (
+    <motion.div
+      data-zone="toast"
+      data-toast-tone={tone}
+      data-motion={motionAttribute(reduced)}
+      // An exiting toast keeps its last props; `present` makes its OK inert and click-through.
+      inert={!present}
+      className={`flex w-full max-w-sm items-start gap-3 bg-v7-panel-2 py-2 pr-2 pl-3 ${CHROME_SHAPE_SM_CLASS} ${TONE_ACCENT_CLASS[tone]}`}
+      // Inline like the region's `none`, so the two always resolve against each other.
+      style={{ pointerEvents: present ? 'auto' : 'none' }}
+      {...motionPropsFor(TOAST_MOTION, reduced)}
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
+        <p className="font-v7-display text-v7-body leading-tight text-v7-text">{title}</p>
+        {body !== undefined ? <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">{body}</p> : null}
+      </div>
+      <IconButton aria-label={dismissLabel} icon="close" variant="quiet" onClick={dismissByHand} />
+    </motion.div>
+  );
+
+  // Both live regions stay mounted while the Toast is, empty when closed: a polite region that
+  // mounts together with its content is skipped by many screen readers. Errors go to the alert.
+  const region = (role: 'status' | 'alert', shows: boolean): ReactElement => (
+    <div role={role} data-zone="toast-region" data-motion={motionAttribute(reduced)} className="flex justify-center px-2" style={regionStyle}>
+      <AnimatePresence>{shows ? <PresenceLayer key="toast" render={renderCard} /> : null}</AnimatePresence>
+    </div>
+  );
+
   return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          key="toast"
-          role={tone === 'error' ? 'alert' : 'status'}
-          data-zone="toast"
-          data-toast-tone={tone}
-          data-motion={motionAttribute(reduced)}
-          className="flex justify-center px-2"
-          style={{
-            position: 'fixed',
-            top: box.offsetTop + TOP_GAP_PX,
-            left: box.offsetLeft,
-            width: box.width,
-            zIndex: Z_INDEX.toast,
-            pointerEvents: 'none',
-          }}
-          {...motionPropsFor(TOAST_MOTION, reduced)}
-        >
-          <div
-            className={`flex w-full max-w-sm items-start gap-3 bg-v7-panel-2 py-2 pr-2 pl-3 ${CHROME_SHAPE_SM_CLASS} ${TONE_ACCENT_CLASS[tone]}`}
-            // Inline like the root's `none`, so the two always resolve against each other.
-            style={{ pointerEvents: 'auto' }}
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-              <p className="font-v7-display text-v7-body leading-tight text-v7-text">{title}</p>
-              {body !== undefined ? (
-                <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">{body}</p>
-              ) : null}
-            </div>
-            <IconButton aria-label={dismissLabel} icon="close" variant="quiet" onClick={dismissByHand} />
-          </div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
+    <>
+      {region('status', open && tone !== 'error')}
+      {region('alert', open && tone === 'error')}
+    </>,
     document.body,
   );
 }

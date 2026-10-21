@@ -436,7 +436,8 @@ Sheet, Dialog and Toast in Overlays.
 Chrome classes come only from `ui/primitives/chrome-classes.ts`. Shape: `CHROME_OUTLINE_CLASS`
 (the 3px ink outline), `CHROME_SHAPE_CLASS`, `CHROME_SHAPE_SM_CLASS`, `CHROME_FLAT_SM_CLASS`
 (outline and small radius, no shadow: badges, inputs), `CHROME_DISC_CLASS` (avatars).
-State: `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `chromePressClass`, `motionAttribute`.
+State: `CHROME_FOCUS_CLASS` (and `CHROME_FOCUS_INSET_CLASS`, the same ring inside the edge for
+scroll regions), `CHROME_DISABLED_CLASS`, `chromePressClass`, `motionAttribute`.
 Fills: `BUTTON_VARIANT_CLASS`, `iconNeedsWell`, `ICON_WELL_CLASS`. Tracks: `CHROME_TRACK_*`
 for Tabs and Segmented. A primitive never restates the outline, shadow, radius or press offset
 as a literal; every class map is a literal string, and composed constants are template
@@ -604,11 +605,18 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 - **Layers** (`ui/layers.ts`, `Z_INDEX`): `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
   Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
   `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
-  `sheet + n` to expanded sheets and `sheetBar + n` to bars, clamped below the next layer.
-- **Paint order**, bottom to top: read-only sheets, expanded blocking sheets, Minimize bars. A
-  blocking sub-choice always paints above every read-only sheet, whatever opened first, and
-  every sheet under it turns `inert`. Two blocking sheets (simultaneous Lot 71 reward pickers)
-  stack in open order: the later one on top, the earlier one inert.
+  `sheet + n` to everything on the sheet layer and `sheetBar + n` to Minimize bars, clamped
+  below the next layer.
+- **Paint order**, bottom to top: expanded read-only sheets, caller-collapsed read-only bars
+  (L74 targeting), expanded blocking sheets, Minimize bars of blocking sheets. A blocking
+  sub-choice always sits on top of every other sheet, whatever opened first (§6.7: "any other
+  open sheet is pushed underneath"), and only its own Minimize bar stays above it. Two
+  blocking sheets (simultaneous Lot 71 reward pickers) stack in open order: the later one on
+  top.
+- **One live sheet** (WAI-ARIA modal dialog): every painted expanded sheet with another
+  expanded sheet above it is `inert`, read-only or blocking, and so is a collapsed read-only
+  bar under an expanded blocking sheet. Only the top expanded sheet (`liveSheetId`) holds focus
+  and takes input; Minimize bars are never inert.
 - **Depth:** read-only sheets "stack one level": only the newest two (`MAX_READ_ONLY_DEPTH`)
   paint. A third stays registered and hidden, and the oldest returns when a newer one closes.
 - **Restore to top:** a sheet restored from its bar rises to the top of its group, so restoring
@@ -618,25 +626,42 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   an Esc meant for one sheet never reaches another (a claim picker, Appendix A
   `claim-seat-dismiss-stay`). An Esc a child control already handled (`defaultPrevented`), or
   one pressed during an IME composition, is ignored. A tooltip inside a sheet closes first.
+  While the newest read-only sheet is collapsed (targeting), no sheet takes Esc and the event
+  stays unhandled: L74's targeting handler owns it ("Esc cancels targeting", §6.6.5).
 - **Read-only dismissal:** Esc, a backdrop press that starts and ends on the overlay, and a
   swipe-down of at least 80px on the handle, all through `onClose`. A press inside the panel, or
   a drag that starts in the panel and ends on the backdrop, never closes it.
   `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
   lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
+- **Exit guard:** a closing sheet or toast keeps its fade, but every dismissal path checks that
+  it is still open, and the exiting overlay or card is `inert` with `pointer-events: none`. A
+  double press closes once, and a press meant for the sheet below reaches it.
 - **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
   only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
   in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial
   focus lands on the first body control. It collapses the sheet to a full-width `--cta-2` bar
-  labelled with the sheet title, which restores it. The caller keeps intents locked while it is
-  minimized (`onMinimizedChange`).
+  labelled with the sheet title and a chevron-up (the `chevron-right` glyph turned, in a
+  `--bg-0` well), `aria-expanded="false"`, which restores it. The caller keeps intents locked
+  while it is minimized (`onMinimizedChange`).
 - **Bars:** 44px bars in 52px slots stacked up from the bottom of the visible box, centered
-  and capped at 28rem. A caller-collapsed sheet (`collapsed` with `collapsedBar`, L74
-  targeting) joins the bar layer the same way, Esc skips it and its focus trap is released.
-  Every expanded overlay adds 52px of bottom padding per bar, so its content stays above them.
-- **Focus** (L11-03 kept, `use-focus-trap.ts`): focus moves in on open (`initialFocusRef`, else
-  the first focusable, else the panel); Tab and Shift+Tab wrap; on close it returns to the
-  opener, but only when nothing else took focus meanwhile. Nothing is focused inside an inert
-  or hidden sheet. Minimize hands focus to the bar, and restoring returns it to the panel.
+  and capped at 28rem; the full-width strip around a bar lets presses through. A
+  caller-collapsed read-only sheet (`collapsed` with `collapsedBar`, L74 targeting) takes a
+  slot the same way, but on the sheet layer: under an expanded blocking sheet, inert. Esc skips
+  it and its focus trap is released. Every expanded overlay adds 52px of bottom padding per
+  bar, so its content stays above them.
+- **Focus** (L11-03 kept, `use-focus-trap.ts`; focus follows the live sheet): whenever a sheet
+  becomes the live one it moves focus in unless focus is already inside (`initialFocusRef`,
+  else the first control, else the scroll region, else the panel); Tab and Shift+Tab wrap. The
+  opener is recorded when the sheet opens, kept while it is minimized or covered, and cleared
+  when it closes. On close, focus goes to the opener only if it is reachable (on the page with
+  no modal sheet left, on an uncovered bar, or inside the new live sheet), else into the new
+  live sheet, else up the opener chain, and never stays in a closing panel. Minimize hands focus
+  to the bar, unless another sheet becomes live, which takes it; restoring returns it to the
+  panel.
+- **Keyboard scroll:** a body that overflows becomes a focusable `role="region"` named by the
+  sheet title (`tabIndex={0}`, the inset focus ring, so it never crosses the title) and joins
+  the Tab cycle in DOM order, so a text-only sheet scrolls with the arrow and page keys (WCAG
+  2.1.1). Initial focus still goes to the first control when one exists.
 - **Placement and size:** `Sheet` defaults to `bottom`. `Dialog` is a read-only Sheet with
   placement `auto`, so it is centered only in desktop mode (`viewportModeFor`) and is a bottom
   sheet on phones, landscape phones and portrait tablets. The overlay is `position: fixed` at
@@ -646,11 +671,13 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   `dialogPreferredMaxWidth`). The body is the only scroller (`relative`, overscroll
   contained); the actions row sits outside it, so Close never scrolls away. Panels are
   `--panel` with the chrome outline and shadow, top corners rounded at the bottom edge, all
-  corners when centered.
+  corners when centered. `ui/tokens.css` exempts them from the V2 `index.css` rule that pads
+  every `[role="dialog"]` on screens under 500px tall.
 - **Toast** (§6.12): a `--panel-2` chrome card at the top of the visible box, on the toast
   layer, with a tone accent on its leading edge (`--cta-2` info, `--upgrade` success,
-  `--danger` error) and a `close` IconButton named by the caller's `dismissLabel`. Errors are
-  `role="alert"`, the rest `role="status"`. Every dismissal goes through
+  `--danger` error) and a `close` IconButton named by the caller's `dismissLabel`. Errors go to
+  a `role="alert"` region, the rest to a `role="status"` one; both stay mounted, empty, while
+  the Toast is mounted, so a polite toast is announced too. Every dismissal goes through
   `onDismiss('manual' | 'timeout')`, once per open; a rerender or prop change never dismisses
   or restarts the timer, which starts when `open` turns true (no `timeoutMs`: no timer).
 - **Motion:** the scrim fades over `--dur-fast`; a bottom panel rises 24px and a centered one

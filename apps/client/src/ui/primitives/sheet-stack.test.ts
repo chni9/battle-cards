@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Z_INDEX } from '../layers';
-import { EMPTY_SHEET_STACK, MAX_READ_ONLY_DEPTH, closeSheet, escTargetId, isSheetInert, openSheet, setSheetDismissLocked, setSheetMinimized, sheetPaintOrder, sheetZIndex, type SheetMode, type SheetStackState } from './sheet-stack';
+import { EMPTY_SHEET_STACK, MAX_READ_ONLY_DEPTH, closeSheet, escTargetId, isSheetInert, liveSheetId, openSheet, setSheetDismissLocked, setSheetMinimized, sheetPaintOrder, sheetZIndex, type SheetMode, type SheetStackState } from './sheet-stack';
 
 interface OpenInput { readonly id: string; readonly mode: SheetMode; readonly dismissLocked?: boolean }
 const ro = (id: string): OpenInput => ({ id, mode: 'read-only' });
@@ -71,5 +71,41 @@ describe('sheet stack inertness and layers', () => {
     expect(setSheetMinimized(s, 'missing', true)).toBe(s);
     expect(setSheetDismissLocked(s, 'card', false)).toBe(s);
     expect(closeSheet(s, 'card').entries).toEqual([]);
+  });
+});
+
+describe('sheet stack fix round 1 (spec v7 §6.7, WAI-ARIA modal dialog)', () => {
+  it('keeps a caller-collapsed read-only bar under an expanded blocking sheet, inert (A4)', () => {
+    const s = min(openAll(ro('target'), bl('reward')), 'target');
+    expect(paintIds(s)).toEqual(['target', 'reward']);
+    expect(['target', 'reward'].map((id) => sheetZIndex(s, id))).toEqual([Z_INDEX.sheet, Z_INDEX.sheet + 1]);
+    expect(['target', 'reward'].map((id) => isSheetInert(s, id))).toEqual([true, false]);
+    const bars = min(s, 'reward');
+    expect(paintIds(bars)).toEqual(['target', 'reward']);
+    expect(['target', 'reward'].map((id) => sheetZIndex(bars, id))).toEqual([Z_INDEX.sheet, Z_INDEX.sheetBar]);
+    expect(isSheetInert(bars, 'target')).toBe(false);
+  });
+  it('paints a collapsed read-only bar above expanded read-only sheets and below expanded blocking ones (A4)', () => {
+    const s = min(openAll(ro('seat'), ro('target'), bl('reward')), 'target');
+    expect(paintIds(s)).toEqual(['seat', 'target', 'reward']);
+    expect(['seat', 'target', 'reward'].map((id) => sheetZIndex(s, id))).toEqual([50, 51, 52]);
+  });
+  it('makes every expanded sheet under another expanded sheet inert, read-only ones included (A5)', () => {
+    const s = openAll(ro('card'), ro('kit'));
+    expect(['card', 'kit'].map((id) => isSheetInert(s, id))).toEqual([true, false]);
+    const withBar = openSheet(min(openAll(ro('card')), 'card'), ro('kit'));
+    expect(['card', 'kit'].map((id) => isSheetInert(withBar, id))).toEqual([false, false]);
+  });
+  it('names the one live sheet: the top expanded painted sheet, never a bar (A1)', () => {
+    expect(liveSheetId(EMPTY_SHEET_STACK)).toBeNull();
+    expect(liveSheetId(openAll(ro('card'), bl('reward'), ro('kit')))).toBe('reward');
+    expect(liveSheetId(min(openAll(ro('card'), bl('reward')), 'reward'))).toBe('card');
+    expect(liveSheetId(min(openAll(bl('reward')), 'reward'))).toBeNull();
+  });
+  it('leaves Esc to the caller while the newest read-only sheet is collapsed (B2, §6.6.5)', () => {
+    const s = min(openAll(ro('seat'), ro('card')), 'card');
+    expect(escTargetId(s)).toBeNull();
+    expect(escTargetId(openSheet(s, ro('kit')))).toBe('kit');
+    expect(escTargetId(min(s, 'card', false))).toBe('card');
   });
 });

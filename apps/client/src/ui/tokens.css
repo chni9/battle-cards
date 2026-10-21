@@ -146,3 +146,16 @@
     color: var(--text);
   }
 }
+
+/*
+ * V7 sheet panels opt out of the V2 short-viewport dialog rule in index.css,
+ * `@media (max-height: 500px) { [role="dialog"] { padding: 0.5rem !important; ... } }`, which
+ * targets every dialog and would pad the V7 panel's flush handle, title and footer at 844×390.
+ * Two attributes outrank its one, and both are !important. Delete this block together with
+ * that rule once design/components/dialog.tsx is deleted (L72-09).
+ */
+@media (max-height: 500px) {
+  [role="dialog"][data-zone="sheet-panel"] {
+    padding: 0 !important;
+  }
+}

@@ -10,11 +10,22 @@
  *   and on a swipe-down of at least `SWIPE_DISMISS_PX` on the handle. `dismissLocked` (the
  *   Feedback send lock) ignores all three; a locked top sheet absorbs Esc.
  * - `mode="blocking"` (sub-choices) has no `onClose`: it ignores Esc, backdrop and swipe and
- *   always paints above read-only sheets, which turn inert under it. Its only way out besides
+ *   always paints above every other sheet, which turns inert under it. Its only way out besides
  *   answering is Minimize, which collapses it to a bar above every other sheet while the caller
  *   keeps intents locked (Q59). The bar restores it.
- * - `collapsed` (L74 targeting) collapses any sheet to the bar layer with the caller's
- *   `collapsedBar` instead of the panel, and releases the focus trap (§6.6.5).
+ * - `collapsed` (L74 targeting) collapses a read-only sheet to a bar with the caller's
+ *   `collapsedBar` instead of the panel and releases the focus trap (§6.6.5). That bar stays
+ *   under an expanded blocking sheet (§6.7), and while it is the newest read-only sheet no sheet
+ *   takes Esc: the caller's targeting handler owns it.
+ * - Only the top expanded sheet is live (WAI-ARIA modal dialog): it holds the focus trap, and
+ *   every sheet under it is inert. Focus follows the live sheet (`use-focus-trap.ts`): it moves
+ *   into a sheet that becomes live, and on close returns to the opener only when the opener is
+ *   reachable, otherwise into the new top sheet, otherwise up the opener chain.
+ * - A closing sheet keeps its fade, but every dismissal path checks that the sheet is still
+ *   open, and the exiting overlay is inert and takes no pointer events, so a second press or a
+ *   press meant for the sheet below never reaches it.
+ * - A body that overflows becomes a named, focusable scroll region in the Tab cycle (WCAG
+ *   2.1.1), so a text-only sheet scrolls by keyboard; initial focus still prefers a control.
  *
  * The overlay is sized to the live `visualViewport` box, never `100dvh` or `inset-0`
  * (L53-02 / L53-07), and every bar it would sit behind adds `BAR_SLOT_PX` of bottom padding so
@@ -37,6 +48,7 @@ import {
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Icon } from '../icons/icon';
 import { durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
 import { motionPropsFor, type V7MotionSpec } from '../motion/reduced-motion';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
@@ -45,12 +57,20 @@ import { seatColorAlpha } from '../seat-colors';
 import { MINIMIZE_LABEL } from '../ui-copy';
 import { useVisualViewportBox } from '../use-visual-viewport-box';
 import { Button } from './button';
-import { CHROME_OUTLINE_CLASS, motionAttribute } from './chrome-classes';
+import { CHROME_FOCUS_INSET_CLASS, CHROME_OUTLINE_CLASS, ICON_WELL_CLASS, motionAttribute } from './chrome-classes';
 import { dialogPreferredMaxWidth } from './dialog-width';
+import { PresenceLayer } from './presence-layer';
 import { resolveSheetPlacement, type SheetPlacement, type SheetPlacementPreference } from './sheet-placement';
-import { escTargetId, isSheetInert, sheetPaintOrder, sheetZIndex } from './sheet-stack';
+import {
+  escTargetId,
+  isSheetInert,
+  liveSheetId,
+  sheetPaintOrder,
+  sheetZIndex,
+  type SheetStackState,
+} from './sheet-stack';
 import { useSheetStackState, useSheetStackStore } from './sheet-stack-context';
-import { useFocusTrap } from './use-focus-trap';
+import { SCROLL_REGION_ATTRIBUTE, useFocusTrap } from './use-focus-trap';
 
 interface SheetBaseProps {
   open: boolean;
@@ -124,6 +144,58 @@ const PANEL_PLACEMENT_CLASS: Readonly<Record<SheetPlacement, string>> = {
   center: 'my-auto rounded-v7-chrome',
 };
 
+/** The sheet (overlay or bar) an element belongs to, by its `data-sheet-id`. */
+function ownerOf(element: Element): { readonly id: string; readonly bar: boolean } | null {
+  const owner = element.closest('[data-sheet-id]');
+  const id = owner?.getAttribute('data-sheet-id') ?? null;
+  if (owner === null || id === null) return null;
+  return { id, bar: owner.getAttribute('data-zone') === 'sheet-bar' };
+}
+
+/**
+ * Whether focus may sit on `element` in `state`: inside the live sheet, on a bar that is not
+ * covered, or on the page while no expanded sheet is painted (an open modal sheet covers it).
+ * A closing, hidden or inert sheet is never reachable, even before its DOM catches up.
+ */
+function reachableIn(state: SheetStackState, element: HTMLElement): boolean {
+  if (!element.isConnected) return false;
+  const owner = ownerOf(element);
+  if (owner === null) return liveSheetId(state) === null;
+  const entry = state.entries.find((candidate) => candidate.id === owner.id);
+  if (entry === undefined) return false;
+  if (owner.bar) return entry.minimized && !isSheetInert(state, owner.id);
+  return liveSheetId(state) === owner.id;
+}
+
+/** The panel of the sheet that is live in `state`, if it is not `exceptId`. */
+function livePanel(state: SheetStackState, exceptId: string): HTMLElement | null {
+  const live = liveSheetId(state);
+  if (live === null || live === exceptId) return null;
+  for (const overlay of document.querySelectorAll<HTMLElement>('[data-zone="sheet-overlay"]')) {
+    if (overlay.getAttribute('data-sheet-id') === live) {
+      return overlay.querySelector<HTMLElement>('[data-zone="sheet-panel"]');
+    }
+  }
+  return null;
+}
+
+/** An overflowing body is a named, focusable scroll region; otherwise it is plain. */
+function syncScrollRegion(body: HTMLElement, titleId: string): void {
+  const overflows = body.scrollHeight > body.clientHeight;
+  if (overflows === body.hasAttribute(SCROLL_REGION_ATTRIBUTE)) return;
+  if (overflows) {
+    body.setAttribute(SCROLL_REGION_ATTRIBUTE, '');
+    body.setAttribute('role', 'region');
+    body.setAttribute('aria-labelledby', titleId);
+    body.tabIndex = 0;
+  } else {
+    body.removeAttribute(SCROLL_REGION_ATTRIBUTE);
+    body.removeAttribute('role');
+    body.removeAttribute('aria-labelledby');
+    body.removeAttribute('tabindex');
+  }
+}
+
 export function Sheet(props: SheetProps): ReactElement | null {
   const {
     open,
@@ -151,10 +223,14 @@ export function Sheet(props: SheetProps): ReactElement | null {
   const box = useVisualViewportBox();
   const reduced = usePrefersReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const focusBarNext = useRef(false);
   const pressStartedOnOverlay = useRef(false);
   const swipe = useRef<{ readonly pointerId: number; readonly startY: number } | null>(null);
+  /** False from the commit that closes the sheet: stale handlers on the exiting tree read it. */
+  const live = useRef(false);
 
   // Layout effects, so the stack is current before the first paint. `dismissLocked` and
   // `collapsed` sync separately: a lock toggle must never re-open the entry or re-stamp it.
@@ -183,21 +259,45 @@ export function Sheet(props: SheetProps): ReactElement | null {
   const resolvedPlacement = resolveSheetPlacement(placement, box);
   const dismissable = readOnly && !dismissLocked && !inert && painted;
 
+  useLayoutEffect(() => {
+    live.current = entry !== undefined;
+  });
+
   useFocusTrap(panelRef, {
-    active: entry !== undefined && !barMode,
-    // Collapsing to the bar hands focus to the bar (Minimize) or to the caller (targeting).
-    restoreFocus: !barMode,
+    open,
+    active: open && liveSheetId(stack) === id,
+    isReachable: (element) => reachableIn(store.getSnapshot(), element),
+    fallbackContainer: () => livePanel(store.getSnapshot(), id),
     ...(initialFocusRef !== undefined ? { initialFocusRef } : {}),
   });
 
+  // Minimize hands focus to the bar, unless another sheet is now the live one (it takes focus).
   useEffect(() => {
     if (!barMode || !focusBarNext.current) return;
     focusBarNext.current = false;
+    if (liveSheetId(store.getSnapshot()) !== null) return;
     barRef.current?.querySelector<HTMLElement>('button')?.focus();
-  }, [barMode]);
+  }, [barMode, store]);
+
+  // The body is a keyboard scroll region only while it overflows (A2); content and box changes
+  // re-measure it.
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!painted || body === null) return;
+    syncScrollRegion(body, titleId);
+    const observer = new ResizeObserver(() => {
+      syncScrollRegion(body, titleId);
+    });
+    observer.observe(body);
+    if (contentRef.current !== null) observer.observe(contentRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [painted, titleId]);
 
   const requestClose = (): void => {
-    if (props.mode === 'read-only') props.onClose();
+    if (!live.current || props.mode !== 'read-only') return;
+    props.onClose();
   };
 
   // Q49: only the top sheet reacts, and only to an Esc nothing handled first. Bubble phase, so
@@ -222,6 +322,10 @@ export function Sheet(props: SheetProps): ReactElement | null {
   const onOverlayPointerDown = (event: PointerEvent<HTMLDivElement>): void => {
     pressStartedOnOverlay.current = event.target === event.currentTarget;
   };
+  // A press that ends inside the panel still clicks the overlay (their common ancestor).
+  const onOverlayPointerUp = (event: PointerEvent<HTMLDivElement>): void => {
+    if (event.target !== event.currentTarget) pressStartedOnOverlay.current = false;
+  };
   // A press on the bare backdrop would move focus to `body`, behind the modal sheet, whether or
   // not it closes the sheet; cancelling the mousedown keeps focus where it was (the click still fires).
   const onOverlayMouseDown = (event: MouseEvent<HTMLDivElement>): void => {
@@ -235,7 +339,7 @@ export function Sheet(props: SheetProps): ReactElement | null {
   };
 
   const onHandlePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    if (!dismissable) return;
+    if (!dismissable || !live.current) return;
     swipe.current = { pointerId: event.pointerId, startY: event.clientY };
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -254,11 +358,13 @@ export function Sheet(props: SheetProps): ReactElement | null {
   };
 
   const minimize = (): void => {
+    if (!live.current) return;
     focusBarNext.current = true;
     store.setMinimized(id, true);
     if (props.mode === 'blocking') props.onMinimizedChange?.(true);
   };
   const restoreFromBar = (): void => {
+    if (!live.current) return;
     store.setMinimized(id, false);
     if (props.mode === 'blocking') props.onMinimizedChange?.(false);
   };
@@ -270,98 +376,104 @@ export function Sheet(props: SheetProps): ReactElement | null {
   const bottomPadding =
     bars.length > 0 ? { paddingBottom: (centered ? CENTER_GUTTER_PX : 0) + bars.length * BAR_SLOT_PX } : {};
 
+  const renderLayer = (present: boolean): ReactElement => (
+    <motion.div
+      data-zone="sheet-overlay"
+      data-sheet-id={id}
+      role="presentation"
+      hidden={!painted}
+      // An exiting overlay keeps its last props; `present` turns it inert and click-through.
+      inert={inert || !present}
+      className={`flex items-start justify-center overflow-hidden ${OVERLAY_PLACEMENT_CLASS[resolvedPlacement]}`}
+      style={{
+        position: 'fixed',
+        top: box.offsetTop,
+        left: box.offsetLeft,
+        width: box.width,
+        height: box.height,
+        zIndex,
+        backgroundColor: seatColorAlpha(V7_COLORS['bg-0'], 0.6),
+        ...bottomPadding,
+        ...(present ? {} : { pointerEvents: 'none' as const }),
+      }}
+      onPointerDown={onOverlayPointerDown}
+      onPointerUp={onOverlayPointerUp}
+      onMouseDown={onOverlayMouseDown}
+      onClick={onOverlayClick}
+      {...overlayMotion}
+    >
+      <motion.div
+        ref={panelRef}
+        role="dialog"
+        aria-modal={!barMode}
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        data-zone="sheet-panel"
+        data-sheet-mode={mode}
+        data-sheet-placement={resolvedPlacement}
+        data-motion={motionAttribute(reduced)}
+        {...(hintAnchor !== undefined ? { 'data-hint-anchor': hintAnchor } : {})}
+        {...dataAttributes}
+        className={[
+          'flex min-h-0 w-full min-w-0 flex-col bg-v7-panel font-v7-body text-v7-text shadow-v7-chrome outline-none',
+          CHROME_OUTLINE_CLASS,
+          PANEL_PLACEMENT_CLASS[resolvedPlacement],
+          height === 'full' ? 'h-full' : '',
+          className ?? '',
+        ].join(' ')}
+        style={{ maxHeight: '100%', maxWidth: `min(${dialogPreferredMaxWidth(className ?? '')}, 100%)` }}
+        {...panelMotion}
+      >
+        {showHandle ? (
+          <div
+            data-zone="sheet-handle"
+            aria-hidden="true"
+            className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center"
+            onPointerDown={onHandlePointerDown}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerCancel}
+          >
+            <span className="h-1.5 w-10 rounded-full bg-v7-text-2 opacity-60" />
+          </div>
+        ) : null}
+        <h2
+          id={titleId}
+          className={`shrink-0 px-4 font-v7-display text-v7-title leading-tight text-v7-text ${showHandle ? 'pt-1' : 'pt-4'}`}
+        >
+          {title}
+        </h2>
+        <div
+          ref={bodyRef}
+          data-zone="sheet-body"
+          className={`relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 text-v7-body ${CHROME_FOCUS_INSET_CLASS}`}
+        >
+          <div ref={contentRef}>{children}</div>
+        </div>
+        {actions !== undefined ? (
+          <div data-zone="sheet-actions" className="flex shrink-0 flex-wrap items-center justify-end gap-2 px-4 pb-4">
+            {actions}
+          </div>
+        ) : null}
+        {mode === 'blocking' ? (
+          <div data-zone="sheet-minimize" className="flex shrink-0 justify-center px-4 pb-4">
+            <Button variant="quiet" icon="minimize" onClick={minimize}>
+              {MINIMIZE_LABEL}
+            </Button>
+          </div>
+        ) : null}
+      </motion.div>
+    </motion.div>
+  );
+
   return createPortal(
     <>
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            key="sheet-overlay"
-            data-zone="sheet-overlay"
-            role="presentation"
-            hidden={!painted}
-            inert={inert}
-            className={`flex items-start justify-center overflow-hidden ${OVERLAY_PLACEMENT_CLASS[resolvedPlacement]}`}
-            style={{
-              position: 'fixed',
-              top: box.offsetTop,
-              left: box.offsetLeft,
-              width: box.width,
-              height: box.height,
-              zIndex,
-              backgroundColor: seatColorAlpha(V7_COLORS['bg-0'], 0.6),
-              ...bottomPadding,
-            }}
-            onPointerDown={onOverlayPointerDown}
-            onMouseDown={onOverlayMouseDown}
-            onClick={onOverlayClick}
-            {...overlayMotion}
-          >
-            <motion.div
-              ref={panelRef}
-              role="dialog"
-              aria-modal={!barMode}
-              aria-labelledby={titleId}
-              tabIndex={-1}
-              data-zone="sheet-panel"
-              data-sheet-mode={mode}
-              data-sheet-placement={resolvedPlacement}
-              data-motion={motionAttribute(reduced)}
-              {...(hintAnchor !== undefined ? { 'data-hint-anchor': hintAnchor } : {})}
-              {...dataAttributes}
-              className={[
-                'flex min-h-0 w-full min-w-0 flex-col bg-v7-panel font-v7-body text-v7-text shadow-v7-chrome outline-none',
-                CHROME_OUTLINE_CLASS,
-                PANEL_PLACEMENT_CLASS[resolvedPlacement],
-                height === 'full' ? 'h-full' : '',
-                className ?? '',
-              ].join(' ')}
-              style={{ maxHeight: '100%', maxWidth: `min(${dialogPreferredMaxWidth(className ?? '')}, 100%)` }}
-              {...panelMotion}
-            >
-              {showHandle ? (
-                <div
-                  data-zone="sheet-handle"
-                  aria-hidden="true"
-                  className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center"
-                  onPointerDown={onHandlePointerDown}
-                  onPointerUp={onHandlePointerUp}
-                  onPointerCancel={onHandlePointerCancel}
-                >
-                  <span className="h-1.5 w-10 rounded-full bg-v7-text-2 opacity-60" />
-                </div>
-              ) : null}
-              <h2
-                id={titleId}
-                className={`shrink-0 px-4 font-v7-display text-v7-title leading-tight text-v7-text ${showHandle ? 'pt-1' : 'pt-4'}`}
-              >
-                {title}
-              </h2>
-              <div
-                data-zone="sheet-body"
-                className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 text-v7-body"
-              >
-                {children}
-              </div>
-              {actions !== undefined ? (
-                <div data-zone="sheet-actions" className="flex shrink-0 flex-wrap items-center justify-end gap-2 px-4 pb-4">
-                  {actions}
-                </div>
-              ) : null}
-              {mode === 'blocking' ? (
-                <div data-zone="sheet-minimize" className="flex shrink-0 justify-center px-4 pb-4">
-                  <Button variant="quiet" icon="minimize" onClick={minimize}>
-                    {MINIMIZE_LABEL}
-                  </Button>
-                </div>
-              ) : null}
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <AnimatePresence>{open ? <PresenceLayer key="sheet-overlay" render={renderLayer} /> : null}</AnimatePresence>
       {barMode ? (
         <div
           ref={barRef}
           data-zone="sheet-bar"
+          data-sheet-id={id}
+          inert={inert}
           className="flex justify-center px-2"
           style={{
             position: 'fixed',
@@ -370,14 +482,21 @@ export function Sheet(props: SheetProps): ReactElement | null {
             width: box.width,
             height: BAR_HEIGHT_PX,
             zIndex,
+            // The full-width strip lets presses through; only the bar itself takes them.
+            pointerEvents: 'none',
           }}
         >
-          <div className="flex w-full max-w-md items-stretch">
+          <div className="flex w-full max-w-md items-stretch" style={{ pointerEvents: 'auto' }}>
             {collapsed === true ? (
               collapsedBar
             ) : (
-              <Button variant="secondary" fullWidth onClick={restoreFromBar}>
-                {title}
+              <Button variant="secondary" fullWidth aria-expanded={false} onClick={restoreFromBar}>
+                <span className="inline-flex items-center gap-2">
+                  <span data-icon-well className={`${ICON_WELL_CLASS} size-7`}>
+                    <Icon name="chevron-right" size={18} className="-rotate-90" />
+                  </span>
+                  {title}
+                </span>
               </Button>
             )}
           </div>
