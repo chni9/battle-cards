@@ -41,11 +41,22 @@ export interface FocusTrapOptions {
   isReachable?: (element: HTMLElement) => boolean;
   /** The container to move focus into when the opener is unreachable (the new top sheet). */
   fallbackContainer?: () => HTMLElement | null;
+  /**
+   * While open but released (collapsed to a bar), the element that stands in for the container
+   * when another trap's opener chain leads into it (the bar's restore control).
+   */
+  standIn?: () => HTMLElement | null;
+  /**
+   * Read when the trap is released while its cycle goes on: true hands the opener to the trap
+   * that activates around it next (Minimize puts the user back where they were).
+   */
+  handOverOnRelease?: boolean;
 }
 
 interface TrapRecord {
   opener: HTMLElement | null;
   focusIn: () => void;
+  standIn: () => HTMLElement | null;
 }
 
 /** Every trap in an open cycle, by container, so a closing trap can hand focus to another. */
@@ -104,16 +115,33 @@ function ownerTrap(element: HTMLElement, except: HTMLElement): TrapRecord | unde
 }
 
 export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, options: FocusTrapOptions): void {
-  const { active, initialFocusRef, restoreFocus = true, open = active, isReachable, fallbackContainer } = options;
+  const {
+    active,
+    initialFocusRef,
+    restoreFocus = true,
+    open = active,
+    isReachable,
+    fallbackContainer,
+    standIn,
+    handOverOnRelease = false,
+  } = options;
 
   const focusIn = useEffectEvent((container: HTMLElement): void => {
     focusInto(container, initialFocusRef?.current ?? null);
   });
+  const readStandIn = useEffectEvent((): HTMLElement | null => standIn?.() ?? null);
+  const readHandOverOnRelease = useEffectEvent((): boolean => handOverOnRelease);
 
   const endCycle = useEffectEvent((container: HTMLElement, record: TrapRecord): void => {
     const reachable = isReachable ?? defaultReachable;
     const live = (element: HTMLElement): boolean =>
       element.isConnected && !container.contains(element) && reachable(element);
+    // Openers that point into this container now point where this sheet came from, so a sheet
+    // opened from inside it can still return focus after it is gone.
+    const heir = record.opener?.isConnected === true ? record.opener : null;
+    for (const other of traps.values()) {
+      if (other !== record && other.opener !== null && container.contains(other.opener)) other.opener = heir;
+    }
     if (!restoreFocus) return;
     const focused = document.activeElement;
     if (focused instanceof HTMLElement && focused !== document.body && live(focused)) return;
@@ -126,10 +154,8 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, option
     const fallback = fallbackContainer?.() ?? null;
     if (fallback !== null && fallback !== container) {
       const target = traps.get(fallback);
-      // The new top sheet inherits the opener, so its own close can still return focus.
-      if (target !== undefined && (target.opener === null || container.contains(target.opener))) {
-        target.opener = record.opener;
-      }
+      // A top sheet with no opener of its own inherits this one.
+      if (target?.opener === null) target.opener = heir;
       // An inert top sheet moves focus in itself as soon as it activates.
       if (isBlocked(fallback)) return;
       if (target === undefined) focusInto(fallback, null);
@@ -145,7 +171,9 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, option
         break;
       }
       seen.add(owner);
-      opener = owner.opener;
+      // A sheet collapsed to its bar is reached through the bar.
+      const standIn = owner.standIn();
+      opener = standIn !== null && live(standIn) ? standIn : owner.opener;
     }
     if (opener !== null) {
       focusWhenReady(opener);
@@ -168,6 +196,7 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, option
       focusIn: () => {
         focusIn(container);
       },
+      standIn: () => readStandIn(),
     };
     traps.set(container, record);
     return () => {
@@ -212,6 +241,20 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, option
     container.addEventListener('keydown', onKeyDown);
     return () => {
       container.removeEventListener('keydown', onKeyDown);
+      // Released while the cycle goes on (the cycle cleanup above already removed a closed
+      // record): hand the opener to whichever trap activates around it.
+      const record = traps.get(container);
+      const opener = record?.opener ?? null;
+      if (opener?.isConnected === true && readHandOverOnRelease() && container.contains(document.activeElement)) {
+        handover = opener;
+      }
     };
   }, [active, containerRef]);
+}
+
+/** Move focus into an open trap's container the way its own activation would (L72-09). */
+export function focusIntoTrap(container: HTMLElement): void {
+  const record = traps.get(container);
+  if (record === undefined) focusInto(container, null);
+  else record.focusIn();
 }

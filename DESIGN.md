@@ -633,9 +633,15 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   a drag that starts in the panel and ends on the backdrop, never closes it.
   `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
   lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
-- **Exit guard:** a closing sheet or toast keeps its fade, but every dismissal path checks that
-  it is still open, and the exiting overlay or card is `inert` with `pointer-events: none`. A
-  double press closes once, and a press meant for the sheet below reaches it.
+- **Press shield** (spec v7 §1 "an accidental tap never spends the turn", §6.6.4): a press
+  during a sheet's exit does nothing, whether or not another sheet remains beneath. The exiting
+  overlay keeps covering the whole box, hit-testable and `aria-hidden`, with handlers that check
+  the sheet is still open; only its panel turns `inert`. So a double tap closes one sheet and
+  never reaches the sheet or the table below; a deliberate press within ~220ms is absorbed and
+  simply repeated. When a panel collapses to its bar (Minimize, L74 "Use" → targeting), a
+  transparent no-op shield covers the box for `--dur-base` (none under reduced motion); the bar
+  shows at once and paints above it. A closing toast stays click-through instead: it covers a
+  small area, and blocking the dock under it would be less predictable.
 - **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
   only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
   in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial
@@ -655,9 +661,13 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   opener is recorded when the sheet opens, kept while it is minimized or covered, and cleared
   when it closes. On close, focus goes to the opener only if it is reachable (on the page with
   no modal sheet left, on an uncovered bar, or inside the new live sheet), else into the new
-  live sheet, else up the opener chain, and never stays in a closing panel. Minimize hands focus
-  to the bar, unless another sheet becomes live, which takes it; restoring returns it to the
-  panel.
+  live sheet, else up the opener chain (a minimized sheet in the chain is reached through its
+  bar), and never stays in a closing panel. A closing sheet re-parents every opener that pointed
+  into it to its own opener, so a sheet opened from inside it still returns focus after it is
+  gone. Minimize hands focus to the bar, unless another sheet becomes live: that sheet takes it,
+  back on the blocking sheet's opener when it is inside (the Chat message field). Restoring
+  returns focus to the panel. Pressing a toast's OK while a sheet is open returns focus to the
+  live sheet (onto the element focused before, when it is there), else to that element.
 - **Keyboard scroll:** a body that overflows becomes a focusable `role="region"` named by the
   sheet title (`tabIndex={0}`, the inset focus ring, so it never crosses the title) and joins
   the Tab cycle in DOM order, so a text-only sheet scrolls with the arrow and page keys (WCAG

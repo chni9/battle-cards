@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
 import { Z_INDEX } from '../layers';
+import { Sheet } from './sheet';
 import { Toast } from './toast';
 
 const timers = { advanceTimers: vi.advanceTimersByTime };
@@ -101,5 +102,25 @@ describe('Toast fix round 1', () => {
     const card = screen.getByRole('status').querySelector<HTMLElement>('[data-zone="toast"]');
     expect(card?.getAttribute('data-motion')).toBe('reduced');
     expect(card?.getAttribute('style') ?? '').not.toMatch(/transform|translate|scale/);
+  });
+});
+
+describe('Toast focus on manual dismissal (fix round 2)', () => {
+  it('puts focus back into the live sheet, not behind it, when OK is pressed over a modal sheet', async () => {
+    const onDismiss = vi.fn();
+    const { user } = renderUi(<><Sheet open mode="read-only" title="Card" onClose={() => undefined}>
+      <button type="button">Use</button><button type="button">Sell</button></Sheet>
+      <Toast open {...base} onDismiss={onDismiss} /></>);
+    const sell = screen.getByRole('button', { name: 'Sell' });
+    act(() => { sell.focus(); });
+    await user.click(ok());
+    expect(onDismiss.mock.calls).toEqual([['manual']]);
+    expect(document.activeElement).toBe(sell);
+  });
+  it('puts focus back on the page element focused before OK when no sheet is open', async () => {
+    const { user } = renderUi(<><button type="button">Draw</button><Toast open {...base} onDismiss={() => undefined} /></>);
+    act(() => { screen.getByRole('button', { name: 'Draw' }).focus(); });
+    await user.click(ok());
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Draw' }));
   });
 });

@@ -121,16 +121,21 @@ describe('Dialog fix round 1', () => {
     const body = zone(panelOf('Feedback'), 'sheet-body');
     expect([body.hasAttribute('tabindex'), body.hasAttribute('role')]).toEqual([false, false]);
   });
-  it('closes once on a double backdrop click (A3, P9d)', async () => {
+  it('closes once on a double backdrop click and shields the page while it fades (A3, P9d; fix round 2)', async () => {
     const onClose = vi.fn();
-    const { user } = renderUi(<ClosingDialog onClose={onClose} />);
-    const overlay = overlayOf(panelOf('Shop'));
-    await user.click(overlay);
-    fireEvent.pointerDown(overlay);
-    fireEvent.click(overlay);
+    const onPagePress = vi.fn();
+    const { user } = renderUi(<><button type="button" onClick={onPagePress}>Shop</button><ClosingDialog onClose={onClose} /></>);
+    const panel = panelOf('Shop');
+    const overlay = overlayOf(panel);
+    await user.dblClick(overlay);
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onPagePress).not.toHaveBeenCalled();
+    // happy-dom has no hit testing: the browser routes a press at this point to the topmost
+    // hit-testable box, which is the exiting overlay (fixed over the whole box, not inert, not
+    // pointer-events: none); only its panel is inert.
     expect(overlay.isConnected).toBe(true);
-    expect(overlay.style.pointerEvents).toBe('none');
+    expect([overlay.style.position, overlay.style.pointerEvents, overlay.hasAttribute('inert')]).toEqual(['fixed', '', false]);
+    expect([overlay.getAttribute('aria-hidden'), panel.hasAttribute('inert')]).toEqual(['true', true]);
   });
   it('closes once on a double backdrop click under reduced motion (A3, P12b)', async () => {
     const onClose = vi.fn();

@@ -28,6 +28,9 @@ import { useVisualViewportBox } from '../use-visual-viewport-box';
 import { CHROME_SHAPE_SM_CLASS, motionAttribute } from './chrome-classes';
 import { IconButton } from './icon-button';
 import { PresenceLayer } from './presence-layer';
+import { livePanel } from './sheet-focus';
+import { useSheetStackStore } from './sheet-stack-context';
+import { focusIntoTrap } from './use-focus-trap';
 
 export type ToastTone = 'info' | 'success' | 'error';
 export type ToastDismissCause = 'manual' | 'timeout';
@@ -96,10 +99,33 @@ export function Toast({
     };
   }, [open]);
 
+  const store = useSheetStackStore();
   const live = useRef(open);
   useLayoutEffect(() => {
     live.current = open;
   });
+
+  /** The element focused before focus entered the toast (its OK button). */
+  const focusedBefore = useRef<HTMLElement | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * The OK button goes inert as the toast closes, and browsers then drop focus to `body`,
+   * behind any modal sheet. Put it back: into the live sheet (onto the element focused before,
+   * when that is inside it), else onto that element, else leave it (fix round 2).
+   */
+  const returnFocusFromToast = (): void => {
+    const card = cardRef.current;
+    if (!card?.contains(document.activeElement)) return;
+    const before = focusedBefore.current?.isConnected === true ? focusedBefore.current : null;
+    const panel = livePanel(store.getSnapshot());
+    if (panel !== null) {
+      if (before !== null && panel.contains(before)) before.focus();
+      else focusIntoTrap(panel);
+    } else {
+      before?.focus();
+    }
+  };
 
   const dismissByHand = (): void => {
     if (!live.current || dismissed.current) return;
@@ -108,6 +134,7 @@ export function Toast({
       window.clearTimeout(timer.current);
       timer.current = null;
     }
+    returnFocusFromToast();
     onDismiss('manual');
   };
 
@@ -122,8 +149,13 @@ export function Toast({
 
   const renderCard = (present: boolean): ReactElement => (
     <motion.div
+      ref={cardRef}
       data-zone="toast"
       data-toast-tone={tone}
+      onFocus={(event) => {
+        const from = event.relatedTarget;
+        if (from instanceof HTMLElement && !event.currentTarget.contains(from)) focusedBefore.current = from;
+      }}
       data-motion={motionAttribute(reduced)}
       // An exiting toast keeps its last props; `present` makes its OK inert and click-through.
       inert={!present}
