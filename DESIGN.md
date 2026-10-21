@@ -251,8 +251,8 @@ a 375 px phone.
 
 Phone portrait first (375 px, up to eight seats, no horizontal page scroll); desktop is
 derived and a landscape phone is a compact mode (spec v7 §2 Q2, §6.4). Touch targets are at
-least 44px. Lot 72 adds no layout component: seat arc, grid and sheet placement land in later
-lots.
+least 44px. The layout mode comes from one rule (Primitives › Viewport modes); seat arc, grid
+and sheet placement land in later lots.
 
 The page ground is the opt-in class **`.v7-ground`** (`ui/tokens.css`, `@layer components`):
 `--bg-0` under a `--bg-1` to `--bg-0` gradient, the two halos (`--glow-a` top left, `--glow-b`
@@ -404,13 +404,14 @@ components render them.
 - **No emoji in `ui/`.** `ui/icons/no-emoji.test.ts` fails on any Extended_Pictographic
   character, and on U+2715 (multiplication X), in any `ui/` source file; draw that cross with
   `Icon name="eliminated"` or `"close"`.
-- The `/dev/ui` gallery section `icons` (`ui/icons/icons.gallery.tsx`) lands with L72-08.
+- The `/dev/ui` gallery section `icons` (`ui/icons/icons.gallery.tsx`, L72-08) shows every
+  glyph at 32px with its name, and `help` and `coach` labelled side by side (Q45).
 - The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75.
 
 ## Components
 
-None yet beyond the icon set (see Icons). Each `ui/` component adds its section here in the
-same commit.
+Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
+The icon set is in Icons; the L72-08 chrome primitives are in Primitives below.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -426,6 +427,99 @@ same commit.
   root carries `data-motion="reduced" | "full"`, and CSS animation or press classes are
   applied only when full. No sheen sweep, pulse, shake, particles, flying cards or slam; the
   same numbers and labels remain, so no information is carried by motion alone.
+
+## Primitives (apps/client/src/ui/primitives/, L72-08)
+
+Chrome classes come only from `ui/primitives/chrome-classes.ts` (`CHROME_SHAPE_CLASS`,
+`CHROME_SHAPE_SM_CLASS`, `CHROME_FOCUS_CLASS`, `CHROME_DISABLED_CLASS`, `BUTTON_VARIANT_CLASS`,
+`chromePressClass`, `motionAttribute`, `iconNeedsWell`, `ICON_WELL_CLASS`): a primitive never
+restates the outline, shadow, radius or press offset as a literal, and every class map is a
+literal string. Focus is a 2px `--text` outline, offset 2px, on `:focus-visible`. Each
+animated control carries `data-motion="reduced" | "full"`.
+
+- **Button:** `primary` (`--cta`), `secondary` (`--cta-2`) and `danger` (`--danger`) fills are
+  labelled in `--text-on-cta` at 13.7 / 7.7 / 6.0 : 1; `quiet` is `--panel-2` with `--text`.
+  Lilita One, 44px floor (`md`) or 56px (`lg`), `type="button"` by default. Press rule: the
+  button drops `--chrome-press-y` (3px) and loses its shadow over `--dur-fast`; under reduced
+  motion it only dims (`brightness-90`), with no translate. A disabled button shows
+  `disabledReason` as visible `--text-2` caption text under it, joined to its
+  `aria-describedby` (§11); `reserveReasonSlot` keeps that line, empty and aria-hidden.
+- **Icon wells:** on the three CTA fills an icon always sits in a round `--bg-0` well
+  (`ICON_WELL_CLASS`), whatever its name, so no icon can meet a fill within CIEDE2000 20 of its
+  body (Icons › Accessibility and use) and a later icon cannot either. On `quiet` the icon sits
+  on the fill. Button and IconButton apply it; Pill, Badge, Toggle and KitTile put icons only
+  on `--panel` or `--panel-2`, and Avatar draws its cross in a well.
+- **IconButton:** a 44px square, `quiet` by default. Its `title` defaults to the `aria-label`
+  (L59-01); `title={null}` removes it. `count > 0` draws an aria-hidden `--cta` badge, so the
+  label carries the number. The root is `relative`: position it with a wrapper.
+- **Pill:** icon plus a Lilita value, read as "{label} {value}". A hidden value shows `?` and
+  reads "{label} unknown", which is also its `title`. The tone is a 2px inset ring (`life`,
+  `point`, `upgrade`, `shield`; `neutral` has none), never the value's color. `lg` puts the
+  value on `--type-vital` (own lives at least 20px). The caption word shows with
+  `captionVisible` and is screen-reader only otherwise.
+- **Badge:** a Nunito caption label (or screen-reader only), a Lilita value, the tone as an
+  inset ring. **BadgeGroup** shows 2 badges, then `+n`; the marker is a 44px button only with
+  `onOverflowClick`.
+- **Avatar:** a round chrome frame holding the portrait, or a seat-hued disc (`v7SeatColor`,
+  `--text-2` for an unknown seat) with the name's first grapheme in `--text-on-cta`. The
+  accessible name is `alt`, else the name. Eliminated: a grayscale face and the `eliminated`
+  cross in a `--bg-0` well outside the filter, so it keeps its color on every seat hue.
+- **Tabs:** a tablist on `--panel`, the selected tab `--cta` with `--text-on-cta`, a roving
+  tabindex. ArrowLeft and ArrowRight move and select (wrapping, skipping disabled tabs), Home
+  and End jump to the first and last enabled tab; one labelled tabpanel.
+- **Segmented:** a radiogroup of `aria-checked` radios, the checked one `--cta`. Arrow keys on
+  both axes move and select; `disabled` locks the group (`aria-disabled`). Tabs and Segmented
+  share `roving-focus.ts`.
+- **Slider:** a native range, `--bg-0` track and `--cta` thumb in the chrome outline, with a
+  Lilita readout. Commit rule: `onChange` is live, and `onCommit` fires once per gesture, on
+  pointer release, on keyup after a step key, on blur, or on a native `change` outside a
+  gesture. It never fires for the latest known value: the last commit, or the `value` prop
+  when that changed after it.
+- **Toggle:** an `aria-pressed` button. The state reads from the knob position
+  (`data-toggle-knob`); the `--cta-2` track is a second cue. The knob slides only when motion
+  is full.
+- **Tooltip:** a `--panel-2` bubble, always rendered (`hidden` while closed) and appended to
+  the trigger's `aria-describedby`; it opens on focus or hover. Esc closes it, and a
+  capture-phase listener swallows that press, so one Esc dismisses one layer (Q49). Once open,
+  it is nudged inside an 8px viewport gutter.
+- **ScrollArea:** `y` (default), `x` or `both`, overscroll contained, the cross axis clipped. A
+  `label` makes it a focusable named region.
+- **TextField:** 16px (`--type-input`) Nunito on `--panel-2`, 44px tall, so iOS never zooms on
+  focus. The hint is `--text-2`. An error sets `aria-invalid`, turns the border `--danger` and
+  prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`).
+- **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons and
+  aria-hidden dots. Paging scrolls smoothly, or instantly under reduced motion (§8.3); a swipe
+  reports its index from the scroll position; the chevrons stop click and pointerdown from
+  reaching a dismiss handler. `gridAtDesktop` shows a grid with no controls in desktop mode.
+- **KitTile:** a `--panel` chrome card with a decorative portrait, the Lilita name and icon
+  stats with screen-reader labels. Selected: a `--cta` ring outside the outline and
+  `aria-pressed`. Excluded: a grayscale portrait and the word "Excluded" (`EXCLUDED_LABEL`),
+  never selectable (Q15, Q23). The `help` info control renders only with `onInfo` and
+  `infoLabel`.
+
+### Viewport modes
+One rule, `viewportModeFor({ width, height })` in `ui/viewport-mode.ts` (spec v7 §6.4): a
+visible height under 500px (`LANDSCAPE_COMPACT_MAX_HEIGHT_PX`) is `landscape-compact`;
+otherwise wider than tall is `desktop`; otherwise `portrait`. `useViewportMode()` and
+`useVisualViewportBox()` (`ui/use-visual-viewport-box.ts`) follow `visualViewport` resize and
+scroll, with the window as the fallback. Carousel `gridAtDesktop`, Sheet placement (L72-09)
+and the L73 seat layout reuse it.
+
+### Copy
+`ui/ui-copy.ts` holds only the spec v7 §10.6 new strings a `ui/` component needs:
+`EXCLUDED_LABEL` "Excluded" (L72-08); L72-09 adds `MINIMIZE_LABEL` and L72-16
+`TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and next, the
+KitTile info control) comes from the caller's existing copy.
+
+### /dev/ui gallery
+DEV only: `isDevUiRoute` (`dev/dev-ui-route.ts`) matches `/dev/ui` and below, and `App.tsx`
+imports `dev/ui-gallery.tsx` lazily behind `import.meta.env.DEV`, so production builds carry
+no gallery chunk. The page paints on `.v7-ground`, links each section from a nav and renders
+each entry on a `--panel` card, flowing with the page (no `vh` or `dvh`). Each `ui/` area adds
+`ui/<area>/<area>.gallery.tsx` exporting `gallery: GallerySection`; `import.meta.glob` finds
+it, and `collectGallerySections` sorts the sections by id and rejects a duplicate id.
+Stateful demos live in a components-only sibling (`primitives-gallery-demos.tsx`). Demo copy
+is DEV-only, never a shipped string.
 
 ## Do's and Don'ts
 
