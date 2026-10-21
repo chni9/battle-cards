@@ -8,7 +8,8 @@
  * (`outlinedLine`), and crosses are filled outlined polygons, never the U+2715 character.
  * Paints are `V7_COLORS` hex, never `currentColor`, `var()` or `color-mix()` (the mobile
  * Safari rule from `ui/seat-colors.ts`). Each name has its own geometry, so no state is told
- * apart by color alone, and help and coach are distinct glyphs (Q45).
+ * apart by color alone, and help and coach are distinct glyphs (Q45). The legibility rules
+ * (solid dots, open gaps, optical size, no icon on its own color) are in DESIGN.md › Icons.
  *
  * Decorative by default (`aria-hidden`). A non-empty `label` makes the icon an image named by
  * it. Icon-only controls go through `IconButton` (L72-08), which carries the aria-label and
@@ -31,14 +32,25 @@ export interface IconProps {
 const paint = V7_COLORS;
 
 /**
- * A thin motif on the open ground: an ink casing 4 units wider than the colored core, so the
- * core keeps a 2-unit outline like a filled shape and still reads on `--bg-0`.
+ * A thin motif on the open ground: an ink casing (by default 4 units wider than the colored
+ * core, so the core keeps a 2-unit outline like a filled shape) that still reads on `--bg-0`.
+ * A motif that crosses a body takes a narrower casing so it does not cut the body in two.
  */
-function outlinedLine(d: string, core: string, width = 2): ReactElement {
+function outlinedLine(d: string, core: string, width = 2, casing = width + 4): ReactElement {
   return (
     <>
-      <path d={d} strokeWidth={width + 4} />
+      <path d={d} strokeWidth={casing} />
       <path d={d} stroke={core} strokeWidth={width} />
+    </>
+  );
+}
+
+/** One eye for `spying-on-you` and `unspy`, so the two cannot drift apart. */
+function eye(body: string): ReactElement {
+  return (
+    <>
+      <path d="M1.5 12C4.5 7 8 4.6 12 4.6S19.5 7 22.5 12C19.5 17 16 19.4 12 19.4S4.5 17 1.5 12z" fill={body} />
+      <circle cx="12" cy="12" r="3" fill={paint.ink} />
     </>
   );
 }
@@ -63,27 +75,20 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   // Statuses.
   'spied-by-you': (
     <>
-      {outlinedLine('M15.5 15.5 20 20', paint.mine, 3)}
-      <circle cx="10" cy="10" r="6.5" fill={paint.mine} />
-      <path d="M7 9.2a3.4 3.4 0 0 1 2.2-2.2" stroke={paint.text} strokeWidth={1.5} />
+      {outlinedLine('M15.5 15.5 20.5 20.5', paint.mine, 3.5)}
+      <circle cx="9.5" cy="9.5" r="7" fill={paint.mine} />
+      <path d="M6 8.8a3.8 3.8 0 0 1 2.8-2.8" stroke={paint.text} strokeWidth={1.5} />
     </>
   ),
-  'spying-on-you': (
-    <>
-      <path
-        d="M2 12c2.8-4.2 6.2-6.3 10-6.3s7.2 2.1 10 6.3c-2.8 4.2-6.2 6.3-10 6.3S4.8 16.2 2 12z"
-        fill={paint['threat-other']}
-      />
-      <circle cx="12" cy="12" r="2.2" fill={paint.ink} />
-    </>
-  ),
+  'spying-on-you': eye(paint['threat-other']),
+  // Sparks end at least 3 units inside the edges, so their casings stay in the viewBox.
   'shield-active': (
     <>
       <path
-        d="M10 6 16.5 8.5v4c0 4.2-2.8 7.1-6.5 8.8-3.7-1.7-6.5-4.6-6.5-8.8v-4z"
+        d="M9.5 6 16.3 8.55v4.68c0 4.25-2.98 7.23-6.8 8.92-3.82-1.7-6.8-4.67-6.8-8.92V8.55z"
         fill={paint.shield}
       />
-      {outlinedLine('M18.8 6.7 20.6 4.9M19.8 11.2h2M14.4 3.6l.4-1.6', paint.cta)}
+      {outlinedLine('M17.8 6.8 19.8 4.8M18.8 10.4H21M14.4 5l.5-2', paint.cta, 2.5, 6)}
     </>
   ),
   block: (
@@ -95,11 +100,11 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   persistent: (
     <>
       <path
-        d="M3 12A9 9 0 0 1 15.08 3.54L15.76 1.66 18.92 7.6 12.68 10.12 13.37 8.24A4 4 0 0 0 8 12z"
+        d="M2.54 12.83A9.5 9.5 0 0 1 13.65 2.64L13.91 1.17 19.57 6.48 12.26 10.52 12.69 8.06A4 4 0 0 0 8.02 12.35z"
         fill={paint['text-2']}
       />
       <path
-        d="M21 12A9 9 0 0 1 8.92 20.46L8.24 22.34 5.08 16.4 11.32 13.88 10.63 15.76A4 4 0 0 0 16 12z"
+        d="M21.46 11.17A9.5 9.5 0 0 1 10.35 21.36L10.09 22.83 4.43 17.52 11.74 13.48 11.31 15.94A4 4 0 0 0 15.98 11.65z"
         fill={paint['text-2']}
       />
     </>
@@ -113,9 +118,10 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   ),
   'reanimation-armed': (
     <>
-      <path d="M3.5 21V10.5a5.5 5.5 0 0 1 11 0V21z" fill={paint['text-2']} />
-      <path d="M6.5 13h5M6.5 16.5h5" />
-      <path d="M18.5 2 23 7.5h-2.5v7h-4v-7H14z" fill={paint.cta} />
+      <path d="M2.5 21.5V10.5a6.5 6.5 0 0 1 13 0v11z" fill={paint['text-2']} />
+      <path d="M9 9v6.5M6.5 11.5h5" />
+      {/* The arrow overlaps the stone, so grave and rising read as one motif. */}
+      <path d="M17 2 22 8.5h-3V17h-4V8.5h-3z" fill={paint.cta} />
     </>
   ),
   'duplication-active': (
@@ -140,10 +146,10 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   ),
   disconnected: (
     <>
-      {outlinedLine('M9.5 10h4M9.5 14h4', paint.text)}
-      <rect x="2" y="8" width="7.5" height="8" rx="2" fill={paint['text-2']} />
-      <rect x="16" y="6" width="6" height="12" rx="2" fill={paint['text-2']} />
-      <path d="M18.5 10h1M18.5 14h1" />
+      {/* A plug, its two prongs facing a socket across a gap, turned onto the diagonal. */}
+      {outlinedLine('M8.11 12 10.23 9.88M12 15.89 14.12 13.77', paint.text, 2.5)}
+      <rect x="1.25" y="5.75" width="8" height="12.5" rx="2.5" transform="rotate(-45 12 12)" fill={paint['text-2']} />
+      <rect x="15.25" y="5.75" width="7.5" height="12.5" rx="2.5" transform="rotate(-45 12 12)" fill={paint['text-2']} />
     </>
   ),
   'absorb-window': <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" fill={paint['cta-2']} />,
@@ -158,9 +164,9 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   // UI controls.
   menu: (
     <>
-      <rect x="3" y="3.5" width="18" height="4.5" rx="2.25" fill={paint.text} />
-      <rect x="3" y="9.75" width="18" height="4.5" rx="2.25" fill={paint.text} />
-      <rect x="3" y="16" width="18" height="4.5" rx="2.25" fill={paint.text} />
+      <rect x="3" y="2.5" width="18" height="4" rx="2" fill={paint.text} />
+      <rect x="3" y="10" width="18" height="4" rx="2" fill={paint.text} />
+      <rect x="3" y="17.5" width="18" height="4" rx="2" fill={paint.text} />
     </>
   ),
   shop: (
@@ -171,19 +177,18 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   ),
   draw: (
     <>
-      <rect x="2.5" y="9" width="12" height="13" rx="2" fill={paint['text-2']} />
-      <rect x="9.5" y="2.5" width="11.5" height="13.5" rx="2" transform="rotate(14 15.25 9.25)" fill={paint.text} />
+      {/* Two staggered card-edge slabs, and the top card lifted off them. */}
+      <rect x="2" y="18.5" width="16" height="4.5" rx="1.75" fill={paint['text-2']} />
+      <rect x="6" y="13.5" width="16" height="4.5" rx="1.75" fill={paint['text-2']} />
+      <rect x="8" y="1.5" width="8.5" height="10.5" rx="2" transform="rotate(-10 12.25 6.75)" fill={paint.text} />
     </>
   ),
   // The `spying-on-you` eye, crossed out (L58-07).
   unspy: (
     <>
-      <path
-        d="M2 12c2.8-4.2 6.2-6.3 10-6.3s7.2 2.1 10 6.3c-2.8 4.2-6.2 6.3-10 6.3S4.8 16.2 2 12z"
-        fill={paint['text-2']}
-      />
-      <circle cx="12" cy="12" r="2.2" fill={paint.ink} />
-      {outlinedLine('M4.5 4.5 19.5 19.5', paint.text)}
+      {eye(paint['text-2'])}
+      {/* A 1-unit casing, so the slash does not cut the eye in two; the pupil shows on both sides. */}
+      {outlinedLine('M3.5 3.5 20.5 20.5', paint.text, 2.5, 4.5)}
     </>
   ),
   log: (
@@ -197,14 +202,15 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   help: (
     <>
       <circle cx="12" cy="12" r="9.5" fill={paint['cta-2']} />
-      <path d="M9.3 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.8v.5" strokeWidth={2.5} />
-      <circle cx="12" cy="17.4" r="0.4" fill={paint.ink} />
+      <path d="M9.3 9.2a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2.9-1.2 1.6v.2" strokeWidth={2.5} />
+      {/* Solid dot: a stroke wider than a tiny circle renders as a ring in Blink and WebKit. */}
+      <circle cx="12" cy="17.5" r="1.4" fill={paint.ink} stroke="none" />
     </>
   ),
   coach: (
     <>
-      <path d="M9 6h11a1.5 1.5 0 0 1 1.5 1.5v2A1.5 1.5 0 0 1 20 11h-4.68A6.5 6.5 0 1 1 9 6z" fill={paint.cta} />
-      <circle cx="9" cy="12.5" r="1.2" fill={paint.ink} />
+      <path d="M9.5 4.5h11A1.5 1.5 0 0 1 22 6v2.5a1.5 1.5 0 0 1-1.5 1.5h-3.77A7.5 7.5 0 1 1 9.5 4.5z" fill={paint.cta} />
+      <circle cx="9.5" cy="12" r="1.5" fill={paint.ink} />
     </>
   ),
   chat: (
@@ -221,8 +227,8 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
   feedback: (
     <>
       <rect x="3" y="3" width="18" height="18" rx="5" fill={paint.cta} />
-      <path d="M12 7.5V13" strokeWidth={2.5} />
-      <circle cx="12" cy="16.6" r="0.4" fill={paint.ink} />
+      <path d="M12 7v6" strokeWidth={2.5} />
+      <circle cx="12" cy="16.8" r="1.4" fill={paint.ink} stroke="none" />
     </>
   ),
   flag: (

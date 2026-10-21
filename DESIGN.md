@@ -306,9 +306,21 @@ and no icon library: every glyph is inline SVG.
   ground. Every glyph has at least one light or colored filled shape. Ink is kept for details
   drawn over a body: pupils, pips, clock hands, mortar and text lines.
 - **Thin motifs** that sit on the open ground (sparks, waves, handles, antenna, prongs, the
-  flag pole, the Unspy slash) are an ink casing 4 units wider than a colored core, so the core
-  keeps the same 2-unit outline as a filled shape. Crosses (`eliminated`, `close`) are filled
-  outlined polygons, never a cross character.
+  flag pole) are an ink casing 4 units wider than a colored core, so the core keeps the same
+  2-unit outline as a filled shape. A motif that crosses a body (the Unspy slash) takes a
+  1-unit casing instead, so it does not cut the body in two. Crosses (`eliminated`, `close`)
+  are filled outlined polygons, never a cross character.
+- **Inside the grid.** No shape or casing crosses the 24-unit viewBox: spark ends stay at least
+  3 units inside the edges (their casing radius).
+- **Solid dots.** A dot smaller than the outline (the `?` and `!` dots) is a solid ink circle
+  with `stroke="none"`: a 2-unit stroke around a tiny circle renders as a ring with a colored
+  hole in Blink and WebKit.
+- **Open gaps.** Gaps between repeated parts are at least 3 units, wider than the outline, so
+  they stay open on a light fill (`menu` bars are 4 units tall with 3.5-unit gaps).
+- **Optical size.** Each glyph spans about 18 to 20 units on its major axis, so flat motifs
+  (eyes, magnifier, whistle) carry the same mass as the full-grid bodies (`menu`, `help`,
+  `chat`). `draw` and `unspy` must read on their own at 16 to 24px: Lot 59 makes the Draw and
+  Unspy dock controls icon-only, and the table is phone first (spec v7 Q2).
 - **Paint.** Only `V7_COLORS` hex from `ui/palette.ts`, never `currentColor`, `var()` or
   `color-mix()` (the Inline Hex Rule). Fills go on shapes, never on a `<g>`. No `<text>`.
 - **One shape per name.** Each name has its own geometry, so no state is told apart by color
@@ -322,27 +334,27 @@ and no icon library: every glyph is inline SVG.
 | Resource | `upgrade` | chunky up arrow | `--upgrade` |
 | Resource | `shield` | heater shield | `--shield` |
 | Status | `spied-by-you` | magnifier with a glint | `--mine` |
-| Status | `spying-on-you` | eye with an ink pupil | `--threat-other` |
-| Status | `shield-active` | shield and three sparks | `--shield`, sparks `--cta` |
+| Status | `spying-on-you` | eye with a large ink pupil (the same eye as `unspy`) | `--threat-other` |
+| Status | `shield-active` | shield and three sparks at its top right | `--shield`, sparks `--cta` |
 | Status | `block` | brick wall | `--text-2` |
-| Status | `persistent` | two chasing arrows | `--text-2` |
+| Status | `persistent` | two chasing arrows with broad heads | `--text-2` |
 | Status | `invisibility` | ghost with ink eyes (the turns are a Badge value) | `--text-2` |
-| Status | `reanimation-armed` | tombstone and a rising arrow | `--text-2`, arrow `--cta` |
+| Status | `reanimation-armed` | tombstone with an engraved cross, a rising arrow overlapping it | `--text-2`, arrow `--cta` |
 | Status | `duplication-active` | two fanned cards | `--text` front, `--text-2` back |
 | Status | `eliminated` | bold cross, the §6.2 seat cross | `--danger` |
 | Status | `bot` | robot head with an antenna | `--text-2` |
-| Status | `disconnected` | plug and socket apart | `--text-2`, prongs `--text` |
+| Status | `disconnected` | plug and socket on the diagonal, two prongs facing the socket across a gap | `--text-2`, prongs `--text` |
 | Status | `absorb-window` | funnel | `--cta-2` |
 | Status | `sentence-ticking` | hourglass | `--threat-attack`, caps `--text-2` |
-| UI | `menu` | three bars | `--text` |
+| UI | `menu` | three bars with open gaps | `--text` |
 | UI | `shop` | bag | `--cta` |
-| UI | `draw` | deck with a lifted top card | `--text` top, `--text-2` deck |
-| UI | `unspy` | the `spying-on-you` eye, crossed out (L58-07) | `--text-2`, slash `--text` |
+| UI | `draw` | two staggered card-edge slabs, the top card lifted off them | `--text` card, `--text-2` slabs |
+| UI | `unspy` | the `spying-on-you` eye (shared geometry), crossed by a slash (L58-07) | `--text-2`, slash `--text` |
 | UI | `log` | lined scroll | `--text-2` |
-| UI | `help` | `?` in a disc | `--cta-2` |
+| UI | `help` | `?` with a solid dot, in a disc | `--cta-2` |
 | UI | `coach` | whistle | `--cta` |
 | UI | `chat` | speech bubble with three dots | `--text` |
-| UI | `feedback` | `!` badge | `--cta` |
+| UI | `feedback` | `!` with a solid dot, on a rounded badge | `--cta` |
 | UI | `flag` | flag on a pole (leave, forfeit) | `--danger`, pole `--text-2` |
 | UI | `sound` | speaker and two waves | `--text` |
 | UI | `vibration` | phone between zigzags | `--text` |
@@ -369,6 +381,17 @@ components render them.
   a glyph.
 - **Seat hues** are never icon paint, and a `--life` or `--threat-*` icon never sits in a
   seat-hued element (the Own-Hue Rule, §5.1).
+- **No icon on its own color.** An icon never sits directly on a fill equal or close to one of
+  its body or motif tokens, because only the ink outline would remain. Close means CIEDE2000
+  under 20 (`SEAT_HUE_MIN_DELTA_E`, the bound the seat hues use), which also covers a contrast
+  near 1.2:1 in the same hue. On `--cta` that rules out `point`, `shop`, `coach`, `feedback`,
+  `spying-on-you` and the `shield-active` and `reanimation-armed` motifs. On `--cta-2` it rules
+  out `help`, `absorb-window`, `spied-by-you`, `shield` and `shield-active`. On `--danger` or a
+  `--life` chip it rules out `life`, `eliminated`, `flag` and `sentence-ticking`. The caller
+  puts such an icon in a `--bg-0` or `--panel` well on that fill, as with the `+N` point icon
+  on the Draw button (spec v7 §6.1 item 5). The L72-08 primitives apply this rule. A body that
+  only shares the luminance of the fill but not its hue (`--text-2` on `--cta`: 1.12:1, but
+  CIEDE2000 52) stays legible, so `draw` can sit on the `--cta` Draw button.
 - The root carries `data-icon={name}` as a lookup hook for tests and later components.
 - **No emoji in `ui/`.** `ui/icons/no-emoji.test.ts` fails on any Extended_Pictographic
   character, and on U+2715 (multiplication X), in any `ui/` source file; draw that cross with
