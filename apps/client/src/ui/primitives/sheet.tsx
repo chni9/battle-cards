@@ -21,10 +21,12 @@
  *   every sheet under it is inert. Focus follows the live sheet (`use-focus-trap.ts`): it moves
  *   into a sheet that becomes live, and on close returns to the opener only when the opener is
  *   reachable, otherwise into the new top sheet, otherwise up the opener chain.
- * - A press during a sheet's exit does nothing (spec v7 §1, §6.6.4): the exiting overlay stays
- *   a hit-testable, `aria-hidden` shield over the whole box whose handlers check the sheet is
- *   still open, and only its panel turns inert. A panel collapsing to its bar leaves a no-op
- *   shield over the box for `DUR_BASE_MS` (none under reduced motion), under the bar.
+ * - A press during a sheet's exit does nothing (spec v7 §1, §6.6.4): the exiting live sheet's
+ *   overlay stays a hit-testable, `aria-hidden` shield over the whole box whose handlers check
+ *   the sheet is still open, and only its panel turns inert. A covered sheet that closes stays
+ *   inert and click-through, one z-index under the live sheet. A real collapse to the bar, or a
+ *   restore from it, raises a no-op shield over the box, bar included, for `DUR_BASE_MS` (none
+ *   under reduced motion) while Minimize and restore ignore presses; the bar shows at once.
  * - A body that overflows becomes a named, focusable scroll region in the Tab cycle (WCAG
  *   2.1.1), so a text-only sheet scrolls by keyboard; initial focus still prefers a control.
  *
@@ -241,24 +243,30 @@ export function Sheet(props: SheetProps): ReactElement | null {
     ...(initialFocusRef !== undefined ? { initialFocusRef } : {}),
   });
 
-  // Collapse shield (fix round 2): when the panel collapses to its bar, a no-op layer covers the
-  // overlay box for the panel's exit time, so a fast second tap on "Use" never lands on the
-  // table (§1, §6.6.4). Derived from the previous render, so it starts in the same commit.
-  const [wasBar, setWasBar] = useState(barMode);
-  const [collapseShield, setCollapseShield] = useState(false);
-  if (wasBar !== barMode) {
-    setWasBar(barMode);
-    setCollapseShield(barMode && !reduced);
+  // Transition shield (fix rounds 2-3): when the panel really collapses to its bar (Minimize,
+  // L74 "Use" -> targeting) or a bar restores its panel, a no-op layer covers the box, bar
+  // included, for the panel's animation time, and Minimize and restore ignore presses. So a fast
+  // second tap never lands on the table, on the bar or on the fresh panel's Minimize (§1,
+  // §6.6.4). A sheet that mounts collapsed has no panel to move, so it raises none. Derived from
+  // the previous render, so it starts in the same commit.
+  const view = barMode ? 'bar' : painted ? 'panel' : 'none';
+  const [previousView, setPreviousView] = useState(view);
+  const [transitionShield, setTransitionShield] = useState(false);
+  if (previousView !== view) {
+    setPreviousView(view);
+    const transition =
+      (previousView === 'panel' && view === 'bar') || (previousView === 'bar' && view === 'panel');
+    setTransitionShield(transition && !reduced);
   }
   useEffect(() => {
-    if (!collapseShield) return;
+    if (!transitionShield) return;
     const timer = window.setTimeout(() => {
-      setCollapseShield(false);
+      setTransitionShield(false);
     }, DUR_BASE_MS);
     return () => {
       window.clearTimeout(timer);
     };
-  }, [collapseShield]);
+  }, [transitionShield]);
 
   // Minimize hands focus to the bar, unless another sheet is now the live one (it takes focus).
   useEffect(() => {
@@ -347,13 +355,13 @@ export function Sheet(props: SheetProps): ReactElement | null {
   };
 
   const minimize = (): void => {
-    if (!live.current) return;
+    if (!live.current || transitionShield) return;
     focusBarNext.current = true;
     store.setMinimized(id, true);
     if (props.mode === 'blocking') props.onMinimizedChange?.(true);
   };
   const restoreFromBar = (): void => {
-    if (!live.current) return;
+    if (!live.current || transitionShield) return;
     store.setMinimized(id, false);
     if (props.mode === 'blocking') props.onMinimizedChange?.(false);
   };
@@ -371,9 +379,10 @@ export function Sheet(props: SheetProps): ReactElement | null {
       data-sheet-id={id}
       role="presentation"
       hidden={!painted}
-      // An exiting overlay keeps its last props. It stays hit-testable as a no-op press shield
-      // (its handlers check `live`) while only its panel turns inert (fix round 2, §1, §6.6.4).
-      inert={inert && present}
+      // An exiting overlay keeps its last props. The live sheet stays hit-testable as a no-op
+      // press shield (its handlers check `live`) while only its panel turns inert (§1, §6.6.4);
+      // a covered sheet stays inert and click-through, under the live one (fix round 3).
+      inert={inert}
       {...(present ? {} : { 'aria-hidden': true })}
       className={`flex items-start justify-center overflow-hidden ${OVERLAY_PLACEMENT_CLASS[resolvedPlacement]}`}
       style={{
@@ -382,9 +391,10 @@ export function Sheet(props: SheetProps): ReactElement | null {
         left: box.offsetLeft,
         width: box.width,
         height: box.height,
-        zIndex,
+        zIndex: present || !inert ? zIndex : zIndex - 1,
         backgroundColor: seatColorAlpha(V7_COLORS['bg-0'], 0.6),
         ...bottomPadding,
+        ...(present || !inert ? {} : { pointerEvents: 'none' as const }),
       }}
       onPointerDown={onOverlayPointerDown}
       onPointerUp={onOverlayPointerUp}
@@ -459,24 +469,6 @@ export function Sheet(props: SheetProps): ReactElement | null {
   return createPortal(
     <>
       <AnimatePresence>{open ? <PresenceLayer key="sheet-overlay" render={renderLayer} /> : null}</AnimatePresence>
-      {barMode && collapseShield ? (
-        <div
-          data-zone="sheet-shield"
-          aria-hidden="true"
-          // A press on the shield does nothing, and its mousedown must not move focus either.
-          onMouseDown={(event) => {
-            event.preventDefault();
-          }}
-          style={{
-            position: 'fixed',
-            top: box.offsetTop,
-            left: box.offsetLeft,
-            width: box.width,
-            height: box.height,
-            zIndex,
-          }}
-        />
-      ) : null}
       {barMode ? (
         <div
           ref={barRef}
@@ -510,6 +502,25 @@ export function Sheet(props: SheetProps): ReactElement | null {
             )}
           </div>
         </div>
+      ) : null}
+      {/* After the bar in the DOM, so on the same layer it covers the bar too. */}
+      {transitionShield ? (
+        <div
+          data-zone="sheet-shield"
+          aria-hidden="true"
+          // A press on the shield does nothing, and its mousedown must not move focus either.
+          onMouseDown={(event) => {
+            event.preventDefault();
+          }}
+          style={{
+            position: 'fixed',
+            top: box.offsetTop,
+            left: box.offsetLeft,
+            width: box.width,
+            height: box.height,
+            zIndex,
+          }}
+        />
       ) : null}
     </>,
     document.body,

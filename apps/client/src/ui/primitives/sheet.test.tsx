@@ -8,6 +8,10 @@ import { Sheet } from './sheet';
 import { Tooltip } from './tooltip';
 
 const noop = (): void => undefined;
+/** A collapse or restore ignores presses for its animation window (fix round 3); wait it out. */
+async function afterTransition(): Promise<void> {
+  await waitFor(() => { expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull(); });
+}
 function zone(root: ParentNode, name: string): HTMLElement {
   const element = root.querySelector<HTMLElement>(`[data-zone="${name}"]`);
   if (element === null) { throw new Error(`missing data-zone="${name}"`); }
@@ -86,6 +90,7 @@ describe('Sheet stack contract (spec v7 §6.7)', () => {
     expect(z(zone(document.body, 'sheet-bar'))).toBeGreaterThan(z(cardOverlay));
     expect(inert(cardOverlay)).toBe(false);
     expect(cardOverlay.style.paddingBottom).toBe('52px');
+    await afterTransition();
     await user.click(button('Choose a reward'));
     expect(onMinimizedChange).toHaveBeenLastCalledWith(false);
     expect(dialog('Choose a reward').getAttribute('aria-modal')).toBe('true');
@@ -283,6 +288,7 @@ describe('Sheet focus follows the live sheet (fix round 1, A1)', () => {
     await user.click(button(MINIMIZE_LABEL));
     await user.click(button('Open card'));
     expect(focused()).toBe(button('Use'));
+    await afterTransition();
     await user.click(button('Choose a reward'));
     expect(focused()).toBe(button('Confirm'));
     expect(inert(overlayOf(dialog('Card')))).toBe(true);
@@ -450,18 +456,19 @@ function TargetingHarness(): ReactElement {
 }
 
 describe('Sheet collapse shield (fix round 2, §1, §6.6.4)', () => {
-  it('covers the box with a no-op shield for the panel exit time while the bar shows at once', async () => {
+  it('covers the box, bar included, with a no-op shield for the panel exit time while the bar shows at once', async () => {
     const onPagePress = vi.fn();
     const { user } = renderUi(<><button type="button" onClick={onPagePress}>Draw</button><TargetingHarness /></>);
     await user.click(button('Use'));
     const shield = zone(document.body, 'sheet-shield');
     const bar = zone(document.body, 'sheet-bar');
     expect(button('Cancel').closest('[data-zone="sheet-bar"]')).toBe(bar);
-    // happy-dom has no hit testing: a press anywhere in the box reaches the shield, a fixed,
-    // hit-testable layer over the whole box; the bar paints above it (same layer, later in the DOM).
+    // happy-dom has no hit testing: a press anywhere in the box, the bar's Cancel included,
+    // reaches the shield, a fixed, hit-testable layer over the whole box that paints above the
+    // bar (same layer, later in the DOM; fix round 3).
     expect([shield.style.position, shield.style.pointerEvents, shield.getAttribute('aria-hidden')]).toEqual(['fixed', '', 'true']);
     expect(z(shield)).toBe(z(bar));
-    expect(shield.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bar.compareDocumentPosition(shield) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await user.click(shield);
     expect(onPagePress).not.toHaveBeenCalled();
     await waitFor(() => { expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull(); });
@@ -555,9 +562,59 @@ describe('Sheet opener chain (fix round 2)', () => {
     expect(focused()).toBe(button('4 lives'));
     await user.click(button(MINIMIZE_LABEL));
     expect(focused()).toBe(message);
+    await afterTransition();
     await user.click(button('Choose a reward'));
     expect(focused()).toBe(button('4 lives'));
     rerender(ui(false));
     expect(focused()).toBe(message);
+  });
+});
+
+describe('Sheet press shields, scoped (fix round 3)', () => {
+  it('keeps a covered sheet that closes click-through and under the live sheet during its exit (1)', async () => {
+    const onConfirm = vi.fn();
+    const ui = (cardOpen: boolean): ReactElement => <>
+      <Sheet open mode="blocking" title="Choose a reward"><button type="button" onClick={onConfirm}>Confirm</button></Sheet>
+      <Ro title="Card" open={cardOpen}><button type="button">Use</button></Ro></>;
+    const { user, rerender } = renderUi(ui(true));
+    const cardOverlay = overlayOf(dialog('Card'));
+    rerender(ui(false));
+    const rewardOverlay = overlayOf(dialog('Choose a reward'));
+    expect(cardOverlay.isConnected).toBe(true);
+    expect([cardOverlay.style.pointerEvents, inert(cardOverlay)]).toEqual(['none', true]);
+    expect(z(cardOverlay)).toBeLessThan(z(rewardOverlay));
+    await user.click(button('Confirm'));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+  it('raises no shield for a sheet that mounts already collapsed (2)', () => {
+    renderUi(<Sheet open collapsed collapsedBar={<button type="button">Cancel</button>} mode="read-only" title="Basic attack" onClose={noop}>
+      <button type="button">Use</button></Sheet>);
+    expect(button('Cancel')).toBeTruthy();
+    expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull();
+  });
+  it('ignores the restore bar during the Minimize window, then restores (3: double tap on Minimize)', async () => {
+    const onMinimizedChange = vi.fn();
+    const { user } = renderUi(<Sheet open mode="blocking" title="Choose a reward" onMinimizedChange={onMinimizedChange}>
+      <button type="button">4 lives</button></Sheet>);
+    await user.click(button(MINIMIZE_LABEL));
+    await user.click(button('Choose a reward'));
+    expect(noDialog('Choose a reward')).toBeNull();
+    expect(onMinimizedChange.mock.calls).toEqual([[true]]);
+    await afterTransition();
+    await user.click(button('Choose a reward'));
+    expect(dialog('Choose a reward')).toBeTruthy();
+    expect(onMinimizedChange.mock.calls).toEqual([[true], [false]]);
+  });
+  it('ignores Minimize during the restore window, then minimizes (3: double tap on the restore bar)', async () => {
+    const { user } = renderUi(REWARD);
+    await user.click(button(MINIMIZE_LABEL));
+    await afterTransition();
+    await user.click(button('Choose a reward'));
+    expect(document.querySelector('[data-zone="sheet-shield"]')).not.toBeNull();
+    await user.click(button(MINIMIZE_LABEL));
+    expect(dialog('Choose a reward')).toBeTruthy();
+    await afterTransition();
+    await user.click(button(MINIMIZE_LABEL));
+    expect(noDialog('Choose a reward')).toBeNull();
   });
 });

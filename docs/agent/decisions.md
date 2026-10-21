@@ -4601,3 +4601,22 @@ click-through in the browser). Amends the "Exit guard" bullet of the fix-round-1
   nothing; a lower-sheet backdrop press works again once the exit completes.
 
 ---
+
+## 2026-10-21 · [P] V7 press shields, scoped (L72-09 fix round 3)
+
+Source: the L72-09 fix-round-3 review; amends the fix-round-2 entry above (spec v7 §1, §6.6.4).
+
+- **Only the live sheet shields while it closes.** A covered sheet closing under the live one
+  (Card under a restored reward) stays inert and click-through, its z-index one below its last
+  value, so it never paints over or swallows presses meant for the live sheet.
+- **Transition window, both ways.** A real expanded → bar collapse and a bar → panel restore
+  raise a no-op shield over the box, bar included, for `DUR_BASE_MS` (none under reduced
+  motion), and Minimize and restore ignore presses in that window. A double tap on Minimize does
+  not re-expand, and a double tap on the restore bar does not re-minimize. A sheet that mounts
+  collapsed raises no shield.
+- **Tests:** three component tests that restore right after Minimize now wait for the window
+  (`afterTransition`) before the restore press: the brief's "minimizes a blocking sheet …
+  (Q59)", the Q59 flow and the Chat-message Minimize case. No assertion changed. The round-2 shield-before-bar DOM-order assertion now asserts
+  shield-after-bar, which the new rule requires.
+
+---

@@ -1,6 +1,6 @@
 /**
  * Focus trap for V7 sheets (L11-03 contract kept; technical spec v7 §6.6.5, §6.7; L72-09 fix
- * round 1: focus follows reachability).
+ * rounds 1-2: focus follows reachability).
  *
  * - **Live trap.** While `active`, Tab and Shift+Tab wrap inside the container (with nothing
  *   focusable, Tab is swallowed). Every time the trap turns active it moves focus in, unless
@@ -15,12 +15,21 @@
  *   removed element, or on an element that `isReachable` rejects, such as one inside this
  *   closing container), focus goes, in order: to the opener when it is reachable; else into
  *   the container `fallbackContainer` names (the new top sheet); else up the opener chain (the
- *   opener of the trap whose container holds this opener). A reachable opener that is still
- *   under `[inert]` (its sheet re-renders a moment later) is handed to the trap that will
- *   activate around it, with one `requestAnimationFrame` retry as a backstop. With nowhere to
- *   go, focus leaves the closing container rather than staying in a dead panel.
+ *   opener of the trap whose container holds this opener, or that trap's `standIn` when it is
+ *   collapsed to a bar). A reachable opener that is still under `[inert]` (its sheet re-renders
+ *   a moment later) is handed to the trap that will activate around it, with one
+ *   `requestAnimationFrame` retry as a backstop. With nowhere to go, focus leaves the closing
+ *   container rather than staying in a dead panel.
+ * - **Re-parenting.** Before anything else at a cycle end, every other open trap whose opener
+ *   sits inside the closing container gets this trap's opener instead, so a sheet opened from
+ *   inside it can still return focus after it is gone.
+ * - **Release mid-cycle.** When the trap is released while its cycle goes on (Minimize) and
+ *   `handOverOnRelease` is true, its opener is handed to the trap that activates around it next,
+ *   so the user lands back where they were (the Chat message field).
  *
- * `restoreFocus`, `isReachable` and `fallbackContainer` are read when the cycle ends.
+ * `restoreFocus`, `isReachable`, `fallbackContainer` and `standIn` are read when the cycle ends;
+ * `handOverOnRelease` when the trap is released. `focusIntoTrap(container)` moves focus into an
+ * open trap the way its own activation would.
  */
 
 import { useEffect, useEffectEvent, type RefObject } from 'react';

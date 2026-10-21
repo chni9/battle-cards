@@ -230,9 +230,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   caller-collapsed read-only sheet (L74 targeting) is a bar on the sheet layer: under an
   expanded blocking sheet it is inert (§6.7), and while it is the newest read-only sheet no
   sheet handles Esc, so L74's targeting handler receives an unhandled Esc and cancels
-  targeting (§6.6.5). A closing sheet is a no-op press shield until its exit ends (its panel is
-  inert), and so is the box for `--dur-base` after a panel collapses to its bar; a closing toast
-  stays click-through.
+  targeting (§6.6.5). The live sheet, once closing, is a no-op press shield until its exit ends
+  (its panel is inert); a covered sheet closing under it stays click-through. A real collapse to
+  the bar or restore from it shields the box, bar included, for `--dur-base`, and Minimize and
+  restore ignore presses then. A closing toast stays click-through.
 - **`useFocusTrap` contract** (`ui/primitives/use-focus-trap.ts`, a superset of the brief's
   row): `useFocusTrap(containerRef, { active, initialFocusRef?, restoreFocus?, open?,
   isReachable?, fallbackContainer?, standIn?, handOverOnRelease? })`. `active` is the live
@@ -248,7 +249,13 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
     sheet becomes the live modal sheet; L74 decides whether entering targeting closes or
     collapses covering read-only sheets;
   - `#root` stays non-inert (deferred), so a programmatic `.focus()` can still leave a modal
-    sheet.
+    sheet;
+  - a click on an exiting overlay or on the transition shield still bubbles through the React
+    tree to the Sheet's ancestors (portal bubbling): never render a Sheet inside a clickable
+    ancestor, or stop propagation there;
+  - closing a collapsed or minimized sheet unmounts its bar at once, with no shield, so a double
+    tap on a `collapsedBar` control that ends targeting can land on the dock: the targeting flow
+    owns that (shield or debounce).
 - **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
   inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
   `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
