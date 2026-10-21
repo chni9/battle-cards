@@ -115,8 +115,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   stops; every seat hue 4.5:1 on all four grounds and pairwise CIEDE2000 at least
   `SEAT_HUE_MIN_DELTA_E` (20) apart. `--ink` is outline and shadow only, never text: labels on
   `--cta`, `--cta-2`, `--danger` and `--life` fills use `--text-on-cta`. A seat hue never
-  shares an element with `--life` or a `--threat-*` color. Resource and threat colors are body
-  text only on `--bg-*` and `--panel`, large text only on `--panel-2`.
+  shares an element with `--life` or a `--threat-*` color. Resource and threat colors are text
+  only at large size, on every ground (spec v7 §5.1); otherwise they are fills, rings and
+  icons. `ui/contrast.test.ts` additionally guarantees at least 4.5:1 on `--bg-0`, `--bg-1`
+  and `--panel`, which keeps large text safe there.
 - **Motion:** V7 components read only `usePrefersReducedMotion()`
   (`ui/motion/use-prefers-reduced-motion.ts`), run motion props through
   `motionSpecFor(spec, reduced)` and put `data-motion="reduced" | "full"` on the animated
