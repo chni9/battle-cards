@@ -9,11 +9,14 @@
  * can cross onto it. It is always rendered, `hidden` while closed, and its id is appended to
  * the trigger's own `aria-describedby`, so the description resolves even when nothing shows.
  *
- * Esc closes it through a capture-phase `document` keydown listener that stops propagation:
- * that press never reaches bubble-phase listeners or React handlers (a sheet's Esc, Q49). It
- * cannot stop `window` capture listeners or `document` capture listeners registered before it,
- * so sheet Esc handling (L72-09) listens in the bubble phase or through React. Once open, the
- * bubble is nudged inside the viewport so it never adds a horizontal page scroll.
+ * Esc closes one layer per press (Q49). Open tooltips form a stack, most recent last, and one
+ * shared capture-phase `document` keydown listener (installed while the stack is non-empty)
+ * closes only the top one, then calls `stopImmediatePropagation`. Still run: `window` capture
+ * listeners, and `document` capture listeners registered before the first open tooltip
+ * installed it. Stopped: later `document` capture listeners, every listener below `document`,
+ * every bubble-phase listener and React handlers. So sheet Esc handling (L72-09) listens in the
+ * bubble phase or through React. Once open, the bubble is nudged inside the viewport so it
+ * never adds a horizontal page scroll.
  */
 
 import {
@@ -35,6 +38,17 @@ export interface TooltipProps {
 
 const VIEWPORT_GUTTER_PX = 8;
 
+/** Close callbacks of the open tooltips, most recently opened last. */
+const openTooltips: (() => void)[] = [];
+
+function closeTopTooltipOnEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape') return;
+  const closeTop = openTooltips.at(-1);
+  if (closeTop === undefined) return;
+  event.stopImmediatePropagation();
+  closeTop();
+}
+
 /** Padding, not margin, bridges the gap so the pointer stays inside the hover region. */
 const PLACEMENT_CLASS = { top: 'bottom-full pb-2', bottom: 'top-full pt-2' } as const;
 
@@ -54,15 +68,15 @@ export function Tooltip({ content, children, placement = 'top' }: TooltipProps):
 
   useEffect(() => {
     if (!open) return;
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.key !== 'Escape') return;
-      event.stopPropagation();
+    const close = (): void => {
       setHovered(false);
       setFocused(false);
-    }
-    document.addEventListener('keydown', onKeyDown, true);
+    };
+    openTooltips.push(close);
+    if (openTooltips.length === 1) document.addEventListener('keydown', closeTopTooltipOnEscape, true);
     return () => {
-      document.removeEventListener('keydown', onKeyDown, true);
+      openTooltips.splice(openTooltips.indexOf(close), 1);
+      if (openTooltips.length === 0) document.removeEventListener('keydown', closeTopTooltipOnEscape, true);
     };
   }, [open]);
 

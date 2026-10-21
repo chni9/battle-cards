@@ -5,7 +5,9 @@
  * `App.tsx` imports this module lazily behind `import.meta.env.DEV`, so production builds
  * carry neither the page nor its demo copy. html, body and #root clip their overflow
  * (index.css), so the ground root is the scroll container, as on Home: `h-full` and
- * `overflow-y-auto`, never `vh` or `dvh` (L53-02). Its halos then size to the visible box.
+ * `overflow-y-auto`, never `vh` or `dvh` (L53-02). Its halos then size to the visible box. It
+ * is `relative`, like every scroll container: an absolutely positioned descendant (each
+ * `sr-only` label) would otherwise escape its clip and grow `#root`, which cannot scroll back.
  */
 
 import type { ReactElement } from 'react';
@@ -18,7 +20,7 @@ const SECTIONS = collectGallerySections(
 
 export function UiGallery(): ReactElement {
   return (
-    <div className="v7-ground h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
+    <div className="relative v7-ground h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
       <div className="mx-auto flex max-w-5xl min-w-0 flex-col gap-10 px-4 py-6 sm:px-6">
         <header className="flex flex-col gap-3">
           <h1 className="font-v7-display text-v7-display leading-none">UI gallery</h1>

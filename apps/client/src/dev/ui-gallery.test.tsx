@@ -36,7 +36,8 @@ describe('/dev/ui gallery (technical spec v7 §4.2)', () => {
     const { container } = renderUi(<UiGallery />);
     const root = container.firstElementChild;
     expect([...(root?.classList ?? [])]).toEqual(
-      expect.arrayContaining(['v7-ground', 'h-full', 'overflow-y-auto', 'overscroll-contain']),
+      // `relative` keeps every sr-only and absolute descendant inside the scroller's clip.
+      expect.arrayContaining(['relative', 'v7-ground', 'h-full', 'overflow-y-auto', 'overscroll-contain']),
     );
   });
 

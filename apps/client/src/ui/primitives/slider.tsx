@@ -46,7 +46,10 @@ const STEP_KEYS: ReadonlySet<string> = new Set([
   'PageDown',
 ]);
 
-// The track and thumb are drawn per engine; box-border keeps the -mt-2 centering exact.
+// The track and thumb are drawn per engine; box-border keeps the -mt-2 centering exact. These
+// pseudo-element variants restate the chrome outline because a class constant cannot be put
+// behind a `[&::-webkit-...]:` prefix: the one allowed exception to "compose from
+// chrome-classes.ts" (DESIGN.md › Primitives).
 const RANGE_CLASS = [
   'h-11 w-full cursor-pointer appearance-none rounded-v7-chrome-sm bg-transparent disabled:cursor-not-allowed disabled:opacity-60',
   '[&::-webkit-slider-runnable-track]:box-border [&::-webkit-slider-runnable-track]:h-3 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:border-2 [&::-webkit-slider-runnable-track]:border-v7-ink [&::-webkit-slider-runnable-track]:bg-v7-bg-0',

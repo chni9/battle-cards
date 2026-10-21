@@ -15,7 +15,7 @@
  *
  * With `gridAtDesktop`, the desktop layout mode (`viewportModeFor`, §6.4) shows every slide in
  * a grid with no paging controls and no carousel semantics; the column count follows the slide
- * count so no slide is left alone on a row (four make two by two).
+ * count so, up to 12 slides, none is left alone on a row (four make two by two).
  */
 
 import {
@@ -80,7 +80,11 @@ function stopPropagation(event: SyntheticEvent): void {
   event.stopPropagation();
 }
 
-/** Desktop grid columns that never leave one slide alone on the last row. */
+/**
+ * Desktop grid columns that never leave one slide alone on the last row, for up to 12 slides
+ * (13 is the first count where 3 and 4 columns both leave one). How to play and the awards
+ * stay far below that.
+ */
 const GRID_COLUMNS_CLASS = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' } as const;
 
 function gridColumnsFor(count: number): keyof typeof GRID_COLUMNS_CLASS {
