@@ -15,7 +15,7 @@ import {
 } from '../screens/table/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
-import { hintAnchorId, hintPlacePrefer, type HintId } from './hint-ids';
+import { hintAnchorId, hintPlacePrefer, type HintId } from '../ui/hint-ids';
 import { placeHintCard } from './place-hint-card';
 
 const COMPACT_HINT_BUTTON =

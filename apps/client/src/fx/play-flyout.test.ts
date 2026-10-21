@@ -17,7 +17,7 @@ import {
   tokenFlyoutPovSelector,
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
-} from './play-flyout';
+} from '../ui/fx-anchors';
 import { tokenFlyoutUsesCardChrome } from './table-fx-types';
 
 const dir = dirname(fileURLToPath(import.meta.url));

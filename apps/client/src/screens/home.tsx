@@ -28,12 +28,12 @@ import {
   hasSeenHowToPlay,
   markHowToPlaySeen,
   type HowToPlayContinueTarget,
-} from '../help/help-storage';
+} from '../ui/help-storage';
 import {
   hasUnseenReleaseNotes,
   markLatestReleaseSeen,
   shouldAutoOpenWhatsNew,
-} from '../help/release-storage';
+} from '../ui/release-storage';
 import type { RoomConnectionStatus } from '../net/use-room-connection';
 import { HowToPlayDialog, type HowToPlayCloseReason } from './how-to-play-dialog';
 import { WhatsNewDialog } from './whats-new-dialog';

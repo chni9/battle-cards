@@ -37,12 +37,12 @@ import {
   applyHintPatch,
   markHowToPlaySeen,
   readHintState,
-} from '../help/help-storage';
+} from '../ui/help-storage';
 import {
   hintIdsDismissedBy,
   selectHint,
   type HintDismissCause,
-} from '../help/select-hint';
+} from '../view-model/select-hint';
 import { ActionLogPanel } from '../action-log/action-log-panel';
 import {
   measureBuyCardFlyout,
@@ -64,7 +64,7 @@ import {
   regenFlowChips,
   stealTransferChips,
   type DirectedTokenChip,
-} from '../fx/opponent-token-chips';
+} from '../view-model/opponent-token-chips';
 import { emitResourceFlowFlash } from '../fx/resource-flow-flash';
 import { skipResourceIconFlyout } from '../fx/token-flyout-skip';
 import {
@@ -72,7 +72,7 @@ import {
   incomingThiefTargetingYouIds,
   incomingTargetingYouIds,
   newIncomingThreats,
-} from '../fx/incoming-threat-diff';
+} from '../view-model/incoming-threat-diff';
 import {
   pointFlyoutCount,
   THREAT_FX_TTL_MS,
@@ -81,7 +81,7 @@ import {
 } from '../fx/motion-timing';
 import { TableFxProvider } from '../fx/table-fx-context';
 import { useTableFx, type TableFxInput } from '../fx/table-fx-hooks';
-import { threatToneFor } from '../fx/threat-tone';
+import { threatToneFor } from '../view-model/threat-tone';
 import { FeedbackDialog } from '../feedback/feedback-dialog';
 import type {
   ActionRejectPayload,

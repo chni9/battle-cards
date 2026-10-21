@@ -29,7 +29,7 @@ import {
   opponentKitIsVisible,
   type OpponentLiveResources,
 } from '../screens/table/opponent-seat-resources';
-import type { TokenFlyoutEndpoint } from './table-fx-types';
+import type { TokenFlyoutEndpoint } from '../fx/table-fx-types';
 
 export interface DirectedTokenChip {
   kind: ResourceKind;

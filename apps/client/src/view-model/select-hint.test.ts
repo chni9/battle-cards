@@ -9,7 +9,7 @@ import {
   incomingAttackTargetingYouIds,
   incomingTargetingYouIds,
   incomingThiefTargetingYouIds,
-} from '../fx/incoming-threat-diff';
+} from './incoming-threat-diff';
 
 import {
   hintIdsDismissedBy,

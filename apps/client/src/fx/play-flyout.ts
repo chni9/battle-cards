@@ -5,6 +5,19 @@
 import type { CardId } from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
+import {
+  ACTION_LOG_PANEL_ZONE,
+  DECK_CARD_FLYOUT_HEIGHT,
+  DECK_CARD_FLYOUT_WIDTH,
+  escapeSelector,
+  INCOMING_COLLAPSED_ZONE,
+  INCOMING_PENDING_ZONE,
+  LOG_COLLAPSED_ZONE,
+  OPPONENTS_COLLAPSED_ZONE,
+  tokenFlyoutPovSelector,
+  tokenFlyoutResourceSelector,
+  tokenFlyoutSeatSelector,
+} from '../ui/fx-anchors';
 import type { DomRectLite, TokenFlyoutEndpoint } from './table-fx-types';
 
 /** Skip `display:none` / unmounted chrome — zero-size rects are not destinations. */
@@ -22,23 +35,6 @@ export function visibleClientRect(el: Element | null): DomRectLite | null {
 function rectOf(el: Element | null): DomRectLite | null {
   return visibleClientRect(el);
 }
-
-function escapeSelector(value: string): string {
-  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
-    return CSS.escape(value);
-  }
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
-/**
- * Collapsed felt chrome still mounts a button (L53-07). Flyouts aim at that
- * button when the panel / seat / Incoming strip is unmounted.
- */
-export const ACTION_LOG_PANEL_ZONE = 'action-log-panel';
-export const LOG_COLLAPSED_ZONE = 'log-collapsed';
-export const OPPONENTS_COLLAPSED_ZONE = 'opponents-collapsed';
-export const INCOMING_PENDING_ZONE = 'incoming-pending';
-export const INCOMING_COLLAPSED_ZONE = 'incoming-collapsed';
 
 export function queryActionLogAnchor(): Element | null {
   return (
@@ -65,31 +61,6 @@ function tokenRect(center: DomRectLite, size = 28): DomRectLite {
     width: size,
     height: size,
   };
-}
-
-/**
- * Token chip flyout — gain: action log → resource; loss: resource → action log.
- * Optional `playerId` scopes the resource origin to an opponent seat (L51-09).
- * Callers enqueue one event per unit of |Δ| with staggered delayMs.
- * Point chips stop at `MAX_POINT_FLYOUTS` so a huge gain cannot stall the table.
- */
-export function tokenFlyoutResourceSelector(
-  kind: ResourceKind,
-  playerId?: string,
-): string {
-  if (playerId !== undefined) {
-    return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"] [data-resource-kind="${escapeSelector(kind)}"]`;
-  }
-  return `[data-zone="resources"] [data-resource-kind="${escapeSelector(kind)}"]`;
-}
-
-export function tokenFlyoutSeatSelector(playerId: string): string {
-  return `[data-zone="opponent-seat"][data-player-id="${escapeSelector(playerId)}"]`;
-}
-
-/** POV dock root — `data-zone="private"` is a wrapper without `data-player-id`. */
-export function tokenFlyoutPovSelector(playerId: string): string {
-  return `[data-zone="private-zone"][data-player-id="${escapeSelector(playerId)}"]`;
 }
 
 /** Seat, POV dock, or the Opponents collapsed button. */
@@ -219,10 +190,6 @@ function fannedChip(
     height: chip.height,
   };
 }
-
-/** Buy/sell card ghost size — small enough to read, not a full hand face (L51-13). */
-export const DECK_CARD_FLYOUT_WIDTH = 48;
-export const DECK_CARD_FLYOUT_HEIGHT = 72;
 
 function sizedRect(center: DomRectLite, width: number, height: number): DomRectLite {
   return {

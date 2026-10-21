@@ -32,7 +32,7 @@ import {
   type AwardValueKind,
   type AwardWinner,
   type GameOverAward,
-} from './game-over-awards';
+} from '../view-model/game-over-awards';
 import {
   DOWNLOAD_ACTION_LOG_LABEL,
   PLAY_AGAIN_LABEL,
