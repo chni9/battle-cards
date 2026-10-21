@@ -9,7 +9,7 @@ describe('avatarInitial', () => {
   });
 
   it('keeps a combining mark with its letter', () => {
-    expect(avatarInitial('élodie')).toBe('É');
+    expect(avatarInitial('e\u0301lodie')).toBe('E\u0301');
   });
 
   it('keeps a multi-code-point grapheme whole', () => {

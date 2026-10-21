@@ -4,8 +4,12 @@
  * the same words; `title={null}` removes it, a string replaces it.
  *
  * `count` draws an aria-hidden badge when above zero, so the caller's `aria-label` carries the
- * number ("Chat, 3 unread"). The default variant is `quiet`. The root is `relative` for that
- * badge, so a caller positions the button with a wrapper, not with `absolute` in `className`.
+ * number: the caller must put it in `aria-label` ("Chat, 3 unread"). The default variant is
+ * `quiet`. Icon and badge share one grid cell, so the root needs no `relative` and a caller's
+ * `className` (`absolute top-3 right-3`) positions the button itself.
+ *
+ * `aria-disabled` (the Carousel end-stops) shows the disabled look and drops the press but
+ * keeps the button focusable; the caller's handler stays in charge and must be a no-op there.
  */
 
 import type { ButtonHTMLAttributes, ReactElement } from 'react';
@@ -45,6 +49,7 @@ export function IconButton({
   ...rest
 }: IconButtonProps): ReactElement {
   const reduced = usePrefersReducedMotion();
+  const ariaDisabled = rest['aria-disabled'] === true || rest['aria-disabled'] === 'true';
   const nativeTitle = title === null ? undefined : (title ?? ariaLabel);
   return (
     <button
@@ -55,26 +60,26 @@ export function IconButton({
       data-variant={variant}
       data-motion={motionAttribute(reduced)}
       className={[
-        'relative inline-flex size-11 shrink-0 select-none items-center justify-center',
+        'inline-grid size-11 shrink-0 select-none place-items-center',
         CHROME_SHAPE_SM_CLASS,
         CHROME_FOCUS_CLASS,
         CHROME_DISABLED_CLASS,
         BUTTON_VARIANT_CLASS[variant],
-        chromePressClass(reduced),
+        ariaDisabled ? '' : chromePressClass(reduced),
         className ?? '',
       ].join(' ')}
     >
       {iconNeedsWell(variant) ? (
-        <span data-icon-well className={`${ICON_WELL_CLASS} size-8`}>
+        <span data-icon-well className={`${ICON_WELL_CLASS} size-8 [grid-area:1/1]`}>
           <Icon name={icon} size={20} />
         </span>
       ) : (
-        <Icon name={icon} size={24} />
+        <Icon name={icon} size={24} className="[grid-area:1/1]" />
       )}
       {count !== undefined && count > 0 ? (
         <span
           aria-hidden="true"
-          className="absolute -top-2 -right-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-v7-ink bg-v7-cta px-1 font-v7-display text-v7-micro leading-none text-v7-text-on-cta"
+          className="inline-flex h-5 min-w-5 translate-x-1/2 -translate-y-1/2 self-start justify-self-end [grid-area:1/1] items-center justify-center rounded-full border-2 border-v7-ink bg-v7-cta px-1 font-v7-display text-v7-micro leading-none text-v7-text-on-cta"
         >
           {count}
         </span>

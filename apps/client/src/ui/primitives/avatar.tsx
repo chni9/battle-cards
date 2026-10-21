@@ -14,6 +14,7 @@ import type { ReactElement } from 'react';
 import { Icon } from '../icons/icon';
 import { V7_COLORS, v7SeatColor } from '../palette';
 import { avatarInitial } from './avatar-initial';
+import { CHROME_DISC_CLASS } from './chrome-classes';
 
 export interface AvatarProps {
   name: string;
@@ -45,7 +46,8 @@ export function Avatar({
       data-eliminated={eliminated ? 'true' : 'false'}
       {...(seatIndex !== null ? { 'data-seat-index': String(seatIndex) } : {})}
       className={[
-        'relative inline-flex shrink-0 rounded-full border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel-2 shadow-v7-chrome',
+        'relative inline-flex shrink-0 bg-v7-panel-2',
+        CHROME_DISC_CLASS,
         SIZE_CLASS[size],
         className ?? '',
       ].join(' ')}

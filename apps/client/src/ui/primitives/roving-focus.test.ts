@@ -1,6 +1,6 @@
 /** Roving-focus keyboard model for Tabs and Segmented (WAI-ARIA APG tabs and radio group). */
 import { describe, expect, it } from 'vitest';
-import { edgeEnabledIndex, nextEnabledIndex, rovingKeyFor } from './roving-focus';
+import { edgeEnabledIndex, hasCommandModifier, nextEnabledIndex, rovingKeyFor } from './roving-focus';
 
 describe('nextEnabledIndex', () => {
   it('steps forward and back with wrap-around', () => {
@@ -46,5 +46,19 @@ describe('rovingKeyFor', () => {
     expect(
       ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'Enter'].map((key) => rovingKeyFor(key, 'radios')),
     ).toEqual(['next', 'next', 'previous', 'previous', null, null]);
+  });
+});
+
+describe('hasCommandModifier', () => {
+  it('leaves Alt, Ctrl and Meta chords to the browser but keeps Shift', () => {
+    const none = { altKey: false, ctrlKey: false, metaKey: false, shiftKey: false };
+    const shifted = { ...none, shiftKey: true };
+    expect(hasCommandModifier(none)).toBe(false);
+    expect(hasCommandModifier(shifted)).toBe(false);
+    expect(['altKey', 'ctrlKey', 'metaKey'].map((key) => hasCommandModifier({ ...none, [key]: true }))).toEqual([
+      true,
+      true,
+      true,
+    ]);
   });
 });

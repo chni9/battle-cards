@@ -122,6 +122,46 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     expect(container.querySelector('svg')).not.toBeNull();
   });
 
+  it('puts className on the outermost element, so layout classes keep their target', () => {
+    const { rerender } = renderUi(<Button className="mt-4">Buy</Button>);
+    expect(screen.getByRole('button', { name: 'Buy' }).classList.contains('mt-4')).toBe(true);
+    rerender(
+      <Button className="mt-4" disabled disabledReason="Not enough points">
+        Buy
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: 'Buy' });
+    expect(button.classList.contains('mt-4')).toBe(false);
+    expect(button.parentElement?.classList.contains('mt-4')).toBe(true);
+  });
+
+  it('turns a disabled CTA fill into the off look instead of fading it (no muddy olive)', () => {
+    renderUi(<Button disabled>Buy</Button>);
+    const button = screen.getByRole('button', { name: 'Buy' });
+    expectClasses(button, 'disabled:bg-v7-panel-2 disabled:text-v7-text-2 disabled:shadow-none disabled:border-dashed');
+    // The fill no longer fades as a whole; only the icon dims.
+    expect([...button.classList].filter((name) => name.startsWith('disabled:opacity-'))).toEqual([]);
+  });
+
+  it('focusableWhenDisabled keeps a disabled button in the Tab order with its reason (Q39)', async () => {
+    const onClick = vi.fn();
+    const { user } = renderUi(
+      <Button disabled focusableWhenDisabled disabledReason="Not your turn" onClick={onClick}>
+        Draw
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: 'Draw' });
+    await user.tab();
+    expect(document.activeElement).toBe(button);
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(describedByIds(button)).toContain(screen.getByText('Not your turn').id);
+    expect(button.className).not.toMatch(/translate/);
+    await user.click(button);
+    await user.keyboard('{Enter}');
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   it('size lg and fullWidth keep the floor and stretch', () => {
     renderUi(
       <Button size="lg" fullWidth>

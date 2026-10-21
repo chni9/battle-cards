@@ -1,8 +1,12 @@
 /**
  * Scroll container for logs, chat and sheet bodies (L53-07: overlays scroll inside and never
  * page-scroll). Overscroll is contained so a fling at the end does not scroll or reload the
- * page underneath; the cross axis is clipped. A `label` makes it a named, focusable region so
- * keyboard users can scroll it (WCAG 2.1.1).
+ * page underneath; the cross axis is clipped.
+ *
+ * A `label` makes it a named region with `tabIndex={0}`, so keyboard users can scroll it
+ * (WCAG 2.1.1). Without one it is still a Tab stop whenever it overflows and holds nothing
+ * focusable, because Chromium makes such scrollers keyboard-focusable on its own, and that
+ * stop has no name. Pass a `label` whenever the content can overflow.
  */
 
 import type { ReactElement, ReactNode, Ref } from 'react';

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
@@ -72,6 +72,23 @@ describe('Segmented (technical spec v7 §11, WAI-ARIA radio group)', () => {
     await user.keyboard('{ArrowLeft}');
     expect(document.activeElement).toBe(radio('Normal'));
     expect(onChange.mock.calls).toEqual([['hard'], ['easy'], ['hard'], ['normal']]);
+  });
+
+  it('moves the roving tabindex with the selection', async () => {
+    const { user } = renderUi(<Harness onChange={vi.fn()} />);
+    await user.tab();
+    await user.keyboard('{ArrowRight}');
+    expect(radio('Hard').tabIndex).toBe(0);
+    expect(radio('Normal').tabIndex).toBe(-1);
+  });
+
+  it('leaves browser shortcuts alone: Ctrl+ArrowRight changes nothing', async () => {
+    const onChange = vi.fn();
+    const { user } = renderUi(<Harness onChange={onChange} />);
+    await user.tab();
+    expect(fireEvent.keyDown(radio('Normal'), { key: 'ArrowRight', ctrlKey: true })).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(radio('Normal'));
   });
 
   it('skips a disabled option', async () => {

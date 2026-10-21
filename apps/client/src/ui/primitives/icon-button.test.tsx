@@ -43,6 +43,22 @@ describe('IconButton (L59-01, technical spec v7 §5.6)', () => {
     expect(button.className).not.toMatch(/translate/);
   });
 
+  it('className positions the button itself: no relative root to fight', () => {
+    renderUi(<IconButton aria-label="Help" icon="help" count={2} className="absolute top-3 right-3" />);
+    const button = screen.getByRole('button', { name: 'Help' });
+    expect([...button.classList]).toEqual(expect.arrayContaining(['absolute', 'top-3', 'right-3']));
+    expect(button.classList.contains('relative')).toBe(false);
+  });
+
+  it('aria-disabled keeps focus, shows the off look and drops the press', () => {
+    renderUi(<IconButton aria-label="Next" icon="chevron-right" aria-disabled />);
+    const button = screen.getByRole('button', { name: 'Next' });
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(button.className).toMatch(/aria-disabled:bg-v7-panel-2/);
+    expect(button.className).not.toMatch(/translate/);
+  });
+
   it('wells its icon on a CTA fill and not on quiet (DESIGN.md Icons)', () => {
     const { container, rerender } = renderUi(<IconButton aria-label="Help" icon="help" variant="secondary" />);
     expect(container.querySelector('[data-icon-well] svg')).not.toBeNull();

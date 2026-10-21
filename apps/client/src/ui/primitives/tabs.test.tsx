@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
@@ -62,6 +62,47 @@ describe('Tabs (technical spec v7 §11, WAI-ARIA tabs)', () => {
     await user.keyboard('{ArrowLeft}');
     expect(document.activeElement).toBe(history);
     expect(onSelect.mock.calls).toEqual([['history'], ['latest'], ['history']]);
+  });
+
+  it('moves the roving tabindex with the selection', async () => {
+    const { user } = renderUi(<Harness onSelect={vi.fn()} />);
+    await user.tab();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'History' }).tabIndex).toBe(0);
+    expect(screen.getByRole('tab', { name: 'Latest' }).tabIndex).toBe(-1);
+  });
+
+  it('leaves browser shortcuts alone: Alt+ArrowRight neither selects, moves focus nor prevents default', async () => {
+    const onSelect = vi.fn();
+    const { user } = renderUi(<Harness onSelect={onSelect} />);
+    await user.tab();
+    const latest = screen.getByRole('tab', { name: 'Latest' });
+    expect(fireEvent.keyDown(latest, { key: 'ArrowRight', altKey: true })).toBe(true);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(latest);
+    expect(latest.getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('uses idPrefix for its ids, so two instances never collide', () => {
+    renderUi(
+      <>
+        <Tabs label="First" tabs={TABS} selectedId="latest" onSelect={vi.fn()} idPrefix="notes">
+          First panel
+        </Tabs>
+        <Tabs label="Second" tabs={TABS} selectedId="history" onSelect={vi.fn()} idPrefix="log">
+          Second panel
+        </Tabs>
+      </>,
+    );
+    const [firstPanel, secondPanel] = screen.getAllByRole('tabpanel');
+    expect([firstPanel?.id, secondPanel?.id]).toEqual(['notes-panel', 'log-panel']);
+    const firstLatest = screen.getAllByRole('tab', { name: 'Latest' })[0];
+    const secondHistory = screen.getAllByRole('tab', { name: 'History' })[1];
+    expect([firstLatest?.id, secondHistory?.id]).toEqual(['notes-tab-latest', 'log-tab-history']);
+    expect(firstLatest?.getAttribute('aria-controls')).toBe('notes-panel');
+    expect(firstPanel?.getAttribute('aria-labelledby')).toBe('notes-tab-latest');
+    expect(secondHistory?.getAttribute('aria-controls')).toBe('log-panel');
+    expect(secondPanel?.getAttribute('aria-labelledby')).toBe('log-tab-history');
   });
 
   it('Home and End jump to the first and last enabled tab', async () => {

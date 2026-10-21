@@ -32,6 +32,14 @@ describe('/dev/ui gallery (technical spec v7 §4.2)', () => {
     expect(container.querySelector('.v7-ground')).not.toBeNull();
   });
 
+  it('scrolls inside its own ground root, because html, body and #root clip (index.css)', () => {
+    const { container } = renderUi(<UiGallery />);
+    const root = container.firstElementChild;
+    expect([...(root?.classList ?? [])]).toEqual(
+      expect.arrayContaining(['v7-ground', 'h-full', 'overflow-y-auto', 'overscroll-contain']),
+    );
+  });
+
   it('links every registered section from the nav, sorted by id', () => {
     renderUi(<UiGallery />);
     const nav = screen.getByRole('navigation', { name: 'Gallery sections' });

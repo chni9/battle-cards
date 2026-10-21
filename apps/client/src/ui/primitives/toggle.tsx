@@ -60,7 +60,7 @@ export function Toggle({
         aria-hidden="true"
         className={`inline-flex h-6 w-10 shrink-0 items-center rounded-full border-2 border-v7-ink px-0.5 ${
           pressed ? 'bg-v7-cta-2' : 'bg-v7-bg-0'
-        }`}
+        } ${disabled ? 'opacity-50' : ''}`}
       >
         <span
           data-toggle-knob={pressed ? 'on' : 'off'}

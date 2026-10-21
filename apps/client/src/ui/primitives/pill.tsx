@@ -13,6 +13,7 @@ import type { ResourceKind } from '../asset-lookup';
 import { Icon } from '../icons/icon';
 import type { IconName } from '../icons/icon-names';
 import { resourceCaptionMode } from '../resource-captions';
+import { CHROME_SHAPE_SM_CLASS } from './chrome-classes';
 
 export type PillTone = 'life' | 'point' | 'upgrade' | 'shield' | 'neutral';
 
@@ -65,7 +66,8 @@ export function Pill({
       {...(resourceKind !== undefined ? { 'data-resource-kind': resourceKind } : {})}
       title={unknown ? `${label} unknown` : label}
       className={[
-        'inline-flex items-center whitespace-nowrap rounded-v7-chrome-sm border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel-2 text-v7-text shadow-v7-chrome',
+        'inline-flex items-center whitespace-nowrap bg-v7-panel-2 text-v7-text',
+        CHROME_SHAPE_SM_CLASS,
         SIZE_CLASS[size],
         TONE_CLASS[resolvedTone],
         className ?? '',

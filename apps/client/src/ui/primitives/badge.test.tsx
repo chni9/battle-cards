@@ -53,6 +53,14 @@ describe('BadgeGroup (technical spec v7 §6.2)', () => {
     expect(screen.queryByText(/^\+\d+$/)).toBeNull();
   });
 
+  it('overflowLabel adds screen-reader words after "+n", keeping the visible text in the name', () => {
+    const { rerender } = renderUi(<BadgeGroup items={ITEMS} overflowLabel="more statuses" onOverflowClick={vi.fn()} />);
+    const button = screen.getByRole('button', { name: '+2 more statuses' });
+    expect(button.querySelector('.shadow-v7-chrome')).not.toBeNull();
+    rerender(<BadgeGroup items={ITEMS} overflowLabel="more statuses" />);
+    expect(screen.getByText('more statuses').classList.contains('sr-only')).toBe(true);
+  });
+
   it('onOverflowClick turns "+n" into a button', async () => {
     const onOverflowClick = vi.fn();
     const { user } = renderUi(<BadgeGroup items={ITEMS} onOverflowClick={onOverflowClick} />);

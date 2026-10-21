@@ -6,13 +6,14 @@
  *
  * `BadgeGroup` shows `max` badges (2 by default, the seat budget of §6.2) and then "+n"; the
  * marker is a 44 px button only when the caller handles `onOverflowClick` (it opens the seat
- * sheet, which lists them all).
+ * sheet, which lists them all). `overflowLabel` adds screen-reader words after "+n" ("+2 more
+ * statuses"), so the accessible name still starts with the visible text (WCAG 2.5.3).
  */
 
 import type { ReactElement } from 'react';
 import { Icon } from '../icons/icon';
 import type { IconName } from '../icons/icon-names';
-import { CHROME_FOCUS_CLASS } from './chrome-classes';
+import { CHROME_FLAT_SM_CLASS, CHROME_FOCUS_CLASS } from './chrome-classes';
 
 export type BadgeTone =
   | 'neutral'
@@ -43,8 +44,7 @@ const TONE_CLASS: Readonly<Record<BadgeTone, string>> = {
   shield: 'ring-2 ring-inset ring-v7-shield',
 };
 
-const CHIP_CLASS =
-  'inline-flex min-h-7 items-center gap-1 whitespace-nowrap rounded-v7-chrome-sm border-(length:--chrome-outline-width) border-v7-ink bg-v7-panel-2 px-1.5 font-v7-body text-v7-caption font-extrabold leading-none text-v7-text';
+const CHIP_CLASS = `${CHROME_FLAT_SM_CLASS} inline-flex min-h-7 items-center gap-1 whitespace-nowrap bg-v7-panel-2 px-1.5 font-v7-body text-v7-caption font-extrabold leading-none text-v7-text`;
 
 export function Badge({ icon, label, value, tone = 'neutral', labelHidden = false }: BadgeProps): ReactElement {
   return (
@@ -64,12 +64,16 @@ export interface BadgeGroupProps {
   items: readonly BadgeGroupItem[];
   max?: number;
   onOverflowClick?: () => void;
+  /** Screen-reader words read after "+n", such as "more statuses". */
+  overflowLabel?: string;
 }
 
-export function BadgeGroup({ items, max = 2, onOverflowClick }: BadgeGroupProps): ReactElement {
+export function BadgeGroup({ items, max = 2, onOverflowClick, overflowLabel }: BadgeGroupProps): ReactElement {
   const visible = items.slice(0, max);
   const hidden = items.length - visible.length;
   const marker = `+${hidden}`;
+  const spoken =
+    overflowLabel !== undefined && overflowLabel !== '' ? <span className="sr-only">{` ${overflowLabel}`}</span> : null;
   return (
     <ul className="flex flex-wrap items-center gap-1">
       {visible.map(({ id, ...badge }) => (
@@ -83,12 +87,16 @@ export function BadgeGroup({ items, max = 2, onOverflowClick }: BadgeGroupProps)
             <button
               type="button"
               onClick={onOverflowClick}
-              className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-v7-chrome-sm ${CHROME_FOCUS_CLASS}`}
+              className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-v7-chrome-sm active:brightness-90 ${CHROME_FOCUS_CLASS}`}
             >
-              <span className={`${CHIP_CLASS} font-v7-display`}>{marker}</span>
+              <span className={`${CHIP_CLASS} font-v7-display shadow-v7-chrome`}>{marker}</span>
+              {spoken}
             </button>
           ) : (
-            <span className={`${CHIP_CLASS} font-v7-display`}>{marker}</span>
+            <span className="inline-flex">
+              <span className={`${CHIP_CLASS} font-v7-display`}>{marker}</span>
+              {spoken}
+            </span>
           )}
         </li>
       ) : null}
