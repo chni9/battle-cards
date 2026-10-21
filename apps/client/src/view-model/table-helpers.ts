@@ -16,7 +16,7 @@ import {
   type RewardChoice,
 } from '@card-battle/shared';
 
-import type { StructuredCost } from '../../design/components/structured-cost';
+import type { StructuredCost } from '../ui/structured-cost';
 
 export type RewardKind = RewardChoice['type'];
 

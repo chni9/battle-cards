@@ -19,8 +19,8 @@ import type { ReactElement } from 'react';
 import { LifeCountBadge } from '../../design/components/life-count-badge';
 import { PlayerName } from '../../design/components/player-name';
 import { isPersistentPresentationId } from '../../view-model/incoming-threat-diff';
-import { pendingChipCalloutTone } from './pending-chip-tone';
-import { nicknameOf } from './table-helpers';
+import { pendingChipCalloutTone } from '../../view-model/pending-chip-tone';
+import { nicknameOf } from '../../view-model/table-helpers';
 import { TutorialCallout } from './tutorial-callout';
 
 export interface PendingQueueProps {

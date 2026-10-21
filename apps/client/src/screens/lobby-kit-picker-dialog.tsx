@@ -6,7 +6,7 @@
 import { getKit, type KitId, type LobbyKitSelection } from '@card-battle/shared';
 import { useState, type ReactElement } from 'react';
 
-import { getOpponentPlaceholderUrl } from '../design/asset-lookup';
+import { getOpponentPlaceholderUrl } from '../ui/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { KitPortrait } from '../design/components/kit-portrait';

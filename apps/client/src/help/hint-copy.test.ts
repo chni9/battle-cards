@@ -4,8 +4,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from '../screens/table/chrome-labels';
-import { HIDDEN_KIT_LABEL } from '../screens/table/table-copy';
+import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from '../view-model/chrome-labels';
+import { HIDDEN_KIT_LABEL } from '../view-model/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
 import { HINT_IDS } from '../ui/hint-ids';

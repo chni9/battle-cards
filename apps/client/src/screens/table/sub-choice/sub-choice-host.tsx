@@ -16,7 +16,7 @@ import { RewardPanel } from './reward-panel';
 import { SpecialPickPanel } from './special-pick-panel';
 import { SlotDropPanel } from './slot-drop-panel';
 import { StealPickPanel } from './steal-pick-panel';
-import { nicknameOf } from '../table-helpers';
+import { nicknameOf } from '../../../view-model/table-helpers';
 
 const SUB_CHOICE_COPY: Record<
   SubChoiceRequiredPayload['kind'],

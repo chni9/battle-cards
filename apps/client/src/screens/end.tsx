@@ -27,7 +27,7 @@ import {
 } from './end-feedback';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
-import { TABLE_BANNER_MS } from './table/table-banner';
+import { TABLE_BANNER_MS } from '../view-model/table-banner';
 
 export interface EndScreenProps {
   view: FinishedStateView;

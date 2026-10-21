@@ -10,14 +10,14 @@ import type {
   SentenceAnnouncementLogEntry,
 } from '@card-battle/shared';
 
-import { formatActionLogEntry } from '../../view-model/action-log';
+import { formatActionLogEntry } from './action-log';
 
 import {
   incomingTargetingYouIds,
   isPersistentPresentationId,
   newIncomingThreats,
-} from '../../view-model/incoming-threat-diff';
-import { threatToneFor } from '../../view-model/threat-tone';
+} from './incoming-threat-diff';
+import { threatToneFor } from './threat-tone';
 
 export const TABLE_BANNER_MS = 1600;
 

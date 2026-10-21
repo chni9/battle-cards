@@ -5,15 +5,15 @@
 
 import { Fragment, type ReactElement, type ReactNode } from 'react';
 
-import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
+import { getResourceIconUrl, type ResourceKind } from '../../ui/asset-lookup';
 import {
   parseCoachBody,
   type CoachBodyPart,
   type CoachResourceKind,
-} from '../../screens/table/tutorial-coach-copy';
+} from '../../view-model/tutorial-coach-copy';
 import { CostDisplay } from './cost-display';
 import { IconButton } from './icon-button';
-import type { StructuredCost } from './structured-cost';
+import type { StructuredCost } from '../../ui/structured-cost';
 
 export interface CoachPanelProps {
   title: string;

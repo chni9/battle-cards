@@ -1,7 +1,7 @@
 /**
  * Optional How to play screenshots — technical spec v6 §5.1.
  * Missing files omit the `<img>`; never a placeholder drawing.
- * Same glob pattern as `design/asset-lookup.ts` (eager `?url`).
+ * Same glob pattern as `ui/asset-lookup.ts` (eager `?url`).
  */
 
 const screenshotModules = import.meta.glob<string>('../assets/how-to-play/*.png', {

@@ -15,13 +15,13 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { Button } from '../../design/components/button';
 import { CostDisplay } from '../../design/components/cost-display';
-import { costAriaLabel } from '../../design/components/structured-cost';
+import { costAriaLabel } from '../../ui/structured-cost';
 import { MOTION_EASE, MOTION_PULSE_S } from '../../fx/motion-timing';
 import {
   DRAW_ACTION_LABEL,
   SHOP_ACTION_LABEL,
   UNSPY_ACTION_LABEL,
-} from './chrome-labels';
+} from '../../view-model/chrome-labels';
 import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';
 

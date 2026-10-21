@@ -3,7 +3,7 @@
  * Presentation amounts come from the catalog strings, not invented values.
  */
 
-import type { ResourceKind } from '../asset-lookup';
+import type { ResourceKind } from './asset-lookup';
 
 export interface EffectResourceSpan {
   start: number;

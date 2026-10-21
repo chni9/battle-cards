@@ -5,7 +5,7 @@
  * stays in `fx/play-flyout.ts`.
  */
 
-import type { ResourceKind } from '../design/asset-lookup';
+import type { ResourceKind } from './asset-lookup';
 
 /**
  * Collapsed felt chrome still mounts a button (L53-07). Flyouts aim at that

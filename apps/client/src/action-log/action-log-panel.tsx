@@ -13,7 +13,7 @@ import type {
 import { formatCardLabel } from '@card-battle/shared';
 import { Fragment, useEffect, useRef, type ReactElement } from 'react';
 
-import { getResourceIconUrl } from '../design/asset-lookup';
+import { getResourceIconUrl } from '../ui/asset-lookup';
 import { LifeCountBadge } from '../design/components/life-count-badge';
 import { PlayerName } from '../design/components/player-name';
 import {

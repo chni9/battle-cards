@@ -9,7 +9,7 @@ import { useState, type ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { IconButton } from '../../design/components/icon-button';
-import { chatUnreadCount } from './chat-unread';
+import { chatUnreadCount } from '../../view-model/chat-unread';
 import { ChatLog } from './chat-log';
 
 export interface TableChatProps {

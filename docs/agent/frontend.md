@@ -52,23 +52,30 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
 - Modules are **moved, not rewritten** (L72-03): `git mv` with the basename unchanged,
   assertions verbatim, importers repointed directly, and **no shim or re-export** stays at an
   old path. `view-model/` holds `incoming-threat-diff`, `threat-tone`, `opponent-token-chips`,
-  `action-log`, `select-hint` and `game-over-awards`; L72-04 moves the pure `design/` and
-  `screens/table/` modules in next.
+  `action-log`, `select-hint` and `game-over-awards`; the modules L72-04 moved in are listed in
+  the last bullet of this section.
 - `view-model/` has **no** React, react-dom or motion import and **no clock read**
   (`Date.now`, `performance.now`); callers pass `nowMs`. The purity block in
   `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
 - `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
-  structured-cost, hint-ids), never a `ui/` component. Until L72-04 moves them,
-  `view-model/opponent-token-chips.ts` still imports from `../design/*` and
-  `../screens/table/*` (temporary exception).
+  structured-cost, hint-ids), never a `ui/` component. Nothing in `view-model/` imports from
+  `design/` or `screens/table/`.
 - `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
   (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
   `import type`; nothing else in `view-model/` imports from `fx/`.
 - The four non-component `ui/` helpers are `hint-ids`, `help-storage`, `release-storage` and
   `fx-anchors`. The `card-battle.v6.*` storage keys in `help-storage` and `release-storage` are
   unchanged. `ui/fx-anchors.ts` holds the FX zone names, the deck-card flyout size and the
-  `data-zone` selector builders; until L72-04 moves `design/asset-lookup` it takes a
-  type-only `ResourceKind` import from it.
+  `data-zone` selector builders; it takes a type-only `ResourceKind` import from
+  `ui/asset-lookup`.
+- L72-04 moved the React-free `design/` and `screens/table/` modules: `src/ui/` holds
+  `asset-lookup`, `seat-colors`, `effect-text-tokens`, `structured-cost`, `visual-viewport`,
+  `resource-captions` and `primitives/dialog-width`; `src/view-model/` holds `table-helpers`,
+  `opponent-seat-resources`, `pending-chip-tone`, `attack-targets`, `chat-unread`,
+  `table-banner`, `tutorial-coach-copy`, `table-copy`, `kit-inspect-traits`,
+  `kit-special-card-key`, `chrome-labels`, `table-flag-intent`, `active-display` and
+  `sub-choice-constants`. New code imports them from there, never from `design/` or
+  `screens/table/`.
 
 ## Design system (V2 · Lots 10+)
 
@@ -85,7 +92,7 @@ rules above are unchanged — this section only covers how the client looks.
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
   `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`), `SeatTile` /
   `CardChoiceTile` / `choiceTileClassName` (L44-01; shop buy cells use the helper). Art resolution:
-  `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
+  `apps/client/src/ui/asset-lookup.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
@@ -461,7 +468,7 @@ rules above are unchanged — this section only covers how the client looks.
     When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
     AnimatePresence cannot leave a stuck blocking overlay.
   - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
-    green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`seat-colors.ts`).
+    green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`ui/seat-colors.ts`).
     POV **dock** uses a strong seat wash (`seatZoneStyle({ intensity: 'fill' })`)
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
@@ -937,7 +944,7 @@ ask rather than revert.
   chips from the seat toward the action log.
 - Room `BRXKPO` (nick `L51Dead`, forfeit): center **You are dead** (~1.6s) then Game over
   (Protocol v30 stays on that dialog). **You won!** not forced this pass — same first-paint
-  seed as dead (`table-banner.test.ts`).
+  seed as dead (`view-model/table-banner.test.ts`).
 
 ### Lot 51 follow-up verified 2026-08-27 (browser, PROTOCOL 30)
 
@@ -1365,7 +1372,7 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`.
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
 
 - Solo Play again, room **IKDWUN** (L67Solo, Assassin, 2 Easy bots). Forfeit, then Play again. Home opens **Play solo** with Assassin, opponent **2**, and **Easy**. **Start solo game** stays up. The next match does not deal itself.
-- Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `table-banner.test.ts`, `imposition.test.ts`).
+- Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `view-model/table-banner.test.ts`, `imposition.test.ts`).
 
 Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Thief Choose target also includes an eliminated player who still has a Thief pending on you. Spy and the other living-only pickers stay living-only. The server still rejects an attack or Thief on a corpse with nothing of that kind pending.
 

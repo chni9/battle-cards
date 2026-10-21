@@ -15,7 +15,7 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-import { getResourceIconUrl } from '../../design/asset-lookup';
+import { getResourceIconUrl } from '../../ui/asset-lookup';
 import { Button } from '../../design/components/button';
 import { Card } from '../../design/components/card';
 import { choiceTileClassName } from '../../design/components/choice-tile-chrome';
@@ -24,7 +24,7 @@ import { Dialog } from '../../design/components/dialog';
 import {
   costAriaLabel,
   structuredCostFromCardCost,
-} from '../../design/components/structured-cost';
+} from '../../ui/structured-cost';
 import {
   BUY_POOL_CARD_LABEL,
   BUY_SPECIAL_LABEL,
@@ -35,8 +35,8 @@ import {
   SHOP_SECTION_CARDS,
   SHOP_SECTION_POOL,
   SHOP_SECTION_UPGRADE_POINTS,
-} from './chrome-labels';
-import { SHOP_PRICE_BLURB } from './table-copy';
+} from '../../view-model/chrome-labels';
+import { SHOP_PRICE_BLURB } from '../../view-model/table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
 const DEFAULT_SHOP_CARD_ID = SHARED_CARD_IDS[0];

@@ -17,7 +17,7 @@ import { Button } from '../../../design/components/button';
 import { CardChoiceTile } from '../../../design/components/card-choice-tile';
 import { PlayerName } from '../../../design/components/player-name';
 import { SeatTile } from '../../../design/components/seat-tile';
-import { nicknameOf, visibleKitId } from '../table-helpers';
+import { nicknameOf, visibleKitId } from '../../../view-model/table-helpers';
 
 export interface MirrorPanelProps {
   subChoice: MirrorChoiceRequiredPayload;

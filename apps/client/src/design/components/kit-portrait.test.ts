@@ -6,7 +6,7 @@
 import { KIT_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
-import { getKitPortraitUrl, getOpponentPlaceholderUrl } from '../asset-lookup';
+import { getKitPortraitUrl, getOpponentPlaceholderUrl } from '../../ui/asset-lookup';
 
 describe('KitPortrait asset sources (L10-05)', () => {
   it('kit and placeholder URLs never reference per-kit dead art', () => {

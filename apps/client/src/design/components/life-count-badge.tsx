@@ -6,7 +6,7 @@
 
 import type { ReactElement } from 'react';
 
-import { getResourceIconUrl } from '../asset-lookup';
+import { getResourceIconUrl } from '../../ui/asset-lookup';
 
 export type LifeCountBadgeKind = 'damage' | 'card-lives' | 'turns';
 
