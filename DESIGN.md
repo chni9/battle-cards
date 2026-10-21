@@ -307,20 +307,28 @@ and no icon library: every glyph is inline SVG.
   drawn over a body: pupils, pips, clock hands, mortar and text lines.
 - **Thin motifs** that sit on the open ground (sparks, waves, handles, antenna, prongs, the
   flag pole) are an ink casing 4 units wider than a colored core, so the core keeps the same
-  2-unit outline as a filled shape. A motif that crosses a body (the Unspy slash) takes a
-  1-unit casing instead, so it does not cut the body in two. Crosses (`eliminated`, `close`)
-  are filled outlined polygons, never a cross character.
-- **Inside the grid.** No shape or casing crosses the 24-unit viewBox: spark ends stay at least
-  3 units inside the edges (their casing radius).
-- **Solid dots.** A dot smaller than the outline (the `?` and `!` dots) is a solid ink circle
-  with `stroke="none"`: a 2-unit stroke around a tiny circle renders as a ring with a colored
-  hole in Blink and WebKit.
-- **Open gaps.** Gaps between repeated parts are at least 3 units, wider than the outline, so
-  they stay open on a light fill (`menu` bars are 4 units tall with 3.5-unit gaps).
-- **Optical size.** Each glyph spans about 18 to 20 units on its major axis, so flat motifs
-  (eyes, magnifier, whistle) carry the same mass as the full-grid bodies (`menu`, `help`,
-  `chat`). `draw` and `unspy` must read on their own at 16 to 24px: Lot 59 makes the Draw and
-  Unspy dock controls icon-only, and the table is phone first (spec v7 Q2).
+  2-unit outline as a filled shape. Sparks may take a narrower casing so they stay inside the
+  grid (`shield-active`: core 2.5, casing 6). A motif that crosses a body (the Unspy slash)
+  takes a 1-unit casing instead, so it does not cut the body in two. Crosses (`eliminated`,
+  `close`) are filled outlined polygons, never a cross character.
+- **Inside the grid.** Every glyph, outline and casings included, stays within 0..24; a
+  rasterized check of all 38 icons confirmed it (L72-07). Spark ends stay at least 3 units
+  inside the edges, their casing radius. `disconnected` already touches 0..24 on both axes,
+  outline included, so it has no margin left for a size or stroke bump (`shield-active`,
+  `draw`, `flag` and `vibration` each reach one edge).
+- **Solid dots.** An ink dot under 0.5 units radius with the inherited 2-unit stroke renders as
+  a ring with a colored hole in Blink and WebKit, so such a dot (the `?` and `!` dots) is drawn
+  as a solid ink circle (r 1.4, `stroke="none"`) instead. Dots from 0.5 units up (`chat` r 0.6,
+  `random` r 0.9, the `invisibility` eyes rx 0.8) keep the inherited stroke and render solid.
+- **Open gaps.** Repeated bars that must read as separate items on a light fill keep gaps of at
+  least 3 units, wider than the outline, so the fill shows between them (`menu`: 5-unit bars,
+  3-unit gaps). Parts stacked on purpose (the `draw` slabs, 0.5 units apart) share one ink
+  band, which separates their fills.
+- **Optical size.** Flat motifs (the eyes, the magnifier, the whistle) reach about 18 to 21
+  units on their major axis (shape geometry, outline excluded), so they carry the same mass as
+  the full-grid bodies (`menu`, `help`, `chat`). The slim `close` cross and the `invisibility`
+  ghost are smaller by design. `draw` and `unspy` must read on their own at 16 to 24px: Lot 59
+  makes the Draw and Unspy dock controls icon-only, and the table is phone first (spec v7 Q2).
 - **Paint.** Only `V7_COLORS` hex from `ui/palette.ts`, never `currentColor`, `var()` or
   `color-mix()` (the Inline Hex Rule). Fills go on shapes, never on a `<g>`. No `<text>`.
 - **One shape per name.** Each name has its own geometry, so no state is told apart by color
@@ -346,7 +354,7 @@ and no icon library: every glyph is inline SVG.
 | Status | `disconnected` | plug and socket on the diagonal, two prongs facing the socket across a gap | `--text-2`, prongs `--text` |
 | Status | `absorb-window` | funnel | `--cta-2` |
 | Status | `sentence-ticking` | hourglass | `--threat-attack`, caps `--text-2` |
-| UI | `menu` | three bars with open gaps | `--text` |
+| UI | `menu` | three 5-unit bars with 3-unit gaps | `--text` |
 | UI | `shop` | bag | `--cta` |
 | UI | `draw` | two staggered card-edge slabs, the top card lifted off them | `--text` card, `--text-2` slabs |
 | UI | `unspy` | the `spying-on-you` eye (shared geometry), crossed by a slash (L58-07) | `--text-2`, slash `--text` |
