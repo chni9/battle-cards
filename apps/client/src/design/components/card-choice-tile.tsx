@@ -6,7 +6,7 @@
 import type { CardInstance } from '@card-battle/shared';
 import type { ReactElement, ReactNode } from 'react';
 
-import { getCardBackUrl } from '../asset-lookup';
+import { getCardBackUrl } from '../../ui/asset-lookup';
 import { Card } from './card';
 import { choiceTileClassName } from './choice-tile-chrome';
 

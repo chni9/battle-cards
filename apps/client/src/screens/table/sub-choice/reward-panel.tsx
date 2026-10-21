@@ -18,7 +18,7 @@ import {
   buildRewardChoice,
   nicknameOf,
   type RewardKind,
-} from '../table-helpers';
+} from '../../../view-model/table-helpers';
 
 export interface RewardPanelProps {
   subChoice: RewardChoiceRequiredPayload;

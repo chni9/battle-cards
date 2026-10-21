@@ -13,7 +13,7 @@ import {
   GOT_IT_ACTION_LABEL,
   HIDE_COACH_ARIA_LABEL,
   OPEN_COACH_ARIA_LABEL,
-} from './table-copy';
+} from '../../view-model/table-copy';
 
 export interface TutorialCoachProps {
   index: number;

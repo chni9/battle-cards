@@ -8,7 +8,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
-import { seatColorHex, seatIndexOf } from '../design/seat-colors';
+import { seatColorHex, seatIndexOf } from '../ui/seat-colors';
 
 export interface ClaimSeatDialogProps {
   open: boolean;

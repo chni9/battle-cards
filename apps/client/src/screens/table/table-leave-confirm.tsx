@@ -20,8 +20,8 @@ import {
   SKIP_TUTORIAL_CONFIRM_BODY,
   SKIP_TUTORIAL_CONFIRM_TITLE,
   STAY_LABEL,
-} from './table-copy';
-import type { TableFlagIntent } from './table-flag-intent';
+} from '../../view-model/table-copy';
+import type { TableFlagIntent } from '../../view-model/table-flag-intent';
 
 export interface TableLeaveConfirmProps {
   intent: Exclude<TableFlagIntent, 'hidden'> | null;

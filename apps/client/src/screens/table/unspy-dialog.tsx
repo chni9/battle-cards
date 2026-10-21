@@ -9,9 +9,9 @@ import { useState, type ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { SeatTile } from '../../design/components/seat-tile';
-import { UNSPY_ACTION_LABEL } from './chrome-labels';
-import { UNSPY_PICKER_HINT } from './table-copy';
-import { visibleKitId } from './table-helpers';
+import { UNSPY_ACTION_LABEL } from '../../view-model/chrome-labels';
+import { UNSPY_PICKER_HINT } from '../../view-model/table-copy';
+import { visibleKitId } from '../../view-model/table-helpers';
 
 export interface UnspyDialogProps {
   open: boolean;

@@ -26,12 +26,12 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { useReducedMotion } from 'motion/react';
 
-import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl } from '../ui/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { IconButton } from '../design/components/icon-button';
-import { readVisualViewportBox } from '../design/components/visual-viewport';
-import { seatColorHex, seatIndexOf, seatZoneStyle } from '../design/seat-colors';
+import { readVisualViewportBox } from '../ui/visual-viewport';
+import { seatColorHex, seatIndexOf, seatZoneStyle } from '../ui/seat-colors';
 import { HintOverlay } from '../help/hint-overlay';
 import {
   applyHintPatch,
@@ -92,24 +92,25 @@ import { IllegalActionDialog } from './illegal-action-dialog';
 import { ILLEGAL_ACTION_COPY } from './illegal-action-copy';
 import { walkInSeesPrivateHands } from './claim-seat';
 import { CardActions, type TableDialog } from './table/card-actions';
-import { ACTIVE_SHIELD_INSTANCE_ID } from './table/active-display';
+import { ACTIVE_SHIELD_INSTANCE_ID } from '../view-model/active-display';
 import { EconomyBar } from './table/economy-bar';
 import { feltCollapseFromCounts } from './table/felt-collapse';
 import { ForfeitFlagIcon } from './table/forfeit-flag-icon';
 import { TableChat } from './table/table-chat';
 import { KitInspectDialog } from './table/kit-inspect-dialog';
 import { OpponentRevealDialog } from './table/opponent-reveal-dialog';
-import { collectLiveResourceSnaps, type OpponentLiveResources } from './table/opponent-seat-resources';
+import { collectLiveResourceSnaps, type OpponentLiveResources } from '../view-model/opponent-seat-resources';
 import { OpponentZone } from './table/opponent-zone';
 import { PendingQueue } from './table/pending-queue';
 import { PrivateZone } from './table/private-zone';
 import { ShopDialog } from './table/shop-dialog';
-import { CLIENT_SUB_CHOICE_MS, SubChoiceHost } from './table/sub-choice';
+import { SubChoiceHost } from './table/sub-choice';
+import { CLIENT_SUB_CHOICE_MS } from '../view-model/sub-choice-constants';
 import {
   cardPlayNeedsConsume,
   cardPlayNeedsTarget,
   livingSpiesOnYou,
-} from './table/table-helpers';
+} from '../view-model/table-helpers';
 import { UnspyDialog } from './table/unspy-dialog';
 import {
   ACTION_LOG_OPEN_LABEL,
@@ -122,12 +123,12 @@ import {
   OPPONENTS_OPEN_LABEL,
   RETURN_HOME_ARIA_LABEL,
   SKIP_TUTORIAL_ARIA_LABEL,
-} from './table/table-copy';
+} from '../view-model/table-copy';
 import {
   tableFlagAriaLabel,
   tableFlagIntent,
   type TableFlagIntent,
-} from './table/table-flag-intent';
+} from '../view-model/table-flag-intent';
 import { TableLeaveConfirm } from './table/table-leave-confirm';
 import { TableShell } from './table/table-shell';
 import { Timers } from './table/timers';
@@ -146,8 +147,8 @@ import {
   tutorialSpotlightInstanceIds,
   TUTORIAL_IDLE_MS,
   type TutorialSendIntent,
-} from './table/tutorial-coach-copy';
-import { povHasWon } from './table/table-banner';
+} from '../view-model/tutorial-coach-copy';
+import { povHasWon } from '../view-model/table-banner';
 import { TableBannerFlash } from './table/your-turn-flash';
 
 export interface TableScreenProps {

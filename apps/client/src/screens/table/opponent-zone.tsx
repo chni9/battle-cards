@@ -17,15 +17,15 @@ import { ConnectionBadge } from '../../design/components/connection-badge';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
-import { seatIndexOf, seatZoneStyle } from '../../design/seat-colors';
+import { seatIndexOf, seatZoneStyle } from '../../ui/seat-colors';
 import {
   persistentToCardInstance,
   shieldActiveInstance,
-} from './active-display';
-import { hasFullSpyCardReveal, visibleKitId } from './table-helpers';
+} from '../../view-model/active-display';
+import { hasFullSpyCardReveal, visibleKitId } from '../../view-model/table-helpers';
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { FlowStatusBadges } from './flow-status-badges';
-import { opponentResourceDisplay } from './opponent-seat-resources';
+import { opponentResourceDisplay } from '../../view-model/opponent-seat-resources';
 import { SentenceChipsForSeat } from './sentence-chip';
 import { SpyEyeIcon } from './spy-eye-icon';
 import { TutorialCallout } from './tutorial-callout';

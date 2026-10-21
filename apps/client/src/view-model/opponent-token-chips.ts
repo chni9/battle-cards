@@ -23,12 +23,12 @@ import {
   type PublicPlayerView,
 } from '@card-battle/shared';
 
-import { getCardArtUrl, getCardBackUrl, type ResourceKind } from '../design/asset-lookup';
-import { structuredPlayCost } from '../design/components/structured-cost';
+import { getCardArtUrl, getCardBackUrl, type ResourceKind } from '../ui/asset-lookup';
+import { structuredPlayCost } from '../ui/structured-cost';
 import {
   opponentKitIsVisible,
   type OpponentLiveResources,
-} from '../screens/table/opponent-seat-resources';
+} from './opponent-seat-resources';
 import type { TokenFlyoutEndpoint } from '../fx/table-fx-types';
 
 export interface DirectedTokenChip {

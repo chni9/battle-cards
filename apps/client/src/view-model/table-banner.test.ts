@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ActionLogEntryView, CardId, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
 
-import { formatActionLogEntry } from '../../view-model/action-log';
+import { formatActionLogEntry } from './action-log';
 import {
   emptySentenceBannerWatch,
   emptyTableBannerWatch,

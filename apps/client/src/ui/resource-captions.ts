@@ -3,7 +3,7 @@
  * Kept out of the ResourceIcon component file so Fast Refresh stays valid.
  */
 
-import type { ResourceKind } from '../asset-lookup';
+import type { ResourceKind } from './asset-lookup';
 
 export const RESOURCE_CAPTIONS: Record<ResourceKind, string> = {
   life: 'Lives',

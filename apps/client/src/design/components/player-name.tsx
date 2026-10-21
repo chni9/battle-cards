@@ -9,7 +9,7 @@ import {
   seatIndexOf,
   seatNameStyle,
   type SeatPlayersView,
-} from '../seat-colors';
+} from '../../ui/seat-colors';
 
 export interface PlayerNameProps {
   nickname: string;

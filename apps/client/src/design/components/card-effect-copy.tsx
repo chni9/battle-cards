@@ -7,7 +7,7 @@ import type { ReactElement } from 'react';
 
 import { CostDisplay } from './cost-display';
 import { EffectTextWithIcons } from './effect-text-icons';
-import { structuredPlayCost } from './structured-cost';
+import { structuredPlayCost } from '../../ui/structured-cost';
 
 export interface CardEffectCopyProps {
   card: Card;

@@ -19,7 +19,7 @@ import { ResourceIcon } from '../design/components/resource-icon';
 import {
   seatIndexOf,
   seatZoneStyle,
-} from '../design/seat-colors';
+} from '../ui/seat-colors';
 import { eliminationReasonLabel } from '../admin/admin-present';
 import {
   buildActionLogWorkbook,

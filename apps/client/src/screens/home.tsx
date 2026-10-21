@@ -20,7 +20,7 @@ import { motion } from 'motion/react';
 import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { formatBotDifficulty } from '../bots/format-bot-difficulty';
-import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl, getKitPortraitUrl } from '../ui/asset-lookup';
 import { Button } from '../design/components/button';
 import { KitPortrait } from '../design/components/kit-portrait';
 import { FeedbackDialog } from '../feedback/feedback-dialog';

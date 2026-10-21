@@ -3,7 +3,7 @@
  * Kept out of `pending-queue.tsx` so that file only exports the component.
  */
 
-import { threatToneFor } from '../../view-model/threat-tone';
+import { threatToneFor } from './threat-tone';
 
 export function pendingChipCalloutTone(cardId: string): 'threat' | 'guide' {
   return threatToneFor(cardId) === 'attack' ? 'threat' : 'guide';

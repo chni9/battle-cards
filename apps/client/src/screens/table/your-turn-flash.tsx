@@ -10,7 +10,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { ActionLogEntryView, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
 
 import { MOTION_EASE } from '../../fx/motion-timing';
-import { seatColorAlpha, seatColorWash } from '../../design/seat-colors';
+import { seatColorAlpha, seatColorWash } from '../../ui/seat-colors';
 import {
   emptySentenceBannerWatch,
   emptyTableBannerWatch,
@@ -21,7 +21,7 @@ import {
   TABLE_BANNER_COPY,
   TABLE_BANNER_MS,
   type TableBannerCue,
-} from './table-banner';
+} from '../../view-model/table-banner';
 
 const ATTACK_RED = '#d62828';
 

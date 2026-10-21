@@ -4,7 +4,7 @@
 
 import type { CardId } from '@card-battle/shared';
 
-import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../ui/asset-lookup';
 import {
   ACTION_LOG_PANEL_ZONE,
   DECK_CARD_FLYOUT_HEIGHT,

@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 3 |
+| 72 · Foundations | 21 | 4 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **3** |
+| **Total** | **134** | **4** |
 
 ## Designer questions still open
 
@@ -51,7 +51,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-01 | **Record V7 in AGENTS, decisions, deploy and PRODUCT.md.** **Acceptance:** An agent reading only `AGENTS.md` + `decisions.md` can tell that V7 is in progress and client-only, that the protocol stays 45, that the open backlog is `backlog_v7.md` and that the promotion freeze applies. Golden rule 1 has the same meaning as rules spec §2 (no Lot 54 summed-volley wording). `PRODUCT.md` exists at the repo root. `deploy.md` describes the freeze and the hotfix path. No code changes. `pnpm verify` green. | M | Low | — | Done |
 | L72-02 | **Split cross-screen source-text tests and record the classification.** **Acceptance:** Every React-free module under `design/` and `screens/table/` has a disposition row. Every `readFileSync` test file appears in the classification with an owner lot. No test file reads sources owned by two lots. The number of `expect()` assertions is unchanged (moved verbatim, not dropped); the `it()` count rises only where a multi-screen `it()` is split by owner. `pnpm verify` green. | M | Medium | L72-01 | Done |
 | L72-03 | **Move fx, help, action-log and awards pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions. No moved module or shim is left under `fx/`, `help/` or `action-log/`. The lint override rejects a React import and `Date.now()` under `src/view-model/`. The old table, Home, What's new and Game over behave as before. `pnpm verify` green. | M | Low | L72-02 | Done |
-| L72-04 | **Move design and table pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions, including the Roulette art byte checks and the no-`100dvh` viewport test. The old table and lobby render as before. No file under `design/` or `screens/table/` still exports a moved function. `pnpm verify` green. | M | Low | L72-03 | To do |
+| L72-04 | **Move design and table pure modules.** **Acceptance:** Git shows renames plus import and path edits only. Every moved test passes with unchanged assertions, including the Roulette art byte checks. The four split `*.visual-viewport.test.ts` no-`100dvh` tests are not moved here (L75, L76 and L81 own them) and keep passing. The old table and lobby render as before. No file under `design/` or `screens/table/` still exports a moved function. `pnpm verify` green. | M | Low | L72-03 | Done |
 | L72-05 | **Add V7 tokens, fonts and ground side by side.** **Acceptance:** Tests: a WCAG ratio helper. `--text` and `--text-2` reach ≥ 4.5:1 on `--bg-0`, `--bg-1`, `--panel` and `--panel-2`. `--text-on-card` reaches ≥ 4.5:1 on both card-face stops. Every seat hue reaches ≥ 4.5:1 on the four grounds (seat names are text), and the hues are pairwise distinct by the metric recorded in `DESIGN.md`. CTA label/fill pairs (`--cta`, `--cta-2`, `--danger`) reach ≥ 4.5:1. A parity test shows `palette.ts` and `tokens.css` declare the same values. The reduced-motion helper returns no transform or scale. No V2 `@theme` value changes. `DESIGN.md` exists. Fonts are added with `pnpm add --filter @card-battle/client`. `pnpm verify` green. | M | Medium | L72-01, L72-04 | To do |
 | L72-06 | **Add the component-test harness.** **Acceptance:** `.test.tsx` files run under happy-dom with the shared render helper, every existing `.test.ts` still runs in node with unchanged results, `scripts/**/*.test.ts` is collected, and AGENTS.md §6 / `testing.md` describe the convention. `pnpm verify` green. | S | Low | L72-05 | To do |
 | L72-07 | **Add the SVG icon set.** **Acceptance:** Every §5.6 icon name renders a non-empty `<svg>` that is `aria-hidden` by default, icon-only controls built from them carry an `aria-label` / `title` (L59-01), no emoji remains in `ui/`, and the set appears in the `/dev/ui` gallery once it exists. `DESIGN.md` lists the set. `pnpm verify` green. | M | Low | L72-06 | To do |

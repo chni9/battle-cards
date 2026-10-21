@@ -11,7 +11,7 @@ import {
   type PublicPlayerView,
 } from '@card-battle/shared';
 
-import { getCardArtUrl, getCardBackUrl } from '../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl } from '../ui/asset-lookup';
 import {
   boostStealChipsWithRecentYield,
   chipsForPublicLogEntry,
