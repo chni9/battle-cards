@@ -4437,3 +4437,16 @@ Source: `docs/technical_spec_v7.md` §5.1, `DESIGN.md`, `apps/client/src/ui/cont
   (asserted in `ui/contrast.test.ts`, recorded in `DESIGN.md`).
 
 ---
+
+## 2026-10-21 · [P] Correction: resource and threat colors are large-text only (L72-05 review)
+
+Source: `docs/technical_spec_v7.md` §5.1 (normative), L72-05 review.
+
+- Resource colors (`--life`, `--point`, `--upgrade`, `--shield`) and threat colors
+  (`--threat-attack`, `--threat-other`, `--mine`) are text only at large size, on every
+  ground; they are fills, rings and icons otherwise. The third bullet of the L72-05 entry
+  above ("body text only on `--bg-*` and `--panel`") is superseded.
+- `ui/contrast.test.ts` keeps its stricter check (at least 4.5:1 on `--bg-0`, `--bg-1` and
+  `--panel`, 3:1 on `--panel-2`), which keeps large text safe on those grounds. No code change.
+
+---

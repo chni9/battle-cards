@@ -187,8 +187,10 @@ are text. `ui/contrast.test.ts` fails if either bound breaks.
 - `--text-on-cta`: **13.70** on `--cta`, **7.73** on `--cta-2`, **5.97** on `--danger`
   (5.79 on `--life`). `--danger` reaches only 4.34 with `--text-on-card`, 2.88 with `--text` and
   3.27 with white, which is why the token exists.
-- Resource and threat colors as text: at least 4.5:1 on `--bg-0`, `--bg-1` and `--panel`, but on
-  `--panel-2` only 3:1 (`--life` and `--threat-attack` 4.25, `--danger` 4.38).
+- Resource and threat colors are text only at large size, on every ground (spec v7 §5.1); they
+  are fills, rings and icons otherwise. `ui/contrast.test.ts` additionally guarantees at least
+  4.5:1 on `--bg-0`, `--bg-1` and `--panel`, which keeps large text safe there, and 3:1 on
+  `--panel-2` (`--life` and `--threat-attack` 4.25, `--danger` 4.38).
 
 ### Named Rules
 **The Own-Hue Rule.** A seat hue never shares an element with `--life` or a `--threat-*` color.
@@ -199,9 +201,11 @@ meaning are separated by element, never by a subtle shade.
 **The Ink Rule.** `--ink` draws outlines and hard shadows only. Text on a CTA fill uses
 `--text-on-cta`; text on a card uses `--text-on-card`.
 
-**The Large-Text Rule.** Resource and threat colors are body text only on `--bg-*` and
-`--panel`. On `--panel-2` they are large text (3:1) only; otherwise they are fills, rings and
-icons.
+**The Large-Text Rule.** Resource colors (`--life`, `--point`, `--upgrade`, `--shield`) and
+threat colors (`--threat-attack`, `--threat-other`, `--mine`) are text only at large size, on
+every ground; otherwise they are fills, rings and icons (spec v7 §5.1). `ui/contrast.test.ts`
+additionally guarantees at least 4.5:1 on `--bg-0`, `--bg-1` and `--panel`, which keeps large
+text safe there.
 
 **The Inline Hex Rule.** Inline styles take hex values from `ui/palette.ts`, never `var()` or
 `color-mix()` (mobile Safari painted theme variables gray in V2; see `ui/seat-colors.ts`).
