@@ -4346,3 +4346,37 @@ Same-day correction of the simultaneous picker.
 
 ---
 
+## 2026-10-21 · [P] V7 visual redesign architecture
+
+Source: designer brainstorm 2026-10-20 (`docs/technical_spec_v7.md` §2, Q1–Q12), the
+2026-10-21 backlog review, and the designer's Q13 ruling of 2026-10-21. V6 is closed at
+Lot 71; any later V6-style lot takes a number from 82.
+
+- **Client-only** (§1): no rule, value, protocol or server change (`PROTOCOL_VERSION` stays
+  45) beyond the §10.3 doc fixes and the §10.5 shared copy fixes. A real need for a new field
+  stops the work and asks.
+- **`ui/` vs `view-model/`** (§4.2–4.3): `ui/` has no game knowledge; `view-model/` is pure,
+  React-free and clock-free (`nowMs` is passed in), and each module has its own test.
+- **Moves, not rewrites** (§4.1): pure modules move with `git mv` and their tests in
+  L72-03/04. Only import and `readFileSync` paths change, and no re-export shim stays behind.
+- **Side by side** (§4.4): V7 tokens live in `apps/client/src/ui/tokens.css` and the V2
+  values stay unchanged; each screen switches in its own lot (L76, L77, L80).
+- **`?ui=next` is table-only until L75** (§4.4): `localStorage['card-battle.v7.ui']`,
+  `?ui=classic` clears it, and tutorial rooms ignore it.
+- **Source-text tests** (§12.1): handled per `docs/backlog_v7_test_classification.md`.
+  Behavior is kept, and every retirement is logged here.
+- **Promotion** (Q12 = A, §4.6): one PR per lot into `dev`; pending `dev` fixes are promoted
+  to `main` before L72 merges; no `dev` → `main` promotion from the first V7 merge until the
+  L75 flip, L76 and L77 are merged; L78–L81 ship after. Details in `docs/agent/deploy.md`.
+- **Q13 resolved: strict freeze, no hotfix path, prod-from-dev.yml unchanged** (designer
+  2026-10-21). This supersedes the §4.6 sentence that sends freeze hotfixes through a branch
+  cut from `main`: `prod-from-dev.yml` rejects any PR into `main` whose head is not `dev`,
+  so a fix waits for the freeze to lift. No CI change, no `hotfix/*` head pattern.
+- **Design docs** (§5.8): `PRODUCT.md` and `DESIGN.md` sit at the repo root. Precedence is
+  code > spec v7 §5 > `DESIGN.md`, and a task that touches tokens or `ui/` updates
+  `DESIGN.md` in the same commit (§12.5).
+- **Subagents** (2026-10-20, 8ba060f): Claude models under Claude Code, Grok 4.5 and
+  Composer 2.5 under Cursor; GPT and other families stay excluded.
+- **Supersedes**: spec v2 visual language, Lot 39, V6 Lots 43/53 table layout; all functions kept (Appendix A).
+
+---

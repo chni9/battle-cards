@@ -15,3 +15,6 @@ coverage/
 
 .superpowers/
 .impeccable/hook.cache.json
+
+# Claude Code worktrees (local); .claude/launch.json is committed (preview config)
+.claude/worktrees/

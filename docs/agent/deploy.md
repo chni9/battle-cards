@@ -6,7 +6,9 @@
 >
 > Sources: technical spec v1 §3 (VPS + Coolify) · designer 2026-09-16 (staging +
 > `dev` gitflow) · designer 2026-09-17 (Coolify Preview Deployments on staging,
-> WaaS pattern) · designer 2026-09-18 (PRs never draft — preview webhook).
+> WaaS pattern) · designer 2026-09-18 (PRs never draft — preview webhook) · designer
+> 2026-10-20 (V7 promotion freeze, technical spec v7 §4.6) · designer 2026-10-21 (Q13:
+> strict freeze, no hotfix path).
 
 ## Layout
 
@@ -277,7 +279,25 @@ Postgres (out of scope). Never set preview `DATABASE_URL` to production.
 
 Hotfixes follow the same path: land on `dev`, check staging, then promote. Do not
 hotfix on `main` to “skip staging” unless you have deliberately disabled the
-GitHub check.
+GitHub check. During the V7 freeze, read the next section first.
+
+## V7 promotion freeze (technical spec v7 §4.6)
+
+Designer 2026-10-20 (Q12 = A), with the hotfix question closed by the designer on
+2026-10-21 (Q13). V7 lands lot by lot on `dev`; the freeze lasts until the player
+path is fully V7.
+
+1. **Before L72 merges**, promote the pending `dev` fixes (What's new `lot-72`) to
+   `main`. List them with `git log --oneline origin/main..origin/dev`, then follow the
+   promotion steps above.
+2. **No `dev` → `main` promotion** from the first V7 merge until the L75 flip, L76 and
+   L77 are merged, unless the designer approves one.
+3. **Hotfixes during the freeze: none (Q13, strict freeze).** `prod-from-dev.yml` rejects
+   any PR into `main` whose head is not `dev`, so a fix lands on `dev` and waits for the
+   freeze to lift. There is no `hotfix/*` exception and the workflow is unchanged. This
+   replaces the §4.6 sentence about a branch cut from `main`
+   (`docs/agent/decisions.md`, 2026-10-21).
+4. **L78–L81 ship after the freeze lifts**, one PR each.
 
 ## Clone-app shortcut (optional)
 

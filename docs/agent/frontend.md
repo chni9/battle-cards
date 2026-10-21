@@ -23,6 +23,13 @@ labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
 Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
 action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
+**V7 (visual redesign "Arcade Holo") is in progress** (`docs/technical_spec_v7.md` +
+Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). It is
+client-only and lands side by side: the V2 design system below still governs every screen
+until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
+design-system record: `/DESIGN.md` (created in L72-05). On conflict, **code > spec v7 §5
+(normative) > `DESIGN.md`** (derived from the code; spec v7 §5.8).
+
 ## Screens
 
 | Screen | When | File |
