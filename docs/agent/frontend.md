@@ -124,6 +124,15 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `motionSpecFor(spec, reduced)` and put `data-motion="reduced" | "full"` on the animated
   root. Reduced means fades and color flashes only: no x, y, scale or rotate, and a fast tween
   instead of the spring. Apply CSS animation and press classes only when full.
+- **Icons (L72-07):** `<Icon name size? label? />` from `ui/icons/icon.tsx`. Names only from
+  `ICON_NAMES` (`ui/icons/icon-names.ts`: the spec v7 §5.6 set including `unspy`, plus the L72
+  additions `clock`, `close`, `chevron-left`, `chevron-right`, `random`); resources via
+  `RESOURCE_ICON[kind]`. Decorative (`aria-hidden`) unless given a non-empty `label`.
+  Icon-only controls use `IconButton` (L72-08) for the aria-label and title (L59-01), never a
+  bare `Icon`. Glyph paints are `V7_COLORS` hex only, with a 2-unit ink outline and a non-ink
+  body. No emoji and no U+2715 cross in `ui/` (`ui/icons/no-emoji.test.ts`); use
+  `Icon name="eliminated"` or `"close"`. The classic `SpyEyeIcon` and `ForfeitFlagIcon`
+  (`screens/table/`) stay until L75. Details: `/DESIGN.md` › Icons.
 - **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.

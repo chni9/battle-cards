@@ -106,9 +106,9 @@ who threatens whom, for how much, and when it lands must read at a glance, with 
 seats on a 375 px screen. The mood is playful and confident, never glossy or noisy, and
 nothing carries information by color or motion alone.
 
-This file describes **Lot 72 only**: tokens, fonts, the ground and the motion helpers. The V2
-light theme in `index.css` still governs every screen until that screen's V7 lot lands
-(spec v7 §4.4); no old screen is recolored.
+This file describes **Lot 72 only**: tokens, fonts, the ground, the motion helpers and the icon
+set. The V2 light theme in `index.css` still governs every screen until that screen's V7 lot
+lands (spec v7 §4.4); no old screen is recolored.
 
 **Key Characteristics:**
 - One dark theme, no light theme.
@@ -290,9 +290,96 @@ Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`, `--c
 and `--chrome-press-y`, never from literals, so L80 can override them under
 `[data-mode="tool"]`.
 
+## Icons
+
+A hand-made SVG set in the arcade style (spec v7 §5.6). Names come from `ICON_NAMES` in
+`ui/icons/icon-names.ts` (`IconName`, `isIconName`); `RESOURCE_ICON` maps each
+`ResourceKind` to its icon (`life`, `point`, `upgradePoint` to `upgrade`, `shield`). The
+component is `<Icon name size? label? className? />` from `ui/icons/icon.tsx`. No icon font
+and no icon library: every glyph is inline SVG.
+
+### Drawing rules
+- **Grid and outline.** `viewBox="0 0 24 24"`, default `size` 20. The root draws every shape
+  with a 2-unit `--ink` outline, round caps and joins: exactly 2px at 24px, 1.67px at the
+  default 20px, and it scales with `size` (no `non-scaling-stroke`).
+- **A body is required.** `--ink` equals `--bg-0`, so an ink-only glyph would vanish on the
+  ground. Every glyph has at least one light or colored filled shape. Ink is kept for details
+  drawn over a body: pupils, pips, clock hands, mortar and text lines.
+- **Thin motifs** that sit on the open ground (sparks, waves, handles, antenna, prongs, the
+  flag pole, the Unspy slash) are an ink casing 4 units wider than a colored core, so the core
+  keeps the same 2-unit outline as a filled shape. Crosses (`eliminated`, `close`) are filled
+  outlined polygons, never a cross character.
+- **Paint.** Only `V7_COLORS` hex from `ui/palette.ts`, never `currentColor`, `var()` or
+  `color-mix()` (the Inline Hex Rule). Fills go on shapes, never on a `<g>`. No `<text>`.
+- **One shape per name.** Each name has its own geometry, so no state is told apart by color
+  alone. `help` and `coach` are different glyphs (Q45). `icon.test.tsx` enforces this.
+
+### The set
+| Group | Name | Motif | Body fill |
+|---|---|---|---|
+| Resource | `life` | heart | `--life` |
+| Resource | `point` | coin with an inner ring | `--point` |
+| Resource | `upgrade` | chunky up arrow | `--upgrade` |
+| Resource | `shield` | heater shield | `--shield` |
+| Status | `spied-by-you` | magnifier with a glint | `--mine` |
+| Status | `spying-on-you` | eye with an ink pupil | `--threat-other` |
+| Status | `shield-active` | shield and three sparks | `--shield`, sparks `--cta` |
+| Status | `block` | brick wall | `--text-2` |
+| Status | `persistent` | two chasing arrows | `--text-2` |
+| Status | `invisibility` | ghost with ink eyes (the turns are a Badge value) | `--text-2` |
+| Status | `reanimation-armed` | tombstone and a rising arrow | `--text-2`, arrow `--cta` |
+| Status | `duplication-active` | two fanned cards | `--text` front, `--text-2` back |
+| Status | `eliminated` | bold cross, the §6.2 seat cross | `--danger` |
+| Status | `bot` | robot head with an antenna | `--text-2` |
+| Status | `disconnected` | plug and socket apart | `--text-2`, prongs `--text` |
+| Status | `absorb-window` | funnel | `--cta-2` |
+| Status | `sentence-ticking` | hourglass | `--threat-attack`, caps `--text-2` |
+| UI | `menu` | three bars | `--text` |
+| UI | `shop` | bag | `--cta` |
+| UI | `draw` | deck with a lifted top card | `--text` top, `--text-2` deck |
+| UI | `unspy` | the `spying-on-you` eye, crossed out (L58-07) | `--text-2`, slash `--text` |
+| UI | `log` | lined scroll | `--text-2` |
+| UI | `help` | `?` in a disc | `--cta-2` |
+| UI | `coach` | whistle | `--cta` |
+| UI | `chat` | speech bubble with three dots | `--text` |
+| UI | `feedback` | `!` badge | `--cta` |
+| UI | `flag` | flag on a pole (leave, forfeit) | `--danger`, pole `--text-2` |
+| UI | `sound` | speaker and two waves | `--text` |
+| UI | `vibration` | phone between zigzags | `--text` |
+| UI | `rules` | open book | `--text-2` |
+| UI | `share` | box with a rising arrow | `--text` |
+| UI | `copy` | two overlapping squares | `--text` front, `--text-2` back |
+| UI | `minimize` | wide bottom bar | `--text` |
+| L72 addition | `clock` | face with ink hands; the table rules seconds (L72-16) | `--text` |
+| L72 addition | `close` | slim cross; Sheet, Dialog, Toast (L72-09) and coach hide (L72-17) | `--text` |
+| L72 addition | `chevron-left` | chunky chevron; Carousel (L72-08) | `--text` |
+| L72 addition | `chevron-right` | its mirror; Carousel (L72-08) | `--text` |
+| L72 addition | `random` | die with ink pips; the Random-only mark (L72-16) | `--text` |
+
+The five L72 additions are not in the spec §5.6 list; they exist because the named Lot 72
+components render them.
+
+### Accessibility and use
+- **Decorative by default:** `aria-hidden="true"`, `focusable="false"`, no `<title>`. A
+  non-empty `label` makes the svg `role="img"` with that `aria-label` and a matching first
+  `<title>`; an empty `label` stays decorative, never an unnamed image.
+- **Icon-only controls** go through `IconButton` (L72-08), whose `aria-label` is required and
+  whose `title` defaults to it (L59-01). A bare `Icon` is never the only name of a control.
+- **Counts** (Invisibility turns, card lives, `+n`) live in Badge or IconButton, never inside
+  a glyph.
+- **Seat hues** are never icon paint, and a `--life` or `--threat-*` icon never sits in a
+  seat-hued element (the Own-Hue Rule, §5.1).
+- The root carries `data-icon={name}` as a lookup hook for tests and later components.
+- **No emoji in `ui/`.** `ui/icons/no-emoji.test.ts` fails on any Extended_Pictographic
+  character, and on U+2715 (multiplication X), in any `ui/` source file; draw that cross with
+  `Icon name="eliminated"` or `"close"`.
+- The `/dev/ui` gallery section `icons` (`ui/icons/icons.gallery.tsx`) lands with L72-08.
+- The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75.
+
 ## Components
 
-None yet (L72-07 onward). Each `ui/` component adds its section here in the same commit.
+None yet beyond the icon set (see Icons). Each `ui/` component adds its section here in the
+same commit.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -326,6 +413,7 @@ None yet (L72-07 onward). Each `ui/` component adds its section here in the same
 - **Don't** use `--ink` as a text color.
 - **Don't** put a seat hue and `--life` or a `--threat-*` color on the same element.
 - **Don't** use `var()` or `color-mix()` in an inline style.
+- **Don't** ship an emoji or a cross character in `ui/`; draw it with `Icon`.
 - **Don't** reuse a V2 name for a V7 key, or let a `--text-v7-*` suffix equal a `--color-v7-*`
   one.
 - **Don't** recolor an old screen: V2 `@theme` and `:root` values stay unchanged until that
