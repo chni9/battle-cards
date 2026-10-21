@@ -27,7 +27,7 @@ action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). It is
 client-only and lands side by side: the V2 design system below still governs every screen
 until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
-design-system record: `/DESIGN.md` (created in L72-05). On conflict, **code > spec v7 §5
+design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 (normative) > `DESIGN.md`** (derived from the code; spec v7 §5.8).
 
 ## Screens
@@ -76,6 +76,55 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   `kit-special-card-key`, `chrome-labels`, `table-flag-intent`, `active-display` and
   `sub-choice-constants`. New code imports them from there, never from `design/` or
   `screens/table/`.
+
+## Design system (V7 · Lot 72+)
+
+Technical spec v7 §5 is normative (§5.1 colors, §5.2 type, §5.3 shapes, §5.7 motion, §8.3
+reduced motion). `/DESIGN.md` is derived from `apps/client/src/ui/` and follows the order
+**code > spec v7 §5 > `DESIGN.md`** (§5.8). A task that adds or changes a token or a `ui/`
+component updates `DESIGN.md` in the same commit (§12.5). The tokens live in `ui/tokens.css`
+and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
+
+- **Side by side** (§4.4): `index.css` imports `./ui/tokens.css` right after
+  `@import "tailwindcss"`. V2 `@theme` and `:root` values do not change, and no old screen is
+  recolored; a screen switches entirely when its lot lands.
+- **Names:** one `@theme inline` block in `ui/tokens.css`, every key
+  `--<tailwind-namespace>-v7-<spec-token>`. Utilities: `bg-v7-panel`, `text-v7-text-2`,
+  `border-v7-ink`, `rounded-v7-chrome`, `shadow-v7-chrome`, `font-v7-display`,
+  `text-v7-input`, `ease-v7-entrance`. No V7 key reuses a V2 name (`--color-ink`,
+  `--color-surface*`, `--color-seat-*`, `--radius-card`, `--radius-button`, `--font-sans`),
+  and no `--text-v7-*` size suffix equals a `--color-v7-*` suffix. L81 may drop the prefix.
+  Inline styles take hex from `ui/palette.ts` (`V7_COLORS`, `v7SeatColor`), never `var()` or
+  `color-mix()` (the mobile Safari rule from `ui/seat-colors.ts`).
+- **Ground:** `.v7-ground` (halos plus 1 px scanlines every 3 px) is opt-in, defined only in
+  `ui/tokens.css`, and never goes on `html`, `body` or `#root`. No `vh` or `dvh` in that file.
+  Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`,
+  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 can override them under
+  `[data-mode="tool"]`.
+- **Fonts:** `ui/fonts.ts` holds seven `@fontsource` side-effect imports: Lilita One 400
+  (titles, buttons, UI numerals, seat names), Fredoka 500-700 (everything printed on a card),
+  Nunito 700-900 (body, descriptions, log lines, labels). `@fontsource/outfit` stays imported
+  in `main.tsx` until L81. Floors: 11 px functional text, 16 px text inputs, own lives at
+  least 20 px, incoming damage at least 22 px on a 375 px phone.
+- **Palette mirror:** `ui/palette.test.ts` reads `ui/tokens.css?raw` and fails when
+  `palette.ts` and the CSS declare different values. Vitest blanks every CSS import, `?raw`
+  included, so the client project sets `test.css.include` for that one file in
+  `vitest.config.ts`; keep that key when the project's `include` changes (L72-06).
+- **Contrast:** `ui/contrast.ts` (`contrastRatio`, `deltaE2000`) backs `ui/contrast.test.ts`.
+  `--text` and `--text-2` reach 4.5:1 on all four grounds; `--text-on-card` on both card-face
+  stops; every seat hue 4.5:1 on all four grounds and pairwise CIEDE2000 at least
+  `SEAT_HUE_MIN_DELTA_E` (20) apart. `--ink` is outline and shadow only, never text: labels on
+  `--cta`, `--cta-2`, `--danger` and `--life` fills use `--text-on-cta`. A seat hue never
+  shares an element with `--life` or a `--threat-*` color. Resource and threat colors are body
+  text only on `--bg-*` and `--panel`, large text only on `--panel-2`.
+- **Motion:** V7 components read only `usePrefersReducedMotion()`
+  (`ui/motion/use-prefers-reduced-motion.ts`), run motion props through
+  `motionSpecFor(spec, reduced)` and put `data-motion="reduced" | "full"` on the animated
+  root. Reduced means fades and color flashes only: no x, y, scale or rotate, and a fast tween
+  instead of the spring. Apply CSS animation and press classes only when full.
+- **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
+  `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
+  committed. Any other finding is fixed, not ignored.
 
 ## Design system (V2 · Lots 10+)
 

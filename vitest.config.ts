@@ -27,6 +27,9 @@ export default defineConfig({
           root: './apps/client',
           environment: 'node',
           include: ['src/**/*.test.ts'],
+          // Vitest blanks every CSS import, `?raw` included, unless css.include matches it.
+          // ui/palette.test.ts reads the token source to prove palette.ts mirrors it (L72-05).
+          css: { include: [/\/src\/ui\/tokens\.css\?raw$/] },
         },
       },
     ],

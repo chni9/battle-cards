@@ -1,0 +1,148 @@
+/*
+ * V7 "Arcade Holo" tokens (technical spec v7 §5.1-§5.3, §5.7), side by side with the V2
+ * theme in index.css (§4.4): nothing here recolors an old screen, and no V2 name is reused.
+ * Mirrored in ui/palette.ts and ui/motion/motion-tokens.ts; ui/palette.test.ts keeps them
+ * equal. Precedence on conflict: code, then spec v7 §5, then DESIGN.md.
+ */
+
+:root {
+  /* §5.1 colors. --ink is outline and shadow only, never text; CTA labels use --text-on-cta. */
+  --bg-0: #0c0920;
+  --bg-1: #17113a;
+  --glow-a: #ff3d7f;
+  --glow-b: #3da9ff;
+  --panel: #1f1850;
+  --panel-2: #2b2256;
+  --ink: #0c0920;
+  --text: #f3eeff;
+  --text-2: #cfc6ff;
+  --text-on-card: #2a2550;
+  --text-on-cta: #0c0920;
+  --life: #ff3d7f;
+  --point: #ffc93d;
+  --upgrade: #3dcf8f;
+  --shield: #6b8cff;
+  --cta: #ffd43d;
+  --cta-2: #3da9ff;
+  --danger: #ff4d4d;
+  --threat-attack: #ff3d7f;
+  --threat-other: #ffa53d;
+  --mine: #3da9ff;
+  --card-face-0: #ffffff;
+  --card-face-1: #f1edff;
+
+  /* §5.1 seat identity hues, view.players index order. Provisional until the L72/L74 playtests (§14.3). */
+  --seat-0: #7cc4ff;
+  --seat-1: #ff6461;
+  --seat-2: #4fe06a;
+  --seat-3: #f5e05a;
+  --seat-4: #a080ff;
+  --seat-5: #f5b07a;
+  --seat-6: #33e6e0;
+  --seat-7: #f655c1;
+
+  /* §5.3 holo cards: the only soft objects on screen. */
+  --card-radius: 12px;
+  --card-rim-width: 2px;
+  --card-rim-holo: conic-gradient(from 200deg, #ff8ad8, #ffe17a, #8af5d0, #8ccaff, #c3a8ff, #ff8ad8);
+  --card-rim-gold: linear-gradient(135deg, #fff2b0 0%, #ffc93d 45%, #c98a12 100%);
+  --card-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+
+  /* §5.3 arcade chrome. L80 tool mode overrides these under [data-mode="tool"]. */
+  --chrome-outline-width: 3px;
+  --chrome-shadow: 0 4px 0 var(--ink);
+  --chrome-radius: 12px;
+  --chrome-radius-sm: 10px;
+  --chrome-press-y: 3px;
+
+  /* §5.1 scanlines: 1 px every 3 px, on the page ground only. */
+  --scanline: rgba(255, 255, 255, 0.03);
+
+  /* §5.7 motion. Mirrors ui/motion/motion-tokens.ts. */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 400ms;
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* §5.2 type steps: 11 px floor for functional text, 16 px inputs (no iOS focus zoom), vital numbers 20-22 px and up. */
+  --type-micro: 11px;
+  --type-caption: 12px;
+  --type-body: 14px;
+  --type-input: 16px;
+  --type-title: 20px;
+  --type-vital: 22px;
+  --type-display: 32px;
+}
+
+/*
+ * Tailwind v4 names (§4.4): every key is --<namespace>-v7-<token>, so a V7 utility never
+ * collides with a V2 one (--color-ink, --color-surface, --color-seat-*, --radius-card...).
+ * Inline mode makes each utility read the :root variable above instead of copying its value.
+ */
+@theme inline {
+  --color-v7-bg-0: var(--bg-0);
+  --color-v7-bg-1: var(--bg-1);
+  --color-v7-glow-a: var(--glow-a);
+  --color-v7-glow-b: var(--glow-b);
+  --color-v7-panel: var(--panel);
+  --color-v7-panel-2: var(--panel-2);
+  --color-v7-ink: var(--ink);
+  --color-v7-text: var(--text);
+  --color-v7-text-2: var(--text-2);
+  --color-v7-text-on-card: var(--text-on-card);
+  --color-v7-text-on-cta: var(--text-on-cta);
+  --color-v7-life: var(--life);
+  --color-v7-point: var(--point);
+  --color-v7-upgrade: var(--upgrade);
+  --color-v7-shield: var(--shield);
+  --color-v7-cta: var(--cta);
+  --color-v7-cta-2: var(--cta-2);
+  --color-v7-danger: var(--danger);
+  --color-v7-threat-attack: var(--threat-attack);
+  --color-v7-threat-other: var(--threat-other);
+  --color-v7-mine: var(--mine);
+  --color-v7-card-face-0: var(--card-face-0);
+  --color-v7-card-face-1: var(--card-face-1);
+  --color-v7-seat-0: var(--seat-0);
+  --color-v7-seat-1: var(--seat-1);
+  --color-v7-seat-2: var(--seat-2);
+  --color-v7-seat-3: var(--seat-3);
+  --color-v7-seat-4: var(--seat-4);
+  --color-v7-seat-5: var(--seat-5);
+  --color-v7-seat-6: var(--seat-6);
+  --color-v7-seat-7: var(--seat-7);
+
+  --radius-v7-chrome: var(--chrome-radius);
+  --radius-v7-chrome-sm: var(--chrome-radius-sm);
+  --radius-v7-card: var(--card-radius);
+  --shadow-v7-chrome: var(--chrome-shadow);
+  --shadow-v7-card: var(--card-shadow);
+
+  --font-v7-display: 'Lilita One', ui-rounded, system-ui, sans-serif;
+  --font-v7-card: 'Fredoka', ui-rounded, system-ui, sans-serif;
+  --font-v7-body: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  --text-v7-micro: var(--type-micro);
+  --text-v7-caption: var(--type-caption);
+  --text-v7-body: var(--type-body);
+  --text-v7-input: var(--type-input);
+  --text-v7-title: var(--type-title);
+  --text-v7-vital: var(--type-vital);
+  --text-v7-display: var(--type-display);
+
+  --ease-v7-entrance: var(--ease-entrance);
+}
+
+@layer components {
+  /* §5.1 ground: opt-in for V7 surfaces, never on html, body or #root (§4.4). Halos are
+     --glow-a / --glow-b at 30% (literal rgb for older mobile Safari). */
+  .v7-ground {
+    background-color: var(--bg-0);
+    background-image:
+      repeating-linear-gradient(to bottom, var(--scanline) 0 1px, transparent 1px 3px),
+      radial-gradient(60% 45% at 12% 8%, rgb(255 61 127 / 0.3), transparent 70%),
+      radial-gradient(55% 40% at 88% 92%, rgb(61 169 255 / 0.3), transparent 70%),
+      linear-gradient(to bottom, var(--bg-1), var(--bg-0));
+    color: var(--text);
+  }
+}
