@@ -17,8 +17,8 @@ import {
 } from 'react';
 
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
-import { dialogPanelClassName, dialogPreferredMaxWidth } from './dialog-width';
-import { readVisualViewportBox, type VisualViewportBox } from './visual-viewport';
+import { dialogPanelClassName, dialogPreferredMaxWidth } from '../../ui/primitives/dialog-width';
+import { readVisualViewportBox, type VisualViewportBox } from '../../ui/visual-viewport';
 
 export interface DialogProps {
   open: boolean;

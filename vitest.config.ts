@@ -26,7 +26,12 @@ export default defineConfig({
           name: 'client',
           root: './apps/client',
           environment: 'node',
-          include: ['src/**/*.test.ts'],
+          // Default stays node: component tests opt in per file with the happy-dom docblock
+          // (technical spec v7 §4.5). scripts/ holds the art-extraction script tests (L72-10).
+          include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
+          // Vitest blanks every CSS import, `?raw` included, unless css.include matches it.
+          // ui/palette.test.ts reads the token source to prove palette.ts mirrors it (L72-05).
+          css: { include: [/\/src\/ui\/tokens\.css\?raw$/] },
         },
       },
     ],

@@ -7,7 +7,7 @@
 import { getCard, listedAttackDamage, type CardInstance } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
-import { getCardArtUrl } from '../asset-lookup';
+import { getCardArtUrl } from '../../ui/asset-lookup';
 import { CardEffectCopy } from './card-effect-copy';
 import { LifeCountBadge } from './life-count-badge';
 

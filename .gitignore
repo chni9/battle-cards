@@ -12,3 +12,12 @@ coverage/
 
 # Office lock files
 ~$*
+
+.superpowers/
+.impeccable/hook.cache.json
+
+# Claude Code worktrees (local); .claude/launch.json is committed (preview config)
+.claude/worktrees/
+
+# V7 art contact sheet (technical spec v7 §5.5): attached to the lot PR, never committed
+apps/client/.art-contact-sheet/

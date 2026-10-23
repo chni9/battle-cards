@@ -3,7 +3,7 @@
  * as a seat-to-seat transfer (L51-11 thief).
  */
 
-import type { ResourceKind } from '../design/asset-lookup';
+import type { ResourceKind } from '../ui/asset-lookup';
 
 const pending = new Set<string>();
 

@@ -1,6 +1,7 @@
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/600.css';
 import '@fontsource/outfit/700.css';
+import './ui/fonts';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 

@@ -6,7 +6,7 @@
 import type { KitId } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
-import { getKitPortraitUrl, getOpponentPlaceholderUrl } from '../asset-lookup';
+import { getKitPortraitUrl, getOpponentPlaceholderUrl } from '../../ui/asset-lookup';
 
 export interface KitPortraitProps {
   kitId: KitId | null;

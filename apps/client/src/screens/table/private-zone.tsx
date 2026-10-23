@@ -17,14 +17,14 @@ import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { PlayerName } from '../../design/components/player-name';
 import { ResourceIcon } from '../../design/components/resource-icon';
-import { seatIndexOf } from '../../design/seat-colors';
-import { persistentToCardInstance, shieldActiveInstance } from './active-display';
+import { seatIndexOf } from '../../ui/seat-colors';
+import { persistentToCardInstance, shieldActiveInstance } from '../../view-model/active-display';
 import { ActivePersistentThumb } from './active-persistent-thumb';
 import { CardBand } from './card-band';
 import { FlowStatusBadges } from './flow-status-badges';
 import { PendingQueue } from './pending-queue';
 import { SentenceChipsForSeat } from './sentence-chip';
-import { INCOMING_OPEN_LABEL, WAITING_OPEN_LABEL } from './table-copy';
+import { INCOMING_OPEN_LABEL, WAITING_OPEN_LABEL } from '../../view-model/table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
 /** Dock resource row shows captions in the layout (L43-01 / technical spec v6 §6.1). */

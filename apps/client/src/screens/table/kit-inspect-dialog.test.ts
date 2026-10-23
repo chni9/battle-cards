@@ -13,8 +13,8 @@ import { getKit, type KitTraits } from '@card-battle/shared';
 import {
   KIT_ABILITY_COPY,
   KIT_TRAIT_SECTION_KEYS,
-} from './kit-inspect-traits';
-import { kitSpecialCardKey } from './kit-special-card-key';
+} from '../../view-model/kit-inspect-traits';
+import { kitSpecialCardKey } from '../../view-model/kit-special-card-key';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 

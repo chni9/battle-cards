@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { resourceCaptionMode } from '../../design/components/resource-captions';
+import { resourceCaptionMode } from '../../ui/resource-captions';
 import {
   DOCK_RESOURCE_CAPTION_VISIBLE,
   INCOMING_STACK_MAX_CLASS,

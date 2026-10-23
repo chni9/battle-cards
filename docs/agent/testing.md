@@ -4,9 +4,10 @@
 > Transverse rules → `/AGENTS.md`. Domain specifics → `engine.md`, `card-handler.md`, `protocol.md`.
 >
 > Sources: technical spec §8 (Definition of Done), §5.5–§5.7 (thresholds), §6.2 (rulings) ·
-> `../backlog_v6.md` (active V6) · `../backlog_v5.md` (V5 parallel) ·
-> `../backlog_v1.md` … `../backlog_v4.md` (archives, for citing finished acceptance only) ·
-> config in `vitest.config.ts`, example in `packages/shared/src/domain/v1-scope.test.ts`.
+> technical spec v7 §12 · `../backlog_v7.md` (V7 open) · `../backlog_v5.md` (V5 parallel) ·
+> `../backlog_v1.md` … `../backlog_v6.md` (closed archives, for citing finished acceptance only) ·
+> config in `vitest.config.ts`, examples in `packages/shared/src/domain/v1-scope.test.ts` and
+> `apps/client/src/test/render.test.tsx`.
 
 ## Golden rules
 
@@ -27,11 +28,23 @@ is how to satisfy it.
 
 ## Layout
 
-Tests sit beside the code: `src/**/*.test.ts`. Vitest projects are declared in the root
-`vitest.config.ts` (`shared`, `server`, `client`). The client project extends
-`apps/client/vite.config.ts` so PNG `import.meta.glob` resolves; environment is
-`node` (source-read / helper tests — not a full jsdom table). `pnpm test` runs all
-projects once; `pnpm verify` is the full gate.
+Tests sit beside the code: `.test.ts` holds logic and source-text tests, `.test.tsx` holds
+component tests. Vitest projects are declared in the root `vitest.config.ts` (`shared`,
+`server`, `client`). The client project extends `apps/client/vite.config.ts` so PNG
+`import.meta.glob` resolves. It collects `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`,
+and its default environment is `node`: a `.test.tsx` opts in to `happy-dom` file by file
+(see Client component tests below). `pnpm test` runs all projects once; `pnpm verify` is the
+full gate.
+
+**Source-text tests (V7, technical spec v7 §12.1).** A `readFileSync` test reads the code of
+one V7 owner lot only (see `docs/backlog_v7_test_classification.md`). A file whose assertions
+span several lots is split into `<read-source-basename>.<original-test-basename>.test.ts`,
+placed beside the source it reads (precedent: `net/use-room-connection.forfeit.test.ts`).
+Each `expect()` moves verbatim, and a split-off part of an `it()` takes the title suffix
+` (<read-source-basename>)`. Compare `expect()` counts, not `it()` counts: a split raises the
+`it()` count and never lowers the `expect()` count. Split a module test's source-text `it()`s
+out before the module moves, so the module test stays source-free and moves with a plain
+`git mv`.
 
 Name the test after the rule and cite its source, so a failure points at a spec section:
 
@@ -50,6 +63,51 @@ already checks shapes; a test earns its place by catching something the compiler
 **Lot 27 interim kit scope:** `content-scope.test.ts` no longer pins `KIT_IDS.length === 4`.
 Until L28-03, it asserts catalog exhaustiveness and `4 ≤ length < 15`. Each data-only kit task
 extends `KIT_IDS` and proves mid-game `alwaysUpgraded` (Scientific Spy pattern).
+
+## Client component tests (V7 · L72-06)
+
+Technical spec v7 §4.5 and §12.2. The harness is `apps/client/src/test/render.tsx`; its own
+behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
+
+- Put the test beside the component (`card.tsx` → `card.test.tsx`).
+- Line 1 is the docblock `// @vitest-environment happy-dom`. Vitest scans the **whole file**
+  for it, so never write that text in a node test, not even in a string or a comment.
+- Render only through `renderUi` (import it relatively from `src/test/render.tsx`). Importing
+  that module registers an after-each that unmounts every tree and resets reduced motion
+  (Vitest runs without globals, so RTL never cleans up on its own) and switches fake timers
+  back to real ones. `renderUi` returns `{ ...result, user }`, where `user` is a `user-event`
+  instance. `renderUi` gives every call its own `SheetStackProvider` store (L72-09), kept
+  across `rerender`; a caller's own `wrapper` renders inside it.
+- Assert with plain DOM (`textContent`, `getAttribute`, `toBeNull`, `screen.getByRole`). There
+  is no jest-dom.
+- Reduced motion: call `setReducedMotion(true)` or `renderUi(ui, { reducedMotion: true })`
+  **before** mounting, then assert `data-motion="reduced"` or the class. `motion` reads the
+  media query once per mount, so a flip reaches the next mount, never a tree already on
+  screen. happy-dom cannot evaluate CSS media queries.
+- Fake timers: `vi.useFakeTimers()`, then
+  `renderUi(ui, { advanceTimers: vi.advanceTimersByTime })`, and wrap manual advances in RTL
+  `act`. `render.tsx` installs a minimal `globalThis.jest.advanceTimersByTime` so RTL's async
+  drain moves Vitest's clock; without it user-event never resolves. That global relies on
+  Vitest's per-file isolation, so never set `test.isolate: false`.
+- `render.tsx` also sets `IS_REACT_ACT_ENVIRONMENT` (RTL's own `beforeAll` never runs without
+  globals), so React reports an update outside `act` as a warning. Keep the output clean: await
+  user-event calls and wrap manual timer or event dispatches in `act`; never unset the flag.
+- happy-dom rejects a cancelled animation's `finished` promise without marking it handled, so
+  every interrupted `motion` animation would fail the run as an unhandled AbortError.
+  `render.tsx` marks it handled, as browsers do; motion components need no stub of their own.
+- happy-dom has no layout: sizes, positions and resolved `clamp()` values are zero or
+  unresolved. Assert structure, roles and data attributes here, and leave pixel checks to the
+  browser gate (`frontend.md` · Post-lot browser gate).
+- Never `Date.now()`; the caller passes `nowMs`.
+
+## V7 test policy (technical spec v7 §12.1–§12.2)
+
+- New V7 code gets behavior tests: render it, drive it, assert what a player or a screen
+  reader can observe.
+- No new `readFileSync` test for V7 code.
+- Existing `readFileSync` tests are classified only by the lot that removes the code they read
+  (`../backlog_v7_test_classification.md`). Until that lot lands they stay as they are.
+- Moved tests keep their assertions verbatim; only import and `readFileSync` paths change.
 
 ## Seeded randomness
 
@@ -135,12 +193,18 @@ These are the spots where a plausible implementation is wrong and silent:
 - ❌ Testing base and upgraded versions of a card in one assertion.
 - ❌ Marking a High-risk task done because the suite is green, without reading the code.
 - ❌ Adding a test dependency before the task actually needs it.
+- ❌ A `.test.tsx` without the happy-dom docblock on line 1, or one that calls RTL `render`
+  instead of `renderUi`.
+- ❌ `@vitest-environment <name>` in a node `.test.ts` (Vitest scans the whole file, so even a
+  string or a comment switches its environment).
+- ❌ A new `readFileSync` test for V7 code.
 
 ## Checklist
 
 - [ ] Test written for every rule and card touched, base and upgraded
 - [ ] Test names cite their spec section
 - [ ] Nothing skipped, disabled, or loosened
+- [ ] Component tests: `.test.tsx` with the happy-dom docblock, rendered through `renderUi`
 - [ ] All randomness seeded and reproducible
 - [ ] `pnpm verify` green
 - [ ] The task's own "Acceptance criteria" column satisfied, not just the suite

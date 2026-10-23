@@ -4346,7 +4346,6 @@ Same-day correction of the simultaneous picker.
 
 ---
 
-
 ## 2026-10-20 · [P] Lobby host never passes to a bot
 
 Developer brief 2026-10-20, relayed from the V7 redesign session. It refines L1-02, which
@@ -4363,5 +4362,280 @@ predates bots: "host leave before start promotes the earliest remaining seat".
 - The Play again host (`resolveReformingHost`) already chose humans only. It is unchanged.
 - No protocol bump: `LobbyStateView.hostPlayerId` already carries the host. The client
   derives every host-only control from `hostPlayerId === you`.
+
+---
+
+## 2026-10-21 · [P] V7 visual redesign architecture
+
+Source: designer brainstorm 2026-10-20 (`docs/technical_spec_v7.md` §2, Q1–Q12), the
+2026-10-21 backlog review, and the designer's Q13 ruling of 2026-10-21. V6 is closed at
+Lot 71; any later V6-style lot takes a number from 82.
+
+- **Client-only** (§1): no rule, value, protocol or server change (`PROTOCOL_VERSION` stays
+  45) beyond the §10.3 doc fixes and the §10.5 shared copy fixes. A real need for a new field
+  stops the work and asks.
+- **`ui/` vs `view-model/`** (§4.2–4.3): `ui/` has no game knowledge; `view-model/` is pure,
+  React-free and clock-free (`nowMs` is passed in), and each module has its own test.
+- **Moves, not rewrites** (§4.1): pure modules move with `git mv` and their tests in
+  L72-03/04. Only import and `readFileSync` paths change, and no re-export shim stays behind.
+- **Side by side** (§4.4): V7 tokens live in `apps/client/src/ui/tokens.css` and the V2
+  values stay unchanged; each screen switches in its own lot (L76, L77, L80).
+- **`?ui=next` is table-only until L75** (§4.4): `localStorage['card-battle.v7.ui']`,
+  `?ui=classic` clears it, and tutorial rooms ignore it.
+- **Source-text tests** (§12.1): handled per `docs/backlog_v7_test_classification.md`.
+  Behavior is kept, and every retirement is logged here.
+- **Promotion** (Q12 = A, §4.6): one PR per lot into `dev`; pending `dev` fixes are promoted
+  to `main` before L72 merges; no `dev` → `main` promotion from the first V7 merge until the
+  L75 flip, L76 and L77 are merged; L78–L81 ship after. Details in `docs/agent/deploy.md`.
+- **Q13 resolved: strict freeze, no hotfix path, prod-from-dev.yml unchanged** (designer
+  2026-10-21). This supersedes the §4.6 sentence that sends freeze hotfixes through a branch
+  cut from `main`: `prod-from-dev.yml` rejects any PR into `main` whose head is not `dev`,
+  so a fix waits for the freeze to lift. No CI change, no `hotfix/*` head pattern.
+- **Design docs** (§5.8): `PRODUCT.md` and `DESIGN.md` sit at the repo root. Precedence is
+  code > spec v7 §5 > `DESIGN.md`, and a task that touches tokens or `ui/` updates
+  `DESIGN.md` in the same commit (§12.5).
+- **Subagents** (2026-10-20, 8ba060f): Claude models under Claude Code, Grok 4.5 and
+  Composer 2.5 under Cursor; GPT and other families stay excluded.
+- **Supersedes**: spec v2 visual language, Lot 39, V6 Lots 43/53 table layout; all functions kept (Appendix A).
+
+---
+
+## 2026-10-21 · [P] L72-02 splits source-text tests by owner lot
+
+Source: `docs/technical_spec_v7.md` §12.1 and `docs/backlog_v7_test_classification.md`.
+
+- Every source-text test whose assertions read code of two V7 owner lots is split into
+  `<read-source-basename>.<original-test-basename>.test.ts` files beside the source they read
+  (naming rule in `docs/agent/testing.md`), so each lot later classifies only its own files.
+- The invariant is the `expect()` count: 287 before and 287 after, every call moved
+  verbatim (only `readFileSync` paths changed). The `it()` count rises by 12 (client tests
+  435 → 447) because five multi-screen `it()`s are split by owner: full-bleed viewport,
+  feedback surfaces, tutorial hints independence, admin route and token flyout overlay chrome.
+  The L72-02 acceptance line in `docs/backlog_v7.md` states this.
+- Module tests that L72-04 moves with `git mv` (`dialog-width`, `opponent-seat-resources`,
+  `chrome-labels`, `table-banner`) lost their source-text `it()`s to sibling files first, and
+  `help/tutorial-hints-independence.test.ts` is logic-only, so L72-03 moves it unchanged.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 tokens: `--text-on-cta` and the seat-hue metric (L72-05)
+
+Source: `docs/technical_spec_v7.md` §5.1, `DESIGN.md`, `apps/client/src/ui/contrast.test.ts`.
+
+- Spec §5.1 keeps `--ink` as a non-text color and names no label color for CTA fills.
+  `--danger` (`#ff4d4d`) gets 4.34:1 with `--text-on-card`, 2.88:1 with `--text` and 3.27:1
+  with white, so no existing text token labels it. V7 adds `--text-on-cta: #0c0920`, which
+  reaches 13.70 / 7.73 / 5.97:1 on `--cta` / `--cta-2` / `--danger` (5.79:1 on `--life`
+  chips). `ui/contrast.test.ts` asserts it; `--ink` stays outline and shadow only.
+- Seat hues: the eight values are pairwise CIEDE2000 (sRGB, D65, kL = kC = kH = 1) at least
+  20 apart (measured minimum 21.33, `--seat-4` / `--seat-7`) and at least 4.5:1 on all four
+  grounds (lowest 4.77:1, `--seat-7` on `--panel-2`). The metric and values are recorded in
+  `DESIGN.md`, `SEAT_HUE_MIN_DELTA_E = 20` in `ui/contrast.ts`; the hues stay provisional
+  until the L72/L74 playtests (spec §14.3).
+- `--life` (4.25:1) and `--danger` (4.38:1) on `--panel-2` miss 4.5:1: resource and threat
+  colors are body text only on `--bg-*` and `--panel`, and large text only on `--panel-2`
+  (asserted in `ui/contrast.test.ts`, recorded in `DESIGN.md`).
+
+---
+
+## 2026-10-21 · [P] Correction: resource and threat colors are large-text only (L72-05 review)
+
+Source: `docs/technical_spec_v7.md` §5.1 (normative), L72-05 review.
+
+- Resource colors (`--life`, `--point`, `--upgrade`, `--shield`) and threat colors
+  (`--threat-attack`, `--threat-other`, `--mine`) are text only at large size, on every
+  ground; they are fills, rings and icons otherwise. The third bullet of the L72-05 entry
+  above ("body text only on `--bg-*` and `--panel`") is superseded.
+- `ui/contrast.test.ts` keeps its stricter check (at least 4.5:1 on `--bg-0`, `--bg-1` and
+  `--panel`, 3:1 on `--panel-2`), which keeps large text safe on those grounds. No code change.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] Carousel end-stops are `aria-disabled`, not `disabled` (L72-08 review)
+
+Source: L72-08 fix round 1 (three reviews of `acd3398` plus skeptics), WCAG 2.2 SC 2.4.3 Focus
+Order and 2.4.7 Focus Visible; the L72-08 brief pinned `hasAttribute('disabled')` on the
+chevrons.
+
+- Paging a Carousel to its first or last slide used to set native `disabled` on the chevron
+  that had just been pressed. The browser's focus fixup then moved keyboard focus to `<body>`;
+  inside the L76/L77 sheets, focus would have left the trap.
+- Ruling: the end-stop chevron carries `aria-disabled="true"`, stays focusable and keeps the
+  disabled look (`CHROME_DISABLED_CLASS` now also styles `aria-disabled`, and IconButton drops
+  its press there). `page()` is a no-op at the ends, so activating an end-stop changes nothing.
+- The brief's carousel assertions moved from `hasAttribute('disabled')` to
+  `aria-disabled="true"`. Each now also asserts that activating the end-stop leaves the index
+  unchanged, and a keyboard test pins focus on Next at the last slide. No assertion was
+  weakened.
+- Follow-on: Button gains the optional `focusableWhenDisabled` for actions whose disabled
+  reason must stay reachable by keyboard (Q39). Native `disabled` stays the default elsewhere.
+  Never toggle native `disabled` on a control that can hold focus while it changes.
+
+---
+
+## 2026-10-21 · [P] V7 sheet stack (L72-09)
+
+Source: `docs/technical_spec_v7.md` §6.7, §6.12, §7.7, §10.6 (Q49, Q59), Appendix A
+`global-dialog-interaction-contract`, `claim-seat-dismiss-stay`,
+`table-sub-choice-non-dismissible`; the L72-09 brief.
+
+- **One stack.** Every open V7 `Sheet` registers in one store (`ui/primitives/sheet-stack.ts`,
+  pure; `sheet-stack-context.ts`), which decides paint order, z-index, inertness and the Esc
+  target. The default store is a module singleton (no provider at the app root);
+  `SheetStackProvider` isolates a subtree and `renderUi` uses it per render.
+- **Paint order:** read-only < expanded blocking < Minimize bars, inside the `Z_INDEX` layers
+  (`ui/layers.ts`: sheet 50, sheetBar 80, banner 90, toast 95). Expanded sheets get
+  `min(50 + n, 79)`, bars `min(80 + n, 89)`, unknown or unpainted ids 50.
+- **"Stack one level"** means: only the newest `MAX_READ_ONLY_DEPTH` (2) expanded read-only
+  sheets paint. An older one stays registered and hidden, and paints again when a newer one
+  closes. The spec left the third sheet undefined.
+- **Restore to top:** restoring a minimized sheet re-stamps its open order, so it rises to the
+  top of its group. Otherwise restoring the earlier of two Lot 71 reward pickers would leave it
+  hidden under the other.
+- **Collapsed on the bar layer:** a sheet its caller marks `collapsed` (L74 targeting) is
+  stored as minimized: it joins the bar group and layer, Esc skips it, its focus trap is
+  released, and it shows the caller's `collapsedBar`.
+- **Stack-aware Esc** replaces V2's "one Esc closes every open Dialog" for V7 surfaces. Each
+  read-only sheet has a bubble-phase `document` keydown listener that acts only when
+  `escTargetId(state)` is its own id and the event is not `defaultPrevented`; a dismiss-locked
+  top sheet absorbs Esc instead of passing it down. So an Esc meant for a lower sheet can never
+  reach a claim picker on top (Appendix A `claim-seat-dismiss-stay`, consumer L76), and an open
+  tooltip (capture phase) closes first.
+- **`closeOnBackdrop`** is added to `ReadOnlySheetProps` (default true) beyond the brief's
+  contract rows, because `DialogProps` exposes it and Sheet had no other way to drop backdrop
+  dismissal while keeping Esc.
+- **Portal:** Sheet and Toast render into `document.body`, so the layers are global and no
+  transformed ancestor or `<form>` captures a fixed overlay. This retires the V2 `type="button"`
+  form hazard for V7 sheets.
+- **Dialog width** is a static `max-w-*` class read through `dialogPreferredMaxWidth` and
+  applied inline as `min(<rem>, 100%)`, not `dialogPanelClassName`, whose
+  `DIALOG_PANEL_BASE_CLASS` would bring V2 chrome into a V7 panel; restyling that constant would
+  recolor every V2 Dialog (§4.4).
+- **Focus:** the opener persists across a re-activation that starts with focus nowhere
+  (Minimize, then restore); nothing is focused under `[inert]` or `[hidden]`; focus is restored
+  only while it is lost or still in the sheet, with one `requestAnimationFrame` retry while the
+  opener is still inert. A press on the bare backdrop cancels its `mousedown`, so it never moves
+  focus to `body` behind the modal (the V2 Dialog did). Minimize is the last control in a
+  blocking panel, so initial focus lands on the first body control.
+- **Toast without `timeoutMs`** stays until dismissed by hand: the spec sets no duration, so a
+  caller that wants a timeout passes one (the gallery uses 4000 ms).
+- **Motion props:** `motionPropsFor(spec, reduced)` (`ui/motion/reduced-motion.ts`) copies each
+  target into an object literal, because motion's target type has a `--${string}` index
+  signature that the `V7MotionTarget` interface cannot satisfy.
+- **Fix outside the brief:** `readVisualViewportBox()` now takes the window-size fallback when
+  `window.visualViewport` is `undefined` (a browser without the API, and happy-dom), not only
+  when it is `null`. Before, the documented fallback threw in exactly the case it was for.
+
+---
+
+## 2026-10-21 · [P] Component-test harness shims (L72-06, L72-09)
+
+Source: `apps/client/src/test/render.tsx`, technical spec v7 §12.2, L72-06 review carry-overs.
+
+- **`globalThis.jest.advanceTimersByTime` (L72-06):** RTL's async drain advances fake clocks
+  only when it sees a global `jest`, so the harness installs one that calls
+  `vi.advanceTimersByTime`. Without it, user-event under fake timers never resolves. It relies
+  on Vitest's per-file isolation (each test file gets a fresh global scope), so
+  `test.isolate: false` must never be set.
+- **`IS_REACT_ACT_ENVIRONMENT` (L72-09):** RTL sets it in its own `beforeAll`, which never
+  registers because Vitest runs without globals, so React silently dropped its "not wrapped in
+  act(...)" warnings. The harness sets it to `true`. Turning it on surfaced no warning in the
+  existing suite. A warning is fixed in the test (await, or wrap in `act`), never by unsetting
+  the flag.
+- **`Animation.prototype.cancel` (L72-09):** happy-dom rejects `Animation.finished` on cancel
+  without marking the promise handled, so every motion animation interrupted by an unmount or
+  a new target failed the run with an unhandled AbortError. Browsers mark it handled (Web
+  Animations, "cancel an animation"); the harness wraps `cancel` on the class happy-dom's
+  `Element.animate` builds to do the same. `window.Animation` is a Vitest getter onto that
+  class, so it is patched, not replaced.
+- The shared `afterEach` also calls `vi.useRealTimers()`, so a test that forgets to restore
+  real timers cannot leak fake ones into the next test.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 sheet stack: blocking on top, one live sheet (L72-09 fix round 1)
+
+Source: `docs/technical_spec_v7.md` §6.7 (normative), WAI-ARIA Authoring Practices "Dialog
+(Modal)" pattern, three reviews of `316d4fa`; amends the "V7 sheet stack (L72-09)" entry above.
+
+- **Spec wins over the brief on collapsed bars (§6.7).** The brief put a caller-collapsed
+  read-only sheet (L74 targeting) in the bar group, so it painted at z 80 above an expanded
+  blocking sheet at 50 and was never inert. §6.7: blocking sub-choices "always sit on top; any
+  other open sheet ... is pushed underneath". Ruling: the bar group splits. Minimize bars of
+  blocking sheets keep the `sheetBar` layer, above everything. A collapsed read-only bar paints
+  on the `sheet` layer, above expanded read-only sheets and below expanded blocking sheets, and
+  is inert while one is expanded above it.
+- **One live sheet (WAI-ARIA modal dialog).** Every painted expanded sheet with another expanded
+  sheet above it is inert, read-only ones included (before: only under a blocking sheet, so a
+  lower aria-modal sheet stayed in the keyboard path). `liveSheetId` names the top expanded
+  sheet; only it holds the focus trap.
+- **Focus follows reachability.** The trap is active only for the live sheet and moves focus in
+  each time it becomes live. The opener is recorded when the sheet opens, kept across minimize
+  and cover, cleared on close. On close, focus goes to the opener only when it is reachable in
+  the new stack (page with no modal sheet painted, an uncovered bar, or the new live sheet),
+  else into the new live sheet, else up the opener chain; it never stays in a closing panel.
+  A reachable opener still under a stale `inert` is handed to the trap that activates around it.
+- **Esc during targeting (§6.6.5).** While the newest read-only sheet (by open order) is
+  collapsed, `escTargetId` is `null`: the Esc stays unhandled, so the L74 targeting handler can
+  cancel targeting instead of the sheet underneath closing.
+- **Exit guard.** Dismissal handlers check a live ref, and an exiting overlay or toast card
+  (`useIsPresent`, `ui/primitives/presence-layer.tsx`) is inert with `pointer-events: none`.
+- **Keyboard scroll.** An overflowing sheet body becomes a focusable region named by the title,
+  in the Tab cycle; initial focus still prefers the first control.
+- **Minors:** a press ending inside the panel no longer closes; the bar strip is click-through
+  outside the bar; the restore control has `aria-expanded="false"` and a chevron-up; both Toast
+  live regions stay mounted (empty) so polite toasts are announced; `ui/tokens.css` exempts V7
+  panels from the V2 `index.css` short-viewport `[role="dialog"]` padding rule until
+  `design/components/dialog.tsx` is deleted.
+- No brief assertion changed: the L72-09 pure and component tests still hold under the new
+  rules; new cases cover each change.
+
+---
+
+## 2026-10-21 · [P] V7 sheets absorb presses while they close (L72-09 fix round 2)
+
+Source: `docs/technical_spec_v7.md` §1 and `PRODUCT.md` ("an accidental tap never spends the
+turn"), §6.6.4 (commit rule); the L72-09 fix-round-2 review (three lenses reproduced the
+click-through in the browser). Amends the "Exit guard" bullet of the fix-round-1 entry above.
+
+- **Ruling: a press during a sheet's exit does nothing, whether or not another sheet remains
+  beneath.** Round 1 made the exiting overlay click-through, so a double tap on a backdrop or on
+  a picker's Confirm reached the page under the scrim (at 1440 it reopened the Dialog 9 ms
+  later) or closed the lower sheet too. Now the exiting overlay root stays hit-testable as a
+  no-op shield over the whole box (`aria-hidden`, handlers gated on `live`) and only its panel
+  turns `inert`. Cost: a deliberate press on the lower sheet within ~220 ms of the top one
+  closing is absorbed and has to be repeated.
+- **Collapse shield.** When a panel collapses to its bar (Minimize, L74 "Use" → targeting), the
+  overlay hides at once, so a no-op shield covers the box for `DUR_BASE_MS` (none under reduced
+  motion, where the panel does not animate). The bar appears immediately and paints above it.
+- **Toast stays click-through** while it fades: it covers a small area, and absorbing presses
+  there would block the dock less predictably.
+- **Opener chain.** A closing trap re-parents every other open trap whose opener sits inside its
+  container to its own opener, before any early return. The chain walk reaches a minimized sheet
+  through its bar. Minimize hands the blocking sheet's opener to the trap that becomes live, and
+  a manual Toast dismissal returns focus to the live sheet, else to the element focused before.
+- **Test change mandated by the ruling:** the fix-round-1 P9e test (exiting Kit overlay
+  click-through, `pointer-events: none`, inert) and the P9d assertion `pointerEvents === 'none'`
+  now assert the shield (hit-testable, `aria-hidden`, panel inert) and that the press does
+  nothing; a lower-sheet backdrop press works again once the exit completes.
+
+---
+
+## 2026-10-21 · [P] V7 press shields, scoped (L72-09 fix round 3)
+
+Source: the L72-09 fix-round-3 review; amends the fix-round-2 entry above (spec v7 §1, §6.6.4).
+
+- **Only the live sheet shields while it closes.** A covered sheet closing under the live one
+  (Card under a restored reward) stays inert and click-through, its z-index one below its last
+  value, so it never paints over or swallows presses meant for the live sheet.
+- **Transition window, both ways.** A real expanded → bar collapse and a bar → panel restore
+  raise a no-op shield over the box, bar included, for `DUR_BASE_MS` (none under reduced
+  motion), and Minimize and restore ignore presses in that window. A double tap on Minimize does
+  not re-expand, and a double tap on the restore bar does not re-minimize. A sheet that mounts
+  collapsed raises no shield.
+- **Tests:** three component tests that restore right after Minimize now wait for the window
+  (`afterTransition`) before the restore press: the brief's "minimizes a blocking sheet …
+  (Q59)", the Q59 flow and the Chat-message Minimize case. No assertion changed. The round-2 shield-before-bar DOM-order assertion now asserts
+  shield-after-bar, which the new rule requires.
 
 ---

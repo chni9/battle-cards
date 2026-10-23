@@ -18,7 +18,7 @@ import {
   CardChoiceTile,
   HIDDEN_CARD_CAPTION,
 } from '../../../design/components/card-choice-tile';
-import { nicknameOf } from '../table-helpers';
+import { nicknameOf } from '../../../view-model/table-helpers';
 
 export interface StealPickPanelProps {
   subChoice: StealPickChoiceRequiredPayload;

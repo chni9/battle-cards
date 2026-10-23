@@ -4,7 +4,7 @@
  * L51-16 — public `livesLost` is already on the log; this does not invent totals.
  */
 
-import type { ResourceKind } from '../design/asset-lookup';
+import type { ResourceKind } from '../ui/asset-lookup';
 
 export type ResourceFlowFlashListener = (delta: number) => void;
 
