@@ -145,7 +145,16 @@
       linear-gradient(to bottom, var(--bg-1), var(--bg-0));
     color: var(--text);
   }
+
+  /* L72-12 — upgraded holo sheen, a translated layer (spec v7 §5.4, §8.2). */
+  .v7-card-sheen { animation: v7-card-sheen 3.2s var(--ease-entrance) infinite; }
 }
+
+@keyframes v7-card-sheen {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  40%, 100% { transform: translateX(300%) skewX(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) { .v7-card-sheen { animation: none; } }
 
 /*
  * V7 sheet panels opt out of the V2 short-viewport dialog rule in index.css,

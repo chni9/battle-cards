@@ -732,6 +732,70 @@ sign-off of the contact sheet is pending (L72-21).
   `effect` / `upgrade` on CardEffectCopy rows.
 - **Gallery:** `/dev/ui` section `text`.
 
+## Card (ui/card)
+
+The V7 card is `<Card>` in `ui/card/card.tsx`. Classic screens keep `design/components/card.tsx`. Catalog strings are not printed on the face; effect copy stays in `CardEffectCopy`.
+
+```tsx
+<Card
+  size="hand" | "lifted" | "sheet" | "thumb" | "tile"
+  instance={CardInstance}
+  damageMultiplier?
+  counter?={{ kind: 'card-lives' | 'turns', amount }}
+  selected?
+  unplayable?
+  onActivate?={(instanceId) => …}
+  dataAttributes?
+/>
+<Card face="hidden" family={CardType} size … onActivate?={() => …} />
+```
+
+The accessible name is `cardFaceLabel` (name, ` upgraded`, `, N damage`, counter label) or `Hidden card`. The caller sets `unplayable` and `counter`. A press is a `<button type="button">` only when `onActivate` is set; otherwise the root is an `<article>` with no `aria-pressed`.
+
+- **Widths** (aspect 2/3; landscape-compact height comes from L75 through `className`):
+  hand `clamp(64px, 19vw, 120px)`, lifted `clamp(80px, 24vw, 150px)`,
+  sheet `clamp(200px, 56vw, 240px)`, thumb `44px` (`w-11`, the touch target),
+  tile `clamp(88px, 26vw, 128px)`.
+- **Rim, face, shadow:** the root padding is `--card-rim-width`, the radius `--card-radius`,
+  the shadow `--card-shadow`. Attacks and actions take `--card-rim-holo`; specials take
+  `--card-rim-gold`. The face is `--card-face-0` → `--card-face-1`.
+- **Chips:** cost is `--panel-2` → `--panel` with `--text`, through `CostAmount` and
+  `title={null}` so the card keeps its own name. Damage is the number only, `aria-hidden`,
+  on `--life` with `--text-on-cta` (5.79:1, AA). Hand and thumb stack both chips on the left;
+  lifted, sheet and tile put cost top-left and damage top-right. Cost icon size is `sm` /
+  `md` / `lg` for hand+thumb / lifted+tile / sheet. Damage type is micro / caption / title
+  on the same split, with sheet at title.
+- **Name:** Fredoka (`font-v7-card`), on `--text-on-card`. Micro at hand, caption at lifted
+  and tile, body at sheet. Thumb shows no visible name; the name stays in the accessible
+  name, as on the V2 art-only thumb.
+- **Upgraded:** a sheen layer of `--card-rim-holo` at 20% overlay, and a gold `+` badge
+  (`--card-rim-gold`, `--text-on-cta`). Full motion adds a white sweep,
+  `.v7-card-sheen` in `ui/tokens.css` (a translate, 3.2s, `--ease-entrance`).
+- **Counter:** only when `counter` is set. Glow is `--cta-2` at 60% with `blur-md`; full
+  motion adds Tailwind `animate-pulse` (opacity only). The badge is Icon `life` for card
+  lives and Icon `clock` for turns, plus the amount. Active persistents with no counter
+  (Curse, combat Shield) get no glow.
+- **Selected:** `outline` `--cta`, 3px, offset 2. Full motion also lifts
+  `-translate-y-2 scale-105` over `--dur-base` on `--ease-entrance`.
+- **Unplayable:** `saturate-30`, never grayscale. The face stays activatable.
+- **Hidden:** verso `--panel-2` → `--panel` and a CSS diamond: attack `--glow-a`, action
+  `--glow-b`, special `--card-rim-gold`. No name, no art, no card id.
+- **Motion and the long-press guard:** `data-motion` is `full` or `reduced` from
+  `usePrefersReducedMotion()`. Reduced motion drops the sheen sweep, the pulse and the
+  lift, and keeps every badge. The root always prevents `contextmenu`, and carries
+  `select-none` and no iOS callout. Button focus is a `--text` outline.
+- **Art:** only `artFor(cardId)`, the base drawing. Upgraded, activated and active looks
+  are code states. Sentence and Shield never pick activated art; Roulette uses its base
+  drawing.
+- **Anchors the component sets:** `data-card-face` (`up` | `hidden`), `data-card-size`,
+  `data-card-rim` (`holo` | `gold`), `data-motion` (`full` | `reduced`), `data-card-family`
+  (hidden only), `data-card-id` and `data-instance-id` (face up only), `data-unplayable`
+  when the caller sets it, `data-card-chips` (`left-stack` | `corners`), `data-card-chip`
+  (`cost` | `damage`), `data-cost-kind`, `data-card-name`, `data-card-badge` (`upgraded`),
+  `data-card-counter` (`card-lives` | `turns`), `data-card-layer` (`glow` | `face` | `sheen`
+  | `sheen-sweep` | `verso`). Caller `dataAttributes` spread first, so these win.
+- **Gallery:** `/dev/ui` section `card`.
+
 ## Do's and Don'ts
 
 ### Do:

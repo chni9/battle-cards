@@ -153,6 +153,15 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.
 
+### Card (`ui/card/`, L72-12)
+
+- It is the only V7 card renderer. `design/components/card.tsx` stays for the classic screens.
+- Art comes only from `artFor`, so the Sentence/Shield guard holds and Roulette uses its base drawing.
+- The context menu is prevented, with `select-none` and no iOS callout.
+- Damage comes from `cardDamageChip` and the accessible name from `cardFaceLabel`.
+- The caller sets `unplayable` and `counter`. The glow and badge follow `counter`.
+- Tests assert `data-motion`, the anchors and the classes, because happy-dom has no media queries.
+
 ### V7 primitives (L72-08)
 
 - **Imports:** one file per primitive in `ui/primitives/` (`button`, `icon-button`, `pill`,
