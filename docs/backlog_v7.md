@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 9 |
+| 72 · Foundations | 21 | 10 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **9** |
+| **Total** | **134** | **10** |
 
 ## Designer questions still open
 
@@ -57,7 +57,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-07 | **Add the SVG icon set.** **Acceptance:** Every §5.6 icon name renders a non-empty `<svg>` that is `aria-hidden` by default, icon-only controls built from them carry an `aria-label` / `title` (L59-01), no emoji remains in `ui/`, and the set appears in the `/dev/ui` gallery once it exists. `DESIGN.md` lists the set. `pnpm verify` green. | M | Low | L72-06 | Done |
 | L72-08 | **Build arcade chrome primitives.** **Acceptance:** happy-dom tests for each primitive: roles and states (`aria-checked` radios, `aria-pressed`, `aria-selected`, arrow keys in the tablist); disabled blocks the handler; Slider calls `onCommit` exactly once on release and never while dragging or keying; Pill renders `?` and "{label} unknown"; Avatar alt and initial fallback; Tooltip opens on focus and closes on Esc; reduced motion drops the press animation. `pnpm verify` green. | L | Medium | L72-04, L72-05, L72-06, L72-07 | Done |
 | L72-09 | **Build Sheet, Dialog and Toast with the stack contract.** **Acceptance:** happy-dom tests: with two read-only sheets, Esc closes only the top one. A blocking sheet over a read-only one ignores Esc and backdrop. Minimize collapses it to a bar rendered above the others, and the bar restores it. Focus enters on open and returns on close. Tab wraps. A press inside the panel does not close it. Toast calls `onDismiss` once on manual close, once on timeout (fake timers), and never on rerender. Reduced motion renders no transform. Swipe and phone/desktop placement are checked in the L72 gate. `pnpm verify` green. | L | **High** | L72-08 | Done |
-| L72-10 | **Extract card and kit art with a contact sheet.** **Acceptance:** `artFor` test: every `ALL_ART_CARD_IDS` and `KIT_IDS` entry resolves to `art/{cards,kits}/<id>.png`, and no resolved URL matches `(dead)`, `Draw.png` or `button`. The existing `asset-lookup.test.ts` assertions are unchanged and green. The script typechecks and lints. The contact sheet is attached to the PR. The Docker build stage still installs. Deps go through `pnpm add -D`. `pnpm verify` green. | L | **High** | L72-06 | To do |
+| L72-10 | **Extract card and kit art with a contact sheet.** **Acceptance:** `artFor` test: every `ALL_ART_CARD_IDS` and `KIT_IDS` entry resolves to `art/{cards,kits}/<id>.png`, and no resolved URL matches `(dead)`, `Draw.png` or `button`. The existing `asset-lookup.test.ts` assertions are unchanged and green. The script typechecks and lints. The contact sheet is attached to the PR. The Docker build stage still installs. Deps go through `pnpm add -D`. `pnpm verify` green. | L | **High** | L72-06 | Done |
 | L72-11 | **Rebuild cost glyphs and effect copy in ui/.** **Acceptance:** happy-dom behavior tests that assert today's card-effect-copy and cost-display outcomes: - base vs upgraded blocks - the Cost row is omitted when there is no cost - Regeneration per-life rates - "4 lives", "3 points", "2 upgrade points" and "4 shield points" render as icon + number with spoken text - `title={null}` removes the tooltip  The old source-text tests stay untouched. `pnpm verify` green. | M | Low | L72-04, L72-05, L72-06, L72-07, L72-08 | To do |
 | L72-12 | **Build the holo Card component.** **Acceptance:** happy-dom tests: - The damage chip equals catalog damage × multiplier for each attack, base and upgraded, and is absent on Tax, Absorber and Super Mirror (L56-04). - Cost chip kinds: points, Tax life, Regeneration per-life (base and upgraded rate). - Upgraded shows the badge and an accessible "upgraded". - Counter labels, including the singulars. - A hidden face exposes neither name nor art. - `contextmenu` default is prevented. - Click and Enter call back with the instance id. - The hand size renders no effect text. - Reduced motion removes the animated sheen and pulse.  `pnpm verify` green. | L | Medium | L72-04, L72-05, L72-07, L72-08, L72-10, L72-11 | To do |
 | L72-13 | **Correct outdated catalog text (§10.5).** **Acceptance:** The catalog strings match §10.5, their tests pin the new text, and the old table inspect shows it. The V7 What's new entry exists and the latest-id tests pass. PR lists the strings for designer review. `pnpm verify` green. | S | Low | L72-01 | To do |

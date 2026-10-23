@@ -699,6 +699,15 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   scales from 0.98, with opacity, over `--dur-base` on the entrance ease; the toast drops 12px.
   Under reduced motion all three only fade.
 
+## Illustrations
+
+Existing drawings only. `art/{cards,kits}/<id>.png` holds 31 cards (including Roulette) and
+16 kits (including Gambler): transparent, trimmed, at native resolution, resolved by
+`artFor(id)`. There is no activated art (card states, spec v7 §5.4). Enclosed regions of the
+old ground stay (spec v7 §5.5): Untouchable's lenses and Cloning's stripes. No number printed
+on a PNG is authoritative — kit stats and card values come from the catalogs. Designer
+sign-off of the contact sheet is pending (L72-21).
+
 ## Do's and Don'ts
 
 ### Do:
