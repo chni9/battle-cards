@@ -708,6 +708,29 @@ old ground stay (spec v7 §5.5): Untouchable's lenses and Cloning's stripes. No 
 on a PNG is authoritative — kit stats and card values come from the catalogs. Designer
 sign-off of the contact sheet is pending (L72-21).
 
+## Cost glyphs and effect copy (L72-11)
+
+`ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx`,
+`ui/text/card-effect-copy.tsx`. Catalog strings are not rewritten.
+
+- **Icon map:** points and pointsPerLife → `point`; lives → `life`; upgradePoint → `upgrade`;
+  shield → `shield`. Tokenizer kinds (`point`, `life`, `upgradePoint`, `shield`) become those
+  amounts through `glyphAmountFromResource`.
+- **CostAmount anatomy:** optional `{m}×`, then `−` / `+`, then the number, then the icon.
+  A per-life rate is `N [point] / [life]` (two icons). Spoken text is an `sr-only` span;
+  the default `title` is that spoken string. `title={null}` removes the tooltip so a parent
+  control keeps its own name (L59-01). `size` is icon px only (`sm` 14, `md` 16, `lg` 20);
+  font family and size come from the parent.
+- **EffectTextWithIcons:** no sign on inlined amounts. `instead of` stays visible prose.
+  Damage, turn counts and card lives stay plain text.
+- **CardEffectCopy:** Cost row, then effect, then for a base card the Upgrade block. The
+  wrapper sits on `--panel` utilities; the Upgrade row is `--panel-2` with the dash in
+  `--text-2`. There is no Cost row when the card has no play cost, and no effect paragraph
+  when that string is empty.
+- **DOM hooks:** `data-glyph-icon` on every CostAmount root; `data-effect-part` `cost` /
+  `effect` / `upgrade` on CardEffectCopy rows.
+- **Gallery:** `/dev/ui` section `text`.
+
 ## Do's and Don'ts
 
 ### Do:

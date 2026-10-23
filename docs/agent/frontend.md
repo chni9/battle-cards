@@ -142,6 +142,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   Printed values are never authoritative. The contact sheet goes on the lot PR. Old screens
   keep `getCardArtUrl` / `getKitPortraitUrl` until L72-21. A new card or kit is a map entry,
   a PNG, and a rerun of the script.
+- **Cost glyphs and effect copy (L72-11):** `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`,
+  `ui/text/effect-text-with-icons.tsx`, `ui/text/card-effect-copy.tsx`. `title={null}` drops the
+  tooltip (L59-01). `signed` is pay/receive; `multiplier` prefixes `{m}×`. Shield phrases now
+  speak "N shield points"; V2's inline glyph spoke only the number. The V2
+  `design/components` CostDisplay, EffectTextWithIcons and CardEffectCopy stay until L75/L76.
 - **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.
@@ -721,7 +726,7 @@ rules above are unchanged — this section only covers how the client looks.
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
     Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
     red (L64-05); Sell is green (gain); Buy / Upgrade stay
-    orange (pay).
+    orange (pay). V7 equivalent: `ui/card/cost-amount.tsx` (L72-11).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `view-model/incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
