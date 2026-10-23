@@ -24,7 +24,7 @@ export function EffectTextWithIcons({ text, iconSize = 'md' }: EffectTextWithIco
     }
     nodes.push(
       <span key={`res-${String(index)}`} className="inline-flex items-center whitespace-nowrap">
-        {span.insteadOf ? <span>instead of </span> : null}
+        {span.insteadOf ? <span className="whitespace-pre">instead of </span> : null}
         <CostAmount amount={glyphAmountFromResource(span.kind, span.amount)} size={iconSize} />
       </span>,
     );

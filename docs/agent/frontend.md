@@ -145,8 +145,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Cost glyphs and effect copy (L72-11):** `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`,
   `ui/text/effect-text-with-icons.tsx`, `ui/text/card-effect-copy.tsx`. `title={null}` drops the
   tooltip (L59-01). `signed` is pay/receive; `multiplier` prefixes `{m}×`. Shield phrases now
-  speak "N shield points"; V2's inline glyph spoke only the number. The V2
-  `design/components` CostDisplay, EffectTextWithIcons and CardEffectCopy stay until L75/L76.
+  speak "N shield points"; V2's inline glyph spoke only the number. The `instead of ` prefix
+  before a glyph uses `whitespace-pre` so the trailing space keeps width inside `inline-flex`.
+  The V2 `design/components` CostDisplay, EffectTextWithIcons and CardEffectCopy stay until
+  L75/L76.
 - **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
   `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
   committed. Any other finding is fixed, not ignored.

@@ -721,8 +721,9 @@ sign-off of the contact sheet is pending (L72-21).
   the default `title` is that spoken string. `title={null}` removes the tooltip so a parent
   control keeps its own name (L59-01). `size` is icon px only (`sm` 14, `md` 16, `lg` 20);
   font family and size come from the parent.
-- **EffectTextWithIcons:** no sign on inlined amounts. `instead of` stays visible prose.
-  Damage, turn counts and card lives stay plain text.
+- **EffectTextWithIcons:** no sign on inlined amounts. `instead of` stays visible prose;
+  the trailing space uses `whitespace-pre` so it cannot collapse against the glyph inside
+  `inline-flex`. Damage, turn counts and card lives stay plain text.
 - **CardEffectCopy:** Cost row, then effect, then for a base card the Upgrade block. The
   wrapper sits on `--panel` utilities; the Upgrade row is `--panel-2` with the dash in
   `--text-2`. There is no Cost row when the card has no play cost, and no effect paragraph

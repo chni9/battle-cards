@@ -34,7 +34,11 @@ describe('EffectTextWithIcons (L72-11)', () => {
   });
   it('keeps "instead of " visible before the previous resource glyph', () => {
     expectGlyphs(S.regeneration.upgradeAdds, 'Lives cost 2 each instead of 3.', ['2 pts', '3 pts'], ['point', 'point']);
-    expect(screen.getByText('instead of').closest('[aria-hidden="true"]')).toBeNull();
+    const instead = screen.getByText('instead of');
+    expect(instead.closest('[aria-hidden="true"]')).toBeNull();
+    // Trailing space must stay in the DOM (visibleText) and keep width inside inline-flex.
+    expect(instead.textContent).toBe('instead of ');
+    expect(instead.classList.contains('whitespace-pre')).toBe(true);
   });
   it('leaves damage, turn counts and card lives as plain prose', () => {
     for (const text of [S['basic-attack'].upgradeAdds, X.block.upgradeAdds, X.roulette.effect, X['mega-attack'].effect]) {
