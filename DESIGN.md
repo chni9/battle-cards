@@ -408,6 +408,30 @@ components render them.
   glyph at 32px with its name, and `help` and `coach` labelled side by side (Q45).
 - The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75.
 
+## Illustrations
+
+The existing drawings only, never new art (spec v7 §5.5).
+
+- **Files:** `apps/client/src/assets/art/cards/<cardId>.png` (31 base cards, Roulette
+  included) and `apps/client/src/assets/art/kits/<kitId>.png` (16 kits, Gambler included):
+  transparent, trimmed to the drawing, at the source's native resolution. They are generated
+  by `scripts/extract-art.ts` from the base drawings in `images/` and never hand-edited.
+- **Lookup:** `artFor(id)` (`ui/asset-lookup.ts`), for a card or a kit. It never throws; a
+  missing drawing falls back to the family verso, then to a transparent pixel.
+- **No activated art:** upgraded, activated and active looks are Card code states (§5.4).
+  Roulette uses its base drawing.
+- **No printed value:** the frame, the header row, the extra printed rows, the kit stat column
+  and Super Mirror's corner badge are removed. Every number on a card or kit comes from the
+  catalogs.
+- **Old ground stays where it is enclosed:** the ground is removed by edge flood-fill only, so
+  a region of card or kit ground that the drawing encloses keeps its color (§5.5). Examples:
+  Block's disc, Untouchable's lenses, Cloning's stripes, Mirror's hanger triangle, the
+  diamond between Strong attack's guards, Specialist's gear hole, the MEGA ATTACK nose and the
+  crescent under Reanimation's shoulders. Edge pixels keep their anti-aliasing, a 1 px blend
+  with the old ground.
+- **Sign-off pending:** the designer signs the before/after contact sheet on the Lot 72 PR
+  (L72-21) before any screen stops using the old PNGs.
+
 ## Components
 
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.

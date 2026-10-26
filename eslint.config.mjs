@@ -52,6 +52,12 @@ export default tseslint.config(
   },
 
   {
+    // One-off Node scripts (art extraction, technical spec v7 §5.5).
+    files: ['apps/client/scripts/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+
+  {
     files: ['apps/client/src/view-model/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', {

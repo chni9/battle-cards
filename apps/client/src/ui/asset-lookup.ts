@@ -6,135 +6,22 @@
  *
  * Activated art: pass `activated: true` only for cards currently in
  * `activePersistentEffects` (and Block's consecutive-turn window when surfaced).
+ *
+ * V7 `artFor` (technical spec v7 §5.5, L72-10): the extracted base drawings under
+ * `assets/art/{cards,kits}/`, never activated art, and it never throws.
  */
 
 import {
   ACTION_CARD_IDS,
   ATTACK_CARD_IDS,
   SPECIAL_CARD_IDS,
+  getCard,
+  isKitId,
   type CardId,
-  type CardType,
   type KitId,
 } from '@card-battle/shared';
 
-type ResourceKind = 'life' | 'point' | 'shield' | 'upgradePoint';
-
-type CardBackKind = CardType | 'kit';
-
-interface CardArtFiles {
-  base: string;
-  upgraded: string;
-  activatedBase?: string;
-  activatedUpgraded?: string;
-}
-
-/** Filename map — single source of truth matching technical spec v2 §4 / v4. */
-const KIT_FILES = {
-  untouchable: 'Untouchable.png',
-  kamikaze: 'Kamikaze.png',
-  scientific: 'Scientist.png',
-  assassin: 'Assassin.png',
-  upgrader: 'Upgrader.png',
-  tactician: 'Tactician.png',
-  indestructible: 'Indestructible.png',
-  prophet: 'Prophet.png',
-  specialist: 'Specialist.png',
-  witch: 'Witch.png',
-  warrior: 'Warrior.png',
-  wizard: 'Magician.png',
-  juggernaut: 'Juggernaut.png',
-  ghost: 'Ghost.png',
-  duplicator: 'Duplicator.png',
-  gambler: 'Gambler.png',
-} as const satisfies Record<KitId, string>;
-
-const CARD_FILES = {
-  'basic-attack': { base: 'Basic attack.png', upgraded: 'Basic attack +.png' },
-  'strong-attack': { base: 'Strong attack.png', upgraded: 'Strong attack +.png' },
-  'super-attack': { base: 'Super attack.png', upgraded: 'Super attack +.png' },
-  spy: { base: 'Spy.png', upgraded: 'Spy +.png' },
-  thief: { base: 'Thief.png', upgraded: 'Thief +.png' },
-  mirror: { base: 'Mirror.png', upgraded: 'Mirror +.png' },
-  shield: { base: 'Shield.png', upgraded: 'Shield +.png' },
-  tax: { base: 'Tax.png', upgraded: 'Tax +.png' },
-  regeneration: { base: 'Regeneration.png', upgraded: 'Regeneration +.png' },
-  absorber: { base: 'Absorption.png', upgraded: 'Absorption +.png' },
-  suicide: { base: 'Suicide.png', upgraded: 'Suicide +.png' },
-  'spy-thief': { base: 'Spy-Thief.png', upgraded: 'Spy-Thief +.png' },
-  imposition: {
-    base: 'Imposition.png',
-    upgraded: 'Imposition +.png',
-    activatedBase: 'Imposition (activated).png',
-    activatedUpgraded: 'Imposition + (activated).png',
-  },
-  cloning: { base: 'Cloning.png', upgraded: 'Cloning +.png' },
-  sentence: { base: 'Sentence.png', upgraded: 'Sentence +.png' },
-  'points-generator': {
-    base: 'Generator.png',
-    upgraded: 'Generator +.png',
-    activatedBase: 'Generator (activated).png',
-    activatedUpgraded: 'Generator + (activated).png',
-  },
-  'upgrade-point-thief': {
-    base: 'Upgrade Point Thief.png',
-    upgraded: 'Upgrade Point Thief +.png',
-  },
-  block: {
-    base: 'Block.png',
-    upgraded: 'Block +.png',
-    activatedBase: 'Block (activated).png',
-    activatedUpgraded: 'Block + (activated).png',
-  },
-  'super-regeneration': {
-    base: 'Super Regeneration.png',
-    upgraded: 'Super Regeneration +.png',
-  },
-  'card-thief': { base: 'Card Thief.png', upgraded: 'Card Thief +.png' },
-  'card-transformer': {
-    base: 'Card Transformer.png',
-    upgraded: 'Card Transformer +.png',
-  },
-  invisibility: {
-    base: 'Invisibility.png',
-    upgraded: 'Invisibility +.png',
-    activatedBase: 'Invisibility (activated).png',
-    activatedUpgraded: 'Invisibility + (activated).png',
-  },
-  reanimation: {
-    base: 'Reanimation.png',
-    upgraded: 'Reanimation +.png',
-    activatedBase: 'Reanimation (activated).png',
-    activatedUpgraded: 'Reanimation + (activated).png',
-  },
-  'card-absorber': { base: 'Card Absorber.png', upgraded: 'Card Absorber +.png' },
-  'mega-attack': { base: 'MEGA ATTACK.png', upgraded: 'MEGA ATTACK +.png' },
-  'super-mirror': { base: 'Super Mirror.png', upgraded: 'Super Mirror +.png' },
-  'super-absorber': {
-    base: 'Super Absorber.png',
-    upgraded: 'Super Absorber +.png',
-    activatedBase: 'Super Absorber (activated).png',
-    activatedUpgraded: 'Super Absorber + (activated).png',
-  },
-  curse: {
-    base: 'Curse.png',
-    upgraded: 'Curse +.png',
-    activatedBase: 'Curse (activated).png',
-    activatedUpgraded: 'Curse + (activated).png',
-  },
-  poison: {
-    base: 'Poison.png',
-    upgraded: 'Poison +.png',
-    activatedBase: 'Poison (activated).png',
-    activatedUpgraded: 'Poison + (activated).png',
-  },
-  'attack-thief': { base: 'Attack Thief.png', upgraded: 'Attack Thief +.png' },
-  roulette: {
-    base: 'Roulette.png',
-    upgraded: 'Roulette +.png',
-    activatedBase: 'Roulette (activated).png',
-    activatedUpgraded: 'Roulette + (activated).png',
-  },
-} as const satisfies Record<CardId, CardArtFiles>;
+import { BACK_FILES, CARD_FILES, KIT_FILES, RESOURCE_FILES, type CardBackKind, type ResourceKind } from './asset-files';
 
 /** Every playable card id with shipped art (3 attack + 7 action + 21 special). */
 export const ALL_ART_CARD_IDS: readonly CardId[] = [
@@ -154,20 +41,6 @@ const CARDS_WITH_ACTIVATED_ART = [
   'poison',
   'roulette',
 ] as const satisfies readonly CardId[];
-
-const RESOURCE_FILES = {
-  life: 'life.png',
-  point: 'point.png',
-  shield: 'shield_point.png',
-  upgradePoint: 'upgrade_point.png',
-} as const satisfies Record<ResourceKind, string>;
-
-const BACK_FILES = {
-  attack: 'verso attack card.png',
-  action: 'verso action card.png',
-  special: 'verso_special_card.png',
-  kit: 'verso kit.png',
-} as const satisfies Record<CardBackKind, string>;
 
 const kitModules = import.meta.glob<string>('../assets/kits/*.png', {
   eager: true,
@@ -192,6 +65,17 @@ const backModules = import.meta.glob<string>('../assets/backs/*.png', {
   query: '?url',
   import: 'default',
 });
+
+/** Extracted base drawings, generated by `scripts/extract-art.ts` (technical spec v7 §5.5). */
+const artModules = import.meta.glob<string>('../assets/art/{cards,kits}/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+
+/** Transparent 1×1 SVG: the last fallback, so a missing drawing never blanks a screen. */
+export const ART_FALLBACK_URL =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='1'%20height='1'%2F%3E";
 
 function urlFromGlob(modules: Record<string, string>, fileName: string, folder: string): string {
   const suffix = `/${folder}/${fileName}`;
@@ -237,6 +121,25 @@ export function getResourceIconUrl(kind: ResourceKind): string {
 
 export function getCardBackUrl(type: CardBackKind): string {
   return urlFromGlob(backModules, BACK_FILES[type], 'backs');
+}
+
+/**
+ * The base drawing of a card or kit — technical spec v7 §5.5 (L72-10). Upgraded, activated
+ * and active looks are Card code states (§5.4), so this never resolves activated art.
+ * Never throws: a missing drawing falls back to the family verso (the kit verso for a kit),
+ * then to `ART_FALLBACK_URL`; an id the catalog does not know goes straight to the latter.
+ */
+export function artFor(id: CardId | KitId): string {
+  const kit = isKitId(id);
+  const drawing = artModules[`../assets/art/${kit ? 'kits' : 'cards'}/${id}.png`];
+  if (drawing !== undefined) return drawing;
+  try {
+    if (kit) return getCardBackUrl('kit');
+    const card = getCard(id);
+    return card === undefined ? ART_FALLBACK_URL : getCardBackUrl(card.type);
+  } catch {
+    return ART_FALLBACK_URL;
+  }
 }
 
 export function getAttackLogoUrl(): string {
