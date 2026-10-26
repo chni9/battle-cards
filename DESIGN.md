@@ -449,7 +449,8 @@ Each `ui/` component adds its section here, or in its own `##` section, in the s
 The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
 Sheet, Dialog and Toast in Overlays, the L72-11 cost glyph and effect copy in Cost glyphs
 and effect copy, the L72-12 holo card in Card, the L72-14 chat in Chat, the L72-15 kit
-portrait and kit details in Kit, and the L72-16 table rules strip and sheet in Rules.
+portrait and kit details in Kit, the L72-16 table rules strip and sheet in Rules, and the
+L72-17 coach panel in Coach panel.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -1087,6 +1088,68 @@ editor stay until L76.
   `RulesSheet` directly.
 - **Gallery:** the `/dev/ui` section `rules` (`ui/rules/rules.gallery.tsx`): the default rules,
   Random only with three kits excluded and 45 s, a 300 s server default, and one allowed kit.
+
+## Coach panel — ui/coach/ (L72-17)
+
+`ui/coach/coach-panel.tsx` and `coach.gallery.tsx` (spec v7 §4.2, §6.12, §8.3; Appendix A
+`table-tutorial-coach`, `table-first-game-hints`, `first-game-hint-host`, `tutorial-overlays`).
+`<CoachPanel title body zone onHide hideAriaLabel footer? extraAttrs? compact? />` and
+`<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props. That file,
+`screens/table/tutorial-coach.tsx`, `help/hint-overlay.tsx` and the `.tutorial-coach-panel` CSS
+stay until L75, which hosts the new panel.
+
+- **Element:** a hovering `<aside>` named by its title (`aria-labelledby` the `<h2>`, so it is a
+  named complementary landmark). It is never a dialog or modal: no `role`, no `aria-modal`, no
+  focus move, no key handling, so Esc stays with the sheet stack (Q49) and the table stays
+  clickable around it. Hosts position it (L75); the panel has no `className`.
+- **Values:** the shape is the chrome outline (`--chrome-outline-width`, `--ink`) with the hard
+  `--chrome-shadow`, `overflow-hidden`, text `--text`. Default: radius `--chrome-radius`
+  (12px), `--panel` at 90% (V6: 78%) with a 6px backdrop blur, max height `min(52vh, 28rem)`. Compact (the
+  first-game hint): radius `--chrome-radius-sm` (10px), `--panel` at 72% (V6: 46%) with a 10px
+  blur, max height `min(32vh, 12rem)`. The header is `--panel-2` with a 2px `--ink` rule under it (padding
+  `px-3 py-2`, compact `px-2 py-1`): the title in Lilita One 20px (compact 14px), then the
+  close control. The body is a `ScrollArea` in Nunito 700, 14px with line height 1.625
+  (compact 12px, 1.375). The footer slot, only when given, has a 2px `--ink` rule above it and
+  stacks in a column (compact: a row), with `px-3 py-2` (compact `px-2 py-1.5`).
+- **Why 72% is the floor:** the compact card hovers over any table content, white card faces
+  included. `--text` over a white card face is 5.74:1 at 72% (6.12:1 over `#f1edff`) and 10.66:1
+  at 90%. V6's 46% gave 2.55:1. `--text-2` is only 4.09:1 over white at 72%, so body text takes
+  `--text` and never `--text-2`. Over the lightest backdrop, a white card face (composite
+  `#5e5981`), the resource icons stay at least 26.7 CIEDE2000 from their bodies (the shield is
+  the nearest), above the bound of 20 in Icons › Accessibility and use, so the amounts need no
+  well.
+- **Amounts:** the body goes through `parseCoachBody` (`**bold**` becomes `<strong>`, the markers
+  are dropped). A numbered resource ("1 life", "+4 points", "2 upgrade points", "3 shield
+  points") is a `CostAmount` at `md` (16px icon, `signed="gain"` when the copy wrote a `+`),
+  which speaks "1 life", "plus 4 pts", "2 upgrade points", "3 shield points". A bare resource
+  word ("lives", "points", "Shield") keeps its word and gains a decorative `RESOURCE_ICON` (16px,
+  `aria-hidden`) after it. Each is wrapped in `span[data-coach-resource="life" | "point" |
+  "upgradePoint" | "shield"]`, not the preserved `data-resource-kind`, so the FX and flyout
+  selectors never match prose. Numbers and words take the body color (`--text`), never a
+  resource color (§5.1). `parseCoachBody` matches the word "live" too, so the tour step "Your
+  zone" ("resources live here") shows a life icon after that verb; the copy and the parser are
+  unchanged here.
+- **Controls:** a 44px quiet `IconButton` (`close`, never a `×` character) named by the caller's
+  `hideAriaLabel` ("Hide coach"), in both variants (V6's compact used 32px). There is no Skip:
+  Skip lives on the table flag (Lot 45), and the first-game hint host puts "Got it" and
+  "Skip all" in the footer slot. The body is a labelled scroll region named by the title
+  (`tabIndex` 0, inset focus ring, since the rounded root clips an outer one), because the
+  capped panel can overflow; Tab runs close control, body, footer.
+- **Entrance:** opacity 0 to 1, y −8px to 0 and scale 0.96 to 1, over `--dur-base` on
+  `--ease-entrance` (V6's `tutorial-coach-in`). Under reduced motion the panel renders at rest,
+  with no transform and no fade, and `data-motion="reduced"` says so. A host that changes the
+  message remounts the panel with a `key`, which replays the entrance.
+- **Anchors:** `data-zone` (`tutorial-coach`, `first-game-hint`), the caller's `extraAttrs`
+  (`data-tutorial-index`, `data-tutorial-coach-open`, `data-hint-id`) and `data-motion`, which
+  `extraAttrs` cannot override.
+- **Known limit:** at 375×812 the compact card with Got it and Skip all keeps at most 74px for the
+  body (three full lines of 12px and part of a fourth, because the 44px floors take 118px of
+  its 192px cap), so the hints "resources", "incoming" and "incoming-thief" need scrolling
+  inside it. At 844×390 the 32vh cap (125px) leaves 12px. The default card at 844×390 keeps
+  73px. Caps and placement are L75's call.
+- **Gallery:** the `/dev/ui` section `coach` (`ui/coach/coach.gallery.tsx`): the Tax tutorial
+  coach with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the
+  compact Draw hint with Got it and Skip all, all from the real shared copy.
 
 ## Do's and Don'ts
 

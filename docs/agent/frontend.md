@@ -517,6 +517,45 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `rules` (`ui/rules/rules.gallery.tsx`, DEV only): default, Random only
   with three kits excluded, a 300 s server default and one allowed kit.
 
+### Coach panel (`ui/coach/`, L72-17)
+
+- **`ui/coach/coach-panel.tsx`** provides `CoachPanel` and `CoachBody` (L72-17), with the props of
+  `design/components/coach-panel.tsx` (`title`, `body`, `zone`, `onHide`, `hideAriaLabel`,
+  `footer?`, `extraAttrs?`, `compact?`). It is the L75 drop-in for `screens/table/tutorial-coach.tsx`
+  and `help/hint-overlay.tsx`, which keep the V6 panel, its `.tutorial-coach-panel` CSS and
+  their source-text tests (`tutorial-callout.test.ts`, `hint-overlay.test.ts`) until then. It is
+  not a dialog (no `role`, no `aria-modal`, no focus move, no key handling, so Esc stays with the
+  sheet stack) and has no Skip: Skip stays on the table flag (Lot 45), and the hint host passes
+  "Got it" and "Skip all" as `footer`. The caller passes the hide label (`HIDE_COACH_ARIA_LABEL`).
+  The body goes through `parseCoachBody` into `CostAmount` (numbered amounts) and `Icon` (a
+  decorative `RESOURCE_ICON` after a bare word). `compact` has a 72% `--panel` floor, which keeps
+  `--text` at 5.7:1 or better over a white card face (V6's 46% was 2.6:1). Copy comes only from
+  the shared tutorial and hint copy (`tutorialStepAt`, `HINT_COPY`); the panel invents none.
+  Details: `/DESIGN.md` › Coach panel.
+- **Anchors:** the root keeps `data-zone` and the caller's `extraAttrs`, then `data-motion`
+  (which `extraAttrs` cannot override), `aria-labelledby` (the `<h2>`). Each resource glyph is
+  `span[data-coach-resource]`, never the preserved `data-resource-kind`, so the FX and flyout
+  selectors cannot match prose. A host remounts the panel with a `key` when the message changes,
+  which replays the entrance.
+- **Scroll region:** the capped body can overflow, so it is a labelled `ScrollArea` (named by the
+  title, keyboard-scrollable) and its focus ring is drawn inset (`focus-visible:-outline-offset-2!`).
+  Use the important modifier: `CHROME_FOCUS_CLASS` already sets an outer offset on the same
+  element and Tailwind would otherwise emit the two in the wrong order. The rounded
+  `overflow-hidden` root would clip an outer ring.
+- **Reduced motion:** the panel renders at rest (`initial={false}`, no transform, no fade),
+  V6's `animation: none`. `motionPropsFor(COACH_ENTER, reduced)` gives motion's props; the
+  entrance is spread only when full.
+- **Tests:** `coach-panel.test.tsx` holds the L72-17 acceptance tests (literal coach bodies, so
+  L75-01's copy fixes cannot break them); `coach-panel.contract.test.tsx` the keyboard path,
+  Escape and the attributes a caller cannot override; `coach.gallery.test.tsx` that each gallery
+  entry still reaches its own script step.
+- **Known limit:** with the 44px floors the compact hint leaves 74px for its body at 375×812 and
+  12px at 844×390, so three of the ten hints scroll on a phone. Caps and placement are L75's
+  call (`/DESIGN.md` › Coach panel › Known limit).
+- **Gallery:** section `coach` (`ui/coach/coach.gallery.tsx`, DEV only): the Tax tutorial coach
+  with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the compact
+  Draw hint with Got it and Skip all.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
