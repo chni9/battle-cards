@@ -423,11 +423,12 @@ The existing drawings only, never new art (spec v7 §5.5).
 - **No printed value:** the frame, the header row, the extra printed rows, the kit stat column
   and Super Mirror's corner badge are removed. Every number on a card or kit comes from the
   catalogs.
-- **No halo on dark grounds:** the outer edge is un-blended from the old ground, so its
-  anti-aliasing fades to transparent instead of keeping a 1 px light rim of white, cream or kit
-  pastel. Light parts that sit close to the ground keep their edge as drawn (Ghost, the Curse
-  skull, Scientist's flask, Assassin's blade edge, Attack Thief's white card). The pixel row
-  just inside the edge can keep a faint trace of the old ground.
+- **No halo on dark grounds:** the two pixel rows along the outer edge (including the
+  stair-corner pixels) are un-blended from the old ground, so the anti-aliasing fades to
+  transparent instead of keeping a light rim of white, cream or kit pastel. A solid fill on the
+  second row is left as drawn. Light parts that sit close to the ground keep their edge as
+  drawn (Ghost, the Curse skull, Scientist's flask, Assassin's blade edge, Attack Thief's white
+  card, the Spy-Thief hand and eye white, the Reanimation face).
 - **Old ground stays where it is enclosed:** the ground is removed by edge flood-fill only, so
   a region of card or kit ground that the drawing encloses keeps its color (§5.5): the
   Untouchable lenses, the Cloning helix stripes, Block's cream disc, the white diamond between

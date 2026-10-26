@@ -9,8 +9,9 @@
  * Gambler): transparent, trimmed, native resolution. The crop boxes and erase zones drop only
  * the frame and the printed values, because the catalogs own every number (designer
  * 2026-09-21; spec v7 §5.5: printed values are not authoritative). Ground removal is edge
- * flood-fill only (`art-flood-fill.ts`), never a global color key; the boundary ring is then
- * un-blended from the same ground so no halo of it is left (`defringeEdge`, fix round 1).
+ * flood-fill only (`art-flood-fill.ts`, which owns `GROUND_TOLERANCE`), never a global color
+ * key; the two rings along the cleared region are then un-blended from the same ground so no
+ * halo of it is left (`defringeEdge`, fix rounds 1 and 2).
  * Also writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`
  * for the lot PR.
  */
@@ -30,12 +31,17 @@ import sharp, { type OverlayOptions } from 'sharp';
 
 import { CARD_FILES, KIT_FILES } from '../src/ui/asset-files';
 import { V7_COLORS } from '../src/ui/palette';
-import { clearEdgeGround, defringeEdge, edgeGroundColor, type CropRect, type RgbaImage } from './art-flood-fill';
+import {
+  GROUND_TOLERANCE,
+  clearEdgeGround,
+  defringeEdge,
+  edgeGroundColor,
+  type CropRect,
+  type RgbaImage,
+} from './art-flood-fill';
 
 /** Fractions of the source width and height. */
 interface Box { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number }
-/** Closest drawing fill to its ground: 21.5 (#e6e6e6 on kit pink #f6dade); noise ≤ 2.2; Attack Thief residue 13.1. */
-const GROUND_TOLERANCE = 16;
 /** Attack, action and special faces: inside the frame, below the printed header (ends ≤ 0.143). */
 const CARD_BOX: Box = { left: 0.06, top: 0.145, right: 0.94, bottom: 0.96 };
 /** Kit faces: below the printed stat block (rows end at 0.347). */
@@ -154,7 +160,8 @@ async function extract(job: Job): Promise<Extracted> {
   const cropped = crop(erased, rectFor(job.box, source.width, source.height));
   const ground = edgeGroundColor(cropped);
   if (ground === undefined) throw new Error(`${job.id}: no opaque ground on the crop border`);
-  const art = defringeEdge(clearEdgeGround(cropped, { tolerance: GROUND_TOLERANCE }), { ground });
+  const cleared = clearEdgeGround(cropped, { tolerance: GROUND_TOLERANCE });
+  const art = defringeEdge(cleared, { ground, tolerance: GROUND_TOLERANCE });
   const bounds = opaqueBounds(art);
   if (bounds === undefined) throw new Error(`${job.id}: nothing left after ground removal`);
   await sharp(art.data, { raw: { width: art.width, height: art.height, channels: 4 } })

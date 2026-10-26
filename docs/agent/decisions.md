@@ -4651,3 +4651,45 @@ Source: the L72-10 visual review and the coordinator's fix-round-1 ruling (spec 
   Treating it too would widen the ruling, so it is left for the designer's sign-off (L72-21).
 
 ---
+
+## 2026-10-26 · [P] V7 art: defringe a guarded second ring (L72-10 fix round 2)
+
+Source: the round-1 re-reviews and the coordinator's fix-round-2 ruling. This extends the
+entry above (spec v7 §5.5); that entry is not edited.
+
+- **Why.** After round 1 the row inside the ring still held old ground: 19,139 pixels at
+  10 % or more, 5,711 at 30 % or more. 4,878 of those are stair-corner pixels that touch the
+  cleared region only diagonally, and 834 are a true second row. At 250 CSS on a DPR 3 screen
+  they read as a thin light outline on dark-filled shapes.
+- **Rings.** Both are computed once from the input:
+  - ring 1: opaque pixels with a 4-neighbour of alpha 0 or off the image (unchanged);
+  - ring 2: the other opaque pixels with a 4-neighbour in ring 1;
+  - core: every other opaque pixel.
+
+  Nothing beyond ring 2 is ever written, so enclosed old-ground regions still stay.
+- **Foreground F.** It is taken from the opaque pixels within 2 px. For a ring-2 pixel these
+  must be core pixels. For a ring-1 pixel they must be outside ring 1, as in round 1.
+  Excluding ring 2 there as well would leave the first ring of every part under five pixels
+  wide with no candidate: on the 47 drawings that raises alpha on 999 ring-1 pixels against
+  round 1 and brings their halo back, so ring 1 is kept exactly as round 1 left it. Among the
+  candidates whose residual (distance of C from the G–F line) is within the tolerance, F is
+  the one farthest from G. With none, F is the candidate with the smallest residual (a
+  3-way blend where two colors meet the ground). With no candidate at all, the pixel is left
+  as drawn.
+- **Guards.** The pixel is left as drawn when:
+  - F is within 3 × the tolerance of G (a light part);
+  - for ring 2 only, the pixel is within half the tolerance of a core 8-neighbour (a solid
+    fill, not a blend).
+- **Un-blend.** a = clamp(dot(C−G, F−G)/|F−G|², 0, 1); alpha × a, rounded; color
+  G + (C−G)/a, clamped.
+- **Constants.** `GROUND_TOLERANCE` (16) now lives in `apps/client/scripts/art-flood-fill.ts`
+  and `extract-art.ts` imports it and passes it to both steps. `defringeEdge` derives its
+  thresholds from it: the residual at 1×, the light part at 3×, the solid fill at ½.
+- **Measured.**
+  - Light excess on `#0c0920` (edge pixels more than 20 luma above their solid fill): 10,373
+    after round 1, 284 now; p99 64 → 9.
+  - Only ring 2 changed: no alpha rose, no pixel became transparent, and nothing on the light
+    face darkened by more than 15 luma.
+  - The output is byte-identical to the reviewer's prototype on all 47 drawings.
+
+---

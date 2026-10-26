@@ -146,9 +146,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `ui/asset-files.ts` maps (base drawings only) and are never hand-edited. Ground removal is
   edge flood-fill only (`scripts/art-flood-fill.ts`), never a global color key, so enclosed
   old-ground regions stay (designer list in `/DESIGN.md` › Illustrations). `defringeEdge` then
-  un-blends the old ground out of the boundary ring only (opaque pixels next to the cleared
-  region), so edges show no light halo on dark grounds; `clearEdgeGround` still writes alpha
-  only (fix round 1, `decisions.md` 2026-10-26). Printed values are never authoritative: the
+  un-blends the old ground out of two rings only: the opaque pixels next to the cleared region,
+  and the pixels next to those unless they are a solid fill. So edges show no light halo on
+  dark grounds; `clearEdgeGround` still writes alpha only (fix rounds 1 and 2, `decisions.md`
+  2026-10-26). `GROUND_TOLERANCE` lives in `scripts/art-flood-fill.ts`, and the defringe
+  thresholds derive from it. Printed values are never authoritative: the
   crop boxes and erase zones drop them, and numbers come from the catalogs. The script also
   writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`;
   it goes on the lot PR for the designer's sign-off. Old screens keep `getCardArtUrl` /

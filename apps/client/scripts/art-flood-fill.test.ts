@@ -1,7 +1,7 @@
 /** Edge flood-fill ground removal — technical spec v7 §5.5 (L72-10). Enclosed light regions survive. */
 import { describe, expect, it } from 'vitest';
 
-import { clearEdgeGround, defringeEdge, edgeGroundColor, type RgbaImage } from './art-flood-fill';
+import { GROUND_TOLERANCE, clearEdgeGround, defringeEdge, edgeGroundColor, type RgbaImage } from './art-flood-fill';
 
 const PIXELS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   '.': [255, 255, 255, 255], // white card ground
@@ -163,5 +163,86 @@ describe('defringeEdge (technical spec v7 §5.5, L72-10 fix round 1)', () => {
     expect(out.data).not.toBe(input.data);
     expect([out.width, out.height]).toEqual([input.width, input.height]);
     expect(input.data).toEqual(before);
+  });
+});
+
+/** Fix round 2 fixtures: `RING_PIXELS` plus a 3-way blend, light fills near the threshold and near-ink fills. */
+const ROUND2_PIXELS: Readonly<Record<string, readonly [number, number, number, number]>> = {
+  ...RING_PIXELS,
+  k: [195, 153, 153, 255], // white, red and ink mixed: no single color explains it within the residual
+  u: [241, 241, 241, 255], // 'v' or 'w' over white at about 50 %
+  v: [226, 226, 226, 255], // light fill 50.2 from white: above 3 x 16
+  w: [228, 228, 228, 255], // light fill 46.8 from white: below 3 x 16
+  n: [44, 44, 44, 255], // ink fill 6.9 from ink: a solid fill (within 16 / 2)
+  p: [47, 47, 47, 255], // 12.1 from ink: a blend with a little ground
+};
+
+function round2Image(rows: readonly string[]): RgbaImage {
+  const width = rows[0]?.length ?? 0;
+  const data = new Uint8ClampedArray(width * rows.length * 4);
+  rows.forEach((row, y) => {
+    Array.from(row).forEach((symbol, x) => {
+      const pixel = ROUND2_PIXELS[symbol];
+      if (pixel === undefined) throw new Error(`Unknown pixel symbol ${symbol}`);
+      data.set(pixel, (y * width + x) * 4);
+    });
+  });
+  return { width, height: rows.length, data };
+}
+
+const pixelOf = (image: RgbaImage, x: number, y: number): number[] =>
+  Array.from(image.data.subarray((y * image.width + x) * 4, (y * image.width + x) * 4 + 4));
+
+describe('defringeEdge thresholds (technical spec v7 §5.5, L72-10 fix round 2)', () => {
+  const fifteen = { ground: WHITE, tolerance: 15 } as const;
+  const sixteen = { ground: WHITE, tolerance: 16 } as const;
+
+  it('falls back to the smallest residual when no nearby color explains the pixel as a blend', () => {
+    const input = round2Image(['xxxxxxx', 'xxkrrrx', 'xxrr##x', 'xxrr##x', 'xxxxxxx']);
+    expect(pixelOf(defringeEdge(input, sixteen), 2, 1)).toEqual([108, 6, 6, 104]);
+  });
+  it('un-blends a foreground just above three times the tolerance from the ground', () => {
+    const input = round2Image(['xxxxxx', 'xxxxxx', 'xxuvvv', 'xxvvvv', 'xxvvvv', 'xxvvvv']);
+    expect(pixelOf(defringeEdge(input, sixteen), 2, 2)).toEqual([226, 226, 226, 123]);
+  });
+  it('keeps a foreground just under three times the tolerance from the ground as a light part', () => {
+    const input = round2Image(['xxxxxx', 'xxxxxx', 'xxuwww', 'xxwwww', 'xxwwww', 'xxwwww']);
+    expect(defringeEdge(input, sixteen).data).toEqual(input.data);
+  });
+  it('derives the light-part threshold from the tolerance, which defaults to GROUND_TOLERANCE', () => {
+    const input = round2Image(['xxxxxx', 'xxxxxx', 'xxuwww', 'xxwwww', 'xxwwww', 'xxwwww']);
+    expect(pixelOf(defringeEdge(input, fifteen), 2, 2)).toEqual([228, 228, 228, 132]);
+    expect(GROUND_TOLERANCE).toBe(16);
+    expect(defringeEdge(input, { ground: WHITE }).data).toEqual(defringeEdge(input, sixteen).data);
+  });
+});
+
+describe('defringeEdge second ring (technical spec v7 §5.5, L72-10 fix round 2)', () => {
+  const options = { ground: WHITE, tolerance: 16 } as const;
+  const STAIR = ['xxx#####', 'xxx#####', 'xxx#####', '###m####', '########', '########', '########', '########'];
+
+  it('un-blends a stair-corner pixel that touches the cleared region only diagonally', () => {
+    expect(pixelOf(defringeEdge(round2Image(STAIR), options), 3, 3)).toEqual([40, 40, 40, 128]);
+  });
+  it('un-blends a second anti-aliased row against the solid core', () => {
+    const input = round2Image(['xxxxxxx', 'xmmmmmx', 'xqqqqqx', 'x#####x', 'x#####x', 'x#####x', 'x#####x', 'xxxxxxx']);
+    expect(pixelOf(defringeEdge(input, options), 3, 2)).toEqual([40, 40, 40, 191]);
+  });
+  it('leaves a second-ring pixel within half the tolerance of a core neighbour as a solid fill', () => {
+    const input = round2Image(['xxxxxxx', 'x#####x', 'x#np##x', 'x#####x', 'x#####x', 'x#####x', 'x#####x', 'xxxxxxx']);
+    const out = defringeEdge(input, options);
+    expect(pixelOf(out, 2, 2)).toEqual([44, 44, 44, 255]);
+    expect(pixelOf(out, 3, 2)).toEqual([40, 40, 40, 247]);
+  });
+  it('leaves a thin part with no core pixel untouched', () => {
+    const input = round2Image(['xxxxxxx', 'x#####x', 'x#mmm#x', 'x#####x', 'xxxxxxx']);
+    expect(defringeEdge(input, options).data).toEqual(input.data);
+  });
+  it('changes nothing beyond the second ring and leaves the input untouched', () => {
+    const input = round2Image(STAIR);
+    const before = Uint8ClampedArray.from(input.data);
+    const out = defringeEdge(input, options);
+    expect(input.data).toEqual(before);
+    expect(out.data).toEqual(withPixels(input, [[3, 3, [40, 40, 40, 128]]]));
   });
 });
