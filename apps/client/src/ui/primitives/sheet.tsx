@@ -248,15 +248,20 @@ export function Sheet(props: SheetProps): ReactElement | null {
   // included, for the panel's animation time, and Minimize and restore ignore presses. So a fast
   // second tap never lands on the table, on the bar or on the fresh panel's Minimize (§1,
   // §6.6.4). A sheet that mounts collapsed has no panel to move, so it raises none. Derived from
-  // the previous render, so it starts in the same commit.
+  // the previous render, so it starts in the same commit. Each real transition bumps the count,
+  // so a second one inside the window (a programmatic `collapsed` toggle) restarts the full
+  // `DUR_BASE_MS` timer instead of inheriting what is left of the first.
   const view = barMode ? 'bar' : painted ? 'panel' : 'none';
   const [previousView, setPreviousView] = useState(view);
   const [transitionShield, setTransitionShield] = useState(false);
+  const [transitionCount, setTransitionCount] = useState(0);
   if (previousView !== view) {
     setPreviousView(view);
     const transition =
       (previousView === 'panel' && view === 'bar') || (previousView === 'bar' && view === 'panel');
-    setTransitionShield(transition && !reduced);
+    const shielded = transition && !reduced;
+    setTransitionShield(shielded);
+    if (shielded) setTransitionCount(transitionCount + 1);
   }
   useEffect(() => {
     if (!transitionShield) return;
@@ -266,7 +271,7 @@ export function Sheet(props: SheetProps): ReactElement | null {
     return () => {
       window.clearTimeout(timer);
     };
-  }, [transitionShield]);
+  }, [transitionShield, transitionCount]);
 
   // Minimize hands focus to the bar, unless another sheet is now the live one (it takes focus).
   useEffect(() => {

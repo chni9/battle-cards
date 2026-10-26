@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
+import { DUR_BASE_MS } from '../motion/motion-tokens';
 import { MINIMIZE_LABEL } from '../ui-copy';
 import { Sheet } from './sheet';
 import { Tooltip } from './tooltip';
@@ -12,6 +13,9 @@ const noop = (): void => undefined;
 async function afterTransition(): Promise<void> {
   await waitFor(() => { expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull(); });
 }
+/** Fake-clock tests (`vi.useFakeTimers()`): move the clock inside `act`, so effects and timers flush. */
+const advance = (ms: number): void => { act(() => { vi.advanceTimersByTime(ms); }); };
+const shieldUp = (): boolean => document.querySelector('[data-zone="sheet-shield"]') !== null;
 function zone(root: ParentNode, name: string): HTMLElement {
   const element = root.querySelector<HTMLElement>(`[data-zone="${name}"]`);
   if (element === null) { throw new Error(`missing data-zone="${name}"`); }
@@ -481,6 +485,32 @@ describe('Sheet collapse shield (fix round 2, §1, §6.6.4)', () => {
   });
 });
 
+describe('Sheet shield timer (fix round 4)', () => {
+  const collapsibleUi = (collapsed: boolean): ReactElement => <Sheet open collapsed={collapsed} collapsedBar={<button type="button">Cancel</button>} mode="read-only" title="Basic attack" onClose={noop}>
+    <button type="button">Use</button></Sheet>;
+  it('restarts a full shield window on every real transition, not from the first one', () => {
+    vi.useFakeTimers();
+    const { rerender } = renderUi(collapsibleUi(false), { advanceTimers: vi.advanceTimersByTime });
+    rerender(collapsibleUi(true));
+    expect(shieldUp()).toBe(true);
+    advance(100);
+    rerender(collapsibleUi(false));
+    advance(DUR_BASE_MS - 1);
+    expect(shieldUp()).toBe(true);
+    advance(2);
+    expect(shieldUp()).toBe(false);
+  });
+  it('raises no shield for either transition under reduced motion', () => {
+    vi.useFakeTimers();
+    const { rerender } = renderUi(collapsibleUi(false), { reducedMotion: true, advanceTimers: vi.advanceTimersByTime });
+    rerender(collapsibleUi(true));
+    expect(shieldUp()).toBe(false);
+    advance(100);
+    rerender(collapsibleUi(false));
+    expect(shieldUp()).toBe(false);
+  });
+});
+
 describe('Sheet opener chain (fix round 2)', () => {
   it('re-parents an opener when the sheet that held it closes first (a: Card closes under Kit)', () => {
     const ui = (cardOpen: boolean, kitOpen: boolean): ReactElement => <><button type="button">Open card</button>
@@ -593,27 +623,36 @@ describe('Sheet press shields, scoped (fix round 3)', () => {
     expect(document.querySelector('[data-zone="sheet-shield"]')).toBeNull();
   });
   it('ignores the restore bar during the Minimize window, then restores (3: double tap on Minimize)', async () => {
+    vi.useFakeTimers();
     const onMinimizedChange = vi.fn();
     const { user } = renderUi(<Sheet open mode="blocking" title="Choose a reward" onMinimizedChange={onMinimizedChange}>
-      <button type="button">4 lives</button></Sheet>);
+      <button type="button">4 lives</button></Sheet>, { advanceTimers: vi.advanceTimersByTime });
     await user.click(button(MINIMIZE_LABEL));
     await user.click(button('Choose a reward'));
     expect(noDialog('Choose a reward')).toBeNull();
     expect(onMinimizedChange.mock.calls).toEqual([[true]]);
-    await afterTransition();
+    advance(DUR_BASE_MS - 1);
+    await user.click(button('Choose a reward'));
+    expect(noDialog('Choose a reward')).toBeNull();
+    expect(onMinimizedChange.mock.calls).toEqual([[true]]);
+    advance(2);
     await user.click(button('Choose a reward'));
     expect(dialog('Choose a reward')).toBeTruthy();
     expect(onMinimizedChange.mock.calls).toEqual([[true], [false]]);
   });
   it('ignores Minimize during the restore window, then minimizes (3: double tap on the restore bar)', async () => {
-    const { user } = renderUi(REWARD);
+    vi.useFakeTimers();
+    const { user } = renderUi(REWARD, { advanceTimers: vi.advanceTimersByTime });
     await user.click(button(MINIMIZE_LABEL));
-    await afterTransition();
+    advance(DUR_BASE_MS + 1);
     await user.click(button('Choose a reward'));
-    expect(document.querySelector('[data-zone="sheet-shield"]')).not.toBeNull();
+    expect(shieldUp()).toBe(true);
     await user.click(button(MINIMIZE_LABEL));
     expect(dialog('Choose a reward')).toBeTruthy();
-    await afterTransition();
+    advance(DUR_BASE_MS - 1);
+    await user.click(button(MINIMIZE_LABEL));
+    expect(dialog('Choose a reward')).toBeTruthy();
+    advance(2);
     await user.click(button(MINIMIZE_LABEL));
     expect(noDialog('Choose a reward')).toBeNull();
   });
