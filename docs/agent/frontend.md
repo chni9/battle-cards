@@ -480,10 +480,24 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 ### Rules (`ui/rules/`, L72-16)
 
-- **Components:** `RulesStrip` (a chrome button named "Table rules" that opens the sheet) and
-  `RulesSheet` (`open`, `rules`, `onClose`; a read-only `Sheet`), with `rules-summary.ts`
-  (`rulesKitFaces`, `formatTurnTimeSeconds`). The strip owns its own `open` state; a caller that
+- **Components:** `RulesStrip` (a chrome button that opens the sheet) and `RulesSheet` (`open`,
+  `rules`, `onClose`; a read-only `Sheet`), with `rules-summary.ts` (`rulesKitFaces`,
+  `formatTurnTimeSeconds`, `rulesSummaryText`). The strip owns its own `open` state; a caller that
   has no strip (the L74 menu, the L77 Game over recall) mounts `RulesSheet` directly.
+- **The strip says what it is:** a header row with the visible "Table rules" and a decorative
+  `chevron-right` (the tap cue). The button's `aria-label` is the same `TABLE_RULES_LABEL`, so the
+  name is what is on screen (WCAG 2.5.3). Prefer `aria-label` to an `aria-labelledby` on the
+  visible span: they give the same name, but the Browser pane's `read_page` and `find` read only
+  `aria-label` and content, so the post-lot gate would see an unnamed button.
+- **The strip is described:** `aria-describedby` points at a hidden sibling `<span>` with
+  `rulesSummaryText(rules)` ("45s, Random, Excluded Kamikaze, Ghost, Gambler"), built from the
+  strip's own words only. Keep it a sibling of the button: inside, `within(strip)` text queries
+  would match it twice (`getByText('300s')` for the default rules).
+- **Face grid:** every face cell has the same fixed width (`w-12`, wide enough for the 11px
+  "Excluded" caption), in a 4 column grid that becomes 8 columns by a container query
+  (`@container` on a wrapper, `@min-[26rem]:grid-cols-8`), so 16 kits fill whole rows and the
+  columns align for any mix. Do not size the cells by content again: a captioned cell is wider
+  than a bare one and the rows jag.
 - **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 recall (the
   last `lobbyRules` seen in this room, in memory) and `FinishedStateView.lobbyRules` in L77
   (spec v7 §6.11). A caller hides the strip when the rules are unknown (a reload mid-game), and

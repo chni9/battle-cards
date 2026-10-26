@@ -1041,17 +1041,30 @@ editor stay until L76.
   (`TABLE_RULES_LABEL`, `aria-haspopup="dialog"`) on `--panel`, at least 44px tall, full width and
   left-aligned, with the shape, focus ring and press from `primitives/chrome-classes.ts`. The
   press drops `--chrome-press-y` and the shadow at full motion and only dims under reduced motion;
-  `data-motion` says which. Row one is the `clock` icon and `{n}s` in Lilita One 20px, exactly as
-  received (`formatTurnTimeSeconds`, never clamped: a server default can be 300), then, only when
-  `randomOnly` is set, the `random` icon and the word "Random" in Nunito. Row two is a wrapping
-  row of the 16 `thumb` portraits in `KIT_IDS` order. The content is phrasing only, so the
-  portraits are the non-clickable `KitPortrait` (`<img alt>` = kit name); the button's own name
-  is "Table rules", and the sheet carries the details for a screen reader.
+  `data-motion` says which. Row one is the header: the visible "Table rules" (Lilita One 14px,
+  `--text`) and a decorative `chevron-right`, the cue that a tap opens details. The button's
+  `aria-label` is the same string, so its name is what is on screen (WCAG 2.5.3 Label in Name).
+  Row two is the `clock` icon and `{n}s` in Lilita One 20px, exactly as received
+  (`formatTurnTimeSeconds`, never clamped: a server default can be 300), then, only when
+  `randomOnly` is set, the `random` icon and the word "Random" in Nunito. Row three is the 16
+  `thumb` portraits in `KIT_IDS` order. The content is phrasing only, so the portraits are the
+  non-clickable `KitPortrait` (`<img alt>` = kit name).
+- **Face grid:** every face cell is the same fixed width, `w-12` (48px), the width of the 11px
+  "Excluded" caption, so the columns line up for any mix of excluded kits. The cells sit in a
+  4 column grid (4 gap) that becomes 8 columns when the strip's own content is 26rem wide (a
+  container query on the strip, not the viewport), so 16 kits always fill whole rows: 4 by 4 on a
+  phone (3 excluded or 15, at 320, 375 and in the 424px gallery frame), 2 by 8 when wide. The
+  tightest case is the 196px content of the gallery frame at 320px, where adjacent captions are
+  2.5px apart; a lobby column at 320px has about 258px.
+- **Screen-reader summary:** the button is described (`aria-describedby`) by a hidden sibling
+  `<span>` holding `rulesSummaryText(rules)`: the seconds, "Random" when set, then "Excluded"
+  followed by the excluded kit names (in `KIT_IDS` order), joined by commas ("45s, Random,
+  Excluded Kamikaze, Ghost, Gambler"; "60s" for the default rules). Only words the strip shows;
+  no new copy. It is a sibling and `hidden` (a described-by target may be hidden), so it adds
+  no layout and no duplicate text inside the strip.
 - **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
   caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
-  opacity, so the state is never carried by dimming alone. The caption is about 48px wide, wider
-  than a 40px thumb, so an excluded cell is 8px wider than an allowed one and a strip with many
-  excluded kits grows tall on a phone (15 excluded: about 550px at 320px wide in the gallery).
+  opacity, so the state is never carried by dimming alone.
 - **Sheet:** `<RulesSheet open rules onClose />` is a read-only `Sheet` (placement `auto`: a
   bottom sheet on phones, centered on desktop; Esc, backdrop and swipe-down close it, only the
   top sheet takes Esc) titled "Table rules". Its only button is Close (`secondary`), which also

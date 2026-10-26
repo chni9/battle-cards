@@ -8,6 +8,7 @@
  */
 
 import { getKit, KIT_IDS, type KitId, type LobbyRules } from '@card-battle/shared';
+import { EXCLUDED_LABEL } from '../ui-copy';
 
 export interface RulesKitFace {
   readonly kitId: KitId;
@@ -32,4 +33,23 @@ export function rulesKitFaces(rules: Pick<LobbyRules, 'excludedKitIds'>): readon
  */
 export function formatTurnTimeSeconds(seconds: number): string {
   return `${String(seconds)}s`;
+}
+
+/**
+ * The strip's spoken summary, for the button's `aria-describedby`: the seconds, "Random" when
+ * kits are dealt at random, then "Excluded" followed by the excluded kit names (in `KIT_IDS`
+ * order, like the faces), joined by commas. It uses only words the strip already shows, so it
+ * adds no copy (L72-16 fix round 1). The button's name stays "Table rules".
+ */
+export function rulesSummaryText(rules: LobbyRules): string {
+  const excludedNames = rulesKitFaces(rules)
+    .filter((face) => face.excluded)
+    .map((face) => face.name);
+  return [
+    formatTurnTimeSeconds(rules.turnTimeSeconds),
+    rules.randomOnly ? 'Random' : null,
+    excludedNames.length > 0 ? `${EXCLUDED_LABEL} ${excludedNames.join(', ')}` : null,
+  ]
+    .filter((part) => part !== null)
+    .join(', ');
 }

@@ -110,4 +110,38 @@ describe('RulesStrip', () => {
     const sheet = screen.getByRole('dialog', { name: 'Table rules' });
     expect(document.activeElement).toBe(within(sheet).getByRole('button', { name: 'Close' }));
   });
+
+  it('shows the visible "Table rules" label and a decorative chevron, and the name is unchanged', () => {
+    renderUi(<RulesStrip rules={rules()} />);
+    const label = within(strip()).getByText('Table rules');
+    expect(label.textContent).toBe('Table rules');
+    expect(strip().getAttribute('aria-label')).toBe(label.textContent);
+    const chevron = strip().querySelector('[data-icon="chevron-right"]');
+    expect(chevron?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('gives every kit face the same fixed width, whatever the mix of excluded kits', () => {
+    renderUi(<RulesStrip rules={rules({ excludedKitIds: ['kamikaze', 'ghost', 'gambler'] })} />);
+    const widths = KIT_IDS.map((kitId) => [...kitFace(strip(), kitId).classList].filter((name) => name.startsWith('w-')));
+    expect(widths.every((names) => names.length === 1)).toBe(true);
+    expect(new Set(widths.map((names) => names[0])).size).toBe(1);
+  });
+
+  it.each([
+    { title: 'the default rules', shown: rules(), summary: '60s' },
+    { title: 'Random only', shown: rules({ randomOnly: true, turnTimeSeconds: 45 }), summary: '45s, Random' },
+    {
+      title: 'two excluded kits',
+      shown: rules({ excludedKitIds: ['wizard', 'untouchable'] }),
+      summary: '60s, Excluded Untouchable, Wizard',
+    },
+  ])('describes $title to a screen reader without opening the sheet', ({ shown, summary }) => {
+    renderUi(<RulesStrip rules={shown} />);
+    const describedBy = strip().getAttribute('aria-describedby');
+    expect(describedBy).not.toBeNull();
+    const description = document.getElementById(describedBy ?? '');
+    expect(description?.textContent).toBe(summary);
+    expect(strip().contains(description)).toBe(false);
+    expect(screen.getByRole('button', { name: 'Table rules', description: summary })).toBe(strip());
+  });
 });
