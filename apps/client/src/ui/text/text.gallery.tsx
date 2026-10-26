@@ -32,11 +32,11 @@ function labelled(label: string, sample: ReactNode): ReactElement {
   );
 }
 
-function amountRow(label: string, amount: ReactElement): ReactElement {
+function amountRow(label: string, sample: ReactElement): ReactElement {
   return (
     <li key={label} className="flex items-center justify-between gap-3">
       <span className={LABEL_CLASS}>{label}</span>
-      <span className="font-v7-display text-v7-body leading-none">{amount}</span>
+      <span className="font-v7-display text-v7-body leading-none">{sample}</span>
     </li>
   );
 }

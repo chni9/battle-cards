@@ -55,6 +55,19 @@ describe('EffectTextWithIcons (L72-11)', () => {
     expect(screen.getByText('instead of').closest('[aria-hidden="true"]')).toBeNull();
   });
 
+  it('draws inline icons at 16 px by default and 14 px for iconSize "sm"', () => {
+    const edge = (root: HTMLElement): string[] =>
+      Array.from(root.querySelectorAll('svg'), (svg) => `${String(svg.getAttribute('width'))}x${String(svg.getAttribute('height'))}`);
+    const byDefault = expectGlyphs(S.regeneration.effect, 'Buy up to 4 at 3 each.', ['4 lives', '3 pts'], ['life', 'point']);
+    expect(edge(byDefault)).toEqual(['16x16', '16x16']);
+    const small = renderUi(
+      <p>
+        <EffectTextWithIcons text={S.regeneration.upgradeAdds} iconSize="sm" />
+      </p>,
+    ).container;
+    expect(edge(small)).toEqual(['14x14', '14x14']);
+  });
+
   it('leaves damage, turn counts and card lives as plain prose', () => {
     for (const text of [S['basic-attack'].upgradeAdds, X.block.upgradeAdds, X.roulette.effect, X['mega-attack'].effect]) {
       expect(expectGlyphs(text, text, [], []).querySelectorAll('svg')).toHaveLength(0);

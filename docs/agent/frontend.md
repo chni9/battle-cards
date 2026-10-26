@@ -315,7 +315,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   that names itself (Draw, Unspy, a shop button) pass `title={null}`: an inner `title` would
   replace the control's own tooltip. The spoken text stays, so an unlabeled button is still named
   by its amount. Never put a `CostAmount` on a fill of its own resource color; an icon-on-fill
-  case goes in a well (`/DESIGN.md` › Icons).
+  case goes in a well (`DESIGN.md` › Icons).
 - **Spoken text:** structured costs keep `spokenCost`'s short wording ("3 pts", "3 pts/life");
   shield now speaks "N shield point(s)" (the V2 inline glyph spoke only the number). Tests read
   the two sides with `test/glyph-queries.ts` (`visibleText`, `spokenTexts`, `glyphRoots`), a

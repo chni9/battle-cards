@@ -4693,3 +4693,26 @@ entry above (spec v7 §5.5); that entry is not edited.
   - The output is byte-identical to the reviewer's prototype on all 47 drawings.
 
 ---
+
+## 2026-10-26 · [P] · [DISCREPANCY] Shield amounts speak "N shield points" (L72-11)
+
+Source: technical spec v7 Appendix A `global-card-effect-copy-inline-icons` (States and Keep),
+the L72-11 brief, and its review (`c9de27d`: spoken text correct for every resource, sign,
+multiplier and "instead of" case).
+
+- The V2 inline glyph (`design/components/effect-text-icons.tsx`) drew a shield phrase
+  ("Gain 4 shield points") as an `aria-hidden` number and icon with no spoken word, so a screen
+  reader heard only "4". Appendix A records that as the V2 state. Points, lives and upgrade
+  points already spoke a word ("4 lives", "3 pts", "2 upgrade points").
+- Ruling: V7 speaks "N shield points" ("1 shield point" for one), like every other resource.
+  `CostAmount` carries it as the `sr-only` spoken text and as the default `title`, wrapped like
+  `spokenCost` (`minus` or `plus` first, then `{m}×`, none for a multiplier of 1). The row's
+  Keep line (each amount has `sr-only` spoken text and its icons are `aria-hidden`) is met.
+  Structured costs keep `spokenCost`'s short wording ("3 pts", "3 pts/life").
+- Appendix A is not rewritten: its States sentence now carries a pointer to this entry. The V2
+  `CostDisplay` and `EffectTextWithIcons` keep their behavior until L75 and L76 retire their
+  consumers.
+- Pinned by `ui/card/glyph-amount.test.ts` (singular and plural, signed, multiplier) and
+  `ui/text/effect-text-with-icons.test.tsx` (`getByTitle('4 shield points')`).
+
+---

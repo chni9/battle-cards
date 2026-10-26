@@ -80,6 +80,9 @@ behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
   across `rerender`; a caller's own `wrapper` renders inside it.
 - Assert with plain DOM (`textContent`, `getAttribute`, `toBeNull`, `screen.getByRole`). There
   is no jest-dom.
+- Cost glyphs and effect copy: read their text with `apps/client/src/test/glyph-queries.ts`
+  (`visibleText`, `spokenTexts`, `glyphRoots`), which separates what a sighted player reads from
+  the screen-reader-only spoken amount (L72-11). Shipped code never imports it.
 - Reduced motion: call `setReducedMotion(true)` or `renderUi(ui, { reducedMotion: true })`
   **before** mounting, then assert `data-motion="reduced"` or the class. `motion` reads the
   media query once per mount, so a flip reaches the next mount, never a tree already on

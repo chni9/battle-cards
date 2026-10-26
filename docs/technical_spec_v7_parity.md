@@ -566,7 +566,7 @@
   - Upgraded Regeneration: the Cost row shows 2 points per life instead of the catalog rate (structuredPlayCost, rules §3)
   - pointsPerLife cost: renders 'N [point]/[life]'
   - Phrase tokenization: points, lives/life and upgrade points render through CostDisplay (16px icons), which includes sr-only spoken text
-  - Shield phrase ('4 shield points'): renders number + shield icon directly, without CostDisplay. The icon is aria-hidden and there is no sr-only word, so a screen reader hears only the number
+  - Shield phrase ('4 shield points'): renders number + shield icon directly, without CostDisplay. The icon is aria-hidden and there is no sr-only word, so a screen reader hears only the number (V7 speaks "N shield points" — L72-11, see decisions.md 2026-10-26)
   - 'instead of N' tail: becomes 'instead of ' + N with the previous span's resource icon. With no previous resource (e.g. '7 consecutive turns instead of 3.') the text stays plain
   - Damage numbers ('20 damage', 'instead of 1' after damage) and '2 card lives' are never iconified
   - 'upgrade points' is matched before 'points' (test-locked)
