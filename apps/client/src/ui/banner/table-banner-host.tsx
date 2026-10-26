@@ -11,11 +11,16 @@
  *   queued behind it never extends it (TableBannerFlash restarted it on every enqueue).
  * - Each lane owns one `role="status"` live region that stays mounted, empty between banners,
  *   and only its content swaps: a region that mounts together with its text is skipped by many
- *   screen readers. Cues are polite, Sentence and wipe assertive (`bannerLiveMode`). A rerender
- *   with the same state keeps the slab node, so a banner is announced once.
- * - The root is `pointer-events: none` on `Z_INDEX.banner` (90): above sheets and Minimize bars,
- *   below toasts, and never takes focus or a press. It renders in place, not in a portal, so its
- *   host must mount it outside any stacking context (L74-17).
+ *   screen readers. Each region takes its lane's mode once (`BANNER_LANE_LIVE_MODE`): cues
+ *   polite, Sentence and wipe assertive. A rerender with the same state keeps the slab node, so a
+ *   banner is announced once.
+ * - The root portals to `document.body`, like Sheet and Toast, so `Z_INDEX.banner` (90) compares
+ *   at body level: above sheets and Minimize bars, below toasts. A transformed or isolated
+ *   ancestor (the arena, the L78 board shake) cannot re-anchor it. It is `pointer-events: none`
+ *   and never takes focus or a press. Mount it once per arena (L74-17) so its regions exist
+ *   before the first cue.
+ * - The slab is flat outlined chrome, with no drop shadow: that means "not pressable" here
+ *   (Badge), so a banner never reads as a CTA or danger button. L78-11 owns the band look.
  * - Entrance only, over `--dur-slow` on `--ease-entrance`; the next item mounts exactly at
  *   `TABLE_BANNER_MS`, with no exit (L78 owns banner juice). Reduced motion keeps the same
  *   text with a fade only: no slam, scale or tilt (§8.3).
@@ -23,6 +28,7 @@
 
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
+import { createPortal } from 'react-dom';
 
 import type { ActionLogEntryView, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
 
@@ -40,8 +46,15 @@ import { durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
 import { motionPropsFor, type V7MotionSpec } from '../motion/reduced-motion';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { V7_COLORS } from '../palette';
-import { CHROME_SHAPE_CLASS, motionAttribute } from '../primitives/chrome-classes';
-import { bannerItemsForCues, bannerLiveMode, type BannerItem, type BannerKind } from './banner-items';
+import { CHROME_OUTLINE_CLASS, motionAttribute } from '../primitives/chrome-classes';
+import {
+  BANNER_LANE_LIVE_MODE,
+  BANNER_LANES,
+  bannerItemsForCues,
+  type BannerItem,
+  type BannerKind,
+  type BannerLane,
+} from './banner-items';
 
 export interface TableBannerHostProps {
   isMyTurn: boolean;
@@ -142,7 +155,7 @@ function BannerSlab({ item, tone, reduced }: BannerSlabProps): ReactElement {
     <motion.p
       data-banner={item.kind}
       data-motion={motionAttribute(reduced)}
-      className={`my-1.5 max-w-[min(92vw,30rem)] whitespace-pre-line text-balance wrap-anywhere text-center font-v7-display text-v7-display leading-tight ${padding} ${CHROME_SHAPE_CLASS}`}
+      className={`my-1.5 max-w-[min(92vw,30rem)] whitespace-pre-line text-balance wrap-anywhere text-center font-v7-display text-v7-display leading-tight ${padding} ${CHROME_OUTLINE_CLASS} rounded-v7-chrome`}
       style={{ backgroundColor: tone, color: V7_COLORS['text-on-cta'] }}
       {...motionPropsFor(slabMotion(item.kind), reduced)}
     >
@@ -152,16 +165,16 @@ function BannerSlab({ item, tone, reduced }: BannerSlabProps): ReactElement {
 }
 
 interface BannerRegionProps {
-  live: 'polite' | 'assertive';
+  lane: BannerLane;
   item: BannerItem | undefined;
   seatColor: string | undefined;
   reduced: boolean;
 }
 
-/** A lane's live region: always mounted, holding at most its head slab. */
-function BannerRegion({ live, item, seatColor, reduced }: BannerRegionProps): ReactElement {
+/** A lane's live region: always mounted, in its lane's mode, holding at most its head slab. */
+function BannerRegion({ lane, item, seatColor, reduced }: BannerRegionProps): ReactElement {
   return (
-    <div role="status" aria-live={live} className="flex w-full flex-col items-center">
+    <div role="status" aria-live={BANNER_LANE_LIVE_MODE[lane]} className="flex w-full flex-col items-center">
       {item !== undefined ? (
         <BannerSlab key={item.key} item={item} tone={slabTone(item.kind, seatColor)} reduced={reduced} />
       ) : null}
@@ -223,14 +236,21 @@ export function TableBannerHost({
     enqueueWipe(items);
   }, [actionLog, you, enqueueWipe]);
 
-  return (
+  const heads: Readonly<Record<BannerLane, BannerItem | undefined>> = {
+    cue: cueHead,
+    sentence: sentenceHead,
+    wipe: wipeHead,
+  };
+
+  return createPortal(
     <div
       className="pointer-events-none fixed inset-0 flex flex-col items-center justify-center px-4"
       style={{ zIndex: Z_INDEX.banner }}
     >
-      <BannerRegion live={bannerLiveMode('turn')} item={cueHead} seatColor={seatColor} reduced={reduced} />
-      <BannerRegion live={bannerLiveMode('sentence')} item={sentenceHead} seatColor={seatColor} reduced={reduced} />
-      <BannerRegion live={bannerLiveMode('wipe')} item={wipeHead} seatColor={seatColor} reduced={reduced} />
-    </div>
+      {BANNER_LANES.map((lane) => (
+        <BannerRegion key={lane} lane={lane} item={heads[lane]} seatColor={seatColor} reduced={reduced} />
+      ))}
+    </div>,
+    document.body,
   );
 }

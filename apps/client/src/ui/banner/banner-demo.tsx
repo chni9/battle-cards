@@ -4,9 +4,9 @@
  * ships. Components only, because `banner.gallery.tsx` exports the non-component `gallery`
  * (react-refresh).
  *
- * The host's `fixed` root stays inside the demo box: the box's `translateZ(0)` makes it the
- * containing block. Seeded kinds (Your turn, You won!, You are dead) remount the host per
- * play, since they fire on first mount. The others keep one mount and add one input per play,
+ * The host portals to `document.body`, so every banner plays at the center of the screen with
+ * real phone geometry, above any open sheet. Seeded kinds (Your turn, You won!, You are dead)
+ * remount the host per play, since they fire on first mount. The others keep one mount and add one input per play,
  * so pressing Play several times queues several banners: an attack each time; the Sentence
  * countdown 3, 2, 1, then the fire line naming a 24-character victim (the nickname cap) to
  * check the wrap; one own Gambler wipe each time.
@@ -16,7 +16,6 @@ import { useMemo, useState, type ReactElement } from 'react';
 
 import type { ActionLogEntryView, PendingEffectView, SentenceAnnouncementLogEntry } from '@card-battle/shared';
 
-import { CHROME_OUTLINE_CLASS } from '../primitives/chrome-classes';
 import { Button } from '../primitives/button';
 import type { BannerKind } from './banner-items';
 import { TableBannerHost } from './table-banner-host';
@@ -92,20 +91,16 @@ export function BannerDemo({ kind, seatColor }: BannerDemoProps): ReactElement {
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <div>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setPlays((count) => count + 1);
-          }}
-        >
-          Play
-        </Button>
-      </div>
-      <div className={`relative h-56 overflow-hidden rounded-v7-chrome v7-ground [transform:translateZ(0)] ${CHROME_OUTLINE_CLASS}`}>
-        {seeded && plays === 0 ? null : host}
-      </div>
+    <div>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          setPlays((count) => count + 1);
+        }}
+      >
+        Play
+      </Button>
+      {seeded && plays === 0 ? null : host}
     </div>
   );
 }

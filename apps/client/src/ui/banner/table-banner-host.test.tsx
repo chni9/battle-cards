@@ -10,6 +10,7 @@ import { renderUi } from '../../test/render';
 import { TABLE_BANNER_MS as MS } from '../../view-model/table-banner';
 import { Z_INDEX } from '../layers';
 import { V7_COLORS, v7SeatColor } from '../palette';
+import { bannerLiveMode, type BannerKind } from './banner-items';
 import { TableBannerHost, type TableBannerHostProps } from './table-banner-host';
 
 const TURN = 'Your turn', ATK = 'You are being attacked', DEAD = 'You are dead', WON = 'You won!';
@@ -30,7 +31,7 @@ function advance(ms: number): void { act(() => { vi.advanceTimersByTime(ms); });
 const shown = (text: string): HTMLElement | null => screen.queryByText(text);
 function on(text: string): void { expect(shown(text)).not.toBeNull(); }
 function off(text: string): void { expect(shown(text)).toBeNull(); }
-function none(v: { container: HTMLElement }): void { expect(v.container.querySelector('[data-banner]')).toBeNull(); }
+function none(v: { baseElement: HTMLElement }): void { expect(v.baseElement.querySelector('[data-banner]')).toBeNull(); }
 /** Normalizes a hex the way the DOM reports inline colors. */
 function css(hex: string): string { const p = document.createElement('p'); p.style.backgroundColor = hex; return p.style.backgroundColor; }
 function fadeOnly(el: HTMLElement): void { expect(el.getAttribute('data-motion')).toBe('reduced'); expect(el.style.transform).toBe(''); }
@@ -105,7 +106,7 @@ describe('TableBannerHost (L72-18)', () => {
 
   it("shows the wipe line only for the POV's own bust, once", () => {
     const view = renderUi(host());
-    const wipe = (): Element | null => view.container.querySelector('[data-banner="wipe"]');
+    const wipe = (): Element | null => view.baseElement.querySelector('[data-banner="wipe"]');
     view.rerender(host({ actionLog: [bust('opp', 4)] }));
     expect(wipe()).toBeNull();
     view.rerender(host({ actionLog: [bust('opp', 4), bust('me', 5)] }));
@@ -150,16 +151,66 @@ describe('TableBannerHost (L72-18)', () => {
 
   it('keeps one live region per lane mounted and swaps only its content', () => {
     const view = renderUi(host());
-    const regions = (): Element[] => [...view.container.querySelectorAll('[role="status"]')];
+    const regions = (): Element[] => [...view.baseElement.querySelectorAll('[role="status"]')];
     const mounted = regions();
+    function sameRegions(): void {
+      const now = regions();
+      expect(now).toHaveLength(mounted.length);
+      now.forEach((region, index) => { expect(region).toBe(mounted[index]); });
+    }
     expect(mounted.map((region) => region.getAttribute('aria-live'))).toEqual(['polite', 'assertive', 'assertive']);
     expect(mounted.map((region) => region.textContent)).toEqual(['', '', '']);
     view.rerender(host({ isMyTurn: true, sentenceAnnouncements: [play], actionLog: [bust('me', 5)] }));
-    expect(regions()).toEqual(mounted);
+    sameRegions();
     expect(mounted.map((region) => region.textContent)).toEqual([TURN, S3, 'You gambled too much and lost everything']);
     advance(MS);
-    expect(regions()).toEqual(mounted);
+    sameRegions();
     expect(mounted.map((region) => region.textContent)).toEqual(['', '', '']);
+  });
+
+  it("puts every kind in a region whose live mode is that kind's bannerLiveMode", () => {
+    const seeds: readonly [BannerKind, Partial<TableBannerHostProps>, string][] = [
+      ['turn', { isMyTurn: true }, TURN],
+      ['won', { youWon: true }, WON],
+      ['dead', { isEliminated: true }, DEAD],
+    ];
+    for (const [kind, props, text] of seeds) {
+      const view = renderUi(host(props));
+      expect(screen.getByText(text).closest('[role="status"]')?.getAttribute('aria-live')).toBe(bannerLiveMode(kind));
+      view.unmount();
+    }
+    const view = renderUi(host());
+    view.rerender(host({ pendingEffects: [atk('a1')], sentenceAnnouncements: [play], actionLog: [bust('me', 5)] }));
+    const changes: readonly [BannerKind, string][] = [
+      ['attacked', ATK],
+      ['sentence', S3],
+      ['wipe', 'You gambled too much and lost everything'],
+    ];
+    for (const [kind, text] of changes) {
+      expect(screen.getByText(text).closest('[role="status"]')?.getAttribute('aria-live')).toBe(bannerLiveMode(kind));
+    }
+  });
+
+  it('portals to document.body, outside a transformed wrapper', () => {
+    const view = renderUi(<div data-testid="wrapper" style={{ transform: 'translateZ(0)' }}>{host({ isMyTurn: true })}</div>);
+    const root = screen.getByText(TURN).closest('[role="status"]')?.parentElement;
+    expect(root?.parentElement).toBe(document.body);
+    expect(view.getByTestId('wrapper').contains(screen.getByText(TURN))).toBe(false);
+    expect(view.container.querySelector('[data-banner]')).toBeNull();
+  });
+
+  it('draws flat outlined slabs with no drop shadow, so a banner never reads as a button', () => {
+    const view = renderUi(host({ isMyTurn: true }));
+    view.rerender(host({ isMyTurn: true, pendingEffects: [atk('a1')], sentenceAnnouncements: [play], actionLog: [bust('me', 5)] }));
+    const slabs = [...view.baseElement.querySelectorAll<HTMLElement>('[data-banner]')];
+    expect(slabs.map((slab) => slab.getAttribute('data-banner'))).toEqual(['turn', 'sentence', 'wipe']);
+    advance(MS);
+    slabs.push(screen.getByText(ATK));
+    for (const slab of slabs) {
+      expect(slab.classList.contains('shadow-v7-chrome')).toBe(false);
+      expect(slab.classList.contains('border-v7-ink')).toBe(true);
+      expect(slab.classList.contains('rounded-v7-chrome')).toBe(true);
+    }
   });
 
   it('keeps the showing banner node across a rerender with the same state, so it is announced once', () => {
@@ -189,5 +240,15 @@ describe('TableBannerHost under StrictMode (L51-06)', () => {
     advance(MS - 1);
     expect(screen.getAllByText(DEAD)).toHaveLength(1);
     advance(1); off(DEAD);
+  });
+
+  it('shows the first-paint Your turn once, for TABLE_BANNER_MS', () => {
+    renderUi(<StrictMode>{host({ isMyTurn: true })}</StrictMode>);
+    expect(screen.getAllByText(TURN)).toHaveLength(1);
+    expect(screen.getByText(TURN).getAttribute('data-banner')).toBe('turn');
+    advance(MS - 1);
+    expect(screen.getAllByText(TURN)).toHaveLength(1);
+    advance(1); off(TURN);
+    advance(MS); off(TURN);
   });
 });

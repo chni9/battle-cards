@@ -577,9 +577,14 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `TableBannerFlash`. It hosts the L51-06 cues, the L63-03 Sentence lines and the L67-01 own
   wipe line; the cue logic stays in `view-model/table-banner.ts` (`nextTableBannerCues`,
   `nextSentenceBannerLines`, `nextWipeBannerLines`), and `ui/banner/banner-items.ts` only keys
-  the items (`bannerItemsForCues`) and picks the live mode (`bannerLiveMode`). The classic table
-  keeps `screens/table/your-turn-flash.tsx` until L75; L74-17 mounts the host in the arena,
-  outside any stacking context (it renders in place at `Z_INDEX.banner`, not in a portal).
+  the items (`bannerItemsForCues`) and sorts them into lanes (`bannerLaneOf`,
+  `BANNER_LANE_LIVE_MODE`). The classic table keeps `screens/table/your-turn-flash.tsx` until L75.
+  The host portals to `document.body` at `Z_INDEX.banner`, like Sheet and Toast, so a
+  transformed arena or the L78 board shake cannot re-anchor it or trap it under the sheets.
+  L74-17 mounts it once per arena so its regions exist before the first cue.
+- **Slab:** flat outlined chrome (`CHROME_OUTLINE_CLASS` plus `rounded-v7-chrome`), never
+  `CHROME_SHAPE_CLASS`: the hard drop shadow would make a click-through banner read as a CTA or
+  danger button. L78-11 owns the band look.
 - **Enqueue synchronously** inside the effect that calls the `next*` helper: a deferred enqueue
   (a 0 ms timeout) is cleared by React Strict Mode's effect replay, which dropped the first-paint
   You won! / You are dead cues. A `<StrictMode>` test in `table-banner-host.test.tsx` locks it.
@@ -589,13 +594,17 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   animation: the next item mounts exactly at `TABLE_BANNER_MS`. `end.tsx` still opens Game over
   after that same constant.
 - **Live regions:** one `role="status"` region per lane, always mounted and empty between
-  banners; only the slab inside swaps, keyed by item. Polite for cues, assertive for Sentence
-  and wipe. Do not mount a region together with its text: many screen readers skip it.
+  banners; only the slab inside swaps, keyed by item. Each region takes its lane's mode from
+  `BANNER_LANE_LIVE_MODE`, the one map `bannerLiveMode(kind)` also reads: polite for cues,
+  assertive for Sentence and wipe. Do not mount a region together with its text: many screen
+  readers skip it.
 - **Tests:** `banner-items.test.ts` (node: keys, copy, live modes, `--text-on-cta` contrast on
   every fill), `table-banner-host.test.tsx` (happy-dom, fake timers: queue order and timing,
-  first-mount seeds, no history replay, Sentence and wipe regions, tones, reduced motion,
-  persistent regions, StrictMode first paint) and `banner.gallery.test.tsx`. Every rerender in
-  a test passes fresh arrays, so the enqueue effects re-run as they do with live views.
+  first-mount seeds, no history replay, Sentence and wipe regions, every kind's live mode,
+  tones, flat slabs, the body portal, reduced motion, persistent regions, StrictMode first paint
+  for won, dead and turn) and `banner.gallery.test.tsx`. Every rerender in a test passes fresh
+  arrays, so the enqueue effects re-run as they do with live views. The banners portal out of
+  `view.container`: query `view.baseElement` or `screen`.
 - **Gallery:** section `banner` (`ui/banner/banner.gallery.tsx`), one `BannerDemo` per kind
   with a DEV-only Play button; repeated presses queue several attacks, Sentence lines or wipes.
 

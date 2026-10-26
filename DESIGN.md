@@ -1189,30 +1189,37 @@ table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stay
   run side by side: a Sentence line can show under an attack cue. The first mount seeds You
   won!, You are dead or Your turn (in that order of precedence) and replays no log history.
 - **Live regions:** each lane owns one `role="status"` region that stays mounted, empty
-  between banners; only its content swaps, so a screen reader announces each banner once. Cues
-  are polite; Sentence and the own wipe are assertive (`bannerLiveMode`).
+  between banners; only its content swaps, so a screen reader announces each banner once. One
+  map, `BANNER_LANE_LIVE_MODE`, sets each region's mode, and `bannerLiveMode(kind)` reads it
+  through the kind's lane: cues are polite; Sentence and the own wipe are assertive.
 - **Slab:** a `<p data-banner="turn | attacked | dead | won | sentence | wipe"
   data-motion="full | reduced">` in Lilita One 32px (`text-v7-display`), leading 1.25, centered
   and balanced, at most `min(92vw, 30rem)` wide, wrapping anywhere so a 24-character nickname
-  cannot overflow. Arcade chrome (`CHROME_SHAPE_CLASS`: 3px `--ink` outline, radius
-  `--chrome-radius`, `--chrome-shadow`). Padding `px-6 py-3` for Your turn and You won!,
-  `px-8 py-4` for the others; 6px margin above and below, so stacked lanes sit 12px apart.
+  cannot overflow. Flat outlined chrome (`CHROME_OUTLINE_CLASS` plus `rounded-v7-chrome`: 3px
+  `--ink` outline, radius `--chrome-radius`, no drop shadow). Flat and outlined means "not
+  pressable" in this system (Badge), so a banner never reads as a CTA or danger button, which
+  matters because a tap goes through it to whatever lies underneath. The full band look is
+  L78-11's. Padding `px-6 py-3` for Your turn and You won!, `px-8 py-4` for the others; 6px
+  margin above and below, so stacked lanes sit 12px apart.
 - **Fills (inline hex):** Your turn and You won! take the POV seat hue (`v7SeatColor`), else
   `--cta`; attacked `--threat-attack`; You are dead, Sentence and wipe `--danger`. The label is
   always `--text-on-cta`, at 4.5:1 or better on every fill (`banner-items.test.ts`): 13.70:1 on
   `--cta`, 5.79:1 on `--threat-attack`, 5.97:1 on `--danger`, 6.50:1 to 14.59:1 on the seat
   hues. A seat hue never shares a slab with `--life` or a `--threat-*` color.
-- **Layer:** the root is `fixed inset-0`, `pointer-events: none`, on `Z_INDEX.banner` (90):
-  above sheets (50) and Minimize bars (80), below toasts (95). It never takes focus or a press.
-  It renders in place, not in a portal, so its host mounts it outside any stacking context.
+- **Layer:** the root portals to `document.body`, like Sheet and Toast, and is
+  `fixed inset-0`, `pointer-events: none`, on `Z_INDEX.banner` (90): above sheets (50) and
+  Minimize bars (80), below toasts (95), all compared at body level. A transformed or isolated
+  ancestor (the arena, the L78 board shake) can neither re-anchor it nor trap it under the
+  sheets. It never takes focus or a press. Mount it once per arena so its regions exist before
+  the first cue.
 - **Motion:** entrance only, over `--dur-slow` on `--ease-entrance`: Your turn and You won!
   scale 0.85 to 1 and rise 12px; attacked and You are dead scale 0.72 to 1.06 and rise 12px;
   Sentence and wipe scale 0.62 to 1.04, rise 18px and untilt from -4deg. No exit: the next
   item mounts exactly at `TABLE_BANNER_MS` (L78 owns banner juice, §8.1). Reduced motion keeps
   the same text with a fade only, no transform (§8.3).
 - **Gallery:** the `/dev/ui` section `banner` (`banner.gallery.tsx`), one `BannerDemo` per
-  kind with a DEV-only Play button inside a 224px box whose `translateZ(0)` contains the fixed
-  root. Your turn (seat 0), You won! (seat 3) and You are dead remount per play; attacked,
+  kind with a DEV-only Play button. Banners play at the center of the screen, with real phone
+  geometry. Your turn (seat 0), You won! (seat 3) and You are dead remount per play; attacked,
   Sentence and wipe add one input per play, so repeated presses queue several. The Sentence demo
   cycles 3, 2, 1, then the fire line naming a 24-character victim.
 
