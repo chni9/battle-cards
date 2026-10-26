@@ -449,8 +449,9 @@ Each `ui/` component adds its section here, or in its own `##` section, in the s
 The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
 Sheet, Dialog and Toast in Overlays, the L72-11 cost glyph and effect copy in Cost glyphs
 and effect copy, the L72-12 holo card in Card, the L72-14 chat in Chat, the L72-15 kit
-portrait and kit details in Kit, the L72-16 table rules strip and sheet in Rules, and the
-L72-17 coach panel in Coach panel.
+portrait and kit details in Kit, the L72-16 table rules strip and sheet in Rules, the
+L72-17 coach panel in Coach panel, the L72-18 banners in Table banners, and the L72-19 seat
+name, bot label and connection badge in Seat identity.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -1222,6 +1223,55 @@ table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stay
   geometry. Your turn (seat 0), You won! (seat 3) and You are dead remount per play; attacked,
   Sentence and wipe add one input per play, so repeated presses queue several. The Sentence demo
   cycles 3, 2, 1, then the fire line naming a 24-character victim.
+
+## Seat identity — ui/seat/ (L72-19)
+
+`ui/seat/player-name.tsx`, `bot-seat-label.tsx`, `connection-badge.tsx` (with its copy in the
+pure `connection-badge-label.ts`) and `seat.gallery.tsx` (spec v7 §4.2, §5.1, §5.2, §6.2;
+Appendix A `global-connection-badge`). Props and copy are V2's, unchanged: `<PlayerName
+nickname playerId? view? seatIndex? className? possessive? />`, `<BotSeatLabel difficulty
+className? />`, `<ConnectionBadge player className? />`. The V2 files in `design/components/`
+stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat/`.
+
+- **PlayerName:** Lilita One (`font-v7-display`, one weight; V2's `font-semibold` is gone). The
+  hue is inline hex from `v7SeatColor`, never `var()` or `color-mix()`, on the nickname span
+  only, so the possessive `'s` follows it in the surrounding color. The seat is an explicit
+  `seatIndex` (clamped into 0 to 7), else `seatIndexOf(view, playerId)`, else none: the span
+  then takes the surrounding color and carries no `data-seat-index`. The size is the caller's.
+- **Seat names stand on `--panel` or `--panel-2`, never straight on `.v7-ground`.** Every hue
+  clears 4.5:1 on both (lowest 4.77:1, `--seat-7` on `--panel-2`), but at a halo center of the
+  ground (30% `--glow-a` or `--glow-b` over `--bg-1` or `--bg-0`) `--seat-1`, `--seat-4` and
+  `--seat-7` fall to between 3.4:1 and 4.6:1. The Own-Hue Rule holds: the seat hue never shares an element
+  with `--life` or a `--threat-*` color, and `--seat-1` (#ff6461) sits close to `--danger`
+  (CIEDE2000 4.1), so a state is never told by that hue alone.
+- **Long names:** the text always keeps the full nickname. A caller that clips passes
+  `className="truncate"` and puts the span in a flex row with `min-w-0` (`truncate` needs a
+  block-level box, which a flex item is). A caller that wraps passes `wrap-anywhere`
+  (`overflow-wrap: anywhere`), not `break-words`: only `anywhere` also shrinks the min-content
+  width, so a 70-character unbroken nickname wraps inside a fit-content box instead of pushing
+  it wider (measured at 320px).
+- **BotSeatLabel:** "Bot · {Easy|Normal|Hard}" (`formatBotDifficulty`): a decorative 12px
+  `bot` icon, "Bot" in `--text-2` and the tier in `--text`, on `--panel`. The dot is
+  `aria-hidden`. The children carry no whitespace text nodes, so `textContent` is exactly
+  `Bot·Easy`. No role and no `aria-label`: the visible text is the spoken text, as in V2.
+- **ConnectionBadge:** copy and the 3 / 5 thresholds unchanged (`connectionBadgeLabel`):
+  "eliminated", "disconnected — grace", "absent N/3", "idle timeouts N/5", and no badge for a
+  connected seat with no timeouts. Eliminated is `--text` on `--bg-0` with the `eliminated`
+  cross (17.19:1); every degraded state is `--text-2` on `--panel-2` with the `disconnected`
+  plug (8.99:1). The two glyphs differ in geometry, so no state rests on color alone. Table
+  seats only: the lobby and Game over say the same things in their own words. No role and no
+  `aria-label`; the icon is decorative.
+- **Shared chip:** both are an inline-flex chip in Nunito 800 at 11px (`text-v7-micro`, the §5.2
+  floor; V2's badge was 10px), uppercase, with `--chrome-radius-sm`, no outline and no hard
+  shadow: the seat frame around them owns the arcade chrome (§5.3). The 12px icon has
+  `shrink-0`. No icon needs a well: `disconnected` (`--text-2`) on `--panel-2` is CIEDE2000
+  65.2, `eliminated` (`--danger`) on `--bg-0` 54.4 and `bot` (`--text-2`) on `--panel` 68.4,
+  all above 20. A degraded badge on a `--panel-2` frame and a bot label on a `--panel` frame
+  lose their chip fill (same color as the ground); the text keeps 8.99:1 and 10.10:1.
+- **Gallery:** the `/dev/ui` section `seat` (`seat.gallery.tsx`): the eight seat hues on both
+  grounds, the possessive, the unseated and the long-name forms in a 240px frame, every bot
+  tier and every badge state (including a connected seat captioned "connected: no badge"),
+  each on `--panel` and `--panel-2`.
 
 ## Do's and Don'ts
 

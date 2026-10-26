@@ -608,6 +608,34 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `banner` (`ui/banner/banner.gallery.tsx`), one `BannerDemo` per kind
   with a DEV-only Play button; repeated presses queue several attacks, Sentence lines or wipes.
 
+### Seat identity (`ui/seat/`, L72-19)
+
+- **Seat identity (`ui/seat/`, L72-19):** `PlayerName`, `BotSeatLabel`, `ConnectionBadge` with
+  unchanged props and copy (`connectionBadgeLabel` in `connection-badge-label.ts`); V2 versions
+  stay until L74 / L76 / L77 switch imports; new code imports only `ui/seat/`.
+- **Copy has one home:** `connectionBadgeLabel(player)` (pure `.ts`, V2's private `badgeLabel`
+  moved verbatim, L10-04) returns the badge text or `null`. Its 3 and 5 thresholds mirror the
+  server's `ABSENT_AUTO_TURN_LIMIT` and `CONNECTED_TIMEOUT_LIMIT`; they are cited, never
+  imported (server-only). `PublicPlayerView` is assignable to `ConnectionBadgePlayer`
+  (`expectTypeOf` in the test).
+- **No role, no `aria-label`:** the visible text is the spoken text (`'Bot·Easy'`,
+  `'absent 2/3'`), as in V2; the 12px icons are decorative. `BotSeatLabel` has no whitespace
+  text nodes between its children.
+- **Seat hues go on panel surfaces:** a `PlayerName` stands on `--panel` or `--panel-2`, never
+  straight on `.v7-ground` (at a halo center `--seat-1`, `--seat-4` and `--seat-7` fall to
+  3.4:1 to 4.6:1). The hue is on the
+  nickname span only and never shares an element with `--life` or a `--threat-*` color.
+- **Long names:** the component never clips. Pass `className="truncate"` in a flex row with
+  `min-w-0` (the badge gets `shrink-0`), or `wrap-anywhere` to wrap. Not `break-words`: it does
+  not shrink min-content, so an unbroken nickname widens a fit-content box (measured at 320px).
+- **Tests:** `connection-badge-label.test.ts` (node), `connection-badge.test.tsx`,
+  `bot-seat-label.test.tsx`, `player-name.test.tsx` and `seat.gallery.test.tsx` (happy-dom).
+  Each file repeats its small helpers (`fakeSeat`, `glyphOf`, `rootOf`) rather than sharing a
+  fixture module. `glyphOf` compares an icon's inner markup, so a test can tell which glyph a
+  badge drew without reading its paint.
+- **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
+  `--panel` and `--panel-2`, with the long-name forms in a 240px frame.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -627,6 +655,7 @@ rules above are unchanged — this section only covers how the client looks.
   `apps/client/src/ui/asset-files.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
+  (V7 rebuilds: `ui/seat/`, L72-19)
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
   (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG (`ui/asset-files.ts`), then rerun
   `scripts/extract-art.ts` for `assets/art/kits/<kitId>.png`, mid-game `alwaysUpgraded` test.
