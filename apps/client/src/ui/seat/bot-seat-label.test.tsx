@@ -44,6 +44,14 @@ describe('BotSeatLabel (V7 · L17-03)', () => {
     expect(svg?.innerHTML).toBe(glyphOf('bot'));
   });
 
+  // happy-dom has no real colors here, so the tone is pinned by its classes (DESIGN.md › Seat identity).
+  it.each(BOT_DIFFICULTIES)('puts the %s label on --panel with --text-2 words and a --text tier', (difficulty) => {
+    const root = rootOf(renderUi(<BotSeatLabel difficulty={difficulty} />).container);
+    expect(root.classList.contains('bg-v7-panel')).toBe(true);
+    expect(root.classList.contains('text-v7-text-2')).toBe(true);
+    expect(screen.getByText(LABELS[difficulty]).classList.contains('text-v7-text')).toBe(true);
+  });
+
   it('passes className to the root', () => {
     const { container } = renderUi(<BotSeatLabel difficulty="hard" className="shrink-0" />);
     expect(rootOf(container).classList.contains('shrink-0')).toBe(true);

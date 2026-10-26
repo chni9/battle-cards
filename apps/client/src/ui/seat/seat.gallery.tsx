@@ -69,8 +69,15 @@ const BADGE_SEATS: readonly { label: string; seat: ConnectionBadgePlayer }[] = [
   { label: 'connected: no badge', seat: seat({}) },
 ];
 
-const LONG_UNBROKEN = 'Wolfeschlegelsteinhausenbergerdorff';
-const LONG_WORDS = 'Bartholomew the Unbeatable Card Shark';
+/**
+ * Real nicknames are trimmed and at most 24 characters: the server rejects longer ones
+ * (`readNickname` in `apps/server/src/rooms/game-room.ts`; parity `home-nickname`, maxLength 24).
+ * All three samples are exactly 24, so the gallery never shows a name a player cannot have. The
+ * widest is 24 capital Ws (320 px in 14 px Lilita One), the worst case for a narrow box.
+ */
+const LONG_UNBROKEN = 'Wolfeschlegelsteinhausen';
+const LONG_WORDS = 'Bartholomew the Unbeaten';
+const LONG_WIDEST = 'W'.repeat(24);
 
 export const gallery: GallerySection = {
   id: 'seat',
@@ -96,7 +103,13 @@ export const gallery: GallerySection = {
           <div className="flex min-w-0 flex-col gap-3 text-v7-body text-v7-text">
             {ground === 'panel' ? (
               <>
-                {labelled('possessive: only the nickname is colored', <span><PlayerName nickname="Ana" seatIndex={0} possessive /></span>)}
+                {/* PlayerName is a fragment (the colored span, then the plain 's); the wrapper keeps both in one flex item. */}
+                {labelled(
+                  'possessive: only the nickname is colored',
+                  <span>
+                    <PlayerName nickname="Ana" seatIndex={0} possessive />
+                  </span>,
+                )}
                 {labelled('no seat: the surrounding color', <PlayerName nickname="Unknown" />)}
               </>
             ) : null}
@@ -112,7 +125,8 @@ export const gallery: GallerySection = {
                 'long, wrapped (wrap-anywhere)',
                 <p className="min-w-0 wrap-anywhere">
                   <PlayerName nickname={LONG_WORDS} seatIndex={6} possessive />{' '}
-                  <PlayerName nickname={LONG_UNBROKEN} seatIndex={1} />
+                  <PlayerName nickname={LONG_UNBROKEN} seatIndex={1} />{' '}
+                  <PlayerName nickname={LONG_WIDEST} seatIndex={3} />
                 </p>,
               )}
             </div>
@@ -137,12 +151,12 @@ export const gallery: GallerySection = {
       render: () =>
         onGrounds(() => (
           <div className="flex flex-wrap gap-x-4 gap-y-3">
-            {BADGE_SEATS.map(({ label, seat }) =>
+            {BADGE_SEATS.map(({ label, seat: badgeSeat }) =>
               labelled(
                 label,
                 // A seat with no badge renders nothing, so the cell keeps a badge's height and its caption stays level.
                 <div className="min-h-6">
-                  <ConnectionBadge player={seat} />
+                  <ConnectionBadge player={badgeSeat} />
                 </div>,
               ),
             )}

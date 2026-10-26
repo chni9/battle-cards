@@ -10,18 +10,20 @@
  * - **Color:** inline `v7SeatColor` hex, never `var()` or `color-mix()` (mobile Safari painted
  *   theme variables gray in V2). Every hue clears 4.5:1 on `--panel` and `--panel-2`
  *   (`ui/contrast.test.ts`); at a halo center of the page ground `--seat-1`, `--seat-4` and
- *   `--seat-7` fall to between 3.4:1 and 4.6:1, so a seat name sits on a panel surface, never
- *   straight on `.v7-ground`.
+ *   `--seat-7` fall to between 3.44:1 and 4.57:1 (DESIGN.md › Seat hues), so a seat name sits on
+ *   a panel surface, never straight on `.v7-ground`.
  * - **Own-Hue Rule (§5.1):** the seat hue is on this span only, and a seat hue never shares an
  *   element with `--life` or `--threat-*`. Seat 1 (#ff6461) sits close to `--danger`, so no
  *   state is ever told by this hue alone.
  * - **Possessive:** `'s` follows the colored span as plain text, so only the nickname is colored.
- * - **Long names:** the span is inline and the text keeps the full nickname, so a screen reader
- *   always hears all of it. A caller that must clip passes `className="truncate"` and puts the
- *   span in a flex row with `min-w-0` (`truncate` needs a block-level box, which a flex item is).
- *   A caller that lets it wrap passes `className="wrap-anywhere"` (`overflow-wrap: anywhere`),
- *   not `break-words`: only `anywhere` also shrinks the box's min-content width, so an unbroken
- *   nickname wraps inside a fit-content or flex-item box instead of pushing it wider.
+ * - **Long names:** a nickname is at most 24 characters (the server rejects longer ones;
+ *   parity `home-nickname`), up to about 320 px in 14 px Lilita One. The span is inline and the
+ *   text keeps the full nickname, so a screen reader always hears all of it. A caller that must
+ *   clip passes `className="truncate"` and puts the span in a flex row with `min-w-0`
+ *   (`truncate` needs a block-level box, which a flex item is). A caller that lets it wrap passes
+ *   `className="wrap-anywhere"` (`overflow-wrap: anywhere`), not `break-words`: only `anywhere`
+ *   also shrinks the box's min-content width, so an unbroken nickname wraps inside a fit-content
+ *   or flex-item box instead of pushing it wider.
  */
 
 import type { ReactElement } from 'react';

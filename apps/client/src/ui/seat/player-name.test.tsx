@@ -5,6 +5,7 @@
  * Lilita One). Same props and seat resolution as V2's `PlayerName`.
  */
 
+import { screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderUi } from '../../test/render';
@@ -64,6 +65,21 @@ describe('PlayerName (V7 · L39-03)', () => {
     const { container } = renderUi(<PlayerName nickname="Cy" playerId="p-cy" view={VIEW} possessive />);
     expect(container.textContent).toBe("Cy's");
     expect(container.querySelector('span')?.textContent).toBe('Cy');
+  });
+
+  it('keeps a 24-character nickname whole under truncate', () => {
+    // 24 is the longest nickname the server accepts (parity `home-nickname`); `truncate` only clips
+    // the paint, so the DOM text, and with it what a screen reader speaks, stays the full name.
+    const nickname = 'Wolfeschlegelsteinhausen';
+    expect(nickname).toHaveLength(24);
+    const { container } = renderUi(<PlayerName nickname={nickname} seatIndex={4} className="truncate" possessive />);
+    const span = container.querySelector('span');
+    expect(span?.classList.contains('truncate')).toBe(true);
+    expect(span?.textContent).toBe(nickname);
+    expect(span?.hasAttribute('aria-label')).toBe(false);
+    expect(span?.hasAttribute('title')).toBe(false);
+    expect(screen.getByText(nickname)).toBe(span);
+    expect(container.textContent).toBe(`${nickname}'s`);
   });
 
   it('passes className to the nickname span', () => {

@@ -610,31 +610,36 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 ### Seat identity (`ui/seat/`, L72-19)
 
-- **Seat identity (`ui/seat/`, L72-19):** `PlayerName`, `BotSeatLabel`, `ConnectionBadge` with
-  unchanged props and copy (`connectionBadgeLabel` in `connection-badge-label.ts`); V2 versions
-  stay until L74 / L76 / L77 switch imports; new code imports only `ui/seat/`.
+- **Components:** `PlayerName`, `BotSeatLabel`, `ConnectionBadge` with unchanged props and copy
+  (`connectionBadgeLabel` in `connection-badge-label.ts`); V2 versions stay until L74 / L76 / L77
+  switch imports; new code imports only `ui/seat/`.
 - **Copy has one home:** `connectionBadgeLabel(player)` (pure `.ts`, V2's private `badgeLabel`
   moved verbatim, L10-04) returns the badge text or `null`. Its 3 and 5 thresholds mirror the
-  server's `ABSENT_AUTO_TURN_LIMIT` and `CONNECTED_TIMEOUT_LIMIT`; they are cited, never
-  imported (server-only). `PublicPlayerView` is assignable to `ConnectionBadgePlayer`
-  (`expectTypeOf` in the test).
+  server's `ABSENT_AUTO_TURN_LIMIT` and `CONNECTED_TIMEOUT_LIMIT`; they are cited, never imported
+  (server-only). `PublicPlayerView` is assignable to `ConnectionBadgePlayer` (`expectTypeOf` in
+  the test).
 - **No role, no `aria-label`:** the visible text is the spoken text (`'Bot·Easy'`,
-  `'absent 2/3'`), as in V2; the 12px icons are decorative. `BotSeatLabel` has no whitespace
-  text nodes between its children.
+  `'absent 2/3'`), as in V2; the 12px icons are decorative. `BotSeatLabel` has no whitespace text
+  nodes between its children.
 - **Seat hues go on panel surfaces:** a `PlayerName` stands on `--panel` or `--panel-2`, never
   straight on `.v7-ground` (at a halo center `--seat-1`, `--seat-4` and `--seat-7` fall to
-  3.4:1 to 4.6:1). The hue is on the
-  nickname span only and never shares an element with `--life` or a `--threat-*` color.
-- **Long names:** the component never clips. Pass `className="truncate"` in a flex row with
-  `min-w-0` (the badge gets `shrink-0`), or `wrap-anywhere` to wrap. Not `break-words`: it does
-  not shrink min-content, so an unbroken nickname widens a fit-content box (measured at 320px).
+  3.44:1 to 4.57:1; DESIGN.md › Seat hues). The hue is on the nickname span only and never shares
+  an element with `--life` or a `--threat-*` color.
+- **Long names:** nicknames are at most 24 characters (server rule, parity `home-nickname`), up
+  to 320px wide in 14px Lilita One. The component never clips. Pass `className="truncate"` in a
+  flex row with `min-w-0` (the badge gets `shrink-0`), or `wrap-anywhere` to wrap. Not
+  `break-words`: it does not shrink min-content, so an unbroken name widens a fit-content box
+  (24 capital Ws pushed one to 320px at a 320px viewport; a 96px box overflows even a 156px name).
+- **Tone tests:** happy-dom cannot compute colors, so the tones are pinned by class: eliminated
+  badge `bg-v7-bg-0`, degraded badge `bg-v7-panel-2`, bot chip `bg-v7-panel`. The two chips repeat
+  one `CHIP_CLASS` string, each with a comment pointing at the other.
 - **Tests:** `connection-badge-label.test.ts` (node), `connection-badge.test.tsx`,
-  `bot-seat-label.test.tsx`, `player-name.test.tsx` and `seat.gallery.test.tsx` (happy-dom).
-  Each file repeats its small helpers (`fakeSeat`, `glyphOf`, `rootOf`) rather than sharing a
-  fixture module. `glyphOf` compares an icon's inner markup, so a test can tell which glyph a
-  badge drew without reading its paint.
+  `bot-seat-label.test.tsx`, `player-name.test.tsx` and `seat.gallery.test.tsx` (happy-dom). Each
+  file repeats its small helpers (`fakeSeat`, `glyphOf`, `rootOf`) rather than sharing a fixture
+  module. `glyphOf` compares an icon's inner markup, so a test can tell which glyph a badge drew
+  without reading its paint. The gallery test also fails on a sample nickname over 24 characters.
 - **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
-  `--panel` and `--panel-2`, with the long-name forms in a 240px frame.
+  `--panel` and `--panel-2`, with the 24-character long-name forms in a 240px frame.
 
 ## Design system (V2 · Lots 10+)
 

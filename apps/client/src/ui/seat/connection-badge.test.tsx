@@ -56,6 +56,26 @@ describe('ConnectionBadge (V7 · global-connection-badge)', () => {
     expect(svgs[0]?.innerHTML).toBe(glyphOf(icon));
   });
 
+  // happy-dom has no real colors here, so the tone is pinned by its classes (DESIGN.md › Seat identity).
+  it('puts an eliminated seat on --bg-0 in --text', () => {
+    const root = rootOf(renderUi(<ConnectionBadge player={fakeSeat({ isEliminated: true })} />).container);
+    expect(root.classList.contains('bg-v7-bg-0')).toBe(true);
+    expect(root.classList.contains('text-v7-text')).toBe(true);
+    expect(root.classList.contains('bg-v7-panel-2')).toBe(false);
+    expect(root.classList.contains('text-v7-text-2')).toBe(false);
+  });
+
+  it.each(STATES.filter(({ name }) => name !== 'eliminated'))(
+    'puts the $name badge on --panel-2 in --text-2',
+    ({ seat }) => {
+      const root = rootOf(renderUi(<ConnectionBadge player={seat} />).container);
+      expect(root.classList.contains('bg-v7-panel-2')).toBe(true);
+      expect(root.classList.contains('text-v7-text-2')).toBe(true);
+      expect(root.classList.contains('bg-v7-bg-0')).toBe(false);
+      expect(root.classList.contains('text-v7-text')).toBe(false);
+    },
+  );
+
   it('renders nothing for a connected seat with no timeouts', () => {
     expect(renderUi(<ConnectionBadge player={fakeSeat()} />).container.childElementCount).toBe(0);
   });

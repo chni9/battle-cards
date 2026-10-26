@@ -180,6 +180,13 @@ least 20 apart. The measured minimum is **21.33** (`--seat-4` / `--seat-7`). Eac
 least 4.5:1 on all four grounds (`--bg-0`, `--bg-1`, `--panel`, `--panel-2`), because seat names
 are text. `ui/contrast.test.ts` fails if either bound breaks.
 
+**Flat tokens only.** The 4.77:1 floor and every ratio in the table are against the four flat
+tokens. `.v7-ground` is not flat: at a halo center (30% `--glow-a` or `--glow-b` over `--bg-1` or
+`--bg-0`) `--seat-1`, `--seat-4` and `--seat-7` fall to **3.44 to 4.57:1**, below the 4.5:1 text
+bar, and the other five stay above 5.5:1. A seat name therefore stands on `--panel` or
+`--panel-2`, never straight on the ground (Seat identity). Nothing in code enforces this; the
+`/dev/ui` seat section shows every hue on both panels.
+
 ### Contrast record (WCAG AA: 4.5:1 body, 3:1 large)
 - `--text` / `--text-2`: 17.19 / 12.25 on `--bg-0`, 15.70 / 11.19 on `--bg-1`, 14.17 / 10.10 on
   `--panel`, 12.61 / 8.99 on `--panel-2`.
@@ -1239,17 +1246,21 @@ stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat
   `seatIndex` (clamped into 0 to 7), else `seatIndexOf(view, playerId)`, else none: the span
   then takes the surrounding color and carries no `data-seat-index`. The size is the caller's.
 - **Seat names stand on `--panel` or `--panel-2`, never straight on `.v7-ground`.** Every hue
-  clears 4.5:1 on both (lowest 4.77:1, `--seat-7` on `--panel-2`), but at a halo center of the
-  ground (30% `--glow-a` or `--glow-b` over `--bg-1` or `--bg-0`) `--seat-1`, `--seat-4` and
-  `--seat-7` fall to between 3.4:1 and 4.6:1. The Own-Hue Rule holds: the seat hue never shares an element
-  with `--life` or a `--threat-*` color, and `--seat-1` (#ff6461) sits close to `--danger`
-  (CIEDE2000 4.1), so a state is never told by that hue alone.
-- **Long names:** the text always keeps the full nickname. A caller that clips passes
-  `className="truncate"` and puts the span in a flex row with `min-w-0` (`truncate` needs a
-  block-level box, which a flex item is). A caller that wraps passes `wrap-anywhere`
-  (`overflow-wrap: anywhere`), not `break-words`: only `anywhere` also shrinks the min-content
-  width, so a 70-character unbroken nickname wraps inside a fit-content box instead of pushing
-  it wider (measured at 320px).
+  clears 4.5:1 on both (lowest 4.77:1, `--seat-7` on `--panel-2`), but those are flat-token
+  figures: at a halo center of the ground `--seat-1`, `--seat-4` and `--seat-7` fall to 3.44 to
+  4.57:1 (Colors › Seat hues). The Own-Hue Rule holds: the seat hue never shares an element with
+  `--life` or a `--threat-*` color, and `--seat-1` (#ff6461) sits close to `--danger` (CIEDE2000
+  4.1), so a state is never told by that hue alone.
+- **Long names:** a nickname is at most 24 characters (the server rejects longer ones; parity
+  `home-nickname`) and the text always keeps the full name. In 14px Lilita One at 320px,
+  "Wolfeschlegelsteinhausen" (24, unbroken) is 156px and 24 capital Ws, the widest 24-character
+  name, is 320px. A caller that clips passes `className="truncate"` and puts the span in a flex
+  row with `min-w-0` (`truncate` needs a block-level box, which a flex item is); beside a
+  "disconnected — grace" badge the 156px name keeps 46px. A caller that wraps passes
+  `wrap-anywhere` (`overflow-wrap: anywhere`), not `break-words`: only `anywhere` also shrinks the
+  min-content width. In a 226px frame `break-words` copes with the 156px name but lets the 320px
+  one push a fit-content box to 320px, and in a 96px box it overflows both; `wrap-anywhere` holds
+  every case at the box width.
 - **BotSeatLabel:** "Bot · {Easy|Normal|Hard}" (`formatBotDifficulty`): a decorative 12px
   `bot` icon, "Bot" in `--text-2` and the tier in `--text`, on `--panel`. The dot is
   `aria-hidden`. The children carry no whitespace text nodes, so `textContent` is exactly
@@ -1269,7 +1280,8 @@ stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat
   all above 20. A degraded badge on a `--panel-2` frame and a bot label on a `--panel` frame
   lose their chip fill (same color as the ground); the text keeps 8.99:1 and 10.10:1.
 - **Gallery:** the `/dev/ui` section `seat` (`seat.gallery.tsx`): the eight seat hues on both
-  grounds, the possessive, the unseated and the long-name forms in a 240px frame, every bot
+  grounds, the possessive, the unseated and the 24-character long-name forms (unbroken, with
+  spaces and the widest) in a 240px frame, every bot
   tier and every badge state (including a connected seat captioned "connected: no badge"),
   each on `--panel` and `--panel-2`.
 

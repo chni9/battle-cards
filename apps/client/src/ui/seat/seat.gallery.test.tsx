@@ -36,4 +36,19 @@ describe('seat gallery (/dev/ui · L72-19)', () => {
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
     }
   });
+
+  it('never shows a nickname longer than the server accepts (24 characters)', () => {
+    const seat = sections.find((s) => s.id === 'seat');
+    if (seat === undefined) throw new Error('seat gallery section missing');
+    const { container } = renderUi(
+      <>
+        {seat.entries.map((entry) => (
+          <div key={entry.id}>{entry.render()}</div>
+        ))}
+      </>,
+    );
+    const nicknames = [...container.querySelectorAll('.font-v7-display')].map((node) => node.textContent);
+    expect(nicknames.length).toBeGreaterThan(8);
+    for (const nickname of nicknames) expect(nickname.length).toBeLessThanOrEqual(24);
+  });
 });

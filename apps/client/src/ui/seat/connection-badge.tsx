@@ -27,6 +27,7 @@ export interface ConnectionBadgeProps {
   className?: string;
 }
 
+/** The same chip as `BotSeatLabel`'s `CHIP_CLASS` (`bot-seat-label.tsx`); change one, change both. */
 const CHIP_CLASS =
   'inline-flex items-center gap-1 rounded-v7-chrome-sm px-1.5 py-0.5 font-v7-body text-v7-micro font-extrabold uppercase tracking-wide';
 
