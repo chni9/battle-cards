@@ -88,4 +88,19 @@ describe('formatCardEffectText (L51-05)', () => {
       'Cannot be redirected.',
     );
   });
+
+  it('renders the technical spec v7 §10.5 copy in the inspect body (L72-13)', () => {
+    expect(formatCardEffectText(SPECIAL_CARD_CATALOG['attack-thief'], false)).toBe(
+      'Block every attack already pending against you, and steal a random attack card from each opponent.\n\nUpgrade: Steal all attack cards from all opponents, not one random each.',
+    );
+    expect(formatCardEffectText(SPECIAL_CARD_CATALOG['attack-thief'], true)).toBe(
+      'Block every attack already pending against you, and steal all attack cards from all opponents.',
+    );
+    expect(formatCardEffectText(SHARED_CARD_CATALOG.absorber, false)).toBe(
+      'Gain the lives the target lost during their last complete turn.\n\nUpgrade: Also capture every point and upgrade point that left them, including sales and thefts; never shield.',
+    );
+    expect(formatCardEffectText(SPECIAL_CARD_CATALOG['super-absorber'], true)).toBe(
+      'While the counter holds, absorb lives each living opponent lost on their turn, plus every point and upgrade point that left them, including sales and thefts; never shield. Playing it does not capture past turns.',
+    );
+  });
 });

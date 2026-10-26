@@ -281,7 +281,8 @@ describe('Super Absorber (L63-05)', () => {
     expect(card.effect).toMatch(/lives/i);
     expect(card.effect).not.toMatch(/doubl/i);
     expect(card.effect).not.toMatch(/snapshot|last complete turn/i);
-    expect(card.upgradeEffect).toMatch(/points/i);
+    expect(card.upgradeEffect).toMatch(/every point and upgrade point that left them/i);
+    expect(card.upgradeEffect).toMatch(/never shield/i);
     expect(card.upgradeEffect).toMatch(/upgrade/i);
     expect(card.upgradeEffect).not.toMatch(/doubl/i);
     expect(card.upgradeAdds).not.toMatch(/doubl/i);

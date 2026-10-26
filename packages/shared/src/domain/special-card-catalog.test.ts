@@ -54,6 +54,29 @@ describe('SPECIAL_CARD_CATALOG (rules spec §5, L5-01)', () => {
     expect(SPECIAL_CARD_CATALOG['attack-thief'].cost).toEqual({ points: 8 });
   });
 
+  it('pins the Lot 68 Attack Thief and Super Absorber+ copy (technical spec v7 §10.5)', () => {
+    const attackThief = SPECIAL_CARD_CATALOG['attack-thief'];
+    expect(attackThief.effect).toBe(
+      'Block every attack already pending against you, and steal a random attack card from each opponent.',
+    );
+    expect(attackThief.upgradeEffect).toBe(
+      'Block every attack already pending against you, and steal all attack cards from all opponents.',
+    );
+    expect(attackThief.upgradeAdds).toBe('Steal all attack cards from all opponents, not one random each.');
+    expect(`${attackThief.effect} ${attackThief.upgradeEffect}`).not.toMatch(/\bonce\b|charge/i);
+
+    const superAbsorber = SPECIAL_CARD_CATALOG['super-absorber'];
+    expect(superAbsorber.effect).toBe(
+      'While the counter holds, absorb lives each living opponent lost on their turn. Playing it does not capture past turns.',
+    );
+    expect(superAbsorber.upgradeEffect).toBe(
+      'While the counter holds, absorb lives each living opponent lost on their turn, plus every point and upgrade point that left them, including sales and thefts; never shield. Playing it does not capture past turns.',
+    );
+    expect(superAbsorber.upgradeAdds).toBe(
+      'Also absorb every point and upgrade point that left them, including sales and thefts; never shield.',
+    );
+  });
+
   it('marks only Imposition and Points Generator as persistent-on-play', () => {
     expect(isPersistentSpecialCardId('imposition')).toBe(true);
     expect(isPersistentSpecialCardId('points-generator')).toBe(true);

@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 12 |
+| 72 · Foundations | 21 | 13 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **12** |
+| **Total** | **134** | **13** |
 
 ## Designer questions still open
 
@@ -60,7 +60,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-10 | **Extract card and kit art with a contact sheet.** **Acceptance:** `artFor` test: every `ALL_ART_CARD_IDS` and `KIT_IDS` entry resolves to `art/{cards,kits}/<id>.png`, and no resolved URL matches `(dead)`, `Draw.png` or `button`. The existing `asset-lookup.test.ts` assertions are unchanged and green. The script typechecks and lints. The contact sheet is attached to the PR. The Docker build stage still installs. Deps go through `pnpm add -D`. `pnpm verify` green. | L | **High** | L72-06 | Done |
 | L72-11 | **Rebuild cost glyphs and effect copy in ui/.** **Acceptance:** happy-dom behavior tests that assert today's card-effect-copy and cost-display outcomes: - base vs upgraded blocks - the Cost row is omitted when there is no cost - Regeneration per-life rates - "4 lives", "3 points", "2 upgrade points" and "4 shield points" render as icon + number with spoken text - `title={null}` removes the tooltip  The old source-text tests stay untouched. `pnpm verify` green. | M | Low | L72-04, L72-05, L72-06, L72-07, L72-08 | Done |
 | L72-12 | **Build the holo Card component.** **Acceptance:** happy-dom tests: - The damage chip equals catalog damage × multiplier for each attack, base and upgraded, and is absent on Tax, Absorber and Super Mirror (L56-04). - Cost chip kinds: points, Tax life, Regeneration per-life (base and upgraded rate). - Upgraded shows the badge and an accessible "upgraded". - Counter labels, including the singulars. - A hidden face exposes neither name nor art. - `contextmenu` default is prevented. - Click and Enter call back with the instance id. - The hand size renders no effect text. - Reduced motion removes the animated sheen and pulse.  `pnpm verify` green. | L | Medium | L72-04, L72-05, L72-07, L72-08, L72-10, L72-11 | Done |
-| L72-13 | **Correct outdated catalog text (§10.5).** **Acceptance:** The catalog strings match §10.5, their tests pin the new text, and the old table inspect shows it. The V7 What's new entry exists and the latest-id tests pass. PR lists the strings for designer review. `pnpm verify` green. | S | Low | L72-01 | To do |
+| L72-13 | **Correct outdated catalog text (§10.5).** **Acceptance:** The catalog strings match §10.5, their tests pin the new text, and the old table inspect shows it. The V7 What's new entry exists and the latest-id tests pass. PR lists the strings for designer review. `pnpm verify` green. | S | Low | L72-01 | Done |
 | L72-14 | **Rebuild ChatLog in ui/.** **Acceptance:** happy-dom tests: - round label + nickname on each line - the side-stream role label - the empty state - Enter sends the body and resets the form - whitespace is not sent - no composer when `canWrite` is false - `maxLength === CHAT_BODY_MAX_LENGTH`  The 16 px computed size is verified in the L72 gate. `pnpm verify` green. | S | Low | L72-04, L72-05, L72-06, L72-08 | To do |
 | L72-15 | **Rebuild kit details and kit portrait in ui/.** **Acceptance:** happy-dom tests: - For every `KIT_IDS` kit, every `KIT_TRAIT_SECTION_KEYS` section and the catalog starting values render. - Specialist's duplicate specials each render. - The starting hand renders verso faces with counts and no "action · attack" prose. - The portrait `alt` is the kit name. - Gambler values match `KIT_CATALOG`.  `pnpm verify` green. | M | Low | L72-12, L72-11 | To do |
 | L72-16 | **Rebuild the table rules strip and sheet in ui/.** **Acceptance:** happy-dom tests: - seconds render from the prop, including a server default above 180 - the Random-only mark appears only when it is set - each excluded kit carries the "Excluded" label and allowed kits do not - tapping the strip opens a read-only sheet with no editable control  `pnpm verify` green. | M | Low | L72-09, L72-15 | To do |

@@ -8,20 +8,22 @@ import {
 } from './release-notes';
 
 describe('release notes catalog (L63-07 / L65-05)', () => {
-  it('lists newest first and keeps lot-72 as the open update', () => {
+  it('lists newest first and keeps lot-72-v7 as the open update', () => {
     expect(RELEASE_NOTES.length).toBeGreaterThan(0);
-    expect(latestReleaseNote().id).toBe('lot-72');
-    expect(latestReleaseNote().date).toBe('2026-10-07');
+    expect(latestReleaseNote().id).toBe('lot-72-v7');
+    expect(latestReleaseNote().date).toBe('2026-10-26');
     expect(isReleaseNoteId('lot-63')).toBe(true);
     expect(isReleaseNoteId('lot-65')).toBe(true);
     expect(isReleaseNoteId('lot-68')).toBe(true);
     expect(isReleaseNoteId('lot-69')).toBe(true);
     expect(isReleaseNoteId('lot-71')).toBe(true);
     expect(isReleaseNoteId('lot-72')).toBe(true);
+    expect(isReleaseNoteId('lot-72-v7')).toBe(true);
     expect(isReleaseNoteId('lot-64')).toBe(false);
     expect(isReleaseNoteId('lot-70')).toBe(false);
     expect(RELEASE_NOTES.some((note) => note.id === 'lot-64')).toBe(false);
     expect(RELEASE_NOTES.map((note) => note.date)).toEqual([
+      '2026-10-26',
       '2026-10-07',
       '2026-10-06',
       '2026-10-05',
@@ -32,8 +34,9 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
   });
 
   it('shows only the current update in the auto popup and every date on New', () => {
-    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72']);
+    expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72-v7']);
     expect(releaseNotesForScope('history').map((note) => note.id)).toEqual([
+      'lot-72-v7',
       'lot-72',
       'lot-71',
       'lot-69',
@@ -43,8 +46,32 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
     ]);
   });
 
-  it('writes lot-72 as short gameplay lines', () => {
+  it('keeps ids unique and opens the V7 entry under a new id (technical spec v7 §10.4)', () => {
+    const ids = RELEASE_NOTES.map((note) => note.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(latestReleaseNote().id).not.toBe('lot-72');
+  });
+
+  it('writes lot-72-v7 as the New look entry with the catalog-text fix (L72-13)', () => {
     const latest = latestReleaseNote();
+    expect(latest.id).toBe('lot-72-v7');
+    expect(latest.title).toBe('New look');
+    expect(latest.additions).toEqual([]);
+    expect(latest.items).toEqual([
+      {
+        cardId: 'attack-thief',
+        before: 'Attack Thief, Absorber+ and Super Absorber+ showed outdated card text.',
+        after: 'Fixed some bugs.',
+      },
+    ]);
+  });
+
+  it('writes lot-72 as short gameplay lines', () => {
+    const latest = RELEASE_NOTES.find((note) => note.id === 'lot-72');
+    expect(latest).toBeDefined();
+    if (latest === undefined) {
+      return;
+    }
     expect(latest.id).toBe('lot-72');
     expect(latest.title).toBe('Active slot drop');
     expect(latest.additions).toEqual([]);

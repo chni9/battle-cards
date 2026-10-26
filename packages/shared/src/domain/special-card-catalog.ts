@@ -178,8 +178,8 @@ export const SPECIAL_CARD_CATALOG = {
     'Super Absorber',
     8,
     'While the counter holds, absorb lives each living opponent lost on their turn. Playing it does not capture past turns.',
-    'While the counter holds, absorb lives each living opponent lost on their turn, plus points and upgrade points they spent. Playing it does not capture past turns.',
-    'Also absorb points and upgrade points they spent.',
+    'While the counter holds, absorb lives each living opponent lost on their turn, plus every point and upgrade point that left them, including sales and thefts; never shield. Playing it does not capture past turns.',
+    'Also absorb every point and upgrade point that left them, including sales and thefts; never shield.',
   ),
   curse: specialCard(
     'curse',
@@ -201,8 +201,8 @@ export const SPECIAL_CARD_CATALOG = {
     'attack-thief',
     'Attack Thief',
     8,
-    'Block one attack targeting you once, and steal a random attack card from each opponent.',
-    'Block one attack targeting you once, and steal all attack cards from all opponents.',
+    'Block every attack already pending against you, and steal a random attack card from each opponent.',
+    'Block every attack already pending against you, and steal all attack cards from all opponents.',
     'Steal all attack cards from all opponents, not one random each.',
   ),
   roulette: specialCard(

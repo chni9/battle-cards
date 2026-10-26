@@ -4733,3 +4733,35 @@ upgraded before, upgraded after; Super attack and Roulette at hand and sheet siz
 - Recorded in `DESIGN.md` › Card › Upgraded. Changing the foil needs a new designer ruling.
 
 ---
+
+## 2026-10-26 · [P] · [DISCREPANCY] V7 What's new id and catalog copy (L72-13)
+
+Source: `docs/technical_spec_v7.md` §4.6, §10.4 and §10.5, the 2026-09-29 Lot 68 entry above
+("Inbox triage and 28 Sep feedback"), and rules spec §3 (Absorber) and §5 (Super Absorber,
+Attack Thief).
+
+- Spec v7 §10.4 first derived the V7 What's new id as `lot-<its lot>`, which gives `lot-72`
+  (commit `6e4575a`; the Lot 72 plan, `d530a8a`, already rewrote the sentence to `lot-72-v7`
+  without recording why). `lot-72` is the pre-V7 entry for the active-slot drop cancel and the
+  Poison and Block fix. It is promoted to `main` before Lot 72 merges (§4.6), and the player's
+  seen-state (`localStorage['card-battle.v6.lastSeenReleaseId']`, `ui/release-storage.ts`) is
+  keyed by id. Reusing `lot-72` for V7 would hide the V7 entry from every player who already
+  dismissed `lot-72`. The V7 entry is therefore `lot-72-v7`, titled "New look". V7
+  player-facing PRs append to it during the promotion freeze. Any later entry takes an unused id.
+  Appending to an entry that is not on `main` (AGENTS.md section 10) is consistent here only
+  because §4.6 forbids merging the Lot 72 PR into `dev` before the `lot-72` promotion PR has
+  merged to `main`.
+- The first item is the §10.5 catalog-text fix. After is `Fixed some bugs.`, per the
+  2026-09-29 "What's new keeps Before and After" ruling. Before is one sentence naming the
+  three cards.
+- The §10.5 copy follows the 2026-09-29 Lot 68 ruling and the code. Attack Thief blocks every
+  attack already pending against the user when played and keeps no charge
+  (`cards/handlers/attack-thief.ts`). Upgraded Absorber ("capture") and upgraded Super Absorber
+  ("absorb", the verb of rules spec §5) copy every point and upgrade point that left the target,
+  including a sale (selling an upgrade point is a spend, `economy/upgrade-points.ts`) and a theft,
+  and never shield, which is not on the ledger (`turn/absorb-ledger.ts`). Attack Thief's
+  `upgradeAdds` is unchanged: it was already accurate.
+- Default wording only: the designer confirms the id and the strings in the Lot 72 PR, and a
+  ruling to keep the catalog text frozen is recorded here (§10.5).
+
+---

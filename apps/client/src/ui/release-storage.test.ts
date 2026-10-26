@@ -54,7 +54,7 @@ describe('release storage (L63-07)', () => {
     });
     expect(readLastSeenReleaseId()).toBeNull();
     expect(hasUnseenReleaseNotes()).toBe(true);
-    expect(latestReleaseNote().id).toBe('lot-72');
+    expect(latestReleaseNote().id).toBe('lot-72-v7');
   });
 
   it('Got it writes the latest id so a second visit is read', () => {
@@ -63,7 +63,7 @@ describe('release storage (L63-07)', () => {
       value: new MemoryStorage(),
     });
     markLatestReleaseSeen();
-    expect(globalThis.localStorage.getItem(LAST_SEEN_RELEASE_ID_KEY)).toBe('lot-72');
+    expect(globalThis.localStorage.getItem(LAST_SEEN_RELEASE_ID_KEY)).toBe('lot-72-v7');
     expect(hasUnseenReleaseNotes()).toBe(false);
   });
 
@@ -75,6 +75,16 @@ describe('release storage (L63-07)', () => {
     });
     storage.setItem(LAST_SEEN_RELEASE_ID_KEY, 'lot-62');
     expect(hasUnseenReleaseNotes()).toBe(true);
+  });
+
+  it('treats a reader who dismissed the pre-V7 lot-72 as unread (technical spec v7 §10.4)', () => {
+    const storage = new MemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+    storage.setItem(LAST_SEEN_RELEASE_ID_KEY, 'lot-72');
+    expect(hasUnseenReleaseNotes()).toBe(true);
+    markLatestReleaseSeen();
+    expect(storage.getItem(LAST_SEEN_RELEASE_ID_KEY)).toBe('lot-72-v7');
+    expect(hasUnseenReleaseNotes()).toBe(false);
   });
 
   it('auto-opens this version when last-seen is not lot-65', () => {

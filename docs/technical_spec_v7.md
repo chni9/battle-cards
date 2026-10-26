@@ -848,9 +848,9 @@ updated to the corrected strings.
 V7 player-facing changes **append Before / After items to the open What's new entry**. Because
 `lot-72` is promoted to `main` before L72 merges (§4.6), the **first V7 PR with a player-facing
 change opens one V7 entry** (`lot-72-v7`, titled "New look" — distinct from `lot-72`, whose
-"seen" key players may already hold) and updates the tests that pin
-the latest id; every later V7 PR appends to it during the freeze. One Before / After item per
-screen area, not per task. Changes land in the same commit as the change
+"seen" key players may already hold; `docs/agent/decisions.md` 2026-10-26) and updates the tests
+that pin the latest id; every later V7 PR appends to it during the freeze. One Before / After
+item per screen area, not per task. Changes land in the same commit as the change
 (`docs/agent/frontend.md`), updating the entry's title when its scope changes. If `dev` is
 promoted to `main` during V7, the next player-facing V7 PR starts a new entry. Lots with no
 player-facing change (L73, L80) add nothing. Bug fixes such as the turn-clock bar use After =
