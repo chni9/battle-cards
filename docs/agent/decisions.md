@@ -4620,3 +4620,34 @@ Source: the L72-09 fix-round-3 review; amends the fix-round-2 entry above (spec 
   shield-after-bar, which the new rule requires.
 
 ---
+
+## 2026-10-26 · [P] V7 art: un-blend the boundary ring from the old ground (L72-10 fix round 1)
+
+Source: the L72-10 visual review and the coordinator's fix-round-1 ruling (spec v7 §5.5).
+
+- **Problem.** Edge flood-fill writes alpha only, so every outer edge kept its anti-aliased
+  pixels at full opacity, blended with the old ground: a 1 px light rim (white, cream, or the
+  kit pastel) that vanishes on the light card face but reads as a sloppy cut-out on the V7 dark
+  grounds. Raising `GROUND_TOLERANCE` cannot fix it: those pixels run from 16 to about 200
+  from the ground, and 21.5 or 27 already eats Assassin's `#e6e6e6` and the Ghost.
+- **Ruling.** §5.5 asks the script to remove the ground by edge flood-fill only. The halo is
+  residual ground inside the boundary, so a separate pure step, `defringeEdge`
+  (`apps/client/scripts/art-flood-fill.ts`), un-blends it. It is restricted to the ring: opaque
+  pixels with a 4-neighbour of alpha 0 or off the image. This overrides the L72-10 brief's
+  "only alpha is ever written" **for the ring only**: `clearEdgeGround` still writes only
+  alpha, and its tests are unchanged. Enclosed old-ground regions are never next to the cleared
+  region, so they still stay.
+- **Method.** Each ring pixel C is taken as a blend of the ground G (the color
+  `clearEdgeGround` removed) and a foreground F. F is the opaque non-ring pixel within 2 px
+  that lies within 16 (RGB) of the G–F line and is farthest from G, so a second anti-aliased
+  row never wins over the solid color and a nearby color the pixel was not blended with is
+  rejected. Then a = clamp(dot(C−G, F−G) / |F−G|², 0, 1), alpha × a, and color
+  G + (C−G)/a. It is skipped when F is within 48 of G (a light part, such as Ghost, Curse,
+  Scientist's flask, Assassin's blade edge or Attack Thief's white card) or when no solid pixel
+  is near (a 1–2 px thin part).
+- **Known remainder.** The second anti-aliased row (opaque, not in the ring) keeps its share of
+  ground: 19,191 such pixels carry 10 % or more across the 47 tiles (43,122 ring pixels), mostly
+  10–30 %. At display size on `#0c0920` that is a faint line inside the edge, not a halo.
+  Treating it too would widen the ruling, so it is left for the designer's sign-off (L72-21).
+
+---

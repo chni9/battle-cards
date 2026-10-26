@@ -145,10 +145,13 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `pnpm --filter @card-battle/client exec tsx scripts/extract-art.ts` from the
   `ui/asset-files.ts` maps (base drawings only) and are never hand-edited. Ground removal is
   edge flood-fill only (`scripts/art-flood-fill.ts`), never a global color key, so enclosed
-  old-ground regions stay. Printed values are never authoritative: the crop boxes and erase
-  zones drop them, and numbers come from the catalogs. The script also writes the
-  before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`; it goes on
-  the lot PR for the designer's sign-off. Old screens keep `getCardArtUrl` /
+  old-ground regions stay (designer list in `/DESIGN.md` › Illustrations). `defringeEdge` then
+  un-blends the old ground out of the boundary ring only (opaque pixels next to the cleared
+  region), so edges show no light halo on dark grounds; `clearEdgeGround` still writes alpha
+  only (fix round 1, `decisions.md` 2026-10-26). Printed values are never authoritative: the
+  crop boxes and erase zones drop them, and numbers come from the catalogs. The script also
+  writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`;
+  it goes on the lot PR for the designer's sign-off. Old screens keep `getCardArtUrl` /
   `getKitPortraitUrl` until L72-21. A new card or kit = its `ui/asset-files.ts` map entry +
   its source PNG in `images/` + a rerun of the script (then check the contact sheet).
 - **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /

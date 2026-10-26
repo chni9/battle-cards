@@ -423,12 +423,17 @@ The existing drawings only, never new art (spec v7 §5.5).
 - **No printed value:** the frame, the header row, the extra printed rows, the kit stat column
   and Super Mirror's corner badge are removed. Every number on a card or kit comes from the
   catalogs.
+- **No halo on dark grounds:** the outer edge is un-blended from the old ground, so its
+  anti-aliasing fades to transparent instead of keeping a 1 px light rim of white, cream or kit
+  pastel. Light parts that sit close to the ground keep their edge as drawn (Ghost, the Curse
+  skull, Scientist's flask, Assassin's blade edge, Attack Thief's white card). The pixel row
+  just inside the edge can keep a faint trace of the old ground.
 - **Old ground stays where it is enclosed:** the ground is removed by edge flood-fill only, so
-  a region of card or kit ground that the drawing encloses keeps its color (§5.5). Examples:
-  Block's disc, Untouchable's lenses, Cloning's stripes, Mirror's hanger triangle, the
-  diamond between Strong attack's guards, Specialist's gear hole, the MEGA ATTACK nose and the
-  crescent under Reanimation's shoulders. Edge pixels keep their anti-aliasing, a 1 px blend
-  with the old ground.
+  a region of card or kit ground that the drawing encloses keeps its color (§5.5): the
+  Untouchable lenses, the Cloning helix stripes, Block's cream disc, the white diamond between
+  Strong attack's guards, Mirror's hanger triangle, the Reanimation crescent and band (under
+  the shoulders, and between the hat brim and the arrow), Specialist's gear hole, the
+  Duplicator lilac sliver and the MEGA ATTACK nose.
 - **Sign-off pending:** the designer signs the before/after contact sheet on the Lot 72 PR
   (L72-21) before any screen stops using the old PNGs.
 

@@ -9,8 +9,10 @@
  * Gambler): transparent, trimmed, native resolution. The crop boxes and erase zones drop only
  * the frame and the printed values, because the catalogs own every number (designer
  * 2026-09-21; spec v7 §5.5: printed values are not authoritative). Ground removal is edge
- * flood-fill only (`art-flood-fill.ts`), never a global color key. Also writes the before/after
- * contact sheet to the gitignored `apps/client/.art-contact-sheet/` for the lot PR.
+ * flood-fill only (`art-flood-fill.ts`), never a global color key; the boundary ring is then
+ * un-blended from the same ground so no halo of it is left (`defringeEdge`, fix round 1).
+ * Also writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`
+ * for the lot PR.
  */
 
 import { mkdir } from 'node:fs/promises';
@@ -28,7 +30,7 @@ import sharp, { type OverlayOptions } from 'sharp';
 
 import { CARD_FILES, KIT_FILES } from '../src/ui/asset-files';
 import { V7_COLORS } from '../src/ui/palette';
-import { clearEdgeGround, type CropRect, type RgbaImage } from './art-flood-fill';
+import { clearEdgeGround, defringeEdge, edgeGroundColor, type CropRect, type RgbaImage } from './art-flood-fill';
 
 /** Fractions of the source width and height. */
 interface Box { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number }
@@ -150,10 +152,12 @@ async function extract(job: Job): Promise<Extracted> {
   };
   const erased = erase(source, job.erase);
   const cropped = crop(erased, rectFor(job.box, source.width, source.height));
-  const cleared = clearEdgeGround(cropped, { tolerance: GROUND_TOLERANCE });
-  const bounds = opaqueBounds(cleared);
+  const ground = edgeGroundColor(cropped);
+  if (ground === undefined) throw new Error(`${job.id}: no opaque ground on the crop border`);
+  const art = defringeEdge(clearEdgeGround(cropped, { tolerance: GROUND_TOLERANCE }), { ground });
+  const bounds = opaqueBounds(art);
   if (bounds === undefined) throw new Error(`${job.id}: nothing left after ground removal`);
-  await sharp(cleared.data, { raw: { width: cleared.width, height: cleared.height, channels: 4 } })
+  await sharp(art.data, { raw: { width: art.width, height: art.height, channels: 4 } })
     .extract(bounds)
     .png({ compressionLevel: 9 })
     .toFile(outputPath);
