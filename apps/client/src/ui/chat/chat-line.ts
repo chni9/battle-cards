@@ -4,7 +4,7 @@
  * players and spectators), which living readers never receive. Pure, so the transcript only
  * lays it out.
  *
- * The three labels are the existing chat copy. Technical spec v7 §10.6 adds no chat string,
+ * The four labels are the existing chat copy. Technical spec v7 §10.6 adds no chat string,
  * and a walk-in's label arrives as a prop (L76).
  */
 
@@ -15,6 +15,8 @@ import { seatIndexOf, type SeatIndex } from '../seat-colors';
 export const CHAT_EMPTY_COPY = 'No messages yet.';
 export const CHAT_INPUT_LABEL = 'Message';
 export const CHAT_SEND_LABEL = 'Send';
+/** The transcript region's name: the V6 "Chat" already on the lobby heading, the table button and the sheet title. */
+export const CHAT_LOG_LABEL = 'Chat';
 
 export interface ChatLineView {
   /** `ChatMessageView.order`: unique per message, so a React key that survives growth and shrink. */

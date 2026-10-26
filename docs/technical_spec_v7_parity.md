@@ -510,6 +510,7 @@
 - **Keep:**
   - Unread is client-local and counts messages that arrived while the popup was closed (decisions 2026-10-06 Lot 70; chat-unread.ts; chat-unread.test.ts)
   - The popup scrolls to the newest line when it opens and when lines arrive (frontend.md)
+    - V7 ruling (designer 2026-10-26, `docs/agent/decisions.md`): "when lines arrive" now applies only while the reader is at the bottom (within 24 px). A reader who scrolled up stays put, their own send always scrolls down, and there is no 'new messages' pill. Opening still lands on the newest line.
   - The Dialog keeps its focus trap, Esc and overlay dismiss, and visual-viewport pinning (design/components/dialog.tsx, L53-07)
 - **Notes:** V7 could add role='log' with aria-live polite, stick to the bottom only when the reader is already at the bottom, and add a 'new messages' jump pill. Those are presentation changes. Tracking unread by last-seen order instead of length would fix the shrink case without touching the protocol, since ChatMessageView.order is already on the wire.
 

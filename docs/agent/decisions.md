@@ -4765,3 +4765,31 @@ Attack Thief).
   ruling to keep the catalog text frozen is recorded here (§10.5).
 
 ---
+
+## 2026-10-26 · [P] V7 chat transcript: stick to the bottom only when the reader is there, named region (L72-14 fix round 1)
+
+Source: designer ruling 2026-10-26 (via the L72-14 review), `docs/technical_spec_v7_parity.md`
+`chat-new-message-announcement` (Keep and Notes), `docs/technical_spec_v7.md` §6.9 and §7.5.
+
+- Decision: the V7 `ChatLog` (`ui/chat/chat-log.tsx`) opens on the newest line and then scrolls
+  to a new line only while the reader is already at the bottom (within 24 px of the end). A reader
+  who has scrolled up stays put. The reader's own send always scrolls down. A new line is a
+  changed message count or newest `order`, not a new array identity, so a re-render with the
+  same messages never moves the reader. No "new messages" pill (a possible later polish).
+- Effect on the Appendix A Keep line "The popup scrolls to the newest line when it opens and when
+  lines arrive": the second half now applies only while the reader is at the bottom. V6 behavior
+  (the old `screens/table/chat-log.tsx` jumps to the bottom on every `messages` change) is
+  unchanged until L74-16, L76-13 and L77-05 migrate to the V7 component. The parity row carries
+  a pointer to this entry. No protocol, rule or value change.
+- Implementation notes: the reader's position is tracked from their own scroll events, so a
+  layout change does not unstick them. A `ResizeObserver` on the log content sticks it to the end
+  while the reader is there, because a `Sheet` mounts its content hidden and the open scroll alone
+  leaves the transcript at the top.
+- Same round: the transcript `ScrollArea` is labelled with the existing V6 copy "Chat" (the lobby
+  heading, the table button and the sheet title; not a new §10.6 string), so it is a named
+  focusable region (WCAG 2.1.1: unlabeled, it is a nameless Tab stop in Chromium and unreachable
+  in WebKit). To keep the message field the sheet's initial focus, a labelled `ScrollArea` now
+  carries `data-scroll-region`, the mark `use-focus-trap.ts` already skips; this changes the L72-08
+  primitive for every labelled use. On the read-only board the region takes focus.
+
+---

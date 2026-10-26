@@ -183,6 +183,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **`className` target:** a primitive puts `className` on its outermost element. That is the
   Button wrapper when a reason line is present; IconButton has no `relative` root, so
   `absolute top-3 right-3` positions it directly.
+- **Labelled scroll regions:** a `ScrollArea` with a `label` is a named focusable region and
+  carries `data-scroll-region` (`SCROLL_REGION_ATTRIBUTE`, `use-focus-trap.ts`), the same mark the
+  Sheet body sets when it overflows. Inside a sheet, initial focus goes to the first focusable
+  element without that mark, so a field after a labelled transcript (Chat) keeps it; with
+  nothing else focusable, the region takes it. Content that can overflow gets a label.
 - **Disabled but focusable:** where a disabled reason must reach keyboard and screen-reader
   users (Q39), pass `disabled` with `focusableWhenDisabled` to Button: it renders
   `aria-disabled="true"`, stays in the Tab order and swallows activation. The Carousel
@@ -383,25 +388,40 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   is L73/L74).
 - **Behavior kept from V6** (Appendix A `chat-compose-enter`): uncontrolled form; `chat-body`
   input, `maxLength` `CHAT_BODY_MAX_LENGTH`; Enter or Send submits; empty or whitespace-only text
-  is dropped with no reset; the form resets after a send; the transcript jumps to the newest
-  line on every `messages` change; no composer when `canWrite` is false. Send is never disabled
+  is dropped with no reset; the form resets after a send; no composer when `canWrite` is false.
+  The transcript opens on the newest line and then sticks to the bottom only while the reader is
+  within 24 px of it (designer 2026-10-26, `decisions.md`); the reader's own send always scrolls
+  down. Send is never disabled
   (nothing tracks an empty field, and a native `disabled` would leave the Tab order). Shift+Enter
   sends too, because the field is a single-line `<input>`.
 - **Announcements** (`chat-new-message-announcement`): the transcript is a polite `role="log"`,
   mounted before the first line, and lines are keyed by `ChatMessageView.order`, so each new line
   is announced once and a re-render never reads the log back. Do not move the role onto the `<ul>`
   (it would strip the list semantics), and do not key lines by index.
-- **Transcript scroller:** a `ScrollArea` with no `label` (no new string; the message field stays
-  the sheet's first focusable control). Chromium still exposes an overflowing, unlabeled
-  scroller as a nameless Tab stop ahead of the field. A named region needs a copy string and a
-  way to mark it `data-scroll-region`; the choice is flagged for the designer at the L72-21 gate.
+- **Transcript scroller:** a `ScrollArea` labelled `CHAT_LOG_LABEL` ("Chat", existing V6 copy,
+  not a new §10.6 string), so it is a named, focusable region and keyboard users can scroll it
+  (WCAG 2.1.1; an unlabeled one is a nameless Tab stop in Chromium and unreachable in WebKit).
+  `ScrollArea` marks a labelled area `data-scroll-region`, so a sheet's initial focus (the
+  `use-focus-trap.ts` rule) still goes to the message field, and falls to the region only on
+  the read-only board. The `role="log"` wrapper stays inside it.
+- **Stick to the bottom:** `stuck` starts true and follows the reader's own scroll events (within
+  `STICK_THRESHOLD_PX` = 24 of the end); an effect keyed on the message count and the newest
+  `order` (not the array identity) and a `ResizeObserver` on the log content scroll to the end
+  only while `stuck`. The observer matters in a `Sheet`: its overlay is `hidden` (no layout) when
+  the transcript mounts, so the open scroll alone leaves it at the top, and the observer scrolls
+  once the sheet shows. A send sets `stuck` and scrolls at once, so the echoed line follows. A
+  "new messages" pill is out of scope.
 - **Line wrapping:** `break-words` on each `<li>`, because `ScrollArea` clips its horizontal
   overflow; checked in the browser with a 24-character nickname and a 200-character body at
   375 px.
 - **Tests:** `chat-line.test.ts` (node), `chat-log.test.tsx` and `chat.gallery.test.tsx`
-  (happy-dom). The scroll test spies on the `Element.prototype` `scrollHeight` getter and
-  `scrollTop` setter, which happy-dom defines on the base `Element`; a version that moves them
-  fails the test loudly. The 16 px input is read from computed style in the browser gate
+  (happy-dom). The open and arrival scroll test spies on the `Element.prototype` `scrollHeight`
+  getter and `scrollTop` setter, which happy-dom defines on the base `Element`; a version that
+  moves them fails the test loudly. The stick-to-bottom tests stub `scrollHeight`,
+  `clientHeight` and `scrollTop` on the scroller element and fire `scroll` for a reader's move;
+  happy-dom's `ResizeObserver` never fires, so one test swaps in a fake and fires it by hand.
+  The focus tests render `ChatLog` inside a read-only `Sheet`. A rendering frame is needed for
+  scroll events and observers in the hidden Browser pane, so take a screenshot between steps. The 16 px input is read from computed style in the browser gate
   (`/dev/ui#chat`), since happy-dom evaluates no CSS.
 - **Gallery:** section `chat` (`ui/chat/chat.gallery.tsx`, DEV only): transcript, empty,
   read-only and longest line.

@@ -4,6 +4,7 @@ import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderUi } from '../../test/render';
 import { ScrollArea } from './scroll-area';
+import { SCROLL_REGION_ATTRIBUTE } from './use-focus-trap';
 
 function expectClasses(element: Element | null, classes: string): void {
   expect([...(element?.classList ?? [])]).toEqual(expect.arrayContaining(classes.split(' ')));
@@ -36,6 +37,18 @@ describe('ScrollArea (L53-07: overlays and logs scroll inside, never the page)',
   it('a label makes it a focusable named region', () => {
     renderUi(<ScrollArea label="Action log">Lines</ScrollArea>);
     expect(screen.getByRole('region', { name: 'Action log' }).tabIndex).toBe(0);
+  });
+
+  it('marks a labelled area data-scroll-region, so a sheet focuses a control before it', () => {
+    renderUi(<ScrollArea label="Action log">Lines</ScrollArea>);
+    expect(screen.getByRole('region', { name: 'Action log' }).hasAttribute(SCROLL_REGION_ATTRIBUTE)).toBe(true);
+  });
+
+  it('leaves an unlabeled area unmarked: it is not a focusable region', () => {
+    const { container } = renderUi(<ScrollArea>Lines</ScrollArea>);
+    const area = container.querySelector('[data-scroll-axis]');
+    expect(area?.hasAttribute(SCROLL_REGION_ATTRIBUTE)).toBe(false);
+    expect(area?.hasAttribute('tabindex')).toBe(false);
   });
 
   it('forwards its ref to the scrolling element', () => {

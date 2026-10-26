@@ -1,7 +1,7 @@
 import type { ChatMessageView } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
-import { CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_SEND_LABEL, chatLineView } from './chat-line';
+import { CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_LOG_LABEL, CHAT_SEND_LABEL, chatLineView } from './chat-line';
 
 const PLAYERS = [{ id: 'p-ana' }, { id: 'p-bo' }];
 const message = (o: Partial<ChatMessageView>): ChatMessageView =>
@@ -9,7 +9,12 @@ const message = (o: Partial<ChatMessageView>): ChatMessageView =>
 
 describe('chatLineView (rules spec §6 Chat, spec v7 §6.9)', () => {
   it('keeps the existing chat copy (spec v7 §10.6: no new strings)', () => {
-    expect([CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_SEND_LABEL]).toEqual(['No messages yet.', 'Message', 'Send']);
+    expect([CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_SEND_LABEL, CHAT_LOG_LABEL]).toEqual([
+      'No messages yet.',
+      'Message',
+      'Send',
+      'Chat',
+    ]);
   });
   it('stamps a lobby line "Lobby" and a match line "Round N"', () => {
     expect(chatLineView(message({ round: 0 }), PLAYERS).roundLabel).toBe('Lobby');

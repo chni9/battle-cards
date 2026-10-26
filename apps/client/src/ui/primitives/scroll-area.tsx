@@ -8,6 +8,11 @@
  * focusable, because Chromium makes such scrollers keyboard-focusable on its own, and that
  * stop has no name. Pass a `label` whenever the content can overflow.
  *
+ * A labelled area also carries `data-scroll-region`, the mark the sheet focus trap reads
+ * (`use-focus-trap.ts`): inside a sheet, initial focus goes to the first focusable thing that is
+ * not a scroll region, so a message field after a transcript keeps it, and the region is focused
+ * only when nothing else is (a read-only transcript). The Sheet body marks itself the same way.
+ *
  * It is `relative`, like every V7 scroll container, so `sr-only` labels and other absolutely
  * positioned descendants resolve against it and stay inside its clip instead of stretching an
  * ancestor's scroll size.
@@ -15,6 +20,7 @@
 
 import type { ReactElement, ReactNode, Ref } from 'react';
 import { CHROME_FOCUS_CLASS } from './chrome-classes';
+import { SCROLL_REGION_ATTRIBUTE } from './use-focus-trap';
 
 export interface ScrollAreaProps {
   children: ReactNode;
@@ -35,7 +41,9 @@ export function ScrollArea({ children, axis = 'y', label, className, ref }: Scro
     <div
       ref={ref}
       data-scroll-axis={axis}
-      {...(label !== undefined ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}
+      {...(label !== undefined
+        ? { role: 'region', 'aria-label': label, tabIndex: 0, [SCROLL_REGION_ATTRIBUTE]: '' }
+        : {})}
       className={['relative min-h-0 min-w-0', AXIS_CLASS[axis], CHROME_FOCUS_CLASS, className ?? ''].join(' ')}
     >
       {children}

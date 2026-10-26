@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
 import { CHAT_BODY_MAX_LENGTH, type ChatMessageView } from '@card-battle/shared';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
 import { V7_COLORS, v7SeatColor } from '../palette';
-import { CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_SEND_LABEL } from './chat-line';
+import { Sheet } from '../primitives/sheet';
+import { CHAT_EMPTY_COPY, CHAT_INPUT_LABEL, CHAT_LOG_LABEL, CHAT_SEND_LABEL } from './chat-line';
 import { ChatLog, type ChatLogProps } from './chat-log';
 
 const PLAYERS = [{ id: 'p-ana' }, { id: 'p-bo' }];
@@ -167,5 +168,200 @@ describe('ChatLog composer (spec v7 §6.9, §7.5; parity chat-compose-enter)', (
     const walkIn = 'Spectators only see this';
     renderUi(chat({ inputLabel: walkIn, placeholder: walkIn }));
     expect(screen.getByRole('textbox', { name: walkIn }).getAttribute('placeholder')).toBe(walkIn);
+  });
+});
+
+describe('ChatLog transcript region (WCAG 2.1.1; fix round 1)', () => {
+  it('names the transcript "Chat" as a focusable region that holds the log', () => {
+    renderUi(chat({ messages: [ANA_LOBBY] }));
+    const region = screen.getByRole('region', { name: 'Chat' });
+    expect(CHAT_LOG_LABEL).toBe('Chat');
+    expect(region.tabIndex).toBe(0);
+    expect(region.contains(screen.getByRole('log'))).toBe(true);
+  });
+  it('keeps the message field as the sheet initial focus when there is a composer', () => {
+    renderUi(
+      <Sheet open mode="read-only" title="Chat" onClose={vi.fn()}>
+        {chat({ messages: [ANA_LOBBY] })}
+      </Sheet>,
+    );
+    expect(document.activeElement).toBe(input());
+  });
+  it('gives the named region the sheet initial focus when the transcript is read-only', () => {
+    renderUi(
+      <Sheet open mode="read-only" title="Chat" onClose={vi.fn()}>
+        {chat({ messages: [ANA_LOBBY], canWrite: false })}
+      </Sheet>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole('region', { name: 'Chat' }));
+  });
+});
+
+interface ScrollBox {
+  scrollHeight: number;
+  clientHeight: number;
+  scrollTop: number;
+}
+const BOX_HEIGHT = 480;
+const BOX_VIEW = 208;
+const BOX_BOTTOM = BOX_HEIGHT - BOX_VIEW;
+
+/**
+ * Give the transcript scroller a geometry of its own (happy-dom has no layout) and record every
+ * `scrollTop` write. It is stubbed on the element, after the first render, so the open scroll
+ * ran against happy-dom's zeros and the stub only sees what happens next.
+ */
+function stubScroller(box: ScrollBox): { scroller: HTMLElement; writes: number[] } {
+  const scroller = screen.getByRole('region', { name: CHAT_LOG_LABEL });
+  const writes: number[] = [];
+  Object.defineProperties(scroller, {
+    scrollHeight: { configurable: true, get: () => box.scrollHeight },
+    clientHeight: { configurable: true, get: () => box.clientHeight },
+    scrollTop: {
+      configurable: true,
+      get: () => box.scrollTop,
+      set: (value: number) => {
+        box.scrollTop = value;
+        writes.push(value);
+      },
+    },
+  });
+  return { scroller, writes };
+}
+/** A reader scrolling: the position changes, then the browser fires `scroll`. */
+function readerScrollsTo(scroller: HTMLElement, box: ScrollBox, top: number): void {
+  box.scrollTop = top;
+  fireEvent.scroll(scroller);
+}
+
+describe('ChatLog sticks to the bottom only when the reader is there (designer 2026-10-26)', () => {
+  it('scrolls to the newest line when the chat opens', () => {
+    vi.spyOn(Element.prototype, 'scrollHeight', 'get').mockReturnValue(BOX_HEIGHT);
+    const scrollTopSet = vi.spyOn(Element.prototype, 'scrollTop', 'set');
+    renderUi(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    expect(scrollTopSet).toHaveBeenCalledWith(BOX_HEIGHT);
+  });
+  it.each([
+    ['at the very bottom', BOX_BOTTOM],
+    ['within 24 px of the bottom', BOX_BOTTOM - 24],
+  ])('follows a new line while the reader is %s', (_, top) => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: 0 };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, top);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    expect(writes).toEqual([BOX_HEIGHT]);
+  });
+  it('stays put when the reader is more than 24 px up, and does not move again on the next line', () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM - 25 };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, BOX_BOTTOM - 25);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3, ANA_ELIMINATED] }));
+    expect(writes).toEqual([]);
+    expect(box.scrollTop).toBe(BOX_BOTTOM - 25);
+  });
+  it('follows again once the reader scrolls back to the bottom', () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, 0);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    expect(writes).toEqual([]);
+    readerScrollsTo(scroller, box, BOX_BOTTOM);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3, ANA_ELIMINATED] }));
+    expect(writes).toEqual([BOX_HEIGHT]);
+  });
+  it('does not scroll when the same messages arrive in a new array', () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { writes } = stubScroller(box);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    view.rerender(chat({ messages: [{ ...ANA_LOBBY }, { ...BO_ROUND_3 }], canWrite: true }));
+    expect(writes).toEqual([]);
+  });
+  it('keeps a reader at the bottom there when earlier lines are revealed above the newest', () => {
+    // An elimination opens the side stream: older lines join the list, the newest is unchanged.
+    const view = renderUi(chat({ messages: [ANA_LOBBY, ANA_ELIMINATED] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { writes } = stubScroller(box);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3, ANA_ELIMINATED] }));
+    expect(writes).toEqual([BOX_HEIGHT]);
+  });
+  it('follows a newer line that replaces an older one, where the count does not change', () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { writes } = stubScroller(box);
+    view.rerender(chat({ messages: [BO_ROUND_3, ANA_ELIMINATED] }));
+    expect(writes).toEqual([BOX_HEIGHT]);
+  });
+  it('scrolls down on the reader own send, even from far up, and the echoed line then follows', async () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, 0);
+    await view.user.type(input(), 'gg{Enter}');
+    expect(writes).toEqual([BOX_HEIGHT]);
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3, ANA_ELIMINATED] }));
+    expect(writes).toEqual([BOX_HEIGHT, BOX_HEIGHT]);
+  });
+  it('does not scroll on a send that sends nothing', async () => {
+    const view = renderUi(chat({ messages: [ANA_LOBBY] }));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, 0);
+    await view.user.type(input(), '   {Enter}');
+    view.rerender(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    expect(writes).toEqual([]);
+  });
+});
+
+/** happy-dom's ResizeObserver never fires, so a test fires it by hand. */
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  readonly observe = vi.fn<(target: Element) => void>();
+  readonly unobserve = vi.fn<(target: Element) => void>();
+  readonly disconnect = vi.fn<() => void>();
+  constructor(private readonly callback: ResizeObserverCallback) {
+    FakeResizeObserver.instances.push(this);
+  }
+  resize(): void {
+    this.callback([], this);
+  }
+}
+
+describe('ChatLog keeps a reader at the bottom when the content size changes (a sheet mounts hidden)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    FakeResizeObserver.instances = [];
+  });
+  function renderWithObserver() {
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    const view = renderUi(chat({ messages: [ANA_LOBBY, BO_ROUND_3] }));
+    const [observer] = FakeResizeObserver.instances;
+    if (observer === undefined) throw new Error('ChatLog did not observe its content');
+    return { view, observer };
+  }
+  it('observes the log content and sticks it to the end when it resizes at the bottom', () => {
+    const { observer } = renderWithObserver();
+    expect(observer.observe).toHaveBeenCalledWith(screen.getByRole('log'));
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: 0 };
+    const { writes } = stubScroller(box);
+    observer.resize();
+    expect(writes).toEqual([BOX_HEIGHT]);
+  });
+  it('leaves a reader who scrolled up where they are when the content resizes', () => {
+    const { observer } = renderWithObserver();
+    const box = { scrollHeight: BOX_HEIGHT, clientHeight: BOX_VIEW, scrollTop: BOX_BOTTOM };
+    const { scroller, writes } = stubScroller(box);
+    readerScrollsTo(scroller, box, 0);
+    observer.resize();
+    expect(writes).toEqual([]);
+  });
+  it('stops observing when the chat unmounts', () => {
+    const { view, observer } = renderWithObserver();
+    view.unmount();
+    expect(observer.disconnect).toHaveBeenCalledTimes(1);
   });
 });

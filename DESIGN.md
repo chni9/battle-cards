@@ -569,9 +569,12 @@ their lot restyles them.
   - So the Sheet's Esc listener (L72-09) is a bubble-phase `document` listener: a tooltip
     open inside a sheet takes the first Esc, and the sheet the next one.
 - **ScrollArea:** `y` (default), `x` or `both`, overscroll contained, the cross axis clipped. A
-  `label` makes it a focusable named region. Without one, Chromium still makes an overflowing
-  scroller with nothing focusable inside a Tab stop, but an unnamed one, so pass a `label`
-  whenever the content can overflow. It is always `relative`, and a `className` of `absolute`
+  `label` makes it a focusable named region (`role="region"`, `tabIndex` 0) marked
+  `data-scroll-region`, the mark the sheet focus trap reads: inside a sheet, initial focus goes to
+  the first focusable thing that is not a scroll region, so a field after a labelled area keeps
+  it, and the region is focused only when it is all there is (a read-only transcript). Without
+  a label, Chromium still makes an overflowing scroller with nothing focusable inside a Tab
+  stop, but an unnamed one, so pass a `label` whenever the content can overflow. It is always `relative`, and a `className` of `absolute`
   or `fixed` loses to it (Tailwind emits `.relative` after `.absolute` and `.fixed`), so a
   caller that needs to position the scroller wraps it in a positioned element.
 - **TextField:** 16px (`--type-input`) Nunito on `--panel-2`, 44px tall, so iOS never zooms on
@@ -911,13 +914,20 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 placeholder? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
 over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migrate.
 
-- **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no outline and no hard
-  shadow (it sits on a surface, like the text input). It is a `ScrollArea` (`axis="y"`) with no
-  `label`: no new §10.6 string, and the message field stays the first focusable control.
-  Chromium still makes an overflowing, unlabeled scroller a nameless Tab stop before the field
-  (seen in Chrome 152); a named region is a designer choice, flagged for the L72-21 gate. It
-  scrolls to the newest line whenever `messages` changes, as the V6 log did, even when the
-  reader has scrolled up.
+- **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
+  the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy
+  already on the lobby heading, the table button and the sheet title, so no new §10.6 string): a
+  focusable named region, so a keyboard user can scroll it (WCAG 2.1.1; Arrow, Page and
+  Home/End keys work). Its `data-scroll-region` keeps the message field the sheet's initial
+  focus; on the read-only board the region takes it. The focus ring is the shared 2 px `--text`
+  outline at a 2 px offset, and it clears the sheet body's padding.
+- **Scrolling:** it opens on the newest line and then sticks to the bottom only while the reader
+  is within 24 px of the end (designer 2026-10-26, `docs/agent/decisions.md`): a new line follows
+  a reader at the bottom and leaves one who scrolled up where they are. The reader's own send
+  always scrolls down. A new line is a changed count or newest `order`, never a new array
+  identity. A `ResizeObserver` on the log content also sticks it to the end while the reader is
+  there, because a sheet mounts its content hidden (no layout until it shows) and a font swap
+  changes the height. There is no "new messages" pill (a possible later polish).
 - **Line anatomy** (`chatLineView`): the round label (`Lobby` for round 0, else `Round N`) in
   Nunito 12 px `--text-2`; the nickname in Lilita One at weight 400 (never faux-bold), colored
   by inline `v7SeatColor(seat)` hex or `V7_COLORS['text-2']` when the sender is not in
