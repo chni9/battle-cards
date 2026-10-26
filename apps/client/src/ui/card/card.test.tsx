@@ -462,15 +462,46 @@ describe('name fit (fix round 1 A4)', () => {
   });
 });
 
-describe('unplayable (fix round 1 A5; spec v7 §5.4)', () => {
+describe('unplayable (fix round 1 A5, fix round 2; spec v7 §5.4)', () => {
+  const FILTERS = ['saturate', 'brightness', 'grayscale', 'opacity', 'contrast'];
+  const filterClasses = (node: HTMLElement) =>
+    classes(node).filter((name) => FILTERS.some((filter) => name.startsWith(filter) || name.startsWith(`-${filter}`)));
+
   it('desaturates and dims an unplayable face, and only that face', () => {
     const { container, rerender } = renderUi(<Card size="hand" instance={inst('suicide')} unplayable />);
-    expect(classes(el(container, UP))).toEqual(expect.arrayContaining(['saturate-30', 'brightness-75']));
+    expect(classes(el(container, '[data-card-layer="body"]'))).toEqual(
+      expect.arrayContaining(['saturate-30', 'brightness-75']),
+    );
     expect(el(container, UP).getAttribute('data-unplayable')).toBe('true');
     rerender(<Card size="hand" instance={inst('suicide')} />);
-    expect(classes(el(container, UP))).not.toContain('saturate-30');
-    expect(classes(el(container, UP))).not.toContain('brightness-75');
+    expect(filterClasses(el(container, '[data-card-layer="body"]'))).toEqual([]);
     expect(el(container, UP).hasAttribute('data-unplayable')).toBe(false);
+  });
+
+  it('dims the body, never the selection outline or the focus ring', async () => {
+    const { container, user } = renderUi(
+      <Card size="hand" instance={inst('suicide')} unplayable selected onActivate={vi.fn()} />,
+    );
+    await user.tab();
+    const root = el(container, UP);
+    expect(document.activeElement).toBe(root);
+    expect(classes(root)).toEqual(expect.arrayContaining(['outline-3', 'outline-v7-cta']));
+    expect(filterClasses(root)).toEqual([]);
+    const ring = el(root, '[data-card-layer="focus"]');
+    expect(classes(ring)).toContain('group-focus-visible:block');
+    expect(filterClasses(ring)).toEqual([]);
+    const body = el(root, '[data-card-layer="body"]');
+    expect(body.contains(ring)).toBe(false);
+    expect(classes(body)).toEqual(expect.arrayContaining(['saturate-30', 'brightness-75']));
+    expect(body.querySelector('[data-card-layer="face"]')).not.toBeNull();
+    expect(body.querySelector('[data-card-chips]')).not.toBeNull();
+  });
+
+  it('dims a hidden face the same way', () => {
+    const { container } = renderUi(<Card face="hidden" family="attack" size="hand" unplayable />);
+    const root = el(container, '[data-card-face="hidden"]');
+    expect(filterClasses(root)).toEqual([]);
+    expect(classes(el(root, '[data-card-layer="body"]'))).toEqual(expect.arrayContaining(['saturate-30', 'brightness-75']));
   });
 });
 

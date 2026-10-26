@@ -4716,3 +4716,20 @@ multiplier and "instead of" case).
   `ui/text/effect-text-with-icons.test.tsx` (`getByTitle('4 shield points')`).
 
 ---
+
+## 2026-10-26 · [P] Upgraded cards keep the strong rainbow holo foil (L72-12)
+
+Source: designer decision of 2026-10-26, after the before/after of L72-12 fix round 1 (base,
+upgraded before, upgraded after; Super attack and Roulette at hand and sheet size on `--bg-0`).
+
+- Ruling: an upgraded card keeps the holo foil exactly as built in `431936f`: `--card-holo-sheen`
+  (a 115deg saturated rainbow in the rim's hue order, `ui/tokens.css`) at 70 % with
+  `mix-blend-mode: soft-light`, drifting back and forth with full motion (`.v7-card-holo-drift`)
+  and still with reduced motion, plus the white sweep band. Designer label: "Arc-en-ciel fort".
+- Accepted consequence: the foil recolors dark parts of a drawing (Roulette's black segments
+  read teal, the sword handles navy). The white face stays white.
+- Alternatives offered and declined: a reverse holo (foil on the face, art untouched), a softer
+  foil, and the previous mint tint (the conic rim gradient at 20 % multiply, from `8f9da01`).
+- Recorded in `DESIGN.md` › Card › Upgraded. Changing the foil needs a new designer ruling.
+
+---

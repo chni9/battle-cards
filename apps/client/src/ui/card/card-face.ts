@@ -107,7 +107,8 @@ export const CARD_NAME_FIT: Readonly<
 /**
  * The name's CSS font size: the base, shrunk until the widest word fits the strip, never under
  * the floor. `cqi` is relative to the face (`@container`), so the fit follows the card width.
- * 10 px at the 64 px hand clamp floor is the one exception to the 11 px floor (DESIGN.md).
+ * The hand floor, 10 px, is the one exception to the 11 px floor (DESIGN.md): a long word
+ * shrinks below 11 px only under a ~367 px viewport and bottoms out at 10.04 px on a 64 px card.
  */
 export function cardNameFontSize(name: string, size: Exclude<CardSize, 'thumb'>): string {
   const { floorPx, base, textPct } = CARD_NAME_FIT[size];

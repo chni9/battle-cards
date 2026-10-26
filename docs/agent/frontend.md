@@ -360,7 +360,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   Hidden faces carry no `data-card-id` or `data-instance-id`.
 - **Selection vs focus:** selection is the `--cta` outline; keyboard focus is a separate
   `--text` ring layer (`data-card-layer="focus"`, `group-focus-visible`). Never style focus
-  through `outline` on a card, or it would replace the selection cue.
+  through `outline` on a card, or it would replace the selection cue. State filters (the
+  unplayable dimming) go on the body layer (`data-card-layer="body"`), never on the root, so
+  both cues keep full contrast.
 - **Tests:** happy-dom has no media queries and no layout, so tests assert `data-motion`, the
   `data-card-*` anchors and the class names (`v7-card-sheen`, `v7-card-holo-drift`,
   `animate-pulse`, the lift, the size variables); the name fit is a node test on

@@ -103,8 +103,18 @@ const FULL_MOTION_CLASS = 'transition-transform duration-(--dur-base) ease-v7-en
 const LIFT_CLASS = '-translate-y-2 scale-105';
 /** A small desktop lift; Tailwind v4 `hover:` only applies on hover-capable pointers. */
 const HOVER_LIFT_CLASS = 'hover:-translate-y-1';
+/**
+ * The card body (rim, face or verso, chips, counter badge) in one layer, so an unplayable card is
+ * dimmed there and never on the root, which carries the `--cta` selection outline, nor on the
+ * focus ring: both keep full contrast (fix round 2). The body is the root's padding box.
+ */
+const BODY_CLASS = 'pointer-events-none absolute inset-0';
 /** Desaturated and dimmed, so grey drawings read "not now" too; never faded out (fix round 1, A5). */
 const UNPLAYABLE_CLASS = 'saturate-30 brightness-75';
+
+function bodyClassName(unplayable: boolean): string {
+  return unplayable ? `${BODY_CLASS} ${UNPLAYABLE_CLASS}` : BODY_CLASS;
+}
 const BUTTON_CLASS = 'cursor-pointer';
 const FOCUS_RING_CLASS =
   'pointer-events-none absolute -inset-2 hidden rounded-[calc(var(--card-radius)+8px)] border-2 border-v7-text group-focus-visible:block';
@@ -147,9 +157,9 @@ const NAME_STRIP_CLASS: Readonly<Record<Exclude<CardSize, 'thumb'>, string>> = {
 
 /**
  * Balanced lines, never truncated and never broken mid-word: the inline font size
- * (`cardNameFontSize`) shrinks the name until its widest word fits the strip, down to 10 px on a
- * 64 px hand card (11 px elsewhere), and scales the hand name up a little toward the 120 px clamp
- * top. "Upgrade Point Thief" and "Super Regeneration" take two lines; `line-clamp-3` is only a
+ * (`cardNameFontSize`) shrinks the name until its widest word fits the strip (hand floor 10 px,
+ * 11 px elsewhere; catalog names bottom out at 10.04 px on a 64 px hand card), and scales the
+ * hand name up a little toward the 120 px clamp top. "Upgrade Point Thief" and "Super Regeneration" take two lines; `line-clamp-3` is only a
  * cap, and `break-words` only guards an unknown name wider than the floor allows.
  */
 const NAME_CLASS =
@@ -297,10 +307,9 @@ function rootClassName(input: {
   readonly full: boolean;
   readonly interactive: boolean;
   readonly selected: boolean;
-  readonly unplayable: boolean;
   readonly className: string | undefined;
 }): string {
-  const { size, full, interactive, selected, unplayable, className } = input;
+  const { size, full, interactive, selected, className } = input;
   return [
     ROOT_CLASS,
     WIDTH_CLASS[size],
@@ -309,7 +318,6 @@ function rootClassName(input: {
     selected ? SELECTED_CLASS : UNSELECTED_CLASS,
     selected && full ? LIFT_CLASS : '',
     interactive && full && !selected ? HOVER_LIFT_CLASS : '',
-    unplayable ? UNPLAYABLE_CLASS : '',
     className ?? '',
   ]
     .filter((part) => part !== '')
@@ -345,7 +353,7 @@ function HiddenFace({
       title={size === 'thumb' ? HIDDEN_CARD_LABEL : undefined}
       selected={selected}
       onActivate={onActivate}
-      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, unplayable, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'hidden',
@@ -356,14 +364,16 @@ function HiddenFace({
         ...(unplayable ? { 'data-unplayable': 'true' } : {}),
       }}
     >
-      <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
-      <span aria-hidden="true" data-card-layer="verso" className={VERSO_CLASS}>
-        <span className={VERSO_LIGHT_CLASS} />
-        <span className={VERSO_HATCH_CLASS} />
-        <span className="absolute inset-[7%] rounded-[calc(var(--card-radius)-6px)] border border-v7-text-2 opacity-35" />
-        <span className={`absolute aspect-square w-[72%] rounded-full opacity-30 blur-lg ${HALO_CLASS[family]}`} />
-        <span className="relative flex aspect-square w-[46%] rotate-45 items-center justify-center rounded-[24%] bg-v7-bg-0 p-[15%] ring-2 ring-v7-panel-2">
-          <span data-card-layer="emblem" className={`block size-full rounded-[24%] ${EMBLEM_CLASS[family]}`} />
+      <span aria-hidden="true" data-card-layer="body" className={bodyClassName(unplayable)}>
+        <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
+        <span aria-hidden="true" data-card-layer="verso" className={VERSO_CLASS}>
+          <span className={VERSO_LIGHT_CLASS} />
+          <span className={VERSO_HATCH_CLASS} />
+          <span className="absolute inset-[7%] rounded-[calc(var(--card-radius)-6px)] border border-v7-text-2 opacity-35" />
+          <span className={`absolute aspect-square w-[72%] rounded-full opacity-30 blur-lg ${HALO_CLASS[family]}`} />
+          <span className="relative flex aspect-square w-[46%] rotate-45 items-center justify-center rounded-[24%] bg-v7-bg-0 p-[15%] ring-2 ring-v7-panel-2">
+            <span data-card-layer="emblem" className={`block size-full rounded-[24%] ${EMBLEM_CLASS[family]}`} />
+          </span>
         </span>
       </span>
     </CardRoot>
@@ -409,7 +419,7 @@ function FaceUp({
       onActivate={onActivate === undefined ? undefined : () => {
         onActivate(instanceId);
       }}
-      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, unplayable, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'up',
@@ -433,65 +443,67 @@ function FaceUp({
           <span className="absolute inset-0 rounded-v7-card bg-v7-cta-2 opacity-60 blur-md" />
         </span>
       ) : null}
-      <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
-      <span data-card-layer="face" className={FACE_CLASS}>
-        <span className={`absolute flex items-center justify-center ${ART_BOX_CLASS[size]}`}>
-          <img
-            src={artFor(cardId)}
-            alt=""
-            draggable={false}
-            className="pointer-events-none size-full object-contain"
-          />
-        </span>
-        {isUpgraded ? (
-          <span aria-hidden="true" data-card-layer="sheen" className="pointer-events-none absolute inset-0">
-            <span data-card-layer="sheen-tint" className={`${SHEEN_TINT_CLASS} ${full ? SHEEN_DRIFT_CLASS : ''}`} />
-            {full ? <span data-card-layer="sheen-sweep" className={SHEEN_SWEEP_CLASS} /> : null}
+      <span data-card-layer="body" className={bodyClassName(unplayable)}>
+        <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
+        <span data-card-layer="face" className={FACE_CLASS}>
+          <span className={`absolute flex items-center justify-center ${ART_BOX_CLASS[size]}`}>
+            <img
+              src={artFor(cardId)}
+              alt=""
+              draggable={false}
+              className="pointer-events-none size-full object-contain"
+            />
           </span>
-        ) : null}
-        {/* Above the sheen, so the sweep never washes the name out. */}
-        {size !== 'thumb' ? (
+          {isUpgraded ? (
+            <span aria-hidden="true" data-card-layer="sheen" className="pointer-events-none absolute inset-0">
+              <span data-card-layer="sheen-tint" className={`${SHEEN_TINT_CLASS} ${full ? SHEEN_DRIFT_CLASS : ''}`} />
+              {full ? <span data-card-layer="sheen-sweep" className={SHEEN_SWEEP_CLASS} /> : null}
+            </span>
+          ) : null}
+          {/* Above the sheen, so the sweep never washes the name out. */}
+          {size !== 'thumb' ? (
+            <span
+              data-card-name=""
+              className={`absolute inset-x-0 bottom-0 flex items-center justify-center ${NAME_STRIP_CLASS[size]} ${NAME_TEXT_CLASS[size]}`}
+            >
+              <span className={NAME_CLASS} style={nameStyle(name, size)}>
+                {name}
+              </span>
+            </span>
+          ) : null}
+        </span>
+        <span data-card-chips={layout} className={`pointer-events-none absolute flex ${CHIPS_CLASS[size]}`}>
+          {/* Corners: cost then "+" down the left, damage alone on the right, so the top rail never
+              holds the widest cost and the badge side by side (fix round 1, A3). Left stack: one
+              column, cost, damage, "+". */}
+          <span className={corners ? 'flex flex-col items-start gap-1' : 'contents'}>
+            {cost !== null ? (
+              <span data-card-chip="cost" data-cost-kind={cost.kind} className={`${sticker} ${COST_CHIP_CLASS}`}>
+                <CostAmount amount={cost} title={null} size={costIconSize(size, cost)} />
+              </span>
+            ) : null}
+            {corners ? upgradedBadge : null}
+          </span>
+          <span className={corners ? 'ml-auto' : 'contents'}>
+            {damage !== null ? (
+              <span aria-hidden="true" data-card-chip="damage" className={`${sticker} ${DAMAGE_CHIP_CLASS}`}>
+                {String(damage)}
+              </span>
+            ) : null}
+            {corners ? null : upgradedBadge}
+          </span>
+        </span>
+        {counter !== undefined ? (
           <span
-            data-card-name=""
-            className={`absolute inset-x-0 bottom-0 flex items-center justify-center ${NAME_STRIP_CLASS[size]} ${NAME_TEXT_CLASS[size]}`}
+            aria-hidden="true"
+            data-card-counter={counter.kind}
+            className="pointer-events-none absolute inset-x-0 -bottom-2 mx-auto flex w-fit items-center gap-0.5 rounded-full bg-v7-bg-0 px-1 py-px font-v7-card text-v7-micro font-bold leading-none text-v7-text tabular-nums ring-1 ring-v7-cta-2"
           >
-            <span className={NAME_CLASS} style={nameStyle(name, size)}>
-              {name}
-            </span>
+            <Icon name={counter.kind === 'card-lives' ? 'life' : 'clock'} size={10} />
+            {String(counter.amount)}
           </span>
         ) : null}
       </span>
-      <span data-card-chips={layout} className={`pointer-events-none absolute flex ${CHIPS_CLASS[size]}`}>
-        {/* Corners: cost then "+" down the left, damage alone on the right, so the top rail never
-            holds the widest cost and the badge side by side (fix round 1, A3). Left stack: one
-            column, cost, damage, "+". */}
-        <span className={corners ? 'flex flex-col items-start gap-1' : 'contents'}>
-          {cost !== null ? (
-            <span data-card-chip="cost" data-cost-kind={cost.kind} className={`${sticker} ${COST_CHIP_CLASS}`}>
-              <CostAmount amount={cost} title={null} size={costIconSize(size, cost)} />
-            </span>
-          ) : null}
-          {corners ? upgradedBadge : null}
-        </span>
-        <span className={corners ? 'ml-auto' : 'contents'}>
-          {damage !== null ? (
-            <span aria-hidden="true" data-card-chip="damage" className={`${sticker} ${DAMAGE_CHIP_CLASS}`}>
-              {String(damage)}
-            </span>
-          ) : null}
-          {corners ? null : upgradedBadge}
-        </span>
-      </span>
-      {counter !== undefined ? (
-        <span
-          aria-hidden="true"
-          data-card-counter={counter.kind}
-          className="pointer-events-none absolute inset-x-0 -bottom-2 mx-auto flex w-fit items-center gap-0.5 rounded-full bg-v7-bg-0 px-1 py-px font-v7-card text-v7-micro font-bold leading-none text-v7-text tabular-nums ring-1 ring-v7-cta-2"
-        >
-          <Icon name={counter.kind === 'card-lives' ? 'life' : 'clock'} size={10} />
-          {String(counter.amount)}
-        </span>
-      ) : null}
     </CardRoot>
   );
 }

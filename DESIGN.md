@@ -239,8 +239,10 @@ Tailwind utilities: `font-v7-display`, `font-v7-card`, `font-v7-body`, `text-v7-
 
 ### Named Rules
 **The Floor Rule.** No functional text under 11px (Impeccable `undersized-ui-text`) and no text
-input under 16px. One exception: a hand card's name may fit down to 10px on a 64px card (the
-hand clamp floor, viewports under 337px) so its longest word never breaks (Card, L72-12).
+input under 16px. One exception: a hand card's name may shrink below 11px so its longest word
+never breaks (Card, L72-12). It happens only for names whose widest word is long, only on
+viewports under about 367px (a hand card under 69.75px), and bottoms out at 10.04px on the 64px
+clamp floor; the 10px floor is never reached by a catalog name.
 
 **The Vital Rule.** Own lives are at least 20px and the incoming damage badge at least 22px on
 a 375 px phone.
@@ -828,11 +830,15 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   word fits the strip (`cardNameWordEm`, from Fredoka 600 advance widths), relative to the face
   as an `@container` (`cqi`). Base sizes: `hand` 11px, growing to about 12.8px at the 120px clamp
   top; `lifted` and `tile` 12px; `sheet` 20px (`--type-title`, balancing its 32px chips). Floors:
-  11px everywhere, except **10px on a hand card at the 64px clamp floor** (viewports under
-  337px), the one exception to the 11px functional floor, needed for "Regeneration" to fit
-  whole. Measured: on a 375px phone every hand name stays 11px; at 320px the smallest is
-  10.04px. "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is
-  unsupported, the name falls back to its strip's size class.
+  11px everywhere, except **10px for a hand name** (`CARD_NAME_FIT`), the one exception to the
+  11px functional floor. It bites only on narrow phones: the widest catalog word, "Regeneration"
+  (5.798em with tight tracking), needs a strip of 63.8px at 11px, that is a 69.75px hand card
+  (97 % of the face, face = card − 4px), reached at a 367px viewport (19vw). From about 367px
+  down to 337px, where the 64px clamp floor starts, such a name shrinks from 11px to 10.04px,
+  and stays at 10.04px below; the 10px floor itself is never reached by a catalog name.
+  Measured: on a 375px phone every hand name stays 11px; at 320px the smallest is 10.04px.
+  "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is unsupported, the
+  name falls back to its strip's size class.
 - **Chips** (Fredoka 700, tabular, a sticker look: pill, 1px `--card-face-0` ring, small
   shadow). Cost: `--panel-2` to `--panel` with `--text` (12.6:1), through `CostAmount` with
   `title={null}` (Tax a life chip, Regeneration its per-life rate), icon `sm` / `md` / `lg`; a
@@ -855,8 +861,9 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   leaves the white face white; `multiply` washed the face mint and `color` turned red flames
   brown. With full motion the foil drifts back and forth (`.v7-card-holo-drift`, 6.4s, two
   sweeps) and a white band crosses the face (`.v7-card-sheen`, 3.2s, sweeping in the first
-  40%); both are translated layers. The name sits above the sheen. The foil is new in L72-12
-  fix round 1 and awaits the designer's look in the L72-21 critique.
+  40%); both are translated layers. The name sits above the sheen. **Designer-approved on
+  2026-10-26** ("Arc-en-ciel fort", `docs/agent/decisions.md`), recoloring of dark art included:
+  keep it as is unless the designer rules again.
 - **Active persistent** (`counter`): a pulsing `--cta-2` glow (a pre-blurred layer at 60% whose
   wrapper pulses its opacity) and a counter badge centered under the face: `--bg-0` pill with a
   1px `--cta-2` ring, Icon `life` (card lives) or `clock` (turns) at 10px, `--text` number,
@@ -870,6 +877,9 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   **Hover:** with full motion, a button card that is not selected lifts 4px on hover-capable
   pointers. **Unplayable:** `saturate(30%)` and `brightness(75%)`, so grey drawings (Suicide,
   Curse, the swords) read "not now" too, while the card stays solid; never grayscale or faded.
+  The filter sits on the card body (`data-card-layer="body"`: rim, face or verso, chips, counter
+  badge), never on the root or the focus ring, so the `--cta` selection outline and the `--text`
+  focus ring keep full contrast on an unplayable card.
 - **Hidden face:** the same frame and rim. The verso is `--panel-2`, lit from the top
   (`--text-2` at 20% fading out) and hatched in `--bg-0`, so it reads as a card on a `--panel`
   ground as well as on `--bg-0`; an inner `--text-2` frame line at 35%; a soft family halo
@@ -885,7 +895,7 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (face up only), `data-card-family`, `data-card-rim="holo" | "gold"`, `data-card-size`,
   `data-motion`, `data-unplayable="true"`, plus the caller's `dataAttributes` (fixed ones
   win). Inside: `data-card-layer="glow" | "rim" | "face" | "sheen" | "sheen-tint" |
-  "sheen-sweep" | "focus" | "verso" | "emblem"`, `data-card-name`, `data-card-chips="left-stack"
+  "sheen-sweep" | "focus" | "body" | "verso" | "emblem"`, `data-card-name`, `data-card-chips="left-stack"
   | "corners"`, `data-card-chip="cost" | "damage"`, `data-cost-kind`,
   `data-card-badge="upgraded"`, `data-card-counter="card-lives" | "turns"`.
 - **Gallery:** the `/dev/ui` section `card` (`ui/card/card.gallery.tsx`): families and rims,
