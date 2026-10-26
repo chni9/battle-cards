@@ -571,6 +571,34 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the compact
   Draw hint with Got it and Skip all.
 
+### Banners (`ui/banner/`, L72-18)
+
+- **`ui/banner/table-banner-host.tsx`** provides `TableBannerHost`, with the props of
+  `TableBannerFlash`. It hosts the L51-06 cues, the L63-03 Sentence lines and the L67-01 own
+  wipe line; the cue logic stays in `view-model/table-banner.ts` (`nextTableBannerCues`,
+  `nextSentenceBannerLines`, `nextWipeBannerLines`), and `ui/banner/banner-items.ts` only keys
+  the items (`bannerItemsForCues`) and picks the live mode (`bannerLiveMode`). The classic table
+  keeps `screens/table/your-turn-flash.tsx` until L75; L74-17 mounts the host in the arena,
+  outside any stacking context (it renders in place at `Z_INDEX.banner`, not in a portal).
+- **Enqueue synchronously** inside the effect that calls the `next*` helper: a deferred enqueue
+  (a 0 ms timeout) is cleared by React Strict Mode's effect replay, which dropped the first-paint
+  You won! / You are dead cues. A `<StrictMode>` test in `table-banner-host.test.tsx` locks it.
+  The watch refs stop the replayed effect from enqueueing twice.
+- **Timing:** each lane (cue, Sentence, wipe) times its head by item key, so a banner queued
+  behind it never extends it; `TableBannerFlash` restarted the timer on every enqueue. No exit
+  animation: the next item mounts exactly at `TABLE_BANNER_MS`. `end.tsx` still opens Game over
+  after that same constant.
+- **Live regions:** one `role="status"` region per lane, always mounted and empty between
+  banners; only the slab inside swaps, keyed by item. Polite for cues, assertive for Sentence
+  and wipe. Do not mount a region together with its text: many screen readers skip it.
+- **Tests:** `banner-items.test.ts` (node: keys, copy, live modes, `--text-on-cta` contrast on
+  every fill), `table-banner-host.test.tsx` (happy-dom, fake timers: queue order and timing,
+  first-mount seeds, no history replay, Sentence and wipe regions, tones, reduced motion,
+  persistent regions, StrictMode first paint) and `banner.gallery.test.tsx`. Every rerender in
+  a test passes fresh arrays, so the enqueue effects re-run as they do with live views.
+- **Gallery:** section `banner` (`ui/banner/banner.gallery.tsx`), one `BannerDemo` per kind
+  with a DEV-only Play button; repeated presses queue several attacks, Sentence lines or wipes.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
