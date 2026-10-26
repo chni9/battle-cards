@@ -311,4 +311,16 @@ describe('parseCoachBody (technical spec v6 §5.4)', () => {
       bold: true,
     });
   });
+
+  it('leaves the verb "live" as prose', () => {
+    // The tour copy "Your kit, cards, and resources live here." has no resource in it: "live" is
+    // a verb, and only "lives" (the plural noun) and "life" name the resource.
+    const tour = 'This dock is **your zone**. Your kit, cards, and resources live here.';
+    expect(parseCoachBody(tour).filter((part) => part.kind === 'resource')).toEqual([]);
+
+    const words = parseCoachBody('Your **lives** live on while your life lasts.').flatMap((part) =>
+      part.kind === 'resource' ? [part.word] : [],
+    );
+    expect(words).toEqual(['lives', 'life']);
+  });
 });

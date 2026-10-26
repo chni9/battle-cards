@@ -138,8 +138,9 @@ export function parseCoachBody(text: string): readonly CoachBodyPart[] {
 }
 
 function parseResourceTokens(text: string, bold: boolean): CoachBodyPart[] {
+  // "lives" and "life" name the resource; the bare verb "live" ("resources live here") does not.
   const token =
-    /(\+)?(\d+)\s+(upgrade\s+points?|points?|lives?|life|shield(?:\s+points?)?)|\b(upgrade\s+points?|points?|lives?|life|shield)\b/gi;
+    /(\+)?(\d+)\s+(upgrade\s+points?|points?|lives|life|shield(?:\s+points?)?)\b|\b(upgrade\s+points?|points?|lives|life|shield)\b/gi;
   const parts: CoachBodyPart[] = [];
   let last = 0;
   let match = token.exec(text);
@@ -179,7 +180,7 @@ function resourceFromLabel(label: string): CoachResourceKind {
   if (normalized.startsWith('point')) {
     return 'point';
   }
-  if (normalized.startsWith('live') || normalized === 'life') {
+  if (normalized === 'lives' || normalized === 'life') {
     return 'life';
   }
   return 'shield';

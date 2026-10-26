@@ -16,16 +16,22 @@
  * It is `relative`, like every V7 scroll container, so `sr-only` labels and other absolutely
  * positioned descendants resolve against it and stay inside its clip instead of stretching an
  * ancestor's scroll size.
+ *
+ * `focusRing` says where the focus ring goes. The default `outer` ring sits 2 px outside the edge.
+ * An area that fills a clipping, rounded container (the coach panel body, L72-17) takes `inset`,
+ * the same ring drawn inside the edge (`CHROME_FOCUS_INSET_CLASS`), so the container never clips it.
  */
 
 import type { ReactElement, ReactNode, Ref } from 'react';
-import { CHROME_FOCUS_CLASS } from './chrome-classes';
+import { CHROME_FOCUS_CLASS, CHROME_FOCUS_INSET_CLASS } from './chrome-classes';
 import { SCROLL_REGION_ATTRIBUTE } from './use-focus-trap';
 
 export interface ScrollAreaProps {
   children: ReactNode;
   axis?: 'y' | 'x' | 'both';
   label?: string;
+  /** Where the keyboard focus ring is drawn: outside the edge (default) or inside it. */
+  focusRing?: 'outer' | 'inset';
   className?: string;
   ref?: Ref<HTMLDivElement>;
 }
@@ -36,7 +42,16 @@ const AXIS_CLASS = {
   both: 'overflow-auto overscroll-contain',
 } as const;
 
-export function ScrollArea({ children, axis = 'y', label, className, ref }: ScrollAreaProps): ReactElement {
+const FOCUS_RING_CLASS = { outer: CHROME_FOCUS_CLASS, inset: CHROME_FOCUS_INSET_CLASS } as const;
+
+export function ScrollArea({
+  children,
+  axis = 'y',
+  label,
+  focusRing = 'outer',
+  className,
+  ref,
+}: ScrollAreaProps): ReactElement {
   return (
     <div
       ref={ref}
@@ -44,7 +59,7 @@ export function ScrollArea({ children, axis = 'y', label, className, ref }: Scro
       {...(label !== undefined
         ? { role: 'region', 'aria-label': label, tabIndex: 0, [SCROLL_REGION_ATTRIBUTE]: '' }
         : {})}
-      className={['relative min-h-0 min-w-0', AXIS_CLASS[axis], CHROME_FOCUS_CLASS, className ?? ''].join(' ')}
+      className={['relative min-h-0 min-w-0', AXIS_CLASS[axis], FOCUS_RING_CLASS[focusRing], className ?? ''].join(' ')}
     >
       {children}
     </div>

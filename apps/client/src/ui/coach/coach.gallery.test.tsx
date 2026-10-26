@@ -21,6 +21,7 @@ function renderEntry(id: string): HTMLElement {
   return root;
 }
 
+// The two real-copy tests below pin the shared tutorial script ("1 life", "plus 4 pts"); an L75-01 copy edit must update them.
 describe('coach gallery (/dev/ui)', () => {
   it('registers the coach section with the three panels', () => {
     expect(gallery.id).toBe('coach');

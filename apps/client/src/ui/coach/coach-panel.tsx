@@ -19,14 +19,22 @@
  * `compact` is the first-game hint card. Its surface is `--panel` at 72% where the default is
  * 90%. V6 used 46%, which left `--text` at about 2.6:1 over a white card face; 72% keeps it at
  * 5.7:1 (6.1:1 over `#f1edff`), so body text takes `--text` and never `--text-2` (4.1:1 there).
- * The compact close control stays 44 px (§5.3), where V6 used 32 px.
+ * The compact close control stays 44 px (§5.3), where V6 used 32 px. Those floors make the
+ * chrome 118 px tall, so the compact cap is `min(36vh, 15rem)`, not V6's `min(32vh, 12rem)`:
+ * measured at 375×812 and 375×667, all ten hints then fit with Got it and Skip all.
+ *
+ * In landscape-compact (a visible height under 500 px, `viewportModeFor`) the footer controls
+ * move into the header row, between the title and the close control, and the footer row goes
+ * away: below the body they would leave a 390 px phone no room to read. The body is a named,
+ * focusable scroll region only while its copy overflows (the Sheet body rule, DESIGN.md ›
+ * Overlays › Keyboard scroll), so a panel that fits adds no Tab stop and no second landmark.
  *
  * Under reduced motion the panel renders at rest and `data-motion="reduced"` says so: V6's
  * `animation: none`, with no transform and no fade (§5.7, §8.3). Nothing is carried by motion.
  */
 
 import { motion } from 'motion/react';
-import { useId, type ReactElement, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 
 import { parseCoachBody, type CoachBodyPart } from '../../view-model/tutorial-coach-copy';
 import { CostAmount } from '../card/cost-amount';
@@ -39,6 +47,7 @@ import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { CHROME_SHAPE_CLASS, CHROME_SHAPE_SM_CLASS, motionAttribute } from '../primitives/chrome-classes';
 import { IconButton } from '../primitives/icon-button';
 import { ScrollArea } from '../primitives/scroll-area';
+import { useViewportMode } from '../use-visual-viewport-box';
 
 export interface CoachPanelProps {
   title: string;
@@ -62,7 +71,7 @@ const COACH_ENTER: V7MotionSpec = {
 /** The rim, shape and text color of the root. The surface and the max height depend on `compact`. */
 const ROOT_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: `${CHROME_SHAPE_CLASS} bg-v7-panel/[0.9] backdrop-blur-[6px] max-h-[min(52vh,28rem)]`,
-  compact: `${CHROME_SHAPE_SM_CLASS} bg-v7-panel/[0.72] backdrop-blur-[10px] max-h-[min(32vh,12rem)]`,
+  compact: `${CHROME_SHAPE_SM_CLASS} bg-v7-panel/[0.72] backdrop-blur-[10px] max-h-[min(36vh,15rem)]`,
 };
 const HEADER_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: 'gap-2 px-3 py-2',
@@ -72,10 +81,9 @@ const TITLE_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: 'text-v7-title',
   compact: 'text-v7-body',
 };
-/** The scroll region's focus ring is drawn inside its edge: the rounded root clips an outer one. */
 const BODY_CLASS: Readonly<Record<'default' | 'compact', string>> = {
-  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed focus-visible:-outline-offset-2!',
-  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug focus-visible:-outline-offset-2!',
+  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed',
+  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug',
 };
 const FOOTER_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: 'flex-col gap-2 px-3 py-2',
@@ -96,6 +104,29 @@ export function CoachPanel({
   const reduced = usePrefersReducedMotion();
   const enter = motionPropsFor(COACH_ENTER, reduced);
   const variant = compact ? 'compact' : 'default';
+  const landscape = useViewportMode() === 'landscape-compact';
+  const footerInHeader = footer !== undefined && landscape;
+
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  // The copy or the cap can change (a resize, a new message, the footer moving), so the check
+  // repeats on the body and on its content, as the Sheet body does (`syncScrollRegion`).
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    const content = contentRef.current;
+    if (body === null || content === null) return;
+    const sync = (): void => {
+      setOverflows(body.scrollHeight > body.clientHeight);
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(body);
+    observer.observe(content);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <motion.aside
@@ -113,13 +144,25 @@ export function CoachPanel({
         <h2 id={titleId} className={`min-w-0 flex-1 font-v7-display leading-tight ${TITLE_CLASS[variant]}`}>
           {title}
         </h2>
+        {footerInHeader ? (
+          // Nowrap: a label such as "Skip all" must not break into two lines in the narrow row.
+          <div className="flex shrink-0 items-center gap-1.5 [&_button]:whitespace-nowrap">{footer}</div>
+        ) : null}
         <IconButton icon="close" aria-label={hideAriaLabel} variant="quiet" onClick={onHide} />
       </div>
-      {/* A label because the body can overflow its cap: it becomes a keyboard-scrollable region. */}
-      <ScrollArea axis="y" label={title} className={`font-v7-body font-bold ${BODY_CLASS[variant]}`}>
-        <CoachBody text={body} />
+      {/* The ring is inside the edge: the rounded `overflow-hidden` root would clip an outer one. */}
+      <ScrollArea
+        ref={bodyRef}
+        axis="y"
+        focusRing="inset"
+        {...(overflows ? { label: title } : {})}
+        className={`font-v7-body font-bold ${BODY_CLASS[variant]}`}
+      >
+        <div ref={contentRef}>
+          <CoachBody text={body} />
+        </div>
       </ScrollArea>
-      {footer !== undefined ? (
+      {footer !== undefined && !footerInHeader ? (
         <div className={`flex shrink-0 border-t-2 border-v7-ink ${FOOTER_CLASS[variant]}`}>{footer}</div>
       ) : null}
     </motion.aside>

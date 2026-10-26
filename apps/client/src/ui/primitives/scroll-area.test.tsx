@@ -51,6 +51,18 @@ describe('ScrollArea (L53-07: overlays and logs scroll inside, never the page)',
     expect(area?.hasAttribute('tabindex')).toBe(false);
   });
 
+  it('draws its focus ring outside by default and inside on request', () => {
+    const outer = renderUi(<ScrollArea>Lines</ScrollArea>);
+    const outerArea = outer.container.querySelector('[data-scroll-axis]');
+    expectClasses(outerArea, 'focus-visible:outline-2 focus-visible:outline-offset-2');
+    expect(outerArea?.classList.contains('focus-visible:-outline-offset-2')).toBe(false);
+
+    const inset = renderUi(<ScrollArea focusRing="inset">Lines</ScrollArea>);
+    const insetArea = inset.container.querySelector('[data-scroll-axis]');
+    expectClasses(insetArea, 'focus-visible:outline-2 focus-visible:-outline-offset-2');
+    expect(insetArea?.classList.contains('focus-visible:outline-offset-2')).toBe(false);
+  });
+
   it('forwards its ref to the scrolling element', () => {
     const ref = createRef<HTMLDivElement>();
     const { container } = renderUi(<ScrollArea ref={ref}>Lines</ScrollArea>);

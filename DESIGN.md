@@ -576,9 +576,12 @@ their lot restyles them.
   the first focusable thing that is not a scroll region, so a field after a labelled area keeps
   it, and the region is focused only when it is all there is (a read-only transcript). Without
   a label, Chromium still makes an overflowing scroller with nothing focusable inside a Tab
-  stop, but an unnamed one, so pass a `label` whenever the content can overflow. It is always `relative`, and a `className` of `absolute`
-  or `fixed` loses to it (Tailwind emits `.relative` after `.absolute` and `.fixed`), so a
-  caller that needs to position the scroller wraps it in a positioned element.
+  stop, but an unnamed one, so pass a `label` whenever the content can overflow. `focusRing`
+  (`'outer'`, the default, or `'inset'`) picks `CHROME_FOCUS_CLASS` or `CHROME_FOCUS_INSET_CLASS`:
+  an area that fills a clipping, rounded container (the coach body) takes `inset`. It is always
+  `relative`, and a `className` of `absolute` or `fixed` loses to it (Tailwind emits `.relative`
+  after `.absolute` and `.fixed`), so a caller that needs to position the scroller wraps it in a
+  positioned element.
 - **TextField:** 16px (`--type-input`) Nunito on `--panel-2`, 44px tall, so iOS never zooms on
   focus. The hint is `--text-2`. An error sets `aria-invalid`, turns the border `--danger` and
   prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
@@ -1103,14 +1106,15 @@ stay until L75, which hosts the new panel.
   focus move, no key handling, so Esc stays with the sheet stack (Q49) and the table stays
   clickable around it. Hosts position it (L75); the panel has no `className`.
 - **Values:** the shape is the chrome outline (`--chrome-outline-width`, `--ink`) with the hard
-  `--chrome-shadow`, `overflow-hidden`, text `--text`. Default: radius `--chrome-radius`
-  (12px), `--panel` at 90% (V6: 78%) with a 6px backdrop blur, max height `min(52vh, 28rem)`. Compact (the
-  first-game hint): radius `--chrome-radius-sm` (10px), `--panel` at 72% (V6: 46%) with a 10px
-  blur, max height `min(32vh, 12rem)`. The header is `--panel-2` with a 2px `--ink` rule under it (padding
-  `px-3 py-2`, compact `px-2 py-1`): the title in Lilita One 20px (compact 14px), then the
-  close control. The body is a `ScrollArea` in Nunito 700, 14px with line height 1.625
-  (compact 12px, 1.375). The footer slot, only when given, has a 2px `--ink` rule above it and
-  stacks in a column (compact: a row), with `px-3 py-2` (compact `px-2 py-1.5`).
+  `--chrome-shadow`, `overflow-hidden`, text `--text`. Default: radius `--chrome-radius` (12px),
+  `--panel` at 90% (V6: 78%) with a 6px backdrop blur, max height `min(52vh, 28rem)`. Compact
+  (the first-game hint): radius `--chrome-radius-sm` (10px), `--panel` at 72% (V6: 46%) with a
+  10px blur, max height `min(36vh, 15rem)` (V6: `min(32vh, 12rem)`; see Fit below). The
+  header is `--panel-2` with a 2px `--ink` rule under it (padding `px-3 py-2`, compact
+  `px-2 py-1`): the title in Lilita One 20px (compact 14px), then the close control. The body is
+  a `ScrollArea` in Nunito 700, 14px with line height 1.625 (compact 12px, 1.375). The footer
+  slot, only when given, has a 2px `--ink` rule above it and stacks in a column (compact: a
+  row), with `px-3 py-2` (compact `px-2 py-1.5`).
 - **Why 72% is the floor:** the compact card hovers over any table content, white card faces
   included. `--text` over a white card face is 5.74:1 at 72% (6.12:1 over `#f1edff`) and 10.66:1
   at 90%. V6's 46% gave 2.55:1. `--text-2` is only 4.09:1 over white at 72%, so body text takes
@@ -1126,15 +1130,17 @@ stay until L75, which hosts the new panel.
   `aria-hidden`) after it. Each is wrapped in `span[data-coach-resource="life" | "point" |
   "upgradePoint" | "shield"]`, not the preserved `data-resource-kind`, so the FX and flyout
   selectors never match prose. Numbers and words take the body color (`--text`), never a
-  resource color (§5.1). `parseCoachBody` matches the word "live" too, so the tour step "Your
-  zone" ("resources live here") shows a life icon after that verb; the copy and the parser are
-  unchanged here.
+  resource color (§5.1). `parseCoachBody` takes only "lives" and "life" as the life resource, so
+  the verb "live" ("resources live here") stays prose.
 - **Controls:** a 44px quiet `IconButton` (`close`, never a `×` character) named by the caller's
   `hideAriaLabel` ("Hide coach"), in both variants (V6's compact used 32px). There is no Skip:
   Skip lives on the table flag (Lot 45), and the first-game hint host puts "Got it" and
   "Skip all" in the footer slot. The body is a labelled scroll region named by the title
-  (`tabIndex` 0, inset focus ring, since the rounded root clips an outer one), because the
-  capped panel can overflow; Tab runs close control, body, footer.
+  (`tabIndex` 0) only while its copy overflows, the Sheet body rule (Overlays › Keyboard
+  scroll): a re-check on a `ResizeObserver` over the body and its content adds or removes the
+  label, so a panel that fits has no extra Tab stop and no second landmark. Its focus ring is
+  inside the edge (`ScrollArea focusRing="inset"`), since the rounded `overflow-hidden` root
+  clips an outer one. Tab runs close control, body (when it overflows), footer.
 - **Entrance:** opacity 0 to 1, y −8px to 0 and scale 0.96 to 1, over `--dur-base` on
   `--ease-entrance` (V6's `tutorial-coach-in`). Under reduced motion the panel renders at rest,
   with no transform and no fade, and `data-motion="reduced"` says so. A host that changes the
@@ -1142,11 +1148,26 @@ stay until L75, which hosts the new panel.
 - **Anchors:** `data-zone` (`tutorial-coach`, `first-game-hint`), the caller's `extraAttrs`
   (`data-tutorial-index`, `data-tutorial-coach-open`, `data-hint-id`) and `data-motion`, which
   `extraAttrs` cannot override.
-- **Known limit:** at 375×812 the compact card with Got it and Skip all keeps at most 74px for the
-  body (three full lines of 12px and part of a fourth, because the 44px floors take 118px of
-  its 192px cap), so the hints "resources", "incoming" and "incoming-thief" need scrolling
-  inside it. At 844×390 the 32vh cap (125px) leaves 12px. The default card at 844×390 keeps
-  73px. Caps and placement are L75's call.
+- **Footer in landscape-compact:** in the `landscape-compact` mode (`useViewportMode`, a visible
+  height under 500px) a given `footer` moves into the header row, between the title and the close
+  control, at the same 44px height, and the footer row goes away; the labels stay on one line.
+  It applies to both variants. In `portrait` and `desktop` the footer stays below the body.
+- **Fit:** the 44px floors make the chrome 118px tall (borders 6, header 54, footer 58), which
+  with V6's compact cap of `min(32vh, 12rem)` left 74px for the body: five of the ten hints
+  overflowed at 375×812 and all ten at 844×390. Measured with the compact card, Got it and Skip
+  all, at the host widths `min(15.5rem, 100vw - 1rem)` (portrait, desktop) and `min(22rem,
+  100vw - 1rem)` (landscape-compact):
+
+  | Viewport | Hint height | Share of screen | Overflow |
+  |---|---|---|---|
+  | 375×812 | 163 to 229px | 13.3 to 18.7% | none of ten |
+  | 375×667 | 163 to 229px | 16.2 to 22.7% | none of ten |
+  | 844×390 | 89 to 138px | 9.5 to 14.8% | none of ten |
+
+  The tallest hint is `resources`, whose copy is 111px at 248px wide (the cap is 240px). All
+  eleven tour steps (with Got it) also fit at 844×390 (130 to 175px). The script steps 17 and 19
+  have no footer and keep the default cap, so at 844×390 they scroll by 18px and show the body
+  region. L75-06 owns the landscape-compact host width (a Watch point in the backlog).
 - **Gallery:** the `/dev/ui` section `coach` (`ui/coach/coach.gallery.tsx`): the Tax tutorial
   coach with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the
   compact Draw hint with Got it and Skip all, all from the real shared copy.
