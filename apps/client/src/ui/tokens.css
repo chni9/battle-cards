@@ -46,6 +46,9 @@
   --card-rim-width: 2px;
   --card-rim-holo: conic-gradient(from 200deg, #ff8ad8, #ffe17a, #8af5d0, #8ccaff, #c3a8ff, #ff8ad8);
   --card-rim-gold: linear-gradient(135deg, #fff2b0 0%, #ffc93d 45%, #c98a12 100%);
+  /* The upgraded holo foil: the rim's hue order as a saturated diagonal rainbow, blended with
+     soft-light so it recolors the drawing and leaves the white face white (L72-12, §5.4). */
+  --card-holo-sheen: linear-gradient(115deg, #ff4fb4 0%, #ffc21a 20%, #2fe0a8 40%, #3d9bff 60%, #9b6bff 80%, #ff4fb4 100%);
   --card-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
 
   /* §5.3 arcade chrome. L80 tool mode overrides these under [data-mode="tool"]. */
@@ -148,13 +151,29 @@
 
   /* L72-12 — upgraded holo sheen, a translated layer (spec v7 §5.4, §8.2). */
   .v7-card-sheen { animation: v7-card-sheen 3.2s var(--ease-entrance) infinite; }
+  /* L72-12 — the holo tint drifts back and forth across two sweeps, translated only (§8.2). */
+  .v7-card-holo-drift { animation: v7-card-holo-drift 6.4s ease-in-out infinite alternate; }
 }
 
 @keyframes v7-card-sheen {
   0% { transform: translateX(-100%) skewX(-12deg); }
   40%, 100% { transform: translateX(300%) skewX(-12deg); }
 }
-@media (prefers-reduced-motion: reduce) { .v7-card-sheen { animation: none; } }
+@keyframes v7-card-holo-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) { .v7-card-sheen, .v7-card-holo-drift { animation: none; } }
+
+/*
+ * L72-12 — a card's own width override, set on the card itself (className `[--card-w:…]`). It
+ * does not inherit, so a container's value never resizes the cards inside it (a lifted or sheet
+ * card inside a hand row keeps its own size).
+ */
+@property --card-w {
+  syntax: '*';
+  inherits: false;
+}
 
 /*
  * V7 sheet panels opt out of the V2 short-viewport dialog rule in index.css,

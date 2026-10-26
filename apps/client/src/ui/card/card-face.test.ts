@@ -14,6 +14,7 @@ import { ALL_ART_CARD_IDS } from '../asset-lookup';
 import { WCAG_AA_TEXT, contrastRatio } from '../contrast';
 import { V7_COLORS } from '../palette';
 import {
+  CARD_NAME_FIT,
   CARD_SIZES,
   HIDDEN_CARD_LABEL,
   cardCostChip,
@@ -21,6 +22,8 @@ import {
   cardDamageChip,
   cardFaceLabel,
   cardFamilyOf,
+  cardNameFontSize,
+  cardNameWordEm,
 } from './card-face';
 
 /** [id, base, upgraded] — rules spec §2 attack table. */
@@ -115,6 +118,38 @@ describe('cardFamilyOf', () => {
     expect(cardFamilyOf('mega-attack')).toBe('special');
     expect(cardFamilyOf('tax')).toBe('action');
     expect(cardFamilyOf('basic-attack')).toBe('attack');
+  });
+});
+
+describe('cardNameWordEm and cardNameFontSize (L72-12 fix round 1, A4)', () => {
+  /** Face width = card width minus the 2 px rim on each side. */
+  const fitPx = (name: string, size: 'hand' | 'lifted' | 'sheet' | 'tile', cardPx: number): number =>
+    ((CARD_NAME_FIT[size].textPct / 100) * (cardPx - 4)) / cardNameWordEm(name);
+  const names = ALL_ART_CARD_IDS.map((id) => getCard(id)?.name ?? id);
+
+  it('measures the widest word, so a long name fits by its longest word', () => {
+    expect(cardNameWordEm('Super Regeneration')).toBe(cardNameWordEm('Regeneration'));
+    expect(cardNameWordEm('Regeneration')).toBeGreaterThan(cardNameWordEm('Super'));
+    expect(cardNameWordEm('Tax')).toBeLessThan(2);
+    expect(cardNameWordEm('é')).toBeCloseTo(0.795, 5);
+  });
+
+  it('fits every catalog name whole at each size floor: 10 px on a 64 px hand card, 11 px elsewhere', () => {
+    for (const name of names) {
+      expect(fitPx(name, 'hand', 64), name).toBeGreaterThanOrEqual(10);
+      expect(fitPx(name, 'lifted', 80), name).toBeGreaterThanOrEqual(11);
+      expect(fitPx(name, 'tile', 88), name).toBeGreaterThanOrEqual(11);
+      expect(fitPx(name, 'sheet', 200), name).toBeGreaterThanOrEqual(11);
+    }
+  });
+
+  it('keeps every hand name at 11 px on a 375 px phone (71.25 px card)', () => {
+    for (const name of names) expect(fitPx(name, 'hand', 71.25), name).toBeGreaterThanOrEqual(11);
+  });
+
+  it('writes the floor, the base and the container-relative fit', () => {
+    expect(cardNameFontSize('Regeneration', 'hand')).toMatch(/^max\(10px, min\(max\(11px, 11cqi\), \d+\.\d{2}cqi\)\)$/);
+    expect(cardNameFontSize('Tax', 'lifted')).toMatch(/^max\(11px, min\(12px, \d+\.\d{2}cqi\)\)$/);
   });
 });
 

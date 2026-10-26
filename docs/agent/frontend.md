@@ -331,7 +331,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **The only V7 card renderer:** `ui/card/card.tsx` (`<Card size instance … />`, or
   `face="hidden" family`) with its pure helpers in `ui/card/card-face.ts` (`CARD_SIZES`,
   `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
-  `HIDDEN_CARD_LABEL`). `design/components/card.tsx` and its source-text tests stay for the
+  `cardNameWordEm`, `cardNameFontSize`, `CARD_NAME_FIT`, `HIDDEN_CARD_LABEL`).
+  `design/components/card.tsx` and its source-text tests stay for the
   classic screens until L75/L76 retire them.
 - **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
   holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
@@ -344,14 +345,30 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   their name is the aria-label and a native `title`.
 - **The caller decides state:** `unplayable` (POV's turn, card-specific reason; the face stays
   activatable), `selected`, and `counter` (`{ kind: 'card-lives' | 'turns', amount }`). The glow
-  and the counter badge follow `counter` only, so Curse and the combat Shield get no glow.
-- **Layout:** the root sizes by width and keeps 2:3 only while its height is auto: a stretching
-  flex or grid parent must align its items. The landscape-compact hand height (L75) comes in
-  through `className`. Hidden faces carry no `data-card-id` or `data-instance-id`.
+  and the counter badge follow `counter` only, so Curse and the combat Shield get no glow. Where
+  a family is itself secret, pass a neutral `family` to the hidden face (V2 used the action verso
+  for unspied plays); the component cannot know.
+- **Size contract:** resize a card only with `className="[--card-w:…]"` on the card itself;
+  width and height both derive from it (height = 1.5 × width), and without it each size uses
+  its own default. `--card-w` does not inherit (`@property` in `ui/tokens.css`), so setting it on
+  a hand row does nothing: set it per card. The definite height means a default stretching flex
+  or grid row cannot distort a card, and the row's `items-*` alignment still applies; do not
+  add `self-*` to cards. L75's landscape-compact hand derives `--card-w` from the visible
+  height. Never pass `w-*`, `h-*` or `aspect-*` classes: they would race the card's own sizes.
+  The selected lift, the 8 px focus ring, the counter glow and the counter badge reach past
+  the 2:3 box, so a scroll or `overflow-hidden` parent pads about 16 px around active cards.
+  Hidden faces carry no `data-card-id` or `data-instance-id`.
+- **Selection vs focus:** selection is the `--cta` outline; keyboard focus is a separate
+  `--text` ring layer (`data-card-layer="focus"`, `group-focus-visible`). Never style focus
+  through `outline` on a card, or it would replace the selection cue.
 - **Tests:** happy-dom has no media queries and no layout, so tests assert `data-motion`, the
-  `data-card-*` anchors and the class names (`v7-card-sheen`, `animate-pulse`, the lift); name
-  fit and art weight are checked in `/dev/ui` (section `card`, which shows every drawing at
-  hand size) at 375×812, 320 px and 1440×900.
+  `data-card-*` anchors and the class names (`v7-card-sheen`, `v7-card-holo-drift`,
+  `animate-pulse`, the lift, the size variables); the name fit is a node test on
+  `cardNameWordEm` over every catalog name. Chip fit, name breaks and art weight are measured in
+  the browser over all 31 ids × 5 sizes × base/upgraded at 320, 375 and 1440 px, by mounting
+  the matrix from `/src/ui/card/card.tsx` in a fixed overlay (never by editing repo files);
+  reduced motion in a srcdoc iframe that stubs `matchMedia` and installs the React refresh
+  preamble before importing the Card.
 
 ## Design system (V2 · Lots 10+)
 

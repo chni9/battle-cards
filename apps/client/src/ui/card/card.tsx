@@ -12,24 +12,28 @@
  *   `isolate` root) stays outside the rim instead of tinting it; the face; the chip rail; the
  *   counter badge under the face. The art sits in a fixed box per size, `object-contain`, so a
  *   long name never shrinks it. Thumbs carry no cost chip and no name (art-only thumbs).
- * - **Sizing:** the root sizes by width and keeps its 2:3 ratio while its height is auto, so a
- *   stretching flex or grid parent must align its items (`items-end`, `items-start`…).
- * - **Motion:** the sheen sweep, the glow pulse and the selected lift are applied only with full
- *   motion (`data-motion`); reduced motion keeps every badge, the static sheen and the outline.
+ * - **Sizing:** width and height both derive from one width (`--card-w`, else the size's
+ *   default), so a stretching flex or grid row cannot distort the card and the row's own
+ *   alignment still applies. A caller resizes a card only through `[--card-w:…]`.
+ * - **Motion:** the sheen sweep, the foil drift, the glow pulse, the selected lift and the hover
+ *   lift are applied only with full motion (`data-motion`); reduced motion keeps every badge,
+ *   the still foil, the selection outline and the focus ring.
  */
 
 import { getCard, type CardInstance, type CardType } from '@card-battle/shared';
-import type { MouseEvent, ReactElement, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from 'react';
 import { artFor } from '../asset-lookup';
 import { Icon } from '../icons/icon';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { motionAttribute } from '../primitives/chrome-classes';
+import type { StructuredCost } from '../structured-cost';
 import {
   HIDDEN_CARD_LABEL,
   cardCostChip,
   cardDamageChip,
   cardFaceLabel,
   cardFamilyOf,
+  cardNameFontSize,
   type CardCounter,
   type CardSize,
 } from './card-face';
@@ -65,15 +69,21 @@ export type CardProps = FaceUpCardProps | HiddenCardProps;
 type Rim = 'holo' | 'gold';
 type ChipLayout = 'left-stack' | 'corners';
 
+/**
+ * Width and height both come from one width: the caller's `--card-w` when set on the card
+ * (className `[--card-w:…]`; it does not inherit, `ui/tokens.css`), else the size's
+ * `--card-w-size`. A definite height leaves a stretching flex or grid row nothing to stretch,
+ * so the card keeps 2:3 without overriding the row's alignment (fix round 1, A2).
+ */
 const ROOT_CLASS =
-  'relative isolate block aspect-[2/3] shrink-0 rounded-v7-card shadow-v7-card p-(--card-rim-width) text-left select-none [-webkit-touch-callout:none]';
+  'group @container relative isolate block w-[var(--card-w,var(--card-w-size))] h-[calc(var(--card-w,var(--card-w-size))*1.5)] shrink-0 rounded-v7-card shadow-v7-card p-(--card-rim-width) text-left select-none [-webkit-touch-callout:none]';
 
 const WIDTH_CLASS: Readonly<Record<CardSize, string>> = {
-  hand: 'w-[clamp(64px,19vw,120px)]',
-  lifted: 'w-[clamp(80px,24vw,150px)]',
-  sheet: 'w-[clamp(200px,56vw,240px)]',
-  thumb: 'w-11',
-  tile: 'w-[clamp(88px,26vw,128px)]',
+  hand: '[--card-w-size:clamp(64px,19vw,120px)]',
+  lifted: '[--card-w-size:clamp(80px,24vw,150px)]',
+  sheet: '[--card-w-size:clamp(200px,56vw,240px)]',
+  thumb: '[--card-w-size:44px]',
+  tile: '[--card-w-size:clamp(88px,26vw,128px)]',
 };
 
 const RIM_CLASS: Readonly<Record<Rim, string>> = {
@@ -81,18 +91,37 @@ const RIM_CLASS: Readonly<Record<Rim, string>> = {
   gold: 'bg-[image:var(--card-rim-gold)]',
 };
 
+/**
+ * Selection is the spec's `--cta` outline (§5.4); focus never touches the outline, it lights a
+ * separate `--text` ring just outside it (the `focus` layer), so a focused selected card shows
+ * both and a focused unselected one shows only the ring (fix round 1, A1). `outline-none` also
+ * keeps the browser's own focus outline off.
+ */
 const SELECTED_CLASS = 'outline-3 outline-offset-2 outline-v7-cta';
+const UNSELECTED_CLASS = 'outline-none';
 const FULL_MOTION_CLASS = 'transition-transform duration-(--dur-base) ease-v7-entrance';
 const LIFT_CLASS = '-translate-y-2 scale-105';
-const UNPLAYABLE_CLASS = 'saturate-30';
-const BUTTON_CLASS =
-  'cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-v7-text';
+/** A small desktop lift; Tailwind v4 `hover:` only applies on hover-capable pointers. */
+const HOVER_LIFT_CLASS = 'hover:-translate-y-1';
+/** Desaturated and dimmed, so grey drawings read "not now" too; never faded out (fix round 1, A5). */
+const UNPLAYABLE_CLASS = 'saturate-30 brightness-75';
+const BUTTON_CLASS = 'cursor-pointer';
+const FOCUS_RING_CLASS =
+  'pointer-events-none absolute -inset-2 hidden rounded-[calc(var(--card-radius)+8px)] border-2 border-v7-text group-focus-visible:block';
 
 /** The face and the verso sit inside the rim; their radius is the card radius minus the rim. */
 const INNER_CLASS =
   'absolute inset-(--card-rim-width) overflow-hidden rounded-[calc(var(--card-radius)-var(--card-rim-width))]';
-const FACE_CLASS = `${INNER_CLASS} bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1`;
-const VERSO_CLASS = `${INNER_CLASS} flex items-center justify-center bg-linear-to-b from-v7-panel-2 to-v7-panel`;
+/** `@container` lets the name size itself against the face width (`cqi`, fix round 1, A4). */
+const FACE_CLASS = `${INNER_CLASS} @container bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1`;
+/**
+ * The verso: `--panel-2` lit from the top and hatched in `--bg-0`, so it reads as a card on a
+ * `--panel` ground as well as on `--bg-0`, not only by its 2 px rim (fix round 1, B5).
+ */
+const VERSO_CLASS = `${INNER_CLASS} flex items-center justify-center bg-v7-panel-2`;
+const VERSO_LIGHT_CLASS = 'absolute inset-0 bg-linear-to-b from-v7-text-2 to-transparent opacity-20';
+const VERSO_HATCH_CLASS =
+  'absolute inset-0 bg-[repeating-linear-gradient(135deg,var(--bg-0)_0_3px,transparent_3px_7px)] opacity-60';
 
 /** A fixed art box per size, so every drawing fits the same frame whatever the name. */
 const ART_BOX_CLASS: Readonly<Record<CardSize, string>> = {
@@ -105,28 +134,41 @@ const ART_BOX_CLASS: Readonly<Record<CardSize, string>> = {
 
 /**
  * The name strip, anchored at the bottom; thumbs print no name, and their accessible name
- * carries it. A `min-h` strip grows upward over the art box when a name needs a third line.
+ * carries it. A `min-h` strip would grow upward rather than clip if an unknown name needed a
+ * third line. The side padding is `CARD_NAME_FIT[size].textPct` in `card-face.ts` (100 % minus
+ * both sides): change them together.
  */
 const NAME_STRIP_CLASS: Readonly<Record<Exclude<CardSize, 'thumb'>, string>> = {
-  hand: 'min-h-[29%] px-[2%] pb-[4%]',
-  lifted: 'min-h-[25%] px-[6%] pb-[4%]',
+  hand: 'min-h-[29%] px-[1.5%] pb-[4%]',
+  lifted: 'min-h-[25%] px-[6%] pb-[3%]',
   sheet: 'min-h-[19%] px-[8%] pb-[3%]',
-  tile: 'min-h-[25%] px-[6%] pb-[4%]',
+  tile: 'min-h-[25%] px-[6%] pb-[3%]',
 };
 
 /**
- * Balanced lines, never truncated at a real width: at hand size on a 375 px phone (71 px wide)
- * the longest names ("Upgrade Point Thief", "Super Regeneration") take two lines at the 11 px
- * floor. A word wider than the strip hyphenates instead of overflowing, so at the 64 px clamp
- * floor "Super Regeneration" and "Card Transformer" take three; `line-clamp-3` is only a cap.
+ * Balanced lines, never truncated and never broken mid-word: the inline font size
+ * (`cardNameFontSize`) shrinks the name until its widest word fits the strip, down to 10 px on a
+ * 64 px hand card (11 px elsewhere), and scales the hand name up a little toward the 120 px clamp
+ * top. "Upgrade Point Thief" and "Super Regeneration" take two lines; `line-clamp-3` is only a
+ * cap, and `break-words` only guards an unknown name wider than the floor allows.
  */
 const NAME_CLASS =
-  'line-clamp-3 text-center text-balance font-v7-card font-semibold leading-[1.1] tracking-tight text-v7-text-on-card hyphens-auto break-words';
+  'line-clamp-3 text-center text-balance font-v7-card font-semibold leading-[1.1] tracking-tight text-v7-text-on-card break-words text-(length:--card-name-size)';
+
+/**
+ * The fitted size travels as `--card-name-size`. Where `cqi` is unsupported the variable is
+ * invalid at computed time, so the name inherits its strip's size class instead.
+ */
+type NameStyle = CSSProperties & { readonly '--card-name-size': string };
+
+function nameStyle(name: string, size: Exclude<CardSize, 'thumb'>): NameStyle {
+  return { '--card-name-size': cardNameFontSize(name, size) };
+}
 
 const NAME_TEXT_CLASS: Readonly<Record<Exclude<CardSize, 'thumb'>, string>> = {
   hand: 'text-v7-micro',
   lifted: 'text-v7-caption',
-  sheet: 'text-v7-body',
+  sheet: 'text-v7-title',
   tile: 'text-v7-caption',
 };
 
@@ -138,9 +180,13 @@ const CHIPS_CLASS: Readonly<Record<CardSize, string>> = {
   tile: 'inset-x-[5px] top-[5px] items-start',
 };
 
-/** Chip height, padding and numeral size; the cost icon follows `COST_ICON_SIZE`. */
+/**
+ * Chip height, padding and numeral size; the cost icon follows `COST_ICON_SIZE`. Hand chips grow
+ * with the card past ~96 px (`cqi` of the `@container` root): 16 px and 11 px on a phone, about
+ * 20 px and 13 px at the 120 px clamp top.
+ */
 const CHIP_SIZE_CLASS: Readonly<Record<CardSize, string>> = {
-  hand: 'h-4 min-w-4 px-1 text-v7-micro',
+  hand: 'h-[max(16px,16.7cqi)] min-w-[max(16px,16.7cqi)] px-1 text-[length:max(11px,10.8cqi)]',
   lifted: 'h-5 min-w-5 px-1.5 text-v7-caption',
   sheet: 'h-8 min-w-8 px-2.5 text-v7-title',
   thumb: 'h-4 min-w-4 px-1 text-v7-micro',
@@ -148,7 +194,7 @@ const CHIP_SIZE_CLASS: Readonly<Record<CardSize, string>> = {
 };
 
 const BADGE_SIZE_CLASS: Readonly<Record<CardSize, string>> = {
-  hand: 'size-4 text-v7-micro',
+  hand: 'size-[max(16px,16.7cqi)] text-[length:max(11px,10.8cqi)]',
   lifted: 'size-5 text-v7-caption',
   sheet: 'size-8 text-v7-title',
   thumb: 'size-4 text-v7-micro',
@@ -163,6 +209,11 @@ const COST_ICON_SIZE: Readonly<Record<CardSize, 'sm' | 'md' | 'lg'>> = {
   tile: 'md',
 };
 
+/** A per-life rate draws two icons; at lifted and tile it takes the small ones to fit the rail. */
+function costIconSize(size: CardSize, cost: StructuredCost): 'sm' | 'md' | 'lg' {
+  return cost.kind === 'pointsPerLife' && (size === 'lifted' || size === 'tile') ? 'sm' : COST_ICON_SIZE[size];
+}
+
 /** Printed pieces share the sticker look: a white ring that lifts them off the drawing. */
 const STICKER_CLASS =
   'inline-flex shrink-0 items-center justify-center rounded-full font-v7-card font-bold leading-none tabular-nums ring-1 ring-v7-card-face-0 shadow-[0_1px_2px_rgb(12_9_32/0.45)]';
@@ -171,17 +222,27 @@ const DAMAGE_CHIP_CLASS = 'bg-v7-life text-v7-text-on-cta';
 const UPGRADED_BADGE_CLASS = 'bg-[image:var(--card-rim-gold)] text-v7-text-on-cta';
 
 /**
- * The upgraded sheen (spec v7 §5.4, §8.2): a holo tint plus, with full motion, a white band
- * translated across the face. Multiply shows the tint on the white face, where an overlay
- * blend would leave white unchanged; the sweep is the tint's sibling so the tint's opacity
- * does not cap it.
+ * The upgraded sheen (spec v7 §5.4, §8.2): a holo foil over the drawing plus, with full motion,
+ * a white band translated across the face. The foil is `--card-holo-sheen`, a saturated
+ * diagonal rainbow on a layer twice the face width, blended with `soft-light`: it shifts the
+ * drawing's hues without muting them and leaves the white face white (soft-light over white is
+ * white). `color` turned red flames brown and grey blades olive. With full motion the layer
+ * drifts back and forth (translated only); with reduced motion it holds still. The sweep is
+ * the foil's sibling so the foil's opacity does not cap it (fix round 1, B9).
  */
 const SHEEN_TINT_CLASS =
-  'absolute inset-0 bg-[image:var(--card-rim-holo)] bg-size-[250%_250%] bg-top-left opacity-20 mix-blend-multiply';
+  'absolute inset-y-0 left-0 w-[200%] bg-[image:var(--card-holo-sheen)] opacity-70 mix-blend-soft-light';
+const SHEEN_DRIFT_CLASS = 'v7-card-holo-drift';
 const SHEEN_SWEEP_CLASS =
   'v7-card-sheen absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-transparent via-v7-card-face-0 to-transparent opacity-70';
 
+/** The verso gem in the family's token; the glow tokens stay for its halo (fix round 1, B4). */
 const EMBLEM_CLASS: Readonly<Record<CardType, string>> = {
+  attack: 'bg-v7-threat-attack',
+  action: 'bg-v7-cta-2',
+  special: 'bg-[image:var(--card-rim-gold)]',
+};
+const HALO_CLASS: Readonly<Record<CardType, string>> = {
   attack: 'bg-v7-glow-a',
   action: 'bg-v7-glow-b',
   special: 'bg-[image:var(--card-rim-gold)]',
@@ -216,9 +277,10 @@ function CardRoot({ label, title, className, attributes, selected, onActivate, c
           onActivate();
         }}
         onContextMenu={preventContextMenu}
-        className={`${className} ${BUTTON_CLASS}`}
+        className={className}
       >
         {children}
+        <span aria-hidden="true" data-card-layer="focus" className={FOCUS_RING_CLASS} />
       </button>
     );
   }
@@ -229,20 +291,24 @@ function CardRoot({ label, title, className, attributes, selected, onActivate, c
   );
 }
 
+/** The root's classes; the caller's `className` always comes last, on both root forms. */
 function rootClassName(input: {
   readonly size: CardSize;
   readonly full: boolean;
+  readonly interactive: boolean;
   readonly selected: boolean;
   readonly unplayable: boolean;
   readonly className: string | undefined;
 }): string {
-  const { size, full, selected, unplayable, className } = input;
+  const { size, full, interactive, selected, unplayable, className } = input;
   return [
     ROOT_CLASS,
     WIDTH_CLASS[size],
+    interactive ? BUTTON_CLASS : '',
     full ? FULL_MOTION_CLASS : '',
-    selected ? SELECTED_CLASS : '',
+    selected ? SELECTED_CLASS : UNSELECTED_CLASS,
     selected && full ? LIFT_CLASS : '',
+    interactive && full && !selected ? HOVER_LIFT_CLASS : '',
     unplayable ? UNPLAYABLE_CLASS : '',
     className ?? '',
   ]
@@ -279,7 +345,7 @@ function HiddenFace({
       title={size === 'thumb' ? HIDDEN_CARD_LABEL : undefined}
       selected={selected}
       onActivate={onActivate}
-      className={rootClassName({ size, full, selected, unplayable, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, unplayable, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'hidden',
@@ -292,10 +358,12 @@ function HiddenFace({
     >
       <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
       <span aria-hidden="true" data-card-layer="verso" className={VERSO_CLASS}>
-        <span className="absolute inset-[7%] rounded-[calc(var(--card-radius)-6px)] border border-v7-text-2 opacity-25" />
-        <span className={`absolute aspect-square w-[72%] rounded-full opacity-30 blur-lg ${EMBLEM_CLASS[family]}`} />
+        <span className={VERSO_LIGHT_CLASS} />
+        <span className={VERSO_HATCH_CLASS} />
+        <span className="absolute inset-[7%] rounded-[calc(var(--card-radius)-6px)] border border-v7-text-2 opacity-35" />
+        <span className={`absolute aspect-square w-[72%] rounded-full opacity-30 blur-lg ${HALO_CLASS[family]}`} />
         <span className="relative flex aspect-square w-[46%] rotate-45 items-center justify-center rounded-[24%] bg-v7-bg-0 p-[15%] ring-2 ring-v7-panel-2">
-          <span className={`block size-full rounded-[24%] ${EMBLEM_CLASS[family]}`} />
+          <span data-card-layer="emblem" className={`block size-full rounded-[24%] ${EMBLEM_CLASS[family]}`} />
         </span>
       </span>
     </CardRoot>
@@ -325,7 +393,13 @@ function FaceUp({
   const damage = cardDamageChip(cardId, isUpgraded, damageMultiplier ?? 1);
   const label = cardFaceLabel({ name, isUpgraded, damage, ...(counter !== undefined ? { counter } : {}) });
   const layout: ChipLayout = size === 'hand' || size === 'thumb' ? 'left-stack' : 'corners';
+  const corners = layout === 'corners';
   const sticker = `${STICKER_CLASS} ${CHIP_SIZE_CLASS[size]}`;
+  const upgradedBadge = isUpgraded ? (
+    <span aria-hidden="true" data-card-badge="upgraded" className={`${STICKER_CLASS} ${BADGE_SIZE_CLASS[size]} ${UPGRADED_BADGE_CLASS}`}>
+      +
+    </span>
+  ) : null;
 
   return (
     <CardRoot
@@ -335,7 +409,7 @@ function FaceUp({
       onActivate={onActivate === undefined ? undefined : () => {
         onActivate(instanceId);
       }}
-      className={rootClassName({ size, full, selected, unplayable, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, unplayable, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'up',
@@ -371,7 +445,7 @@ function FaceUp({
         </span>
         {isUpgraded ? (
           <span aria-hidden="true" data-card-layer="sheen" className="pointer-events-none absolute inset-0">
-            <span className={SHEEN_TINT_CLASS} />
+            <span data-card-layer="sheen-tint" className={`${SHEEN_TINT_CLASS} ${full ? SHEEN_DRIFT_CLASS : ''}`} />
             {full ? <span data-card-layer="sheen-sweep" className={SHEEN_SWEEP_CLASS} /> : null}
           </span>
         ) : null}
@@ -379,33 +453,33 @@ function FaceUp({
         {size !== 'thumb' ? (
           <span
             data-card-name=""
-            className={`absolute inset-x-0 bottom-0 flex items-center justify-center ${NAME_STRIP_CLASS[size]}`}
+            className={`absolute inset-x-0 bottom-0 flex items-center justify-center ${NAME_STRIP_CLASS[size]} ${NAME_TEXT_CLASS[size]}`}
           >
-            <span className={`${NAME_CLASS} ${NAME_TEXT_CLASS[size]}`}>{name}</span>
+            <span className={NAME_CLASS} style={nameStyle(name, size)}>
+              {name}
+            </span>
           </span>
         ) : null}
       </span>
       <span data-card-chips={layout} className={`pointer-events-none absolute flex ${CHIPS_CLASS[size]}`}>
-        {cost !== null ? (
-          <span data-card-chip="cost" data-cost-kind={cost.kind} className={`${sticker} ${COST_CHIP_CLASS}`}>
-            <CostAmount amount={cost} title={null} size={COST_ICON_SIZE[size]} />
-          </span>
-        ) : null}
-        <span className={layout === 'corners' ? 'ml-auto flex flex-col items-end gap-1' : 'contents'}>
+        {/* Corners: cost then "+" down the left, damage alone on the right, so the top rail never
+            holds the widest cost and the badge side by side (fix round 1, A3). Left stack: one
+            column, cost, damage, "+". */}
+        <span className={corners ? 'flex flex-col items-start gap-1' : 'contents'}>
+          {cost !== null ? (
+            <span data-card-chip="cost" data-cost-kind={cost.kind} className={`${sticker} ${COST_CHIP_CLASS}`}>
+              <CostAmount amount={cost} title={null} size={costIconSize(size, cost)} />
+            </span>
+          ) : null}
+          {corners ? upgradedBadge : null}
+        </span>
+        <span className={corners ? 'ml-auto' : 'contents'}>
           {damage !== null ? (
             <span aria-hidden="true" data-card-chip="damage" className={`${sticker} ${DAMAGE_CHIP_CLASS}`}>
               {String(damage)}
             </span>
           ) : null}
-          {isUpgraded ? (
-            <span
-              aria-hidden="true"
-              data-card-badge="upgraded"
-              className={`${STICKER_CLASS} ${BADGE_SIZE_CLASS[size]} ${UPGRADED_BADGE_CLASS}`}
-            >
-              +
-            </span>
-          ) : null}
+          {corners ? null : upgradedBadge}
         </span>
       </span>
       {counter !== undefined ? (

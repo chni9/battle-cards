@@ -239,7 +239,8 @@ Tailwind utilities: `font-v7-display`, `font-v7-card`, `font-v7-body`, `text-v7-
 
 ### Named Rules
 **The Floor Rule.** No functional text under 11px (Impeccable `undersized-ui-text`) and no text
-input under 16px.
+input under 16px. One exception: a hand card's name may fit down to 10px on a 64px card (the
+hand clamp floor, viewports under 337px) so its longest word never breaks (Card, L72-12).
 
 **The Vital Rule.** Own lives are at least 20px and the incoming damage badge at least 22px on
 a 375 px phone.
@@ -284,7 +285,9 @@ Two families (spec v7 §5.3).
 - **Holo cards:** radius 12px (`--card-radius`, `rounded-v7-card`), a 2px iridescent rim
   (`--card-rim-width`; `--card-rim-holo`, a conic gradient `#ff8ad8 #ffe17a #8af5d0 #8ccaff
   #c3a8ff`; specials use `--card-rim-gold`, a gold linear gradient `#fff2b0 #ffc93d #c98a12`)
-  around a white face (`--card-face-0` to `--card-face-1`).
+  around a white face (`--card-face-0` to `--card-face-1`). An upgraded card adds the holo foil
+  `--card-holo-sheen`, a 115deg linear rainbow `#ff4fb4 #ffc21a #2fe0a8 #3d9bff #9b6bff`, the
+  rim's hue order at full saturation (Card).
 
 Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`, `--chrome-radius(-sm)`
 and `--chrome-press-y`, never from literals, so L80 can override them under
@@ -788,18 +791,29 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 - **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? onActivate?
   className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy hand
   without identity. `size` is `hand | lifted | sheet | thumb | tile` (`CARD_SIZES`). With
-  `onActivate` the root is a `<button type="button">` with `aria-pressed={selected}` (click and
-  Enter call back with the instance id; a hidden face calls back with no argument); without it,
-  an `<article>`. The accessible name is `cardFaceLabel`: "Strong attack upgraded, 4 damage",
-  "Poison, 3 card lives", "Invisibility, 1 turn remaining"; a hidden face is "Hidden card".
-  Thumbs also carry it as a native `title`, since they print no name. The caller decides
-  `unplayable` and `counter`; an unplayable face stays activatable.
-- **Widths** (the root sizes by width; the 2:3 ratio holds while its height is auto, so a
-  stretching flex or grid parent aligns its items): `hand` `clamp(64px, 19vw, 120px)` (spec),
-  `lifted` `clamp(80px, 24vw, 150px)`, `sheet` `clamp(200px, 56vw, 240px)` (spec: at least
-  200px), `thumb` 44px (`w-11`, the touch target), `tile` `clamp(88px, 26vw, 128px)`. The
-  non-spec widths are picks for the L72-21 critique. The landscape-compact hand height comes
-  from L75 through `className`.
+  `onActivate` the root is a `<button type="button">` with `aria-pressed={selected}` (click,
+  Enter and Space call back with the instance id; a hidden face calls back with no argument);
+  without it, an `<article>`. The accessible name is `cardFaceLabel`: "Strong attack upgraded,
+  4 damage", "Poison, 3 card lives", "Invisibility, 1 turn remaining"; a hidden face is "Hidden
+  card". Thumbs also carry it as a native `title`, since they print no name. The caller decides
+  `unplayable` and `counter`; an unplayable face stays activatable. The caller's `className`
+  comes last on both root forms. Where a family is itself secret, the caller passes a neutral
+  family (V2 used the action verso for unspied plays).
+- **Size contract:** width and height both come from one width, `--card-w` when the caller sets
+  it on the card (className `[--card-w:96px]`), else the size's default (`--card-w-size`): `hand`
+  `clamp(64px, 19vw, 120px)` (spec), `lifted` `clamp(80px, 24vw, 150px)`, `sheet`
+  `clamp(200px, 56vw, 240px)` (spec: at least 200px), `thumb` 44px (the touch target), `tile`
+  `clamp(88px, 26vw, 128px)`. Height is `--card-w × 1.5`, a definite size, so a stretching flex
+  or grid row cannot distort the card, and the row's own `items-*` alignment still applies
+  (measured: a hand card in a 220px default flex row stays 71×107 at 375px). `--card-w` is an
+  `@property` that does not inherit (`ui/tokens.css`): a container's value never resizes the
+  cards inside it, so a lifted or sheet card in a hand row keeps its size. `--card-w` is the
+  only resize path; L75's landscape-compact hand derives it from the visible height. The
+  non-spec widths are picks for the L72-21 critique.
+- **Overflow:** the selected lift (8px up, 105%), the focus ring (8px around), the counter
+  glow (4px out plus a 12px blur) and the counter badge (8px under the bottom edge) reach past
+  the 2:3 box. A scroll or `overflow-hidden` parent pads for them: about 16px around active
+  cards and 10px under a card with a counter.
 - **Frame:** radius `--card-radius` (12px), a `--card-rim-width` (2px) rim painted by its own
   layer under the face: `--card-rim-holo` for attacks and actions, `--card-rim-gold` for
   specials (also on hidden specials). Face `--card-face-0` to `--card-face-1`, radius 10px (card
@@ -809,48 +823,71 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   `object-contain` in a fixed art box per size, centered, `alt=""`, `draggable={false}`, so a
   two-line name never shrinks it and every drawing reads at the same weight.
 - **Name:** Fredoka 600 in `--text-on-card` (12.4:1 on `--card-face-1`), centered at the
-  bottom: 11px at `hand`, 12px at `lifted` and `tile`, 14px at `sheet`, none at `thumb`. Up to
-  two balanced lines with tight tracking, never truncated: on a 375px phone "Upgrade Point
-  Thief" and "Super Regeneration" take two lines at the 11px floor. A word wider than the strip
-  hyphenates (`lang="en"`); at the 64px clamp floor two names take a third line, and the strip
-  grows upward over the art box rather than clipping.
+  bottom, up to two balanced lines with tight tracking, none at `thumb`. It is never truncated
+  and no word ever breaks: `cardNameFontSize` (`card-face.ts`) shrinks the name until its widest
+  word fits the strip (`cardNameWordEm`, from Fredoka 600 advance widths), relative to the face
+  as an `@container` (`cqi`). Base sizes: `hand` 11px, growing to about 12.8px at the 120px clamp
+  top; `lifted` and `tile` 12px; `sheet` 20px (`--type-title`, balancing its 32px chips). Floors:
+  11px everywhere, except **10px on a hand card at the 64px clamp floor** (viewports under
+  337px), the one exception to the 11px functional floor, needed for "Regeneration" to fit
+  whole. Measured: on a 375px phone every hand name stays 11px; at 320px the smallest is
+  10.04px. "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is
+  unsupported, the name falls back to its strip's size class.
 - **Chips** (Fredoka 700, tabular, a sticker look: pill, 1px `--card-face-0` ring, small
   shadow). Cost: `--panel-2` to `--panel` with `--text` (12.6:1), through `CostAmount` with
-  `title={null}` (Tax a life chip, Regeneration its per-life rate), icon `sm` / `md` / `lg`.
-  Damage: `--life` with `--text-on-cta` (5.79:1), number only, `aria-hidden` (the accessible
-  name carries it), `cardDamageChip` = `listedAttackDamage` × `damageMultiplier`, absent on
-  non-attacks and on Tax, Absorber and Super Mirror. Numerals 11px at `hand` and `thumb`, 12px
-  at `lifted` and `tile`, 20px at `sheet`. `hand` and `thumb` stack the chips down the left edge
-  (the next hand card overlaps from the right); `lifted`, `sheet` and `tile` put cost top-left
-  and damage top-right. Thumbs carry no cost chip: they stay art-only plus damage (Appendix A
-  `global-card-face`), because a two-digit cost spans a 44px face and no thumb place pays one.
+  `title={null}` (Tax a life chip, Regeneration its per-life rate), icon `sm` / `md` / `lg`; a
+  per-life rate takes `sm` icons at `lifted` and `tile` too. Damage: `--life` with
+  `--text-on-cta` (5.79:1), number only, `aria-hidden` (the accessible name carries it),
+  `cardDamageChip` = `listedAttackDamage` × `damageMultiplier`, absent on non-attacks and on
+  Tax, Absorber and Super Mirror. Numerals 11px at `hand` and `thumb`, 12px at `lifted` and
+  `tile`, 20px at `sheet`; hand chips grow with the card past about 96px (16px tall and 11px on
+  a phone, about 19px and 12.5px at 120px). `hand` and `thumb` stack the chips down the left
+  edge (the next hand card overlaps from the right): cost, damage, "+". `lifted`, `sheet` and
+  `tile` put cost then "+" down the left and damage top-right, so the top rail never holds the
+  widest cost and the badge side by side; every chip stays inside the card at every size
+  (measured at 320, 375 and 1440px). Thumbs carry no cost chip: they stay art-only plus damage
+  (Appendix A `global-card-face`), because a two-digit cost spans a 44px face and no thumb place
+  pays one.
 - **Upgraded:** a gold "+" badge (`--card-rim-gold` with `--text-on-cta`, `aria-hidden`; the
-  name says "upgraded") in the chip rail, under the damage chip; a holo tint over the face
-  (`--card-rim-holo` at 20%, multiply, so it shows on the white face where an overlay blend
-  would not); with full motion, a white band translated across the face (`.v7-card-sheen` in
-  `ui/tokens.css`, 3.2s, sweeping in the first 40%). The name sits above the sheen.
+  name says "upgraded"); a holo foil over the drawing: `--card-holo-sheen`, a saturated diagonal
+  rainbow in the rim's hue order (pink, yellow, mint, blue, violet), at 70% with `soft-light`, on
+  a layer twice the face width. Soft-light shifts the drawing's hues without muting them and
+  leaves the white face white; `multiply` washed the face mint and `color` turned red flames
+  brown. With full motion the foil drifts back and forth (`.v7-card-holo-drift`, 6.4s, two
+  sweeps) and a white band crosses the face (`.v7-card-sheen`, 3.2s, sweeping in the first
+  40%); both are translated layers. The name sits above the sheen. The foil is new in L72-12
+  fix round 1 and awaits the designer's look in the L72-21 critique.
 - **Active persistent** (`counter`): a pulsing `--cta-2` glow (a pre-blurred layer at 60% whose
   wrapper pulses its opacity) and a counter badge centered under the face: `--bg-0` pill with a
   1px `--cta-2` ring, Icon `life` (card lives) or `clock` (turns) at 10px, `--text` number,
   `aria-hidden`. No counter, no glow: Curse and the combat Shield get neither (L73/L74 may add
   an `active` prop).
-- **Selected:** a 3px `--cta` outline offset 2px; with full motion the card lifts 8px and
-  scales 105%, easing over `--dur-base`. **Unplayable:** `saturate(30%)`, never grayscale.
-  **Focus:** a 3px `--text` outline offset 2px on the button form.
-- **Hidden face:** the same frame and rim, a `--panel-2` to `--panel` verso with an inner
-  `--text-2` frame line at 25%, a soft family halo and a diamond emblem in a `--bg-0` gem:
-  `--glow-a` (attack), `--glow-b` (action), gold (special). No name, art, id or chip.
+- **Selected:** the spec's 3px `--cta` outline offset 2px; with full motion the card lifts 8px
+  and scales 105%, easing over `--dur-base`. **Focus** never touches that outline: the button
+  form lights a separate 2px `--text` ring 8px outside the card (`group-focus-visible`), so a
+  focused selected card shows both and a focused unselected one only the ring, with or without
+  motion. Unselected cards set `outline: none`, which also keeps the browser's own ring off.
+  **Hover:** with full motion, a button card that is not selected lifts 4px on hover-capable
+  pointers. **Unplayable:** `saturate(30%)` and `brightness(75%)`, so grey drawings (Suicide,
+  Curse, the swords) read "not now" too, while the card stays solid; never grayscale or faded.
+- **Hidden face:** the same frame and rim. The verso is `--panel-2`, lit from the top
+  (`--text-2` at 20% fading out) and hatched in `--bg-0`, so it reads as a card on a `--panel`
+  ground as well as on `--bg-0`; an inner `--text-2` frame line at 35%; a soft family halo
+  (`--glow-a`, `--glow-b`, gold) behind a diamond gem in a `--bg-0` setting: `--threat-attack`
+  (attack), `--cta-2` (action), gold (special). No name, art, id or chip.
 - **Long-press guard:** every face prevents the context menu and sets `user-select: none` and
   `-webkit-touch-callout: none` (spec v7 §6.6.5); the art has `pointer-events: none`.
-- **Reduced motion:** `data-motion="reduced"` drops the sheen sweep, the glow pulse and the
-  lift; the static tint, every badge, the counter, the outline and the labels stay.
+- **Reduced motion:** `data-motion="reduced"` drops the sheen sweep, the foil drift, the glow
+  pulse, the selected lift and the hover lift; the still foil, every badge, the counter, the
+  selection outline, the focus ring and the labels stay (checked in a stubbed reduced-motion
+  page: no running animation).
 - **Anchors:** root `data-card-face="up" | "hidden"`, `data-card-id`, `data-instance-id`
   (face up only), `data-card-family`, `data-card-rim="holo" | "gold"`, `data-card-size`,
   `data-motion`, `data-unplayable="true"`, plus the caller's `dataAttributes` (fixed ones
-  win). Inside: `data-card-layer="glow" | "rim" | "face" | "sheen" | "sheen-sweep" | "verso"`,
-  `data-card-name`, `data-card-chips="left-stack" | "corners"`, `data-card-chip="cost" |
-  "damage"`, `data-cost-kind`, `data-card-badge="upgraded"`, `data-card-counter="card-lives" |
-  "turns"`.
+  win). Inside: `data-card-layer="glow" | "rim" | "face" | "sheen" | "sheen-tint" |
+  "sheen-sweep" | "focus" | "verso" | "emblem"`, `data-card-name`, `data-card-chips="left-stack"
+  | "corners"`, `data-card-chip="cost" | "damage"`, `data-cost-kind`,
+  `data-card-badge="upgraded"`, `data-card-counter="card-lives" | "turns"`.
 - **Gallery:** the `/dev/ui` section `card` (`ui/card/card.gallery.tsx`): families and rims,
   every size, chips, states, hidden faces, and every catalog drawing at `hand` size.
 
