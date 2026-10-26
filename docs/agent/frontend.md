@@ -450,6 +450,15 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   and `[data-zone="private-zone"]` (2.35rem and 3rem, unlayered, so they beat the size classes).
   A V7 surface must not reuse those zone names around a `KitPortrait` before L75 removes the
   rules, or the portrait would not keep its `size`.
+- **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
+  `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
+  in `ui/card/card-classes.ts`.
+- **Focus and selection:** a clickable portrait takes the shared `CHROME_FOCUS_CLASS` ring
+  (`--text`); the `--cta` outline is selection (Card, KitTile). A picker marks the chosen kit
+  with its own selected state, never by restyling focus.
+- **Eliminated name:** the component composes ", eliminated" into a clickable portrait's name
+  (an `ariaLabel` from the caller replaces it, so it must carry the state itself); the image
+  name of a plain portrait stays the bare kit name (spec v7 §11).
 - **Nesting:** a portrait inside another control (a `KitTile` head, a seat button) is the
   non-clickable form, so no button sits inside a button; `KitTile` already hides its portrait
   from assistive tech and names the tile by its visible kit name.

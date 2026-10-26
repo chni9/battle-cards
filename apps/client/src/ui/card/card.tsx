@@ -28,6 +28,15 @@ import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { motionAttribute } from '../primitives/chrome-classes';
 import type { StructuredCost } from '../structured-cost';
 import {
+  INNER_CLASS,
+  VERSO_CLASS,
+  VERSO_FRAME_CLASS,
+  VERSO_HATCH_CLASS,
+  VERSO_LIGHT_CLASS,
+  rimLayerClass,
+  type Rim,
+} from './card-classes';
+import {
   HIDDEN_CARD_LABEL,
   cardCostChip,
   cardDamageChip,
@@ -66,7 +75,6 @@ export interface HiddenCardProps extends CardCommonProps {
 
 export type CardProps = FaceUpCardProps | HiddenCardProps;
 
-type Rim = 'holo' | 'gold';
 type ChipLayout = 'left-stack' | 'corners';
 
 /**
@@ -84,11 +92,6 @@ const WIDTH_CLASS: Readonly<Record<CardSize, string>> = {
   sheet: '[--card-w-size:clamp(200px,56vw,240px)]',
   thumb: '[--card-w-size:44px]',
   tile: '[--card-w-size:clamp(88px,26vw,128px)]',
-};
-
-const RIM_CLASS: Readonly<Record<Rim, string>> = {
-  holo: 'bg-[image:var(--card-rim-holo)]',
-  gold: 'bg-[image:var(--card-rim-gold)]',
 };
 
 /**
@@ -119,19 +122,8 @@ const BUTTON_CLASS = 'cursor-pointer';
 const FOCUS_RING_CLASS =
   'pointer-events-none absolute -inset-2 hidden rounded-[calc(var(--card-radius)+8px)] border-2 border-v7-text group-focus-visible:block';
 
-/** The face and the verso sit inside the rim; their radius is the card radius minus the rim. */
-const INNER_CLASS =
-  'absolute inset-(--card-rim-width) overflow-hidden rounded-[calc(var(--card-radius)-var(--card-rim-width))]';
 /** `@container` lets the name size itself against the face width (`cqi`, fix round 1, A4). */
 const FACE_CLASS = `${INNER_CLASS} @container bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1`;
-/**
- * The verso: `--panel-2` lit from the top and hatched in `--bg-0`, so it reads as a card on a
- * `--panel` ground as well as on `--bg-0`, not only by its 2 px rim (fix round 1, B5).
- */
-const VERSO_CLASS = `${INNER_CLASS} flex items-center justify-center bg-v7-panel-2`;
-const VERSO_LIGHT_CLASS = 'absolute inset-0 bg-linear-to-b from-v7-text-2 to-transparent opacity-20';
-const VERSO_HATCH_CLASS =
-  'absolute inset-0 bg-[repeating-linear-gradient(135deg,var(--bg-0)_0_3px,transparent_3px_7px)] opacity-60';
 
 /** A fixed art box per size, so every drawing fits the same frame whatever the name. */
 const ART_BOX_CLASS: Readonly<Record<CardSize, string>> = {
@@ -365,11 +357,11 @@ function HiddenFace({
       }}
     >
       <span aria-hidden="true" data-card-layer="body" className={bodyClassName(unplayable)}>
-        <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
+        <span aria-hidden="true" data-card-layer="rim" className={rimLayerClass(rim)} />
         <span aria-hidden="true" data-card-layer="verso" className={VERSO_CLASS}>
           <span className={VERSO_LIGHT_CLASS} />
           <span className={VERSO_HATCH_CLASS} />
-          <span className="absolute inset-[7%] rounded-[calc(var(--card-radius)-6px)] border border-v7-text-2 opacity-35" />
+          <span className={VERSO_FRAME_CLASS} />
           <span className={`absolute aspect-square w-[72%] rounded-full opacity-30 blur-lg ${HALO_CLASS[family]}`} />
           <span className="relative flex aspect-square w-[46%] rotate-45 items-center justify-center rounded-[24%] bg-v7-bg-0 p-[15%] ring-2 ring-v7-panel-2">
             <span data-card-layer="emblem" className={`block size-full rounded-[24%] ${EMBLEM_CLASS[family]}`} />
@@ -444,7 +436,7 @@ function FaceUp({
         </span>
       ) : null}
       <span data-card-layer="body" className={bodyClassName(unplayable)}>
-        <span aria-hidden="true" data-card-layer="rim" className={`absolute inset-0 rounded-v7-card ${RIM_CLASS[rim]}`} />
+        <span aria-hidden="true" data-card-layer="rim" className={rimLayerClass(rim)} />
         <span data-card-layer="face" className={FACE_CLASS}>
           <span className={`absolute flex items-center justify-center ${ART_BOX_CLASS[size]}`}>
             <img

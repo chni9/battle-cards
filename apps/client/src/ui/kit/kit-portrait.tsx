@@ -10,15 +10,20 @@
  *   box with `object-contain` so the 16 trimmed drawings share one visual weight. An unrevealed
  *   kit (`null`) is a code face with a "?", and Random a code face with the `random` icon. The
  *   art and the code faces share one frame, so a portrait never changes size when a kit is
- *   revealed.
+ *   revealed. The two code faces have no art to carry them, so they wear the Card's hidden
+ *   verso (`card-classes.ts`: holo rim, `--panel-2` lit from the top, inner frame line) and read
+ *   as tiles on `--bg-0` and on `--panel`; the art faces stay plain.
  * - **Name:** `kitPortraitAlt` (the catalog name, "Hidden kit", "Random kit"). A code face is a
  *   `role="img"` named the same way.
- * - **Clickable:** with `onClick` the root is one `<button>` named `ariaLabel ?? alt` and the
+ * - **Clickable:** with `onClick` the root is one `<button>` named `ariaLabel`, else the name,
+ *   plus ", eliminated" for an eliminated kit (button children are presentational, so the badge
+ *   would not be read; the image name of a plain portrait stays the bare kit name, §11). The
  *   face inside is decorative, so a screen reader hears one control, not an image in a button.
- *   The caller names state (for example "eliminated") in `ariaLabel`: button children are
- *   presentational, so the badge is not read there.
- * - **Eliminated:** the face is greyscale and the badge (the `eliminated` icon, never a
- *   character) is a sibling of the face, so the filter never greys the red cross.
+ *   Focus is the shared `--text` ring (`CHROME_FOCUS_CLASS`): the `--cta` outline is selection.
+ * - **Eliminated:** the face is greyscale and dimmed (grey kits such as Ghost would otherwise
+ *   read as alive), and the badge (the `eliminated` icon, never a character) is a sibling of the
+ *   face, so neither filter reaches the red cross. At thumb size the badge is about a third of
+ *   the face width.
  * - **Anchors:** `data-zone="kit-portrait"` and `data-eliminated` stay (`fx/play-flyout.ts` and
  *   the L74 self strip query them); `data-kit-face` and `data-kit-size` are new.
  */
@@ -27,7 +32,8 @@ import type { LobbyKitSelection } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 import { artFor } from '../asset-lookup';
 import { Icon } from '../icons/icon';
-import { ICON_WELL_CLASS } from '../primitives/chrome-classes';
+import { VERSO_CLASS, VERSO_FRAME_CLASS, VERSO_LIGHT_CLASS, rimLayerClass } from '../card/card-classes';
+import { CHROME_FOCUS_CLASS, ICON_WELL_CLASS } from '../primitives/chrome-classes';
 import { kitPortraitAlt } from './kit-portrait-label';
 
 export interface KitPortraitProps {
@@ -37,7 +43,7 @@ export interface KitPortraitProps {
   className?: string;
   /** When set, the portrait is one button (for example opening the kit sheet). */
   onClick?: () => void;
-  /** The button's accessible name; defaults to the kit name. Ignored without `onClick`. */
+  /** The button's accessible name; defaults to the kit name (", eliminated" added). Ignored without `onClick`. */
   ariaLabel?: string;
 }
 
@@ -54,23 +60,34 @@ const WIDTH_CLASS: Readonly<Record<PortraitSize, string>> = {
 
 const FRAME_CLASS =
   'relative inline-block aspect-3/4 shrink-0 rounded-v7-card shadow-v7-card select-none [-webkit-touch-callout:none]';
-/** `--cta` focus outline, offset so it clears the face; 44 px target (spec v7 §5.3). */
-const BUTTON_CLASS =
-  'min-h-11 min-w-11 cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-v7-cta';
+/** A 44 px target (spec v7 §5.3). Focus is the project ring; `--cta` is the selection outline. */
+const BUTTON_CLASS = `min-h-11 min-w-11 cursor-pointer ${CHROME_FOCUS_CLASS}`;
 
-const FACE_CLASS = 'absolute inset-0 flex items-center justify-center overflow-hidden rounded-v7-card';
-const ART_FACE_CLASS = `${FACE_CLASS} bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1 p-[6%]`;
-const HIDDEN_FACE_CLASS = `${FACE_CLASS} bg-v7-panel-2`;
-const RANDOM_FACE_CLASS = `${FACE_CLASS} bg-linear-to-br from-v7-panel-2 to-v7-bg-1`;
+const ELIMINATED_LABEL = 'Eliminated';
 
+const ART_FACE_CLASS =
+  'absolute inset-0 flex items-center justify-center overflow-hidden rounded-v7-card bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1 p-[6%]';
+/** The code faces' wrapper: the rim and the verso inside it carry the shape (`card-classes.ts`). */
+const CODE_FACE_CLASS = 'absolute inset-0';
+/** Greyscale and dimmed, on the face only; the badge sits outside it and stays fully bright. */
+const ELIMINATED_FACE_CLASS = ' grayscale brightness-70';
+
+/** The "?" is sized to match the Random die at each size (a die body is three quarters of its icon). */
 const HIDDEN_MARK_CLASS: Readonly<Record<PortraitSize, string>> = {
   thumb: 'text-v7-title',
   tile: 'text-v7-display',
-  sheet: 'text-v7-display',
-  hero: 'text-[56px]',
+  sheet: 'text-[44px]',
+  hero: 'text-[72px]',
 };
 const RANDOM_ICON_PX: Readonly<Record<PortraitSize, number>> = { thumb: 22, tile: 36, sheet: 48, hero: 80 };
-const BADGE_ICON_PX: Readonly<Record<PortraitSize, number>> = { thumb: 14, tile: 18, sheet: 22, hero: 32 };
+/** At thumb the badge icon plus its 2 px well is 13 px: about a third of the 40 px face. */
+const BADGE_ICON_PX: Readonly<Record<PortraitSize, number>> = { thumb: 9, tile: 18, sheet: 22, hero: 32 };
+const BADGE_POSITION_CLASS: Readonly<Record<PortraitSize, string>> = {
+  thumb: 'right-0.5 bottom-0.5',
+  tile: 'right-1 bottom-1',
+  sheet: 'right-1 bottom-1',
+  hero: 'right-1 bottom-1',
+};
 
 function faceFor(kitId: LobbyKitSelection | null): Face {
   if (kitId === null) return 'hidden';
@@ -87,7 +104,7 @@ interface FaceProps {
 }
 
 function KitFace({ kitId, size, alt, decorative, greyscale }: FaceProps): ReactElement {
-  const grey = greyscale ? ' grayscale' : '';
+  const grey = greyscale ? ELIMINATED_FACE_CLASS : '';
   if (kitId !== null && kitId !== 'random') {
     return (
       <span data-kit-layer="face" className={`${ART_FACE_CLASS}${grey}`}>
@@ -101,17 +118,17 @@ function KitFace({ kitId, size, alt, decorative, greyscale }: FaceProps): ReactE
     );
   }
   const a11y = decorative ? ({ 'aria-hidden': true } as const) : ({ role: 'img', 'aria-label': alt } as const);
-  if (kitId === 'random') {
-    return (
-      <span data-kit-layer="face" {...a11y} className={`${RANDOM_FACE_CLASS}${grey}`}>
-        <Icon name="random" size={RANDOM_ICON_PX[size]} />
-      </span>
-    );
-  }
   return (
-    <span data-kit-layer="face" {...a11y} className={`${HIDDEN_FACE_CLASS}${grey}`}>
-      <span aria-hidden="true" className={`font-v7-display leading-none text-v7-text-2 ${HIDDEN_MARK_CLASS[size]}`}>
-        ?
+    <span data-kit-layer="face" {...a11y} className={`${CODE_FACE_CLASS}${grey}`}>
+      <span aria-hidden="true" data-kit-layer="rim" className={rimLayerClass('holo')} />
+      <span aria-hidden="true" data-kit-layer="verso" className={VERSO_CLASS}>
+        <span data-kit-layer="verso-light" className={VERSO_LIGHT_CLASS} />
+        <span data-kit-layer="verso-frame" className={VERSO_FRAME_CLASS} />
+        {kitId === 'random' ? (
+          <Icon name="random" size={RANDOM_ICON_PX[size]} className="relative" />
+        ) : (
+          <span className={`relative font-v7-display leading-none text-v7-text-2 ${HIDDEN_MARK_CLASS[size]}`}>?</span>
+        )}
       </span>
     </span>
   );
@@ -132,8 +149,8 @@ export function KitPortrait({
     <>
       <KitFace kitId={kitId} size={size} alt={alt} decorative={clickable} greyscale={isEliminated} />
       {isEliminated ? (
-        <span data-kit-layer="badge" className={`absolute right-1 bottom-1 p-0.5 ${ICON_WELL_CLASS}`}>
-          <Icon name="eliminated" size={BADGE_ICON_PX[size]} label="Eliminated" />
+        <span data-kit-layer="badge" className={`absolute p-0.5 ${BADGE_POSITION_CLASS[size]} ${ICON_WELL_CLASS}`}>
+          <Icon name="eliminated" size={BADGE_ICON_PX[size]} label={ELIMINATED_LABEL} />
         </span>
       ) : null}
     </>
@@ -154,7 +171,7 @@ export function KitPortrait({
       <button
         {...anchors}
         type="button"
-        aria-label={ariaLabel ?? alt}
+        aria-label={ariaLabel ?? (isEliminated ? `${alt}, ${ELIMINATED_LABEL.toLowerCase()}` : alt)}
         onClick={() => {
           onClick();
         }}

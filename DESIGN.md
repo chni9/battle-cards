@@ -970,22 +970,32 @@ the classic files and their duplicated copy stay until L75 and L76.
   `sheet` 96 and `hero` 160 px at 3:4 (default `tile`), radius `--card-radius`, shadow
   `--card-shadow`. The face is the base drawing from `artFor` on the `--card-face-0` to
   `--card-face-1` gradient, `object-contain` in a box inset 6 %, so the 16 trimmed drawings
-  share one visual weight. A hidden kit is a `--panel-2` face with a "?" in Lilita One
-  `--text-2`; Random is a `--panel-2` to `--bg-1` face with the `random` icon. The name is
+  share one visual weight. A hidden kit and Random have no art, so both wear the Card's hidden
+  verso (`ui/card/card-classes.ts`, shared with `card.tsx`): the 2 px holo rim, a `--panel-2`
+  fill lit from the top (`--text-2` at 20 %) and the inner frame line at 35 %, so they read as
+  tiles on `--bg-0` and on `--panel` alike (the art faces stay plain, with no frame). Hidden
+  shows a "?" in Lilita One `--text-2`, sized to match the Random die (20, 32, 44 and 72 px at
+  thumb, tile, sheet and hero); Random shows the `random` icon (22, 36, 48, 80 px). The name is
   `kitPortraitAlt`: the catalog name, "Hidden kit" or "Random kit" (`alt` for art, `role="img"`
   and `aria-label` for a code face). Anchors: `data-zone="kit-portrait"` and
   `data-eliminated` (kept from V2 for `fx/play-flyout.ts` and the L74 self strip), plus
   `data-kit-face="art" | "hidden" | "random"`, `data-kit-size` and, inside, `data-kit-layer`
   (`face`, `badge`). The root sets `select-none` and `-webkit-touch-callout: none`; long-press
   belongs to the caller (§6.6.5).
-- **Eliminated:** the face is greyscale and the `eliminated` icon (a `--danger` cross in a
+- **Eliminated:** the face is greyscale and dimmed to 70 % brightness (a grey kit such as Ghost
+  or Warrior would otherwise read as alive), and the `eliminated` icon (a `--danger` cross in a
   `--bg-0` well, labelled "Eliminated") sits in the bottom-right corner as a sibling of the
-  face, so the filter never greys the cross. No per-kit dead art, no cross character.
+  face, so neither filter reaches the cross. The badge icon is 9, 18, 22 and 32 px at thumb,
+  tile, sheet and hero, so with its 2 px well it is 13 px, about a third of the face, at thumb.
+  No per-kit dead art, no cross character.
 - **Clickable:** with `onClick` the root is one `<button type="button">` named `ariaLabel`, else
-  the kit name, at least 44 px wide and tall (a `thumb` button grows to 44 px), with a 3 px
-  `--cta` focus outline offset 2 px. The face inside is decorative (`alt=""`, code faces
-  `aria-hidden`). Button children are presentational, so a caller that needs the elimination
-  heard passes it in `ariaLabel`. Without `onClick` the root is a `<span>`.
+  the kit name plus ", eliminated" for an eliminated kit (button children are presentational, so
+  the badge would not be read; a plain portrait's image name stays the bare kit name, §11). It is
+  at least 44 px wide and tall (a `thumb` button grows to 44 px). Focus is the shared 2 px
+  `--text` ring (`CHROME_FOCUS_CLASS`, as Pills, Tabs, KitTile and the Card's focus layer):
+  `--cta` is the selection outline, so a focused kit never looks selected in the picker. The
+  face inside is decorative (`alt=""`, code faces `aria-hidden`). Without `onClick` the root is
+  a `<span>`.
 - **KitDetails:** `<KitDetails kitId />`: a header (the `sheet` portrait and the kit name,
   `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2` with a
   Lilita One `<h3>` each, in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
@@ -998,7 +1008,8 @@ the classic files and their duplicated copy stay until L75 and L76.
   one hidden thumb `Card` per family (an action and an attack verso) with its label and
   `×count`; both always render, `×0` included, so there is no "N action · M attack" prose.
 - **Cards:** special and trait cards are thumb `Card`s with a visible name caption under each
-  (a thumb prints no name). Instance ids are `kitSpecialCardKey(cardId, index)` (index keeps
+  (a thumb prints no name). The columns are left-aligned (`w-20`, caption and cost on the thumb's
+  left edge), so every thumb in the sheet, the hand's included, shares one left edge. Instance ids are `kitSpecialCardKey(cardId, index)` (index keeps
   Specialist's two Card Transformers apart), `always-upgraded:<cardId>` and
   `immune-to:<cardId>`, so they appear as `data-instance-id`; the Card's gold "+" badge
   replaces the V2 "↑". An empty trait group says "None"; Prophet's empty special list stays

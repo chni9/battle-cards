@@ -59,10 +59,13 @@ function Group({ id, children }: { id: KitDetailsSectionId; children: ReactNode 
   );
 }
 
-/** A thumb prints no name, so the name stays visible under it (the V2 caption, without "↑"). */
+/**
+ * A thumb prints no name, so the name stays visible under it (the V2 caption, without "↑"). The
+ * columns are left-aligned, so every thumb in the sheet shares the hand thumbs' left edge.
+ */
 function Caption({ cardId }: { cardId: CardId }): ReactElement {
   return (
-    <span data-card-caption className={`${CAPTION_CLASS} text-center`}>
+    <span data-card-caption className={`${CAPTION_CLASS} text-left`}>
       {getCard(cardId)?.name ?? cardId}
     </span>
   );
@@ -84,7 +87,7 @@ function TraitCards({
   return (
     <ul className={LIST_CLASS}>
       {cardIds.map((cardId) => (
-        <li key={cardId} className="flex w-20 flex-col items-center gap-1">
+        <li key={cardId} className="flex w-20 flex-col items-start gap-1">
           <Card size="thumb" instance={{ instanceId: `${instancePrefix}:${cardId}`, cardId, isUpgraded }} />
           <Caption cardId={cardId} />
         </li>
@@ -161,7 +164,7 @@ export function KitDetails({ kitId }: KitDetailsProps): ReactElement {
               const key = kitSpecialCardKey(cardId, index);
               const cost = cardCostChip(cardId, false);
               return (
-                <li key={key} data-special-key={key} className="flex w-20 flex-col items-center gap-1">
+                <li key={key} data-special-key={key} className="flex w-20 flex-col items-start gap-1">
                   <Card size="thumb" instance={{ instanceId: key, cardId, isUpgraded: false }} />
                   <Caption cardId={cardId} />
                   {/* `mt-auto` lines the costs up when one name wraps to two lines and another does not. */}
