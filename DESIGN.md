@@ -448,7 +448,8 @@ The existing drawings only, never new art (spec v7 §5.5).
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
 The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
 Sheet, Dialog and Toast in Overlays, the L72-11 cost glyph and effect copy in Cost glyphs
-and effect copy, the L72-12 holo card in Card, and the L72-14 chat in Chat.
+and effect copy, the L72-12 holo card in Card, the L72-14 chat in Chat, and the L72-15 kit
+portrait and kit details in Kit.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -955,6 +956,68 @@ over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migr
   §10.6 adds no chat string.
 - **Gallery:** the `/dev/ui` section `chat` (`ui/chat/chat.gallery.tsx`): the transcript with
   living and side lines, the empty box, the read-only board, and the longest nickname and body.
+
+## Kit (ui/kit/, L72-15)
+
+`ui/kit/kit-portrait.tsx`, `kit-portrait-label.ts`, `kit-details.tsx`, `kit-details-sections.ts` and
+`kit.gallery.tsx` (spec v7 §4.2, §5.5, §6.6.5, §7.3, §11; Appendix A `kit-inspect-dialog`,
+`lobby-kit-picker-dialog`, `home-solo-kit-picker`, `global-art-catalog`). They replace the V2
+`design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
+the classic files and their duplicated copy stay until L75 and L76.
+
+- **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? />`,
+  `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
+  `sheet` 96 and `hero` 160 px at 3:4 (default `tile`), radius `--card-radius`, shadow
+  `--card-shadow`. The face is the base drawing from `artFor` on the `--card-face-0` to
+  `--card-face-1` gradient, `object-contain` in a box inset 6 %, so the 16 trimmed drawings
+  share one visual weight. A hidden kit is a `--panel-2` face with a "?" in Lilita One
+  `--text-2`; Random is a `--panel-2` to `--bg-1` face with the `random` icon. The name is
+  `kitPortraitAlt`: the catalog name, "Hidden kit" or "Random kit" (`alt` for art, `role="img"`
+  and `aria-label` for a code face). Anchors: `data-zone="kit-portrait"` and
+  `data-eliminated` (kept from V2 for `fx/play-flyout.ts` and the L74 self strip), plus
+  `data-kit-face="art" | "hidden" | "random"`, `data-kit-size` and, inside, `data-kit-layer`
+  (`face`, `badge`). The root sets `select-none` and `-webkit-touch-callout: none`; long-press
+  belongs to the caller (§6.6.5).
+- **Eliminated:** the face is greyscale and the `eliminated` icon (a `--danger` cross in a
+  `--bg-0` well, labelled "Eliminated") sits in the bottom-right corner as a sibling of the
+  face, so the filter never greys the cross. No per-kit dead art, no cross character.
+- **Clickable:** with `onClick` the root is one `<button type="button">` named `ariaLabel`, else
+  the kit name, at least 44 px wide and tall (a `thumb` button grows to 44 px), with a 3 px
+  `--cta` focus outline offset 2 px. The face inside is decorative (`alt=""`, code faces
+  `aria-hidden`). Button children are presentational, so a caller that needs the elimination
+  heard passes it in `ariaLabel`. Without `onClick` the root is a `<span>`.
+- **KitDetails:** `<KitDetails kitId />`: a header (the `sheet` portrait and the kit name,
+  `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2` with a
+  Lilita One `<h3>` each, in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
+  starting hand, special cards, always upgraded, immune to, attacks per turn, upgrade points,
+  draw risk, and ability (only for a kit with `KIT_ABILITY_COPY`). Every value is read from
+  `KIT_CATALOG`, never from the art (the old Gambler PNG prints "?" for a Draw the catalog sets
+  to 10). Copy is the V6 copy, verbatim, in Nunito `--text-2`.
+- **Starting resources and hand:** three `Pill`s (life, point, upgrade point; tone ring, value
+  `--text`, caption spoken only) and a `Draw +N` chip with a signed `CostAmount`. The hand is
+  one hidden thumb `Card` per family (an action and an attack verso) with its label and
+  `×count`; both always render, `×0` included, so there is no "N action · M attack" prose.
+- **Cards:** special and trait cards are thumb `Card`s with a visible name caption under each
+  (a thumb prints no name). Instance ids are `kitSpecialCardKey(cardId, index)` (index keeps
+  Specialist's two Card Transformers apart), `always-upgraded:<cardId>` and
+  `immune-to:<cardId>`, so they appear as `data-instance-id`; the Card's gold "+" badge
+  replaces the V2 "↑". An empty trait group says "None"; Prophet's empty special list stays
+  empty (he starts with two random specials, told in Ability). No face is a button: the sheet
+  around the details owns Select.
+- **Costs:** a thumb prints no cost chip (L72-12), so a special's play cost is a signed
+  `CostAmount` under its caption, lined up across a row; Draw and the upgrade-point Buy and Sell
+  prices are `CostAmount` too, so every amount is an icon, a number and a spoken text. L72-21
+  note: the L72-15 contract expected both a thumb chip and a `CostAmount`, which would show
+  every special cost twice; the Card has no thumb chip, so only the `CostAmount` shows.
+- **Art pockets:** the old card ground that a drawing encloses (Untouchable's lenses,
+  Specialist's gear hole, Duplicator's pale square; Illustrations) matches the face on the
+  portrait's light gradient and reads as part of the drawing. Checked in a browser experiment
+  on a `--bg-0` face (not shipped): pale lilac lenses, hub and tile, none a hole.
+- **Anchors:** `data-kit-id`, `data-kit-name`, `data-kit-section="<id>"`, `data-kit-stat="draw" |
+  "upgrade-point-buy" | "upgrade-point-sell"`, `data-hand-family="action" | "attack"`,
+  `data-special-key`, `data-card-caption`.
+- **Gallery:** the `/dev/ui` section `kit` (`ui/kit/kit.gallery.tsx`): the four faces, the four
+  sizes, every kit at `tile`, and the details of Scientific, Specialist, Gambler and Prophet.
 
 ## Do's and Don'ts
 

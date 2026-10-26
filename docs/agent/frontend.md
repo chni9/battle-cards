@@ -426,6 +426,49 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `chat` (`ui/chat/chat.gallery.tsx`, DEV only): transcript, empty,
   read-only and longest line.
 
+### Kit (`ui/kit/`, L72-15)
+
+- **What replaces what:** `KitPortrait` and `KitDetails` replace `design/components/kit-portrait.tsx`
+  and `screens/table/kit-inspect-details.tsx` on V7 surfaces: the L74 kit sheet and self strip,
+  the L76 kit picker and the L72-16 rules strip. The classic files and their duplicated copy
+  stay until L75 / L76, which delete them with their source-text tests.
+- **Values:** every number comes from `KIT_CATALOG` (`getKit`, `upgradePointBuyCost`,
+  `upgradePointSellYield`), never from the PNG: the printed stats are cropped out of the art
+  (`artFor`), and the old Gambler PNG prints "?" where the catalog has Draw 10. The ability
+  prose is
+  `KIT_ABILITY_COPY`, verbatim (the Prophet copy fix is L76's, spec v7 §10.1).
+- **Anchors:** `data-kit-section` (one per group, with `data-kit-stat`, `data-hand-family`,
+  `data-special-key` and `data-card-caption` inside) and `data-zone="kit-portrait"` with
+  `data-eliminated`, `data-kit-face`, `data-kit-size`. `fx/play-flyout.ts` and the L74 self strip
+  query the portrait anchors.
+- **The name has one source:** `kitPortraitAlt(kitId)` (`ui/kit/kit-portrait-label.ts`): the
+  catalog name, "Hidden kit" for `null` and "Random kit" for `'random'` (spec v7 §11). A caller
+  never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
+  or that name; the face inside is decorative, so a screen reader hears the button only, and a
+  caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
+- **Classic width rules:** `index.css` still sizes a portrait inside `[data-zone="opponent-seat"]`
+  and `[data-zone="private-zone"]` (2.35rem and 3rem, unlayered, so they beat the size classes).
+  A V7 surface must not reuse those zone names around a `KitPortrait` before L75 removes the
+  rules, or the portrait would not keep its `size`.
+- **Nesting:** a portrait inside another control (a `KitTile` head, a seat button) is the
+  non-clickable form, so no button sits inside a button; `KitTile` already hides its portrait
+  from assistive tech and names the tile by its visible kit name.
+- **Sections:** `kit-details-sections.ts` holds the ids in display order, their titles and
+  `KIT_TRAIT_SECTION_FOR`, a `Record` keyed by `KIT_TRAIT_SECTION_KEYS`: a new `KitTraits` key
+  fails typecheck, then the L30-05 test, until it has a rendered section. A new section id goes
+  in the table and in `kit-details.tsx`; the test pins the order.
+- **Cards inside the details:** thumb `Card`s with synthetic instance ids
+  (`kitSpecialCardKey(cardId, index)`, `always-upgraded:<id>`, `immune-to:<id>`); the starting
+  hand is two hidden thumbs. A thumb prints no name and no cost chip, so the details add a
+  visible caption and a signed `CostAmount`. Never resize them with `w-*` classes (Card contract).
+- **Tests:** `kit-details.test.tsx` is the component test that the L30-05 and L51-04 rows of
+  `kit-inspect-dialog.test.ts` expected (`docs/backlog_v7_test_classification.md`); the classic
+  test stays as it is until L75 / L76. A test that mocks `console.error` also asserts nothing
+  else was logged, so a React key or nesting warning fails it.
+- **Gallery:** section `kit` (`ui/kit/kit.gallery.tsx`, DEV only). The size by kit matrix is
+  not in the gallery: check it in the browser by mounting `/src/ui/kit/kit-portrait.tsx` from
+  the page console (as for the Card matrix), never by editing repo files.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
