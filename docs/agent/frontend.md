@@ -326,6 +326,33 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `data-effect-part="cost" | "effect" | "upgrade"`. Catalog text itself is L72-13's.
 - **Gallery:** section `text` (`ui/text/text.gallery.tsx`, DEV only).
 
+### Card (`ui/card/`, L72-12)
+
+- **The only V7 card renderer:** `ui/card/card.tsx` (`<Card size instance … />`, or
+  `face="hidden" family`) with its pure helpers in `ui/card/card-face.ts` (`CARD_SIZES`,
+  `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
+  `HIDDEN_CARD_LABEL`). `design/components/card.tsx` and its source-text tests stay for the
+  classic screens until L75/L76 retire them.
+- **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
+  holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
+  V7 surface; upgraded and active looks are Card states.
+- **Long-press is ours:** every face prevents the context menu and sets `select-none` and
+  `[-webkit-touch-callout:none]`; the art has `pointer-events-none` and `draggable={false}`.
+- **Numbers and names:** damage comes from `cardDamageChip` (`listedAttackDamage` × the
+  caller's `damageMultiplier`); the accessible name from `cardFaceLabel` (name, " upgraded",
+  ", N damage", the counter label). Thumbs print no name and no cost chip (art-only thumbs), so
+  their name is the aria-label and a native `title`.
+- **The caller decides state:** `unplayable` (POV's turn, card-specific reason; the face stays
+  activatable), `selected`, and `counter` (`{ kind: 'card-lives' | 'turns', amount }`). The glow
+  and the counter badge follow `counter` only, so Curse and the combat Shield get no glow.
+- **Layout:** the root sizes by width and keeps 2:3 only while its height is auto: a stretching
+  flex or grid parent must align its items. The landscape-compact hand height (L75) comes in
+  through `className`. Hidden faces carry no `data-card-id` or `data-instance-id`.
+- **Tests:** happy-dom has no media queries and no layout, so tests assert `data-motion`, the
+  `data-card-*` anchors and the class names (`v7-card-sheen`, `animate-pulse`, the lift); name
+  fit and art weight are checked in `/dev/ui` (section `card`, which shows every drawing at
+  hand size) at 375×812, 320 px and 1440×900.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
