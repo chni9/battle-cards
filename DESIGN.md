@@ -448,8 +448,8 @@ The existing drawings only, never new art (spec v7 §5.5).
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
 The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
 Sheet, Dialog and Toast in Overlays, the L72-11 cost glyph and effect copy in Cost glyphs
-and effect copy, the L72-12 holo card in Card, the L72-14 chat in Chat, and the L72-15 kit
-portrait and kit details in Kit.
+and effect copy, the L72-12 holo card in Card, the L72-14 chat in Chat, the L72-15 kit
+portrait and kit details in Kit, and the L72-16 table rules strip and sheet in Rules.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -618,7 +618,7 @@ and the L73 seat layout reuse it.
 `ui/ui-copy.ts` holds only the new strings a `ui/` component needs, each listed in the PR for
 designer review (spec v7 §10.6): `EXCLUDED_LABEL` "Excluded" and `carouselPositionLabel`
 ("{label}, {n} of {m}", the Carousel status line), both L72-08, and `MINIMIZE_LABEL`
-"Minimize" (L72-09). L72-16 adds `TABLE_RULES_LABEL`. Every other label (IconButton names, Carousel previous and
+"Minimize" (L72-09), and `TABLE_RULES_LABEL` "Table rules" (L72-16). Every other label (IconButton names, Carousel previous and
 next, the KitTile info control, the BadgeGroup `overflowLabel`) comes from the caller's
 existing copy.
 
@@ -1029,6 +1029,51 @@ the classic files and their duplicated copy stay until L75 and L76.
   `data-special-key`, `data-card-caption`.
 - **Gallery:** the `/dev/ui` section `kit` (`ui/kit/kit.gallery.tsx`): the four faces, the four
   sizes, every kit at `tile`, and the details of Scientific, Specialist, Gambler and Prophet.
+
+## Rules (ui/rules/, L72-16)
+
+`ui/rules/rules-summary.ts`, `rules-strip.tsx`, `rules-sheet.tsx` and `rules.gallery.tsx` (spec v7
+§6.11, §7.4, §7.6, §11, Q15; Appendix A `lobby-rules-summary`, `rules-recall-table-end`). They
+are the read-only half of `screens/lobby-rules-panel.tsx` on V7 surfaces; that file and its host
+editor stay until L76.
+
+- **Strip:** `<RulesStrip rules className? />` is one chrome button named "Table rules"
+  (`TABLE_RULES_LABEL`, `aria-haspopup="dialog"`) on `--panel`, at least 44px tall, full width and
+  left-aligned, with the shape, focus ring and press from `primitives/chrome-classes.ts`. The
+  press drops `--chrome-press-y` and the shadow at full motion and only dims under reduced motion;
+  `data-motion` says which. Row one is the `clock` icon and `{n}s` in Lilita One 20px, exactly as
+  received (`formatTurnTimeSeconds`, never clamped: a server default can be 300), then, only when
+  `randomOnly` is set, the `random` icon and the word "Random" in Nunito. Row two is a wrapping
+  row of the 16 `thumb` portraits in `KIT_IDS` order. The content is phrasing only, so the
+  portraits are the non-clickable `KitPortrait` (`<img alt>` = kit name); the button's own name
+  is "Table rules", and the sheet carries the details for a screen reader.
+- **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
+  caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
+  opacity, so the state is never carried by dimming alone. The caption is about 48px wide, wider
+  than a 40px thumb, so an excluded cell is 8px wider than an allowed one and a strip with many
+  excluded kits grows tall on a phone (15 excluded: about 550px at 320px wide in the gallery).
+- **Sheet:** `<RulesSheet open rules onClose />` is a read-only `Sheet` (placement `auto`: a
+  bottom sheet on phones, centered on desktop; Esc, backdrop and swipe-down close it, only the
+  top sheet takes Esc) titled "Table rules". Its only button is Close (`secondary`), which also
+  takes the initial focus; it has no editable control and no `aria-pressed`. The body is the
+  clock, "Human turn" and the seconds; the Random mark when set; then a list of all 16 kits in
+  auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4 on the 28rem desktop
+  panel, so "Indestructible" fits without a breakpoint). Each item is an `aria-hidden` thumb
+  portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when excluded,
+  "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the labelled
+  keyboard region of the Sheet contract, and focus still starts on Close.
+- **Anchors:** `data-kit-id` and `data-excluded="true" | "false"` on every kit face (a `<span>` in
+  the strip, an `<li>` in the sheet). New hooks; no preserved anchor changes. `KitDetails` also
+  carries `data-kit-id`, so a query for one kit scopes to its container (the strip, the sheet
+  panel or the details).
+- **Icons:** `clock` and `random` have `--text` bodies and sit on `--panel`, never on a fill
+  within CIEDE2000 20 of their body.
+- **Copy:** "Table rules" and "Excluded" are the §10.6 strings. "Human turn", "Random" and
+  "Close" are existing labels. The tests use the literals, so a copy change fails a test.
+- **Later:** L76 adds the host editor in this folder. L74's menu and L77's Game over recall open
+  `RulesSheet` directly.
+- **Gallery:** the `/dev/ui` section `rules` (`ui/rules/rules.gallery.tsx`): the default rules,
+  Random only with three kits excluded and 45 s, a 300 s server default, and one allowed kit.
 
 ## Do's and Don'ts
 

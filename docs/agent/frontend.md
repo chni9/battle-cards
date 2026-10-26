@@ -478,6 +478,31 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   not in the gallery: check it in the browser by mounting `/src/ui/kit/kit-portrait.tsx` from
   the page console (as for the Card matrix), never by editing repo files.
 
+### Rules (`ui/rules/`, L72-16)
+
+- **Components:** `RulesStrip` (a chrome button named "Table rules" that opens the sheet) and
+  `RulesSheet` (`open`, `rules`, `onClose`; a read-only `Sheet`), with `rules-summary.ts`
+  (`rulesKitFaces`, `formatTurnTimeSeconds`). The strip owns its own `open` state; a caller that
+  has no strip (the L74 menu, the L77 Game over recall) mounts `RulesSheet` directly.
+- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 recall (the
+  last `lobbyRules` seen in this room, in memory) and `FinishedStateView.lobbyRules` in L77
+  (spec v7 §6.11). A caller hides the strip when the rules are unknown (a reload mid-game), and
+  the tutorial never mounts it. The component invents no default.
+- **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows
+  `TURN_DURATION_MS` until the host sets a time, so it can exceed the host maximum of 180.
+  Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.
+- **Excluded is a word:** an excluded kit carries `EXCLUDED_LABEL` at full opacity. Dim or grey
+  the portrait only (`opacity-40 grayscale` on the portrait wrapper), never the name or the label.
+- **L76 adds the host editor here:** the slider sends on release, All / None / Random and the
+  16 kit toggles, in this folder, reusing `rulesKitFaces`. `screens/lobby-rules-panel.tsx` stays
+  until L76.
+- **Nesting:** the strip's portraits are the non-clickable `KitPortrait` inside one `<button>`;
+  they are `aria-hidden` in the sheet, where the visible name names the kit.
+- **Tests:** `rules-strip.test.tsx` and `rules-sheet.test.tsx` repeat the small `rules()` and
+  `kitFace()` helpers instead of sharing a file. They assert the literal strings.
+- **Gallery:** section `rules` (`ui/rules/rules.gallery.tsx`, DEV only): default, Random only
+  with three kits excluded, a 300 s server default and one allowed kit.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility

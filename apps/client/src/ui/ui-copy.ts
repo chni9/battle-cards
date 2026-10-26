@@ -15,3 +15,6 @@ export function carouselPositionLabel(label: string, position: number, count: nu
 
 /** Blocking sub-choice sheets collapse to a bar (spec v7 §6.7, §10.6, Q59). */
 export const MINIMIZE_LABEL = 'Minimize';
+
+/** The house-rules strip's name and its sheet's title (spec v7 §6.11, §7.4, §10.6). */
+export const TABLE_RULES_LABEL = 'Table rules';

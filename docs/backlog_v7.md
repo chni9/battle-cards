@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 15 |
+| 72 · Foundations | 21 | 16 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **15** |
+| **Total** | **134** | **16** |
 
 ## Designer questions still open
 
@@ -63,7 +63,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-13 | **Correct outdated catalog text (§10.5).** **Acceptance:** The catalog strings match §10.5, their tests pin the new text, and the old table inspect shows it. The V7 What's new entry exists and the latest-id tests pass. PR lists the strings for designer review. `pnpm verify` green. | S | Low | L72-01 | Done |
 | L72-14 | **Rebuild ChatLog in ui/.** **Acceptance:** happy-dom tests: - round label + nickname on each line - the side-stream role label - the empty state - Enter sends the body and resets the form - whitespace is not sent - no composer when `canWrite` is false - `maxLength === CHAT_BODY_MAX_LENGTH`  The 16 px computed size is verified in the L72 gate. `pnpm verify` green. | S | Low | L72-04, L72-05, L72-06, L72-08 | Done |
 | L72-15 | **Rebuild kit details and kit portrait in ui/.** **Acceptance:** happy-dom tests: - For every `KIT_IDS` kit, every `KIT_TRAIT_SECTION_KEYS` section and the catalog starting values render. - Specialist's duplicate specials each render. - The starting hand renders verso faces with counts and no "action · attack" prose. - The portrait `alt` is the kit name. - Gambler values match `KIT_CATALOG`.  `pnpm verify` green. | M | Low | L72-12, L72-11 | Done |
-| L72-16 | **Rebuild the table rules strip and sheet in ui/.** **Acceptance:** happy-dom tests: - seconds render from the prop, including a server default above 180 - the Random-only mark appears only when it is set - each excluded kit carries the "Excluded" label and allowed kits do not - tapping the strip opens a read-only sheet with no editable control  `pnpm verify` green. | M | Low | L72-09, L72-15 | To do |
+| L72-16 | **Rebuild the table rules strip and sheet in ui/.** **Acceptance:** happy-dom tests: - seconds render from the prop, including a server default above 180 - the Random-only mark appears only when it is set - each excluded kit carries the "Excluded" label and allowed kits do not - tapping the strip opens a read-only sheet with no editable control  `pnpm verify` green. | M | Low | L72-09, L72-15 | Done |
 | L72-17 | **Rebuild the coach panel in ui/.** **Acceptance:** happy-dom tests: - body markers and resource words render icon glyphs with spoken text - × calls `onHide` - the footer renders - data attributes reach the root - the panel has no `role="dialog"` and no Skip control - reduced motion skips the enter animation  `pnpm verify` green. | S | Low | L72-08, L72-11 | To do |
 | L72-18 | **Rebuild table banner cues in ui/.** **Acceptance:** happy-dom tests with fake timers: - queued cues play in order, each for `TABLE_BANNER_MS` - Sentence lines are announced assertively - the wipe line shows only for the POV's own bust - the first mount seeds won, dead and turn, but no log history - reduced motion renders no slam transform  `pnpm verify` green. | M | Medium | L72-03, L72-04, L72-05, L72-06, L72-08, L72-09 | To do |
 | L72-19 | **Rebuild BotSeatLabel, PlayerName and ConnectionBadge in ui/.** **Acceptance:** Component tests render each state from a fake seat and assert the visible text and `aria` labels match today's copy. Added to the `/dev/ui` gallery. `pnpm verify` green. | S | Low | L72-08 | To do |
