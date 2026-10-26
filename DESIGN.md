@@ -448,7 +448,7 @@ The existing drawings only, never new art (spec v7 §5.5).
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
 The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
 Sheet, Dialog and Toast in Overlays, the L72-11 cost glyph and effect copy in Cost glyphs
-and effect copy, and the L72-12 holo card in Card.
+and effect copy, the L72-12 holo card in Card, and the L72-14 chat in Chat.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -900,6 +900,51 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   `data-card-badge="upgraded"`, `data-card-counter="card-lives" | "turns"`.
 - **Gallery:** the `/dev/ui` section `card` (`ui/card/card.gallery.tsx`): families and rims,
   every size, chips, states, hidden faces, and every catalog drawing at `hand` size.
+
+## Chat (ui/chat)
+
+`ui/chat/chat-line.ts`, `ui/chat/chat-log.tsx` and `ui/chat/chat.gallery.tsx` (L72-14; spec v7
+§6.9, §7.5; Appendix A `chat-compose-enter`, `lobby-chat`, `table-chat-popup`,
+`chat-new-message-announcement`, `table-chat-side-stream-disclosure`,
+`lobby-chat-walk-in-spectator-stream`, `end-finished-chat-readonly`,
+`global-text-input-no-ios-zoom`). One `<ChatLog messages players canWrite onSend inputLabel?
+placeholder? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
+over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migrate.
+
+- **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no outline and no hard
+  shadow (it sits on a surface, like the text input). It is a `ScrollArea` (`axis="y"`) with no
+  `label`: no new §10.6 string, and the message field stays the first focusable control.
+  Chromium still makes an overflowing, unlabeled scroller a nameless Tab stop before the field
+  (seen in Chrome 152); a named region is a designer choice, flagged for the L72-21 gate. It
+  scrolls to the newest line whenever `messages` changes, as the V6 log did, even when the
+  reader has scrolled up.
+- **Line anatomy** (`chatLineView`): the round label (`Lobby` for round 0, else `Round N`) in
+  Nunito 12 px `--text-2`; the nickname in Lilita One at weight 400 (never faux-bold), colored
+  by inline `v7SeatColor(seat)` hex or `V7_COLORS['text-2']` when the sender is not in
+  `players` (a walk-in or someone who left); the body in Nunito 700 at 14 px `--text`. The
+  nickname is the only element with a seat hue, and it sits on `--panel-2`, where every seat hue
+  is at least 4.5:1. The whole line uses `break-words`: the box clips its horizontal overflow, so
+  a 200-character unbroken body or a 24-character nickname wraps instead of being cut.
+- **Side stream:** an eliminated or spectator line is italic `--text-2` with the role in words
+  after the nickname (`(eliminated)`, `(spectator)`, upright) and `data-chat-stream="side"`; a
+  living line is `--text` and `data-chat-stream="living"`. Italic plus the word means the two
+  streams never differ by color alone.
+- **Announcements:** the transcript is a polite `role="log"` that is mounted before the first
+  line and holds the empty message, so a screen reader announces each line that arrives once.
+  Lines are keyed by `ChatMessageView.order`, so a re-render or a line revealed in the middle
+  (an elimination opens the side stream) leaves the existing nodes alone and is not read again.
+- **Empty:** "No messages yet." in Nunito 700 14 px `--text-2`, with no list.
+- **Composer:** only when `canWrite` (never on the finished board). A `TextField` named
+  `chat-body` (16 px, 44 px high, `maxLength` `CHAT_BODY_MAX_LENGTH`) with a hidden label and a
+  placeholder, both "Message" unless `inputLabel` or `placeholder` overrides them (the walk-in
+  label, L76), and a primary "Send" `Button` (`type="submit"`). Enter or Send sends the trimmed
+  body and resets the form; empty or whitespace-only text is dropped without a reset. Send is
+  never disabled: the form is uncontrolled, so no empty state exists to follow, and the V6
+  behavior is kept. Shift+Enter sends too (a single-line input has no newline).
+- **Copy:** `CHAT_EMPTY_COPY`, `CHAT_INPUT_LABEL` and `CHAT_SEND_LABEL` keep the V6 wording;
+  §10.6 adds no chat string.
+- **Gallery:** the `/dev/ui` section `chat` (`ui/chat/chat.gallery.tsx`): the transcript with
+  living and side lines, the empty box, the read-only board, and the longest nickname and body.
 
 ## Do's and Don'ts
 

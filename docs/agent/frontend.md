@@ -372,6 +372,40 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   reduced motion in a srcdoc iframe that stubs `matchMedia` and installs the React refresh
   preamble before importing the Card.
 
+### Chat (`ui/chat/`, L72-14)
+
+- **Component:** `ui/chat/ChatLog` (L72-14): transcript plus composer; `onSend` receives the
+  trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
+  walk-in label (L76). It replaces `screens/table/chat-log.tsx` for L74-16, L76-13 and L77-05.
+  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`.
+  `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
+  three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
+  is L73/L74).
+- **Behavior kept from V6** (Appendix A `chat-compose-enter`): uncontrolled form; `chat-body`
+  input, `maxLength` `CHAT_BODY_MAX_LENGTH`; Enter or Send submits; empty or whitespace-only text
+  is dropped with no reset; the form resets after a send; the transcript jumps to the newest
+  line on every `messages` change; no composer when `canWrite` is false. Send is never disabled
+  (nothing tracks an empty field, and a native `disabled` would leave the Tab order). Shift+Enter
+  sends too, because the field is a single-line `<input>`.
+- **Announcements** (`chat-new-message-announcement`): the transcript is a polite `role="log"`,
+  mounted before the first line, and lines are keyed by `ChatMessageView.order`, so each new line
+  is announced once and a re-render never reads the log back. Do not move the role onto the `<ul>`
+  (it would strip the list semantics), and do not key lines by index.
+- **Transcript scroller:** a `ScrollArea` with no `label` (no new string; the message field stays
+  the sheet's first focusable control). Chromium still exposes an overflowing, unlabeled
+  scroller as a nameless Tab stop ahead of the field. A named region needs a copy string and a
+  way to mark it `data-scroll-region`; the choice is flagged for the designer at the L72-21 gate.
+- **Line wrapping:** `break-words` on each `<li>`, because `ScrollArea` clips its horizontal
+  overflow; checked in the browser with a 24-character nickname and a 200-character body at
+  375 px.
+- **Tests:** `chat-line.test.ts` (node), `chat-log.test.tsx` and `chat.gallery.test.tsx`
+  (happy-dom). The scroll test spies on the `Element.prototype` `scrollHeight` getter and
+  `scrollTop` setter, which happy-dom defines on the base `Element`; a version that moves them
+  fails the test loudly. The 16 px input is read from computed style in the browser gate
+  (`/dev/ui#chat`), since happy-dom evaluates no CSS.
+- **Gallery:** section `chat` (`ui/chat/chat.gallery.tsx`, DEV only): transcript, empty,
+  read-only and longest line.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
