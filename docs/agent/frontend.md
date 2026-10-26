@@ -294,6 +294,38 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   test's sheets never sit above another's. The swipe on a real touch screen and the placement
   at 375×812, 844×390 and 1440×900 are checked in the L72-21 browser gate.
 
+### Cost glyphs and effect copy (L72-11)
+
+- **Files:** `ui/card/glyph-amount.ts` (`GlyphAmount` = `StructuredCost` or a shield amount,
+  `glyphAmountIcon`, `glyphAmountFromResource`, `spokenGlyphAmount`), `ui/card/cost-amount.tsx`
+  (`<CostAmount amount signed? multiplier? title? size? />`), `ui/text/effect-text-with-icons.tsx`
+  (`<EffectTextWithIcons text iconSize? />`), `ui/text/card-effect-copy.tsx`
+  (`<CardEffectCopy card isUpgraded />`: Cost row, effect, Upgrade block). They carry spec v7
+  §6.6.1 and replace the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`
+  on V7 screens; the V2 files and their source-text tests stay untouched until L75 and L76
+  retire their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
+  L76 import these.
+- **Use:** one `CostAmount` for every number-plus-icon amount: a cost chip, a Draw or shop price,
+  a reward, an amount inside prose. `signed="cost" | "gain"` prefixes `−` or `+` and speaks "minus"
+  or "plus"; `multiplier={2}` prefixes `2×` (a multiplier of 1 shows nothing). `size` sets only
+  the icon px (`sm` 14, `md` 16, `lg` 20); font and color come from the parent, so a glyph never
+  paints a resource color as text (spec v7 §5.1). A `pointsPerLife` rate shows two icons
+  (`N [point]/[life]`). The root has `data-glyph-icon={IconName}`.
+- **`title={null}` (L59-01):** `title` defaults to the spoken amount ("3 pts"). Inside a control
+  that names itself (Draw, Unspy, a shop button) pass `title={null}`: an inner `title` would
+  replace the control's own tooltip. The spoken text stays, so an unlabeled button is still named
+  by its amount. Never put a `CostAmount` on a fill of its own resource color; an icon-on-fill
+  case goes in a well (`/DESIGN.md` › Icons).
+- **Spoken text:** structured costs keep `spokenCost`'s short wording ("3 pts", "3 pts/life");
+  shield now speaks "N shield point(s)" (the V2 inline glyph spoke only the number). Tests read
+  the two sides with `test/glyph-queries.ts` (`visibleText`, `spokenTexts`, `glyphRoots`), a
+  test-only module that shipped code never imports.
+- **Effect copy:** catalog prose goes through `EffectTextWithIcons`, which turns resource
+  phrases ("4 lives", "2 upgrade points", "4 shield points") into amounts and keeps "instead
+  of" visible; damage, turns and card lives stay prose. `CardEffectCopy` rows carry
+  `data-effect-part="cost" | "effect" | "upgrade"`. Catalog text itself is L72-13's.
+- **Gallery:** section `text` (`ui/text/text.gallery.tsx`, DEV only).
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -734,7 +766,7 @@ rules above are unchanged — this section only covers how the client looks.
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
     Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
     red (L64-05); Sell is green (gain); Buy / Upgrade stay
-    orange (pay).
+    orange (pay). V7 equivalent: `ui/card/cost-amount.tsx` (L72-11).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
     (diff in `view-model/incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,

@@ -441,8 +441,9 @@ The existing drawings only, never new art (spec v7 §5.5).
 ## Components
 
 Each `ui/` component adds its section here, or in its own `##` section, in the same commit.
-The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, and the L72-09
-Sheet, Dialog and Toast in Overlays.
+The icon set is in Icons; the L72-08 chrome primitives are in Primitives below, the L72-09
+Sheet, Dialog and Toast in Overlays, and the L72-11 cost glyph and effect copy in Cost glyphs
+and effect copy.
 
 ### Motion (shared by every component)
 - **Durations** (`ui/motion/motion-tokens.ts`, mirrored as CSS variables): `--dur-fast` 120ms,
@@ -728,6 +729,54 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 - **Motion:** the scrim fades over `--dur-fast`; a bottom panel rises 24px and a centered one
   scales from 0.98, with opacity, over `--dur-base` on the entrance ease; the toast drops 12px.
   Under reduced motion all three only fade.
+
+## Cost glyphs and effect copy (L72-11)
+
+`ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx` and
+`ui/text/card-effect-copy.tsx` (spec v7 §6.6.1; Appendix A `global-card-effect-copy-inline-icons`).
+They are the V7 successors of the V2 `CostDisplay`, `EffectTextWithIcons` and `CardEffectCopy`
+in `design/components/`, which stay until L75 and L76 retire their consumers. Catalog text is
+rendered as it is; the copy fixes of §10.5 are L72-13's.
+
+- **Icon map** (`glyphAmountIcon`, one `GlyphAmount` shape for the structured costs and for the
+  shield amount that only catalog prose carries): `points` and `pointsPerLife` use `point`,
+  `lives` uses `life`, `upgradePoint` uses `upgrade`, `shield` uses `shield`. The tokenizer's
+  resource kinds map in with `glyphAmountFromResource` (`point` to `points`, `life` to `lives`).
+- **CostAmount anatomy:** one `inline-flex` span, never wrapping, with tabular digits. It holds
+  a screen-reader-only spoken text, then one `aria-hidden` group: `{m}×` (only when the
+  multiplier is not 1), the sign (`−` pay, `+` gain; none by default), the number, the icon. A
+  `pointsPerLife` rate reads `N [point]/[life]` with two icons. The root carries
+  `data-glyph-icon={IconName}` (the primary icon), and the tests and later components read it.
+- **Spoken text:** structured costs keep `spokenCost`'s short wording ("3 pts", "1 pt",
+  "3 pts/life", "2 upgrade points", "minus 10 pts", "2×4 pts"). A shield amount speaks "4 shield
+  points" ("1 shield point"), wrapped the same way. The V2 inline glyph spoke only the number.
+- **Tooltip:** `title` defaults to the spoken amount. `title={null}` renders no `title`, and the
+  spoken text stays: inside a control that names itself, an inner `title` would replace the
+  control's tooltip (L59-01). An unlabeled parent button is then named by the spoken amount.
+- **Size and color:** `size` sets only the icon, 14 (`sm`, default), 16 (`md`) or 20 (`lg`) px.
+  Font family, size, weight and color come from the parent: `--text` or `--text-2` on the dark
+  grounds, `--text-on-card` on the card face. The number never takes a resource color at small
+  size (§5.1; `--life` on `--panel-2` is 4.25:1). Icon paints are fixed, so CostAmount adds no
+  well: a caller that sets one on `--cta`, `--cta-2`, `--danger` or a `--life` chip follows
+  Icons › Accessibility and use (a `--bg-0` well, `--text` numbers).
+- **EffectTextWithIcons:** each "4 lives", "3 points", "2 upgrade points" or "4 shield points"
+  phrase becomes a `CostAmount` (default `iconSize` `md`, `sm` allowed), without a sign, since
+  the prose already says who gains or pays. "instead of 3" keeps its words as ordinary visible
+  text and takes the icon of the resource before it; with no earlier resource it stays prose.
+  Damage, turn counts and "card lives" are not resource phrases and stay plain. Each amount and
+  its "instead of" stay on one line. Amounts come from the catalog string, never from a value
+  kept in code.
+- **CardEffectCopy** (`card`, `isUpgraded`), top to bottom: a **Cost** row (the label, then the
+  play cost at `md`; omitted when the card has none; Regeneration is 3 points per life, 2 when
+  upgraded), the effect as held (`effect`, or `upgradeEffect` when upgraded; omitted when
+  empty), then for a base card the **Upgrade** row on `--panel-2` (`rounded-v7-chrome-sm`): the
+  label, a `--text-2` dash, `upgradeAdds`. The rows sit on the sheet's `--panel`, in `--text`,
+  Nunito 700 at 14px (labels 800), line height 1.375. No "Cost:" prefix and no helper line.
+  Rows carry `data-effect-part="cost" | "effect" | "upgrade"`.
+- **Gallery:** the `/dev/ui` section `text` (`ui/text/text.gallery.tsx`) shows every amount kind
+  with `signed`, `multiplier` and `size="lg"`; the prose cases ("instead of", three resources,
+  shield, turns left as prose); and `CardEffectCopy` for Regeneration (base and upgraded), Basic
+  attack and Tax.
 
 ## Do's and Don'ts
 
