@@ -23,6 +23,7 @@ import {
   type SubChoiceRequiredPayload,
 } from '@card-battle/shared';
 
+import { recurringChips, type RecurringChip } from './recurring-chips';
 import { seatColorIndexOf } from './seats';
 import { threatToneFor } from './threat-tone';
 
@@ -80,6 +81,8 @@ export interface ThreatsModel {
   entries: readonly ThreatEntry[];
   /** First-seen wire order. */
   fanOuts: readonly FanOutGroup[];
+  /** Curse on the POV and opponent Poison / Imposition chips with their paused state (§6.5, L73-05). */
+  recurring: readonly RecurringChip[];
 }
 
 /**
@@ -219,7 +222,7 @@ export function threats(
     };
   });
 
-  return { entries, fanOuts };
+  return { entries, fanOuts, recurring: recurringChips(view) };
 }
 
 /**

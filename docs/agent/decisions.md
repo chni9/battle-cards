@@ -5032,3 +5032,37 @@ upgraded) and `super-mirror.ts` copies (`redirectedBy: 'super-mirror'`).
   left, is a plain arrow.
 
 ---
+
+## 2026-10-27 · [P] V7 recurring chips: Curse drains during Block; persistent-incoming retired (L73-05)
+
+Source: technical spec v7 §6.5, §11 and §13 #35; rules spec §5 (Block line 165, Invisibility
+line 193, Curse lines 217–221, Poison lines 224–225, Imposition lines 228–229) and §6 Game Turn
+(line 269); `apps/server/src/engine/turn/apply-persistent-effects.ts`.
+
+- **Paused reading.** A recurring chip is paused when the POV's own view shows the engine will
+  skip that effect on the POV's next tick. Own Invisibility pauses Poison, Imposition and Curse:
+  `applyPersistentEffects` returns before every victim tick (lines 74–79,
+  `engine/specials/is-invisible.ts` lines 10–12). An own Block chain (`blockTurnsRemaining > 0`
+  or `blockAttacksForbidden`) pauses Poison and Imposition only
+  (`victimPersistentTicksPausedByBlock`, lines 203–205, checked at 213 and 235). **Curse keeps
+  draining during Block:** `applyCursesOnVictim` has no Block check (lines 258–266), and the
+  rules spec Block card says "Curse and attacks are unchanged". An up, upgraded own Shield
+  (line 217) and own points ≤ 7 (lines 221–227) pause Imposition. This follows the amended
+  spec v7 §6.5, not the earlier draft that let Block pause every chip.
+- **Amounts.** The catalog rate for the tier, never a prediction. The rates are client constants
+  in `view-model/recurring-chips.ts` (`CLIENT_POISON_LIVES`, `CLIENT_IMPOSITION_FLOOR`,
+  `CLIENT_IMPOSITION_CAP`, `CLIENT_CURSE_POINTS_PER_LIFE`) that cite the rules spec and mirror the
+  server constants (lines 39–49), as `CLIENT_SUB_CHOICE_MS` does. Curse shows a rate (1 life per
+  3 or 2 points spent).
+- **Curse at 1 life (designer 2026-10-27).** The engine never takes a Curse victim's last life:
+  at ≤ 1 life `applyOneCurse` deactivates the Curse instead of draining (lines 268–272). The chip
+  shows `ending`, not live and not paused. Invisibility still wins, because the engine skips
+  every victim tick before that check (lines 74–83).
+- **Retired test.** `screens/table/persistent-incoming.test.ts` is deleted with
+  `screens/table/persistent-incoming.ts`, which no surface has rendered since c0e9668 (Lot 14).
+  Its two cases (opponent Imposition and own Points Generator on Incoming; own Imposition once per
+  opponent on the felt) describe V2 presentation chips that spec v7 §6.5 supersedes. Recurring
+  chips list only the effects that tick against the POV (Curse on you, opponent Poison and
+  Imposition), and `view-model/recurring-chips.test.ts` covers them.
+
+---

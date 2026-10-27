@@ -127,6 +127,16 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   sub-choice lists the id. `gridThreatEntries` keeps POV in/out plus the tapped seat's
   entries, and `seatThreatIds` gives a seat's in/out ids. The tone type is
   `ReturnType<typeof threatToneFor>`, so `threats.ts` adds no `fx/` import.
+- `view-model/recurring-chips.ts` (L73-05, spec v7 §6.5, Q35): `recurringChips(view)` (also
+  `threats().recurring`) lists every Curse on the POV (`self.activePersistentEffects`) and each
+  living opponent's Poison and Imposition with `counter > 0`, in `view.players` order; none for
+  an eliminated or walk-in POV. The amount is the catalog rate for the tier from the
+  `CLIENT_*` constants (rules spec §5, mirroring `apply-persistent-effects.ts`), never a
+  prediction. `state` (`live` / `paused` / `ending`) mirrors the engine: own Invisibility
+  pauses all three; an own Block chain (`blockTurnsRemaining > 0` or `blockAttacksForbidden`)
+  pauses Poison and Imposition, and Curse keeps draining; an up, upgraded own Shield or own
+  points ≤ 7 pause Imposition; a Curse on the POV at ≤ 1 life is `ending`, because the engine
+  removes it instead of draining (designer 2026-10-27).
 
 ## Design system (V7 · Lot 72+)
 
@@ -907,9 +917,10 @@ rules above are unchanged — this section only covers how the client looks.
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
   including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
-  Opponent actives sit beside the kit portrait (`activeShield` + persistents). Imposition / Points Generator also get
-  presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
-  them in step 4 — not real pending).
+  Opponent actives sit beside the kit portrait (`activeShield` + persistents). The V2 table
+  shows no Incoming / felt chip for Imposition or Points Generator: the unwired
+  `persistent-incoming.ts` was deleted in L73-05 (spec v7 §13 #35). V7 recurring chips come
+  from `view-model/recurring-chips.ts` (View-model layer above).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
