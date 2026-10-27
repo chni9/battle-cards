@@ -21,7 +21,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | Lot | Tasks | Done |
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
-| 73 · View-model | 13 | 5 |
+| 73 · View-model | 13 | 6 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **26** |
+| **Total** | **134** | **27** |
 
 ## Designer questions still open
 
@@ -132,7 +132,7 @@ Pure, React-free view-model with behavior tests and no clock reads (§4.3). No p
 | L73-03 | **Add seats() layout modes, arc order and grid fallback.** **Acceptance:** Tests check that 360×740, 375×812 and 768×1024 are portrait, a 740×360 phone is landscape-compact and 1440×900 is desktop. They cover seat order for 2, 4 and 8 seats (next player first clockwise; walk-in has no anchor). A box where arc seats would sit under 8 px apart switches to a grid: 4 + 3 for 7 opponents, 4 + 4 for an 8-seat spectator view. No two arc seats are closer than the gap. `pnpm verify` green. | M | Medium | L73-02 | Done |
 | L73-04 | **Add threats() arrows, labels, fan-out and Mirror state.** **Acceptance:** Three Assassin attacks on the POV give three entries with three labels and no total. A ×2 attack shows the multiplied number. MEGA ATTACK on 7 opponents gives one fan-out group with 7 target badges. Spy and Thief incoming use the other tone; Sentence and Mirror use the attack tone. A redirected effect is drawn from the redirector with its badge. Mirror-eligible ids are flagged only while the prompt is open. `pnpm verify` green. | M | Medium | L72-03, L73-02 | Done |
 | L73-05 | **Add recurring chips; delete persistent-incoming.ts.** **Acceptance:** Opponent Poison while the POV has Block is paused. A Curse on the POV during Block is not paused. Own Invisibility pauses all three. Imposition is paused at 7 points and with an up, upgraded Shield, and live at 8. Upgraded tiers show their rates. Neither an eliminated owner nor a depleted counter gives a chip. `persistent-incoming.ts` is gone and nothing imports it. `pnpm verify` green. | M | Medium | L73-04 | Done |
-| L73-06 | **Add cardActions() for hand and special cards.** **Acceptance:** Each card family is tested for its target set: attack and Thief corpse ripostes stay separate, living Invisible seats are never offered, and upgraded thieves take no target. Each disabled reason has a fixture that triggers it. Regeneration tiles are priced and disabled past what the POV can afford. Card Transformer with no shared card gives 'nothing to consume'. Off-turn every action is disabled with its reason. `pnpm verify` green. | L | **High** | L72-04, L73-02 | To do |
+| L73-06 | **Add cardActions() for hand and special cards.** **Acceptance:** Each card family is tested for its target set: attack and Thief corpse ripostes stay separate, living Invisible seats are never offered, and upgraded thieves take no target. Each disabled reason has a fixture that triggers it. Regeneration tiles are priced and disabled past what the POV can afford. Card Transformer with no shared card gives 'nothing to consume'. Off-turn every action is disabled with its reason. `pnpm verify` green. | L | **High** | L72-04, L73-02 | Done |
 | L73-07 | **Add in-play card actions: own-only Upgrade and Deactivate.** **Acceptance:** An opponent's base Shield offers no Upgrade, even when the POV holds a base Shield and 1 upgrade point. Own Poison, Shield and Sentence offer Upgrade with 1 upgrade point and show it disabled at 0. Deactivate is absent on Shield and Sentence, and disabled off-turn and during a sub-choice. Shield and Sentence thumbs never request activated art. `pnpm verify` green. | M | Medium | L73-06 | To do |
 | L73-08 | **Add drop zones and dropTarget().** **Acceptance:** An attack dropped on a valid seat returns `playCard` with that target. The same drop on a living Invisible seat or a non-qualifying corpse returns null. MEGA ATTACK on a seat returns null; on the plate it returns `playCard` with no target. Regeneration on the plate returns open-choice with no intent. A special over the Sell zone returns null. Off-turn, no drag starts. `pnpm verify` green. | S | Medium | L73-06 | To do |
 | L73-09 | **Add selfStrip() and the dock.** **Acceptance:** Unspy is disabled with each of its reasons, and enabled with a living spy, 10 points and on turn. A Gambler payout of 14 is hot. A walk-in has no economy. An eliminated POV with `pendingReanimation` is Reanimating; without it, Watching. The finished board shows Stats and no Draw. The Shield thumb appears only while shield > 0. `pnpm verify` green. | M | Medium | L73-07 | To do |

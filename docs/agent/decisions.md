@@ -5066,3 +5066,29 @@ line 193, Curse lines 217–221, Poison lines 224–225, Imposition lines 228–
   Imposition), and `view-model/recurring-chips.test.ts` covers them.
 
 ---
+
+## 2026-10-27 · [P] V7 card actions mirror the server's play checks (L73-06)
+
+Source: technical spec v7 §4.3, §6.6, §11 (Q39, Q44); `apps/server/src/engine/turn/list-legal-play-card.ts`,
+`perform-action.ts` (`playCardAction`, `playMultipleAttacksAction`) and each handler's `canPlay`.
+
+- **Rule.** `cardActions` disables an action only when the view proves the server rejects it, in the
+  server's order: lock, temporarily unavailable, Invisibility, Block ban, target / consume / pool,
+  points. Target seats follow the server's per-card sets; there is no client immunity filter.
+- **Beyond V2.** Use is also disabled for Mirror and Super Mirror with nothing they can redirect,
+  upgraded Upgrade Point Thief, Spy Thief and Sentence with no living non-Invisible opponent, Card
+  Absorber on an empty pool, Block during the ban, and any unaffordable play. V2 let the server reject.
+- **Second Reanimation (designer 2026-10-27).** Use on a Reanimation is disabled with
+  `reanimation-armed` ("Reanimation already armed") while the POV's own `activePersistentEffects`
+  already holds one. That is exactly the server's `reanimation.ts` `canPlay` (#V4-12c), the only
+  path that arms a Reanimation, so at most one is ever armed. The code is appended to the fixed
+  `DISABLED_REASONS` list; it is a new string for the PR.
+- **Left enabled.** A play that needs a forced slot drop when no slot is droppable (Lot 69). The
+  client may be less strict than the server, which rejects it with an illegal-action toast.
+- **Tax** stays enabled at 1 life: `tax.ts` `canPlay` ignores lives, so `not-enough-lives` is a shop
+  reason only.
+- **Multi-attack** is hidden, not disabled, with fewer than two hand attacks
+  (`multi-attack-need-two`; `listAssassinMultiAttackCandidates` returns none), as Upgrade is hidden
+  once upgraded. Its points reason uses the two cheapest hand attacks.
+
+---

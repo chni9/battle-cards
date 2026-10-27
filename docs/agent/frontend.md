@@ -137,6 +137,17 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   pauses Poison and Imposition, and Curse keeps draining; an up, upgraded own Shield or own
   points ≤ 7 pause Imposition; a Curse on the POV at ≤ 1 life is `ending`, because the engine
   removes it instead of draining (designer 2026-10-27).
+- **Card actions (L73-06).** `view-model/card-actions.ts` `cardActions(view, card, ctx)` gives a
+  hand or special card's actions in the order Use, Upgrade, Sell, Multi-attack. A hidden action is
+  absent; an unavailable one is disabled with one `DisabledReason` from
+  `view-model/action-reasons.ts`, whose `DISABLED_REASON_COPY` holds all V7 disabled-reason copy.
+  `view-model/action-lock.ts` `actionLock(view, ctx)` gives `actions-locked` (finished board, open
+  sub-choice, eliminated POV, walk-in) before `not-your-turn`; every V7 action model starts from
+  it. `use` carries the routing: target seats, send, Regeneration tiles 1–4, or Card Transformer
+  consume options. Seats and reasons mirror `list-legal-play-card.ts`, `perform-action.ts` and each
+  handler's `canPlay` in the server's check order, and a reason shows only when the view proves the
+  server rejects. Never add a client immunity filter, and never gate a play the server accepts
+  (golden rule 8). The V2 table keeps `screens/table/card-actions.tsx` until L75.
 
 ## Design system (V7 · Lot 72+)
 
