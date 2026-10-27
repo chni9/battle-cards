@@ -184,20 +184,21 @@ describe('threats() fan-out', () => {
   it.each([
     ['a living Invisible', { activePersistentEffects: [makePersistent({ id: 'inv', cardId: 'invisibility', counter: 3 })] }],
     ['an eliminated', { isEliminated: true }],
-  ] as const)('fans out a hits-all play that skips %s opponent', (_label, p3) => {
+  ] as const)('fans out a volley that skips %s opponent', (_label, p3) => {
+    // A basic attack is not a hits-all play, so only the coverage filter can burst it.
     const view = makePlayingView({
       players: [makePlayer('me', { isYou: true }), makePlayer('p1'), makePlayer('p2'), makePlayer('p3', p3)],
       turnOrder: ['me', 'p1', 'p2', 'p3'],
       pendingEffects: [
-        makePending({ id: 't1', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'spy-thief', isUpgraded: true, queuedAt: 6 }),
-        makePending({ id: 't2', sourcePlayerId: 'p1', targetPlayerId: 'p2', cardId: 'spy-thief', isUpgraded: true, queuedAt: 6 }),
+        makePending({ id: 'v1', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'basic-attack', queuedAt: 6 }),
+        makePending({ id: 'v2', sourcePlayerId: 'p1', targetPlayerId: 'p2', cardId: 'basic-attack', queuedAt: 6 }),
       ],
     });
     const model = threats(view, null);
-    expect(model.fanOuts.map((group) => group.key)).toEqual(['p1|6|spy-thief']);
+    expect(model.fanOuts.map((group) => group.key)).toEqual(['p1|6|basic-attack']);
     expect(model.fanOuts[0]?.targets.map((target) => target.label)).toEqual([
-      { kind: 'effect', cardId: 'spy-thief' },
-      { kind: 'effect', cardId: 'spy-thief' },
+      { kind: 'damage', amount: 1 },
+      { kind: 'damage', amount: 1 },
     ]);
   });
 
