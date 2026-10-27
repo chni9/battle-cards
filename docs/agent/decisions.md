@@ -4961,3 +4961,30 @@ Source: technical spec v7 §5.2 ("11 px for any functional text"), the L72-12 fi
   hand-name floor on 320 to 360 px phones, or shorten the face text another way.
 
 ---
+
+## 2026-10-27 · [P] V7 seat tiers and badge order (L73-02)
+
+Source: technical spec v7 §6.2 (≤ 2 status badges + "+n"), §6.3 (tiers from wire fields
+only), §11 (Q36, Q46, Q47) and the Lot 73 brief's open badge-order question.
+
+- **Tier.** `eliminated` when `isEliminated` or `eliminationReveal` (the server always freezes
+  the reveal at death, `elimination-rewards.ts` `captureEliminationSnapshot`), else
+  `spy-plus` when `spied.kitId`, else `base-spy` when `spied` is present, else `unspied`. A
+  dead seat that also carries spectator `spied` shows its death reveal. `kitHidden` is true
+  for `unspied` and `base-spy` (Q66).
+- **Badges.** Every public status is one badge, in `SEAT_BADGE_KINDS` order: spying-on-you,
+  block, invisibility, sentence, shield, persistent, duplication, draw-gain, reanimation,
+  absorb-window. Active persistents and ticking Sentences count as badges: a phone seat has
+  no room for a thumbs row, and the seat sheet lists them all. Invisibility is one badge
+  with its turns, never also a persistent. A Block badge with 0 turns is the last-turn
+  attack ban (L25-01).
+- **Eliminated seats** keep only reanimation and absorb-window, the two statuses that exist
+  only on a dead seat (§6.3). They show no connection, eye or bot label, as V2 hides them
+  (`opponent-zone.tsx`). Death dumps actives and cancels the seat's Sentences
+  (`cleanupEliminatedPlayer`); the frozen Shield value shows in the resource row.
+- **Not rendered:** `activeAttackBlock`, dead since Lot 68 (Q36).
+- **Walk-in.** `watching` once any seat carries `spied` (the overlay is granted, L57-16). This is
+  the same test as `screens/claim-seat.ts` `walkInSeesPrivateHands`; the view-model cannot
+  import `screens/`. Otherwise it is `walk-in-fogged`.
+
+---

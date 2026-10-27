@@ -53,12 +53,13 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   assertions verbatim, importers repointed directly, and **no shim or re-export** stays at an
   old path. `view-model/` holds `incoming-threat-diff`, `threat-tone`, `opponent-token-chips`,
   `action-log`, `select-hint` and `game-over-awards`; the modules L72-04 moved in are listed in
-  the last bullet of this section.
+  the L72-04 bullet of this section.
 - `view-model/` has **no** React, react-dom or motion import and **no clock read**
   (`Date.now`, `performance.now`); callers pass `nowMs`. The purity block in
   `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
 - `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
-  structured-cost, hint-ids), never a `ui/` component. Nothing in `view-model/` imports from
+  structured-cost, hint-ids, seat-colors, primitives/avatar-initial,
+  seat/connection-badge-label), never a `ui/` component. Nothing in `view-model/` imports from
   `design/` or `screens/table/`.
 - `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
   (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
@@ -76,6 +77,26 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   `kit-special-card-key`, `chrome-labels`, `table-flag-intent`, `active-display` and
   `sub-choice-constants`. New code imports them from there, never from `design/` or
   `screens/table/`.
+- **Seats (`view-model/seats.ts`, L73-02; spec v7 §6.2, §6.3):** `seatList(view)` returns the
+  POV mode (`povModeOf`: `seated`, `reanimating`, `watching`, `walk-in-fogged`) and one
+  `SeatModel` per seat that is not the POV's (`!isYou`; a walk-in gets every seat), in
+  `view.players` order with `seatColorIndexOf` colours. The tier comes from wire fields only:
+  `eliminated` (`isEliminated` or `eliminationReveal`), `spy-plus` (`spied.kitId`),
+  `base-spy` (`spied` without `kitId`), else `unspied`; no log line changes it. `kitHidden`
+  is true for `unspied` and `base-spy` (Q66). `resources` always holds life, point,
+  upgradePoint and shield, each a number or `'?'` (`opponentResourceDisplay`; the dead
+  `resourcesSnapshot` is never read). `reveal` carries Spy+ live or death-frozen hand and
+  specials; opponents never get a hand count. A walk-in is `watching` once any seat carries
+  `spied` (L57-16), else `walk-in-fogged`. `povModeOf`, `connectionLabel` and
+  `seatColorIndexOf` are exported so the threat arrows and the self strip reuse them.
+- **Seat badges (L73-02):** every public status is one `SeatBadge`, in `SEAT_BADGE_KINDS`
+  order: spying-on-you, block, invisibility, sentence, shield, persistent, duplication,
+  draw-gain, reanimation, absorb-window. A seat shows the first `SEAT_VISIBLE_BADGE_COUNT`
+  (2) plus `+badgeOverflow`; the seat sheet lists all. Invisibility is one badge carrying its
+  effect, never also a persistent; a `block` badge with 0 turns is the last-turn attack ban.
+  An eliminated seat keeps only reanimation and absorb-window, with `connectionLabel` and
+  `botDifficulty` null. `activeAttackBlock` renders nothing (Q36). The bot difficulty is
+  null in the tutorial. Why: `decisions.md` 2026-10-27 "V7 seat tiers and badge order".
 
 ## Design system (V7 · Lot 72+)
 

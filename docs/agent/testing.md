@@ -112,6 +112,23 @@ behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
   (`../backlog_v7_test_classification.md`). Until that lot lands they stay as they are.
 - Moved tests keep their assertions verbatim; only import and `readFileSync` paths change.
 
+## View-model fixtures (V7 · L73-02)
+
+`apps/client/src/view-model/test-fixtures.ts` builds the wire views every Lot 73 test reads;
+tests import it and shipped code never does. `makePlayingView(overrides?)` is a Classic playing
+view: you `me`, game `TEST`, `me`'s turn, turn 1, turnOrder `['me', 'p1', 'p2']`, no deadline,
+players `me` (isYou), `p1` and `p2`, `self` from `makeSelf()`, empty queue, log, pool and
+Sentences, pool fee 1, no tutorial index, and no `isSpectator`, `claimableSeats` or
+`chatMessages`. `makePlayer(id, overrides?)` is a living, connected human with nickname = id, no
+actives, Shield, Block, Duplication, Reanimation or absorb window, and no `spied`,
+`spyingOnYou`, `eliminationReveal` or `drawGain`. `makeSelf(overrides?)` is Kamikaze with 10
+lives and every other resource 0. `makeCard(cardId)` gives `${cardId}-1` base;
+`makePending(...)` is base, `queuedAt` 1, ×1, not redirected; `makePersistent(...)` is base with
+no counter or target; `makeEliminationReveal(overrides?)` is a Kamikaze death freeze with every
+token 0. A test that needs other seats passes `players` and `turnOrder` together; a test that
+changes the POV's resources sets `self` (the POV's `PublicPlayerView` carries no private
+values). Later tasks append builders and never change these defaults (Lot 73 plan contract).
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card
