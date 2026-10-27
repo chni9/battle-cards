@@ -166,6 +166,17 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   rectangle math on half-open rects, with no DOM. It returns the exact `playCard` / `sellCard`
   intent, an open-choice result for Regeneration and Card Transformer, or `null` over an invalid
   seat, outside every valid zone, or inside two (spec v7 §6.6.3–§6.6.4).
+- `view-model/self-strip.ts` (L73-09, technical spec v7 §6.1 items 3 and 5, §6.12):
+  `selfStrip(view, ctx)` gives the self strip and, in `.dock`, the dock. Thumbs run combat
+  Shield (only while `self.shield > 0`), own actives, then own ticking Sentences
+  (`inPlayThumbs`, L73-07), and each carries `cardActions(view, ref, ctx)`. The POV mode,
+  connection text and seat colour are L73-02's `povModeOf`, `connectionLabel` and
+  `seatColorIndexOf`. Draw pays `players[you].drawGain ?? kit draw` and is
+  `hot` above 10 (L64-05). Unspy is present for a Seated or Reanimating POV and absent for a
+  Watching one. Its reason is the lock, then `no-living-spy`, then `not-enough-points`
+  (L58-07). The finished board (`readOnly`) shows `stats` instead of Draw, Unspy and Activate
+  duplication, and Shop is browse-only. A walk-in (`isSpectator`) gets no kit, resources,
+  thumbs or economy (Q38).
 
 ## Design system (V7 · Lot 72+)
 

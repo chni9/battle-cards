@@ -5117,3 +5117,20 @@ Source: technical spec v7 §11 and §13 (Q37, Q40); Appendix A `table-inspect-ac
   `CARDS_WITH_ACTIVATED_ART` lists it (Appendix A `global-activated-art-guard`).
 
 ---
+
+## 2026-10-27 · [P] V7 self strip and dock: walk-in, finished board and spectator Unspy (L73-09)
+
+Source: technical spec v7 §6.1 items 3 and 5, §6.3, §6.12 and Appendix A Q38;
+`apps/client/src/view-model/self-strip.ts`.
+
+- **Walk-in.** A walk-in's `view.self` is the server filler `EMPTY_SPECTATOR_SELF`
+  (`build-view-for.ts`), so `selfStrip` returns no kit, resources, thumbs, Draw, Shop, Unspy or
+  duplication for `isSpectator` (Q38). The V2 private zone was already text only.
+- **Finished board.** `stats` replaces Draw, Unspy and Activate duplication (§6.12). Walk-ins
+  get it too: Stats only reopens Game over and carries no economy. The strip offers no Leave
+  there, because the flag is Return home (§6.12).
+- **Unspy.** It is present for a Seated or Reanimating POV and absent for a Watching POV (§6.3,
+  spectator overlay). Its reasons follow the server's order: the lock, then no living spy, then
+  points (`clear-spy.ts` checks the spy before `payCost`).
+
+---
