@@ -4914,3 +4914,31 @@ try/catch so a private window still works") and the L72-20 review.
   the Keep line first.
 
 ---
+
+## 2026-10-27 · [P] · [DISCREPANCY] Hand card names may fall below the 11 px floor (L72-12 fix round 1 A4, L72-21 final review)
+
+Source: technical spec v7 §5.2 ("11 px for any functional text"), the L72-12 fix round 1 ruling
+(A4), and the L72-21 whole-branch final review (`d530a8a..595b1d0`).
+
+- **Spec line.** §5.2 sets the floor: 11 px for any functional text.
+- **Code line.** `ui/card/card-face.ts` `CARD_NAME_FIT.hand` has `floorPx: 10`, and
+  `cardNameFontSize` shrinks a hand name down to it. The ruling is L72-12 fix round 1 (A4): the
+  hand name may fall below 11 px, to a 10 px floor, so its widest word never breaks mid-word.
+  Until now the deviation was recorded only in `DESIGN.md` and the SDD ledger.
+- **Why.** At 320 px and up a catalog name must not break mid-word, and the catalog names cannot
+  change. "Regeneration" is the widest word (5.798 em with the card's tight tracking), and
+  "Super Regeneration" has the same widest word.
+- **Measured range.** The hand card is `clamp(64px, 19vw, 120px)`, its face is the card minus
+  4 px, and the name strip takes 97 % of the face.
+  - The name needs a 69.75 px card to stay at 11 px, which is a 367 px viewport.
+  - Below that the name sits at or near the clamp floor and renders between 10 and 11 px:
+    about 10.8 px at 360 px (face about 64.4 px) and 10.04 px at 337 px and below.
+  - The effect is therefore not limited to 320 px phones. 360 px is a §12.3 gate size and a
+    common Android width, and it is affected. The 10 px floor itself is never reached by a
+    catalog name.
+- **Not changed.** The 10 px floor stays as ruled in L72-12. `DESIGN.md` › The Floor Rule now
+  states the range 320 to about 367 px.
+- **Open.** This waits on the designer's answer, asked in the Lot 72 PR notes: accept a 10 px
+  hand-name floor on 320 to 360 px phones, or shorten the face text another way.
+
+---

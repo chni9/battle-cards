@@ -234,14 +234,20 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `dialog.test.tsx`) or mocks `ui/use-visual-viewport-box` (see `carousel.test.tsx`; a mock
   must then provide every hook the rendered tree calls).
 - **Copy scope:** `ui/ui-copy.ts` holds only the spec v7 §10.6 strings a `ui/` component adds
-  (`EXCLUDED_LABEL` and `MINIMIZE_LABEL` now, `TABLE_RULES_LABEL` in L72-16). Any other label
-  is a prop the caller fills from existing copy.
+  (`EXCLUDED_LABEL`, `MINIMIZE_LABEL`, `TABLE_RULES_LABEL`, `carouselPositionLabel`,
+  `shieldPointsLabel`, `ELIMINATED_LABEL` and `eliminatedPortraitLabel`). A new such string goes
+  there, not beside its component. Any other label is a prop the caller fills from existing
+  copy.
 - **Gallery registration:** add `ui/<area>/<area>.gallery.tsx` exporting
   `const gallery: GallerySection = { id: '<area>', title, entries: [{ id, title, render }] }`
   (`dev/gallery-registry.ts`). `dev/ui-gallery.tsx` picks it up through `import.meta.glob`; no
   central file is edited, and a duplicate section id throws. Keep stateful demo components in
   a components-only sibling `.tsx` (react-refresh). The route is `/dev/ui`
   (`dev/dev-ui-route.ts`), DEV only and absent from production builds.
+- **Preview config:** `.claude/launch.json` is committed. It is the desktop app's dev-server
+  preview configuration: a `server` entry (`pnpm --filter @card-battle/server dev`, port 2567)
+  and a `client` entry (`pnpm --filter @card-battle/client dev`, port 5173), so `/dev/ui` and the
+  table open without a hand-run `pnpm dev`. It carries no secrets and must never gain any.
 
 ### V7 overlays (L72-09)
 
@@ -771,7 +777,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block) is promoted to `main` before V7 Lot 72 merges. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block) is promoted to `main` before V7 Lot 72 merges. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

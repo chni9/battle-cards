@@ -34,6 +34,7 @@ import { artFor } from '../asset-lookup';
 import { Icon } from '../icons/icon';
 import { VERSO_CLASS, VERSO_FRAME_CLASS, VERSO_LIGHT_CLASS, rimLayerClass } from '../card/card-classes';
 import { CHROME_FOCUS_CLASS, ICON_WELL_CLASS } from '../primitives/chrome-classes';
+import { ELIMINATED_LABEL, eliminatedPortraitLabel } from '../ui-copy';
 import { kitPortraitAlt } from './kit-portrait-label';
 
 export interface KitPortraitProps {
@@ -62,8 +63,6 @@ const FRAME_CLASS =
   'relative inline-block aspect-3/4 shrink-0 rounded-v7-card shadow-v7-card select-none [-webkit-touch-callout:none]';
 /** A 44 px target (spec v7 §5.3). Focus is the project ring; `--cta` is the selection outline. */
 const BUTTON_CLASS = `min-h-11 min-w-11 cursor-pointer ${CHROME_FOCUS_CLASS}`;
-
-const ELIMINATED_LABEL = 'Eliminated';
 
 const ART_FACE_CLASS =
   'absolute inset-0 flex items-center justify-center overflow-hidden rounded-v7-card bg-linear-to-b from-v7-card-face-0 to-v7-card-face-1 p-[6%]';
@@ -171,7 +170,7 @@ export function KitPortrait({
       <button
         {...anchors}
         type="button"
-        aria-label={ariaLabel ?? (isEliminated ? `${alt}, ${ELIMINATED_LABEL.toLowerCase()}` : alt)}
+        aria-label={ariaLabel ?? (isEliminated ? eliminatedPortraitLabel(alt) : alt)}
         onClick={() => {
           onClick();
         }}

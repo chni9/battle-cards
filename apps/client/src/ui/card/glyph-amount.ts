@@ -11,6 +11,7 @@
 import type { ResourceKind } from '../asset-lookup';
 import type { IconName } from '../icons/icon-names';
 import { spokenCost, type CostSign, type StructuredCost } from '../structured-cost';
+import { shieldPointsLabel } from '../ui-copy';
 
 export type GlyphAmount = StructuredCost | { readonly kind: 'shield'; readonly amount: number };
 
@@ -50,7 +51,7 @@ export function spokenGlyphAmount(
     return spokenCost(amount, multiplier, signed);
   }
 
-  const base = `${String(amount.amount)} shield ${amount.amount === 1 ? 'point' : 'points'}`;
+  const base = shieldPointsLabel(amount.amount);
   const signedBase = signed === 'cost' ? `minus ${base}` : signed === 'gain' ? `plus ${base}` : base;
   return multiplier !== undefined && multiplier !== 1 ? `${String(multiplier)}×${signedBase}` : signedBase;
 }

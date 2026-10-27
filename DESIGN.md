@@ -106,8 +106,9 @@ who threatens whom, for how much, and when it lands must read at a glance, with 
 seats on a 375 px screen. The mood is playful and confident, never glossy or noisy, and
 nothing carries information by color or motion alone.
 
-This file describes **Lot 72 only**: tokens, fonts, the ground, the motion helpers and the icon
-set. The V2 light theme in `index.css` still governs every screen until that screen's V7 lot
+This file describes **Lot 72 only**: tokens, fonts, the ground, the motion helpers, the icon
+set and the illustrations, plus the primitives, overlays, cost glyphs, card, kit, chat, rules,
+coach, banners and seats built on them. The V2 light theme in `index.css` still governs every screen until that screen's V7 lot
 lands (spec v7 §4.4); no old screen is recolored.
 
 **Key Characteristics:**
@@ -247,9 +248,10 @@ Tailwind utilities: `font-v7-display`, `font-v7-card`, `font-v7-body`, `text-v7-
 ### Named Rules
 **The Floor Rule.** No functional text under 11px (Impeccable `undersized-ui-text`) and no text
 input under 16px. One exception: a hand card's name may shrink below 11px so its longest word
-never breaks (Card, L72-12). It happens only for names whose widest word is long, only on
-viewports under about 367px (a hand card under 69.75px), and bottoms out at 10.04px on the 64px
-clamp floor; the 10px floor is never reached by a catalog name.
+never breaks (Card, L72-12). It happens only for names whose widest word is long, on viewports
+from 320px up to about 367px (a hand card under 69.75px): about 10.8px at 360px, and 10.04px at
+337px and below, on the 64px clamp floor. The 10px floor is never reached by a catalog name. It
+waits on the designer (decisions.md 2026-10-27).
 
 **The Vital Rule.** Own lives are at least 20px and the incoming damage badge at least 22px on
 a 375 px phone.
@@ -871,7 +873,8 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (97 % of the face, face = card − 4px), reached at a 367px viewport (19vw). From about 367px
   down to 337px, where the 64px clamp floor starts, such a name shrinks from 11px to 10.04px,
   and stays at 10.04px below; the 10px floor itself is never reached by a catalog name.
-  Measured: on a 375px phone every hand name stays 11px; at 320px the smallest is 10.04px.
+  Measured: on a 375px phone every hand name stays 11px; at 360px "Regeneration" is about 10.8px
+  (face 64.4px); at 320px the smallest is 10.04px.
   "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is unsupported, the
   name falls back to its strip's size class.
 - **Chips** (Fredoka 700, tabular, a sticker look: pill, 1px `--card-face-0` ring, small

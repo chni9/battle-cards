@@ -63,6 +63,10 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         before: 'Attack Thief, Absorber+ and Super Absorber+ showed outdated card text.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'The tutorial showed a stray life icon on its resources tip.',
+        after: 'Fixed some bugs.',
+      },
     ]);
   });
 
