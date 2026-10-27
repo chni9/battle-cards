@@ -4,6 +4,8 @@
  * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
  * `/dev/ui` is the DEV-only V7 component gallery (technical spec v7 §4.2): it is lazily
  * imported behind `import.meta.env.DEV`, so production builds carry no gallery chunk.
+ * The playing table follows the temporary `?ui=next` switch (technical spec v7 §4.4 / L72-20,
+ * removed in L75); tutorial rooms always keep the classic table.
  */
 
 import { defaultLobbyRules } from '@card-battle/shared';
@@ -12,6 +14,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { isDevUiRoute } from './dev/dev-ui-route';
 import { useRoomConnection } from './net/use-room-connection';
 import { AdminApp } from './screens/admin/admin-app';
+import { ArenaScreen } from './screens/arena/arena-screen';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
@@ -20,6 +23,12 @@ import { LobbyScreen } from './screens/lobby';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen } from './screens/table';
+import {
+  applyUiSwitchParam,
+  browserUiSwitchStorage,
+  parseUiSwitchParam,
+  resolveTableUi,
+} from './ui-switch';
 
 const UiGallery = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import('./dev/ui-gallery')).UiGallery }))
@@ -93,6 +102,10 @@ function GameApp() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [claimDismissedKey, setClaimDismissedKey] = useState<string | null>(null);
   const [pendingSoloMenu, setPendingSoloMenu] = useState<SoloMenuSeed | null>(null);
+  // Once per page load, never per 250 ms tick: ?ui= writes or clears the stored choice.
+  const [tablePreference] = useState(() =>
+    applyUiSwitchParam(parseUiSwitchParam(window.location.search), browserUiSwitchStorage()),
+  );
 
   const claimableSeats = view?.claimableSeats ?? [];
   const claimableKey = claimableSeats.map((seat) => seat.playerId).join('|');
@@ -154,6 +167,7 @@ function GameApp() {
           onDismissActionReject={clearActionReject}
           statusLabel={STATUS_LABELS[status]}
           nowMs={nowMs}
+          tableUi={resolveTableUi({ preference: tablePreference, playKind: view.playKind })}
           onLeave={() => {
             void leaveGame();
           }}
@@ -184,9 +198,13 @@ function GameApp() {
   }
 
   if (view?.phase === 'playing') {
+    const Board =
+      resolveTableUi({ preference: tablePreference, playKind: view.playKind }) === 'next'
+        ? ArenaScreen
+        : TableScreen;
     return (
       <>
-        <TableScreen
+        <Board
           view={view}
           actionReject={actionReject}
           onDismissActionReject={clearActionReject}

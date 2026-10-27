@@ -4,6 +4,8 @@
  * PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
  * One FeedbackDialog owned here so stats / ask / turn-strip `!` never stack (L47-03).
  * Finished hub leave goes through ask-once (L57-03).
+ * The finished board follows the temporary table switch via `tableUi` (technical spec v7
+ * §4.4 / L72-20, removed in L75).
  */
 
 import type { FinishedStateView } from '@card-battle/shared';
@@ -25,8 +27,10 @@ import {
   shouldPlayAgainAfterAskDismiss,
   type EndFeedbackMode,
 } from './end-feedback';
+import { ArenaScreen } from './arena/arena-screen';
 import { GameOverDialog } from './game-over-dialog';
 import { TableScreen } from './table';
+import type { TableUi } from '../ui-switch';
 import { TABLE_BANNER_MS } from '../view-model/table-banner';
 
 export interface EndScreenProps {
@@ -37,6 +41,8 @@ export interface EndScreenProps {
   nowMs: number;
   onLeave: () => void;
   onPlayAgain?: () => void;
+  /** Table switch decision from App (technical spec v7 §4.4); classic when omitted. L75 removes it. */
+  tableUi?: TableUi;
 }
 
 const noop = (): void => {
@@ -51,6 +57,7 @@ export function EndScreen({
   nowMs,
   onLeave,
   onPlayAgain,
+  tableUi = 'classic',
 }: EndScreenProps): ReactElement {
   const [bannerElapsed, setBannerElapsed] = useState(false);
   const [statsDismissed, setStatsDismissed] = useState(false);
@@ -132,9 +139,11 @@ export function EndScreen({
     };
   }, []);
 
+  const Board = tableUi === 'next' ? ArenaScreen : TableScreen;
+
   return (
     <>
-      <TableScreen
+      <Board
         view={view.finalTable}
         actionReject={actionReject}
         onDismissActionReject={onDismissActionReject}

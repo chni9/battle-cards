@@ -36,8 +36,8 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
-| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
+| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (renders `TableScreen` until L74-01) |
+| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
@@ -1175,6 +1175,20 @@ rules above are unchanged — this section only covers how the client looks.
   `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
   Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
   Client ranks recap numbers only (`view-model/game-over-awards.ts`); do not parse `exportLog`.
+- **Table UI switch (technical spec v7 §4.4 · L72-20, removed in L75):** `?ui=next` writes
+  `localStorage['card-battle.v7.ui'] = 'next'`, `?ui=classic` removes it, else the stored
+  value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
+  rooms always get classic. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
+  each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
+  `ArenaScreen` renders `TableScreen` until L74-01. Storage access is `try/catch` and a
+  blocked store degrades to classic (or to the param for that load); the param is never
+  stripped from the URL.
+- **Client storage keys** (no accounts; every helper guards the storage accessor in try/catch,
+  and the V7 switch also guards each read and write): localStorage
+  `card-battle.v6.howToPlaySeen`, `card-battle.v6.lastSeenReleaseId`, `card-battle.v6.hints`,
+  `card-battle.v6.feedbackAsked.<gameCode>` and `card-battle.v7.ui` (table switch, L72-20,
+  removed in L75); sessionStorage `card-battle:reconnection-token` and
+  `card-battle.v6.inboxPassword`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
