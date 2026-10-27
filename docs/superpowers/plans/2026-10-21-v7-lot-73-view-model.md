@@ -1423,7 +1423,7 @@ Invisible seats (spec v7 §6.5). Labels stay per effect, never summed.
    - MEGA ATTACK, Suicide and Super Mirror hit every alive opponent (`mega-attack.ts`, `suicide.ts`, `super-mirror.ts`).
 
    The rule therefore also covers the Review's Assassin volley and Super Mirror copies, which keep the original `queuedAt` (`duplicate-pending-effect.ts`). Because the test is literal, a burst turns into separate arrows once its first target resolves. This is the plan's default; the designer may override it (Appendix B, Q1).
-2. **One target is a plain arrow.** A burst replaces several arrows ("instead of 7 arrows"). One target has nothing to compress, and an arrow names source and target more precisely. Default; designer question (Appendix B, Q2).
+2. **One target is a plain arrow.** A burst replaces several arrows ("instead of 7 arrows"). One target has nothing to compress, and an arrow names source and target more precisely. Decided by the designer on 2026-10-27 (Appendix B, Q2).
 3. **Fan-out targets.** There is one target row per effect, in wire order. A seat hit twice gets two badges with their own labels, never a per-seat sum (golden rule 1). `fanOuts` is in first-seen wire order.
 4. **Self-target and relation.** Base Suicide queues on its own user (`suicide.ts`, the `!card.isUpgraded` branch). That entry is `incoming` (relation checks the target first), takes `threatToneFor('suicide')` = `effect`, and never joins a fan-out.
 5. **Tone type.** `ReturnType<typeof threatToneFor> | 'mine'`, not an `import type` from `fx/`. This keeps the frontend.md rule that only `threat-tone.ts` and `opponent-token-chips.ts` reach into `fx/`.
@@ -1468,7 +1468,16 @@ export const CLIENT_IMPOSITION_FLOOR = 7;
 export const CLIENT_IMPOSITION_CAP = { base: 2, upgraded: 4 } as const;
 /** Rules spec §5 Curse (lines 217, 221): 1 life per 3 / 2 points spent; mirrors CURSE_POINTS_PER_LIFE_*. */
 export const CLIENT_CURSE_POINTS_PER_LIFE = { base: 3, upgraded: 2 } as const;
+/**
+ * live = ticks on the POV's next turn; paused = the engine skips it (spec v7 §6.5);
+ * ending = a Curse on the POV at ≤ 1 life, which the engine removes instead of draining
+ * (apply-persistent-effects.ts applyOneCurse; designer 2026-10-27).
+ */
+export const RECURRING_CHIP_STATES = ['live', 'paused', 'ending'] as const;
+export type RecurringChipState = (typeof RECURRING_CHIP_STATES)[number];
 ```
+
+  - `RecurringChip` carries `state: RecurringChipState` in place of the contract draft's `paused: boolean`, so a chip can never be both paused and ending (AGENTS.md §6: encode invariants in types).
 
   - in `threats.ts`: `ThreatsModel` gains `recurring: readonly RecurringChip[]`, and `threats()` sets it to `recurringChips(view)`.
 
@@ -1509,16 +1518,16 @@ function table(input: {
   });
 }
 
-function pausedById(view: PlayingStateView): Record<string, boolean> {
-  return Object.fromEntries(recurringChips(view).map((chip) => [chip.effectId, chip.paused]));
+function stateById(view: PlayingStateView): Record<string, string> {
+  return Object.fromEntries(recurringChips(view).map((chip) => [chip.effectId, chip.state]));
 }
 
 describe('recurringChips (spec v7 §6.5, Q35)', () => {
   it('lists a Curse on the POV and opponent Poison and Imposition at their base rates', () => {
     expect(recurringChips(table({}))).toEqual([
-      { effectId: 'cu1', cardId: 'curse', ownerPlayerId: 'me', isUpgraded: false, amount: { kind: 'life-per-points-spent', pointsPerLife: 3 }, paused: false },
-      { effectId: 'po1', cardId: 'poison', ownerPlayerId: 'p1', isUpgraded: false, amount: { kind: 'lives-per-turn', lives: 1 }, paused: false },
-      { effectId: 'im1', cardId: 'imposition', ownerPlayerId: 'p2', isUpgraded: false, amount: { kind: 'points-above-floor', maxPoints: 2, floor: 7 }, paused: false },
+      { effectId: 'cu1', cardId: 'curse', ownerPlayerId: 'me', isUpgraded: false, amount: { kind: 'life-per-points-spent', pointsPerLife: 3 }, state: 'live' },
+      { effectId: 'po1', cardId: 'poison', ownerPlayerId: 'p1', isUpgraded: false, amount: { kind: 'lives-per-turn', lives: 1 }, state: 'live' },
+      { effectId: 'im1', cardId: 'imposition', ownerPlayerId: 'p2', isUpgraded: false, amount: { kind: 'points-above-floor', maxPoints: 2, floor: 7 }, state: 'live' },
     ]);
   });
 
@@ -1539,24 +1548,31 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
     ['blockTurnsRemaining > 0', { blockTurnsRemaining: 2 }],
     ['blockAttacksForbidden', { blockAttacksForbidden: true }],
   ] as const)('pauses opponent Poison and Imposition, not a Curse on the POV, during Block (%s)', (_label, me) => {
-    expect(pausedById(table({ me }))).toEqual({ cu1: false, po1: true, im1: true });
+    expect(stateById(table({ me }))).toEqual({ cu1: 'live', po1: 'paused', im1: 'paused' });
   });
 
   it('pauses all three under own Invisibility', () => {
     const view = table({ self: { activePersistentEffects: [invisibility, curse('cu1')] } });
-    expect(pausedById(view)).toEqual({ cu1: true, po1: true, im1: true });
+    expect(stateById(view)).toEqual({ cu1: 'paused', po1: 'paused', im1: 'paused' });
   });
 
   it('pauses Imposition at 7 points and keeps it live at 8', () => {
-    expect(pausedById(table({ self: { points: 7 } }))['im1']).toBe(true);
-    expect(pausedById(table({ self: { points: 8 } }))['im1']).toBe(false);
-    expect(pausedById(table({ self: { points: 0 } }))).toEqual({ cu1: false, po1: false, im1: true });
+    expect(stateById(table({ self: { points: 7 } }))['im1']).toBe('paused');
+    expect(stateById(table({ self: { points: 8 } }))['im1']).toBe('live');
+    expect(stateById(table({ self: { points: 0 } }))).toEqual({ cu1: 'live', po1: 'live', im1: 'paused' });
   });
 
   it('pauses Imposition only under an up, upgraded Shield; Poison keeps ticking', () => {
-    expect(pausedById(table({ self: { shield: 3, shieldIsUpgraded: true } }))).toEqual({ cu1: false, po1: false, im1: true });
-    expect(pausedById(table({ self: { shield: 3, shieldIsUpgraded: false } }))['im1']).toBe(false);
-    expect(pausedById(table({ self: { shield: 0, shieldIsUpgraded: true } }))['im1']).toBe(false);
+    expect(stateById(table({ self: { shield: 3, shieldIsUpgraded: true } }))).toEqual({ cu1: 'live', po1: 'live', im1: 'paused' });
+    expect(stateById(table({ self: { shield: 3, shieldIsUpgraded: false } }))['im1']).toBe('live');
+    expect(stateById(table({ self: { shield: 0, shieldIsUpgraded: true } }))['im1']).toBe('live');
+  });
+
+  it('ends a Curse on the POV at 1 life unless Invisibility pauses it (designer 2026-10-27)', () => {
+    expect(stateById(table({ self: { lives: 1 } }))).toEqual({ cu1: 'ending', po1: 'live', im1: 'live' });
+    expect(stateById(table({ self: { lives: 2 } }))['cu1']).toBe('live');
+    expect(stateById(table({ self: { lives: 1, activePersistentEffects: [invisibility, curse('cu1')] } }))['cu1']).toBe('paused');
+    expect(stateById(table({ self: { lives: 1 }, me: { blockTurnsRemaining: 2 } }))['cu1']).toBe('ending');
   });
 
   it('gives no chip for an eliminated owner or a depleted counter', () => {
@@ -1613,15 +1629,15 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
        - `shieldStops`: `view.self.shield > 0 && view.self.shieldIsUpgraded`;
        - `belowFloor`: `view.self.points <= CLIENT_IMPOSITION_FLOOR`.
      - Walk `view.players` in order.
-       - On the POV's seat, emit one chip for each `curse` in `view.self.activePersistentEffects`, in order, with `ownerPlayerId = view.you` and `paused = invisible`.
-       - On each living opponent, emit one chip for each `poison` or `imposition` in its `activePersistentEffects` whose `counter !== null && counter > 0`, in order. Poison gets `paused = invisible || blocked`. Imposition gets `paused = invisible || blocked || shieldStops || belowFloor`.
+       - On the POV's seat, emit one chip for each `curse` in `view.self.activePersistentEffects`, in order, with `ownerPlayerId = view.you` and `state = invisible ? 'paused' : view.self.lives <= 1 ? 'ending' : 'live'`. Invisibility comes first because the engine skips every victim tick before `applyOneCurse` reads the lives (`apply-persistent-effects.ts:74-83`, `:268-272`).
+       - On each living opponent, emit one chip for each `poison` or `imposition` in its `activePersistentEffects` whose `counter !== null && counter > 0`, in order. Poison is `'paused'` when `invisible || blocked`, else `'live'`. Imposition is `'paused'` when `invisible || blocked || shieldStops || belowFloor`, else `'live'`.
      - Each amount is the tier's constant (`isUpgraded ? X.upgraded : X.base`).
   2. **`threats.ts`.** Add `recurring: readonly RecurringChip[]` to `ThreatsModel` with a doc line citing §6.5 recurring chips. Return `recurring: recurringChips(view)` from `threats()`. Use `import { recurringChips, type RecurringChip } from './recurring-chips'`. `recurring-chips.ts` never imports `threats.ts`, so there is no cycle.
   3. **`incoming-threat-diff.ts`.** Make a comment-only change on line 8: replace `` /** Synthetic ids from `persistent-incoming.ts` — not engine queue entries. */ `` with `` /** Legacy synthetic `persistent:` ids (V2 presentation chips, module deleted in L73-05) — never engine queue entries. */ ``.
   4. **Delete** with `git rm apps/client/src/screens/table/persistent-incoming.ts apps/client/src/screens/table/persistent-incoming.test.ts`.
   5. **Check nothing references it.** `grep -rn "persistent-incoming\|buildPersistentIncomingChips\|buildPersistentOthersChips" apps packages` must print nothing. Before this task it matched only the module, its test, and the `incoming-threat-diff.ts:8` comment (verified 2026-10-27).
 
-- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/recurring-chips.test.ts apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  2 passed (2)`, `Tests  38 passed (38)` (11 + 27). Then run `pnpm typecheck`, which must be clean and proves nothing imported the deleted module.
+- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/recurring-chips.test.ts apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  2 passed (2)`, `Tests  39 passed (39)` (12 + 27). Then run `pnpm typecheck`, which must be clean and proves nothing imported the deleted module.
 
 - [ ] **Step 5: Docs.**
   - **`docs/agent/frontend.md`, V2 bullet.** In the `**Activated art**` bullet, replace these three lines:
@@ -1649,9 +1665,11 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
       living opponent's Poison and Imposition with `counter > 0`, in `view.players` order; none for
       an eliminated or walk-in POV. The amount is the catalog rate for the tier from the
       `CLIENT_*` constants (rules spec §5, mirroring `apply-persistent-effects.ts`), never a
-      prediction. `paused` mirrors the engine: own Invisibility pauses all three; an own Block
-      chain (`blockTurnsRemaining > 0` or `blockAttacksForbidden`) pauses Poison and Imposition,
-      and Curse keeps draining; an up, upgraded own Shield or own points ≤ 7 pause Imposition.
+      prediction. `state` (`live` / `paused` / `ending`) mirrors the engine: own Invisibility
+      pauses all three; an own Block chain (`blockTurnsRemaining > 0` or `blockAttacksForbidden`)
+      pauses Poison and Imposition, and Curse keeps draining; an up, upgraded own Shield or own
+      points ≤ 7 pause Imposition; a Curse on the POV at ≤ 1 life is `ending`, because the engine
+      removes it instead of draining (designer 2026-10-27).
     ```
 
   - **`docs/agent/decisions.md`.** Append this entry at the end of the file, after the L73-03 entry's closing `---`; it closes with its own `---`. Use the commit date in the heading if it is later than 2026-10-27.
@@ -1678,6 +1696,10 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
       `CLIENT_IMPOSITION_CAP`, `CLIENT_CURSE_POINTS_PER_LIFE`) that cite the rules spec and mirror the
       server constants (lines 39–49), as `CLIENT_SUB_CHOICE_MS` does. Curse shows a rate (1 life per
       3 or 2 points spent).
+    - **Curse at 1 life (designer 2026-10-27).** The engine never takes a Curse victim's last life:
+      at ≤ 1 life `applyOneCurse` deactivates the Curse instead of draining (lines 268–272). The chip
+      shows `ending`, not live and not paused. Invisibility still wins, because the engine skips
+      every victim tick before that check (lines 74–83).
     - **Retired test.** `screens/table/persistent-incoming.test.ts` is deleted with
       `screens/table/persistent-incoming.ts`, which no surface has rendered since c0e9668 (Lot 14).
       Its two cases (opponent Imposition and own Points Generator on Incoming; own Imposition once per
@@ -1701,8 +1723,9 @@ feat(view-model): add recurring chips (L73-05)
 
 Own Block pauses opponent Poison and Imposition but not a Curse on the
 POV (rules spec Block, apply-persistent-effects.ts); own Invisibility
-pauses all three. Deletes the unwired persistent-incoming.ts and its
-test (spec v7 §6.5, §13 #35).
+pauses all three. A Curse on the POV at 1 life shows as ending (designer
+2026-10-27). Deletes the unwired persistent-incoming.ts and its test
+(spec v7 §6.5, §13 #35).
 ```
 
 **Acceptance map:**
@@ -1711,6 +1734,7 @@ test (spec v7 §6.5, §13 #35).
 - Imposition paused at 7 points and under an up, upgraded Shield, live at 8: `pauses Imposition at 7 points and keeps it live at 8` and `pauses Imposition only under an up, upgraded Shield; Poison keeps ticking`.
 - Upgraded tiers show their rates: `shows the upgraded rate of each tier`.
 - No chip for an eliminated owner or a depleted counter: `gives no chip for an eliminated owner or a depleted counter`.
+- Beyond the Acceptance (designer 2026-10-27): a Curse on the POV at 1 life is `ending`: `ends a Curse on the POV at 1 life unless Invisibility pauses it (designer 2026-10-27)`.
 - `persistent-incoming.ts` is gone and nothing imports it: Step 3 items 4–5 (`git rm`, empty grep) and the clean `pnpm typecheck` in Step 4.
 - `pnpm verify` green: Step 6.
 
@@ -1731,10 +1755,10 @@ test (spec v7 §6.5, §13 #35).
    - A Poison owned by an Invisible opponent still ticks. The server never checks the owner, so the chip is not paused.
 5. **Order.** Chips follow `view.players` order. Within a seat they follow its `activePersistentEffects` order, and the POV's seat uses `self.activePersistentEffects`.
 6. **Chip scope.** Only the three cards §6.5 lists get a chip. Points Generator, Roulette, Super Absorber, Invisibility and Sentence get none. Super Absorber copies the POV's ledger rather than draining a fixed rate.
-7. **Curse at 1 life is not marked paused.** The engine ends a Curse at ≤ 1 life instead of draining (lines 269–272), but §6.5 does not list this case, so the chip shows live. Default; designer question (Appendix B, Q3).
+7. **Curse at 1 life is `ending` (designer 2026-10-27).** The engine ends a Curse at ≤ 1 life instead of draining (lines 268–272), so the chip says it is about to end. Invisibility outranks it (`'paused'`), as in the engine. Block does not change it.
 8. **Constant names.** The names use the `CLIENT_` prefix after `CLIENT_SUB_CHOICE_MS`, so `grep` never confuses them with the server constants. Tests assert literal numbers (1, 2, 7, 2, 4, 3, 2), so a drifting constant fails a test.
 9. **`isPersistentPresentationId` stays.** Its V2 consumers go in L75. Only the comment that names the deleted file changes, so the Step 3 `grep` is clean.
-10. **`paused` reads the current view only.** It is not a turn simulation. For example, `blockAttacksForbidden` stays true on the last chain turn (`state-view.ts` doc), and the chip follows it.
+10. **`state` reads the current view only.** It is not a turn simulation. For example, `blockAttacksForbidden` stays true on the last chain turn (`state-view.ts` doc), and the chip follows it.
 
 ---
 
@@ -1758,7 +1782,8 @@ test (spec v7 §6.5, §13 #35).
   `makePersistent`, `makePlayer`, `makePlayingView`, `makeSelf`.
 - Produces (contract names unchanged):
   - `action-lock.ts`: `ActionContext`, `LockReason`, `actionLock`.
-  - `action-reasons.ts`: `DISABLED_REASONS`, `DisabledReason`, `DISABLED_REASON_COPY`,
+  - `action-reasons.ts`: `DISABLED_REASONS` (the contract list plus `'reanimation-armed'`, appended last by
+    designer decision 2026-10-27), `DisabledReason`, `DISABLED_REASON_COPY`,
     `ActionAvailability`, plus `availabilityFor(reason: DisabledReason | null): ActionAvailability`
     (`{ enabled: reason === null, reason }`; L73-07, L73-09 and L73-10 build every availability with it).
   - `card-actions.ts`: `CardRef` (hand, special, read-only), `CardActionKind`, `CardAction`,
@@ -1833,6 +1858,7 @@ describe('disabled reasons (spec v7 §10.6, §11)', () => {
       'temporarily-unavailable': 'Temporarily unavailable',
       'no-living-spy': 'Nobody is spying on you',
       'pool-empty': 'Pool empty',
+      'reanimation-armed': 'Reanimation already armed',
     });
   });
   it('builds an availability with a reason only when disabled', () => {
@@ -1842,7 +1868,7 @@ describe('disabled reasons (spec v7 §10.6, §11)', () => {
 });
 ```
 
-`card-actions.test.ts` (32 blocks). Header and builders:
+`card-actions.test.ts` (33 blocks). Header and builders:
 ```ts
 import type { CardId, PendingEffectView, PlayingStateView, PrivateSelfView, SubChoiceRequiredPayload } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
@@ -1972,6 +1998,12 @@ function crowdedTable(): PlayingStateView {
     });
     ```
 29. Card Absorber: `useReason(viewWith({ points: 4 }), special('card-absorber'))` → `'pool-empty'`; with `{ pool: [makeCard('spy')] }` → `null`.
+33. (In this describe; numbered last so blocks 30–32 keep their numbers.) `greys a second Reanimation while one is armed (reanimation.ts canPlay, designer 2026-10-27)`: with `const ARMED = makePersistent({ id: 'pe-rean', cardId: 'reanimation' })`,
+    - `useReason(viewWith({ points: 8 }), special('reanimation'))` → `null`;
+    - `useReason(viewWith({ points: 8, activePersistentEffects: [ARMED] }), special('reanimation'))` → `'reanimation-armed'`;
+    - `useReason(viewWith({ points: 0, activePersistentEffects: [ARMED] }), special('reanimation'))` → `'reanimation-armed'` (the card check comes before points);
+    - `useReason(viewWith({ points: 8, activePersistentEffects: [ARMED] }, { currentTurnPlayerId: 'p1' }), special('reanimation'))` → `'not-your-turn'` (the lock comes first);
+    - an opponent's armed Reanimation does not count: `useReason(viewWith({ points: 8 }, { players: [makePlayer('me', { isYou: true }), makePlayer('p1', { activePersistentEffects: [ARMED] }), makePlayer('p2')] }), special('reanimation'))` → `null`.
 
 `describe('Multi-attack (Assassin; Q44; Appendix A assassin-multi-attack)')` with
 `const ATTACKS = [makeCard('basic-attack'), makeCard('strong-attack'), makeCard('spy')];` and
@@ -2042,6 +2074,7 @@ Expected: all four files fail with `Failed to resolve import "./action-lock"` (o
 | mirror | `send` | `no-valid-target` unless a pending effect with `targetPlayerId === you` is an attack, base Mirror: not upgraded; never `redirectedBy 'super-mirror'`; `mega-attack` only for upgraded Mirror and base MEGA | `mirror.ts:14`; `mirror-choice.ts:32-66` |
 | super-mirror | `send` | `no-valid-target` unless any `isAttackCardId` effect targets the POV | `super-mirror.ts:23`; `mirror-choice.ts:71-75` |
 | card-absorber | `send` | `pool-empty` when `view.pool.length === 0` | `card-absorber.ts:17` |
+| reanimation | `send` | `reanimation-armed` when `self.activePersistentEffects` already holds a `reanimation` (designer 2026-10-27: grey it, never two armed) | `reanimation.ts:14-27` (#V4-12c) |
 | regeneration | `regeneration` | tiles 1–4, `totalCost = perLife × n`; perLife from `structuredPlayCost(SHARED_CARD_CATALOG.regeneration, isUpgraded)` (3, or 2 upgraded) | `regeneration.ts:12-40`; `list-legal-play-card.ts:75-99` |
 | card-transformer | `consume` | options `self.hand.filter((c) => isSharedCardId(c.cardId))`; `nothing-to-consume` when empty | `card-transformer.ts:20-40`; `list-legal-play-card.ts:101-133` |
 | mega-attack, block, every other card | `send` | none | each handler's `canPlay` (`targetPlayerId === null`) |
@@ -2052,7 +2085,7 @@ Expected: all four files fail with `Failed to resolve import "./action-lock"` (o
   ?? (isTemporarilyUnavailableCardId(cardId) ? 'temporarily-unavailable' : null)
   ?? (ownInvisible(view) && cardActsOnOpponents(cardId) ? 'invisibility' : null)   // self.activePersistentEffects
   ?? (povBanned(view) && (isAttackCardId(cardId) || cardId === 'block') ? 'attack-ban' : null) // POV public blockAttacksForbidden
-  ?? cardCheck(view, instance, routing)     // the table's no-valid-target / nothing-to-consume / pool-empty
+  ?? cardCheck(view, instance, routing)     // the table's no-valid-target / nothing-to-consume / pool-empty / reanimation-armed
   ?? (self.points < playPoints(instance) ? 'not-enough-points' : null) // regeneration: perLife; else getCard(id)?.cost.points ?? 0
   ```
   Each Regeneration tile is `availabilityFor(useReason ?? (self.points < totalCost ? 'not-enough-points' : null))`.
@@ -2062,7 +2095,7 @@ Expected: all four files fail with `Failed to resolve import "./action-lock"` (o
   (points < sum of the two cheapest hand-attack costs ? not-enough-points)`; rows are the hand's
   shared attacks in hand order, each with the attack seat ids. Doc comments cite the table's sources.
 
-- [ ] **Step 4: Run them and see them pass.** Same command as Step 2: all 4 files pass (4 + 2 + 32 + 2 `it` / `it.each` blocks; Vitest counts each `it.each` row as its own test).
+- [ ] **Step 4: Run them and see them pass.** Same command as Step 2: all 4 files pass (4 + 2 + 33 + 2 `it` / `it.each` blocks; Vitest counts each `it.each` row as its own test).
   Then `pnpm vitest run apps/client/src/view-model` stays green.
 
 - [ ] **Step 5: Docs.**
@@ -2094,10 +2127,13 @@ Expected: all four files fail with `Failed to resolve import "./action-lock"` (o
   - **Beyond V2.** Use is also disabled for Mirror and Super Mirror with nothing they can redirect,
     upgraded Upgrade Point Thief, Spy Thief and Sentence with no living non-Invisible opponent, Card
     Absorber on an empty pool, Block during the ban, and any unaffordable play. V2 let the server reject.
-  - **Left enabled.** A second Reanimation while one is armed (`reanimation.ts` `canPlay`) and a play
-    that needs a forced slot drop when no slot is droppable (Lot 69). The client may be less strict than
-    the server, which rejects them with an illegal-action toast. No reason code is added; whether
-    Reanimation gets one is a designer question in the Lot 73 PR.
+  - **Second Reanimation (designer 2026-10-27).** Use on a Reanimation is disabled with
+    `reanimation-armed` ("Reanimation already armed") while the POV's own `activePersistentEffects`
+    already holds one. That is exactly the server's `reanimation.ts` `canPlay` (#V4-12c), the only
+    path that arms a Reanimation, so at most one is ever armed. The code is appended to the fixed
+    `DISABLED_REASONS` list; it is a new string for the PR.
+  - **Left enabled.** A play that needs a forced slot drop when no slot is droppable (Lot 69). The
+    client may be less strict than the server, which rejects it with an illegal-action toast.
   - **Tax** stays enabled at 1 life: `tax.ts` `canPlay` ignores lives, so `not-enough-lives` is a shop
     reason only.
   - **Multi-attack** is hidden, not disabled, with fewer than two hand attacks
@@ -2122,14 +2158,14 @@ feat(view-model): add cardActions() (L73-06)
 
 Disabled reasons mirror the server's play checks in its order, so the
 client never blocks a play the server accepts. Multi-attack is hidden
-below two hand attacks; a second Reanimation stays enabled and the
-server rejects it with a toast. Recorded in decisions.md.
+below two hand attacks. A second Reanimation is greyed with
+reanimation-armed (designer 2026-10-27). Recorded in decisions.md.
 EOF
 ```
 
 **Acceptance map:**
 - Each card family's target set: blocks 8, 9, 11, 13, 14 and 15. Attack and Thief corpse ripostes stay separate and living Invisible seats are never offered: block 10. Upgraded thieves take no target: block 11.
-- Each disabled reason has a fixture that triggers it. Every reason `cardActions` emits has one here: `not-your-turn` (21), `actions-locked` (22), `invisibility` (23), `attack-ban` (24), `not-enough-points` (26), `no-upgrade-point` (5), `no-valid-target` (14, 28), `nothing-to-consume` (20), `pool-empty` (29) and `temporarily-unavailable` (`card-actions-frozen.test.ts`). The two it never emits get theirs where they arise: `no-living-spy` in L73-09 (`Unspy is disabled with $reason`) and `not-enough-lives` in L73-10 (`checks points and lives: Tax needs 2 lives, Super attack 20 points`).
+- Each disabled reason has a fixture that triggers it. Every reason `cardActions` emits has one here: `not-your-turn` (21), `actions-locked` (22), `invisibility` (23), `attack-ban` (24), `not-enough-points` (26), `no-upgrade-point` (5), `no-valid-target` (14, 28), `nothing-to-consume` (20), `pool-empty` (29), `reanimation-armed` (33) and `temporarily-unavailable` (`card-actions-frozen.test.ts`). The two it never emits get theirs where they arise: `no-living-spy` in L73-09 (`Unspy is disabled with $reason`) and `not-enough-lives` in L73-10 (`checks points and lives: Tax needs 2 lives, Super attack 20 points`).
 - Regeneration tiles are priced and disabled past what the POV can afford: blocks 16–18.
 - Card Transformer with no shared card gives `nothing-to-consume`: block 20.
 - Off-turn every action is disabled with its reason: block 21.
@@ -2139,7 +2175,7 @@ EOF
 1. Reason precedence is the server's check order, per action (`perform-action.ts:1752-1825` for Use, `:1536-1626` for Multi-attack). So Invisibility beats the ban on Use, and the ban beats Invisibility on Multi-attack.
 2. Own Invisibility is read from `self.activePersistentEffects` (server `playerIsInvisible(actor)`); the ban from the POV's public `blockAttacksForbidden` (`PrivateSelfView` has no ban field).
 3. The extra Use gates (Mirror, Super Mirror, upgraded UP / Spy Thief, upgraded Sentence, Card Absorber, Block) mirror handler `canPlay` exactly; the view's `pendingEffects` filtered on `targetPlayerId === you` equals the server queue (`queue-effect.ts:40`, `mirror-choice.ts:117`).
-4. A second Reanimation while one is armed and the Lot 69 slot outlet stay enabled, with no new reason code: the client may be less strict than the server, which rejects them with an illegal-action toast (`reanimation.ts` `canPlay`; golden rule 8). Whether Reanimation should get its own reason is a designer question (Appendix B, Q4).
+4. **Designer 2026-10-27:** a second Reanimation while one is armed is greyed with `reanimation-armed`, read from `self.activePersistentEffects` exactly as `reanimation.ts` `canPlay` reads the owner's actives. The Lot 69 slot outlet stays enabled with no reason code: the client may be less strict than the server, which rejects it with an illegal-action toast (golden rule 8).
 5. Tax at 1 life stays enabled (`tax.ts:16`). `not-enough-lives` and `no-living-spy` are never produced here; L73-10 and L73-09 own their fixtures.
 6. Multi-attack is hidden below `MULTI_ATTACK_MIN_ATTACKS` hand attacks, never a special (MEGA ATTACK) row (`assassin-candidates.ts:91-93`, Q44).
 7. Routing is computed even when Use is disabled, so the sheet can show seats, tiles or options read-only. Tiles take Use's reason first, then their own price.
@@ -4348,9 +4384,12 @@ export const CLIENT_POISON_LIVES = { base: 1, upgraded: 2 } as const;
 export const CLIENT_IMPOSITION_FLOOR = 7;
 export const CLIENT_IMPOSITION_CAP = { base: 2, upgraded: 4 } as const;
 export const CLIENT_CURSE_POINTS_PER_LIFE = { base: 3, upgraded: 2 } as const;
+/** live = ticks on the POV's next turn; paused = skipped; ending = a Curse the engine removes at ≤ 1 life (designer 2026-10-27). */
+export const RECURRING_CHIP_STATES = ['live', 'paused', 'ending'] as const;
+export type RecurringChipState = (typeof RECURRING_CHIP_STATES)[number];
 export interface RecurringChip {
   effectId: string; cardId: RecurringCardId; ownerPlayerId: string; isUpgraded: boolean;
-  amount: RecurringAmount; paused: boolean;
+  amount: RecurringAmount; state: RecurringChipState;
 }
 export function recurringChips(view: PlayingStateView): readonly RecurringChip[];
 ```
@@ -4370,6 +4409,7 @@ export const DISABLED_REASONS = [
   'not-enough-points', 'not-enough-lives', 'no-upgrade-point',
   'no-valid-target', 'nothing-to-consume', 'temporarily-unavailable',
   'no-living-spy', 'pool-empty',
+  'reanimation-armed', // designer 2026-10-27 (L73-06)
 ] as const;
 export type DisabledReason = (typeof DISABLED_REASONS)[number];
 export const DISABLED_REASON_COPY: Record<DisabledReason, string>; // Appendix B, New strings
@@ -4551,14 +4591,14 @@ export function nextTurnStartedRecord(previous: TurnStartedRecord | null, sighti
 
 ## Appendix B — Designer questions
 
-Each question has a default that the plan implements and tests. An answer that differs changes only the owning task's code and tests. List them in the Lot 73 PR.
+Each question has a default that the plan implements and tests. An answer that differs changes only the owning task's code and tests. The designer answered Q2–Q4 on 2026-10-27; the rows record the decision. List any question still open in the Lot 73 PR.
 
 | # | Question | Plan default | Owner |
 |---|---|---|---|
 | Q1 | **Burst after the first hit resolves.** A fan-out uses the literal "every opponent" test: a (source, card, `queuedAt`) set is one burst only while it covers every living, non-Invisible opponent of the source. A MEGA ATTACK, Suicide or upgraded-thief burst therefore turns into separate arrows once its first target resolves, one turn after the play. Should the burst persist for the remaining copies? That would mean matching the `actionPlayed` log entry, because the queue alone cannot tell it from an Assassin volley that missed a seat. | The literal rule: arrows once a copy has resolved. Test `draws arrows once a fan-out no longer covers every living opponent`. | L73-04 |
-| Q2 | **"Hits all" on a 2-seat table.** A hits-all play against a single living opponent has one target. Burst or plain arrow? | A plain arrow. Test `draws a hits-all play on a 2-seat table as a plain arrow`. | L73-04 |
-| Q3 | **Curse at 1 life.** The engine ends a Curse on the POV at ≤ 1 life instead of draining (`apply-persistent-effects.ts:269-272`), but §6.5's paused list does not include this case. Should the chip show paused, or ending? | The chip stays live (not paused). | L73-05 |
-| Q4 | **Second Reanimation while one is armed.** The server rejects it (`reanimation.ts` `canPlay`, an illegal-action toast). Should Use show a reason such as "Reanimation already armed"? That needs a new code in the fixed `DISABLED_REASONS` list. | Use stays enabled and no code is added: the client may be less strict than the server. Recorded in the L73-06 `decisions.md` entry. | L73-06 |
+| Q2 | **"Hits all" on a 2-seat table.** A hits-all play against a single living opponent has one target. Burst or plain arrow? | **Decided by the designer 2026-10-27: a plain arrow** (the plan's default). Test `draws a hits-all play on a 2-seat table as a plain arrow`. | L73-04 |
+| Q3 | **Curse at 1 life.** The engine ends a Curse on the POV at ≤ 1 life instead of draining (`apply-persistent-effects.ts:268-272`). | **Decided by the designer 2026-10-27: the chip shows `ending`.** `RecurringChip.state` is `live` / `paused` / `ending`; Invisibility still shows `paused`. Test `ends a Curse on the POV at 1 life unless Invisibility pauses it (designer 2026-10-27)`. | L73-05 |
+| Q4 | **Second Reanimation while one is armed.** The server rejects it (`reanimation.ts` `canPlay`, #V4-12c), and playing it is the only way to arm one. | **Decided by the designer 2026-10-27: greyed, never two armed.** New code `reanimation-armed` ("Reanimation already armed") appended to `DISABLED_REASONS`; the server rule is unchanged. Test block 33 `greys a second Reanimation while one is armed (reanimation.ts canPlay, designer 2026-10-27)`. | L73-06 |
 
 ### New strings (§10.6)
 
@@ -4578,6 +4618,7 @@ Every player-facing string Lot 73 puts in a view-model constant. "Reused" string
 | Temporarily unavailable | `DISABLED_REASON_COPY['temporarily-unavailable']` | L73-06 | Reused: `screens/table/card-actions.tsx` |
 | Nobody is spying on you | `DISABLED_REASON_COPY['no-living-spy']` | L73-06 | New |
 | Pool empty | `DISABLED_REASON_COPY['pool-empty']` | L73-06 | Reused: `ILLEGAL_ACTION_COPY['empty-pool'].title` |
+| Reanimation already armed | `DISABLED_REASON_COPY['reanimation-armed']` | L73-06 | New (designer 2026-10-27, Q4) |
 | 1 life / {n} lives | `RegenerationTile.label` | L73-06 | Reused: V2 `regenerationQuantityLabel`, `screens/table/card-actions.tsx` |
 | Reanimating | `SELF_STRIP_POV_LABELS.reanimating` | L73-09 | Reused: V2 `flow-status-badges.tsx`; also listed in spec §10.6 |
 | Watching | `SELF_STRIP_POV_LABELS.watching` | L73-09 | Reused: the V2 spectator heading in `screens/table.tsx`; also listed in spec §10.6 |
