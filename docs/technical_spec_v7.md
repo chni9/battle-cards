@@ -1052,6 +1052,21 @@ Numbers refer to Appendix A "Audit open questions".
 
 - **Lobby host handoff to a bot** (Appendix A Q27): server fix in its own session — PR #78 into
   `dev` (2026-10-20).
+- **Dead base-Spy `resourcesSnapshot`** (found 2026-10-27 while framing Lot 73; designer: a
+  separate fix, recorded here). Since Lot 69, `buildSpiedView` sends live lives, points,
+  upgrade points and shield for every Spy relation and never sends `resourcesSnapshot`.
+  - The server still freezes it in `GameState` (`grantSpy`, `visibility-matrix.ts`).
+  - The shared `SpiedPlayerView` still types it.
+  - Bot and enumeration code still falls back to it after the live field:
+    - `score-engage/score-actions.ts`;
+    - `belief/resources.ts`;
+    - `belief/determinize.ts`;
+    - `eval/eval-state-from-view.ts`;
+    - `engine/turn/enumeration-state-from-view.ts`.
+
+  This is no behavior bug: every path reads the live field first, so bots do see base-Spy
+  resources. The cleanup is a server and shared change in its own session, outside V7.
+  Removing the field from the type is a protocol change.
 - **Admin match detail** (rules and chat inside the match-detail dialog): needs admin HTTP fields.
 - New illustrations (red-figure, mosaic, painted…): later chantier; Recraft or Scenario free
   tiers if generated (§5.5 keeps the swap cheap).
