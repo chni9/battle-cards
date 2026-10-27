@@ -3,7 +3,7 @@
  * `card-actions-dialog`, `table-target-picker-eligibility`, `regeneration-quantity-picker`,
  * `card-transformer-consume-picker`, `assassin-multi-attack`, `table-inspect-active-upgrade`,
  * `deactivate-confirm-dialog`, `active-persistent-thumbs`, `sentence-chips`,
- * `global-activated-art-guard`; Lot 73 (L73-06, L73-07).
+ * `global-activated-art-guard`, `table-use-target-routing`; §6.6.3; Lot 73 (L73-06 to L73-08).
  *
  * What a hand or special card offers, in display order (Use, Upgrade, Sell, Multi-attack), and
  * where Use routes. A hidden action is absent; an offered one is disabled with the first reason the
@@ -16,6 +16,9 @@
  * A card in play (an active persistent, a Shield, a ticking Sentence) offers only Upgrade and
  * Deactivate, and only when the server would find it as the POV's own (Q37): another seat's card
  * in play gets a read-only sheet. `inPlayThumbs` lists one seat's cards in play for the strips.
+ *
+ * `drop` and `canDrag` publish the §6.6.3 drop table from the same enabled actions, so a drop can
+ * never produce an intent the server would reject; `drop-target.ts` turns a pointer into an intent.
  */
 
 import {
@@ -103,6 +106,22 @@ export interface MultiAttackModel {
   minAttacks: typeof MULTI_ATTACK_MIN_ATTACKS;
 }
 
+/** What a drop on the plate does (spec v7 §6.6.3): send at once, or open a pre-send choice. */
+export type PlateDrop = 'send' | 'regeneration' | 'consume';
+
+/**
+ * Where a card may be dropped (spec v7 §6.6.3). Only an enabled Use opens seats or the plate, so
+ * a disabled Use yields none; Sell is independent of Use and open to a hand shared card.
+ */
+export interface DropZones {
+  /** Seats that accept the card: Use enabled and routed `target`. Upgraded thieves route `send`. */
+  seatIds: readonly string[];
+  /** Use enabled and routed send / regeneration / consume; null for a targeted card. */
+  plate: PlateDrop | null;
+  /** The Sell action is present and enabled (hand shared cards only; never a special). */
+  sell: boolean;
+}
+
 export interface CardActionsModel {
   /**
    * `CardInstance.instanceId` for hand, special and read-only refs; `effect.id` for an active;
@@ -115,6 +134,19 @@ export interface CardActionsModel {
   /** Null when Use is absent. Set even while Use is disabled, so the sheet shows it read-only. */
   use: UseRouting | null;
   multiAttack: MultiAttackModel | null;
+  /** Valid drop zones (spec v7 §6.6.3); all empty for a read-only or in-play card. */
+  drop: DropZones;
+  /**
+   * Whether a drag may start: false while locked (off-turn, sub-choice, finished board, eliminated
+   * POV, walk-in), for read-only and in-play cards, and when no zone would take the card, so no
+   * drag starts that can only snap back (§6.6.3; the tap still opens the sheet with the reason).
+   */
+  canDrag: boolean;
+}
+
+/** A card with no drop zone: read-only and in-play refs. A fresh object per model, never shared. */
+function noDrop(): DropZones {
+  return { seatIds: [], plate: null, sell: false };
 }
 
 /** Use before the lock and price are applied: the routing, plus the card's own `canPlay` gate. */
@@ -502,7 +534,27 @@ function inPlayActions(
       actions.push({ kind: 'deactivate', ...availabilityFor(lock) });
     }
   }
-  return { instanceId: inPlayInstanceId(view, ref), actions, use: null, multiAttack: null };
+  return {
+    instanceId: inPlayInstanceId(view, ref),
+    actions,
+    use: null,
+    multiAttack: null,
+    drop: noDrop(),
+    canDrag: false,
+  };
+}
+
+/**
+ * The §6.6.3 drop table from the enabled actions: a targeted card drops on a valid seat only, an
+ * untargeted one on the plate only, a pre-send choice opens on the plate and sends nothing, and a
+ * hand shared card also drops on Sell. Multi-attack has no drop path.
+ */
+function dropZonesFor(use: UseRouting, useEnabled: boolean, actions: readonly CardAction[]): DropZones {
+  return {
+    seatIds: useEnabled && use.kind === 'target' ? use.seatIds : [],
+    plate: useEnabled && use.kind !== 'target' ? use.kind : null,
+    sell: actions.some((action) => action.kind === 'sell' && action.enabled),
+  };
 }
 
 /**
@@ -522,7 +574,14 @@ export function cardActions(
   }
   const { instance } = card;
   if (card.zone === 'read-only') {
-    return { instanceId: instance.instanceId, actions: [], use: null, multiAttack: null };
+    return {
+      instanceId: instance.instanceId,
+      actions: [],
+      use: null,
+      multiAttack: null,
+      drop: noDrop(),
+      canDrag: false,
+    };
   }
 
   const lock = actionLock(view, ctx);
@@ -543,11 +602,16 @@ export function cardActions(
     });
   }
 
+  const use = routingFor(view, plan, useReason);
+  const drop = dropZonesFor(use, useReason === null, actions);
   return {
     instanceId: instance.instanceId,
     actions,
-    use: routingFor(view, plan, useReason),
+    use,
     multiAttack,
+    drop,
+    // The zones already collapse under a lock; this keeps the §6.6.3 "never while locked" explicit.
+    canDrag: lock === null && (drop.seatIds.length > 0 || drop.plate !== null || drop.sell),
   };
 }
 

@@ -159,6 +159,13 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   ticking Sentences with their `ThumbBadge` and `activatedArt`, which is never true for Shield or
   Sentence (Appendix A `global-activated-art-guard`). The V2 table keeps `activeUpgradeInstanceId`
   until L75.
+- **Drag and drop (L73-08).** `cardActions` adds `drop` (valid seats, what the plate does, Sell) and
+  `canDrag`, which is false off-turn, while locked, for read-only and in-play cards, and when no zone
+  takes the card; the arena adds the tutorial tour and Look gate. A disabled Use opens no seat or
+  plate zone. `view-model/drop-target.ts` `dropTarget(pointer, zoneRects, actions)` is pure
+  rectangle math on half-open rects, with no DOM. It returns the exact `playCard` / `sellCard`
+  intent, an open-choice result for Regeneration and Card Transformer, or `null` over an invalid
+  seat, outside every valid zone, or inside two (spec v7 §6.6.3–§6.6.4).
 
 ## Design system (V7 · Lot 72+)
 
