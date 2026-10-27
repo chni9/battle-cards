@@ -3,7 +3,7 @@
  * special-pick (Lot 24), and reanimation-kit (Lot 26).
  */
 
-import type { CardId, SpecialCardId } from './card';
+import type { CardId, CardInstance, SpecialCardId } from './card';
 import type { KitId } from './kit';
 
 export type SubChoiceKind =
@@ -77,6 +77,14 @@ export type PendingSlotActivationPayload =
     }
   | { kind: 'sentence'; sourcePlayerId: string; isUpgraded: boolean };
 
+/** Restore a special removed on play when the human cancels slot-drop (Lot 69 hotfix). */
+export interface SlotDropCancelRestore {
+  playerId: string;
+  instance: CardInstance;
+  /** Card was returned to the pool on play (non-persistent special). */
+  pooled: boolean;
+}
+
 /** Lot 69 — drop one occupied slot before a fifth activation sticks. */
 export interface SlotDropSubChoicePayload {
   /** Seat that must resolve the pick. */
@@ -90,6 +98,8 @@ export interface SlotDropSubChoicePayload {
     isUpgraded: boolean;
   }[];
   pendingActivation: PendingSlotActivationPayload;
+  /** Present when the activating card left `specialCards` or the pool on play. */
+  cancelRestore?: SlotDropCancelRestore;
 }
 
 /**

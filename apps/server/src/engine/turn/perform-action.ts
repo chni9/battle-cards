@@ -1857,11 +1857,20 @@ function playCardAction(
     }
   }
 
+  const cancelRestore = fromSpecials
+    ? {
+        playerId: actorPlayerId,
+        instance,
+        pooled: !isPersistentSpecialCardId(cardId) && cardId !== 'card-absorber',
+      }
+    : undefined;
+
   reconcileSlotCapAfterPlay(
     state,
     slotOwnerForCardPlay(actorPlayerId, cardId, resolvedTargetId),
     actorPlayerId,
     nowMs,
+    cancelRestore,
   );
 
   return {

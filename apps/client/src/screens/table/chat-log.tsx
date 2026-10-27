@@ -66,7 +66,7 @@ export function ChatLog({ messages, players, canWrite, onSend }: ChatLogProps): 
             maxLength={200}
             aria-label="Message"
             placeholder="Message"
-            className="min-h-11 min-w-0 flex-1 rounded-[length:var(--radius-control)] border border-border bg-surface px-3 py-2 text-sm text-ink"
+            className="min-h-11 min-w-0 flex-1 rounded-[length:var(--radius-control)] border border-border bg-surface px-3 py-2 font-sans text-base text-ink placeholder:text-ink-muted/70"
           />
           <Button compact type="submit" variant="green">
             Send

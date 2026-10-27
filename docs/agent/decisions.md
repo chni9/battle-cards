@@ -4291,6 +4291,16 @@ both changes.
 
 ---
 
+## 2026-10-08 · [P] Block skips Poison ticks (Imposition parity)
+
+Designer. While Block is active on a player (`blockAttacksForbidden` or
+`blockTurnsRemaining > 0`), Poison does not tick on that player on their
+turn — same window as Imposition skip (Lot 69). Curse, attacks, and other
+effects unchanged. Upgraded Shield still blocks Imposition only; it does not
+stop Poison unless a future rule says otherwise.
+
+---
+
 ## 2026-10-06 · [P] Lot 71 forfeit: active Poison does not pay
 
 Designer correction the same day. Forfeit and leaving the table pay only
@@ -4336,3 +4346,22 @@ Same-day correction of the simultaneous picker.
 
 ---
 
+
+## 2026-10-20 · [P] Lobby host never passes to a bot
+
+Developer brief 2026-10-20, relayed from the V7 redesign session. It refines L1-02, which
+predates bots: "host leave before start promotes the earliest remaining seat".
+
+- Bots are appended in add order. A host who added a bot before a guest joined then left,
+  and the bot became host. A bot has no client. Start, Add bot, Kick and Table rules were
+  then out of reach for every human left in the lobby.
+- The host now passes to the earliest remaining **connected** human seat
+  (`nextLobbyHostId`, `apps/server/src/rooms/seats.ts`). If none is connected, it passes to
+  the earliest remaining human seat, whose reservation is still held for reconnection.
+- Only bots left: unchanged. The earliest seat is promoted and the room disposes at once
+  (L15-06). No seat left: no host.
+- The Play again host (`resolveReformingHost`) already chose humans only. It is unchanged.
+- No protocol bump: `LobbyStateView.hostPlayerId` already carries the host. The client
+  derives every host-only control from `hostPlayerId === you`.
+
+---

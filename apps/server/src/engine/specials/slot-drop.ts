@@ -7,6 +7,7 @@ import {
   type ActionReject,
   type GameState,
   type PendingSlotActivationPayload,
+  type SlotDropCancelRestore,
 } from '@card-battle/shared';
 
 import { findPlayer } from '../turn/advance-turn';
@@ -88,6 +89,7 @@ export function beginSlotDrop(
     slotOwnerId: string;
     pending: PendingSlotActivationPayload;
     nowMs: number;
+    cancelRestore?: SlotDropCancelRestore;
   },
 ): void {
   const slots = listForcedSlotDropEligibleSlots(state, input.slotOwnerId);
@@ -107,8 +109,44 @@ export function beginSlotDrop(
       isUpgraded: slot.isUpgraded,
     })),
     pendingActivation: input.pending,
+    ...(input.cancelRestore !== undefined ? { cancelRestore: input.cancelRestore } : {}),
     deadlineMs: input.nowMs + SLOT_DROP_SUB_CHOICE_MS,
   };
+}
+
+/** Human cancel — abort the fifth activation; bots and timeout never call this. */
+export function cancelSlotDrop(
+  state: GameState,
+  playerId: string,
+): { ok: true } | ActionReject {
+  const choice = state.subChoice;
+
+  if (choice?.kind !== 'slot-drop' || choice.playerId !== playerId) {
+    return actionReject('no-slot-drop-pending');
+  }
+
+  const restore = choice.cancelRestore;
+
+  if (restore !== undefined) {
+    const holder = findPlayer(state, restore.playerId);
+
+    if (holder !== undefined) {
+      if (restore.pooled) {
+        const poolIndex = state.pool.findIndex(
+          (card) => card.instanceId === restore.instance.instanceId,
+        );
+
+        if (poolIndex >= 0) {
+          state.pool.splice(poolIndex, 1);
+        }
+      }
+
+      holder.specialCards.push(restore.instance);
+    }
+  }
+
+  state.subChoice = null;
+  return { ok: true };
 }
 
 export function applySlotDrop(

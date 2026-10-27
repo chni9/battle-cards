@@ -11,7 +11,7 @@ import {
   clearActiveSlot,
 } from './active-slots';
 import { beginSlotDrop } from './slot-drop';
-import type { PendingSlotActivationPayload } from '@card-battle/shared';
+import type { PendingSlotActivationPayload, SlotDropCancelRestore } from '@card-battle/shared';
 
 function newestSlot(slots: readonly ActiveSlotRef[]): ActiveSlotRef | null {
   if (slots.length === 0) {
@@ -60,6 +60,7 @@ export function reconcileSlotCapAfterPlay(
   slotOwnerId: string,
   chooserPlayerId: string,
   nowMs: number,
+  cancelRestore?: SlotDropCancelRestore,
 ): boolean {
   const owner = state.players.find((player) => player.id === slotOwnerId);
 
@@ -87,6 +88,7 @@ export function reconcileSlotCapAfterPlay(
     slotOwnerId,
     pending,
     nowMs,
+    ...(cancelRestore !== undefined ? { cancelRestore } : {}),
   });
 
   return true;
