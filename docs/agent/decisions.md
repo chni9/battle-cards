@@ -4988,3 +4988,30 @@ only), §11 (Q36, Q46, Q47) and the Lot 73 brief's open badge-order question.
   import `screens/`. Otherwise it is `walk-in-fogged`.
 
 ---
+
+## 2026-10-27 · [P] V7 seat layout geometry (L73-03)
+
+Source: technical spec v7 §6.4 (amended modes, arc, grid), §14.3 (values tuned in the L74
+playtest) and the Lot 73 brief's open walk-in question.
+
+- **Mode** is `ui/viewport-mode.ts` `viewportModeFor`: one rule for sheets, Carousel and seats.
+- **Portrait arc.** The plate sits centred on the arena's bottom edge. Seat centres lie on the
+  ellipse centred on the plate that touches the arena's top and sides: n equal sectors over
+  the upper half, centres at half steps, the first seat on the left (clockwise from the
+  POV at the bottom).
+- **Desktop arc** uses the full ellipse around the arena centre: n + 1 equal slots from the
+  bottom, with slot 0 left to the POV.
+- **Walk-in** (no anchor): seat order is `turnOrder` from `turnOrder[0]`. Desktop spreads n
+  slots around the full ellipse, half a step from the bottom. Portrait keeps the upper half,
+  because the bottom of a portrait arena sits on the self-strip region.
+- **Landscape-compact:** one top band of n equal columns, no ellipse, reported as an `arc`
+  (the layout union has no third kind).
+- **Gap test:** two seat boxes are too close when they are under `SEAT_MIN_GAP_PX` apart on
+  both axes; 8 px or more on either axis separates them. An arena smaller than one seat
+  box (a 0×0 first paint) uses the grid. Grid rows are ceil(n/2) over floor(n/2) in seat
+  order; an empty second row is dropped.
+- `SEAT_BOX` (portrait 76×92, landscape-compact 76×84, desktop 120×136), `PLATE_BOX` and the
+  gap are L73 starting values. L74 tunes them and updates the L73 tests that pin the
+  360-wide grid switch.
+
+---

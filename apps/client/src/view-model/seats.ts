@@ -25,6 +25,7 @@ import { avatarInitial } from '../ui/primitives/avatar-initial';
 import { seatIndexOf } from '../ui/seat-colors';
 import { connectionBadgeLabel } from '../ui/seat/connection-badge-label';
 import { opponentResourceDisplay } from './opponent-seat-resources';
+import { layoutSeats, type LayoutBox, type SeatLayout } from './seat-layout';
 import { hasFullSpyCardReveal, visibleKitId } from './table-helpers';
 
 /** What the POV knows of a seat (§6.3): nothing, live numbers, the kit and cards too, or the death freeze. */
@@ -165,6 +166,15 @@ export function seatList(view: PlayingStateView): SeatList {
     pov: povModeOf(view),
     seats: view.players.filter((player) => !player.isYou).map((player) => seatModelOf(view, player)),
   };
+}
+
+/** The seat list plus where each seat sits (spec v7 §4.3, §6.4). `seats` keeps `view.players` order; the layout carries the drawing order. */
+export interface SeatsModel extends SeatList {
+  layout: SeatLayout;
+}
+
+export function seats(view: PlayingStateView, layoutBox: LayoutBox): SeatsModel {
+  return { ...seatList(view), layout: layoutSeats(view, layoutBox) };
 }
 
 function seatModelOf(view: PlayingStateView, player: PublicPlayerView): SeatModel {

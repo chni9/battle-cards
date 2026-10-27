@@ -113,3 +113,20 @@ export function makeEliminationReveal(
     ...overrides,
   };
 }
+
+/**
+ * A table of `ids` in turn order. The seat `overrides.you ?? 'me'` is the POV (`isYou`); a
+ * walk-in passes `{ you: 'watcher', isSpectator: true }`, which leaves every seat a non-POV
+ * seat. L73-03.
+ */
+export function makeTableView(
+  ids: readonly string[],
+  overrides?: Partial<PlayingStateView>,
+): PlayingStateView {
+  const you = overrides?.you ?? 'me';
+  return makePlayingView({
+    turnOrder: [...ids],
+    players: ids.map((id) => makePlayer(id, { isYou: id === you })),
+    ...overrides,
+  });
+}
