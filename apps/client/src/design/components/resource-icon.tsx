@@ -24,7 +24,7 @@ import { RESOURCE_CAPTIONS, resourceCaptionMode } from '../../ui/resource-captio
 
 export interface ResourceIconProps {
   kind: ResourceKind;
-  /** Numeric amount, or `unknown` for unspied / base Spy seats (L51-08). */
+  /** Numeric amount, or `unknown` for an unspied seat (L51-08); every Spy relation has live numbers (Lot 69). */
   value: number | 'unknown';
   label?: string;
   className?: string;

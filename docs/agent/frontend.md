@@ -1056,9 +1056,10 @@ rules above are unchanged — this section only covers how the client looks.
     No wire field.
   - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14 / L51-15 / L51-16):** POV dock
     `ResourceIcon` still handles live dock Δ except overlay-landed transfers
-    (skip only after chips measure). Unspied / base Spy enqueue **directed** chips
+    (skip only after chips measure). Every seat enqueues **directed** chips
     (`from` / `to` log or player): play/buy/upgrade spends seat→log; sell yield
-    log→seat; buy upgrade point spends Classic 10 when kit is hidden. **Resource
+    log→seat. A seat whose kit is hidden (unspied, or base Spy since Lot 69) flies one
+    Draw point and spends Classic 10 for an upgrade point. **Resource
     chips are icon-only** (`object-contain` + drop shadow, no `bg-surface-raised`,
     no card radius, no border). Overlay card chrome is **`asCard === true` only**
     — never `from.width`. Token chips are 40×40 both ends (L51-16); that size
@@ -1208,13 +1209,15 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy / death reveal (L51-08 / L51-10):** opponent seats always show lives /
-  points / upgrade points / shield icons. Unspied and base Spy render `?` (never
-  unspied totals, never the frozen snapshot numbers). Upgraded Spy and death
-  reveal show live / freeze numbers. Icons stack vertically beside the portrait;
+- **Spy / death reveal (L51-08 / L51-10, Lot 69):** opponent seats always show lives /
+  points / upgrade points / shield icons. An unspied seat renders `?` (never unspied
+  totals). Any Spy relation, base or upgraded, shows live numbers; a death reveal shows the
+  numbers frozen at death. A base Spy keeps the kit, hand and specials hidden; Spy+
+  (`spied.kitId`) and death reveal show them. The server never sends
+  `spied.resourcesSnapshot` (spec v7 §14.1). Icons stack vertically beside the portrait;
   activated cards sit under the portrait. Shield stays on the seat (no omit-on-
-  overflow). Portrait stays tappable when a Spy or death reveal exists. Dialog
-  title is `{nickname}` for Spy and `{nickname} (eliminated)` on death. No Hidden
+  overflow). Portrait stays tappable when a Spy+ or death reveal exists. Dialog
+  title is `{nickname}` for Spy+ and `{nickname} (eliminated)` on death. No Hidden
   kit / Spied — tap / Revealed — tap labels.
 - **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
   resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).

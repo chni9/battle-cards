@@ -1,6 +1,7 @@
 /**
- * Opponent seat resource presentation — L51-08.
- * Unspied and base Spy stay `?`; live numbers only from upgraded Spy or death reveal.
+ * Opponent seat resource presentation — L51-08, Lot 69.
+ * An unspied seat stays `?`. Every Spy relation, base or Spy+, carries live numbers on
+ * `spied`; a death reveal carries the numbers frozen at death.
  * Must never print unspied totals (those fields are not on PublicPlayerView).
  */
 
@@ -53,7 +54,7 @@ export function opponentResourceDisplay(
   return { known: false };
 }
 
-/** Kit identity is known — Draw amount may be read from the catalog (L51-09). */
+/** True for any Spy relation or death reveal (L51-09). Since Lot 69 it no longer means the kit is known: a base Spy has no `spied.kitId`. */
 export function opponentKitIsVisible(
   player: Pick<PublicPlayerView, 'spied' | 'eliminationReveal'>,
 ): boolean {
@@ -66,7 +67,7 @@ export function opponentHasLiveResourceIcons(
   return opponentResourceDisplay(player).known;
 }
 
-/** POV + upgraded Spy / death-reveal seats that expose live totals (L51-11). */
+/** POV plus every seat with known totals: any Spy relation (live) or death reveal (frozen) (L51-11, Lot 69). */
 export function collectLiveResourceSnaps(
   you: string,
   self: OpponentLiveResources,
