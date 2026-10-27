@@ -1018,7 +1018,7 @@ Sequential, in id order: L73-01 → L73-13. Each task starts from the previous t
 **Files:**
 - Create: `apps/client/src/view-model/threats.ts`
 - Test: `apps/client/src/view-model/threats.test.ts` (create)
-- Modify: `docs/agent/frontend.md`, `docs/backlog_v7.md`
+- Modify: `docs/agent/frontend.md`, `docs/agent/decisions.md`, `docs/backlog_v7.md`
 
 **Interfaces:**
 - Consumes:
@@ -1032,6 +1032,7 @@ Sequential, in id order: L73-01 → L73-13. Each task starts from the previous t
   - **Added field:** `ThreatEntry.queuedAt: number`, for the "queued #N" tooltip and for ordering.
   - `ThreatEntry.mirrorBadge` has type `PendingEffectRedirectSource | null`, which is the contract's `'mirror' | 'super-mirror' | null`.
   - `FanOutGroup.key` has the format `` `${sourcePlayerId}|${queuedAt}|${cardId}` ``. `ThreatEntry.fanOutKey` holds that value or `null`.
+  - `HITS_ALL_CARD_IDS = ['mega-attack', 'suicide', 'attack-thief'] as const` and `HITS_ALL_WHEN_UPGRADED_CARD_IDS = ['card-thief', 'spy-thief', 'upgrade-point-thief'] as const`: the plays whose burst stays while two or more copies remain (designer 2026-10-27, Appendix B Q1).
 
 - [ ] **Step 1: Write the failing tests** in `apps/client/src/view-model/threats.test.ts`:
 
@@ -1239,17 +1240,39 @@ describe('threats() fan-out', () => {
     ]);
   });
 
-  it('draws arrows once a fan-out no longer covers every living opponent', () => {
+  it.each([
+    ['mega-attack', false, true],
+    ['suicide', false, true],
+    ['attack-thief', false, true],
+    ['card-thief', true, true],
+    ['spy-thief', true, true],
+    ['upgrade-point-thief', true, true],
+    ['card-thief', false, false],
+  ] as const)('after a copy resolved, %s (upgraded %s) keeps its burst: %s (designer 2026-10-27)', (cardId, isUpgraded, burst) => {
     // p2 has already resolved its copy on its own turn; me and p3 still wait.
     const model = threats(viewWith([
+      makePending({ id: 'x-me', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId, isUpgraded, queuedAt: 3 }),
+      makePending({ id: 'x-p3', sourcePlayerId: 'p1', targetPlayerId: 'p3', cardId, isUpgraded, queuedAt: 3 }),
+    ], ['me', 'p1', 'p2', 'p3']), null);
+    const key = `p1|3|${cardId}`;
+    expect(model.fanOuts.map((group) => group.key)).toEqual(burst ? [key] : []);
+    expect(model.entries.map((entry) => entry.fanOutKey)).toEqual(burst ? [key, key] : [null, null]);
+  });
+
+  it('draws a plain arrow once a single hits-all copy remains', () => {
+    const model = threats(viewWith([
       makePending({ id: 'mega-me', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'mega-attack', queuedAt: 3 }),
-      makePending({ id: 'mega-p3', sourcePlayerId: 'p1', targetPlayerId: 'p3', cardId: 'mega-attack', queuedAt: 3 }),
     ], ['me', 'p1', 'p2', 'p3']), null);
     expect(model.fanOuts).toEqual([]);
-    expect(model.entries.map((entry) => [entry.fanOutKey, entry.label])).toEqual([
-      [null, { kind: 'damage', amount: 20 }],
-      [null, { kind: 'damage', amount: 20 }],
-    ]);
+    expect(model.entries.map((entry) => [entry.fanOutKey, entry.label])).toEqual([[null, { kind: 'damage', amount: 20 }]]);
+  });
+
+  it('keeps a Super Mirror burst after one copy resolved', () => {
+    const model = threats(viewWith([
+      makePending({ id: 'fx:dup:a:p1', sourcePlayerId: 'me', targetPlayerId: 'p1', cardId: 'strong-attack', queuedAt: 4, damageMultiplier: 2, redirectedBy: 'super-mirror' }),
+      makePending({ id: 'fx:dup:a:p3', sourcePlayerId: 'me', targetPlayerId: 'p3', cardId: 'strong-attack', queuedAt: 4, damageMultiplier: 2, redirectedBy: 'super-mirror' }),
+    ], ['me', 'p1', 'p2', 'p3']), null);
+    expect(model.fanOuts.map((group) => group.key)).toEqual(['me|4|strong-attack']);
   });
 
   it('draws a hits-all play on a 2-seat table as a plain arrow', () => {
@@ -1337,6 +1360,22 @@ function isInvisible(player: PublicPlayerView): boolean {
   return player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
 }
 
+/**
+ * Plays that hit every opponent by nature (spec v7 §6.5; server mega-attack.ts, suicide.ts,
+ * attack-thief.ts queue one copy per alive opponent at every tier; card-thief.ts, spy-thief.ts
+ * and upgrade-point-thief.ts do so when upgraded; super-mirror.ts copies carry
+ * redirectedBy 'super-mirror'). Designer 2026-10-27 (Q1): their burst stays while two or more
+ * copies remain, even after earlier copies resolved.
+ */
+export const HITS_ALL_CARD_IDS = ['mega-attack', 'suicide', 'attack-thief'] as const;
+export const HITS_ALL_WHEN_UPGRADED_CARD_IDS = ['card-thief', 'spy-thief', 'upgrade-point-thief'] as const;
+
+function isHitsAllCopy(effect: PendingEffectView): boolean {
+  if (effect.redirectedBy === 'super-mirror') return true;
+  if ((HITS_ALL_CARD_IDS as readonly CardId[]).includes(effect.cardId)) return true;
+  return effect.isUpgraded && (HITS_ALL_WHEN_UPGRADED_CARD_IDS as readonly CardId[]).includes(effect.cardId);
+}
+
 function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
   const buckets = new Map<string, PendingEffectView[]>(); // Map keeps first-seen (wire) order
   for (const effect of view.pendingEffects) {
@@ -1351,10 +1390,12 @@ function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
     const first = effects[0];
     if (first === undefined) continue;
     const targets = new Set(effects.map((effect) => effect.targetPlayerId));
-    if (targets.size < 2) continue; // one target is a plain arrow
-    // "Across every opponent" (§6.5): every living opponent of the source, except living
-    // Invisible seats, which upgraded thieves skip (L65-02) while MEGA ATTACK still hits them.
-    const covered = view.players
+    if (targets.size < 2) continue; // one target is a plain arrow (designer 2026-10-27, Q2)
+    // A hits-all play keeps its burst (Q1). Any other set needs the literal "across every
+    // opponent" (§6.5): every living opponent of the source, except living Invisible seats,
+    // which upgraded thieves skip (L65-02) while MEGA ATTACK still hits them. That covers the
+    // Review's Assassin volley.
+    const covered = effects.every(isHitsAllCopy) || view.players
       .filter((p) => p.id !== first.sourcePlayerId && !p.isEliminated && !isInvisible(p))
       .every((p) => targets.has(p.id));
     if (!covered) continue;
@@ -1367,9 +1408,9 @@ function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
 }
 ```
 
-  Build `fanOuts` first. Then fill each entry's `fanOutKey` from a `Map<effectId, key>`.
+  Build `fanOuts` first. Then fill each entry's `fanOutKey` from a `Map<effectId, key>`. `HITS_ALL_CARD_IDS` and `HITS_ALL_WHEN_UPGRADED_CARD_IDS` are exported (named data, read by L74 for the burst icon); `isHitsAllCopy` stays private.
 
-- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  1 passed (1)`, `Tests  27 passed (27)`.
+- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  1 passed (1)`, `Tests  35 passed (35)` (Vitest counts each `it.each` row).
 
 - [ ] **Step 5: Docs.**
   - In `docs/agent/frontend.md`, append this bullet at the end of `## View-model layer (V7 · Lot 72+)`, after the L73-03 "Seat layout" bullet and before `## Design system (V7 · Lot 72+)`:
@@ -1384,28 +1425,52 @@ function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
   seat colour (`seatColorIndexOf`). `groupKey` (`source|target|queuedAt|cardId`) fans arrows side by side.
   A **fan-out** (`FanOutGroup`, key `source|queuedAt|cardId`) is a `(source, cardId,
   queuedAt)` set with at least two distinct targets that covers every living opponent of the
-  source except living Invisible seats; a self-targeted entry never joins one. A single
-  target, or a set that no longer covers everyone because a target has resolved, draws plain
-  arrows. Members stay in `entries` with `fanOutKey` set, and each target badge keeps its own
+  source except living Invisible seats, or that is a hits-all play (`HITS_ALL_CARD_IDS`,
+  upgraded `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, or Super Mirror copies). A hits-all burst stays
+  while two or more copies remain, even after earlier copies resolved (designer 2026-10-27).
+  A self-targeted entry never joins one, and a single remaining target draws a plain arrow. Members stay in `entries` with `fanOutKey` set, and each target badge keeps its own
   label. `mirrorBadge` comes from `redirectedBy`. `mirrorEligible` is set only while a `mirror`
   sub-choice lists the id. `gridThreatEntries` keeps POV in/out plus the tapped seat's
   entries, and `seatThreatIds` gives a seat's in/out ids. The tone type is
   `ReturnType<typeof threatToneFor>`, so `threats.ts` adds no `fx/` import.
 ```
 
+  - In `docs/agent/decisions.md`, append this entry at the end of the file, after the L73-03 entry's closing `---`; it closes with its own `---`:
+
+```markdown
+## 2026-10-27 · [P] V7 threat fan-out: hits-all bursts persist; one target is an arrow (designer, L73-04)
+
+Source: designer answers 2026-10-27 (Lot 73 plan, Appendix B Q1 and Q2); technical spec v7 §6.5;
+server handlers `mega-attack.ts`, `suicide.ts`, `attack-thief.ts` (one copy per alive opponent at
+every tier), `card-thief.ts`, `spy-thief.ts`, `upgrade-point-thief.ts` (one copy per opponent when
+upgraded) and `super-mirror.ts` copies (`redirectedBy: 'super-mirror'`).
+
+- **Q1, burst after the first hit.** Each copy of a hits-all play resolves on its own target's turn.
+  The burst stays while two or more copies remain, instead of turning into separate arrows once the
+  first target has resolved. Hits-all is read from the card (`HITS_ALL_CARD_IDS`,
+  `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, Super Mirror copies), never from the log. An Assassin volley
+  keeps the literal §6.5 test: it bursts only while it covers every living, non-Invisible opponent.
+- **Q2, one target.** A hits-all play with a single target, on a 2-seat table or as the last copy
+  left, is a plain arrow.
+
+---
+```
+
   - In `docs/backlog_v7.md`, change the final cell of row `L73-04` from `To do` to `Done`. In Progress, change `| 73 · View-model | 13 | 3 |` to `| 73 · View-model | 13 | 4 |` and `| **Total** | **134** | **24** |` to `| **Total** | **134** | **25** |`.
 
 - [ ] **Step 6: Verify and commit.**
   - `pnpm verify` must be green.
-  - Stage the files by name: `git add apps/client/src/view-model/threats.ts apps/client/src/view-model/threats.test.ts docs/agent/frontend.md docs/backlog_v7.md`
+  - Stage the files by name: `git add apps/client/src/view-model/threats.ts apps/client/src/view-model/threats.test.ts docs/agent/frontend.md docs/agent/decisions.md docs/backlog_v7.md`
   - Commit with this message (subject is 46 characters):
 
 ```
 feat(view-model): add threats() model (L73-04)
 
 A fan-out is a (source, card, queuedAt) set with two or more distinct
-targets covering every living opponent of the source except living
-Invisible seats (spec v7 §6.5). Labels stay per effect, never summed.
+targets that covers every living opponent of the source except living
+Invisible seats, or that is a hits-all play (MEGA ATTACK, Suicide,
+Attack Thief, upgraded thieves, Super Mirror copies), whose burst stays
+while two copies remain (designer 2026-10-27). Labels stay per effect.
 ```
 
 **Acceptance map:**
@@ -1422,7 +1487,7 @@ Invisible seats (spec v7 §6.5). Labels stay per effect, never summed.
    - upgraded Spy Thief and Upgrade Point Thief skip living Invisible seats (`spy-thief.ts`, `upgrade-point-thief.ts` `livingTargets`);
    - MEGA ATTACK, Suicide and Super Mirror hit every alive opponent (`mega-attack.ts`, `suicide.ts`, `super-mirror.ts`).
 
-   The rule therefore also covers the Review's Assassin volley and Super Mirror copies, which keep the original `queuedAt` (`duplicate-pending-effect.ts`). Because the test is literal, a burst turns into separate arrows once its first target resolves. This is the plan's default; the designer may override it (Appendix B, Q1).
+   The rule therefore also covers the Review's Assassin volley and Super Mirror copies, which keep the original `queuedAt` (`duplicate-pending-effect.ts`). **Designer 2026-10-27 (Q1):** a hits-all play keeps its burst while two or more copies remain, even after its first target resolved. Hits-all is read from the card, never from the log: `HITS_ALL_CARD_IDS` (every tier), `HITS_ALL_WHEN_UPGRADED_CARD_IDS` (upgraded only) and `redirectedBy === 'super-mirror'`, each from the server handler that queues one copy per alive opponent. An Assassin volley keeps the literal rule, so a volley that skips a living opponent never bursts.
 2. **One target is a plain arrow.** A burst replaces several arrows ("instead of 7 arrows"). One target has nothing to compress, and an arrow names source and target more precisely. Decided by the designer on 2026-10-27 (Appendix B, Q2).
 3. **Fan-out targets.** There is one target row per effect, in wire order. A seat hit twice gets two badges with their own labels, never a per-seat sum (golden rule 1). `fanOuts` is in first-seen wire order.
 4. **Self-target and relation.** Base Suicide queues on its own user (`suicide.ts`, the `!card.isUpgraded` branch). That entry is `incoming` (relation checks the target first), takes `threatToneFor('suicide')` = `effect`, and never joins a fan-out.
@@ -1637,7 +1702,7 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
   4. **Delete** with `git rm apps/client/src/screens/table/persistent-incoming.ts apps/client/src/screens/table/persistent-incoming.test.ts`.
   5. **Check nothing references it.** `grep -rn "persistent-incoming\|buildPersistentIncomingChips\|buildPersistentOthersChips" apps packages` must print nothing. Before this task it matched only the module, its test, and the `incoming-threat-diff.ts:8` comment (verified 2026-10-27).
 
-- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/recurring-chips.test.ts apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  2 passed (2)`, `Tests  39 passed (39)` (12 + 27). Then run `pnpm typecheck`, which must be clean and proves nothing imported the deleted module.
+- [ ] **Step 4: Run them and see them pass.** Run `pnpm vitest run apps/client/src/view-model/recurring-chips.test.ts apps/client/src/view-model/threats.test.ts`. Expected: `Test Files  2 passed (2)`, `Tests  47 passed (47)` (12 + 35). Then run `pnpm typecheck`, which must be clean and proves nothing imported the deleted module.
 
 - [ ] **Step 5: Docs.**
   - **`docs/agent/frontend.md`, V2 bullet.** In the `**Activated art**` bullet, replace these three lines:
@@ -1672,7 +1737,7 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
       removes it instead of draining (designer 2026-10-27).
     ```
 
-  - **`docs/agent/decisions.md`.** Append this entry at the end of the file, after the L73-03 entry's closing `---`; it closes with its own `---`. Use the commit date in the heading if it is later than 2026-10-27.
+  - **`docs/agent/decisions.md`.** Append this entry at the end of the file, after the L73-04 entry's closing `---`; it closes with its own `---`. Use the commit date in the heading if it is later than 2026-10-27.
 
     ```markdown
     ## 2026-10-27 · [P] V7 recurring chips: Curse drains during Block; persistent-incoming retired (L73-05)
@@ -4367,6 +4432,10 @@ export interface ThreatsModel {
   fanOuts: readonly FanOutGroup[];
   recurring: readonly RecurringChip[];            // L73-05
 }
+export const HITS_ALL_CARD_IDS = ['mega-attack', 'suicide', 'attack-thief'] as const; // every tier (designer 2026-10-27, Q1)
+export const HITS_ALL_WHEN_UPGRADED_CARD_IDS = ['card-thief', 'spy-thief', 'upgrade-point-thief'] as const; // upgraded only
+// A fan-out: ≥ 2 distinct targets that cover every living non-Invisible opponent, or every member a
+// hits-all copy (the lists above, or redirectedBy 'super-mirror'), whose burst stays while ≥ 2 remain.
 export function threats(view: PlayingStateView, subChoice: SubChoiceRequiredPayload | null): ThreatsModel;
 export function gridThreatEntries(model: ThreatsModel, povId: string, tappedSeatId: string | null): readonly ThreatEntry[];
 export function seatThreatIds(model: ThreatsModel, playerId: string): { incoming: readonly string[]; outgoing: readonly string[] };
@@ -4591,11 +4660,11 @@ export function nextTurnStartedRecord(previous: TurnStartedRecord | null, sighti
 
 ## Appendix B — Designer questions
 
-Each question has a default that the plan implements and tests. An answer that differs changes only the owning task's code and tests. The designer answered Q2–Q4 on 2026-10-27; the rows record the decision. List any question still open in the Lot 73 PR.
+Each question has a default that the plan implements and tests. An answer that differs changes only the owning task's code and tests. The designer answered Q1–Q4 on 2026-10-27; the rows record the decisions, and none is open.
 
 | # | Question | Plan default | Owner |
 |---|---|---|---|
-| Q1 | **Burst after the first hit resolves.** A fan-out uses the literal "every opponent" test: a (source, card, `queuedAt`) set is one burst only while it covers every living, non-Invisible opponent of the source. A MEGA ATTACK, Suicide or upgraded-thief burst therefore turns into separate arrows once its first target resolves, one turn after the play. Should the burst persist for the remaining copies? That would mean matching the `actionPlayed` log entry, because the queue alone cannot tell it from an Assassin volley that missed a seat. | The literal rule: arrows once a copy has resolved. Test `draws arrows once a fan-out no longer covers every living opponent`. | L73-04 |
+| Q1 | **Burst after the first hit resolves.** A hits-all play (MEGA ATTACK, Suicide, Attack Thief, upgraded Card / Spy / Upgrade Point Thief, Super Mirror copies) queues one copy per opponent, and each copy resolves on its own target's turn. | **Decided by the designer 2026-10-27: keep the burst while two or more copies remain;** one remaining copy is a plain arrow (Q2). An Assassin volley keeps the literal "every opponent" rule. Tests `after a copy resolved, %s (upgraded %s) keeps its burst: %s (designer 2026-10-27)`, `draws a plain arrow once a single hits-all copy remains`, `keeps a Super Mirror burst after one copy resolved`. | L73-04 |
 | Q2 | **"Hits all" on a 2-seat table.** A hits-all play against a single living opponent has one target. Burst or plain arrow? | **Decided by the designer 2026-10-27: a plain arrow** (the plan's default). Test `draws a hits-all play on a 2-seat table as a plain arrow`. | L73-04 |
 | Q3 | **Curse at 1 life.** The engine ends a Curse on the POV at ≤ 1 life instead of draining (`apply-persistent-effects.ts:268-272`). | **Decided by the designer 2026-10-27: the chip shows `ending`.** `RecurringChip.state` is `live` / `paused` / `ending`; Invisibility still shows `paused`. Test `ends a Curse on the POV at 1 life unless Invisibility pauses it (designer 2026-10-27)`. | L73-05 |
 | Q4 | **Second Reanimation while one is armed.** The server rejects it (`reanimation.ts` `canPlay`, #V4-12c), and playing it is the only way to arm one. | **Decided by the designer 2026-10-27: greyed, never two armed.** New code `reanimation-armed` ("Reanimation already armed") appended to `DISABLED_REASONS`; the server rule is unchanged. Test block 33 `greys a second Reanimation while one is armed (reanimation.ts canPlay, designer 2026-10-27)`. | L73-06 |
