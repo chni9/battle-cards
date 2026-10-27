@@ -20,7 +20,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 
 | Lot | Tasks | Done |
 |---|---|---|
-| 72 · Foundations | 21 | 20 |
+| 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 0 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **20** |
+| **Total** | **134** | **21** |
 
 ## Designer questions still open
 
@@ -68,7 +68,7 @@ Design system beside the V2 look, the pure-module moves, the shared `ui/` pieces
 | L72-18 | **Rebuild table banner cues in ui/.** **Acceptance:** happy-dom tests with fake timers: - queued cues play in order, each for `TABLE_BANNER_MS` - Sentence lines are announced assertively - the wipe line shows only for the POV's own bust - the first mount seeds won, dead and turn, but no log history - reduced motion renders no slam transform  `pnpm verify` green. | M | Medium | L72-03, L72-04, L72-05, L72-06, L72-08, L72-09 | Done |
 | L72-19 | **Rebuild BotSeatLabel, PlayerName and ConnectionBadge in ui/.** **Acceptance:** Component tests render each state from a fake seat and assert the visible text and `aria` labels match today's copy. Added to the `/dev/ui` gallery. `pnpm verify` green. | S | Low | L72-08 | Done |
 | L72-20 | **Add the ?ui=next table switch.** **Acceptance:** Resolver tests: next, classic, stored, tutorial and a throwing storage. With the switch on or off the same table renders today. The literals asserted by the `inbox-route`, `admin-route`, `claim-seat-dialog`, `tutorial-hints-independence` and `feedback-surfaces` source-text tests stay in place; no code is deleted, so nothing needs classifying. `pnpm verify` green. | S | Medium | L72-01 | Done |
-| L72-21 | **Run the Lot 72 design and browser gate.** **Acceptance:** The detector is clean on V7 files. Critique notes are in the PR. "Lot 72 verified" with room codes is in `frontend.md`. Contact-sheet sign-off is recorded, or marked pending before any screen uses the new art. `pnpm verify` green. | M | Low | L72-01…L72-20 | To do |
+| L72-21 | **Run the Lot 72 design and browser gate.** **Acceptance:** The detector is clean on V7 files. Critique notes are in the PR. "Lot 72 verified" with room codes is in `frontend.md`. Contact-sheet sign-off is recorded, or marked pending before any screen uses the new art. `pnpm verify` green. | M | Low | L72-01…L72-20 | Done |
 
 ### §4.1 pure-module dispositions
 

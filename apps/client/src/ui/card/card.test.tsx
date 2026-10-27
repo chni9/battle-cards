@@ -494,7 +494,34 @@ describe('unplayable (fix round 1 A5, fix round 2; spec v7 §5.4)', () => {
     expect(body.contains(ring)).toBe(false);
     expect(classes(body)).toEqual(expect.arrayContaining(['saturate-30', 'brightness-75']));
     expect(body.querySelector('[data-card-layer="face"]')).not.toBeNull();
-    expect(body.querySelector('[data-card-chips]')).not.toBeNull();
+    // The chips are numbers the player plans with: they stay out of the dimmed body (L72-21 gate).
+    expect(body.querySelector('[data-card-chips]')).toBeNull();
+  });
+
+  it('keeps the cost and damage chips, the "+" badge and the counter at full contrast (L72-21 gate)', () => {
+    // The dimming took the `--text-on-cta` label on the `--life` damage chip to 2.6:1, under the
+    // 4.5:1 §5.1 binds for that pair; an unplayable card stays activatable (§5.4), so it is not an
+    // inactive control. Only the drawing layers (rim, face) dim.
+    const { container } = renderUi(
+      <Card size="hand" instance={inst('mega-attack', true)} unplayable counter={{ kind: 'turns', amount: 3 }} />,
+    );
+    const root = el(container, UP);
+    const body = el(root, '[data-card-layer="body"]');
+    expect(classes(body)).toEqual(expect.arrayContaining(['saturate-30', 'brightness-75']));
+    expect(body.querySelector('[data-card-layer="rim"]')).not.toBeNull();
+    expect(body.querySelector('[data-card-layer="face"]')).not.toBeNull();
+    const marks = [
+      el(root, '[data-card-chip="cost"]'),
+      el(root, '[data-card-chip="damage"]'),
+      el(root, '[data-card-badge="upgraded"]'),
+      el(root, '[data-card-counter="turns"]'),
+    ];
+    for (const mark of marks) {
+      expect(body.contains(mark)).toBe(false);
+      for (let node: HTMLElement | null = mark; node !== null && node !== root; node = node.parentElement) {
+        expect(filterClasses(node)).toEqual([]);
+      }
+    }
   });
 
   it('dims a hidden face the same way', () => {

@@ -4873,3 +4873,44 @@ This entry adds to the 2026-10-27 round 3 entry above, which stays as written.
   designer to judge. DESIGN.md is corrected in place.
 
 ---
+
+## 2026-10-27 · [P] Unplayable cards keep their chips at full contrast (L72-21 gate)
+
+Source: the Lot 72 design gate (L72-21). Impeccable's rendered scan of `/dev/ui` at 375×812 and
+1440×900 and the gate's critique both flagged the unplayable MEGA ATTACK in the Card gallery.
+
+- **Finding.** The unplayable dimming (`saturate-30 brightness-75`, L72-12 fix round 2) sat on
+  the whole card body, chips included. It took the `--text-on-cta` label on the `--life` damage
+  chip to 2.6:1. `saturate(30%)` alone would still leave about 3.8:1. Spec v7 §5.1 binds that pair
+  at 4.5:1, and an unplayable card stays activatable (§5.4: a tap opens the sheet with the
+  reason), so it is not an inactive control that WCAG exempts.
+- **Ruling.** The body layer (`data-card-layer="body"`) keeps the rim and the face or verso, and
+  only it is dimmed. The cost and damage chips, the "+" badge and the counter badge move to a
+  sibling `data-card-layer="marks"` over the same box, never filtered. DOM order and the
+  accessible name are unchanged; the selection outline and the focus ring stay off the body as
+  before.
+- **Test.** `ui/card/card.test.tsx` adds a case that every mark sits outside the body with no
+  filter class on any ancestor up to the root. The fix round 2 assertion that the chips are inside
+  the dimmed body pinned the defect and now asserts the opposite.
+- Recorded in `DESIGN.md` › Card (Unplayable, Anchors) and `docs/agent/frontend.md` › Card.
+
+---
+
+## 2026-10-27 · [P] · [DISCREPANCY] V6 storage helpers wrap only the storage accessor (L72-20 review, L72-21 gate)
+
+Source: technical spec v7 Appendix A `global-client-storage` (Keep: "Every access is wrapped in
+try/catch so a private window still works") and the L72-20 review.
+
+- **Code.** `ui/help-storage.ts`, `ui/release-storage.ts`, `feedback/asked-storage.ts` and
+  `inbox/password-storage.ts` wrap only the `localStorage` / `sessionStorage` accessor in
+  `try/catch` (`tryStorage`, `trySessionStorage`). Their `getItem`, `setItem` and `removeItem`
+  calls are not wrapped, so a browser that exposes storage but throws on access or on a full
+  quota would throw from those helpers.
+- **Elsewhere.** `net/use-room-connection.ts` (reconnect token) and the V7 `ui-switch.ts`
+  (L72-20) wrap every call, as the Keep line says.
+- **Not changed.** The divergence predates V7 (Lots 42–63). V7 changes no V6 behavior outside a
+  lot's scope, so the helpers stay as they are. The V7 lot that rewrites
+  each helper's consumer brings it in line with the Keep line, unless a designer ruling relaxes
+  the Keep line first.
+
+---

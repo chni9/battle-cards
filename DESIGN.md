@@ -912,9 +912,12 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   **Hover:** with full motion, a button card that is not selected lifts 4px on hover-capable
   pointers. **Unplayable:** `saturate(30%)` and `brightness(75%)`, so grey drawings (Suicide,
   Curse, the swords) read "not now" too, while the card stays solid; never grayscale or faded.
-  The filter sits on the card body (`data-card-layer="body"`: rim, face or verso, chips, counter
-  badge), never on the root or the focus ring, so the `--cta` selection outline and the `--text`
-  focus ring keep full contrast on an unplayable card.
+  The filter sits on the card body (`data-card-layer="body"`: rim, face or verso), never on the
+  root or the focus ring, so the `--cta` selection outline and the `--text` focus ring keep full
+  contrast on an unplayable card. The marks (cost and damage chips, the "+" badge, the counter
+  badge) sit in a sibling `data-card-layer="marks"` over the same box and are never dimmed:
+  dimmed, the `--text-on-cta` label on the `--life` damage chip fell to 2.6:1, and an unplayable
+  card stays activatable, so its numbers keep the §5.1 pairs (L72-21 gate).
 - **Hidden face:** the same frame and rim. The verso is `--panel-2`, lit from the top
   (`--text-2` at 20% fading out) and hatched in `--bg-0`, so it reads as a card on a `--panel`
   ground as well as on `--bg-0`; an inner `--text-2` frame line at 35%; a soft family halo
@@ -930,7 +933,7 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (face up only), `data-card-family`, `data-card-rim="holo" | "gold"`, `data-card-size`,
   `data-motion`, `data-unplayable="true"`, plus the caller's `dataAttributes` (fixed ones
   win). Inside: `data-card-layer="glow" | "rim" | "face" | "sheen" | "sheen-tint" |
-  "sheen-sweep" | "focus" | "body" | "verso" | "emblem"`, `data-card-name`, `data-card-chips="left-stack"
+  "sheen-sweep" | "focus" | "body" | "marks" | "verso" | "emblem"`, `data-card-name`, `data-card-chips="left-stack"
   | "corners"`, `data-card-chip="cost" | "damage"`, `data-cost-kind`,
   `data-card-badge="upgraded"`, `data-card-counter="card-lives" | "turns"`.
 - **Gallery:** the `/dev/ui` section `card` (`ui/card/card.gallery.tsx`): families and rims,

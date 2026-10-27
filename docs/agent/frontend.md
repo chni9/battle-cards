@@ -372,8 +372,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Selection vs focus:** selection is the `--cta` outline; keyboard focus is a separate
   `--text` ring layer (`data-card-layer="focus"`, `group-focus-visible`). Never style focus
   through `outline` on a card, or it would replace the selection cue. State filters (the
-  unplayable dimming) go on the body layer (`data-card-layer="body"`), never on the root, so
-  both cues keep full contrast.
+  unplayable dimming) go on the body layer (`data-card-layer="body"`: rim, face or verso), never
+  on the root, so both cues keep full contrast. The chips, the "+" badge and the counter badge
+  live in the sibling `data-card-layer="marks"` and are never filtered, so their numbers keep the
+  §5.1 contrast pairs on an unplayable card (L72-21 gate).
 - **Tests:** happy-dom has no media queries and no layout, so tests assert `data-motion`, the
   `data-card-*` anchors and the class names (`v7-card-sheen`, `v7-card-holo-drift`,
   `animate-pulse`, the lift, the size variables); the name fit is a node test on
@@ -1963,3 +1965,42 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
 
 Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Thief Choose target also includes an eliminated player who still has a Thief pending on you. Spy and the other living-only pickers stay living-only. The server still rejects an attack or Thief on a corpse with nothing of that kind pending.
 
+### Lot 72 verified 2026-10-27 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 45)
+
+Vite `:5173`, Colyseus `:2567`, nick **L72Gate**, viewports 375×812, 844×390 and 1440×900 in the
+built-in browser pane. Baseline: a detached worktree at `d530a8a` (the commit before L72-01),
+rooms **LUQDWX** (lobby) and **VNLEVA** (solo, 3 Easy bots).
+
+- **Design gate (§12.4):** `.impeccable/config.json` holds only the pre-approved
+  `radial-spotlight-glow` / `dark-glow` ignore on `ui/tokens.css`, plus the four
+  `design-system-font` ignores on `.superpowers/brainstorm/` boards (§12.4 exemption, 4494d34);
+  no `ignoreRules` or `ignoreFiles`, no `impeccable-disable`, `hook.cache.json` gitignored.
+  `detect` on `ui/`, `screens/arena/` and `assets/art/`: exit 0, 17 advisories, 0 primary
+  (PNGs are unscannable). URL scans of `/dev/ui` at 375×812 and 1440×900: the Q3b halo on
+  `.v7-ground` is the only allowed finding. One real low-contrast finding (unplayable chips) is
+  fixed below. The V2 `tutorial-pulse` dark glow from `index.css`, the gallery-frame
+  `nested-cards` and a gallery-fixture repeat are false positives. Critique notes are in the
+  Lot 72 PR.
+- **Side by side (§4.4):** with `?ui=classic`, Home and lobby **EYTJLL** match the baseline
+  style hash at both sizes (Home `8a605ac8` / `216884e1`, lobby `2cc969fa`). Solo **YSUSRL**
+  and its Game over keep the V2 look. Every screen loads Outfit only, with no V7 font and no
+  ground. What's new opened on `lot-72-v7` ("New look").
+- **Switch (§4.4):** `?ui=next` stores `card-battle.v7.ui = 'next'`, and it survives `/`. Solo
+  **ELIEIJ** mounts `ArenaScreen` (a pass-through to `TableScreen`), and so does its finished
+  board (`EndScreen`). `?ui=classic` clears the key. Tutorial **LWKIFB** stays classic with the
+  key set (React fiber probe, past the board tour).
+- **`/dev/ui`:** the production build ships no gallery chunk. All 11 sections render at
+  375×812 and 1440×900, with the ground off `html`, `body` and `#root`, Fredoka, Lilita One and
+  Nunito loaded and no page overflow. `chat-body` is **16px**, 44 px tall, maxLength 200, and
+  every field is 16 px. The Dialog overlay equals `visualViewport` at 375×812 and 844×390
+  (bottom sheet, gap 0) and at 1440×900 (centred), with `aria-modal` and no `100dvh`. A
+  read-only sheet closes on a 260 px mouse drag of its handle (`left_click_drag`; a drag on the
+  title only selects text); the blocking picker stays open.
+- **Art (§5.5):** `extract-art.ts` regenerates the 31 card and 16 kit PNGs byte for byte, and no
+  screen imports `artFor` yet. Contact sheet signed off 2026-10-27 by the designer, with the
+  enclosed old-ground pockets removed per the designer (e2beae8, 33b897c).
+- **Pre-merge (§4.6):** `lot-72` is **pending** on `origin/main` (59ca9ed; PR #79 dev → main is
+  open). The Lot 72 PR waits for it.
+- Fix: an unplayable `Card` dimmed its cost and damage chips with the rest of the body (damage
+  label 2.6:1). The chips, the "+" badge and the counter badge now sit in an undimmed `marks`
+  layer. `pnpm verify` **2613** tests.

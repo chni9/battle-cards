@@ -107,11 +107,17 @@ const LIFT_CLASS = '-translate-y-2 scale-105';
 /** A small desktop lift; Tailwind v4 `hover:` only applies on hover-capable pointers. */
 const HOVER_LIFT_CLASS = 'hover:-translate-y-1';
 /**
- * The card body (rim, face or verso, chips, counter badge) in one layer, so an unplayable card is
- * dimmed there and never on the root, which carries the `--cta` selection outline, nor on the
- * focus ring: both keep full contrast (fix round 2). The body is the root's padding box.
+ * The card body (rim, face or verso) in one layer, so an unplayable card is dimmed there and never
+ * on the root, which carries the `--cta` selection outline, nor on the focus ring: both keep full
+ * contrast (fix round 2). The body is the root's padding box.
  */
 const BODY_CLASS = 'pointer-events-none absolute inset-0';
+/**
+ * The marks (cost and damage chips, the "+" badge, the counter badge) sit in a sibling layer over
+ * the same box, outside the dimmed body: dimmed, the `--life` damage chip label fell to 2.6:1 (spec
+ * v7 §5.1 binds 4.5:1), and an unplayable card stays activatable (§5.4). L72-21 gate.
+ */
+const MARKS_CLASS = 'pointer-events-none absolute inset-0';
 /** Desaturated and dimmed, so grey drawings read "not now" too; never faded out (fix round 1, A5). */
 const UNPLAYABLE_CLASS = 'saturate-30 brightness-75';
 
@@ -464,6 +470,8 @@ function FaceUp({
             </span>
           ) : null}
         </span>
+      </span>
+      <span data-card-layer="marks" className={MARKS_CLASS}>
         <span data-card-chips={layout} className={`pointer-events-none absolute flex ${CHIPS_CLASS[size]}`}>
           {/* Corners: cost then "+" down the left, damage alone on the right, so the top rail never
               holds the widest cost and the badge side by side (fix round 1, A3). Left stack: one
