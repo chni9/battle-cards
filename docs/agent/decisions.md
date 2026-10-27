@@ -4836,3 +4836,40 @@ qu'il reste des anciens fonds"). This supersedes "enclosed old-ground regions st
   limit as the outer edge's 3-way corners in round 2.
 
 ---
+
+## 2026-10-27 · [P] V7 art: erase the Reanimation shirt-end residue (L72-10 fix round 4)
+
+Source: the independent re-review of fix round 3 (e2beae8), relayed by the coordinator,
+against the designer's 2026-10-27 request to "remove what is left of the old card grounds".
+This entry adds to the 2026-10-27 round 3 entry above, which stays as written.
+
+- **Residue.** The round 3 "Known remainder" at the ends of the Reanimation shirt's lower edge
+  was still faintly visible up close on the dark grounds: a light tick at each end, about
+  3.7 × 0.7 CSS px at 250 CSS px wide and DPR 3.
+  - Cause: the shirt's 1 px anti-aliased bottom row is a uniform blend, so the ring-2
+    solid-fill guard in `defringeEdge` keeps it.
+  - A pocket seed cannot reach it: its pixels are 26 to 128 from the ground, so
+    `clearSeededGround` would throw.
+- **Fix.** A per-asset erase list, `RESIDUE_ERASE` in `extract-art.ts`, goes through the
+  existing `erase()` before ground removal, like `CARD_ERASE` and `KIT_ERASE`: alpha only, on a
+  copy, boxes as fractions of the source.
+  - It covers exactly 13 pixels of the 365 × 530 `Reanimation.png`: row 374, x 109–113 and
+    252–255; row 375, x 110–111 and 254–255. In the output these are (70–74, 293),
+    (71–72, 294), (213–216, 293) and (215–216, 294).
+  - `defringeEdge`, `clearEdgeGround` and `clearSeededGround` are unchanged. `defringeEdge`
+    un-blends the new edge around the boxes.
+- **Result.** Only `cards/reanimation.png` changes, and its size stays 288 × 339. The changed
+  pixels are the 13 erased ones and 12 ring pixels within two pixels of them. The output is
+  byte-reproducible.
+  - On the light ground (`#f3eeff`) the shirt's soft bottom row (alpha 112) now stops at the
+    boxes, 4 to 5 px before the arm. That is a 1 px row under half coverage, a step of under
+    0.4 CSS px, and is not visible at display scale.
+- **Left as is.** The MEGA ATTACK tooth-gap corner, the Reanimation band tip and the Cloning
+  tips: the review measured them under one CSS pixel and invisible.
+- **Correction (Points Generator).** The round 3 entry calls the two Points Generator pixels
+  "1 px residues", and DESIGN.md › Illustrations called them "1 px light residues". In the
+  output they are near-transparent blue tints (alpha 18 and 10), not light residues. The faint
+  light dot beside each is the coin and arrow blend of the drawing. They are still kept for the
+  designer to judge. DESIGN.md is corrected in place.
+
+---

@@ -454,11 +454,18 @@ The existing drawings only, never new art (spec v7 §5.5).
   - the Untouchable lenses;
   - Specialist's gear hole;
   - the Duplicator sliver under the arrow.
+- **Residue past the two rings:** at both ends of the Reanimation shirt's lower edge the
+  anti-aliasing is wider than the two rings and too far from the ground for a seed, so a
+  per-asset erase list (`RESIDUE_ERASE` in `scripts/extract-art.ts`) clears those pixels before
+  ground removal, like the printed values, and the edge around them is un-blended the same way
+  (L72-10 fix round 4).
 - **Light parts that share the ground color stay:** the Spy glint, the Tax minus, the
   Regeneration plus, the MEGA ATTACK and Assassin blood-drop highlights, and the edge of the
   Invisibility glint.
-- **Kept for the designer to judge:** two 1 px light residues where Points Generator's arrows
-  pinch against the coin.
+- **Kept for the designer to judge:** two 1 px near-ground pixels where Points Generator's
+  arrows pinch against the coin. The un-blend leaves them as near-transparent blue tints
+  (alpha 18 and 10), not light residues; the faint light dot beside each is the coin and arrow
+  blend of the drawing.
 - **Sign-off pending:** the designer signs the before/after contact sheet on the Lot 72 PR
   (L72-21) before any screen stops using the old PNGs.
 

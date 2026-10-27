@@ -13,7 +13,9 @@
  * key. The old ground the drawings enclose is cleared from hand-placed seeds, one per pocket
  * (`POCKET_SEEDS`, designer 2026-10-27, fix round 3). The two rings along every cleared region
  * are then un-blended from the same ground so no halo of it is left (`defringeEdge`, fix
- * rounds 1 and 2).
+ * rounds 1 and 2). The two old-ground residues none of that reaches, at the ends of the
+ * Reanimation shirt's lower edge, are erased like the printed values (`RESIDUE_ERASE`, fix
+ * round 4).
  * Also writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`
  * for the lot PR.
  */
@@ -61,12 +63,30 @@ const CARD_ERASE: Partial<Record<CardId, readonly Box[]>> = {
   'super-mirror': [{ left: 0.74, top: 0.8, right: 0.96, bottom: 0.96 }],
 };
 /**
+ * Old-ground residue that neither the defringe rings nor a pocket seed can reach, erased like
+ * the printed areas before ground removal (designer 2026-10-27, L72-10 fix round 4). At both
+ * ends of the Reanimation shirt's lower edge the 1 px anti-aliased row is a uniform blend, so
+ * the ring-2 solid-fill guard in `defringeEdge` keeps it, and its pixels are 26 to 128 from the
+ * ground, too far for a seed. `defringeEdge` then un-blends the new edge around each box.
+ * Exact pixels of the 365 × 530 `Reanimation.png`: row 374, x 109–113 and 252–255; row 375,
+ * x 110–111 and 254–255.
+ */
+const RESIDUE_ERASE: Partial<Record<CardId, readonly Box[]>> = {
+  reanimation: [
+    { left: 109 / 365, top: 374 / 530, right: 114 / 365, bottom: 375 / 530 }, // left end
+    { left: 110 / 365, top: 375 / 530, right: 112 / 365, bottom: 376 / 530 },
+    { left: 252 / 365, top: 374 / 530, right: 256 / 365, bottom: 375 / 530 }, // right end
+    { left: 254 / 365, top: 375 / 530, right: 256 / 365, bottom: 376 / 530 },
+  ],
+};
+/**
  * One seed inside each enclosed old-ground pocket, as fractions of the crop box (designer
  * 2026-10-27: remove what is left of the old card grounds inside the drawings). Found by a
  * detector over every opaque region within `GROUND_TOLERANCE` of an asset's ground, then
  * sorted by hand; the regions that are drawing parts (eye glints, the Tax minus, the
- * Regeneration plus, blood-drop highlights) and the two 1 px Points Generator residues have no
- * seed. Never a global color key: it would eat those parts, the skulls and the Ghost.
+ * Regeneration plus, blood-drop highlights) and the two 1 px Points Generator pixels (left as
+ * near-transparent blue tints by `defringeEdge`) have no seed. Never a global color key: it
+ * would eat those parts, the skulls and the Ghost.
  */
 const POCKET_SEEDS: Partial<Record<CardId | KitId, readonly { x: number; y: number }[]>> = {
   'strong-attack': [{ x: 0.522, y: 0.552 }], // diamond between the guards
@@ -118,7 +138,7 @@ function buildJobs(): Job[] {
       folder: 'cards',
       source: CARD_FILES[id].base,
       box: CARD_BOX,
-      erase: CARD_ERASE[id] ?? [],
+      erase: [...(CARD_ERASE[id] ?? []), ...(RESIDUE_ERASE[id] ?? [])],
       pockets: POCKET_SEEDS[id] ?? [],
     }),
   );
