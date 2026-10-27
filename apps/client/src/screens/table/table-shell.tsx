@@ -12,7 +12,7 @@ import { Button } from '../../design/components/button';
 import {
   ACTION_LOG_OPEN_LABEL,
   OPPONENTS_OPEN_LABEL,
-} from './table-copy';
+} from '../../view-model/table-copy';
 import type { FeltCollapse } from './felt-collapse';
 
 export interface TableShellProps {

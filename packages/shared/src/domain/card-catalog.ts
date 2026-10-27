@@ -76,8 +76,8 @@ export const SHARED_CARD_CATALOG = {
     'action',
     3,
     'Gain the lives the target lost during their last complete turn.',
-    'Gain the lives the target lost during their last complete turn, and also capture points and upgrade points they actively spent.',
-    'Also capture points and upgrade points they actively spent.',
+    'Gain the lives the target lost during their last complete turn, and also capture every point and upgrade point that left them, including sales and thefts; never shield.',
+    'Also capture every point and upgrade point that left them, including sales and thefts; never shield.',
   ),
   spy: pointsCard(
     'spy',

@@ -6,13 +6,13 @@
 
 import type { ReactElement } from 'react';
 
-import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
+import { getResourceIconUrl, type ResourceKind } from '../../ui/asset-lookup';
 import {
   costSignGlyph,
   spokenCost,
   type CostSign,
   type StructuredCost,
-} from './structured-cost';
+} from '../../ui/structured-cost';
 
 export interface CostDisplayProps {
   cost: StructuredCost;

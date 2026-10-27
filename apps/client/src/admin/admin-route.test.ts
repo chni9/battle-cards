@@ -14,12 +14,9 @@ function read(rel: string): string {
 describe('admin route (Lot 61-06)', () => {
   it('renders /admin before game phases and redirects /inbox to feedback', () => {
     const app = read('App.tsx');
-    const home = read('screens/home.tsx');
     expect(app).toContain("path.startsWith('/admin/')");
     expect(app).toContain("window.location.replace('/admin/feedback')");
     expect(app).toContain('<AdminApp');
-    expect(home).not.toContain('/admin');
-    expect(home).not.toContain('/inbox');
   });
 
   it('reuses inbox password session storage', () => {

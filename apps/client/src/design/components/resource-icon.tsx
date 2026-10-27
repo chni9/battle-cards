@@ -19,8 +19,8 @@ import {
   TOKEN_STAGGER_MS,
 } from '../../fx/motion-timing';
 import { useTableFxOptional } from '../../fx/table-fx-hooks';
-import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
-import { RESOURCE_CAPTIONS, resourceCaptionMode } from './resource-captions';
+import { getResourceIconUrl, type ResourceKind } from '../../ui/asset-lookup';
+import { RESOURCE_CAPTIONS, resourceCaptionMode } from '../../ui/resource-captions';
 
 export interface ResourceIconProps {
   kind: ResourceKind;

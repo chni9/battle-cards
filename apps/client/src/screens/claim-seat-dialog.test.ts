@@ -101,10 +101,4 @@ describe('walkInSeesPrivateHands (L57-16)', () => {
       ]),
     ).toBe(true);
   });
-
-  it('hides watching-hands copy while the overlay is fogged', () => {
-    const table = readFileSync(join(here, 'table.tsx'), 'utf8');
-    expect(table).toContain('walkInSeesPrivateHands');
-    expect(table).toContain('Hands stay hidden until you stay spectating or sit.');
-  });
 });

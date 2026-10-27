@@ -4,6 +4,10 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+/** Technical spec v7 §4.3: src/view-model/ is pure and never reads a clock. */
+const VIEW_MODEL_PURITY_MESSAGE =
+  'src/view-model/ is pure: no React, react-dom or motion import and no clock read; callers pass nowMs (technical spec v7 §4.3).';
+
 export default tseslint.config(
   {
     ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**'],
@@ -45,5 +49,25 @@ export default tseslint.config(
     files: ['apps/client/src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest'], reactRefresh.configs.vite],
     languageOptions: { globals: globals.browser },
+  },
+
+  {
+    // One-off Node scripts (art extraction, technical spec v7 §5.5).
+    files: ['apps/client/scripts/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+
+  {
+    files: ['apps/client/src/view-model/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: ['react', 'react-dom', 'motion'].map((name) => ({ name, message: VIEW_MODEL_PURITY_MESSAGE })),
+        patterns: [{ group: ['react/*', 'react-dom/*', 'motion/*'], message: VIEW_MODEL_PURITY_MESSAGE }],
+      }],
+      'no-restricted-properties': ['error',
+        { object: 'Date', property: 'now', message: VIEW_MODEL_PURITY_MESSAGE },
+        { object: 'performance', property: 'now', message: VIEW_MODEL_PURITY_MESSAGE },
+      ],
+    },
   },
 );

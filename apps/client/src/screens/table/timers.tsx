@@ -15,7 +15,7 @@ import {
   seatColorWash,
   seatIndexOf,
   type SeatPlayersView,
-} from '../../design/seat-colors';
+} from '../../ui/seat-colors';
 import { MOTION_DURATION_S, MOTION_EASE } from '../../fx/motion-timing';
 
 export interface TimersProps {

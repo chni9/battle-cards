@@ -5,7 +5,7 @@
 
 import type { ReactElement } from 'react';
 
-import { getResourceIconUrl, type ResourceKind } from '../design/asset-lookup';
+import { getResourceIconUrl, type ResourceKind } from '../ui/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import {

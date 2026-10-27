@@ -13,13 +13,13 @@ import {
 } from '@card-battle/shared';
 import type { ReactElement, ReactNode } from 'react';
 
-import { getCardArtUrl, getCardBackUrl } from '../../design/asset-lookup';
+import { getCardArtUrl, getCardBackUrl } from '../../ui/asset-lookup';
 import { CostDisplay } from '../../design/components/cost-display';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import { ResourceIcon } from '../../design/components/resource-icon';
-import { structuredCostFromCardCost } from '../../design/components/structured-cost';
-import { KIT_ABILITY_COPY } from './kit-inspect-traits';
-import { kitSpecialCardKey } from './kit-special-card-key';
+import { structuredCostFromCardCost } from '../../ui/structured-cost';
+import { KIT_ABILITY_COPY } from '../../view-model/kit-inspect-traits';
+import { kitSpecialCardKey } from '../../view-model/kit-special-card-key';
 
 export interface KitInspectDetailsProps {
   kitId: KitId;

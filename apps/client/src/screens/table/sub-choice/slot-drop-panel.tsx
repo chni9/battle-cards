@@ -13,7 +13,7 @@ import type { ReactElement } from 'react';
 
 import { Button } from '../../../design/components/button';
 import { CardChoiceTile } from '../../../design/components/card-choice-tile';
-import { nicknameOf } from '../table-helpers';
+import { nicknameOf } from '../../../view-model/table-helpers';
 
 export interface SlotDropPanelProps {
   subChoice: SlotDropChoiceRequiredPayload;

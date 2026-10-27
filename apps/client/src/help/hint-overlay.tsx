@@ -8,14 +8,14 @@ import { useLayoutEffect, useRef, type CSSProperties, type ReactElement } from '
 
 import { Button } from '../design/components/button';
 import { CoachPanel } from '../design/components/coach-panel';
-import { readVisualViewportBox } from '../design/components/visual-viewport';
+import { readVisualViewportBox } from '../ui/visual-viewport';
 import {
   GOT_IT_ACTION_LABEL,
   HIDE_COACH_ARIA_LABEL,
-} from '../screens/table/table-copy';
+} from '../view-model/table-copy';
 
 import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
-import { hintAnchorId, hintPlacePrefer, type HintId } from './hint-ids';
+import { hintAnchorId, hintPlacePrefer, type HintId } from '../ui/hint-ids';
 import { placeHintCard } from './place-hint-card';
 
 const COMPACT_HINT_BUTTON =

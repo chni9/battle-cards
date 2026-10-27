@@ -23,19 +23,635 @@ labels, Lot 60 Game over awards gallery, Lot 63 Gambler Draw-bust log tell,
 Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
 action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
+**V7 (visual redesign "Arcade Holo") is in progress** (`docs/technical_spec_v7.md` +
+Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). It is
+client-only and lands side by side: the V2 design system below still governs every screen
+until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
+design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
+(normative) > `DESIGN.md`** (derived from the code; spec v7 §5.8).
+
 ## Screens
 
 | Screen | When | File |
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
-| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) |
-| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once | `screens/end.tsx` + `game-over-dialog.tsx` + `game-over-awards.ts` |
+| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (renders `TableScreen` until L74-01) |
+| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
 
 Shared status copy: `screens/status-labels.ts`.
+
+## View-model layer (V7 · Lot 72+)
+
+Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table in
+`docs/backlog_v7.md`.
+
+- Modules are **moved, not rewritten** (L72-03): `git mv` with the basename unchanged,
+  assertions verbatim, importers repointed directly, and **no shim or re-export** stays at an
+  old path. `view-model/` holds `incoming-threat-diff`, `threat-tone`, `opponent-token-chips`,
+  `action-log`, `select-hint` and `game-over-awards`; the modules L72-04 moved in are listed in
+  the last bullet of this section.
+- `view-model/` has **no** React, react-dom or motion import and **no clock read**
+  (`Date.now`, `performance.now`); callers pass `nowMs`. The purity block in
+  `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
+- `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
+  structured-cost, hint-ids), never a `ui/` component. Nothing in `view-model/` imports from
+  `design/` or `screens/table/`.
+- `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
+  (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
+  `import type`; nothing else in `view-model/` imports from `fx/`.
+- The four non-component `ui/` helpers are `hint-ids`, `help-storage`, `release-storage` and
+  `fx-anchors`. The `card-battle.v6.*` storage keys in `help-storage` and `release-storage` are
+  unchanged. `ui/fx-anchors.ts` holds the FX zone names, the deck-card flyout size and the
+  `data-zone` selector builders; it takes a type-only `ResourceKind` import from
+  `ui/asset-lookup`.
+- L72-04 moved the React-free `design/` and `screens/table/` modules: `src/ui/` holds
+  `asset-lookup`, `seat-colors`, `effect-text-tokens`, `structured-cost`, `visual-viewport`,
+  `resource-captions` and `primitives/dialog-width`; `src/view-model/` holds `table-helpers`,
+  `opponent-seat-resources`, `pending-chip-tone`, `attack-targets`, `chat-unread`,
+  `table-banner`, `tutorial-coach-copy`, `table-copy`, `kit-inspect-traits`,
+  `kit-special-card-key`, `chrome-labels`, `table-flag-intent`, `active-display` and
+  `sub-choice-constants`. New code imports them from there, never from `design/` or
+  `screens/table/`.
+
+## Design system (V7 · Lot 72+)
+
+Technical spec v7 §5 is normative (§5.1 colors, §5.2 type, §5.3 shapes, §5.7 motion, §8.3
+reduced motion). `/DESIGN.md` is derived from `apps/client/src/ui/` and follows the order
+**code > spec v7 §5 > `DESIGN.md`** (§5.8). A task that adds or changes a token or a `ui/`
+component updates `DESIGN.md` in the same commit (§12.5). The tokens live in `ui/tokens.css`
+and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
+
+- **Side by side** (§4.4): `index.css` imports `./ui/tokens.css` right after
+  `@import "tailwindcss"`. V2 `@theme` and `:root` values do not change, and no old screen is
+  recolored; a screen switches entirely when its lot lands.
+- **Names:** one `@theme inline` block in `ui/tokens.css`, every key
+  `--<tailwind-namespace>-v7-<spec-token>`. Utilities: `bg-v7-panel`, `text-v7-text-2`,
+  `border-v7-ink`, `rounded-v7-chrome`, `shadow-v7-chrome`, `font-v7-display`,
+  `text-v7-input`, `ease-v7-entrance`. No V7 key reuses a V2 name (`--color-ink`,
+  `--color-surface*`, `--color-seat-*`, `--radius-card`, `--radius-button`, `--font-sans`),
+  and no `--text-v7-*` size suffix equals a `--color-v7-*` suffix. L81 may drop the prefix.
+  Inline styles take hex from `ui/palette.ts` (`V7_COLORS`, `v7SeatColor`), never `var()` or
+  `color-mix()` (the mobile Safari rule from `ui/seat-colors.ts`).
+- **Ground:** `.v7-ground` (halos plus 1 px scanlines every 3 px) is opt-in, defined only in
+  `ui/tokens.css`, and never goes on `html`, `body` or `#root`. No `vh` or `dvh` in that file.
+  Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`,
+  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 can override them under
+  `[data-mode="tool"]`.
+- **Fonts:** `ui/fonts.ts` holds seven `@fontsource` side-effect imports: Lilita One 400
+  (titles, buttons, UI numerals, seat names), Fredoka 500-700 (everything printed on a card),
+  Nunito 700-900 (body, descriptions, log lines, labels). `@fontsource/outfit` stays imported
+  in `main.tsx` until L81. Floors: 11 px functional text, 16 px text inputs, own lives at
+  least 20 px, incoming damage at least 22 px on a 375 px phone.
+- **Palette mirror:** `ui/palette.test.ts` reads `ui/tokens.css?raw` and fails when
+  `palette.ts` and the CSS declare different values. Vitest blanks every CSS import, `?raw`
+  included, so the client project sets `test.css.include` for that one file in
+  `vitest.config.ts`; keep that key when the project's `include` changes (L72-06).
+- **Contrast:** `ui/contrast.ts` (`contrastRatio`, `deltaE2000`) backs `ui/contrast.test.ts`.
+  `--text` and `--text-2` reach 4.5:1 on all four grounds; `--text-on-card` on both card-face
+  stops; every seat hue 4.5:1 on all four grounds and pairwise CIEDE2000 at least
+  `SEAT_HUE_MIN_DELTA_E` (20) apart. `--ink` is outline and shadow only, never text: labels on
+  `--cta`, `--cta-2`, `--danger` and `--life` fills use `--text-on-cta`. A seat hue never
+  shares an element with `--life` or a `--threat-*` color. Resource and threat colors are text
+  only at large size, on every ground (spec v7 §5.1); otherwise they are fills, rings and
+  icons. `ui/contrast.test.ts` additionally guarantees at least 4.5:1 on `--bg-0`, `--bg-1`
+  and `--panel`, which keeps large text safe there.
+- **Motion:** V7 components read only `usePrefersReducedMotion()`
+  (`ui/motion/use-prefers-reduced-motion.ts`), run motion props through
+  `motionSpecFor(spec, reduced)` and put `data-motion="reduced" | "full"` on the animated
+  root. Reduced means fades and color flashes only: no x, y, scale or rotate, and a fast tween
+  instead of the spring. Apply CSS animation and press classes only when full.
+- **Icons (L72-07):** `<Icon name size? label? />` from `ui/icons/icon.tsx`. Names only from
+  `ICON_NAMES` (`ui/icons/icon-names.ts`: the spec v7 §5.6 set including `unspy`, plus the L72
+  additions `clock`, `close`, `chevron-left`, `chevron-right`, `random`); resources via
+  `RESOURCE_ICON[kind]`. Decorative (`aria-hidden`) unless given a non-empty `label`.
+  Icon-only controls use `IconButton` (L72-08) for the aria-label and title (L59-01), never a
+  bare `Icon`. Glyph paints are `V7_COLORS` hex only, with a 2-unit ink outline and a non-ink
+  body. Never put an icon directly on a fill within CIEDE2000 20 of its body or motif token
+  (for example `point`, `shop`, `coach` or `feedback` on `--cta`, or `help` on `--cta-2`):
+  put it in a `--bg-0` or `--panel` well. No emoji and no U+2715 cross in `ui/`
+  (`ui/icons/no-emoji.test.ts`); use `Icon name="eliminated"` or `"close"`. The classic
+  `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75. Details:
+  `/DESIGN.md` › Icons.
+- **Art (L72-10, spec v7 §5.5):** `src/assets/art/{cards,kits}/<id>.png`, 31 base cards
+  (Roulette included) and 16 kits (Gambler included), transparent, trimmed, native
+  resolution. Resolve them only through `artFor(id)` (`ui/asset-lookup.ts`): it never
+  returns activated art (upgraded, activated and active looks are Card code states, §5.4) and
+  never throws; a missing drawing falls back to the family verso (the kit verso for a kit),
+  then to `ART_FALLBACK_URL`. The PNGs are generated by
+  `pnpm --filter @card-battle/client exec tsx scripts/extract-art.ts` from the
+  `ui/asset-files.ts` maps (base drawings only) and are never hand-edited. Ground removal is
+  edge flood-fill only (`scripts/art-flood-fill.ts`), never a global color key. Old ground a
+  drawing encloses is cleared by `clearSeededGround` from one hand-placed seed per pocket
+  (`POCKET_SEEDS` in `scripts/extract-art.ts`; designer 2026-10-27, list in `/DESIGN.md` ›
+  Illustrations). The helper throws when a seed is not ground, so a wrong seed cannot erase
+  drawing. A new pocket gets a seed, never a color key. `defringeEdge` then un-blends the old
+  ground out of two rings only: the opaque pixels next to any cleared region (outer edge or
+  pocket), and the pixels next to those unless they are a solid fill. So edges show no light
+  halo on dark grounds; `clearEdgeGround` still writes alpha only (fix rounds 1–3,
+  `decisions.md` 2026-10-26 and 2026-10-27). `GROUND_TOLERANCE` lives in
+  `scripts/art-flood-fill.ts`, and the defringe thresholds derive from it. Printed values are
+  never authoritative: the crop boxes and erase zones drop them, and numbers come from the
+  catalogs. The script also
+  writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`;
+  it goes on the lot PR for the designer's sign-off. Old screens keep `getCardArtUrl` /
+  `getKitPortraitUrl` until L72-21. A new card or kit = its `ui/asset-files.ts` map entry +
+  its source PNG in `images/` + a rerun of the script (then check the contact sheet).
+- **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
+  `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
+  committed. Any other finding is fixed, not ignored.
+
+### V7 primitives (L72-08)
+
+- **Imports:** one file per primitive in `ui/primitives/` (`button`, `icon-button`, `pill`,
+  `badge`, `avatar`, `tabs`, `segmented`, `slider`, `toggle`, `tooltip`, `scroll-area`,
+  `text-field`, `carousel`, `kit-tile`), each a named export of the same PascalCase name
+  (`import { Button } from '../ui/primitives/button'`). There is no barrel file. Details per
+  primitive: `/DESIGN.md` › Primitives.
+- **Chrome helpers:** `ui/primitives/chrome-classes.ts` is the only source of the chrome
+  classes:
+  - shape: `CHROME_OUTLINE_CLASS`, `CHROME_SHAPE_CLASS`, `CHROME_SHAPE_SM_CLASS`,
+    `CHROME_FLAT_SM_CLASS`, `CHROME_DISC_CLASS`, and `CHROME_TRACK_*` for Tabs and Segmented;
+  - state: focus, the "off" disabled look (`CHROME_DISABLED_CLASS`, which covers `disabled` and
+    `aria-disabled="true"`), variants and press (`chromePressClass(reduced)`,
+    `motionAttribute(reduced)`);
+  - the icon-well rule: `iconNeedsWell(variant)` and `ICON_WELL_CLASS`. On `--cta`, `--cta-2`
+    and `--danger` fills an icon sits in a `--bg-0` well.
+
+  New chrome composes these constants instead of restating the outline, radius or shadow
+  (`border-v7-ink`, `shadow-v7-chrome` and so on). `avatar-initial.ts` holds the grapheme
+  initial.
+- **`className` target:** a primitive puts `className` on its outermost element. That is the
+  Button wrapper when a reason line is present; IconButton has no `relative` root, so
+  `absolute top-3 right-3` positions it directly.
+- **Labelled scroll regions:** a `ScrollArea` with a `label` is a named focusable region and
+  carries `data-scroll-region` (`SCROLL_REGION_ATTRIBUTE`, `use-focus-trap.ts`), the same mark the
+  Sheet body sets when it overflows. Inside a sheet, initial focus goes to the first focusable
+  element without that mark, so a field after a labelled transcript (Chat) keeps it; with
+  nothing else focusable, the region takes it. Content that can overflow gets a label (a body
+  that overflows only sometimes sets it only then, as the Sheet and the coach panel do).
+  `focusRing="inset"` draws the ring inside the edge for an area inside a clipping container.
+- **Disabled but focusable:** where a disabled reason must reach keyboard and screen-reader
+  users (Q39), pass `disabled` with `focusableWhenDisabled` to Button: it renders
+  `aria-disabled="true"`, stays in the Tab order and swallows activation. The Carousel
+  end-stops use `aria-disabled` on IconButton, so paging to an end keeps focus (WCAG 2.4.3,
+  `docs/agent/decisions.md` 2026-10-21). Never toggle native `disabled` on a focused control.
+- **Keyboard model:** `ui/primitives/roving-focus.ts` backs Tabs and Segmented:
+  `rovingKeyFor(key, 'tabs' | 'radios')`, `nextEnabledIndex`, `edgeEnabledIndex`, and
+  `hasCommandModifier(event)`, which leaves Alt, Ctrl and Meta chords to the browser. A new
+  roving widget reuses it rather than writing its own arrow-key switch.
+- **Esc layering:** each Esc closes one layer. Open tooltips form a stack, and one shared
+  capture-phase `document` listener closes only the most recent one, then calls
+  `stopImmediatePropagation`.
+  - Still run: `window` capture listeners, and `document` capture listeners registered before
+    the shared one was installed.
+  - Stopped: later `document` capture listeners, everything below `document`, every
+    bubble-phase listener, and React handlers.
+  - The Sheet's Esc listener (L72-09) is therefore a bubble-phase `document` listener, so a
+    tooltip open inside a sheet takes the first Esc and the sheet the next.
+- **Scroll containers are positioned:** every V7 scroll container (a screen's scrolling ground,
+  ScrollArea, the Carousel track, the Sheet body) carries `relative`. Absolutely positioned
+  descendants, `sr-only` labels included, then stay inside its clip. Without it they stretch
+  `#root`, which clips and cannot scroll back, and a screen reader's focus-follows can leave a
+  blank screen. The rule covers V7 containers; a pre-V7 screen adopts it when its lot restyles
+  it. ScrollArea is always `relative`, and a `className` of `absolute` or `fixed` loses to it
+  (Tailwind emits `.relative` after `.absolute` and `.fixed`), so a caller that must position
+  the scroller wraps it in a positioned element.
+- **`data-motion`:** every animated primitive puts `data-motion="reduced" | "full"` on the
+  element that moves (Button, IconButton and Toggle on the `<button>`, Carousel on its scroll
+  track, whose `scroll-smooth` class and `scrollTo` behavior follow it) and applies transition
+  or press classes only when full. Tests assert the attribute or the class, never
+  a media query (happy-dom cannot evaluate one).
+- **Viewport rule:** layout mode comes only from `viewportModeFor({ width, height })`
+  (`ui/viewport-mode.ts`) or the hooks `useViewportMode()` / `useVisualViewportBox()`
+  (`ui/use-visual-viewport-box.ts`, `useSyncExternalStore` on `visualViewport`). Never write a
+  second height or aspect breakpoint. happy-dom has no `visualViewport`, so
+  `readVisualViewportBox()` falls back to the window size (1024×768 there); a component test
+  that needs a given box stubs it (`vi.stubGlobal('visualViewport', …)`, see
+  `dialog.test.tsx`) or mocks `ui/use-visual-viewport-box` (see `carousel.test.tsx`; a mock
+  must then provide every hook the rendered tree calls).
+- **Copy scope:** `ui/ui-copy.ts` holds only the spec v7 §10.6 strings a `ui/` component adds
+  (`EXCLUDED_LABEL`, `MINIMIZE_LABEL`, `TABLE_RULES_LABEL`, `carouselPositionLabel`,
+  `shieldPointsLabel`, `ELIMINATED_LABEL` and `eliminatedPortraitLabel`). A new such string goes
+  there, not beside its component. Any other label is a prop the caller fills from existing
+  copy.
+- **Gallery registration:** add `ui/<area>/<area>.gallery.tsx` exporting
+  `const gallery: GallerySection = { id: '<area>', title, entries: [{ id, title, render }] }`
+  (`dev/gallery-registry.ts`). `dev/ui-gallery.tsx` picks it up through `import.meta.glob`; no
+  central file is edited, and a duplicate section id throws. Keep stateful demo components in
+  a components-only sibling `.tsx` (react-refresh). The route is `/dev/ui`
+  (`dev/dev-ui-route.ts`), DEV only and absent from production builds.
+- **Preview config:** `.claude/launch.json` is committed. It is the desktop app's dev-server
+  preview configuration: a `server` entry (`pnpm --filter @card-battle/server dev`, port 2567)
+  and a `client` entry (`pnpm --filter @card-battle/client dev`, port 5173), so `/dev/ui` and the
+  table open without a hand-run `pnpm dev`. It carries no secrets and must never gain any.
+
+### V7 overlays (L72-09)
+
+- **Contract** (spec v7 §6.7, Q49, Q59; details in `/DESIGN.md` › Overlays):
+  `<Sheet mode="read-only" onClose …>` or `<Sheet mode="blocking" …>` (a discriminated union:
+  blocking has no `onClose`), `<Dialog>` (a read-only Sheet with placement `auto`) and
+  `<Toast onDismiss={(cause) => …} dismissLabel …>`. Blocking sheets paint above every
+  read-only sheet, ignore Esc, backdrop and swipe, and leave only through an answer or
+  Minimize, which collapses them to a bar above every sheet while the caller keeps intents
+  locked. Read-only sheets paint at most two deep and close on Esc, a backdrop press or a
+  swipe-down; `dismissLocked` (the Feedback send lock) blocks all three, `closeOnBackdrop`
+  only the backdrop. Esc closes only the top sheet. Toasts are dismissed only by hand or by
+  timeout, both through `onDismiss`, never by a prop or state change.
+- **One live sheet** (fix round 1): only the top expanded sheet is live; every sheet under it
+  is inert, and focus follows it (`use-focus-trap.ts`: move in on becoming live, restore on
+  close only to a reachable opener, else the new live sheet, else the opener chain). A
+  caller-collapsed read-only sheet (L74 targeting) is a bar on the sheet layer: under an
+  expanded blocking sheet it is inert (§6.7), and while it is the newest read-only sheet no
+  sheet handles Esc, so L74's targeting handler receives an unhandled Esc and cancels
+  targeting (§6.6.5). The live sheet, once closing, is a no-op press shield until its exit ends
+  (its panel is inert); a covered sheet closing under it stays click-through. A real collapse to
+  the bar or restore from it shields the box, bar included, for `--dur-base`, and Minimize and
+  restore ignore presses then. A closing toast stays click-through.
+- **`useFocusTrap` contract** (`ui/primitives/use-focus-trap.ts`, a superset of the brief's
+  row): `useFocusTrap(containerRef, { active, initialFocusRef?, restoreFocus?, open?,
+  isReachable?, fallbackContainer?, standIn?, handOverOnRelease? })`. `active` is the live
+  trap; `open` (default `active`) is the open cycle that keeps the opener; `isReachable`,
+  `fallbackContainer` and `standIn` steer the restore on close; `handOverOnRelease` hands the
+  opener to the next trap when it is released mid-cycle. `focusIntoTrap(container)` moves
+  focus into an open trap the way its activation would. Sheet wires all of it; another caller
+  can pass only `active`.
+- **L74 carry-overs (not code yet):**
+  - collapsing a read-only sheet for targeting releases its trap, but nothing moves focus to the
+    caller's `collapsedBar`: L74 owns targeting focus (§6.6.5);
+  - under the B2 ruling, an older expanded read-only sheet (Seat) under a collapsed targeting
+    sheet becomes the live modal sheet; L74 decides whether entering targeting closes or
+    collapses covering read-only sheets;
+  - `#root` stays non-inert (deferred), so a programmatic `.focus()` can still leave a modal
+    sheet;
+  - a click on an exiting overlay or on the transition shield still bubbles through the React
+    tree to the Sheet's ancestors (portal bubbling): never render a Sheet inside a clickable
+    ancestor, or stop propagation there;
+  - closing a collapsed or minimized sheet unmounts its bar at once, with no shield, so a double
+    tap on a `collapsedBar` control that ends targeting can land on the dock: the targeting flow
+    owns that (shield or debounce).
+- **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
+  inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
+  `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
+  `sheet.tsx`, `dialog.tsx`, `toast.tsx`, `presence-layer.tsx` (tells an AnimatePresence child
+  whether it is exiting), `sheet-focus.ts` (`reachableIn`, `livePanel`: where focus may go in
+  a stack state); layers in `ui/layers.ts` (`Z_INDEX`). The default
+  store is a module singleton, so the app root needs no provider; `<SheetStackProvider>` exists
+  for isolation.
+- **Portals:** sheets and toasts render into `document.body`. A sheet opened from inside a
+  `<form>` therefore leaves the form, which retires the V2 hazard where a raw `<button>` in a
+  Dialog inside the solo menu form had to keep `type="button"` (Appendix A
+  `global-dialog-interaction-contract`): a button outside the form's DOM has no form to
+  submit. React events still bubble through the React tree, so a caller's `onKeyDown` or
+  `onClick` above the sheet still sees them.
+- **Tests:** `renderUi` gives every render its own sheet stack, kept across `rerender`, so one
+  test's sheets never sit above another's. The swipe on a real touch screen and the placement
+  at 375×812, 844×390 and 1440×900 are checked in the L72-21 browser gate.
+
+### Cost glyphs and effect copy (L72-11)
+
+- **Files:** `ui/card/glyph-amount.ts` (`GlyphAmount` = `StructuredCost` or a shield amount,
+  `glyphAmountIcon`, `glyphAmountFromResource`, `spokenGlyphAmount`), `ui/card/cost-amount.tsx`
+  (`<CostAmount amount signed? multiplier? title? size? />`), `ui/text/effect-text-with-icons.tsx`
+  (`<EffectTextWithIcons text iconSize? />`), `ui/text/card-effect-copy.tsx`
+  (`<CardEffectCopy card isUpgraded />`: Cost row, effect, Upgrade block). They carry spec v7
+  §6.6.1 and replace the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`
+  on V7 screens; the V2 files and their source-text tests stay untouched until L75 and L76
+  retire their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
+  L76 import these.
+- **Use:** one `CostAmount` for every number-plus-icon amount: a cost chip, a Draw or shop price,
+  a reward, an amount inside prose. `signed="cost" | "gain"` prefixes `−` or `+` and speaks "minus"
+  or "plus"; `multiplier={2}` prefixes `2×` (a multiplier of 1 shows nothing). `size` sets only
+  the icon px (`sm` 14, `md` 16, `lg` 20); font and color come from the parent, so a glyph never
+  paints a resource color as text (spec v7 §5.1). A `pointsPerLife` rate shows two icons
+  (`N [point]/[life]`). The root has `data-glyph-icon={IconName}`.
+- **`title={null}` (L59-01):** `title` defaults to the spoken amount ("3 pts"). Inside a control
+  that names itself (Draw, Unspy, a shop button) pass `title={null}`: an inner `title` would
+  replace the control's own tooltip. The spoken text stays, so an unlabeled button is still named
+  by its amount. Never put a `CostAmount` on a fill of its own resource color; an icon-on-fill
+  case goes in a well (`DESIGN.md` › Icons).
+- **Spoken text:** structured costs keep `spokenCost`'s short wording ("3 pts", "3 pts/life");
+  shield now speaks "N shield point(s)" (the V2 inline glyph spoke only the number). Tests read
+  the two sides with `test/glyph-queries.ts` (`visibleText`, `spokenTexts`, `glyphRoots`), a
+  test-only module that shipped code never imports.
+- **Effect copy:** catalog prose goes through `EffectTextWithIcons`, which turns resource
+  phrases ("4 lives", "2 upgrade points", "4 shield points") into amounts and keeps "instead
+  of" visible; damage, turns and card lives stay prose. `CardEffectCopy` rows carry
+  `data-effect-part="cost" | "effect" | "upgrade"`. Catalog text itself is L72-13's.
+- **Gallery:** section `text` (`ui/text/text.gallery.tsx`, DEV only).
+
+### Card (`ui/card/`, L72-12)
+
+- **The only V7 card renderer:** `ui/card/card.tsx` (`<Card size instance … />`, or
+  `face="hidden" family`) with its pure helpers in `ui/card/card-face.ts` (`CARD_SIZES`,
+  `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
+  `cardNameWordEm`, `cardNameFontSize`, `CARD_NAME_FIT`, `HIDDEN_CARD_LABEL`).
+  `design/components/card.tsx` and its source-text tests stay for the
+  classic screens until L75/L76 retire them.
+- **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
+  holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
+  V7 surface; upgraded and active looks are Card states.
+- **Long-press is ours:** every face prevents the context menu and sets `select-none` and
+  `[-webkit-touch-callout:none]`; the art has `pointer-events-none` and `draggable={false}`.
+- **Numbers and names:** damage comes from `cardDamageChip` (`listedAttackDamage` × the
+  caller's `damageMultiplier`); the accessible name from `cardFaceLabel` (name, " upgraded",
+  ", N damage", the counter label). Thumbs print no name and no cost chip (art-only thumbs), so
+  their name is the aria-label and a native `title`.
+- **The caller decides state:** `unplayable` (POV's turn, card-specific reason; the face stays
+  activatable), `selected`, and `counter` (`{ kind: 'card-lives' | 'turns', amount }`). The glow
+  and the counter badge follow `counter` only, so Curse and the combat Shield get no glow. Where
+  a family is itself secret, pass a neutral `family` to the hidden face (V2 used the action verso
+  for unspied plays); the component cannot know.
+- **Size contract:** resize a card only with `className="[--card-w:…]"` on the card itself;
+  width and height both derive from it (height = 1.5 × width), and without it each size uses
+  its own default. `--card-w` does not inherit (`@property` in `ui/tokens.css`), so setting it on
+  a hand row does nothing: set it per card. The definite height means a default stretching flex
+  or grid row cannot distort a card, and the row's `items-*` alignment still applies; do not
+  add `self-*` to cards. L75's landscape-compact hand derives `--card-w` from the visible
+  height. Never pass `w-*`, `h-*` or `aspect-*` classes: they would race the card's own sizes.
+  The selected lift, the 8 px focus ring, the counter glow and the counter badge reach past
+  the 2:3 box, so a scroll or `overflow-hidden` parent pads about 16 px around active cards.
+  Hidden faces carry no `data-card-id` or `data-instance-id`.
+- **Selection vs focus:** selection is the `--cta` outline; keyboard focus is a separate
+  `--text` ring layer (`data-card-layer="focus"`, `group-focus-visible`). Never style focus
+  through `outline` on a card, or it would replace the selection cue. State filters (the
+  unplayable dimming) go on the body layer (`data-card-layer="body"`: rim, face or verso), never
+  on the root, so both cues keep full contrast. The chips, the "+" badge and the counter badge
+  live in the sibling `data-card-layer="marks"` and are never filtered, so their numbers keep the
+  §5.1 contrast pairs on an unplayable card (L72-21 gate).
+- **Tests:** happy-dom has no media queries and no layout, so tests assert `data-motion`, the
+  `data-card-*` anchors and the class names (`v7-card-sheen`, `v7-card-holo-drift`,
+  `animate-pulse`, the lift, the size variables); the name fit is a node test on
+  `cardNameWordEm` over every catalog name. Chip fit, name breaks and art weight are measured in
+  the browser over all 31 ids × 5 sizes × base/upgraded at 320, 375 and 1440 px, by mounting
+  the matrix from `/src/ui/card/card.tsx` in a fixed overlay (never by editing repo files);
+  reduced motion in a srcdoc iframe that stubs `matchMedia` and installs the React refresh
+  preamble before importing the Card.
+
+### Chat (`ui/chat/`, L72-14)
+
+- **Component:** `ui/chat/ChatLog` (L72-14): transcript plus composer; `onSend` receives the
+  trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
+  walk-in label (L76). It replaces `screens/table/chat-log.tsx` for L74-16, L76-13 and L77-05.
+  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`.
+  `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
+  three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
+  is L73/L74).
+- **Behavior kept from V6** (Appendix A `chat-compose-enter`): uncontrolled form; `chat-body`
+  input, `maxLength` `CHAT_BODY_MAX_LENGTH`; Enter or Send submits; empty or whitespace-only text
+  is dropped with no reset; the form resets after a send; no composer when `canWrite` is false.
+  The transcript opens on the newest line and then sticks to the bottom only while the reader is
+  within 24 px of it (designer 2026-10-26, `decisions.md`); the reader's own send always scrolls
+  down. Send is never disabled
+  (nothing tracks an empty field, and a native `disabled` would leave the Tab order). Shift+Enter
+  sends too, because the field is a single-line `<input>`.
+- **Announcements** (`chat-new-message-announcement`): the transcript is a polite `role="log"`,
+  mounted before the first line, and lines are keyed by `ChatMessageView.order`, so each new line
+  is announced once and a re-render never reads the log back. Do not move the role onto the `<ul>`
+  (it would strip the list semantics), and do not key lines by index.
+- **Transcript scroller:** a `ScrollArea` labelled `CHAT_LOG_LABEL` ("Chat", existing V6 copy,
+  not a new §10.6 string), so it is a named, focusable region and keyboard users can scroll it
+  (WCAG 2.1.1; an unlabeled one is a nameless Tab stop in Chromium and unreachable in WebKit).
+  `ScrollArea` marks a labelled area `data-scroll-region`, so a sheet's initial focus (the
+  `use-focus-trap.ts` rule) still goes to the message field, and falls to the region only on
+  the read-only board. The `role="log"` wrapper stays inside it.
+- **Stick to the bottom:** `stuck` starts true and follows the reader's own scroll events (within
+  `STICK_THRESHOLD_PX` = 24 of the end); an effect keyed on the message count and the newest
+  `order` (not the array identity) and a `ResizeObserver` on the log content scroll to the end
+  only while `stuck`. The observer matters in a `Sheet`: its overlay is `hidden` (no layout) when
+  the transcript mounts, so the open scroll alone leaves it at the top, and the observer scrolls
+  once the sheet shows. A send sets `stuck` and scrolls at once, so the echoed line follows. A
+  "new messages" pill is out of scope.
+- **Line wrapping:** `break-words` on each `<li>`, because `ScrollArea` clips its horizontal
+  overflow; checked in the browser with a 24-character nickname and a 200-character body at
+  375 px.
+- **Tests:** `chat-line.test.ts` (node), `chat-log.test.tsx` and `chat.gallery.test.tsx`
+  (happy-dom). The open and arrival scroll test spies on the `Element.prototype` `scrollHeight`
+  getter and `scrollTop` setter, which happy-dom defines on the base `Element`; a version that
+  moves them fails the test loudly. The stick-to-bottom tests stub `scrollHeight`,
+  `clientHeight` and `scrollTop` on the scroller element and fire `scroll` for a reader's move;
+  happy-dom's `ResizeObserver` never fires, so one test swaps in a fake and fires it by hand.
+  The focus tests render `ChatLog` inside a read-only `Sheet`. A rendering frame is needed for
+  scroll events and observers in the hidden Browser pane, so take a screenshot between steps. The 16 px input is read from computed style in the browser gate
+  (`/dev/ui#chat`), since happy-dom evaluates no CSS.
+- **Gallery:** section `chat` (`ui/chat/chat.gallery.tsx`, DEV only): transcript, empty,
+  read-only and longest line.
+
+### Kit (`ui/kit/`, L72-15)
+
+- **What replaces what:** `KitPortrait` and `KitDetails` replace `design/components/kit-portrait.tsx`
+  and `screens/table/kit-inspect-details.tsx` on V7 surfaces: the L74 kit sheet and self strip,
+  the L76 kit picker and the L72-16 rules strip. The classic files and their duplicated copy
+  stay until L75 / L76, which delete them with their source-text tests.
+- **Values:** every number comes from `KIT_CATALOG` (`getKit`, `upgradePointBuyCost`,
+  `upgradePointSellYield`), never from the PNG: the printed stats are cropped out of the art
+  (`artFor`), and the old Gambler PNG prints "?" where the catalog has Draw 10. The ability
+  prose is
+  `KIT_ABILITY_COPY`, verbatim (the Prophet copy fix is L76's, spec v7 §10.1).
+- **Anchors:** `data-kit-section` (one per group, with `data-kit-stat`, `data-hand-family`,
+  `data-special-key` and `data-card-caption` inside) and `data-zone="kit-portrait"` with
+  `data-eliminated`, `data-kit-face`, `data-kit-size`. `fx/play-flyout.ts` and the L74 self strip
+  query the portrait anchors.
+- **The name has one source:** `kitPortraitAlt(kitId)` (`ui/kit/kit-portrait-label.ts`): the
+  catalog name, "Hidden kit" for `null` and "Random kit" for `'random'` (spec v7 §11). A caller
+  never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
+  or that name; the face inside is decorative, so a screen reader hears the button only, and a
+  caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
+- **Classic width rules:** `index.css` still sizes a portrait inside `[data-zone="opponent-seat"]`
+  and `[data-zone="private-zone"]` (2.35rem and 3rem, unlayered, so they beat the size classes).
+  A V7 surface must not reuse those zone names around a `KitPortrait` before L75 removes the
+  rules, or the portrait would not keep its `size`.
+- **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
+  `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
+  in `ui/card/card-classes.ts`.
+- **Focus and selection:** a clickable portrait takes the shared `CHROME_FOCUS_CLASS` ring
+  (`--text`); the `--cta` outline is selection (Card, KitTile). A picker marks the chosen kit
+  with its own selected state, never by restyling focus.
+- **Eliminated name:** the component composes ", eliminated" into a clickable portrait's name
+  (an `ariaLabel` from the caller replaces it, so it must carry the state itself); the image
+  name of a plain portrait stays the bare kit name (spec v7 §11).
+- **Nesting:** a portrait inside another control (a `KitTile` head, a seat button) is the
+  non-clickable form, so no button sits inside a button; `KitTile` already hides its portrait
+  from assistive tech and names the tile by its visible kit name.
+- **Sections:** `kit-details-sections.ts` holds the ids in display order, their titles and
+  `KIT_TRAIT_SECTION_FOR`, a `Record` keyed by `KIT_TRAIT_SECTION_KEYS`: a new `KitTraits` key
+  fails typecheck, then the L30-05 test, until it has a rendered section. A new section id goes
+  in the table and in `kit-details.tsx`; the test pins the order.
+- **Cards inside the details:** thumb `Card`s with synthetic instance ids
+  (`kitSpecialCardKey(cardId, index)`, `always-upgraded:<id>`, `immune-to:<id>`); the starting
+  hand is two hidden thumbs. A thumb prints no name and no cost chip, so the details add a
+  visible caption and a signed `CostAmount`. Never resize them with `w-*` classes (Card contract).
+- **Tests:** `kit-details.test.tsx` is the component test that the L30-05 and L51-04 rows of
+  `kit-inspect-dialog.test.ts` expected (`docs/backlog_v7_test_classification.md`); the classic
+  test stays as it is until L75 / L76. A test that mocks `console.error` also asserts nothing
+  else was logged, so a React key or nesting warning fails it.
+- **Gallery:** section `kit` (`ui/kit/kit.gallery.tsx`, DEV only). The size by kit matrix is
+  not in the gallery: check it in the browser by mounting `/src/ui/kit/kit-portrait.tsx` from
+  the page console (as for the Card matrix), never by editing repo files.
+
+### Rules (`ui/rules/`, L72-16)
+
+- **Components:** `RulesStrip` (a chrome button that opens the sheet) and `RulesSheet` (`open`,
+  `rules`, `onClose`; a read-only `Sheet`), with `rules-summary.ts` (`rulesKitFaces`,
+  `formatTurnTimeSeconds`, `rulesSummaryText`). The strip owns its own `open` state; a caller that
+  has no strip (the L74 menu, the L77 Game over recall) mounts `RulesSheet` directly.
+- **The strip says what it is:** a header row with the visible "Table rules" and a decorative
+  `chevron-right` (the tap cue). The button's `aria-label` is the same `TABLE_RULES_LABEL`, so the
+  name is what is on screen (WCAG 2.5.3). Prefer `aria-label` to an `aria-labelledby` on the
+  visible span: they give the same name, but the Browser pane's `read_page` and `find` read only
+  `aria-label` and content, so the post-lot gate would see an unnamed button.
+- **The strip is described:** `aria-describedby` points at a hidden sibling `<span>` with
+  `rulesSummaryText(rules)` ("45s, Random, Excluded Kamikaze, Ghost, Gambler"), built from the
+  strip's own words only. Keep it a sibling of the button: inside, `within(strip)` text queries
+  would match it twice (`getByText('300s')` for the default rules).
+- **Face grid:** every face cell has the same fixed width (`w-12`, wide enough for the 11px
+  "Excluded" caption), in a 4 column grid that becomes 8 columns by a container query
+  (`@container` on a wrapper, `@min-[26rem]:grid-cols-8`), so 16 kits fill whole rows and the
+  columns align for any mix. Do not size the cells by content again: a captioned cell is wider
+  than a bare one and the rows jag.
+- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 recall (the
+  last `lobbyRules` seen in this room, in memory) and `FinishedStateView.lobbyRules` in L77
+  (spec v7 §6.11). A caller hides the strip when the rules are unknown (a reload mid-game), and
+  the tutorial never mounts it. The component invents no default.
+- **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows
+  `TURN_DURATION_MS` until the host sets a time, so it can exceed the host maximum of 180.
+  Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.
+- **Excluded is a word:** an excluded kit carries `EXCLUDED_LABEL` at full opacity. Dim or grey
+  the portrait only (`opacity-40 grayscale` on the portrait wrapper), never the name or the label.
+- **L76 adds the host editor here:** the slider sends on release, All / None / Random and the
+  16 kit toggles, in this folder, reusing `rulesKitFaces`. `screens/lobby-rules-panel.tsx` stays
+  until L76.
+- **Nesting:** the strip's portraits are the non-clickable `KitPortrait` inside one `<button>`;
+  they are `aria-hidden` in the sheet, where the visible name names the kit.
+- **Tests:** `rules-strip.test.tsx` and `rules-sheet.test.tsx` repeat the small `rules()` and
+  `kitFace()` helpers instead of sharing a file. They assert the literal strings.
+- **Gallery:** section `rules` (`ui/rules/rules.gallery.tsx`, DEV only): default, Random only
+  with three kits excluded, a 300 s server default and one allowed kit.
+
+### Coach panel (`ui/coach/`, L72-17)
+
+- **`ui/coach/coach-panel.tsx`** provides `CoachPanel` and `CoachBody` (L72-17), with the props of
+  `design/components/coach-panel.tsx` (`title`, `body`, `zone`, `onHide`, `hideAriaLabel`,
+  `footer?`, `extraAttrs?`, `compact?`). It is the L75 drop-in for `screens/table/tutorial-coach.tsx`
+  and `help/hint-overlay.tsx`, which keep the V6 panel, its `.tutorial-coach-panel` CSS and
+  their source-text tests (`tutorial-callout.test.ts`, `hint-overlay.test.ts`) until then. It is
+  not a dialog (no `role`, no `aria-modal`, no focus move, no key handling, so Esc stays with the
+  sheet stack) and has no Skip: Skip stays on the table flag (Lot 45), and the hint host passes
+  "Got it" and "Skip all" as `footer`. The caller passes the hide label (`HIDE_COACH_ARIA_LABEL`).
+  The body goes through `parseCoachBody` into `CostAmount` (numbered amounts) and `Icon` (a
+  decorative `RESOURCE_ICON` after a bare word; `parseCoachBody` reads only "lives" and "life" as
+  the life resource, so the verb "live" stays prose). `compact` has a 72% `--panel` floor, which
+  keeps `--text` at 5.7:1 or better over a white card face (V6's 46% was 2.6:1), and a
+  `min(36vh, 15rem)` cap. Copy comes only from
+  the shared tutorial and hint copy (`tutorialStepAt`, `HINT_COPY`); the panel invents none.
+  Details: `/DESIGN.md` › Coach panel.
+- **Anchors:** the root keeps `data-zone` and the caller's `extraAttrs`, then `data-motion`
+  (which `extraAttrs` cannot override), `aria-labelledby` (the `<h2>`). Each resource glyph is
+  `span[data-coach-resource]`, never the preserved `data-resource-kind`, so the FX and flyout
+  selectors cannot match prose. A host remounts the panel with a `key` when the message changes,
+  which replays the entrance.
+- **Scroll region:** the body is a labelled `ScrollArea` (named by the title, keyboard-scrollable)
+  only while its copy overflows, like a Sheet body. `CoachPanel` re-checks `scrollHeight >
+  clientHeight` in a layout effect and on a `ResizeObserver` over the body and its content, and
+  passes `label` only then, so a panel that fits has no Tab stop and no second landmark. Its
+  focus ring is inside the edge: `<ScrollArea focusRing="inset">` (default `'outer'`) selects
+  `CHROME_FOCUS_INSET_CLASS`, because the rounded `overflow-hidden` root would clip an outer
+  ring. Never add a `focus-visible:-outline-offset-*` literal next to `CHROME_FOCUS_CLASS`:
+  Tailwind emits the negative offset first, so the outer one wins.
+- **Landscape-compact footer:** `CoachPanel` reads `useViewportMode()`. In `landscape-compact`
+  a given `footer` renders inside the header row, between the title and the close control, and
+  there is no footer row; elsewhere it stays below the body. A host passes the same `footer` in
+  every mode and sizes the card itself: L75 should use `min(15.5rem, 100vw - 1rem)` for hints in
+  portrait and desktop and `min(22rem, 100vw - 1rem)` in landscape-compact (the measured fit).
+  Tests mock `useViewportMode` the way `carousel.test.tsx` does.
+- **Reduced motion:** the panel renders at rest (`initial={false}`, no transform, no fade),
+  V6's `animation: none`. `motionPropsFor(COACH_ENTER, reduced)` gives motion's props; the
+  entrance is spread only when full.
+- **Tests:** `coach-panel.test.tsx` holds the L72-17 acceptance tests (literal coach bodies, so
+  L75-01's copy fixes cannot break them); `coach-panel.contract.test.tsx` the keyboard path,
+  Escape, the caps, the footer placement, the overflow region and the attributes a caller cannot
+  override; `coach.gallery.test.tsx` that each gallery entry still reaches its own script step
+  (an L75-01 copy edit must update it).
+- **Fit:** with the cap and the header footer above, all ten hints fit with Got it and Skip all
+  at 375×812, 375×667 and 844×390, and the eleven tour steps fit at 844×390. Only the script
+  steps 17 and 19 (no footer, default cap) scroll at 844×390, by 18px (`/DESIGN.md` › Coach
+  panel › Fit).
+- **Gallery:** section `coach` (`ui/coach/coach.gallery.tsx`, DEV only): the Tax tutorial coach
+  with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the compact
+  Draw hint with Got it and Skip all.
+
+### Banners (`ui/banner/`, L72-18)
+
+- **`ui/banner/table-banner-host.tsx`** provides `TableBannerHost`, with the props of
+  `TableBannerFlash`. It hosts the L51-06 cues, the L63-03 Sentence lines and the L67-01 own
+  wipe line; the cue logic stays in `view-model/table-banner.ts` (`nextTableBannerCues`,
+  `nextSentenceBannerLines`, `nextWipeBannerLines`), and `ui/banner/banner-items.ts` only keys
+  the items (`bannerItemsForCues`) and sorts them into lanes (`bannerLaneOf`,
+  `BANNER_LANE_LIVE_MODE`). The classic table keeps `screens/table/your-turn-flash.tsx` until L75.
+  The host portals to `document.body` at `Z_INDEX.banner`, like Sheet and Toast, so a
+  transformed arena or the L78 board shake cannot re-anchor it or trap it under the sheets.
+  L74-17 mounts it once per arena so its regions exist before the first cue.
+- **Slab:** flat outlined chrome (`CHROME_OUTLINE_CLASS` plus `rounded-v7-chrome`), never
+  `CHROME_SHAPE_CLASS`: the hard drop shadow would make a click-through banner read as a CTA or
+  danger button. L78-11 owns the band look.
+- **Enqueue synchronously** inside the effect that calls the `next*` helper: a deferred enqueue
+  (a 0 ms timeout) is cleared by React Strict Mode's effect replay, which dropped the first-paint
+  You won! / You are dead cues. A `<StrictMode>` test in `table-banner-host.test.tsx` locks it.
+  The watch refs stop the replayed effect from enqueueing twice.
+- **Timing:** each lane (cue, Sentence, wipe) times its head by item key, so a banner queued
+  behind it never extends it; `TableBannerFlash` restarted the timer on every enqueue. No exit
+  animation: the next item mounts exactly at `TABLE_BANNER_MS`. `end.tsx` still opens Game over
+  after that same constant.
+- **Live regions:** one `role="status"` region per lane, always mounted and empty between
+  banners; only the slab inside swaps, keyed by item. Each region takes its lane's mode from
+  `BANNER_LANE_LIVE_MODE`, the one map `bannerLiveMode(kind)` also reads: polite for cues,
+  assertive for Sentence and wipe. Do not mount a region together with its text: many screen
+  readers skip it.
+- **Tests:** `banner-items.test.ts` (node: keys, copy, live modes, `--text-on-cta` contrast on
+  every fill), `table-banner-host.test.tsx` (happy-dom, fake timers: queue order and timing,
+  first-mount seeds, no history replay, Sentence and wipe regions, every kind's live mode,
+  tones, flat slabs, the body portal, reduced motion, persistent regions, StrictMode first paint
+  for won, dead and turn) and `banner.gallery.test.tsx`. Every rerender in a test passes fresh
+  arrays, so the enqueue effects re-run as they do with live views. The banners portal out of
+  `view.container`: query `view.baseElement` or `screen`.
+- **Gallery:** section `banner` (`ui/banner/banner.gallery.tsx`), one `BannerDemo` per kind
+  with a DEV-only Play button; repeated presses queue several attacks, Sentence lines or wipes.
+
+### Seat identity (`ui/seat/`, L72-19)
+
+- **Components:** `PlayerName`, `BotSeatLabel`, `ConnectionBadge` with unchanged props and copy
+  (`connectionBadgeLabel` in `connection-badge-label.ts`); V2 versions stay until L74 / L76 / L77
+  switch imports; new code imports only `ui/seat/`.
+- **Copy has one home:** `connectionBadgeLabel(player)` (pure `.ts`, V2's private `badgeLabel`
+  moved verbatim, L10-04) returns the badge text or `null`. Its 3 and 5 thresholds mirror the
+  server's `ABSENT_AUTO_TURN_LIMIT` and `CONNECTED_TIMEOUT_LIMIT`; they are cited, never imported
+  (server-only). `PublicPlayerView` is assignable to `ConnectionBadgePlayer` (`expectTypeOf` in
+  the test).
+- **No role, no `aria-label`:** the visible text is the spoken text (`'Bot·Easy'`,
+  `'absent 2/3'`), as in V2; the 12px icons are decorative. `BotSeatLabel` has no whitespace text
+  nodes between its children.
+- **Seat hues go on panel surfaces:** a `PlayerName` stands on `--panel` or `--panel-2`, never
+  straight on `.v7-ground` (at a halo center `--seat-1`, `--seat-4` and `--seat-7` fall to
+  3.44:1 to 4.57:1; DESIGN.md › Seat hues). The hue is on the nickname span only and never shares
+  an element with `--life` or a `--threat-*` color.
+- **Long names:** nicknames are at most 24 characters (server rule, parity `home-nickname`), up
+  to 320px wide in 14px Lilita One. The component never clips. Pass `className="truncate"` in a
+  flex row with `min-w-0` (the badge gets `shrink-0`), or `wrap-anywhere` to wrap. Not
+  `break-words`: it does not shrink min-content, so an unbroken name widens a fit-content box
+  (24 capital Ws pushed one to 320px at a 320px viewport; a 96px box overflows even a 156px name).
+- **Tone tests:** happy-dom cannot compute colors, so the tones are pinned by class: eliminated
+  badge `bg-v7-bg-0`, degraded badge `bg-v7-panel-2`, bot chip `bg-v7-panel`. The two chips repeat
+  one `CHIP_CLASS` string, each with a comment pointing at the other.
+- **Tests:** `connection-badge-label.test.ts` (node), `connection-badge.test.tsx`,
+  `bot-seat-label.test.tsx`, `player-name.test.tsx` and `seat.gallery.test.tsx` (happy-dom). Each
+  file repeats its small helpers (`fakeSeat`, `glyphOf`, `rootOf`) rather than sharing a fixture
+  module. `glyphOf` compares an icon's inner markup, so a test can tell which glyph a badge drew
+  without reading its paint. The gallery test also fails on a sample nickname over 24 characters.
+- **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
+  `--panel` and `--panel-2`, with the 24-character long-name forms in a 240px frame.
 
 ## Design system (V2 · Lots 10+)
 
@@ -52,12 +668,15 @@ rules above are unchanged — this section only covers how the client looks.
   `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
   `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`), `SeatTile` /
   `CardChoiceTile` / `choiceTileClassName` (L44-01; shop buy cells use the helper). Art resolution:
-  `apps/client/src/design/asset-lookup.ts` (never invent a mapping; never invent filenames —
+  `apps/client/src/ui/asset-lookup.ts`, with the filename maps in
+  `apps/client/src/ui/asset-files.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
   `apps/client/src/assets/kits/` in the same task that adds the `KIT_FILES` entry.
+  (V7 rebuilds: `ui/seat/`, L72-19)
 - **Data-only kit registration (Lot 27):** append to `KIT_IDS`, add `KIT_CATALOG` row
-  (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG, mid-game `alwaysUpgraded` test. No engine
-  change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` locks
+  (tech v4 §8.2 verbatim), add `KIT_FILES` + PNG (`ui/asset-files.ts`), then rerun
+  `scripts/extract-art.ts` for `assets/art/kits/<kitId>.png`, mid-game `alwaysUpgraded` test.
+  No engine change — `acquire-card.ts` already applies the trait. `content-scope.test.ts` locks
   `KIT_IDS.length === 16` with exhaustive catalog keys; client `KIT_FILES` is asserted in
   `asset-lookup.test.ts`. Inspect dialog already renders `alwaysUpgraded` / `specialCards`;
   only duplicate specials need a `${cardId}:${index}` React key (L27-05). New `KitTraits`
@@ -70,7 +689,9 @@ rules above are unchanged — this section only covers how the client looks.
   `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
   `dialogPanelClassName` (L53-02 / L53-07). Prefer this
   for every modal prompt (Lobby copy feedback; Table card-first prompts). No
-  extra npm dependency unless separately ruled.
+  extra npm dependency unless separately ruled. V2 only: V7 surfaces use `ui/primitives`
+  `Sheet` / `Dialog` / `Toast` (L72-09), where Esc closes only the top sheet (Q49); see
+  DESIGN.md.
 - **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
   view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
@@ -156,7 +777,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) is the open update: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -416,6 +1037,8 @@ rules above are unchanged — this section only covers how the client looks.
   travel; not cards from Draw), buy/sell card ghosts, resolution, elim, rewards. Resource
   flash clears after ~1.6s. Shared timing in `fx/motion-timing.ts` (~0.55s). Dialogs animate
   open/close. Intents must never await FX. `useReducedMotion` skips choreography.
+  Pure FX decisions live in `view-model/`, zone names and selector builders in
+  `ui/fx-anchors.ts`; `fx/play-flyout.ts` keeps the DOM measuring (L72-03).
 - **Table UX polish (Lot 39 · `docs/backlog_ux.md`):** client readability only — no rule
   change. Task IDs are **L39-** so they never collide with V5 Lot 32 search work.
   - **IllegalActionDialog (L39-02):** `error` is `{ code, message }` (PROTOCOL 27). Table
@@ -426,7 +1049,7 @@ rules above are unchanged — this section only covers how the client looks.
     When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
     AnimatePresence cannot leave a stuck blocking overlay.
   - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
-    green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`seat-colors.ts`).
+    green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`ui/seat-colors.ts`).
     POV **dock** uses a strong seat wash (`seatZoneStyle({ intensity: 'fill' })`)
     instead of the old fixed `surface-kit` pink; opponent seats use a softer tint +
     loud glow when active. Colored names in pending queue and action log.
@@ -471,9 +1094,9 @@ rules above are unchanged — this section only covers how the client looks.
     (`EffectTextWithIcons`, L51-12). No “Choose Use, Upgrade, or Sell.” helper.
     Draw is green (gain) except Gambler payout `> 10` (catalog listed Draw) is
     red (L64-05); Sell is green (gain); Buy / Upgrade stay
-    orange (pay).
+    orange (pay). V7 equivalent: `ui/card/cost-amount.tsx` (L72-11).
   - **Threat FX + turn banner (L39-05):** when a **new** real Incoming pending targets POV
-    (diff in `incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
+    (diff in `view-model/incoming-threat-diff.ts`; presentation `persistent:…` chips never count),
     enqueue `threatOutline` + optional `targetingCue` (opponent-seat pulse highlight,
     not a line). Tone via `threatToneFor`: **red**
     `attack` for attack cards + Sentence / Mirror / Super Mirror; **orange** `effect`
@@ -563,7 +1186,21 @@ rules above are unchanged — this section only covers how the client looks.
   action (`thinkTimeMs` / `turnActionsCount`). Bots compete for every other award. Recap
   `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
   Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
-  Client ranks recap numbers only (`game-over-awards.ts`); do not parse `exportLog`.
+  Client ranks recap numbers only (`view-model/game-over-awards.ts`); do not parse `exportLog`.
+- **Table UI switch (technical spec v7 §4.4 · L72-20, removed in L75):** `?ui=next` writes
+  `localStorage['card-battle.v7.ui'] = 'next'`, `?ui=classic` removes it, else the stored
+  value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
+  rooms always get classic. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
+  each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
+  `ArenaScreen` renders `TableScreen` until L74-01. Storage access is `try/catch` and a
+  blocked store degrades to classic (or to the param for that load); the param is never
+  stripped from the URL.
+- **Client storage keys** (no accounts; every helper guards the storage accessor in try/catch,
+  and the V7 switch also guards each read and write): localStorage
+  `card-battle.v6.howToPlaySeen`, `card-battle.v6.lastSeenReleaseId`, `card-battle.v6.hints`,
+  `card-battle.v6.feedbackAsked.<gameCode>` and `card-battle.v7.ui` (table switch, L72-20,
+  removed in L75); sessionStorage `card-battle:reconnection-token` and
+  `card-battle.v6.inboxPassword`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;
   self-only Use sends immediately; targeted Use opens nested target Dialog; Regen opens
@@ -902,7 +1539,7 @@ ask rather than revert.
   chips from the seat toward the action log.
 - Room `BRXKPO` (nick `L51Dead`, forfeit): center **You are dead** (~1.6s) then Game over
   (Protocol v30 stays on that dialog). **You won!** not forced this pass — same first-paint
-  seed as dead (`table-banner.test.ts`).
+  seed as dead (`view-model/table-banner.test.ts`).
 
 ### Lot 51 follow-up verified 2026-08-27 (browser, PROTOCOL 30)
 
@@ -1330,7 +1967,46 @@ Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`.
 Vite `:5173`, Colyseus `:2567`, `TURN_DURATION_MS=300000`. No protocol bump.
 
 - Solo Play again, room **IKDWUN** (L67Solo, Assassin, 2 Easy bots). Forfeit, then Play again. Home opens **Play solo** with Assassin, opponent **2**, and **Easy**. **Start solo game** stays up. The next match does not deal itself.
-- Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `table-banner.test.ts`, `imposition.test.ts`).
+- Active Shield upgrade, the Gambler wipe banner, and Imposition above 7 are locked by engine and client tests (`upgrade-card.test.ts`, `view-model/table-banner.test.ts`, `imposition.test.ts`).
 
 Attack Choose target and Assassin multi-attack seats are living opponents, plus an eliminated player who still has an attack pending on you (`attackTargetOpponents`). Thief Choose target also includes an eliminated player who still has a Thief pending on you. Spy and the other living-only pickers stay living-only. The server still rejects an attack or Thief on a corpse with nothing of that kind pending.
 
+### Lot 72 verified 2026-10-27 (browser, `TURN_DURATION_MS=300000`, PROTOCOL 45)
+
+Vite `:5173`, Colyseus `:2567`, nick **L72Gate**, viewports 375×812, 844×390 and 1440×900 in the
+built-in browser pane. Baseline: a detached worktree at `d530a8a` (the commit before L72-01),
+rooms **LUQDWX** (lobby) and **VNLEVA** (solo, 3 Easy bots).
+
+- **Design gate (§12.4):** `.impeccable/config.json` holds only the pre-approved
+  `radial-spotlight-glow` / `dark-glow` ignore on `ui/tokens.css`, plus the four
+  `design-system-font` ignores on `.superpowers/brainstorm/` boards (§12.4 exemption, 4494d34);
+  no `ignoreRules` or `ignoreFiles`, no `impeccable-disable`, `hook.cache.json` gitignored.
+  `detect` on `ui/`, `screens/arena/` and `assets/art/`: exit 0, 17 advisories, 0 primary
+  (PNGs are unscannable). URL scans of `/dev/ui` at 375×812 and 1440×900: the Q3b halo on
+  `.v7-ground` is the only allowed finding. One real low-contrast finding (unplayable chips) is
+  fixed below. The V2 `tutorial-pulse` dark glow from `index.css`, the gallery-frame
+  `nested-cards` and a gallery-fixture repeat are false positives. Critique notes are in the
+  Lot 72 PR.
+- **Side by side (§4.4):** with `?ui=classic`, Home and lobby **EYTJLL** match the baseline
+  style hash at both sizes (Home `8a605ac8` / `216884e1`, lobby `2cc969fa`). Solo **YSUSRL**
+  and its Game over keep the V2 look. Every screen loads Outfit only, with no V7 font and no
+  ground. What's new opened on `lot-72-v7` ("New look").
+- **Switch (§4.4):** `?ui=next` stores `card-battle.v7.ui = 'next'`, and it survives `/`. Solo
+  **ELIEIJ** mounts `ArenaScreen` (a pass-through to `TableScreen`), and so does its finished
+  board (`EndScreen`). `?ui=classic` clears the key. Tutorial **LWKIFB** stays classic with the
+  key set (React fiber probe, past the board tour).
+- **`/dev/ui`:** the production build ships no gallery chunk. All 11 sections render at
+  375×812 and 1440×900, with the ground off `html`, `body` and `#root`, Fredoka, Lilita One and
+  Nunito loaded and no page overflow. `chat-body` is **16px**, 44 px tall, maxLength 200, and
+  every field is 16 px. The Dialog overlay equals `visualViewport` at 375×812 and 844×390
+  (bottom sheet, gap 0) and at 1440×900 (centred), with `aria-modal` and no `100dvh`. A
+  read-only sheet closes on a 260 px mouse drag of its handle (`left_click_drag`; a drag on the
+  title only selects text); the blocking picker stays open.
+- **Art (§5.5):** `extract-art.ts` regenerates the 31 card and 16 kit PNGs byte for byte, and no
+  screen imports `artFor` yet. Contact sheet signed off 2026-10-27 by the designer, with the
+  enclosed old-ground pockets removed per the designer (e2beae8, 33b897c).
+- **Pre-merge (§4.6):** `lot-72` reached `origin/main` on 2026-10-27 (PR #79, 5719b89). The
+  branch then merged `dev` (lobby host fix, #78), so `lot-72` lists three items.
+- Fix: an unplayable `Card` dimmed its cost and damage chips with the rest of the body (damage
+  label 2.6:1). The chips, the "+" badge and the counter badge now sit in an undimmed `marks`
+  layer. `pnpm verify` **2613** tests.

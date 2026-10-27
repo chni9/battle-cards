@@ -19,7 +19,7 @@ import { ResourceIcon } from '../design/components/resource-icon';
 import {
   seatIndexOf,
   seatZoneStyle,
-} from '../design/seat-colors';
+} from '../ui/seat-colors';
 import { eliminationReasonLabel } from '../admin/admin-present';
 import {
   buildActionLogWorkbook,
@@ -32,7 +32,7 @@ import {
   type AwardValueKind,
   type AwardWinner,
   type GameOverAward,
-} from './game-over-awards';
+} from '../view-model/game-over-awards';
 import {
   DOWNLOAD_ACTION_LOG_LABEL,
   PLAY_AGAIN_LABEL,

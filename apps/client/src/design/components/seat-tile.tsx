@@ -6,7 +6,7 @@
 import type { KitId } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
-import { seatIndexOf, seatZoneStyle, type SeatPlayersView } from '../seat-colors';
+import { seatIndexOf, seatZoneStyle, type SeatPlayersView } from '../../ui/seat-colors';
 import {
   CHOICE_IDLE_FRAME_CLASS,
   CHOICE_SELECTED_FRAME_CLASS,

@@ -7,7 +7,7 @@ import { chatRoundLabel, type ChatMessageView } from '@card-battle/shared';
 import { useEffect, useRef, type ReactElement, type SyntheticEvent } from 'react';
 
 import { Button } from '../../design/components/button';
-import { seatColorHex, seatIndexOf } from '../../design/seat-colors';
+import { seatColorHex, seatIndexOf } from '../../ui/seat-colors';
 
 const UNKNOWN_SEAT = '#4a5d6e';
 

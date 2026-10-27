@@ -26,6 +26,18 @@ describe('SHARED_CARD_CATALOG (rules spec §1–§3, Lot 2 shop rulings)', () =>
     expect(SHARED_CARD_CATALOG.regeneration.sellYield).toEqual({ points: 3 });
   });
 
+  it('pins the Lot 68 Absorber+ copy (technical spec v7 §10.5)', () => {
+    const absorber = SHARED_CARD_CATALOG.absorber;
+    expect(absorber.effect).toBe('Gain the lives the target lost during their last complete turn.');
+    expect(absorber.upgradeEffect).toBe(
+      'Gain the lives the target lost during their last complete turn, and also capture every point and upgrade point that left them, including sales and thefts; never shield.',
+    );
+    expect(absorber.upgradeAdds).toBe(
+      'Also capture every point and upgrade point that left them, including sales and thefts; never shield.',
+    );
+    expect(`${absorber.upgradeEffect} ${absorber.upgradeAdds}`).not.toMatch(/actively spent/i);
+  });
+
   it('getSharedCard returns undefined for specials', () => {
     expect(getSharedCard('suicide')).toBeUndefined();
     expect(getSharedCard('basic-attack')?.id).toBe('basic-attack');

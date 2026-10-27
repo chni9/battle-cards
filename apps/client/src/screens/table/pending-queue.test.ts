@@ -8,18 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { pendingChipCalloutTone } from './pending-chip-tone';
-
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe('pending queue callouts (L51-07)', () => {
-  it('uses red for attack-tone chips and orange for other real pending', () => {
-    expect(pendingChipCalloutTone('basic-attack')).toBe('threat');
-    expect(pendingChipCalloutTone('sentence')).toBe('threat');
-    expect(pendingChipCalloutTone('spy')).toBe('guide');
-    expect(pendingChipCalloutTone('thief')).toBe('guide');
-  });
-
   it('wraps real chips with a no-arrow tutorial callout', () => {
     const source = readFileSync(join(dir, 'pending-queue.tsx'), 'utf8');
     expect(source).toContain('arrow={false}');

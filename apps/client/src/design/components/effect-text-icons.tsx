@@ -4,10 +4,10 @@
 
 import type { ReactElement, ReactNode } from 'react';
 
-import { getResourceIconUrl, type ResourceKind } from '../asset-lookup';
+import { getResourceIconUrl, type ResourceKind } from '../../ui/asset-lookup';
 import { CostDisplay } from './cost-display';
-import { tokenizeEffectResources } from './effect-text-tokens';
-import type { StructuredCost } from './structured-cost';
+import { tokenizeEffectResources } from '../../ui/effect-text-tokens';
+import type { StructuredCost } from '../../ui/structured-cost';
 
 function structuredFromKind(kind: ResourceKind, amount: number): StructuredCost | null {
   if (kind === 'point') {

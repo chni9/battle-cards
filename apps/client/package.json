@@ -13,6 +13,9 @@
   "dependencies": {
     "@card-battle/shared": "workspace:*",
     "@colyseus/sdk": "^0.17.43",
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/lilita-one": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
     "@fontsource/outfit": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "exceljs": "^4.4.0",
@@ -22,9 +25,15 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.4",
+    "happy-dom": "^21.0.4",
+    "sharp": "^0.35.5",
+    "tsx": "4.23.1",
     "vite": "8.1.5"
   }
 }

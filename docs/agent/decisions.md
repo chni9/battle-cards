@@ -4346,7 +4346,6 @@ Same-day correction of the simultaneous picker.
 
 ---
 
-
 ## 2026-10-20 · [P] Lobby host never passes to a bot
 
 Developer brief 2026-10-20, relayed from the V7 redesign session. It refines L1-02, which
@@ -4363,5 +4362,602 @@ predates bots: "host leave before start promotes the earliest remaining seat".
 - The Play again host (`resolveReformingHost`) already chose humans only. It is unchanged.
 - No protocol bump: `LobbyStateView.hostPlayerId` already carries the host. The client
   derives every host-only control from `hostPlayerId === you`.
+
+---
+
+## 2026-10-21 · [P] V7 visual redesign architecture
+
+Source: designer brainstorm 2026-10-20 (`docs/technical_spec_v7.md` §2, Q1–Q12), the
+2026-10-21 backlog review, and the designer's Q13 ruling of 2026-10-21. V6 is closed at
+Lot 71; any later V6-style lot takes a number from 82.
+
+- **Client-only** (§1): no rule, value, protocol or server change (`PROTOCOL_VERSION` stays
+  45) beyond the §10.3 doc fixes and the §10.5 shared copy fixes. A real need for a new field
+  stops the work and asks.
+- **`ui/` vs `view-model/`** (§4.2–4.3): `ui/` has no game knowledge; `view-model/` is pure,
+  React-free and clock-free (`nowMs` is passed in), and each module has its own test.
+- **Moves, not rewrites** (§4.1): pure modules move with `git mv` and their tests in
+  L72-03/04. Only import and `readFileSync` paths change, and no re-export shim stays behind.
+- **Side by side** (§4.4): V7 tokens live in `apps/client/src/ui/tokens.css` and the V2
+  values stay unchanged; each screen switches in its own lot (L76, L77, L80).
+- **`?ui=next` is table-only until L75** (§4.4): `localStorage['card-battle.v7.ui']`,
+  `?ui=classic` clears it, and tutorial rooms ignore it.
+- **Source-text tests** (§12.1): handled per `docs/backlog_v7_test_classification.md`.
+  Behavior is kept, and every retirement is logged here.
+- **Promotion** (Q12 = A, §4.6): one PR per lot into `dev`; pending `dev` fixes are promoted
+  to `main` before L72 merges; no `dev` → `main` promotion from the first V7 merge until the
+  L75 flip, L76 and L77 are merged; L78–L81 ship after. Details in `docs/agent/deploy.md`.
+- **Q13 resolved: strict freeze, no hotfix path, prod-from-dev.yml unchanged** (designer
+  2026-10-21). This supersedes the §4.6 sentence that sends freeze hotfixes through a branch
+  cut from `main`: `prod-from-dev.yml` rejects any PR into `main` whose head is not `dev`,
+  so a fix waits for the freeze to lift. No CI change, no `hotfix/*` head pattern.
+- **Design docs** (§5.8): `PRODUCT.md` and `DESIGN.md` sit at the repo root. Precedence is
+  code > spec v7 §5 > `DESIGN.md`, and a task that touches tokens or `ui/` updates
+  `DESIGN.md` in the same commit (§12.5).
+- **Subagents** (2026-10-20, 8ba060f): Claude models under Claude Code, Grok 4.5 and
+  Composer 2.5 under Cursor; GPT and other families stay excluded.
+- **Supersedes**: spec v2 visual language, Lot 39, V6 Lots 43/53 table layout; all functions kept (Appendix A).
+
+---
+
+## 2026-10-21 · [P] L72-02 splits source-text tests by owner lot
+
+Source: `docs/technical_spec_v7.md` §12.1 and `docs/backlog_v7_test_classification.md`.
+
+- Every source-text test whose assertions read code of two V7 owner lots is split into
+  `<read-source-basename>.<original-test-basename>.test.ts` files beside the source they read
+  (naming rule in `docs/agent/testing.md`), so each lot later classifies only its own files.
+- The invariant is the `expect()` count: 287 before and 287 after, every call moved
+  verbatim (only `readFileSync` paths changed). The `it()` count rises by 12 (client tests
+  435 → 447) because five multi-screen `it()`s are split by owner: full-bleed viewport,
+  feedback surfaces, tutorial hints independence, admin route and token flyout overlay chrome.
+  The L72-02 acceptance line in `docs/backlog_v7.md` states this.
+- Module tests that L72-04 moves with `git mv` (`dialog-width`, `opponent-seat-resources`,
+  `chrome-labels`, `table-banner`) lost their source-text `it()`s to sibling files first, and
+  `help/tutorial-hints-independence.test.ts` is logic-only, so L72-03 moves it unchanged.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 tokens: `--text-on-cta` and the seat-hue metric (L72-05)
+
+Source: `docs/technical_spec_v7.md` §5.1, `DESIGN.md`, `apps/client/src/ui/contrast.test.ts`.
+
+- Spec §5.1 keeps `--ink` as a non-text color and names no label color for CTA fills.
+  `--danger` (`#ff4d4d`) gets 4.34:1 with `--text-on-card`, 2.88:1 with `--text` and 3.27:1
+  with white, so no existing text token labels it. V7 adds `--text-on-cta: #0c0920`, which
+  reaches 13.70 / 7.73 / 5.97:1 on `--cta` / `--cta-2` / `--danger` (5.79:1 on `--life`
+  chips). `ui/contrast.test.ts` asserts it; `--ink` stays outline and shadow only.
+- Seat hues: the eight values are pairwise CIEDE2000 (sRGB, D65, kL = kC = kH = 1) at least
+  20 apart (measured minimum 21.33, `--seat-4` / `--seat-7`) and at least 4.5:1 on all four
+  grounds (lowest 4.77:1, `--seat-7` on `--panel-2`). The metric and values are recorded in
+  `DESIGN.md`, `SEAT_HUE_MIN_DELTA_E = 20` in `ui/contrast.ts`; the hues stay provisional
+  until the L72/L74 playtests (spec §14.3).
+- `--life` (4.25:1) and `--danger` (4.38:1) on `--panel-2` miss 4.5:1: resource and threat
+  colors are body text only on `--bg-*` and `--panel`, and large text only on `--panel-2`
+  (asserted in `ui/contrast.test.ts`, recorded in `DESIGN.md`).
+
+---
+
+## 2026-10-21 · [P] Correction: resource and threat colors are large-text only (L72-05 review)
+
+Source: `docs/technical_spec_v7.md` §5.1 (normative), L72-05 review.
+
+- Resource colors (`--life`, `--point`, `--upgrade`, `--shield`) and threat colors
+  (`--threat-attack`, `--threat-other`, `--mine`) are text only at large size, on every
+  ground; they are fills, rings and icons otherwise. The third bullet of the L72-05 entry
+  above ("body text only on `--bg-*` and `--panel`") is superseded.
+- `ui/contrast.test.ts` keeps its stricter check (at least 4.5:1 on `--bg-0`, `--bg-1` and
+  `--panel`, 3:1 on `--panel-2`), which keeps large text safe on those grounds. No code change.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] Carousel end-stops are `aria-disabled`, not `disabled` (L72-08 review)
+
+Source: L72-08 fix round 1 (three reviews of `acd3398` plus skeptics), WCAG 2.2 SC 2.4.3 Focus
+Order and 2.4.7 Focus Visible; the L72-08 brief pinned `hasAttribute('disabled')` on the
+chevrons.
+
+- Paging a Carousel to its first or last slide used to set native `disabled` on the chevron
+  that had just been pressed. The browser's focus fixup then moved keyboard focus to `<body>`;
+  inside the L76/L77 sheets, focus would have left the trap.
+- Ruling: the end-stop chevron carries `aria-disabled="true"`, stays focusable and keeps the
+  disabled look (`CHROME_DISABLED_CLASS` now also styles `aria-disabled`, and IconButton drops
+  its press there). `page()` is a no-op at the ends, so activating an end-stop changes nothing.
+- The brief's carousel assertions moved from `hasAttribute('disabled')` to
+  `aria-disabled="true"`. Each now also asserts that activating the end-stop leaves the index
+  unchanged, and a keyboard test pins focus on Next at the last slide. No assertion was
+  weakened.
+- Follow-on: Button gains the optional `focusableWhenDisabled` for actions whose disabled
+  reason must stay reachable by keyboard (Q39). Native `disabled` stays the default elsewhere.
+  Never toggle native `disabled` on a control that can hold focus while it changes.
+
+---
+
+## 2026-10-21 · [P] V7 sheet stack (L72-09)
+
+Source: `docs/technical_spec_v7.md` §6.7, §6.12, §7.7, §10.6 (Q49, Q59), Appendix A
+`global-dialog-interaction-contract`, `claim-seat-dismiss-stay`,
+`table-sub-choice-non-dismissible`; the L72-09 brief.
+
+- **One stack.** Every open V7 `Sheet` registers in one store (`ui/primitives/sheet-stack.ts`,
+  pure; `sheet-stack-context.ts`), which decides paint order, z-index, inertness and the Esc
+  target. The default store is a module singleton (no provider at the app root);
+  `SheetStackProvider` isolates a subtree and `renderUi` uses it per render.
+- **Paint order:** read-only < expanded blocking < Minimize bars, inside the `Z_INDEX` layers
+  (`ui/layers.ts`: sheet 50, sheetBar 80, banner 90, toast 95). Expanded sheets get
+  `min(50 + n, 79)`, bars `min(80 + n, 89)`, unknown or unpainted ids 50.
+- **"Stack one level"** means: only the newest `MAX_READ_ONLY_DEPTH` (2) expanded read-only
+  sheets paint. An older one stays registered and hidden, and paints again when a newer one
+  closes. The spec left the third sheet undefined.
+- **Restore to top:** restoring a minimized sheet re-stamps its open order, so it rises to the
+  top of its group. Otherwise restoring the earlier of two Lot 71 reward pickers would leave it
+  hidden under the other.
+- **Collapsed on the bar layer:** a sheet its caller marks `collapsed` (L74 targeting) is
+  stored as minimized: it joins the bar group and layer, Esc skips it, its focus trap is
+  released, and it shows the caller's `collapsedBar`.
+- **Stack-aware Esc** replaces V2's "one Esc closes every open Dialog" for V7 surfaces. Each
+  read-only sheet has a bubble-phase `document` keydown listener that acts only when
+  `escTargetId(state)` is its own id and the event is not `defaultPrevented`; a dismiss-locked
+  top sheet absorbs Esc instead of passing it down. So an Esc meant for a lower sheet can never
+  reach a claim picker on top (Appendix A `claim-seat-dismiss-stay`, consumer L76), and an open
+  tooltip (capture phase) closes first.
+- **`closeOnBackdrop`** is added to `ReadOnlySheetProps` (default true) beyond the brief's
+  contract rows, because `DialogProps` exposes it and Sheet had no other way to drop backdrop
+  dismissal while keeping Esc.
+- **Portal:** Sheet and Toast render into `document.body`, so the layers are global and no
+  transformed ancestor or `<form>` captures a fixed overlay. This retires the V2 `type="button"`
+  form hazard for V7 sheets.
+- **Dialog width** is a static `max-w-*` class read through `dialogPreferredMaxWidth` and
+  applied inline as `min(<rem>, 100%)`, not `dialogPanelClassName`, whose
+  `DIALOG_PANEL_BASE_CLASS` would bring V2 chrome into a V7 panel; restyling that constant would
+  recolor every V2 Dialog (§4.4).
+- **Focus:** the opener persists across a re-activation that starts with focus nowhere
+  (Minimize, then restore); nothing is focused under `[inert]` or `[hidden]`; focus is restored
+  only while it is lost or still in the sheet, with one `requestAnimationFrame` retry while the
+  opener is still inert. A press on the bare backdrop cancels its `mousedown`, so it never moves
+  focus to `body` behind the modal (the V2 Dialog did). Minimize is the last control in a
+  blocking panel, so initial focus lands on the first body control.
+- **Toast without `timeoutMs`** stays until dismissed by hand: the spec sets no duration, so a
+  caller that wants a timeout passes one (the gallery uses 4000 ms).
+- **Motion props:** `motionPropsFor(spec, reduced)` (`ui/motion/reduced-motion.ts`) copies each
+  target into an object literal, because motion's target type has a `--${string}` index
+  signature that the `V7MotionTarget` interface cannot satisfy.
+- **Fix outside the brief:** `readVisualViewportBox()` now takes the window-size fallback when
+  `window.visualViewport` is `undefined` (a browser without the API, and happy-dom), not only
+  when it is `null`. Before, the documented fallback threw in exactly the case it was for.
+
+---
+
+## 2026-10-21 · [P] Component-test harness shims (L72-06, L72-09)
+
+Source: `apps/client/src/test/render.tsx`, technical spec v7 §12.2, L72-06 review carry-overs.
+
+- **`globalThis.jest.advanceTimersByTime` (L72-06):** RTL's async drain advances fake clocks
+  only when it sees a global `jest`, so the harness installs one that calls
+  `vi.advanceTimersByTime`. Without it, user-event under fake timers never resolves. It relies
+  on Vitest's per-file isolation (each test file gets a fresh global scope), so
+  `test.isolate: false` must never be set.
+- **`IS_REACT_ACT_ENVIRONMENT` (L72-09):** RTL sets it in its own `beforeAll`, which never
+  registers because Vitest runs without globals, so React silently dropped its "not wrapped in
+  act(...)" warnings. The harness sets it to `true`. Turning it on surfaced no warning in the
+  existing suite. A warning is fixed in the test (await, or wrap in `act`), never by unsetting
+  the flag.
+- **`Animation.prototype.cancel` (L72-09):** happy-dom rejects `Animation.finished` on cancel
+  without marking the promise handled, so every motion animation interrupted by an unmount or
+  a new target failed the run with an unhandled AbortError. Browsers mark it handled (Web
+  Animations, "cancel an animation"); the harness wraps `cancel` on the class happy-dom's
+  `Element.animate` builds to do the same. `window.Animation` is a Vitest getter onto that
+  class, so it is patched, not replaced.
+- The shared `afterEach` also calls `vi.useRealTimers()`, so a test that forgets to restore
+  real timers cannot leak fake ones into the next test.
+
+---
+
+## 2026-10-21 · [P] · [DISCREPANCY] V7 sheet stack: blocking on top, one live sheet (L72-09 fix round 1)
+
+Source: `docs/technical_spec_v7.md` §6.7 (normative), WAI-ARIA Authoring Practices "Dialog
+(Modal)" pattern, three reviews of `316d4fa`; amends the "V7 sheet stack (L72-09)" entry above.
+
+- **Spec wins over the brief on collapsed bars (§6.7).** The brief put a caller-collapsed
+  read-only sheet (L74 targeting) in the bar group, so it painted at z 80 above an expanded
+  blocking sheet at 50 and was never inert. §6.7: blocking sub-choices "always sit on top; any
+  other open sheet ... is pushed underneath". Ruling: the bar group splits. Minimize bars of
+  blocking sheets keep the `sheetBar` layer, above everything. A collapsed read-only bar paints
+  on the `sheet` layer, above expanded read-only sheets and below expanded blocking sheets, and
+  is inert while one is expanded above it.
+- **One live sheet (WAI-ARIA modal dialog).** Every painted expanded sheet with another expanded
+  sheet above it is inert, read-only ones included (before: only under a blocking sheet, so a
+  lower aria-modal sheet stayed in the keyboard path). `liveSheetId` names the top expanded
+  sheet; only it holds the focus trap.
+- **Focus follows reachability.** The trap is active only for the live sheet and moves focus in
+  each time it becomes live. The opener is recorded when the sheet opens, kept across minimize
+  and cover, cleared on close. On close, focus goes to the opener only when it is reachable in
+  the new stack (page with no modal sheet painted, an uncovered bar, or the new live sheet),
+  else into the new live sheet, else up the opener chain; it never stays in a closing panel.
+  A reachable opener still under a stale `inert` is handed to the trap that activates around it.
+- **Esc during targeting (§6.6.5).** While the newest read-only sheet (by open order) is
+  collapsed, `escTargetId` is `null`: the Esc stays unhandled, so the L74 targeting handler can
+  cancel targeting instead of the sheet underneath closing.
+- **Exit guard.** Dismissal handlers check a live ref, and an exiting overlay or toast card
+  (`useIsPresent`, `ui/primitives/presence-layer.tsx`) is inert with `pointer-events: none`.
+- **Keyboard scroll.** An overflowing sheet body becomes a focusable region named by the title,
+  in the Tab cycle; initial focus still prefers the first control.
+- **Minors:** a press ending inside the panel no longer closes; the bar strip is click-through
+  outside the bar; the restore control has `aria-expanded="false"` and a chevron-up; both Toast
+  live regions stay mounted (empty) so polite toasts are announced; `ui/tokens.css` exempts V7
+  panels from the V2 `index.css` short-viewport `[role="dialog"]` padding rule until
+  `design/components/dialog.tsx` is deleted.
+- No brief assertion changed: the L72-09 pure and component tests still hold under the new
+  rules; new cases cover each change.
+
+---
+
+## 2026-10-21 · [P] V7 sheets absorb presses while they close (L72-09 fix round 2)
+
+Source: `docs/technical_spec_v7.md` §1 and `PRODUCT.md` ("an accidental tap never spends the
+turn"), §6.6.4 (commit rule); the L72-09 fix-round-2 review (three lenses reproduced the
+click-through in the browser). Amends the "Exit guard" bullet of the fix-round-1 entry above.
+
+- **Ruling: a press during a sheet's exit does nothing, whether or not another sheet remains
+  beneath.** Round 1 made the exiting overlay click-through, so a double tap on a backdrop or on
+  a picker's Confirm reached the page under the scrim (at 1440 it reopened the Dialog 9 ms
+  later) or closed the lower sheet too. Now the exiting overlay root stays hit-testable as a
+  no-op shield over the whole box (`aria-hidden`, handlers gated on `live`) and only its panel
+  turns `inert`. Cost: a deliberate press on the lower sheet within ~220 ms of the top one
+  closing is absorbed and has to be repeated.
+- **Collapse shield.** When a panel collapses to its bar (Minimize, L74 "Use" → targeting), the
+  overlay hides at once, so a no-op shield covers the box for `DUR_BASE_MS` (none under reduced
+  motion, where the panel does not animate). The bar appears immediately and paints above it.
+- **Toast stays click-through** while it fades: it covers a small area, and absorbing presses
+  there would block the dock less predictably.
+- **Opener chain.** A closing trap re-parents every other open trap whose opener sits inside its
+  container to its own opener, before any early return. The chain walk reaches a minimized sheet
+  through its bar. Minimize hands the blocking sheet's opener to the trap that becomes live, and
+  a manual Toast dismissal returns focus to the live sheet, else to the element focused before.
+- **Test change mandated by the ruling:** the fix-round-1 P9e test (exiting Kit overlay
+  click-through, `pointer-events: none`, inert) and the P9d assertion `pointerEvents === 'none'`
+  now assert the shield (hit-testable, `aria-hidden`, panel inert) and that the press does
+  nothing; a lower-sheet backdrop press works again once the exit completes.
+
+---
+
+## 2026-10-21 · [P] V7 press shields, scoped (L72-09 fix round 3)
+
+Source: the L72-09 fix-round-3 review; amends the fix-round-2 entry above (spec v7 §1, §6.6.4).
+
+- **Only the live sheet shields while it closes.** A covered sheet closing under the live one
+  (Card under a restored reward) stays inert and click-through, its z-index one below its last
+  value, so it never paints over or swallows presses meant for the live sheet.
+- **Transition window, both ways.** A real expanded → bar collapse and a bar → panel restore
+  raise a no-op shield over the box, bar included, for `DUR_BASE_MS` (none under reduced
+  motion), and Minimize and restore ignore presses in that window. A double tap on Minimize does
+  not re-expand, and a double tap on the restore bar does not re-minimize. A sheet that mounts
+  collapsed raises no shield.
+- **Tests:** three component tests that restore right after Minimize now wait for the window
+  (`afterTransition`) before the restore press: the brief's "minimizes a blocking sheet …
+  (Q59)", the Q59 flow and the Chat-message Minimize case. No assertion changed. The round-2 shield-before-bar DOM-order assertion now asserts
+  shield-after-bar, which the new rule requires.
+
+---
+
+## 2026-10-26 · [P] V7 art: un-blend the boundary ring from the old ground (L72-10 fix round 1)
+
+Source: the L72-10 visual review and the coordinator's fix-round-1 ruling (spec v7 §5.5).
+
+- **Problem.** Edge flood-fill writes alpha only, so every outer edge kept its anti-aliased
+  pixels at full opacity, blended with the old ground: a 1 px light rim (white, cream, or the
+  kit pastel) that vanishes on the light card face but reads as a sloppy cut-out on the V7 dark
+  grounds. Raising `GROUND_TOLERANCE` cannot fix it: those pixels run from 16 to about 200
+  from the ground, and 21.5 or 27 already eats Assassin's `#e6e6e6` and the Ghost.
+- **Ruling.** §5.5 asks the script to remove the ground by edge flood-fill only. The halo is
+  residual ground inside the boundary, so a separate pure step, `defringeEdge`
+  (`apps/client/scripts/art-flood-fill.ts`), un-blends it. It is restricted to the ring: opaque
+  pixels with a 4-neighbour of alpha 0 or off the image. This overrides the L72-10 brief's
+  "only alpha is ever written" **for the ring only**: `clearEdgeGround` still writes only
+  alpha, and its tests are unchanged. Enclosed old-ground regions are never next to the cleared
+  region, so they still stay.
+- **Method.** Each ring pixel C is taken as a blend of the ground G (the color
+  `clearEdgeGround` removed) and a foreground F. F is the opaque non-ring pixel within 2 px
+  that lies within 16 (RGB) of the G–F line and is farthest from G, so a second anti-aliased
+  row never wins over the solid color and a nearby color the pixel was not blended with is
+  rejected. Then a = clamp(dot(C−G, F−G) / |F−G|², 0, 1), alpha × a, and color
+  G + (C−G)/a. It is skipped when F is within 48 of G (a light part, such as Ghost, Curse,
+  Scientist's flask, Assassin's blade edge or Attack Thief's white card) or when no solid pixel
+  is near (a 1–2 px thin part).
+- **Known remainder.** The second anti-aliased row (opaque, not in the ring) keeps its share of
+  ground: 19,191 such pixels carry 10 % or more across the 47 tiles (43,122 ring pixels), mostly
+  10–30 %. At display size on `#0c0920` that is a faint line inside the edge, not a halo.
+  Treating it too would widen the ruling, so it is left for the designer's sign-off (L72-21).
+
+---
+
+## 2026-10-26 · [P] V7 art: defringe a guarded second ring (L72-10 fix round 2)
+
+Source: the round-1 re-reviews and the coordinator's fix-round-2 ruling. This extends the
+entry above (spec v7 §5.5); that entry is not edited.
+
+- **Why.** After round 1 the row inside the ring still held old ground: 19,139 pixels at
+  10 % or more, 5,711 at 30 % or more. 4,878 of those are stair-corner pixels that touch the
+  cleared region only diagonally, and 834 are a true second row. At 250 CSS on a DPR 3 screen
+  they read as a thin light outline on dark-filled shapes.
+- **Rings.** Both are computed once from the input:
+  - ring 1: opaque pixels with a 4-neighbour of alpha 0 or off the image (unchanged);
+  - ring 2: the other opaque pixels with a 4-neighbour in ring 1;
+  - core: every other opaque pixel.
+
+  Nothing beyond ring 2 is ever written, so enclosed old-ground regions still stay.
+- **Foreground F.** It is taken from the opaque pixels within 2 px. For a ring-2 pixel these
+  must be core pixels. For a ring-1 pixel they must be outside ring 1, as in round 1.
+  Excluding ring 2 there as well would leave the first ring of every part under five pixels
+  wide with no candidate: on the 47 drawings that raises alpha on 999 ring-1 pixels against
+  round 1 and brings their halo back, so ring 1 is kept exactly as round 1 left it. Among the
+  candidates whose residual (distance of C from the G–F line) is within the tolerance, F is
+  the one farthest from G. With none, F is the candidate with the smallest residual (a
+  3-way blend where two colors meet the ground). With no candidate at all, the pixel is left
+  as drawn.
+- **Guards.** The pixel is left as drawn when:
+  - F is within 3 × the tolerance of G (a light part);
+  - for ring 2 only, the pixel is within half the tolerance of a core 8-neighbour (a solid
+    fill, not a blend).
+- **Un-blend.** a = clamp(dot(C−G, F−G)/|F−G|², 0, 1); alpha × a, rounded; color
+  G + (C−G)/a, clamped.
+- **Constants.** `GROUND_TOLERANCE` (16) now lives in `apps/client/scripts/art-flood-fill.ts`
+  and `extract-art.ts` imports it and passes it to both steps. `defringeEdge` derives its
+  thresholds from it: the residual at 1×, the light part at 3×, the solid fill at ½.
+- **Measured.**
+  - Light excess on `#0c0920` (edge pixels more than 20 luma above their solid fill): 10,373
+    after round 1, 284 now; p99 64 → 9.
+  - Only ring 2 changed: no alpha rose, no pixel became transparent, and nothing on the light
+    face darkened by more than 15 luma.
+  - The output is byte-identical to the reviewer's prototype on all 47 drawings.
+
+---
+
+## 2026-10-26 · [P] · [DISCREPANCY] Shield amounts speak "N shield points" (L72-11)
+
+Source: technical spec v7 Appendix A `global-card-effect-copy-inline-icons` (States and Keep),
+the L72-11 brief, and its review (`c9de27d`: spoken text correct for every resource, sign,
+multiplier and "instead of" case).
+
+- The V2 inline glyph (`design/components/effect-text-icons.tsx`) drew a shield phrase
+  ("Gain 4 shield points") as an `aria-hidden` number and icon with no spoken word, so a screen
+  reader heard only "4". Appendix A records that as the V2 state. Points, lives and upgrade
+  points already spoke a word ("4 lives", "3 pts", "2 upgrade points").
+- Ruling: V7 speaks "N shield points" ("1 shield point" for one), like every other resource.
+  `CostAmount` carries it as the `sr-only` spoken text and as the default `title`, wrapped like
+  `spokenCost` (`minus` or `plus` first, then `{m}×`, none for a multiplier of 1). The row's
+  Keep line (each amount has `sr-only` spoken text and its icons are `aria-hidden`) is met.
+  Structured costs keep `spokenCost`'s short wording ("3 pts", "3 pts/life").
+- Appendix A is not rewritten: its States sentence now carries a pointer to this entry. The V2
+  `CostDisplay` and `EffectTextWithIcons` keep their behavior until L75 and L76 retire their
+  consumers.
+- Pinned by `ui/card/glyph-amount.test.ts` (singular and plural, signed, multiplier) and
+  `ui/text/effect-text-with-icons.test.tsx` (`getByTitle('4 shield points')`).
+
+---
+
+## 2026-10-26 · [P] Upgraded cards keep the strong rainbow holo foil (L72-12)
+
+Source: designer decision of 2026-10-26, after the before/after of L72-12 fix round 1 (base,
+upgraded before, upgraded after; Super attack and Roulette at hand and sheet size on `--bg-0`).
+
+- Ruling: an upgraded card keeps the holo foil exactly as built in `431936f`: `--card-holo-sheen`
+  (a 115deg saturated rainbow in the rim's hue order, `ui/tokens.css`) at 70 % with
+  `mix-blend-mode: soft-light`, drifting back and forth with full motion (`.v7-card-holo-drift`)
+  and still with reduced motion, plus the white sweep band. Designer label: "Arc-en-ciel fort".
+- Accepted consequence: the foil recolors dark parts of a drawing (Roulette's black segments
+  read teal, the sword handles navy). The white face stays white.
+- Alternatives offered and declined: a reverse holo (foil on the face, art untouched), a softer
+  foil, and the previous mint tint (the conic rim gradient at 20 % multiply, from `8f9da01`).
+- Recorded in `DESIGN.md` › Card › Upgraded. Changing the foil needs a new designer ruling.
+
+---
+
+## 2026-10-26 · [P] · [DISCREPANCY] V7 What's new id and catalog copy (L72-13)
+
+Source: `docs/technical_spec_v7.md` §4.6, §10.4 and §10.5, the 2026-09-29 Lot 68 entry above
+("Inbox triage and 28 Sep feedback"), and rules spec §3 (Absorber) and §5 (Super Absorber,
+Attack Thief).
+
+- Spec v7 §10.4 first derived the V7 What's new id as `lot-<its lot>`, which gives `lot-72`
+  (commit `6e4575a`; the Lot 72 plan, `d530a8a`, already rewrote the sentence to `lot-72-v7`
+  without recording why). `lot-72` is the pre-V7 entry for the active-slot drop cancel and the
+  Poison and Block fix. It is promoted to `main` before Lot 72 merges (§4.6), and the player's
+  seen-state (`localStorage['card-battle.v6.lastSeenReleaseId']`, `ui/release-storage.ts`) is
+  keyed by id. Reusing `lot-72` for V7 would hide the V7 entry from every player who already
+  dismissed `lot-72`. The V7 entry is therefore `lot-72-v7`, titled "New look". V7
+  player-facing PRs append to it during the promotion freeze. Any later entry takes an unused id.
+  Appending to an entry that is not on `main` (AGENTS.md section 10) is consistent here only
+  because §4.6 forbids merging the Lot 72 PR into `dev` before the `lot-72` promotion PR has
+  merged to `main`.
+- The first item is the §10.5 catalog-text fix. After is `Fixed some bugs.`, per the
+  2026-09-29 "What's new keeps Before and After" ruling. Before is one sentence naming the
+  three cards.
+- The §10.5 copy follows the 2026-09-29 Lot 68 ruling and the code. Attack Thief blocks every
+  attack already pending against the user when played and keeps no charge
+  (`cards/handlers/attack-thief.ts`). Upgraded Absorber ("capture") and upgraded Super Absorber
+  ("absorb", the verb of rules spec §5) copy every point and upgrade point that left the target,
+  including a sale (selling an upgrade point is a spend, `economy/upgrade-points.ts`) and a theft,
+  and never shield, which is not on the ledger (`turn/absorb-ledger.ts`). Attack Thief's
+  `upgradeAdds` is unchanged: it was already accurate.
+- Default wording only: the designer confirms the id and the strings in the Lot 72 PR, and a
+  ruling to keep the catalog text frozen is recorded here (§10.5).
+
+---
+
+## 2026-10-26 · [P] V7 chat transcript: stick to the bottom only when the reader is there, named region (L72-14 fix round 1)
+
+Source: designer ruling 2026-10-26 (via the L72-14 review), `docs/technical_spec_v7_parity.md`
+`chat-new-message-announcement` (Keep and Notes), `docs/technical_spec_v7.md` §6.9 and §7.5.
+
+- Decision: the V7 `ChatLog` (`ui/chat/chat-log.tsx`) opens on the newest line and then scrolls
+  to a new line only while the reader is already at the bottom (within 24 px of the end). A reader
+  who has scrolled up stays put. The reader's own send always scrolls down. A new line is a
+  changed message count or newest `order`, not a new array identity, so a re-render with the
+  same messages never moves the reader. No "new messages" pill (a possible later polish).
+- Effect on the Appendix A Keep line "The popup scrolls to the newest line when it opens and when
+  lines arrive": the second half now applies only while the reader is at the bottom. V6 behavior
+  (the old `screens/table/chat-log.tsx` jumps to the bottom on every `messages` change) is
+  unchanged until L74-16, L76-13 and L77-05 migrate to the V7 component. The parity row carries
+  a pointer to this entry. No protocol, rule or value change.
+- Implementation notes: the reader's position is tracked from their own scroll events, so a
+  layout change does not unstick them. A `ResizeObserver` on the log content sticks it to the end
+  while the reader is there, because a `Sheet` mounts its content hidden and the open scroll alone
+  leaves the transcript at the top.
+- Same round: the transcript `ScrollArea` is labelled with the existing V6 copy "Chat" (the lobby
+  heading, the table button and the sheet title; not a new §10.6 string), so it is a named
+  focusable region (WCAG 2.1.1: unlabeled, it is a nameless Tab stop in Chromium and unreachable
+  in WebKit). To keep the message field the sheet's initial focus, a labelled `ScrollArea` now
+  carries `data-scroll-region`, the mark `use-focus-trap.ts` already skips; this changes the L72-08
+  primitive for every labelled use. On the read-only board the region takes focus.
+
+---
+
+## 2026-10-27 · [P] V7 art: remove the enclosed old-ground pockets (designer, L72-10 fix round 3)
+
+Source: the designer's contact-sheet review on 2026-10-27, as relayed by the coordinator. The
+designer asked to "remove what is left of the old card grounds inside the drawings" ("retire ce
+qu'il reste des anciens fonds"). This supersedes "enclosed old-ground regions stay" in the
+2026-10-26 entries and in spec v7 §5.5 (now amended).
+
+- **Rule.** Edge flood-fill stays the only global rule. A pocket the edge fill cannot reach is
+  cleared by a targeted seeded fill: `clearSeededGround`
+  (`apps/client/scripts/art-flood-fill.ts`), started from one hand-placed seed per pocket.
+  - The seeds are `POCKET_SEEDS` in `extract-art.ts`, written as fractions of the crop box.
+  - The fill uses the asset's edge ground and `GROUND_TOLERANCE`, is 4-connected, crosses only
+    opaque ground pixels, and writes only alpha.
+  - It throws when a seed is outside the image, transparent, or not ground within the
+    tolerance, so a wrong seed fails instead of erasing drawing.
+  - `defringeEdge` runs afterwards, unchanged. Its rings take every pixel next to alpha 0, so
+    each pocket's edge gets the same two-ring un-blend as the outer edge.
+- **Why seeds, not a color key.** A global key on the ground color would also remove drawing
+  parts that share it: the Spy and Spy-Thief eye whites and glints, the Curse and Gambler
+  skulls, the Ghost, Attack Thief's card, Scientist's flask, the blade highlights and the
+  `#e6e6e6` parts.
+- **How the pockets were found.** A scratch detector listed every opaque 4-connected region
+  within `GROUND_TOLERANCE` of each of the 47 assets' ground: 25 regions in 15 assets. Each was
+  sorted by hand.
+  - **Removed, named by the designer (16 regions, 9 assets):** Strong attack's diamond;
+    Mirror's hanger triangle; the 5 Cloning stripes; Block's two half-discs; the Reanimation
+    band by the hat brim and the crescent under the shoulders; the MEGA ATTACK nose; the
+    Untouchable lenses (2); Specialist's gear hole; the Duplicator sliver.
+  - **Removed, beyond the named list (1 region):** the MEGA ATTACK tooth gap closed by the knife
+    handle. It is the same rounded tooth gap as the one to its left, which the edge fill
+    already cleared.
+  - **Kept as drawing parts (6 regions):** the Spy glint; the Tax minus and the Regeneration plus
+    (drawn white, the same as Upgrade Point Thief's plus on a cream card); the MEGA ATTACK and
+    Assassin blood-drop highlights; a 1 px anti-aliased edge of the Invisibility glint.
+  - **Kept as ambiguous (2 regions):** the two 1 px residues where Points Generator's arrows
+    pinch against the coin. They are listed for the designer.
+- **Known remainder.** Where a pocket meets two drawing colors, the anti-aliasing is wider than
+  the two rings, so a few light pixels remain beyond them. This happens at the ends of the
+  Reanimation shirt's lower edge and at one corner of the MEGA ATTACK tooth gap. It is the same
+  limit as the outer edge's 3-way corners in round 2.
+
+---
+
+## 2026-10-27 · [P] V7 art: erase the Reanimation shirt-end residue (L72-10 fix round 4)
+
+Source: the independent re-review of fix round 3 (e2beae8), relayed by the coordinator,
+against the designer's 2026-10-27 request to "remove what is left of the old card grounds".
+This entry adds to the 2026-10-27 round 3 entry above, which stays as written.
+
+- **Residue.** The round 3 "Known remainder" at the ends of the Reanimation shirt's lower edge
+  was still faintly visible up close on the dark grounds: a light tick at each end, about
+  3.7 × 0.7 CSS px at 250 CSS px wide and DPR 3.
+  - Cause: the shirt's 1 px anti-aliased bottom row is a uniform blend, so the ring-2
+    solid-fill guard in `defringeEdge` keeps it.
+  - A pocket seed cannot reach it: its pixels are 26 to 128 from the ground, so
+    `clearSeededGround` would throw.
+- **Fix.** A per-asset erase list, `RESIDUE_ERASE` in `extract-art.ts`, goes through the
+  existing `erase()` before ground removal, like `CARD_ERASE` and `KIT_ERASE`: alpha only, on a
+  copy, boxes as fractions of the source.
+  - It covers exactly 13 pixels of the 365 × 530 `Reanimation.png`: row 374, x 109–113 and
+    252–255; row 375, x 110–111 and 254–255. In the output these are (70–74, 293),
+    (71–72, 294), (213–216, 293) and (215–216, 294).
+  - `defringeEdge`, `clearEdgeGround` and `clearSeededGround` are unchanged. `defringeEdge`
+    un-blends the new edge around the boxes.
+- **Result.** Only `cards/reanimation.png` changes, and its size stays 288 × 339. The changed
+  pixels are the 13 erased ones and 12 ring pixels within two pixels of them. The output is
+  byte-reproducible.
+  - On the light ground (`#f3eeff`) the shirt's soft bottom row (alpha 112) now stops at the
+    boxes, 4 to 5 px before the arm. That is a 1 px row under half coverage, a step of under
+    0.4 CSS px, and is not visible at display scale.
+- **Left as is.** The MEGA ATTACK tooth-gap corner, the Reanimation band tip and the Cloning
+  tips: the review measured them under one CSS pixel and invisible.
+- **Correction (Points Generator).** The round 3 entry calls the two Points Generator pixels
+  "1 px residues", and DESIGN.md › Illustrations called them "1 px light residues". In the
+  output they are near-transparent blue tints (alpha 18 and 10), not light residues. The faint
+  light dot beside each is the coin and arrow blend of the drawing. They are still kept for the
+  designer to judge. DESIGN.md is corrected in place.
+
+---
+
+## 2026-10-27 · [P] Unplayable cards keep their chips at full contrast (L72-21 gate)
+
+Source: the Lot 72 design gate (L72-21). Impeccable's rendered scan of `/dev/ui` at 375×812 and
+1440×900 and the gate's critique both flagged the unplayable MEGA ATTACK in the Card gallery.
+
+- **Finding.** The unplayable dimming (`saturate-30 brightness-75`, L72-12 fix round 2) sat on
+  the whole card body, chips included. It took the `--text-on-cta` label on the `--life` damage
+  chip to 2.6:1. `saturate(30%)` alone would still leave about 3.8:1. Spec v7 §5.1 binds that pair
+  at 4.5:1, and an unplayable card stays activatable (§5.4: a tap opens the sheet with the
+  reason), so it is not an inactive control that WCAG exempts.
+- **Ruling.** The body layer (`data-card-layer="body"`) keeps the rim and the face or verso, and
+  only it is dimmed. The cost and damage chips, the "+" badge and the counter badge move to a
+  sibling `data-card-layer="marks"` over the same box, never filtered. DOM order and the
+  accessible name are unchanged; the selection outline and the focus ring stay off the body as
+  before.
+- **Test.** `ui/card/card.test.tsx` adds a case that every mark sits outside the body with no
+  filter class on any ancestor up to the root. The fix round 2 assertion that the chips are inside
+  the dimmed body pinned the defect and now asserts the opposite.
+- Recorded in `DESIGN.md` › Card (Unplayable, Anchors) and `docs/agent/frontend.md` › Card.
+
+---
+
+## 2026-10-27 · [P] · [DISCREPANCY] V6 storage helpers wrap only the storage accessor (L72-20 review, L72-21 gate)
+
+Source: technical spec v7 Appendix A `global-client-storage` (Keep: "Every access is wrapped in
+try/catch so a private window still works") and the L72-20 review.
+
+- **Code.** `ui/help-storage.ts`, `ui/release-storage.ts`, `feedback/asked-storage.ts` and
+  `inbox/password-storage.ts` wrap only the `localStorage` / `sessionStorage` accessor in
+  `try/catch` (`tryStorage`, `trySessionStorage`). Their `getItem`, `setItem` and `removeItem`
+  calls are not wrapped, so a browser that exposes storage but throws on access or on a full
+  quota would throw from those helpers.
+- **Elsewhere.** `net/use-room-connection.ts` (reconnect token) and the V7 `ui-switch.ts`
+  (L72-20) wrap every call, as the Keep line says.
+- **Not changed.** The divergence predates V7 (Lots 42–63). V7 changes no V6 behavior outside a
+  lot's scope, so the helpers stay as they are. The V7 lot that rewrites
+  each helper's consumer brings it in line with the Keep line, unless a designer ruling relaxes
+  the Keep line first.
+
+---
+
+## 2026-10-27 · [P] · [DISCREPANCY] Hand card names may fall below the 11 px floor (L72-12 fix round 1 A4, L72-21 final review)
+
+Source: technical spec v7 §5.2 ("11 px for any functional text"), the L72-12 fix round 1 ruling
+(A4), and the L72-21 whole-branch final review (`d530a8a..595b1d0`).
+
+- **Spec line.** §5.2 sets the floor: 11 px for any functional text.
+- **Code line.** `ui/card/card-face.ts` `CARD_NAME_FIT.hand` has `floorPx: 10`, and
+  `cardNameFontSize` shrinks a hand name down to it. The ruling is L72-12 fix round 1 (A4): the
+  hand name may fall below 11 px, to a 10 px floor, so its widest word never breaks mid-word.
+  Until now the deviation was recorded only in `DESIGN.md` and the SDD ledger.
+- **Why.** At 320 px and up a catalog name must not break mid-word, and the catalog names cannot
+  change. "Regeneration" is the widest word (5.798 em with the card's tight tracking), and
+  "Super Regeneration" has the same widest word.
+- **Measured range.** The hand card is `clamp(64px, 19vw, 120px)`, its face is the card minus
+  4 px, and the name strip takes 97 % of the face.
+  - The name needs a 69.75 px card to stay at 11 px, which is a 367 px viewport.
+  - Below that the name sits at or near the clamp floor and renders between 10 and 11 px:
+    about 10.8 px at 360 px (face about 64.4 px) and 10.04 px at 337 px and below.
+  - The effect is therefore not limited to 320 px phones. 360 px is a §12.3 gate size and a
+    common Android width, and it is affected. The 10 px floor itself is never reached by a
+    catalog name.
+- **Not changed.** The 10 px floor stays as ruled in L72-12. `DESIGN.md` › The Floor Rule now
+  states the range 320 to about 367 px.
+- **Open.** This waits on the designer's answer, asked in the Lot 72 PR notes: accept a 10 px
+  hand-name floor on 320 to 360 px phones, or shorten the face text another way.
 
 ---
