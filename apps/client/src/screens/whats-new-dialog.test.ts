@@ -58,7 +58,7 @@ describe('What’s new dialog (L63-07)', () => {
     expect(latestReleaseNote().additions).toHaveLength(0);
     expect(latestReleaseNote().items).toHaveLength(2);
     const lot72 = RELEASE_NOTES.find((note) => note.id === 'lot-72');
-    expect(lot72?.items).toHaveLength(2);
+    expect(lot72?.items).toHaveLength(3);
     const lot71 = RELEASE_NOTES.find((note) => note.id === 'lot-71');
     expect(lot71?.items).toHaveLength(5);
     const lot69 = RELEASE_NOTES.find((note) => note.id === 'lot-69');

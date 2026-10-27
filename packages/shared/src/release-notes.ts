@@ -9,15 +9,12 @@
  * that is already on `main` except to correct that entry's own text.
  * `lot-63` shipped on `main` (promote #51). `lot-65` shipped on `main`
  * (promote #56). `lot-68` shipped on `main`. `lot-69` stays as written.
- * `lot-71` shipped on `main`. `lot-72` (active-slot drop cancel; Block / Poison) is
- * promoted to `main` before V7 Lot 72 merges (technical spec v7 §4.6), so it stops
- * being the open update. `lot-72-v7` ("New look") is the open V7 update that V7
- * player-facing PRs append to during the promotion freeze (v7 §10.4). It is not
- * `lot-72`, because seen-state is keyed by id and reusing that id would hide the V7
- * entry from every player who dismissed `lot-72` (decisions.md 2026-10-26). Appending
- * to a `lot-72-v7` that is not on `main` follows the rule above only because §4.6
- * forbids merging the Lot 72 PR into `dev` before the `lot-72` promotion has merged
- * to `main`.
+ * `lot-71` shipped on `main`. `lot-72` (active-slot drop cancel; Block / Poison;
+ * lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72
+ * merged into `dev` (technical spec v7 §4.6). `lot-72-v7` ("New look") is the open V7
+ * update that V7 player-facing PRs append to during the promotion freeze (v7 §10.4).
+ * It is not `lot-72`, because seen-state is keyed by id and reusing that id would hide
+ * the V7 entry from every player who dismissed `lot-72` (decisions.md 2026-10-26).
  *
  * Player copy (designer 2026-09-29): keep Before and After. Each side is
  * one short sentence about the gameplay change. Bug fixes: After is
@@ -85,6 +82,10 @@ const RELEASE_NOTES_CATALOG = [
         cardId: 'poison' as const,
         before: 'Poison still ticked on you during an active Block chain.',
         after: 'Poison does not tick on you during Block, like Imposition.',
+      },
+      {
+        before: 'When the host left the lobby, a bot could become host and nobody could start.',
+        after: 'Fixed some bugs.',
       },
     ],
   },
