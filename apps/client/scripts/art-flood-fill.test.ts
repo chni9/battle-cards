@@ -1,7 +1,14 @@
 /** Edge flood-fill ground removal — technical spec v7 §5.5 (L72-10). Enclosed light regions survive. */
 import { describe, expect, it } from 'vitest';
 
-import { GROUND_TOLERANCE, clearEdgeGround, defringeEdge, edgeGroundColor, type RgbaImage } from './art-flood-fill';
+import {
+  GROUND_TOLERANCE,
+  clearEdgeGround,
+  clearSeededGround,
+  defringeEdge,
+  edgeGroundColor,
+  type RgbaImage,
+} from './art-flood-fill';
 
 const PIXELS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   '.': [255, 255, 255, 255], // white card ground
@@ -244,5 +251,49 @@ describe('defringeEdge second ring (technical spec v7 §5.5, L72-10 fix round 2)
     const out = defringeEdge(input, options);
     expect(input.data).toEqual(before);
     expect(out.data).toEqual(withPixels(input, [[3, 3, [40, 40, 40, 128]]]));
+  });
+});
+
+describe('clearSeededGround (designer 2026-10-27, L72-10 fix round 3)', () => {
+  const options = { ground: WHITE, tolerance: 16 } as const;
+  const ISLANDS = ['#########', '#...#...#', '#...#...#', '#########'];
+
+  it('clears the enclosed ground island a seed sits in and nothing else', () => {
+    const input = imageFrom(ISLANDS);
+    const out = clearSeededGround(input, [{ x: 2, y: 1 }], options);
+    expect(alphaMask(out)).toEqual(['111111111', '100011111', '100011111', '111111111']);
+    for (let i = 0; i < out.data.length; i += 4) {
+      expect(out.data.subarray(i, i + 3)).toEqual(input.data.subarray(i, i + 3));
+    }
+  });
+  it('fills every seeded island and is 4-connected, so a diagonal neighbour stays', () => {
+    expect(alphaMask(clearSeededGround(imageFrom(ISLANDS), [{ x: 1, y: 1 }, { x: 7, y: 2 }], options))).toEqual(
+      ['111111111', '100010001', '100010001', '111111111']);
+    expect(alphaMask(clearSeededGround(imageFrom(['#####', '#.###', '##.##', '#####']), [{ x: 1, y: 1 }], options))).toEqual(
+      ['11111', '10111', '11111', '11111']);
+  });
+  it('throws when a seed is not opaque ground within the tolerance', () => {
+    const input = imageFrom(['xxxxx', 'x#..x', 'xxxxx']);
+    expect(() => clearSeededGround(input, [{ x: 1, y: 1 }], options)).toThrow(/not ground/);
+    expect(() => clearSeededGround(input, [{ x: 0, y: 0 }], options)).toThrow(/not ground/);
+    expect(() => clearSeededGround(input, [{ x: 9, y: 1 }], options)).toThrow(/not ground/);
+    expect(() => clearSeededGround(imageFrom(['###', '#g#', '###']), [{ x: 1, y: 1 }], options)).toThrow(/not ground/);
+  });
+  it('returns a new image and leaves the input untouched', () => {
+    const input = imageFrom(ISLANDS);
+    const before = Uint8ClampedArray.from(input.data);
+    const out = clearSeededGround(input, [{ x: 2, y: 1 }], options);
+    expect(out).not.toBe(input);
+    expect(out.data).not.toBe(input.data);
+    expect([out.width, out.height]).toEqual([input.width, input.height]);
+    expect(input.data).toEqual(before);
+  });
+  it('lets defringeEdge un-blend the boundary ring of a cleared pocket', () => {
+    const input = ringImage(['#########', '#########', '##mmmmm##', '##m...m##', '##m...m##', '##mmmmm##', '#########', '#########', '#########']);
+    expect(pixelOf(defringeEdge(input, options), 4, 2)).toEqual([147, 147, 147, 255]);
+    const out = defringeEdge(clearSeededGround(input, [{ x: 4, y: 3 }], options), options);
+    expect(pixelOf(out, 4, 3)[3]).toBe(0);
+    expect(pixelOf(out, 4, 2)).toEqual([40, 40, 40, 128]);
+    expect(pixelOf(out, 2, 4)).toEqual([40, 40, 40, 128]);
   });
 });

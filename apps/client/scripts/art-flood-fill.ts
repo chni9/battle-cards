@@ -1,18 +1,21 @@
 /**
  * Ground removal for the V7 art extraction — technical spec v7 §5.5 (L72-10).
  *
- * The ground is removed by edge flood-fill only, never by a global color key: a light
- * part of a drawing that matches the ground color (a blade highlight, an eye glint, a
- * region enclosed by an outline) survives unless the fill can reach it from the border
- * through ground-colored pixels. `clearEdgeGround` writes only alpha; every color channel
- * is kept.
+ * The ground is removed by edge flood-fill, never by a global color key: a light part of a
+ * drawing that matches the ground color (a blade highlight, an eye glint, a region enclosed by
+ * an outline) survives unless the fill can reach it from the border through ground-colored
+ * pixels. `clearEdgeGround` writes only alpha; every color channel is kept.
  *
- * `defringeEdge` then un-blends the old ground out of the two pixel rings along the cleared
- * region: the opaque pixels next to it (or to the image edge), and the opaque pixels next to
- * those, guarded so a solid fill is never touched. Their anti-aliasing mixed the drawing with
- * the old ground, which reads as a light halo on the V7 dark grounds. It stays edge-based and
- * never reaches past the second ring, so enclosed old-ground regions stay as they are
- * (L72-10 fix rounds 1 and 2, docs/agent/decisions.md 2026-10-26).
+ * `clearSeededGround` then clears the enclosed old-ground pockets the designer asked to remove,
+ * each from a hand-placed seed (designer 2026-10-27, L72-10 fix round 3). It throws on a seed
+ * that is not ground, so it can never erase drawing.
+ *
+ * `defringeEdge` finally un-blends the old ground out of the two pixel rings along every
+ * cleared region: the opaque pixels next to it (or to the image edge), and the opaque pixels
+ * next to those, guarded so a solid fill is never touched. Their anti-aliasing mixed the drawing
+ * with the old ground, which reads as a light halo on the V7 dark grounds. It never reaches past
+ * the second ring (L72-10 fix rounds 1 and 2, docs/agent/decisions.md 2026-10-26 and
+ * 2026-10-27).
  */
 
 /**
@@ -137,6 +140,77 @@ export function clearEdgeGround(image: RgbaImage, options: { readonly tolerance:
  */
 export function edgeGroundColor(image: RgbaImage): Rgb | undefined {
   return groundColor(image, borderPixels(image.width, image.height));
+}
+
+/** A pixel inside an enclosed old-ground pocket, in image coordinates. */
+export interface PocketSeed {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * Clears the enclosed old-ground pockets that `seeds` sit in (designer 2026-10-27, L72-10 fix
+ * round 3). Edge flood-fill cannot reach a pocket the drawing encloses, and a global color key
+ * would also eat drawing parts that share the ground color (eye whites, skulls, the Ghost), so
+ * each pocket is named by a seed placed by hand. From each seed the fill spreads 4-connected
+ * through the opaque pixels within `tolerance` (Euclidean RGB, inclusive) of `ground` and sets
+ * their alpha to 0. It never crosses a transparent pixel or another color, so it stays inside
+ * the pocket. Only alpha is written, on a copy; the input is untouched.
+ *
+ * Throws when a seed is outside the image, transparent, or not ground within the tolerance: a
+ * misplaced seed must fail loudly instead of erasing drawing.
+ */
+export function clearSeededGround(
+  image: RgbaImage,
+  seeds: readonly PocketSeed[],
+  options: { readonly ground: Rgb; readonly tolerance: number },
+): RgbaImage {
+  const { width, height } = image;
+  const data = new Uint8ClampedArray(image.data);
+  const { ground, tolerance } = options;
+
+  const isGround = (x: number, y: number): boolean => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return false;
+    const offset = (y * width + x) * 4;
+    if ((image.data[offset + 3] ?? 0) === 0) return false;
+    const distance = Math.hypot(
+      (image.data[offset] ?? 0) - ground.r,
+      (image.data[offset + 1] ?? 0) - ground.g,
+      (image.data[offset + 2] ?? 0) - ground.b,
+    );
+    return distance <= tolerance;
+  };
+  for (const seed of seeds) {
+    if (!Number.isInteger(seed.x) || !Number.isInteger(seed.y) || !isGround(seed.x, seed.y)) {
+      throw new Error(`Pocket seed ${seed.x},${seed.y} is not ground within ${tolerance}`);
+    }
+  }
+
+  // Explicit stack, no recursion; each pixel is pushed at most once (marked when pushed).
+  const visited = new Uint8Array(width * height);
+  const stack = new Int32Array(width * height);
+  let top = 0;
+  const push = (x: number, y: number): void => {
+    if (!isGround(x, y) || visited[y * width + x] === 1) return;
+    visited[y * width + x] = 1;
+    stack[top] = y * width + x;
+    top += 1;
+  };
+
+  for (const seed of seeds) push(seed.x, seed.y);
+  while (top > 0) {
+    top -= 1;
+    const pixel = stack[top] ?? 0;
+    data[pixel * 4 + 3] = 0;
+    const x = pixel % width;
+    const y = (pixel - x) / width;
+    push(x - 1, y);
+    push(x + 1, y);
+    push(x, y - 1);
+    push(x, y + 1);
+  }
+
+  return { width, height, data };
 }
 
 /**

@@ -4793,3 +4793,46 @@ Source: designer ruling 2026-10-26 (via the L72-14 review), `docs/technical_spec
   primitive for every labelled use. On the read-only board the region takes focus.
 
 ---
+
+## 2026-10-27 · [P] V7 art: remove the enclosed old-ground pockets (designer, L72-10 fix round 3)
+
+Source: the designer's contact-sheet review on 2026-10-27, as relayed by the coordinator. The
+designer asked to "remove what is left of the old card grounds inside the drawings" ("retire ce
+qu'il reste des anciens fonds"). This supersedes "enclosed old-ground regions stay" in the
+2026-10-26 entries and in spec v7 §5.5 (now amended).
+
+- **Rule.** Edge flood-fill stays the only global rule. A pocket the edge fill cannot reach is
+  cleared by a targeted seeded fill: `clearSeededGround`
+  (`apps/client/scripts/art-flood-fill.ts`), started from one hand-placed seed per pocket.
+  - The seeds are `POCKET_SEEDS` in `extract-art.ts`, written as fractions of the crop box.
+  - The fill uses the asset's edge ground and `GROUND_TOLERANCE`, is 4-connected, crosses only
+    opaque ground pixels, and writes only alpha.
+  - It throws when a seed is outside the image, transparent, or not ground within the
+    tolerance, so a wrong seed fails instead of erasing drawing.
+  - `defringeEdge` runs afterwards, unchanged. Its rings take every pixel next to alpha 0, so
+    each pocket's edge gets the same two-ring un-blend as the outer edge.
+- **Why seeds, not a color key.** A global key on the ground color would also remove drawing
+  parts that share it: the Spy and Spy-Thief eye whites and glints, the Curse and Gambler
+  skulls, the Ghost, Attack Thief's card, Scientist's flask, the blade highlights and the
+  `#e6e6e6` parts.
+- **How the pockets were found.** A scratch detector listed every opaque 4-connected region
+  within `GROUND_TOLERANCE` of each of the 47 assets' ground: 25 regions in 15 assets. Each was
+  sorted by hand.
+  - **Removed, named by the designer (16 regions, 9 assets):** Strong attack's diamond;
+    Mirror's hanger triangle; the 5 Cloning stripes; Block's two half-discs; the Reanimation
+    band by the hat brim and the crescent under the shoulders; the MEGA ATTACK nose; the
+    Untouchable lenses (2); Specialist's gear hole; the Duplicator sliver.
+  - **Removed, beyond the named list (1 region):** the MEGA ATTACK tooth gap closed by the knife
+    handle. It is the same rounded tooth gap as the one to its left, which the edge fill
+    already cleared.
+  - **Kept as drawing parts (6 regions):** the Spy glint; the Tax minus and the Regeneration plus
+    (drawn white, the same as Upgrade Point Thief's plus on a cream card); the MEGA ATTACK and
+    Assassin blood-drop highlights; a 1 px anti-aliased edge of the Invisibility glint.
+  - **Kept as ambiguous (2 regions):** the two 1 px residues where Points Generator's arrows
+    pinch against the coin. They are listed for the designer.
+- **Known remainder.** Where a pocket meets two drawing colors, the anti-aliasing is wider than
+  the two rings, so a few light pixels remain beyond them. This happens at the ends of the
+  Reanimation shirt's lower edge and at one corner of the MEGA ATTACK tooth gap. It is the same
+  limit as the outer edge's 3-way corners in round 2.
+
+---

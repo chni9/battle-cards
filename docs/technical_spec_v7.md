@@ -333,7 +333,10 @@ L72 adds a one-off script, `apps/client/scripts/extract-art.ts`, run with
 `pnpm --filter @card-battle/client exec tsx scripts/extract-art.ts` (uses `sharp`, §4.5). It
 crops each base card and kit PNG from `images/` to its drawing, removes the frame and the baked
 numbers, and removes the ground **by edge flood-fill only** (never a global color key, so
-light parts of a drawing such as blades or flask highlights survive). Outputs, committed:
+light parts of a drawing such as blades or flask highlights survive). Old ground that a drawing
+encloses, which the edge fill cannot reach, is removed by targeted seeded fills: one
+hand-placed seed per pocket, listed per asset in the script's `POCKET_SEEDS` (designer
+2026-10-27). That is still never a global color key. Outputs, committed:
 `apps/client/src/assets/art/{cards,kits}/<id>.png` — **31 base cards (incl. Roulette) + 16
 kits (incl. Gambler)**. Upgraded / activated variants become code states (§5.4).
 

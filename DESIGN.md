@@ -441,12 +441,24 @@ The existing drawings only, never new art (spec v7 §5.5).
   second row is left as drawn. Light parts that sit close to the ground keep their edge as
   drawn (Ghost, the Curse skull, Scientist's flask, Assassin's blade edge, Attack Thief's white
   card, the Spy-Thief hand and eye white, the Reanimation face).
-- **Old ground stays where it is enclosed:** the ground is removed by edge flood-fill only, so
-  a region of card or kit ground that the drawing encloses keeps its color (§5.5): the
-  Untouchable lenses, the Cloning helix stripes, Block's cream disc, the white diamond between
-  Strong attack's guards, Mirror's hanger triangle, the Reanimation crescent and band (under
-  the shoulders, and between the hat brim and the arrow), Specialist's gear hole, the
-  Duplicator lilac sliver and the MEGA ATTACK nose.
+- **No old ground inside a drawing** (designer 2026-10-27): the old ground a drawing encloses
+  is removed and shows the ground through it. Each pocket gets one hand-placed seed
+  (`POCKET_SEEDS` in `scripts/extract-art.ts`), never a global color key, and its edge is
+  un-blended like the outer edge. Pockets removed:
+  - Strong attack's diamond between the guards;
+  - Mirror's hanger triangle;
+  - the Cloning helix stripes (5);
+  - Block's disc (both halves);
+  - the Reanimation band (by the hat brim) and crescent (under the shoulders);
+  - the MEGA ATTACK nose, and its tooth gap closed by the knife;
+  - the Untouchable lenses;
+  - Specialist's gear hole;
+  - the Duplicator sliver under the arrow.
+- **Light parts that share the ground color stay:** the Spy glint, the Tax minus, the
+  Regeneration plus, the MEGA ATTACK and Assassin blood-drop highlights, and the edge of the
+  Invisibility glint.
+- **Kept for the designer to judge:** two 1 px light residues where Points Generator's arrows
+  pinch against the coin.
 - **Sign-off pending:** the designer signs the before/after contact sheet on the Lot 72 PR
   (L72-21) before any screen stops using the old PNGs.
 

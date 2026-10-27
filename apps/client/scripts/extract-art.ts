@@ -10,8 +10,10 @@
  * the frame and the printed values, because the catalogs own every number (designer
  * 2026-09-21; spec v7 §5.5: printed values are not authoritative). Ground removal is edge
  * flood-fill only (`art-flood-fill.ts`, which owns `GROUND_TOLERANCE`), never a global color
- * key; the two rings along the cleared region are then un-blended from the same ground so no
- * halo of it is left (`defringeEdge`, fix rounds 1 and 2).
+ * key. The old ground the drawings enclose is cleared from hand-placed seeds, one per pocket
+ * (`POCKET_SEEDS`, designer 2026-10-27, fix round 3). The two rings along every cleared region
+ * are then un-blended from the same ground so no halo of it is left (`defringeEdge`, fix
+ * rounds 1 and 2).
  * Also writes the before/after contact sheet to the gitignored `apps/client/.art-contact-sheet/`
  * for the lot PR.
  */
@@ -34,6 +36,7 @@ import { V7_COLORS } from '../src/ui/palette';
 import {
   GROUND_TOLERANCE,
   clearEdgeGround,
+  clearSeededGround,
   defringeEdge,
   edgeGroundColor,
   type CropRect,
@@ -57,6 +60,31 @@ const CARD_ERASE: Partial<Record<CardId, readonly Box[]>> = {
   roulette: [{ left: 0.58, top: 0.145, right: 0.96, bottom: 0.33 }],
   'super-mirror': [{ left: 0.74, top: 0.8, right: 0.96, bottom: 0.96 }],
 };
+/**
+ * One seed inside each enclosed old-ground pocket, as fractions of the crop box (designer
+ * 2026-10-27: remove what is left of the old card grounds inside the drawings). Found by a
+ * detector over every opaque region within `GROUND_TOLERANCE` of an asset's ground, then
+ * sorted by hand; the regions that are drawing parts (eye glints, the Tax minus, the
+ * Regeneration plus, blood-drop highlights) and the two 1 px Points Generator residues have no
+ * seed. Never a global color key: it would eat those parts, the skulls and the Ghost.
+ */
+const POCKET_SEEDS: Partial<Record<CardId | KitId, readonly { x: number; y: number }[]>> = {
+  'strong-attack': [{ x: 0.522, y: 0.552 }], // diamond between the guards
+  mirror: [{ x: 0.5, y: 0.263 }], // hanger triangle
+  cloning: [
+    { x: 0.699, y: 0.288 }, // upper tail stripe
+    { x: 0.606, y: 0.36 }, // loop stripes, top to bottom
+    { x: 0.5, y: 0.436 },
+    { x: 0.397, y: 0.513 },
+    { x: 0.301, y: 0.582 }, // lower tail stripe
+  ],
+  block: [{ x: 0.403, y: 0.388 }, { x: 0.593, y: 0.529 }], // both halves of the disc
+  reanimation: [{ x: 0.674, y: 0.214 }, { x: 0.5, y: 0.714 }], // band by the brim, crescent under the shoulders
+  'mega-attack': [{ x: 0.5, y: 0.58 }, { x: 0.556, y: 0.677 }], // nose, tooth gap closed by the knife
+  untouchable: [{ x: 0.326, y: 0.696 }, { x: 0.671, y: 0.696 }], // both lenses
+  specialist: [{ x: 0.5, y: 0.516 }], // gear hole
+  duplicator: [{ x: 0.385, y: 0.524 }], // sliver under the arrow
+};
 const EXCLUDED_SOURCE = /\(dead\)|^Draw\.png$|_button\.png$/;
 const IMAGES_DIR = new URL('../../../images/', import.meta.url);
 const ART_DIR = new URL('../src/assets/art/', import.meta.url);
@@ -71,6 +99,7 @@ interface Job {
   readonly source: string;
   readonly box: Box;
   readonly erase: readonly Box[];
+  readonly pockets: readonly { readonly x: number; readonly y: number }[];
 }
 
 interface Extracted {
@@ -84,10 +113,24 @@ const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 } as const;
 /** Every base card in catalog order, then every kit; the 31 + 16 of spec v7 §5.5. */
 function buildJobs(): Job[] {
   const cards = [...ATTACK_CARD_IDS, ...ACTION_CARD_IDS, ...SPECIAL_CARD_IDS].map(
-    (id): Job => ({ id, folder: 'cards', source: CARD_FILES[id].base, box: CARD_BOX, erase: CARD_ERASE[id] ?? [] }),
+    (id): Job => ({
+      id,
+      folder: 'cards',
+      source: CARD_FILES[id].base,
+      box: CARD_BOX,
+      erase: CARD_ERASE[id] ?? [],
+      pockets: POCKET_SEEDS[id] ?? [],
+    }),
   );
   const kits = KIT_IDS.map(
-    (id): Job => ({ id, folder: 'kits', source: KIT_FILES[id], box: KIT_BOX, erase: KIT_ERASE }),
+    (id): Job => ({
+      id,
+      folder: 'kits',
+      source: KIT_FILES[id],
+      box: KIT_BOX,
+      erase: KIT_ERASE,
+      pockets: POCKET_SEEDS[id] ?? [],
+    }),
   );
   if (cards.length !== 31 || kits.length !== 16) {
     throw new Error(`Expected 31 cards and 16 kits, got ${cards.length} and ${kits.length}`);
@@ -161,7 +204,12 @@ async function extract(job: Job): Promise<Extracted> {
   const ground = edgeGroundColor(cropped);
   if (ground === undefined) throw new Error(`${job.id}: no opaque ground on the crop border`);
   const cleared = clearEdgeGround(cropped, { tolerance: GROUND_TOLERANCE });
-  const art = defringeEdge(cleared, { ground, tolerance: GROUND_TOLERANCE });
+  const seeds = job.pockets.map(({ x, y }) => ({
+    x: Math.floor(x * cleared.width),
+    y: Math.floor(y * cleared.height),
+  }));
+  const opened = clearSeededGround(cleared, seeds, { ground, tolerance: GROUND_TOLERANCE });
+  const art = defringeEdge(opened, { ground, tolerance: GROUND_TOLERANCE });
   const bounds = opaqueBounds(art);
   if (bounds === undefined) throw new Error(`${job.id}: nothing left after ground removal`);
   await sharp(art.data, { raw: { width: art.width, height: art.height, channels: 4 } })
