@@ -109,6 +109,24 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   are under `SEAT_MIN_GAP_PX` (8) apart on both axes, or the arena cannot hold one seat:
   `ceil(n/2)` over `floor(n/2)` in seat order. `SEAT_BOX`, `PLATE_BOX` and the gap are L74
   playtest values (§14.3); retuning them updates `seat-layout.test.ts`.
+- `view-model/threats.ts` (L73-04, spec v7 §6.5): `threats(view, subChoice)` gives one
+  `ThreatEntry` per `pendingEffects` item, in wire order, each with its **own** label
+  (`listedAttackDamage` × `damageMultiplier`, else the effect's card icon), never a summed
+  total (golden rule 1). Relation is `incoming` when the POV is the target (a self-queued
+  base Suicide included), else `outgoing` when the POV is the source, else `third-party`.
+  Tone: `mine` for outgoing, `threatToneFor` otherwise; every entry also carries the source
+  seat colour (`seatColorIndexOf`). `groupKey` (`source|target|queuedAt|cardId`) fans arrows side by side.
+  A **fan-out** (`FanOutGroup`, key `source|queuedAt|cardId`) is a `(source, cardId,
+  queuedAt)` set with at least two distinct targets that covers every living opponent of the
+  source except living Invisible seats, or that is a hits-all play (`HITS_ALL_CARD_IDS`,
+  upgraded `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, or Super Mirror copies). A hits-all burst stays
+  while two or more copies remain, even after earlier copies resolved (designer 2026-10-27).
+  A self-targeted entry never joins one, and a single remaining target draws a plain arrow.
+  Members stay in `entries` with `fanOutKey` set, and each target badge keeps its own
+  label. `mirrorBadge` comes from `redirectedBy`. `mirrorEligible` is set only while a `mirror`
+  sub-choice lists the id. `gridThreatEntries` keeps POV in/out plus the tapped seat's
+  entries, and `seatThreatIds` gives a seat's in/out ids. The tone type is
+  `ReturnType<typeof threatToneFor>`, so `threats.ts` adds no `fx/` import.
 
 ## Design system (V7 · Lot 72+)
 

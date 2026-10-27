@@ -5015,3 +5015,20 @@ playtest) and the Lot 73 brief's open walk-in question.
   360-wide grid switch.
 
 ---
+
+## 2026-10-27 · [P] V7 threat fan-out: hits-all bursts persist; one target is an arrow (designer, L73-04)
+
+Source: designer answers 2026-10-27 (Lot 73 plan, Appendix B Q1 and Q2); technical spec v7 §6.5;
+server handlers `mega-attack.ts`, `suicide.ts`, `attack-thief.ts` (one copy per alive opponent at
+every tier), `card-thief.ts`, `spy-thief.ts`, `upgrade-point-thief.ts` (one copy per opponent when
+upgraded) and `super-mirror.ts` copies (`redirectedBy: 'super-mirror'`).
+
+- **Q1, burst after the first hit.** Each copy of a hits-all play resolves on its own target's turn.
+  The burst stays while two or more copies remain, instead of turning into separate arrows once the
+  first target has resolved. Hits-all is read from the card (`HITS_ALL_CARD_IDS`,
+  `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, Super Mirror copies), never from the log. An Assassin volley
+  keeps the literal §6.5 test: it bursts only while it covers every living, non-Invisible opponent.
+- **Q2, one target.** A hits-all play with a single target, on a 2-seat table or as the last copy
+  left, is a plain arrow.
+
+---
