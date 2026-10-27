@@ -148,6 +148,17 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   handler's `canPlay` in the server's check order, and a reason shows only when the view proves the
   server rejects. Never add a client immunity filter, and never gate a play the server accepts
   (golden rule 8). The V2 table keeps `screens/table/card-actions.tsx` until L75.
+- **In-play cards (L73-07).** `cardActions` also takes `active`, `shield` and `sentence` refs.
+  Upgrade is offered only on the POV's own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS`, own
+  Shield while `self.shield > 0` (`active-shield`) and own ticking Sentence (its id). It is disabled
+  at 0 upgrade points, off-turn and while locked, and hidden once upgraded and for Curse and
+  Reanimation (Q37). Another seat's card in play gets a read-only sheet; its Shield model id is
+  `active-shield:<playerId>`, never the POV's. Deactivate is offered on own persistents only, never
+  Shield or Sentence, and is disabled off-turn and during a sub-choice (Q40); the Lot 69 confirm
+  stays a UI step. `inPlayThumbs(view, ownerPlayerId)` lists a seat's Shield, persistents and
+  ticking Sentences with their `ThumbBadge` and `activatedArt`, which is never true for Shield or
+  Sentence (Appendix A `global-activated-art-guard`). The V2 table keeps `activeUpgradeInstanceId`
+  until L75.
 
 ## Design system (V7 · Lot 72+)
 

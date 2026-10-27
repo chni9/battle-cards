@@ -1,7 +1,9 @@
 /**
- * Card actions — technical spec v7 §4.3, §6.6.1, §11 (Q39, Q44); Appendix A
+ * Card actions — technical spec v7 §4.3, §6.6.1, §11 (Q37, Q39, Q40, Q44); Appendix A
  * `card-actions-dialog`, `table-target-picker-eligibility`, `regeneration-quantity-picker`,
- * `card-transformer-consume-picker`, `assassin-multi-attack`; Lot 73 (L73-06).
+ * `card-transformer-consume-picker`, `assassin-multi-attack`, `table-inspect-active-upgrade`,
+ * `deactivate-confirm-dialog`, `active-persistent-thumbs`, `sentence-chips`,
+ * `global-activated-art-guard`; Lot 73 (L73-06, L73-07).
  *
  * What a hand or special card offers, in display order (Use, Upgrade, Sell, Multi-attack), and
  * where Use routes. A hidden action is absent; an offered one is disabled with the first reason the
@@ -10,9 +12,14 @@
  * (`playCardAction`, `playMultipleAttacksAction`) and each handler's `canPlay`, read from this
  * recipient's view only (§6.3). A reason shows only when the view proves the server rejects:
  * there is no client immunity filter, and the server revalidates every intent (golden rule 8).
+ *
+ * A card in play (an active persistent, a Shield, a ticking Sentence) offers only Upgrade and
+ * Deactivate, and only when the server would find it as the POV's own (Q37): another seat's card
+ * in play gets a read-only sheet. `inPlayThumbs` lists one seat's cards in play for the strips.
  */
 
 import {
+  ACTIVE_SHIELD_INSTANCE_ID,
   SHARED_CARD_CATALOG,
   cardActsOnOpponents,
   getCard,
@@ -21,27 +28,43 @@ import {
   isSharedAttackCardId,
   isSharedCardId,
   isTemporarilyUnavailableCardId,
+  isUpgradeableActiveCardId,
   type CardId,
   type CardInstance,
   type PendingEffectView,
+  type PendingSentenceView,
+  type PersistentEffectView,
   type PlayingStateView,
   type PublicPlayerView,
 } from '@card-battle/shared';
 
+import { CARDS_WITH_ACTIVATED_ART } from '../ui/asset-lookup';
 import { structuredPlayCost } from '../ui/structured-cost';
 import { actionLock, type ActionContext } from './action-lock';
 import { availabilityFor, type ActionAvailability, type DisabledReason } from './action-reasons';
+import { persistentToCardInstance } from './active-display';
 import { attackTargetOpponents, thiefTargetOpponents } from './attack-targets';
 
 /**
  * A card the POV can act on (hand, special), or only read: an opponent's Spy hand, the log, the
- * queue, the pool or the shop.
+ * queue, the pool or the shop. A card in play (L73-07) names its seat: an active persistent, a
+ * Shield (`isUpgraded` as that seat shows it) or a ticking Sentence, whose owner is its
+ * `sourcePlayerId`.
  */
 export type CardRef =
   | { zone: 'hand' | 'special'; instance: CardInstance }
-  | { zone: 'read-only'; instance: CardInstance };
+  | { zone: 'read-only'; instance: CardInstance }
+  | { zone: 'active'; ownerPlayerId: string; effect: PersistentEffectView }
+  | { zone: 'shield'; ownerPlayerId: string; isUpgraded: boolean }
+  | { zone: 'sentence'; ownerPlayerId: string; sentence: PendingSentenceView };
 
-/** `deactivate` is for cards in play (L73-07). */
+/** A card in play: the in-play branch of `cardActions` and every `InPlayThumb` (L73-07). */
+export type InPlayCardRef = Extract<CardRef, { zone: 'active' | 'shield' | 'sentence' }>;
+
+/** A held or read-only card: everything `cardActions` routes through Use. */
+type HeldCardRef = Exclude<CardRef, InPlayCardRef>;
+
+/** `deactivate` is for own persistents in play (L73-07). */
 export type CardActionKind = 'use' | 'upgrade' | 'sell' | 'multi-attack' | 'deactivate';
 
 /** Hidden actions are absent from the model; a present one is enabled or carries its reason. */
@@ -81,9 +104,13 @@ export interface MultiAttackModel {
 }
 
 export interface CardActionsModel {
-  /** `CardInstance.instanceId` for hand, special and read-only refs. */
+  /**
+   * `CardInstance.instanceId` for hand, special and read-only refs; `effect.id` for an active;
+   * `'active-shield'` for the POV's own Shield and `active-shield:<playerId>` for another seat's;
+   * `sentence.id` for a Sentence.
+   */
   instanceId: string;
-  /** Order: use, upgrade, sell, multi-attack. */
+  /** Order: use, upgrade, sell, multi-attack, deactivate. */
   actions: readonly CardAction[];
   /** Null when Use is absent. Set even while Use is disabled, so the sheet shows it read-only. */
   use: UseRouting | null;
@@ -340,7 +367,7 @@ function routingFor(
  * hand holds at least two shared attacks (`assassin-candidates.ts:91-93`; never MEGA ATTACK). Rows
  * are the hand's shared attacks in hand order, each with the attack seat set.
  */
-function multiAttackOffer(view: PlayingStateView, card: CardRef): MultiAttackModel | null {
+function multiAttackOffer(view: PlayingStateView, card: HeldCardRef): MultiAttackModel | null {
   if (card.zone !== 'hand' || !isSharedAttackCardId(card.instance.cardId)) {
     return null;
   }
@@ -382,16 +409,117 @@ function multiAttackReason(
 }
 
 /**
- * The actions for one card. Use is always offered; Upgrade unless the copy is upgraded
- * (`upgrade-card.ts`); Sell only for a shared card in hand (`sell-card.ts`); Multi-attack per
- * `multiAttackOffer`. Upgrade and Sell have no check beyond the lock and the upgrade point
- * (`list-legal-economy.ts:43-71`), so Invisibility and the Block ban leave them usable.
+ * Upgrade's reason: the lock, then the upgrade point (`upgrade-card.ts:40-42`). It has no other
+ * check (`list-legal-economy.ts:49-71`), so Invisibility and the Block ban leave it usable.
+ */
+function upgradeReason(view: PlayingStateView, lock: DisabledReason | null): DisabledReason | null {
+  return lock ?? (view.self.upgradePoints < 1 ? 'no-upgrade-point' : null);
+}
+
+/** A walk-in owns nothing in play: its `self` is filler data (Q38). */
+function isOwnSeat(view: PlayingStateView, ownerPlayerId: string): boolean {
+  return view.isSpectator !== true && ownerPlayerId === view.you;
+}
+
+/**
+ * The Shield's id. The server knows only the actor's own `ACTIVE_SHIELD_INSTANCE_ID`; another
+ * seat's Shield gets a per-seat id that no intent can carry as the POV's own (Q37).
+ */
+function shieldInstanceId(view: PlayingStateView, ownerPlayerId: string): string {
+  return isOwnSeat(view, ownerPlayerId)
+    ? ACTIVE_SHIELD_INSTANCE_ID
+    : `${ACTIVE_SHIELD_INSTANCE_ID}:${ownerPlayerId}`;
+}
+
+function inPlayInstanceId(view: PlayingStateView, ref: InPlayCardRef): string {
+  switch (ref.zone) {
+    case 'active':
+      return ref.effect.id;
+    case 'shield':
+      return shieldInstanceId(view, ref.ownerPlayerId);
+    case 'sentence':
+      return ref.sentence.id;
+  }
+}
+
+interface InPlayOffer {
+  upgradeable: boolean;
+  deactivatable: boolean;
+}
+
+/**
+ * The POV owns a card in play exactly when the server would find it as the actor's own
+ * (`upgrade-card.ts:44-108`; `list-legal-deactivate.ts:23-31`). The upgraded state is read from
+ * that own record, never from the ref. Upgrade: an unupgraded own active in
+ * `UPGRADEABLE_ACTIVE_CARD_IDS` (never Curse or Reanimation), the own Shield while
+ * `self.shield > 0`, an own ticking Sentence. Deactivate: every own persistent, a Curse on the
+ * POV included, never Shield or Sentence (Lot 69). Null: a read-only sheet.
+ */
+function ownInPlay(view: PlayingStateView, ref: InPlayCardRef): InPlayOffer | null {
+  if (!isOwnSeat(view, ref.ownerPlayerId)) {
+    return null;
+  }
+  switch (ref.zone) {
+    case 'shield':
+      return view.self.shield > 0
+        ? { upgradeable: !view.self.shieldIsUpgraded, deactivatable: false }
+        : null;
+    case 'sentence': {
+      const entry = view.pendingSentences.find(
+        (sentence) => sentence.id === ref.sentence.id && sentence.sourcePlayerId === view.you,
+      );
+      return entry === undefined ? null : { upgradeable: !entry.isUpgraded, deactivatable: false };
+    }
+    case 'active': {
+      const effect = view.self.activePersistentEffects.find((entry) => entry.id === ref.effect.id);
+      return effect === undefined
+        ? null
+        : {
+            upgradeable: !effect.isUpgraded && isUpgradeableActiveCardId(effect.cardId),
+            deactivatable: true,
+          };
+    }
+  }
+}
+
+/**
+ * Upgrade then Deactivate. Deactivate has no check beyond the lock, which covers the
+ * `game-room.ts` `handleAction` sub-choice gate (Q40); own Invisibility leaves both usable.
+ */
+function inPlayActions(
+  view: PlayingStateView,
+  ref: InPlayCardRef,
+  ctx: ActionContext,
+): CardActionsModel {
+  const offer = ownInPlay(view, ref);
+  const actions: CardAction[] = [];
+  if (offer !== null) {
+    const lock = actionLock(view, ctx);
+    if (offer.upgradeable) {
+      actions.push({ kind: 'upgrade', ...availabilityFor(upgradeReason(view, lock)) });
+    }
+    if (offer.deactivatable) {
+      actions.push({ kind: 'deactivate', ...availabilityFor(lock) });
+    }
+  }
+  return { instanceId: inPlayInstanceId(view, ref), actions, use: null, multiAttack: null };
+}
+
+/**
+ * The actions for one card. Use is always offered on a held card; Upgrade unless the copy is
+ * upgraded (`upgrade-card.ts`); Sell only for a shared card in hand (`sell-card.ts`);
+ * Multi-attack per `multiAttackOffer`. Upgrade and Sell have no check beyond the lock and the
+ * upgrade point (`list-legal-economy.ts:43-71`), so Invisibility and the Block ban leave them
+ * usable. A card in play goes to `inPlayActions`.
  */
 export function cardActions(
   view: PlayingStateView,
   card: CardRef,
   ctx: ActionContext,
 ): CardActionsModel {
+  if (card.zone === 'active' || card.zone === 'shield' || card.zone === 'sentence') {
+    return inPlayActions(view, card, ctx);
+  }
   const { instance } = card;
   if (card.zone === 'read-only') {
     return { instanceId: instance.instanceId, actions: [], use: null, multiAttack: null };
@@ -402,10 +530,7 @@ export function cardActions(
   const useReason = reasonForUse(view, instance, plan, lock);
   const actions: CardAction[] = [{ kind: 'use', ...availabilityFor(useReason) }];
   if (!instance.isUpgraded) {
-    actions.push({
-      kind: 'upgrade',
-      ...availabilityFor(lock ?? (view.self.upgradePoints < 1 ? 'no-upgrade-point' : null)),
-    });
+    actions.push({ kind: 'upgrade', ...availabilityFor(upgradeReason(view, lock)) });
   }
   if (card.zone === 'hand' && isSharedCardId(instance.cardId)) {
     actions.push({ kind: 'sell', ...availabilityFor(lock) });
@@ -424,4 +549,94 @@ export function cardActions(
     use: routingFor(view, plan, useReason),
     multiAttack,
   };
+}
+
+/** A thumb's count, shown under the art (V2 `active-persistent-thumb.tsx`, L56-06 / L58-06). */
+export type ThumbBadge =
+  /** `PersistentEffectView.counter` on any persistent but Invisibility. */
+  | { kind: 'card-lives'; value: number }
+  /** Invisibility's turns left (L58-06). */
+  | { kind: 'turns'; value: number }
+  /** `PendingSentence.remainingOwnerTurns`: turns, not card lives. */
+  | { kind: 'sentence-turns'; value: number };
+
+export interface InPlayThumb {
+  /** Feed it to `cardActions` for the sheet. Own Shield: `self.shieldIsUpgraded`; another seat's: `activeShield.isUpgraded`. */
+  ref: InPlayCardRef;
+  /** The face; `instanceId` is the `cardActions` model's `instanceId`. */
+  instance: CardInstance;
+  /** Null for a Shield and any persistent whose `counter` is null (Curse, Reanimation). */
+  badge: ThumbBadge | null;
+  /** The activated art; never for Shield or Sentence (Appendix A `global-activated-art-guard`). */
+  activatedArt: boolean;
+}
+
+/** `ui/asset-lookup.ts`: the cards with an activated PNG. A `Set<string>` reads any `CardId`. */
+const ACTIVATED_ART_CARD_IDS = new Set<string>(CARDS_WITH_ACTIVATED_ART);
+
+function shieldThumb(view: PlayingStateView, ownerPlayerId: string, isUpgraded: boolean): InPlayThumb {
+  return {
+    ref: { zone: 'shield', ownerPlayerId, isUpgraded },
+    instance: { instanceId: shieldInstanceId(view, ownerPlayerId), cardId: 'shield', isUpgraded },
+    badge: null,
+    activatedArt: false,
+  };
+}
+
+function persistentBadge(effect: PersistentEffectView): ThumbBadge | null {
+  if (effect.counter === null) {
+    return null;
+  }
+  return effect.cardId === 'invisibility'
+    ? { kind: 'turns', value: effect.counter }
+    : { kind: 'card-lives', value: effect.counter };
+}
+
+function persistentThumb(ownerPlayerId: string, effect: PersistentEffectView): InPlayThumb {
+  return {
+    ref: { zone: 'active', ownerPlayerId, effect },
+    instance: persistentToCardInstance(effect),
+    badge: persistentBadge(effect),
+    activatedArt: ACTIVATED_ART_CARD_IDS.has(effect.cardId),
+  };
+}
+
+function sentenceThumb(ownerPlayerId: string, sentence: PendingSentenceView): InPlayThumb {
+  return {
+    ref: { zone: 'sentence', ownerPlayerId, sentence },
+    instance: { instanceId: sentence.id, cardId: 'sentence', isUpgraded: sentence.isUpgraded },
+    badge: { kind: 'sentence-turns', value: sentence.remainingOwnerTurns },
+    activatedArt: false,
+  };
+}
+
+/**
+ * One seat's cards in play, in V2 `private-zone.tsx` order: Shield, persistents, then that
+ * seat's ticking Sentences in `pendingSentences` order. The POV's own seat reads `self` (the
+ * Shield while `self.shield > 0`); any other seat, and every seat for a walk-in, reads its
+ * `view.players` entry (none: no thumbs).
+ */
+export function inPlayThumbs(view: PlayingStateView, ownerPlayerId: string): readonly InPlayThumb[] {
+  const sentences = view.pendingSentences
+    .filter((sentence) => sentence.sourcePlayerId === ownerPlayerId)
+    .map((sentence) => sentenceThumb(ownerPlayerId, sentence));
+  if (isOwnSeat(view, ownerPlayerId)) {
+    const { self } = view;
+    return [
+      ...(self.shield > 0 ? [shieldThumb(view, ownerPlayerId, self.shieldIsUpgraded)] : []),
+      ...self.activePersistentEffects.map((effect) => persistentThumb(ownerPlayerId, effect)),
+      ...sentences,
+    ];
+  }
+  const player = view.players.find((entry) => entry.id === ownerPlayerId);
+  if (player === undefined) {
+    return [];
+  }
+  return [
+    ...(player.activeShield === null
+      ? []
+      : [shieldThumb(view, ownerPlayerId, player.activeShield.isUpgraded)]),
+    ...player.activePersistentEffects.map((effect) => persistentThumb(ownerPlayerId, effect)),
+    ...sentences,
+  ];
 }

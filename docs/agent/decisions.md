@@ -5092,3 +5092,28 @@ Source: technical spec v7 §4.3, §6.6, §11 (Q39, Q44); `apps/server/src/engine
   once upgraded. Its points reason uses the two cheapest hand attacks.
 
 ---
+
+## 2026-10-27 · [P] V7 in-play Upgrade is own-only; Deactivate locks during a sub-choice (L73-07)
+
+Source: technical spec v7 §11 and §13 (Q37, Q40); Appendix A `table-inspect-active-upgrade`,
+`card-inspect-dialog`, `deactivate-confirm-dialog`; `apps/server/src/engine/economy/upgrade-card.ts`,
+`apps/server/src/engine/turn/list-legal-economy.ts`, `apps/server/src/rooms/game-room.ts` `handleAction`.
+
+- **Q37.** The V7 `cardActions` offers Upgrade on a card in play only when the server would find it as
+  the POV's own. That is an own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS` (by effect id in
+  `self.activePersistentEffects`), the own Shield while `self.shield > 0` (`active-shield`), or an own
+  ticking Sentence (`PendingSentence.id` with `sourcePlayerId === you`). Another seat's active, Shield
+  or Sentence gets a read-only sheet, and its Shield model id is `active-shield:<playerId>`, so no path
+  can send it as the POV's Shield. Upgrade is disabled with its reason at 0 upgrade points (V2 hid it),
+  off-turn and while locked. It is hidden once upgraded and for Curse and Reanimation.
+- **V2 unchanged.** The V2 table keeps `activeUpgradeInstanceId` and its opponent-Shield bug until the
+  L75 flip, because Lot 73 changes nothing a player sees (spec v7 §10.4, §12.3). L74-09 pins the
+  regression in the rendered path.
+- **Q40.** Deactivate is offered on own active persistents only (a Curse on you and Reanimation
+  included), never on Shield or Sentence. It is disabled, not hidden, off-turn (`not-your-turn`) and
+  while actions are locked, an open sub-choice included (`actions-locked`), because the server rejects
+  it then (`handleAction` sub-choice gate). V2 gated it on `isMyTurn` only and hid it off-turn.
+- **Thumbs.** Shield and Sentence never request activated art. A persistent requests it only when
+  `CARDS_WITH_ACTIVATED_ART` lists it (Appendix A `global-activated-art-guard`).
+
+---
