@@ -1012,6 +1012,20 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   in hand order through the commit and closes the sheet. Cancel returns to the card and drops
   the selection (Q44); after Esc, the backdrop or any close, reopening the card starts on the card
   step with nothing selected (the reused, still-mounted sheet resets when it opens again).
+- `screens/arena/hand-drag.ts`, `use-hand-drag.ts`, `hand-drag-layer.tsx` (L74-12, spec v7
+  §6.6.3–§6.6.5): drag is a shortcut. Hand and special cards carry `touch-action: pan-x`, so a
+  horizontal swipe is the hand's native scroll; a move more vertical than horizontal past 8 px
+  (`classifyHandGesture`) lifts a ghost portaled to `document.body` (`data-zone="hand-drag-ghost"`,
+  `Z_INDEX.dragGhost`, `pointer-events: none`). A drag starts only when `canStartHandDrag` holds: the
+  model's `canDrag` (never off-turn or locked) and no targeting; L75 adds the tour and Look
+  gate. Zones are measured once at lift (`measureDropZones`: `data-zone="opponent-seat"` +
+  `data-player-id`, `data-zone="pending"`, the Sell zone). Valid seats and the plate carry
+  `data-drop="valid|over"`; the Sell zone (`data-zone="sell-drop"`) shows only for a sellable
+  card, above the hand on the side opposite the drag origin. On release the card's model is
+  recomputed and `dispatchDrop` commits the `dropTarget` intent, opens the card sheet for a
+  pre-send choice (nothing sent), or springs the card back (instantly under reduced motion). The
+  click that ends a drag never opens the sheet.
+- L74-12 browser check (375×812 and 390×844): browser check pending (controller).
 
 ## Design system (V2 · Lots 10+)
 

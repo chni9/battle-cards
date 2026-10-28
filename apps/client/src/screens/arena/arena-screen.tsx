@@ -12,6 +12,9 @@
  *   target" bar; `liveTargeting` re-reads the seats every render, a stale model ends targeting
  *   (Review Focus 2), a valid seat tap commits once, and `useTapGuard` ignores seat taps for
  *   `TAP_GUARD_MS` after the player ends targeting, because the bar unmounts with no shield.
+ * - §6.6.3–§6.6.5 (L74-12): a card lifted from the hand drags a ghost (`useHandDrag`, portaled by
+ *   `HandDragLayer`); the seats and the plate light from the latest model, a drop commits through
+ *   `commit` or opens the card sheet for its pre-send choice, and nothing drags while targeting.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -43,6 +46,8 @@ import {
 } from './arena-sheets';
 import { CardSheet } from './card-sheet';
 import { CentralPlate } from './central-plate';
+import { plateDropHighlight, seatDropHighlight } from './hand-drag';
+import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
 import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
@@ -53,6 +58,7 @@ import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
+import { useHandDrag } from './use-hand-drag';
 import { useTapGuard } from './use-tap-guard';
 
 export type ArenaScreenProps = TableScreenProps;
@@ -109,6 +115,19 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
     finishTargeting();
   });
   const targeting = live !== null;
+
+  // Drag from the hand (L74-12, §6.6.3): exclusive with targeting; a pre-send choice opens the card sheet.
+  const handDrag = useHandDrag({
+    view,
+    ctx,
+    targetingActive: targeting,
+    commit,
+    openChoice: (source) => {
+      openSheet({ kind: 'card', source });
+    },
+  });
+  const dragging = handDrag.view?.phase === 'dragging' ? handDrag.view : null;
+
   useEffect(() => {
     if (!targeting) return;
     const listener = (event: KeyboardEvent): void => {
@@ -160,6 +179,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
             openSheet({ kind: 'seat', playerId });
           }}
           {...(live === null ? {} : { targeting: { key: live.sheetKey, seatIds: live.seatIds, onTarget } })}
+          {...(dragging === null ? {} : { dropHighlight: seatDropHighlight(dragging.zones, dragging.hover) })}
         />
         {/* After the seats, so they paint above them: arrows at z 10, the plate at z 20, both under the sheets. */}
         <ThreatLayer
@@ -177,6 +197,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           onOpenCard={(source) => {
             openSheet({ kind: 'card', source });
           }}
+          dropHighlight={dragging === null ? null : plateDropHighlight(dragging.zones, dragging.hover)}
         />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
@@ -203,9 +224,12 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           onOpenCard={(source) => {
             openSheet({ kind: 'card', source });
           }}
+          drag={handDrag.fanProps}
         />
       </div>
       <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2" />
+      {/* Portaled to `document.body` on `Z_INDEX.dragGhost`, under every sheet (Appendix A.8 ruling 10). */}
+      <HandDragLayer drag={handDrag.view} />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {

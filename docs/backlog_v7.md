@@ -22,7 +22,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
-| 74 · Arena I | 26 | 11 |
+| 74 · Arena I | 26 | 12 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **45** |
+| **Total** | **134** | **46** |
 
 ## Designer questions still open
 
@@ -160,7 +160,7 @@ The arena behind `?ui=next` (§6, except tutorial re-anchoring, desktop / landsc
 | L74-09 | **Self strip and own in-play cards.** **Acceptance:** Tests cover these cases. Upgrade sends `upgradeCard {instanceId}` with the effect id, with `active-shield`, and with the Sentence id. Inspecting an opponent's base Shield offers no Upgrade even when the POV has a base shield and 1 upgrade point (Q37 regression). Deactivate sends nothing until confirmed, then `deactivatePersistent {effectId}`. Deactivate is disabled while a sub-choice is open. Esc on the confirm keeps the card sheet open (Lot 69). Captions are visible. `pnpm verify` green. **Watch point:** `index.css` lines 195-201 have unlayered `width: 2.35rem` and `3rem` rules on a kit portrait under `data-zone="opponent-seat"` and `"private-zone"`. They beat Tailwind `w-*` and would shrink a V7 `KitPortrait`; in the commit that introduces the V7 self strip, scope those two rules to the classic table or drop them. | M | Medium | L74-01, L74-02, L74-08 | Done |
 | L74-10 | **Tap-tap targeting and pre-send choices.** **Acceptance:** Tests with a mocked connection cover these cases. Spy opens the bar, and tapping a target sends one `playCard` with `targetPlayerId`. Cancel and Esc send nothing and restore the hand. A living Invisible seat and a non-qualifying corpse are `aria-disabled`, and tapping them sends nothing. A corpse with a pending attack on you is a valid attack target but not a Spy target. Upgraded Card Thief sends with no target. Regeneration quantity 3 sends `quantity: 3`. Transformer sends `consumeInstanceId`. `pnpm verify` green. | L | **High** | L74-08, L74-04 | Done |
 | L74-11 | **Assassin multi-attack.** **Acceptance:** Tests cover these cases. Two rows on the same seat send one `playMultipleAttacks` containing both. The button is disabled with one row. Cancelling and reopening shows no selection. MEGA ATTACK is never listed. A non-Assassin kit shows no Multi-attack. `pnpm verify` green. | M | Medium | L74-08 | Done |
-| L74-12 | **Drag from the hand.** **Acceptance:** Unit tests on the arena drop handler map each `dropTarget` result to the right commit or none: a pre-send-choice result opens the choice step without sending, and `null` sends nothing. A test covers the drag start guard: no drag when `actionsLocked` or off-turn. The browser check at 375×812 and 390×844 covers horizontal scroll versus vertical lift, seat, plate and Sell highlights, and spring-back, and is recorded in frontend.md. `pnpm verify` green. | L | **High** | L74-10, L74-06 | To do |
+| L74-12 | **Drag from the hand.** **Acceptance:** Unit tests on the arena drop handler map each `dropTarget` result to the right commit or none: a pre-send-choice result opens the choice step without sending, and `null` sends nothing. A test covers the drag start guard: no drag when `actionsLocked` or off-turn. The browser check at 375×812 and 390×844 covers horizontal scroll versus vertical lift, seat, plate and Sell highlights, and spring-back, and is recorded in frontend.md. `pnpm verify` green. | L | **High** | L74-10, L74-06 | Done |
 | L74-13 | **Dock: Draw, Unspy, Activate duplication.** **Acceptance:** Tests cover these cases. Draw shows `+N` with no word, is red above 10 for a Gambler, and sends `drawCard` once. Unspy is disabled with each of its reasons. A single spy is preselected and Confirm sends `clearSpy`. An eliminated spectator's overlay is never listed. Activate duplication appears only for a Duplicator and sends once. `pnpm verify` green. | M | Low | L74-08 | To do |
 | L74-14 | **Shop sheet.** **Acceptance:** Tests cover these cases. A single tap only selects, and Buy sends `buyCard {cardId}`. A double-tap sends one `buyCard` and closes. Off-turn every tile is disabled but the tabs stay browsable. An unaffordable tile's aria-label ends with ', cannot afford'. The Spy tile shows 2/4. Upgrade-point Buy and Sell follow the kit. Pool Buy random is disabled when the pool is empty. The client has exactly one special-price constant. The existing shop source-text tests stay green. `pnpm verify` green. | L | Medium | L74-13, L74-02 | To do |
 | L74-15 | **Log ticker and log sheet.** **Acceptance:** Tests cover these cases. The ticker shows the newest entry. The sheet groups entries by round. A card segment opens the inspect with no footer. Draw and elimination lines are not buttons. An unspied pool buy reads 'bought a card from the pool'. No filter or Why control renders. `pnpm verify` green. | M | Low | L74-03, L74-02 | To do |

@@ -683,11 +683,14 @@ shipped string.
 (`sheet-stack.ts`, pure; `sheet-stack-context.ts`, the store) that implements spec v7 §6.7.
 The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 
-- **Layers** (`ui/layers.ts`, `Z_INDEX`): `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
+- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
   Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
   `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
   `sheet + n` to everything on the sheet layer and `sheetBar + n` to Minimize bars, clamped
   below the next layer.
+- **Drag ghost** (`Z_INDEX.dragGhost`, L74-12, spec v7 §6.6.5): the arena's hand-drag ghost and
+  Sell zone are the one overlay outside Sheet / Dialog / Toast: a `pointer-events: none` portal
+  to `document.body`, mounted only during a drag, below every sheet.
 - **Paint order**, bottom to top: expanded read-only sheets, caller-collapsed read-only bars
   (L74 targeting), expanded blocking sheets, Minimize bars of blocking sheets. A blocking
   sub-choice always sits on top of every other sheet, whatever opened first (§6.7: "any other

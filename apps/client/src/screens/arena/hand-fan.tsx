@@ -8,6 +8,10 @@
  * after a gap. The component renders `handFanModel`; a tap only asks ArenaScreen to open the
  * card's sheet, so nothing is sent from here (golden rule 8). There is no entrance motion (V2
  * `card-band.tsx` always skips it); a held card that upgrades replays V2's 90 degree flip.
+ *
+ * L74-12 (§6.6.3, §6.6.5) wires the drag on each slot through `drag` (`useHandDrag`): the slot
+ * keeps `touch-action: pan-x`, so a horizontal swipe stays the scroller's native scroll, and a
+ * lifted card dims in place with `data-lifted` while its ghost follows the pointer.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -20,6 +24,7 @@ import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-mot
 import { motionAttribute } from '../../ui/primitives/chrome-classes';
 import { ScrollArea } from '../../ui/primitives/scroll-area';
 import type { ActionContext } from '../../view-model/action-lock';
+import type { HandFanDragProps } from './hand-drag';
 import {
   HAND_GROUP_COPY,
   handFanModel,
@@ -34,6 +39,8 @@ export interface HandFanProps {
   readonly selectedInstanceId: string | null;
   /** A tap selects the card by opening its sheet. It never sends anything (§6.6.4). */
   readonly onOpenCard: (source: HandCardSource) => void;
+  /** L74-12: the drag gesture on each card slot (`useHandDrag(...).fanProps`). Without it a card only taps. */
+  readonly drag?: HandFanDragProps;
 }
 
 type HandFanStyle = CSSProperties & { readonly '--hand-strips': string; readonly '--hand-fulls': string };
@@ -63,7 +70,7 @@ const FLIP_REDUCED = {
   transition: { duration: durationS('fast') },
 } as const;
 
-export function HandFan({ view, ctx, selectedInstanceId, onOpenCard }: HandFanProps): ReactElement {
+export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag }: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
   const style: HandFanStyle = {
@@ -76,12 +83,19 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard }: HandFanPr
     <div data-hand-fan="" className="@container h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
       <ScrollArea axis="x" className="h-full px-4 pt-4 pb-3">
         <div className="mx-auto flex w-max items-end gap-3">
-          <HandGroup zone="hand" cards={model.hand} selectedInstanceId={selectedInstanceId} onOpenCard={onOpenCard} />
+          <HandGroup
+            zone="hand"
+            cards={model.hand}
+            selectedInstanceId={selectedInstanceId}
+            onOpenCard={onOpenCard}
+            {...(drag !== undefined ? { drag } : {})}
+          />
           <HandGroup
             zone="specials"
             cards={model.specials}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
+            {...(drag !== undefined ? { drag } : {})}
           />
         </div>
       </ScrollArea>
@@ -94,10 +108,11 @@ interface HandGroupProps {
   readonly cards: readonly HandFanCard[];
   readonly selectedInstanceId: string | null;
   readonly onOpenCard: (source: HandCardSource) => void;
+  readonly drag?: HandFanDragProps;
 }
 
 /** An empty group keeps V2's caption and text (Q60); a filled one is named by its `aria-label`. */
-function HandGroup({ zone, cards, selectedInstanceId, onOpenCard }: HandGroupProps): ReactElement {
+function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, drag }: HandGroupProps): ReactElement {
   const copy = HAND_GROUP_COPY[zone];
   return (
     <div data-zone={zone} data-hint-anchor={zone} className="flex items-end">
@@ -115,6 +130,7 @@ function HandGroup({ zone, cards, selectedInstanceId, onOpenCard }: HandGroupPro
               last={index === cards.length - 1}
               selected={card.source.instance.instanceId === selectedInstanceId}
               onOpen={onOpenCard}
+              {...(drag !== undefined ? { drag } : {})}
             />
           ))}
         </ul>
@@ -128,14 +144,24 @@ interface HandSlotProps {
   readonly last: boolean;
   readonly selected: boolean;
   readonly onOpen: (source: HandCardSource) => void;
+  readonly drag?: HandFanDragProps;
 }
 
-/** Not clipped: the card overflows its slot to the right, and a selected or focused card rises above its neighbour. */
-function HandSlot({ card, last, selected, onOpen }: HandSlotProps): ReactElement {
+/**
+ * Not clipped: the card overflows its slot to the right, and a selected or focused card rises above
+ * its neighbour. `touch-pan-x` leaves a horizontal pan to the browser's scroll (L74-12).
+ */
+function HandSlot({ card, last, selected, onOpen, drag }: HandSlotProps): ReactElement {
+  const lifted = drag?.liftedInstanceId === card.source.instance.instanceId;
   return (
     <li
-      className={`relative shrink-0 focus-within:z-10 ${selected ? 'z-10' : ''}`}
+      {...(lifted ? { 'data-lifted': 'true' } : {})}
+      className={`relative shrink-0 touch-pan-x focus-within:z-10 ${selected ? 'z-10' : ''} ${lifted ? 'opacity-40' : ''}`}
       style={last ? undefined : { width: STRIP_WIDTH }}
+      onPointerDown={(event) => {
+        drag?.onCardPointerDown(card.source, event);
+      }}
+      onClickCapture={drag?.onCardClickCapture}
     >
       <HandCard card={card} selected={selected} onOpen={onOpen} />
     </li>

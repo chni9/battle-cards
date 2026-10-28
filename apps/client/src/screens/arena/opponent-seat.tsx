@@ -26,6 +26,9 @@
  *   seat is named "{nickname}, target", its tap is the target tap, and it wears a `--mine` ring
  *   (the POV's own outgoing effect, §5.1) that pulses at full motion. Any other seat is
  *   `aria-disabled`, inert and dimmed, and keeps its usual name. Validity comes from the model.
+ * - **Drop highlight (L74-12, §6.6.3).** During a hand drag, a seat that takes the card carries
+ *   `data-drop="valid"` and a `--mine` ring, thicker and `data-drop="over"` under the pointer.
+ *   `measureDropZones` reads this root's rect by `data-zone` and `data-player-id`.
  */
 
 import { useId, type CSSProperties, type ReactElement } from 'react';
@@ -56,6 +59,8 @@ export interface OpponentSeatProps {
   onOpen: (playerId: string) => void;
   /** L74-10: set while a card is targeted; the seat's tap then targets (or does nothing). */
   target?: SeatTarget;
+  /** L74-12: set during a hand drag when this seat takes the card; `over` under the pointer. */
+  drop?: 'valid' | 'over';
 }
 
 const ROOT_CLASS = `pointer-events-auto absolute flex flex-col bg-v7-panel text-v7-text select-none [-webkit-touch-callout:none] ${CHROME_SHAPE_SM_CLASS}`;
@@ -65,6 +70,8 @@ const RESOURCE_ROW_CLASS = 'flex h-3 items-center gap-0.5 px-0.5';
 const BADGE_CHIP_CLASS = 'flex items-center gap-px rounded-v7-chrome-sm bg-v7-panel-2 p-px';
 /** Between the nickname, the connection label and the bot words in the seat's `title`. */
 const SEAT_TITLE_SEPARATOR = ' · ';
+/** The drop ring on the root: the POV's own outgoing effect color (§5.1), thicker under the pointer. */
+const DROP_RING_CLASS = { valid: 'ring-2 ring-v7-mine', over: 'ring-4 ring-v7-mine' } as const;
 
 function ResourceValue({ resource }: { resource: SeatResource }): ReactElement {
   const { kind, value } = resource;
@@ -103,7 +110,7 @@ function seatControl(
   }
 }
 
-export function OpponentSeat({ model, center, tapped, onOpen, target }: OpponentSeatProps): ReactElement {
+export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: OpponentSeatProps): ReactElement {
   const detailsId = useId();
   const reduced = usePrefersReducedMotion();
   const control = seatControl(target, model.nickname, () => {
@@ -131,6 +138,7 @@ export function OpponentSeat({ model, center, tapped, onOpen, target }: Opponent
     model.isEliminated ? 'border-dashed' : '',
     tapped ? 'ring-3 ring-v7-cta' : '',
     target?.kind === 'invalid' ? 'opacity-50' : '',
+    drop !== undefined ? DROP_RING_CLASS[drop] : '',
   ]
     .filter((part) => part !== '')
     .join(' ');
@@ -146,6 +154,7 @@ export function OpponentSeat({ model, center, tapped, onOpen, target }: Opponent
       {...(model.isActive ? { 'data-active-seat': 'true' } : {})}
       {...(tapped ? { 'data-tapped-seat': 'true' } : {})}
       {...(model.kitHidden ? { 'data-hint-anchor': 'hidden-kit' } : {})}
+      {...(drop !== undefined ? { 'data-drop': drop } : {})}
       style={style}
       className={className}
     >

@@ -5444,3 +5444,28 @@ Source: technical spec v7 §6.6.2, §13 Q44; Appendix A `assassin-multi-attack`,
   returns to the card; Esc and the backdrop close the sheet.
 
 ---
+
+## 2026-10-28 · [P] V7 hand drag: pointer events, portal ghost, drop on the latest view (L74-12)
+
+Source: technical spec v7 §6.6.3–§6.6.5, §12.2; Appendix A `table-use-target-routing`,
+`global-input-modalities`.
+
+- **Pointer events and a threshold, not motion `drag`.** Hand cards carry `touch-action: pan-x`,
+  so a horizontal swipe stays the browser's native scroll of the hand (the browser cancels the
+  pointer), and a move more vertical than horizontal past 8 px (`classifyHandGesture`) lifts the
+  card. motion's element `drag` moves the element inside the clipped scroller and sets
+  `touch-action: none`, which would kill that native scroll; §6.6.5 allows "an equivalent
+  threshold".
+- **Portal ghost.** The ghost and the Sell zone are a `pointer-events: none` layer portaled to
+  `document.body` on `Z_INDEX.dragGhost` (40, `ui/layers.ts`), under `Z_INDEX.sheet`, mounted only
+  during a drag. They are the one fixed layer outside `Sheet` / `Dialog` / `Toast` (Lot 74 plan
+  Appendix A.8 ruling 10), because §6.6.5 asks for a ghost out of the scroller. Hit testing stays
+  `dropTarget` rect math on zones measured once at lift.
+- **A drop resolves against the latest view.** The card's model is recomputed at release, so a
+  card that left the hand, a passed turn or a lock sends nothing and springs back.
+- **Sell zone.** It shows only while a sellable card is dragged, above the hand on the side
+  opposite the drag origin, so neither a straight lift nor a release over the hand sells.
+- **No drag while targeting.** Targeting is exclusive (L74-10). L75 adds the tutorial tour and
+  Look gate to `canStartHandDrag`.
+
+---

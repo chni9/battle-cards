@@ -13,6 +13,9 @@
  * - **One badge per incoming effect.** Each shows its own listed damage or effect art, never a
  *   sum (golden rule 1), and opens the queue inspect. Nothing here sends an intent (§6.6.4): every
  *   control opens a read-only card sheet.
+ * - **Drop highlight (L74-12, §6.6.3).** During a hand drag of an untargeted card, the root
+ *   carries `data-drop="valid"` and a `--mine` ring, thicker and `data-drop="over"` under the
+ *   pointer, as the seats do.
  * - **Recurring chips** show the catalog rate (`recurringAmountGlyph`), the owner for Poison and
  *   Imposition, and "Paused" / "Ending" in words; a live chip has no word (designer answer Q4).
  */
@@ -32,6 +35,7 @@ import { INCOMING_OPEN_LABEL } from '../../view-model/table-copy';
 import { nicknameOf } from '../../view-model/table-helpers';
 import type { ThreatEntry, ThreatsModel } from '../../view-model/threats';
 import type { CardSheetSource } from './card-sheet-source';
+import type { PlateDropHighlight } from './hand-drag';
 import { lastPlayedCard, recurringAmountGlyph, recurringChipThumb } from './plate-model';
 import { pendingEffectCopy, RECURRING_STATE_COPY } from './threat-copy';
 import { MIRROR_ELIGIBLE_CLASS, THREAT_TONE_RING_CLASS } from './threat-geometry';
@@ -44,10 +48,16 @@ export interface CentralPlateProps {
   arena: Size;
   onOpenCard: (source: CardSheetSource) => void;
   // No `ref`: L74-12 measures the `data-zone="pending"` root in the DOM (`measureDropZones`).
-  // L74-12 adds `dropHighlight?`.
+  /** L74-12: lit while an untargeted card is dragged; `over` under the pointer. */
+  dropHighlight?: PlateDropHighlight | null;
 }
 
 const BADGE_CLASS = `inline-flex min-h-11 min-w-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-text ring-2 ring-inset ${CHROME_FOCUS_CLASS}`;
+/** The seats' drop rings (`opponent-seat.tsx`), rounded like the plate's landing frame. */
+const DROP_RING_CLASS = {
+  valid: 'rounded-v7-chrome-sm ring-2 ring-v7-mine',
+  over: 'rounded-v7-chrome-sm ring-4 ring-v7-mine',
+} as const;
 const CHIP_CLASS = 'inline-flex min-h-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-caption text-v7-text';
 
 function IncomingBadge({
@@ -145,15 +155,17 @@ function RecurringChipView({
   );
 }
 
-export function CentralPlate({ view, model, mode, arena, onOpenCard }: CentralPlateProps): ReactElement {
+export function CentralPlate({ view, model, mode, arena, onOpenCard, dropHighlight }: CentralPlateProps): ReactElement {
   const center = plateCenterFor(mode, arena);
   const size = PLATE_BOX[mode];
   const landing = lastPlayedCard(view.actionLog);
   const incoming = model.entries.filter((entry) => entry.relation === 'incoming');
+  const drop = dropHighlight ?? null;
   return (
     <section
       data-zone="pending"
       data-hint-anchor="incoming"
+      {...(drop !== null ? { 'data-drop': drop } : {})}
       aria-label={INCOMING_OPEN_LABEL}
       style={{
         left: center.centerX - size.width / 2,
@@ -161,7 +173,7 @@ export function CentralPlate({ view, model, mode, arena, onOpenCard }: CentralPl
         bottom: arena.height - (center.centerY + size.height / 2),
         minHeight: size.height,
       }}
-      className="absolute z-20 flex flex-col items-center justify-end gap-1"
+      className={`absolute z-20 flex flex-col items-center justify-end gap-1 ${drop !== null ? DROP_RING_CLASS[drop] : ''}`}
     >
       <div
         data-plate-landing=""
