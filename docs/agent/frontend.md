@@ -40,7 +40,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
-| Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
+| Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `App.tsx` (redirect only) |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -812,6 +812,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
     Meta or Shift stays the browser's.
+  - `AdminToggleChip` renders every Feedback filter (L80-09): a flat chip with `aria-pressed`,
+    pressed `bg-v7-cta-2 text-v7-text-on-cta`, idle `bg-v7-panel-2 text-v7-text`. With `icon` and
+    `labelHidden` it is icon-only and takes `aria-label` and `title` from `label`; a text chip
+    adds neither. It has no `disabled`, so the Feedback marks are their own buttons.
   - The class strings are `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS`,
     `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_FIELD_CLASS` (every input and select: 16px, 44px, panel-2
     fill, flat outline, focus ring), `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the
@@ -851,7 +855,9 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - `makeAdminOverview()` is the empty-log payload. `makeGameListItem(id)` (room code is the id
     upper-cased, two humans, no bots, not a tutorial), `makeGamesPage(items)` (page 1, size 50,
     `total` the item count) and `makeGameDetail()` (`fg-1` / `ABCDEF`, Classic, two seats, no
-    eliminations, no log) cover Matches. Later tasks add builders and never change a default.
+    eliminations, no log) cover Matches. `makeInboxRow(id)` (Pending bug, screen `home`, protocol
+    45, every optional field null, no topics, no log tail) covers Feedback. Later tasks add
+    builders and never change a default.
 - **Behavior kept from L61-06 / Lot 62:**
   - `App` branches `/admin` before game phases (no Colyseus). The shell reuses
     `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
@@ -937,12 +943,21 @@ its payloads and `PROTOCOL_VERSION` do not change.
     Matches export is a quiet `Button` labelled **Download spreadsheet (this page)**: it writes
     the loaded page's rows, not the whole result set, and is off until a page loads.
   - `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
-  - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). Kind, About and triage
-    status filter client-side (default Pending). Each row shows its status as a colored stripe
-    and three icons (clock / check / cross), not buttons. Clicking an icon `PATCH`es
-    `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do) without
-    opening the report. The open report uses the same icons. Detail still shows contact,
-    nickname, game code, screen, playKind, protocol, user agent and log tail.
+  - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). It is `AdminPageIntro`
+    plus `AdminStatus` (Loading… until the first answer, one alert for a load or save error,
+    `No reports match these filters.` when the filters match nothing). Kind, Status and Area are
+    three `role="group"` rows of `AdminToggleChip` and filter client-side (default Pending).
+    Each row starts with a round **status badge** (`role="img"`, named by
+    `FEEDBACK_TRIAGE_STATUS_LABEL`) in the status tone, holding the clock / check / cross
+    `StatusGlyph` in `--text-on-cta`: Pending `--threat-other`, Done `--upgrade`, Eliminated
+    (won't do) `--danger`. There is no `border-l-4` stripe: the Impeccable `side-tab` rule flags
+    it (spec v7 §12.4). Three icon marks per row `PATCH` `/api/inbox/:id` to `pending` / `done` /
+    `eliminated` without opening the report; every mark on the page is disabled while a save
+    runs, the pressed mark takes the status fill, and a failed save leaves the row as it was.
+    The row's dates go through `formatDateTime`. The report is a V7 `Dialog` in tool mode
+    (`width="lg"`, `data-mode="tool"`) with the same marks, contact, nickname, game code,
+    screen, playKind, protocol, user agent and the log tail JSON in a `ScrollArea` named
+    `Log tail`. The legacy `screens/inbox.tsx` is gone (L80-09).
 
 ## Design system (V2 · Lots 10+)
 

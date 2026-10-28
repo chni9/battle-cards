@@ -5297,3 +5297,47 @@ decision).
   never sent.
 
 ---
+
+## 2026-10-28 · [P] Dead legacy inbox screen removed (L80-09)
+
+Source: technical spec v7 §11 and §13 (Q81, disposition "Dead code removed with its
+replacement"), §7.8, §12.1; Lot 80 plan task L80-09.
+
+- **What went.** `screens/inbox.tsx` (`InboxScreen`: its own password form, kind and area
+  filters, no triage) is deleted. Its replacement, `screens/admin/admin-feedback-page.tsx`,
+  landed in Lot 61 (L61-09) and gained triage in Lot 68. Nothing imported `InboxScreen`: a
+  grep over `apps/client/src` found only its own definition before the delete.
+- **What stays.** `App.tsx` still redirects `/inbox` and `/inbox/*` to `/admin/feedback`, and
+  `GET /api/inbox` is unchanged. The `inbox/inbox-route.test.ts` source-text `it` keeps its
+  App.tsx and `fetch-inbox.ts` assertions (Lot 80 does not rewrite `App.tsx`; Lot 74 edits it in
+  parallel). Its checks of `admin-feedback-page.tsx` text moved to behavior tests in
+  `screens/admin/admin-feedback-page.test.tsx`.
+- **Why here, not in Lot 81.** The plan's Review notes put the delete in L80-09, the task that
+  finishes the Feedback page. L81-01's mention of `screens/inbox.tsx` is already satisfied.
+
+---
+
+## 2026-10-28 · [P] Feedback status badge replaces the side stripe (L80-09)
+
+Source: technical spec v7 §5.1 (never color alone), §7.8, §12.4 (Impeccable detector); Lot 80
+plan Appendix B question 6 (designer answer 2026-10-28: default tones accepted); the L80-01
+error-line change for the same detector rule.
+
+- **Ruling.** The plan asked for a `border-l-4` stripe in the status tone on each Feedback row.
+  The Impeccable design detector flags a one-sided thick accent stripe (`side-tab`) as a defect,
+  and L80-01 had already dropped it from `AdminStatus` errors. Each row now starts with a round
+  **status badge** instead: a `size-8` disc filled with the status tone, holding the existing
+  clock / check / cross `StatusGlyph` in `--text-on-cta` (ink), with `role="img"` and an
+  `aria-label` from `FEEDBACK_TRIAGE_STATUS_LABEL`. Status is therefore told by the fill, the
+  glyph shape and the name, never by color alone.
+- **Tones unchanged.** Pending `--threat-other`, Done `--upgrade`, Eliminated (won't do)
+  `--danger`. Ink on those fills reads 9.95, 9.78 and 5.97 to 1, and each fill reads 4.9 to 8.2
+  against `--panel`, above the 3:1 non-text floor. The pressed mark in a row and in the report
+  takes the same fill, so the badge and the mark agree.
+- **Parity row.** `docs/technical_spec_v7_parity.md` Appendix A `admin-feedback-triage` said
+  "left stripe in the status color"; that line now says badge.
+- **Label.** The status chips and marks are named by `FEEDBACK_TRIAGE_STATUS_LABEL`, so the
+  third one reads **Eliminated**, as before. "Won't do" appears only in the page intro; the
+  label map lives in `packages/shared`, which Lot 80 does not touch.
+
+---

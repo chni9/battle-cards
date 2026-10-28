@@ -3,7 +3,13 @@ import { screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { adminPageCount } from '../../admin/admin-paging';
 import { renderUi } from '../../test/render';
-import { AdminDataTable, AdminPager, AdminStatus, type AdminTableColumn } from './admin-ui';
+import {
+  AdminDataTable,
+  AdminPager,
+  AdminStatus,
+  AdminToggleChip,
+  type AdminTableColumn,
+} from './admin-ui';
 
 interface KitRow {
   kit: string;
@@ -169,5 +175,63 @@ describe('AdminPager (technical spec v7 §7.8, L80-06)', () => {
     renderUi(<AdminPager page={2} pageCount={3} onPage={vi.fn()} disabled />);
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Previous' }).disabled).toBe(true);
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next' }).disabled).toBe(true);
+  });
+});
+
+describe('AdminToggleChip (technical spec v7 §7.8, L80-09)', () => {
+  it('AdminToggleChip exposes aria-pressed and an icon-only chip keeps its name', async () => {
+    const onAll = vi.fn<() => void>();
+    const onPending = vi.fn<() => void>();
+    const { rerender, user } = renderUi(
+      <>
+        <AdminToggleChip label="All" pressed onPress={onAll} />
+        <AdminToggleChip
+          label="Pending"
+          pressed={false}
+          onPress={onPending}
+          icon={<svg data-testid="glyph" aria-hidden="true" />}
+          labelHidden
+        />
+      </>,
+    );
+    const all = screen.getByRole('button', { name: 'All' });
+    expect(all.getAttribute('aria-pressed')).toBe('true');
+    expect(all.textContent).toBe('All');
+    // A text chip is named by its words: no title or aria-label repeats them.
+    expect(all.hasAttribute('title')).toBe(false);
+    expect(all.hasAttribute('aria-label')).toBe(false);
+
+    // The icon-only chip has no words on screen, so its name and tooltip come from the label.
+    const pending = screen.getByRole('button', { name: 'Pending' });
+    expect(pending.getAttribute('aria-pressed')).toBe('false');
+    expect(pending.getAttribute('aria-label')).toBe('Pending');
+    expect(pending.getAttribute('title')).toBe('Pending');
+    expect(pending.textContent).toBe('');
+    expect(within(pending).getByTestId('glyph')).not.toBeNull();
+
+    await user.click(pending);
+    expect(onPending).toHaveBeenCalledTimes(1);
+    await user.click(all);
+    expect(onAll).toHaveBeenCalledTimes(1);
+
+    // Pressed and idle differ in the fill, not only in the attribute.
+    expect(all.className).toContain('bg-v7-cta-2');
+    expect(pending.className).toContain('bg-v7-panel-2');
+    rerender(
+      <>
+        <AdminToggleChip label="All" pressed={false} onPress={onAll} />
+        <AdminToggleChip label="Pending" pressed onPress={onPending} icon={<svg aria-hidden="true" />} labelHidden />
+      </>,
+    );
+    expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Pending' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('a chip with an icon and no hidden label shows both', () => {
+    renderUi(<AdminToggleChip label="Done" pressed={false} onPress={vi.fn()} icon={<svg data-testid="glyph" aria-hidden="true" />} />);
+    const chip = screen.getByRole('button', { name: 'Done' });
+    expect(chip.textContent).toBe('Done');
+    expect(within(chip).getByTestId('glyph')).not.toBeNull();
+    expect(chip.hasAttribute('title')).toBe(false);
   });
 });

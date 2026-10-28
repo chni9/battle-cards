@@ -1,8 +1,8 @@
 /**
  * Shared admin pieces in V7 tool mode (technical spec v7 §7.8, L80-01). Every admin loading,
  * empty and error line is an `AdminStatus`, every table an `AdminDataTable`, the paged tables
- * (Matches, Database) an `AdminPager`, and the nav and the Database tabs an `AdminLinkBar`, so
- * no page keeps a private copy. Class strings live in
+ * (Matches, Database) an `AdminPager`, the nav and the Database tabs an `AdminLinkBar`, and the
+ * Feedback filters an `AdminToggleChip`, so no page keeps a private copy. Class strings live in
  * `admin-classes.ts` (react-refresh: this file exports components only).
  */
 
@@ -11,6 +11,7 @@ import type { MouseEvent, ReactElement, ReactNode } from 'react';
 import type { AdminLink } from '../../admin/admin-routes';
 import { Button } from '../../ui/primitives/button';
 import {
+  CHROME_FLAT_SM_CLASS,
   CHROME_FOCUS_CLASS,
   CHROME_OUTLINE_CLASS,
   CHROME_TRACK_CLASS,
@@ -311,5 +312,50 @@ export function AdminPager({
         Next
       </Button>
     </nav>
+  );
+}
+
+/**
+ * A filter chip: a button with `aria-pressed`, the right role for a filter that stays on or off
+ * (a tab or a radio would promise a panel or a single choice). It is flat tool-mode chrome, so
+ * pressed is told by the `--cta-2` fill and idle by `--panel-2`, with `--text-on-cta` on the fill
+ * (spec v7 §5.1, §7.8; Feedback, L80-09).
+ *
+ * `labelHidden` makes an icon-only chip: the words leave the screen, so `aria-label` and `title`
+ * carry them as the name and the tooltip. A text chip is named by its words and adds neither, so
+ * a screen reader does not say them twice. Hiding the label of a chip with no icon would leave an
+ * empty button, so the words stay then.
+ */
+export function AdminToggleChip({
+  label,
+  pressed,
+  onPress,
+  icon,
+  labelHidden = false,
+}: {
+  label: string;
+  pressed: boolean;
+  onPress: () => void;
+  icon?: ReactNode;
+  labelHidden?: boolean;
+}): ReactElement {
+  const iconOnly = labelHidden && icon !== undefined;
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      {...(iconOnly ? { 'aria-label': label, title: label } : {})}
+      className={[
+        'inline-flex min-h-11 select-none items-center justify-center gap-2 font-v7-display text-v7-body leading-none',
+        iconOnly ? 'min-w-11 px-2' : 'px-3',
+        CHROME_FLAT_SM_CLASS,
+        CHROME_FOCUS_CLASS,
+        pressed ? 'bg-v7-cta-2 text-v7-text-on-cta' : 'bg-v7-panel-2 text-v7-text hover:brightness-110',
+      ].join(' ')}
+      onClick={onPress}
+    >
+      {icon}
+      {iconOnly ? null : label}
+    </button>
   );
 }

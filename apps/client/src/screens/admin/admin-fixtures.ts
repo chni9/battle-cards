@@ -11,6 +11,7 @@ import type {
   AdminKitStatRow,
   AdminKitStats,
   AdminOverview,
+  FeedbackInboxRow,
 } from '@card-battle/shared';
 
 /** An Overview of an empty log: every count 0, every nullable null, every list empty. */
@@ -167,4 +168,28 @@ export function makeGameDetail(overrides: Partial<AdminGameDetail> = {}): AdminG
 /** The Kits payload: the rows given and the number of matches they are based on (0 by default). */
 export function makeKitStats(rows: readonly AdminKitStatRow[], sampleGames = 0): AdminKitStats {
   return { sampleGames, rows };
+}
+
+/**
+ * A Pending bug report sent from the hub: no optional field, no topic and no log tail. The
+ * protocol is 45, the current `PROTOCOL_VERSION`, so a test reads a plain `Protocol: 45`.
+ */
+export function makeInboxRow(id: string, overrides: Partial<FeedbackInboxRow> = {}): FeedbackInboxRow {
+  return {
+    id,
+    createdAt: '2026-10-20T12:30:00.000Z',
+    kind: 'bug',
+    message: `Report ${id}`,
+    contact: null,
+    nickname: null,
+    gameCode: null,
+    screen: 'home',
+    protocolVersion: 45,
+    playKind: null,
+    logTail: null,
+    userAgent: null,
+    topics: [],
+    status: 'pending',
+    ...overrides,
+  };
 }

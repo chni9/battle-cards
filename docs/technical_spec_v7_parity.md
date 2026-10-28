@@ -4132,7 +4132,7 @@
   - Per-row status marks: three icon buttons. A click PATCHes /api/inbox/:id {status} without opening the report (stopPropagation). Clicking the current status does nothing.
   - The same marks appear inside the report dialog.
 - **States:**
-  - The row has a left stripe in the status color (orange pending, green done, red eliminated).
+  - The row starts with a round status badge in the status color (orange pending, green done, red eliminated) holding the clock, check or cross glyph, named by the status (L80-09; a side stripe is the Impeccable `side-tab` defect).
   - Every mark on the page is disabled (opacity 50%) while any save is running (global savingStatus).
   - The row updates only after the server confirms success. A 401 locks the admin session.
 - **Keep:**

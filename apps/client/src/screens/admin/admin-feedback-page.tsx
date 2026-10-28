@@ -1,5 +1,11 @@
 /**
- * Feedback inbox under /admin/feedback (Lot 61-09).
+ * Feedback inbox under /admin/feedback (Lot 61-09), in V7 tool mode (technical spec v7 §7.8,
+ * L80-09). Rows load once from `GET /api/inbox` and the kind, area and status filters stay on the
+ * client (L47-05 / L47-06); a row mark `PATCH`es the status without opening the report (L68-01).
+ *
+ * Status is never told by color alone (spec v7 §5.1): each row starts with a round badge in the
+ * status tone that holds the clock, check or cross glyph and is named by the status. It is not a
+ * one-sided border stripe, which the Impeccable `side-tab` rule flags (spec v7 §12.4).
  */
 
 import {
@@ -16,10 +22,20 @@ import {
 } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { Button } from '../../design/components/button';
-import { Dialog } from '../../design/components/dialog';
-import { fetchInbox, filterInbox, updateInboxStatus } from '../../inbox/fetch-inbox';
+import { formatDateTime } from '../../admin/admin-present';
 import { adminErrorCopy, currentAdminSession, lockAdminSession } from '../../admin/fetch-admin';
+import { fetchInbox, filterInbox, updateInboxStatus } from '../../inbox/fetch-inbox';
+import { Button } from '../../ui/primitives/button';
+import {
+  CHROME_FLAT_SM_CLASS,
+  CHROME_FOCUS_CLASS,
+  CHROME_FOCUS_INSET_CLASS,
+  CHROME_OUTLINE_CLASS,
+} from '../../ui/primitives/chrome-classes';
+import { Dialog } from '../../ui/primitives/dialog';
+import { ScrollArea } from '../../ui/primitives/scroll-area';
+import { ADMIN_BODY_TEXT_CLASS, ADMIN_PANEL_CLASS } from './admin-classes';
+import { AdminPageIntro, AdminStatus, AdminToggleChip } from './admin-ui';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
   bug: 'Bug',
@@ -27,22 +43,15 @@ const KIND_LABEL: Record<FeedbackKind, string> = {
   idea: 'Idea',
 };
 
-const STATUS_TONE: Record<FeedbackTriageStatus, { idle: string; active: string; stripe: string }> = {
-  pending: {
-    idle: 'text-cta-orange',
-    active: 'bg-cta-orange text-cta-label-on-dark',
-    stripe: 'border-l-cta-orange',
-  },
-  done: {
-    idle: 'text-cta-green-deep',
-    active: 'bg-cta-green-deep text-cta-label-on-dark',
-    stripe: 'border-l-cta-green-deep',
-  },
-  eliminated: {
-    idle: 'text-cta-red',
-    active: 'bg-cta-red text-cta-label-on-dark',
-    stripe: 'border-l-cta-red',
-  },
+/**
+ * Status fills (designer 2026-10-28, plan Appendix B 6): Pending `--threat-other`, Done
+ * `--upgrade`, Eliminated (won't do) `--danger`. Threat and resource colors are fills and icons,
+ * never body text (spec v7 §5.1), so the glyph on them is `--text-on-cta` (ink).
+ */
+const STATUS_FILL: Record<FeedbackTriageStatus, string> = {
+  pending: 'bg-v7-threat-other',
+  done: 'bg-v7-upgrade',
+  eliminated: 'bg-v7-danger',
 };
 
 function StatusGlyph({ status }: { status: FeedbackTriageStatus }): ReactElement {
@@ -88,6 +97,25 @@ function StatusGlyph({ status }: { status: FeedbackTriageStatus }): ReactElement
   );
 }
 
+function StatusBadge({ status }: { status: FeedbackTriageStatus }): ReactElement {
+  const label = FEEDBACK_TRIAGE_STATUS_LABEL[status];
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-v7-text-on-cta ${STATUS_FILL[status]}`}
+    >
+      <StatusGlyph status={status} />
+    </span>
+  );
+}
+
+/**
+ * The three triage marks. They are their own buttons, not `AdminToggleChip`s, because every mark
+ * on the page is disabled while any save runs (a chip has no `disabled`). The pressed mark takes
+ * the status fill, so it matches the row badge.
+ */
 function StatusMarks(props: {
   current: FeedbackTriageStatus;
   disabled: boolean;
@@ -98,7 +126,6 @@ function StatusMarks(props: {
     <div className="flex items-center gap-1">
       {FEEDBACK_TRIAGE_STATUSES.map((status) => {
         const selected = status === current;
-        const tone = STATUS_TONE[status];
         return (
           <button
             key={status}
@@ -108,12 +135,13 @@ function StatusMarks(props: {
             disabled={disabled}
             title={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
             className={[
-              'inline-flex h-8 w-8 items-center justify-center rounded-full',
-              selected ? tone.active : `${tone.idle} hover:bg-surface`,
-              disabled ? 'opacity-50' : '',
+              'inline-flex size-11 items-center justify-center',
+              CHROME_FLAT_SM_CLASS,
+              CHROME_FOCUS_CLASS,
+              selected ? `${STATUS_FILL[status]} text-v7-text-on-cta` : 'bg-v7-panel-2 text-v7-text',
+              'disabled:cursor-not-allowed disabled:opacity-50',
             ].join(' ')}
-            onClick={(event) => {
-              event.stopPropagation();
+            onClick={() => {
               if (selected || disabled) {
                 return;
               }
@@ -188,116 +216,98 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const selected = rows?.find((row) => row.id === openId) ?? null;
 
   return (
-    <div>
-      {error !== null ? <p className="text-sm text-cta-red">{error}</p> : null}
+    <div className="space-y-6">
+      <AdminPageIntro
+        title="Feedback"
+        description="Tester reports from the game. Filter them, then mark each one pending, done or won't do."
+      />
+      {error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {rows === null && error === null ? <AdminStatus state={{ kind: 'loading' }} /> : null}
       {rows !== null ? (
         <>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              compact
-              type="button"
-              variant={kindFilter === 'all' ? 'green' : 'orange'}
-              onClick={() => {
-                setKindFilter('all');
-              }}
-            >
-              All
-            </Button>
-            {FEEDBACK_KINDS.map((kind) => (
-              <Button
-                key={kind}
-                compact
-                type="button"
-                variant={kindFilter === kind ? 'green' : 'orange'}
-                onClick={() => {
-                  setKindFilter(kind);
+          <div className={`${ADMIN_PANEL_CLASS} space-y-3`}>
+            <div role="group" aria-label="Kind" className="flex flex-wrap gap-2">
+              <AdminToggleChip
+                label="All"
+                pressed={kindFilter === 'all'}
+                onPress={() => {
+                  setKindFilter('all');
                 }}
-              >
-                {KIND_LABEL[kind]}
-              </Button>
-            ))}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              aria-pressed={statusFilter === 'all'}
-              className={[
-                'rounded-full px-2 py-1 text-xs',
-                statusFilter === 'all' ? 'bg-ink text-cta-label-on-dark' : 'text-ink-muted',
-              ].join(' ')}
-              onClick={() => {
-                setStatusFilter('all');
-              }}
-            >
-              Any status
-            </button>
-            {FEEDBACK_TRIAGE_STATUSES.map((status) => {
-              const selected = statusFilter === status;
-              const tone = STATUS_TONE[status];
-              return (
-                <button
+              />
+              {FEEDBACK_KINDS.map((kind) => (
+                <AdminToggleChip
+                  key={kind}
+                  label={KIND_LABEL[kind]}
+                  pressed={kindFilter === kind}
+                  onPress={() => {
+                    setKindFilter(kind);
+                  }}
+                />
+              ))}
+            </div>
+            <div role="group" aria-label="Status" className="flex flex-wrap items-center gap-2">
+              <AdminToggleChip
+                label="Any status"
+                pressed={statusFilter === 'all'}
+                onPress={() => {
+                  setStatusFilter('all');
+                }}
+              />
+              {FEEDBACK_TRIAGE_STATUSES.map((status) => (
+                <AdminToggleChip
                   key={status}
-                  type="button"
-                  aria-label={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
-                  aria-pressed={selected}
-                  title={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
-                  className={[
-                    'inline-flex h-8 w-8 items-center justify-center rounded-full',
-                    selected ? tone.active : tone.idle,
-                  ].join(' ')}
-                  onClick={() => {
+                  label={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
+                  pressed={statusFilter === status}
+                  icon={<StatusGlyph status={status} />}
+                  labelHidden
+                  onPress={() => {
                     setStatusFilter(status);
                   }}
-                >
-                  <StatusGlyph status={status} />
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              compact
-              type="button"
-              variant={topicFilter === 'all' ? 'green' : 'orange'}
-              onClick={() => {
-                setTopicFilter('all');
-              }}
-            >
-              Any area
-            </Button>
-            {FEEDBACK_TOPICS.map((topic) => (
-              <Button
-                key={topic}
-                compact
-                type="button"
-                variant={topicFilter === topic ? 'green' : 'orange'}
-                onClick={() => {
-                  setTopicFilter(topic);
+                />
+              ))}
+            </div>
+            <div role="group" aria-label="Area" className="flex flex-wrap gap-2">
+              <AdminToggleChip
+                label="Any area"
+                pressed={topicFilter === 'all'}
+                onPress={() => {
+                  setTopicFilter('all');
                 }}
-              >
-                {FEEDBACK_TOPIC_LABEL[topic]}
-              </Button>
-            ))}
-          </div>
-          <ul className="mt-6 divide-y divide-border-soft rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
-            {visible.map((row) => (
-              <li key={row.id} className={`flex items-center border-l-4 ${STATUS_TONE[row.status].stripe}`}>
-                <button
-                  type="button"
-                  className="block min-w-0 flex-1 px-3 py-3 text-left"
-                  onClick={() => {
-                    setOpenId(row.id);
+              />
+              {FEEDBACK_TOPICS.map((topic) => (
+                <AdminToggleChip
+                  key={topic}
+                  label={FEEDBACK_TOPIC_LABEL[topic]}
+                  pressed={topicFilter === topic}
+                  onPress={() => {
+                    setTopicFilter(topic);
                   }}
-                >
-                  <p className="text-xs text-ink-muted">
-                    {row.createdAt} · {KIND_LABEL[row.kind]}
-                    {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
-                    {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
-                    {row.nickname !== null ? ` · ${row.nickname}` : ''}
-                  </p>
-                  <p className="mt-1 text-sm text-ink">{messagePreview(row.message)}</p>
-                </button>
-                <div className="shrink-0 pr-2">
+                />
+              ))}
+            </div>
+          </div>
+          {visible.length === 0 ? (
+            <AdminStatus state={{ kind: 'empty', message: 'No reports match these filters.' }} />
+          ) : (
+            <ul className={`${CHROME_OUTLINE_CLASS} divide-y divide-v7-ink rounded-v7-chrome bg-v7-panel`}>
+              {visible.map((row) => (
+                <li key={row.id} className="flex flex-wrap items-center gap-3 px-3 py-3">
+                  <StatusBadge status={row.status} />
+                  <button
+                    type="button"
+                    className={`min-w-0 flex-1 basis-56 rounded-v7-chrome-sm px-1 py-1 text-left ${CHROME_FOCUS_INSET_CLASS}`}
+                    onClick={() => {
+                      setOpenId(row.id);
+                    }}
+                  >
+                    <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">
+                      {formatDateTime(row.createdAt)} · {KIND_LABEL[row.kind]}
+                      {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
+                      {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
+                      {row.nickname !== null ? ` · ${row.nickname}` : ''}
+                    </p>
+                    <p className={`mt-1 ${ADMIN_BODY_TEXT_CLASS} text-v7-text`}>{messagePreview(row.message)}</p>
+                  </button>
                   <StatusMarks
                     current={row.status}
                     disabled={savingStatus}
@@ -305,24 +315,23 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                       applyStatus(row.id, status);
                     }}
                   />
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       ) : null}
       <Dialog
         open={selected !== null}
         title={selected !== null ? KIND_LABEL[selected.kind] : 'Report'}
-        panelClassName="max-w-lg"
+        width="lg"
+        dataAttributes={{ 'data-mode': 'tool' }}
         onClose={() => {
           setOpenId(null);
         }}
         actions={
           <Button
-            compact
-            type="button"
-            variant="orange"
+            variant="quiet"
             onClick={() => {
               setOpenId(null);
             }}
@@ -332,9 +341,9 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         }
       >
         {selected !== null ? (
-          <div className="space-y-3 text-sm text-ink">
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-ink-muted">{selected.createdAt}</p>
+          <div className={`space-y-3 break-words ${ADMIN_BODY_TEXT_CLASS} text-v7-text`}>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">{formatDateTime(selected.createdAt)}</p>
               <StatusMarks
                 current={selected.status}
                 disabled={savingStatus}
@@ -354,9 +363,16 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
             <p>Play: {selected.playKind ?? '—'}</p>
             <p>Protocol: {selected.protocolVersion}</p>
             <p>User agent: {selected.userAgent ?? '—'}</p>
-            <pre className="overflow-x-auto rounded-[length:var(--radius-control)] border border-border bg-surface p-2 text-xs">
-              {JSON.stringify(selected.logTail, null, 2)}
-            </pre>
+            <ScrollArea
+              axis="x"
+              label="Log tail"
+              focusRing="inset"
+              className={`${CHROME_FLAT_SM_CLASS} bg-v7-panel-2`}
+            >
+              <pre className="p-2 font-mono text-v7-caption text-v7-text">
+                {JSON.stringify(selected.logTail, null, 2)}
+              </pre>
+            </ScrollArea>
           </div>
         ) : null}
       </Dialog>

@@ -1365,6 +1365,13 @@ values.
     step on `--panel-2`, and rows are split by 1px tool-line rules.
   - `AdminLinkBar`: section links (the nav, the Database tabs) on the Tabs track. The current
     one is filled `--cta` with `aria-current="page"`. The track wraps at 390px.
+  - `AdminToggleChip`: a flat 44px chip with `aria-pressed` for a client-side filter (the
+    Feedback Kind, Status and Area rows). Pressed is filled `--cta-2` with `--text-on-cta`, idle
+    is `--panel-2` with `--text`. An icon-only chip keeps its name in `aria-label` and `title`.
+  - Feedback status badge (`admin-feedback-page.tsx`): a round 32px fill in the status tone,
+    `--threat-other` Pending, `--upgrade` Done, `--danger` Eliminated, holding the clock, check
+    or cross glyph in `--text-on-cta` and named by the status, so the tone is never alone. The
+    pressed triage mark takes the same fill. No one-sided stripe (the detector's `side-tab`).
 - **Charts** (`screens/admin/admin-charts.tsx`, colors in `admin/admin-chart-math.ts`): CSS and
   SVG, no chart library. Series colors are `ADMIN_CHART_COLORS`, hex from `V7_COLORS`, in this
   order: `--cta-2`, `--point`, `--life`, `--upgrade`, `--shield`, `--threat-other`, `--text-2`,
