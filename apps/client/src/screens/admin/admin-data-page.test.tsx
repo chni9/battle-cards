@@ -77,13 +77,26 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     expect(call.url.searchParams.get('pageSize')).toBe('50');
     expect(call.headers['x-inbox-password']).toBe('secret');
 
-    expect(tabLinks().map((link) => [link.textContent, link.getAttribute('href')])).toStrictEqual([
-      ['Finished games', '/admin/data/finished_games'],
-      ['Players', '/admin/data/finished_game_players'],
-      ['Eliminations', '/admin/data/finished_game_eliminations'],
-      ['Feedback', '/admin/data/feedback_reports'],
-    ]);
     expect(currentTabs()).toStrictEqual(['Finished games']);
+  });
+
+  it('lists five tables in order with Chat messages last', () => {
+    installFakeFetch();
+    renderUi(<AdminDataPage password="secret" table={null} />);
+    expect(tabLinks().map((link) => link.textContent)).toStrictEqual([
+      'Finished games',
+      'Players',
+      'Eliminations',
+      'Feedback',
+      'Chat messages',
+    ]);
+    expect(tabLinks().map((link) => link.getAttribute('href'))).toStrictEqual([
+      '/admin/data/finished_games',
+      '/admin/data/finished_game_players',
+      '/admin/data/finished_game_eliminations',
+      '/admin/data/feedback_reports',
+      '/admin/data/game_chat_messages',
+    ]);
   });
 
   it('marks the tab of the routed table current', () => {
@@ -317,6 +330,58 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     }
   });
 
+  it('the Chat messages tab requests game_chat_messages, is marked current and shows the Role column', async () => {
+    const fake = installFakeFetch();
+    renderUi(<AdminDataPage password="secret" table="game_chat_messages" />);
+    const call = fake.last(tablePath('game_chat_messages'));
+    expect(call.url.searchParams.get('page')).toBe('1');
+    expect(call.url.searchParams.get('pageSize')).toBe('50');
+    expect(call.headers['x-inbox-password']).toBe('secret');
+    expect(currentTabs()).toStrictEqual(['Chat messages']);
+
+    await call.respond(
+      200,
+      makeTablePage('game_chat_messages', [
+        { game_id: 'g-1', order_index: 0, sender_id: 's-1', nickname: 'Ada', role: 'living', body: 'hi', round_index: 0 },
+        { game_id: 'g-1', order_index: 1, sender_id: 's-2', nickname: 'Bob', role: 'eliminated', body: 'gg', round_index: 3 },
+        { game_id: 'g-1', order_index: 2, sender_id: 's-3', nickname: 'Cy', role: 'spectator', body: 'wow', round_index: 3 },
+      ]),
+    );
+    const table = grid('Chat messages');
+    const headers = within(table).getAllByRole('columnheader').map((cell) => cell.textContent);
+    expect(headers).toStrictEqual([
+      'Game Id',
+      'Order Index',
+      'Sender Id',
+      'Nickname',
+      'Role',
+      'Body',
+      'Round Index',
+    ]);
+    const roleColumn = headers.indexOf('Role');
+    const roles = within(table)
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[roleColumn]?.textContent);
+    expect(roles).toStrictEqual(['living', 'eliminated', 'spectator']);
+    expect(currentTabs()).toStrictEqual(['Chat messages']);
+  });
+
+  it('exports admin-game_chat_messages.xlsx through the same export', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDataPage password="secret" table="game_chat_messages" />);
+    const loaded = makeTablePage('game_chat_messages', [
+      { game_id: 'g-1', order_index: 0, sender_id: 's-1', nickname: 'Ada', role: 'living', body: 'hi', round_index: 0 },
+    ]);
+    await fake.last(tablePath('game_chat_messages')).respond(200, loaded);
+    await user.click(downloadButton());
+    // `exportTablePageXlsx` names the file after `page.table` (`admin-{table}.xlsx`), so the page
+    // handed over is what makes the file `admin-game_chat_messages.xlsx`.
+    expect(exportTablePage).toHaveBeenCalledTimes(1);
+    expect(exportTablePage).toHaveBeenCalledWith(loaded);
+    expect(exportTablePage.mock.calls[0]?.[0].table).toBe('game_chat_messages');
+  });
+
   it('a deep link to an unknown table shows Not found and marks no tab current', async () => {
     const fake = installFakeFetch();
     renderUi(<AdminDataPage password="secret" table="nope" />);
@@ -328,8 +393,8 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.queryByText(EMPTY_COPY)).toBeNull();
-    // The four tabs stay so the designer can leave, and none is current.
-    expect(tabLinks()).toHaveLength(4);
+    // The five tabs stay so the designer can leave, and none is current.
+    expect(tabLinks()).toHaveLength(5);
     expect(currentTabs()).toStrictEqual([]);
     expect(downloadButton().disabled).toBe(true);
     expect(pageText()).toBe('Page 1 of 1');

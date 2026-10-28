@@ -4161,7 +4161,7 @@
 - **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`
 - **Purpose:** Read-only grid of the allowlisted log tables.
 - **Controls:**
-  - Table buttons: 'Finished games' / 'Players' / 'Eliminations' / 'Feedback'. Each does pushState to /admin/data/{name} then popstate. The active one is green.
+  - Table buttons: 'Finished games' / 'Players' / 'Eliminations' / 'Feedback' / 'Chat messages' (fifth, L80-11). Each does pushState to /admin/data/{name} then popstate. The active one is green.
   - Orange 'Download spreadsheet (this page)' (disabled until a page loads). It runs exportTablePageXlsx and writes 'admin-{table}.xlsx'.
 - **States:**
   - Intro: 'Database' / 'Read-only view of log tables. Large fields are shortened in the grid.'
@@ -4169,23 +4169,23 @@
   - Headers are snake_case converted to Title Case. Cells are truncated at 16rem. Null shows '—', objects are JSON-stringified, and truncated JSONB shows 'Preview only (N bytes)'.
   - Error (role=alert). Late responses are ignored.
 - **Keep:**
-  - Four allowlisted tables only. No SQL box (L61-05 / technical spec v6 §14).
+  - Five allowlisted tables only: Finished games, Players, Eliminations, Feedback and Chat messages (L80-11). No SQL box (L61-05 / technical spec v6 §14).
   - Late responses are ignored (L62-07).
-- **Notes:** game_chat_messages (Lot 70) is not in the allowlist. finished_games now carries the Lot 70 rule columns, which show up as plain columns here.
+- **Notes:** finished_games now carries the Lot 70 rule columns, which show up as plain columns here.
 
-### `admin-database-chat-transcripts` — Database: chat transcripts table (game_chat_messages), reachable by URL only · `Lot 62+`
+### `admin-database-chat-transcripts` — Database: chat transcripts table (game_chat_messages), the Chat messages tab · `Lot 62+`
 
 - **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/screens/admin/admin-app.tsx`, `apps/client/src/screens/admin/admin-nav.tsx`, `apps/client/src/admin/admin-present.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`, `apps/server/src/http/admin-http.ts`, `apps/server/src/db/write-finished-game.ts`, `apps/server/db/migrations/011_lobby_rules_and_chat.sql`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/admin/api.ts`
-- **Purpose:** Read-only grid of the persisted table chat. Since Lot 70 every finished-game write inserts one game_chat_messages row per message, with game_id, order_index, sender_id, nickname, role, body and round_index (write-finished-game.ts:150-165, migration 011). The server allowlist has included the table since Lot 70 (admin-table-browser.ts:8-14, commit 490712b). The client never got a tab for it: TABLES in admin-data-page.tsx:10-15 still lists only the four Lot 61 tables. The only way to the chat log in /admin is typing /admin/data/game_chat_messages.
+- **Purpose:** Read-only grid of the persisted table chat. Since Lot 70 every finished-game write inserts one game_chat_messages row per message, with game_id, order_index, sender_id, nickname, role, body and round_index (write-finished-game.ts:150-165, migration 011). The server allowlist has included the table since Lot 70 (admin-table-browser.ts:8-14, commit 490712b). Since L80-11 the Database page has a Chat messages tab for it, fifth after Feedback (TABLES in admin-data-page.tsx).
 - **Controls:**
-  - Direct URL /admin/data/game_chat_messages. adminRoute() slices the table name from the path (admin-app.tsx:38-40) and AdminDataPage calls fetchAdminTable(password, 'game_chat_messages', {page:'1', pageSize:'50'}), which sends GET /api/admin/tables/game_chat_messages with X-Inbox-Password (fetch-admin.ts:132-137). There is no in-app control that leads here.
-  - Table tab buttons: Finished games, Players, Eliminations, Feedback (admin-data-page.tsx:60-76). Each calls setPickedTable, pushState /admin/data/{name} and dispatches popstate. There is no Chat tab.
+  - Direct URL /admin/data/game_chat_messages. adminRoute() slices the table name from the path (admin-app.tsx:38-40) and AdminDataPage calls fetchAdminTable(password, 'game_chat_messages', {page:'1', pageSize:'50'}), which sends GET /api/admin/tables/game_chat_messages with X-Inbox-Password (fetch-admin.ts:132-137). The Chat messages tab links here (L80-11).
+  - Table tabs: Finished games, Players, Eliminations, Feedback, Chat messages (admin-data-page.tsx, L80-11). Each links to /admin/data/{name}.
   - 'Download spreadsheet (this page)' calls exportTablePageXlsx(visiblePage) and saves admin-game_chat_messages.xlsx with one sheet named game_chat_messages. Arrays and objects are JSON-stringified (admin-xlsx.ts:84-96, 259-270). It is disabled while visiblePage is null.
   - The 'Database' nav button goes to /admin/data, which always opens on finished_games, never chat (admin-nav.tsx:10, admin-data-page.tsx:24).
   - Not present: pagination (page is hard-coded to 1), sort, search, per-game filter, cell expand or tooltip.
 - **States:**
-  - Chat table active: no tab is highlighted, because the green variant applies only to the four TABLES entries (admin-data-page.tsx:66).
-  - Display name: tableDisplayName has no game_chat_messages entry and would fall back to the raw id (admin-present.ts:74-82). Column headers come from columnDisplayName: Game Id, Order Index, Sender Id, Nickname, Role, Body, Round Index.
+  - Chat table active: the Chat messages tab is the current one (aria-current), as for the other four tables.
+  - Display name: tableDisplayName maps game_chat_messages to 'Chat messages' (admin-present.ts, L80-11). Column headers come from columnDisplayName: Game Id, Order Index, Sender Id, Nickname, Role, Body, Round Index.
   - Loading or switching: visiblePage is null (loadedTable !== activeTable), so the grid is empty, there is no row-count line, Download is disabled, and no 'Loading…' text shows.
   - Empty (0 rows, for example before any post-011 game): a bare header row plus '0 rows · page 1'. There is no empty-state message.
   - Error: a role=alert line from adminErrorCopy: 'Wrong password' (401), 'Not found' (404), 'Database unavailable' (503), or 'Could not load' (network / status 0). A 401 also clears the stored password and reopens AdminPasswordGate through subscribeAdminUnauthorized (admin-app.tsx:61-65).
@@ -4203,7 +4203,7 @@
   - Stale-fetch ignore, and the previous page clears on table switch or error (L62-07; admin-route.test.ts:50-61 asserts 'let cancelled', 'loadedTable === activeTable', 'setPage(null)').
   - A 401 re-opens the password gate. /admin is not linked from the hub (L61-06, frontend.md:97-118).
   - Nothing is persisted if the room dies before the game finishes. A redesign must not imply a live or in-progress chat log (decisions.md Lot 70).
-- **Notes:** The gap is real. Commit 490712b (L70) touched admin-table-browser.ts and its test but not admin-data-page.tsx or admin-present.ts. L61-10's acceptance line still says 'four tables only' (backlog_v6.md:513), so the client matches the Lot 61 acceptance and the server matches Lot 70. Adding a tab is presentation-only: the server endpoint already serves the table. Fixing the ORDER BY 1 ordering, or adding a per-game filter, would need a server change.
+- **Notes:** The gap was real until L80-11. Commit 490712b (L70) touched admin-table-browser.ts and its test but not admin-data-page.tsx or admin-present.ts, and L61-10's acceptance line said 'four tables only' (backlog_v6.md:513). L80-11 added the tab: it is presentation-only, since the server endpoint already served the table. Fixing the ORDER BY 1 ordering, or adding a per-game filter, would need a server change, so rows keep the server order (decisions.md 2026-10-28 'Admin Database lists five tables').
 
 ### `admin-database-finished-games-rule-columns` — Database: Finished games tab, raw Lot 70 house-rule columns · `Lot 62+`
 

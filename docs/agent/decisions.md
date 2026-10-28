@@ -5341,3 +5341,35 @@ error-line change for the same detector rule.
   label map lives in `packages/shared`, which Lot 80 does not touch.
 
 ---
+
+## 2026-10-28 · [P] Admin Database lists five tables (L80-11)
+
+Source: technical spec v7 §7.8 (a **Chat messages** tab in Data, role column visible) and §13
+Q80 (answered in part); Lot 80 plan Appendix B (designer answer 2026-10-28: defaults
+accepted); decisions 2026-10-06 (Lot 70 table chat, Room chat outlives one match);
+`docs/agent/db.md` (`game_chat_messages`).
+
+- **Supersedes L61-10's "four tables only".** The Database page now offers five tabs, in this
+  order: Finished games, Players, Eliminations, Feedback, **Chat messages**
+  (`game_chat_messages`, `tableDisplayName`). The server has allowlisted the table since
+  Lot 70; only the client lacked a tab, so the change is client-only and `PROTOCOL_VERSION`
+  stays 45. Still read-only, still no SQL box.
+- **Role stays visible.** The grid shows every column the server names, so `role` (`living`,
+  `eliminated`, `spectator`, frozen at send time) is a plain column and a redesign must not
+  hide it: it is the only way to tell the eliminated and spectator side stream from the main
+  table chat in the same grid.
+- **Chat stays out of Overview.** Chat rows are not overview metrics (`db.md`). The tab is a
+  raw browser over the table, not a chart.
+- **Row order is unchanged.** The table has no `created_at`, so the server keeps its
+  `ORDER BY` first column fallback, which sorts by the `game_id` uuid. Rows are not
+  chronological and there is no per-game filter. Both would need a server change, which Lot 80
+  does not make. Because each finished game stores the room transcript as of its end, the same
+  line can appear under several `game_id`s after Play again.
+- **Q80 is answered in part.** The chat half of Q80 is now in the UI. The match detail's
+  lobby rules (`excluded_kit_ids`, `random_only`, `turn_time_seconds`) still show only as raw
+  columns on the Finished games tab; Q80's other half is not part of this task.
+- **Parity rows.** `docs/technical_spec_v7_parity.md` Appendix A `admin-database-page` now says
+  five tables and no longer notes that chat is outside the allowlist;
+  `admin-database-chat-transcripts` now describes the tab instead of "reachable by URL only".
+
+---

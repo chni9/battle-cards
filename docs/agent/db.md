@@ -116,4 +116,6 @@ match-filter `WHERE` as the outer query, so a tutorial in a reused Play-again
 room does not mark the first real match as a rematch.
 
 The admin table browser allowlist includes `game_chat_messages` (Lot 70). Chat
-rows are not overview metrics.
+rows are not overview metrics. The `/admin` Database page has a **Chat messages**
+tab for it (L80-11); rows keep the server order (by `game_id`, no `created_at`)
+with no per-game filter.

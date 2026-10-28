@@ -82,6 +82,7 @@ export function tableDisplayName(table: string): string {
     finished_game_players: 'Players',
     finished_game_eliminations: 'Eliminations',
     feedback_reports: 'Feedback',
+    game_chat_messages: 'Chat messages',
   };
   return labels[table] ?? table;
 }

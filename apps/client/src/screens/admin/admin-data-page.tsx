@@ -17,11 +17,17 @@ import {
   type AdminTableColumn,
 } from './admin-ui';
 
+/**
+ * The tabs, in order (spec v7 §7.8, L80-11). `game_chat_messages` (Lot 70) is last: the server has
+ * allowlisted it since Lot 70 and L80-11 only gives it a tab. The rows keep the server's order,
+ * with no per-game filter.
+ */
 const TABLES = [
   'finished_games',
   'finished_game_players',
   'finished_game_eliminations',
   'feedback_reports',
+  'game_chat_messages',
 ] as const;
 
 const DEFAULT_TABLE = 'finished_games';

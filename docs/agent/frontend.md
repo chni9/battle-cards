@@ -936,10 +936,11 @@ its payloads and `PROTOCOL_VERSION` do not change.
     an error needs a filter edit, as on Overview.
   - **Database states (L80-10):** `AdminDataPage` is route-driven: the table is `AdminApp`'s
     `route.table` (`null` reads `finished_games`), with no picked-table state of its own. The
-    tabs are an `AdminLinkBar` (`label="Database tables"`) over the four tables
-    (`/admin/data/{name}`, labelled by `tableDisplayName`); the link whose href is the active
-    table is `aria-current`, so an unknown table (`/admin/data/nope`) marks none and the
-    server's 404 shows `Not found` as an `AdminStatus` error. A request sends `page` and
+    tabs are an `AdminLinkBar` (`label="Database tables"`) over the five tables
+    (`/admin/data/{name}`, labelled by `tableDisplayName`; `game_chat_messages` is the fifth,
+    **Chat messages**, L80-11, with its Role column and the server's row order); the link whose
+    href is the active table is `aria-current`, so an unknown table (`/admin/data/nope`) marks
+    none and the server's 404 shows `Not found` as an `AdminStatus` error. A request sends `page` and
     `pageSize=50` and is keyed `{table}:{page}`; Next and Previous go through `AdminPager`. The
     page number belongs to its table, so another table reads as page 1 even if the page is not
     remounted. While the page for the key loads it shows `Loading…`, no grid and the pager off;

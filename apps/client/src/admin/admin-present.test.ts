@@ -11,6 +11,7 @@ import {
   gameModeLabel,
   gameNotesLabel,
   kitDisplayName,
+  tableDisplayName,
 } from './admin-present';
 import { DEFAULT_ADMIN_FILTERS, filtersToQuery, overviewQuery } from './filter-query';
 
@@ -40,6 +41,13 @@ describe('admin-present', () => {
   it('labels gambling eliminations (L64-04)', () => {
     expect(eliminationReasonLabel('gambling')).toBe('Gambling');
     expect(eliminationReasonLabel('combat')).toBe('Combat');
+  });
+
+  it('labels game_chat_messages as Chat messages (L80-11)', () => {
+    expect(tableDisplayName('game_chat_messages')).toBe('Chat messages');
+    // The four older tables keep their names, and a table the client does not know stays raw.
+    expect(tableDisplayName('feedback_reports')).toBe('Feedback');
+    expect(tableDisplayName('nope')).toBe('nope');
   });
 });
 
