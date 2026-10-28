@@ -125,6 +125,19 @@ function buyShortfall(
   return null;
 }
 
+/**
+ * The pool's own checks, in `buy-pool-card.ts` order (apps/server/src/engine/economy/): an empty
+ * pool first, then the public fee through `payCost` (points only).
+ */
+function poolShortfall(
+  view: PlayingStateView,
+): Extract<DisabledReason, 'pool-empty' | 'not-enough-points'> | null {
+  if (view.pool.length === 0) {
+    return 'pool-empty';
+  }
+  return view.self.points < view.poolBuyCost ? 'not-enough-points' : null;
+}
+
 function highlightOf(view: PlayingStateView): ShopHighlight | null {
   const spotlight =
     view.playKind === 'tutorial' && view.tutorialIndex !== null
@@ -180,14 +193,7 @@ export function shop(view: PlayingStateView, ctx: ActionContext): ShopModel {
     pool: {
       cards: view.pool,
       cost: { kind: 'points', amount: view.poolBuyCost },
-      buy: availabilityFor(
-        lock ??
-          (view.pool.length === 0
-            ? 'pool-empty'
-            : self.points < view.poolBuyCost
-              ? 'not-enough-points'
-              : null),
-      ),
+      buy: availabilityFor(lock ?? poolShortfall(view)),
     },
     upgradePoints: {
       buyCostPoints,

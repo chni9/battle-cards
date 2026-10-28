@@ -122,6 +122,11 @@ describe('shop() (§6.8)', () => {
     expect(shop(makePlayingView({ self: makeSelf({ points: 20 }) }), LIVE).special.buy).toEqual({ enabled: true, reason: null });
   });
 
+  it('reports an empty pool before the fee, as buy-pool-card.ts checks it first', () => {
+    expect(shop(makePlayingView({ pool: [], poolBuyCost: 4, self: makeSelf({ points: 3 }) }), LIVE).pool.buy)
+      .toEqual({ enabled: false, reason: 'pool-empty' });
+  });
+
   it('shows public pool faces and disables Buy random on an empty pool and under the fee (L58-05)', () => {
     const poolCard = makeCard('shield', { instanceId: 'pool-1', isUpgraded: true });
     expect(shop(makePlayingView({ pool: [], poolBuyCost: 1, self: makeSelf({ points: 50 }) }), LIVE).pool)
