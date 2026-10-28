@@ -139,6 +139,13 @@ export function AdminMetricGrid({ children }: { children: ReactNode }): ReactEle
   return <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</dl>;
 }
 
+/**
+ * A metric cell paints a `--panel-2` fill with the 6 px tool radius and no border or shadow. It
+ * sits inside an outlined module panel, so an outline of its own would read as a card inside a
+ * card (Impeccable `nested-cards`, spec v7 §12.4; L80-12).
+ */
+const METRIC_CELL_CLASS = 'rounded-v7-chrome-sm bg-v7-panel-2 p-3 md:p-4';
+
 /** The hint is a second `dd` of the same term: a `p` is not allowed inside a `dl` group. */
 export function AdminMetricCard({
   label,
@@ -150,7 +157,7 @@ export function AdminMetricCard({
   hint?: string;
 }): ReactElement {
   return (
-    <div className={ADMIN_PANEL_CLASS}>
+    <div className={METRIC_CELL_CLASS}>
       <dt className={ADMIN_CAPTION_CLASS}>{label}</dt>
       <dd className="mt-1.5 font-v7-display text-v7-vital tabular-nums text-v7-text">{value}</dd>
       {hint !== undefined ? (

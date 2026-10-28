@@ -1353,8 +1353,12 @@ values.
 - **Portals:** sheets render into `document.body`, outside the scope, so admin Dialogs pass
   `data-mode="tool"` through `dataAttributes` to get the tool chrome on their panel.
 - **Shared pieces** (`screens/admin/admin-ui.tsx`; class strings in `admin-classes.ts`):
-  - `ADMIN_PANEL_CLASS`: tool-line outline, 8px radius, `--panel` fill, no shadow. Metric
-    cards and empty states use it.
+  - `ADMIN_PANEL_CLASS`: tool-line outline, 8px radius, `--panel` fill, no shadow. Module
+    panels and empty states use it.
+  - `AdminMetricCard`: a `dl` cell with a `--panel-2` fill and the 6px tool radius, and no
+    border or shadow. It sits inside an outlined module panel, so an outline of its own would
+    be a card inside a card (the detector's `nested-cards`, L80-12). A fill-only box is not
+    counted as an inner card.
   - `AdminStatus`: loading is a `role="status"` line, and an empty result is a panel. An error
     is a `role="alert"` box on `--panel` with a full 1px `--danger` outline, the 6px tool radius
     and the `eliminated` cross, so it is never told by color alone. There is no one-sided accent

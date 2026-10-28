@@ -5,6 +5,8 @@ import { adminPageCount } from '../../admin/admin-paging';
 import { renderUi } from '../../test/render';
 import {
   AdminDataTable,
+  AdminMetricCard,
+  AdminMetricGrid,
   AdminPager,
   AdminStatus,
   AdminToggleChip,
@@ -274,5 +276,31 @@ describe('AdminToggleChip (technical spec v7 §7.8, L80-09)', () => {
     expect(chip.textContent).toBe('Done');
     expect(within(chip).getByTestId('glyph')).not.toBeNull();
     expect(chip.hasAttribute('title')).toBe(false);
+  });
+});
+
+describe('AdminMetricCard (technical spec v7 §12.4, L80-12)', () => {
+  it('keeps the term and value markup and paints a fill, never an outline, inside its panel', () => {
+    renderUi(
+      <AdminMetricGrid>
+        <AdminMetricCard label="Humans only" value="12" hint="No bot seats" />
+        <AdminMetricCard label="Finished matches" value="30" />
+      </AdminMetricGrid>,
+    );
+    const term = screen.getByText('Humans only');
+    expect(term.tagName).toBe('DT');
+    const cell = term.parentElement;
+    if (cell === null) throw new Error('The metric term has no cell');
+    expect(cell.parentElement?.tagName).toBe('DL');
+    // The value and the hint are two `dd` of the same term (a `p` is not allowed in a `dl`).
+    expect([...cell.querySelectorAll('dd')].map((value) => value.textContent)).toStrictEqual([
+      '12',
+      'No bot seats',
+    ]);
+    expect(screen.getByText('30').tagName).toBe('DD');
+    // A metric sits inside an outlined module panel: its own border or shadow would read as a
+    // card inside a card (Impeccable `nested-cards`), so it is a `--panel-2` fill only.
+    expect(cell.className).toContain('bg-v7-panel-2');
+    expect(cell.className).not.toMatch(/border|shadow|outline/);
   });
 });
