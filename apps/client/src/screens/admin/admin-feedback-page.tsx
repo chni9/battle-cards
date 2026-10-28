@@ -34,7 +34,7 @@ import {
 } from '../../ui/primitives/chrome-classes';
 import { Dialog } from '../../ui/primitives/dialog';
 import { ScrollArea } from '../../ui/primitives/scroll-area';
-import { ADMIN_BODY_TEXT_CLASS, ADMIN_PANEL_CLASS } from './admin-classes';
+import { ADMIN_BODY_TEXT_CLASS, ADMIN_NOTE_CLASS, ADMIN_PANEL_CLASS } from './admin-classes';
 import { AdminPageIntro, AdminStatus, AdminToggleChip } from './admin-ui';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
@@ -311,7 +311,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                       setOpenId(row.id);
                     }}
                   >
-                    <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">
+                    <p className={ADMIN_NOTE_CLASS}>
                       {formatDateTime(row.createdAt)} · {KIND_LABEL[row.kind]}
                       {row.topics.length > 0 ? ` · ${formatFeedbackTopics(row.topics)}` : ''}
                       {row.gameCode !== null ? ` · ${row.gameCode}` : ''}
@@ -354,7 +354,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         {selected !== null ? (
           <div className={`space-y-3 break-words ${ADMIN_BODY_TEXT_CLASS} text-v7-text`}>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">{formatDateTime(selected.createdAt)}</p>
+              <p className={ADMIN_NOTE_CLASS}>{formatDateTime(selected.createdAt)}</p>
               <StatusMarks
                 current={selected.status}
                 disabled={savingStatus}

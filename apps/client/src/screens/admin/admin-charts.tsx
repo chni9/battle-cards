@@ -18,12 +18,10 @@ import {
 } from '../../admin/admin-chart-math';
 import { formatCount, formatPercent } from '../../admin/admin-present';
 import { V7_TOOL_LINE } from '../../ui/palette';
-import { ADMIN_BODY_TEXT_CLASS } from './admin-classes';
+import { ADMIN_BODY_TEXT_CLASS, ADMIN_NOTE_CLASS } from './admin-classes';
 
 /** Chart labels and legend rows: Nunito at the 12 px caption step (spec v7 §5.2 table text). */
 const CHART_LABEL_CLASS = 'font-v7-body text-v7-caption font-bold text-v7-text';
-/** Chart values, axis text and figcaptions: the same step in `--text-2`. */
-const CHART_CAPTION_CLASS = 'font-v7-body text-v7-caption font-bold text-v7-text-2';
 const NO_DATA_CLASS = `${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`;
 
 export interface AdminBarItem {
@@ -63,7 +61,7 @@ export function AdminHorizontalBarChart({
                   style={{ width: `${String(width)}%` }}
                 />
               </div>
-              <span className={`min-w-[3rem] text-right tabular-nums ${CHART_CAPTION_CLASS}`}>
+              <span className={`min-w-[3rem] text-right tabular-nums ${ADMIN_NOTE_CLASS}`}>
                 {item.display ?? formatCount(item.value)}
               </span>
             </li>
@@ -71,7 +69,7 @@ export function AdminHorizontalBarChart({
         })}
       </ul>
       {caption !== undefined ? (
-        <figcaption className={CHART_CAPTION_CLASS}>{caption}</figcaption>
+        <figcaption className={ADMIN_NOTE_CLASS}>{caption}</figcaption>
       ) : null}
     </figure>
   );
@@ -115,13 +113,13 @@ export function AdminPieChart({
                 style={{ background: slice?.color ?? ADMIN_CHART_EMPTY_COLOR }}
               />
               <span className="flex-1">{item.label}</span>
-              <span className={`tabular-nums ${CHART_CAPTION_CLASS}`}>{formatCount(item.value)}</span>
+              <span className={`tabular-nums ${ADMIN_NOTE_CLASS}`}>{formatCount(item.value)}</span>
             </li>
           );
         })}
       </ul>
       {caption !== undefined ? (
-        <figcaption className={`${CHART_CAPTION_CLASS} sm:basis-full`}>{caption}</figcaption>
+        <figcaption className={`${ADMIN_NOTE_CLASS} sm:basis-full`}>{caption}</figcaption>
       ) : null}
     </figure>
   );
@@ -200,11 +198,11 @@ export function AdminScatterChart({
           );
         })}
       </svg>
-      <p className={CHART_CAPTION_CLASS}>
+      <p className={ADMIN_NOTE_CLASS}>
         {yLabel} × {xLabel}
       </p>
       {caption !== undefined ? (
-        <figcaption className={CHART_CAPTION_CLASS}>{caption}</figcaption>
+        <figcaption className={ADMIN_NOTE_CLASS}>{caption}</figcaption>
       ) : null}
     </figure>
   );

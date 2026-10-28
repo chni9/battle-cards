@@ -49,6 +49,7 @@ import {
   ADMIN_BODY_TEXT_CLASS,
   ADMIN_FIELD_CLASS,
   ADMIN_FIELD_LABEL_CLASS,
+  ADMIN_NOTE_CLASS,
   ADMIN_PANEL_CLASS,
   ADMIN_SECTION_TITLE_CLASS,
 } from './admin-classes';
@@ -357,7 +358,7 @@ export function AdminOverviewModules({
           />
         </AdminMetricGrid>
         {overview.gameplay.thinkTimePartial ? (
-          <p className="font-v7-body text-v7-caption font-bold text-v7-text-2">
+          <p className={ADMIN_NOTE_CLASS}>
             New matches only — think time is missing on pre-migration rows (
             {formatCount(overview.gameplay.thinkTimeSeatCount)} of{' '}
             {formatCount(overview.gameplay.actorSeatCount)} seats).

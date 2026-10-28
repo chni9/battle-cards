@@ -25,6 +25,7 @@ import { ScrollArea } from '../../ui/primitives/scroll-area';
 import {
   ADMIN_BODY_TEXT_CLASS,
   ADMIN_CAPTION_CLASS,
+  ADMIN_NOTE_CLASS,
   ADMIN_PANEL_CLASS,
   ADMIN_SECTION_TITLE_CLASS,
 } from './admin-classes';
@@ -153,7 +154,7 @@ export function AdminMetricCard({
       <dt className={ADMIN_CAPTION_CLASS}>{label}</dt>
       <dd className="mt-1.5 font-v7-display text-v7-vital tabular-nums text-v7-text">{value}</dd>
       {hint !== undefined ? (
-        <dd className="mt-1 font-v7-body text-v7-caption font-bold text-v7-text-2">{hint}</dd>
+        <dd className={`mt-1 ${ADMIN_NOTE_CLASS}`}>{hint}</dd>
       ) : null}
     </div>
   );

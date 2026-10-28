@@ -33,5 +33,12 @@ export const ADMIN_FIELD_CLASS = `min-h-11 w-full min-w-0 px-3 font-v7-body text
 /** Body, description and table text: Nunito at the 14 px body step; the caller picks the color. */
 export const ADMIN_BODY_TEXT_CLASS = 'font-v7-body text-v7-body font-bold';
 
+/**
+ * Notes, captions and hints in `--text-2` at the 12 px caption step: the filter note, metric
+ * hints, chart values and figcaptions, Overview module notes and the Feedback dates. One string,
+ * so the six places that used to repeat it cannot drift.
+ */
+export const ADMIN_NOTE_CLASS = 'font-v7-body text-v7-caption font-bold text-v7-text-2';
+
 /** Table headers and metric labels: the field-label step, uppercase. */
 export const ADMIN_CAPTION_CLASS = `${ADMIN_FIELD_LABEL_CLASS} uppercase tracking-wide`;

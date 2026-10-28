@@ -17,6 +17,7 @@ import { Button } from '../../ui/primitives/button';
 import {
   ADMIN_FIELD_CLASS,
   ADMIN_FIELD_LABEL_CLASS,
+  ADMIN_NOTE_CLASS,
   ADMIN_PANEL_CLASS,
   ADMIN_SECTION_TITLE_CLASS,
 } from './admin-classes';
@@ -38,7 +39,7 @@ export function AdminFiltersForm({
       <h3 id="admin-filters-heading" className={ADMIN_SECTION_TITLE_CLASS}>
         Filters
       </h3>
-      <p className="mt-1 font-v7-body text-v7-caption font-bold text-v7-text-2">
+      <p className={`mt-1 ${ADMIN_NOTE_CLASS}`}>
         Tutorial matches are hidden unless you include them below. From and To
         use your local clock.
       </p>

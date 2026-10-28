@@ -831,8 +831,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - The class strings are `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS`,
     `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_FIELD_CLASS` (every input and select: 16px, 44px, panel-2
     fill, flat outline, focus ring), `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the
-    color) and `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and
-    metric labels). No page keeps a private copy.
+    color), `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and
+    metric labels) and `ADMIN_NOTE_CLASS` (12px Nunito in `--text-2` for notes, captions and
+    hints: the filter note, metric hints, chart values and figcaptions, Overview module notes,
+    Feedback dates). No page keeps a private copy.
   - `AdminStatus` errors are a 1px `--danger` outlined `--panel` box with the `eliminated`
     cross and `--text` words. There is no one-sided border stripe: the Impeccable `side-tab`
     rule flags it (spec v7 §12.4).
