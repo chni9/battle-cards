@@ -586,11 +586,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
   or that name; the face inside is decorative, so a screen reader hears the button only, and a
   caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
-- **Classic width rules:** in landscape `index.css` still sizes a classic portrait inside
-  `[data-zone="opponent-seat"]` (2.35rem; since L74-04 only under `.table-shell` and the classic
-  `[data-zone="opponents-dialog-row"]`) and `[data-zone="private-zone"]` (3rem). They are
-  unlayered, so they beat the size classes: a V7 surface must not put a `KitPortrait` under an
-  unscoped one of those zones before L75 removes them.
+- **Classic width rules:** in landscape `index.css` still sizes a V2 portrait inside
+  `[data-zone="opponent-seat"]` (2.35rem; scoped to `.table-shell` and the classic
+  `[data-zone="opponents-dialog-row"]`, L74-04) and `[data-zone="private-zone"]` (3rem; scoped to
+  `.table-shell`, L74-09). The rules are unlayered, but the arena's seats and self strip sit
+  outside both scopes and keep their `KitPortrait` `size`; L75 deletes the rules with the old table.
 - **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
   `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
   in `ui/card/card-classes.ts`.
@@ -972,6 +972,22 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   each time the sheet opens (a closed sheet stays mounted and is reused on reopen). A
   hand or special card that left `view.self` turns its open sheet read-only (`liveCardRefFor`),
   so no intent can name a stale instance.
+- `screens/arena/self-strip.tsx` (L74-09, spec v7 §6.1 item 3, §6.6.1, §11 Q37 / Q40): renders
+  `selfStrip(view, ctx)` (computed once in ArenaScreen) inside the `private-zone` region. It shows
+  the own `KitPortrait` (`tile`, a button "Inspect your kit" that opens the kit sheet) and
+  `data-zone="resources"` (`data-hint-anchor="resources"`) with four `Pill`s in the order life
+  (`lg`, the Vital rule), shield, point, upgradePoint, each with `data-resource-kind` and a visible
+  caption (`RESOURCE_CAPTIONS`, L43-01), then "Shield ↑" when upgraded. Next come the flow badges
+  in model order ("Block · N left" or "Block · attacks banned", "Invisible" with turns,
+  "Reanimating"), the connection label and "Duplication active" (the Activate duplication button
+  is the dock's, L74-13). Last is
+  `<ul aria-label="Active cards">`, the `Card size="thumb"` thumbs: `counter` only for card lives
+  and Invisibility turns; never on Shield or Sentence, whose turns left are a separate "Turns left"
+  badge (ruling 1). A thumb opens the card sheet with source `in-play`. There, Upgrade sends the
+  model `instanceId` (effect id, `active-shield`, Sentence id), and Deactivate (`danger`) opens the
+  Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
+  and only its Deactivate sends `deactivatePersistent {effectId}`. A walk-in gets no strip
+  (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
 
 ## Design system (V2 · Lots 10+)
 

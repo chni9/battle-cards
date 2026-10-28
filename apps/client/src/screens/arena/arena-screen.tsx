@@ -17,6 +17,7 @@
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
+import { selfStrip } from '../../view-model/self-strip';
 import { seats } from '../../view-model/seats';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
@@ -38,6 +39,7 @@ import { HandFan } from './hand-fan';
 import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
 import { SeatSheet } from './seat-sheet';
+import { SelfStrip } from './self-strip';
 import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
@@ -55,6 +57,8 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const layoutBox = useArenaLayoutBox(arenaRef);
   const seatsModel = seats(view, layoutBox);
   const threatModel = threats(view, props.subChoice);
+  // The POV strip and, in `.dock`, its dock: computed once here, L74-13 reads `strip.dock` (Appendix A.2).
+  const strip = selfStrip(view, ctx);
   // The read-only sheet host (Appendix A.5): one reducer state, one component per entry.
   const [sheets, setSheets] = useState<ArenaSheetsState>(EMPTY_ARENA_SHEETS);
   const openSheet = useCallback((sheet: ArenaSheet): void => {
@@ -121,7 +125,20 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
         />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
-        <div data-zone="resources" data-hint-anchor="resources" />
+        {strip.resources === null ? (
+          // A walk-in has no resources (Q38): the empty state until L74-23 adds the Watching strip.
+          <div data-zone="resources" data-hint-anchor="resources" />
+        ) : (
+          <SelfStrip
+            model={strip}
+            onOpenKit={(kitId) => {
+              openSheet({ kind: 'kit', kitId });
+            }}
+            onOpenCard={(source) => {
+              openSheet({ kind: 'card', source });
+            }}
+          />
+        )}
       </div>
       <div {...arenaRegionAttributes('hand')} data-zone="card-band" className="min-w-0 shrink-0">
         <HandFan

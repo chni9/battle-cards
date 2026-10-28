@@ -5377,3 +5377,26 @@ Focus 1 and 3.
   action shows its own reason (§11, Q39), `Not your turn` and `Actions locked` included.
 
 ---
+
+## 2026-10-28 · [P] V7 self strip, in-play sheet actions and the private-zone CSS scope (L74-09)
+
+Source: technical spec v7 §6.1 item 3, §6.6.1, §11 (Q37, Q40); Appendix A `private-zone-identity`,
+`deactivate-confirm-dialog`, `table-deactivate-confirm-escape-layer`, `global-resource-captions`;
+Lot 74 plan Appendix A.8 rulings 1, 5 and 9.
+
+- The own resources keep visible captions (L43-01, Appendix A keep) through `Pill
+  captionVisible`. The lives pill is `lg` (22 px, the Vital rule).
+- In-play Upgrade and Deactivate come only from `cardActions` on the thumb's ref. So an
+  opponent's Shield sheet has no Upgrade (Q37), Deactivate is disabled during a sub-choice
+  (Q40), and an eliminated POV's leftover Shield shows Upgrade disabled with `actions-locked`.
+- The Lot 69 confirm is a `Dialog` stacked over the card sheet. The sheet stack gives Esc to the
+  top sheet only (Q49), so one Esc closes the confirm and keeps the card sheet; V2 needed a
+  dedicated guard for this. The confirm closes when its persistent leaves the model, and its
+  Deactivate is disabled with the reason if the turn passes while it is open.
+- Shield and Sentence thumbs never pass `counter`. A Sentence's remaining owner turns are a
+  separate "Turns left" badge (ruling 1).
+- `index.css`'s landscape `[data-zone="private-zone"] [data-zone="kit-portrait"]` width rule is
+  scoped to `.table-shell`. It keeps the V2 table's look and no longer shrinks the arena's
+  `KitPortrait` (ruling 5).
+
+---

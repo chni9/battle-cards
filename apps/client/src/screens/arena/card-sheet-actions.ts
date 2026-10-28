@@ -14,6 +14,10 @@ import { structuredCostFromCardCost, type StructuredCost } from '../../ui/struct
 /** V2 `screens/table/card-actions.tsx` label, verbatim (the arena never imports `screens/table/`). */
 export const USE_ACTION_LABEL = 'Use';
 
+/** V2 `screens/table/card-actions.tsx` labels, verbatim: the in-play Deactivate and its confirm's Cancel (Lot 69, L74-09). */
+export const DEACTIVATE_ACTION_LABEL = 'Deactivate';
+export const CANCEL_ACTION_LABEL = 'Cancel';
+
 /** `upgrade-card.ts`: Upgrade costs one upgrade point. */
 export const UPGRADE_ACTION_COST: StructuredCost = { kind: 'upgradePoint', amount: 1 };
 

@@ -10,27 +10,40 @@
  * Opening or closing the sheet sends nothing (§6.6.4). A held card that left the hand while the
  * sheet is open turns it read-only (`liveCardRefFor`, Review Focus 1), and a sheet commits at most
  * once per view (Review Focus 3).
+ *
+ * L74-09 adds the in-play Deactivate (§6.6.1, §11 Q40; Appendix A `deactivate-confirm-dialog`,
+ * `table-deactivate-confirm-escape-layer`): `danger`, behind the Lot 69 confirm. The confirm is a
+ * `Dialog` stacked over the sheet, so the sheet stack hands Esc to it alone (Q49) and one Esc
+ * leaves the card sheet open; only the confirm's Deactivate sends `deactivatePersistent`.
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
-import { useEffect, useRef, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
 import { cardActions, type CardAction } from '../../view-model/card-actions';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from '../../view-model/chrome-labels';
+import { DEACTIVATE_CONFIRM_BODY, DEACTIVATE_CONFIRM_TITLE } from '../../view-model/table-copy';
 import { Card } from '../../ui/card/card';
 import { cardCostChip } from '../../ui/card/card-face';
 import { CostAmount } from '../../ui/card/cost-amount';
 import { Badge } from '../../ui/primitives/badge';
 import { Button } from '../../ui/primitives/button';
 import { ICON_WELL_CLASS } from '../../ui/primitives/chrome-classes';
+import { Dialog } from '../../ui/primitives/dialog';
 import { Sheet } from '../../ui/primitives/sheet';
 import type { CostSign, StructuredCost } from '../../ui/structured-cost';
 import { CardEffectCopy } from '../../ui/text/card-effect-copy';
 import type { ArenaCommit, ArenaIntent } from './arena-commit';
 import { arenaSheetKey } from './arena-sheets';
-import { sellYieldOf, UPGRADE_ACTION_COST, USE_ACTION_LABEL } from './card-sheet-actions';
+import {
+  CANCEL_ACTION_LABEL,
+  DEACTIVATE_ACTION_LABEL,
+  sellYieldOf,
+  UPGRADE_ACTION_COST,
+  USE_ACTION_LABEL,
+} from './card-sheet-actions';
 import {
   ACTIVE_LABEL,
   CARD_LIVES_LABEL,
@@ -90,6 +103,10 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       committedFor.current = null;
     }
   }, [open]);
+
+  // The Lot 69 confirm (in-play Deactivate). It lives and dies with this sheet.
+  const [confirming, setConfirming] = useState(false);
+  const deactivate = model.actions.find((action) => action.kind === 'deactivate');
 
   function send(intent: ArenaIntent): void {
     if (commit === undefined || committedFor.current === view) {
@@ -180,48 +197,97 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         // L74-11 adds the Multi-attack entry.
         return null;
       case 'deactivate':
-        // L74-09 adds Deactivate.
-        return null;
+        // Nothing is sent from here: the button only opens the confirm (Lot 69).
+        return (
+          <Button
+            key={action.kind}
+            variant="danger"
+            onClick={() => {
+              setConfirming(true);
+            }}
+            {...shared}
+          >
+            {DEACTIVATE_ACTION_LABEL}
+          </Button>
+        );
     }
   }
 
   return (
-    <Sheet
-      open={open}
-      mode="read-only"
-      placement="bottom"
-      title={cardSheetTitle(source)}
-      onClose={onClose}
-      dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}
-      {...(commit !== undefined && model.actions.length > 0
-        ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
-        : {})}
-    >
-      <div className="flex flex-col items-center gap-3 pt-2 pb-3">
-        <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
-        {card !== undefined ? (
-          <div className="w-full">
-            <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
-          </div>
-        ) : null}
-        {context?.kind === 'active' ? (
-          <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
-            <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
-            {context.count !== null ? (
-              <Badge
-                icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
-                label={context.count.label}
-                value={context.count.value}
-              />
-            ) : null}
-          </div>
-        ) : null}
-        {context?.kind === 'spy-reveal' ? (
-          <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
-            {SPY_REVEAL_LABEL}
-          </p>
-        ) : null}
-      </div>
-    </Sheet>
+    <>
+      <Sheet
+        open={open}
+        mode="read-only"
+        placement="bottom"
+        title={cardSheetTitle(source)}
+        onClose={onClose}
+        dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}
+        {...(commit !== undefined && model.actions.length > 0
+          ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
+          : {})}
+      >
+        <div className="flex flex-col items-center gap-3 pt-2 pb-3">
+          <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
+          {card !== undefined ? (
+            <div className="w-full">
+              <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
+            </div>
+          ) : null}
+          {context?.kind === 'active' ? (
+            <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
+              <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
+              {context.count !== null ? (
+                <Badge
+                  icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
+                  label={context.count.label}
+                  value={context.count.value}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          {context?.kind === 'spy-reveal' ? (
+            <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
+              {SPY_REVEAL_LABEL}
+            </p>
+          ) : null}
+        </div>
+      </Sheet>
+      {/* Cancel comes first, so it takes the initial focus: the safe answer, as in V2. The confirm closes by itself when the action leaves the model (the persistent expired), and its Deactivate carries the live reason if the turn passes or a sub-choice opens while it is up. */}
+      <Dialog
+        open={confirming && deactivate !== undefined}
+        title={DEACTIVATE_CONFIRM_TITLE}
+        onClose={() => {
+          setConfirming(false);
+        }}
+        dataAttributes={{ 'data-arena-sheet': `deactivate:${model.instanceId}` }}
+        actions={
+          <>
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setConfirming(false);
+              }}
+            >
+              {CANCEL_ACTION_LABEL}
+            </Button>
+            <Button
+              variant="danger"
+              disabled={deactivate?.enabled !== true}
+              {...(deactivate !== undefined && deactivate.reason !== null
+                ? { disabledReason: DISABLED_REASON_COPY[deactivate.reason] }
+                : {})}
+              onClick={() => {
+                setConfirming(false);
+                send({ kind: 'deactivatePersistent', payload: { effectId: model.instanceId } });
+              }}
+            >
+              {DEACTIVATE_ACTION_LABEL}
+            </Button>
+          </>
+        }
+      >
+        <p className="font-v7-body text-v7-body text-v7-text">{DEACTIVATE_CONFIRM_BODY}</p>
+      </Dialog>
+    </>
   );
 }
