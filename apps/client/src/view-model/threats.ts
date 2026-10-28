@@ -92,12 +92,23 @@ export interface ThreatsModel {
  * `redirectedBy: 'super-mirror'`). Designer 2026-10-27 (Q1): their burst stays while two or more
  * copies remain, even after earlier copies resolved.
  */
-export const HITS_ALL_CARD_IDS = ['mega-attack', 'suicide', 'attack-thief'] as const;
+export const HITS_ALL_CARD_IDS = [
+  'mega-attack',
+  'suicide',
+  'attack-thief',
+] as const satisfies readonly CardId[];
 export const HITS_ALL_WHEN_UPGRADED_CARD_IDS = [
   'card-thief',
   'spy-thief',
   'upgrade-point-thief',
-] as const;
+] as const satisfies readonly CardId[];
+
+/**
+ * Lookup sets, as `card.ts` builds `CARD_IDS_THAT_ACT_ON_OPPONENTS_SET`: a `Set<string>` reads
+ * any `CardId` without widening the `as const` tuples.
+ */
+const HITS_ALL_SET = new Set<string>(HITS_ALL_CARD_IDS);
+const HITS_ALL_WHEN_UPGRADED_SET = new Set<string>(HITS_ALL_WHEN_UPGRADED_CARD_IDS);
 
 /** Server `playerIsInvisible` (`engine/specials/is-invisible.ts`): any active Invisibility. */
 function isInvisible(player: PublicPlayerView): boolean {
@@ -108,13 +119,10 @@ function isHitsAllCopy(effect: PendingEffectView): boolean {
   if (effect.redirectedBy === 'super-mirror') {
     return true;
   }
-  if ((HITS_ALL_CARD_IDS as readonly CardId[]).includes(effect.cardId)) {
+  if (HITS_ALL_SET.has(effect.cardId)) {
     return true;
   }
-  return (
-    effect.isUpgraded &&
-    (HITS_ALL_WHEN_UPGRADED_CARD_IDS as readonly CardId[]).includes(effect.cardId)
-  );
+  return effect.isUpgraded && HITS_ALL_WHEN_UPGRADED_SET.has(effect.cardId);
 }
 
 function labelFor(effect: PendingEffectView): ThreatLabel {
@@ -152,10 +160,11 @@ function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
     if (targets.size < 2) {
       continue;
     }
-    // A hits-all play keeps its burst (Q1). Any other set needs the literal "across every
-    // opponent" (§6.5): every living opponent of the source, except living Invisible seats,
-    // which upgraded thieves skip (L65-02) while MEGA ATTACK still hits them. That covers the
-    // Review's Assassin volley.
+    // A hits-all play keeps its burst (Q1); its copies exit through `isHitsAllCopy` and never
+    // reach the coverage test. Any other set needs the literal "across every opponent" (§6.5):
+    // every living opponent of the source except living Invisible seats, because a volley cannot
+    // target one (server `isIllegalOpposingTarget`, L65-02). That covers the Review's Assassin
+    // volley.
     const covered =
       effects.every(isHitsAllCopy) ||
       view.players

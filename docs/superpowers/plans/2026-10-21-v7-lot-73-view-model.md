@@ -76,7 +76,7 @@ The five input classes most likely to bite, each pinned by a named test:
 - **Commands:** run one test file from the repo root with `pnpm vitest run apps/client/src/view-model/<file>.test.ts`.
 - **Docs:**
   - Each task updates only the `docs/agent/frontend.md` lines it supersedes. New L73 bullets go at the end of `## View-model layer (V7 · Lot 72+)`, each after the previous task's bullet, in task order.
-  - `docs/agent/decisions.md` ends with a `---` line. Each entry is appended after it in the file's existing `## YYYY-MM-DD · [P] …` format, closes with its own `---`, and never edits a past entry. Lot 73 appends in task order: L73-02, L73-03, L73-05, L73-06, L73-07, L73-09, L73-11, L73-13.
+  - `docs/agent/decisions.md` ends with a `---` line. Each entry is appended after it in the file's existing `## YYYY-MM-DD · [P] …` format, closes with its own `---`, and never edits a past entry. Lot 73 appends in task order: L73-02, L73-03, L73-04, L73-05, L73-06, L73-07, L73-09, L73-11, L73-13.
 - **Backlog:** set the task's row to `In progress` when you start it and to `Done` in its commit. After task L73-NN the Progress table reads `| 73 · View-model | 13 | NN |` and `| **Total** | **134** | **21 + NN** |`: 22 after L73-01, 34 after L73-13. If a parallel lot moved the Total first, add one to whatever it holds; the Lot 73 cell is exact.
 - **References:** "Appendix A" followed by a parity row id in backticks (for example Appendix A `economy-bar`) means spec v7 Appendix A, `docs/technical_spec_v7_parity.md`. This plan's own Appendix A is the interface contract.
 
