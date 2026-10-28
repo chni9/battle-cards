@@ -239,6 +239,9 @@ function dockFor(
             ...availabilityFor(unspyReasonOf(view, spyIds.length, lock)),
           }
         : null,
+    // Hidden while Duplication is active. That holds only because the server's `beginTurnFor`
+    // clears `duplicationActive` at every turn start (`advance-turn.ts:77`), so the control comes
+    // back on the Duplicator's next turn.
     duplication:
       view.self.kitId === 'duplicator' && me?.duplicationActive !== true
         ? availabilityFor(lock)

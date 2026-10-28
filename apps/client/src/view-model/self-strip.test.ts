@@ -159,6 +159,14 @@ describe('selfStrip POV label (§6.3, §6.12)', () => {
     });
   });
 
+  it('a walk-in after Stay is Watching through spied, keeps Leave and gets no economy (Q38, L57-16)', () => {
+    const vision = { kitId: 'kamikaze', hand: [], specialCards: [], lives: 10, points: 0, upgradePoints: 0, shield: 0 } as const;
+    const stayed: PlayingStateView = { ...walkInView(), players: [makePlayer('p1', { spied: vision }), makePlayer('p2')] };
+    const strip = selfStrip(stayed, LIVE);
+    expect(strip).toMatchObject({ pov: 'watching', povLabel: 'Watching', leave: true, kitId: null, resources: null, thumbs: [] });
+    expect(strip.dock).toEqual({ draw: null, shop: null, unspy: null, duplication: null, stats: false });
+  });
+
   it('offers no strip Leave on the finished board (the flag is Return home)', () => {
     const view = viewWith({ isEliminated: true }, { currentTurnPlayerId: null, turnDeadlineMs: null });
     expect(selfStrip(view, FINISHED)).toMatchObject({ povLabel: 'Watching', leave: false });
