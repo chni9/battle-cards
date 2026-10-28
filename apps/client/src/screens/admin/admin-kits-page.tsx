@@ -59,8 +59,11 @@ const kitColumns: AdminTableColumn<AdminKitStatRow>[] = [
 export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
+  // Counts Apply presses. It is part of the request key, so Apply always asks again, even with
+  // unchanged filters: that is how a designer retries after an error (spec v7 §7.8).
+  const [applyCount, setApplyCount] = useState(0);
   const list = useAdminList({
-    key: JSON.stringify(applied),
+    key: JSON.stringify({ applied, applyCount }),
     load: () => fetchAdminKitStats(password, filtersToQuery(applied)),
   });
   const visibleStats = list.data;
@@ -76,6 +79,7 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
         onChange={setFilters}
         onApply={() => {
           setApplied(filters);
+          setApplyCount((count) => count + 1);
         }}
       />
       <div className="flex flex-wrap items-center gap-3">

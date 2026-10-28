@@ -102,9 +102,13 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
-  // The pager count belongs to the applied filters: paging keeps it, new filters forget it.
+  // Counts Apply presses. It is part of the request key, so Apply always asks again, even with
+  // unchanged filters: that is how a designer retries after an error (spec v7 §7.8).
+  const [applyCount, setApplyCount] = useState(0);
+  // The pager count belongs to the applied filters, not to the Apply count: paging and a retry
+  // keep it, new filters forget it.
   const list = useAdminList({
-    key: JSON.stringify({ applied, page: pageNumber }),
+    key: JSON.stringify({ applied, page: pageNumber, applyCount }),
     scope: JSON.stringify(applied),
     // No `pageSize`: the server default (50) applies and there is no size picker (L80-06).
     load: () => fetchAdminGames(password, { ...filtersToQuery(applied), page: String(pageNumber) }),
@@ -179,6 +183,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         onApply={() => {
           setApplied(filters);
           setPageNumber(1);
+          setApplyCount((count) => count + 1);
         }}
       />
       <div className="flex flex-wrap items-center gap-3">

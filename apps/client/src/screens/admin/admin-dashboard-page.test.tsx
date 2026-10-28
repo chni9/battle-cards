@@ -93,7 +93,6 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
     expect(screen.queryByRole('alert')).toBeNull();
 
-    // Apply only refetches when the filters differ from the applied ones, so each Apply edits one.
     // An edit alone sends nothing: the request is keyed on the applied filters, not the form's.
     await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'humans');
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(1);
@@ -114,6 +113,24 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('status').textContent).toBe('Loading…');
     expectNineModules();
+    await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
+    expect(screen.queryByRole('alert')).toBeNull();
+    expectNineModules();
+  });
+
+  it('after a 503, Apply with no filter edit asks again and a 200 clears the alert', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDashboardPage password="secret" />);
+    await fake.last(OVERVIEW_PATH).respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+    // Nothing loaded, so no module and no Actors control: Apply is the only retry.
+    expect(screen.queryByRole('heading', { level: 3, name: 'General' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Actors' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(fake.to(OVERVIEW_PATH)).toHaveLength(2);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
     expect(screen.queryByRole('alert')).toBeNull();
     expectNineModules();

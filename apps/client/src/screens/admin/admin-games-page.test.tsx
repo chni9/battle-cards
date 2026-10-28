@@ -162,6 +162,41 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(pageText()).toBe('Page 1 of 3');
   });
 
+  it('after a 503, Apply with no filter edit asks again from page 1 and a 200 clears the alert', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
+    await user.click(pagerButton('Next'));
+    await fake.last(GAMES_PATH).respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(fake.to(GAMES_PATH)).toHaveLength(3);
+    expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('1');
+    expect(screen.queryByRole('alert')).toBeNull();
+    // The filters did not change, so the retry keeps the page count it knew.
+    expect(pageText()).toBe('Page 1 of 3');
+    await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1b'));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open match PAGE1B' })).not.toBeNull();
+    expect(pageText()).toBe('Page 1 of 3');
+  });
+
+  it('after a 503 on page 1, Apply with no filter edit asks for page 1 again', async () => {
+    // Page 1 is already the page, so only the Apply itself can make the request new.
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(fake.to(GAMES_PATH)).toHaveLength(2);
+    expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('1');
+    await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(pageText()).toBe('Page 1 of 3');
+  });
+
   it('new filters forget the last known page count until their first page loads', async () => {
     const fake = installFakeFetch();
     const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);

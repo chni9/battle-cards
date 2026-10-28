@@ -878,7 +878,9 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - Nav: Overview, Matches, Kits, Feedback, Database. Default filters exclude tutorial rows.
   - Filters (`AdminFiltersForm`, shared by Overview, Matches and Kits; L80-03): From, To,
     Opponents, Seat count, Kit and the tutorial toggle, then a primary Apply. Edits send nothing
-    until Apply. Seat count is a select over `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`,
+    until Apply. Apply always starts a new request, even with unchanged filters: each page
+    counts Apply presses (`applyCount`) in its request key, so Apply is the retry after an error
+    (Overview has no other control before a first load). Seat count is a select over `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`,
     so it can never send a value the server ignores; its 'Any seat count' option
     (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends none.
   - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
@@ -928,9 +930,11 @@ its payloads and `PROTOCOL_VERSION` do not change.
     build the action log.` as an `AdminStatus` error in the body and re-enables the button.
   - **Matches paging (L80-06):** the list is `AdminDataTable` (`label="Matches"`, **Room code**
     first) over `AdminPager`. `pageNumber` starts at 1 and the fetch key is
-    `JSON.stringify({ applied, page })`; each request sends the filter query plus `page` and no
-    `pageSize` (the server default 50 applies; there is no size picker). **Apply** sets the
-    filters and goes back to page 1. While the page for the key is not loaded the table is
+    `JSON.stringify({ applied, page, applyCount })`; each request sends the filter query plus
+    `page` and no `pageSize` (the server default 50 applies; there is no size picker). **Apply**
+    sets the filters, goes back to page 1 and always asks again; the Apply count is in the
+    request key, not in the pager's scope (the applied filters), so a retry with unchanged
+    filters keeps the page count it knew. While the page for the key is not loaded the table is
     replaced by `Loading…` and the pager is off; on an error the rows are gone and the alert
     shows. The pager label keeps the last page count the server gave for the same filters
     (never below the page itself), so its `aria-live` text reads `Page 2 of 3` while page 2
@@ -947,8 +951,8 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `No kit data for these filters.` show only for a loaded answer. **Download spreadsheet** is a
     quiet `Button`, off until a non-empty answer loads, and hands the loaded rows (raw `kitId`s)
     to `exportKitStatsXlsx`. The table (`label="Kit stats"`) shows kit display names. **Apply**
-    with unchanged filters sends nothing (`setApplied` keeps the same object), so a retry after
-    an error needs a filter edit, as on Overview.
+    always asks again, unchanged filters included, so it retries after an error with no filter
+    edit, as on Overview and Matches.
   - **Database states (L80-10):** `AdminDataPage` is route-driven: the table is `AdminApp`'s
     `route.table` (`null` reads `finished_games`), with no picked-table state of its own. The
     tabs are an `AdminLinkBar` (`label="Database tables"`) over the five tables

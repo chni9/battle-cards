@@ -160,15 +160,18 @@ describe('AdminKitsPage (technical spec v7 §7.8, L80-08)', () => {
     expect(downloadButton().disabled).toBe(true);
   });
 
-  it('a later success clears the alert', async () => {
+  it('after a 503, Apply with no filter edit asks again and a 200 clears the alert', async () => {
     const fake = installFakeFetch();
     const { user } = renderUi(<AdminKitsPage password="secret" />);
     await fake.last(KIT_STATS_PATH).respond(503);
     expect(screen.getByRole('alert')).not.toBeNull();
 
-    // Apply with the filters unchanged asks for nothing again, so the retry changes one.
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'humans');
+    // Apply always asks again, so a retry needs no filter edit.
     await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(fake.to(KIT_STATS_PATH)).toHaveLength(2);
+    expect(fake.last(KIT_STATS_PATH).url.search).toBe(fake.to(KIT_STATS_PATH)[0]?.url.search);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
     await fake.last(KIT_STATS_PATH).respond(200, makeKitStats([kitRow('kamikaze')], 1));
     expect(screen.queryByRole('alert')).toBeNull();
     expect(kitCells()).toStrictEqual(['Kamikaze']);
