@@ -39,7 +39,7 @@
   - /admin is handled before any game phase and opens no Colyseus socket. /inbox redirects to /admin/feedback (Lot 61, L61-06).
   - Nickname and join code live in App state. They survive Home remounts within a tab session, for example after Leave or a kick.
   - Table and End receive their statusLabel from STATUS_LABELS[status].
-  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. home.tsx must not contain '/admin' or '/inbox'.
+  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. screens/home.admin-route.test.ts (split from it in L72-02) checks that home.tsx contains no '/admin' and no '/inbox'.
 - **Notes:** There is no router library and no deep link for a join code (for example ?code=). The document title is the static 'Card Battle'. Fonts are Outfit 400/600/700 from @fontsource. Tokens are light-only in index.css @theme; there is no dark mode. #root uses overflow hidden, so each screen must scroll inside itself (visual-viewport.test.ts).
 
 ### `global-room-connection-lifecycle` — Room connection lifecycle (before and while entering a room)

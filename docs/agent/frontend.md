@@ -2416,8 +2416,9 @@ value, viewports 1440×900 and 390×844 in the built-in browser pane.
   and `/admin/data/game_chat_messages` have `main.scrollWidth - main.clientWidth = 0`, no element
   past the right edge outside a labelled scroll region, and every input and select computes 16px.
 - **Design gate (§12.4):** the static `impeccable detect` on `screens/admin` and `admin` found 0.
-  Page scans (headless Chrome, unlocked session) at both sizes of Overview, Matches, a match
-  dialog, Kits, Feedback, Database (chat) and the gate found three things. `nested-cards` ×36 on
+  Page scans (headless Chrome, unlocked session) of Overview, Matches, a match dialog, Kits,
+  Feedback, Database (chat) and the gate, which ran at 1440×900 only (see the correction below),
+  found three things. `nested-cards` ×36 on
   Overview (an outlined metric card in an outlined module panel) is fixed (G1). The
   `kicker-above-heading` finding ("Designer" over "Insights", on every page) is fixed because
   the designer removed the eyebrow on 2026-10-28 (G2, `decisions.md`). `dark-glow #f0771f` on
@@ -2442,4 +2443,54 @@ value, viewports 1440×900 and 390×844 in the built-in browser pane.
     never linking `/admin`.
   - G7: the Feedback save-error comment cites spec v7 §7.8 and L80-09 instead of a review label,
     and the Seat count line of this file is wrapped.
-- `pnpm verify` **3119** tests.
+- **Re-scan after the gate fixes:** the Impeccable page scans repeated after G1 to G7 leave only
+  the V2 `dark-glow` (`tutorial-pulse` in `index.css`, outside the admin scope, no ignore added).
+  `nested-cards` and `kicker-above-heading` are gone.
+- **Browser re-check after the gate fixes (real Chrome):** the `Designer` eyebrow is gone, a
+  Database tab keeps focus after activation, and the pager's Next pressed by keyboard keeps
+  focus.
+- **Critique (Impeccable, designer 2026-10-28):** dual-agent (A: design review, B: detector and
+  browser evidence, isolated), **23/40 Acceptable**, no P0 and three P1. The five priority issues:
+  1. [P1] The kit-balance views can drive wrong decisions: "Most wins (kit)" picks one of 11 kits
+     tied at 8, the pick × win scatter has fixed 0–100% axes, and the Kits table is alphabetical
+     with no baseline. Follow-up (outside Lot 80: spec v7 §7.8 keeps the modules unchanged).
+  2. [P1] The Overview is an unbounded scroll with no hierarchy (about 9,975 px at 1440, every
+     zero row shown). Follow-up.
+  3. [P1] Feedback triage is silent, has no undo, and dropped keyboard focus after a mark. Focus
+     is fixed now (C1); undo, a live message and chip counts are follow-ups.
+  4. [P2] Filters are per page, unsaved and not in the URL, with Actors repeated five times.
+     Follow-up.
+  5. [P2] Investigating one match takes paging and memory (the report code is plain text, no
+     room-code search, chat out of order, and at 390 the Matches dates wrapped over four lines
+     with no scroll cue on wide tables). The wrap and the cue are fixed now (C2); the rest is
+     follow-up.
+- **Detector evidence (critique, Assessment B):** the source scan found 0. Page scans at 1440×900
+  and 390×844, with the DevTools emulation held, found `dark-glow` (the V2 false positive) on
+  every page; `cramped-padding` on the Matches and match-detail table frame at 390, a false
+  positive (a padding-0 frame around a `ScrollArea` whose cells carry their own padding) that
+  nonetheless pointed at the real missing scroll cue, fixed by C2; and `straggler` advisories,
+  left.
+- **Designer answers (2026-10-28):** fix only the small things before the PR (C1, C2) and send the
+  rest to the PR as follow-ups. The next admin lot is kit balance first: highest win rate with
+  ties stated, the scatter with data-range axes, ticks, point labels and fair-share reference
+  lines, and a sortable Kits table with a vs-expected column and small-sample flags. In a
+  later lot a resource keeps its color in admin (lives `--life`, points `--point`, upgrade
+  `--upgrade`, shield `--shield` in Economy and Combat) and those colors stop being reused for
+  unrelated chart categories. See `decisions.md` 2026-10-28 "Admin critique follow-ups".
+- **Correction:** the first "390×844" page scans of this gate (the controller's DevTools-port
+  runs) actually ran at 1440: the emulation dropped when their DevTools session closed. The
+  critique's Assessment B redid the scans with the emulation held, and those are the recorded
+  390×844 results.
+- **Critique fixes (each a commit, `pnpm verify` green):**
+  - C1: a triage mark pressed by keyboard that takes its row out of the Pending view dropped focus
+    to the body. Focus now moves to the next row's open button, else the previous row's, else the
+    empty message (a focusable, not tabbable, region), and only when it was really lost. A mark
+    pressed in the report keeps focus in the dialog (`admin-feedback-page.test.tsx`, six tests).
+  - C2: at 390 the Matches `Ended` date broke over four lines and nothing showed that a wide table
+    scrolled. `AdminTableColumn.nowrap` keeps that cell on one line, and `AdminDataTable` (so the
+    Database grid too) shows a decorative right-edge fade while its region overflows and is not
+    scrolled to the end. `useMoreToTheRight` (`admin-scroll-cue.ts`) reads it on scroll and when
+    the region or the table resizes (`admin-ui.test.tsx`, `admin-scroll-cue.test.ts`,
+    `admin-games-page.test.tsx`, `admin-data-page.test.tsx`). happy-dom has no layout, so these
+    tests stub the measures.
+- `pnpm verify` **3141** tests.

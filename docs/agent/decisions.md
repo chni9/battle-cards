@@ -5408,3 +5408,28 @@ finding on every admin page; designer 2026-10-28.
   changed. `docs/technical_spec_v7_parity.md` `admin-shell` and `admin-app.test.tsx` follow.
 
 ---
+
+## 2026-10-28 · [P] Admin critique follow-ups (L80-12)
+
+Source: the Impeccable critique of `/admin` (dual-agent, 23/40 Acceptable) and the designer's
+answers to it, 2026-10-28; the Lot 80 gate record in `docs/agent/frontend.md`; technical spec v7
+§7.8.
+
+- **Scope before the PR: small fixes only.** The designer chose "petits correctifs": the two
+  fixes that cost little are done in Lot 80 (C1, focus after a triage mark; C2, no-wrap dates and
+  a scroll cue on wide tables). Everything else in the critique goes to the PR as follow-up work,
+  not into Lot 80.
+- **Next admin lot: kit balance first.** Highest win rate with ties stated (today "Most wins
+  (kit)" shows one of 11 kits tied at 8); the pick × win scatter with data-range axes, ticks,
+  point labels and fair-share reference lines; a sortable Kits table with a vs-expected column and
+  small-sample flags. It changes the §7.8 modules, which Lot 80 kept as they were, so it is a
+  later lot.
+- **Resource colors in admin, in a follow-up.** A resource keeps its color in admin too: lives
+  `--life`, points `--point`, upgrade `--upgrade` and shield `--shield` in Economy and Combat, and
+  those colors stop being reused for unrelated chart categories (for example `--life` for
+  "4 seats" and "Inactive" in the pies). No change in Lot 80.
+- **Still open (follow-up, not decided here).** The Overview's length and hierarchy, filters kept
+  across pages and in the URL, triage undo and a live message, and the match investigation links
+  and search.
+
+---
