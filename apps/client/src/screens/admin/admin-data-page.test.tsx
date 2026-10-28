@@ -4,7 +4,9 @@ import { useEffect, useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminRoute } from '../../admin/admin-routes';
 import { exportTablePageXlsx } from '../../export/admin-xlsx';
+import { INBOX_PASSWORD_STORAGE_KEY } from '../../inbox/password-storage';
 import { renderUi } from '../../test/render';
+import { AdminApp } from './admin-app';
 import { AdminDataPage } from './admin-data-page';
 import { makeTablePage } from './admin-fixtures';
 import { installFakeFetch, setAdminPath } from './admin-test-harness';
@@ -283,11 +285,13 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     expect(currentTabs()).toStrictEqual(['Players']);
   });
 
-  it('a late response is ignored and paging starts over when the table changes without a remount', async () => {
-    // AdminApp remounts the page on every route change, so this guard never fires there; it
-    // keeps the page correct on its own should that remount ever go.
+  it('in the real shell a tab change starts the next table at page 1, and so does coming back', async () => {
+    // The page keeps no table-keyed state: it relies on AdminApp remounting it on every route
+    // change. This pins that remount through the real shell, A → B → A.
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/data');
     const fake = installFakeFetch();
-    const { user, rerender } = renderUi(<AdminDataPage password="secret" table="finished_games" />);
+    const { user } = renderUi(<AdminApp />);
     await fake.last(tablePath('finished_games')).respond(
       200,
       makeTablePage('finished_games', [{ id: 'g-1' }], { total: 120 }),
@@ -296,18 +300,21 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     const latePage2 = fake.last(tablePath('finished_games'));
     expect(latePage2.url.searchParams.get('page')).toBe('2');
 
-    rerender(<AdminDataPage password="secret" table="finished_game_players" />);
+    await user.click(screen.getByRole('link', { name: 'Players' }));
     const players = fake.last(tablePath('finished_game_players'));
     expect(players.url.searchParams.get('page')).toBe('1');
     // Finished games' page count is not the players' count.
     expect(pageText()).toBe('Page 1 of 1');
-
     await players.respond(200, makeTablePage('finished_game_players', [{ game_id: 'players-row' }]));
     await latePage2.respond(200, makeTablePage('finished_games', [{ id: 'late-page-2-row' }], { page: 2, total: 120 }));
     expect(screen.queryByText('late-page-2-row')).toBeNull();
     expect(screen.getByText('players-row')).not.toBeNull();
-    expect(pageText()).toBe('Page 1 of 1');
     expect(currentTabs()).toStrictEqual(['Players']);
+
+    // Back on Finished games the page picked there before is gone: page 1 again.
+    await user.click(screen.getByRole('link', { name: 'Finished games' }));
+    expect(fake.last(tablePath('finished_games')).url.searchParams.get('page')).toBe('1');
+    expect(pageText()).toBe('Page 1 of 1');
   });
 
   it('the export button stays disabled until a page loads, then exports that page', async () => {

@@ -944,8 +944,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     href is the active table is `aria-current`, so an unknown table (`/admin/data/nope`) marks
     none and the server's 404 shows `Not found` as an `AdminStatus` error. A request sends `page` and
     `pageSize=50` and is keyed `{table}:{page}`; Next and Previous go through `AdminPager`. The
-    page number belongs to its table, so another table reads as page 1 even if the page is not
-    remounted. While the page for the key loads it shows `Loading…`, no grid and the pager off;
+    page keeps no table-keyed state: `AdminApp` remounts it on every route change (`key` on the
+    route), so a tab change, and a return to an earlier tab, starts at page 1 with no page count
+    and the old table's late answers land in an unmounted page. While the page for the key
+    loads it shows `Loading…`, no grid and the pager off;
     the pager label keeps the last page count the server gave for this table (never below the
     page itself), so it reads `Page 2 of 3` while page 2 loads and `Page 1 of 1` on a new
     table. A failure is the alert with the rows gone, and a stale answer, success or error, is

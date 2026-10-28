@@ -57,22 +57,20 @@ interface GridRow {
 
 /**
  * Read-only browser of the log tables (spec v7 §7.8, L80-10). The table is the route's
- * (`/admin/data/:table`) and `AdminApp` remounts the page on every route change. The page also
- * keys its own state on the table, so a table change it is handed without a remount still starts
- * at page 1, forgets the last table's page count and ignores the last table's late answers.
+ * (`/admin/data/:table`), and `AdminApp` remounts the page on every route change (`key` on the
+ * route), so a tab change starts over: page 1, no page count, and the old table's late answers
+ * land in an unmounted page. The page keeps no table-keyed state of its own.
  */
 export function AdminDataPage({ password, table }: AdminDataPageProps): ReactElement {
   const activeTable = table ?? DEFAULT_TABLE;
-  // The page number belongs to the table it was picked on: another table reads as page 1.
-  const [paging, setPaging] = useState({ table: activeTable, page: 1 });
-  const pageNumber = paging.table === activeTable ? paging.page : 1;
+  const [pageNumber, setPageNumber] = useState(1);
   const listKey = `${activeTable}:${String(pageNumber)}`;
   const [page, setPage] = useState<AdminTablePage | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The last page count the server gave for this table. Paging keeps it, so the pager label (an
   // aria-live region) never announces a wrong total while the next page loads (as Matches, L80-06).
-  const [knownPageCount, setKnownPageCount] = useState<{ table: string; count: number } | null>(null);
+  const [knownPageCount, setKnownPageCount] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,10 +88,7 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
         return;
       }
       setPage(result.data);
-      setKnownPageCount({
-        table: activeTable,
-        count: adminPageCount(result.data.total, result.data.pageSize),
-      });
+      setKnownPageCount(adminPageCount(result.data.total, result.data.pageSize));
       setLoadedKey(listKey);
       setError(null);
     });
@@ -105,12 +100,11 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
   const loaded = loadedKey === listKey;
   const visiblePage = loaded ? page : null;
   // Until the page for this key loads the total is the last one known for this table, never below
-  // the page itself ("Page 2 of 3" while page 2 loads, never "Page 2 of 2"). A new table knows
+  // the page itself ("Page 2 of 3" while page 2 loads, never "Page 2 of 2"). A fresh mount knows
   // nothing, so its pager reads "Page 1 of 1" until its first page loads.
-  const lastKnownCount = knownPageCount?.table === activeTable ? knownPageCount.count : 1;
   const pagerCount =
     visiblePage === null
-      ? Math.max(lastKnownCount, pageNumber)
+      ? Math.max(knownPageCount ?? 1, pageNumber)
       : adminPageCount(visiblePage.total, visiblePage.pageSize);
 
   return (
@@ -153,9 +147,7 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
       <AdminPager
         page={pageNumber}
         pageCount={pagerCount}
-        onPage={(next) => {
-          setPaging({ table: activeTable, page: next });
-        }}
+        onPage={setPageNumber}
         disabled={visiblePage === null}
       />
     </div>
