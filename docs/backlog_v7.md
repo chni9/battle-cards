@@ -22,7 +22,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
-| 74 · Arena I | 26 | 2 |
+| 74 · Arena I | 26 | 3 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **36** |
+| **Total** | **134** | **37** |
 
 ## Designer questions still open
 
@@ -151,7 +151,7 @@ The arena behind `?ui=next` (§6, except tutorial re-anchoring, desktop / landsc
 |---|---|---|---|---|---|
 | L74-01 | **Arena shell behind ?ui=next.** **Acceptance:** The routing decision has a unit test: switch on with Classic gives the arena; switch off or a tutorial room gives the old table. A happy-dom test renders all six regions with their empty states for a 2-seat and an 8-seat fake view. The old table and its source-text tests are untouched. `pnpm verify` green. | M | Medium | Lot 72, Lot 73 | Done |
 | L74-02 | **Read-only card sheet and kit sheet.** **Acceptance:** Tests cover these cases. A base card shows effect plus the Upgrade block; an upgraded card shows `upgradeEffect` only. Sentence and Shield never request activated art. An active Poison shows its card lives and Invisibility shows turns. Log and queue sources render no footer. Long-press fires at 450 ms and is cancelled by 8 px of movement. The kit sheet renders a section for every `KitTraits` field (the moved L30-05 assertion). `pnpm verify` green. **Watch point:** `ui/kit/kit-details.tsx` renders each group as `<section aria-labelledby>`, which makes about nine named region landmarks per sheet. Use `role="group"`, or keep the `<h3>` and drop the label. | M | Low | L72-09 | Done |
-| L74-03 | **Top bar, menu and flag confirm.** **Acceptance:** Tests cover these cases. Banner copy and seat color match each state, and both Block variants render. The first flag tap opens the confirm and sends nothing. Stay and Esc send nothing. Forfeit calls `onForfeit` once and never `onLeave`. The spectator variant calls `onLeave`. `!` has aria-label 'Feedback' and no visible word. How to play Skip marks it seen. `pnpm verify` green. | M | Medium | L74-01, L72-09 | To do |
+| L74-03 | **Top bar, menu and flag confirm.** **Acceptance:** Tests cover these cases. Banner copy and seat color match each state, and both Block variants render. The first flag tap opens the confirm and sends nothing. Stay and Esc send nothing. Forfeit calls `onForfeit` once and never `onLeave`. The spectator variant calls `onLeave`. `!` has aria-label 'Feedback' and no visible word. How to play Skip marks it seen. `pnpm verify` green. | M | Medium | L74-01, L72-09 | Done |
 | L74-04 | **Opponent seats and portrait arc/grid.** **Acceptance:** There is one component test per §6.3 tier. Unspied: lives and resources show `?` and no kit. Base Spy: numbers show, but no kit and no hand. Spy+: the kit portrait shows. Eliminated: frozen values with the eliminated treatment. Spectator overlay: full vision. A 7-opponent view renders the grid when `seats()` returns grid mode. The active seat has `data-active-seat`. No unspied total appears anywhere in the DOM. `pnpm verify` green. **Watch point:** `index.css` lines 195-201 have unlayered `width: 2.35rem` and `3rem` rules on a kit portrait under `data-zone="opponent-seat"` and `"private-zone"`. They beat Tailwind `w-*` and would shrink a V7 `KitPortrait`; in the commit that introduces V7 seats, scope those two rules to the classic table or drop them. | L | **High** | L74-01, L74-02 | To do |
 | L74-05 | **Seat sheet.** **Acceptance:** Tests cover these cases. A base-Spied seat sheet shows numbers and no kit or hand. A Spy+ sheet lists hand thumbs that open the card sheet. An eliminated seat shows the '{nick} (eliminated)' title. An unspied seat has no kit control. Opening the sheet sends no intent. `pnpm verify` green. | S | Medium | L74-04 | To do |
 | L74-06 | **Threat arrows, central plate and recurring chips.** **Acceptance:** Tests cover these cases. Two attacks from one Assassin action on the same seat render two labels, each with its own damage, and no sum. MEGA ATTACK against 7 opponents renders one burst plus 7 target badges. A Mirror-redirected effect shows its badge on the redirector's arrow. Eligible ids are highlighted while a Mirror prompt is open. A Curse-on-you chip shows paused under own Invisibility. A plate badge opens the queue inspect. `pnpm verify` green. | L | Medium | L74-04, L74-02 | To do |

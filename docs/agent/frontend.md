@@ -846,6 +846,24 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   swallows the click that ends the press). A face outside the hand is a `Card` with
   `onActivate` (a button: Enter or click) plus these handlers. Both open the same read-only
   sheet and send nothing.
+- `screens/arena/top-bar.tsx` + `top-bar-model.ts` + `leave-confirm-sheet.tsx` (L74-03, spec v7
+  §6.1 item 1, §6.12; plan Appendix A rulings 2 and 3).
+  - Contents: the round (`Round N`, from `tableRound`, the same count as the log and chat),
+    the turn banner (`Your turn`, `{Nick}'s turn` with the nickname in its seat hue on
+    `--panel`, or `—`), the active seat's Block line (V2 copy) and the empty
+    `data-zone="timers"` clock slot (L74-21).
+  - Visible icons, left to right: Feedback `!` (44 px, aria-label `Feedback`, no word), the
+    flag, and Menu. L74-16 puts Chat first.
+  - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
+    calls `onOpenFeedback` instead.
+  - Menu sheet: How to play (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not)
+    and `Code {code} · {connection}` with Copy (`Code copied` / `Copy failed`).
+  - The flag opens `LeaveConfirmSheet` (V7 `Dialog`) for the live
+    `tableFlagIntent(...)`, which carries `isSpectator`.
+    - Forfeit calls `onForfeit` and keeps the socket.
+    - Leave table (eliminated or walk-in) and Return home (finished board) call `onLeave`.
+    - The first tap only opens the confirm. Stay has initial focus. Stay, Esc and the
+      backdrop send nothing, and a second tap during the exit sends nothing.
 
 ## Design system (V2 · Lots 10+)
 

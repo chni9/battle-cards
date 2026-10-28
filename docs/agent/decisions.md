@@ -5250,3 +5250,20 @@ plan Appendix A.5, A.7 and ruling 1; frontend.md "L74 carry-overs".
   sheet and the L74-09 self strip.
 
 ---
+
+## 2026-10-28 · [P] Arena flag confirm follows the live flag intent (L74-03)
+
+Source: technical spec v7 §6.12 ("Leave / forfeit: confirm sheet"); Lot 74 plan ruling 3;
+Appendix A `table-leave-forfeit`; L43-05, L43-06.
+
+- V2 stored the flag intent when the flag was tapped (`setLeaveConfirm(flagIntent)`). The arena
+  re-derives it on every render from `tableFlagIntent(...)` with `isSpectator`. If the POV is
+  eliminated while the forfeit confirm is open, the same confirm becomes "Leave the table?",
+  and its button leaves instead of sending a FORFEIT the server would reject.
+- The confirm button latches on its first press: a ref, reset when the flag opens the confirm.
+  A double tap therefore sends one FORFEIT even when the second press reaches the stale handler
+  the exiting confirm keeps through its exit (AnimatePresence renders its last props); a state
+  flag would not hold, because that handler closes over the old state.
+- With no active seat, the banner reads `—` alone. V2 printed "—'s turn"; the brief names `—`.
+
+---

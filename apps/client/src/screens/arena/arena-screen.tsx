@@ -19,6 +19,7 @@ import type { ReactElement } from 'react';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import type { TableScreenProps } from '../table';
 import { arenaRegionAttributes } from './arena-regions';
+import { TopBar } from './top-bar';
 
 export type ArenaScreenProps = TableScreenProps;
 
@@ -35,8 +36,15 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
       className="v7-ground relative flex h-full w-full min-w-0 flex-col overflow-hidden font-v7-body text-v7-text"
     >
       <div {...arenaRegionAttributes('top-bar')} className="shrink-0 px-2 pt-2">
-        {/* Clock slot: L74-21 renders the turn clock here (spec v7 §6.10). */}
-        <div data-zone="timers" data-hint-anchor="your-turn" />
+        {/* `onLeave` and `onForfeit` are App-level, not ArenaIntents (Appendix A.6): the bar calls them from its confirm. */}
+        <TopBar
+          view={view}
+          readOnly={readOnly}
+          statusLabel={props.statusLabel}
+          onLeave={props.onLeave}
+          onForfeit={props.onForfeit}
+          {...(props.onOpenFeedback !== undefined ? { onOpenFeedback: props.onOpenFeedback } : {})}
+        />
       </div>
       <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
         <p data-zone="log-collapsed" className="truncate text-v7-caption text-v7-text-2">
