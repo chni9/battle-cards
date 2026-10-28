@@ -806,9 +806,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
     Meta or Shift stays the browser's.
   - The class strings are `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS`,
-    `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the color)
-    and `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and metric
-    labels). No page keeps a private copy.
+    `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_FIELD_CLASS` (every input and select: 16px, 44px, panel-2
+    fill, flat outline, focus ring), `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the
+    color) and `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and
+    metric labels). No page keeps a private copy.
   - `AdminStatus` errors are a 1px `--danger` outlined `--panel` box with the `eliminated`
     cross and `--text` words. There is no one-sided border stripe: the Impeccable `side-tab`
     rule flags it (spec v7 §12.4).
@@ -842,6 +843,11 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
     `GET /api/admin/*`.
   - Nav: Overview, Matches, Kits, Feedback, Database. Default filters exclude tutorial rows.
+  - Filters (`AdminFiltersForm`, shared by Overview, Matches and Kits; L80-03): From, To,
+    Opponents, Seat count, Kit and the tutorial toggle, then a primary Apply. Edits send nothing
+    until Apply. Seat count is a select over `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`,
+    so it can never send a value the server ignores; its 'Any seat count' option
+    (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends none.
   - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
     Bots and seats, Endings, Retention and feedback) from one `GET /api/admin/overview`
     payload.

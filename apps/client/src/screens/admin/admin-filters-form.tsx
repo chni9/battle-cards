@@ -1,16 +1,26 @@
+/**
+ * The match filters shared by Overview, Matches and Kits (Appendix A `admin-filters-form`),
+ * restyled for tool mode (technical spec v7 §7.8, L80-03). Edits stay in the caller's state;
+ * only Apply sends them (`filtersToQuery`).
+ *
+ * Seat count is a select over `ADMIN_OCCUPANCY_KEYS` (2–8, the values the server accepts), so it
+ * can never send a value the server ignores. Its empty option sends no `occupancy`.
+ */
+
 import type { ReactElement } from 'react';
 
-import type { AdminFilterState } from '../../admin/filter-query';
-import { KIT_IDS } from '@card-battle/shared';
+import { ADMIN_OCCUPANCY_KEYS, KIT_IDS } from '@card-battle/shared';
 
-import { Button } from '../../design/components/button';
 import { kitDisplayName } from '../../admin/admin-present';
-
-const inputClassName = [
-  'mt-1.5 block w-full min-h-10 rounded-[length:var(--radius-control)]',
-  'border border-border bg-surface-raised px-3 py-2 font-sans text-sm text-ink',
-  'placeholder:text-ink-muted/60',
-].join(' ');
+import type { AdminFilterState } from '../../admin/filter-query';
+import { Button } from '../../ui/primitives/button';
+import {
+  ADMIN_FIELD_CLASS,
+  ADMIN_FIELD_LABEL_CLASS,
+  ADMIN_PANEL_CLASS,
+  ADMIN_SECTION_TITLE_CLASS,
+} from './admin-classes';
+import { ANY_SEAT_COUNT_LABEL } from './admin-filters-copy';
 
 interface AdminFiltersFormProps {
   filters: AdminFilterState;
@@ -24,22 +34,19 @@ export function AdminFiltersForm({
   onApply,
 }: AdminFiltersFormProps): ReactElement {
   return (
-    <section
-      className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4 md:p-5"
-      aria-labelledby="admin-filters-heading"
-    >
-      <h3 id="admin-filters-heading" className="font-sans text-sm font-semibold text-ink">
+    <section className={ADMIN_PANEL_CLASS} aria-labelledby="admin-filters-heading">
+      <h3 id="admin-filters-heading" className={ADMIN_SECTION_TITLE_CLASS}>
         Filters
       </h3>
-      <p className="mt-1 text-xs text-ink-muted">
+      <p className="mt-1 font-v7-body text-v7-caption font-bold text-v7-text-2">
         Tutorial matches are hidden unless you include them below. From and To
         use your local clock.
       </p>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="block text-xs font-medium text-ink-muted">
-          From
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className={ADMIN_FIELD_LABEL_CLASS}>From</span>
           <input
-            className={inputClassName}
+            className={ADMIN_FIELD_CLASS}
             type="datetime-local"
             value={filters.from}
             onChange={(event) => {
@@ -47,10 +54,10 @@ export function AdminFiltersForm({
             }}
           />
         </label>
-        <label className="block text-xs font-medium text-ink-muted">
-          To
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className={ADMIN_FIELD_LABEL_CLASS}>To</span>
           <input
-            className={inputClassName}
+            className={ADMIN_FIELD_CLASS}
             type="datetime-local"
             value={filters.to}
             onChange={(event) => {
@@ -58,10 +65,10 @@ export function AdminFiltersForm({
             }}
           />
         </label>
-        <label className="block text-xs font-medium text-ink-muted">
-          Opponents
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className={ADMIN_FIELD_LABEL_CLASS}>Opponents</span>
           <select
-            className={inputClassName}
+            className={ADMIN_FIELD_CLASS}
             value={filters.bots}
             onChange={(event) => {
               onChange({
@@ -75,22 +82,27 @@ export function AdminFiltersForm({
             <option value="withBots">Includes bots</option>
           </select>
         </label>
-        <label className="block text-xs font-medium text-ink-muted">
-          Seat count
-          <input
-            className={inputClassName}
-            inputMode="numeric"
-            placeholder="2–8"
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className={ADMIN_FIELD_LABEL_CLASS}>Seat count</span>
+          <select
+            className={ADMIN_FIELD_CLASS}
             value={filters.occupancy}
             onChange={(event) => {
               onChange({ ...filters, occupancy: event.target.value });
             }}
-          />
+          >
+            <option value="">{ANY_SEAT_COUNT_LABEL}</option>
+            {ADMIN_OCCUPANCY_KEYS.map((seats) => (
+              <option key={seats} value={String(seats)}>
+                {seats}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="block text-xs font-medium text-ink-muted">
-          Kit
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className={ADMIN_FIELD_LABEL_CLASS}>Kit</span>
           <select
-            className={inputClassName}
+            className={ADMIN_FIELD_CLASS}
             value={filters.kit}
             onChange={(event) => {
               onChange({ ...filters, kit: event.target.value });
@@ -104,10 +116,10 @@ export function AdminFiltersForm({
             ))}
           </select>
         </label>
-        <label className="flex min-h-10 items-center gap-2 pt-5 text-sm text-ink">
+        <label className="flex min-h-11 items-center gap-2 self-end font-v7-body text-v7-body font-bold text-v7-text">
           <input
             type="checkbox"
-            className="size-4 rounded border-border"
+            className="size-5 accent-v7-cta-2"
             checked={filters.includeTutorial}
             onChange={(event) => {
               onChange({ ...filters, includeTutorial: event.target.checked });
@@ -117,7 +129,7 @@ export function AdminFiltersForm({
         </label>
       </div>
       <div className="mt-4">
-        <Button compact type="button" variant="green" onClick={onApply}>
+        <Button variant="primary" onClick={onApply}>
           Apply
         </Button>
       </div>

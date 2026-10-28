@@ -1340,6 +1340,11 @@ values.
   values at `text-v7-vital`, tabular); Nunito for body, descriptions, labels and table text.
   Same floors as the game: 11px functional text, and every admin input, select and textarea at
   `text-v7-input` (16px) so iOS never zooms on focus.
+- **Fields:** `ADMIN_FIELD_CLASS` (`screens/admin/admin-classes.ts`) styles every admin input
+  and select: `text-v7-input` (16px, so iOS never zooms on focus), a 44px minimum height, the
+  `--panel-2` fill, the flat 1px tool-line outline (`CHROME_FLAT_SM_CLASS`) and the shared focus
+  ring. The label above a field is `ADMIN_FIELD_LABEL_CLASS` (Nunito, caption step); a native
+  checkbox is `size-5` with `accent-v7-cta-2`. No admin file keeps a private copy of the class.
 - **Button roles:** the action that commits (Unlock, Apply) is `variant="primary"`; downloads,
   Sign out, Close and Previous / Next are `variant="quiet"`. Buttons come from
   `ui/primitives/button`, dialogs from `ui/primitives/dialog`.
