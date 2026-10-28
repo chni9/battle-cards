@@ -873,13 +873,15 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   placements, or grid rows laid out by the same pure helper the arrows use) and is drawn at
   `SEAT_BOX.portrait` in every mode until L75. A seat is one button named by the full nickname
   over the anatomy:
-  - the name in its seat hue, truncated with a `title`;
+  - the name in its seat hue, truncated and `aria-hidden` (the button carries it);
   - a `KitPortrait` thumb or the seat-hue initial `Avatar`;
   - a lives pill and a points / upgrade points / shield column (`?` when hidden, a
     `data-resource-kind` on each);
   - two status badges and `+n` (`seatBadgeView`).
-  Bot and connection show as icons, with their words for screen readers and in the title; the
-  seat sheet shows them in full. Actives and Sentences are badges here, and their thumbs live
+  Bot and connection show as icons, with their words for screen readers; the seat sheet shows
+  them in full. The anatomy takes no pointer, so the button's `title` is the one tooltip: the
+  full nickname, then the connection label and the bot words (`botSeatLabelText`,
+  `ui/seat/bot-seat-label-text.ts`), joined with ` · `. Actives and Sentences are badges here, and their thumbs live
   in the seat sheet. Anchors: `data-zone="opponent-seat"`, `data-player-id`, `data-seat`,
   `data-seat-index`, `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
   `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`

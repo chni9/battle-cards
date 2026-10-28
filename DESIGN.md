@@ -1299,6 +1299,9 @@ stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat
   `bot` icon, "Bot" in `--text-2` and the tier in `--text`, on `--panel`. The dot is
   `aria-hidden`. The children carry no whitespace text nodes, so `textContent` is exactly
   `Bot·Easy`. No role and no `aria-label`: the visible text is the spoken text, as in V2.
+  Its words come from the pure `bot-seat-label-text.ts` (`botSeatLabelParts`, and
+  `botSeatLabelText` = "Bot · Hard" as plain text), which the arena seat reads for its `title`
+  because the Lot 74 import rule bars `bots/` (L74-04, plan ruling 8 exception for `ui/seat/`).
 - **ConnectionBadge:** copy and the 3 / 5 thresholds unchanged (`connectionBadgeLabel`):
   "eliminated", "disconnected — grace", "absent N/3", "idle timeouts N/5", and no badge for a
   connected seat with no timeouts. Eliminated is `--text` on `--bg-0` with the `eliminated`

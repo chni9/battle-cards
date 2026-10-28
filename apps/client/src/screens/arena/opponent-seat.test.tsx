@@ -165,6 +165,13 @@ describe('opponent seat anatomy (§6.2)', () => {
     expect(name?.textContent).toContain(LONG_NICK);
   });
 
+  it('a truncated long nickname: the seat title carries the full nickname, then the bot words; the name is spoken once (Q1)', () => {
+    renderSeats(replacePlayer(makeArenaView({ seatCount: 8 }), makePlayer('p1', { nickname: LONG_NICK, isBot: true, botDifficulty: 'easy' })), PHONE_360);
+    const button = within(seatEl('p1')).getByRole('button', { name: LONG_NICK });
+    expect(button.getAttribute('title')).toBe(`${LONG_NICK} · Bot · Easy`);
+    expect(seatEl('p1').querySelector('[data-seat-name] [aria-hidden="true"]')?.textContent).toBe(LONG_NICK);
+  });
+
   it('shows two status badges then +n; the eye keeps data-spy-eye', () => {
     const p1 = makePlayer('p1', {
       spyingOnYou: true,
@@ -187,9 +194,22 @@ describe('opponent seat anatomy (§6.2)', () => {
     view = replacePlayer(view, makePlayer('p2', { connection: { status: 'disconnected', disconnectedAt: 0, automaticTurnsTaken: 0, consecutiveTimeouts: 0 } }));
     renderSeats(view);
     expect(seatEl('p1').querySelector('[data-seat-bot]')?.textContent).toBe('Bot·Hard');
+    expect(seatEl('p1').querySelector('[data-seat-bot]')?.getAttribute('title')).toBe('Bot · Hard');
     expect(seatEl('p2').querySelector('[data-seat-connection]')?.getAttribute('title')).toBe('disconnected — grace');
     expect(seatEl('p2').querySelector('[data-seat-connection]')?.textContent).toBe('disconnected — grace');
     expect(seatEl('p3').querySelector('[data-seat-bot], [data-seat-connection]')).toBeNull();
+    // The anatomy takes no pointer, so the button's title is the tooltip a pointer reaches (designer Q1).
+    const titleOf = (id: string) => within(seatEl(id)).getByRole('button', { name: id }).getAttribute('title');
+    expect(titleOf('p1')).toBe('p1 · Bot · Hard');
+    expect(titleOf('p2')).toBe('p2 · disconnected — grace');
+    expect(titleOf('p3')).toBe('p3');
+  });
+
+  it('an eliminated seat with no reveal greys its initial disc and adds the cross', () => {
+    renderSeats(replacePlayer(makeArenaView(), makePlayer('p1', { isEliminated: true })));
+    const portrait = seatEl('p1').querySelector('[data-zone="opponent-portrait"]');
+    expect(portrait?.querySelector('[data-zone="kit-portrait"]')).toBeNull();
+    expect(portrait?.querySelector('[data-eliminated="true"] svg[data-icon="eliminated"]')).not.toBeNull();
   });
 
   it('shows a Gambler draw gain the POV receives (Q47)', () => {

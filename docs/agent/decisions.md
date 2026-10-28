@@ -5282,7 +5282,15 @@ A.8.9.
   points / upgrade points / shield column; at most two status badges and "+n".
 - **Compact statuses.** `BotSeatLabel` (about 95 px) and the connection chip (up to about
   150 px) cannot fit 76 px. The seat shows the `bot` and `disconnected` icons with their words
-  for screen readers and in a `title`; the seat sheet (L74-05) shows both in full.
+  for screen readers; the seat sheet (L74-05) shows both in full.
+- **Words in the title (designer answer Q1).** The anatomy takes no pointer, so a `title`
+  inside it never shows. The seat button carries the one reachable `title`: the full
+  nickname, then the connection label and the bot words, joined with ` · `
+  ("p1 · Bot · Hard"); its accessible name stays exactly the nickname. The bot words come
+  from `ui/seat/bot-seat-label-text.ts` (`botSeatLabelText`, also behind `BotSeatLabel`)
+  because the arena import rule bars `bots/`: a controller-approved exception to plan
+  ruling A.8.8 for `ui/seat/`. The visible name is `aria-hidden`, so the button's description
+  does not repeat it.
 - **Actives and Sentences.** On the seat they are the `SeatModel` badges. Their 44 px thumbs,
   which open the read-only card sheet, live in the seat sheet (L74-05).
 - **One control.** The seat is one button named by the nickname. The portrait is the

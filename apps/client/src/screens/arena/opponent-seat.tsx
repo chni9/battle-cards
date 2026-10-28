@@ -5,8 +5,13 @@
  *
  * - **One control.** A stretched `<button>` named by the full nickname covers the seat; the
  *   anatomy is a non-interactive sibling it points to with `aria-describedby`, so no control
- *   nests inside another (frontend.md › Kit, Nesting). The visible name truncates with a
- *   `title`, while the accessible name keeps all 24 characters (plan Review Focus 5).
+ *   nests inside another (frontend.md › Kit, Nesting). The visible name truncates, while the
+ *   accessible name keeps all 24 characters (plan Review Focus 5); the visible name is
+ *   `aria-hidden`, so the description does not repeat it.
+ * - **Words in the title (designer answer Q1).** The anatomy takes no pointer, so the one
+ *   tooltip a pointer can reach is the button's: the full nickname, then the connection label
+ *   and the bot words, joined with ` · `. The bot and connection icons speak the same words to
+ *   screen readers; the seat sheet (L74-05) prints them. Every word is public.
  * - **Rows** (14 + 53 + 16 px inside the 3 px outline): the name in its seat hue with the
  *   connection and bot icons; the kit thumb or the initial disc beside the lives pill and the
  *   points / upgrade points / shield column; at most two status badges and "+n".
@@ -29,6 +34,7 @@ import { Avatar } from '../../ui/primitives/avatar';
 import { CHROME_FOCUS_CLASS, CHROME_SHAPE_SM_CLASS } from '../../ui/primitives/chrome-classes';
 import { RESOURCE_CAPTIONS } from '../../ui/resource-captions';
 import { BotSeatLabel } from '../../ui/seat/bot-seat-label';
+import { botSeatLabelText } from '../../ui/seat/bot-seat-label-text';
 import { PlayerName } from '../../ui/seat/player-name';
 import type { SeatPlacement } from '../../view-model/seat-layout';
 import { SEAT_VISIBLE_BADGE_COUNT, type SeatModel, type SeatResource } from '../../view-model/seats';
@@ -49,6 +55,8 @@ const LIVES_PILL_CLASS =
   'flex h-4 items-center gap-0.5 rounded-v7-chrome-sm bg-v7-panel-2 px-0.5 ring-2 ring-v7-life ring-inset';
 const RESOURCE_ROW_CLASS = 'flex h-3 items-center gap-0.5 px-0.5';
 const BADGE_CHIP_CLASS = 'flex items-center gap-px rounded-v7-chrome-sm bg-v7-panel-2 p-px';
+/** Between the nickname, the connection label and the bot words in the seat's `title`. */
+const SEAT_TITLE_SEPARATOR = ' · ';
 
 function ResourceValue({ resource }: { resource: SeatResource }): ReactElement {
   const { kind, value } = resource;
@@ -73,6 +81,10 @@ function ResourceValue({ resource }: { resource: SeatResource }): ReactElement {
 export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProps): ReactElement {
   const detailsId = useId();
   const rect = seatRect(center);
+  const botWords = model.botDifficulty !== null ? botSeatLabelText(model.botDifficulty) : null;
+  const seatTitle = [model.nickname, model.connectionLabel, botWords]
+    .filter((words): words is string => words !== null)
+    .join(SEAT_TITLE_SEPARATOR);
   const style: CSSProperties = {
     left: `${String(rect.left)}px`,
     top: `${String(rect.top)}px`,
@@ -104,6 +116,7 @@ export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProp
         type="button"
         aria-label={model.nickname}
         aria-describedby={detailsId}
+        title={seatTitle}
         onClick={() => {
           onOpen(model.playerId);
         }}
@@ -111,11 +124,14 @@ export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProp
       />
       <div id={detailsId} className="pointer-events-none relative flex h-full min-w-0 flex-col">
         <div data-seat-name title={model.nickname} className="flex min-w-0 items-center gap-0.5">
-          <PlayerName
-            nickname={model.nickname}
-            seatIndex={model.seatColorIndex}
-            className="min-w-0 truncate text-v7-caption leading-[14px]"
-          />
+          {/* Hidden from the description: the button already carries the name. */}
+          <span aria-hidden="true" className="flex min-w-0">
+            <PlayerName
+              nickname={model.nickname}
+              seatIndex={model.seatColorIndex}
+              className="min-w-0 truncate text-v7-caption leading-[14px]"
+            />
+          </span>
           {model.connectionLabel !== null ? (
             <span data-seat-connection title={model.connectionLabel} className="inline-flex shrink-0">
               <Icon name="disconnected" size={12} />
@@ -123,7 +139,7 @@ export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProp
             </span>
           ) : null}
           {model.botDifficulty !== null ? (
-            <span data-seat-bot className="inline-flex shrink-0">
+            <span data-seat-bot title={botSeatLabelText(model.botDifficulty)} className="inline-flex shrink-0">
               <Icon name="bot" size={12} />
               <span className="sr-only">
                 <BotSeatLabel difficulty={model.botDifficulty} />
