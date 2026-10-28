@@ -119,7 +119,11 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
   const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
   const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
+  const filterKey = JSON.stringify(applied);
   const listKey = JSON.stringify({ applied, page: pageNumber });
+  // The last page count the server gave for the current filters. Paging keeps it, so the pager
+  // label (an aria-live region) never announces a wrong total while the next page loads.
+  const [knownPageCount, setKnownPageCount] = useState<{ filterKey: string; count: number } | null>(null);
   const [detail, setDetail] = useState<Awaited<
     ReturnType<typeof fetchAdminGameDetail>
   > | null>(null);
@@ -141,13 +145,17 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         return;
       }
       setPage(result.data);
+      setKnownPageCount({
+        filterKey,
+        count: adminPageCount(result.data.total, result.data.pageSize),
+      });
       setLoadedKey(listKey);
       setError(null);
     });
     return () => {
       cancelled = true;
     };
-  }, [password, applied, pageNumber, listKey]);
+  }, [password, applied, pageNumber, listKey, filterKey]);
 
   useEffect(() => {
     if (activeDetail === null) {
@@ -192,6 +200,15 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const loaded = loadedKey === listKey;
   const visiblePage = loaded ? page : null;
   const items = visiblePage?.items ?? [];
+  // Until the page for this key loads the total is the last one known for these filters, never
+  // below the page itself ("Page 2 of 3" while page 2 loads, never "Page 2 of 2"). New filters
+  // forget it: another result set has another total, so nothing is known until it loads, and the
+  // label reads "Page 1 of 1" as at first load.
+  const lastKnownCount = knownPageCount?.filterKey === filterKey ? knownPageCount.count : 1;
+  const pagerCount =
+    visiblePage === null
+      ? Math.max(lastKnownCount, pageNumber)
+      : adminPageCount(visiblePage.total, visiblePage.pageSize);
 
   return (
     <div className="space-y-8">
@@ -244,11 +261,9 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
           rowOpenLabel={(row) => `Open match ${row.roomId}`}
         />
       ) : null}
-      {/* Until the page for this key loads there is no total, so the count is the page itself:
-          "Page 1 of 1" at first, never "Page 2 of 1". */}
       <AdminPager
         page={pageNumber}
-        pageCount={visiblePage === null ? pageNumber : adminPageCount(visiblePage.total, visiblePage.pageSize)}
+        pageCount={pagerCount}
         onPage={setPageNumber}
         disabled={visiblePage === null}
       />

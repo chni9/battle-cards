@@ -889,7 +889,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `pageSize` (the server default 50 applies; there is no size picker). **Apply** sets the
     filters and goes back to page 1. While the page for the key is not loaded the table is
     replaced by `Loading…` and the pager is off; on an error the rows are gone and the alert
-    shows. **Showing X of Y** stays. Each row's Room code cell is a button named
+    shows. The pager label keeps the last page count the server gave for the same filters
+    (never below the page itself), so its `aria-live` text reads `Page 2 of 3` while page 2
+    loads, not `Page 2 of 2`; new filters forget it and read `Page 1 of 1` until their first
+    page loads. **Showing X of Y** stays. Each row's Room code cell is a button named
     `Open match {roomId}` that opens `/admin/games/{finished_games.id}`, never the room code;
     the dialog hands focus back to it on close.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page

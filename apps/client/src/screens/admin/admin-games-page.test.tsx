@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 import type { AdminGameListItem } from '@card-battle/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { exportGamesListXlsx } from '../../export/admin-xlsx';
 import { renderUi } from '../../test/render';
 import { AdminGamesPage } from './admin-games-page';
 import { makeGameDetail, makeGameListItem, makeGamesPage } from './admin-fixtures';
-import { installFakeFetch } from './admin-test-harness';
+import { installFakeFetch, setAdminPath } from './admin-test-harness';
 
 // No test writes a file: the page only has to hand the loaded page to the exporter.
 vi.mock('../../export/admin-xlsx', () => ({ exportGamesListXlsx: vi.fn() }));
@@ -88,6 +88,9 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     await user.click(pagerButton('Next'));
     expect(fake.to(GAMES_PATH)).toHaveLength(2);
     expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('2');
+    // The label sits in an aria-live region: while page 2 loads it keeps the last known total
+    // rather than announcing "Page 2 of 2" first.
+    expect(pageText()).toBe('Page 2 of 3');
     await fake.last(GAMES_PATH).respond(200, pageOf(2, 'page2a'));
     expect(pageText()).toBe('Page 2 of 3');
     expect(pagerButton('Previous').disabled).toBe(false);
@@ -115,8 +118,27 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(fake.to(GAMES_PATH)).toHaveLength(3);
     expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('1');
+    // The filters did not change, so the last known total still holds while page 1 loads.
+    expect(pageText()).toBe('Page 1 of 3');
     await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1b'));
     expect(pageText()).toBe('Page 1 of 3');
+  });
+
+  it('new filters forget the last known page count until their first page loads', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
+    await user.click(pagerButton('Next'));
+    await fake.last(GAMES_PATH).respond(200, pageOf(2, 'page2a'));
+    expect(pageText()).toBe('Page 2 of 3');
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'humans');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    // Another filter set has another total, so the old "of 3" would be a guess.
+    expect(pageText()).toBe('Page 1 of 1');
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage(itemsStartingWith('few', 10), { total: 10 }));
+    expect(pageText()).toBe('Page 1 of 1');
+    expect(pagerButton('Next').disabled).toBe(true);
   });
 
   it('a slower page-2 response arriving after Apply requests page 1 is ignored', async () => {
@@ -177,6 +199,7 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(pagerButton('Next').disabled).toBe(true);
 
     await fake.last(GAMES_PATH).respond(503);
+    expect(pageText()).toBe('Page 2 of 3');
     expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('table')).toBeNull();
@@ -265,6 +288,60 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(location.pathname).toBe('/admin/games');
     expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
     expect(document.activeElement).toBe(rowButton);
+  });
+
+  it('closing a deep-linked match returns to /admin/games and does not reopen it while the URL prop stays', async () => {
+    // The shell only re-routes on popstate, which replaceState does not fire: after Close the
+    // page is still handed detailId="fg-1" and must not open it again (`ignoreUrlDetail`).
+    setAdminPath('/admin/games/fg-1');
+    const fake = installFakeFetch();
+    const { rerender, user } = renderUi(<AdminGamesPage password="secret" detailId="fg-1" />);
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+    await fake.last('/api/admin/games/fg-1').respond(200, makeGameDetail({ id: 'fg-1', roomId: 'ABCDEF' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Match ABCDEF' })).not.toBeNull();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(location.pathname).toBe('/admin/games');
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+
+    // A parent re-render with the same URL-derived prop does not bring the dialog back.
+    rerender(<AdminGamesPage password="secret" detailId="fg-1" />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+    expect(location.pathname).toBe('/admin/games');
+  });
+
+  it('after a deep-linked match is closed, closing another match does not fall back to the URL match', async () => {
+    // Without `ignoreUrlDetail`, a closed pick falls back to the URL prop and fetches it again.
+    setAdminPath('/admin/games/fg-1');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId="fg-1" />);
+    await fake.last(GAMES_PATH).respond(
+      200,
+      makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' }), makeGameListItem('fg-2', { roomId: 'GHIJKL' })]),
+    );
+    await fake.last('/api/admin/games/fg-1').respond(200, makeGameDetail({ id: 'fg-1', roomId: 'ABCDEF' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open match GHIJKL' }));
+    expect(location.pathname).toBe('/admin/games/fg-2');
+    await fake.last('/api/admin/games/fg-2').respond(200, makeGameDetail({ id: 'fg-2', roomId: 'GHIJKL' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    expect(location.pathname).toBe('/admin/games');
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+    expect(fake.to('/api/admin/games/fg-2')).toHaveLength(1);
   });
 
   it('a mouse click on a row opens that match too', async () => {
