@@ -59,8 +59,8 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
 - `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
   structured-cost, hint-ids, seat-colors, primitives/avatar-initial,
-  seat/connection-badge-label, viewport-mode), never a `ui/` component. Nothing in `view-model/` imports from
-  `design/` or `screens/table/`.
+  seat/connection-badge-label, viewport-mode), never a `ui/` component. Nothing in
+  `view-model/` imports from `design/` or `screens/table/`.
 - `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
   (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
   `import type`; nothing else in `view-model/` imports from `fx/`.
@@ -106,8 +106,10 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   left. Desktop: the full ellipse around the arena centre, the bottom slot left to the POV
   (a walk-in uses all n slots). Landscape-compact: one top band of n equal columns, reported
   as `kind: 'arc'`. Grid fallback when two seat boxes (`SEAT_BOX[mode]`, badge row included)
-  are under `SEAT_MIN_GAP_PX` (8) apart on both axes, or the arena cannot hold one seat:
-  `ceil(n/2)` over `floor(n/2)` in seat order. `SEAT_BOX`, `PLATE_BOX` and the gap are L74
+  are under `SEAT_MIN_GAP_PX` (8) apart on both axes, when the arena cannot hold one seat, or
+  when a portrait arena only a little taller than one seat leaves the ellipse a negative
+  vertical radius (the plate sits on its bottom edge): `ceil(n/2)` over `floor(n/2)` in seat
+  order. `SEAT_BOX`, `PLATE_BOX` and the gap are L74
   playtest values (§14.3); retuning them updates `seat-layout.test.ts`.
 - `view-model/threats.ts` (L73-04, spec v7 §6.5): `threats(view, subChoice)` gives one
   `ThreatEntry` per `pendingEffects` item, in wire order, each with its **own** label

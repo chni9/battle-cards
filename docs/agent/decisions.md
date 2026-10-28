@@ -5008,8 +5008,10 @@ playtest) and the Lot 73 brief's open walk-in question.
   (the layout union has no third kind).
 - **Gap test:** two seat boxes are too close when they are under `SEAT_MIN_GAP_PX` apart on
   both axes; 8 px or more on either axis separates them. An arena smaller than one seat
-  box (a 0×0 first paint) uses the grid. Grid rows are ceil(n/2) over floor(n/2) in seat
-  order; an empty second row is dropped.
+  box (a 0×0 first paint) uses the grid. So does a portrait arena only a little taller than
+  one seat, where the plate on the bottom edge leaves the ellipse a negative vertical
+  radius. Grid rows are ceil(n/2) over floor(n/2) in seat order; an empty second row is
+  dropped.
 - `SEAT_BOX` (portrait 76×92, landscape-compact 76×84, desktop 120×136), `PLATE_BOX` and the
   gap are L73 starting values. L74 tunes them and updates the L73 tests that pin the
   360-wide grid switch.

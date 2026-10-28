@@ -168,7 +168,10 @@ export function seatList(view: PlayingStateView): SeatList {
   };
 }
 
-/** The seat list plus where each seat sits (spec v7 §4.3, §6.4). `seats` keeps `view.players` order; the layout carries the drawing order. */
+/**
+ * The seat list plus where each seat sits (spec v7 §4.3, §6.4). `seats` keeps `view.players`
+ * order; the layout carries the drawing order.
+ */
 export interface SeatsModel extends SeatList {
   layout: SeatLayout;
 }

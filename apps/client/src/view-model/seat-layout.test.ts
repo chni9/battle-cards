@@ -3,7 +3,8 @@
  * grid fallback), §14.3 (the box constants are L74 playtest starting values) and §12.2 (behavior
  * tests only). Coordinates are asserted relative to `SEAT_BOX` and `PLATE_BOX` where the result
  * is exact, so retuning a constant in L74 moves only the two tests that pin the 360-wide grid
- * switch (17, 18).
+ * switch (17, 18) and the arc-count floor at the end of the gap test (22), which counts the arcs
+ * the L73 constants produce.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -165,6 +166,11 @@ describe('arc placement (§6.4)', () => {
         { playerId: 'p4', centerX: 647.5, centerY: y },
       ],
     });
+    // The plate sits midway between the band's bottom edge and the arena's.
+    expect(plateCenterFor('landscape-compact', LANDSCAPE.arena)).toEqual({
+      centerX: 370,
+      centerY: (SEAT_BOX['landscape-compact'].height + LANDSCAPE.arena.height) / 2,
+    });
   });
 
   it('a walk-in on desktop: 8 seats around the whole ellipse from turnOrder[0], none reserved', () => {
@@ -226,6 +232,17 @@ describe('grid fallback (§6.4)', () => {
     expect(
       layoutSeats(seated(2), { viewport: PHONE.viewport, arena: { width: 0, height: 0 } }),
     ).toEqual({ kind: 'grid', mode: 'portrait', rows: [['p1'], ['p2']] });
+  });
+
+  it('a portrait arena one pixel taller than a seat leaves a negative vertical radius: grid', () => {
+    const arena = { width: 360, height: SEAT_BOX.portrait.height + 1 };
+    // It holds one seat, but the plate on its bottom edge sits less than half a seat down.
+    expect(plateCenterFor('portrait', arena).centerY - SEAT_BOX.portrait.height / 2).toBeLessThan(0);
+    expect(layoutSeats(seated(1), { viewport: PHONE.viewport, arena })).toEqual({
+      kind: 'grid',
+      mode: 'portrait',
+      rows: [['p1']],
+    });
   });
 
   it('never leaves two arc seats closer than the gap, in any mode', () => {
