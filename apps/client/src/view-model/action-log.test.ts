@@ -4,11 +4,9 @@ import type { ActionLogEntryKind, ActionLogEntryView } from '@card-battle/shared
 
 import {
   ACTION_LOG_KINDS,
-  filterActionLog,
   formatActionLogEntry,
   formatActionLogEntrySegments,
   groupByRound,
-  groupByTurn,
   resourceDeltaClass,
   roundOfTurn,
 } from './action-log';
@@ -439,32 +437,7 @@ describe('formatActionLogEntry (L9-02)', () => {
   });
 });
 
-describe('filterActionLog / groupByTurn (L9-02)', () => {
-  it('filters by kind, player, and query', () => {
-    const filtered = filterActionLog(
-      sample,
-      {
-        playerId: 'b',
-        kinds: new Set(['actionPlayed']),
-        query: 'basic',
-      },
-      nick,
-    );
-
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0]?.kind).toBe('actionPlayed');
-  });
-
-  it('shows nothing when no kinds are selected', () => {
-    const filtered = filterActionLog(
-      sample,
-      { playerId: null, kinds: new Set(), query: '' },
-      nick,
-    );
-
-    expect(filtered).toHaveLength(0);
-  });
-
+describe('MEGA ATTACK phrasing and round grouping (L9-02)', () => {
   it('phrases MEGA ATTACK as an attack, including full shield absorb (L20-05)', () => {
     expect(
       formatActionLogEntry(
@@ -514,15 +487,6 @@ describe('filterActionLog / groupByTurn (L9-02)', () => {
         nick,
       ),
     ).not.toMatch(/life|absorbed by shield/);
-  });
-
-  it('groups consecutive entries by turnSequence', () => {
-    const groups = groupByTurn(sample);
-
-    expect(groups).toEqual([
-      { turnSequence: 1, entries: [sample[0]] },
-      { turnSequence: 2, entries: [sample[1], sample[2]] },
-    ]);
   });
 
   it('groups by table round from seat count (no turn numbers in grouping key)', () => {

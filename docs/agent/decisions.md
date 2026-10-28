@@ -5134,3 +5134,24 @@ Source: technical spec v7 §6.1 items 3 and 5, §6.3, §6.12 and Appendix A Q38;
   points (`clear-spy.ts` checks the spy before `payCost`).
 
 ---
+
+## 2026-10-27 · [P] Unused action-log filters removed (L73-11)
+
+Source: technical spec v7 §11 ("Dead code removed when its replacement lands: … unused log
+filters"), §13 Q62 and §6.9; Appendix A `table-action-log-panel` ("No player, kind or search
+filters (L45/L51)").
+
+- `view-model/action-log.ts` drops `filterActionLog`, `entryInvolvesPlayer`,
+  `ActionLogFilters`, `groupByTurn` and its return type `TurnGroup`. Since the panel dropped
+  its filter rail (L45/L51) only their own tests imported them. The V7 log sheet
+  (`view-model/log.ts`, §6.9) groups by round and has no filters.
+- Retired from the L9-02 block of `action-log.test.ts`: 'filters by kind, player, and
+  query', 'shows nothing when no kinds are selected' and 'groups consecutive entries by
+  turnSequence'. They covered only the deleted exports, so no shipped behavior loses a test.
+- The block's other two tests cover live code and stay verbatim under the renamed describe
+  'MEGA ATTACK phrasing and round grouping (L9-02)': MEGA ATTACK phrasing (L20-05) and
+  `groupByRound` / `roundOfTurn`.
+- `ACTION_LOG_KINDS` and its L56-03 test stay; L81-01 re-checks it. No player-visible
+  change: the old panel never called the removed helpers.
+
+---

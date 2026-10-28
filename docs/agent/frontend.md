@@ -1248,6 +1248,11 @@ rules above are unchanged — this section only covers how the client looks.
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
   `apps/client/src/action-log/` — scrollable round groups (no player/kind/search filters).
+  V7 reads it through `view-model/log.ts` `log(view)` (L73-11, spec v7 §6.9): the ticker is
+  the latest entry, rounds come from `groupByRound` with `view.players.length`, and each card
+  segment carries `inspectable` (the L56-05 list below; a `blockedBy` name stays text). Pass
+  `finalTable` on the finished board. The unused filter helpers (`filterActionLog`,
+  `entryInvolvesPlayer`, `ActionLogFilters`, `groupByTurn`) are gone (spec v7 §11, Q62).
   Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
