@@ -8,7 +8,8 @@
  * `apps/server/src/engine/turn/apply-persistent-effects.ts`, read from this recipient's own view
  * only (no hidden information, §6.3).
  *
- * Points Generator, Roulette, Super Absorber and Invisibility get no chip (§6.5 lists three cards).
+ * Points Generator, Roulette, Super Absorber, Invisibility and Sentence get no chip (§6.5 lists
+ * three cards).
  */
 
 import type { PersistentEffectView, PlayingStateView } from '@card-battle/shared';

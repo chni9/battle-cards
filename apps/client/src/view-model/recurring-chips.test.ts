@@ -97,10 +97,17 @@ describe('recurringChips (spec v7 §6.5, Q35)', () => {
         activePersistentEffects: [
           makePersistent({ id: 'im0', cardId: 'imposition', counter: 0 }),
           makePersistent({ id: 'po0', cardId: 'poison', counter: 0 }),
+          // The `makePersistent` default counter is null, which the server skips too.
+          makePersistent({ id: 'po-null', cardId: 'poison' }),
         ],
       },
     });
     expect(recurringChips(view)).toEqual([]);
+  });
+
+  it('keeps a Poison owned by an Invisible opponent live: the server never checks the owner', () => {
+    const view = table({ p1: { activePersistentEffects: [invisibility, poison('po1')] } });
+    expect(stateById(view)).toEqual({ cu1: 'live', po1: 'live', im1: 'live' });
   });
 
   it("ignores the POV's own Poison and Imposition and a Curse sitting on an opponent", () => {
