@@ -10,14 +10,17 @@ import { installFakeFetch, setAdminPath } from './admin-test-harness';
 const BLURB = 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.';
 
 describe('AdminApp shell (technical spec v7 §7.8, L61-06, L80-01)', () => {
-  it('opens the tool scope with the Designer header', () => {
+  it('opens the tool scope with the Insights header and no eyebrow above it', () => {
     installFakeFetch();
     setAdminPath('/admin');
     renderUi(<AdminApp />);
     const main = screen.getByRole('main');
     expect(main.getAttribute('data-mode')).toBe('tool');
-    expect(within(main).getByText('Designer')).not.toBeNull();
-    expect(within(main).getByRole('heading', { level: 1 }).textContent).toBe('Insights');
+    const heading = within(main).getByRole('heading', { level: 1 });
+    expect(heading.textContent).toBe('Insights');
+    // The "Designer" kicker is gone (designer 2026-10-28; Impeccable `kicker-above-heading`).
+    expect(within(main).queryByText('Designer')).toBeNull();
+    expect(heading.previousElementSibling).toBeNull();
     expect(within(main).getByText(BLURB)).not.toBeNull();
   });
 

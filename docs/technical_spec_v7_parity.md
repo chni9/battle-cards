@@ -3812,7 +3812,7 @@
   - Locked: the header plus the password gate. Sign out is absent.
   - Unlocked: the header, Sign out, nav and page. A stored password skips the gate with no probe.
   - Any 401 runs lockAdminSession, which clears the stored password and shows the gate again (subscribeAdminUnauthorized). A request started before a lock can neither store the old password again nor lock the session unlocked since (session counter, L80-02).
-  - Header copy: eyebrow 'Designer', h1 'Insights', blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.'
+  - Header copy: h1 'Insights' and the blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.' The 'Designer' eyebrow above the h1 was removed (designer 2026-10-28, L80-12).
   - Tool mode: `<main data-mode="tool">` on a flat --bg-0 ground with no .v7-ground halos; admin Dialogs carry data-mode="tool" themselves (L80-01).
 - **Keep:**
   - /admin loads without Colyseus and is never linked from the hub (L61-06, admin-route.test.ts).

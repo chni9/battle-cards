@@ -5393,3 +5393,18 @@ the L80-10 Database paging and the L80-11 entry above, which this note extends w
   Eliminations tab. Out of scope for Lot 80.
 
 ---
+
+## 2026-10-28 · [P] The admin header drops its Designer eyebrow (L80-12)
+
+Source: the Lot 80 design gate (technical spec v7 §12.4); the Impeccable `kicker-above-heading`
+finding on every admin page; designer 2026-10-28.
+
+- **Decision.** The `Designer` eyebrow above the `Insights` h1 in `AdminApp` is removed. The h1
+  and the blurb ('Finished matches, kit balance, feedback, and raw log tables. Not linked from
+  the player hub.') stay unchanged.
+- **Why.** The detector flags a small uppercase kicker over a heading, and the word adds
+  nothing: the page is already the designer's tool, and the blurb says so.
+- **Kept copy changed.** L80-01 kept the header copy as it was; this is the one line of it that
+  changed. `docs/technical_spec_v7_parity.md` `admin-shell` and `admin-app.test.tsx` follow.
+
+---

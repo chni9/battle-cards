@@ -56,10 +56,7 @@ export function AdminApp(): ReactElement {
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">
-              Designer
-            </p>
-            <h1 className="mt-2 font-v7-display text-v7-display text-v7-text">Insights</h1>
+            <h1 className="font-v7-display text-v7-display text-v7-text">Insights</h1>
             <p className="mt-2 max-w-xl font-v7-body text-v7-body font-bold text-v7-text-2">
               Finished matches, kit balance, feedback, and raw log tables. Not linked from the
               player hub.
