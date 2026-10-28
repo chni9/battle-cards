@@ -1,5 +1,9 @@
 // @vitest-environment happy-dom
-import { FEEDBACK_TRIAGE_STATUSES, FEEDBACK_TRIAGE_STATUS_LABEL } from '@card-battle/shared';
+import {
+  FEEDBACK_TRIAGE_STATUSES,
+  FEEDBACK_TRIAGE_STATUS_LABEL,
+  type FeedbackInboxRow,
+} from '@card-battle/shared';
 import { screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -68,10 +72,12 @@ function listedIds(): string[] {
   return ROWS.filter((row) => screen.queryByText(row.message) !== null).map((row) => row.id);
 }
 
-async function renderLoaded(): Promise<{ fake: ReturnType<typeof installFakeFetch>; user: UserEvent }> {
+async function renderLoaded(
+  rows: readonly FeedbackInboxRow[] = ROWS,
+): Promise<{ fake: ReturnType<typeof installFakeFetch>; user: UserEvent }> {
   const fake = installFakeFetch();
   const { user } = renderUi(<AdminFeedbackPage password="secret" />);
-  await fake.last(INBOX_PATH).respond(200, ROWS);
+  await fake.last(INBOX_PATH).respond(200, rows);
   return { fake, user };
 }
 
@@ -485,5 +491,80 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('group')).toBeNull();
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+  });
+});
+
+describe('AdminFeedbackPage focus after a mark takes a row out of the view (technical spec v7 §7.8, WCAG 2.4.3, L80-12)', () => {
+  const p1 = makeInboxRow('p1', { message: 'First pending report' });
+  const p2 = makeInboxRow('p2', { message: 'Second pending report' });
+  const p3 = makeInboxRow('p3', { message: 'Third pending report' });
+
+  function openButtonOf(row: FeedbackInboxRow): HTMLElement {
+    return screen.getByRole('button', { name: new RegExp(row.message) });
+  }
+
+  /** Presses Done on a Pending row by keyboard, and lets the PATCH resolve when `resolve` is set. */
+  async function pressDone(
+    harness: Awaited<ReturnType<typeof renderLoaded>>,
+    row: FeedbackInboxRow,
+    resolve = true,
+  ): Promise<void> {
+    const item = openButtonOf(row).closest('li');
+    if (item === null) throw new Error(`no row for ${row.id}`);
+    const done = markIn(item, FEEDBACK_TRIAGE_STATUS_LABEL.done);
+    done.focus();
+    await harness.user.keyboard('{Enter}');
+    expect(document.activeElement).toBe(done);
+    if (resolve) await harness.fake.last(`/api/inbox/${row.id}`).respond(200);
+  }
+
+  it('moves focus to the open button of the next row', async () => {
+    const harness = await renderLoaded([p1, p2, p3]);
+    await pressDone(harness, p1);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: /First pending report/ })).toBeNull();
+    expect(document.activeElement).toBe(openButtonOf(p2));
+  });
+
+  it('moves focus to the next row when the marked row is in the middle', async () => {
+    const harness = await renderLoaded([p1, p2, p3]);
+    await pressDone(harness, p2);
+    expect(document.activeElement).toBe(openButtonOf(p3));
+  });
+
+  it('moves focus to the open button of the previous row when the marked row was the last', async () => {
+    const harness = await renderLoaded([p1, p2, p3]);
+    await pressDone(harness, p3);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(document.activeElement).toBe(openButtonOf(p2));
+  });
+
+  it('moves focus to the empty message when the marked row was the only one', async () => {
+    const harness = await renderLoaded([p1]);
+    await pressDone(harness, p1);
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    const focused = document.activeElement;
+    // A focusable but not tabbable region around the message, so the screen reader reads it.
+    expect(focused?.getAttribute('tabindex')).toBe('-1');
+    expect(focused?.contains(screen.getByText(EMPTY))).toBe(true);
+  });
+
+  it('keeps focus where the designer moved it while the mark was saving', async () => {
+    const harness = await renderLoaded([p1, p2]);
+    await pressDone(harness, p1, false);
+    const kind = chip('Kind', 'Idea');
+    kind.focus();
+    await harness.fake.last('/api/inbox/p1').respond(200);
+    expect(screen.queryByRole('button', { name: /First pending report/ })).toBeNull();
+    expect(document.activeElement).toBe(kind);
+  });
+
+  it('keeps focus on the mark when the save fails and the row stays', async () => {
+    const harness = await renderLoaded([p1, p2]);
+    await pressDone(harness, p1, false);
+    const done = document.activeElement;
+    await harness.fake.last('/api/inbox/p1').respond(503);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(document.activeElement).toBe(done);
   });
 });

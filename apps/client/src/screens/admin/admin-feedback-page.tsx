@@ -20,7 +20,7 @@ import {
   type FeedbackTopic,
   type FeedbackTriageStatus,
 } from '@card-battle/shared';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 
 import { formatDateTime } from '../../admin/admin-present';
 import { adminErrorCopy, currentAdminSession, lockAdminSession } from '../../admin/fetch-admin';
@@ -166,6 +166,29 @@ function messagePreview(message: string): string {
   return `${message.slice(0, 96)}…`;
 }
 
+/**
+ * Where keyboard focus lands when a row mark takes `markedId` out of the filtered view (the default
+ * Pending view loses a row on every Done or Won't do): the next row that is still listed, else the
+ * previous one, else `null` when the list is now empty. `before` is the list as it was on screen
+ * and `after` the list now. `null` is also the answer when the row was not on screen before, so a
+ * filter change that already moved it away is never mistaken for the mark (WCAG 2.4.3; spec v7
+ * §7.8, L80-12).
+ */
+function rowToFocusAfterMark(
+  before: readonly FeedbackInboxRow[],
+  after: readonly FeedbackInboxRow[],
+  markedId: string,
+): FeedbackInboxRow | null {
+  const index = before.findIndex((row) => row.id === markedId);
+  if (index === -1) {
+    return null;
+  }
+  const listed = new Set(after.map((row) => row.id));
+  const next = before.slice(index + 1).find((row) => listed.has(row.id));
+  const previous = before.slice(0, index).findLast((row) => listed.has(row.id));
+  return next ?? previous ?? null;
+}
+
 interface AdminFeedbackPageProps {
   password: string;
 }
@@ -182,6 +205,13 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const [statusFilter, setStatusFilter] = useState<FeedbackTriageStatus | 'all'>('pending');
   const [openId, setOpenId] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
+  // Focus bookkeeping for a row mark that takes its row out of the view (L80-12): the open button
+  // of every listed row, the empty-message region, the row marked (set when its save succeeds,
+  // read by the next commit) and the list as the previous commit showed it.
+  const openButtons = useRef(new Map<string, HTMLButtonElement>());
+  const emptyRegion = useRef<HTMLDivElement>(null);
+  const markedRowId = useRef<string | null>(null);
+  const listedBefore = useRef<readonly FeedbackInboxRow[]>([]);
 
   useEffect(() => {
     const session = currentAdminSession();
@@ -200,6 +230,30 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const visible =
     rows === null ? [] : filterInbox(rows, kindFilter, topicFilter, statusFilter);
 
+  // The marked row's button is gone and the browser parks focus on the body. Move it to the
+  // neighbor row, or to the empty message, but only when it really was lost: a designer who
+  // moved on while the mark saved keeps their place. A mark pressed in the report is not tracked
+  // here: the dialog keeps focus (L80-09).
+  useLayoutEffect(() => {
+    const before = listedBefore.current;
+    listedBefore.current = visible;
+    const markedId = markedRowId.current;
+    markedRowId.current = null;
+    if (markedId === null || visible.some((row) => row.id === markedId)) {
+      return;
+    }
+    const active = document.activeElement;
+    if (active !== null && active !== document.body && active.isConnected) {
+      return;
+    }
+    const target = rowToFocusAfterMark(before, visible, markedId);
+    if (target !== null) {
+      openButtons.current.get(target.id)?.focus();
+    } else if (visible.length === 0) {
+      emptyRegion.current?.focus();
+    }
+  });
+
   function applyStatus(id: string, status: FeedbackTriageStatus, inReport: boolean): void {
     setSavingStatus(true);
     setSaveError(null);
@@ -212,6 +266,9 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         }
         setSaveError({ message: adminErrorCopy(result.status), reportId: inReport ? id : null });
         return;
+      }
+      if (!inReport) {
+        markedRowId.current = id;
       }
       setRows((current) =>
         current === null
@@ -298,7 +355,10 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
             </div>
           </div>
           {visible.length === 0 ? (
-            <AdminStatus state={{ kind: 'empty', message: 'No reports match these filters.' }} />
+            // Focusable, not tabbable: the last row marked away hands focus here (L80-12).
+            <div ref={emptyRegion} tabIndex={-1} className={`rounded-v7-chrome ${CHROME_FOCUS_CLASS}`}>
+              <AdminStatus state={{ kind: 'empty', message: 'No reports match these filters.' }} />
+            </div>
           ) : (
             <ul className={`${CHROME_OUTLINE_CLASS} divide-y divide-v7-ink rounded-v7-chrome bg-v7-panel`}>
               {visible.map((row) => (
@@ -306,6 +366,13 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                   <StatusBadge status={row.status} />
                   <button
                     type="button"
+                    ref={(element) => {
+                      if (element === null) {
+                        openButtons.current.delete(row.id);
+                      } else {
+                        openButtons.current.set(row.id, element);
+                      }
+                    }}
                     className={`min-w-0 flex-1 basis-56 rounded-v7-chrome-sm px-1 py-1 text-left ${CHROME_FOCUS_INSET_CLASS}`}
                     onClick={() => {
                       setOpenId(row.id);
