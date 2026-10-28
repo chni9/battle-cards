@@ -5277,3 +5277,23 @@ Source: technical spec v7 §7.8 ("keyboard rows"), §12.1; Lot 80 plan Appendix 
   page, and the effect's cancel flag ignores the older answer.
 
 ---
+
+## 2026-10-28 · [P] Match detail focus return now comes from the V7 Dialog (L80-07)
+
+Source: technical spec v7 §7.8, §6.7; follows the L80-06 entry above (not edited: it is a past
+decision).
+
+- **What changed.** The L80-06 entry says the V2 Dialog restores focus to the row button. The
+  detail dialog is now the V7 `ui/primitives/dialog` (`AdminGameDetailDialog`), so the V7
+  `useFocusTrap` does it: when the open cycle ends and focus is lost it returns to the opener,
+  the element focused when the dialog opened, here the `Open match {code}` button, if that
+  element is still reachable. The L80-06 choice (a row `<button>`, no `<tr>` handlers) is
+  unchanged, and the test `closing returns to /admin/games, does not reopen the URL detail, and
+  puts focus back on the row` passes as written.
+- **A retry opens again.** The detail request is keyed by the active match id. A 404 or 503
+  leaves that id active, so picking the same row again would not have run the effect. Each
+  opening now bumps a counter in the effect's dependencies, and the answer is cleared at the
+  same time, so a retry shows `Loading…` and asks again instead of waiting on a request that is
+  never sent.
+
+---

@@ -344,6 +344,122 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(fake.to('/api/admin/games/fg-2')).toHaveLength(1);
   });
 
+  it('a deep link to /admin/games/:id shows Loading… then the dialog', async () => {
+    setAdminPath('/admin/games/fg-1');
+    const fake = installFakeFetch();
+    renderUi(<AdminGamesPage password="secret" detailId="fg-1" />);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+
+    // The list is in, the detail is still on its way: one Loading… line, no dialog yet.
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await fake.last('/api/admin/games/fg-1').respond(200, makeGameDetail({ id: 'fg-1', roomId: 'ABCDEF' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    const dialog = screen.getByRole('dialog', { name: 'Match ABCDEF' });
+    expect(dialog.getAttribute('data-mode')).toBe('tool');
+  });
+
+  it('an older detail response arriving after a newer one is ignored', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(
+      200,
+      makeGamesPage([makeGameListItem('fg-a', { roomId: 'AAAAAA' }), makeGameListItem('fg-b', { roomId: 'BBBBBB' })]),
+    );
+
+    // Nothing is open while a detail loads, so a second row can be picked before the first answers.
+    await user.click(screen.getByRole('button', { name: 'Open match AAAAAA' }));
+    const older = fake.last('/api/admin/games/fg-a');
+    await user.click(screen.getByRole('button', { name: 'Open match BBBBBB' }));
+    const newer = fake.last('/api/admin/games/fg-b');
+    expect(location.pathname).toBe('/admin/games/fg-b');
+
+    await newer.respond(200, makeGameDetail({ id: 'fg-b', roomId: 'BBBBBB' }));
+    await older.respond(200, makeGameDetail({ id: 'fg-a', roomId: 'AAAAAA' }));
+
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('dialog', { name: 'Match BBBBBB' })).not.toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Match AAAAAA' })).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('an older detail response arriving while a newer one is pending shows neither', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(
+      200,
+      makeGamesPage([makeGameListItem('fg-a', { roomId: 'AAAAAA' }), makeGameListItem('fg-b', { roomId: 'BBBBBB' })]),
+    );
+    await user.click(screen.getByRole('button', { name: 'Open match AAAAAA' }));
+    const older = fake.last('/api/admin/games/fg-a');
+    await user.click(screen.getByRole('button', { name: 'Open match BBBBBB' }));
+
+    await older.respond(503);
+    // The failure belongs to the match that is no longer open: no alert, and B is still loading.
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+  });
+
+  it.each([
+    [404, 'Not found'],
+    [503, 'Database unavailable'],
+  ])('%i shows %s, with the dialog closed', async (status, copy) => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+    await user.click(screen.getByRole('button', { name: 'Open match ABCDEF' }));
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+
+    await fake.last('/api/admin/games/fg-1').respond(status);
+    expect(screen.getByRole('alert').textContent).toBe(copy);
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('picking the same match again after a failure asks again and opens it', async () => {
+    // `activeDetail` does not change on a retry, so the page must ask again on its own.
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+    await user.click(screen.getByRole('button', { name: 'Open match ABCDEF' }));
+    await fake.last('/api/admin/games/fg-1').respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+
+    await user.click(screen.getByRole('button', { name: 'Open match ABCDEF' }));
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(2);
+    // The old alert is gone the moment the retry starts.
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+
+    await fake.last('/api/admin/games/fg-1').respond(200, makeGameDetail({ id: 'fg-1', roomId: 'ABCDEF' }));
+    expect(screen.getByRole('dialog', { name: 'Match ABCDEF' })).not.toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it.each(['Escape', 'Close'])('%s returns to /admin/games', async (how) => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+    await user.click(screen.getByRole('button', { name: 'Open match ABCDEF' }));
+    await fake.last('/api/admin/games/fg-1').respond(200, makeGameDetail({ id: 'fg-1', roomId: 'ABCDEF' }));
+    expect(location.pathname).toBe('/admin/games/fg-1');
+
+    if (how === 'Escape') {
+      await user.keyboard('{Escape}');
+    } else {
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    }
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(location.pathname).toBe('/admin/games');
+    expect(fake.to('/api/admin/games/fg-1')).toHaveLength(1);
+  });
+
   it('a mouse click on a row opens that match too', async () => {
     const fake = installFakeFetch();
     const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);

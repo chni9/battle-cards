@@ -881,8 +881,29 @@ its payloads and `PROTOCOL_VERSION` do not change.
     (`role="alert"`) above the modules and never blanks a loaded overview; the next success
     clears it. **Download Excel** is a quiet `Button` that exports the loaded overview JSON.
   - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
-    again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`. The detail
-    fetch ignores stale responses and shows `adminErrorCopy` on 404/503.
+    again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`.
+  - **Match detail (L80-07):** `AdminGameDetailDialog({ detail, onClose })`
+    (`screens/admin/admin-game-detail-dialog.tsx`) is the V7 `Dialog` (`width="2xl"`,
+    `dataAttributes={{ 'data-mode': 'tool' }}`), open while `detail` is not null. Its title is
+    `Match {roomId}`. The facts are a `dl` (`grid-cols-2 sm:grid-cols-3`): **Started**,
+    **Ended**, **Mode** (`gameModeLabel`: `Classic`, an unknown mode raw), **Length**, **Turns**,
+    **Winner** (`Unknown` when null) and **Notes** (`gameNotesLabel`, the list's `Bots ·
+    Tutorial` or `—`, so no new flag wording). **Seats** is an `AdminDataTable` (Player, Kit,
+    Lives, **Points**, Role; a missing nickname is `—`; Role is Winner > Bot > Eliminated >
+    Player). **Elimination order** (only when there is one) lists `{victim} — {reason}`, plus
+    ` · by {nick}` when `eliminatorNickname` resolves the eliminator to a seat; an absence, a
+    leave or an unknown id adds nothing. The replay seed line closes the body. There are no
+    rules text and no chat in the detail (spec v7 §13 Q80, §14.1).
+  - **Detail states:** the page keeps one `detailAnswer` tagged with its match id and derives
+    everything from it and `activeDetail`: `Loading…` (`AdminStatus`) while the active match
+    has no answer, an `AdminStatus` error (`adminErrorCopy`, 404 `Not found`, 503 `Database
+    unavailable`) with the dialog closed when it failed, the dialog when it succeeded. An
+    answer for a match that is no longer active shows nothing, so an older response arriving
+    after a newer one is ignored. Opening a match counts (`detailOpenings`) so picking the same
+    row again after a failure asks again. **Download action log** shows only when the payload
+    has `exportLog`; it is a quiet `Button` that reads `Downloading…` while the workbook builds
+    (`aria-disabled`, so focus stays), builds once per click, and a failure shows `Could not
+    build the action log.` as an `AdminStatus` error in the body and re-enables the button.
   - **Matches paging (L80-06):** the list is `AdminDataTable` (`label="Matches"`, **Room code**
     first) over `AdminPager`. `pageNumber` starts at 1 and the fetch key is
     `JSON.stringify({ applied, page })`; each request sends the filter query plus `page` and no
@@ -894,7 +915,8 @@ its payloads and `PROTOCOL_VERSION` do not change.
     loads, not `Page 2 of 2`; new filters forget it and read `Page 1 of 1` until their first
     page loads. **Showing X of Y** stays. Each row's Room code cell is a button named
     `Open match {roomId}` that opens `/admin/games/{finished_games.id}`, never the room code;
-    the dialog hands focus back to it on close.
+    the V7 Dialog (its `useFocusTrap` restores focus to a reachable opener) hands focus back to
+    it on close.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
   - A 401 clears the session and re-opens the password gate (Sign out takes the same path,

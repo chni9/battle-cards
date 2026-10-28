@@ -19,13 +19,6 @@ describe('admin route (Lot 61-06)', () => {
     expect(app).toContain('<AdminApp');
   });
 
-  it('ignores stale game-detail responses and surfaces 404/503', () => {
-    const games = read('screens/admin/admin-games-page.tsx');
-    expect(games).toContain('let cancelled = false');
-    expect(games).toContain('if (cancelled)');
-    expect(games).toContain('setDetailError(adminErrorCopy(result.status))');
-  });
-
   it('ignores stale Matches, Kits, and Database list fetches', () => {
     const kits = read('screens/admin/admin-kits-page.tsx');
     const data = read('screens/admin/admin-data-page.tsx');

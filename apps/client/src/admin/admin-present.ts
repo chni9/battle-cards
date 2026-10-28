@@ -2,7 +2,12 @@
  * Human-facing labels and formatting for the designer admin UI (Lot 61).
  */
 
-import { KIT_CATALOG, type KitId } from '@card-battle/shared';
+import {
+  KIT_CATALOG,
+  type AdminGameDetail,
+  type AdminGameElimination,
+  type KitId,
+} from '@card-battle/shared';
 
 export function kitDisplayName(kitId: string | null | undefined): string {
   if (kitId === null || kitId === undefined || kitId.length === 0) {
@@ -97,4 +102,45 @@ export function eliminationReasonLabel(reason: string): string {
     gambling: 'Gambling',
   };
   return labels[reason] ?? reason;
+}
+
+/**
+ * The match mode as the detail dialog names it (spec v7 §7.8, L80-07). Classic is the only mode
+ * V7 ships (technical spec v1 §9); a mode the client does not know is shown raw rather than
+ * hidden, so a future one is visible in the admin before it gets a label.
+ */
+export function gameModeLabel(mode: string): string {
+  const labels: Record<string, string> = { classic: 'Classic' };
+  return labels[mode] ?? mode;
+}
+
+/**
+ * The Notes cell of a match, in the list and in the detail (L80-07): `Bots · Tutorial`, or `—`
+ * when neither flag is set. One helper keeps the two surfaces on the same words.
+ */
+export function gameNotesLabel(game: { hasBots: boolean; isTutorial: boolean }): string {
+  const notes: string[] = [];
+  if (game.hasBots) {
+    notes.push('Bots');
+  }
+  if (game.isTutorial) {
+    notes.push('Tutorial');
+  }
+  return notes.length === 0 ? '—' : notes.join(' · ');
+}
+
+/**
+ * Who eliminated a seat, by the nickname on that seat, or `null` when nobody did (an absence, a
+ * leave, a gambling death) or the id matches no seat of this match (L80-07). `null` adds nothing
+ * to the detail line, so an unresolved eliminator never prints a guess.
+ */
+export function eliminatorNickname(
+  detail: AdminGameDetail,
+  elimination: AdminGameElimination,
+): string | null {
+  if (elimination.eliminatorPlayerId === null) {
+    return null;
+  }
+  const seat = detail.seats.find((candidate) => candidate.playerId === elimination.eliminatorPlayerId);
+  return seat?.nickname ?? null;
 }
