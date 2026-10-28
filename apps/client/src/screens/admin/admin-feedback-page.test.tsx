@@ -49,6 +49,16 @@ function marksIn(scope: HTMLElement): HTMLButtonElement[] {
   );
 }
 
+/**
+ * A mark is off while any save runs: `aria-disabled`, never native `disabled`, so a mark pressed
+ * by keyboard keeps focus (WCAG 2.4.3). happy-dom keeps focus on a natively disabled button where
+ * Chrome drops it to the body, so the missing `disabled` attribute is what pins the fix here.
+ */
+function isOff(mark: HTMLElement): boolean {
+  expect(mark.hasAttribute('disabled')).toBe(false);
+  return mark.getAttribute('aria-disabled') === 'true';
+}
+
 function markIn(scope: HTMLElement, name: string): HTMLButtonElement {
   return within(scope).getByRole<HTMLButtonElement>('button', { name });
 }
@@ -186,7 +196,7 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(patch.jsonBody).toStrictEqual({ status: 'done' });
     expect(patch.headers['x-inbox-password']).toBe('secret');
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(marksIn(row).map((mark) => mark.disabled)).toStrictEqual([true, true, true]);
+    expect(marksIn(row).map(isOff)).toStrictEqual([true, true, true]);
 
     await patch.respond(200);
     // Done is outside the Pending view, so the row leaves it.
@@ -203,15 +213,59 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     if (first === undefined || second === undefined || third === undefined) throw new Error('expected three rows');
     await user.click(markIn(first, FEEDBACK_TRIAGE_STATUS_LABEL.eliminated));
     for (const row of [first, second, third]) {
-      expect(marksIn(row).map((mark) => mark.disabled)).toStrictEqual([true, true, true]);
+      expect(marksIn(row).map(isOff)).toStrictEqual([true, true, true]);
     }
 
     await fake.last('/api/inbox/r1').respond(200);
     for (const row of [first, second, third]) {
-      expect(marksIn(row).map((mark) => mark.disabled)).toStrictEqual([false, false, false]);
+      expect(marksIn(row).map(isOff)).toStrictEqual([false, false, false]);
     }
     // The row follows the server's answer: its Eliminated mark is now the pressed one.
     expect(marksIn(first).map(isPressed)).toStrictEqual([false, false, true]);
+  });
+
+  it('a row mark pressed by keyboard keeps focus while it saves, and a second press sends nothing', async () => {
+    const { fake, user } = await renderLoaded();
+    await user.click(chip('Status', 'Any status'));
+    const [row] = screen.getAllByRole('listitem');
+    if (row === undefined) throw new Error('expected a row');
+    const done = markIn(row, FEEDBACK_TRIAGE_STATUS_LABEL.done);
+    done.focus();
+    expect(document.activeElement).toBe(done);
+
+    await user.keyboard('{Enter}');
+    expect(fake.to('/api/inbox/r1')).toHaveLength(1);
+    expect(isOff(done)).toBe(true);
+    expect(document.activeElement).toBe(done);
+    // The off mark swallows Enter and Space: still one PATCH.
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+    expect(fake.to('/api/inbox/r1')).toHaveLength(1);
+
+    await fake.last('/api/inbox/r1').respond(200);
+    expect(isOff(done)).toBe(false);
+    expect(isPressed(done)).toBe(true);
+    expect(document.activeElement).toBe(done);
+  });
+
+  it('a report mark pressed by keyboard keeps focus inside the dialog while it saves', async () => {
+    const { fake, user } = await renderLoaded();
+    await user.click(screen.getByRole('button', { name: /The shop button is hidden/ }));
+    const dialog = await screen.findByRole('dialog');
+    const done = markIn(dialog, FEEDBACK_TRIAGE_STATUS_LABEL.done);
+    done.focus();
+    expect(document.activeElement).toBe(done);
+
+    await user.keyboard('{Enter}');
+    expect(fake.to('/api/inbox/r1')).toHaveLength(1);
+    expect(isOff(done)).toBe(true);
+    expect(document.activeElement).toBe(done);
+    await user.keyboard('{Enter}');
+    expect(fake.to('/api/inbox/r1')).toHaveLength(1);
+
+    await fake.last('/api/inbox/r1').respond(200);
+    expect(isPressed(done)).toBe(true);
+    expect(document.activeElement).toBe(done);
   });
 
   it('the current status mark is a no-op', async () => {
@@ -221,7 +275,7 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(isPressed(pending)).toBe(true);
     await user.click(pending);
     expect(fake.calls).toHaveLength(1);
-    expect(marksIn(row).map((mark) => mark.disabled)).toStrictEqual([false, false, false]);
+    expect(marksIn(row).map(isOff)).toStrictEqual([false, false, false]);
   });
 
   it.each([
@@ -238,7 +292,7 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     // Still in the Pending view, still Pending, and every mark can be pressed again.
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
     expect(marksIn(row).map(isPressed)).toStrictEqual([true, false, false]);
-    expect(marksIn(row).map((mark) => mark.disabled)).toStrictEqual([false, false, false]);
+    expect(marksIn(row).map(isOff)).toStrictEqual([false, false, false]);
   });
 
   it('a 401 on a mark clears the stored key and leaves the row unchanged', async () => {
@@ -359,11 +413,11 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     await user.click(markIn(dialog, FEEDBACK_TRIAGE_STATUS_LABEL.done));
     expect(fake.to('/api/inbox/r1')).toHaveLength(1);
     expect(fake.last('/api/inbox/r1').jsonBody).toStrictEqual({ status: 'done' });
-    expect(marksIn(dialog).map((mark) => mark.disabled)).toStrictEqual([true, true, true]);
+    expect(marksIn(dialog).map(isOff)).toStrictEqual([true, true, true]);
 
     await fake.last('/api/inbox/r1').respond(200);
     expect(marksIn(dialog).map(isPressed)).toStrictEqual([false, true, false]);
-    expect(marksIn(dialog).map((mark) => mark.disabled)).toStrictEqual([false, false, false]);
+    expect(marksIn(dialog).map(isOff)).toStrictEqual([false, false, false]);
 
     await user.click(within(dialog).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();

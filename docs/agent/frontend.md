@@ -974,8 +974,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `StatusGlyph` in `--text-on-cta`: Pending `--threat-other`, Done `--upgrade`, Eliminated
     (won't do) `--danger`. There is no `border-l-4` stripe: the Impeccable `side-tab` rule flags
     it (spec v7 §12.4). Three icon marks per row `PATCH` `/api/inbox/:id` to `pending` / `done` /
-    `eliminated` without opening the report; every mark on the page is disabled while a save
-    runs, the pressed mark takes the status fill, and a failed save leaves the row as it was.
+    `eliminated` without opening the report; every mark on the page is off while a save runs
+    (`aria-disabled`, never native `disabled`, the press swallowed, so a mark pressed by keyboard
+    keeps focus in the row or in the report), the pressed mark takes the status fill, and a
+    failed save leaves the row as it was.
     The row's dates go through `formatDateTime`. The report is a V7 `Dialog` in tool mode
     (`width="lg"`, `data-mode="tool"`) with the same marks, contact, nickname, game code,
     screen, playKind, protocol, user agent and the log tail JSON in a `ScrollArea` named

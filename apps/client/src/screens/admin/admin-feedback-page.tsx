@@ -113,7 +113,10 @@ function StatusBadge({ status }: { status: FeedbackTriageStatus }): ReactElement
 
 /**
  * The three triage marks. They are their own buttons, not `AdminToggleChip`s, because every mark
- * on the page is disabled while any save runs (a chip has no `disabled`). The pressed mark takes
+ * on the page is off while any save runs (a chip has no off state). Off is `aria-disabled`, never
+ * native `disabled`, and the click handler swallows the press: a mark pressed by keyboard, in a
+ * row or in the report dialog, keeps focus while it saves instead of dropping it to the body
+ * behind the modal (WCAG 2.4.3; frontend.md "Disabled but focusable"). The pressed mark takes
  * the status fill, so it matches the row badge.
  */
 function StatusMarks(props: {
@@ -132,14 +135,14 @@ function StatusMarks(props: {
             type="button"
             aria-label={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
             aria-pressed={selected}
-            disabled={disabled}
+            {...(disabled ? { 'aria-disabled': true } : {})}
             title={FEEDBACK_TRIAGE_STATUS_LABEL[status]}
             className={[
               'inline-flex size-11 items-center justify-center',
               CHROME_FLAT_SM_CLASS,
               CHROME_FOCUS_CLASS,
               selected ? `${STATUS_FILL[status]} text-v7-text-on-cta` : 'bg-v7-panel-2 text-v7-text',
-              'disabled:cursor-not-allowed disabled:opacity-50',
+              'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
             ].join(' ')}
             onClick={() => {
               if (selected || disabled) {
