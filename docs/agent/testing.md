@@ -127,7 +127,7 @@ lives and every other resource 0. `makeCard(cardId)` gives `${cardId}-1` base;
 no counter or target; `makeEliminationReveal(overrides?)` is a Kamikaze death freeze with every
 token 0. A test that needs other seats passes `players` and `turnOrder` together; a test that
 changes the POV's resources sets `self` (the POV's `PublicPlayerView` carries no private
-values). Later tasks append builders and never change these defaults (Lot 73 plan contract). L73-03 adds `makeTableView(ids, overrides?)`: one `makePlayer` per id in turn order, with `isYou` on `overrides.you ?? 'me'` (pass `{ you: 'watcher', isSpectator: true }` for a walk-in).
+values). Later tasks append builders and never change these defaults (Lot 73 plan contract). L73-03 adds `makeTableView(ids, overrides?)`: one `makePlayer` per id in turn order, with `isYou` on `overrides.you ?? 'me'` (pass `{ you: 'watcher', isSpectator: true }` for a walk-in). L73-12 adds `makeLobbyView` and `makeFinishedView` (the finished view copies `gameCode`, `players`, `playKind` and `tutorialIndex` from its `finalTable`); pass `lobbyRules: null` to omit the rules, as the wire does for a tutorial finish.
 
 ## Seeded randomness
 

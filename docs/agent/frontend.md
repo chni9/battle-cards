@@ -624,10 +624,15 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (`@container` on a wrapper, `@min-[26rem]:grid-cols-8`), so 16 kits fill whole rows and the
   columns align for any mix. Do not size the cells by content again: a captioned cell is wider
   than a bare one and the rows jag.
-- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 recall (the
-  last `lobbyRules` seen in this room, in memory) and `FinishedStateView.lobbyRules` in L77
-  (spec v7 §6.11). A caller hides the strip when the rules are unknown (a reload mid-game), and
-  the tutorial never mounts it. The component invents no default.
+- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 table recall
+  and `FinishedStateView.lobbyRules` in L77 (spec v7 §6.11). The data comes from
+  `view-model/rules-recall.ts` (L73-12): `rulesRecall(view)` for a lobby or finished view, and
+  `tableRulesRecall(cache, view)` on the table. The cache is the last `lobbyRules` seen in this
+  room, kept in memory: call `nextRulesCache(cache, view)` on every view change (a new room
+  code drops it). `cachedLobbyRules(cache, view)` is the same rules as `turnClock`'s length
+  source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
+  the rules are unknown (a reload mid-game) or the room is a tutorial: the caller hides the
+  strip, and the tutorial never mounts it. The component invents no default.
 - **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows
   `TURN_DURATION_MS` until the host sets a time, so it can exceed the host maximum of 180.
   Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.

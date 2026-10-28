@@ -5,15 +5,19 @@
  * only what it asserts on. Later Lot 73 tasks append builders and never change these defaults.
  */
 
-import type {
-  CardId,
-  CardInstance,
-  EliminationRevealView,
-  PendingEffectView,
-  PersistentEffectView,
-  PlayingStateView,
-  PrivateSelfView,
-  PublicPlayerView,
+import {
+  defaultLobbyRules,
+  type CardId,
+  type CardInstance,
+  type EliminationRevealView,
+  type FinishedStateView,
+  type LobbyRules,
+  type LobbyStateView,
+  type PendingEffectView,
+  type PersistentEffectView,
+  type PlayingStateView,
+  type PrivateSelfView,
+  type PublicPlayerView,
 } from '@card-battle/shared';
 
 export function makeCard(cardId: CardId, overrides?: Partial<CardInstance>): CardInstance {
@@ -129,4 +133,54 @@ export function makeTableView(
     players: ids.map((id) => makePlayer(id, { isYou: id === you })),
     ...overrides,
   });
+}
+
+export type LobbyViewOverrides = Partial<Omit<LobbyStateView, 'lobbyRules'>> & {
+  lobbyRules?: LobbyRules | null;
+};
+
+/**
+ * A one-seat lobby view whose `lobbyRules` are the defaults. `lobbyRules: null` omits the field
+ * (`exactOptionalPropertyTypes` forbids `undefined`). L73-12.
+ */
+export function makeLobbyView(overrides: LobbyViewOverrides = {}): LobbyStateView {
+  const { lobbyRules = defaultLobbyRules(), ...rest } = overrides;
+  return {
+    phase: 'lobby',
+    you: 'me',
+    gameCode: 'TEST',
+    hostPlayerId: 'me',
+    players: [{ id: 'me', nickname: 'me', isBot: false, isReady: true }],
+    yourKitSelection: 'random',
+    ...rest,
+    ...(lobbyRules === null ? {} : { lobbyRules }),
+  };
+}
+
+export type FinishedViewOverrides = Partial<Omit<FinishedStateView, 'lobbyRules'>> & {
+  lobbyRules?: LobbyRules | null;
+};
+
+/**
+ * A finished view over `finalTable` (default `makePlayingView()`): `gameCode`, `players`,
+ * `playKind` and `tutorialIndex` are copied from it, as on the wire. `lobbyRules: null` omits
+ * the field, the wire shape of a tutorial finish. L73-12.
+ */
+export function makeFinishedView(overrides: FinishedViewOverrides = {}): FinishedStateView {
+  const { lobbyRules = defaultLobbyRules(), ...rest } = overrides;
+  const finalTable = rest.finalTable ?? makePlayingView();
+  return {
+    phase: 'finished',
+    you: 'me',
+    gameCode: finalTable.gameCode,
+    winnerPlayerId: 'me',
+    players: finalTable.players,
+    recap: { turnSequence: finalTable.turnSequence, players: [], eliminations: [] },
+    exportLog: { turns: [], events: [] },
+    finalTable,
+    playKind: finalTable.playKind,
+    tutorialIndex: finalTable.tutorialIndex,
+    ...rest,
+    ...(lobbyRules === null ? {} : { lobbyRules }),
+  };
 }
