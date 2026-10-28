@@ -65,6 +65,8 @@ Also holds the pure-module rows that L72-03 / L72-04 move (listed under Owner lo
 
 ## Owner lot 74
 
+> Re-checked by L74-01 (2026-10-28): the three rows' files and `it()` titles exist at `7407fa3`. L74-02 writes the `card-effect-copy` replacement, L74-03 the `forfeit` one and L74-13 the `clear-spy` one.
+
 | File | Test | Asserts | Class | Replacement / superseded by |
 |---|---|---|---|---|
 | `design/components/card-effect-copy.test.ts` | CardEffectCopy (L51-12) > labels play cost Cost and renders effect text through resource glyphs | card-effect-copy.tsx contains '<span>Cost</span>' and EffectTextWithIcons; does not contain 'Choose Use, Upgrade, or Sell.' or 'Cost:' prose | product-behavior | Component test (testing-library + happy-dom) on the V7 card sheet content (§6.6.1, built in L74). Render a costed base card (e.g. basic-attack): a 'Cost' label followed by the icon cost row whose sr-only spoken cost is present; effect text renders inline resource glyphs (img per token); queryByText(/Cost:/) and queryByText('Choose Use, Upgrade, or Sell.') are null. Add the §6.6.1 cases: a base card shows the 'Upgrade — {upgradeAdds}' block, an upgraded card shows upgradeEffect alone. The old test retires in the commit that deletes card-effect-copy.tsx, when its last consumers (old table card-actions.tsx in L75, old card.tsx via What's new in L76) are gone. |

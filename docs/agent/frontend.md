@@ -36,7 +36,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
-| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (renders `TableScreen` until L74-01) |
+| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
@@ -782,6 +782,41 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
   `--panel` and `--panel-2`, with the 24-character long-name forms in a 240px frame.
 
+## Arena (V7, ?ui=next)
+
+Technical spec v7 §6 and §4.4; the Lot 74 plan (`docs/superpowers/plans/2026-10-21-v7-lot-74-arena-1.md`,
+Appendix A). Each Lot 74 task appends its bullet here, in task order.
+
+- `screens/arena/arena-screen.tsx` (L74-01, spec v7 §4.4): the switch. `App.tsx` (playing) and
+  `EndScreen` (finished board, `tableUi`) mount `ArenaScreen` when `resolveTableUi(...)` is
+  `'next'`: `?ui=next` was set and the room is Classic. The default and tutorial rooms keep
+  `TableScreen`. `ArenaScreenProps` is the `TableScreenProps` alias, so App passes one prop set
+  to either board.
+- Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
+  `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
+  always renders, with its empty state. The root is `<main data-zone="table" data-arena="next">`,
+  `.v7-ground`, `h-full w-full overflow-hidden` of `#root`. It has no `vh`, `dvh` or `w-screen` and
+  never page-scrolls (L53-07); only the hand scrolls, inside itself.
+- Anchors (L74-01, §6.12): regions keep the V2 `data-zone` names that `fx/`, hints and the tutorial
+  query.
+  - `top-bar`: `timers` with `data-hint-anchor="your-turn"` (the clock slot).
+  - `ticker`: `log-collapsed`.
+  - `arena`: `felt`, holding `opponents` and `pending` with `incoming`.
+  - `self-strip`: `private-zone` with `data-player-id={view.you}` (a walk-in too), holding
+    `resources` with `resources`.
+  - `hand`: `card-band`, holding `hand` with `hand` and `specials` with `specials`.
+  - `dock`: `dock`.
+  Never use `data-card-row`: `index.css` forces nowrap on it.
+- Action lock (L74-01, §4.3, Appendix A.2): `ArenaScreen` computes `ctx = { subChoice,
+  readOnly }` and `actionLock(view, ctx)` once per render and passes models down as props.
+  There is no React context for game data. The root exposes the lock as `data-action-lock`
+  (`none` | `not-your-turn` | `actions-locked`).
+- Import rule (L74-01): `screens/arena/` imports only `ui/`, `view-model/`, `fx/`, `net/`
+  (types), `help/`, `feedback/` and `screens/status-labels`, `screens/illegal-action-copy` and
+  `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`; the one exception
+  is the `TableScreenProps` type behind the alias. A pure helper still living there moves, with its
+  tests, in the task that first needs it.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -1336,7 +1371,7 @@ rules above are unchanged — this section only covers how the client looks.
   value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
   rooms always get classic. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
   each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
-  `ArenaScreen` renders `TableScreen` until L74-01. Storage access is `try/catch` and a
+  `ArenaScreen` is the V7 arena since L74-01 (`## Arena (V7, ?ui=next)`). Storage access is `try/catch` and a
   blocked store degrades to classic (or to the param for that load); the param is never
   stripped from the URL.
 - **Client storage keys** (no accounts; every helper guards the storage accessor in try/catch,

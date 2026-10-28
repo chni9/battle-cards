@@ -5205,3 +5205,22 @@ Source: technical spec v7 §6.12 and Q38, §6.3 (spectator overlay); `view-model
 - The L74-23 Review line is corrected in the same change.
 
 ---
+
+## 2026-10-28 · [P] Arena entry: the pass-through test retires with the pass-through (L74-01)
+
+Source: technical spec v7 §4.4 and §6.1; §12.1 (old-layout detail); L72-20.
+
+- `screens/arena/arena-screen.test.ts` pinned the L72-20 stand-in: for a live and a finished
+  board, `ArenaScreen(props)` returned `<TableScreen {...props} />` with the same props. L74-01
+  gives the arena its own body (the spec v7 §6.1 regions), so that assertion is now false on
+  purpose. The file is deleted in the same commit and `arena-screen.test.tsx` replaces it.
+- What it protected is still tested:
+  - The routing decision is pinned by `ui-switch.test.ts` "tutorial rooms always get the
+    classic table": switch on in a Classic room gives `'next'` (the arena); switch off or a
+    tutorial room gives `'classic'`.
+  - An opted-in board that renders every region, on a live and a finished board, is pinned by
+    `arena-screen.test.tsx`.
+- `App.tsx` and `screens/end.tsx` have mounted `ArenaScreen` behind the switch since L72-20.
+  L74-01 does not edit them.
+
+---
