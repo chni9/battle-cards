@@ -812,8 +812,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     keyboard keeps focus while the next page loads and at the last page (Disabled but focusable).
   - `useAdminList({ key, scope?, load })` (`screens/admin/use-admin-list.ts`) holds the state of
     every admin read (Overview, Matches, Kits, Database): `data`, `loaded`, `error`
-    (`adminErrorCopy`) and `lastData`. A new `key` starts a new request and reads not loaded
-    until its answer; an answer for an older key is dropped. `load` is read through
+    (`adminErrorCopy`) and `lastData`. A new `key` starts a new request with its own id and reads
+    not loaded until that request's answer; an answer for an older request is dropped, and asking
+    for an earlier key again (Actors both, humans, both) is a new request too, so the older
+    answer or error for that key never stands in for it (L80-12). `load` is read through
     `useEffectEvent` when the key changes, so every input that can change while the page is
     mounted belongs in the key (the password never changes under a mounted page). `lastData`
     is the last success for the current `scope` (Matches: the applied filters; Database: the

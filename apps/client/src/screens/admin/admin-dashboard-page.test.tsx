@@ -173,6 +173,59 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     expect(within(finishedMatchesCard()).queryByText('1')).toBeNull();
   });
 
+  it('asking for an earlier Actors value again shows Loading… until that new request answers', async () => {
+    // both → humans → both, before the humans answer: the first "both" answer is not this request's.
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDashboardPage password="secret" />);
+    await fake.last(OVERVIEW_PATH).respond(200, overviewOf(4));
+
+    await user.selectOptions(actorsSelect(), 'humans');
+    const humansCall = fake.last(OVERVIEW_PATH);
+    await user.selectOptions(actorsSelect(), 'both');
+    expect(fake.to(OVERVIEW_PATH)).toHaveLength(3);
+    const bothAgain = fake.last(OVERVIEW_PATH);
+    expect(bothAgain.url.searchParams.has('actors')).toBe(false);
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+
+    // The dropped humans answer does not end the wait either.
+    await humansCall.respond(200, overviewOf(1));
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+    expect(within(finishedMatchesCard()).getByText('4')).not.toBeNull();
+
+    await bothAgain.respond(200, overviewOf(6));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(within(finishedMatchesCard()).getByText('6')).not.toBeNull();
+  });
+
+  it('an old failure does not come back when the same Actors value is asked for again', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDashboardPage password="secret" />);
+    await fake.last(OVERVIEW_PATH).respond(200, overviewOf(4));
+    await user.selectOptions(actorsSelect(), 'humans');
+    await fake.last(OVERVIEW_PATH).respond(200, overviewOf(1));
+    // The "both" request fails: the 503 is the answer held for "both".
+    await user.selectOptions(actorsSelect(), 'both');
+    await fake.last(OVERVIEW_PATH).respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+
+    await user.selectOptions(actorsSelect(), 'humans');
+    const humansCall = fake.last(OVERVIEW_PATH);
+    await user.selectOptions(actorsSelect(), 'both');
+    const bothAgain = fake.last(OVERVIEW_PATH);
+    expect(fake.to(OVERVIEW_PATH)).toHaveLength(5);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+
+    await humansCall.respond(200, overviewOf(2));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+
+    await bothAgain.respond(200, overviewOf(7));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(within(finishedMatchesCard()).getByText('7')).not.toBeNull();
+  });
+
   it('Download Excel appears once loaded and exports the overview', async () => {
     const fake = installFakeFetch();
     const { user } = renderUi(<AdminDashboardPage password="secret" />);

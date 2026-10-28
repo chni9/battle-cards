@@ -5,8 +5,11 @@
  * the same way.
  *
  * `key` names the request. A new key starts a new one, and until its answer lands the read is not
- * loaded: Loading…, and no data or error from an older key. An answer for an older key is
- * dropped. `load` is read through `useEffectEvent` when the key changes, so every input of `load`
+ * loaded: Loading…, and no data or error from an older request. An answer for an older request is
+ * dropped. Each start carries its own id and an answer counts only for the id that asked, so
+ * asking for an earlier key again (Actors both, humans, both) is a new request: it reads Loading…
+ * until its own answer, and an older answer or error for the same key does not stand in for it.
+ * `load` is read through `useEffectEvent` when the key changes, so every input of `load`
  * that can change while the page is mounted belongs in the key. The password does not: `AdminApp`
  * mounts the pages only while unlocked, and the gate replaces them on every lock.
  *
@@ -40,9 +43,16 @@ export interface AdminList<Data> {
 }
 
 export function useAdminList<Data>({ key, scope = key, load }: AdminListRequest<Data>): AdminList<Data> {
-  const [answer, setAnswer] = useState<{ key: string; result: AdminFetchResult<Data> } | null>(null);
+  const [request, setRequest] = useState({ key, scope, id: 0 });
+  const [answer, setAnswer] = useState<{ id: number; result: AdminFetchResult<Data> } | null>(null);
   const [last, setLast] = useState<{ scope: string; data: Data } | null>(null);
   const startLoad = useEffectEvent(load);
+
+  // A changed key or scope is a new request with a new id, set while rendering so no render reads
+  // an answer of the old one as the new one's.
+  if (request.key !== key || request.scope !== scope) {
+    setRequest({ key, scope, id: request.id + 1 });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -50,17 +60,17 @@ export function useAdminList<Data>({ key, scope = key, load }: AdminListRequest<
       if (cancelled) {
         return;
       }
-      setAnswer({ key, result });
+      setAnswer({ id: request.id, result });
       if (result.ok) {
-        setLast({ scope, data: result.data });
+        setLast({ scope: request.scope, data: result.data });
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [key, scope]);
+  }, [request]);
 
-  const current = answer?.key === key ? answer.result : null;
+  const current = answer?.id === request.id ? answer.result : null;
   return {
     data: current?.ok === true ? current.data : null,
     loaded: current !== null,
