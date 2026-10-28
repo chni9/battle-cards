@@ -1350,9 +1350,11 @@ values.
 - **Shared pieces** (`screens/admin/admin-ui.tsx`; class strings in `admin-classes.ts`):
   - `ADMIN_PANEL_CLASS`: tool-line outline, 8px radius, `--panel` fill, no shadow. Metric
     cards and empty states use it.
-  - `AdminStatus`: loading is a `role="status"` line, an empty result is a panel, and an error
-    is a `role="alert"` line with a `--danger` left edge. Its words stay `--text`, because
-    resource and threat colors are never body text.
+  - `AdminStatus`: loading is a `role="status"` line, and an empty result is a panel. An error
+    is a `role="alert"` box on `--panel` with a full 1px `--danger` outline, the 6px tool radius
+    and the `eliminated` cross, so it is never told by color alone. There is no one-sided accent
+    stripe (the detector's `side-tab`). Its words stay `--text`: `--danger` text is 4.38:1 on
+    `--panel-2`, and resource and threat colors are never body text.
   - `AdminDataTable`: a required `label` names its horizontal `ScrollArea`, so a wide table
     scrolls inside its region at 390px and the page never does. The header uses the caption
     step on `--panel-2`, and rows are split by 1px tool-line rules.

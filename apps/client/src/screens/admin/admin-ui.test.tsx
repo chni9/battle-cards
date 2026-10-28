@@ -25,7 +25,10 @@ describe('admin shared pieces (technical spec v7 §7.8, L80-01)', () => {
     expect(screen.queryByRole('status')).toBeNull();
 
     rerender(<AdminStatus state={{ kind: 'error', message: 'Database unavailable' }} />);
-    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('Database unavailable');
+    // Marked by a glyph as well as the --danger outline, never by color alone (WCAG 1.4.1).
+    expect(alert.querySelector('svg[data-icon="eliminated"]')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('AdminDataTable renders the empty message instead of an empty table', () => {

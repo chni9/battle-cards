@@ -17,3 +17,9 @@ export const ADMIN_SECTION_TITLE_CLASS = 'font-v7-display text-v7-title text-v7-
 
 /** Labels above inputs and selects: Nunito at the 12 px caption step (spec v7 §5.2 labels). */
 export const ADMIN_FIELD_LABEL_CLASS = 'font-v7-body text-v7-caption font-extrabold text-v7-text-2';
+
+/** Body, description and table text: Nunito at the 14 px body step; the caller picks the color. */
+export const ADMIN_BODY_TEXT_CLASS = 'font-v7-body text-v7-body font-bold';
+
+/** Table headers and metric labels: the field-label step, uppercase. */
+export const ADMIN_CAPTION_CLASS = `${ADMIN_FIELD_LABEL_CLASS} uppercase tracking-wide`;

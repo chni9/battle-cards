@@ -15,12 +15,15 @@ import {
   CHROME_TRACK_ITEM_CLASS,
   CHROME_TRACK_SELECTED_CLASS,
 } from '../../ui/primitives/chrome-classes';
+import { Icon } from '../../ui/icons/icon';
 import { hasCommandModifier } from '../../ui/primitives/roving-focus';
 import { ScrollArea } from '../../ui/primitives/scroll-area';
-import { ADMIN_PANEL_CLASS, ADMIN_SECTION_TITLE_CLASS } from './admin-classes';
-
-const BODY_TEXT_CLASS = 'font-v7-body text-v7-body font-bold';
-const CAPTION_CLASS = 'font-v7-body text-v7-caption font-extrabold uppercase tracking-wide text-v7-text-2';
+import {
+  ADMIN_BODY_TEXT_CLASS,
+  ADMIN_CAPTION_CLASS,
+  ADMIN_PANEL_CLASS,
+  ADMIN_SECTION_TITLE_CLASS,
+} from './admin-classes';
 
 export type AdminStatusState =
   | { kind: 'loading' }
@@ -29,23 +32,34 @@ export type AdminStatusState =
 
 /**
  * One look for every admin wait, empty result and failure (spec v7 §7.8 "consistent loading,
- * empty and error states"). The error words stay `--text`: `--danger` marks the edge only, as
- * resource and threat colors are never body text (§5.1).
+ * empty and error states"). An error is a `--panel` box with a full 1 px `--danger` outline and
+ * the `eliminated` cross, so it is never told by color alone (WCAG 1.4.1). Its words stay
+ * `--text`: `--danger` text is under 4.5:1 on `--panel-2`, and resource and threat colors are
+ * never body text (§5.1).
  */
 export function AdminStatus({ state }: { state: AdminStatusState }): ReactElement {
   switch (state.kind) {
     case 'loading':
       return (
-        <p role="status" className={`${BODY_TEXT_CLASS} text-v7-text-2`}>
+        <p role="status" className={`${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>
           Loading…
         </p>
       );
     case 'empty':
-      return <p className={`${ADMIN_PANEL_CLASS} text-center ${BODY_TEXT_CLASS} text-v7-text-2`}>{state.message}</p>;
+      return <p className={`${ADMIN_PANEL_CLASS} text-center ${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>{state.message}</p>;
     case 'error':
       return (
-        <p role="alert" className={`border-l-4 border-v7-danger pl-3 ${BODY_TEXT_CLASS} text-v7-text`}>
-          {state.message}
+        <p
+          role="alert"
+          className={[
+            'flex items-start gap-2 rounded-v7-chrome-sm px-3 py-2',
+            'border-(length:--chrome-outline-width) border-v7-danger bg-v7-panel',
+            ADMIN_BODY_TEXT_CLASS,
+            'text-v7-text',
+          ].join(' ')}
+        >
+          <Icon name="eliminated" size={18} className="shrink-0" />
+          <span className="min-w-0">{state.message}</span>
         </p>
       );
   }
@@ -111,7 +125,7 @@ export function AdminPageIntro({
   return (
     <header className="space-y-1">
       <h2 className={ADMIN_SECTION_TITLE_CLASS}>{title}</h2>
-      <p className={`max-w-2xl ${BODY_TEXT_CLASS} text-v7-text-2`}>{description}</p>
+      <p className={`max-w-2xl ${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>{description}</p>
     </header>
   );
 }
@@ -132,7 +146,7 @@ export function AdminMetricCard({
 }): ReactElement {
   return (
     <div className={ADMIN_PANEL_CLASS}>
-      <dt className={CAPTION_CLASS}>{label}</dt>
+      <dt className={ADMIN_CAPTION_CLASS}>{label}</dt>
       <dd className="mt-1.5 font-v7-display text-v7-vital tabular-nums text-v7-text">{value}</dd>
       {hint !== undefined ? (
         <dd className="mt-1 font-v7-body text-v7-caption font-bold text-v7-text-2">{hint}</dd>
@@ -148,8 +162,8 @@ export interface AdminTableColumn<Row> {
   cell: (row: Row) => ReactNode;
 }
 
-const HEAD_CELL_CLASS = `px-3 py-2.5 ${CAPTION_CLASS}`;
-const BODY_CELL_CLASS = `px-3 py-2.5 align-top ${BODY_TEXT_CLASS} text-v7-text`;
+const HEAD_CELL_CLASS = `px-3 py-2.5 ${ADMIN_CAPTION_CLASS}`;
+const BODY_CELL_CLASS = `px-3 py-2.5 align-top ${ADMIN_BODY_TEXT_CLASS} text-v7-text`;
 
 /**
  * Every admin table. `label` is required: any table can overflow a 390 px phone, so it scrolls

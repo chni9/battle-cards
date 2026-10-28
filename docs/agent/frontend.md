@@ -805,8 +805,13 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
     Meta or Shift stays the browser's.
-  - `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS` and `ADMIN_FIELD_LABEL_CLASS` are the
-    class strings. No page keeps a private copy.
+  - The class strings are `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS`,
+    `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the color)
+    and `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and metric
+    labels). No page keeps a private copy.
+  - `AdminStatus` errors are a 1px `--danger` outlined `--panel` box with the `eliminated`
+    cross and `--text` words. There is no one-sided border stripe: the Impeccable `side-tab`
+    rule flags it (spec v7 §12.4).
 - **Gate:** `TextField` (password, `current-password`, 16px) and a primary `Button`. Unlock is
   `focusableWhenDisabled`: while blank or Checking… it is `aria-disabled`, so a click that starts
   the check keeps focus on it.
