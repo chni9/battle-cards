@@ -4,19 +4,33 @@
  * A.8 ruling 1 (the activated look is the counter glow; Shield and Sentence never get it); L56-05
  * (a queue or log card shows the catalog face with no footer).
  *
- * Every source shows the same body. The read-only form has no action row: L74-08 adds Use,
- * Upgrade and Sell for a held card. Opening or closing the sheet sends nothing (§6.6.4).
+ * Every source shows the same body. L74-08 adds the action row (§6.6.1, §6.6.2, §11 Q39): Use,
+ * Upgrade and Sell in model order, each disabled with its own reason, and every commit through
+ * `commit` (`arena-commit.ts`). Without `commit` the sheet is a pure inspect with no action row.
+ * Opening or closing the sheet sends nothing (§6.6.4). A held card that left the hand while the
+ * sheet is open turns it read-only (`liveCardRefFor`, Review Focus 1), and a sheet commits at most
+ * once per view (Review Focus 3).
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 
 import type { ActionContext } from '../../view-model/action-lock';
+import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
+import { cardActions, type CardAction } from '../../view-model/card-actions';
+import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from '../../view-model/chrome-labels';
 import { Card } from '../../ui/card/card';
+import { cardCostChip } from '../../ui/card/card-face';
+import { CostAmount } from '../../ui/card/cost-amount';
 import { Badge } from '../../ui/primitives/badge';
+import { Button } from '../../ui/primitives/button';
+import { ICON_WELL_CLASS } from '../../ui/primitives/chrome-classes';
 import { Sheet } from '../../ui/primitives/sheet';
+import type { CostSign, StructuredCost } from '../../ui/structured-cost';
 import { CardEffectCopy } from '../../ui/text/card-effect-copy';
+import type { ArenaCommit, ArenaIntent } from './arena-commit';
 import { arenaSheetKey } from './arena-sheets';
+import { sellYieldOf, UPGRADE_ACTION_COST, USE_ACTION_LABEL } from './card-sheet-actions';
 import {
   ACTIVE_LABEL,
   CARD_LIVES_LABEL,
@@ -24,6 +38,7 @@ import {
   cardSheetContext,
   cardSheetCounter,
   cardSheetTitle,
+  liveCardRefFor,
   liveCardSheetSource,
   sheetInstanceFor,
   type CardSheetSource,
@@ -33,34 +48,160 @@ export interface CardSheetProps {
   /** False while the sheet plays its exit from `closing` (arena-sheets.ts). */
   open: boolean;
   source: CardSheetSource;
-  /** The live view: in-play counters follow it; L74-08 reads card actions from it. */
+  /** The live view: in-play counters follow it; the card actions are read from it (L74-08). */
   view: PlayingStateView;
-  /** The arena's action context (Appendix A.2); read from L74-08 on. */
+  /** The arena's action context (Appendix A.2): the lock the actions read. */
   ctx: ActionContext;
   onClose: () => void;
+  /** The single intent exit (L74-08). Without it the sheet renders no action row (a pure inspect). */
+  commit?: ArenaCommit;
+  /** Use routed `target`: the sheet hands the card and its seats over. L74-10 passes it from ArenaScreen and collapses the sheet into targeting. */
+  onBeginTargeting?: (request: { instanceId: string; seatIds: readonly string[] }) => void;
+}
+
+/** Icons sit in a `--bg-0` well on a CTA fill (DESIGN.md › Cost glyphs); the amount is a private part of the button label. */
+function ActionCost({ amount, signed }: { amount: StructuredCost; signed: CostSign }): ReactElement {
+  return (
+    <span data-action-cost="" className={`${ICON_WELL_CLASS} gap-0.5 px-2 py-0.5 text-v7-text`}>
+      <CostAmount amount={amount} signed={signed} title={null} />
+    </span>
+  );
 }
 
 export function CardSheet(props: CardSheetProps): ReactElement {
-  const source = liveCardSheetSource(props.source, props.view);
-  const instance = sheetInstanceFor(source);
-  const card = getCard(instance.cardId);
+  const { open, view, ctx, commit, onBeginTargeting, onClose } = props;
+  const source = liveCardSheetSource(props.source, view);
+  const ref = liveCardRefFor(source, view);
+  const model = cardActions(view, ref, ctx);
+  // The face follows the live copy of a held card; any other source keeps L74-02's sheetInstanceFor.
+  const face = ref.zone === 'hand' || ref.zone === 'special' ? ref.instance : sheetInstanceFor(source);
+  const card = getCard(face.cardId);
   const counter = cardSheetCounter(source);
   const context = cardSheetContext(source);
 
+  // One commit per view (Review Focus 3): a second tap before the next state update sends nothing,
+  // even on the stale panel an exit animation keeps on screen.
+  const committedFor = useRef<PlayingStateView | null>(null);
+  // Per opening, not per mount: a closed sheet stays mounted through its exit (`closing`) and is reused
+  // when the same card opens again (same key), so the guard re-arms when `open` turns true. A ref is
+  // not written during render (React Compiler lint), hence the effect; L74-10 adds the state resets.
+  useEffect(() => {
+    if (open) {
+      committedFor.current = null;
+    }
+  }, [open]);
+
+  function send(intent: ArenaIntent): void {
+    if (commit === undefined || committedFor.current === view) {
+      return;
+    }
+    committedFor.current = view;
+    commit(intent);
+    onClose();
+  }
+
+  function onUse(): void {
+    const use = model.use;
+    if (use === null) {
+      return;
+    }
+    switch (use.kind) {
+      case 'send':
+        send({ kind: 'playCard', payload: { instanceId: model.instanceId } });
+        return;
+      case 'target':
+        // L74-10 collapses this sheet into targeting; nothing is sent until a seat is tapped.
+        onBeginTargeting?.({ instanceId: model.instanceId, seatIds: use.seatIds });
+        return;
+      case 'regeneration':
+      case 'consume':
+        // L74-10 adds the in-sheet pre-send step (quantity / consume tiles); until then Use does nothing.
+        return;
+    }
+  }
+
+  function renderAction(action: CardAction): ReactElement | null {
+    const shared = {
+      'data-card-action': action.kind,
+      disabled: !action.enabled,
+      ...(action.reason !== null ? { disabledReason: DISABLED_REASON_COPY[action.reason] } : {}),
+    };
+    switch (action.kind) {
+      case 'use': {
+        const cost = cardCostChip(face.cardId, face.isUpgraded);
+        return (
+          <Button key={action.kind} variant="primary" onClick={onUse} {...shared}>
+            {USE_ACTION_LABEL}
+            {cost !== null ? (
+              <>
+                {' '}
+                <ActionCost amount={cost} signed="cost" />
+              </>
+            ) : null}
+          </Button>
+        );
+      }
+      case 'upgrade':
+        return (
+          <Button
+            key={action.kind}
+            variant="secondary"
+            onClick={() => {
+              send({ kind: 'upgradeCard', payload: { instanceId: model.instanceId } });
+            }}
+            {...shared}
+          >
+            {CARD_UPGRADE_LABEL}{' '}
+            <ActionCost amount={UPGRADE_ACTION_COST} signed="cost" />
+          </Button>
+        );
+      case 'sell': {
+        const yielded = sellYieldOf(face);
+        return (
+          <Button
+            key={action.kind}
+            variant="quiet"
+            onClick={() => {
+              send({ kind: 'sellCard', payload: { instanceId: model.instanceId } });
+            }}
+            {...shared}
+          >
+            {CARD_SELL_LABEL}
+            {yielded !== null ? (
+              <>
+                {' '}
+                <ActionCost amount={yielded} signed="gain" />
+              </>
+            ) : null}
+          </Button>
+        );
+      }
+      case 'multi-attack':
+        // L74-11 adds the Multi-attack entry.
+        return null;
+      case 'deactivate':
+        // L74-09 adds Deactivate.
+        return null;
+    }
+  }
+
   return (
     <Sheet
-      open={props.open}
+      open={open}
       mode="read-only"
       placement="bottom"
       title={cardSheetTitle(source)}
-      onClose={props.onClose}
+      onClose={onClose}
       dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}
+      {...(commit !== undefined && model.actions.length > 0
+        ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
+        : {})}
     >
       <div className="flex flex-col items-center gap-3 pt-2 pb-3">
-        <Card size="sheet" instance={instance} {...(counter !== null ? { counter } : {})} />
+        <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
         {card !== undefined ? (
           <div className="w-full">
-            <CardEffectCopy card={card} isUpgraded={instance.isUpgraded} />
+            <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
           </div>
         ) : null}
         {context?.kind === 'active' ? (

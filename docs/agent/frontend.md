@@ -950,6 +950,28 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `special`), and the selected card is the newest open hand/special card sheet
   (`selectedHandInstanceId`). There is no entrance motion. An upgrade replays a 90° flip
   (`data-upgrade-flip` counts the flips), or a 120 ms fade under reduced motion (designer Q13).
+- `screens/arena/arena-commit.ts` (L74-08, spec v7 §6.6.4, Lot 74 Appendix A.6):
+  `createArenaCommit(handlers)` is the only exit for every `ArenaIntent`. `ArenaScreen` builds it
+  once per render from its props and passes `commit` down; no component calls an intent handler
+  (`onPlayCard`, `onSellCard`, …) directly. Leave, forfeit and chat are App-level actions: the
+  `TopBar` (and later the chat sheet) calls `onLeave` / `onForfeit` / `onSendChat` directly,
+  outside the helper; L75 handles the tutorial Skip separately. `playCard` forwards only the
+  defined option keys, and a missing optional handler (`onDeactivatePersistent`,
+  `onActivateDuplication`) makes the intent a no-op. It never checks legality. L74-17 (own-intent
+  FX), L74-25 (reject spring-back) and L75 (`allowTutorialSend`) plug in here.
+- `screens/arena/card-sheet.tsx` actions + `card-sheet-actions.ts` (L74-08, spec v7 §6.6.1,
+  §6.6.2, §11): the row comes from `cardActions(view, liveCardRefFor(source, view), ctx).actions`,
+  in model order. Use (`primary`, "Use" plus the play cost as a `−` `CostAmount`), Upgrade
+  (`secondary`, `−1` upgrade point) and Sell (`quiet`, `+` the catalog `sellYield`), each tagged
+  `data-card-action`. A disabled action shows `DISABLED_REASON_COPY[reason]` under it (`Button
+  disabledReason`); there is no shared "Actions locked" line. A Use routed `send` commits
+  `playCard {instanceId}` and closes the sheet; a Use routed `target` calls
+  `onBeginTargeting({ instanceId, seatIds })` (L74-10 collapses the sheet into targeting) and
+  sends nothing; Regeneration and Card Transformer get their in-sheet pre-send step in L74-10.
+  A sheet commits at most once per view, so a double tap sends one intent; the guard re-arms
+  each time the sheet opens (a closed sheet stays mounted and is reused on reopen). A
+  hand or special card that left `view.self` turns its open sheet read-only (`liveCardRefFor`),
+  so no intent can name a stale instance.
 
 ## Design system (V2 · Lots 10+)
 

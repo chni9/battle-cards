@@ -20,6 +20,7 @@ import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { seats } from '../../view-model/seats';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
+import { createArenaCommit } from './arena-commit';
 import { arenaRegionAttributes } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
 import {
@@ -48,6 +49,8 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const readOnly = props.readOnly ?? false;
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly };
   const lock = actionLock(view, ctx);
+  // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
+  const commit = createArenaCommit(props);
   const arenaRef = useRef<HTMLDivElement>(null);
   const layoutBox = useArenaLayoutBox(arenaRef);
   const seatsModel = seats(view, layoutBox);
@@ -142,6 +145,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
                 source={sheet.source}
                 view={view}
                 ctx={ctx}
+                commit={commit}
                 onClose={() => {
                   closeSheet(sheet);
                 }}

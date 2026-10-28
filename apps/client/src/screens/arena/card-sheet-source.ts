@@ -68,6 +68,38 @@ export function cardRefFor(source: CardSheetSource): CardRef {
   }
 }
 
+/**
+ * The ref `cardActions` reads against the latest view (Lot 74 Review Focus 1). A held hand or
+ * special card takes its live instance (an upgrade since the sheet opened). One that left
+ * `view.self` (played, stolen, sold, transformed) becomes `{ zone: 'read-only', instance }`, so no
+ * action can name a stale instance. Every other source is `cardRefFor(source)`; an in-play ref
+ * needs no check, because `cardActions` already gives a card it no longer finds as the POV's own
+ * `actions: []`.
+ */
+export function liveCardRefFor(source: CardSheetSource, view: PlayingStateView): CardRef {
+  switch (source.kind) {
+    case 'hand': {
+      const live = view.self.hand.find((card) => card.instanceId === source.instance.instanceId);
+      return live === undefined
+        ? { zone: 'read-only', instance: source.instance }
+        : { zone: 'hand', instance: live };
+    }
+    case 'special': {
+      const live = view.self.specialCards.find((card) => card.instanceId === source.instance.instanceId);
+      return live === undefined
+        ? { zone: 'read-only', instance: source.instance }
+        : { zone: 'special', instance: live };
+    }
+    case 'in-play':
+    case 'spy-reveal':
+    case 'queue':
+    case 'log':
+      return cardRefFor(source);
+    default:
+      return unreachable(source);
+  }
+}
+
 /** queue: `{ instanceId: `queue-${effectId}`, cardId, isUpgraded }`; log: `log-${cardId}-${'up'|'base'}`. */
 export function sheetInstanceFor(source: CardSheetSource): CardInstance {
   switch (source.kind) {

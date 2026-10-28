@@ -5352,3 +5352,28 @@ Appendix A `global-card-face`, `card-band`.
   point. `DESIGN.md` is updated in the same commit (spec v7 §5.8).
 
 ---
+
+## 2026-10-28 · [P] V7 arena: one commit helper; stale and repeated taps send nothing (L74-08)
+
+Source: technical spec v7 §6.6.1, §6.6.4 and §11 (Q39); Lot 74 plan Appendix A.6 and Review
+Focus 1 and 3.
+
+- `screens/arena/arena-commit.ts` `createArenaCommit(handlers)` is the only exit for every
+  `ArenaIntent`. `ArenaScreen` builds it once per render from its props. Components receive
+  `commit` and never call an intent handler directly. L74-17 (own-intent FX), L74-25 (reject
+  spring-back) and L75 (`allowTutorialSend`) plug in there. It never checks legality (golden
+  rule 8).
+- Leave, forfeit and chat are App-level actions, not `ArenaIntent`s: the `TopBar` (and later the
+  chat sheet) calls `onLeave` / `onForfeit` / `onSendChat` directly from an explicit confirm or
+  send button, outside the helper. L75 handles the tutorial Skip separately.
+- The card sheet reads `cardActions` against the latest view through `liveCardRefFor`. A hand
+  or special card that left `view.self` (played, stolen, sold, transformed, wiped) turns the open
+  sheet read-only, with no action, instead of closing it under the player's finger.
+- A card sheet commits at most once per view. A second tap on any action before the next state
+  update sends nothing, whatever the exit animation keeps on screen. The guard re-arms when the
+  sheet opens again: a closed sheet stays mounted and is reused on reopen, so a rejected intent
+  (an `actionReject` with no state update) can be retried by reopening the card.
+- V2's "Actions locked — you can still read the card." line is not carried over. Each disabled
+  action shows its own reason (§11, Q39), `Not your turn` and `Actions locked` included.
+
+---

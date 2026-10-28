@@ -6,10 +6,10 @@ import type { CardId, PlayingStateView } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import { inPlayThumbs, type InPlayThumb } from '../../view-model/card-actions';
-import { makeCard, makePersistent, makeSelf } from '../../view-model/test-fixtures';
+import { makeCard, makePersistent, makePlayingView, makeSelf } from '../../view-model/test-fixtures';
 import {
   ACTIVE_LABEL, CARD_LIVES_LABEL, SPY_REVEAL_LABEL, TURNS_LEFT_LABEL,
-  cardRefFor, cardSheetContext, cardSheetCounter, cardSheetTitle, liveCardSheetSource, sheetInstanceFor,
+  cardRefFor, cardSheetContext, cardSheetCounter, cardSheetTitle, liveCardRefFor, liveCardSheetSource, sheetInstanceFor,
   type CardSheetSource,
 } from './card-sheet-source';
 import { makeArenaView } from './test-view';
@@ -85,5 +85,37 @@ describe('card sheet sources (Appendix A.5, spec v7 §6.6.1)', () => {
     expect(ticked.kind === 'in-play' ? ticked.thumb.badge : null).toEqual({ kind: 'card-lives', value: 2 });
     expect(liveCardSheetSource(open, boardWith(null))).toBe(open);
     expect(liveCardSheetSource(HAND, boardWith(2))).toBe(HAND);
+  });
+});
+
+describe('liveCardRefFor (L74-08, Review Focus 1)', () => {
+  const spy = makeCard('spy');
+  const poison = makeCard('poison');
+
+  it('reads a held hand card from the latest view, upgrade included', () => {
+    const upgraded = makeCard('spy', { isUpgraded: true });
+    expect(liveCardRefFor({ kind: 'hand', instance: spy }, makePlayingView({ self: makeSelf({ hand: [upgraded] }) })))
+      .toEqual({ zone: 'hand', instance: upgraded });
+  });
+
+  it('turns a hand card that left the hand into a read-only ref', () => {
+    expect(liveCardRefFor({ kind: 'hand', instance: spy }, makePlayingView()))
+      .toEqual({ zone: 'read-only', instance: spy });
+  });
+
+  it('does the same for a special', () => {
+    expect(liveCardRefFor({ kind: 'special', instance: poison }, makePlayingView({ self: makeSelf({ specialCards: [poison] }) })))
+      .toEqual({ zone: 'special', instance: poison });
+    expect(liveCardRefFor({ kind: 'special', instance: poison }, makePlayingView()))
+      .toEqual({ zone: 'read-only', instance: poison });
+  });
+
+  it('leaves every other source to cardRefFor', () => {
+    const view = makePlayingView({ self: makeSelf({ shield: 4 }) });
+    const [thumb] = inPlayThumbs(view, 'me');
+    if (thumb === undefined) throw new Error('no own Shield thumb');
+    const queue: CardSheetSource = { kind: 'queue', effectId: 'e-1', cardId: 'basic-attack', isUpgraded: false };
+    expect(liveCardRefFor({ kind: 'in-play', thumb }, view)).toEqual(cardRefFor({ kind: 'in-play', thumb }));
+    expect(liveCardRefFor(queue, view)).toEqual(cardRefFor(queue));
   });
 });
