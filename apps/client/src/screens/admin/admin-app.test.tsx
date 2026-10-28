@@ -73,3 +73,80 @@ describe('AdminApp shell (technical spec v7 §7.8, L61-06, L80-01)', () => {
     expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBeNull();
   });
 });
+
+describe('AdminApp sign-out and rate limit (L80-02)', () => {
+  function signOutButton(): HTMLElement {
+    return screen.getByRole('button', { name: 'Sign out' });
+  }
+
+  it('Sign out removes the key and shows an empty gate', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await fake.last('/api/admin/overview').respond(200, makeAdminOverview());
+    await user.click(signOutButton());
+    const field = screen.getByLabelText('Password');
+    expect(field instanceof HTMLInputElement && field.value).toBe('');
+    expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
+  });
+
+  it('Sign out is absent while the gate shows', () => {
+    setAdminPath('/admin');
+    installFakeFetch();
+    renderUi(<AdminApp />);
+    expect(screen.getByLabelText('Password')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
+  });
+
+  it('the next Unlock after sign-out probes again', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await fake.last('/api/admin/overview').respond(200, makeAdminOverview());
+    expect(fake.to('/api/admin/overview')).toHaveLength(1);
+    await user.click(signOutButton());
+    await user.type(screen.getByLabelText('Password'), 'secret{Enter}');
+    expect(fake.to('/api/admin/overview')).toHaveLength(2);
+    expect(fake.last('/api/admin/overview').headers['x-inbox-password']).toBe('secret');
+  });
+
+  it('a page request resolving after Sign out leaves the key absent', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/kits');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await user.click(signOutButton());
+    await fake.last('/api/admin/kit-stats').respond(200, { sampleGames: 0, rows: [] });
+    expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBeNull();
+    expect(screen.getByLabelText('Password')).not.toBeNull();
+  });
+
+  it('a Feedback 401 that resolves after Sign out does not lock the next session', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'old');
+    setAdminPath('/admin/feedback');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    const staleList = fake.last('/api/inbox');
+    await user.click(signOutButton());
+    await user.type(screen.getByLabelText('Password'), 'new{Enter}');
+    await fake.last('/api/admin/overview').respond(200, makeAdminOverview());
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    await staleList.respond(401);
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBe('new');
+  });
+
+  it('a 429 on the Feedback list shows the rate-limit copy and keeps the key', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/feedback');
+    const fake = installFakeFetch();
+    renderUi(<AdminApp />);
+    await fake.last('/api/inbox').respond(429);
+    expect(screen.getByText('Too many wrong passwords. Try again in a few minutes.')).not.toBeNull();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBe('secret');
+  });
+});

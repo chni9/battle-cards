@@ -19,7 +19,7 @@ import { useEffect, useState, type ReactElement } from 'react';
 import { Button } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
 import { fetchInbox, filterInbox, updateInboxStatus } from '../../inbox/fetch-inbox';
-import { adminErrorCopy, lockAdminSession } from '../../admin/fetch-admin';
+import { adminErrorCopy, currentAdminSession, lockAdminSession } from '../../admin/fetch-admin';
 
 const KIND_LABEL: Record<FeedbackKind, string> = {
   bug: 'Bug',
@@ -149,10 +149,11 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const [savingStatus, setSavingStatus] = useState(false);
 
   useEffect(() => {
+    const session = currentAdminSession();
     void fetchInbox(password).then((result) => {
       if (!result.ok) {
         if (result.status === 401) {
-          lockAdminSession();
+          lockAdminSession(session);
         }
         setError(adminErrorCopy(result.status));
         return;
@@ -167,11 +168,12 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   function applyStatus(id: string, status: FeedbackTriageStatus): void {
     setSavingStatus(true);
     setError(null);
+    const session = currentAdminSession();
     void updateInboxStatus(password, id, status).then((result) => {
       setSavingStatus(false);
       if (!result.ok) {
         if (result.status === 401) {
-          lockAdminSession();
+          lockAdminSession(session);
         }
         setError(adminErrorCopy(result.status));
         return;

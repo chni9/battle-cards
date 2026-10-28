@@ -117,6 +117,23 @@ describe('AdminPasswordGate (L61-06, L80-01)', () => {
     expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBeNull();
   });
 
+  it('a 429 on Unlock shows the rate-limit copy and keeps the gate', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'old');
+    const { probe, answer } = controlledProbe();
+    const onUnlocked = vi.fn();
+    const { user } = renderUi(<AdminPasswordGate onUnlocked={onUnlocked} probe={probe} />);
+    await user.click(unlockButton());
+    expect(probe.mock.calls).toStrictEqual([['old']]);
+    await answer({ ok: false, status: 429 });
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Too many wrong passwords. Try again in a few minutes.',
+    );
+    expect(onUnlocked).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Password')).not.toBeNull();
+    expect(isOff(unlockButton())).toBe(false);
+    expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBe('old');
+  });
+
   it('the password field uses the 16 px input step', () => {
     renderUi(<AdminPasswordGate onUnlocked={vi.fn()} probe={controlledProbe().probe} />);
     const field = screen.getByLabelText('Password');

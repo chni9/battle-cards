@@ -815,6 +815,18 @@ its payloads and `PROTOCOL_VERSION` do not change.
 - **Gate:** `TextField` (password, `current-password`, 16px) and a primary `Button`. Unlock is
   `focusableWhenDisabled`: while blank or Checking… it is `aria-disabled`, so a click that starts
   the check keeps focus on it.
+- **Sign out and the session counter (L80-02):** a quiet `Button` **Sign out** sits in the
+  header row (right of the h1 from `md`, under the blurb on phones) while unlocked and calls
+  `lockAdminSession()`, the same path as a 401, so the gate comes back empty with the key
+  cleared. `admin/fetch-admin.ts` keeps a module counter (`currentAdminSession()`) that every
+  lock bumps. A request captures it before it starts. `lockAdminSession(session)` is a no-op
+  when that session is stale, and `adminGet` stores the password on success only while its
+  session is still current. So a request that started before a lock can neither store the old
+  password again nor lock the session unlocked since. The gate probe and every page go through
+  `adminGet`; Feedback's `fetchInbox` and `updateInboxStatus` capture the session themselves.
+- **429 copy:** `adminErrorCopy(429)` is `ADMIN_RATE_LIMIT_COPY` ('Too many wrong passwords. Try
+  again in a few minutes.'), shown by the gate and by every page, Feedback included. A 429 never
+  locks the session and never clears the stored key; only a 401 does.
 - **Tests:** happy-dom component tests use the test-only `screens/admin/admin-test-harness.ts`
   and `admin-fixtures.ts`. Shipped code never imports either.
   - `installFakeFetch()` stubs the global `fetch` that `adminGet` and `fetchInbox` read at call
@@ -846,8 +858,8 @@ its payloads and `PROTOCOL_VERSION` do not change.
     fetch ignores stale responses and shows `adminErrorCopy` on 404/503.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
-  - A 401 clears the session and re-opens the password gate. `adminGet` catches network and
-    JSON failures (status 0 → Could not load).
+  - A 401 clears the session and re-opens the password gate (Sign out takes the same path,
+    L80-02). `adminGet` catches network and JSON failures (status 0 → Could not load).
   - From/To `datetime-local` values are converted to UTC ISO on the client, so the VPS does not
     shift the window.
   - Client `exceljs` exports for the overview, games list, kit stats and table browser page.
