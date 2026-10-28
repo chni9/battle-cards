@@ -5373,3 +5373,23 @@ accepted); decisions 2026-10-06 (Lot 70 table chat, Room chat outlives one match
   `admin-database-chat-transcripts` now describes the tab instead of "reachable by URL only".
 
 ---
+
+## 2026-10-28 · [P] Chat messages pages can repeat or skip lines (L80-11)
+
+Source: the Lot 80 whole-branch review (final fix wave F5); `apps/server/src/db/admin-table-browser.ts`
+`tableOrderBy` and `loadAdminTablePage`; `apps/server/db/migrations/011_lobby_rules_and_chat.sql`;
+the L80-10 Database paging and the L80-11 entry above, which this note extends without changing.
+
+- **Hazard.** `game_chat_messages` has no `created_at`, so `tableOrderBy` falls back to
+  `ORDER BY 1`, the non-unique `game_id`. Lines inside one game have no defined order, and since
+  L80-10 pages the tab with `LIMIT` / `OFFSET`, Postgres may return a game's lines in a different
+  order for each page request: a line can show on two pages, or on none.
+- **Known issue, no client fix.** Lot 80 is client-only and the client cannot order rows the
+  server pages. The designer reads the tab as a raw dump; a line missing from a page may sit on
+  the next one, and the total stays right.
+- **Server follow-up (one line).** Give `game_chat_messages` its own branch in `tableOrderBy`:
+  `game_id DESC, order_index ASC`. `(game_id, order_index)` is the primary key, so the order is
+  total and every page is stable, and lines read in send order within each game, as on the
+  Eliminations tab. Out of scope for Lot 80.
+
+---

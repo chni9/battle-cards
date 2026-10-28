@@ -975,7 +975,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     object as JSON and a `_truncated` preview as `Preview only (N bytes)`. Zero rows show `No
     rows in this table.` and read `Page 1 of 1`. The `{N} rows · page {N}` line stays.
     **Download spreadsheet (this page)** is a quiet `Button`, off until a page loads, that hands
-    the loaded page to `exportTablePageXlsx`. Still read-only: there is no SQL box.
+    the loaded page to `exportTablePageXlsx`. Still read-only: there is no SQL box. **Known
+    issue:** the server orders `game_chat_messages` by `game_id` only, so Chat messages pages can
+    repeat or skip a line; the fix is server side (`game_id DESC, order_index ASC` in
+    `tableOrderBy`, `db.md`, `decisions.md` 2026-10-28).
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
   - A 401 clears the session and re-opens the password gate (Sign out takes the same path,
