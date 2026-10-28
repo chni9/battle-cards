@@ -91,6 +91,35 @@ describe('cardActions: own-only Upgrade in play (Q37)', () => {
     expect(actionsOf(board(1, [POISON], { isSpectator: true }), shield('me'))).toEqual([]);
   });
 
+  it("follows the view's own record, not the ref, on an own card's upgraded state (Decision 2)", () => {
+    const upgradedPoison = { ...POISON, isUpgraded: true };
+    const upgradedSentence = { ...OWN_SENTENCE, isUpgraded: true };
+    // The ref says upgraded, the view's own record says base: Upgrade stays offered.
+    expect(actionsOf(board(1), shield('me', true))).toEqual([UPGRADE_ON]);
+    expect(actionsOf(board(1), active('me', upgradedPoison))).toEqual([UPGRADE_ON, DEACTIVATE_ON]);
+    expect(actionsOf(board(1), sentence(upgradedSentence))).toEqual([UPGRADE_ON]);
+    // The ref says base, the view's own record says upgraded: Upgrade stays hidden.
+    const upgradedRecords = board(1, [upgradedPoison], {
+      self: makeSelf({ upgradePoints: 1, shield: 4, shieldIsUpgraded: true, activePersistentEffects: [upgradedPoison] }),
+      pendingSentences: [upgradedSentence],
+    });
+    expect(actionsOf(upgradedRecords, shield('me'))).toEqual([]);
+    expect(actionsOf(upgradedRecords, active('me', POISON))).toEqual([DEACTIVATE_ON]);
+    expect(actionsOf(upgradedRecords, sentence(OWN_SENTENCE))).toEqual([]);
+  });
+
+  it.each<[string, CardRef]>([
+    ['own Shield', shield('me')],
+    ['own Sentence', sentence(OWN_SENTENCE)],
+  ])('%s shows Upgrade disabled off-turn and while a sub-choice is open', (_label, ref) => {
+    expect(actionsOf(board(1, [POISON, CURSE], { currentTurnPlayerId: 'p1' }), ref)).toEqual([
+      { kind: 'upgrade', enabled: false, reason: 'not-your-turn' },
+    ]);
+    expect(actionsOf(board(1), ref, MIRROR_OPEN)).toEqual([
+      { kind: 'upgrade', enabled: false, reason: 'actions-locked' },
+    ]);
+  });
+
   it('never offers Use, Sell or Multi-attack on a card in play', () => {
     const model = cardActions(board(1), active('me', POISON), ON_TURN);
     expect(model.use).toBeNull();

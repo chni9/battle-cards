@@ -5115,6 +5115,9 @@ Source: technical spec v7 §11 and §13 (Q37, Q40); Appendix A `table-inspect-ac
   included), never on Shield or Sentence. It is disabled, not hidden, off-turn (`not-your-turn`) and
   while actions are locked, an open sub-choice included (`actions-locked`), because the server rejects
   it then (`handleAction` sub-choice gate). V2 gated it on `isMyTurn` only and hid it off-turn.
+  On the finished board V7 shows Deactivate disabled (`actions-locked`, spec v7 §6.12 "every intent
+  locked"), where Appendix A `deactivate-confirm-dialog` says it is not offered: a deliberate
+  deviation.
 - **Thumbs.** Shield and Sentence never request activated art. A persistent requests it only when
   `CARDS_WITH_ACTIVATED_ART` lists it (Appendix A `global-activated-art-guard`).
 
