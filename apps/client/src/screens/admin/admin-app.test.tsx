@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { INBOX_PASSWORD_STORAGE_KEY } from '../../inbox/password-storage';
 import { renderUi } from '../../test/render';
 import { AdminApp } from './admin-app';
-import { makeAdminOverview } from './admin-fixtures';
+import { makeAdminOverview, makeTablePage } from './admin-fixtures';
 import { installFakeFetch, setAdminPath } from './admin-test-harness';
 
 const BLURB = 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.';
@@ -151,5 +151,68 @@ describe('AdminApp sign-out and rate limit (L80-02)', () => {
     expect(screen.getByText('Too many wrong passwords. Try again in a few minutes.')).not.toBeNull();
     expect(screen.queryByLabelText('Password')).toBeNull();
     expect(sessionStorage.getItem(INBOX_PASSWORD_STORAGE_KEY)).toBe('secret');
+  });
+});
+
+describe('AdminApp focus after a link activation (WCAG 2.4.3, L80-12)', () => {
+  function currentLink(name: string): HTMLElement {
+    const link = screen.getByRole('link', { name });
+    expect(link.getAttribute('aria-current')).toBe('page');
+    return link;
+  }
+
+  it('a Database tab activated by keyboard leaves focus on the now-current tab after the page remounts', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/data');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await fake.last('/api/admin/tables/finished_games').respond(
+      200,
+      makeTablePage('finished_games', [{ id: 'g-1' }]),
+    );
+    const players = screen.getByRole('link', { name: 'Players' });
+    players.focus();
+    await user.keyboard('{Enter}');
+
+    // The page remounted, so the tab is a new element, and it holds the focus: not the body.
+    const now = currentLink('Players');
+    expect(now).not.toBe(players);
+    expect(document.activeElement).toBe(now);
+
+    // The table loading in does not move it either.
+    await fake.last('/api/admin/tables/finished_game_players').respond(
+      200,
+      makeTablePage('finished_game_players', [{ game_id: 'p-1' }]),
+    );
+    expect(document.activeElement).toBe(currentLink('Players'));
+  });
+
+  it('a nav link activated by keyboard keeps its focus, and the page behind it takes none', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/data');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await fake.last('/api/admin/tables/finished_games').respond(
+      200,
+      makeTablePage('finished_games', [{ id: 'g-1' }]),
+    );
+    const matches = screen.getByRole('link', { name: 'Matches' });
+    matches.focus();
+    await user.keyboard('{Enter}');
+    expect(currentLink('Matches')).toBe(matches);
+    expect(document.activeElement).toBe(matches);
+  });
+
+  it('a pointer click on a Database tab restores focus the same way', async () => {
+    sessionStorage.setItem(INBOX_PASSWORD_STORAGE_KEY, 'secret');
+    setAdminPath('/admin/data');
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminApp />);
+    await fake.last('/api/admin/tables/finished_games').respond(
+      200,
+      makeTablePage('finished_games', [{ id: 'g-1' }]),
+    );
+    await user.click(screen.getByRole('link', { name: 'Eliminations' }));
+    expect(document.activeElement).toBe(currentLink('Eliminations'));
   });
 });

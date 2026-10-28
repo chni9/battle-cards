@@ -9,9 +9,14 @@
  * Sign out (§7.8, L80-02) is the 401 lock path: `lockAdminSession()` clears the key, bumps the
  * session counter and notifies the shell, so the gate, the storage and the subscribers behave as
  * after a 401. It shows only while unlocked.
+ *
+ * Every route change remounts the page (`key={routeKey}`), so a link inside it that the keyboard
+ * just activated (a Database tab) is gone and focus would drop to the body (WCAG 2.4.3). The shell
+ * remembers that link's `href` when the route changes and focuses its twin in the new page
+ * (L80-12). The nav sits outside the keyed page and keeps its own focus.
  */
 
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 
 import { adminRoute } from '../../admin/admin-routes';
 import {
@@ -32,9 +37,18 @@ import { AdminKitsPage } from './admin-kits-page';
 export function AdminApp(): ReactElement {
   const [routeKey, setRouteKey] = useState(0);
   const [password, setPassword] = useState<string | null>(() => readStoredInboxPassword());
+  const pageRef = useRef<HTMLDivElement>(null);
+  // The `href` of the page link that had focus when the route changed; read once by the next
+  // layout effect, after the new page has mounted.
+  const refocusHref = useRef<string | null>(null);
 
   useEffect(() => {
     const onPop = (): void => {
+      const active = document.activeElement;
+      refocusHref.current =
+        active instanceof HTMLAnchorElement && pageRef.current?.contains(active) === true
+          ? active.getAttribute('href')
+          : null;
       setRouteKey((value) => value + 1);
     };
     window.addEventListener('popstate', onPop);
@@ -42,6 +56,16 @@ export function AdminApp(): ReactElement {
       window.removeEventListener('popstate', onPop);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    const href = refocusHref.current;
+    refocusHref.current = null;
+    if (href === null) {
+      return;
+    }
+    const links = pageRef.current?.querySelectorAll<HTMLAnchorElement>('a[href]') ?? [];
+    [...links].find((link) => link.getAttribute('href') === href)?.focus();
+  }, [routeKey]);
 
   useEffect(() => {
     return subscribeAdminUnauthorized(() => {
@@ -91,7 +115,7 @@ export function AdminApp(): ReactElement {
             <div className="mt-6">
               <AdminNav />
             </div>
-            <div className="mt-6" key={routeKey}>
+            <div className="mt-6" key={routeKey} ref={pageRef}>
               {route.page === 'dashboard' ? <AdminDashboardPage password={password} /> : null}
               {route.page === 'games' ? (
                 <AdminGamesPage password={password} detailId={route.gameId} />

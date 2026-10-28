@@ -3805,7 +3805,7 @@
 - **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/admin/admin-app.tsx`, `apps/client/src/admin/admin-routes.ts`, `apps/client/src/admin/admin-route.test.ts`, `apps/client/src/screens/admin/admin-app.test.tsx`
 - **Purpose:** Password-gated designer analytics in V7 tool mode (technical spec v7 §7.8). The pathname is matched before any game phase, and Colyseus is never used.
 - **Controls:**
-  - Browser back and forward: a popstate listener bumps routeKey and remounts the page.
+  - Browser back and forward: a popstate listener bumps routeKey and remounts the page. When a link inside the page had focus (a Database tab pressed by keyboard), the shell focuses the link with the same href in the new page (L80-12).
   - Routes (adminRoute in admin-routes.ts): /admin and /admin/dashboard go to Overview. /admin/games and /admin/games/:id (detail). /admin/kits. /admin/feedback. /admin/data and /admin/data/:table. One trailing '/' is ignored, and any unknown /admin/* path falls back to Overview.
   - Quiet 'Sign out' button in the header row while unlocked (L80-02). It runs lockAdminSession(), the 401 path, so the stored key is cleared and the gate comes back empty.
 - **States:**

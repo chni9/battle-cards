@@ -823,7 +823,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
-    Meta or Shift stays the browser's.
+    Meta or Shift stays the browser's. The route change remounts the page, so `AdminApp` reads
+    the `href` of a focused link inside the page (a Database tab) on `popstate` and focuses its
+    twin once the new page has mounted (L80-12; WCAG 2.4.3). The nav is outside the keyed page
+    and keeps focus by itself.
   - `AdminToggleChip` renders every Feedback filter (L80-09): a flat chip with `aria-pressed`,
     pressed `bg-v7-cta-2 text-v7-text-on-cta`, idle `bg-v7-panel-2 text-v7-text`. With `icon` and
     `labelHidden` it is icon-only and takes `aria-label` and `title` from `label`; a text chip
