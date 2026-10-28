@@ -178,9 +178,9 @@ describe('AdminGameDetailDialog (technical spec v7 §7.8, L80-07)', () => {
     );
     const heading = screen.getByRole('heading', { name: 'Elimination order' });
     const list = heading.nextElementSibling;
-    if (list === null) throw new Error('no elimination list');
+    if (!(list instanceof HTMLElement)) throw new Error('no elimination list');
     expect(
-      within(list as HTMLElement)
+      within(list)
         .getAllByRole('listitem')
         .map((item) => item.textContent),
     ).toStrictEqual(['Bob — Combat · by Ann', 'Cat — Absent', 'Dan — Left']);
