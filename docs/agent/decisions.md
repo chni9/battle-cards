@@ -5469,3 +5469,18 @@ Source: technical spec v7 §6.6.3–§6.6.5, §12.2; Appendix A `table-use-targe
   Look gate to `canStartHandDrag`.
 
 ---
+
+## 2026-10-28 · [P] V7 dock: Draw pulse per own turn, duplication in the dock (L74-13)
+
+Source: technical spec v7 §6.1 item 5, §11; Appendix A `economy-bar`, `private-zone-identity`;
+L59-01, L64-05.
+
+- **Draw pulses at every own turn start and payout change.** The pulse key is
+  `{turnSequence}:{gain}` on the POV's turn. V2 pulsed only when the turn came back from another
+  seat, so the second turn of a Block chain did not pulse. The arena animates the button in
+  place, so keyboard focus stays on Draw; no pulse under reduced motion.
+- **Activate duplication lives in the dock** (§6.1 item 5, `DockModel.duplication`), not in the
+  private zone as in V2. The self strip keeps the 'Duplication active' text.
+- **Spoken names stay V2's** (A.8 ruling 4): `Draw, plus 1 pt`, `Unspy, minus 10 pts`.
+
+---

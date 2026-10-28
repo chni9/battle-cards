@@ -1045,6 +1045,23 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     unit-tested in `hand-drag.test.ts` / `hand-drag-layer.test.tsx`. Real-touch pan versus
     lift and the full-motion spring-back timing (the pane may throttle animation) go to the
     L74-26 gate on a phone.
+- `screens/arena/dock.tsx`, `unspy-sheet.tsx`, `dock-model.ts` (L74-13, spec v7 §6.1 item 5, §6.12,
+  §11): renders `selfStrip(view, ctx).dock` in the dock region. Draw (`--cta`, `--danger` when
+  `hot`, i.e. above `DRAW_HOT_ABOVE`) shows '+N' with the point icon and no word; its aria-label
+  and title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at
+  each own turn start and payout change, never under reduced motion, and sends `drawCard`. Shop
+  keeps its word label and `data-hint-anchor="shop"` (disabled until L74-14 passes
+  `onOpenShop`). Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for a
+  seated or Reanimating POV and disabled with its reason; it opens `UnspySheet` ('Choose who is
+  spying you.', `unspy.spyIds`, a single spy preselected) where Confirm sends `clearSpy` and
+  Cancel, Esc or the backdrop reset the pick. Activate duplication shows while
+  `dock.duplication` is set and sends `activateDuplication`; the self strip keeps only
+  'Duplication active'. An eliminated Watching POV keeps the disabled dock without Unspy (A.8
+  ruling 7); a walk-in has no controls (Q38). Every send goes through the commit, and for
+  `TAP_GUARD_MS` after targeting ends the dock sends nothing. The `use-room-connection.clear-spy`
+  source-text row now has its behavior tests: `net/use-room-connection.clear-spy.behavior.test.ts`
+  (`renderHook` over a mocked `@colyseus/sdk` room, the L74-03 pattern) and
+  `screens/arena/dock.test.tsx`.
 
 ## Design system (V2 · Lots 10+)
 

@@ -15,6 +15,9 @@
  * - §6.6.3–§6.6.5 (L74-12): a card lifted from the hand drags a ghost (`useHandDrag`, portaled by
  *   `HandDragLayer`); the seats and the plate light from the latest model, a drop commits through
  *   `commit` or opens the card sheet for its pre-send choice, and nothing drags while targeting.
+ * - §6.1 item 5 (L74-13): the dock region renders `strip.dock` (`Dock`), and its sends use the same
+ *   tap guard as the seats, so no double tap on the targeting bar reaches Draw, Unspy or Activate
+ *   duplication underneath.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -30,7 +33,7 @@ import { selfStrip } from '../../view-model/self-strip';
 import { seats } from '../../view-model/seats';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
-import { createArenaCommit } from './arena-commit';
+import { createArenaCommit, type ArenaCommit } from './arena-commit';
 import { arenaRegionAttributes } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
 import {
@@ -46,6 +49,8 @@ import {
 } from './arena-sheets';
 import { CardSheet } from './card-sheet';
 import { CentralPlate } from './central-plate';
+import { Dock } from './dock';
+import { dockHasControls } from './dock-model';
 import { plateDropHighlight, seatDropHighlight } from './hand-drag';
 import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
@@ -115,6 +120,12 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
     finishTargeting();
   });
   const targeting = live !== null;
+  // The dock's exit (L74-13): the same commit, silenced while the tap guard is up, so the second tap
+  // of a double tap on the bar's Cancel or a target cannot land on Draw, Unspy or Activate duplication.
+  const dockCommit: ArenaCommit = (intent) => {
+    if (tapGuard.guarded) return;
+    commit(intent);
+  };
 
   // Drag from the hand (L74-12, §6.6.3): exclusive with targeting; a pre-send choice opens the card sheet.
   const handDrag = useHandDrag({
@@ -227,7 +238,18 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           drag={handDrag.fanProps}
         />
       </div>
-      <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2" />
+      <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2">
+        {/* A walk-in has no controls (Q38): the region stays, empty. An eliminated Watching POV keeps the disabled dock (A.8 ruling 7). */}
+        {dockHasControls(strip.dock) ? (
+          <Dock
+            model={strip.dock}
+            isMyTurn={strip.isActive}
+            turnSequence={view.turnSequence}
+            view={view}
+            commit={dockCommit}
+          />
+        ) : null}
+      </div>
       {/* Portaled to `document.body` on `Z_INDEX.dragGhost`, under every sheet (Appendix A.8 ruling 10). */}
       <HandDragLayer drag={handDrag.view} />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
