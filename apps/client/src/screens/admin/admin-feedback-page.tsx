@@ -375,16 +375,20 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
             <p>Play: {selected.playKind ?? '—'}</p>
             <p>Protocol: {selected.protocolVersion}</p>
             <p>User agent: {selected.userAgent ?? '—'}</p>
-            <ScrollArea
-              axis="x"
-              label="Log tail"
-              focusRing="inset"
-              className={`${CHROME_FLAT_SM_CLASS} bg-v7-panel-2`}
-            >
-              <pre className="p-2 font-mono text-v7-caption text-v7-text">
-                {JSON.stringify(selected.logTail, null, 2)}
-              </pre>
-            </ScrollArea>
+            {selected.logTail === null ? (
+              <p>Log tail: —</p>
+            ) : (
+              <ScrollArea
+                axis="x"
+                label="Log tail"
+                focusRing="inset"
+                className={`${CHROME_FLAT_SM_CLASS} bg-v7-panel-2`}
+              >
+                <pre className="p-2 font-mono text-v7-caption text-v7-text">
+                  {JSON.stringify(selected.logTail, null, 2)}
+                </pre>
+              </ScrollArea>
+            )}
           </div>
         ) : null}
       </Dialog>

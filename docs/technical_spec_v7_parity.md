@@ -4159,7 +4159,7 @@
   - Quiet 'Close', Esc or overlay.
 - **States:**
   - V7 Dialog in tool mode (width lg, data-mode="tool"). Title is the kind label (or 'Report').
-  - Shows createdAt (formatDateTime), the status marks, 'About: {topics}' when present, the full message (pre-wrap), 'Contact', 'Nickname', 'Code', 'Screen', 'Play', 'Protocol' and 'User agent' (each '—' when null), and logTail as pretty JSON in a <pre> inside a ScrollArea named 'Log tail'.
+  - Shows createdAt (formatDateTime), the status marks, 'About: {topics}' when present, the full message (pre-wrap), 'Contact', 'Nickname', 'Code', 'Screen', 'Play', 'Protocol' and 'User agent' (each '—' when null), and logTail as pretty JSON in a <pre> inside a ScrollArea named 'Log tail'. A null logTail reads 'Log tail: —' with no region (L80-12).
   - A failed save from a mark in this report shows its alert (role=alert) inside the dialog, not behind the modal.
 - **Keep:**
   - The detail keeps contact, nickname, game code, screen, playKind, protocol, user agent and log tail (admin-feedback-page.test.tsx › 'the report shows every kept field with — when null, in tool mode').

@@ -369,9 +369,11 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(within(dialog).getByText('Play: —')).not.toBeNull();
     expect(within(dialog).getByText('Protocol: 45')).not.toBeNull();
     expect(within(dialog).getByText('User agent: —')).not.toBeNull();
-    const tail = within(dialog).getByRole('region', { name: 'Log tail' });
-    expect(tail.getAttribute('data-scroll-axis')).toBe('x');
-    expect(tail.querySelector('pre')?.textContent).toBe('null');
+    // A null tail reads like the other null fields, never the JSON word `null`, and has nothing
+    // to scroll, so no empty "Log tail" region either.
+    expect(within(dialog).getByText('Log tail: —')).not.toBeNull();
+    expect(within(dialog).queryByRole('region', { name: 'Log tail' })).toBeNull();
+    expect(within(dialog).queryByText('null')).toBeNull();
     // The same marks as the row, Pending pressed.
     expect(marksIn(dialog).map(isPressed)).toStrictEqual([true, false, false]);
   });
@@ -400,10 +402,12 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(within(dialog).getByText('Code: ABCDEF')).not.toBeNull();
     expect(within(dialog).getByText('Play: tutorial')).not.toBeNull();
     expect(within(dialog).getByText('User agent: TestAgent/1.0')).not.toBeNull();
+    const region = within(dialog).getByRole('region', { name: 'Log tail' });
+    expect(region.getAttribute('data-scroll-axis')).toBe('x');
     expect(
-      within(within(dialog).getByRole('region', { name: 'Log tail' })).getByText((_text, node) => node?.tagName === 'PRE')
-        .textContent,
+      within(region).getByText((_text, node) => node?.tagName === 'PRE').textContent,
     ).toBe(JSON.stringify(tail, null, 2));
+    expect(within(dialog).queryByText('Log tail: —')).toBeNull();
   });
 
   it('a mark in the report sends one PATCH and the report follows the row, then Close closes it', async () => {

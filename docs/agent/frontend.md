@@ -1008,7 +1008,8 @@ its payloads and `PROTOCOL_VERSION` do not change.
     The row's dates go through `formatDateTime`. The report is a V7 `Dialog` in tool mode
     (`width="lg"`, `data-mode="tool"`) with the same marks, contact, nickname, game code,
     screen, playKind, protocol, user agent and the log tail JSON in a `ScrollArea` named
-    `Log tail`. The legacy `screens/inbox.tsx` is gone (L80-09).
+    `Log tail`. A null log tail reads `Log tail: —` like the other null fields, with no empty
+    region (L80-12). The legacy `screens/inbox.tsx` is gone (L80-09).
 
 ## Design system (V2 · Lots 10+)
 
