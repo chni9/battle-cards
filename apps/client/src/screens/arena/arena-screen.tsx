@@ -32,8 +32,10 @@ import {
   type ArenaSheetsState,
 } from './arena-sheets';
 import { CardSheet } from './card-sheet';
+import { CentralPlate } from './central-plate';
 import { KitSheet } from './kit-sheet';
 import { SeatSheet } from './seat-sheet';
+import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
 
@@ -95,7 +97,23 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
             openSheet({ kind: 'seat', playerId });
           }}
         />
-        <div data-zone="pending" data-hint-anchor="incoming" />
+        {/* After the seats, so they paint above them: arrows at z 10, the plate at z 20, both under the sheets. */}
+        <ThreatLayer
+          model={threatModel}
+          layout={seatsModel.layout}
+          arena={layoutBox.arena}
+          povId={view.you}
+          tappedSeatId={tappedSeatId}
+        />
+        <CentralPlate
+          view={view}
+          model={threatModel}
+          mode={seatsModel.layout.mode}
+          arena={layoutBox.arena}
+          onOpenCard={(source) => {
+            openSheet({ kind: 'card', source });
+          }}
+        />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
         <div data-zone="resources" data-hint-anchor="resources" />

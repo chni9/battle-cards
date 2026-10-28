@@ -5303,3 +5303,31 @@ A.8.9.
   there because that V2 dialog renders outside `<main class="table-shell">`.
 
 ---
+
+## 2026-10-28 · [P] V7 threat arrows and central plate (L74-06)
+
+Source: technical spec v7 §6.1 item 2, §6.5, §8.2, §11, §13 Q35; Appendix A `incoming-pending`,
+`waiting-on-others-strip`, `table-fx-threat`, `table-subchoice-mirror`, `table-action-log-inspect`.
+
+- **Dead state removed.** `TableFxContext.mirrorHighlightIds` and `setMirrorHighlightIds`
+  (`fx/table-fx-hooks.ts`, `fx/table-fx-context.tsx`) are deleted. No product code set or read
+  them: the V2 table derives its Mirror highlight from `subChoice`, and the arena from
+  `ThreatEntry.mirrorEligible` (spec v7 §11). `screens/table/persistent-incoming.ts` was already
+  deleted in L73-05.
+- **Reachability.** The arrow layer (paths, labels, hits-all bursts and badges) is `aria-hidden`
+  and never takes a press, so overlapping 44 px hit areas never pile up on a phone. The POV's
+  incoming effects are buttons on the central plate. Every seat's public pending effects, in
+  and out, are buttons in its seat sheet (L74-05). Grid mode draws only the POV's arrows plus a
+  tapped seat's.
+- **Fanning.** Arrows fan per seat pair, in both directions, not only per `groupKey`. A mixed
+  multi-attack and a mutual pair therefore never overlap, and every arrow keeps its own label
+  (golden rule 1).
+- **Landing spot.** The plate shows the newest public play: the last `actionPlayed` `playCard`
+  with a `cardId`, or a multi-attack's first attack. It is a face button that opens the read-only
+  card sheet with the `log` source (catalog face, no footer, L56-05), so every card face on the
+  plate is inspectable (spec v7 §6.6.5).
+- **Recurring chips.** A chip is a button that opens the in-play card sheet of the persistent it
+  ticks from. The amount is the catalog rate (Imposition shows its cap, not the floor). Paused
+  and ending say so in words; live has no word.
+
+---

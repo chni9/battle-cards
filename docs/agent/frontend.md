@@ -909,6 +909,31 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `arenaSheetEntries(sheets)` entry (`open={entry.open}`, keyed by `key`) as the last children of
   `<main>`, never inside a clickable element. It lands with the seat sheet, the first opener; no
   later task adds another host.
+- `screens/arena/threat-layer.tsx`, `central-plate.tsx`, `threat-geometry.ts`,
+  `plate-model.ts` (L74-06, spec v7 §6.1 item 2, §6.5, §11): `ThreatLayer` renders
+  `threats(view, subChoice)`, statically (motion is L78), as an `aria-hidden`, press-through
+  layer.
+  - **Arrows:** one arrow and one label per pending effect, never a sum. Arrows between one
+    seat pair fan side by side in either direction (`threatArrows`). Incoming arrows end at the
+    plate in their threat tone, outgoing ones are `--mine`, and third-party ones take the source
+    seat hue with a tone ring on the label. In grid mode only the POV's arrows draw, plus the
+    tapped seat's.
+  - **Hits-all plays:** one "Hits all" burst on the source plus a badge on each target seat
+    (`fanOutMarks`).
+  - **Mirror:** a redirected effect carries the Mirror / Super Mirror name; while a Mirror prompt
+    is open, eligible ids get `data-mirror-eligible` on arrows and plate badges.
+  - **Tapped seat:** the open seat sheet's arrows light up and the rest dim.
+  - **Central plate:** `CentralPlate` keeps `data-zone="pending"` and
+    `data-hint-anchor="incoming"`. It holds:
+    - the landing spot (the newest public `playCard`, or a multi-attack's first attack), a face
+      button that opens the `log` card sheet;
+    - the POV's incoming effects as ≥ 22 px badge buttons that open the queue inspect;
+    - recurring chips (owner, catalog rate, "Paused" / "Ending" in words) that open the in-play
+      card sheet.
+  - **FX anchors:** plate badges, arrow labels and hits-all badges carry `data-pending-id`. The
+    arena's elements come first in the DOM, so they anchor the resolution flash.
+  - **Reachability:** every public pending effect stays reachable, on the plate or in a seat
+    sheet.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1116,7 +1141,7 @@ rules above are unchanged — this section only covers how the client looks.
   Opponent actives sit beside the kit portrait (`activeShield` + persistents). The V2 table
   shows no Incoming / felt chip for Imposition or Points Generator: the unwired
   `persistent-incoming.ts` was deleted in L73-05 (spec v7 §13 #35). V7 recurring chips come
-  from `view-model/recurring-chips.ts` (View-model layer above).
+  from `view-model/recurring-chips.ts` (View-model layer above) and render on the arena's central plate (L74-06).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage

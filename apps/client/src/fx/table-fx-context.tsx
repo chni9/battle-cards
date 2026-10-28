@@ -19,7 +19,6 @@ let fxSeq = 0;
 
 export function TableFxProvider({ children }: { children: ReactNode }): ReactElement {
   const [events, setEvents] = useState<TableFxEvent[]>([]);
-  const [mirrorHighlightIds, setMirrorHighlightIds] = useState<readonly string[]>([]);
 
   const enqueue = useCallback((event: TableFxInput): void => {
     const id = `fx-${String(++fxSeq)}`;
@@ -35,10 +34,8 @@ export function TableFxProvider({ children }: { children: ReactNode }): ReactEle
     (): TableFxContextValue => ({
       enqueue,
       events,
-      mirrorHighlightIds,
-      setMirrorHighlightIds,
     }),
-    [enqueue, events, mirrorHighlightIds],
+    [enqueue, events],
   );
 
   return (
