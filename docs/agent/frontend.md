@@ -887,9 +887,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     Opponents, Seat count, Kit and the tutorial toggle, then a primary Apply. Edits send nothing
     until Apply. Apply always starts a new request, even with unchanged filters: each page
     counts Apply presses (`applyCount`) in its request key, so Apply is the retry after an error
-    (Overview has no other control before a first load). Seat count is a select over `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`,
-    so it can never send a value the server ignores; its 'Any seat count' option
-    (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends none.
+    (Overview has no other control before a first load). Seat count is a select over
+    `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`, so it can never send a value the server
+    ignores; its 'Any seat count' option (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends
+    none.
   - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
     Bots and seats, Endings, Retention and feedback) from one `GET /api/admin/overview`
     payload (L80-05). Each module is an `ADMIN_PANEL_CLASS` section: an `h3`

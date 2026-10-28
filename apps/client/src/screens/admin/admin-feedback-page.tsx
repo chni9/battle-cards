@@ -175,7 +175,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const [loadError, setLoadError] = useState<string | null>(null);
   // A failed triage save, tagged with the report its mark was pressed in (null for a row mark).
   // While that report is open its alert renders inside the dialog: the page behind an
-  // `aria-modal` sheet is dimmed and not announced (F7).
+  // `aria-modal` sheet is dimmed and not announced (spec v7 §7.8, L80-09).
   const [saveError, setSaveError] = useState<{ message: string; reportId: string | null } | null>(null);
   const [kindFilter, setKindFilter] = useState<FeedbackKind | 'all'>('all');
   const [topicFilter, setTopicFilter] = useState<FeedbackTopic | 'all'>('all');
