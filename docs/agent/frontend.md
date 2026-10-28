@@ -149,7 +149,11 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   consume options. Seats and reasons mirror `list-legal-play-card.ts`, `perform-action.ts` and each
   handler's `canPlay` in the server's check order, and a reason shows only when the view proves the
   server rejects. Never add a client immunity filter, and never gate a play the server accepts
-  (golden rule 8). The V2 table keeps `screens/table/card-actions.tsx` until L75.
+  (golden rule 8). The two Invisibility predicates live once, in `view-model/attack-targets.ts`:
+  `hasInvisibility` (server `playerIsInvisible`; a seat or `view.self`) and
+  `seatIsLivingInvisible` (server `isIllegalOpposingTarget`). New view-model code never
+  re-writes either predicate; `self-strip.ts` and `seats.ts` read the Invisibility effect itself
+  for its turns. The V2 table keeps `screens/table/card-actions.tsx` until L75.
 - **In-play cards (L73-07).** `cardActions` also takes `active`, `shield` and `sentence` refs.
   Upgrade is offered only on the POV's own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS`, own
   Shield while `self.shield > 0` (`active-shield`) and own ticking Sentence (its id). It is disabled

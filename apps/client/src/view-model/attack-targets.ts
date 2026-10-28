@@ -16,11 +16,22 @@ type PendingPick = Pick<
   'id' | 'cardId' | 'sourcePlayerId' | 'targetPlayerId'
 >;
 
-function seatIsLivingInvisible(player: AttackTargetSeat): boolean {
-  return (
-    !player.isEliminated &&
-    player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')
-  );
+/**
+ * Server `playerIsInvisible` (`engine/specials/is-invisible.ts`): any active Invisibility. The
+ * one client copy of that predicate; pass a seat or the POV's own `self` record.
+ */
+export function hasInvisibility(record: {
+  activePersistentEffects: readonly { cardId: string }[];
+}): boolean {
+  return record.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
+}
+
+/**
+ * Server `isIllegalOpposingTarget` (`engine/specials/is-invisible.ts`, L65-02): a living
+ * Invisible seat is never a single target; a corpse stays one (Absorber's death window, ripostes).
+ */
+export function seatIsLivingInvisible(player: AttackTargetSeat): boolean {
+  return !player.isEliminated && hasInvisibility(player);
 }
 
 function corpseSourceIds(

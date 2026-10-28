@@ -43,10 +43,15 @@ import {
 
 import { CARDS_WITH_ACTIVATED_ART } from '../ui/asset-lookup';
 import { structuredPlayCost } from '../ui/structured-cost';
-import { actionLock, type ActionContext } from './action-lock';
+import { actionLock, type ActionContext, type LockReason } from './action-lock';
 import { availabilityFor, type ActionAvailability, type DisabledReason } from './action-reasons';
 import { persistentToCardInstance } from './active-display';
-import { attackTargetOpponents, thiefTargetOpponents } from './attack-targets';
+import {
+  attackTargetOpponents,
+  hasInvisibility,
+  seatIsLivingInvisible,
+  thiefTargetOpponents,
+} from './attack-targets';
 
 /**
  * A card the POV can act on (hand, special), or only read: an opponent's Spy hand, the log, the
@@ -156,19 +161,6 @@ type UsePlan =
   | { kind: 'regeneration'; pointsPerLife: number }
   | { kind: 'consume'; options: readonly CardInstance[] };
 
-/** `is-invisible.ts` `isIllegalOpposingTarget`: never a single target (L65-02); a corpse is. */
-function isLivingInvisible(player: PublicPlayerView): boolean {
-  return (
-    !player.isEliminated &&
-    player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility')
-  );
-}
-
-/** The server's `playerIsInvisible(actor)`, read from the POV's own record. */
-function isOwnInvisible(view: PlayingStateView): boolean {
-  return view.self.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
-}
-
 /** `grant-block-turns.ts` `attacksForbiddenDuringBlock`; `PrivateSelfView` has no ban field. */
 function isPovBanned(view: PlayingStateView): boolean {
   return view.players.some((player) => player.id === view.you && player.blockAttacksForbidden);
@@ -182,7 +174,7 @@ function opponentsOf(view: PlayingStateView): PublicPlayerView[] {
 /** `list-legal-play-card.ts:41-44` `livingOpponents`; the upgraded thieves' `livingTargets`. */
 function livingTargetIds(view: PlayingStateView): string[] {
   return opponentsOf(view)
-    .filter((player) => !player.isEliminated && !isLivingInvisible(player))
+    .filter((player) => !player.isEliminated && !seatIsLivingInvisible(player))
     .map((player) => player.id);
 }
 
@@ -209,7 +201,7 @@ function absorberSeatIds(view: PlayingStateView): string[] {
   return opponentsOf(view)
     .filter(
       (player) =>
-        (!player.isEliminated || player.absorbWindowOpen) && !isLivingInvisible(player),
+        (!player.isEliminated || player.absorbWindowOpen) && !seatIsLivingInvisible(player),
     )
     .map((player) => player.id);
 }
@@ -248,7 +240,9 @@ function hasSuperMirrorTarget(view: PlayingStateView): boolean {
 function hasSentenceCandidate(view: PlayingStateView, isUpgraded: boolean): boolean {
   return view.players.some(
     (player) =>
-      !player.isEliminated && !isLivingInvisible(player) && (!isUpgraded || player.id !== view.you),
+      !player.isEliminated &&
+      !seatIsLivingInvisible(player) &&
+      (!isUpgraded || player.id !== view.you),
   );
 }
 
@@ -345,14 +339,14 @@ function reasonForUse(
   view: PlayingStateView,
   instance: CardInstance,
   plan: UsePlan,
-  lock: DisabledReason | null,
+  lock: LockReason | null,
 ): DisabledReason | null {
   const { cardId } = instance;
   const playPoints = plan.kind === 'regeneration' ? plan.pointsPerLife : catalogPlayPoints(cardId);
   return (
     lock ??
     (isTemporarilyUnavailableCardId(cardId) ? 'temporarily-unavailable' : null) ??
-    (isOwnInvisible(view) && cardActsOnOpponents(cardId) ? 'invisibility' : null) ??
+    (hasInvisibility(view.self) && cardActsOnOpponents(cardId) ? 'invisibility' : null) ??
     (isPovBanned(view) && (isAttackCardId(cardId) || cardId === 'block') ? 'attack-ban' : null) ??
     planCheck(plan) ??
     (view.self.points < playPoints ? 'not-enough-points' : null)
@@ -424,7 +418,7 @@ function multiAttackOffer(view: PlayingStateView, card: HeldCardRef): MultiAttac
 function multiAttackReason(
   view: PlayingStateView,
   offer: MultiAttackModel,
-  lock: DisabledReason | null,
+  lock: LockReason | null,
 ): DisabledReason | null {
   const cheapest = offer.rows
     .map((row) => catalogPlayPoints(row.instance.cardId))
@@ -434,8 +428,9 @@ function multiAttackReason(
   return (
     lock ??
     (isPovBanned(view) ? 'attack-ban' : null) ??
-    (isOwnInvisible(view) ? 'invisibility' : null) ??
-    (attackSeatIds(view).length === 0 ? 'no-valid-target' : null) ??
+    (hasInvisibility(view.self) ? 'invisibility' : null) ??
+    // Every row carries the attack seat set `multiAttackOffer` computed once.
+    (offer.rows.every((row) => row.seatIds.length === 0) ? 'no-valid-target' : null) ??
     (view.self.points < cheapest ? 'not-enough-points' : null)
   );
 }
@@ -444,7 +439,7 @@ function multiAttackReason(
  * Upgrade's reason: the lock, then the upgrade point (`upgrade-card.ts:40-42`). It has no other
  * check (`list-legal-economy.ts:49-71`), so Invisibility and the Block ban leave it usable.
  */
-function upgradeReason(view: PlayingStateView, lock: DisabledReason | null): DisabledReason | null {
+function upgradeReason(view: PlayingStateView, lock: LockReason | null): DisabledReason | null {
   return lock ?? (view.self.upgradePoints < 1 ? 'no-upgrade-point' : null);
 }
 

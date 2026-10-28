@@ -14,6 +14,8 @@
 
 import type { PersistentEffectView, PlayingStateView } from '@card-battle/shared';
 
+import { hasInvisibility } from './attack-targets';
+
 /** Cards that get a chip (§6.5). */
 export type RecurringCardId = 'poison' | 'imposition' | 'curse';
 
@@ -70,9 +72,7 @@ export function recurringChips(view: PlayingStateView): readonly RecurringChip[]
 
   // `applyPersistentEffects` returns before every victim tick while the owner is Invisible
   // (lines 74–79), so Invisibility outranks every other state below, Curse's "ending" included.
-  const invisible = view.self.activePersistentEffects.some(
-    (effect) => effect.cardId === 'invisibility',
-  );
+  const invisible = hasInvisibility(view.self);
   // `victimPersistentTicksPausedByBlock` guards Imposition and Poison only; Curse has no Block
   // check (rules spec §5 Block: "Curse and attacks are unchanged"). `blockAttacksForbidden` stays
   // true on the last chain turn, when `blockTurnsRemaining` is already 0.

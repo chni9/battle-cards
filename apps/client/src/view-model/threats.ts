@@ -19,10 +19,10 @@ import {
   type PendingEffectRedirectSource,
   type PendingEffectView,
   type PlayingStateView,
-  type PublicPlayerView,
   type SubChoiceRequiredPayload,
 } from '@card-battle/shared';
 
+import { hasInvisibility } from './attack-targets';
 import { recurringChips, type RecurringChip } from './recurring-chips';
 import { seatColorIndexOf } from './seats';
 import { threatToneFor } from './threat-tone';
@@ -110,11 +110,6 @@ export const HITS_ALL_WHEN_UPGRADED_CARD_IDS = [
 const HITS_ALL_SET = new Set<string>(HITS_ALL_CARD_IDS);
 const HITS_ALL_WHEN_UPGRADED_SET = new Set<string>(HITS_ALL_WHEN_UPGRADED_CARD_IDS);
 
-/** Server `playerIsInvisible` (`engine/specials/is-invisible.ts`): any active Invisibility. */
-function isInvisible(player: PublicPlayerView): boolean {
-  return player.activePersistentEffects.some((effect) => effect.cardId === 'invisibility');
-}
-
 function isHitsAllCopy(effect: PendingEffectView): boolean {
   if (effect.redirectedBy === 'super-mirror') {
     return true;
@@ -170,7 +165,7 @@ function fanOutGroups(view: PlayingStateView): FanOutGroup[] {
       view.players
         .filter(
           (player) =>
-            player.id !== first.sourcePlayerId && !player.isEliminated && !isInvisible(player),
+            player.id !== first.sourcePlayerId && !player.isEliminated && !hasInvisibility(player),
         )
         .every((player) => targets.has(player.id));
     if (!covered) {

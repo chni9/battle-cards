@@ -167,6 +167,15 @@ describe('target seats per card family (Appendix A table-target-picker-eligibili
       seatIds: [],
     });
   });
+
+  it('keeps the target routing while Use is disabled, so the sheet can show it read-only', () => {
+    const offTurn = cardActions({ ...crowdedTable(), currentTurnPlayerId: 'p1' }, hand('basic-attack'), ON_TURN);
+    expect(reasonOf(offTurn, 'use')).toBe('not-your-turn');
+    expect(offTurn.use).toEqual({ kind: 'target', seatIds: ['p1', 'c1'] });
+    const unaffordable = cardActions(viewWith({ points: 1 }), hand('strong-attack'), ON_TURN);
+    expect(reasonOf(unaffordable, 'use')).toBe('not-enough-points');
+    expect(unaffordable.use).toEqual({ kind: 'target', seatIds: ['p1', 'p2'] });
+  });
 });
 
 describe('Use routing: pre-send choices (Appendix A regeneration-quantity-picker, card-transformer-consume-picker)', () => {
@@ -251,6 +260,16 @@ describe('disabled reasons, one fixture each (spec v7 §11)', () => {
     }
     expect(reasonOfUse(view, hand('tax'))).toBeNull();
     expect(reasonOfUse(view, hand('thief'))).toBeNull();
+  });
+
+  it('leaves Super Mirror and Card Absorber usable during the Block ban (list-legal-play-card.ts:68-73)', () => {
+    const view = viewWith({ points: 30 }, {
+      players: BANNED,
+      pool: [makeCard('spy')],
+      pendingEffects: [makePending({ id: 'fx-on-me', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'basic-attack' })],
+    });
+    expect(reasonOfUse(view, special('super-mirror'))).toBeNull();
+    expect(reasonOfUse(view, special('card-absorber'))).toBeNull();
   });
 
   it('reports the first reason in the server order (perform-action.ts playCardAction)', () => {
