@@ -137,6 +137,20 @@ describe('dropTarget (spec v7 §6.6.3, §6.6.4)', () => {
     expect(drop(hand('basic-attack'), { x: 25, y: 40 }, table(), overlap)).toStrictEqual(play('basic-attack-1', 'p1'));
   });
 
+  it('returns null inside a valid seat or plate that overlaps a valid Sell zone', () => {
+    // A targeted Use opens seats only and an untargeted one the plate only (`dropZonesFor`), so a
+    // seat and the plate are never both valid for one card; Sell is the second zone either meets.
+    const sellOverSeat: DropZoneRects = { ...RECTS, sell: { left: 0, top: 0, width: 100, height: 80 } };
+    expect(drop(hand('basic-attack'), AT.p1, table(), sellOverSeat)).toBeNull();
+    const sellOverPlate: DropZoneRects = { ...RECTS, sell: { left: 100, top: 200, width: 200, height: 120 } };
+    expect(drop(hand('shield'), AT.plate, table(), sellOverPlate)).toBeNull();
+    // A special has no Sell zone, so the same overlap still sends from the plate.
+    expect(drop(special('mega-attack'), AT.plate, table(), sellOverPlate)).toStrictEqual(play('mega-attack-1'));
+    // A seat over the plate: an attack has no plate zone, so the seat alone takes it.
+    const seatOnPlate: DropZoneRects = { ...RECTS, seats: [{ playerId: 'p1', rect: { left: 150, top: 220, width: 60, height: 60 } }] };
+    expect(drop(hand('basic-attack'), AT.plate, table(), seatOnPlate)).toStrictEqual(play('basic-attack-1', 'p1'));
+  });
+
   it('treats rects as half-open, so a shared edge belongs to one zone', () => {
     const touching: DropZoneRects = {
       ...RECTS,
@@ -160,5 +174,10 @@ describe('dropTarget (spec v7 §6.6.3, §6.6.4)', () => {
 
   it('drops nowhere on the plate when the plate rect is absent', () => {
     expect(drop(special('mega-attack'), AT.plate, table(), { ...RECTS, plate: null })).toBeNull();
+  });
+
+  it('drops nowhere on Sell when the Sell rect is absent', () => {
+    expect(cardActions(table(), hand('shield'), ON_TURN).drop.sell).toBe(true);
+    expect(drop(hand('shield'), AT.sell, table(), { ...RECTS, sell: null })).toBeNull();
   });
 });
