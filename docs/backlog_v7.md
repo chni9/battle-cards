@@ -21,7 +21,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | Lot | Tasks | Done |
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
-| 73 · View-model | 13 | 12 |
+| 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 0 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **33** |
+| **Total** | **134** | **34** |
 
 ## Designer questions still open
 
@@ -139,7 +139,7 @@ Pure, React-free view-model with behavior tests and no clock reads (§4.3). No p
 | L73-10 | **Add shop() with one special-price constant.** **Acceptance:** The Spy tile costs 4 to buy. Upgrade-point Buy and Sell follow a kit-specific price. Buy special is disabled at 19 points with its reason. Buy random is disabled on an empty pool and under the fee. Off-turn every buy is disabled while every tile stays listed. `grep` finds one client literal for the special price. `pnpm verify` green. | M | Medium | L72-03, L73-06 | Done |
 | L73-11 | **Add log(); remove unused log filters.** **Acceptance:** The ticker is the last entry. Groups split on round boundaries at 4 and 8 seats. A fogged pool buy reads 'a card from the pool' with no inspectable card. An unspied Ghost gain renders `+?`. No import of the removed helpers remains. `pnpm verify` green. | S | Low | L72-03, L73-02 | Done |
 | L73-12 | **Add rulesRecall() and turn-length source selection.** **Acceptance:** A lobby view with 2 excluded kits and 30 s recalls both. A finished Classic view recalls its own rules. A tutorial finished view gives null. A new room code clears the cache. `pnpm verify` green. | S | Low | L72-03 | Done |
-| L73-13 | **Add turnClock() with modes and length fallbacks.** **Acceptance:** There is one test per mode. A 30 s host turn with 15 s left gives ratio 0.5. A resume `TURN_STARTED` keeps the original length. With no cached rules and no record, the clock gives seconds only. `danger` starts at 10 s and `tick` at 5 s. A bot turn after a human turn is `none`. A finished board with a disconnected last seat is `none`. `pnpm verify` green. | M | Medium | L73-12 | To do |
+| L73-13 | **Add turnClock() with modes and length fallbacks.** **Acceptance:** There is one test per mode. A 30 s host turn with 15 s left gives ratio 0.5. A resume `TURN_STARTED` keeps the original length. With no cached rules and no record, the clock gives seconds only. `danger` starts at 10 s and `tick` at 5 s. A bot turn after a human turn is `none`. A finished board with a disconnected last seat is `none`. `pnpm verify` green. | M | Medium | L73-12 | Done |
 
 ---
 

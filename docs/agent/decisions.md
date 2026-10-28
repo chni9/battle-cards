@@ -5155,3 +5155,29 @@ filters (L45/L51)").
   change: the old panel never called the removed helpers.
 
 ---
+
+## 2026-10-27 · [P] · [DISCREPANCY] Turn clock mode order and deadline source (L73-13)
+
+Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timers` and
+`table-turn-timer-scale`, `apps/server/src/rooms/game-room.ts` (`beginTurnOrAbsentAutoPlay`,
+`pauseTimersOwnedBy`, `onReconnect`).
+
+- **Brief line.** Modes are checked in the order `none` (tutorial, finished board, null
+  deadline), `paused`, `absent` (absent with no deadline), `countdown`.
+- **Code line.** The server nulls `turnDeadlineMs` when a turn starts on a disconnected seat
+  (the grace window). A null-deadline `none` checked first would hide "Paused — reconnecting"
+  at turn start and make `absent`, which needs a null deadline, unreachable. The V2 table
+  checks paused and absent before its "—" label (`screens/table.tsx`).
+- **Reading.** `turnClock` checks `none` for the tutorial and the finished board first, then
+  `paused`, then `absent` (null deadline), then `none` for any other null deadline (bot turns,
+  no active seat), then `countdown`. The brief's cases still hold: a finished board with a
+  disconnected last seat is `none`, and a bot turn after a human turn is `none`.
+- **Deadline source.** Seconds come from `view.turnDeadlineMs` only. The `TURN_STARTED` record
+  gives the full length, never the seconds, so a stale human record during a bot turn shows
+  no countdown (Appendix A `table-turn-timer-scale`, "Bot turn"). The server sends a state
+  carrying the same deadline after every `TURN_STARTED`, the resume included.
+- **Not changed.** When an absent seat's turn starts, the server leaves the previous deadline
+  in place and auto-draws on the next tick. That brief window shows a countdown from the
+  stale deadline, as V2 does.
+
+---

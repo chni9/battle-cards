@@ -1249,6 +1249,14 @@ rules above are unchanged — this section only covers how the client looks.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
   server, never a client-only countdown as authority. When the active seat is `disconnected`,
   show paused copy instead of a live countdown.
+  V7 (L73-13, spec v7 §6.10): `view-model/turn-clock.ts` `turnClock()` checks `none` for the
+  tutorial and the finished board, then `paused`, then `absent` (null deadline), then `none`
+  for any other null deadline (bot turns), else `countdown`. Seconds come from
+  `view.turnDeadlineMs` only. The full length comes from the cached lobby `turnTimeSeconds`
+  (`cachedLobbyRules`, L73-12), else the first `TURN_STARTED` of that `turnSequence`
+  (`nextTurnStartedRecord`; call it on each new `lastTurnStarted` with `view.turnSequence`
+  and the receive time), else seconds only with no ratio. `danger` is the last 10 s and `tick`
+  the last 5 s. Once L74 wires it, it replaces the fixed 60 s divisor in `table.tsx`.
 - **Degraded states (L9-01):** each `PublicPlayerView.connection` drives badges —
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
