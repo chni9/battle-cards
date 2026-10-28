@@ -5267,3 +5267,31 @@ Appendix A `table-leave-forfeit`; L43-05, L43-06.
 - With no active seat, the banner reads `—` alone. V2 printed "—'s turn"; the brief names `—`.
 
 ---
+
+## 2026-10-28 · [P] V7 opponent seat anatomy in the 76×92 box (L74-04)
+
+Source: technical spec v7 §6.2, §6.3, §6.4, §11, §14.3; Appendix A `opponent-seat`,
+`active-persistent-thumbs`, `sentence-chips`, `global-connection-badge`; plan rulings A.8.5 and
+A.8.9.
+
+- **Box.** A seat is drawn at `SEAT_BOX.portrait` (76×92) in every mode until L75; the
+  geometry still follows `seats()`. 76 px is the widest seat that fits four grid seats in a row
+  on a 360 px phone with 16 px margins (§6.4), so the L73 values stay; the browser gate may
+  still tune them (§14.3).
+- **Rows.** The name in seat hue; the kit thumb or the initial disc beside the lives pill and the
+  points / upgrade points / shield column; at most two status badges and "+n".
+- **Compact statuses.** `BotSeatLabel` (about 95 px) and the connection chip (up to about
+  150 px) cannot fit 76 px. The seat shows the `bot` and `disconnected` icons with their words
+  for screen readers and in a `title`; the seat sheet (L74-05) shows both in full.
+- **Actives and Sentences.** On the seat they are the `SeatModel` badges. Their 44 px thumbs,
+  which open the read-only card sheet, live in the seat sheet (L74-05).
+- **One control.** The seat is one button named by the nickname. The portrait is the
+  non-clickable form beside it, so no control nests in another.
+- **Grid positions.** Grid seats are placed by the pure `seatCenters`
+  (`screens/arena/seat-geometry.ts`), which the arrows and drop zones reuse, so no seat is
+  measured.
+- **Classic CSS.** The landscape opponent kit-portrait width rule is scoped to `.table-shell`
+  and the classic `[data-zone="opponents-dialog-row"]` (ruling A.8.5). The second selector is
+  there because that V2 dialog renders outside `<main class="table-shell">`.
+
+---

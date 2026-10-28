@@ -584,10 +584,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
   or that name; the face inside is decorative, so a screen reader hears the button only, and a
   caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
-- **Classic width rules:** `index.css` still sizes a portrait inside `[data-zone="opponent-seat"]`
-  and `[data-zone="private-zone"]` (2.35rem and 3rem, unlayered, so they beat the size classes).
-  A V7 surface must not reuse those zone names around a `KitPortrait` before L75 removes the
-  rules, or the portrait would not keep its `size`.
+- **Classic width rules:** in landscape `index.css` still sizes a classic portrait inside
+  `[data-zone="opponent-seat"]` (2.35rem; since L74-04 only under `.table-shell` and the classic
+  `[data-zone="opponents-dialog-row"]`) and `[data-zone="private-zone"]` (3rem). They are
+  unlayered, so they beat the size classes: a V7 surface must not put a `KitPortrait` under an
+  unscoped one of those zones before L75 removes them.
 - **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
   `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
   in `ui/card/card-classes.ts`.
@@ -864,6 +865,25 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     - Leave table (eliminated or walk-in) and Return home (finished board) call `onLeave`.
     - The first tap only opens the confirm. Stay has initial focus. Stay, Esc and the
       backdrop send nothing, and a second tap during the exit sends nothing.
+- `screens/arena/arena-seats.tsx`, `opponent-seat.tsx`, `use-arena-layout-box.ts`,
+  `seat-geometry.ts`, `seat-badges.ts` (L74-04, spec v7 §6.2–§6.4, §11): `ArenaScreen` measures
+  the arena region with `useArenaLayoutBox` (the visible viewport, plus a `ResizeObserver` on
+  the region; 0×0 before the first measure, so the first layout is a grid) and renders
+  `seats(view, box)`. Every seat sits absolutely at `seatCenters(layout, arena)` (the arc
+  placements, or grid rows laid out by the same pure helper the arrows use) and is drawn at
+  `SEAT_BOX.portrait` in every mode until L75. A seat is one button named by the full nickname
+  over the anatomy:
+  - the name in its seat hue, truncated with a `title`;
+  - a `KitPortrait` thumb or the seat-hue initial `Avatar`;
+  - a lives pill and a points / upgrade points / shield column (`?` when hidden, a
+    `data-resource-kind` on each);
+  - two status badges and `+n` (`seatBadgeView`).
+  Bot and connection show as icons, with their words for screen readers and in the title; the
+  seat sheet shows them in full. Actives and Sentences are badges here, and their thumbs live
+  in the seat sheet. Anchors: `data-zone="opponent-seat"`, `data-player-id`, `data-seat`,
+  `data-seat-index`, `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
+  `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`
+  and `data-spy-eye` on the eye badge. Seats render the `SeatModel` and never re-derive a tier.
 
 ## Design system (V2 · Lots 10+)
 

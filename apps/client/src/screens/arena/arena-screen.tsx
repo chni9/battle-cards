@@ -14,12 +14,15 @@
  * `screens/table/` or `design/`; `TableScreenProps` is the one type behind the alias below.
  */
 
-import type { ReactElement } from 'react';
+import { useRef, type ReactElement } from 'react';
 
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
+import { seats } from '../../view-model/seats';
 import type { TableScreenProps } from '../table';
 import { arenaRegionAttributes } from './arena-regions';
+import { ArenaSeats } from './arena-seats';
 import { TopBar } from './top-bar';
+import { useArenaLayoutBox } from './use-arena-layout-box';
 
 export type ArenaScreenProps = TableScreenProps;
 
@@ -28,6 +31,9 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const readOnly = props.readOnly ?? false;
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly };
   const lock = actionLock(view, ctx);
+  const arenaRef = useRef<HTMLDivElement>(null);
+  const layoutBox = useArenaLayoutBox(arenaRef);
+  const seatsModel = seats(view, layoutBox);
   return (
     <main
       data-zone="table"
@@ -51,9 +57,15 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           {view.actionLog.length === 0 ? 'No actions yet' : null}
         </p>
       </div>
-      {/* Measured by L74-04: ref-able, relative, overflow-hidden, no padding (Appendix A.3). */}
-      <div {...arenaRegionAttributes('arena')} data-zone="felt" className="relative min-h-0 flex-1 overflow-hidden">
-        <div data-zone="opponents" />
+      {/* Measured here (L74-04): relative, overflow-hidden, no padding, so its box is the seats' positioning box (Appendix A.3). */}
+      <div
+        ref={arenaRef}
+        {...arenaRegionAttributes('arena')}
+        data-zone="felt"
+        className="relative min-h-0 flex-1 overflow-hidden"
+      >
+        {/* No `onOpenSeat` yet: L74-05 adds the sheet host, opens the seat sheet and derives `tappedSeatId`. */}
+        <ArenaSeats model={seatsModel} arena={layoutBox.arena} tappedSeatId={null} />
         <div data-zone="pending" data-hint-anchor="incoming" />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">

@@ -192,7 +192,8 @@
     box-shadow: none;
   }
 
-  [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
+  .table-shell [data-zone="opponent-seat"] [data-zone="kit-portrait"],
+  [data-zone="opponents-dialog-row"] [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
     width: 2.35rem;
   }
 

@@ -102,4 +102,16 @@ describe('ArenaScreen shell (spec v7 §6.1, L74-01)', () => {
     const { container } = renderUi(<ArenaScreen {...makeArenaProps(overrides)} />);
     expect(arenaRoot(container).getAttribute('data-action-lock')).toBe(lock);
   });
+
+  it('renders one seat per opponent in the opponents zone; a seat tap sends nothing (L74-04)', async () => {
+    const props = makeArenaProps({ view: makeArenaView({ seatCount: 8 }) });
+    const { user } = renderUi(<ArenaScreen {...props} />);
+    const zone = document.querySelector('[data-arena-region="arena"] [data-zone="opponents"]');
+    if (zone === null) throw new Error('no opponents zone');
+    expect(zone.querySelectorAll('[data-zone="opponent-seat"]')).toHaveLength(7);
+    const seat = zone.querySelector<HTMLElement>('[data-player-id="p1"]');
+    if (seat === null) throw new Error('no p1 seat');
+    await user.click(within(seat).getByRole('button', { name: 'p1' }));
+    expectNoArenaIntent(props);
+  });
 });
