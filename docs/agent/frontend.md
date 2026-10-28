@@ -808,6 +808,8 @@ its payloads and `PROTOCOL_VERSION` do not change.
     1) renders every paged table's footer: `<nav aria-label="Pages">` with quiet **Previous**,
     an `aria-live="polite"` `Page N of M` and **Next**. Previous is off on page 1, Next on the
     last page, and `disabled` turns both off while a page loads. Zero rows read `Page 1 of 1`.
+    Off is `aria-disabled` (`focusableWhenDisabled`), never native `disabled`, so Next pressed by
+    keyboard keeps focus while the next page loads and at the last page (Disabled but focusable).
   - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,

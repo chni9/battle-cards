@@ -276,6 +276,11 @@ export function AdminDataTable<Row>({
  * Previous is off on page 1 and Next on the last page; `disabled` turns both off while a page
  * loads. The caller passes `adminPageCount`, which is never below 1, so an empty list reads
  * "Page 1 of 1". The count is `aria-live` so a screen reader hears the page change.
+ *
+ * Off is `aria-disabled` (`focusableWhenDisabled`), never native `disabled`: pressing Next by
+ * keyboard turns it off while the page loads, and on the last page for good, and a natively
+ * disabled button would drop focus to the body (WCAG 2.4.3; frontend.md "Disabled but
+ * focusable"). The Button swallows a press while off.
  */
 export function AdminPager({
   page,
@@ -293,6 +298,7 @@ export function AdminPager({
       <Button
         variant="quiet"
         disabled={disabled || page <= 1}
+        focusableWhenDisabled
         onClick={() => {
           onPage(page - 1);
         }}
@@ -305,6 +311,7 @@ export function AdminPager({
       <Button
         variant="quiet"
         disabled={disabled || page >= pageCount}
+        focusableWhenDisabled
         onClick={() => {
           onPage(page + 1);
         }}

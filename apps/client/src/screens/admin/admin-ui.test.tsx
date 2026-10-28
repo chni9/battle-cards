@@ -16,6 +16,17 @@ interface KitRow {
   picks: number;
 }
 
+/**
+ * The pager buttons are `focusableWhenDisabled`: off is `aria-disabled`, never native `disabled`
+ * (frontend.md "Disabled but focusable", WCAG 2.4.3). happy-dom keeps focus on a natively
+ * disabled button where Chrome drops it to the body, so the missing `disabled` attribute is what
+ * pins the fix here; the `activeElement` checks state the intent.
+ */
+function isOff(button: HTMLElement): boolean {
+  expect(button.hasAttribute('disabled')).toBe(false);
+  return button.getAttribute('aria-disabled') === 'true';
+}
+
 const columns: readonly AdminTableColumn<KitRow>[] = [
   { id: 'kit', header: 'Kit', cell: (row) => row.kit },
   { id: 'picks', header: 'Times picked', align: 'right', cell: (row) => row.picks },
@@ -138,23 +149,27 @@ describe('AdminPager (technical spec v7 §7.8, L80-06)', () => {
     expect(within(nav).getByText('Page 1 of 3')).not.toBeNull();
     const previous = within(nav).getByRole<HTMLButtonElement>('button', { name: 'Previous' });
     const next = within(nav).getByRole<HTMLButtonElement>('button', { name: 'Next' });
-    expect(previous.disabled).toBe(true);
-    expect(next.disabled).toBe(false);
+    expect(isOff(previous)).toBe(true);
+    expect(isOff(next)).toBe(false);
 
+    // An off end-stop swallows the press.
+    await user.click(previous);
+    expect(onPage).not.toHaveBeenCalled();
     await user.click(next);
     expect(onPage).toHaveBeenLastCalledWith(2);
 
     rerender(<AdminPager page={2} pageCount={3} onPage={onPage} />);
     expect(within(nav).getByText('Page 2 of 3')).not.toBeNull();
-    expect(previous.disabled).toBe(false);
-    expect(next.disabled).toBe(false);
+    expect(isOff(previous)).toBe(false);
+    expect(isOff(next)).toBe(false);
     await user.click(previous);
     expect(onPage).toHaveBeenLastCalledWith(1);
 
     rerender(<AdminPager page={3} pageCount={3} onPage={onPage} />);
     expect(within(nav).getByText('Page 3 of 3')).not.toBeNull();
-    expect(previous.disabled).toBe(false);
-    expect(next.disabled).toBe(true);
+    expect(isOff(previous)).toBe(false);
+    expect(isOff(next)).toBe(true);
+    await user.click(next);
     expect(onPage).toHaveBeenCalledTimes(2);
   });
 
@@ -167,14 +182,40 @@ describe('AdminPager (technical spec v7 §7.8, L80-06)', () => {
     renderUi(<AdminPager page={1} pageCount={adminPageCount(0, 50)} onPage={vi.fn()} />);
     expect(screen.getByText('Page 1 of 1')).not.toBeNull();
     expect(screen.queryByText('Page 1 of 0')).toBeNull();
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Previous' }).disabled).toBe(true);
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next' }).disabled).toBe(true);
+    expect(isOff(screen.getByRole('button', { name: 'Previous' }))).toBe(true);
+    expect(isOff(screen.getByRole('button', { name: 'Next' }))).toBe(true);
   });
 
-  it('disabled turns both buttons off while a page loads', () => {
-    renderUi(<AdminPager page={2} pageCount={3} onPage={vi.fn()} disabled />);
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Previous' }).disabled).toBe(true);
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next' }).disabled).toBe(true);
+  it('disabled turns both buttons off while a page loads', async () => {
+    const onPage = vi.fn<(page: number) => void>();
+    const { user } = renderUi(<AdminPager page={2} pageCount={3} onPage={onPage} disabled />);
+    expect(isOff(screen.getByRole('button', { name: 'Previous' }))).toBe(true);
+    expect(isOff(screen.getByRole('button', { name: 'Next' }))).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onPage).not.toHaveBeenCalled();
+  });
+
+  it('a button turned off by its own keyboard press keeps focus', async () => {
+    // Next on page 2 of 3: the parent turns the pager off while page 3 loads, then Next stays
+    // off on the last page. Native `disabled` would drop focus to the body both times.
+    const onPage = vi.fn<(page: number) => void>();
+    const { rerender, user } = renderUi(<AdminPager page={2} pageCount={3} onPage={onPage} />);
+    const next = screen.getByRole('button', { name: 'Next' });
+    await user.tab();
+    await user.tab();
+    expect(document.activeElement).toBe(next);
+    await user.keyboard('{Enter}');
+    expect(onPage).toHaveBeenLastCalledWith(3);
+
+    rerender(<AdminPager page={3} pageCount={3} onPage={onPage} disabled />);
+    expect(isOff(next)).toBe(true);
+    expect(document.activeElement).toBe(next);
+    rerender(<AdminPager page={3} pageCount={3} onPage={onPage} />);
+    expect(isOff(next)).toBe(true);
+    expect(document.activeElement).toBe(next);
+    await user.keyboard('{Enter}');
+    expect(onPage).toHaveBeenCalledTimes(1);
   });
 });
 

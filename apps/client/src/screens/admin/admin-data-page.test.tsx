@@ -55,6 +55,16 @@ function pagerButton(name: 'Previous' | 'Next'): HTMLButtonElement {
   return within(screen.getByRole('navigation', { name: 'Pages' })).getByRole<HTMLButtonElement>('button', { name });
 }
 
+/**
+ * The pager buttons are `focusableWhenDisabled`: off is `aria-disabled`, never native `disabled`,
+ * so a button pressed by keyboard keeps focus when it turns off (WCAG 2.4.3).
+ */
+function pagerOff(name: 'Previous' | 'Next'): boolean {
+  const button = pagerButton(name);
+  expect(button.hasAttribute('disabled')).toBe(false);
+  return button.getAttribute('aria-disabled') === 'true';
+}
+
 function pageText(): string | null {
   return within(screen.getByRole('navigation', { name: 'Pages' })).getByText(/^Page \d+ of \d+$/).textContent;
 }
@@ -114,8 +124,8 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     expect(screen.queryByText(EMPTY_COPY)).toBeNull();
     // Nothing is known yet, so the pager reads one page and cannot be used.
     expect(pageText()).toBe('Page 1 of 1');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
     expect(downloadButton().disabled).toBe(true);
 
     await fake.last(tablePath('finished_games')).respond(200, makeTablePage('finished_games', [{ id: 'g-1' }]));
@@ -166,8 +176,8 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
       makeTablePage('finished_games', [{ id: 'page-1-row' }], { total: 120 }),
     );
     expect(pageText()).toBe('Page 1 of 3');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(false);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(false);
 
     await user.click(pagerButton('Next'));
     expect(fake.to(tablePath('finished_games'))).toHaveLength(2);
@@ -177,14 +187,14 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     // The label is an aria-live region: while page 2 loads it keeps the last known total rather
     // than announcing "Page 2 of 2", and the pager cannot be pressed again.
     expect(pageText()).toBe('Page 2 of 3');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
     await second.respond(200, makeTablePage('finished_games', [{ id: 'page-2-row' }], { page: 2, total: 120 }));
     expect(pageText()).toBe('Page 2 of 3');
     expect(screen.getByText('page-2-row')).not.toBeNull();
     expect(screen.queryByText('page-1-row')).toBeNull();
-    expect(pagerButton('Previous').disabled).toBe(false);
-    expect(pagerButton('Next').disabled).toBe(false);
+    expect(pagerOff('Previous')).toBe(false);
+    expect(pagerOff('Next')).toBe(false);
 
     await user.click(pagerButton('Next'));
     expect(fake.last(tablePath('finished_games')).url.searchParams.get('page')).toBe('3');
@@ -193,10 +203,40 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
       makeTablePage('finished_games', [{ id: 'page-3-row' }], { page: 3, total: 120 }),
     );
     expect(pageText()).toBe('Page 3 of 3');
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
 
     await user.click(pagerButton('Previous'));
     expect(fake.last(tablePath('finished_games')).url.searchParams.get('page')).toBe('2');
+  });
+
+  it('Next pressed by keyboard keeps focus while the page loads and at the last page', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDataPage password="secret" table={null} />);
+    await fake.last(tablePath('finished_games')).respond(
+      200,
+      makeTablePage('finished_games', [{ id: 'page-1-row' }], { total: 60 }),
+    );
+    const next = pagerButton('Next');
+    next.focus();
+    expect(document.activeElement).toBe(next);
+
+    await user.keyboard('{Enter}');
+    expect(fake.last(tablePath('finished_games')).url.searchParams.get('page')).toBe('2');
+    // Off while page 2 loads, yet still the focused control: focus never drops to the body.
+    expect(pagerOff('Next')).toBe(true);
+    expect(document.activeElement).toBe(next);
+    // An off button swallows the press, so a second Enter asks for nothing.
+    await user.keyboard('{Enter}');
+    expect(fake.to(tablePath('finished_games'))).toHaveLength(2);
+
+    await fake.last(tablePath('finished_games')).respond(
+      200,
+      makeTablePage('finished_games', [{ id: 'page-2-row' }], { page: 2, total: 60 }),
+    );
+    // Page 2 is the last: the end-stop keeps Next off, and focus stays on it.
+    expect(pageText()).toBe('Page 2 of 2');
+    expect(pagerOff('Next')).toBe(true);
+    expect(document.activeElement).toBe(next);
   });
 
   it('0 rows show the empty message, Page 1 of 1 and both pager buttons disabled', async () => {
@@ -208,8 +248,8 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.getByText('0 rows · page 1')).not.toBeNull();
     expect(pageText()).toBe('Page 1 of 1');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
   });
 
   it('shows the row count and page of the loaded page', async () => {

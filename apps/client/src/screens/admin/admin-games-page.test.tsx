@@ -43,6 +43,16 @@ function pagerButton(name: 'Previous' | 'Next'): HTMLButtonElement {
   return within(screen.getByRole('navigation', { name: 'Pages' })).getByRole<HTMLButtonElement>('button', { name });
 }
 
+/**
+ * The pager buttons are `focusableWhenDisabled`: off is `aria-disabled`, never native `disabled`,
+ * so a button pressed by keyboard keeps focus when it turns off (WCAG 2.4.3).
+ */
+function pagerOff(name: 'Previous' | 'Next'): boolean {
+  const button = pagerButton(name);
+  expect(button.hasAttribute('disabled')).toBe(false);
+  return button.getAttribute('aria-disabled') === 'true';
+}
+
 function pageText(): string | null {
   return within(screen.getByRole('navigation', { name: 'Pages' })).getByText(/^Page \d+ of \d+$/).textContent;
 }
@@ -64,8 +74,8 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(screen.queryByRole('table')).toBeNull();
     // Nothing is known yet, so the pager reads one page and cannot be used.
     expect(pageText()).toBe('Page 1 of 1');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
 
     await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
     expect(screen.queryByRole('status')).toBeNull();
@@ -82,8 +92,8 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
 
     await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
     expect(pageText()).toBe('Page 1 of 3');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(false);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(false);
 
     await user.click(pagerButton('Next'));
     expect(fake.to(GAMES_PATH)).toHaveLength(2);
@@ -93,18 +103,46 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(pageText()).toBe('Page 2 of 3');
     await fake.last(GAMES_PATH).respond(200, pageOf(2, 'page2a'));
     expect(pageText()).toBe('Page 2 of 3');
-    expect(pagerButton('Previous').disabled).toBe(false);
-    expect(pagerButton('Next').disabled).toBe(false);
+    expect(pagerOff('Previous')).toBe(false);
+    expect(pagerOff('Next')).toBe(false);
 
     await user.click(pagerButton('Next'));
     expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('3');
     await fake.last(GAMES_PATH).respond(200, pageOf(3, 'page3a', TOTAL - 2 * PAGE_SIZE));
     expect(pageText()).toBe('Page 3 of 3');
-    expect(pagerButton('Previous').disabled).toBe(false);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(false);
+    expect(pagerOff('Next')).toBe(true);
 
     await user.click(pagerButton('Previous'));
     expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('2');
+  });
+
+  it('Next pressed by keyboard keeps focus while the page loads and at the last page', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, pageOf(1, 'page1a'));
+    // Fifty row buttons come first in Tab order, so focus Next directly; Enter is the keyboard press.
+    const next = pagerButton('Next');
+    next.focus();
+    expect(document.activeElement).toBe(next);
+
+    await user.keyboard('{Enter}');
+    expect(fake.last(GAMES_PATH).url.searchParams.get('page')).toBe('2');
+    // Off while page 2 loads, yet still the focused control: focus never drops to the body.
+    expect(pagerOff('Next')).toBe(true);
+    expect(document.activeElement).toBe(next);
+    // An off button swallows the press, so a second Enter asks for nothing.
+    await user.keyboard('{Enter}');
+    expect(fake.to(GAMES_PATH)).toHaveLength(2);
+
+    await fake.last(GAMES_PATH).respond(200, pageOf(2, 'page2a'));
+    expect(document.activeElement).toBe(next);
+    await user.keyboard('{Enter}');
+    await fake.last(GAMES_PATH).respond(200, pageOf(3, 'page3a', TOTAL - 2 * PAGE_SIZE));
+    // The end-stop turns Next off for good, and focus stays on it.
+    expect(pageText()).toBe('Page 3 of 3');
+    expect(pagerOff('Next')).toBe(true);
+    expect(document.activeElement).toBe(next);
   });
 
   it('Apply after paging requests page=1', async () => {
@@ -138,7 +176,7 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(pageText()).toBe('Page 1 of 1');
     await fake.last(GAMES_PATH).respond(200, makeGamesPage(itemsStartingWith('few', 10), { total: 10 }));
     expect(pageText()).toBe('Page 1 of 1');
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
   });
 
   it('a slower page-2 response arriving after Apply requests page 1 is ignored', async () => {
@@ -195,8 +233,8 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.getByRole('status').textContent).toBe('Loading…');
     // The next page is still on its way, so the pager cannot be pressed again.
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
 
     await fake.last(GAMES_PATH).respond(503);
     expect(pageText()).toBe('Page 2 of 3');
@@ -235,8 +273,8 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Download spreadsheet (this page)' }).disabled).toBe(true);
     // An empty list is one page, never "Page 1 of 0".
     expect(pageText()).toBe('Page 1 of 1');
-    expect(pagerButton('Previous').disabled).toBe(true);
-    expect(pagerButton('Next').disabled).toBe(true);
+    expect(pagerOff('Previous')).toBe(true);
+    expect(pagerOff('Next')).toBe(true);
   });
 
   it('puts the room code first and keeps the other columns in order', async () => {
