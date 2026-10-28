@@ -1365,6 +1365,16 @@ values.
     step on `--panel-2`, and rows are split by 1px tool-line rules.
   - `AdminLinkBar`: section links (the nav, the Database tabs) on the Tabs track. The current
     one is filled `--cta` with `aria-current="page"`. The track wraps at 390px.
+- **Charts** (`screens/admin/admin-charts.tsx`, colors in `admin/admin-chart-math.ts`): CSS and
+  SVG, no chart library. Series colors are `ADMIN_CHART_COLORS`, hex from `V7_COLORS`, in this
+  order: `--cta-2`, `--point`, `--life`, `--upgrade`, `--shield`, `--threat-other`, `--text-2`,
+  `--danger`. Each reads at least 3:1 on `--panel` and neighbours stay at least 39 ΔE2000 apart;
+  `--glow-a`, `--threat-attack`, `--mine`, `--glow-b` and `--cta` are left out (repeat values,
+  or 3.9 from `--point`). A single series (bars, dots) is the first color. The empty ring and an
+  unlisted legend swatch are `ADMIN_CHART_EMPTY_COLOR` (`--panel-2`). Bar tracks are `--panel-2`,
+  the pie hole is `--panel`, and the scatter frame and axes are 1px `V7_TOOL_LINE`
+  (`non-scaling-stroke`). Chart colors are fills and marks, never text: labels are `--text` and
+  values, axis text and captions `--text-2`, all at the 12px caption step.
 
 ## Do's and Don'ts
 

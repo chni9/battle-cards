@@ -828,6 +828,11 @@ its payloads and `PROTOCOL_VERSION` do not change.
 - **429 copy:** `adminErrorCopy(429)` is `ADMIN_RATE_LIMIT_COPY` ('Too many wrong passwords. Try
   again in a few minutes.'), shown by the gate and by every page, Feedback included. A 429 never
   locks the session and never clears the stored key; only a 401 does.
+- **Charts (L80-04):** `admin-charts.tsx` stays CSS and SVG. Series colors are `ADMIN_CHART_COLORS`
+  (eight hex from `V7_COLORS`, `admin/admin-chart-math.ts`) and the empty ring is
+  `ADMIN_CHART_EMPTY_COLOR` (`--panel-2`), never `var()`. Order and rationale: `DESIGN.md` ›
+  Tool mode › Charts. `admin-charts.test.tsx` pins the render; `admin-charts-dependencies.test.ts`
+  checks that `apps/client/package.json` holds no chart library.
 - **Tests:** happy-dom component tests use the test-only `screens/admin/admin-test-harness.ts`
   and `admin-fixtures.ts`. Shipped code never imports either.
   - `installFakeFetch()` stubs the global `fetch` that `adminGet` and `fetchInbox` read at call

@@ -70,6 +70,10 @@ Technical spec v7 §4.5 and §12.2. The harness is `apps/client/src/test/render.
 behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
 
 - Put the test beside the component (`card.tsx` → `card.test.tsx`).
+- Never give a `.test.ts` and a `.test.tsx` the same basename. TypeScript's `include` keeps
+  only the `.ts` of two files that differ by extension, so `tsc` skips the `.tsx` and ESLint
+  fails to parse it ("not found by the project service"). Name the node test for what it checks
+  (`admin-charts-dependencies.test.ts` beside `admin-charts.test.tsx`).
 - Line 1 is the docblock `// @vitest-environment happy-dom`. Vitest scans the **whole file**
   for it, so never write that text in a node test, not even in a string or a comment.
 - Render only through `renderUi` (import it relatively from `src/test/render.tsx`). Importing

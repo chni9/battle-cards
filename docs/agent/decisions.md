@@ -5220,3 +5220,35 @@ Source: technical spec v7 §7.8 (tool mode), §5.1 (`--ink` is outline and shado
   `disabled` on a focused control). Enter and click are no-ops in those states, as before.
 
 ---
+
+## 2026-10-28 · [P] Admin chart test retires token and helper names (L80-04)
+
+Source: technical spec v7 §7.8 ("charts in the V7 palette"), §5.1 (non-text contrast, hex in
+inline styles), §12.1 (source-text tests); Lot 80 plan Appendix B question 4 (designer answer
+2026-10-28: default order accepted).
+
+- **Old test retired.** `screens/admin/admin-charts.test.ts` read `admin-charts.tsx` and asserted
+  that it contained `conicGradientFromSlices`, `scatterPlotXY` and `var(--color-cta-purple)`.
+  That is old-layout detail, superseded by §7.8 and §5.1: V7 inline colors are hex, never
+  `var()`. The behavior is now pinned by render tests (`admin-charts.test.tsx`: the pie
+  background, the empty ring, the scatter coordinates and titles, the first palette color) and
+  by a package.json check that the client depends on no chart library
+  (`admin-charts-dependencies.test.ts`, §4.5). The chart geometry keeps its own tests in
+  `admin/admin-chart-math.test.ts`; only its empty-fallback string moved to
+  `ADMIN_CHART_EMPTY_COLOR`.
+- **Palette order.** `ADMIN_CHART_COLORS` (was `ADMIN_CHART_COLOR_VARS`) is `--cta-2`,
+  `--point`, `--life`, `--upgrade`, `--shield`, `--threat-other`, `--text-2`, `--danger`, as hex
+  from `V7_COLORS`. Each reads at least 3:1 on `--panel` (4.77 to 10.48), and neighbours stay
+  at least 39 ΔE2000 apart. The closest pair overall is `--shield` / `--cta-2` (13.5), four
+  slices apart. A single series (bars, dots) uses the first. The empty ring and an unlisted
+  legend swatch use `--panel-2`.
+- **Left out.** `--glow-a` and `--threat-attack` repeat `--life`; `--glow-b` and `--mine` repeat
+  `--cta-2`; `--cta` sits ΔE2000 3.9 from `--point`, too close to tell apart in a legend.
+- **File name.** The plan named the node test `admin-charts.test.ts` and the render test
+  `admin-charts.test.tsx`. TypeScript's `include` keeps only the `.ts` of two files that differ
+  by extension, so the `.tsx` would have been left out of `tsc` and ESLint failed to parse it
+  ("not found by the project service"). The node test is therefore
+  `admin-charts-dependencies.test.ts`; the render test keeps `admin-charts.test.tsx`, beside its
+  component (`docs/agent/testing.md`).
+
+---

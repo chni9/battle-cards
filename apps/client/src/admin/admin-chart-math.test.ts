@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { contrastRatio } from '../ui/contrast';
+import { V7_COLORS } from '../ui/palette';
 import {
+  ADMIN_CHART_COLORS,
+  ADMIN_CHART_EMPTY_COLOR,
   barWidthPercent,
   conicGradientFromSlices,
   layoutPieSlices,
@@ -30,7 +34,7 @@ describe('admin chart math (L62-05)', () => {
       { id: 'b', count: 0 },
     ]);
     expect(zeros.map((slice) => slice.sweepPct)).toEqual([0, 0]);
-    expect(conicGradientFromSlices(zeros)).toBe('var(--color-border-soft)');
+    expect(conicGradientFromSlices(zeros)).toBe(ADMIN_CHART_EMPTY_COLOR);
 
     const halves = layoutPieSlices([
       { id: 'a', count: 2 },
@@ -50,6 +54,20 @@ describe('admin chart math (L62-05)', () => {
     expect(origin).toEqual({ x: 8, y: 92 });
     const topRight = scatterPlotXY(1, 1, 8, 100);
     expect(topRight).toEqual({ x: 92, y: 8 });
+  });
+
+  it('uses eight pairwise-distinct V7 palette colors, each 3:1 on --panel (spec v7 §5.1, §7.8)', () => {
+    const palette: readonly string[] = Object.values(V7_COLORS);
+    expect(ADMIN_CHART_COLORS).toHaveLength(8);
+    expect(new Set(ADMIN_CHART_COLORS).size).toBe(8);
+    for (const color of ADMIN_CHART_COLORS) {
+      expect(palette).toContain(color);
+      expect(contrastRatio(color, V7_COLORS.panel)).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('the empty fallback is --panel-2', () => {
+    expect(ADMIN_CHART_EMPTY_COLOR).toBe(V7_COLORS['panel-2']);
   });
 
   it('sorts counts descending with a stable id tie-break', () => {
