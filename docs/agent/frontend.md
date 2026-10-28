@@ -194,6 +194,8 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   server's `SPECIAL_CARD_PURCHASE_COST` stays authoritative. In the tutorial,
   `shop-upgrade-point` opens Upgrade points and `shop-absorber` opens Cards with Absorber
   highlighted, not preselected.
+- `view-model/log.ts` (L73-11, spec v7 §6.9): documented under Conventions, in the action-log
+  bullet.
 
 ## Design system (V7 · Lot 72+)
 
@@ -1269,7 +1271,7 @@ rules above are unchanged — this section only covers how the client looks.
   `apps/client/src/action-log/` — scrollable round groups (no player/kind/search filters).
   V7 reads it through `view-model/log.ts` `log(view)` (L73-11, spec v7 §6.9): the ticker is
   the latest entry, rounds come from `groupByRound` with `view.players.length`, and each card
-  segment carries `inspectable` (the L56-05 list below; a `blockedBy` name stays text). Pass
+  segment carries `inspectable` (the L56-05 list (above); a `blockedBy` name stays text). Pass
   `finalTable` on the finished board. The unused filter helpers (`filterActionLog`,
   `entryInvolvesPlayer`, `ActionLogFilters`, `groupByTurn`) are gone (spec v7 §11, Q62).
   Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit

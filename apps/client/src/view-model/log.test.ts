@@ -60,6 +60,19 @@ describe('log() ticker and rounds (spec v7 §6.9)', () => {
     ]);
   });
 
+  it('falls back to the player id for an actor missing from view.players', () => {
+    const view = makePlayingView({
+      players: [makePlayer('me', { isYou: true, nickname: 'Ann' }), makePlayer('p1'), makePlayer('p2')],
+      actionLog: [
+        { kind: 'actionPlayed', actorPlayerId: 'gone', action: 'playCard', cardId: 'basic-attack',
+          isUpgraded: false, targetPlayerId: 'me', turnSequence: 1 },
+      ],
+    });
+    const { ticker } = log(view);
+    expect(ticker?.text).toBe('gone attacks Ann with Basic attack (1)');
+    expect(ticker?.segments[0]).toEqual({ type: 'player', playerId: 'gone', nickname: 'gone' });
+  });
+
   it('has no ticker and no rounds for an empty log', () => {
     expect(log(makePlayingView())).toEqual({ ticker: null, rounds: [] });
   });
