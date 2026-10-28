@@ -64,6 +64,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'The tutorial showed a stray life icon on its resources tip.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'After you cancelled the fifth-active picker, the turn timer could show the wrong time.',
+        after: 'Fixed some bugs.',
+      },
     ],
   },
   {

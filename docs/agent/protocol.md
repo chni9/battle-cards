@@ -53,7 +53,9 @@ revalidation. Stated there, not repeated here. What follows is what they do not 
    after `staySpectating` or when `claimableSeats` is empty — a walk-in with the picker
    still open must not see kits. Do not invent a second vision matrix.
 4. **Timer deadlines are computed and sent by the server.** A client-side countdown drifts and
-   can be bypassed.
+   can be bypassed. A new turn runs `beginTurnOrAbsentAutoPlay()` (sets or nulls
+   `turnDeadlineMs`) before `sendStateToEveryone()`, so every view carries the deadline
+   `turnStarted` announces. Sending state first ships the previous deadline (L82-01).
 5. **Adding a field to `Player` or `GameState` is not done until the view builder classifies
    it.** Public, private, Spy-gated, or server-only — decided in the same change, never
    defaulted.
