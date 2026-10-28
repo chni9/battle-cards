@@ -5224,3 +5224,29 @@ Source: technical spec v7 §4.4 and §6.1; §12.1 (old-layout detail); L72-20.
   L74-01 does not edit them.
 
 ---
+
+## 2026-10-28 · [P] Arena sheets: exit-mounted stack, early log source, kit sections (L74-02)
+
+Source: technical spec v7 §6.6.1, §6.6.4, §6.6.5, §6.7; the L74-02 brief and Watch point; Lot 74
+plan Appendix A.5, A.7 and ruling 1; frontend.md "L74 carry-overs".
+
+- **Closed sheets stay mounted for their exit.** `ArenaSheetsState` keeps a `closing` list:
+  the last two closed sheets, rendered with `open={false}`. The `Sheet` press shield then
+  covers a second tap during the exit. Unmounting at once would let a double tap on a
+  backdrop or a sheet button land on the arena: a seat, or Draw. This is the Lot 74 plan
+  Appendix A.5 shape: `CardSheet` and `KitSheet` take `open`.
+- **The `log` source lands with the card sheet.** The L74-02 Acceptance names log and queue
+  sources. Its shape is `{ kind: 'log'; cardId; isUpgraded }`, with the synthetic face
+  `log-<cardId>-<up|base>`. The plate's landing card (L74-06) and the log (L74-15) open it.
+- **Card sheet keys use the face id:** `card:<sheetInstanceFor(source).instanceId>`. A queue
+  effect keys as `card:queue-<effectId>`, so it cannot collide with an in-play persistent
+  whose instance id is an effect id.
+- **Kit details sections are headed groups.** `ui/kit/kit-details.tsx` drops `aria-labelledby`
+  from its `<section>`s, so a kit sheet no longer exposes up to nine region landmarks. Each
+  group keeps its `<h3>` for heading navigation. No test asserted the landmark role;
+  `kit-details.test.tsx` gains a test that none renders.
+- **No `onOpenKit` on the card sheet.** No Part 1 card source carries a kit, and V2's inspect
+  never linked one. The kit sheet opens from `KitPortrait` buttons instead: the L74-05 seat
+  sheet and the L74-09 self strip.
+
+---

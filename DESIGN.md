@@ -497,6 +497,14 @@ name, bot label and connection badge in Seat identity.
   root carries `data-motion="reduced" | "full"`, and CSS animation or press classes are
   applied only when full. No sheen sweep, pulse, shake, particles, flying cards or slam; the
   same numbers and labels remain, so no information is carried by motion alone.
+- **Long-press** (`ui/motion/use-long-press.ts`, L74-02, spec v7 §6.6.5): `useLongPress({
+  onLongPress, disabled? })` returns pointer handlers for the face it opens. A primary-button
+  press held for `LONG_PRESS_MS` (450 ms) fires once. Moving the pointer more than
+  `LONG_PRESS_MOVE_PX` (8 px), releasing, cancelling or leaving cancels it. `onClickCapture`
+  swallows the click that ends a long press, so a tap action never follows it. It applies
+  outside the hand only (the hand reads a vertical move as a drag), opens the same read-only
+  sheet that Enter or a click opens on the face, and never sends an intent. Motion preference
+  does not change it.
 
 ## Primitives (apps/client/src/ui/primitives/, L72-08)
 
@@ -1034,8 +1042,9 @@ the classic files and their duplicated copy stay until L75 and L76.
   face inside is decorative (`alt=""`, code faces `aria-hidden`). Without `onClick` the root is
   a `<span>`.
 - **KitDetails:** `<KitDetails kitId />`: a header (the `sheet` portrait and the kit name,
-  `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2` with a
-  Lilita One `<h3>` each, in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
+  `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2`, each headed
+  by a Lilita One `<h3>` and carrying no accessible name, so a sheet exposes headings, not up to
+  nine region landmarks (L74-02), in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
   starting hand, special cards, always upgraded, immune to, attacks per turn, upgrade points,
   draw risk, and ability (only for a kit with `KIT_ABILITY_COPY`). Every value is read from
   `KIT_CATALOG`, never from the art (the old Gambler PNG prints "?" for a Draw the catalog sets

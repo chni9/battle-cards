@@ -603,7 +603,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Sections:** `kit-details-sections.ts` holds the ids in display order, their titles and
   `KIT_TRAIT_SECTION_FOR`, a `Record` keyed by `KIT_TRAIT_SECTION_KEYS`: a new `KitTraits` key
   fails typecheck, then the L30-05 test, until it has a rendered section. A new section id goes
-  in the table and in `kit-details.tsx`; the test pins the order.
+  in the table and in `kit-details.tsx`; the test pins the order. Each group is a `<section>`
+  headed by its `<h3>` with no accessible name, so it is not a region landmark (L74-02).
 - **Cards inside the details:** thumb `Card`s with synthetic instance ids
   (`kitSpecialCardKey(cardId, index)`, `always-upgraded:<id>`, `immune-to:<id>`); the starting
   hand is two hidden thumbs. A thumb prints no name and no cost chip, so the details add a
@@ -816,6 +817,35 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`; the one exception
   is the `TableScreenProps` type behind the alias. A pure helper still living there moves, with its
   tests, in the task that first needs it.
+- `screens/arena/arena-sheets.ts` (L74-02, spec v7 §6.7, Q49): one pure reducer holds the
+  read-only sheets.
+  - `open` lists them oldest first; the `Sheet` stack paints the newest two.
+  - `openArenaSheet` moves an already-open sheet to the end instead of copying it.
+  - `closeArenaSheet` moves a sheet to `closing`. The last two closed sheets stay mounted with
+    `open={false}`, so the Sheet press shield covers their exit and a double tap never lands on
+    the arena underneath.
+  - `arenaSheetKey` is `card:<face instance id>` or `kit:<kitId>`. Every arena `Sheet` carries
+    it as `data-arena-sheet`.
+  - Render `arenaSheetEntries(state)` as direct children of the arena root. Never put a sheet
+    inside a clickable element: React portals bubble clicks.
+- `screens/arena/card-sheet.tsx` + `card-sheet-source.ts` (L74-02, §6.6.1, §5.4, L56-05): the
+  read-only card sheet.
+  - `CardSheetSource` is `hand`, `special`, `in-play` (an `InPlayThumb`, re-read from the live
+    view while open), `spy-reveal`, `queue` or `log`. Part 2 adds pool, shop and reward.
+  - `cardRefFor` gives the `cardActions` ref. `sheetInstanceFor` gives the face, with
+    synthetic `queue-<effectId>` and `log-<cardId>-<up|base>` ids.
+  - The sheet shows the face at `sheet` size and `CardEffectCopy`, then the V2 context:
+    `Active` with a `Card lives` or `Turns left` badge, or `Spy reveal — inspect only`. Queue
+    and log cards show nothing more.
+  - The activated look is the `counter` glow, for a persistent's card lives or Invisibility
+    turns only. Shield and Sentence never get `counter`; a Sentence's turns show as the
+    `Turns left` badge (plan Appendix A ruling 1).
+- `screens/arena/kit-sheet.tsx` (L74-02, §6.6.5, Q46): `KitDetails` in a read-only bottom sheet
+  titled with the kit name. It has every section, including one for each `KitTraits` field (L30-05).
+- `ui/motion/use-long-press.ts` (L74-02, §6.6.5): `useLongPress` (450 ms, cancelled past 8 px,
+  swallows the click that ends the press). A face outside the hand is a `Card` with
+  `onActivate` (a button: Enter or click) plus these handlers. Both open the same read-only
+  sheet and send nothing.
 
 ## Design system (V2 · Lots 10+)
 

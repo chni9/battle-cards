@@ -254,3 +254,12 @@ describe('KitDetails spec values', () => {
     expect(section(container, 'attacks-per-turn').textContent).toContain('One attack card per action');
   });
 });
+
+describe('KitDetails landmarks (L74-02 watch point)', () => {
+  it('heads each group with an h3 and exposes no region landmark', () => {
+    renderUi(<KitDetails kitId="gambler" />);
+    expect(screen.queryAllByRole('region')).toEqual([]);
+    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent))
+      .toEqual(KIT_DETAILS_SECTION_IDS.map((id) => KIT_DETAILS_SECTION_TITLES[id]));
+  });
+});
