@@ -76,6 +76,9 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(2);
     expect(fake.last(OVERVIEW_PATH).url.searchParams.get('actors')).toBe('humans');
     expect(fake.last(OVERVIEW_PATH).headers['x-inbox-password']).toBe('secret');
+    // The new request is still pending: the loaded overview must stay on screen meanwhile.
+    expectNineModules();
+    expect(screen.queryByRole('status')).toBeNull();
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
 
     await user.selectOptions(actorsSelect(), 'both');
@@ -90,9 +93,14 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     expect(screen.queryByRole('alert')).toBeNull();
 
     // Apply only refetches when the filters differ from the applied ones, so each Apply edits one.
+    // An edit alone sends nothing: the request is keyed on the applied filters, not the form's.
     await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'humans');
+    expect(fake.to(OVERVIEW_PATH)).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(2);
+    expect(fake.last(OVERVIEW_PATH).url.searchParams.get('bots')).toBe('humans');
+    // A refetch in flight keeps the loaded overview on screen.
+    expectNineModules();
     await fake.last(OVERVIEW_PATH).respond(503);
     expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
     expectNineModules();
@@ -100,6 +108,7 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'withBots');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(3);
+    expect(fake.last(OVERVIEW_PATH).url.searchParams.get('bots')).toBe('withBots');
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
     expect(screen.queryByRole('alert')).toBeNull();
     expectNineModules();

@@ -57,9 +57,10 @@ import { AdminMetricCard, AdminMetricGrid } from './admin-ui';
 const MODULE_CLASS = `${ADMIN_PANEL_CLASS} space-y-4`;
 
 /**
- * A select that sits in a module header, not in a form column. `ADMIN_FIELD_CLASS` is `w-full`
- * and Tailwind emits `w-full` after `w-auto`, so a `w-auto` on the select would lose: the label
- * shrinks to its content instead (`w-fit`) and the full-width select fills it.
+ * A select that sits in a module header, not in a form column (spec v7 §7.8, L80-05).
+ * `ADMIN_FIELD_CLASS` is `w-full` and Tailwind emits `w-full` after `w-auto`, so a `w-auto` on the
+ * select would lose: the label shrinks to its content instead (`w-fit`) and the full-width select
+ * fills it.
  */
 const HEADER_FIELD_CLASS = 'flex w-fit min-w-0 max-w-full flex-col gap-1.5';
 
