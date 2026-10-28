@@ -61,6 +61,13 @@ describe('turnClock modes (spec v7 §6.10)', () => {
       .toEqual({ mode: 'none', label: '—' });
   });
 
+  it('is none with no active seat, even with a deadline', () => {
+    const none = { mode: 'none', label: '—' };
+    const gone = makePlayingView({ currentTurnPlayerId: 'gone', turnDeadlineMs: NOW + 30_000 });
+    expect(clock({ view: gone, cachedLobbyRules: RULES_30 })).toEqual(none);
+    expect(clock({ view: makePlayingView({ currentTurnPlayerId: null, turnDeadlineMs: NOW + 30_000 }) })).toEqual(none);
+  });
+
   it('is paused while the active seat is disconnected, with or without a deadline', () => {
     const paused = { mode: 'paused', label: 'Paused — reconnecting' };
     expect(clock({ view: activeP1('disconnected', { turnDeadlineMs: NOW + 12_000 }), cachedLobbyRules: RULES_30 }))

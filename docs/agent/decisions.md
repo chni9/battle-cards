@@ -5179,8 +5179,11 @@ Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timer
   disconnected last seat is `none`, and a bot turn after a human turn is `none`.
 - **Deadline source.** Seconds come from `view.turnDeadlineMs` only. The `TURN_STARTED` record
   gives the full length, never the seconds, so a stale human record during a bot turn shows
-  no countdown (Appendix A `table-turn-timer-scale`, "Bot turn"). The server sends a state
-  carrying the same deadline after every `TURN_STARTED`, the resume included.
+  no countdown (Appendix A `table-turn-timer-scale`, "Bot turn"). On a new turn the server
+  sends the state carrying that deadline just before `TURN_STARTED` (`game-room.ts`:
+  `sendStateToEveryone(); broadcastTurnStarted();`), as `turn-clock.ts` says. A resume
+  (`onReconnect` → `resumeTimersOwnedBy`) and a restart on the same `turnSequence`
+  (`turnAdvanced === false`) send it just after `TURN_STARTED`.
 - **Not changed.** When an absent seat's turn starts, the server leaves the previous deadline
   in place and auto-draws on the next tick. That brief window shows a countdown from the
   stale deadline, as V2 does.

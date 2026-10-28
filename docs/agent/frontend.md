@@ -198,6 +198,8 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   bullet.
 - `view-model/rules-recall.ts` (L73-12, spec v7 §6.11): documented under Design system,
   Rules (`ui/rules/`, L72-16), in the "Who supplies `rules`" bullet.
+- `view-model/turn-clock.ts` (L73-13, spec v7 §6.10): documented under Conventions, in the
+  timer-display bullet.
 
 ## Design system (V7 · Lot 72+)
 
@@ -1266,7 +1268,7 @@ rules above are unchanged — this section only covers how the client looks.
   (`cachedLobbyRules`, L73-12), else the first `TURN_STARTED` of that `turnSequence`
   (`nextTurnStartedRecord`; call it on each new `lastTurnStarted` with `view.turnSequence`
   and the receive time), else seconds only with no ratio. `danger` is the last 10 s and `tick`
-  the last 5 s. Once L74 wires it, it replaces the fixed 60 s divisor in `table.tsx`.
+  the last 5 s. The V2 `table.tsx` keeps its fixed 60 s divisor until the L75 flip.
 - **Degraded states (L9-01):** each `PublicPlayerView.connection` drives badges —
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
