@@ -967,7 +967,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). It is `AdminPageIntro`
     plus `AdminStatus` (Loading… until the first answer, one alert for a load or save error,
-    `No reports match these filters.` when the filters match nothing). Kind, Status and Area are
+    `No reports match these filters.` when the filters match nothing). A save that fails from
+    a mark in the open report shows its alert inside the report dialog, since the page behind
+    the `aria-modal` sheet is dimmed and not announced; a row mark's failure, or one from a
+    report closed since, shows on the page. Kind, Status and Area are
     three `role="group"` rows of `AdminToggleChip` and filter client-side (default Pending).
     Each row starts with a round **status badge** (`role="img"`, named by
     `FEEDBACK_TRIAGE_STATUS_LABEL`) in the status tone, holding the clock / check / cross

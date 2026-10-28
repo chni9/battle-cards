@@ -172,7 +172,11 @@ interface AdminFeedbackPageProps {
 
 export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactElement {
   const [rows, setRows] = useState<FeedbackInboxRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // A failed triage save, tagged with the report its mark was pressed in (null for a row mark).
+  // While that report is open its alert renders inside the dialog: the page behind an
+  // `aria-modal` sheet is dimmed and not announced (F7).
+  const [saveError, setSaveError] = useState<{ message: string; reportId: string | null } | null>(null);
   const [kindFilter, setKindFilter] = useState<FeedbackKind | 'all'>('all');
   const [topicFilter, setTopicFilter] = useState<FeedbackTopic | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<FeedbackTriageStatus | 'all'>('pending');
@@ -186,7 +190,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         if (result.status === 401) {
           lockAdminSession(session);
         }
-        setError(adminErrorCopy(result.status));
+        setLoadError(adminErrorCopy(result.status));
         return;
       }
       setRows(result.rows);
@@ -196,9 +200,9 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
   const visible =
     rows === null ? [] : filterInbox(rows, kindFilter, topicFilter, statusFilter);
 
-  function applyStatus(id: string, status: FeedbackTriageStatus): void {
+  function applyStatus(id: string, status: FeedbackTriageStatus, inReport: boolean): void {
     setSavingStatus(true);
-    setError(null);
+    setSaveError(null);
     const session = currentAdminSession();
     void updateInboxStatus(password, id, status).then((result) => {
       setSavingStatus(false);
@@ -206,7 +210,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         if (result.status === 401) {
           lockAdminSession(session);
         }
-        setError(adminErrorCopy(result.status));
+        setSaveError({ message: adminErrorCopy(result.status), reportId: inReport ? id : null });
         return;
       }
       setRows((current) =>
@@ -217,6 +221,10 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
     });
   }
   const selected = rows?.find((row) => row.id === openId) ?? null;
+  // A save error shows where its mark was pressed: in that report while it is open, else on the
+  // page (a row mark, or a report closed since).
+  const reportSaveError = selected !== null && saveError?.reportId === selected.id ? saveError.message : null;
+  const pageError = loadError ?? (reportSaveError === null ? (saveError?.message ?? null) : null);
 
   return (
     <div className="space-y-6">
@@ -224,8 +232,8 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
         title="Feedback"
         description="Tester reports from the game. Filter them, then mark each one pending, done or won't do."
       />
-      {error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
-      {rows === null && error === null ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {pageError !== null ? <AdminStatus state={{ kind: 'error', message: pageError }} /> : null}
+      {rows === null && loadError === null ? <AdminStatus state={{ kind: 'loading' }} /> : null}
       {rows !== null ? (
         <>
           <div className={`${ADMIN_PANEL_CLASS} space-y-3`}>
@@ -315,7 +323,7 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                     current={row.status}
                     disabled={savingStatus}
                     onSelect={(status) => {
-                      applyStatus(row.id, status);
+                      applyStatus(row.id, status, false);
                     }}
                   />
                 </li>
@@ -351,10 +359,11 @@ export function AdminFeedbackPage({ password }: AdminFeedbackPageProps): ReactEl
                 current={selected.status}
                 disabled={savingStatus}
                 onSelect={(status) => {
-                  applyStatus(selected.id, status);
+                  applyStatus(selected.id, status, true);
                 }}
               />
             </div>
+            {reportSaveError !== null ? <AdminStatus state={{ kind: 'error', message: reportSaveError }} /> : null}
             {selected.topics.length > 0 ? (
               <p>About: {formatFeedbackTopics(selected.topics)}</p>
             ) : null}

@@ -423,6 +423,56 @@ describe('AdminFeedbackPage (technical spec v7 §7.8, L80-09)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it.each([
+    [503, 'Database unavailable'],
+    [429, RATE_LIMIT],
+  ])('a failed mark in the report shows its alert inside the dialog (%i)', async (status, copy) => {
+    const { fake, user } = await renderLoaded();
+    await user.click(screen.getByRole('button', { name: /The shop button is hidden/ }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(markIn(dialog, FEEDBACK_TRIAGE_STATUS_LABEL.done));
+
+    await fake.last('/api/inbox/r1').respond(status);
+    // The page behind the modal is inert, so the alert lives in the dialog, and only there.
+    expect(within(dialog).getByRole('alert').textContent).toBe(copy);
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(marksIn(dialog).map(isPressed)).toStrictEqual([true, false, false]);
+    expect(marksIn(dialog).map(isOff)).toStrictEqual([false, false, false]);
+
+    // A retry from the report clears it there.
+    await user.click(markIn(dialog, FEEDBACK_TRIAGE_STATUS_LABEL.done));
+    expect(screen.queryByRole('alert')).toBeNull();
+    await fake.last('/api/inbox/r1').respond(200);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(marksIn(dialog).map(isPressed)).toStrictEqual([false, true, false]);
+  });
+
+  it('closing the report after a failed mark leaves its alert on the page', async () => {
+    const { fake, user } = await renderLoaded();
+    await user.click(screen.getByRole('button', { name: /The shop button is hidden/ }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(markIn(dialog, FEEDBACK_TRIAGE_STATUS_LABEL.done));
+    await fake.last('/api/inbox/r1').respond(503);
+
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // The row is still Pending, so the reason stays in view.
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+  });
+
+  it('a failed row mark keeps its alert on the page, out of a report opened afterwards', async () => {
+    const { fake, user } = await renderLoaded();
+    const row = screen.getByRole('listitem');
+    await user.click(markIn(row, FEEDBACK_TRIAGE_STATUS_LABEL.done));
+    await fake.last('/api/inbox/r1').respond(503);
+    expect(screen.getByRole('alert').textContent).toBe('Database unavailable');
+
+    await user.click(within(row).getByRole('button', { name: /The shop button is hidden/ }));
+    const dialog = await screen.findByRole('dialog');
+    // The failure was a row's, not this report's: the dialog shows no alert of its own.
+    expect(within(dialog).queryByRole('alert')).toBeNull();
+  });
+
   it('a load error shows an alert', async () => {
     const fake = installFakeFetch();
     renderUi(<AdminFeedbackPage password="secret" />);
