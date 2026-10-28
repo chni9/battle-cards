@@ -811,14 +811,15 @@ its payloads and `PROTOCOL_VERSION` do not change.
     Off is `aria-disabled` (`focusableWhenDisabled`), never native `disabled`, so Next pressed by
     keyboard keeps focus while the next page loads and at the last page (Disabled but focusable).
   - `useAdminList({ key, scope?, load })` (`screens/admin/use-admin-list.ts`) holds the state of
-    every admin list read (Matches, Kits, Database): `data`, `loaded`, `error`
+    every admin read (Overview, Matches, Kits, Database): `data`, `loaded`, `error`
     (`adminErrorCopy`) and `lastData`. A new `key` starts a new request and reads not loaded
     until its answer; an answer for an older key is dropped. `load` is read through
     `useEffectEvent` when the key changes, so every input that can change while the page is
     mounted belongs in the key (the password never changes under a mounted page). `lastData`
     is the last success for the current `scope` (Matches: the applied filters; Database: the
-    table), and `adminPagerCount(page, data, lastData)` (`admin/admin-paging.ts`) turns it into
-    the pager's count while the next page loads.
+    table; Overview: one constant scope, so its modules never blank), and
+    `adminPagerCount(page, data, lastData)` (`admin/admin-paging.ts`) turns it into the pager's
+    count while the next page loads.
   - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
@@ -895,9 +896,12 @@ its payloads and `PROTOCOL_VERSION` do not change.
     match mix).
   - Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package.
   - Do not flash "no data" before the first fetch: `Loading…` is the `AdminStatus` loading line
-    (`role="status"`) while nothing has loaded. A failure is the `AdminStatus` error line
-    (`role="alert"`) above the modules and never blanks a loaded overview; the next success
-    clears it. **Download Excel** is a quiet `Button` that exports the loaded overview JSON.
+    (`role="status"`) while a request is in flight, alone before the first answer and above
+    the last loaded modules during a refetch (an Actors change, Apply), which stay on screen
+    (L80 final fix wave; until then a refetch showed no pending state). A failure is the
+    `AdminStatus` error line (`role="alert"`) above the modules and never blanks a loaded
+    overview; it is gone as soon as the next request starts. **Download Excel** is a quiet
+    `Button` that exports the loaded overview JSON.
   - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
     again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`.
   - **Match detail (L80-07):** `AdminGameDetailDialog({ detail, onClose })`

@@ -76,10 +76,11 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(2);
     expect(fake.last(OVERVIEW_PATH).url.searchParams.get('actors')).toBe('humans');
     expect(fake.last(OVERVIEW_PATH).headers['x-inbox-password']).toBe('secret');
-    // The new request is still pending: the loaded overview must stay on screen meanwhile.
+    // The new request is still pending: the loaded overview stays on screen, under Loading….
     expectNineModules();
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
+    expect(screen.queryByRole('status')).toBeNull();
 
     await user.selectOptions(actorsSelect(), 'both');
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(3);
@@ -109,9 +110,31 @@ describe('AdminDashboardPage (technical spec v7 §7.8, L80-05)', () => {
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(fake.to(OVERVIEW_PATH)).toHaveLength(3);
     expect(fake.last(OVERVIEW_PATH).url.searchParams.get('bots')).toBe('withBots');
+    // The retry replaces the stale alert with Loading…; the modules stay.
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+    expectNineModules();
     await fake.last(OVERVIEW_PATH).respond(200, makeAdminOverview());
     expect(screen.queryByRole('alert')).toBeNull();
     expectNineModules();
+  });
+
+  it('a refetch shows Loading… while the nine modules stay on screen', async () => {
+    const fake = installFakeFetch();
+    const { user } = renderUi(<AdminDashboardPage password="secret" />);
+    await fake.last(OVERVIEW_PATH).respond(200, overviewOf(4));
+    expect(screen.queryByRole('status')).toBeNull();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Opponents' }), 'humans');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    // Never blank a loaded overview: the old numbers stay until the new ones land.
+    expect(screen.getByRole('status').textContent).toBe('Loading…');
+    expectNineModules();
+    expect(within(finishedMatchesCard()).getByText('4')).not.toBeNull();
+
+    await fake.last(OVERVIEW_PATH).respond(200, overviewOf(5));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(within(finishedMatchesCard()).getByText('5')).not.toBeNull();
   });
 
   it('ignores a stale overview response', async () => {

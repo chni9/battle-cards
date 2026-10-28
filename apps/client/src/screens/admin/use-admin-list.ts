@@ -1,7 +1,8 @@
 /**
- * The state of one admin read: Matches, Kits and Database (technical spec v7 §7.8 "consistent
- * loading, empty and error states"; L80-06, L80-08, L80-10). One hook, so every page tells a
- * load, an answer and a failure apart the same way and drops a stale answer the same way.
+ * The state of one admin read: Overview, Matches, Kits and Database (technical spec v7 §7.8
+ * "consistent loading, empty and error states"; L80-05, L80-06, L80-08, L80-10). One hook, so
+ * every page tells a load, an answer and a failure apart the same way and drops a stale answer
+ * the same way.
  *
  * `key` names the request. A new key starts a new one, and until its answer lands the read is not
  * loaded: Loading…, and no data or error from an older key. An answer for an older key is
@@ -10,9 +11,9 @@
  * mounts the pages only while unlocked, and the gate replaces them on every lock.
  *
  * `scope` names the result set an answer belongs to (Matches: the applied filters; Database: the
- * table). `lastData` is the last data loaded for the current scope, kept while a later request
- * of that scope loads or after it fails, so a pager keeps its count while the next page loads.
- * With no `scope`, the key is the scope.
+ * table; Overview: one set). `lastData` is the last data loaded for the current scope, kept while
+ * a later request of that scope loads or after it fails, so a pager keeps its count while the
+ * next page loads and the Overview keeps its modules. With no `scope`, the key is the scope.
  *
  * Hooks live in a `.ts` file: a `.tsx` file exports components only (react-refresh).
  */
