@@ -917,6 +917,16 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `Open match {roomId}` that opens `/admin/games/{finished_games.id}`, never the room code;
     the V7 Dialog (its `useFocusTrap` restores focus to a reachable opener) hands focus back to
     it on close.
+  - **Kits states (L80-08):** `AdminKitsPage` follows the same pattern as Matches without a
+    pager. While the stats for the applied filters are not loaded it shows `Loading…`
+    (`AdminStatus`, `role="status"`) and no table, no `Based on N matches` line and no empty
+    copy; a failure is the `AdminStatus` error alert with the previous table gone, never the
+    empty copy; a stale response (success or error) is ignored. `Based on N matches` and
+    `No kit data for these filters.` show only for a loaded answer. **Download spreadsheet** is a
+    quiet `Button`, off until a non-empty answer loads, and hands the loaded rows (raw `kitId`s)
+    to `exportKitStatsXlsx`. The table (`label="Kit stats"`) shows kit display names. **Apply**
+    with unchanged filters sends nothing (`setApplied` keeps the same object), so a retry after
+    an error needs a filter edit, as on Overview.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
   - A 401 clears the session and re-opens the password gate (Sign out takes the same path,

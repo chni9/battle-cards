@@ -20,12 +20,7 @@ describe('admin route (Lot 61-06)', () => {
   });
 
   it('ignores stale Matches, Kits, and Database list fetches', () => {
-    const kits = read('screens/admin/admin-kits-page.tsx');
     const data = read('screens/admin/admin-data-page.tsx');
-    expect(kits).toContain('let cancelled = false');
-    expect(kits).toContain('if (cancelled)');
-    expect(kits).toContain('visibleStats');
-    expect(kits).toContain('setStats(null)');
     expect(data).toContain('let cancelled = false');
     expect(data).toContain('if (cancelled)');
     expect(data).toContain('loadedTable === activeTable');

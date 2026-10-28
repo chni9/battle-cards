@@ -8,6 +8,8 @@ import type {
   AdminGameDetail,
   AdminGameListItem,
   AdminGamesPage,
+  AdminKitStatRow,
+  AdminKitStats,
   AdminOverview,
 } from '@card-battle/shared';
 
@@ -160,4 +162,9 @@ export function makeGameDetail(overrides: Partial<AdminGameDetail> = {}): AdminG
     hasExportLog: false,
     ...overrides,
   };
+}
+
+/** The Kits payload: the rows given and the number of matches they are based on (0 by default). */
+export function makeKitStats(rows: readonly AdminKitStatRow[], sampleGames = 0): AdminKitStats {
+  return { sampleGames, rows };
 }

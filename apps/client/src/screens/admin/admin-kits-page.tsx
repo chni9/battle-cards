@@ -9,9 +9,15 @@ import {
 } from '../../admin/filter-query';
 import { adminErrorCopy, fetchAdminKitStats } from '../../admin/fetch-admin';
 import { exportKitStatsXlsx } from '../../export/admin-xlsx';
-import { Button } from '../../design/components/button';
+import { Button } from '../../ui/primitives/button';
+import { ADMIN_BODY_TEXT_CLASS } from './admin-classes';
 import { AdminFiltersForm } from './admin-filters-form';
-import { AdminDataTable, AdminPageIntro, type AdminTableColumn } from './admin-ui';
+import {
+  AdminDataTable,
+  AdminPageIntro,
+  AdminStatus,
+  type AdminTableColumn,
+} from './admin-ui';
 
 interface AdminKitsPageProps {
   password: string;
@@ -21,7 +27,7 @@ const kitColumns: AdminTableColumn<AdminKitStatRow>[] = [
   {
     id: 'kit',
     header: 'Kit',
-    cell: (row) => <span className="font-medium">{kitDisplayName(row.kitId)}</span>,
+    cell: (row) => <span className="font-extrabold">{kitDisplayName(row.kitId)}</span>,
   },
   {
     id: 'picks',
@@ -78,7 +84,8 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
     };
   }, [password, applied, listKey]);
 
-  const visibleStats = loadedKey === listKey ? stats : null;
+  const loaded = loadedKey === listKey;
+  const visibleStats = loaded ? stats : null;
 
   return (
     <div className="space-y-8">
@@ -95,9 +102,7 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
       />
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          compact
-          type="button"
-          variant="orange"
+          variant="quiet"
           disabled={visibleStats === null || visibleStats.rows.length === 0}
           onClick={() => {
             if (visibleStats !== null) {
@@ -108,23 +113,22 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
           Download spreadsheet
         </Button>
         {visibleStats !== null ? (
-          <p className="text-sm text-ink-muted">
+          <p className={`${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>
             Based on {formatCount(visibleStats.sampleGames)} matches
           </p>
         ) : null}
       </div>
-      {error !== null && loadedKey === listKey ? (
-        <p className="text-sm text-cta-red" role="alert">
-          {error}
-        </p>
+      {!loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {loaded && error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {visibleStats !== null ? (
+        <AdminDataTable
+          label="Kit stats"
+          columns={kitColumns}
+          rows={visibleStats.rows}
+          rowKey={(row) => row.kitId}
+          emptyMessage="No kit data for these filters."
+        />
       ) : null}
-      <AdminDataTable
-        label="Kit stats"
-        columns={kitColumns}
-        rows={visibleStats?.rows ?? []}
-        rowKey={(row) => row.kitId}
-        emptyMessage="No kit data for these filters."
-      />
     </div>
   );
 }
