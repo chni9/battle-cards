@@ -119,6 +119,7 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
         </p>
       ) : null}
       <AdminDataTable
+        label="Kit stats"
         columns={kitColumns}
         rows={visibleStats?.rows ?? []}
         rowKey={(row) => row.kitId}

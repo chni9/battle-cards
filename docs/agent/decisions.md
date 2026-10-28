@@ -5189,3 +5189,34 @@ Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timer
   stale deadline, as V2 does.
 
 ---
+
+## 2026-10-28 · [P] V7 admin tool mode scope (L80-01)
+
+Source: technical spec v7 §7.8 (tool mode), §5.1 (`--ink` is outline and shadow only), §5.3
+(chrome knobs), §4.4; designer answers of 2026-10-28 to the Lot 80 plan's Appendix B
+(questions 1, 2 and 7).
+
+- **One override, no new variable.** `[data-mode="tool"]` in `ui/tokens.css` sets the five
+  chrome knobs (`--chrome-outline-width: 1px`, `--chrome-shadow: none`, `--chrome-radius: 8px`,
+  `--chrome-radius-sm: 6px`, `--chrome-press-y: 0px`), `color-scheme: dark` and
+  `--ink: #7d72c4` (`V7_TOOL_LINE`). Overriding `--ink` instead of adding an outline variable
+  works because `--ink` is outline and shadow only (§5.1): it recolors every outline inside the
+  scope and nothing else. No primitive gains a `mode` prop or changes, so Lot 76 keeps `ui/`
+  primitives to itself.
+- **Why not `#0c0920`.** At 1px the arcade ink reads 1.21:1 on `--panel` and 1.36:1 on
+  `--panel-2`, which fails WCAG 1.4.11 for field and table edges. `#7d72c4` reads 4.72 / 4.31 /
+  3.89 / 3.46:1 on `--bg-0` / `--bg-1` / `--panel` / `--panel-2` (`ui/tool-mode.test.ts`).
+- **Flat ground.** The admin `<main>` is `bg-v7-bg-0` with no `.v7-ground` halos or scanlines:
+  §7.8 asks for neutral dark panels and no juice.
+- **App.tsx source-text assertions stay.** L80 does not rewrite `App.tsx` (spec v7 §4.4
+  "migrated directly"; Lot 74 edits it in parallel). The `admin-route.test.ts` App.tsx `it` and
+  the `inbox-route.test.ts` App / fetch-inbox assertions are kept until the lot that rewrites
+  that routing. This task removed only the two `admin-route.test.ts` `it`s whose behavior
+  replacements it adds ('reuses inbox password session storage' and 're-opens the password
+  gate on 401'; `docs/backlog_v7_test_classification.md` › Owner lot 80).
+- **Unlock stays focusable.** The gate's Unlock is `focusableWhenDisabled`, so while blank or
+  Checking… it is `aria-disabled` rather than natively `disabled`. The click that starts the check
+  would otherwise drop focus to the page (`frontend.md` › V7 primitives: never toggle native
+  `disabled` on a focused control). Enter and click are no-ops in those states, as before.
+
+---

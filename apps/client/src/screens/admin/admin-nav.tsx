@@ -1,36 +1,19 @@
+/**
+ * The five admin sections (Appendix A `admin-nav`, L61-06), as links in tool mode (L80-01). The
+ * shell re-renders this on every `popstate`, so the current section follows the URL.
+ */
+
 import type { ReactElement } from 'react';
 
-import { Button } from '../../design/components/button';
-
-const LINKS: { href: string; label: string }[] = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/games', label: 'Matches' },
-  { href: '/admin/kits', label: 'Kits' },
-  { href: '/admin/feedback', label: 'Feedback' },
-  { href: '/admin/data', label: 'Database' },
-];
+import { ADMIN_SECTIONS, adminSectionHref } from '../../admin/admin-routes';
+import { AdminLinkBar } from './admin-ui';
 
 export function AdminNav(): ReactElement {
-  const path = window.location.pathname.replace(/\/$/, '') || '/admin';
   return (
-    <nav className="flex flex-wrap gap-2 border-b border-border-soft pb-4">
-      {LINKS.map((link) => {
-        const active = path === link.href || (link.href !== '/admin' && path.startsWith(link.href));
-        return (
-          <Button
-            key={link.href}
-            compact
-            type="button"
-            variant={active ? 'green' : 'orange'}
-            onClick={() => {
-              window.history.pushState({}, '', link.href);
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            }}
-          >
-            {link.label}
-          </Button>
-        );
-      })}
-    </nav>
+    <AdminLinkBar
+      label="Admin sections"
+      links={ADMIN_SECTIONS}
+      currentHref={adminSectionHref(window.location.pathname)}
+    />
   );
 }

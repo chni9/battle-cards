@@ -1,9 +1,15 @@
 /**
- * Password-gated /admin SPA shell (Lot 61-06).
+ * Password-gated /admin SPA shell (Lot 61-06), in V7 tool mode (technical spec v7 §7.8, L80-01).
+ *
+ * `data-mode="tool"` scopes the flat chrome of `ui/tokens.css` (1 px tool-line outline, 8 / 6 px
+ * radius, no hard shadow, no press translate). The ground is flat `--bg-0`, with no `.v7-ground`
+ * halos or scanlines: §7.8 asks for neutral dark panels and no juice (designer 2026-10-28). The
+ * `main` scrolls, so it is `relative` like every V7 scroll container (L53-07).
  */
 
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { adminRoute } from '../../admin/admin-routes';
 import { fetchAdminOverview, subscribeAdminUnauthorized } from '../../admin/fetch-admin';
 import { readStoredInboxPassword } from '../../inbox/password-storage';
 import { AdminNav } from './admin-nav';
@@ -13,36 +19,6 @@ import { AdminDataPage } from './admin-data-page';
 import { AdminFeedbackPage } from './admin-feedback-page';
 import { AdminGamesPage } from './admin-games-page';
 import { AdminKitsPage } from './admin-kits-page';
-
-function adminRoute(): {
-  page: 'dashboard' | 'games' | 'kits' | 'feedback' | 'data';
-  gameCode: string | null;
-  table: string | null;
-} {
-  const path = window.location.pathname.replace(/\/$/, '') || '/admin';
-  if (path === '/admin' || path === '/admin/dashboard') {
-    return { page: 'dashboard', gameCode: null, table: null };
-  }
-  if (path.startsWith('/admin/games/')) {
-    return { page: 'games', gameCode: path.slice('/admin/games/'.length), table: null };
-  }
-  if (path === '/admin/games') {
-    return { page: 'games', gameCode: null, table: null };
-  }
-  if (path === '/admin/kits') {
-    return { page: 'kits', gameCode: null, table: null };
-  }
-  if (path === '/admin/feedback') {
-    return { page: 'feedback', gameCode: null, table: null };
-  }
-  if (path.startsWith('/admin/data/')) {
-    return { page: 'data', gameCode: null, table: path.slice('/admin/data/'.length) };
-  }
-  if (path === '/admin/data') {
-    return { page: 'data', gameCode: null, table: null };
-  }
-  return { page: 'dashboard', gameCode: null, table: null };
-}
 
 export function AdminApp(): ReactElement {
   const [routeKey, setRouteKey] = useState(0);
@@ -64,18 +40,16 @@ export function AdminApp(): ReactElement {
     });
   }, []);
 
-  const route = adminRoute();
+  const route = adminRoute(window.location.pathname);
 
   return (
-    <main className="h-full overflow-y-auto bg-surface font-sans text-ink">
-            <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
+    <main data-mode="tool" className="relative h-full overflow-y-auto bg-v7-bg-0 font-v7-body text-v7-text">
+      <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+        <p className="font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">
           Designer
         </p>
-        <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-          Insights
-        </h1>
-        <p className="mt-2 max-w-xl text-sm text-ink-muted">
+        <h1 className="mt-2 font-v7-display text-v7-display text-v7-text">Insights</h1>
+        <p className="mt-2 max-w-xl font-v7-body text-v7-body font-bold text-v7-text-2">
           Finished matches, kit balance, feedback, and raw log tables. Not linked from the player
           hub.
         </p>
@@ -98,7 +72,7 @@ export function AdminApp(): ReactElement {
             <div className="mt-6" key={routeKey}>
               {route.page === 'dashboard' ? <AdminDashboardPage password={password} /> : null}
               {route.page === 'games' ? (
-                <AdminGamesPage password={password} detailId={route.gameCode} />
+                <AdminGamesPage password={password} detailId={route.gameId} />
               ) : null}
               {route.page === 'kits' ? <AdminKitsPage password={password} /> : null}
               {route.page === 'feedback' ? <AdminFeedbackPage password={password} /> : null}

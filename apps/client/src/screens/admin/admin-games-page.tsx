@@ -274,6 +274,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
                 Seats
               </p>
               <AdminDataTable
+                label="Seats"
                 columns={[
                   { id: 'nick', header: 'Player', cell: (s) => s.nickname ?? '—' },
                   { id: 'kit', header: 'Kit', cell: (s) => kitDisplayName(s.kitId) },

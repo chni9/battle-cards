@@ -223,8 +223,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Ground:** `.v7-ground` (halos plus 1 px scanlines every 3 px) is opt-in, defined only in
   `ui/tokens.css`, and never goes on `html`, `body` or `#root`. No `vh` or `dvh` in that file.
   Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`,
-  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 can override them under
-  `[data-mode="tool"]`.
+  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 overrides them under
+  `[data-mode="tool"]` (`DESIGN.md` › Tool mode).
 - **Fonts:** `ui/fonts.ts` holds seven `@fontsource` side-effect imports: Lilita One 400
   (titles, buttons, UI numerals, seat names), Fredoka 500-700 (everything printed on a card),
   Nunito 700-900 (body, descriptions, log lines, labels). `@fontsource/outfit` stays imported
@@ -782,6 +782,78 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
   `--panel` and `--panel-2`, with the 24-character long-name forms in a 240px frame.
 
+### Admin tool mode (/admin, Lot 80)
+
+Technical spec v7 §7.8; looks and values in `/DESIGN.md` › Tool mode. Client only: the admin API,
+its payloads and `PROTOCOL_VERSION` do not change.
+
+- **Scope:** `AdminApp`'s `<main data-mode="tool">` (`relative`, flat `bg-v7-bg-0`, no
+  `.v7-ground`). The `[data-mode="tool"]` block in `ui/tokens.css` sets `--ink` to
+  `V7_TOOL_LINE` (`ui/palette.ts`), a 1px outline, 8 / 6px radii, no chrome shadow and no press
+  translate, so every V7 primitive inside it goes flat without a `mode` prop. Sheets portal out
+  of the scope: an admin Dialog passes `dataAttributes={{ 'data-mode': 'tool' }}`.
+- **Routing:** `admin/admin-routes.ts` is pure and tested in node. `adminRoute(pathname)`
+  returns `{ page, gameId, table }`, and any unclaimed path falls back to Overview. `gameId` is
+  `finished_games.id`, so a Play again row is a new match. `normalizeAdminPath` strips one
+  trailing `/`. `ADMIN_SECTIONS` holds the five sections in order. `adminSectionHref` marks a
+  section by exact path or, except Overview, by a `/` prefix, so `/admin/dashboard` marks none.
+- **Shared pieces, one each** (`screens/admin/admin-ui.tsx`, classes in `admin-classes.ts`):
+  - `AdminStatus` renders every loading, empty and error line.
+  - `AdminDataTable` renders every admin table. Its `label` is required and names the
+    horizontal `ScrollArea`.
+  - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
+    `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
+    plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
+    Meta or Shift stays the browser's.
+  - `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS` and `ADMIN_FIELD_LABEL_CLASS` are the
+    class strings. No page keeps a private copy.
+- **Gate:** `TextField` (password, `current-password`, 16px) and a primary `Button`. Unlock is
+  `focusableWhenDisabled`: while blank or Checking… it is `aria-disabled`, so a click that starts
+  the check keeps focus on it.
+- **Tests:** happy-dom component tests use the test-only `screens/admin/admin-test-harness.ts`
+  and `admin-fixtures.ts`. Shipped code never imports either.
+  - `installFakeFetch()` stubs the global `fetch` that `adminGet` and `fetchInbox` read at call
+    time. Each call stays pending until the test calls `respond(status, body)` or `fail()`,
+    which run inside `act` and drain the page's `.then` chain. Header names are lower-cased:
+    happy-dom's `Headers` keeps the caller's casing.
+  - `setAdminPath(path)` sets the URL before mount. Importing the harness restores `fetch`,
+    clears `sessionStorage` and resets the URL after each test.
+  - `makeAdminOverview()` is the empty-log payload. Later tasks add builders and never change a
+    default.
+- **Behavior kept from L61-06 / Lot 62:**
+  - `App` branches `/admin` before game phases (no Colyseus). The shell reuses
+    `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
+    `GET /api/admin/*`.
+  - Nav: Overview, Matches, Kits, Feedback, Database. Default filters exclude tutorial rows.
+  - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
+    Bots and seats, Endings, Retention and feedback) from one `GET /api/admin/overview`
+    payload.
+  - Match mix (`bots`) filters games. **Actors** (`humans` / `bots` / `both`, default both)
+    lives on actor-level module headers and filters seats and action joins; mixed tables still
+    contribute the selected seats. Seat win share applies Actors to both wins and games at that
+    seat. Feedback reports-per-game uses the date window on both sides (not occupancy, kit or
+    match mix).
+  - Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package.
+  - Do not flash "no data" before the first fetch (`Loading…`). Excel downloads the loaded
+    overview JSON.
+  - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
+    again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`. The detail
+    fetch ignores stale responses and shows `adminErrorCopy` on 404/503.
+  - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
+    on switch or error.
+  - A 401 clears the session and re-opens the password gate. `adminGet` catches network and
+    JSON failures (status 0 → Could not load).
+  - From/To `datetime-local` values are converted to UTC ISO on the client, so the VPS does not
+    shift the window.
+  - Client `exceljs` exports for the overview, games list, kit stats and table browser page.
+  - `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
+  - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). Kind, About and triage
+    status filter client-side (default Pending). Each row shows its status as a colored stripe
+    and three icons (clock / check / cross), not buttons. Clicking an icon `PATCH`es
+    `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do) without
+    opening the report. The open report uses the same icons. Detail still shows contact,
+    nickname, game code, screen, playKind, protocol, user agent and log tail.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -844,34 +916,7 @@ rules above are unchanged — this section only covers how the client looks.
   **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
-  **Admin (L61-06+ / Lot 62):** `App` branches `/admin` before game phases (no Colyseus). Reuses
-  `sessionStorage['card-battle.v6.inboxPassword']` and `X-Inbox-Password` against
-  `GET /api/admin/*`. Nav: Overview, Matches, Kits, Feedback, Database. Default filters
-  exclude tutorial rows. Overview is nine stacked modules (General, Volume, Gameplay,
-  Economy, Combat, Hidden tools, Bots and seats, Endings, Retention and feedback) from
-  one `GET /api/admin/overview` payload. Match mix (`bots`) filters games; **Actors**
-  (`humans` / `bots` / `both`, default both) lives on actor-level module headers and
-  filters seats / action joins — mixed tables still contribute the selected seats.
-  Seat win share applies Actors to both wins and games at that seat. Feedback
-  reports-per-game uses the date window on both sides (not occupancy / kit /
-  match mix). Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package. Do not flash
-  “no data” before the first fetch (`Loading…`). Excel downloads the loaded overview
-  JSON. Games list is keyed by `finished_games.id`; detail
-  `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
-  returns to `/admin/games`. Detail fetch ignores stale responses and shows
-  `adminErrorCopy` on 404/503. Matches, Kits, and Database list fetches ignore
-  stale responses and clear the previous page on switch or error. A 401 clears
-  the session and re-opens the password
-  gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
-  From/To `datetime-local` values are converted to UTC ISO on the client so the
-  VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
-  browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
-  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind, About, and triage
-  status filters client-side (default Pending). Each row shows status as a colored
-  stripe and three icons (clock / check / cross), not buttons. Clicking an icon
-  `PATCH`es `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do)
-  without opening the report. The open report uses the same icons. Detail still shows
-  contact, nickname, game code, screen, playKind, protocol, user agent, and log tail.
+  **Admin:** see Admin tool mode (Lot 80).
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under

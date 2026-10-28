@@ -19,13 +19,6 @@ describe('admin route (Lot 61-06)', () => {
     expect(app).toContain('<AdminApp');
   });
 
-  it('reuses inbox password session storage', () => {
-    const admin = read('screens/admin/admin-app.tsx');
-    const fetchAdmin = read('admin/fetch-admin.ts');
-    expect(admin).toContain('readStoredInboxPassword');
-    expect(fetchAdmin).toContain('X-Inbox-Password');
-  });
-
   it('keys game detail by finished-game id and can close a URL dialog', () => {
     const games = read('screens/admin/admin-games-page.tsx');
     expect(games).toContain('onOpen(row.id)');
@@ -56,17 +49,6 @@ describe('admin route (Lot 61-06)', () => {
     expect(data).toContain('if (cancelled)');
     expect(data).toContain('loadedTable === activeTable');
     expect(data).toContain('setPage(null)');
-  });
-
-  it('re-opens the password gate on 401', () => {
-    const admin = read('screens/admin/admin-app.tsx');
-    const fetchAdmin = read('admin/fetch-admin.ts');
-    const gate = read('screens/admin/admin-password-gate.tsx');
-    expect(fetchAdmin).toContain('lockAdminSession');
-    expect(admin).toContain('subscribeAdminUnauthorized');
-    expect(admin).toContain('setPassword(null)');
-    expect(gate).toContain('.finally(');
-    expect(gate).toContain('adminErrorCopy(0)');
   });
 
   it('clears dashboard error after a successful overview fetch', () => {
