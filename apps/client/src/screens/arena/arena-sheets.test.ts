@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { inPlayThumbs } from '../../view-model/card-actions';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import {
-  arenaSheetEntries, arenaSheetKey, closeArenaSheet, EMPTY_ARENA_SHEETS, MAX_CLOSING_SHEETS, openArenaSheet, openSeatId,
-  type ArenaSheet,
+  arenaSheetEntries, arenaSheetKey, closeArenaSheet, EMPTY_ARENA_SHEETS, endTargeting, MAX_CLOSING_SHEETS, openArenaSheet,
+  openSeatId, startTargeting, type ArenaSheet, type TargetingState,
 } from './arena-sheets';
 import { makeArenaView } from './test-view';
 
@@ -20,7 +20,7 @@ const KIT: ArenaSheet = { kind: 'kit', kitId: 'tactician' };
 
 describe('arena sheets (Appendix A.5, spec v7 §6.7)', () => {
   it('starts with no open and no closing sheet', () => {
-    expect(EMPTY_ARENA_SHEETS).toEqual({ open: [], closing: [] });
+    expect(EMPTY_ARENA_SHEETS).toEqual({ open: [], closing: [], targeting: null });
     expect(MAX_CLOSING_SHEETS).toBe(2);
   });
 
@@ -95,5 +95,45 @@ describe('seat sheets (L74-05)', () => {
     state = openArenaSheet(state, { kind: 'kit', kitId: 'tactician' });
     expect(openSeatId(state)).toBe('p2');
     expect(openSeatId(closeArenaSheet(closeArenaSheet(state, { kind: 'seat', playerId: 'p2' }), { kind: 'seat', playerId: 'p1' }))).toBeNull();
+  });
+});
+
+describe('targeting (L74-10, §6.6.2)', () => {
+  const card = (instanceId: string): ArenaSheet => ({ kind: 'card', source: { kind: 'hand', instance: makeCard('spy', { instanceId }) } });
+  const kit: ArenaSheet = { kind: 'kit', kitId: 'tactician' };
+  const targetingOf = (sheet: ArenaSheet): TargetingState => ({ sheetKey: arenaSheetKey(sheet), instanceId: 'spy-1', seatIds: ['p1'] });
+
+  it('keeps only the targeted card sheet open, closes the others through their exit, and records the target set', () => {
+    const spy = card('spy-1');
+    const state = openArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, kit), spy);
+    expect(startTargeting(state, targetingOf(spy))).toEqual({ open: [spy], closing: [kit], targeting: targetingOf(spy) });
+  });
+
+  it('ignores a target request for a sheet that is not open', () => {
+    const state = openArenaSheet(EMPTY_ARENA_SHEETS, kit);
+    expect(startTargeting(state, targetingOf(card('spy-1')))).toBe(state);
+  });
+
+  it('ends targeting by closing the targeted sheet', () => {
+    const spy = card('spy-1');
+    const state = startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy));
+    expect(endTargeting(state)).toEqual({ open: [], closing: [spy], targeting: null });
+  });
+
+  it('returns the same state when nothing is targeted', () => {
+    const state = openArenaSheet(EMPTY_ARENA_SHEETS, kit);
+    expect(endTargeting(state)).toBe(state);
+  });
+
+  it('opening any sheet ends targeting first: targeting is exclusive', () => {
+    const spy = card('spy-1');
+    const state = startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy));
+    expect(openArenaSheet(state, kit)).toEqual({ open: [kit], closing: [spy], targeting: null });
+  });
+
+  it('closing the targeted sheet clears targeting', () => {
+    const spy = card('spy-1');
+    const state = startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy));
+    expect(closeArenaSheet(state, spy)).toEqual({ open: [], closing: [spy], targeting: null });
   });
 });

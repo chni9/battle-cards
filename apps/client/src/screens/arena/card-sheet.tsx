@@ -15,14 +15,20 @@
  * `table-deactivate-confirm-escape-layer`): `danger`, behind the Lot 69 confirm. The confirm is a
  * `Dialog` stacked over the sheet, so the sheet stack hands Esc to it alone (Q49) and one Esc
  * leaves the card sheet open; only the confirm's Deactivate sends `deactivatePersistent`.
+ *
+ * L74-10 adds the pre-send choices (§6.6.2; Appendix A `regeneration-quantity-picker`,
+ * `card-transformer-consume-picker`): Regeneration tiles ('1 life' preselected, the checked tile
+ * takes initial focus) and Card Transformer consume tiles (the first preselected) only select, and
+ * Use then sends `quantity` / `consumeInstanceId`. The pick resets on every opening. The arena
+ * passes `collapsed` / `collapsedBar` while the card is targeted (§6.6.2, `targeting.tsx`).
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
-import { cardActions, type CardAction } from '../../view-model/card-actions';
+import { cardActions, type CardAction, type RegenerationQuantity } from '../../view-model/card-actions';
 import { CARD_SELL_LABEL, CARD_UPGRADE_LABEL } from '../../view-model/chrome-labels';
 import { DEACTIVATE_CONFIRM_BODY, DEACTIVATE_CONFIRM_TITLE } from '../../view-model/table-copy';
 import { Card } from '../../ui/card/card';
@@ -56,6 +62,8 @@ import {
   sheetInstanceFor,
   type CardSheetSource,
 } from './card-sheet-source';
+import { ConsumeChoice, RegenerationChoice } from './pre-send-choice';
+import { DEFAULT_REGENERATION_QUANTITY, resolveConsumeId } from './pre-send-model';
 
 export interface CardSheetProps {
   /** False while the sheet plays its exit from `closing` (arena-sheets.ts). */
@@ -70,6 +78,10 @@ export interface CardSheetProps {
   commit?: ArenaCommit;
   /** Use routed `target`: the sheet hands the card and its seats over. L74-10 passes it from ArenaScreen and collapses the sheet into targeting. */
   onBeginTargeting?: (request: { instanceId: string; seatIds: readonly string[] }) => void;
+  /** L74-10: the card is targeted; the sheet collapses into `collapsedBar` (Sheet `collapsed`). */
+  collapsed?: boolean;
+  /** L74-10: the "Choose a target" bar shown while `collapsed`. */
+  collapsedBar?: ReactNode;
 }
 
 /** Icons sit in a `--bg-0` well on a CTA fill (DESIGN.md › Cost glyphs); the amount is a private part of the button label. */
@@ -82,7 +94,7 @@ function ActionCost({ amount, signed }: { amount: StructuredCost; signed: CostSi
 }
 
 export function CardSheet(props: CardSheetProps): ReactElement {
-  const { open, view, ctx, commit, onBeginTargeting, onClose } = props;
+  const { open, view, ctx, commit, onBeginTargeting, onClose, collapsed, collapsedBar } = props;
   const source = liveCardSheetSource(props.source, view);
   const ref = liveCardRefFor(source, view);
   const model = cardActions(view, ref, ctx);
@@ -97,16 +109,40 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   const committedFor = useRef<PlayingStateView | null>(null);
   // Per opening, not per mount: a closed sheet stays mounted through its exit (`closing`) and is reused
   // when the same card opens again (same key), so the guard re-arms when `open` turns true. A ref is
-  // not written during render (React Compiler lint), hence the effect; L74-10 adds the state resets.
+  // not written during render (React Compiler lint), hence the effect; the state resets below.
   useEffect(() => {
     if (open) {
       committedFor.current = null;
     }
   }, [open]);
 
+  // The pre-send picks (§6.6.2), reset on every opening for the same reason: "pick 3 lives, Esc,
+  // reopen" shows '1 life' again. React's adjust-state-during-render pattern, as
+  // `ui/primitives/sheet.tsx` does; never an effect with setState.
+  const [quantity, setQuantity] = useState<RegenerationQuantity>(DEFAULT_REGENERATION_QUANTITY);
+  const [consumePick, setConsumePick] = useState<string | null>(null);
+  const checkedRef = useRef<HTMLButtonElement>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setQuantity(DEFAULT_REGENERATION_QUANTITY);
+      setConsumePick(null);
+    }
+  }
+
   // The Lot 69 confirm (in-play Deactivate). It lives and dies with this sheet.
   const [confirming, setConfirming] = useState(false);
   const deactivate = model.actions.find((action) => action.kind === 'deactivate');
+  const useAction = model.actions.find((action) => action.kind === 'use');
+  const use = model.use;
+  // The pre-send groups belong to the action row: a pure inspect (no `commit`) shows neither.
+  const regeneration = commit !== undefined && use?.kind === 'regeneration' ? use : null;
+  // Use takes the selected tile's availability, which carries Use's own reason first, then its price.
+  const regenerationTile = regeneration?.tiles.find((tile) => tile.quantity === quantity);
+  const consume = commit !== undefined && use?.kind === 'consume' ? use : null;
+  // Null with nothing to consume: no group, and Use's own reason says why once.
+  const consumeId = consume === null ? null : resolveConsumeId(consume.options, consumePick);
 
   function send(intent: ArenaIntent): void {
     if (commit === undefined || committedFor.current === view) {
@@ -118,7 +154,6 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   }
 
   function onUse(): void {
-    const use = model.use;
     if (use === null) {
       return;
     }
@@ -131,17 +166,23 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         onBeginTargeting?.({ instanceId: model.instanceId, seatIds: use.seatIds });
         return;
       case 'regeneration':
+        send({ kind: 'playCard', payload: { instanceId: model.instanceId, quantity } });
+        return;
       case 'consume':
-        // L74-10 adds the in-sheet pre-send step (quantity / consume tiles); until then Use does nothing.
+        if (consumeId === null) {
+          return;
+        }
+        send({ kind: 'playCard', payload: { instanceId: model.instanceId, consumeInstanceId: consumeId } });
         return;
     }
   }
 
   function renderAction(action: CardAction): ReactElement | null {
+    const availability = action.kind === 'use' && regenerationTile !== undefined ? regenerationTile : action;
     const shared = {
       'data-card-action': action.kind,
-      disabled: !action.enabled,
-      ...(action.reason !== null ? { disabledReason: DISABLED_REASON_COPY[action.reason] } : {}),
+      disabled: !availability.enabled,
+      ...(availability.reason !== null ? { disabledReason: DISABLED_REASON_COPY[availability.reason] } : {}),
     };
     switch (action.kind) {
       case 'use': {
@@ -222,6 +263,9 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         title={cardSheetTitle(source)}
         onClose={onClose}
         dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}
+        {...(collapsed !== undefined ? { collapsed } : {})}
+        {...(collapsedBar !== undefined ? { collapsedBar } : {})}
+        {...(regenerationTile?.enabled === true ? { initialFocusRef: checkedRef } : {})}
         {...(commit !== undefined && model.actions.length > 0
           ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
           : {})}
@@ -231,6 +275,26 @@ export function CardSheet(props: CardSheetProps): ReactElement {
           {card !== undefined ? (
             <div className="w-full">
               <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
+            </div>
+          ) : null}
+          {regeneration !== null ? (
+            <div className="w-full">
+              <RegenerationChoice
+                tiles={regeneration.tiles}
+                selected={quantity}
+                onSelect={setQuantity}
+                checkedRef={checkedRef}
+              />
+            </div>
+          ) : null}
+          {consume !== null && consumeId !== null ? (
+            <div className="w-full">
+              <ConsumeChoice
+                options={consume.options}
+                selectedId={consumeId}
+                disabled={useAction?.enabled !== true}
+                onSelect={setConsumePick}
+              />
             </div>
           ) : null}
           {context?.kind === 'active' ? (

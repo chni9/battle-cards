@@ -8,14 +8,20 @@
  * - §6.4 and L53-07: it fills `#root` with no viewport unit and never page-scrolls.
  * - §4.3 and Appendix A.2: the action lock is computed once per render and models are passed
  *   down as props, with no React context for game data.
+ * - §6.6.2, §6.6.5 (L74-10): Use on a targeted card collapses its sheet into the "Choose a
+ *   target" bar; `liveTargeting` re-reads the seats every render, a stale model ends targeting
+ *   (Review Focus 2), a valid seat tap commits once, and `useTapGuard` ignores seat taps for
+ *   `TAP_GUARD_MS` after the player ends targeting, because the bar unmounts with no shield.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
  * `screens/table/` or `design/`; `TableScreenProps` is the one type behind the alias below.
  */
 
-import { useCallback, useRef, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactElement } from 'react';
 
+import { liveSheetId } from '../../ui/primitives/sheet-stack';
+import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { seats } from '../../view-model/seats';
@@ -28,8 +34,10 @@ import {
   arenaSheetEntries,
   closeArenaSheet,
   EMPTY_ARENA_SHEETS,
+  endTargeting,
   openArenaSheet,
   openSeatId,
+  startTargeting,
   type ArenaSheet,
   type ArenaSheetsState,
 } from './arena-sheets';
@@ -40,9 +48,12 @@ import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
+import { TargetingBar } from './targeting';
+import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
+import { useTapGuard } from './use-tap-guard';
 
 export type ArenaScreenProps = TableScreenProps;
 
@@ -61,13 +72,54 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const strip = selfStrip(view, ctx);
   // The read-only sheet host (Appendix A.5): one reducer state, one component per entry.
   const [sheets, setSheets] = useState<ArenaSheetsState>(EMPTY_ARENA_SHEETS);
+  // `setSheets` is stable; it is listed because the React Compiler infers it once the render also
+  // calls it (the stale-targeting end below), so these callbacks still never change.
   const openSheet = useCallback((sheet: ArenaSheet): void => {
     setSheets((current) => openArenaSheet(current, sheet));
-  }, []);
+  }, [setSheets]);
   const closeSheet = useCallback((sheet: ArenaSheet): void => {
     setSheets((current) => closeArenaSheet(current, sheet));
-  }, []);
+  }, [setSheets]);
   const tappedSeatId = openSeatId(sheets);
+
+  // Tap-tap targeting (L74-10, §6.6.2, §6.6.5): the bar and the seats read the live seat set.
+  const tapGuard = useTapGuard();
+  const live = liveTargeting(view, ctx, sheets);
+  if (sheets.targeting !== null && live === null) {
+    // Card left the hand, turn passed or a sub-choice opened (Review Focus 2). React's
+    // "adjust state while rendering" pattern, as ui/primitives/sheet.tsx does; never an effect.
+    setSheets(endTargeting(sheets));
+  }
+  const finishTargeting = (): void => {
+    setSheets((current) => endTargeting(current));
+    tapGuard.raise();
+  };
+  const onTarget = (playerId: string): void => {
+    if (live?.seatIds.includes(playerId) !== true) return;
+    commit({ kind: 'playCard', payload: { instanceId: live.instanceId, targetPlayerId: playerId } });
+    finishTargeting();
+  };
+  // Esc cancels targeting. The collapsed sheet takes no Esc (sheet-stack.ts `escTargetId`), and an
+  // expanded sheet a later task opens above the bar (the L74-13 Unspy sheet) takes it first.
+  const store = useSheetStackStore();
+  const onTargetingKey = useEffectEvent((event: KeyboardEvent): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
+    if (liveSheetId(store.getSnapshot()) !== null) return;
+    event.preventDefault();
+    finishTargeting();
+  });
+  const targeting = live !== null;
+  useEffect(() => {
+    if (!targeting) return;
+    const listener = (event: KeyboardEvent): void => {
+      onTargetingKey(event);
+    };
+    document.addEventListener('keydown', listener);
+    return () => {
+      document.removeEventListener('keydown', listener);
+    };
+  }, [targeting]);
+
   return (
     <main
       data-zone="table"
@@ -103,8 +155,11 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           arena={layoutBox.arena}
           tappedSeatId={tappedSeatId}
           onOpenSeat={(playerId) => {
+            // The second tap of a double tap that ended targeting lands here once the bar is gone.
+            if (tapGuard.guarded) return;
             openSheet({ kind: 'seat', playerId });
           }}
+          {...(live === null ? {} : { targeting: { key: live.sheetKey, seatIds: live.seatIds, onTarget } })}
         />
         {/* After the seats, so they paint above them: arrows at z 10, the plate at z 20, both under the sheets. */}
         <ThreatLayer
@@ -154,7 +209,10 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {
-          case 'card':
+          case 'card': {
+            // Always a boolean: re-tapping the lifted hand card ends targeting and reopens this sheet
+            // in one reducer step (no `open={false}` in between), and only `false` un-collapses it.
+            const collapsed = live?.sheetKey === key;
             return (
               <CardSheet
                 key={key}
@@ -163,11 +221,17 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
                 view={view}
                 ctx={ctx}
                 commit={commit}
+                onBeginTargeting={(request) => {
+                  setSheets((current) => startTargeting(current, { sheetKey: key, ...request }));
+                }}
+                collapsed={collapsed}
+                {...(collapsed ? { collapsedBar: <TargetingBar onCancel={finishTargeting} /> } : {})}
                 onClose={() => {
                   closeSheet(sheet);
                 }}
               />
             );
+          }
           case 'kit':
             return (
               <KitSheet

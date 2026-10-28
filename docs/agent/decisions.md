@@ -5400,3 +5400,26 @@ Lot 74 plan Appendix A.8 rulings 1, 5 and 9.
   `KitPortrait` (ruling 5).
 
 ---
+
+## 2026-10-28 · [P] V7 targeting and pre-send choices (L74-10)
+
+Source: technical spec v7 §6.6.2, §6.6.4, §6.6.5; Appendix A `card-target-picker`,
+`regeneration-quantity-picker`, `card-transformer-consume-picker`; frontend.md "L74 carry-overs".
+
+- **Regeneration is select then Use.** §6.6.2 ("chosen in the sheet before Use sends") replaces
+  L44-06's click-to-commit quantity picker: a tile only selects (`aria-pressed`), '1 life' is
+  preselected, and Use sends `playCard { instanceId, quantity }`. The V2 table keeps
+  click-to-commit until L75 deletes it.
+- **Card Transformer consume tiles live in the sheet.** The first shared card is preselected, as
+  in V2, and Use sends `consumeInstanceId`. With nothing to consume no group is drawn: Use's
+  disabled reason is the same sentence, so it shows once.
+- **Targeting is exclusive.** Entering targeting closes every other read-only sheet and opening
+  any sheet ends it, so no expanded sheet sits under the bar (the B2 carry-over) and Esc always
+  reaches the arena's handler, which stands down while an expanded sheet is live.
+- **A stale target set ends targeting.** The seats are re-read from `cardActions` every render;
+  when the card leaves the hand, the turn passes or a sub-choice opens, targeting ends and the
+  card sheet closes, so a later seat tap cannot send.
+- **Exit guard.** Closing a collapsed sheet unmounts its bar with no shield, so for
+  `DUR_BASE_MS` after the player ends targeting the arena ignores seat taps and dock commits.
+
+---

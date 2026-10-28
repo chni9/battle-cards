@@ -403,20 +403,16 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   opener to the next trap when it is released mid-cycle. `focusIntoTrap(container)` moves
   focus into an open trap the way its activation would. Sheet wires all of it; another caller
   can pass only `active`.
-- **L74 carry-overs (not code yet):**
-  - collapsing a read-only sheet for targeting releases its trap, but nothing moves focus to the
-    caller's `collapsedBar`: L74 owns targeting focus (§6.6.5);
-  - under the B2 ruling, an older expanded read-only sheet (Seat) under a collapsed targeting
-    sheet becomes the live modal sheet; L74 decides whether entering targeting closes or
-    collapses covering read-only sheets;
+- **L74 carry-overs:**
+  - targeting focus, covering sheets and the bar double tap are settled by L74-10 (Arena
+    section): focus goes to the first valid seat, entering targeting closes every other
+    read-only sheet, and `useTapGuard` ignores seat taps and dock commits for `--dur-base`
+    after targeting ends;
   - `#root` stays non-inert (deferred), so a programmatic `.focus()` can still leave a modal
     sheet;
   - a click on an exiting overlay or on the transition shield still bubbles through the React
     tree to the Sheet's ancestors (portal bubbling): never render a Sheet inside a clickable
-    ancestor, or stop propagation there;
-  - closing a collapsed or minimized sheet unmounts its bar at once, with no shield, so a double
-    tap on a `collapsedBar` control that ends targeting can land on the dock: the targeting flow
-    owns that (shield or debounce).
+    ancestor, or stop propagation there.
 - **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
   inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
   `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
@@ -967,7 +963,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   disabledReason`); there is no shared "Actions locked" line. A Use routed `send` commits
   `playCard {instanceId}` and closes the sheet; a Use routed `target` calls
   `onBeginTargeting({ instanceId, seatIds })` (L74-10 collapses the sheet into targeting) and
-  sends nothing; Regeneration and Card Transformer get their in-sheet pre-send step in L74-10.
+  sends nothing; Regeneration and Card Transformer pick their tile in the sheet first (L74-10).
   A sheet commits at most once per view, so a double tap sends one intent; the guard re-arms
   each time the sheet opens (a closed sheet stays mounted and is reused on reopen). A
   hand or special card that left `view.self` turns its open sheet read-only (`liveCardRefFor`),
@@ -988,6 +984,23 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
   and only its Deactivate sends `deactivatePersistent {effectId}`. A walk-in gets no strip
   (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
+- `screens/arena/targeting.tsx`, `targeting-model.ts`, `pre-send-choice.tsx`, `pre-send-model.ts`,
+  `use-tap-guard.ts` (L74-10, spec v7 §6.6.2, §6.6.5): Use on a card routed `target` calls
+  `startTargeting` (`arena-sheets.ts`), which collapses its card sheet into `TargetingBar`
+  ('Choose a target' + Cancel) and closes every other read-only sheet; opening any sheet ends
+  targeting, so it is exclusive. `liveTargeting` re-reads `cardActions` (through
+  `liveCardRefFor`) every render: the
+  model's seats become buttons named '{nickname}, target' (`data-target-seat="valid"`, `--mine`
+  ring, pulse at full motion), every other seat is `aria-disabled` and inert
+  (`data-target-seat="invalid"`), and focus moves to the first valid seat in DOM order. A valid
+  tap commits `playCard {instanceId, targetPlayerId}` at once and closes the sheet; Cancel and Esc
+  (the arena's `document` listener, which acts only while no expanded sheet is live) close it
+  and send nothing. When the card leaves the hand, the turn passes or a sub-choice opens,
+  targeting ends and the sheet closes. For `TAP_GUARD_MS` (`--dur-base`) after targeting ends,
+  seat taps (and, from L74-13, dock commits) are ignored, because the bar unmounts with no
+  shield. Regeneration tiles 1–4 ('1 life' preselected, the checked tile takes initial focus)
+  and Card Transformer consume tiles (first preselected; no group when nothing qualifies, Use's
+  reason says why) are picked in the sheet; Use then sends `quantity` / `consumeInstanceId`.
 
 ## Design system (V2 · Lots 10+)
 

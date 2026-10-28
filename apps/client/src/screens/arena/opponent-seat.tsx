@@ -22,16 +22,21 @@
  *   `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
  *   `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`
  *   and `data-spy-eye` on the eye badge. Values keep `data-resource-kind` for the L74-17 FX.
+ * - **Targeting (L74-10, §6.6.5).** With `target`, the button carries `data-target-seat`. A valid
+ *   seat is named "{nickname}, target", its tap is the target tap, and it wears a `--mine` ring
+ *   (the POV's own outgoing effect, §5.1) that pulses at full motion. Any other seat is
+ *   `aria-disabled`, inert and dimmed, and keeps its usual name. Validity comes from the model.
  */
 
 import { useId, type CSSProperties, type ReactElement } from 'react';
 
 import { KitPortrait } from '../../ui/kit/kit-portrait';
+import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-motion';
 import { Icon } from '../../ui/icons/icon';
 import { RESOURCE_ICON } from '../../ui/icons/icon-names';
 import { v7SeatColor } from '../../ui/palette';
 import { Avatar } from '../../ui/primitives/avatar';
-import { CHROME_FOCUS_CLASS, CHROME_SHAPE_SM_CLASS } from '../../ui/primitives/chrome-classes';
+import { CHROME_FOCUS_CLASS, CHROME_SHAPE_SM_CLASS, motionAttribute } from '../../ui/primitives/chrome-classes';
 import { RESOURCE_CAPTIONS } from '../../ui/resource-captions';
 import { BotSeatLabel } from '../../ui/seat/bot-seat-label';
 import { botSeatLabelText } from '../../ui/seat/bot-seat-label-text';
@@ -40,6 +45,7 @@ import type { SeatPlacement } from '../../view-model/seat-layout';
 import { SEAT_VISIBLE_BADGE_COUNT, type SeatModel, type SeatResource } from '../../view-model/seats';
 import { SEAT_MORE_STATUSES_LABEL, seatBadgeView } from './seat-badges';
 import { seatRect } from './seat-geometry';
+import { targetSeatLabel, type SeatTarget } from './targeting-model';
 
 export interface OpponentSeatProps {
   model: SeatModel;
@@ -48,6 +54,8 @@ export interface OpponentSeatProps {
   /** This seat's sheet is open (L74-05): a `--cta` ring; L74-06 lights its arrows. */
   tapped: boolean;
   onOpen: (playerId: string) => void;
+  /** L74-10: set while a card is targeted; the seat's tap then targets (or does nothing). */
+  target?: SeatTarget;
 }
 
 const ROOT_CLASS = `pointer-events-auto absolute flex flex-col bg-v7-panel text-v7-text select-none [-webkit-touch-callout:none] ${CHROME_SHAPE_SM_CLASS}`;
@@ -78,8 +86,32 @@ function ResourceValue({ resource }: { resource: SeatResource }): ReactElement {
   );
 }
 
-export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProps): ReactElement {
+/** The stretched control's name and tap: the seat sheet, or a target while targeting. */
+function seatControl(
+  target: SeatTarget | undefined,
+  nickname: string,
+  onOpen: () => void,
+): { readonly label: string; readonly onClick: () => void } {
+  switch (target?.kind) {
+    case undefined:
+      return { label: nickname, onClick: onOpen };
+    case 'valid':
+      return { label: targetSeatLabel(nickname), onClick: target.onTarget };
+    case 'invalid':
+      // Inert: an invalid seat neither targets nor opens its sheet while targeting.
+      return { label: nickname, onClick: () => undefined };
+  }
+}
+
+export function OpponentSeat({ model, center, tapped, onOpen, target }: OpponentSeatProps): ReactElement {
   const detailsId = useId();
+  const reduced = usePrefersReducedMotion();
+  const control = seatControl(target, model.nickname, () => {
+    onOpen(model.playerId);
+  });
+  const validTarget = target?.kind === 'valid';
+  // The ring sits on the stretched button; the dim on the root, because the button is transparent.
+  const targetClass = validTarget ? `ring-4 ring-v7-mine ${reduced ? '' : 'animate-pulse'}` : '';
   const rect = seatRect(center);
   const botWords = model.botDifficulty !== null ? botSeatLabelText(model.botDifficulty) : null;
   const seatTitle = [model.nickname, model.connectionLabel, botWords]
@@ -94,7 +126,12 @@ export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProp
       ? { outline: `3px solid ${v7SeatColor(model.seatColorIndex)}`, outlineOffset: 2 }
       : {}),
   };
-  const className = [ROOT_CLASS, model.isEliminated ? 'border-dashed' : '', tapped ? 'ring-3 ring-v7-cta' : '']
+  const className = [
+    ROOT_CLASS,
+    model.isEliminated ? 'border-dashed' : '',
+    tapped ? 'ring-3 ring-v7-cta' : '',
+    target?.kind === 'invalid' ? 'opacity-50' : '',
+  ]
     .filter((part) => part !== '')
     .join(' ');
 
@@ -114,13 +151,14 @@ export function OpponentSeat({ model, center, tapped, onOpen }: OpponentSeatProp
     >
       <button
         type="button"
-        aria-label={model.nickname}
+        aria-label={control.label}
         aria-describedby={detailsId}
         title={seatTitle}
-        onClick={() => {
-          onOpen(model.playerId);
-        }}
-        className={`absolute inset-0 rounded-v7-chrome-sm ${CHROME_FOCUS_CLASS}`}
+        {...(target !== undefined ? { 'data-target-seat': target.kind } : {})}
+        {...(target?.kind === 'invalid' ? { 'aria-disabled': true } : {})}
+        {...(validTarget ? { 'data-motion': motionAttribute(reduced) } : {})}
+        onClick={control.onClick}
+        className={`absolute inset-0 rounded-v7-chrome-sm ${CHROME_FOCUS_CLASS} ${targetClass}`}
       />
       <div id={detailsId} className="pointer-events-none relative flex h-full min-w-0 flex-col">
         <div data-seat-name title={model.nickname} className="flex min-w-0 items-center gap-0.5">
