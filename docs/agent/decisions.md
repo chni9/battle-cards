@@ -5189,3 +5189,19 @@ Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timer
   stale deadline, as V2 does.
 
 ---
+
+## 2026-10-28 · [P] Eliminated POV keeps a disabled dock (designer, Lot 74)
+
+Source: technical spec v7 §6.12 and Q38, §6.3 (spectator overlay); `view-model/self-strip.ts`
+(L73-09); the L74-23 brief **Review** line in `docs/superpowers/plans/2026-10-21-v7-lot-74-arena-1.md`.
+
+- **Conflict.** The 2026-10-21 backlog review wrote on L74-23 "The economy dock is hidden for
+  every spectator-overlay POV". Spec §6.12 hides the economy dock only for walk-in spectators
+  (Q38), and L73-09's `selfStrip(view, ctx).dock` models it that way.
+- **Designer 2026-10-28.** The spec stands. An eliminated POV without `pendingReanimation`
+  ("Watching") keeps a visible dock: Draw and Activate duplication disabled (`actions-locked`),
+  Shop browse-only, and no Unspy (the spectator overlay is never offered Unspy, §6.3). Only a
+  walk-in has no dock.
+- The L74-23 Review line is corrected in the same change.
+
+---
