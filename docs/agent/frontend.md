@@ -856,8 +856,9 @@ its payloads and `PROTOCOL_VERSION` do not change.
     upper-cased, two humans, no bots, not a tutorial), `makeGamesPage(items)` (page 1, size 50,
     `total` the item count) and `makeGameDetail()` (`fg-1` / `ABCDEF`, Classic, two seats, no
     eliminations, no log) cover Matches. `makeInboxRow(id)` (Pending bug, screen `home`, protocol
-    45, every optional field null, no topics, no log tail) covers Feedback. Later tasks add
-    builders and never change a default.
+    45, every optional field null, no topics, no log tail) covers Feedback.
+    `makeTablePage(table, rows)` (columns from the first row's keys, page 1, size 50, `total` the
+    row count) covers Database. Later tasks add builders and never change a default.
 - **Behavior kept from L61-06 / Lot 62:**
   - `App` branches `/admin` before game phases (no Colyseus). The shell reuses
     `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
@@ -933,6 +934,24 @@ its payloads and `PROTOCOL_VERSION` do not change.
     to `exportKitStatsXlsx`. The table (`label="Kit stats"`) shows kit display names. **Apply**
     with unchanged filters sends nothing (`setApplied` keeps the same object), so a retry after
     an error needs a filter edit, as on Overview.
+  - **Database states (L80-10):** `AdminDataPage` is route-driven: the table is `AdminApp`'s
+    `route.table` (`null` reads `finished_games`), with no picked-table state of its own. The
+    tabs are an `AdminLinkBar` (`label="Database tables"`) over the four tables
+    (`/admin/data/{name}`, labelled by `tableDisplayName`); the link whose href is the active
+    table is `aria-current`, so an unknown table (`/admin/data/nope`) marks none and the
+    server's 404 shows `Not found` as an `AdminStatus` error. A request sends `page` and
+    `pageSize=50` and is keyed `{table}:{page}`; Next and Previous go through `AdminPager`. The
+    page number belongs to its table, so another table reads as page 1 even if the page is not
+    remounted. While the page for the key loads it shows `Loading…`, no grid and the pager off;
+    the pager label keeps the last page count the server gave for this table (never below the
+    page itself), so it reads `Page 2 of 3` while page 2 loads and `Page 1 of 1` on a new
+    table. A failure is the alert with the rows gone, and a stale answer, success or error, is
+    ignored. The grid is an `AdminDataTable` named by the table's display name: Title Case
+    headers from `columnDisplayName`, cells cut at `max-w-[16rem] truncate`, null as `—`, an
+    object as JSON and a `_truncated` preview as `Preview only (N bytes)`. Zero rows show `No
+    rows in this table.` and read `Page 1 of 1`. The `{N} rows · page {N}` line stays.
+    **Download spreadsheet (this page)** is a quiet `Button`, off until a page loads, that hands
+    the loaded page to `exportTablePageXlsx`. Still read-only: there is no SQL box.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
   - A 401 clears the session and re-opens the password gate (Sign out takes the same path,

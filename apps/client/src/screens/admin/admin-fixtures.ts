@@ -11,6 +11,7 @@ import type {
   AdminKitStatRow,
   AdminKitStats,
   AdminOverview,
+  AdminTablePage,
   FeedbackInboxRow,
 } from '@card-battle/shared';
 
@@ -168,6 +169,21 @@ export function makeGameDetail(overrides: Partial<AdminGameDetail> = {}): AdminG
 /** The Kits payload: the rows given and the number of matches they are based on (0 by default). */
 export function makeKitStats(rows: readonly AdminKitStatRow[], sampleGames = 0): AdminKitStats {
   return { sampleGames, rows };
+}
+
+/**
+ * A page of the Database browser (L80-10): the columns are the first row's keys in order (none for
+ * an empty page), page 1 of size 50, `total` the number of rows given. A test that needs more
+ * pages than rows passes `total` and `page` as overrides. `dataType` is `'text'` for every
+ * column: the client never reads it.
+ */
+export function makeTablePage(
+  table: string,
+  rows: readonly Record<string, unknown>[],
+  overrides: Partial<AdminTablePage> = {},
+): AdminTablePage {
+  const columns = Object.keys(rows[0] ?? {}).map((name) => ({ name, dataType: 'text' }));
+  return { table, columns, rows, page: 1, pageSize: 50, total: rows.length, ...overrides };
 }
 
 /**

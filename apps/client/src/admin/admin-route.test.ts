@@ -18,12 +18,4 @@ describe('admin route (Lot 61-06)', () => {
     expect(app).toContain("window.location.replace('/admin/feedback')");
     expect(app).toContain('<AdminApp');
   });
-
-  it('ignores stale Matches, Kits, and Database list fetches', () => {
-    const data = read('screens/admin/admin-data-page.tsx');
-    expect(data).toContain('let cancelled = false');
-    expect(data).toContain('if (cancelled)');
-    expect(data).toContain('loadedTable === activeTable');
-    expect(data).toContain('setPage(null)');
-  });
 });
