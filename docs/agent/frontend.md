@@ -855,15 +855,22 @@ its payloads and `PROTOCOL_VERSION` do not change.
     (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends none.
   - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
     Bots and seats, Endings, Retention and feedback) from one `GET /api/admin/overview`
-    payload.
+    payload (L80-05). Each module is an `ADMIN_PANEL_CLASS` section: an `h3`
+    (`ADMIN_SECTION_TITLE_CLASS`), a `--text-2` description and `h4` subheadings. The Actors and
+    Kit wins **Show** selects use `ADMIN_FIELD_CLASS` (16px) under an `ADMIN_FIELD_LABEL_CLASS`
+    label. That class is `w-full` and Tailwind emits `w-full` after `w-auto`, so a header
+    select stays narrow through a `w-fit` label, never a `w-auto` on the select. The five Actors
+    selects share one state; Show stays local to the module.
   - Match mix (`bots`) filters games. **Actors** (`humans` / `bots` / `both`, default both)
     lives on actor-level module headers and filters seats and action joins; mixed tables still
     contribute the selected seats. Seat win share applies Actors to both wins and games at that
     seat. Feedback reports-per-game uses the date window on both sides (not occupancy, kit or
     match mix).
   - Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package.
-  - Do not flash "no data" before the first fetch (`Loading…`). Excel downloads the loaded
-    overview JSON.
+  - Do not flash "no data" before the first fetch: `Loading…` is the `AdminStatus` loading line
+    (`role="status"`) while nothing has loaded. A failure is the `AdminStatus` error line
+    (`role="alert"`) above the modules and never blanks a loaded overview; the next success
+    clears it. **Download Excel** is a quiet `Button` that exports the loaded overview JSON.
   - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
     again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`. The detail
     fetch ignores stale responses and shows `adminErrorCopy` on 404/503.

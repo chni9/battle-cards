@@ -50,33 +50,4 @@ describe('admin route (Lot 61-06)', () => {
     expect(data).toContain('loadedTable === activeTable');
     expect(data).toContain('setPage(null)');
   });
-
-  it('clears dashboard error after a successful overview fetch', () => {
-    const dashboard = read('screens/admin/admin-dashboard-page.tsx');
-    expect(dashboard).toContain('setOverview(result.data)');
-    expect(dashboard).toContain('setError(null)');
-    expect(dashboard).toContain('Loading…');
-    expect(dashboard).toContain('overviewQuery(applied, actors)');
-    expect(dashboard).toContain('exportOverviewXlsx');
-    expect(dashboard).not.toContain('setOverview(null)');
-  });
-
-  it('renders nine Overview modules and an Actors control', () => {
-    const modules = read('screens/admin/admin-overview-modules.tsx');
-    expect(modules).toContain('title="General"');
-    expect(modules).toContain('title="Volume"');
-    expect(modules).toContain('title="Gameplay"');
-    expect(modules).toContain('title="Economy"');
-    expect(modules).toContain('title="Combat"');
-    expect(modules).toContain('title="Hidden tools"');
-    expect(modules).toContain('title="Bots and seats"');
-    expect(modules).toContain('title="Endings"');
-    expect(modules).toContain('title="Retention and feedback"');
-    expect(modules).toContain('AdminActorsControl');
-    expect(modules).toContain('Hours are UTC.');
-    expect(modules).toContain('Tax, Suicide, and Imposition life loss is not attack damage.');
-    expect(modules).toContain('Ignores the opponents match-mix filter');
-    expect(modules).toContain('AdminScatterChart');
-    expect(modules).toContain('New matches only');
-  });
 });

@@ -8,10 +8,10 @@ import {
 } from '../../admin/filter-query';
 import { adminErrorCopy, fetchAdminOverview } from '../../admin/fetch-admin';
 import { exportOverviewXlsx } from '../../export/admin-xlsx';
-import { Button } from '../../design/components/button';
+import { Button } from '../../ui/primitives/button';
 import { AdminFiltersForm } from './admin-filters-form';
 import { AdminOverviewModules } from './admin-overview-modules';
-import { AdminPageIntro } from './admin-ui';
+import { AdminPageIntro, AdminStatus } from './admin-ui';
 
 interface AdminDashboardPageProps {
   password: string;
@@ -57,21 +57,14 @@ export function AdminDashboardPage({ password }: AdminDashboardPageProps): React
           setApplied(filters);
         }}
       />
-      {error !== null ? (
-        <p className="text-sm text-cta-red" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {!hasLoaded && overview === null ? (
-        <p className="text-sm text-ink-muted">Loading…</p>
-      ) : null}
+      {error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {!hasLoaded && overview === null ? <AdminStatus state={{ kind: 'loading' }} /> : null}
       {overview !== null ? (
         <>
           <div>
             <Button
-              compact
               type="button"
-              variant="orange"
+              variant="quiet"
               onClick={() => {
                 void exportOverviewXlsx(overview);
               }}
