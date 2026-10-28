@@ -1025,7 +1025,26 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   recomputed and `dispatchDrop` commits the `dropTarget` intent, opens the card sheet for a
   pre-send choice (nothing sent), or springs the card back (instantly under reduced motion). The
   click that ends a drag never opens the sheet.
-- L74-12 browser check (375×812 and 390×844): browser check pending (controller).
+- L74-12 browser check (2026-10-28, solo Assassin vs 3 Normal bots, `?ui=next`, 180 s turns,
+  built-in browser at 375×812 then 390×844; mouse drags plus scripted pointer sequences for
+  two-segment gestures). Passed:
+  - (a) a mostly horizontal move neither lifts nor opens the sheet; the slot is `touch-action:
+    pan-x`, the hand scroller overflows on its own (495 px in 375 px; a wheel scroll moves it
+    120 px) and the page never scrolls (`scrollWidth` = viewport width);
+  - (b) a vertical lift past 8 px shows the portal ghost under the pointer, marks the slot
+    `data-lifted`, and a release on empty felt springs back with nothing sent;
+  - (c) a playable Basic attack lights every seat `data-drop="valid"` (plate not lit), the
+    hovered seat `over`, and the drop queues the attack (points −1, outgoing arrow label);
+  - (e) the Sell zone appears on the side opposite the drag start, 96×72, 16 px from the
+    edge and 8 px above the hand (390×844), clear of the seats and the plate; a drop sells
+    the card (Strong attack +2, Absorber +1);
+  - (f) off-turn nothing lifts and no zone lights (`data-action-lock="not-your-turn"`); a tap
+    opens the read-only sheet with its reasons.
+  - Not exercised: (d) a plate-only drop (no affordable untargeted card in this game; no
+    Draw before L74-13) and (g) a Regeneration / Card Transformer plate drop — both
+    unit-tested in `hand-drag.test.ts` / `hand-drag-layer.test.tsx`. Real-touch pan versus
+    lift and the full-motion spring-back timing (the pane may throttle animation) go to the
+    L74-26 gate on a phone.
 
 ## Design system (V2 · Lots 10+)
 
