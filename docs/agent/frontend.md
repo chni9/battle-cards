@@ -825,8 +825,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - `closeArenaSheet` moves a sheet to `closing`. The last two closed sheets stay mounted with
     `open={false}`, so the Sheet press shield covers their exit and a double tap never lands on
     the arena underneath.
-  - `arenaSheetKey` is `card:<face instance id>` or `kit:<kitId>`. Every arena `Sheet` carries
-    it as `data-arena-sheet`.
+  - `arenaSheetKey` is `card:<face instance id>`, `kit:<kitId>` or `seat:<playerId>` (L74-05).
+    Every arena `Sheet` carries it as `data-arena-sheet`.
   - Render `arenaSheetEntries(state)` as direct children of the arena root. Never put a sheet
     inside a clickable element: React portals bubble clicks.
 - `screens/arena/card-sheet.tsx` + `card-sheet-source.ts` (L74-02, §6.6.1, §5.4, L56-05): the
@@ -886,6 +886,29 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `data-seat-index`, `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
   `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`
   and `data-spy-eye` on the eye badge. Seats render the `SeatModel` and never re-derive a tier.
+- `screens/arena/seat-sheet.tsx`, `threat-copy.ts` (L74-05, spec v7 §6.3, §6.5, §6.6.5, §11 Q46):
+  a seat tap opens the seat sheet. It is the read-only `{ kind: 'seat', playerId }` entry of
+  `arena-sheets.ts` (key `seat:<id>`), titled by the nickname or "{nick} (eliminated)". It
+  shows:
+  - the kit, a button to the kit sheet, only when the `SeatModel` avatar is a kit (Spy+, a death
+    reveal or the spectator overlay);
+  - `BotSeatLabel` and the connection badge in full;
+  - the four resources as `Pill`s (`?` stays `unknown`);
+  - every status badge (`seatBadgeView`);
+  - the seat's public pending effects, incoming then outgoing, each once (a self-queued Suicide
+    counts as incoming), as buttons to the queue inspect with the V2 chip words
+    (`pendingEffectCopy`);
+  - the seat's in-play thumbs (Shield, persistents, ticking Sentences; card lives or turns on
+    the card, Sentence turns as a line);
+  - under Spy+ or a reveal, the hand and specials.
+  A thumb opens the read-only card sheet on tap or long-press (`in-play` / `spy-reveal`
+  sources). The newest open seat sheet is the "tapped" seat (`openSeatId`): its seat gets the
+  `--cta` ring, and L74-06 lights its arrows. Opening the sheet sends nothing.
+- `ArenaScreen` sheet host (L74-05, plan Appendix A.5): `useState` over `arena-sheets.ts`,
+  `openSheet` / `closeSheet`, and one `CardSheet` / `KitSheet` / `SeatSheet` per
+  `arenaSheetEntries(sheets)` entry (`open={entry.open}`, keyed by `key`) as the last children of
+  `<main>`, never inside a clickable element. It lands with the seat sheet, the first opener; no
+  later task adds another host.
 
 ## Design system (V2 · Lots 10+)
 

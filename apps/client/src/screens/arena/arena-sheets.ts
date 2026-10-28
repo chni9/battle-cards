@@ -18,7 +18,11 @@ import type { KitId } from '@card-battle/shared';
 
 import { sheetInstanceFor, type CardSheetSource } from './card-sheet-source';
 
-export type ArenaSheet = { kind: 'card'; source: CardSheetSource } | { kind: 'kit'; kitId: KitId };
+export type ArenaSheet =
+  | { kind: 'card'; source: CardSheetSource }
+  | { kind: 'kit'; kitId: KitId }
+  /** An opponent seat's sheet (L74-05, spec v7 §6.5). */
+  | { kind: 'seat'; playerId: string };
 
 export interface ArenaSheetsState {
   /** Open read-only sheets, oldest first. The `Sheet` primitive paints the newest two (MAX_READ_ONLY_DEPTH). */
@@ -37,13 +41,15 @@ function unreachable(value: never): never {
   throw new Error('Unhandled arena sheet');
 }
 
-/** `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`. The React key and `data-arena-sheet`. */
+/** `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`, `seat:<playerId>`. The React key and `data-arena-sheet`. */
 export function arenaSheetKey(sheet: ArenaSheet): string {
   switch (sheet.kind) {
     case 'card':
       return `card:${sheetInstanceFor(sheet.source).instanceId}`;
     case 'kit':
       return `kit:${sheet.kitId}`;
+    case 'seat':
+      return `seat:${sheet.playerId}`;
     default:
       return unreachable(sheet);
   }
@@ -89,4 +95,19 @@ export function arenaSheetEntries(state: ArenaSheetsState): readonly ArenaSheetE
     ...state.closing.map((sheet) => ({ sheet, key: arenaSheetKey(sheet), open: false })),
     ...state.open.map((sheet) => ({ sheet, key: arenaSheetKey(sheet), open: true })),
   ];
+}
+
+/**
+ * The player of the newest open seat sheet, else null: that seat is "tapped" (spec v7 §6.5, its
+ * arrows light up). A card or kit sheet opened above it does not untap the seat, and a seat sheet
+ * that is only `closing` no longer counts.
+ */
+export function openSeatId(state: ArenaSheetsState): string | null {
+  for (let index = state.open.length - 1; index >= 0; index -= 1) {
+    const sheet = state.open[index];
+    if (sheet?.kind === 'seat') {
+      return sheet.playerId;
+    }
+  }
+  return null;
 }

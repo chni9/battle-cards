@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { inPlayThumbs } from '../../view-model/card-actions';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import {
-  arenaSheetEntries, arenaSheetKey, closeArenaSheet, EMPTY_ARENA_SHEETS, MAX_CLOSING_SHEETS, openArenaSheet,
+  arenaSheetEntries, arenaSheetKey, closeArenaSheet, EMPTY_ARENA_SHEETS, MAX_CLOSING_SHEETS, openArenaSheet, openSeatId,
   type ArenaSheet,
 } from './arena-sheets';
 import { makeArenaView } from './test-view';
@@ -73,5 +73,27 @@ describe('arena sheets (Appendix A.5, spec v7 §6.7)', () => {
       { sheet: SPY, key: 'card:spy-1', open: false },
       { sheet: KIT, key: 'kit:tactician', open: true },
     ]);
+  });
+});
+
+describe('seat sheets (L74-05)', () => {
+  it('keys a seat sheet by its player', () => {
+    expect(arenaSheetKey({ kind: 'seat', playerId: 'p1' })).toBe('seat:p1');
+  });
+
+  it('opening an open seat again moves it to the top, never a copy', () => {
+    let state = openArenaSheet(EMPTY_ARENA_SHEETS, { kind: 'seat', playerId: 'p1' });
+    state = openArenaSheet(state, { kind: 'kit', kitId: 'tactician' });
+    state = openArenaSheet(state, { kind: 'seat', playerId: 'p1' });
+    expect(state.open).toEqual([{ kind: 'kit', kitId: 'tactician' }, { kind: 'seat', playerId: 'p1' }]);
+  });
+
+  it('openSeatId is the newest open seat, even under a card sheet, and null without one', () => {
+    expect(openSeatId(EMPTY_ARENA_SHEETS)).toBeNull();
+    let state = openArenaSheet(EMPTY_ARENA_SHEETS, { kind: 'seat', playerId: 'p1' });
+    state = openArenaSheet(state, { kind: 'seat', playerId: 'p2' });
+    state = openArenaSheet(state, { kind: 'kit', kitId: 'tactician' });
+    expect(openSeatId(state)).toBe('p2');
+    expect(openSeatId(closeArenaSheet(closeArenaSheet(state, { kind: 'seat', playerId: 'p2' }), { kind: 'seat', playerId: 'p1' }))).toBeNull();
   });
 });

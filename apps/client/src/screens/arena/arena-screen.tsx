@@ -14,13 +14,26 @@
  * `screens/table/` or `design/`; `TableScreenProps` is the one type behind the alias below.
  */
 
-import { useRef, type ReactElement } from 'react';
+import { useCallback, useRef, useState, type ReactElement } from 'react';
 
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { seats } from '../../view-model/seats';
+import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
 import { arenaRegionAttributes } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
+import {
+  arenaSheetEntries,
+  closeArenaSheet,
+  EMPTY_ARENA_SHEETS,
+  openArenaSheet,
+  openSeatId,
+  type ArenaSheet,
+  type ArenaSheetsState,
+} from './arena-sheets';
+import { CardSheet } from './card-sheet';
+import { KitSheet } from './kit-sheet';
+import { SeatSheet } from './seat-sheet';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
 
@@ -34,6 +47,16 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const arenaRef = useRef<HTMLDivElement>(null);
   const layoutBox = useArenaLayoutBox(arenaRef);
   const seatsModel = seats(view, layoutBox);
+  const threatModel = threats(view, props.subChoice);
+  // The read-only sheet host (Appendix A.5): one reducer state, one component per entry.
+  const [sheets, setSheets] = useState<ArenaSheetsState>(EMPTY_ARENA_SHEETS);
+  const openSheet = useCallback((sheet: ArenaSheet): void => {
+    setSheets((current) => openArenaSheet(current, sheet));
+  }, []);
+  const closeSheet = useCallback((sheet: ArenaSheet): void => {
+    setSheets((current) => closeArenaSheet(current, sheet));
+  }, []);
+  const tappedSeatId = openSeatId(sheets);
   return (
     <main
       data-zone="table"
@@ -64,8 +87,14 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
         data-zone="felt"
         className="relative min-h-0 flex-1 overflow-hidden"
       >
-        {/* No `onOpenSeat` yet: L74-05 adds the sheet host, opens the seat sheet and derives `tappedSeatId`. */}
-        <ArenaSeats model={seatsModel} arena={layoutBox.arena} tappedSeatId={null} />
+        <ArenaSeats
+          model={seatsModel}
+          arena={layoutBox.arena}
+          tappedSeatId={tappedSeatId}
+          onOpenSeat={(playerId) => {
+            openSheet({ kind: 'seat', playerId });
+          }}
+        />
         <div data-zone="pending" data-hint-anchor="incoming" />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
@@ -90,6 +119,56 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
         </div>
       </div>
       <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2" />
+      {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
+      {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
+        switch (sheet.kind) {
+          case 'card':
+            return (
+              <CardSheet
+                key={key}
+                open={open}
+                source={sheet.source}
+                view={view}
+                ctx={ctx}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+              />
+            );
+          case 'kit':
+            return (
+              <KitSheet
+                key={key}
+                open={open}
+                kitId={sheet.kitId}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+              />
+            );
+          case 'seat': {
+            const seat = seatsModel.seats.find((entry) => entry.playerId === sheet.playerId);
+            return seat === undefined ? null : (
+              <SeatSheet
+                key={key}
+                open={open}
+                seat={seat}
+                view={view}
+                threatModel={threatModel}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+                onOpenKit={(kitId) => {
+                  openSheet({ kind: 'kit', kitId });
+                }}
+                onOpenCard={(source) => {
+                  openSheet({ kind: 'card', source });
+                }}
+              />
+            );
+          }
+        }
+      })}
     </main>
   );
 }
