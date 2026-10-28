@@ -167,7 +167,7 @@ export interface PublicPlayerView {
    * Always `false` while living.
    */
   absorbWindowOpen: boolean;
-  /** Filled only when the recipient spies this player (L3-05). */
+  /** Filled when the recipient spies this player (L3-05) or has spectator vision; see `SpiedPlayerView`. */
   spied?: SpiedPlayerView;
   /**
    * True when this living seat has a Spy matrix row on the recipient
@@ -188,23 +188,28 @@ export interface PublicPlayerView {
 }
 
 /**
- * Spy-gated slice of another player — only when the recipient has a Spy relation
- * on them (technical spec §5.1, rules §3).
+ * Spy-gated slice of another player: present when the recipient has a Spy relation on them,
+ * or full spectator vision (rules spec §3, Lot 69; server `build-view-for.ts` `buildSpiedView`).
  *
- * Both levels: kit + full hand/special card lists forever.
- * Base (`kit-and-cards`): frozen resource snapshot from resolve turn.
- * Upgraded (`full-resources`): live lives, points, upgrade points, shield.
+ * Base Spy (`kit-and-cards`, a pre-Lot-69 level name): live lives, points, upgrade points and
+ * shield only. Kit, hand and specials stay hidden.
+ * Spy+ (`full-resources`), an eliminated spectator, or a walk-in after Stay (L57-16): the same
+ * live values plus `kitId`, `hand` and `specialCards`.
  */
 export interface SpiedPlayerView {
+  /** Spy+ and spectator vision only (Lot 69). */
   kitId?: KitId;
   hand?: readonly CardInstance[];
   specialCards?: readonly CardInstance[];
-  /** Live resources — upgraded Spy only. */
+  /** Live resources: every Spy relation and spectator vision (Lot 69). */
   lives?: number;
   points?: number;
   upgradePoints?: number;
   shield?: number;
-  /** Frozen resources at first Spy resolve — base Spy. */
+  /**
+   * Never sent since Lot 69. It stays in the type only because removing it is a protocol
+   * change; the cleanup is separate work (technical spec v7 §14.1).
+   */
   resourcesSnapshot?: {
     lives: number;
     points: number;
@@ -274,14 +279,16 @@ export interface PendingEffectView {
  * Playing view (L1-09). Built per recipient.
  *
  * Private: own kit, hand, lives, shield, exact resources.
- * Public: card count, elimination status, pending queue, turn order, actions.
- * Spy (base): kit + cards + frozen resource snapshot. Spy (upgraded): kit + cards + live
- * resources (lives, points, upgrade points, shield).
+ * Public: elimination status, pending queue, turn order, actions.
+ * Spy (base, Lot 69): live lives, points, upgrade points and shield. Spy+ (upgraded) and
+ * spectator vision: those live values plus kit, hand and specials. `spied.resourcesSnapshot`
+ * is never sent (technical spec v7 §14.1).
  * Server-only: never `seed`.
  *
  * Developer ruling 2026-07-30: lives and shield are **not** public without Spy
  * (overrides tech §5.1 table for unspied opponents).
- * Hand **card count** is also private — revealed only via Spy (`spied.hand` / specials).
+ * Hand **card count** is also private — revealed only via Spy+ or spectator vision
+ * (`spied.hand` / specials).
  */
 
 /**

@@ -5,7 +5,7 @@
 
 import { isAttackCardId, type PendingEffectView } from '@card-battle/shared';
 
-/** Synthetic ids from `persistent-incoming.ts` — not engine queue entries. */
+/** Legacy synthetic `persistent:` ids (V2 presentation chips, module deleted in L73-05) — never engine queue entries. */
 export function isPersistentPresentationId(effectId: string): boolean {
   return effectId.startsWith('persistent:');
 }

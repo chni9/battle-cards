@@ -1,7 +1,8 @@
 /**
- * Spy / death reveal — shown on click so the opponent seat stays compact on mobile.
+ * Spy+ / death reveal — shown on click so the opponent seat stays compact on mobile.
  * Replaces KitInspectDialog for revealed opponents (live hand + resources, not roster).
- * Base Spy resources stay `?`; upgraded Spy and death reveal show numbers (L51-08).
+ * Spy+ shows live numbers and a death reveal the frozen ones; a missing value renders `?`
+ * (L51-08). A base Spy never opens it: it reveals resources only, on the seat (Lot 69).
  */
 
 import { getKit, type CardInstance, type KitId } from '@card-battle/shared';

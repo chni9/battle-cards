@@ -49,7 +49,6 @@ export function nicknameOf(view: PlayingStateView, playerId: string): string {
   return view.players.find((player) => player.id === playerId)?.nickname ?? playerId;
 }
 
-/** Kit art the recipient already sees — Spy or death reveal. Matches opponent-zone. */
 /** Spy+ kit/hand reveal — base Spy is live resources only (Lot 69). */
 export function hasFullSpyCardReveal(player: PublicPlayerView): boolean {
   const spied = player.spied;
@@ -61,6 +60,7 @@ export function hasFullSpyCardReveal(player: PublicPlayerView): boolean {
   );
 }
 
+/** Kit the recipient already sees: death reveal, else Spy+. A base Spy keeps it hidden (Lot 69). Matches opponent-zone. */
 export function visibleKitId(player: PublicPlayerView): KitId | null {
   if (player.eliminationReveal !== undefined) {
     return player.eliminationReveal.kitId;

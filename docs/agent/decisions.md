@@ -4961,3 +4961,231 @@ Source: technical spec v7 §5.2 ("11 px for any functional text"), the L72-12 fi
   hand-name floor on 320 to 360 px phones, or shorten the face text another way.
 
 ---
+
+## 2026-10-27 · [P] V7 seat tiers and badge order (L73-02)
+
+Source: technical spec v7 §6.2 (≤ 2 status badges + "+n"), §6.3 (tiers from wire fields
+only), §11 (Q36, Q46, Q47) and the Lot 73 brief's open badge-order question.
+
+- **Tier.** `eliminated` when `isEliminated` or `eliminationReveal` (the server always freezes
+  the reveal at death, `elimination-rewards.ts` `captureEliminationSnapshot`), else
+  `spy-plus` when `spied.kitId`, else `base-spy` when `spied` is present, else `unspied`. A
+  dead seat that also carries spectator `spied` shows its death reveal. `kitHidden` is true
+  for `unspied` and `base-spy` (Q66).
+- **Badges.** Every public status is one badge, in `SEAT_BADGE_KINDS` order: spying-on-you,
+  block, invisibility, sentence, shield, persistent, duplication, draw-gain, reanimation,
+  absorb-window. Active persistents and ticking Sentences count as badges: a phone seat has
+  no room for a thumbs row, and the seat sheet lists them all. Invisibility is one badge
+  with its turns, never also a persistent. A Block badge with 0 turns is the last-turn
+  attack ban (L25-01).
+- **Eliminated seats** keep only reanimation and absorb-window, the two statuses that exist
+  only on a dead seat (§6.3). They show no connection, eye or bot label, as V2 hides them
+  (`opponent-zone.tsx`). Death dumps actives and cancels the seat's Sentences
+  (`cleanupEliminatedPlayer`); the frozen Shield value shows in the resource row.
+- **Not rendered:** `activeAttackBlock`, dead since Lot 68 (Q36).
+- **Walk-in.** `watching` once any seat carries `spied` (the overlay is granted, L57-16). This is
+  the same test as `screens/claim-seat.ts` `walkInSeesPrivateHands`; the view-model cannot
+  import `screens/`. Otherwise it is `walk-in-fogged`.
+
+---
+
+## 2026-10-27 · [P] V7 seat layout geometry (L73-03)
+
+Source: technical spec v7 §6.4 (amended modes, arc, grid), §14.3 (values tuned in the L74
+playtest) and the Lot 73 brief's open walk-in question.
+
+- **Mode** is `ui/viewport-mode.ts` `viewportModeFor`: one rule for sheets, Carousel and seats.
+- **Portrait arc.** The plate sits centred on the arena's bottom edge. Seat centres lie on the
+  ellipse centred on the plate that touches the arena's top and sides: n equal sectors over
+  the upper half, centres at half steps, the first seat on the left (clockwise from the
+  POV at the bottom).
+- **Desktop arc** uses the full ellipse around the arena centre: n + 1 equal slots from the
+  bottom, with slot 0 left to the POV.
+- **Walk-in** (no anchor): seat order is `turnOrder` from `turnOrder[0]`. Desktop spreads n
+  slots around the full ellipse, half a step from the bottom. Portrait keeps the upper half,
+  because the bottom of a portrait arena sits on the self-strip region.
+- **Landscape-compact:** one top band of n equal columns, no ellipse, reported as an `arc`
+  (the layout union has no third kind).
+- **Gap test:** two seat boxes are too close when they are under `SEAT_MIN_GAP_PX` apart on
+  both axes; 8 px or more on either axis separates them. An arena smaller than one seat
+  box (a 0×0 first paint) uses the grid. So does a portrait arena only a little taller than
+  one seat, where the plate on the bottom edge leaves the ellipse a negative vertical
+  radius. Grid rows are ceil(n/2) over floor(n/2) in seat order; an empty second row is
+  dropped.
+- `SEAT_BOX` (portrait 76×92, landscape-compact 76×84, desktop 120×136), `PLATE_BOX` and the
+  gap are L73 starting values. L74 tunes them and updates the L73 tests that pin the
+  360-wide grid switch.
+
+---
+
+## 2026-10-27 · [P] V7 threat fan-out: hits-all bursts persist; one target is an arrow (designer, L73-04)
+
+Source: designer answers 2026-10-27 (Lot 73 plan, Appendix B Q1 and Q2); technical spec v7 §6.5;
+server handlers `mega-attack.ts`, `suicide.ts`, `attack-thief.ts` (one copy per alive opponent at
+every tier), `card-thief.ts`, `spy-thief.ts`, `upgrade-point-thief.ts` (one copy per opponent when
+upgraded) and `super-mirror.ts` copies (`redirectedBy: 'super-mirror'`).
+
+- **Q1, burst after the first hit.** Each copy of a hits-all play resolves on its own target's turn.
+  The burst stays while two or more copies remain, instead of turning into separate arrows once the
+  first target has resolved. Hits-all is read from the card (`HITS_ALL_CARD_IDS`,
+  `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, Super Mirror copies), never from the log. An Assassin volley
+  keeps the literal §6.5 test: it bursts only while it covers every living, non-Invisible opponent.
+- **Q2, one target.** A hits-all play with a single target, on a 2-seat table or as the last copy
+  left, is a plain arrow.
+
+---
+
+## 2026-10-27 · [P] V7 recurring chips: Curse drains during Block; persistent-incoming retired (L73-05)
+
+Source: technical spec v7 §6.5, §11 and §13 #35; rules spec §5 (Block line 165, Invisibility
+line 193, Curse lines 217–221, Poison lines 224–225, Imposition lines 228–229) and §6 Game Turn
+(line 269); `apps/server/src/engine/turn/apply-persistent-effects.ts`.
+
+- **Paused reading.** A recurring chip is paused when the POV's own view shows the engine will
+  skip that effect on the POV's next tick. Own Invisibility pauses Poison, Imposition and Curse:
+  `applyPersistentEffects` returns before every victim tick (lines 74–79,
+  `engine/specials/is-invisible.ts` lines 10–12). An own Block chain (`blockTurnsRemaining > 0`
+  or `blockAttacksForbidden`) pauses Poison and Imposition only
+  (`victimPersistentTicksPausedByBlock`, lines 203–205, checked at 213 and 235). **Curse keeps
+  draining during Block:** `applyCursesOnVictim` has no Block check (lines 258–266), and the
+  rules spec Block card says "Curse and attacks are unchanged". An up, upgraded own Shield
+  (line 217) and own points ≤ 7 (lines 221–227) pause Imposition. This follows the amended
+  spec v7 §6.5, not the earlier draft that let Block pause every chip.
+- **Amounts.** The catalog rate for the tier, never a prediction. The rates are client constants
+  in `view-model/recurring-chips.ts` (`CLIENT_POISON_LIVES`, `CLIENT_IMPOSITION_FLOOR`,
+  `CLIENT_IMPOSITION_CAP`, `CLIENT_CURSE_POINTS_PER_LIFE`) that cite the rules spec and mirror the
+  server constants (lines 39–49), as `CLIENT_SUB_CHOICE_MS` does. Curse shows a rate (1 life per
+  3 or 2 points spent).
+- **Curse at 1 life (designer 2026-10-27).** The engine never takes a Curse victim's last life:
+  at ≤ 1 life `applyOneCurse` deactivates the Curse instead of draining (lines 268–272). The chip
+  shows `ending`, not live and not paused. Invisibility still wins, because the engine skips
+  every victim tick before that check (lines 74–83).
+- **Retired test.** `screens/table/persistent-incoming.test.ts` is deleted with
+  `screens/table/persistent-incoming.ts`, which no surface has rendered since c0e9668 (Lot 14).
+  Its two cases (opponent Imposition and own Points Generator on Incoming; own Imposition once per
+  opponent on the felt) describe V2 presentation chips that spec v7 §6.5 supersedes. Recurring
+  chips list only the effects that tick against the POV (Curse on you, opponent Poison and
+  Imposition), and `view-model/recurring-chips.test.ts` covers them.
+
+---
+
+## 2026-10-27 · [P] V7 card actions mirror the server's play checks (L73-06)
+
+Source: technical spec v7 §4.3, §6.6, §11 (Q39, Q44); `apps/server/src/engine/turn/list-legal-play-card.ts`,
+`perform-action.ts` (`playCardAction`, `playMultipleAttacksAction`) and each handler's `canPlay`.
+
+- **Rule.** `cardActions` disables an action only when the view proves the server rejects it, in the
+  server's order: lock, temporarily unavailable, Invisibility, Block ban, target / consume / pool,
+  points. Target seats follow the server's per-card sets; there is no client immunity filter.
+- **Beyond V2.** Use is also disabled for Mirror and Super Mirror with nothing they can redirect,
+  upgraded Upgrade Point Thief, Spy Thief and Sentence with no living non-Invisible opponent, Card
+  Absorber on an empty pool, Block during the ban, and any unaffordable play. V2 let the server reject.
+- **Second Reanimation (designer 2026-10-27).** Use on a Reanimation is disabled with
+  `reanimation-armed` ("Reanimation already armed") while the POV's own `activePersistentEffects`
+  already holds one. That is exactly the server's `reanimation.ts` `canPlay` (#V4-12c), the only
+  path that arms a Reanimation, so at most one is ever armed. The code is appended to the fixed
+  `DISABLED_REASONS` list; it is a new string for the PR.
+- **Left enabled.** A play that needs a forced slot drop when no slot is droppable (Lot 69). The
+  client may be less strict than the server, which rejects it with an illegal-action toast.
+- **Tax** stays enabled at 1 life: `tax.ts` `canPlay` ignores lives, so `not-enough-lives` is a shop
+  reason only.
+- **Multi-attack** is hidden, not disabled, with fewer than two hand attacks
+  (`multi-attack-need-two`; `listAssassinMultiAttackCandidates` returns none), as Upgrade is hidden
+  once upgraded. Its points reason uses the two cheapest hand attacks.
+
+---
+
+## 2026-10-27 · [P] V7 in-play Upgrade is own-only; Deactivate locks during a sub-choice (L73-07)
+
+Source: technical spec v7 §11 and §13 (Q37, Q40); Appendix A `table-inspect-active-upgrade`,
+`card-inspect-dialog`, `deactivate-confirm-dialog`; `apps/server/src/engine/economy/upgrade-card.ts`,
+`apps/server/src/engine/turn/list-legal-economy.ts`, `apps/server/src/rooms/game-room.ts` `handleAction`.
+
+- **Q37.** The V7 `cardActions` offers Upgrade on a card in play only when the server would find it as
+  the POV's own. That is an own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS` (by effect id in
+  `self.activePersistentEffects`), the own Shield while `self.shield > 0` (`active-shield`), or an own
+  ticking Sentence (`PendingSentence.id` with `sourcePlayerId === you`). Another seat's active, Shield
+  or Sentence gets a read-only sheet, and its Shield model id is `active-shield:<playerId>`, so no path
+  can send it as the POV's Shield. Upgrade is disabled with its reason at 0 upgrade points (V2 hid it),
+  off-turn and while locked. It is hidden once upgraded and for Curse and Reanimation.
+- **V2 unchanged.** The V2 table keeps `activeUpgradeInstanceId` and its opponent-Shield bug until the
+  L75 flip, because Lot 73 changes nothing a player sees (spec v7 §10.4, §12.3). L74-09 pins the
+  regression in the rendered path.
+- **Q40.** Deactivate is offered on own active persistents only (a Curse on you and Reanimation
+  included), never on Shield or Sentence. It is disabled, not hidden, off-turn (`not-your-turn`) and
+  while actions are locked, an open sub-choice included (`actions-locked`), because the server rejects
+  it then (`handleAction` sub-choice gate). V2 gated it on `isMyTurn` only and hid it off-turn.
+  On the finished board V7 shows Deactivate disabled (`actions-locked`, spec v7 §6.12 "every intent
+  locked"), where Appendix A `deactivate-confirm-dialog` says it is not offered: a deliberate
+  deviation.
+- **Thumbs.** Shield and Sentence never request activated art. A persistent requests it only when
+  `CARDS_WITH_ACTIVATED_ART` lists it (Appendix A `global-activated-art-guard`).
+
+---
+
+## 2026-10-27 · [P] V7 self strip and dock: walk-in, finished board and spectator Unspy (L73-09)
+
+Source: technical spec v7 §6.1 items 3 and 5, §6.3, §6.12 and Appendix A Q38;
+`apps/client/src/view-model/self-strip.ts`.
+
+- **Walk-in.** A walk-in's `view.self` is the server filler `EMPTY_SPECTATOR_SELF`
+  (`build-view-for.ts`), so `selfStrip` returns no kit, resources, thumbs, Draw, Shop, Unspy or
+  duplication for `isSpectator` (Q38). The V2 private zone was already text only.
+- **Finished board.** `stats` replaces Draw, Unspy and Activate duplication (§6.12). Walk-ins
+  get it too: Stats only reopens Game over and carries no economy. The strip offers no Leave
+  there, because the flag is Return home (§6.12).
+- **Unspy.** It is present for a Seated or Reanimating POV and absent for a Watching POV (§6.3,
+  spectator overlay). Its reasons follow the server's order: the lock, then no living spy, then
+  points (`clear-spy.ts` checks the spy before `payCost`).
+
+---
+
+## 2026-10-27 · [P] Unused action-log filters removed (L73-11)
+
+Source: technical spec v7 §11 ("Dead code removed when its replacement lands: … unused log
+filters"), §13 Q62 and §6.9; Appendix A `table-action-log-panel` ("No player, kind or search
+filters (L45/L51)").
+
+- `view-model/action-log.ts` drops `filterActionLog`, `entryInvolvesPlayer`,
+  `ActionLogFilters`, `groupByTurn` and its return type `TurnGroup`. Since the panel dropped
+  its filter rail (L45/L51) only their own tests imported them. The V7 log sheet
+  (`view-model/log.ts`, §6.9) groups by round and has no filters.
+- Retired from the L9-02 block of `action-log.test.ts`: 'filters by kind, player, and
+  query', 'shows nothing when no kinds are selected' and 'groups consecutive entries by
+  turnSequence'. They covered only the deleted exports, so no shipped behavior loses a test.
+- The block's other two tests cover live code and stay verbatim under the renamed describe
+  'MEGA ATTACK phrasing and round grouping (L9-02)': MEGA ATTACK phrasing (L20-05) and
+  `groupByRound` / `roundOfTurn`.
+- `ACTION_LOG_KINDS` and its L56-03 test stay; L81-01 re-checks it. No player-visible
+  change: the old panel never called the removed helpers.
+
+---
+
+## 2026-10-27 · [P] · [DISCREPANCY] Turn clock mode order and deadline source (L73-13)
+
+Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timers` and
+`table-turn-timer-scale`, `apps/server/src/rooms/game-room.ts` (`beginTurnOrAbsentAutoPlay`,
+`pauseTimersOwnedBy`, `onReconnect`).
+
+- **Brief line.** Modes are checked in the order `none` (tutorial, finished board, null
+  deadline), `paused`, `absent` (absent with no deadline), `countdown`.
+- **Code line.** The server nulls `turnDeadlineMs` when a turn starts on a disconnected seat
+  (the grace window). A null-deadline `none` checked first would hide "Paused — reconnecting"
+  at turn start and make `absent`, which needs a null deadline, unreachable. The V2 table
+  checks paused and absent before its "—" label (`screens/table.tsx`).
+- **Reading.** `turnClock` checks `none` for the tutorial and the finished board first, then
+  `paused`, then `absent` (null deadline), then `none` for any other null deadline (bot turns,
+  no active seat), then `countdown`. The brief's cases still hold: a finished board with a
+  disconnected last seat is `none`, and a bot turn after a human turn is `none`.
+- **Deadline source.** Seconds come from `view.turnDeadlineMs` only. The `TURN_STARTED` record
+  gives the full length, never the seconds, so a stale human record during a bot turn shows
+  no countdown (Appendix A `table-turn-timer-scale`, "Bot turn"). On a new turn the server
+  sends the state carrying that deadline just before `TURN_STARTED` (`game-room.ts`:
+  `sendStateToEveryone(); broadcastTurnStarted();`), as `turn-clock.ts` says. A resume
+  (`onReconnect` → `resumeTimersOwnedBy`) and a restart on the same `turnSequence`
+  (`turnAdvanced === false`) send it just after `TURN_STARTED`.
+- **Not changed.** When an absent seat's turn starts, the server leaves the previous deadline
+  in place and auto-draws on the next tick. That brief window shows a countdown from the
+  stale deadline, as V2 does.
+
+---

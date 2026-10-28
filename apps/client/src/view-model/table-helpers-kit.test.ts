@@ -1,5 +1,5 @@
 /**
- * visibleKitId follows opponent-zone Spy / death reveal — L44-02.
+ * visibleKitId follows opponent-zone Spy+ / death reveal — L44-02, Lot 69.
  */
 
 import { describe, expect, it } from 'vitest';

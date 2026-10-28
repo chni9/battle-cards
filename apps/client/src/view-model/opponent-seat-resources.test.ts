@@ -19,7 +19,7 @@ const snapshot = {
 };
 
 describe('opponent seat resources (L51-08)', () => {
-  it('shows unknown for unspied and base Spy, never snapshot totals', () => {
+  it('shows unknown for unspied and for a pre-Lot-69 snapshot fixture, never snapshot totals', () => {
     expect(opponentResourceDisplay({})).toEqual({ known: false });
     expect(
       opponentResourceDisplay({

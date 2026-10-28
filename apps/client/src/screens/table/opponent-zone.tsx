@@ -1,7 +1,7 @@
 /**
  * Opponent seat — hug content, never crop kit portrait.
- * Spy / death reveal: click the portrait to open the reveal dialog.
- * Resource icons always render; unspied / base Spy show `?` (L51-08).
+ * Spy+ / death reveal: click the portrait to open the reveal dialog.
+ * Resource icons always render; an unspied seat shows `?`, any Spy relation live numbers (L51-08, Lot 69).
  * Resources stack beside the portrait; activated cards sit under it (L51-10).
  */
 
@@ -35,7 +35,7 @@ export interface OpponentZoneProps {
   player: PublicPlayerView;
   onInspectActive?: (effectId: string) => void;
   onInspectSentence?: (sentence: PendingSentenceView) => void;
-  /** Spy or death reveal — opens the opponent info dialog. */
+  /** Spy+ or death reveal — opens the opponent info dialog. */
   onInspectReveal?: () => void;
   /** Tutorial spotlight after Spy (L45-05). */
   highlightPortrait?: boolean;

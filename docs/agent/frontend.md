@@ -53,13 +53,14 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   assertions verbatim, importers repointed directly, and **no shim or re-export** stays at an
   old path. `view-model/` holds `incoming-threat-diff`, `threat-tone`, `opponent-token-chips`,
   `action-log`, `select-hint` and `game-over-awards`; the modules L72-04 moved in are listed in
-  the last bullet of this section.
+  the L72-04 bullet of this section.
 - `view-model/` has **no** React, react-dom or motion import and **no clock read**
   (`Date.now`, `performance.now`); callers pass `nowMs`. The purity block in
   `eslint.config.mjs` and `view-model/view-model-purity.test.ts` enforce it.
 - `view-model/` imports only `@card-battle/shared` and pure `ui/*.ts` helpers (asset-lookup,
-  structured-cost, hint-ids), never a `ui/` component. Nothing in `view-model/` imports from
-  `design/` or `screens/table/`.
+  structured-cost, hint-ids, seat-colors, primitives/avatar-initial,
+  seat/connection-badge-label, viewport-mode), never a `ui/` component. Nothing in
+  `view-model/` imports from `design/` or `screens/table/`.
 - `view-model/threat-tone.ts` (`ThreatTone`) and `view-model/opponent-token-chips.ts`
   (`TokenFlyoutEndpoint`) each keep a **type-only** import from `fx/table-fx-types`. Keep them
   `import type`; nothing else in `view-model/` imports from `fx/`.
@@ -76,6 +77,129 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   `kit-special-card-key`, `chrome-labels`, `table-flag-intent`, `active-display` and
   `sub-choice-constants`. New code imports them from there, never from `design/` or
   `screens/table/`.
+- **Seats (`view-model/seats.ts`, L73-02; spec v7 §6.2, §6.3):** `seatList(view)` returns the
+  POV mode (`povModeOf`: `seated`, `reanimating`, `watching`, `walk-in-fogged`) and one
+  `SeatModel` per seat that is not the POV's (`!isYou`; a walk-in gets every seat), in
+  `view.players` order with `seatColorIndexOf` colours. The tier comes from wire fields only:
+  `eliminated` (`isEliminated` or `eliminationReveal`), `spy-plus` (`spied.kitId`),
+  `base-spy` (`spied` without `kitId`), else `unspied`; no log line changes it. `kitHidden`
+  is true for `unspied` and `base-spy` (Q66). `resources` always holds life, point,
+  upgradePoint and shield, each a number or `'?'` (`opponentResourceDisplay`; the dead
+  `resourcesSnapshot` is never read). `reveal` carries Spy+ live or death-frozen hand and
+  specials; opponents never get a hand count. A walk-in is `watching` once any seat carries
+  `spied` (L57-16), else `walk-in-fogged`. `povModeOf`, `connectionLabel` and
+  `seatColorIndexOf` are exported so the threat arrows and the self strip reuse them.
+- **Seat badges (L73-02):** every public status is one `SeatBadge`, in `SEAT_BADGE_KINDS`
+  order: spying-on-you, block, invisibility, sentence, shield, persistent, duplication,
+  draw-gain, reanimation, absorb-window. A seat shows the first `SEAT_VISIBLE_BADGE_COUNT`
+  (2) plus `+badgeOverflow`; the seat sheet lists all. Invisibility is one badge carrying its
+  effect, never also a persistent; a `block` badge with 0 turns is the last-turn attack ban.
+  An eliminated seat keeps only reanimation and absorb-window, with `connectionLabel` and
+  `botDifficulty` null. `activeAttackBlock` renders nothing (Q36). The bot difficulty is
+  null in the tutorial. Why: `decisions.md` 2026-10-27 "V7 seat tiers and badge order".
+- **Seat layout (`view-model/seat-layout.ts`, L73-03; spec v7 §6.4):** `seats(view, layoutBox)`
+  is `seatList(view)` plus `layout`. `layoutModeFor(layoutBox.viewport)` is
+  `ui/viewport-mode.ts` `viewportModeFor`. `seatOrder` rotates `turnOrder` so the player
+  after the POV comes first; a walk-in keeps `turnOrder` from `turnOrder[0]`. Portrait: seat
+  centres on the upper half of the ellipse centred on the plate (`plateCenterFor`: on the
+  arena's bottom edge) that touches the arena's top and sides, n equal sectors from the
+  left. Desktop: the full ellipse around the arena centre, the bottom slot left to the POV
+  (a walk-in uses all n slots). Landscape-compact: one top band of n equal columns, reported
+  as `kind: 'arc'`. Grid fallback when two seat boxes (`SEAT_BOX[mode]`, badge row included)
+  are under `SEAT_MIN_GAP_PX` (8) apart on both axes, when the arena cannot hold one seat, or
+  when a portrait arena only a little taller than one seat leaves the ellipse a negative
+  vertical radius (the plate sits on its bottom edge): `ceil(n/2)` over `floor(n/2)` in seat
+  order. `SEAT_BOX`, `PLATE_BOX` and the gap are L74
+  playtest values (§14.3); retuning them updates `seat-layout.test.ts`.
+- `view-model/threats.ts` (L73-04, spec v7 §6.5): `threats(view, subChoice)` gives one
+  `ThreatEntry` per `pendingEffects` item, in wire order, each with its **own** label
+  (`listedAttackDamage` × `damageMultiplier`, else the effect's card icon), never a summed
+  total (golden rule 1). Relation is `incoming` when the POV is the target (a self-queued
+  base Suicide included), else `outgoing` when the POV is the source, else `third-party`.
+  Tone: `mine` for outgoing, `threatToneFor` otherwise; every entry also carries the source
+  seat colour (`seatColorIndexOf`). `groupKey` (`source|target|queuedAt|cardId`) fans arrows side by side.
+  A **fan-out** (`FanOutGroup`, key `source|queuedAt|cardId`) is a `(source, cardId,
+  queuedAt)` set with at least two distinct targets that covers every living opponent of the
+  source except living Invisible seats, or that is a hits-all play (`HITS_ALL_CARD_IDS`,
+  upgraded `HITS_ALL_WHEN_UPGRADED_CARD_IDS`, or Super Mirror copies). A hits-all burst stays
+  while two or more copies remain, even after earlier copies resolved (designer 2026-10-27).
+  A self-targeted entry never joins one, and a single remaining target draws a plain arrow.
+  Members stay in `entries` with `fanOutKey` set, and each target badge keeps its own
+  label. `mirrorBadge` comes from `redirectedBy`. `mirrorEligible` is set only while a `mirror`
+  sub-choice lists the id. `gridThreatEntries` keeps POV in/out plus the tapped seat's
+  entries, and `seatThreatIds` gives a seat's in/out ids. The tone type is
+  `ReturnType<typeof threatToneFor>`, so `threats.ts` adds no `fx/` import.
+- `view-model/recurring-chips.ts` (L73-05, spec v7 §6.5, Q35): `recurringChips(view)` (also
+  `threats().recurring`) lists every Curse on the POV (`self.activePersistentEffects`) and each
+  living opponent's Poison and Imposition with `counter > 0`, in `view.players` order; none for
+  an eliminated or walk-in POV. The amount is the catalog rate for the tier from the
+  `CLIENT_*` constants (rules spec §5, mirroring `apply-persistent-effects.ts`), never a
+  prediction. `state` (`live` / `paused` / `ending`) mirrors the engine: own Invisibility
+  pauses all three; an own Block chain (`blockTurnsRemaining > 0` or `blockAttacksForbidden`)
+  pauses Poison and Imposition, and Curse keeps draining; an up, upgraded own Shield or own
+  points ≤ 7 pause Imposition; a Curse on the POV at ≤ 1 life is `ending`, because the engine
+  removes it instead of draining (designer 2026-10-27).
+- **Card actions (L73-06).** `view-model/card-actions.ts` `cardActions(view, card, ctx)` gives a
+  hand or special card's actions in the order Use, Upgrade, Sell, Multi-attack. A hidden action is
+  absent; an unavailable one is disabled with one `DisabledReason` from
+  `view-model/action-reasons.ts`, whose `DISABLED_REASON_COPY` holds all V7 disabled-reason copy.
+  `view-model/action-lock.ts` `actionLock(view, ctx)` gives `actions-locked` (finished board, open
+  sub-choice, eliminated POV, walk-in) before `not-your-turn`; every V7 action model starts from
+  it. `use` carries the routing: target seats, send, Regeneration tiles 1–4, or Card Transformer
+  consume options. Seats and reasons mirror `list-legal-play-card.ts`, `perform-action.ts` and each
+  handler's `canPlay` in the server's check order, and a reason shows only when the view proves the
+  server rejects. Never add a client immunity filter, and never gate a play the server accepts
+  (golden rule 8). The two Invisibility predicates live once, in `view-model/attack-targets.ts`:
+  `hasInvisibility` (server `playerIsInvisible`; a seat or `view.self`) and
+  `seatIsLivingInvisible` (server `isIllegalOpposingTarget`). New view-model code never
+  re-writes either predicate; `self-strip.ts` and `seats.ts` read the Invisibility effect itself
+  for its turns. The V2 table keeps `screens/table/card-actions.tsx` until L75.
+- **In-play cards (L73-07).** `cardActions` also takes `active`, `shield` and `sentence` refs.
+  Upgrade is offered only on the POV's own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS`, own
+  Shield while `self.shield > 0` (`active-shield`) and own ticking Sentence (its id). It is disabled
+  at 0 upgrade points, off-turn and while locked, and hidden once upgraded and for Curse and
+  Reanimation (Q37). Another seat's card in play gets a read-only sheet; its Shield model id is
+  `active-shield:<playerId>`, never the POV's. Deactivate is offered on own persistents only, never
+  Shield or Sentence, and is disabled off-turn and during a sub-choice (Q40); the Lot 69 confirm
+  stays a UI step. `inPlayThumbs(view, ownerPlayerId)` lists a seat's Shield, persistents and
+  ticking Sentences with their `ThumbBadge` and `activatedArt`, which is never true for Shield or
+  Sentence (Appendix A `global-activated-art-guard`). The V2 table keeps `activeUpgradeInstanceId`
+  until L75.
+- **Drag and drop (L73-08).** `cardActions` adds `drop` (valid seats, what the plate does, Sell) and
+  `canDrag`, which is false off-turn, while locked, for read-only and in-play cards, and when no zone
+  takes the card; the arena adds the tutorial tour and Look gate (L75-04). A disabled Use opens no
+  seat or plate zone. `view-model/drop-target.ts` `dropTarget(pointer, zoneRects, actions)` is pure
+  rectangle math on half-open rects, with no DOM. It returns the exact `playCard` / `sellCard`
+  intent, an open-choice result for Regeneration and Card Transformer, or `null` over an invalid
+  seat, outside every valid zone, or inside two (spec v7 §6.6.3–§6.6.4).
+- `view-model/self-strip.ts` (L73-09, technical spec v7 §6.1 items 3 and 5, §6.12):
+  `selfStrip(view, ctx)` gives the self strip and, in `.dock`, the dock. Thumbs run combat
+  Shield (only while `self.shield > 0`), own actives, then own ticking Sentences
+  (`inPlayThumbs`, L73-07), and each carries `cardActions(view, ref, ctx)`. The POV mode,
+  connection text and seat colour are L73-02's `povModeOf`, `connectionLabel` and
+  `seatColorIndexOf`. Draw pays `players[you].drawGain ?? kit draw` and is
+  `hot` above 10 (L64-05). Unspy is present for a Seated or Reanimating POV and absent for a
+  Watching one. Its reason is the lock, then `no-living-spy`, then `not-enough-points`
+  (L58-07). The finished board (`readOnly`) shows `stats` instead of Draw, Unspy and Activate
+  duplication, and Shop is browse-only. A walk-in (`isSpectator`) gets no kit, resources,
+  thumbs or economy (Q38).
+- `view-model/shop.ts` (L73-10, technical spec v7 §6.8): `shop(view, ctx)` gives the tabs
+  Cards / Special / Pool / Upgrade points. Card tiles use the catalog `buyCost` (Spy buys for
+  4), the kit's `alwaysUpgraded` faces, and points-and-lives affordability. Upgrade-point
+  prices come from `upgradePointBuyCost` / `upgradePointSellYield` at call time (L58-03), and
+  Buy random uses the public `poolBuyCost`. Every buy carries the lock reason off-turn, in a
+  sub-choice and on the finished board, so the Shop is browse-only there.
+  `SPECIAL_CARD_PURCHASE_POINTS` is the **only** client copy of the special price (Q50):
+  `screens/table/shop-dialog.tsx` and `view-model/opponent-token-chips.ts` import it, and the
+  server's `SPECIAL_CARD_PURCHASE_COST` stays authoritative. In the tutorial,
+  `shop-upgrade-point` opens Upgrade points and `shop-absorber` opens Cards with Absorber
+  highlighted, not preselected.
+- `view-model/log.ts` (L73-11, spec v7 §6.9): documented under Conventions, in the action-log
+  bullet.
+- `view-model/rules-recall.ts` (L73-12, spec v7 §6.11): documented under Design system,
+  Rules (`ui/rules/`, L72-16), in the "Who supplies `rules`" bullet.
+- `view-model/turn-clock.ts` (L73-13, spec v7 §6.10): documented under Conventions, in the
+  timer-display bullet.
 
 ## Design system (V7 · Lot 72+)
 
@@ -512,10 +636,15 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (`@container` on a wrapper, `@min-[26rem]:grid-cols-8`), so 16 kits fill whole rows and the
   columns align for any mix. Do not size the cells by content again: a captioned cell is wider
   than a bare one and the rows jag.
-- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 recall (the
-  last `lobbyRules` seen in this room, in memory) and `FinishedStateView.lobbyRules` in L77
-  (spec v7 §6.11). A caller hides the strip when the rules are unknown (a reload mid-game), and
-  the tutorial never mounts it. The component invents no default.
+- **Who supplies `rules`:** the L76 lobby (`LobbyStateView.lobbyRules`), the L74 table recall
+  and `FinishedStateView.lobbyRules` in L77 (spec v7 §6.11). The data comes from
+  `view-model/rules-recall.ts` (L73-12): `rulesRecall(view)` for a lobby or finished view, and
+  `tableRulesRecall(cache, view)` on the table. The cache is the last `lobbyRules` seen in this
+  room, kept in memory: call `nextRulesCache(cache, view)` on every view change (a new room
+  code drops it). `cachedLobbyRules(cache, view)` is the same rules as `turnClock`'s length
+  source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
+  the rules are unknown (a reload mid-game) or the room is a tutorial: the caller hides the
+  strip, and the tutorial never mounts it. The component invents no default.
 - **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows
   `TURN_DURATION_MS` until the host sets a time, so it can exceed the host maximum of 180.
   Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.
@@ -856,9 +985,10 @@ rules above are unchanged — this section only covers how the client looks.
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
   including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
-  Opponent actives sit beside the kit portrait (`activeShield` + persistents). Imposition / Points Generator also get
-  presentation-only Incoming / felt chips via `persistent-incoming.ts` (engine still ticks
-  them in step 4 — not real pending).
+  Opponent actives sit beside the kit portrait (`activeShield` + persistents). The V2 table
+  shows no Incoming / felt chip for Imposition or Points Generator: the unwired
+  `persistent-incoming.ts` was deleted in L73-05 (spec v7 §13 #35). V7 recurring chips come
+  from `view-model/recurring-chips.ts` (View-model layer above).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
@@ -882,7 +1012,7 @@ rules above are unchanged — this section only covers how the client looks.
   **+1 / −1** upgrade-point `CostDisplay` (`signed="gain"` on Buy, `signed="cost"` on
   Sell). Buy is orange (points `signed="cost"`); Sell is green (points `signed="gain"`
   so the point icon has contrast). Then the shared-card
-  grid + Buy special, and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
+  grid + Buy special (price `SPECIAL_CARD_PURCHASE_POINTS` from `view-model/shop.ts`, Q50), and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
   (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
   (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
@@ -1056,9 +1186,10 @@ rules above are unchanged — this section only covers how the client looks.
     No wire field.
   - **Opponent token flyouts (L51-09 / L51-11 / L51-13 / L51-14 / L51-15 / L51-16):** POV dock
     `ResourceIcon` still handles live dock Δ except overlay-landed transfers
-    (skip only after chips measure). Unspied / base Spy enqueue **directed** chips
+    (skip only after chips measure). Every seat enqueues **directed** chips
     (`from` / `to` log or player): play/buy/upgrade spends seat→log; sell yield
-    log→seat; buy upgrade point spends Classic 10 when kit is hidden. **Resource
+    log→seat. A seat whose kit is hidden (unspied, or base Spy since Lot 69) flies one
+    Draw point and spends Classic 10 for an upgrade point. **Resource
     chips are icon-only** (`object-contain` + drop shadow, no `bg-surface-raised`,
     no card radius, no border). Overlay card chrome is **`asCard === true` only**
     — never `from.width`. Token chips are 40×40 both ends (L51-16); that size
@@ -1130,10 +1261,23 @@ rules above are unchanged — this section only covers how the client looks.
 - Timer display is cosmetic: trust `turnDeadlineMs` / `turnStarted.deadlineMs` from the
   server, never a client-only countdown as authority. When the active seat is `disconnected`,
   show paused copy instead of a live countdown.
+  V7 (L73-13, spec v7 §6.10): `view-model/turn-clock.ts` `turnClock()` checks `none` for the
+  tutorial and the finished board, then `paused`, then `absent` (null deadline), then `none`
+  for any other null deadline (bot turns), else `countdown`. Seconds come from
+  `view.turnDeadlineMs` only. The full length comes from the cached lobby `turnTimeSeconds`
+  (`cachedLobbyRules`, L73-12), else the first `TURN_STARTED` of that `turnSequence`
+  (`nextTurnStartedRecord`; call it on each new `lastTurnStarted` with `view.turnSequence`
+  and the receive time), else seconds only with no ratio. `danger` is the last 10 s and `tick`
+  the last 5 s. The V2 `table.tsx` keeps its fixed 60 s divisor until the L75 flip.
 - **Degraded states (L9-01):** each `PublicPlayerView.connection` drives badges —
   disconnected grace, `absent N/3`, idle timeouts `N/5`.
 - Action log is the table's main organ (technical spec §7). Browsable history lives in
   `apps/client/src/action-log/` — scrollable round groups (no player/kind/search filters).
+  V7 reads it through `view-model/log.ts` `log(view)` (L73-11, spec v7 §6.9): the ticker is
+  the latest entry, rounds come from `groupByRound` with `view.players.length`, and each card
+  segment carries `inspectable` (the L56-05 list (above); a `blockedBy` name stays text). Pass
+  `finalTable` on the finished board. The unused filter helpers (`filterActionLog`,
+  `entryInvolvesPlayer`, `ActionLogFilters`, `groupByTurn`) are gone (spec v7 §11, Q62).
   Copy is natural language (`Alice attacks Bob with Basic attack`); buy/sell/upgrade omit
   the card name (`sold a card`). Card display names come from `getCard`.
   Server `actionLog` is a discriminated union (`actionPlayed`, `actionResolved`,
@@ -1208,13 +1352,15 @@ rules above are unchanged — this section only covers how the client looks.
 - **Assassin** (`allowsMultipleAttacksPerTurn`): `playMultipleAttacks` with ≥2
   `{ instanceId, targetPlayerId }`. Single attack still uses `playCard`. Multi-attack opens
   from the attack-card action Dialog. Draw label uses `getKit(self.kitId).startingResources.draw`.
-- **Spy / death reveal (L51-08 / L51-10):** opponent seats always show lives /
-  points / upgrade points / shield icons. Unspied and base Spy render `?` (never
-  unspied totals, never the frozen snapshot numbers). Upgraded Spy and death
-  reveal show live / freeze numbers. Icons stack vertically beside the portrait;
+- **Spy / death reveal (L51-08 / L51-10, Lot 69):** opponent seats always show lives /
+  points / upgrade points / shield icons. An unspied seat renders `?` (never unspied
+  totals). Any Spy relation, base or upgraded, shows live numbers; a death reveal shows the
+  numbers frozen at death. A base Spy keeps the kit, hand and specials hidden; Spy+
+  (`spied.kitId`) and death reveal show them. The server never sends
+  `spied.resourcesSnapshot` (spec v7 §14.1). Icons stack vertically beside the portrait;
   activated cards sit under the portrait. Shield stays on the seat (no omit-on-
-  overflow). Portrait stays tappable when a Spy or death reveal exists. Dialog
-  title is `{nickname}` for Spy and `{nickname} (eliminated)` on death. No Hidden
+  overflow). Portrait stays tappable when a Spy+ or death reveal exists. Dialog
+  title is `{nickname}` for Spy+ and `{nickname} (eliminated)` on death. No Hidden
   kit / Spied — tap / Revealed — tap labels.
 - **`actionResolved.outcome === 'immune'`**: surface **“immune”** in action-log copy and
   resolution FX flash (Untouchable, Invisibility, and any future `outcome: 'immune'`).

@@ -4,8 +4,9 @@
  * Persistent asymmetric who-sees-what-of-whom. Never a boolean on the spied player.
  *
  * Developer ruling 2026-07-30 (evening): Spy "resources" = lives, points, upgrade
- * points, shield. Base Spy freezes a full-resource snapshot at resolve; upgraded Spy
- * sees those values live (rules §3 upgrade text).
+ * points, shield. Since Lot 69 every level sees them live; the base level (`kit-and-cards`,
+ * a pre-Lot-69 name) no longer reveals kit or cards. The first-grant `resourcesSnapshot` is
+ * still frozen server-side but never sent (technical spec v7 §14.1).
  */
 
 export const SPY_VISIBILITY_LEVELS = ['kit-and-cards', 'full-resources'] as const;

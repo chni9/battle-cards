@@ -1,6 +1,6 @@
 /**
  * Pure helpers for the browsable public action log (technical spec §7, L9-02).
- * No rule logic — formatting and filter only.
+ * No rule logic — formatting and round grouping only.
  * L39-03: segment formatter so seat-colored nicknames avoid substring collisions.
  */
 
@@ -31,12 +31,6 @@ export const ACTION_LOG_KINDS: readonly ActionLogEntryKind[] = [
   'sentenceFired',
   'resourceChange',
 ] as const;
-
-export interface ActionLogFilters {
-  playerId: string | null;
-  kinds: ReadonlySet<ActionLogEntryKind>;
-  query: string;
-}
 
 export type NicknameResolver = (playerId: string) => string;
 
@@ -477,91 +471,6 @@ export function formatActionLogEntry(
   nicknameOf: NicknameResolver,
 ): string {
   return joinSegments(formatActionLogEntrySegments(entry, nicknameOf));
-}
-
-export function entryInvolvesPlayer(entry: ActionLogEntryView, playerId: string): boolean {
-  switch (entry.kind) {
-    case 'actionPlayed':
-      return (
-        entry.actorPlayerId === playerId ||
-        entry.targetPlayerId === playerId ||
-        (entry.attacks?.some((attack) => attack.targetPlayerId === playerId) ?? false)
-      );
-    case 'actionResolved':
-      return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
-    case 'playerEliminated':
-      return entry.playerId === playerId || entry.eliminatorPlayerId === playerId;
-    case 'mirrorRedirected':
-      return (
-        entry.actorPlayerId === playerId ||
-        entry.previousTargetPlayerId === playerId ||
-        entry.newTargetPlayerId === playerId
-      );
-    case 'persistentDeactivated':
-      return entry.ownerPlayerId === playerId;
-    case 'curseTransferred':
-      return entry.fromPlayerId === playerId || entry.toPlayerId === playerId;
-    case 'playerReanimated':
-      return entry.playerId === playerId;
-    case 'rewardsClaimed':
-      return entry.eliminatorPlayerId === playerId || entry.eliminatedPlayerId === playerId;
-    case 'sentenceCountdown':
-      return entry.sourcePlayerId === playerId;
-    case 'sentenceFired':
-      return entry.sourcePlayerId === playerId || entry.targetPlayerId === playerId;
-    case 'resourceChange':
-      return entry.playerId === playerId;
-    default: {
-      const _exhaustive: never = entry;
-      return _exhaustive;
-    }
-  }
-}
-
-export function filterActionLog(
-  entries: readonly ActionLogEntryView[],
-  filters: ActionLogFilters,
-  nicknameOf: NicknameResolver,
-): ActionLogEntryView[] {
-  const query = filters.query.trim().toLowerCase();
-
-  return entries.filter((entry) => {
-    if (!filters.kinds.has(entry.kind)) {
-      return false;
-    }
-
-    if (filters.playerId !== null && !entryInvolvesPlayer(entry, filters.playerId)) {
-      return false;
-    }
-
-    if (query.length === 0) {
-      return true;
-    }
-
-    return formatActionLogEntry(entry, nicknameOf).toLowerCase().includes(query);
-  });
-}
-
-export interface TurnGroup {
-  turnSequence: number;
-  entries: ActionLogEntryView[];
-}
-
-export function groupByTurn(entries: readonly ActionLogEntryView[]): TurnGroup[] {
-  const groups: TurnGroup[] = [];
-
-  for (const entry of entries) {
-    const last = groups[groups.length - 1];
-
-    if (last?.turnSequence !== entry.turnSequence) {
-      groups.push({ turnSequence: entry.turnSequence, entries: [entry] });
-      continue;
-    }
-
-    last.entries.push(entry);
-  }
-
-  return groups;
 }
 
 /**

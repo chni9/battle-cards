@@ -29,6 +29,7 @@ import {
   opponentKitIsVisible,
   type OpponentLiveResources,
 } from './opponent-seat-resources';
+import { SPECIAL_CARD_PURCHASE_POINTS } from './shop';
 import type { TokenFlyoutEndpoint } from '../fx/table-fx-types';
 
 export interface DirectedTokenChip {
@@ -60,9 +61,6 @@ const LIVE_RESOURCE_KINDS: readonly ResourceKind[] = [
   'upgradePoint',
   'shield',
 ];
-
-/** Random special purchase — rules spec §5. Shop chrome uses the same amount. */
-const SPECIAL_CARD_PURCHASE_POINTS = 20;
 
 function playerById(
   players: readonly PublicPlayerView[],
