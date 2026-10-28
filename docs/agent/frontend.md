@@ -177,6 +177,17 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   (L58-07). The finished board (`readOnly`) shows `stats` instead of Draw, Unspy and Activate
   duplication, and Shop is browse-only. A walk-in (`isSpectator`) gets no kit, resources,
   thumbs or economy (Q38).
+- `view-model/shop.ts` (L73-10, technical spec v7 §6.8): `shop(view, ctx)` gives the tabs
+  Cards / Special / Pool / Upgrade points. Card tiles use the catalog `buyCost` (Spy buys for
+  4), the kit's `alwaysUpgraded` faces, and points-and-lives affordability. Upgrade-point
+  prices come from `upgradePointBuyCost` / `upgradePointSellYield` at call time (L58-03), and
+  Buy random uses the public `poolBuyCost`. Every buy carries the lock reason off-turn, in a
+  sub-choice and on the finished board, so the Shop is browse-only there.
+  `SPECIAL_CARD_PURCHASE_POINTS` is the **only** client copy of the special price (Q50):
+  `screens/table/shop-dialog.tsx` and `view-model/opponent-token-chips.ts` import it, and the
+  server's `SPECIAL_CARD_PURCHASE_COST` stays authoritative. In the tutorial,
+  `shop-upgrade-point` opens Upgrade points and `shop-absorber` opens Cards with Absorber
+  highlighted, not preselected.
 
 ## Design system (V7 · Lot 72+)
 
@@ -984,7 +995,7 @@ rules above are unchanged — this section only covers how the client looks.
   **+1 / −1** upgrade-point `CostDisplay` (`signed="gain"` on Buy, `signed="cost"` on
   Sell). Buy is orange (points `signed="cost"`); Sell is green (points `signed="gain"`
   so the point icon has contrast). Then the shared-card
-  grid + Buy special, and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
+  grid + Buy special (price `SPECIAL_CARD_PURCHASE_POINTS` from `view-model/shop.ts`, Q50), and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
   (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
   (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
   `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)

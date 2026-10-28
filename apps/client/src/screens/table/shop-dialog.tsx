@@ -36,6 +36,7 @@ import {
   SHOP_SECTION_POOL,
   SHOP_SECTION_UPGRADE_POINTS,
 } from '../../view-model/chrome-labels';
+import { SPECIAL_CARD_PURCHASE_POINTS } from '../../view-model/shop';
 import { SHOP_PRICE_BLURB } from '../../view-model/table-copy';
 import { TutorialCallout } from './tutorial-callout';
 
@@ -128,7 +129,7 @@ export function ShopDialog({
           <Button
             compact
             variant="orange"
-            disabled={disabled || view.self.points < 20}
+            disabled={disabled || view.self.points < SPECIAL_CARD_PURCHASE_POINTS}
             onClick={() => {
               onBuySpecialCard();
               onClose();
@@ -136,7 +137,7 @@ export function ShopDialog({
           >
             {BUY_SPECIAL_LABEL}{' '}
             <CostDisplay
-              cost={{ kind: 'points', amount: 20 }}
+              cost={{ kind: 'points', amount: SPECIAL_CARD_PURCHASE_POINTS }}
               signed="cost"
               className="text-inherit"
             />
