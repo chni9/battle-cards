@@ -3815,7 +3815,7 @@
   - Header copy: h1 'Insights' and the blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.' The 'Designer' eyebrow above the h1 was removed (designer 2026-10-28, L80-12).
   - Tool mode: `<main data-mode="tool">` on a flat --bg-0 ground with no .v7-ground halos; admin Dialogs carry data-mode="tool" themselves (L80-01).
 - **Keep:**
-  - /admin loads without Colyseus and is never linked from the hub (L61-06, admin-route.test.ts).
+  - /admin loads without Colyseus (L61-06, admin-route.test.ts) and is never linked from the hub (screens/home.admin-route.test.ts, L72-02).
   - Reuses sessionStorage 'card-battle.v6.inboxPassword' and the X-Inbox-Password header (admin-app.test.tsx, fetch-admin.test.ts).
   - Page state (filters, page numbers) resets on each navigation because of the key remount. The Database page relies on it (admin-data-page.test.tsx › 'in the real shell a tab change starts the next table at page 1, and so does coming back').
 - **Notes:** Sign out (L80-02) is the lock control; at the 1de498d audit there was none.
