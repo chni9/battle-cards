@@ -3,6 +3,7 @@ import type { AdminGameListItem } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { formatDateTime } from '../../admin/admin-present';
 import { exportGamesListXlsx } from '../../export/admin-xlsx';
 import { renderUi } from '../../test/render';
 import { AdminGamesPage } from './admin-games-page';
@@ -327,6 +328,18 @@ describe('AdminGamesPage (technical spec v7 §7.8, L80-06)', () => {
       'Turns',
       'Notes',
     ]);
+  });
+
+  it('keeps the Ended date and time on one line so a phone does not break it over four', async () => {
+    const fake = installFakeFetch();
+    renderUi(<AdminGamesPage password="secret" detailId={null} />);
+    await fake.last(GAMES_PATH).respond(200, makeGamesPage([makeGameListItem('fg-1', { roomId: 'ABCDEF' })]));
+    const table = within(screen.getByRole('region', { name: 'Matches' })).getByRole('table');
+    const cells = within(table).getAllByRole('cell');
+    expect(cells[1]?.textContent).toBe(formatDateTime('2026-10-20T12:30:00.000Z'));
+    expect(cells[1]?.className).toContain('whitespace-nowrap');
+    // Only the date column: the winner and notes text still wrap.
+    expect(cells[3]?.className).not.toContain('whitespace-nowrap');
   });
 
   it('Tab reaches a row and Enter opens /admin/games/:id with the finished-game id, never roomId', async () => {

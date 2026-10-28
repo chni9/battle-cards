@@ -6,7 +6,7 @@
  * `admin-classes.ts` (react-refresh: this file exports components only).
  */
 
-import type { MouseEvent, ReactElement, ReactNode } from 'react';
+import { useState, type MouseEvent, type ReactElement, type ReactNode } from 'react';
 
 import type { AdminLink } from '../../admin/admin-routes';
 import { Button } from '../../ui/primitives/button';
@@ -29,6 +29,7 @@ import {
   ADMIN_PANEL_CLASS,
   ADMIN_SECTION_TITLE_CLASS,
 } from './admin-classes';
+import { useMoreToTheRight } from './admin-scroll-cue';
 
 export type AdminStatusState =
   | { kind: 'loading' }
@@ -171,11 +172,20 @@ export interface AdminTableColumn<Row> {
   id: string;
   header: string;
   align?: 'left' | 'right';
+  /** Keeps a cell on one line: a date and time must not break over four lines at 390 px (L80-12). */
+  nowrap?: boolean;
   cell: (row: Row) => ReactNode;
 }
 
 const HEAD_CELL_CLASS = `px-3 py-2.5 ${ADMIN_CAPTION_CLASS}`;
 const BODY_CELL_CLASS = `px-3 py-2.5 align-top ${ADMIN_BODY_TEXT_CLASS} text-v7-text`;
+/**
+ * The right-edge fade that says a table scrolls on (L80-12): a gradient from the panel color into
+ * nothing, over the edge. It takes no clicks, so a tap or a drag reaches the table under it, and
+ * it is hidden from assistive technology: the labelled scroll region already says it scrolls.
+ */
+const SCROLL_CUE_CLASS =
+  'pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-v7-panel to-transparent';
 /** The row-open button reads as the cell's text, with an underline on hover and the focus ring. */
 const ROW_OPEN_CLASS = `rounded-v7-chrome-sm text-left underline-offset-2 hover:underline ${CHROME_FOCUS_CLASS}`;
 
@@ -197,8 +207,9 @@ type AdminDataTableProps<Row> = {
 
 /**
  * Every admin table. `label` is required: any table can overflow a 390 px phone, so it scrolls
- * sideways inside a named region (ScrollArea contract, L53-07) and the page never does. Rows are
- * split by 1 px tool-line borders (`--ink` in tool mode).
+ * sideways inside a named region (ScrollArea contract, L53-07) and the page never does. While the
+ * region has more to its right, a fade on that edge says so (L80-12). Rows are split by 1 px
+ * tool-line borders (`--ink` in tool mode).
  *
  * With `onRowOpen` the first column's cell holds a real `<button>` named by `rowOpenLabel`, so
  * Tab, Enter and Space work natively and a dialog opened from it can hand focus back to it
@@ -214,13 +225,17 @@ export function AdminDataTable<Row>({
   onRowOpen,
   rowOpenLabel,
 }: AdminDataTableProps<Row>): ReactElement {
+  // The region is state, not a ref: the cue reads its layout, and it exists only while rows do.
+  const [region, setRegion] = useState<HTMLDivElement | null>(null);
+  const moreToTheRight = useMoreToTheRight(region);
+
   if (rows.length === 0) {
     return <AdminStatus state={{ kind: 'empty', message: emptyMessage }} />;
   }
 
   return (
-    <div className={`${CHROME_OUTLINE_CLASS} overflow-hidden rounded-v7-chrome bg-v7-panel`}>
-      <ScrollArea axis="x" label={label} focusRing="inset">
+    <div className={`${CHROME_OUTLINE_CLASS} relative overflow-hidden rounded-v7-chrome bg-v7-panel`}>
+      <ScrollArea ref={setRegion} axis="x" label={label} focusRing="inset">
         <table className="w-full min-w-[32rem] border-collapse text-left">
           <thead className="bg-v7-panel-2">
             <tr>
@@ -251,7 +266,7 @@ export function AdminDataTable<Row>({
                 {columns.map((column, index) => (
                   <td
                     key={column.id}
-                    className={`${BODY_CELL_CLASS} ${column.align === 'right' ? 'text-right tabular-nums' : ''}`}
+                    className={`${BODY_CELL_CLASS} ${column.align === 'right' ? 'text-right tabular-nums' : ''} ${column.nowrap === true ? 'whitespace-nowrap' : ''}`}
                   >
                     {onRowOpen !== undefined && index === 0 ? (
                       <button
@@ -275,6 +290,7 @@ export function AdminDataTable<Row>({
           </tbody>
         </table>
       </ScrollArea>
+      {moreToTheRight ? <span aria-hidden="true" data-scroll-cue="end" className={SCROLL_CUE_CLASS} /> : null}
     </div>
   );
 }

@@ -377,6 +377,23 @@ describe('AdminDataPage (technical spec v7 §7.8, L80-10)', () => {
     }
   });
 
+  it('the grid shows the scroll cue while it has more to the right (L80-12)', async () => {
+    // happy-dom computes no layout: a 300 px region over a 900 px table, as a phone would show it.
+    const scrollWidth = vi.spyOn(Element.prototype, 'scrollWidth', 'get').mockReturnValue(900);
+    const clientWidth = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
+    try {
+      const fake = installFakeFetch();
+      renderUi(<AdminDataPage password="secret" table="finished_games" />);
+      expect(document.querySelector('[data-scroll-cue]')).toBeNull();
+      await fake.last(tablePath('finished_games')).respond(200, makeTablePage('finished_games', [{ id: 'g-1' }]));
+      const region = screen.getByRole('region', { name: 'Finished games' });
+      expect(region.parentElement?.querySelector('[data-scroll-cue]')?.getAttribute('aria-hidden')).toBe('true');
+    } finally {
+      scrollWidth.mockRestore();
+      clientWidth.mockRestore();
+    }
+  });
+
   it('the Chat messages tab requests game_chat_messages, is marked current and shows the Role column', async () => {
     const fake = installFakeFetch();
     renderUi(<AdminDataPage password="secret" table="game_chat_messages" />);

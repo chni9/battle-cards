@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminPageCount } from '../../admin/admin-paging';
 import { renderUi } from '../../test/render';
 import {
@@ -140,6 +140,150 @@ describe('admin shared pieces (technical spec v7 §7.8, L80-01)', () => {
   it('AdminDataTable without onRowOpen has no row buttons', () => {
     renderUi(<AdminDataTable label="Kit stats" columns={columns} rows={[{ kit: 'Spy', picks: 2 }]} rowKey={(row) => row.kit} />);
     expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('AdminDataTable wide tables on a phone (technical spec v7 §7.8, L80-12)', () => {
+  it('a nowrap column keeps its cells on one line and the others wrap', () => {
+    const dated: readonly AdminTableColumn<KitRow>[] = [
+      { id: 'kit', header: 'Kit', cell: (row) => row.kit },
+      { id: 'when', header: 'Ended', nowrap: true, cell: () => 'Oct 20, 2026, 2:30 PM' },
+    ];
+    renderUi(<AdminDataTable label="Kit stats" columns={dated} rows={[{ kit: 'Spy', picks: 2 }]} rowKey={(row) => row.kit} />);
+    const [kit, when] = within(screen.getByRole('table')).getAllByRole('cell');
+    expect(when?.className).toContain('whitespace-nowrap');
+    expect(kit?.className).not.toContain('whitespace-nowrap');
+  });
+});
+
+/** The layout happy-dom does not compute: a region 300 wide that holds a table 900 wide. */
+interface ScrollBox {
+  scrollWidth: number;
+  clientWidth: number;
+  scrollLeft: number;
+}
+
+const WIDE: ScrollBox = { scrollWidth: 900, clientWidth: 300, scrollLeft: 0 };
+
+/** happy-dom's ResizeObserver never fires, so a test fires it by hand (precedent: chat-log.test.tsx). */
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  readonly observe = vi.fn<(target: Element) => void>();
+  readonly unobserve = vi.fn<(target: Element) => void>();
+  readonly disconnect = vi.fn<() => void>();
+  constructor(private readonly callback: ResizeObserverCallback) {
+    FakeResizeObserver.instances.push(this);
+  }
+  resize(): void {
+    act(() => {
+      this.callback([], this);
+    });
+  }
+}
+
+/** The fade cue of a table region: the element next to the scroll region, if shown. */
+function scrollCue(): Element | null {
+  return screen.getByRole('region', { name: 'Kit stats' }).parentElement?.querySelector('[data-scroll-cue]') ?? null;
+}
+
+/** Stubs the box on the region itself, after the first render, as the browser would report it. */
+function stubRegion(box: ScrollBox): HTMLElement {
+  const region = screen.getByRole('region', { name: 'Kit stats' });
+  Object.defineProperties(region, {
+    scrollWidth: { configurable: true, get: () => box.scrollWidth },
+    clientWidth: { configurable: true, get: () => box.clientWidth },
+    scrollLeft: { configurable: true, get: () => box.scrollLeft },
+  });
+  return region;
+}
+
+function renderTable(): void {
+  renderUi(
+    <AdminDataTable label="Kit stats" columns={columns} rows={[{ kit: 'Spy', picks: 2 }]} rowKey={(row) => row.kit} />,
+  );
+}
+
+describe('AdminDataTable scroll cue (technical spec v7 §7.8, L80-12)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    FakeResizeObserver.instances = [];
+  });
+
+  it('shows a decorative right-edge fade when the table overflows at mount', () => {
+    vi.spyOn(Element.prototype, 'scrollWidth', 'get').mockReturnValue(WIDE.scrollWidth);
+    // happy-dom defines `clientWidth` on HTMLElement and `scrollWidth` on Element.
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(WIDE.clientWidth);
+    renderTable();
+    const cue = scrollCue();
+    if (cue === null) throw new Error('the overflowing table shows no cue');
+    // Not announced, not clickable, and a fade into the panel color on the right edge.
+    expect(cue.getAttribute('aria-hidden')).toBe('true');
+    expect(cue.className).toContain('pointer-events-none');
+    expect(cue.className).toContain('right-0');
+    expect(cue.className).toContain('bg-linear-to-l');
+    expect(cue.className).toContain('from-v7-panel');
+  });
+
+  it('shows no cue when the table fits', () => {
+    renderTable();
+    expect(scrollCue()).toBeNull();
+    const region = stubRegion({ scrollWidth: 300, clientWidth: 300, scrollLeft: 0 });
+    fireEvent.scroll(region);
+    expect(scrollCue()).toBeNull();
+  });
+
+  it('follows the scroll position: shown until the end, gone at the end, back when scrolled back', () => {
+    renderTable();
+    const box = { ...WIDE };
+    const region = stubRegion(box);
+    expect(scrollCue()).toBeNull();
+
+    fireEvent.scroll(region);
+    expect(scrollCue()).not.toBeNull();
+
+    box.scrollLeft = 250;
+    fireEvent.scroll(region);
+    expect(scrollCue()).not.toBeNull();
+
+    box.scrollLeft = 600;
+    fireEvent.scroll(region);
+    expect(scrollCue()).toBeNull();
+
+    box.scrollLeft = 0;
+    fireEvent.scroll(region);
+    expect(scrollCue()).not.toBeNull();
+  });
+
+  it('follows a resize of the region or of the table through its ResizeObserver', () => {
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    renderTable();
+    const [observer] = FakeResizeObserver.instances;
+    if (observer === undefined) throw new Error('the table did not observe its size');
+    const region = screen.getByRole('region', { name: 'Kit stats' });
+    // Both the scroll region (the window narrows) and the table (new rows) can change the overflow.
+    expect(observer.observe).toHaveBeenCalledWith(region);
+    expect(observer.observe).toHaveBeenCalledWith(within(region).getByRole('table'));
+
+    const box = { ...WIDE };
+    stubRegion(box);
+    observer.resize();
+    expect(scrollCue()).not.toBeNull();
+
+    box.clientWidth = 900;
+    observer.resize();
+    expect(scrollCue()).toBeNull();
+  });
+
+  it('stops listening when the table unmounts', () => {
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    const { unmount } = renderUi(
+      <AdminDataTable label="Kit stats" columns={columns} rows={[{ kit: 'Spy', picks: 2 }]} rowKey={(row) => row.kit} />,
+    );
+    const [observer] = FakeResizeObserver.instances;
+    if (observer === undefined) throw new Error('the table did not observe its size');
+    unmount();
+    expect(observer.disconnect).toHaveBeenCalled();
   });
 });
 

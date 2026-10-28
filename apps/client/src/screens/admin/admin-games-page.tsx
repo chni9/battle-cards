@@ -61,6 +61,7 @@ const gameColumns: AdminTableColumn<AdminGameListItem>[] = [
   {
     id: 'ended',
     header: 'Ended',
+    nowrap: true,
     cell: (row) => formatDateTime(row.endedAt),
   },
   {
