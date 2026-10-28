@@ -810,6 +810,15 @@ its payloads and `PROTOCOL_VERSION` do not change.
     last page, and `disabled` turns both off while a page loads. Zero rows read `Page 1 of 1`.
     Off is `aria-disabled` (`focusableWhenDisabled`), never native `disabled`, so Next pressed by
     keyboard keeps focus while the next page loads and at the last page (Disabled but focusable).
+  - `useAdminList({ key, scope?, load })` (`screens/admin/use-admin-list.ts`) holds the state of
+    every admin list read (Matches, Kits, Database): `data`, `loaded`, `error`
+    (`adminErrorCopy`) and `lastData`. A new `key` starts a new request and reads not loaded
+    until its answer; an answer for an older key is dropped. `load` is read through
+    `useEffectEvent` when the key changes, so every input that can change while the page is
+    mounted belongs in the key (the password never changes under a mounted page). `lastData`
+    is the last success for the current `scope` (Matches: the applied filters; Database: the
+    table), and `adminPagerCount(page, data, lastData)` (`admin/admin-paging.ts`) turns it into
+    the pager's count while the next page loads.
   - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,

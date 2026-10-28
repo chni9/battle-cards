@@ -1,10 +1,10 @@
 import type { AdminTablePage } from '@card-battle/shared';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
-import { adminPageCount } from '../../admin/admin-paging';
+import { adminPagerCount } from '../../admin/admin-paging';
 import { columnDisplayName, formatCount, tableDisplayName } from '../../admin/admin-present';
 import type { AdminLink } from '../../admin/admin-routes';
-import { adminErrorCopy, fetchAdminTable } from '../../admin/fetch-admin';
+import { fetchAdminTable } from '../../admin/fetch-admin';
 import { exportTablePageXlsx } from '../../export/admin-xlsx';
 import { Button } from '../../ui/primitives/button';
 import { ADMIN_BODY_TEXT_CLASS } from './admin-classes';
@@ -16,6 +16,7 @@ import {
   AdminStatus,
   type AdminTableColumn,
 } from './admin-ui';
+import { useAdminList } from './use-admin-list';
 
 /**
  * The tabs, in order (spec v7 §7.8, L80-11). `game_chat_messages` (Lot 70) is last: the server has
@@ -64,48 +65,16 @@ interface GridRow {
 export function AdminDataPage({ password, table }: AdminDataPageProps): ReactElement {
   const activeTable = table ?? DEFAULT_TABLE;
   const [pageNumber, setPageNumber] = useState(1);
-  const listKey = `${activeTable}:${String(pageNumber)}`;
-  const [page, setPage] = useState<AdminTablePage | null>(null);
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  // The last page count the server gave for this table. Paging keeps it, so the pager label (an
-  // aria-live region) never announces a wrong total while the next page loads (as Matches, L80-06).
-  const [knownPageCount, setKnownPageCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchAdminTable(password, activeTable, {
-      page: String(pageNumber),
-      pageSize: String(PAGE_SIZE),
-    }).then((result) => {
-      if (cancelled) {
-        return;
-      }
-      if (!result.ok) {
-        setError(adminErrorCopy(result.status));
-        setPage(null);
-        setLoadedKey(listKey);
-        return;
-      }
-      setPage(result.data);
-      setKnownPageCount(adminPageCount(result.data.total, result.data.pageSize));
-      setLoadedKey(listKey);
-      setError(null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [password, activeTable, pageNumber, listKey]);
-
-  const loaded = loadedKey === listKey;
-  const visiblePage = loaded ? page : null;
-  // Until the page for this key loads the total is the last one known for this table, never below
-  // the page itself ("Page 2 of 3" while page 2 loads, never "Page 2 of 2"). A fresh mount knows
-  // nothing, so its pager reads "Page 1 of 1" until its first page loads.
-  const pagerCount =
-    visiblePage === null
-      ? Math.max(knownPageCount ?? 1, pageNumber)
-      : adminPageCount(visiblePage.total, visiblePage.pageSize);
+  // The pager count belongs to the table, as it belongs to the filters on Matches (L80-06).
+  const list = useAdminList({
+    key: `${activeTable}:${String(pageNumber)}`,
+    scope: activeTable,
+    load: () => fetchAdminTable(password, activeTable, { page: String(pageNumber), pageSize: String(PAGE_SIZE) }),
+  });
+  const visiblePage = list.data;
+  // While a page loads the label keeps the last total known for this table; a fresh mount reads
+  // "Page 1 of 1" until its first page loads.
+  const pagerCount = adminPagerCount(pageNumber, visiblePage, list.lastData);
 
   return (
     <div className="space-y-8">
@@ -133,8 +102,8 @@ export function AdminDataPage({ password, table }: AdminDataPageProps): ReactEle
           </p>
         ) : null}
       </div>
-      {!loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
-      {loaded && error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {!list.loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {list.error !== null ? <AdminStatus state={{ kind: 'error', message: list.error }} /> : null}
       {visiblePage !== null ? (
         <AdminDataTable
           label={tableDisplayName(activeTable)}

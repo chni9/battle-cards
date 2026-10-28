@@ -14,3 +14,26 @@ export function adminPageCount(total: number, pageSize: number): number {
   }
   return Math.max(1, Math.ceil(total / pageSize));
 }
+
+/** What the pager count reads from a page answer (`AdminGamesPage`, `AdminTablePage`). */
+export interface AdminPageTotals {
+  total: number;
+  pageSize: number;
+}
+
+/**
+ * The pager's "of M" (L80-06, L80-10). With the page for `page` loaded it is that answer's count.
+ * Until then it is the last count known for the same result set, never below `page` itself, so
+ * the `aria-live` label reads "Page 2 of 3" while page 2 loads, never "Page 2 of 2"; with nothing
+ * known it reads one page.
+ */
+export function adminPagerCount(
+  page: number,
+  loaded: AdminPageTotals | null,
+  last: AdminPageTotals | null,
+): number {
+  if (loaded !== null) {
+    return adminPageCount(loaded.total, loaded.pageSize);
+  }
+  return Math.max(last === null ? 1 : adminPageCount(last.total, last.pageSize), page);
+}

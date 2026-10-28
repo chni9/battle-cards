@@ -1,5 +1,5 @@
-import type { AdminKitStatRow, AdminKitStats } from '@card-battle/shared';
-import { useEffect, useState, type ReactElement } from 'react';
+import type { AdminKitStatRow } from '@card-battle/shared';
+import { useState, type ReactElement } from 'react';
 
 import { formatCount, formatPercent, kitDisplayName } from '../../admin/admin-present';
 import {
@@ -7,7 +7,7 @@ import {
   filtersToQuery,
   type AdminFilterState,
 } from '../../admin/filter-query';
-import { adminErrorCopy, fetchAdminKitStats } from '../../admin/fetch-admin';
+import { fetchAdminKitStats } from '../../admin/fetch-admin';
 import { exportKitStatsXlsx } from '../../export/admin-xlsx';
 import { Button } from '../../ui/primitives/button';
 import { ADMIN_BODY_TEXT_CLASS } from './admin-classes';
@@ -18,6 +18,7 @@ import {
   AdminStatus,
   type AdminTableColumn,
 } from './admin-ui';
+import { useAdminList } from './use-admin-list';
 
 interface AdminKitsPageProps {
   password: string;
@@ -58,34 +59,11 @@ const kitColumns: AdminTableColumn<AdminKitStatRow>[] = [
 export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
-  const [stats, setStats] = useState<AdminKitStats | null>(null);
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const listKey = JSON.stringify(applied);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchAdminKitStats(password, filtersToQuery(applied)).then((result) => {
-      if (cancelled) {
-        return;
-      }
-      if (!result.ok) {
-        setError(adminErrorCopy(result.status));
-        setStats(null);
-        setLoadedKey(listKey);
-        return;
-      }
-      setStats(result.data);
-      setLoadedKey(listKey);
-      setError(null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [password, applied, listKey]);
-
-  const loaded = loadedKey === listKey;
-  const visibleStats = loaded ? stats : null;
+  const list = useAdminList({
+    key: JSON.stringify(applied),
+    load: () => fetchAdminKitStats(password, filtersToQuery(applied)),
+  });
+  const visibleStats = list.data;
 
   return (
     <div className="space-y-8">
@@ -118,8 +96,8 @@ export function AdminKitsPage({ password }: AdminKitsPageProps): ReactElement {
           </p>
         ) : null}
       </div>
-      {!loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
-      {loaded && error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {!list.loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {list.error !== null ? <AdminStatus state={{ kind: 'error', message: list.error }} /> : null}
       {visibleStats !== null ? (
         <AdminDataTable
           label="Kit stats"

@@ -1,7 +1,7 @@
-import type { AdminGameDetail, AdminGameListItem, AdminGamesPage } from '@card-battle/shared';
+import type { AdminGameDetail, AdminGameListItem } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { adminPageCount } from '../../admin/admin-paging';
+import { adminPagerCount } from '../../admin/admin-paging';
 import {
   formatCount,
   formatDateTime,
@@ -33,6 +33,7 @@ import {
   AdminStatus,
   type AdminTableColumn,
 } from './admin-ui';
+import { useAdminList } from './use-admin-list';
 
 interface AdminGamesPageProps {
   password: string;
@@ -101,9 +102,13 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
-  const [page, setPage] = useState<AdminGamesPage | null>(null);
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // The pager count belongs to the applied filters: paging keeps it, new filters forget it.
+  const list = useAdminList({
+    key: JSON.stringify({ applied, page: pageNumber }),
+    scope: JSON.stringify(applied),
+    // No `pageSize`: the server default (50) applies and there is no size picker (L80-06).
+    load: () => fetchAdminGames(password, { ...filtersToQuery(applied), page: String(pageNumber) }),
+  });
   // The answer to the detail request, tagged with the match it is for. Everything the page shows
   // (Loading…, the alert, the dialog) is derived from it and `activeDetail`, so an answer for a
   // match that is no longer the active one can never show (L80-07).
@@ -117,40 +122,6 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
   const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
   const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
-  const filterKey = JSON.stringify(applied);
-  const listKey = JSON.stringify({ applied, page: pageNumber });
-  // The last page count the server gave for the current filters. Paging keeps it, so the pager
-  // label (an aria-live region) never announces a wrong total while the next page loads.
-  const [knownPageCount, setKnownPageCount] = useState<{ filterKey: string; count: number } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    // No `pageSize`: the server default (50) applies and there is no size picker (L80-06).
-    void fetchAdminGames(password, {
-      ...filtersToQuery(applied),
-      page: String(pageNumber),
-    }).then((result) => {
-      if (cancelled) {
-        return;
-      }
-      if (!result.ok) {
-        setError(adminErrorCopy(result.status));
-        setPage(null);
-        setLoadedKey(listKey);
-        return;
-      }
-      setPage(result.data);
-      setKnownPageCount({
-        filterKey,
-        count: adminPageCount(result.data.total, result.data.pageSize),
-      });
-      setLoadedKey(listKey);
-      setError(null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [password, applied, pageNumber, listKey, filterKey]);
 
   useEffect(() => {
     if (activeDetail === null) {
@@ -190,18 +161,11 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const detailError = answer !== null && !answer.ok ? adminErrorCopy(answer.status) : null;
   const detailLoading = activeDetail !== null && answer === null;
 
-  const loaded = loadedKey === listKey;
-  const visiblePage = loaded ? page : null;
+  const visiblePage = list.data;
   const items = visiblePage?.items ?? [];
-  // Until the page for this key loads the total is the last one known for these filters, never
-  // below the page itself ("Page 2 of 3" while page 2 loads, never "Page 2 of 2"). New filters
-  // forget it: another result set has another total, so nothing is known until it loads, and the
-  // label reads "Page 1 of 1" as at first load.
-  const lastKnownCount = knownPageCount?.filterKey === filterKey ? knownPageCount.count : 1;
-  const pagerCount =
-    visiblePage === null
-      ? Math.max(lastKnownCount, pageNumber)
-      : adminPageCount(visiblePage.total, visiblePage.pageSize);
+  // While a page loads the label keeps the last total known for these filters; new filters read
+  // "Page 1 of 1" until their first page loads (another result set, another total).
+  const pagerCount = adminPagerCount(pageNumber, visiblePage, list.lastData);
 
   return (
     <div className="space-y-8">
@@ -233,8 +197,8 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
           </p>
         ) : null}
       </div>
-      {!loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
-      {loaded && error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
+      {!list.loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {list.error !== null ? <AdminStatus state={{ kind: 'error', message: list.error }} /> : null}
       {detailLoading ? <AdminStatus state={{ kind: 'loading' }} /> : null}
       {detailError !== null ? <AdminStatus state={{ kind: 'error', message: detailError }} /> : null}
 
