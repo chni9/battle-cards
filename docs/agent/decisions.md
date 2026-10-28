@@ -5423,3 +5423,24 @@ Source: technical spec v7 §6.6.2, §6.6.4, §6.6.5; Appendix A `card-target-pic
   `DUR_BASE_MS` after the player ends targeting the arena ignores seat taps and dock commits.
 
 ---
+
+## 2026-10-28 · [P] V7 Assassin multi-attack resets on Cancel (L74-11)
+
+Source: technical spec v7 §6.6.2, §13 Q44; Appendix A `assassin-multi-attack`,
+`table-multi-attack-target-eligibility`.
+
+- **Cancel resets the selection (Q44).** V2 kept `multiIds` / `multiTargets` after Cancel; the
+  arena drops them on Cancel, and the card sheet resets them when it opens again after Esc, the
+  backdrop or any close. A closed sheet stays mounted through its exit and is reused on reopen, so
+  the reset rides on the open transition, not on an unmount; reopening shows nothing selected.
+- **No default target per row.** V2 seeded each toggled row with the first living opponent. The
+  arena asks for an explicit seat per row, like tap-tap targeting (§6.6.2), so two toggles never
+  send an attack the player did not aim. Several rows may still pick the same seat (golden
+  rule 1).
+- **Rows and order.** Rows are `cardActions(...).multiAttack` rows (hand shared attacks, never
+  MEGA ATTACK); the intent lists the picked rows in hand order, whatever order they were
+  toggled. The server pairs the volley (L68-05).
+- **A step of the card sheet.** The panel replaces the card sheet's body and actions, so Cancel
+  returns to the card; Esc and the backdrop close the sheet.
+
+---

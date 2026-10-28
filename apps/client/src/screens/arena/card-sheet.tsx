@@ -21,6 +21,12 @@
  * takes initial focus) and Card Transformer consume tiles (the first preselected) only select, and
  * Use then sends `quantity` / `consumeInstanceId`. The pick resets on every opening. The arena
  * passes `collapsed` / `collapsedBar` while the card is targeted (§6.6.2, `targeting.tsx`).
+ *
+ * L74-11 adds the Assassin multi-attack (§6.6.1, §6.6.2, §13 Q44; Appendix A `assassin-multi-attack`):
+ * the model's Multi-attack entry turns the sheet into a step (title, body and actions), not a fourth
+ * sheet kind. Cancel returns to the card; the selection resets on every opening, so Esc or the
+ * backdrop then reopen on the card step with nothing selected. Play commits one
+ * `playMultipleAttacks` through `send` and picking a seat sends nothing (§6.6.4).
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
@@ -62,6 +68,18 @@ import {
   sheetInstanceFor,
   type CardSheetSource,
 } from './card-sheet-source';
+import { MultiAttackPanel } from './multi-attack';
+import {
+  EMPTY_MULTI_ATTACK_SELECTION,
+  MULTI_ATTACK_ENTRY_LABEL,
+  MULTI_ATTACK_TITLE,
+  multiAttackPayload,
+  pickMultiAttackTarget,
+  playAttacksLabel,
+  selectedMultiAttackRows,
+  toggleMultiAttackRow,
+  type MultiAttackSelection,
+} from './multi-attack-selection';
 import { ConsumeChoice, RegenerationChoice } from './pre-send-choice';
 import { DEFAULT_REGENERATION_QUANTITY, resolveConsumeId } from './pre-send-model';
 
@@ -122,13 +140,21 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   const [quantity, setQuantity] = useState<RegenerationQuantity>(DEFAULT_REGENERATION_QUANTITY);
   const [consumePick, setConsumePick] = useState<string | null>(null);
   const checkedRef = useRef<HTMLButtonElement>(null);
+  // The multi-attack step (L74-11): null is the card step. Reset on every opening like the picks above
+  // (Q44), because a closed sheet is reused, never remounted.
+  const [multi, setMulti] = useState<MultiAttackSelection | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
       setQuantity(DEFAULT_REGENERATION_QUANTITY);
       setConsumePick(null);
+      setMulti(null);
     }
+  }
+  // The card left the hand, or the hand fell below two attacks: back to the card step.
+  if (multi !== null && model.multiAttack === null) {
+    setMulti(null);
   }
 
   // The Lot 69 confirm (in-play Deactivate). It lives and dies with this sheet.
@@ -143,6 +169,9 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   const consume = commit !== undefined && use?.kind === 'consume' ? use : null;
   // Null with nothing to consume: no group, and Use's own reason says why once.
   const consumeId = consume === null ? null : resolveConsumeId(consume.options, consumePick);
+  const multiAction = model.actions.find((action) => action.kind === 'multi-attack');
+  const multiStep = multi !== null && model.multiAttack !== null ? { selection: multi, model: model.multiAttack } : null;
+  const multiPayload = multiStep === null ? null : multiAttackPayload(multiStep.model, multiStep.selection);
 
   function send(intent: ArenaIntent): void {
     if (commit === undefined || committedFor.current === view) {
@@ -235,8 +264,19 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         );
       }
       case 'multi-attack':
-        // L74-11 adds the Multi-attack entry.
-        return null;
+        // Nothing is sent from here: the entry only opens the step.
+        return (
+          <Button
+            key={action.kind}
+            variant="secondary"
+            onClick={() => {
+              setMulti(EMPTY_MULTI_ATTACK_SELECTION);
+            }}
+            {...shared}
+          >
+            {MULTI_ATTACK_ENTRY_LABEL}
+          </Button>
+        );
       case 'deactivate':
         // Nothing is sent from here: the button only opens the confirm (Lot 69).
         return (
@@ -260,61 +300,104 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         open={open}
         mode="read-only"
         placement="bottom"
-        title={cardSheetTitle(source)}
+        title={multiStep !== null ? MULTI_ATTACK_TITLE : cardSheetTitle(source)}
         onClose={onClose}
         dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}
         {...(collapsed !== undefined ? { collapsed } : {})}
         {...(collapsedBar !== undefined ? { collapsedBar } : {})}
         {...(regenerationTile?.enabled === true ? { initialFocusRef: checkedRef } : {})}
-        {...(commit !== undefined && model.actions.length > 0
-          ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
-          : {})}
+        {...(multiStep !== null
+          ? {
+              actions: (
+                <div className="flex flex-wrap items-start gap-2">
+                  <Button
+                    variant="primary"
+                    disabled={multiAction?.enabled !== true || multiPayload === null}
+                    {...(multiAction !== undefined && multiAction.reason !== null
+                      ? { disabledReason: DISABLED_REASON_COPY[multiAction.reason] }
+                      : {})}
+                    onClick={() => {
+                      if (multiPayload !== null) {
+                        send({ kind: 'playMultipleAttacks', payload: multiPayload });
+                      }
+                    }}
+                  >
+                    {playAttacksLabel(selectedMultiAttackRows(multiStep.model, multiStep.selection).length)}
+                  </Button>
+                  <Button
+                    variant="quiet"
+                    onClick={() => {
+                      setMulti(null);
+                    }}
+                  >
+                    {CANCEL_ACTION_LABEL}
+                  </Button>
+                </div>
+              ),
+            }
+          : commit !== undefined && model.actions.length > 0
+            ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
+            : {})}
       >
-        <div className="flex flex-col items-center gap-3 pt-2 pb-3">
-          <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
-          {card !== undefined ? (
-            <div className="w-full">
-              <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
-            </div>
-          ) : null}
-          {regeneration !== null ? (
-            <div className="w-full">
-              <RegenerationChoice
-                tiles={regeneration.tiles}
-                selected={quantity}
-                onSelect={setQuantity}
-                checkedRef={checkedRef}
-              />
-            </div>
-          ) : null}
-          {consume !== null && consumeId !== null ? (
-            <div className="w-full">
-              <ConsumeChoice
-                options={consume.options}
-                selectedId={consumeId}
-                disabled={useAction?.enabled !== true}
-                onSelect={setConsumePick}
-              />
-            </div>
-          ) : null}
-          {context?.kind === 'active' ? (
-            <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
-              <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
-              {context.count !== null ? (
-                <Badge
-                  icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
-                  label={context.count.label}
-                  value={context.count.value}
+        {multiStep !== null ? (
+          <MultiAttackPanel
+            view={view}
+            model={multiStep.model}
+            selection={multiStep.selection}
+            onToggle={(instanceId) => {
+              setMulti((current) => (current === null ? current : toggleMultiAttackRow(current, instanceId)));
+            }}
+            onPickTarget={(instanceId, playerId) => {
+              setMulti((current) => (current === null ? current : pickMultiAttackTarget(current, instanceId, playerId)));
+            }}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3 pt-2 pb-3">
+            <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
+            {card !== undefined ? (
+              <div className="w-full">
+                <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
+              </div>
+            ) : null}
+            {regeneration !== null ? (
+              <div className="w-full">
+                <RegenerationChoice
+                  tiles={regeneration.tiles}
+                  selected={quantity}
+                  onSelect={setQuantity}
+                  checkedRef={checkedRef}
                 />
-              ) : null}
-            </div>
-          ) : null}
-          {context?.kind === 'spy-reveal' ? (
-            <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
-              {SPY_REVEAL_LABEL}
-            </p>
-          ) : null}
-        </div>
+              </div>
+            ) : null}
+            {consume !== null && consumeId !== null ? (
+              <div className="w-full">
+                <ConsumeChoice
+                  options={consume.options}
+                  selectedId={consumeId}
+                  disabled={useAction?.enabled !== true}
+                  onSelect={setConsumePick}
+                />
+              </div>
+            ) : null}
+            {context?.kind === 'active' ? (
+              <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
+                <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
+                {context.count !== null ? (
+                  <Badge
+                    icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
+                    label={context.count.label}
+                    value={context.count.value}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+            {context?.kind === 'spy-reveal' ? (
+              <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
+                {SPY_REVEAL_LABEL}
+              </p>
+            ) : null}
+          </div>
+        )}
       </Sheet>
       {/* Cancel comes first, so it takes the initial focus: the safe answer, as in V2. The confirm closes by itself when the action leaves the model (the persistent expired), and its Deactivate carries the live reason if the turn passes or a sub-choice opens while it is up. */}
       <Dialog

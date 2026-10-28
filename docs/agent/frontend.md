@@ -1001,6 +1001,17 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   shield. Regeneration tiles 1–4 ('1 life' preselected, the checked tile takes initial focus)
   and Card Transformer consume tiles (first preselected; no group when nothing qualifies, Use's
   reason says why) are picked in the sheet; Use then sends `quantity` / `consumeInstanceId`.
+- `screens/arena/multi-attack.tsx`, `multi-attack-selection.ts`, `seat-choice-button.tsx`
+  (L74-11, spec v7 §6.6.1, §6.6.2, §13 Q44): the card sheet shows **Multi-attack** only when
+  `cardActions(...).actions` holds it (a kit with several attacks per turn, a hand shared attack,
+  at least two in hand; never MEGA ATTACK). It turns the sheet into the 'Assassin multi-attack'
+  step: one row per model row in hand order, each a card toggle (`aria-pressed`) and, once
+  toggled, a group of the row's attack seats (`SeatChoiceButton`; a riposte corpse reads
+  '{nick}, eliminated'). No row has a default target, and several rows may pick one seat. 'Play
+  N attacks' needs two toggled rows that each have a target; it sends one `playMultipleAttacks`
+  in hand order through the commit and closes the sheet. Cancel returns to the card and drops
+  the selection (Q44); after Esc, the backdrop or any close, reopening the card starts on the card
+  step with nothing selected (the reused, still-mounted sheet resets when it opens again).
 
 ## Design system (V2 · Lots 10+)
 
