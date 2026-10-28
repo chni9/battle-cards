@@ -1,14 +1,17 @@
 /**
  * Shared admin pieces in V7 tool mode (technical spec v7 §7.8, L80-01). Every admin loading,
- * empty and error line is an `AdminStatus`, every table an `AdminDataTable`, and the nav and the
- * Database tabs an `AdminLinkBar`, so no page keeps a private copy. Class strings live in
+ * empty and error line is an `AdminStatus`, every table an `AdminDataTable`, the paged tables
+ * (Matches, Database) an `AdminPager`, and the nav and the Database tabs an `AdminLinkBar`, so
+ * no page keeps a private copy. Class strings live in
  * `admin-classes.ts` (react-refresh: this file exports components only).
  */
 
 import type { MouseEvent, ReactElement, ReactNode } from 'react';
 
 import type { AdminLink } from '../../admin/admin-routes';
+import { Button } from '../../ui/primitives/button';
 import {
+  CHROME_FOCUS_CLASS,
   CHROME_OUTLINE_CLASS,
   CHROME_TRACK_CLASS,
   CHROME_TRACK_IDLE_CLASS,
@@ -164,11 +167,34 @@ export interface AdminTableColumn<Row> {
 
 const HEAD_CELL_CLASS = `px-3 py-2.5 ${ADMIN_CAPTION_CLASS}`;
 const BODY_CELL_CLASS = `px-3 py-2.5 align-top ${ADMIN_BODY_TEXT_CLASS} text-v7-text`;
+/** The row-open button reads as the cell's text, with an underline on hover and the focus ring. */
+const ROW_OPEN_CLASS = `rounded-v7-chrome-sm text-left underline-offset-2 hover:underline ${CHROME_FOCUS_CLASS}`;
+
+/**
+ * A row can open (Matches) or not. Both props come together: a button with no name would be
+ * unreachable by assistive technology, so the type refuses an `onRowOpen` without a label.
+ */
+type AdminRowOpenProps<Row> =
+  | { onRowOpen?: undefined; rowOpenLabel?: undefined }
+  | { onRowOpen: (row: Row) => void; rowOpenLabel: (row: Row) => string };
+
+type AdminDataTableProps<Row> = {
+  label: string;
+  columns: readonly AdminTableColumn<Row>[];
+  rows: readonly Row[];
+  rowKey: (row: Row) => string;
+  emptyMessage?: string;
+} & AdminRowOpenProps<Row>;
 
 /**
  * Every admin table. `label` is required: any table can overflow a 390 px phone, so it scrolls
  * sideways inside a named region (ScrollArea contract, L53-07) and the page never does. Rows are
  * split by 1 px tool-line borders (`--ink` in tool mode).
+ *
+ * With `onRowOpen` the first column's cell holds a real `<button>` named by `rowOpenLabel`, so
+ * Tab, Enter and Space work natively and a dialog opened from it can hand focus back to it
+ * (L80-06; `decisions.md` 2026-10-28). The whole row stays clickable for the mouse; the button
+ * stops its click so a press opens once.
  */
 export function AdminDataTable<Row>({
   label,
@@ -176,13 +202,9 @@ export function AdminDataTable<Row>({
   rows,
   rowKey,
   emptyMessage = 'No rows match the current filters.',
-}: {
-  label: string;
-  columns: readonly AdminTableColumn<Row>[];
-  rows: readonly Row[];
-  rowKey: (row: Row) => string;
-  emptyMessage?: string;
-}): ReactElement {
+  onRowOpen,
+  rowOpenLabel,
+}: AdminDataTableProps<Row>): ReactElement {
   if (rows.length === 0) {
     return <AdminStatus state={{ kind: 'empty', message: emptyMessage }} />;
   }
@@ -206,13 +228,37 @@ export function AdminDataTable<Row>({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={rowKey(row)} className="border-t border-v7-ink hover:bg-v7-panel-2">
-                {columns.map((column) => (
+              <tr
+                key={rowKey(row)}
+                className={`border-t border-v7-ink hover:bg-v7-panel-2${onRowOpen !== undefined ? ' cursor-pointer' : ''}`}
+                {...(onRowOpen !== undefined
+                  ? {
+                      onClick: () => {
+                        onRowOpen(row);
+                      },
+                    }
+                  : {})}
+              >
+                {columns.map((column, index) => (
                   <td
                     key={column.id}
                     className={`${BODY_CELL_CLASS} ${column.align === 'right' ? 'text-right tabular-nums' : ''}`}
                   >
-                    {column.cell(row)}
+                    {onRowOpen !== undefined && index === 0 ? (
+                      <button
+                        type="button"
+                        aria-label={rowOpenLabel(row)}
+                        className={ROW_OPEN_CLASS}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRowOpen(row);
+                        }}
+                      >
+                        {column.cell(row)}
+                      </button>
+                    ) : (
+                      column.cell(row)
+                    )}
                   </td>
                 ))}
               </tr>
@@ -221,5 +267,49 @@ export function AdminDataTable<Row>({
         </table>
       </ScrollArea>
     </div>
+  );
+}
+
+/**
+ * Previous / Page N of M / Next under a paged table (Matches, Database; spec v7 §7.8, L80-06).
+ * Previous is off on page 1 and Next on the last page; `disabled` turns both off while a page
+ * loads. The caller passes `adminPageCount`, which is never below 1, so an empty list reads
+ * "Page 1 of 1". The count is `aria-live` so a screen reader hears the page change.
+ */
+export function AdminPager({
+  page,
+  pageCount,
+  onPage,
+  disabled = false,
+}: {
+  page: number;
+  pageCount: number;
+  onPage: (page: number) => void;
+  disabled?: boolean;
+}): ReactElement {
+  return (
+    <nav aria-label="Pages" className="flex flex-wrap items-center gap-3">
+      <Button
+        variant="quiet"
+        disabled={disabled || page <= 1}
+        onClick={() => {
+          onPage(page - 1);
+        }}
+      >
+        Previous
+      </Button>
+      <p aria-live="polite" className={`${ADMIN_BODY_TEXT_CLASS} tabular-nums text-v7-text-2`}>
+        {`Page ${String(page)} of ${String(pageCount)}`}
+      </p>
+      <Button
+        variant="quiet"
+        disabled={disabled || page >= pageCount}
+        onClick={() => {
+          onPage(page + 1);
+        }}
+      >
+        Next
+      </Button>
+    </nav>
   );
 }

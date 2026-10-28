@@ -800,7 +800,14 @@ its payloads and `PROTOCOL_VERSION` do not change.
 - **Shared pieces, one each** (`screens/admin/admin-ui.tsx`, classes in `admin-classes.ts`):
   - `AdminStatus` renders every loading, empty and error line.
   - `AdminDataTable` renders every admin table. Its `label` is required and names the
-    horizontal `ScrollArea`.
+    horizontal `ScrollArea`. With `onRowOpen` and `rowOpenLabel` (typed as a pair) the first
+    column's cell holds a real `<button aria-label={rowOpenLabel(row)}>`, so Tab, Enter and
+    Space work natively; the `<tr>` also takes the mouse click (`cursor-pointer`) and the
+    button stops its own click so a press opens once. Matches is the only user (L80-06).
+  - `AdminPager` (`admin/admin-paging.ts` holds `adminPageCount(total, pageSize)`, never below
+    1) renders every paged table's footer: `<nav aria-label="Pages">` with quiet **Previous**,
+    an `aria-live="polite"` `Page N of M` and **Next**. Previous is off on page 1, Next on the
+    last page, and `disabled` turns both off while a page loads. Zero rows read `Page 1 of 1`.
   - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
     `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
     plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
@@ -841,8 +848,10 @@ its payloads and `PROTOCOL_VERSION` do not change.
     happy-dom's `Headers` keeps the caller's casing.
   - `setAdminPath(path)` sets the URL before mount. Importing the harness restores `fetch`,
     clears `sessionStorage` and resets the URL after each test.
-  - `makeAdminOverview()` is the empty-log payload. Later tasks add builders and never change a
-    default.
+  - `makeAdminOverview()` is the empty-log payload. `makeGameListItem(id)` (room code is the id
+    upper-cased, two humans, no bots, not a tutorial), `makeGamesPage(items)` (page 1, size 50,
+    `total` the item count) and `makeGameDetail()` (`fg-1` / `ABCDEF`, Classic, two seats, no
+    eliminations, no log) cover Matches. Later tasks add builders and never change a default.
 - **Behavior kept from L61-06 / Lot 62:**
   - `App` branches `/admin` before game phases (no Colyseus). The shell reuses
     `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
@@ -874,13 +883,24 @@ its payloads and `PROTOCOL_VERSION` do not change.
   - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
     again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`. The detail
     fetch ignores stale responses and shows `adminErrorCopy` on 404/503.
+  - **Matches paging (L80-06):** the list is `AdminDataTable` (`label="Matches"`, **Room code**
+    first) over `AdminPager`. `pageNumber` starts at 1 and the fetch key is
+    `JSON.stringify({ applied, page })`; each request sends the filter query plus `page` and no
+    `pageSize` (the server default 50 applies; there is no size picker). **Apply** sets the
+    filters and goes back to page 1. While the page for the key is not loaded the table is
+    replaced by `Loading…` and the pager is off; on an error the rows are gone and the alert
+    shows. **Showing X of Y** stays. Each row's Room code cell is a button named
+    `Open match {roomId}` that opens `/admin/games/{finished_games.id}`, never the room code;
+    the dialog hands focus back to it on close.
   - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
     on switch or error.
   - A 401 clears the session and re-opens the password gate (Sign out takes the same path,
     L80-02). `adminGet` catches network and JSON failures (status 0 → Could not load).
   - From/To `datetime-local` values are converted to UTC ISO on the client, so the VPS does not
     shift the window.
-  - Client `exceljs` exports for the overview, games list, kit stats and table browser page.
+  - Client `exceljs` exports for the overview, games list, kit stats and table browser page. The
+    Matches export is a quiet `Button` labelled **Download spreadsheet (this page)**: it writes
+    the loaded page's rows, not the whole result set, and is off until a page loads.
   - `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
   - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). Kind, About and triage
     status filter client-side (default Pending). Each row shows its status as a colored stripe

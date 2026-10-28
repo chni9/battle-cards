@@ -19,14 +19,6 @@ describe('admin route (Lot 61-06)', () => {
     expect(app).toContain('<AdminApp');
   });
 
-  it('keys game detail by finished-game id and can close a URL dialog', () => {
-    const games = read('screens/admin/admin-games-page.tsx');
-    expect(games).toContain('onOpen(row.id)');
-    expect(games).toContain('ignoreUrlDetail');
-    expect(games).toContain("replaceState({}, '', gamesListPath())");
-    expect(games).not.toContain('setPickedDetail(row.roomId)');
-  });
-
   it('ignores stale game-detail responses and surfaces 404/503', () => {
     const games = read('screens/admin/admin-games-page.tsx');
     expect(games).toContain('let cancelled = false');
@@ -35,12 +27,8 @@ describe('admin route (Lot 61-06)', () => {
   });
 
   it('ignores stale Matches, Kits, and Database list fetches', () => {
-    const games = read('screens/admin/admin-games-page.tsx');
     const kits = read('screens/admin/admin-kits-page.tsx');
     const data = read('screens/admin/admin-data-page.tsx');
-    expect(games.match(/let cancelled = false/g)).toHaveLength(2);
-    expect(games).toContain('loadedKey === listKey');
-    expect(games).toContain('setPage(null)');
     expect(kits).toContain('let cancelled = false');
     expect(kits).toContain('if (cancelled)');
     expect(kits).toContain('visibleStats');

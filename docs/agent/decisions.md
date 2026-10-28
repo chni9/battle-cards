@@ -5252,3 +5252,28 @@ inline styles), §12.1 (source-text tests); Lot 80 plan Appendix B question 4 (d
   component (`docs/agent/testing.md`).
 
 ---
+
+## 2026-10-28 · [P] Admin keyboard rows use a row button (L80-06)
+
+Source: technical spec v7 §7.8 ("keyboard rows"), §12.1; Lot 80 plan Appendix B question 5
+(designer answer 2026-10-28: default accepted).
+
+- **Choice.** A Matches row opens through a real `<button type="button">` in its first cell
+  (**Room code**), named `Open match {code}` with `aria-label`. Tab reaches it, and Enter and
+  Space work natively with no key handlers. The V2 Dialog restores focus to
+  `document.activeElement` at open time, which is that button, so closing the detail puts focus
+  back on the row.
+- **Why not a focusable `<tr>`.** The alternative put `tabIndex={0}` and Enter / Space handlers
+  on the `<tr>`. That needs a `role="button"` or `link` on a table row, which drops the row
+  semantics screen readers announce, and re-implements keyboard activation by hand. The button
+  keeps the table a table.
+- **Mouse.** The whole `<tr>` stays clickable (`cursor-pointer`, `onClick`). The button stops its
+  own click from bubbling, so one press opens one detail.
+- **Layout.** Room code moves from the second column to the first so the button is each row's
+  first Tab stop; the column set and headers are otherwise unchanged. The ScrollArea around the
+  table is itself a labelled Tab stop, so Tab reaches it before the first row.
+- **Paging.** The pager is off until the page for the current key loads, so two page requests
+  of one filter set cannot overlap; only Apply, which stays enabled, can supersede an in-flight
+  page, and the effect's cancel flag ignores the older answer.
+
+---

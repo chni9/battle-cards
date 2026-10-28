@@ -1,6 +1,7 @@
 import type { AdminGameListItem, AdminGamesPage } from '@card-battle/shared';
 import { useEffect, useState, type ReactElement } from 'react';
 
+import { adminPageCount } from '../../admin/admin-paging';
 import {
   formatCount,
   formatDateTime,
@@ -20,10 +21,20 @@ import {
   buildActionLogWorkbook,
   downloadWorkbookBuffer,
 } from '../../export/build-action-log-xlsx';
-import { Button } from '../../design/components/button';
+// The detail Dialog is still the V2 one (its action buttons are the V2 `Button`); L80-07 replaces
+// both with the V7 Dialog and drops these two imports.
+import { Button as DialogButton } from '../../design/components/button';
 import { Dialog } from '../../design/components/dialog';
+import { Button } from '../../ui/primitives/button';
+import { ADMIN_BODY_TEXT_CLASS } from './admin-classes';
 import { AdminFiltersForm } from './admin-filters-form';
-import { AdminDataTable, AdminPageIntro, type AdminTableColumn } from './admin-ui';
+import {
+  AdminDataTable,
+  AdminPageIntro,
+  AdminPager,
+  AdminStatus,
+  type AdminTableColumn,
+} from './admin-ui';
 
 interface AdminGamesPageProps {
   password: string;
@@ -38,16 +49,20 @@ function gameDetailPath(gameId: string): string {
   return `/admin/games/${encodeURIComponent(gameId)}`;
 }
 
+/**
+ * Room code leads so the row's open button is the first Tab stop of each row (L80-06). The
+ * columns are otherwise those of Lot 62.
+ */
 const gameColumns: AdminTableColumn<AdminGameListItem>[] = [
+  {
+    id: 'code',
+    header: 'Room code',
+    cell: (row) => row.roomId,
+  },
   {
     id: 'ended',
     header: 'Ended',
     cell: (row) => formatDateTime(row.endedAt),
-  },
-  {
-    id: 'code',
-    header: 'Room code',
-    cell: (row) => <span className="font-medium">{row.roomId}</span>,
   },
   {
     id: 'seats',
@@ -96,6 +111,7 @@ const gameColumns: AdminTableColumn<AdminGameListItem>[] = [
 export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): ReactElement {
   const [filters, setFilters] = useState<AdminFilterState>(DEFAULT_ADMIN_FILTERS);
   const [applied, setApplied] = useState(DEFAULT_ADMIN_FILTERS);
+  const [pageNumber, setPageNumber] = useState(1);
   const [page, setPage] = useState<AdminGamesPage | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,14 +119,18 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
   const [pickedDetail, setPickedDetail] = useState<string | null>(null);
   const [ignoreUrlDetail, setIgnoreUrlDetail] = useState(false);
   const activeDetail = pickedDetail ?? (ignoreUrlDetail ? null : detailId);
-  const listKey = JSON.stringify(applied);
+  const listKey = JSON.stringify({ applied, page: pageNumber });
   const [detail, setDetail] = useState<Awaited<
     ReturnType<typeof fetchAdminGameDetail>
   > | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchAdminGames(password, { ...filtersToQuery(applied), page: '1' }).then((result) => {
+    // No `pageSize`: the server default (50) applies and there is no size picker (L80-06).
+    void fetchAdminGames(password, {
+      ...filtersToQuery(applied),
+      page: String(pageNumber),
+    }).then((result) => {
       if (cancelled) {
         return;
       }
@@ -127,7 +147,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
     return () => {
       cancelled = true;
     };
-  }, [password, applied, listKey]);
+  }, [password, applied, pageNumber, listKey]);
 
   useEffect(() => {
     if (activeDetail === null) {
@@ -169,7 +189,8 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
     window.history.replaceState({}, '', gameDetailPath(gameId));
   };
 
-  const visiblePage = loadedKey === listKey ? page : null;
+  const loaded = loadedKey === listKey;
+  const visiblePage = loaded ? page : null;
   const items = visiblePage?.items ?? [];
 
   return (
@@ -183,38 +204,54 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         onChange={setFilters}
         onApply={() => {
           setApplied(filters);
+          setPageNumber(1);
         }}
       />
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          compact
-          type="button"
-          variant="orange"
+          variant="quiet"
           disabled={items.length === 0}
           onClick={() => {
             void exportGamesListXlsx(items);
           }}
         >
-          Download spreadsheet
+          Download spreadsheet (this page)
         </Button>
         {visiblePage !== null ? (
-          <p className="text-sm text-ink-muted">
+          <p className={`${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>
             Showing {formatCount(items.length)} of {formatCount(visiblePage.total)}
           </p>
         ) : null}
       </div>
-      {error !== null && loadedKey === listKey ? (
-        <p className="text-sm text-cta-red" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {!loaded ? <AdminStatus state={{ kind: 'loading' }} /> : null}
+      {loaded && error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
       {detailError !== null ? (
         <p className="text-sm text-cta-red" role="alert">
           {detailError}
         </p>
       ) : null}
 
-      <ClickableGamesTable items={items} onOpen={openDetail} />
+      {visiblePage !== null ? (
+        <AdminDataTable
+          label="Matches"
+          columns={gameColumns}
+          rows={items}
+          rowKey={(row) => row.id}
+          emptyMessage="No finished matches match these filters."
+          onRowOpen={(row) => {
+            openDetail(row.id);
+          }}
+          rowOpenLabel={(row) => `Open match ${row.roomId}`}
+        />
+      ) : null}
+      {/* Until the page for this key loads there is no total, so the count is the page itself:
+          "Page 1 of 1" at first, never "Page 2 of 1". */}
+      <AdminPager
+        page={pageNumber}
+        pageCount={visiblePage === null ? pageNumber : adminPageCount(visiblePage.total, visiblePage.pageSize)}
+        onPage={setPageNumber}
+        disabled={visiblePage === null}
+      />
 
       <Dialog
         open={activeDetail !== null && detail?.ok === true}
@@ -224,7 +261,7 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
         actions={
           <>
             {detail?.ok === true && detail.data.exportLog !== undefined ? (
-              <Button
+              <DialogButton
                 compact
                 type="button"
                 variant="orange"
@@ -239,11 +276,11 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
                 }}
               >
                 Download action log
-              </Button>
+              </DialogButton>
             ) : null}
-            <Button compact type="button" variant="orange" onClick={closeDetail}>
+            <DialogButton compact type="button" variant="orange" onClick={closeDetail}>
               Close
-            </Button>
+            </DialogButton>
           </>
         }
       >
@@ -326,63 +363,6 @@ export function AdminGamesPage({ password, detailId }: AdminGamesPageProps): Rea
           </div>
         ) : null}
       </Dialog>
-    </div>
-  );
-}
-
-function ClickableGamesTable({
-  items,
-  onOpen,
-}: {
-  items: readonly AdminGameListItem[];
-  onOpen: (id: string) => void;
-}): ReactElement {
-  if (items.length === 0) {
-    return (
-      <p className="rounded-[length:var(--radius-card)] border border-border bg-surface-raised px-4 py-8 text-center text-sm text-ink-muted">
-        No finished matches match these filters.
-      </p>
-    );
-  }
-
-  return (
-    <div className="overflow-hidden rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
-          <thead>
-            <tr>
-              {gameColumns.map((column) => (
-                <th
-                  key={column.id}
-                  className={`border-b border-border bg-surface px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-muted ${column.align === 'right' ? 'text-right' : ''}`}
-                >
-                  {column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer hover:bg-surface/80"
-                onClick={() => {
-                  onOpen(row.id);
-                }}
-              >
-                {gameColumns.map((column) => (
-                  <td
-                    key={column.id}
-                    className={`border-b border-border-soft px-3 py-2.5 ${column.align === 'right' ? 'text-right tabular-nums' : ''}`}
-                  >
-                    {column.cell(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
