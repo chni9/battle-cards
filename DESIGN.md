@@ -835,12 +835,16 @@ rendered as it is; the copy fixes of §10.5 are L72-13's.
 `global-art-lot63-gambler-roulette`, `active-persistent-thumbs`, `sentence-chips`). It is the
 only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic screens.
 
-- **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? onActivate?
-  className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy hand
-  without identity. `size` is `hand | lifted | sheet | thumb | tile` (`CARD_SIZES`). With
-  `onActivate` the root is a `<button type="button">` with `aria-pressed={selected}` (click,
-  Enter and Space call back with the instance id; a hidden face calls back with no argument);
-  without it, an `<article>`. The accessible name is `cardFaceLabel`: "Strong attack upgraded,
+- **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? description?
+  onActivate? className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy
+  hand without identity. `size` is `hand | lifted | sheet | thumb | tile` (`CARD_SIZES`). With
+  `onActivate` the root is a `<button type="button">` (click, Enter and Space call back with the
+  instance id; a hidden face calls back with no argument); without it, an `<article>`. The button
+  carries `aria-pressed` only when the caller passes `selected` (the hand's selection): a face that
+  only opens a sheet (thumbs, log, queue, pool) passes none, so it never reads as a toggle (L74-07).
+  `description` becomes the face's accessible description on either root form (`aria-describedby`
+  to a hidden node); the hand passes the unplayable reason, `DISABLED_REASON_COPY[reason]`.
+  The accessible name is `cardFaceLabel`: "Strong attack upgraded,
   4 damage", "Poison, 3 card lives", "Invisibility, 1 turn remaining"; a hidden face is "Hidden
   card". Thumbs also carry it as a native `title`, since they print no name. The caller decides
   `unplayable` and `counter`; an unplayable face stays activatable. The caller's `className`

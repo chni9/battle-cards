@@ -5331,3 +5331,24 @@ Source: technical spec v7 §6.1 item 2, §6.5, §8.2, §11, §13 Q35; Appendix A
   and ending say so in words; live has no word.
 
 ---
+
+## 2026-10-28 · [P] V7 Card: aria-pressed only for a selection, and a description passthrough (L74-07)
+
+Source: technical spec v7 §5.4 (unplayable), §11 (Q39); `docs/backlog_v7.md` L74-07 Watch point;
+Appendix A `global-card-face`, `card-band`.
+
+- `ui/card/card.tsx` emits `aria-pressed` only when the caller passes `selected`. The hand fan
+  passes it (a tap selects the card and opens its sheet). Faces that only open a sheet (thumbs,
+  log, queue, pool) pass none, so they no longer read as toggles. This supersedes L72's
+  "aria-pressed always equals selected".
+- The new optional `description` becomes the face's accessible description (`aria-describedby`
+  to a hidden node). The hand passes `DISABLED_REASON_COPY[reason]` for an unplayable card, so
+  the reason behind the dimming reaches assistive tech. The face stays activatable.
+- The hand dims a card when Use is disabled for a card-specific reason: every `DisabledReason`
+  except `not-your-turn` and `actions-locked`. `cardActions` ranks the lock above every other
+  reason, so this happens only on the POV's own turn with no sub-choice open, and never dims the
+  whole hand (§5.4).
+- Lot 74 plan Appendix A.8 ruling 8 lists `ui/card/card.tsx` and its test for this backlog Watch
+  point. `DESIGN.md` is updated in the same commit (spec v7 §5.8).
+
+---

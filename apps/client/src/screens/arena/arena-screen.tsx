@@ -33,6 +33,8 @@ import {
 } from './arena-sheets';
 import { CardSheet } from './card-sheet';
 import { CentralPlate } from './central-plate';
+import { HandFan } from './hand-fan';
+import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
 import { SeatSheet } from './seat-sheet';
 import { ThreatLayer } from './threat-layer';
@@ -119,22 +121,14 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
         <div data-zone="resources" data-hint-anchor="resources" />
       </div>
       <div {...arenaRegionAttributes('hand')} data-zone="card-band" className="min-w-0 shrink-0">
-        <div data-zone="hand" data-hint-anchor="hand">
-          {view.self.hand.length === 0 ? (
-            <p className="flex flex-col font-v7-body text-v7-caption font-bold text-v7-text-2">
-              <span>Hand</span>
-              <span>Empty</span>
-            </p>
-          ) : null}
-        </div>
-        <div data-zone="specials" data-hint-anchor="specials">
-          {view.self.specialCards.length === 0 ? (
-            <p className="flex flex-col font-v7-body text-v7-caption font-bold text-v7-text-2">
-              <span>Specials</span>
-              <span>None</span>
-            </p>
-          ) : null}
-        </div>
+        <HandFan
+          view={view}
+          ctx={ctx}
+          selectedInstanceId={selectedHandInstanceId(sheets)}
+          onOpenCard={(source) => {
+            openSheet({ kind: 'card', source });
+          }}
+        />
       </div>
       <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2" />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}

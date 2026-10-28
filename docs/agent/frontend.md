@@ -485,7 +485,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   ", N damage", the counter label). Thumbs print no name and no cost chip (art-only thumbs), so
   their name is the aria-label and a native `title`.
 - **The caller decides state:** `unplayable` (POV's turn, card-specific reason; the face stays
-  activatable), `selected`, and `counter` (`{ kind: 'card-lives' | 'turns', amount }`). The glow
+  activatable), `selected` (it alone sets `aria-pressed`, L74-07), `description` (the accessible
+  description; the hand passes the unplayable reason) and `counter`
+  (`{ kind: 'card-lives' | 'turns', amount }`). The glow
   and the counter badge follow `counter` only, so Curse and the combat Shield get no glow. Where
   a family is itself secret, pass a neutral `family` to the hidden face (V2 used the action verso
   for unspied plays); the component cannot know.
@@ -934,6 +936,20 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     arena's elements come first in the DOM, so they anchor the resolution flash.
   - **Reachability:** every public pending effect stays reachable, on the plate or in a seat
     sheet.
+- `screens/arena/hand-fan.tsx` + `hand-fan-model.ts` (L74-07, spec v7 §5.4, §6.1 item 4): the
+  `hand` region (`data-zone="card-band"`) holds one horizontal `ScrollArea` with two groups,
+  `data-zone="hand"` (attacks, then actions, each in hand order; `<ul aria-label="Hand">`) and
+  `data-zone="specials"` (gold rims, after a 12 px gap; `<ul aria-label="Specials">`), each with
+  its `data-hint-anchor`. An empty group shows the V2 caption and text ("Hand" / "Empty",
+  "Specials" / "None"). Cards are `Card size="hand"`: the Card root carries `data-instance-id`,
+  and V7 markup never uses `data-card-row`. Every card but the last of its group sits in a slot of
+  `max(44px, …)` (`STRIP_WIDTH`), so the next card overlaps it from the right; under 44 px the hand
+  scrolls inside itself. `unplayable` (and the card's accessible description) is Use disabled for
+  a card-specific reason: every `DisabledReason` but `not-your-turn` / `actions-locked`, so only
+  on the POV's turn. A tap calls `onOpenCard`; ArenaScreen opens the card sheet (source `hand` /
+  `special`), and the selected card is the newest open hand/special card sheet
+  (`selectedHandInstanceId`). There is no entrance motion. An upgrade replays a 90° flip
+  (`data-upgrade-flip` counts the flips), or a 120 ms fade under reduced motion (designer Q13).
 
 ## Design system (V2 · Lots 10+)
 

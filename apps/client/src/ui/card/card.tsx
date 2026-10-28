@@ -21,7 +21,7 @@
  */
 
 import { getCard, type CardInstance, type CardType } from '@card-battle/shared';
-import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from 'react';
+import { useId, type CSSProperties, type MouseEvent, type ReactElement, type ReactNode } from 'react';
 import { artFor } from '../asset-lookup';
 import { Icon } from '../icons/icon';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
@@ -52,9 +52,15 @@ type DataAttributes = Readonly<Record<`data-${string}`, string>>;
 
 interface CardCommonProps {
   size: CardSize;
+  /** The hand's selection. A button carries `aria-pressed` only when the caller passes this (L74-07). */
   selected?: boolean;
   /** Desaturated; the caller decides it (spec v7 §5.4). The face stays activatable. */
   unplayable?: boolean;
+  /**
+   * The face's accessible description, read after its name (spec v7 §11). The hand passes the
+   * unplayable reason.
+   */
+  description?: string;
   className?: string;
   dataAttributes?: DataAttributes;
 }
@@ -265,21 +271,44 @@ interface CardRootProps {
   readonly title: string | undefined;
   readonly className: string;
   readonly attributes: DataAttributes;
-  readonly selected: boolean;
+  readonly selected: boolean | undefined;
+  readonly description: string | undefined;
   readonly onActivate: (() => void) | undefined;
   readonly children: ReactNode;
 }
 
-/** One root for both faces: a toggle-style button when the caller can act, an article otherwise. */
-function CardRoot({ label, title, className, attributes, selected, onActivate, children }: CardRootProps): ReactElement {
+/**
+ * One root for both faces: a toggle-style button when the caller passes `selected`, a plain button
+ * otherwise, an article without `onActivate`. A non-empty `description` is linked by
+ * `aria-describedby` to a hidden node, on either root form.
+ */
+function CardRoot({
+  label,
+  title,
+  className,
+  attributes,
+  selected,
+  description,
+  onActivate,
+  children,
+}: CardRootProps): ReactElement {
+  const descriptionId = useId();
   const titleProps = title !== undefined ? { title } : {};
+  const hasDescription = description !== undefined && description !== '';
+  const describedBy = hasDescription ? { 'aria-describedby': descriptionId } : {};
+  const descriptionNode = hasDescription ? (
+    <span id={descriptionId} hidden>
+      {description}
+    </span>
+  ) : null;
   if (onActivate !== undefined) {
     return (
       <button
         {...attributes}
         type="button"
         aria-label={label}
-        aria-pressed={selected}
+        {...(selected !== undefined ? { 'aria-pressed': selected } : {})}
+        {...describedBy}
         {...titleProps}
         onClick={() => {
           onActivate();
@@ -289,12 +318,21 @@ function CardRoot({ label, title, className, attributes, selected, onActivate, c
       >
         {children}
         <span aria-hidden="true" data-card-layer="focus" className={FOCUS_RING_CLASS} />
+        {descriptionNode}
       </button>
     );
   }
   return (
-    <article {...attributes} aria-label={label} {...titleProps} onContextMenu={preventContextMenu} className={className}>
+    <article
+      {...attributes}
+      aria-label={label}
+      {...describedBy}
+      {...titleProps}
+      onContextMenu={preventContextMenu}
+      className={className}
+    >
       {children}
+      {descriptionNode}
     </article>
   );
 }
@@ -337,8 +375,9 @@ export function Card(props: CardProps): ReactElement {
 function HiddenFace({
   family,
   size,
-  selected = false,
+  selected,
   unplayable = false,
+  description,
   className,
   dataAttributes,
   onActivate,
@@ -350,8 +389,9 @@ function HiddenFace({
       label={HIDDEN_CARD_LABEL}
       title={size === 'thumb' ? HIDDEN_CARD_LABEL : undefined}
       selected={selected}
+      description={description}
       onActivate={onActivate}
-      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected: selected === true, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'hidden',
@@ -383,8 +423,9 @@ function FaceUp({
   size,
   damageMultiplier,
   counter,
-  selected = false,
+  selected,
   unplayable = false,
+  description,
   className,
   dataAttributes,
   onActivate,
@@ -414,10 +455,11 @@ function FaceUp({
       label={label}
       title={size === 'thumb' ? label : undefined}
       selected={selected}
+      description={description}
       onActivate={onActivate === undefined ? undefined : () => {
         onActivate(instanceId);
       }}
-      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected, className })}
+      className={rootClassName({ size, full, interactive: onActivate !== undefined, selected: selected === true, className })}
       attributes={{
         ...dataAttributes,
         'data-card-face': 'up',
