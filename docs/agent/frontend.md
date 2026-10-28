@@ -196,6 +196,8 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   highlighted, not preselected.
 - `view-model/log.ts` (L73-11, spec v7 §6.9): documented under Conventions, in the action-log
   bullet.
+- `view-model/rules-recall.ts` (L73-12, spec v7 §6.11): documented under Design system,
+  Rules (`ui/rules/`, L72-16), in the "Who supplies `rules`" bullet.
 
 ## Design system (V7 · Lot 72+)
 
