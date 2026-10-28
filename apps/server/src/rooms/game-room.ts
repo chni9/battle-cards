@@ -2619,8 +2619,8 @@ export class GameRoom extends Room<{ client: GameClient }> {
       }
 
       this.clearSubChoiceTimer('slot-drop');
-      this.sendStateToEveryone();
       this.beginTurnOrAbsentAutoPlay();
+      this.sendStateToEveryone();
       this.broadcastTurnStarted();
       return;
     }
