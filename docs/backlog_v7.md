@@ -28,9 +28,9 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
-| 80 · Admin | 12 | 11 |
+| 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **45** |
+| **Total** | **134** | **46** |
 
 ## Designer questions still open
 
@@ -296,7 +296,7 @@ Sound and haptics (§9): CC0 clips (download needs the developer's OK), settings
 | L80-09 | **Normalize the Feedback page and report dialog.** **Acceptance:** component tests with a mocked `/api/inbox` cover these cases: - 'Loading…' shows, then the rows - the default view lists Pending rows only - the kind, area and status toggles expose `aria-pressed` - a row mark sends one PATCH with the new status without opening the report, the marks stay disabled until it resolves, and a failure leaves the row unchanged with an alert - the report shows each kept field, with '—' when null - a filter with no match shows the empty message  `inbox-route.test.ts` keeps its App redirect and `/api/inbox` assertions. Nothing references `screens/inbox.tsx`. `pnpm verify` green. | M | Medium | L80-01 | Done |
 | L80-10 | **Add Database pagination and consistent states.** **Acceptance:** component tests cover these cases: - switching tables requests `page=1&pageSize=50` for the new table and never shows the old table's rows - Next requests `page=2` - 0 rows show the empty message - a late response for the previous table is ignored - the export button stays disabled until a page loads  `pnpm verify` green. | M | Low | L80-06 | Done |
 | L80-11 | **Add a Chat messages tab to Database.** **Acceptance:** - `admin-present.test.ts` asserts 'Chat messages' for `game_chat_messages`. - A component test checks that the tab requests `/api/admin/tables/game_chat_messages`, is marked current, and shows a Role column with fixture `living` / `eliminated` / `spectator` values. - `pnpm verify` green. | S | Low | L80-10 | Done |
-| L80-12 | **Run the Lot 80 browser and design gate.** **Acceptance:** - The 'Lot 80 verified' entry lists the seed data, the viewports and each surface checked. - Impeccable findings on shipped admin files are fixed or designer-approved. - All 28 Appendix A admin surfaces are still present. - `pnpm verify` green. | M | Low | L80-01…L80-11 | To do |
+| L80-12 | **Run the Lot 80 browser and design gate.** **Acceptance:** - The 'Lot 80 verified' entry lists the seed data, the viewports and each surface checked. - Impeccable findings on shipped admin files are fixed or designer-approved. - All 28 Appendix A admin surfaces are still present. - `pnpm verify` green. | M | Low | L80-01…L80-11 | Done |
 
 ---
 

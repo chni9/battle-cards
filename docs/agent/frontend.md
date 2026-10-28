@@ -2364,3 +2364,82 @@ rooms **LUQDWX** (lobby) and **VNLEVA** (solo, 3 Easy bots).
 - Fix: an unplayable `Card` dimmed its cost and damage chips with the rest of the body (damage
   label 2.6:1). The chips, the "+" badge and the counter badge now sit in an undimmed `marks`
   layer. `pnpm verify` **2613** tests.
+
+### Lot 80 verified 2026-10-28 (browser, `/admin` tool mode, PROTOCOL 45)
+
+Vite `:5173`, Colyseus `:2567` (`TURN_DURATION_MS=300000`), `INBOX_PASSWORD` set to a local test
+value, viewports 1440×900 and 390×844 in the built-in browser pane.
+
+- **Seed data:** a local throwaway Postgres, `cardbattle_l80_gate` (homebrew `postgresql@16`),
+  migrated with `db:migrate` and filled by a scratch SQL script that is not in the repo. Never
+  production data. It holds 124 `finished_games` (2–8 seats, a third with bots, 2 tutorial, the
+  Lot 70 rule columns on the classic rows, every 4th with an empty `export_log`), 620 players,
+  496 eliminations (most with an eliminator), 72 `game_chat_messages` over 6 games with all three
+  roles, and 8 `feedback_reports` across kinds, topics and statuses. Exports were intercepted in
+  the page (the anchor `download` was captured, no file written).
+- **Static checks:** no `design/` import and none of the V2 class names (`text-ink`,
+  `bg-surface`, `border-border`, `cta-*`, `radius-card`, `font-sans`, …) under `screens/admin` or
+  `admin`. The 28 `admin-*` rows of the parity doc each name files that exist.
+- **Gate (1440×900):** a wrong password and Enter reads `Wrong password`; ten wrong guesses
+  answer 429 with the rate-limit copy and no stored key, and the right password still unlocks.
+  The password field is 16px, and `<main data-mode="tool">`. Sign out empties the gate and clears
+  the key, and the next unlock probes and loads Overview.
+- **Nav:** five links in order with `aria-current="page"` on the section. `/admin/games/:id`
+  marks Matches and `/admin/dashboard` marks none (the accepted rule).
+- **Overview:** nine module headings in order, 11 fields all 16px. Actors Humans sends
+  `actors=humans` at once. Seat count offers `Any seat count` and 2…8. Seat 5 and the tutorial
+  toggle send nothing until Apply, then `occupancy=5&includeTutorial=true&actors=humans`.
+  Download Excel saves `admin-overview.xlsx`.
+- **Matches:** 122 non-tutorial rows, `Showing 50 of 122`, `Page 1 of 3`. Next opens page 2, then
+  page 3 (22 rows) with Next `aria-disabled="true"` and no native `disabled`. Export saves
+  `admin-games.xlsx`, and Apply returns to `page=1`.
+- **Keyboard:** focus on `Open match L80004`, Enter opens `/admin/games/<finished_games.id>` as
+  the `Match L80004` dialog in tool mode (a centered 672px panel). It shows Started, Ended, Mode
+  `Classic`, Length, Turns, Winner, Notes `—`, the seats with points and roles, the elimination
+  order with ` · by {nick}`, and the seed line. Download action log saves `L80004.xlsx`. Esc
+  returns to `/admin/games` with focus back on `Open match L80004`. A deep-link reload opens the
+  dialog, and Esc closes it without reopening.
+- **Kits:** 16 rows by display name, `Based on 122 matches`, export `admin-kit-stats.xlsx`.
+- **Feedback:** intro, the Kind, Status and Area groups with `aria-pressed`, Pending by default
+  (4 rows), status badges named. A Done mark sends one `PATCH /api/inbox/:id` without opening the
+  report, and the row leaves the Pending view. The report dialog is in tool mode with every
+  field.
+- **Database:** tabs Finished games, Players, Eliminations, Feedback, Chat messages. `124 rows ·
+  page 1`, `Page 1 of 3`, Next opens page 2. The Chat messages tab marks
+  `/admin/data/game_chat_messages` current, shows seven Title Case headers with `Role` holding
+  `living`, `eliminated` and `spectator`, and reads `Page 1 of 2`. All five tables export
+  (`admin-finished_games.xlsx`, `admin-finished_game_players.xlsx`,
+  `admin-finished_game_eliminations.xlsx`, `admin-feedback_reports.xlsx`,
+  `admin-game_chat_messages.xlsx`). `/admin/data/nope` reads `Not found`, marks no tab and
+  disables the export.
+- **Phone (390×844):** `/admin`, `/admin/games`, `/admin/kits`, `/admin/feedback`, `/admin/data`
+  and `/admin/data/game_chat_messages` have `main.scrollWidth - main.clientWidth = 0`, no element
+  past the right edge outside a labelled scroll region, and every input and select computes 16px.
+- **Design gate (§12.4):** the static `impeccable detect` on `screens/admin` and `admin` found 0.
+  Page scans (headless Chrome, unlocked session) at both sizes of Overview, Matches, a match
+  dialog, Kits, Feedback, Database (chat) and the gate found three things. `nested-cards` ×36 on
+  Overview (an outlined metric card in an outlined module panel) is fixed (G1). The
+  `kicker-above-heading` finding ("Designer" over "Insights", on every page) is fixed because
+  the designer removed the eyebrow on 2026-10-28 (G2, `decisions.md`). `dark-glow #f0771f` on
+  `body` on every page is the V2 `tutorial-pulse` in `index.css` (`--color-cta-orange`), not
+  admin code. The designer ruled on 2026-10-28 to add **no ignore**; the PR notes it as outside
+  the admin scope, and the lot that deletes the V2 CSS removes it. `.impeccable/config.json` is
+  unchanged. The advisory `straggler` (a one-word last line) is left.
+- **Fixes (each a commit, `pnpm verify` green):**
+  - G1: `AdminMetricCard` is a `--panel-2` fill with the 6px tool radius and no border, so a metric
+    is no card inside a card (`admin-ui.test.tsx`).
+  - G2: the `Designer` eyebrow is gone from the header (`admin-app.test.tsx`).
+  - G3: a null log tail reads `Log tail: —`, not the JSON `null`, with no empty region
+    (`admin-feedback-page.test.tsx`).
+  - G4: a Database tab pressed by keyboard (or clicked) kept no focus, because the route change
+    remounts the page. `AdminApp` reads the `href` of a focused page link on `popstate` and
+    focuses its twin after the new page mounts. The nav keeps its own focus
+    (`admin-app.test.tsx`, three tests).
+  - G5: `useAdminList` counted an older answer for the same key as the new request's, so Actors
+    both, humans, both showed no `Loading…` and could bring back an old error. Each request now
+    has an id and an answer counts only for its own (`admin-dashboard-page.test.tsx`, two tests).
+  - G6: the parity `admin-shell` row points at `screens/home.admin-route.test.ts` for the hub
+    never linking `/admin`.
+  - G7: the Feedback save-error comment cites spec v7 §7.8 and L80-09 instead of a review label,
+    and the Seat count line of this file is wrapped.
+- `pnpm verify` **3119** tests.
