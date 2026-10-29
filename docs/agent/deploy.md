@@ -64,6 +64,39 @@ branch is not `dev`. It is inert until that workflow itself lives on `main` (fir
 promotion). Retarget open feature PRs (including `#29`) onto `dev` **before** that
 promotion, or they will fail the check.
 
+## Image build: one download, cached pnpm store
+
+`pnpm-lock.yaml` resolves `uWebSockets.js` (`colyseus` →
+`@colyseus/uwebsockets-transport`) to a GitHub tarball on `codeload.github.com`,
+not to an npm package. GitHub rate-limits that host. On 2026-10-28 the PR #84
+preview failed with `ERR_PNPM_FETCH_429`: the build and runtime stages each
+downloaded the tarball, in parallel, on every build.
+
+The `Dockerfile` downloads at most once per build and keeps the packages between
+builds:
+
+- Only the `deps` stage install downloads. Its pnpm store is a BuildKit cache
+  mount (`id=card-battle-pnpm-store`, target `/pnpm/store`).
+  `npm_config_fetch_retries=5` gives a 429 five retries instead of pnpm's two.
+- The runtime stage copies its manifests from `deps`, not from the build
+  context. Its `--prod` install therefore starts after `deps` and finds every
+  package in the store. The client build and that install still run in parallel.
+- The cache mount is not part of the layer cache. Coolify gives every stage the
+  per-preview values `COOLIFY_FQDN` and `COOLIFY_BRANCH`, as `ARG` lines or
+  through `ARG COOLIFY_BUILD_SECRETS_HASH`, so a new preview reruns every `RUN`.
+  The store stays, and is shared by every build on the server's Docker daemon
+  (staging, previews, production).
+- The runtime image holds `node_modules` only. The store never enters a layer.
+
+Coolify's Docker cleanup runs `docker builder prune -af`, which empties the mount
+too. The next build downloads once and fills it again. To start from an empty
+store on purpose, change the mount `id` in both `RUN` lines.
+
+Check it in the Coolify build log. pnpm prints `Progress: resolved N, reused R,
+downloaded D` under each install. The runtime install shows `downloaded 0`. A
+later build that reruns the `deps` install also shows `downloaded 0`. A
+redeploy with nothing changed shows both installs as `CACHED`.
+
 ## GitHub (once)
 
 These clicks live on GitHub, not Coolify.
