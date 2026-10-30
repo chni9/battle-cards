@@ -216,6 +216,28 @@ describe('central plate (§6.1 item 2)', () => {
   });
 });
 
+describe('central plate presses (final review, Minor 3)', () => {
+  it('lets presses through its empty area: only the landing card, badges and chips take them', () => {
+    const log: ActionLogEntryView[] = [
+      { kind: 'actionPlayed', actorPlayerId: 'p1', action: 'playCard', cardId: 'strong-attack', isUpgraded: false, targetPlayerId: 'me', turnSequence: 2 },
+    ];
+    renderThreats(makeArenaView({ overrides: {
+      actionLog: log,
+      pendingEffects: [makePending({ id: 'e1', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'strong-attack' })],
+      self: makeSelf({ lives: 6, activePersistentEffects: [makePersistent({ id: 'cur', cardId: 'curse' })] }),
+    } }));
+    // happy-dom has no hit testing: a tap on a grid seat under the plate's empty area is an L74-26 gate check.
+    expect(plate().classList.contains('pointer-events-none')).toBe(true);
+    const takers = [
+      plate().querySelector('[data-plate-landing] [data-card-id="strong-attack"]'),
+      plate().querySelector('[data-pending-id="e1"]'),
+      plate().querySelector('[data-recurring-chip="cur"]'),
+    ];
+    expect(takers.map((element) => element?.classList.contains('pointer-events-auto'))).toEqual([true, true, true]);
+    expect(plate().querySelector('[data-plate-landing]')?.classList.contains('pointer-events-auto')).toBe(false);
+  });
+});
+
 describe('the plate in the arena (§6.6.4)', () => {
   it('a plate badge opens the read-only card sheet; nothing is sent', async () => {
     const props = makeArenaProps({ view: makeArenaView({ overrides: { pendingEffects: [

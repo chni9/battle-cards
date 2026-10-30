@@ -18,6 +18,10 @@
  *   pointer, as the seats do.
  * - **Recurring chips** show the catalog rate (`recurringAmountGlyph`), the owner for Poison and
  *   Imposition, and "Paused" / "Ending" in words; a live chip has no word (designer answer Q4).
+ * - **Press-through** (Lot 74 Part 1 final review, Minor 3). The root is `pointer-events-none` and
+ *   only the landing card, the badges and the chips take presses, so the plate's empty area never
+ *   swallows a tap on a grid seat it overlaps. `measureDropZones` reads the root's rect, so the
+ *   drop zone is unchanged.
  */
 
 import { formatCardLabel, type PlayingStateView } from '@card-battle/shared';
@@ -52,13 +56,13 @@ export interface CentralPlateProps {
   dropHighlight?: PlateDropHighlight | null;
 }
 
-const BADGE_CLASS = `inline-flex min-h-11 min-w-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-text ring-2 ring-inset ${CHROME_FOCUS_CLASS}`;
+const BADGE_CLASS = `pointer-events-auto inline-flex min-h-11 min-w-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-text ring-2 ring-inset ${CHROME_FOCUS_CLASS}`;
 /** The seats' drop rings (`opponent-seat.tsx`), rounded like the plate's landing frame. */
 const DROP_RING_CLASS = {
   valid: 'rounded-v7-chrome-sm ring-2 ring-v7-mine',
   over: 'rounded-v7-chrome-sm ring-4 ring-v7-mine',
 } as const;
-const CHIP_CLASS = 'inline-flex min-h-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-caption text-v7-text';
+const CHIP_CLASS = 'pointer-events-auto inline-flex min-h-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-caption text-v7-text';
 
 function IncomingBadge({
   entry,
@@ -173,7 +177,7 @@ export function CentralPlate({ view, model, mode, arena, onOpenCard, dropHighlig
         bottom: arena.height - (center.centerY + size.height / 2),
         minHeight: size.height,
       }}
-      className={`absolute z-20 flex flex-col items-center justify-end gap-1 ${drop !== null ? DROP_RING_CLASS[drop] : ''}`}
+      className={`pointer-events-none absolute z-20 flex flex-col items-center justify-end gap-1 ${drop !== null ? DROP_RING_CLASS[drop] : ''}`}
     >
       <div
         data-plate-landing=""
@@ -183,6 +187,7 @@ export function CentralPlate({ view, model, mode, arena, onOpenCard, dropHighlig
           <Card
             size="thumb"
             instance={landing}
+            className="pointer-events-auto"
             onActivate={() => {
               onOpenCard({ kind: 'log', cardId: landing.cardId, isUpgraded: landing.isUpgraded });
             }}

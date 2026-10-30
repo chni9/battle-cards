@@ -17,8 +17,9 @@ import type { RecurringAmount, RecurringChip } from '../../view-model/recurring-
 /**
  * The newest public play (spec v7 §6.1 item 2), else null: the last `actionPlayed` `playCard`
  * with a `cardId`, or a multi-attack's first attack (designer answer Q5). Draws, buys, sells,
- * upgrades and deactivations are not plays. The instance id is keyed by the log index, so the
- * face is a new element when a newer play lands.
+ * upgrades and deactivations are not plays. The instance id is keyed by the log index, so a newer
+ * play has a new id. The plate does not key the face on it: a remount would drop focus from a
+ * focused landing card, and the landing motion is L78's to decide.
  */
 export function lastPlayedCard(actionLog: readonly ActionLogEntryView[]): CardInstance | null {
   for (let index = actionLog.length - 1; index >= 0; index -= 1) {

@@ -946,6 +946,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     - the POV's incoming effects as ≥ 22 px badge buttons that open the queue inspect;
     - recurring chips (owner, catalog rate, "Paused" / "Ending" in words) that open the in-play
       card sheet.
+    The root is `pointer-events-none` and only those three take presses, so the plate's empty
+    area never swallows a tap on a grid seat it overlaps (final review, Minor 3).
   - **FX anchors:** plate badges, arrow labels and hits-all badges carry `data-pending-id`. The
     arena's elements come first in the DOM, so they anchor the resolution flash.
   - **Reachability:** every public pending effect stays reachable, on the plate or in a seat
