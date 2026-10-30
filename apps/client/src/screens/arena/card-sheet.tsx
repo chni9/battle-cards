@@ -26,11 +26,14 @@
  * the model's Multi-attack entry turns the sheet into a step (title, body and actions), not a fourth
  * sheet kind. Cancel returns to the card; the selection resets on every opening, so Esc or the
  * backdrop then reopen on the card step with nothing selected. Play commits one
- * `playMultipleAttacks` through `send` and picking a seat sends nothing (§6.6.4).
+ * `playMultipleAttacks` through `send` and picking a seat sends nothing (§6.6.4). Each step swap
+ * moves focus into what replaced the focused button (final review, I2): the first row toggle on
+ * entry; the Multi-attack entry on Cancel or a model reset, else the first enabled action, else
+ * the panel.
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
-import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
@@ -102,6 +105,16 @@ export interface CardSheetProps {
   collapsedBar?: ReactNode;
 }
 
+/** Where focus goes once a multi-attack step swap has unmounted the focused button (final review, I2). */
+interface StepFocus {
+  readonly target: 'rows' | 'entry';
+}
+
+/** The first enabled match: a natively disabled button cannot take focus. */
+function enabledIn(root: HTMLElement | null, selector: string): HTMLElement | null {
+  return root?.querySelector<HTMLElement>(`${selector}:not([disabled])`) ?? null;
+}
+
 /** Icons sit in a `--bg-0` well on a CTA fill (DESIGN.md › Cost glyphs); the amount is a private part of the button label. */
 function ActionCost({ amount, signed }: { amount: StructuredCost; signed: CostSign }): ReactElement {
   return (
@@ -156,10 +169,31 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       setConfirming(false);
     }
   }
-  // The card left the hand, or the hand fell below two attacks: back to the card step.
+  // Each step swap unmounts the button that had focus. Left on `body`, focus escapes the modal
+  // sheet's Tab trap into the live arena, Draw included (final review, I2): entering the step
+  // focuses the first row toggle; leaving it focuses the Multi-attack entry, else the first enabled
+  // action, else the panel. A new object per request, so the effect below runs once for each.
+  const [stepFocus, setStepFocus] = useState<StepFocus | null>(null);
+  const stepRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  // The card left the hand, or the hand fell below two attacks: back to the card step. Only a sheet
+  // that stays open moves focus; a reopening one is placed by its focus trap.
   if (multi !== null && model.multiAttack === null) {
     setMulti(null);
+    if (open && open === wasOpen) {
+      setStepFocus({ target: 'entry' });
+    }
   }
+  useLayoutEffect(() => {
+    if (stepFocus === null) {
+      return;
+    }
+    const target =
+      stepFocus.target === 'rows'
+        ? enabledIn(stepRef.current, '[data-multi-attack-row] button')
+        : (enabledIn(actionsRef.current, '[data-card-action="multi-attack"]') ?? enabledIn(actionsRef.current, 'button'));
+    (target ?? stepRef.current?.closest<HTMLElement>('[role="dialog"]'))?.focus();
+  }, [stepFocus]);
 
   const deactivate = model.actions.find((action) => action.kind === 'deactivate');
   const useAction = model.actions.find((action) => action.kind === 'use');
@@ -273,6 +307,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
             variant="secondary"
             onClick={() => {
               setMulti(EMPTY_MULTI_ATTACK_SELECTION);
+              setStepFocus({ target: 'rows' });
             }}
             {...shared}
           >
@@ -311,7 +346,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
         {...(multiStep !== null
           ? {
               actions: (
-                <div className="flex flex-wrap items-start gap-2">
+                <div ref={actionsRef} className="flex flex-wrap items-start gap-2">
                   <Button
                     variant="primary"
                     disabled={multiAction?.enabled !== true || multiPayload === null}
@@ -330,6 +365,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
                     variant="quiet"
                     onClick={() => {
                       setMulti(null);
+                      setStepFocus({ target: 'entry' });
                     }}
                   >
                     {CANCEL_ACTION_LABEL}
@@ -338,68 +374,76 @@ export function CardSheet(props: CardSheetProps): ReactElement {
               ),
             }
           : commit !== undefined && model.actions.length > 0
-            ? { actions: <div className="flex flex-wrap items-start gap-2">{model.actions.map(renderAction)}</div> }
+            ? {
+                actions: (
+                  <div ref={actionsRef} className="flex flex-wrap items-start gap-2">
+                    {model.actions.map(renderAction)}
+                  </div>
+                ),
+              }
             : {})}
       >
-        {multiStep !== null ? (
-          <MultiAttackPanel
-            view={view}
-            model={multiStep.model}
-            selection={multiStep.selection}
-            onToggle={(instanceId) => {
-              setMulti((current) => (current === null ? current : toggleMultiAttackRow(current, instanceId)));
-            }}
-            onPickTarget={(instanceId, playerId) => {
-              setMulti((current) => (current === null ? current : pickMultiAttackTarget(current, instanceId, playerId)));
-            }}
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-3 pt-2 pb-3">
-            <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
-            {card !== undefined ? (
-              <div className="w-full">
-                <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
-              </div>
-            ) : null}
-            {regeneration !== null ? (
-              <div className="w-full">
-                <RegenerationChoice
-                  tiles={regeneration.tiles}
-                  selected={quantity}
-                  onSelect={setQuantity}
-                  checkedRef={checkedRef}
-                />
-              </div>
-            ) : null}
-            {consume !== null && consumeId !== null ? (
-              <div className="w-full">
-                <ConsumeChoice
-                  options={consume.options}
-                  selectedId={consumeId}
-                  disabled={useAction?.enabled !== true}
-                  onSelect={setConsumePick}
-                />
-              </div>
-            ) : null}
-            {context?.kind === 'active' ? (
-              <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
-                <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
-                {context.count !== null ? (
-                  <Badge
-                    icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
-                    label={context.count.label}
-                    value={context.count.value}
+        <div ref={stepRef}>
+          {multiStep !== null ? (
+            <MultiAttackPanel
+              view={view}
+              model={multiStep.model}
+              selection={multiStep.selection}
+              onToggle={(instanceId) => {
+                setMulti((current) => (current === null ? current : toggleMultiAttackRow(current, instanceId)));
+              }}
+              onPickTarget={(instanceId, playerId) => {
+                setMulti((current) => (current === null ? current : pickMultiAttackTarget(current, instanceId, playerId)));
+              }}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-3 pt-2 pb-3">
+              <Card size="sheet" instance={face} {...(counter !== null ? { counter } : {})} />
+              {card !== undefined ? (
+                <div className="w-full">
+                  <CardEffectCopy card={card} isUpgraded={face.isUpgraded} />
+                </div>
+              ) : null}
+              {regeneration !== null ? (
+                <div className="w-full">
+                  <RegenerationChoice
+                    tiles={regeneration.tiles}
+                    selected={quantity}
+                    onSelect={setQuantity}
+                    checkedRef={checkedRef}
                   />
-                ) : null}
-              </div>
-            ) : null}
-            {context?.kind === 'spy-reveal' ? (
-              <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
-                {SPY_REVEAL_LABEL}
-              </p>
-            ) : null}
-          </div>
-        )}
+                </div>
+              ) : null}
+              {consume !== null && consumeId !== null ? (
+                <div className="w-full">
+                  <ConsumeChoice
+                    options={consume.options}
+                    selectedId={consumeId}
+                    disabled={useAction?.enabled !== true}
+                    onSelect={setConsumePick}
+                  />
+                </div>
+              ) : null}
+              {context?.kind === 'active' ? (
+                <div data-card-sheet-context="active" className="flex w-full flex-wrap items-center gap-2">
+                  <p className="font-v7-display text-v7-body text-v7-text">{ACTIVE_LABEL}</p>
+                  {context.count !== null ? (
+                    <Badge
+                      icon={context.count.label === CARD_LIVES_LABEL ? 'life' : 'clock'}
+                      label={context.count.label}
+                      value={context.count.value}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+              {context?.kind === 'spy-reveal' ? (
+                <p data-card-sheet-context="spy-reveal" className="w-full font-v7-body text-v7-body text-v7-text-2">
+                  {SPY_REVEAL_LABEL}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </div>
       </Sheet>
       {/*
         Cancel comes first, so it takes the initial focus: the safe answer, as in V2. The confirm

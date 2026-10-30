@@ -1036,7 +1036,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   N attacks' needs two toggled rows that each have a target; it sends one `playMultipleAttacks`
   in hand order through the commit and closes the sheet. Cancel returns to the card and drops
   the selection (Q44); after Esc, the backdrop or any close, reopening the card starts on the card
-  step with nothing selected (the reused, still-mounted sheet resets when it opens again).
+  step with nothing selected (the reused, still-mounted sheet resets when it opens again). A step
+  swap unmounts the focused button, so the sheet moves focus itself (final review, I2): to the
+  first row toggle on entry, and on Cancel or a model reset to the Multi-attack entry, else the
+  first enabled action, else the panel. Focus never falls to `body`, outside the Tab trap.
 - `screens/arena/hand-drag.ts`, `use-hand-drag.ts`, `hand-drag-layer.tsx` (L74-12, spec v7
   §6.6.3–§6.6.5): drag is a shortcut. Hand and special cards carry `touch-action: pan-x`, so a
   horizontal swipe is the hand's native scroll; a move more vertical than horizontal past 8 px

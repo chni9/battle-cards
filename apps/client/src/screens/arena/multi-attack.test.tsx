@@ -172,3 +172,36 @@ describe('Assassin multi-attack (§6.6.2)', () => {
     expect(onPlayMultipleAttacks).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('multi-attack step focus (final review, I2)', () => {
+  it('entering the step focuses the first row toggle, and Cancel focuses the Multi-attack entry', async () => {
+    const { user, props } = setup(assassinView());
+    const dialog = await openMultiAttack(user);
+    expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: BASIC }));
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(document.activeElement).toBe(within(sheet('Basic attack')).getByRole('button', { name: 'Multi-attack' }));
+    expectNoArenaIntent(props);
+  });
+
+  it('a model reset focuses the first enabled action once the entry is gone (the hand fell below two attacks)', async () => {
+    const { user, rerender, props } = setup(assassinView());
+    await openMultiAttack(user);
+    const oneAttack = makeArenaView({ overrides: { self: makeSelf({ kitId: 'assassin', points: 10, hand: [makeCard('basic-attack', { instanceId: 'atk-1' })] }) } });
+    rerender(<ArenaScreen {...props} view={oneAttack} />);
+    const card = sheet('Basic attack');
+    expect(within(card).queryByRole('button', { name: 'Multi-attack' })).toBeNull();
+    expect(document.activeElement).toBe(within(card).getByRole('button', { name: /^Use/ }));
+    expectNoArenaIntent(props);
+  });
+
+  it('a model reset focuses the panel when the card left the hand and the sheet turned read-only', async () => {
+    const { user, rerender, props } = setup(assassinView());
+    await openMultiAttack(user);
+    const withoutCard = makeArenaView({ overrides: { self: makeSelf({ kitId: 'assassin', points: 10, hand: [makeCard('strong-attack', { instanceId: 'str-1' })] }) } });
+    rerender(<ArenaScreen {...props} view={withoutCard} />);
+    const card = sheet('Basic attack');
+    expect(within(card).queryAllByRole('button', { name: /^(Use|Multi-attack)/ })).toEqual([]);
+    expect(document.activeElement).toBe(card);
+    expectNoArenaIntent(props);
+  });
+});
