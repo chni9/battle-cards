@@ -5484,3 +5484,24 @@ L59-01, L64-05.
 - **Spoken names stay V2's** (A.8 ruling 4): `Draw, plus 1 pt`, `Unspy, minus 10 pts`.
 
 ---
+
+## 2026-10-30 · [P] V7 arena: who owns which sheet (L74-05, final review ruling R3)
+
+Source: technical spec v7 §6.6.5, §6.7 (Q49); Lot 74 plan Appendix A.5; Lot 74 Part 1 final
+review (Minor 7, Minor 10, "What Part 2 will need"), controller ruling R3.
+
+- **Reducer-hosted** (`screens/arena/arena-sheets.ts`, rendered by the `ArenaScreen` host): card,
+  kit and seat. Opening one ends targeting, so targeting stays exclusive (L74-10). Part 2's Shop
+  (L74-14), Log (L74-15), Chat (L74-16) and Table rules (L74-22) join the reducer as
+  `ArenaSheet` variants, each with an `arenaSheetKey` case.
+- **Owner-local** (the owner's own `open` state): the TopBar menu and leave confirm, and the
+  Dock's Unspy picker. They do not end targeting. While one is the live sheet it takes Esc first
+  through the sheet stack, and the arena's targeting Esc stands down.
+- **Outside the stack until L75 / L76:** the V2 `HowToPlayDialog` and `FeedbackDialog` that the
+  TopBar opens. The stack does not see them, so during targeting one Esc both ends targeting and
+  closes the dialog; the L74-26 gate checks it with the other ledger-50 items.
+- Why now: four Part 2 briefs add a sheet, and the reviewer found the earlier "no later task adds
+  another host" line true only of the reducer. Writing the three sides down lets each brief pick
+  one explicitly. This wave documents the convention only; no code changes for it.
+
+---

@@ -909,8 +909,22 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `ArenaScreen` sheet host (L74-05, plan Appendix A.5): `useState` over `arena-sheets.ts`,
   `openSheet` / `closeSheet`, and one `CardSheet` / `KitSheet` / `SeatSheet` per
   `arenaSheetEntries(sheets)` entry (`open={entry.open}`, keyed by `key`) as the last children of
-  `<main>`, never inside a clickable element. It lands with the seat sheet, the first opener; no
-  later task adds another host.
+  `<main>`, never inside a clickable element. It lands with the seat sheet, the first opener, and
+  stays the only reducer host. A few sheets are owner-local instead; the next bullet says which.
+- **Who owns which sheet** (Lot 74 Part 1 final review, ruling R3; decisions.md 2026-10-30). A
+  Part 2 brief that adds a sheet picks one of these three, and says which:
+  - **Reducer-hosted** (`arena-sheets.ts`, rendered by the host above): card, kit and seat.
+    Opening one ends targeting (targeting is exclusive), and the sheet stack's Esc rule closes
+    the top one. Part 2's Shop (L74-14), Log (L74-15), Chat (L74-16) and Table rules (L74-22)
+    join the reducer as `ArenaSheet` variants, each with its `arenaSheetKey` case (the `never`
+    default makes a missing case a type error).
+  - **Owner-local** (the owner's own `open` state, a `Sheet` / `Dialog` rendered by the owner):
+    the TopBar menu and leave confirm, and the Dock's Unspy picker. Opening one does not end
+    targeting. While it is the live sheet it takes Esc first through the sheet stack, and the
+    arena's targeting Esc stands down (`liveSheetId` is not null).
+  - **Outside the stack until L75 / L76:** the V2 `HowToPlayDialog` and `FeedbackDialog` the
+    TopBar opens (V2 `Dialog`, no portal). The sheet stack does not see them, so during
+    targeting one Esc both ends targeting and closes the dialog (ledger 50, the L74-26 gate).
 - `screens/arena/threat-layer.tsx`, `central-plate.tsx`, `threat-geometry.ts`,
   `plate-model.ts` (L74-06, spec v7 §6.1 item 2, §6.5, §11): `ThreatLayer` renders
   `threats(view, subChoice)`, statically (motion is L78), as an `aria-hidden`, press-through
