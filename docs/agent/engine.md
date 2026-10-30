@@ -385,6 +385,8 @@ subject is the actor (eliminated-spectator overlay is not a matrix row).
 - ❌ A per-player sequence counter for `queuedAt`.
 - ❌ Hardcoding 25 for the life cap, or 10 for the upgrade-point cost (a future kit changes it).
 - ❌ Adding lives with `player.lives += n` and clamping by hand instead of calling `gainLives`.
+- ❌ Clearing a held fifth activation with `clearActiveSlot`: it pools a persistent card, and
+  Cancel or Drop then leaves two copies (rules spec §5 Active slots, L82-02).
 - ❌ Inventing a second pool-removal path outside `takeFromPool` — the pool is public and
   readable (rules spec §1, technical spec v4 §4.3); removals still go through one primitive.
 - ❌ Granting immunity to an absent or inactive player. They remain a valid target throughout.

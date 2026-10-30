@@ -71,6 +71,10 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         before: 'After you cancelled the fifth-active picker, the turn timer could show the wrong time.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'After the fifth-active picker, a copy of the played card could also land in the pool.',
+        after: 'Fixed some bugs.',
+      },
     ]);
   });
 

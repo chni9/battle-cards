@@ -664,16 +664,18 @@ No protocol bump. What’s new id `lot-71`. Lobby rules and chat stay out of thi
 
 ---
 
-## Lot 82 — Slot-drop cancel turn deadline (developer 2026-10-28)
+## Lot 82 — Slot-drop server fixes (developer 2026-10-28)
 
 V6-style server fix after V6 closed (`docs/backlog_v7.md` header: later V6-style lots take
 numbers from 82). No rule, value or protocol change (`PROTOCOL_VERSION` stays 45). Found by
 V7 L73 (`turnClock()` reads `turnDeadlineMs` from the view); V7 may not touch the server.
 The player-facing line appends onto the open What’s new id `lot-72-v7` (promotion freeze).
+L82-02 (developer 2026-10-30) was found while planning the V7 slot-drop sheet (L74-20).
 
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L82-01 | `handleSlotDrop` cancel sent state before `beginTurnOrAbsentAutoPlay()`, so every view carried the previous `turnDeadlineMs` (or a deadline on a bot, tutorial or disconnected turn) while `turnStarted` announced the new one, and no state followed. Reorder to `beginTurnOrAbsentAutoPlay()` → `sendStateToEveryone()` → `broadcastTurnStarted()`, like every other new-turn path. **Acceptance:** a test pins that order on the cancel path and fails before the fix; `protocol.md` rule 4 states it; `lot-72-v7` gets a `Fixed some bugs.` line; `pnpm verify` green. | S | Medium | — | Done |
+| L82-02 | A play that opened a fifth active slot took the new persistent card off through `clearActiveSlot` → `deactivatePersistentEffect`, which pooled a copy. Cancel then returned the played card to its specials and Drop re-activated it, so the card existed twice (specials and pool, or active and pool), Curse on a full victim included. The held card now leaves the slot owner without reaching the pool; the dropped card still pools. Cancel still refunds no points (designer question, `decisions.md` 2026-10-30). **Acceptance:** tests play a fifth persistent (own Points Generator, Curse on a full victim) and compare every card copy on the table while the pick is held, after Cancel and after Drop; they fail before the fix; `lot-72-v7` gets a `Fixed some bugs.` line; `pnpm verify` green. | S | **High** | L69-01 | Done |
 
 ---
 
@@ -712,8 +714,8 @@ The player-facing line appends onto the open What’s new id `lot-72-v7` (promot
 | 69 | 1 |
 | 70 | 1 |
 | 71 | 1 |
-| 82 | 1 |
-| **Total** | **169** |
+| 82 | 2 |
+| **Total** | **170** |
 
 **Characteristic V6 failures (silent):** tutorial setup leaking into Classic deals; treating a weaker answer that still lets incoming land as a bug (Lot 54 keeps the weaker attack); minting Tax+ via Indestructible `alwaysUpgraded` so the lesson is +6; `leaveGame()` on Forfeit so testers never see Game over; **Return home skipping the Game over ask**; **Start without guest Ready**; **Play again writing a second finished-game row for the same match**; join-by-code **reviving an eliminated seat**; a walk-in **seeing kits while the claim picker is still open**; feedback 200 without a row; seed in `log_tail`; inventing How to play art; an *undocumented* extra protocol bump; Feedback on Incoming or the economy bar; writing the word Feedback on the turn-strip `!`; treating Invisibility remaining turns as card-lives (`applyDamage` whitelist); logging a counter loss from `applyLifeLoss`; **naming the recovered pool card on the public action log**; **publishing a Gambler's Draw payout to opponents**; **showing older What’s new dates in the auto popup**; **a new What’s new id while the latest entry is still off `main`**; **solo Play again dealing the next match without the menu**.
 
