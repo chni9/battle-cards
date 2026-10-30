@@ -143,6 +143,9 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   // The multi-attack step (L74-11): null is the card step. Reset on every opening like the picks above
   // (Q44), because a closed sheet is reused, never remounted.
   const [multi, setMulti] = useState<MultiAttackSelection | null>(null);
+  // The Lot 69 confirm (in-play Deactivate). It lives and dies with this sheet's opening: a confirm
+  // left up when its persistent expired never pops up again by itself on a reopen (L74-09 fix).
+  const [confirming, setConfirming] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -150,6 +153,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       setQuantity(DEFAULT_REGENERATION_QUANTITY);
       setConsumePick(null);
       setMulti(null);
+      setConfirming(false);
     }
   }
   // The card left the hand, or the hand fell below two attacks: back to the card step.
@@ -157,8 +161,6 @@ export function CardSheet(props: CardSheetProps): ReactElement {
     setMulti(null);
   }
 
-  // The Lot 69 confirm (in-play Deactivate). It lives and dies with this sheet.
-  const [confirming, setConfirming] = useState(false);
   const deactivate = model.actions.find((action) => action.kind === 'deactivate');
   const useAction = model.actions.find((action) => action.kind === 'use');
   const use = model.use;
@@ -399,9 +401,14 @@ export function CardSheet(props: CardSheetProps): ReactElement {
           </div>
         )}
       </Sheet>
-      {/* Cancel comes first, so it takes the initial focus: the safe answer, as in V2. The confirm closes by itself when the action leaves the model (the persistent expired), and its Deactivate carries the live reason if the turn passes or a sub-choice opens while it is up. */}
+      {/*
+        Cancel comes first, so it takes the initial focus: the safe answer, as in V2. The confirm
+        shows only over an open sheet, and closes by itself when the action leaves the model (the
+        persistent expired). Its Deactivate carries the live reason if the turn passes or a
+        sub-choice opens while it is up.
+      */}
       <Dialog
-        open={confirming && deactivate !== undefined}
+        open={open && confirming && deactivate !== undefined}
         title={DEACTIVATE_CONFIRM_TITLE}
         onClose={() => {
           setConfirming(false);

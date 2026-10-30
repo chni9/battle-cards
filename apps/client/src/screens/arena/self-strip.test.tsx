@@ -13,6 +13,7 @@ import type {
   SubChoiceRequiredPayload,
 } from '@card-battle/shared';
 import { screen, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { visibleText } from '../../test/glyph-queries';
@@ -207,6 +208,32 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     expect(screen.queryByRole('dialog', { name: 'Are you sure?' })).toBeNull();
     expect(screen.getByRole('dialog', { name: 'Poison' })).not.toBeNull();
     expectNoArenaIntent(props);
+  });
+
+  it('closes the confirm when its persistent leaves, and never shows it again by itself (final review, Minor 4)', async () => {
+    const withPoison = viewWith({ activePersistentEffects: [POISON] });
+    const without = viewWith({});
+    const thumb = inPlayThumbs(withPoison, 'me').find((entry) => entry.instance.instanceId === 'eff-poison');
+    if (thumb === undefined) throw new Error('no Poison thumb');
+    const commit = vi.fn<ArenaCommit>();
+    const sheet = (open: boolean, view: PlayingStateView): ReactElement => (
+      <CardSheet open={open} source={{ kind: 'in-play', thumb }} view={view} ctx={LIVE} onClose={vi.fn()} commit={commit} />
+    );
+    const confirm = (): HTMLElement | null => screen.queryByRole('dialog', { name: 'Are you sure?' });
+    const { user, rerender } = renderUi(sheet(true, withPoison));
+    await user.click(within(screen.getByRole('dialog', { name: 'Poison' })).getByRole('button', { name: 'Deactivate' }));
+    expect(confirm()).not.toBeNull();
+    rerender(sheet(true, without));
+    expect(confirm()).toBeNull();
+    // The sheet closes; the same card comes back (same key, the sheet is reused): no confirm while
+    // closed, and none on the reopen until Deactivate is pressed again.
+    rerender(sheet(false, without));
+    rerender(sheet(false, withPoison));
+    expect(confirm()).toBeNull();
+    rerender(sheet(true, withPoison));
+    expect(screen.getByRole('dialog', { name: 'Poison' })).not.toBeNull();
+    expect(confirm()).toBeNull();
+    expect(commit).not.toHaveBeenCalled();
   });
 
   it('disables Deactivate with its reason while a sub-choice is open (Q40)', async () => {

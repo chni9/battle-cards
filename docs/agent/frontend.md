@@ -1006,8 +1006,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   badge (ruling 1). A thumb opens the card sheet with source `in-play`. There, Upgrade sends the
   model `instanceId` (effect id, `active-shield`, Sentence id), and Deactivate (`danger`) opens the
   Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
-  and only its Deactivate sends `deactivatePersistent {effectId}`. A walk-in gets no strip
-  (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
+  and only its Deactivate sends `deactivatePersistent {effectId}`. The confirm shows only over
+  the open sheet and resets when the sheet opens again, so a confirm left up when its persistent
+  expired never pops up by itself. A walk-in gets no strip (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
 - `screens/arena/targeting.tsx`, `targeting-model.ts`, `pre-send-choice.tsx`, `pre-send-model.ts`,
   `use-tap-guard.ts` (L74-10, spec v7 §6.6.2, §6.6.5): Use on a card routed `target` calls
   `startTargeting` (`arena-sheets.ts`), which collapses its card sheet into `TargetingBar`
