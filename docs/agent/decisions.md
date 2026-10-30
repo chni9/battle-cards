@@ -5453,3 +5453,36 @@ Locked (no dependency, lockfile, entrypoint or protocol change):
 Supersedes the "build stage" wording of the 2026-09-20 entry: the
 `NODE_ENV=development pnpm install` now runs in `deps`. Operator detail:
 `docs/agent/deploy.md` (Image build).
+
+---
+## 2026-10-30 · [P] A held fifth activation never reaches the pool (L82-02)
+
+When a play opens a fifth active slot, `reconcileSlotCapAfterPlay` took the new card off the
+slot owner through `clearActiveSlot`, the primitive a forced drop uses. For a persistent card
+that is `deactivatePersistentEffect`, which pools a fresh `pool:<effectId>:<seq>` copy. Cancel
+then returned the played card to its specials, and Drop re-activated it from
+`pendingActivation`. Either way the card existed twice. Curse on a full victim took the same
+path.
+
+Rules spec §5 (Active slots) settles both outcomes. On Cancel "the new card is not activated
+and returns to their hand or specials". On Drop the activation sticks. Neither puts the card
+in the pool. So taking the fifth card off is a hold, not a deactivation.
+
+Locked (no rule, value or protocol change; `PROTOCOL_VERSION` stays 45):
+
+- The held persistent is filtered off `activePersistentEffects` without pooling. Shield and
+  Sentence still go through `clearActiveSlot`, which never pooled them. A played Sentence is
+  pooled at play time and Cancel takes it back (`cancelRestore.pooled`), unchanged.
+- The dropped slot still goes through `clearActiveSlot`, so a dropped persistent still pools.
+- `nextPoolInstanceSeq` no longer advances for the held card, so later pool instance ids in a
+  game with a fifth-slot pick differ by one from the old code.
+
+---
+## 2026-10-30 · [UNDEFINED] Slot-drop Cancel keeps the play cost spent (L82-02)
+
+The play's points cost is paid in `playCardAction` before the fifth slot is taken off, and
+`cancelSlotDrop` refunds nothing. Measured on `dev` with 20 points: own Points Generator
+leaves 15 after the play and 15 after Cancel; Curse on a full victim leaves 12 and 12. The
+card is back in specials and the turn is not spent, so the player can play it again and pay
+twice. Rules spec §5 says the card returns but says nothing about its cost. Code left as is;
+designer question: should Cancel refund the points the play paid?
