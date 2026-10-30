@@ -136,6 +136,19 @@
   --ease-v7-entrance: var(--ease-entrance);
 }
 
+/* L80 tool mode (spec v7 §7.8): admin chrome. 1 px outline in the tool line, no hard shadow,
+   no pressed translate. --ink is only an outline and shadow colour (§5.1), so overriding it
+   here recolours outlines inside the scope and nothing else. */
+[data-mode="tool"] {
+  --ink: #7d72c4;
+  --chrome-outline-width: 1px;
+  --chrome-shadow: none;
+  --chrome-radius: 8px;
+  --chrome-radius-sm: 6px;
+  --chrome-press-y: 0px;
+  color-scheme: dark;
+}
+
 @layer components {
   /* §5.1 ground: opt-in for V7 surfaces, never on html, body or #root (§4.4). Halos are
      --glow-a / --glow-b at 30% (literal rgb for older mobile Safari). */

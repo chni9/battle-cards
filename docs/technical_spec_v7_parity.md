@@ -39,7 +39,7 @@
   - /admin is handled before any game phase and opens no Colyseus socket. /inbox redirects to /admin/feedback (Lot 61, L61-06).
   - Nickname and join code live in App state. They survive Home remounts within a tab session, for example after Leave or a kick.
   - Table and End receive their statusLabel from STATUS_LABELS[status].
-  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. home.tsx must not contain '/admin' or '/inbox'.
+  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. screens/home.admin-route.test.ts (split from it in L72-02) checks that home.tsx contains no '/admin' and no '/inbox'.
 - **Notes:** There is no router library and no deep link for a join code (for example ?code=). The document title is the static 'Card Battle'. Fonts are Outfit 400/600/700 from @fontsource. Tokens are light-only in index.css @theme; there is no dark mode. #root uses overflow hidden, so each screen must scroll inside itself (visual-viewport.test.ts).
 
 ### `global-room-connection-lifecycle` — Room connection lifecycle (before and while entering a room)
@@ -266,21 +266,21 @@
   - Feedback is wired on Home, Lobby, Table and Game over (feedback-surfaces.test.ts).
   - The table control is the `!` IconButton with aria-label Feedback, not the word (L57-01).
   - The economy bar never shows Feedback (feedback-surfaces.test.ts).
-  - There is no Inbox or Admin link on the hub (admin-route.test.ts, L47-05 / L61-06).
+  - There is no Inbox or Admin link on the hub (screens/home.admin-route.test.ts, split from admin-route.test.ts in L72-02; L47-05 / L61-06).
 - **Notes:** Home, Lobby and Table chrome belong to other auditors. Only the Feedback wiring is listed here.
 
 ### `legacy-inbox-redirect` — Legacy /inbox redirect
 
-- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/inbox.tsx`, `apps/client/src/inbox/inbox-route.test.ts`
+- **Files:** `apps/client/src/App.tsx`, `apps/client/src/inbox/inbox-route.test.ts`, `apps/client/src/admin/admin-route.test.ts`
 - **Purpose:** Old designer URL forwards to the admin feedback tab.
 - **Controls:**
   - /inbox or /inbox/* runs window.location.replace('/admin/feedback'), which adds no history entry and renders nothing.
 - **States:**
-  - screens/inbox.tsx (InboxScreen with its own password form 'Open', kind and topic filters, no triage) is dead code. Nothing imports it.
+  - The legacy screens/inbox.tsx (InboxScreen, with its own password form, kind and topic filters and no triage) was deleted in L80-09. Nothing renders at /inbox.
 - **Keep:**
   - The redirect stays (L61-06 / L61-09, locked by inbox-route.test.ts and admin-route.test.ts).
   - GET /api/inbox stays the backend for the Feedback tab.
-- **Notes:** frontend.md marks inbox.tsx as a legacy screen unused by the router.
+- **Notes:** At the 1de498d audit inbox.tsx was dead code; frontend.md now records it as gone (L80-09).
 
 ### `rules-turn-time-default-override` — Human turn time: server default until the host moves the slider (lobby and solo) · `Lot 62+`
 
@@ -456,7 +456,7 @@
   - keyboard-only: everything is reachable through buttons; inside an open Dialog Tab is trapped, so the TutorialCoach and HintOverlay buttons outside the panel cannot be reached by keyboard
 - **Keep:**
   - No global hotkeys (none exist today; adding one is a new product decision)
-  - Inputs stay at 16px or larger so mobile focus does not zoom (home, admin, feedback and chat inputs use text-base)
+  - Inputs stay at 16px or larger so mobile focus does not zoom (home, feedback and chat inputs use text-base; admin fields use text-v7-input, Lot 80)
   - Card art is not draggable
 - **Notes:** Doc drift: frontend.md says Tooltip (hover + focus, role=tooltip) is used for the reasons own cards are unavailable, but apps/client/src/design/components/tooltip.tsx is imported nowhere. Only native title attributes remain.
 
@@ -619,7 +619,7 @@
   - Widths are capped with min(…,100%) so a 390px phone never clips Cancel or Close off the right edge (L53-07)
   - Height is 100% of the overlay, never 90dvh, 100dvh or 100vw (test-locked)
   - The overlay is sized to visualViewport and uses items-start, never items-center or items-end, so a tall panel's title is not clipped (dialog-width.test.ts asserts dialog.tsx source strings)
-  - Current consumer widths: max-w-md (feedback, table chat), max-w-lg (kit inspect, opponent reveal, lobby rules panel, inbox, admin feedback, one table dialog), max-w-2xl (How to play, What's new, admin games, one table dialog), max-w-3xl (Shop, lobby kit picker, sub-choice host, Game over, one table dialog)
+  - Current consumer widths: max-w-md (feedback, table chat), max-w-lg (kit inspect, opponent reveal, lobby rules panel, admin feedback, one table dialog; the legacy inbox was deleted in L80-09), max-w-2xl (How to play, What's new, admin games, one table dialog), max-w-3xl (Shop, lobby kit picker, sub-choice host, Game over, one table dialog)
 - **Notes:** Dialog itself is inventoried in global-dialog-button-primitives. This surface covers only the width and height contract that every modal inherits. The lobby rules panel (max-w-lg) and table chat (max-w-md) consumers arrived in L70-01, after Lot 61. The tests are source-string checks on dialog.tsx and index.css, so a redesign has to update them deliberately.
 
 ### `global-tooltip-unused` — Tooltip component (unused; native title is the live tooltip mechanism)
@@ -688,8 +688,8 @@
 
 ### `global-text-input-no-ios-zoom` — Mobile text-entry font-size rule (16 px minimum, no iOS focus zoom) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/screens/inbox.tsx`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/design/components/dialog.tsx`, `apps/client/src/index.css`, `apps/client/index.html`, `apps/client/node_modules/tailwindcss/preflight.css`
-- **Purpose:** A rule that applies everywhere. Every input, textarea and select a player can focus must have a computed font-size of at least 16 px, so iOS Safari does not zoom the page on focus. Chat, nickname, game code, feedback and the admin password already meet it. Commit 6372d04 (7 Oct 2026, PR #73, after Lot 70 chat) fixed the chat input by changing its class from text-sm to text-base. Neither docs/agent/frontend.md nor docs/agent/decisions.md records the rule, and no test checks it, so a V7 restyle could bring the zoom bug back without anyone noticing.
+- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/screens/admin/admin-classes.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/design/components/dialog.tsx`, `apps/client/src/index.css`, `apps/client/index.html`, `apps/client/node_modules/tailwindcss/preflight.css`
+- **Purpose:** A rule that applies everywhere. Every input, textarea and select a player can focus must have a computed font-size of at least 16 px, so iOS Safari does not zoom the page on focus. Chat, nickname, game code, feedback and the admin password already meet it. Commit 6372d04 (7 Oct 2026, PR #73, after Lot 70 chat) fixed the chat input by changing its class from text-sm to text-base. At the 1de498d audit neither docs/agent/frontend.md nor docs/agent/decisions.md recorded the rule and no test checked it, so a V7 restyle could bring the zoom bug back without anyone noticing. For /admin, Lot 80 records it (frontend.md › Admin tool mode, ADMIN_FIELD_CLASS) and pins every admin field with a test.
 - **Controls:**
   - Nickname input, NicknameField (home.tsx:800-815), shown on the online, solo and tutorial paths (home.tsx:507, 604, 734). maxLength 24, autoComplete=nickname, placeholder 'Your name', disabled while busy. Calls onNicknameChange. 16 px through inputClassName (home.tsx:70-75, 'font-sans text-base').
   - Game code input (home.tsx:527-538). Forces uppercase in onChange, maxLength 6, autoComplete=off, spellCheck=false, placeholder 'ABCDEF', disabled while busy. Calls onJoinCodeChange; the form submits joinGame through the Join button. 16 px.
@@ -697,16 +697,16 @@
   - Table chat composer: the same ChatLog inside a Dialog opened by the Chat IconButton next to Forfeit (table-chat.tsx:38-70). The composer only renders when canWrite is true. On open, the Dialog focuses the first focusable element, which is the message input (dialog.tsx:84-101).
   - Feedback dialog Message textarea (feedback-dialog.tsx:231-240). maxLength 4000, min-h-28, placeholder from feedbackMessagePlaceholder(kind). 16 px through inputClassName (feedback-dialog.tsx:44-49).
   - Feedback dialog 'Contact (optional)' input (feedback-dialog.tsx:244-252). maxLength 200, autoComplete=email, no type=email. 16 px.
-  - Admin password input (admin-password-gate.tsx:61-69). type=password, autoComplete=current-password; Unlock is disabled while busy or empty. 16 px (admin-password-gate.tsx:11-14).
-  - Admin filters (admin-filters-form.tsx): From and To datetime-local inputs (41-58), Opponents select all/humans/withBots (63-78), Seat count input with inputMode=numeric and placeholder '2–8' (80-88), Kit select over KIT_IDS (92-105), and an 'Include tutorial matches' checkbox (108-115). The shared class is text-sm (14 px) with min-h-10 (admin-filters-form.tsx:9-13), so it BREAKS the rule today. The checkbox is not a text field.
-  - Admin overview 'Actors' select, both/humans/bots (admin-overview-modules.tsx:59-76), and the Kit wins 'Show' select, wins/winRate (admin-overview-modules.tsx:271-280). Both are text-sm, so they BREAK the rule today.
-  - Legacy /inbox password input (inbox.tsx:139-147). 16 px, but InboxScreen is not imported anywhere: app.tsx:23-26 redirects /inbox to /admin/feedback.
+  - Admin password field: the V7 TextField (type=password, autoComplete=current-password) at the 16 px input step; Unlock is off (aria-disabled, still focusable) while busy or empty. Pinned by admin-password-gate.test.tsx › 'the password field uses the 16 px input step' (L80-01).
+  - Admin filters (admin-filters-form.tsx): From and To datetime-local inputs, Opponents select all/humans/withBots, Seat count select ('Any seat count' plus 2–8, L80-03), Kit select over KIT_IDS, and an 'Include tutorial matches' checkbox. Every input and select uses ADMIN_FIELD_CLASS (admin-classes.ts): text-v7-input (16 px) at a 44 px height, so the rule holds (L80-03; it broke it at the 1de498d audit with text-sm). Pinned by admin-filters-form.test.tsx › 'every filter field uses the 16 px input step'. The checkbox is not a text field.
+  - Admin overview 'Actors' select, both/humans/bots, and the Kit wins 'Show' select, wins/winRate (admin-overview-modules.tsx). Both use ADMIN_FIELD_CLASS (16 px) since L80-05, pinned by admin-overview-modules.test.tsx › 'every select uses the 16 px input step'.
+  - Legacy /inbox password input: gone with screens/inbox.tsx (L80-09). /inbox redirects to /admin/feedback (App.tsx).
   - Lobby / solo-menu Table rules dialog: the 'Human turn seconds' range slider, 5 to 180 s, step 1 (lobby-rules-panel.tsx:92-107), plus kit toggles and All / None / Random, all of which are buttons. A range input does not trigger the iOS focus zoom, so no font rule applies. If V7 adds a typed seconds field or a kit search box to the host rules (user: custom rules, banned kits and turn-time changes stay), that field falls under this rule.
 - **States:**
   - Compliant: text-base is 1rem, which is 16 px because index.css:63-70 sets no html font-size and the browser default stays.
   - Inherit trap: Tailwind v4 preflight sets 'font: inherit' on input, select and textarea (preflight.css:243-249). The Dialog body is text-sm (dialog.tsx:221-222) and admin labels are text-xs. A V7 field with no explicit 16 px class inside those containers renders at 14 px or 12 px, and iOS zooms.
-  - Non-compliant today: admin filters form and admin overview selects (text-sm). Focusing them on an iPhone zooms the page.
-  - Disabled: home nickname and code inputs are disabled while busy (connecting or solo launch pending). Join is disabled until canJoin. Admin Unlock is disabled while busy or when the password is blank. Feedback Send is disabled until canSend, and its label reads 'Sending…' while busy.
+  - Admin: every admin input and select is 16 px since Lot 80 (ADMIN_FIELD_CLASS). At the 1de498d audit the admin filters form and the overview selects were text-sm, and focusing them on an iPhone zoomed the page.
+  - Disabled: home nickname and code inputs are disabled while busy (connecting or solo launch pending). Join is disabled until canJoin. Admin Unlock is off (aria-disabled, focusable) while busy or when the password is blank. Feedback Send is disabled until canSend, and its label reads 'Sending…' while busy.
   - Hidden: the chat composer does not render when canWrite is false (finished board or holdout; decisions.md 2026-10-06 'Room chat outlives one match'). Only the transcript shows, with 'No messages yet.' when it is empty.
   - Keyboard open: the iOS on-screen keyboard shrinks visualViewport. See the global-visual-viewport-fit surface for how the overlays follow it.
   - Not reproducible on desktop: neither Chrome DevTools device mode nor the headless 390×844 post-lot gate (frontend.md) shows the iOS focus zoom. Verify by reading the computed font-size of every focusable field, or on a real iOS Safari.
@@ -718,7 +718,7 @@
   - Chat composer: at most 200 characters, aria-label 'Message', placeholder, a Send button, submit on Enter, empty or whitespace text not sent (the server also rejects it, decisions.md 2026-10-06 Lot 70), the form resets after a send, and the transcript scrolls to the bottom when a message arrives (chat-log.tsx:24-30).
   - Field attributes stay: nickname maxLength 24 and autoComplete=nickname. Join code is uppercased with maxLength 6, autoComplete off and spellCheck off. Feedback message maxLength 4000; contact maxLength 200 with autoComplete=email. Passwords use autoComplete=current-password.
   - The placeholder colour (ink-muted/70) and the focus-visible outline on home and feedback inputs stay.
-- **Notes:** I marked this true because the chat input (Lot 70) and its zoom fix (6372d04) came after Lot 61. The 16 px class on home, feedback and admin password inputs is older. Today five copies of inputClassName exist (home.tsx:70, feedback-dialog.tsx:44, inbox.tsx:35, admin-password-gate.tsx:11, admin-filters-form.tsx:9), plus inline classes in chat-log.tsx:69 and admin-overview-modules.tsx:61-64,272. No shared Input primitive exists, so nothing enforces the rule in one place. home.tsx line numbers in this checkout are 70-75 for inputClassName, not the 51-56 the brief cites.
+- **Notes:** I marked this true because the chat input (Lot 70) and its zoom fix (6372d04) came after Lot 61. The 16 px class on home, feedback and admin password inputs is older. At the 1de498d audit five copies of inputClassName existed (home.tsx:70, feedback-dialog.tsx:44, inbox.tsx:35, admin-password-gate.tsx:11, admin-filters-form.tsx:9), plus inline classes in chat-log.tsx:69 and admin-overview-modules.tsx:61-64,272. Lot 80 removed the admin copies: inbox.tsx is deleted, the gate uses the V7 TextField, and every other admin input and select uses ADMIN_FIELD_CLASS (admin-classes.ts), each pinned by a 16 px test. Outside /admin no shared Input primitive enforces the rule in one place. home.tsx line numbers in this checkout are 70-75 for inputClassName, not the 51-56 the brief cites.
 
 ### `global-visual-viewport-fit` — Visible-viewport sizing for overlays and table (on-screen keyboard and device frame)
 
@@ -3503,7 +3503,7 @@
 
 ### `end-action-log-export` — Download action log (Excel)
 
-- **Files:** `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/screens/game-over-dialog.tsx`, `apps/client/src/screens/game-over-copy.ts`, `apps/client/src/screens/admin/admin-games-page.tsx`
+- **Files:** `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/screens/game-over-dialog.tsx`, `apps/client/src/screens/game-over-copy.ts`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`
 - **Purpose:** Builds a two-sheet .xlsx (Turns, Events) from FinishedStateView.exportLog with full, unfogged data.
 - **Controls:**
   - Game over Dialog button 'Download action log' (busy label 'Building Excel…'), rendered only when import.meta.env.DEV (showActionLogDownload)
@@ -3802,87 +3802,91 @@
 
 ### `admin-shell` — /admin SPA shell and router
 
-- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/admin/admin-app.tsx`, `apps/client/src/admin/admin-route.test.ts`
-- **Purpose:** Password-gated designer analytics. The pathname is matched before any game phase, and Colyseus is never used.
+- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/admin/admin-app.tsx`, `apps/client/src/admin/admin-routes.ts`, `apps/client/src/admin/admin-route.test.ts`, `apps/client/src/screens/admin/admin-app.test.tsx`
+- **Purpose:** Password-gated designer analytics in V7 tool mode (technical spec v7 §7.8). The pathname is matched before any game phase, and Colyseus is never used.
 - **Controls:**
-  - Browser back and forward: a popstate listener bumps routeKey and remounts the page.
-  - Routes: /admin and /admin/dashboard go to Overview. /admin/games and /admin/games/:id (detail). /admin/kits. /admin/feedback. /admin/data and /admin/data/:table. Any unknown /admin/* path falls back to Overview.
+  - Browser back and forward: a popstate listener bumps routeKey and remounts the page. When a link inside the page had focus (a Database tab pressed by keyboard), the shell focuses the link with the same href in the new page (L80-12).
+  - Routes (adminRoute in admin-routes.ts): /admin and /admin/dashboard go to Overview. /admin/games and /admin/games/:id (detail). /admin/kits. /admin/feedback. /admin/data and /admin/data/:table. One trailing '/' is ignored, and any unknown /admin/* path falls back to Overview.
+  - Quiet 'Sign out' button in the header row while unlocked (L80-02). It runs lockAdminSession(), the 401 path, so the stored key is cleared and the gate comes back empty.
 - **States:**
-  - Locked: the header plus the password gate.
-  - Unlocked: the header, nav and page. A stored password skips the gate with no probe.
-  - Any 401 runs lockAdminSession, which clears the stored password and shows the gate again (subscribeAdminUnauthorized).
-  - Header copy: eyebrow 'Designer', h1 'Insights', blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.'
+  - Locked: the header plus the password gate. Sign out is absent.
+  - Unlocked: the header, Sign out, nav and page. A stored password skips the gate with no probe.
+  - Any 401 runs lockAdminSession, which clears the stored password and shows the gate again (subscribeAdminUnauthorized). A request started before a lock can neither store the old password again nor lock the session unlocked since (session counter, L80-02).
+  - Header copy: h1 'Insights' and the blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.' The 'Designer' eyebrow above the h1 was removed (designer 2026-10-28, L80-12).
+  - Tool mode: `<main data-mode="tool">` on a flat --bg-0 ground with no .v7-ground halos; admin Dialogs carry data-mode="tool" themselves (L80-01).
 - **Keep:**
-  - /admin loads without Colyseus and is never linked from the hub (L61-06, admin-route.test.ts).
-  - Reuses sessionStorage 'card-battle.v6.inboxPassword' and the X-Inbox-Password header (admin-route.test.ts).
-  - Page state (filters, picked table) resets on each navigation because of the key remount.
-- **Notes:** There is no lock or sign-out control.
+  - /admin loads without Colyseus (L61-06, admin-route.test.ts) and is never linked from the hub (screens/home.admin-route.test.ts, L72-02).
+  - Reuses sessionStorage 'card-battle.v6.inboxPassword' and the X-Inbox-Password header (admin-app.test.tsx, fetch-admin.test.ts).
+  - Page state (filters, page numbers) resets on each navigation because of the key remount. The Database page relies on it (admin-data-page.test.tsx › 'in the real shell a tab change starts the next table at page 1, and so does coming back').
+- **Notes:** Sign out (L80-02) is the lock control; at the 1de498d audit there was none.
 
 ### `admin-password-gate` — Admin password gate
 
 - **Files:** `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/inbox/password-storage.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/server/src/http/inbox-auth.ts`
 - **Purpose:** Unlocks /admin with INBOX_PASSWORD by probing GET /api/admin/overview.
 - **Controls:**
-  - 'Password' input (type password, autoComplete current-password), prefilled from sessionStorage.
-  - Green 'Unlock' submit button (Enter submits the form). The label reads 'Checking…' while busy.
+  - 'Password' TextField (type password, autoComplete current-password, 16 px), prefilled from sessionStorage.
+  - Primary 'Unlock' submit button (Enter submits the form). The label reads 'Checking…' while busy.
 - **States:**
-  - Unlock is disabled when the trimmed input is empty or a check is running.
-  - Errors (role=alert): 401 'Wrong password' (also clears the stored password), 404 'Not found' (INBOX_PASSWORD unset), 503 'Database unavailable', and 0 / network / other including 429 'Could not load'.
+  - Unlock is off when the trimmed input is empty or a check is running: aria-disabled (focusableWhenDisabled), so it keeps focus and a press does nothing.
+  - Errors (AdminStatus, role=alert): 401 'Wrong password' (also clears the stored password), 404 'Not found' (INBOX_PASSWORD unset), 429 'Too many wrong passwords. Try again in a few minutes.' (the stored key stays; L80-02), 503 'Database unavailable', and 0 / network / other 'Could not load'.
 - **Keep:**
   - Same auth as the inbox: timing-safe compare, 404 when unset, 401 when wrong, one shared limiter of 10 wrong guesses per 10 min per IP that counts only failures (technical spec v6 §14, inbox-auth.ts).
-  - The password is stored only in sessionStorage, and only after a successful load (password-storage.ts, fetch-admin.ts).
+  - The password is stored only in sessionStorage, and only after a successful load while its session is still current (password-storage.ts, fetch-admin.ts).
 
 ### `admin-nav` — Admin nav tabs
 
-- **Files:** `apps/client/src/screens/admin/admin-nav.tsx`
-- **Purpose:** Client-side tab navigation between the admin pages.
+- **Files:** `apps/client/src/screens/admin/admin-nav.tsx`, `apps/client/src/screens/admin/admin-ui.tsx`, `apps/client/src/admin/admin-routes.ts`
+- **Purpose:** Client-side navigation between the admin pages.
 - **Controls:**
-  - Buttons 'Overview' (/admin), 'Matches' (/admin/games), 'Kits' (/admin/kits), 'Feedback' (/admin/feedback), 'Database' (/admin/data). Each does pushState then dispatches popstate.
+  - `<nav aria-label="Admin sections">` (AdminLinkBar) with links 'Overview' (/admin), 'Matches' (/admin/games), 'Kits' (/admin/kits), 'Feedback' (/admin/feedback), 'Database' (/admin/data). A plain primary click does pushState then dispatches popstate; a click with Alt, Ctrl, Meta or Shift stays the browser's (new tab or window).
 - **States:**
-  - The active tab is green and the others orange. Active means an exact path match, or a prefix match for non-root tabs (so /admin/dashboard does not light Overview).
+  - The current section has aria-current="page" and the selected look of the Tabs track (L72-08 chrome, tool mode). Current means an exact path match, or a prefix match for non-root sections (adminSectionHref), so /admin/dashboard marks none.
+  - The track wraps at 390 px.
 - **Keep:**
   - The five sections and their order stay.
   - Deep links work: /admin/games/:id and /admin/data/:table.
+- **Notes:** Links, not ARIA tabs, because each one changes the URL (L80-01). At the 1de498d audit they were buttons, the active one green.
 
 ### `admin-filters-form` — Shared admin match filters (Overview, Matches, Kits)
 
-- **Files:** `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/admin/filter-query.ts`, `apps/client/src/admin/filter-query.test.ts`, `apps/server/src/db/admin-filters.ts`
+- **Files:** `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/screens/admin/admin-filters-copy.ts`, `apps/client/src/admin/filter-query.ts`, `apps/client/src/admin/filter-query.test.ts`, `apps/server/src/db/admin-filters.ts`
 - **Purpose:** Match-level filters sent as query params to /api/admin/overview, /games and /kit-stats.
 - **Controls:**
   - 'From' and 'To' datetime-local inputs.
   - 'Opponents' select: 'All matches' (no param) / 'Humans only' (bots=humans) / 'Includes bots' (bots=withBots).
-  - 'Seat count' text input (inputMode numeric, placeholder '2–8') sent as occupancy.
+  - 'Seat count' select: 'Any seat count' (no param) plus 2 to 8 (ADMIN_OCCUPANCY_KEYS), sent as occupancy (L80-03).
   - 'Kit' select: 'Any kit' plus every KIT_IDS entry by display name, sent as kit.
   - Checkbox 'Include tutorial matches' (includeTutorial=true).
-  - Green 'Apply'. Edits refetch only on Apply.
+  - Primary 'Apply'. Edits send nothing until Apply, and Apply always starts a new request, unchanged filters included, so it is the retry after an error (each page counts Apply presses in its request key).
 - **States:**
-  - Helper copy: 'Tutorial matches are hidden unless you include them below. From and To use your local clock.'
+  - Title 'Filters' and helper copy: 'Tutorial matches are hidden unless you include them below. From and To use your local clock.'
   - Each page holds its own filter state, and it resets on navigation.
-  - The server silently ignores an invalid seat count outside 2–8 (admin-filters.ts).
+  - Every field is 16 px (ADMIN_FIELD_CLASS) at a 44 px height.
 - **Keep:**
   - From and To are converted from the local clock to UTC ISO on the client (L62-07, decisions 2026-09-19).
   - Tutorial rows are excluded by default (L61-01 / technical spec v6 §14).
   - Match mix (bots) filters games and is separate from Actors (L62-01).
-- **Notes:** The UTC conversion is L62-07 (after Lot 61).
+- **Notes:** The UTC conversion is L62-07 (after Lot 61). The select cannot send a seat count the server would ignore; at the 1de498d audit it was a free text input.
 
 ### `admin-overview-page` — Admin Overview page (dashboard)
 
-- **Files:** `apps/client/src/screens/admin/admin-dashboard-page.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/admin-xlsx.ts`
+- **Files:** `apps/client/src/screens/admin/admin-dashboard-page.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/screens/admin/use-admin-list.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/admin-xlsx.ts`
 - **Purpose:** Nine stacked metric modules from one GET /api/admin/overview payload.
 - **Controls:**
-  - Filters plus Apply (admin-filters-form).
-  - Orange 'Download Excel', shown once an overview has loaded. It runs exportOverviewXlsx and writes 'admin-overview.xlsx' with sheets General, Volume, Gameplay, Economy, Combat, Hidden, Bots and seats, Endings, Retention.
+  - Filters plus Apply (admin-filters-form). Apply always asks again, so it retries after an error even before a first load, when no Actors control exists yet.
+  - Quiet 'Download Excel', shown once an overview has loaded. It runs exportOverviewXlsx and writes 'admin-overview.xlsx' with sheets General, Volume, Gameplay, Economy, Combat, Hidden, Bots and seats, Endings, Retention.
   - The Actors select in module headers refetches immediately (see admin-actors-control).
 - **States:**
   - Intro: 'Overview' / 'Nine modules on the finished-game log. Match mix filters games; Actors filters seats inside those games.'
-  - 'Loading…' shows before the first response, never an empty 'No data' flash.
-  - An error (role=alert) keeps the previous overview on screen (no setOverview(null)).
+  - 'Loading…' (AdminStatus, role=status) shows while a request is in flight: alone before the first response, never an empty 'No data' flash, and above the last loaded modules during a refetch, which stay on screen.
+  - An error (AdminStatus, role=alert) shows above the modules and keeps the previous overview on screen; it goes as soon as the next request starts.
   - Empty data: the modules still render, with zero counts and 'No data' charts.
 - **Keep:**
   - Excel exports the loaded overview JSON, which already reflects the current filters and Actors (L62-06).
-  - A successful fetch clears the error (admin-route.test.ts).
-  - A late overview response is ignored (cancelled flag).
-- **Notes:** The page shell is Lot 61. The nine-module body and the overview Excel are Lot 62 (see the module surfaces).
+  - A successful fetch clears the error (admin-dashboard-page.test.tsx).
+  - A late overview response is ignored (useAdminList).
+- **Notes:** The page shell is Lot 61. The nine-module body and the overview Excel are Lot 62 (see the module surfaces). The refetch Loading… line is a Lot 80 change; before it a refetch showed no pending state.
 
 ### `admin-actors-control` — Overview Actors select · `Lot 62+`
 
@@ -3909,7 +3913,7 @@
   - Null values show '—'. Lengths are in minutes with one decimal ('< 0.1 min' under 3 s).
 - **Keep:**
   - Module description: 'Match-level totals. Lengths are minutes. Occupancy pie uses the same seat counts as the length-by-seats bars.'
-  - Tests lock the caption 'Ignores the opponents match-mix filter' (admin-route.test.ts).
+  - Tests lock the caption 'Ignores the opponents match-mix filter' (admin-overview-modules.test.tsx › 'keeps the UTC, non-attack and match-mix notes').
 - **Notes:** Lot 62.
 
 ### `admin-overview-volume` — Overview module: Volume · `Lot 62+`
@@ -3923,7 +3927,7 @@
   - 'Games by hour of day' bars (label 'HH:00 UTC', caption 'Hours are UTC.').
   - Empty: 'No data'.
 - **Keep:**
-  - Hours are labelled UTC (locked by admin-route.test.ts).
+  - Hours are labelled UTC (locked by admin-overview-modules.test.tsx › 'keeps the UTC, non-attack and match-mix notes').
 - **Notes:** Lot 62.
 
 ### `admin-overview-gameplay` — Overview module: Gameplay (actor-level) · `Lot 62+`
@@ -3968,7 +3972,7 @@
   - Cards: 'Lives lost (attacks)', 'Shield absorbed', 'Non-attack life loss' (hint 'Tax, Suicide, Imposition — not applyDamage').
   - 'Resolution outcomes' pie (Applied / Immune / Cancelled / Blocked), caption 'Tax, Suicide, and Imposition life loss is not attack damage.'
 - **Keep:**
-  - Never merge non-attack loss into damage (AGENTS golden rule 2; L62-04). Tests lock the caption.
+  - Never merge non-attack loss into damage (AGENTS golden rule 2; L62-04). admin-overview-modules.test.tsx locks the caption.
 - **Notes:** Lot 62.
 
 ### `admin-overview-hidden-tools` — Overview module: Hidden tools (actor-level) · `Lot 62+`
@@ -4031,74 +4035,78 @@
 
 ### `admin-chart-primitives` — Admin chart and table primitives · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/admin/admin-charts.tsx`, `apps/client/src/admin/admin-chart-math.ts`, `apps/client/src/screens/admin/admin-ui.tsx`, `apps/client/src/admin/admin-present.ts`, `apps/client/src/admin/admin-overview-labels.ts`
+- **Files:** `apps/client/src/screens/admin/admin-charts.tsx`, `apps/client/src/admin/admin-chart-math.ts`, `apps/client/src/screens/admin/admin-ui.tsx`, `apps/client/src/screens/admin/admin-classes.ts`, `apps/client/src/admin/admin-present.ts`, `apps/client/src/admin/admin-overview-labels.ts`
 - **Purpose:** Shared CSS/SVG charts and layout pieces for the admin pages.
 - **Controls:**
   - Scatter points show a native SVG <title> tooltip on hover ('{kit}: pick X%, win Y%').
 - **States:**
   - AdminHorizontalBarChart: label (truncated, title attribute), bar width relative to the max, value text (display or formatCount), optional caption. 'No data' when empty.
-  - AdminPieChart: conic-gradient donut (role=img, aria-label lists label and count) with a legend of swatch, label and count. 'No data' when empty.
-  - AdminScatterChart: 100×100 SVG, with axis text '{yLabel} × {xLabel}'.
+  - AdminPieChart: conic-gradient donut (role=img, aria-label lists label and count) with a legend of swatch, label and count. 'No data' when empty; an all-zero pie paints the empty ring (ADMIN_CHART_EMPTY_COLOR, --panel-2).
+  - AdminScatterChart: 100×100 SVG (role=img, aria-label '{yLabel} versus {xLabel}'), with axis text '{yLabel} × {xLabel}'.
   - AdminBucketChart is a horizontal bar chart.
-  - AdminMetricCard (label, value, optional hint) in AdminMetricGrid. AdminDataTable with an empty message. AdminPageIntro (title plus description).
+  - AdminMetricCard (label, value, optional hint) in AdminMetricGrid. AdminDataTable (required label naming a horizontal ScrollArea, empty message, optional row-open button), AdminPager, AdminStatus, AdminLinkBar, AdminToggleChip and AdminPageIntro (title plus description), all in admin-ui.tsx; class strings in admin-classes.ts.
   - Formatters: null or non-finite values show '—'; percent has one decimal; think time shows 'X.X s'.
 - **Keep:**
-  - No chart npm package; CSS/SVG and tokens only (L62-05 / technical spec v6 §15).
-  - Chart palette: cta-purple, cta-orange, resource life / shield / upgrade / point, seat-0, seat-6 (admin-chart-math.ts).
-- **Notes:** Charts are Lot 62. MetricCard, DataTable and PageIntro are Lot 61.
+  - No chart npm package; CSS/SVG and tokens only (L62-05 / technical spec v6 §15; admin-charts-dependencies.test.ts).
+  - Chart palette: ADMIN_CHART_COLORS, eight hex from V7_COLORS in the order cta-2, point, life, upgrade, shield, threat-other, text-2, danger; single-series bars and dots in cta-2 (L80-04, admin-chart-math.ts).
+- **Notes:** Charts are Lot 62. MetricCard, DataTable and PageIntro are Lot 61. The V7 palette replaced the V2 one (cta-purple, cta-orange, resource and seat colors) in L80-04.
 
 ### `admin-matches-page` — Admin Matches (games list)
 
-- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/export/admin-xlsx.ts`
+- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/use-admin-list.ts`, `apps/client/src/admin/admin-paging.ts`, `apps/client/src/export/admin-xlsx.ts`
 - **Purpose:** Finished games from the log. Select a row to open its detail.
 - **Controls:**
-  - Filters plus Apply.
-  - Orange 'Download spreadsheet' (disabled when there are no items). It runs exportGamesListXlsx and writes 'admin-games.xlsx' from the loaded rows only.
-  - Click a table row to open the detail and replaceState to /admin/games/:id.
+  - Filters plus Apply. Apply goes back to page 1 and always asks again (a retry needs no filter edit).
+  - Quiet 'Download spreadsheet (this page)' (off until a page with rows loads). It runs exportGamesListXlsx and writes 'admin-games.xlsx' from the loaded page's rows only.
+  - Each row's Room code cell is a button named 'Open match {roomId}' (Tab, Enter, Space); the whole row also takes the mouse click. Either opens the detail and replaceStates to /admin/games/:id (finished_games.id).
+  - AdminPager under the table: quiet 'Previous', 'Page N of M' (aria-live polite), quiet 'Next', in `<nav aria-label="Pages">`. Each request sends page and no pageSize (server default 50).
 - **States:**
   - Intro: 'Matches' / 'Finished games from the log. Select a row for seats, eliminations, and export.'
+  - 'Loading…' (role=status) while the page for the current request is not loaded; the previous rows are gone and the pager is off.
   - 'Showing X of Y' once loaded.
-  - List error (role=alert). Detail error (role=alert) at page level.
-  - Empty: 'No finished matches match these filters.'
-  - Only page 1 is fetched (server default 50 rows). There are no pager controls.
-  - Columns: Ended, Room code, Players, Winner, Winning kit, Length, Turns, Notes ('Bots' · 'Tutorial' or '—'). Horizontal scroll below 48rem.
+  - List error (role=alert) with the rows gone. Detail Loading… and detail error (role=alert) at page level.
+  - Empty: 'No finished matches match these filters.' Zero rows read 'Page 1 of 1'.
+  - Pager: Previous off on page 1, Next off on the last page, both off while a page loads. Off is aria-disabled, so a keyboard press keeps focus. While a page loads the label keeps the last count known for the same filters (never below the page itself); new filters read 'Page 1 of 1' until their first page loads.
+  - Columns: Room code, Ended, Players, Winner, Winning kit, Length, Turns, Notes ('Bots' · 'Tutorial' or '—'). The table scrolls sideways inside a labelled ScrollArea ('Matches'), never the page.
 - **Keep:**
-  - Rows are keyed by finished_games.id, not roomId (Play again reuses room_id; Lot 61 Bugbot, admin-route.test.ts).
+  - Rows are keyed by finished_games.id, not roomId (Play again reuses room_id; Lot 61 Bugbot, admin-games-page.test.tsx).
   - Late responses are ignored, and the previous page clears on filter switch or error (L62-07).
-- **Notes:** Rows are clickable <tr> elements with no keyboard focus or role.
+- **Notes:** Paging and keyboard rows are L80-06. At the 1de498d audit only page 1 was fetched and rows were clickable <tr> elements with no keyboard focus.
 
 ### `admin-match-detail-dialog` — Admin match detail dialog
 
-- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/export/build-action-log-xlsx.ts`, `packages/shared/src/admin/api.ts`
+- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`, `apps/client/src/export/build-action-log-xlsx.ts`, `packages/shared/src/admin/api.ts`
 - **Purpose:** Seats, elimination order, seed and action-log export for one finished match.
 - **Controls:**
-  - Orange 'Download action log', shown when detail.exportLog exists. It runs buildActionLogWorkbook and writes '{roomId}.xlsx'.
-  - Orange 'Close', Esc or overlay call closeDetail, which runs replaceState to /admin/games and ignores the URL detail id.
+  - Quiet 'Download action log', shown when detail.exportLog exists. It runs buildActionLogWorkbook and writes '{roomId}.xlsx'. It reads 'Downloading…' while the workbook builds (aria-disabled, so focus stays) and builds once per press.
+  - Quiet 'Close', Esc or overlay call closeDetail, which runs replaceState to /admin/games and ignores the URL detail id. Focus returns to the row's Open match button.
 - **States:**
-  - Title 'Match {roomId}'. The dialog opens only once the detail has loaded; there is no loading indicator.
-  - Fields: Ended, Length, Turns, Winner ('Unknown' when null).
-  - 'Seats' table: Player, Kit, Lives, Role. Role precedence is Winner, then Bot, then Eliminated, then Player.
-  - 'Elimination order' ordered list '{nick} — {reason}', shown only when there are eliminations.
+  - Title 'Match {roomId}'. While the detail loads, the page shows 'Loading…' (role=status) and the dialog opens once it has loaded.
+  - Facts: Started, Ended, Mode ('Classic', an unknown mode raw), Length, Turns, Winner ('Unknown' when null), Notes ('Bots' · 'Tutorial' or '—').
+  - 'Seats' table: Player ('—' when missing), Kit, Lives, Points, Role. Role precedence is Winner, then Bot, then Eliminated, then Player.
+  - 'Elimination order' ordered list '{nick} — {reason}', plus ' · by {nick}' when the eliminator resolves to a seat; shown only when there are eliminations.
   - 'Replay seed (designer only): {seed}' in monospace.
-  - A deep link to /admin/games/:id opens it directly. A 404 or 503 shows a page-level error and the dialog stays closed.
+  - A build failure shows 'Could not build the action log.' (role=alert) in the body and re-enables the button.
+  - A deep link to /admin/games/:id opens it directly. A 404 or 503 shows a page-level error and the dialog stays closed; picking the same row again asks again.
 - **Keep:**
   - Detail is GET /api/admin/games/:id on finished_games.id (L61-04 / Bugbot).
   - The seed may appear only here, on password-gated admin (L61-01 seed exception).
-  - Late detail responses are ignored (admin-route.test.ts).
-- **Notes:** Not shown although present in AdminGameDetail: seat points, startedAt, mode, hasBots / isTutorial flags, and the eliminator. Lot 70 rule columns and chat are not in the API type. The action-log download has no busy or error state.
+  - Late detail responses are ignored (admin-games-page.test.tsx).
+- **Notes:** The extra facts, Points, the eliminator and the loading and error states are L80-07. Lot 70 rule columns and chat are still not in the API type (see admin-match-detail-rules-and-chat).
 
 ### `admin-kits-page` — Admin Kits (pick / win rates)
 
-- **Files:** `apps/client/src/screens/admin/admin-kits-page.tsx`, `apps/client/src/export/admin-xlsx.ts`
+- **Files:** `apps/client/src/screens/admin/admin-kits-page.tsx`, `apps/client/src/screens/admin/use-admin-list.ts`, `apps/client/src/export/admin-xlsx.ts`
 - **Purpose:** Kit pick and win rates for the filtered match set.
 - **Controls:**
-  - Filters plus Apply.
-  - Orange 'Download spreadsheet' (disabled when there are no rows). It runs exportKitStatsXlsx and writes 'admin-kit-stats.xlsx' with raw kit ids.
+  - Filters plus Apply (Apply always asks again, so it retries after an error with no filter edit).
+  - Quiet 'Download spreadsheet' (off until a non-empty answer loads). It runs exportKitStatsXlsx and writes 'admin-kit-stats.xlsx' with raw kit ids.
 - **States:**
   - Intro: 'Kits' / 'Pick and win rates for the filtered match set. Tutorial matches stay excluded unless you change filters.'
-  - 'Based on N matches'.
-  - Table: Kit, Times picked, Wins, Share of picks, Win rate.
-  - Empty: 'No kit data for these filters.' Error (role=alert).
+  - 'Loading…' (role=status) until the stats for the current request load, with no table, no sample line and no empty copy.
+  - 'Based on N matches' for a loaded answer.
+  - Table ('Kit stats'): Kit, Times picked, Wins, Share of picks, Win rate.
+  - Empty: 'No kit data for these filters.' Error (role=alert) with the previous table gone, never the empty copy.
 - **Keep:**
   - Kit rates respect the tutorial filter (L61-04).
   - Late responses are ignored (L62-07).
@@ -4108,33 +4116,34 @@
 - **Files:** `apps/client/src/screens/admin/admin-feedback-page.tsx`, `apps/client/src/inbox/fetch-inbox.ts`, `packages/shared/src/feedback/report.ts`
 - **Purpose:** Read tester reports from GET /api/inbox, filtered on the client.
 - **Controls:**
-  - Kind filter buttons: 'All' / 'Bug' / 'Confusion' / 'Idea' (the selected one is green).
-  - Area filter buttons: 'Any area' plus UI / Gameplay / Card / Shop / Bot / Tutorial / Other.
-  - Click a row to open the report dialog.
+  - Kind filter chips (`role="group"` 'Kind'): 'All' / 'Bug' / 'Confusion' / 'Idea'. AdminToggleChip with aria-pressed; the pressed one takes the --cta-2 fill.
+  - Area filter chips (group 'Area'): 'Any area' plus UI / Gameplay / Card / Shop / Bot / Tutorial / Other.
+  - Click a row's text button to open the report dialog.
   - Status filter and per-row status marks: see admin-feedback-triage.
 - **States:**
-  - Rows load once on mount. There is no refresh button and no loading indicator.
-  - An error shows as a plain red line (no role=alert). It covers load errors and status save errors.
-  - No empty-state message when the filters match nothing; an empty list renders.
-  - Row meta: '{createdAt raw ISO} · {Kind} · {topics} · {gameCode} · {nickname}', then a message preview truncated to 96 characters.
-  - There is no AdminPageIntro on this page, unlike the other pages.
+  - Intro (AdminPageIntro): 'Feedback' / 'Tester reports from the game. Filter them, then mark each one pending, done or won't do.'
+  - Rows load once on mount, with 'Loading…' (role=status) until the answer. There is no refresh button.
+  - Errors are AdminStatus alerts (role=alert): a load error, or a failed status save. A save that fails from a mark in the open report shows inside the report dialog; a row mark's failure shows on the page.
+  - Empty: 'No reports match these filters.' while the filters stay on screen.
+  - Row meta: '{createdAt via formatDateTime} · {Kind} · {topics} · {gameCode} · {nickname}', then a message preview truncated to 96 characters.
 - **Keep:**
   - Uses GET /api/inbox unchanged (L61-09; inbox-route.test.ts).
   - Kind and area filters stay on the client (L47-05 / L47-06).
   - No edit or delete (technical spec v6 §7.3).
+- **Notes:** The intro, the states and the chips are L80-09. At the 1de498d audit the page had no intro, no loading line, a plain red error line and raw ISO dates.
 
 ### `admin-feedback-triage` — Feedback triage status (filter + marks) · `Lot 62+`
 
 - **Files:** `apps/client/src/screens/admin/admin-feedback-page.tsx`, `apps/client/src/inbox/fetch-inbox.ts`, `packages/shared/src/feedback/report.ts`
 - **Purpose:** Designer triage of each report as Pending, Done or Eliminated (won't do).
 - **Controls:**
-  - Status filter: an 'Any status' pill plus three round icon buttons (clock = Pending, check = Done, cross = Eliminated), each with aria-label, title and aria-pressed. Default is Pending.
-  - Per-row status marks: three icon buttons. A click PATCHes /api/inbox/:id {status} without opening the report (stopPropagation). Clicking the current status does nothing.
+  - Status filter (group 'Status'): an 'Any status' chip plus three icon-only AdminToggleChips (clock = Pending, check = Done, cross = Eliminated), each with aria-label, title and aria-pressed. Default is Pending.
+  - Per-row status marks: three icon buttons beside the row's text button (not inside it). A click PATCHes /api/inbox/:id {status} without opening the report. Clicking the current status does nothing.
   - The same marks appear inside the report dialog.
 - **States:**
-  - The row has a left stripe in the status color (orange pending, green done, red eliminated).
-  - Every mark on the page is disabled (opacity 50%) while any save is running (global savingStatus).
-  - The row updates only after the server confirms success. A 401 locks the admin session.
+  - The row starts with a round status badge in the status color (orange pending, green done, red eliminated) holding the clock, check or cross glyph, named by the status (L80-09; a side stripe is the Impeccable `side-tab` defect).
+  - Every mark on the page is off (aria-disabled, opacity 50%) while any save is running (global savingStatus). It stays focusable and swallows the press, so a mark pressed by keyboard keeps focus, in a row or in the report dialog.
+  - The row updates only after the server confirms success. A 401 locks the admin session; a 429 shows the rate-limit copy.
 - **Keep:**
   - Status values are pending / done / eliminated, with default pending, and pre-migration rows count as pending (L68-01, report.ts).
   - Marks are icons, not word buttons (frontend.md Feedback tab).
@@ -4147,50 +4156,56 @@
 - **Purpose:** Full report with everything the designer needs for triage.
 - **Controls:**
   - Status marks (triage).
-  - Orange 'Close', Esc or overlay.
+  - Quiet 'Close', Esc or overlay.
 - **States:**
-  - Title is the kind label (or 'Report').
-  - Shows createdAt (raw), 'About: {topics}' when present, the full message (pre-wrap), 'Contact', 'Nickname', 'Code', 'Screen', 'Play', 'Protocol' and 'User agent' (each '—' when null), and logTail as pretty JSON in a <pre>.
+  - V7 Dialog in tool mode (width lg, data-mode="tool"). Title is the kind label (or 'Report').
+  - Shows createdAt (formatDateTime), the status marks, 'About: {topics}' when present, the full message (pre-wrap), 'Contact', 'Nickname', 'Code', 'Screen', 'Play', 'Protocol' and 'User agent' (each '—' when null), and logTail as pretty JSON in a <pre> inside a ScrollArea named 'Log tail'. A null logTail reads 'Log tail: —' with no region (L80-12).
+  - A failed save from a mark in this report shows its alert (role=alert) inside the dialog, not behind the modal.
 - **Keep:**
-  - The detail keeps contact, nickname, game code, screen, playKind, protocol, user agent and log tail (inbox-route.test.ts locks each selected.* field).
+  - The detail keeps contact, nickname, game code, screen, playKind, protocol, user agent and log tail (admin-feedback-page.test.tsx › 'the report shows every kept field with — when null, in tool mode').
   - logTail is already seed-stripped by the server (strip-seed).
 - **Notes:** Protocol stays visible here (designer data), separate from the player-facing removal.
 
 ### `admin-database-page` — Admin Database (read-only table browser)
 
-- **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`
+- **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/screens/admin/use-admin-list.ts`, `apps/client/src/admin/admin-paging.ts`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`
 - **Purpose:** Read-only grid of the allowlisted log tables.
 - **Controls:**
-  - Table buttons: 'Finished games' / 'Players' / 'Eliminations' / 'Feedback'. Each does pushState to /admin/data/{name} then popstate. The active one is green.
-  - Orange 'Download spreadsheet (this page)' (disabled until a page loads). It runs exportTablePageXlsx and writes 'admin-{table}.xlsx'.
+  - Table links in `<nav aria-label="Database tables">` (AdminLinkBar): 'Finished games' / 'Players' / 'Eliminations' / 'Feedback' / 'Chat messages' (fifth, L80-11). Each links to /admin/data/{name}; a plain click does pushState then popstate, and the shell remounts the page.
+  - Quiet 'Download spreadsheet (this page)' (off until a page loads). It runs exportTablePageXlsx and writes 'admin-{table}.xlsx'.
+  - AdminPager: 'Previous', 'Page N of M', 'Next'. Each request sends page and pageSize=50 (L80-10).
 - **States:**
   - Intro: 'Database' / 'Read-only view of log tables. Large fields are shortened in the grid.'
-  - 'N rows · page 1'. Only page 1, 50 rows, is fetched, with no pager.
+  - The link of the routed table has aria-current="page". A table outside the five (a deep link to /admin/data/nope) marks none, and the server's 404 shows 'Not found'.
+  - 'Loading…' (role=status) while the page for the current request loads, with no grid and the pager off.
+  - '{N} rows · page {N}' for a loaded page. The pager label keeps the last count known for the table while the next page loads.
   - Headers are snake_case converted to Title Case. Cells are truncated at 16rem. Null shows '—', objects are JSON-stringified, and truncated JSONB shows 'Preview only (N bytes)'.
-  - Error (role=alert). Late responses are ignored.
+  - Empty: 'No rows in this table.' and 'Page 1 of 1'.
+  - Error (role=alert) with the rows gone. Late responses are ignored.
 - **Keep:**
-  - Four allowlisted tables only. No SQL box (L61-05 / technical spec v6 §14).
+  - Five allowlisted tables only: Finished games, Players, Eliminations, Feedback and Chat messages (L80-11). No SQL box (L61-05 / technical spec v6 §14).
   - Late responses are ignored (L62-07).
-- **Notes:** game_chat_messages (Lot 70) is not in the allowlist. finished_games now carries the Lot 70 rule columns, which show up as plain columns here.
+- **Notes:** finished_games now carries the Lot 70 rule columns, which show up as plain columns here. Known issue: the server orders game_chat_messages by game_id only, so Chat messages pages can repeat or skip a line (decisions.md 2026-10-28 'Chat messages pages can repeat or skip lines'). At the 1de498d audit only page 1 was fetched and the tabs were buttons, the active one green.
 
-### `admin-database-chat-transcripts` — Database: chat transcripts table (game_chat_messages), reachable by URL only · `Lot 62+`
+### `admin-database-chat-transcripts` — Database: chat transcripts table (game_chat_messages), the Chat messages tab · `Lot 62+`
 
 - **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/screens/admin/admin-app.tsx`, `apps/client/src/screens/admin/admin-nav.tsx`, `apps/client/src/admin/admin-present.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`, `apps/server/src/http/admin-http.ts`, `apps/server/src/db/write-finished-game.ts`, `apps/server/db/migrations/011_lobby_rules_and_chat.sql`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/admin/api.ts`
-- **Purpose:** Read-only grid of the persisted table chat. Since Lot 70 every finished-game write inserts one game_chat_messages row per message, with game_id, order_index, sender_id, nickname, role, body and round_index (write-finished-game.ts:150-165, migration 011). The server allowlist has included the table since Lot 70 (admin-table-browser.ts:8-14, commit 490712b). The client never got a tab for it: TABLES in admin-data-page.tsx:10-15 still lists only the four Lot 61 tables. The only way to the chat log in /admin is typing /admin/data/game_chat_messages.
+- **Purpose:** Read-only grid of the persisted table chat. Since Lot 70 every finished-game write inserts one game_chat_messages row per message, with game_id, order_index, sender_id, nickname, role, body and round_index (write-finished-game.ts:150-165, migration 011). The server allowlist has included the table since Lot 70 (admin-table-browser.ts:8-14, commit 490712b). Since L80-11 the Database page has a Chat messages tab for it, fifth after Feedback (TABLES in admin-data-page.tsx).
 - **Controls:**
-  - Direct URL /admin/data/game_chat_messages. adminRoute() slices the table name from the path (admin-app.tsx:38-40) and AdminDataPage calls fetchAdminTable(password, 'game_chat_messages', {page:'1', pageSize:'50'}), which sends GET /api/admin/tables/game_chat_messages with X-Inbox-Password (fetch-admin.ts:132-137). There is no in-app control that leads here.
-  - Table tab buttons: Finished games, Players, Eliminations, Feedback (admin-data-page.tsx:60-76). Each calls setPickedTable, pushState /admin/data/{name} and dispatches popstate. There is no Chat tab.
+  - Direct URL /admin/data/game_chat_messages. adminRoute() (admin-routes.ts) slices the table name from the path and AdminDataPage calls fetchAdminTable(password, 'game_chat_messages', {page: String(N), pageSize:'50'}), which sends GET /api/admin/tables/game_chat_messages with X-Inbox-Password. The Chat messages tab links here (L80-11).
+  - Table tabs: Finished games, Players, Eliminations, Feedback, Chat messages (admin-data-page.tsx, L80-11). Each links to /admin/data/{name}.
   - 'Download spreadsheet (this page)' calls exportTablePageXlsx(visiblePage) and saves admin-game_chat_messages.xlsx with one sheet named game_chat_messages. Arrays and objects are JSON-stringified (admin-xlsx.ts:84-96, 259-270). It is disabled while visiblePage is null.
-  - The 'Database' nav button goes to /admin/data, which always opens on finished_games, never chat (admin-nav.tsx:10, admin-data-page.tsx:24).
-  - Not present: pagination (page is hard-coded to 1), sort, search, per-game filter, cell expand or tooltip.
+  - The 'Database' nav link goes to /admin/data, which always opens on finished_games, never chat (DEFAULT_TABLE in admin-data-page.tsx).
+  - AdminPager pages the table 50 rows at a time (L80-10).
+  - Not present: sort, search, per-game filter, cell expand or tooltip.
 - **States:**
-  - Chat table active: no tab is highlighted, because the green variant applies only to the four TABLES entries (admin-data-page.tsx:66).
-  - Display name: tableDisplayName has no game_chat_messages entry and would fall back to the raw id (admin-present.ts:74-82). Column headers come from columnDisplayName: Game Id, Order Index, Sender Id, Nickname, Role, Body, Round Index.
-  - Loading or switching: visiblePage is null (loadedTable !== activeTable), so the grid is empty, there is no row-count line, Download is disabled, and no 'Loading…' text shows.
-  - Empty (0 rows, for example before any post-011 game): a bare header row plus '0 rows · page 1'. There is no empty-state message.
-  - Error: a role=alert line from adminErrorCopy: 'Wrong password' (401), 'Not found' (404), 'Database unavailable' (503), or 'Could not load' (network / status 0). A 401 also clears the stored password and reopens AdminPasswordGate through subscribeAdminUnauthorized (admin-app.tsx:61-65).
-  - Row order: the table has no created_at and no tableOrderBy branch, so the server falls back to ORDER BY 1, which sorts by the game_id uuid (admin-table-browser.ts:108-122). Rows are not chronological, and order_index order within a game is not guaranteed.
-  - Cap: only the first 50 rows are fetched. The line shows the total ('N rows · page 1'), but the remaining rows cannot be reached in the UI.
+  - Chat table active: the Chat messages tab is the current one (aria-current), as for the other four tables.
+  - Display name: tableDisplayName maps game_chat_messages to 'Chat messages' (admin-present.ts, L80-11). Column headers come from columnDisplayName: Game Id, Order Index, Sender Id, Nickname, Role, Body, Round Index.
+  - Loading or switching: 'Loading…' (role=status) shows, with no grid, no row-count line, Download off and the pager off. A tab change remounts the page, so it starts at page 1.
+  - Empty (0 rows, for example before any post-011 game): 'No rows in this table.', '0 rows · page 1' and 'Page 1 of 1'.
+  - Error: a role=alert line from adminErrorCopy: 'Wrong password' (401), 'Not found' (404), 'Database unavailable' (503), or 'Could not load' (network / status 0). A 401 also clears the stored password and reopens AdminPasswordGate through subscribeAdminUnauthorized (admin-app.tsx).
+  - Row order: the table has no created_at and no tableOrderBy branch, so the server falls back to ORDER BY 1, which sorts by the game_id uuid (admin-table-browser.ts tableOrderBy). Rows are not chronological, and order_index order within a game is not guaranteed.
+  - Paging hazard (known issue): because game_id is not unique, LIMIT / OFFSET pages are not stable, so a line can show on two pages or on none. The one-line server fix is game_id DESC, order_index ASC in tableOrderBy (decisions.md 2026-10-28; out of scope for the client-only Lot 80).
   - Body (1–200 chars) is cut by max-w-[16rem] truncate with no title attribute. The full text is visible only in the spreadsheet.
   - Duplication: each finished game stores the room transcript as of that game's end, so after Play again the same line appears under several game_ids (decisions.md 2026-10-06 'Room chat outlives one match'; db.md:39).
   - round_index 0 means a lobby line ('Lobby' in-game via chatRoundLabel). The grid shows a raw 0.
@@ -4200,21 +4215,22 @@
   - game_chat_messages is in the admin allowlist (Lot 70, db.md:118). Chat rows are not overview metrics (db.md:118-119), so a redesign must not fold chat into Overview charts.
   - The role column must stay visible so living vs eliminated/spectator lines can be told apart. Role is frozen at send time (decisions.md 2026-10-06 Lot 70 'Table chat').
   - Excel export of the loaded page JSON only, client-side exceljs (L61-08 / L61-10).
-  - Stale-fetch ignore, and the previous page clears on table switch or error (L62-07; admin-route.test.ts:50-61 asserts 'let cancelled', 'loadedTable === activeTable', 'setPage(null)').
-  - A 401 re-opens the password gate. /admin is not linked from the hub (L61-06, frontend.md:97-118).
+  - Stale-fetch ignore, and the previous page clears on table switch or error (L62-07; admin-data-page.test.tsx › 'a late response for the previous table is ignored' and 'a failed page shows an alert and clears the previous rows').
+  - A 401 re-opens the password gate. /admin is not linked from the hub (L61-06, frontend.md › Admin tool mode).
   - Nothing is persisted if the room dies before the game finishes. A redesign must not imply a live or in-progress chat log (decisions.md Lot 70).
-- **Notes:** The gap is real. Commit 490712b (L70) touched admin-table-browser.ts and its test but not admin-data-page.tsx or admin-present.ts. L61-10's acceptance line still says 'four tables only' (backlog_v6.md:513), so the client matches the Lot 61 acceptance and the server matches Lot 70. Adding a tab is presentation-only: the server endpoint already serves the table. Fixing the ORDER BY 1 ordering, or adding a per-game filter, would need a server change.
+- **Notes:** The gap was real until L80-11. Commit 490712b (L70) touched admin-table-browser.ts and its test but not admin-data-page.tsx or admin-present.ts, and L61-10's acceptance line said 'four tables only' (backlog_v6.md:513). L80-11 added the tab: it is presentation-only, since the server endpoint already served the table. Fixing the ORDER BY 1 ordering, or adding a per-game filter, would need a server change, so rows keep the server order (decisions.md 2026-10-28 'Admin Database lists five tables').
 
 ### `admin-database-finished-games-rule-columns` — Database: Finished games tab, raw Lot 70 house-rule columns · `Lot 62+`
 
 - **Files:** `apps/client/src/screens/admin/admin-data-page.tsx`, `apps/client/src/admin/admin-present.ts`, `apps/client/src/export/admin-xlsx.ts`, `apps/server/src/db/admin-table-browser.ts`, `apps/server/src/db/write-finished-game.ts`, `apps/server/db/migrations/011_lobby_rules_and_chat.sql`, `apps/server/src/rooms/game-room.ts`, `packages/shared/src/protocol/lobby-rules.ts`
 - **Purpose:** Today this is the only place in /admin where the persisted lobby rules can be seen. The finished_games tab runs SELECT *, so the three Lot 70 columns appear as raw grid columns: excluded_kit_ids text[], random_only boolean, turn_time_seconds integer (write-finished-game.ts:64-86, migration 011:5-21).
 - **Controls:**
-  - 'Finished games' tab button. This is the default when the route has no table (admin-data-page.tsx:24).
+  - 'Finished games' tab link. This is the default when the route has no table (DEFAULT_TABLE in admin-data-page.tsx).
   - 'Download spreadsheet (this page)' writes admin-finished_games.xlsx. excluded_kit_ids is written as a JSON array string, random_only as true/false, and turn_time_seconds as a number. A null is written as an empty cell.
-  - Not present: any formatting of these columns, kit-name mapping, a filter, or a pager past page 1 (50 rows).
+  - AdminPager pages the rows 50 at a time (L80-10).
+  - Not present: any formatting of these columns, kit-name mapping, or a filter.
 - **States:**
-  - Excluded Kit Ids: node-postgres returns text[] as a JS array, which formatCell JSON-stringifies, for example ["ghost","gambler"]. Raw kit ids, not kit names (admin-data-page.tsx:135-150).
+  - Excluded Kit Ids: node-postgres returns text[] as a JS array, which formatCell JSON-stringifies, for example ["ghost","gambler"]. Raw kit ids, not kit names (formatCell in admin-data-page.tsx).
   - Empty array '[]' means every Classic kit was allowed.
   - Random Only shows 'true' or 'false'.
   - Turn Time Seconds is the effective seconds the room used (viewLobbyRules rounds humanTurnDurationMs; game-room.ts:1298-1311). It is at least 5, and above 180 when the TURN_DURATION_MS env override is longer (decisions.md Lot 70).
@@ -4231,23 +4247,23 @@
 
 ### `admin-match-detail-rules-and-chat` — Matches: match detail dialog is missing the persisted house rules and the chat transcript · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/server/src/db/admin-game-detail.ts`, `packages/shared/src/admin/api.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/db/write-finished-game.ts`
-- **Purpose:** Per-match designer view, keyed by finished_games.id. It shows Ended, Length, Turns, Winner, a Seats table (Player / Kit / Lives / Role), Elimination order and the Replay seed (admin-games-page.tsx:219-327). loadAdminGameDetail selects neither the three rule columns nor game_chat_messages (admin-game-detail.ts:35-38), and AdminGameDetail has no rules or chat fields (api.ts:336-354). So the Lot 70 data stored for each match cannot be seen in the match's own detail.
+- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`, `apps/server/src/db/admin-game-detail.ts`, `packages/shared/src/admin/api.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/db/write-finished-game.ts`
+- **Purpose:** Per-match designer view, keyed by finished_games.id. It shows Started, Ended, Mode, Length, Turns, Winner and Notes, a Seats table (Player / Kit / Lives / Points / Role), Elimination order and the Replay seed (admin-game-detail-dialog.tsx, L80-07). loadAdminGameDetail selects neither the three rule columns nor game_chat_messages (admin-game-detail.ts:35-38), and AdminGameDetail has no rules or chat fields (api.ts:336-354). So the Lot 70 data stored for each match cannot be seen in the match's own detail.
 - **Controls:**
-  - Row click in the Matches table calls openDetail(id): it replaceStates /admin/games/:id and fetches GET /api/admin/games/:id (admin-games-page.tsx:164-170, 364-371).
-  - Direct URL /admin/games/:id (adminRoute; admin-app.tsx:26-27). A non-uuid id returns 404 (admin-game-detail.ts:9-15).
+  - The row's 'Open match {roomId}' button, or a click on the row, calls openDetail(id): it replaceStates /admin/games/:id and fetches GET /api/admin/games/:id (admin-games-page.tsx).
+  - Direct URL /admin/games/:id (adminRoute in admin-routes.ts). A non-uuid id returns 404 (admin-game-detail.ts:9-15).
   - 'Download action log' (shown only when exportLog is present) builds `${roomId}.xlsx` with Turns and Events sheets only. It carries no rules and no chat sheet (build-action-log-xlsx.ts:49,118).
-  - 'Close' button and Dialog onClose call closeDetail: replaceState back to /admin/games and ignore the URL detail (admin-games-page.tsx:154-162).
+  - 'Close' button and Dialog onClose call closeDetail: replaceState back to /admin/games and ignore the URL detail (admin-games-page.tsx).
   - Not present: a rules block, a chat transcript, a link to the Database chat rows for this game.
 - **States:**
-  - Detail loading: the Dialog stays closed until detail.ok (open={activeDetail !== null && detail?.ok === true}). There is no spinner.
+  - Detail loading: 'Loading…' (role=status) shows on the page and the Dialog opens once the detail has loaded (L80-07).
   - Detail error: a role=alert line above the list with adminErrorCopy (404 'Not found', 503 'Database unavailable'). The dialog does not open.
   - Rules to represent if surfaced: custom (excluded kits listed), all kits allowed (empty array), Random only on or off, turn time 5–180 or above 180 under env override, tutorial (null, no rules apply), legacy pre-011 row (null, not recorded).
   - Chat to represent if surfaced: no messages (indistinguishable from a pre-011 row); lobby-only lines (round_index 0, 'Lobby'); lines from earlier matches in the same room after online Play again, because each row stores the full room transcript to that game's end and messages have no timestamp or match marker; side-stream lines (role eliminated or spectator) that living players never saw; bodies up to 200 chars.
-  - Also stored but not shown in detail today: mode, startedAt, hasBots and isTutorial (they are in the payload but not rendered; the list's Notes column shows Bots / Tutorial).
+  - Mode, startedAt, hasBots / isTutorial (as Notes), seat points and the eliminator are shown since L80-07; only the rules and the chat are still missing.
 - **Keep:**
   - Detail is keyed by finished_games.id, not room_id, because room_id is reused on Play again (L61-04; admin-game-detail.ts:1-4).
-  - Closing /admin/games/:id returns to /admin/games. The detail fetch ignores stale responses (frontend.md:110-112; L62-07).
+  - Closing /admin/games/:id returns to /admin/games. The detail fetch ignores stale responses (frontend.md › Admin tool mode; L62-07).
   - Designed detail, not a JSON dump (L61-07 acceptance).
   - The Replay seed stays labelled designer-only (technical spec v6 §14).
   - Download action log stays Excel-parity with the player Game over export (export_log; L61).
@@ -4260,9 +4276,9 @@
 - **Files:** `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/admin/filter-query.ts`, `apps/server/src/db/admin-filters.ts`, `apps/server/src/db/admin-list-games.ts`, `apps/server/src/db/admin-kit-stats.ts`, `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/export/admin-xlsx.ts`, `packages/shared/src/admin/api.ts`
 - **Purpose:** The shared admin filters and the Matches list predate Lot 70 and never read excluded_kit_ids, random_only or turn_time_seconds. The designer cannot isolate custom-rule matches, Random-only matches, or short-clock matches. Kit balance numbers mix matches where a kit was banned with matches where it was available.
 - **Controls:**
-  - Filters form (shared by Overview, Matches and Kits): From and To (datetime-local, converted from local time to UTC ISO), Opponents select (All matches / Humans only / Includes bots), Seat count text input (placeholder 2–8), Kit select (Any kit + every KIT_IDS entry by name), 'Include tutorial matches' checkbox, and Apply (admin-filters-form.tsx:38-123; filter-query.ts:40-63).
+  - Filters form (shared by Overview, Matches and Kits): From and To (datetime-local, converted from local time to UTC ISO), Opponents select (All matches / Humans only / Includes bots), Seat count select (Any seat count + 2–8), Kit select (Any kit + every KIT_IDS entry by name), 'Include tutorial matches' checkbox, and Apply (admin-filters-form.tsx; filter-query.ts).
   - Server parses only from, to, bots, actors, occupancy, kit and includeTutorial (admin-filters.ts:79-125). There is no rules param.
-  - Matches list 'Notes' column shows only 'Bots' and/or 'Tutorial' (admin-games-page.tsx:80-93). AdminGameListItem has no rules fields (api.ts:295-307).
+  - Matches list 'Notes' column shows only 'Bots' and/or 'Tutorial' (gameNotesLabel). AdminGameListItem has no rules fields (api.ts).
   - Matches 'Download spreadsheet' columns: Code, Ended, Seats, Winner, Kit, Duration ms, Turns, Bots, Tutorial. No rules (admin-xlsx.ts:26-42).
 - **States:**
   - Kit filter means 'any seat played this kit'. A match where that kit was excluded simply does not match. Nothing distinguishes 'excluded' from 'not picked'.
@@ -4278,21 +4294,20 @@
 
 ### `admin-password-enter-submit` — Admin password gate: Enter submits
 
-- **Files:** `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-feedback-page.tsx`, `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/inbox.tsx`
+- **Files:** `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-feedback-page.tsx`, `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`
 - **Purpose:** Admin unlock form plus admin detail Dialogs.
 - **Controls:**
-  - Enter in 'Password' (type=password, autocomplete current-password): submits Unlock when it is enabled (not busy, trimmed value non-empty)
+  - Enter in 'Password' (type=password, autocomplete current-password): submits Unlock when it is on (not busy, trimmed value non-empty); otherwise Enter does nothing
   - Admin feedback report Dialog: Escape / backdrop / Close call setOpenId(null)
-  - Admin match detail Dialog: Escape / backdrop call closeDetail
+  - Admin match detail Dialog: Escape / backdrop / Close call closeDetail
 - **States:**
   - busy: 'Checking…'
   - error alert from adminErrorCopy
   - unlocked: the password is stored for the admin session
 - **Keep:**
-  - Enter-to-unlock
-  - Admin Dialogs follow the global Dialog contract
-- **Notes:** apps/client/src/screens/inbox.tsx (InboxScreen, with its own form and Dialog) is not mounted anywhere; /inbox redirects to /admin/feedback (App.tsx:23-26). It looks like dead code.
-
+  - Enter-to-unlock (admin-password-gate.test.tsx › 'Enter in Password submits once, stores the key and unlocks')
+  - Admin Dialogs follow the global Dialog contract, in tool mode (data-mode="tool")
+- **Notes:** The legacy screens/inbox.tsx (InboxScreen, with its own form and Dialog) was deleted in L80-09; /inbox redirects to /admin/feedback (App.tsx).
 
 ## Critic gaps (all filled above)
 

@@ -5190,6 +5190,249 @@ Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timer
 
 ---
 
+## 2026-10-28 · [P] V7 admin tool mode scope (L80-01)
+
+Source: technical spec v7 §7.8 (tool mode), §5.1 (`--ink` is outline and shadow only), §5.3
+(chrome knobs), §4.4; designer answers of 2026-10-28 to the Lot 80 plan's Appendix B
+(questions 1, 2 and 7).
+
+- **One override, no new variable.** `[data-mode="tool"]` in `ui/tokens.css` sets the five
+  chrome knobs (`--chrome-outline-width: 1px`, `--chrome-shadow: none`, `--chrome-radius: 8px`,
+  `--chrome-radius-sm: 6px`, `--chrome-press-y: 0px`), `color-scheme: dark` and
+  `--ink: #7d72c4` (`V7_TOOL_LINE`). Overriding `--ink` instead of adding an outline variable
+  works because `--ink` is outline and shadow only (§5.1): it recolors every outline inside the
+  scope and nothing else. No primitive gains a `mode` prop or changes, so Lot 76 keeps `ui/`
+  primitives to itself.
+- **Why not `#0c0920`.** At 1px the arcade ink reads 1.21:1 on `--panel` and 1.36:1 on
+  `--panel-2`, which fails WCAG 1.4.11 for field and table edges. `#7d72c4` reads 4.72 / 4.31 /
+  3.89 / 3.46:1 on `--bg-0` / `--bg-1` / `--panel` / `--panel-2` (`ui/tool-mode.test.ts`).
+- **Flat ground.** The admin `<main>` is `bg-v7-bg-0` with no `.v7-ground` halos or scanlines:
+  §7.8 asks for neutral dark panels and no juice.
+- **App.tsx source-text assertions stay.** L80 does not rewrite `App.tsx` (spec v7 §4.4
+  "migrated directly"; Lot 74 edits it in parallel). The `admin-route.test.ts` App.tsx `it` and
+  the `inbox-route.test.ts` App / fetch-inbox assertions are kept until the lot that rewrites
+  that routing. This task removed only the two `admin-route.test.ts` `it`s whose behavior
+  replacements it adds ('reuses inbox password session storage' and 're-opens the password
+  gate on 401'; `docs/backlog_v7_test_classification.md` › Owner lot 80).
+- **Unlock stays focusable.** The gate's Unlock is `focusableWhenDisabled`, so while blank or
+  Checking… it is `aria-disabled` rather than natively `disabled`. The click that starts the check
+  would otherwise drop focus to the page (`frontend.md` › V7 primitives: never toggle native
+  `disabled` on a focused control). Enter and click are no-ops in those states, as before.
+
+---
+
+## 2026-10-28 · [P] Admin chart test retires token and helper names (L80-04)
+
+Source: technical spec v7 §7.8 ("charts in the V7 palette"), §5.1 (non-text contrast, hex in
+inline styles), §12.1 (source-text tests); Lot 80 plan Appendix B question 4 (designer answer
+2026-10-28: default order accepted).
+
+- **Old test retired.** `screens/admin/admin-charts.test.ts` read `admin-charts.tsx` and asserted
+  that it contained `conicGradientFromSlices`, `scatterPlotXY` and `var(--color-cta-purple)`.
+  That is old-layout detail, superseded by §7.8 and §5.1: V7 inline colors are hex, never
+  `var()`. The behavior is now pinned by render tests (`admin-charts.test.tsx`: the pie
+  background, the empty ring, the scatter coordinates and titles, the first palette color) and
+  by a package.json check that the client depends on no chart library
+  (`admin-charts-dependencies.test.ts`, §4.5). The chart geometry keeps its own tests in
+  `admin/admin-chart-math.test.ts`; only its empty-fallback string moved to
+  `ADMIN_CHART_EMPTY_COLOR`.
+- **Palette order.** `ADMIN_CHART_COLORS` (was `ADMIN_CHART_COLOR_VARS`) is `--cta-2`,
+  `--point`, `--life`, `--upgrade`, `--shield`, `--threat-other`, `--text-2`, `--danger`, as hex
+  from `V7_COLORS`. Each reads at least 3:1 on `--panel` (4.77 to 10.48), and neighbours stay
+  at least 39 ΔE2000 apart. The closest pair overall is `--shield` / `--cta-2` (13.5), four
+  slices apart. A single series (bars, dots) uses the first. The empty ring and an unlisted
+  legend swatch use `--panel-2`.
+- **Left out.** `--glow-a` and `--threat-attack` repeat `--life`; `--glow-b` and `--mine` repeat
+  `--cta-2`; `--cta` sits ΔE2000 3.9 from `--point`, too close to tell apart in a legend.
+- **File name.** The plan named the node test `admin-charts.test.ts` and the render test
+  `admin-charts.test.tsx`. TypeScript's `include` keeps only the `.ts` of two files that differ
+  by extension, so the `.tsx` would have been left out of `tsc` and ESLint failed to parse it
+  ("not found by the project service"). The node test is therefore
+  `admin-charts-dependencies.test.ts`; the render test keeps `admin-charts.test.tsx`, beside its
+  component (`docs/agent/testing.md`).
+
+---
+
+## 2026-10-28 · [P] Admin keyboard rows use a row button (L80-06)
+
+Source: technical spec v7 §7.8 ("keyboard rows"), §12.1; Lot 80 plan Appendix B question 5
+(designer answer 2026-10-28: default accepted).
+
+- **Choice.** A Matches row opens through a real `<button type="button">` in its first cell
+  (**Room code**), named `Open match {code}` with `aria-label`. Tab reaches it, and Enter and
+  Space work natively with no key handlers. The V2 Dialog restores focus to
+  `document.activeElement` at open time, which is that button, so closing the detail puts focus
+  back on the row.
+- **Why not a focusable `<tr>`.** The alternative put `tabIndex={0}` and Enter / Space handlers
+  on the `<tr>`. That needs a `role="button"` or `link` on a table row, which drops the row
+  semantics screen readers announce, and re-implements keyboard activation by hand. The button
+  keeps the table a table.
+- **Mouse.** The whole `<tr>` stays clickable (`cursor-pointer`, `onClick`). The button stops its
+  own click from bubbling, so one press opens one detail.
+- **Layout.** Room code moves from the second column to the first so the button is each row's
+  first Tab stop; the column set and headers are otherwise unchanged. The ScrollArea around the
+  table is itself a labelled Tab stop, so Tab reaches it before the first row.
+- **Paging.** The pager is off until the page for the current key loads, so two page requests
+  of one filter set cannot overlap; only Apply, which stays enabled, can supersede an in-flight
+  page, and the effect's cancel flag ignores the older answer.
+
+---
+
+## 2026-10-28 · [P] Match detail focus return now comes from the V7 Dialog (L80-07)
+
+Source: technical spec v7 §7.8, §6.7; follows the L80-06 entry above (not edited: it is a past
+decision).
+
+- **What changed.** The L80-06 entry says the V2 Dialog restores focus to the row button. The
+  detail dialog is now the V7 `ui/primitives/dialog` (`AdminGameDetailDialog`), so the V7
+  `useFocusTrap` does it: when the open cycle ends and focus is lost it returns to the opener,
+  the element focused when the dialog opened, here the `Open match {code}` button, if that
+  element is still reachable. The L80-06 choice (a row `<button>`, no `<tr>` handlers) is
+  unchanged, and the test `closing returns to /admin/games, does not reopen the URL detail, and
+  puts focus back on the row` passes as written.
+- **A retry opens again.** The detail request is keyed by the active match id. A 404 or 503
+  leaves that id active, so picking the same row again would not have run the effect. Each
+  opening now bumps a counter in the effect's dependencies, and the answer is cleared at the
+  same time, so a retry shows `Loading…` and asks again instead of waiting on a request that is
+  never sent.
+
+---
+
+## 2026-10-28 · [P] Dead legacy inbox screen removed (L80-09)
+
+Source: technical spec v7 §11 and §13 (Q81, disposition "Dead code removed with its
+replacement"), §7.8, §12.1; Lot 80 plan task L80-09.
+
+- **What went.** `screens/inbox.tsx` (`InboxScreen`: its own password form, kind and area
+  filters, no triage) is deleted. Its replacement, `screens/admin/admin-feedback-page.tsx`,
+  landed in Lot 61 (L61-09) and gained triage in Lot 68. Nothing imported `InboxScreen`: a
+  grep over `apps/client/src` found only its own definition before the delete.
+- **What stays.** `App.tsx` still redirects `/inbox` and `/inbox/*` to `/admin/feedback`, and
+  `GET /api/inbox` is unchanged. The `inbox/inbox-route.test.ts` source-text `it` keeps its
+  App.tsx and `fetch-inbox.ts` assertions (Lot 80 does not rewrite `App.tsx`; Lot 74 edits it in
+  parallel). Its checks of `admin-feedback-page.tsx` text moved to behavior tests in
+  `screens/admin/admin-feedback-page.test.tsx`.
+- **Why here, not in Lot 81.** The plan's Review notes put the delete in L80-09, the task that
+  finishes the Feedback page. L81-01's mention of `screens/inbox.tsx` is already satisfied.
+
+---
+
+## 2026-10-28 · [P] Feedback status badge replaces the side stripe (L80-09)
+
+Source: technical spec v7 §5.1 (never color alone), §7.8, §12.4 (Impeccable detector); Lot 80
+plan Appendix B question 6 (designer answer 2026-10-28: default tones accepted); the L80-01
+error-line change for the same detector rule.
+
+- **Ruling.** The plan asked for a `border-l-4` stripe in the status tone on each Feedback row.
+  The Impeccable design detector flags a one-sided thick accent stripe (`side-tab`) as a defect,
+  and L80-01 had already dropped it from `AdminStatus` errors. Each row now starts with a round
+  **status badge** instead: a `size-8` disc filled with the status tone, holding the existing
+  clock / check / cross `StatusGlyph` in `--text-on-cta` (ink), with `role="img"` and an
+  `aria-label` from `FEEDBACK_TRIAGE_STATUS_LABEL`. Status is therefore told by the fill, the
+  glyph shape and the name, never by color alone.
+- **Tones unchanged.** Pending `--threat-other`, Done `--upgrade`, Eliminated (won't do)
+  `--danger`. Ink on those fills reads 9.95, 9.78 and 5.97 to 1, and each fill reads 4.9 to 8.2
+  against `--panel`, above the 3:1 non-text floor. The pressed mark in a row and in the report
+  takes the same fill, so the badge and the mark agree.
+- **Parity row.** `docs/technical_spec_v7_parity.md` Appendix A `admin-feedback-triage` said
+  "left stripe in the status color"; that line now says badge.
+- **Label.** The status chips and marks are named by `FEEDBACK_TRIAGE_STATUS_LABEL`, so the
+  third one reads **Eliminated**, as before. "Won't do" appears only in the page intro; the
+  label map lives in `packages/shared`, which Lot 80 does not touch.
+
+---
+
+## 2026-10-28 · [P] Admin Database lists five tables (L80-11)
+
+Source: technical spec v7 §7.8 (a **Chat messages** tab in Data, role column visible) and §13
+Q80 (answered in part); Lot 80 plan Appendix B (designer answer 2026-10-28: defaults
+accepted); decisions 2026-10-06 (Lot 70 table chat, Room chat outlives one match);
+`docs/agent/db.md` (`game_chat_messages`).
+
+- **Supersedes L61-10's "four tables only".** The Database page now offers five tabs, in this
+  order: Finished games, Players, Eliminations, Feedback, **Chat messages**
+  (`game_chat_messages`, `tableDisplayName`). The server has allowlisted the table since
+  Lot 70; only the client lacked a tab, so the change is client-only and `PROTOCOL_VERSION`
+  stays 45. Still read-only, still no SQL box.
+- **Role stays visible.** The grid shows every column the server names, so `role` (`living`,
+  `eliminated`, `spectator`, frozen at send time) is a plain column and a redesign must not
+  hide it: it is the only way to tell the eliminated and spectator side stream from the main
+  table chat in the same grid.
+- **Chat stays out of Overview.** Chat rows are not overview metrics (`db.md`). The tab is a
+  raw browser over the table, not a chart.
+- **Row order is unchanged.** The table has no `created_at`, so the server keeps its
+  `ORDER BY` first column fallback, which sorts by the `game_id` uuid. Rows are not
+  chronological and there is no per-game filter. Both would need a server change, which Lot 80
+  does not make. Because each finished game stores the room transcript as of its end, the same
+  line can appear under several `game_id`s after Play again.
+- **Q80 is answered in part.** The chat half of Q80 is now in the UI. The match detail's
+  lobby rules (`excluded_kit_ids`, `random_only`, `turn_time_seconds`) still show only as raw
+  columns on the Finished games tab; Q80's other half is not part of this task.
+- **Parity rows.** `docs/technical_spec_v7_parity.md` Appendix A `admin-database-page` now says
+  five tables and no longer notes that chat is outside the allowlist;
+  `admin-database-chat-transcripts` now describes the tab instead of "reachable by URL only".
+
+---
+
+## 2026-10-28 · [P] Chat messages pages can repeat or skip lines (L80-11)
+
+Source: the Lot 80 whole-branch review (final fix wave F5); `apps/server/src/db/admin-table-browser.ts`
+`tableOrderBy` and `loadAdminTablePage`; `apps/server/db/migrations/011_lobby_rules_and_chat.sql`;
+the L80-10 Database paging and the L80-11 entry above, which this note extends without changing.
+
+- **Hazard.** `game_chat_messages` has no `created_at`, so `tableOrderBy` falls back to
+  `ORDER BY 1`, the non-unique `game_id`. Lines inside one game have no defined order, and since
+  L80-10 pages the tab with `LIMIT` / `OFFSET`, Postgres may return a game's lines in a different
+  order for each page request: a line can show on two pages, or on none.
+- **Known issue, no client fix.** Lot 80 is client-only and the client cannot order rows the
+  server pages. The designer reads the tab as a raw dump; a line missing from a page may sit on
+  the next one, and the total stays right.
+- **Server follow-up (one line).** Give `game_chat_messages` its own branch in `tableOrderBy`:
+  `game_id DESC, order_index ASC`. `(game_id, order_index)` is the primary key, so the order is
+  total and every page is stable, and lines read in send order within each game, as on the
+  Eliminations tab. Out of scope for Lot 80.
+
+---
+
+## 2026-10-28 · [P] The admin header drops its Designer eyebrow (L80-12)
+
+Source: the Lot 80 design gate (technical spec v7 §12.4); the Impeccable `kicker-above-heading`
+finding on every admin page; designer 2026-10-28.
+
+- **Decision.** The `Designer` eyebrow above the `Insights` h1 in `AdminApp` is removed. The h1
+  and the blurb ('Finished matches, kit balance, feedback, and raw log tables. Not linked from
+  the player hub.') stay unchanged.
+- **Why.** The detector flags a small uppercase kicker over a heading, and the word adds
+  nothing: the page is already the designer's tool, and the blurb says so.
+- **Kept copy changed.** L80-01 kept the header copy as it was; this is the one line of it that
+  changed. `docs/technical_spec_v7_parity.md` `admin-shell` and `admin-app.test.tsx` follow.
+
+---
+
+## 2026-10-28 · [P] Admin critique follow-ups (L80-12)
+
+Source: the Impeccable critique of `/admin` (dual-agent, 23/40 Acceptable) and the designer's
+answers to it, 2026-10-28; the Lot 80 gate record in `docs/agent/frontend.md`; technical spec v7
+§7.8.
+
+- **Scope before the PR: small fixes only.** The designer chose "petits correctifs": the two
+  fixes that cost little are done in Lot 80 (C1, focus after a triage mark; C2, no-wrap dates and
+  a scroll cue on wide tables). Everything else in the critique goes to the PR as follow-up work,
+  not into Lot 80.
+- **Next admin lot: kit balance first.** Highest win rate with ties stated (today "Most wins
+  (kit)" shows one of 11 kits tied at 8); the pick × win scatter with data-range axes, ticks,
+  point labels and fair-share reference lines; a sortable Kits table with a vs-expected column and
+  small-sample flags. It changes the §7.8 modules, which Lot 80 kept as they were, so it is a
+  later lot.
+- **Resource colors in admin, in a follow-up.** A resource keeps its color in admin too: lives
+  `--life`, points `--point`, upgrade `--upgrade` and shield `--shield` in Economy and Combat, and
+  those colors stop being reused for unrelated chart categories (for example `--life` for
+  "4 seats" and "Inactive" in the pies). No change in Lot 80.
+- **Still open (follow-up, not decided here).** The Overview's length and hierarchy, filters kept
+  across pages and in the URL, triage undo and a live message, and the match investigation links
+  and search.
+
+---
 ## 2026-10-29 · [T] Image build downloads once into a cached pnpm store
 
 The PR #84 preview (2026-10-28) failed with `ERR_PNPM_FETCH_429`. Both the build-stage and

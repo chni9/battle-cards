@@ -1,11 +1,17 @@
+import type { AdminGameDetail, AdminGameElimination } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
+import { makeGameDetail } from '../screens/admin/admin-fixtures';
 import {
   eliminationReasonLabel,
+  eliminatorNickname,
   formatMinutesFromMs,
   formatNullablePercent,
   formatThinkMs,
+  gameModeLabel,
+  gameNotesLabel,
   kitDisplayName,
+  tableDisplayName,
 } from './admin-present';
 import { DEFAULT_ADMIN_FILTERS, filtersToQuery, overviewQuery } from './filter-query';
 
@@ -35,6 +41,49 @@ describe('admin-present', () => {
   it('labels gambling eliminations (L64-04)', () => {
     expect(eliminationReasonLabel('gambling')).toBe('Gambling');
     expect(eliminationReasonLabel('combat')).toBe('Combat');
+  });
+
+  it('labels game_chat_messages as Chat messages (L80-11)', () => {
+    expect(tableDisplayName('game_chat_messages')).toBe('Chat messages');
+    // The four older tables keep their names, and a table the client does not know stays raw.
+    expect(tableDisplayName('feedback_reports')).toBe('Feedback');
+    expect(tableDisplayName('nope')).toBe('nope');
+  });
+});
+
+describe('match detail labels (L80-07)', () => {
+  const eliminationBy = (eliminatorPlayerId: string | null): AdminGameElimination => ({
+    orderIndex: 0,
+    playerId: 'p2',
+    nickname: 'Bob',
+    eliminatorPlayerId,
+    reason: 'combat',
+  });
+  const detail: AdminGameDetail = makeGameDetail();
+
+  it('labels the classic mode and returns an unknown mode raw', () => {
+    expect(gameModeLabel('classic')).toBe('Classic');
+    expect(gameModeLabel('team')).toBe('team');
+  });
+
+  it('names the eliminator only when it resolves to a seat', () => {
+    expect(eliminatorNickname(detail, eliminationBy('p1'))).toBe('Ana');
+    expect(eliminatorNickname(detail, eliminationBy(null))).toBeNull();
+    expect(eliminatorNickname(detail, eliminationBy('p-gone'))).toBeNull();
+  });
+
+  it('names no eliminator whose seat has no nickname', () => {
+    const anonymous = makeGameDetail({
+      seats: detail.seats.map((seat) => (seat.playerId === 'p1' ? { ...seat, nickname: null } : seat)),
+    });
+    expect(eliminatorNickname(anonymous, eliminationBy('p1'))).toBeNull();
+  });
+
+  it('lists the notes of a match as the Matches list does', () => {
+    expect(gameNotesLabel({ hasBots: false, isTutorial: false })).toBe('—');
+    expect(gameNotesLabel({ hasBots: true, isTutorial: false })).toBe('Bots');
+    expect(gameNotesLabel({ hasBots: false, isTutorial: true })).toBe('Tutorial');
+    expect(gameNotesLabel({ hasBots: true, isTutorial: true })).toBe('Bots · Tutorial');
   });
 });
 

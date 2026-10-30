@@ -1,17 +1,26 @@
+/**
+ * The /admin password gate (L61-06), on the V7 primitives in tool mode (L80-01). It shares the
+ * inbox session password (`card-battle.v6.inboxPassword`, L47-05): a success stores it, a 401
+ * clears it.
+ *
+ * Unlock stays focusable while blank or checking (`focusableWhenDisabled`): a click that starts
+ * the check must not drop focus to the page by toggling native `disabled` on the focused button
+ * (`docs/agent/frontend.md` › V7 primitives). The guard in `tryUnlock` makes Enter in the field a
+ * no-op in those states.
+ */
+
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { adminErrorCopy } from '../../admin/fetch-admin';
-import { Button } from '../../design/components/button';
 import {
   clearStoredInboxPassword,
   readStoredInboxPassword,
   storeInboxPassword,
 } from '../../inbox/password-storage';
-
-const inputClassName = [
-  'mt-1.5 block w-full min-h-11 rounded-[length:var(--radius-control)]',
-  'border border-border bg-surface-raised px-3 py-2 font-sans text-base text-ink',
-].join(' ');
+import { Button } from '../../ui/primitives/button';
+import { TextField } from '../../ui/primitives/text-field';
+import { ADMIN_PANEL_CLASS } from './admin-classes';
+import { AdminStatus } from './admin-ui';
 
 interface AdminPasswordGateProps {
   onUnlocked: (password: string) => void;
@@ -55,29 +64,27 @@ export function AdminPasswordGate({ onUnlocked, probe }: AdminPasswordGateProps)
   };
 
   return (
-    <form className="max-w-sm" onSubmit={onSubmit}>
-      <label className="block text-sm font-medium text-ink">
-        Password
-        <input
-          className={inputClassName}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-          }}
-        />
-      </label>
-      <div className="mt-4">
-        <Button type="submit" variant="green" disabled={busy || password.trim().length === 0}>
+    <form className={`${ADMIN_PANEL_CLASS} flex max-w-sm flex-col gap-4`} onSubmit={onSubmit}>
+      <TextField
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={(event) => {
+          setPassword(event.target.value);
+        }}
+      />
+      <div>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={busy || password.trim().length === 0}
+          focusableWhenDisabled
+        >
           {busy ? 'Checking…' : 'Unlock'}
         </Button>
       </div>
-      {error !== null ? (
-        <p className="mt-4 text-sm text-cta-red" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error !== null ? <AdminStatus state={{ kind: 'error', message: error }} /> : null}
     </form>
   );
 }

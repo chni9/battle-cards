@@ -1,5 +1,8 @@
 /**
- * Overview modules (Lot 62). Match-level vs actor-level sections.
+ * Overview modules (Lot 62). Match-level vs actor-level sections, restyled for tool mode
+ * (technical spec v7 §7.8, L80-05): each module is an `ADMIN_PANEL_CLASS` section, each field
+ * an `ADMIN_FIELD_CLASS` select with an `ADMIN_FIELD_LABEL_CLASS` label. Copy and data flow are
+ * unchanged.
  */
 
 import type {
@@ -42,11 +45,25 @@ import {
   AdminScatterChart,
   type AdminBarItem,
 } from './admin-charts';
+import {
+  ADMIN_BODY_TEXT_CLASS,
+  ADMIN_FIELD_CLASS,
+  ADMIN_FIELD_LABEL_CLASS,
+  ADMIN_NOTE_CLASS,
+  ADMIN_PANEL_CLASS,
+  ADMIN_SECTION_TITLE_CLASS,
+} from './admin-classes';
 import { AdminMetricCard, AdminMetricGrid } from './admin-ui';
 
-const moduleClassName = [
-  'space-y-4 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4 md:p-5',
-].join(' ');
+const MODULE_CLASS = `${ADMIN_PANEL_CLASS} space-y-4`;
+
+/**
+ * A select that sits in a module header, not in a form column (spec v7 §7.8, L80-05).
+ * `ADMIN_FIELD_CLASS` is `w-full` and Tailwind emits `w-full` after `w-auto`, so a `w-auto` on the
+ * select would lose: the label shrinks to its content instead (`w-fit`) and the full-width select
+ * fills it.
+ */
+const HEADER_FIELD_CLASS = 'flex w-fit min-w-0 max-w-full flex-col gap-1.5';
 
 function AdminActorsControl({
   value,
@@ -56,13 +73,10 @@ function AdminActorsControl({
   onChange: (next: AdminActorsFilter) => void;
 }): ReactElement {
   return (
-    <label className="block text-xs font-medium text-ink-muted">
-      Actors
+    <label className={HEADER_FIELD_CLASS}>
+      <span className={ADMIN_FIELD_LABEL_CLASS}>Actors</span>
       <select
-        className={[
-          'mt-1.5 block min-h-10 rounded-[length:var(--radius-control)]',
-          'border border-border bg-surface-raised px-3 py-2 font-sans text-sm text-ink',
-        ].join(' ')}
+        className={ADMIN_FIELD_CLASS}
         value={value}
         onChange={(event) => {
           const next = event.target.value;
@@ -93,11 +107,11 @@ function AdminModule({
   children: ReactNode;
 }): ReactElement {
   return (
-    <section className={moduleClassName}>
+    <section className={MODULE_CLASS}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="font-sans text-lg font-semibold text-ink">{title}</h3>
-          <p className="max-w-2xl text-sm text-ink-muted">{description}</p>
+          <h3 className={ADMIN_SECTION_TITLE_CLASS}>{title}</h3>
+          <p className={`max-w-2xl ${ADMIN_BODY_TEXT_CLASS} text-v7-text-2`}>{description}</p>
         </div>
         {actors !== undefined && onActorsChange !== undefined ? (
           <AdminActorsControl value={actors} onChange={onActorsChange} />
@@ -109,7 +123,7 @@ function AdminModule({
 }
 
 function Subheading({ children }: { children: string }): ReactElement {
-  return <h4 className="font-sans text-sm font-semibold text-ink">{children}</h4>;
+  return <h4 className="font-v7-body text-v7-body font-extrabold text-v7-text">{children}</h4>;
 }
 
 function countBars(
@@ -264,12 +278,12 @@ export function AdminOverviewModules({
             })),
           )}
         />
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <Subheading>Kit wins</Subheading>
-          <label className="text-xs font-medium text-ink-muted">
-            Show
+          <label className={HEADER_FIELD_CLASS}>
+            <span className={ADMIN_FIELD_LABEL_CLASS}>Show</span>
             <select
-              className="ml-2 rounded-[length:var(--radius-control)] border border-border bg-surface px-2 py-1 text-sm text-ink"
+              className={ADMIN_FIELD_CLASS}
               value={kitMetric}
               onChange={(event) => {
                 setKitMetric(event.target.value === 'winRate' ? 'winRate' : 'wins');
@@ -344,7 +358,7 @@ export function AdminOverviewModules({
           />
         </AdminMetricGrid>
         {overview.gameplay.thinkTimePartial ? (
-          <p className="text-xs text-ink-muted">
+          <p className={ADMIN_NOTE_CLASS}>
             New matches only — think time is missing on pre-migration rows (
             {formatCount(overview.gameplay.thinkTimeSeatCount)} of{' '}
             {formatCount(overview.gameplay.actorSeatCount)} seats).

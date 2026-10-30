@@ -40,7 +40,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
-| Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `screens/inbox.tsx` (legacy screen unused by router) |
+| Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `App.tsx` (redirect only) |
 
 Shared status copy: `screens/status-labels.ts`.
 
@@ -223,8 +223,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Ground:** `.v7-ground` (halos plus 1 px scanlines every 3 px) is opt-in, defined only in
   `ui/tokens.css`, and never goes on `html`, `body` or `#root`. No `vh` or `dvh` in that file.
   Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`,
-  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 can override them under
-  `[data-mode="tool"]`.
+  `--chrome-radius(-sm)` and `--chrome-press-y`, so L80 overrides them under
+  `[data-mode="tool"]` (`DESIGN.md` › Tool mode).
 - **Fonts:** `ui/fonts.ts` holds seven `@fontsource` side-effect imports: Lilita One 400
   (titles, buttons, UI numerals, seat names), Fredoka 500-700 (everything printed on a card),
   Nunito 700-900 (body, descriptions, log lines, labels). `@fontsource/outfit` stays imported
@@ -782,6 +782,241 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Gallery:** section `seat` (`ui/seat/seat.gallery.tsx`, DEV only): every sample on both
   `--panel` and `--panel-2`, with the 24-character long-name forms in a 240px frame.
 
+### Admin tool mode (/admin, Lot 80)
+
+Technical spec v7 §7.8; looks and values in `/DESIGN.md` › Tool mode. Client only: the admin API,
+its payloads and `PROTOCOL_VERSION` do not change.
+
+- **Scope:** `AdminApp`'s `<main data-mode="tool">` (`relative`, flat `bg-v7-bg-0`, no
+  `.v7-ground`). The `[data-mode="tool"]` block in `ui/tokens.css` sets `--ink` to
+  `V7_TOOL_LINE` (`ui/palette.ts`), a 1px outline, 8 / 6px radii, no chrome shadow and no press
+  translate, so every V7 primitive inside it goes flat without a `mode` prop. Sheets portal out
+  of the scope: an admin Dialog passes `dataAttributes={{ 'data-mode': 'tool' }}`.
+- **Routing:** `admin/admin-routes.ts` is pure and tested in node. `adminRoute(pathname)`
+  returns `{ page, gameId, table }`, and any unclaimed path falls back to Overview. `gameId` is
+  `finished_games.id`, so a Play again row is a new match. `normalizeAdminPath` strips one
+  trailing `/`. `ADMIN_SECTIONS` holds the five sections in order. `adminSectionHref` marks a
+  section by exact path or, except Overview, by a `/` prefix, so `/admin/dashboard` marks none.
+- **Shared pieces, one each** (`screens/admin/admin-ui.tsx`, classes in `admin-classes.ts`):
+  - `AdminStatus` renders every loading, empty and error line.
+  - `AdminDataTable` renders every admin table. Its `label` is required and names the
+    horizontal `ScrollArea`. With `onRowOpen` and `rowOpenLabel` (typed as a pair) the first
+    column's cell holds a real `<button aria-label={rowOpenLabel(row)}>`, so Tab, Enter and
+    Space work natively; the `<tr>` also takes the mouse click (`cursor-pointer`) and the
+    button stops its own click so a press opens once. Matches is the only user (L80-06).
+  - `AdminPager` (`admin/admin-paging.ts` holds `adminPageCount(total, pageSize)`, never below
+    1) renders every paged table's footer: `<nav aria-label="Pages">` with quiet **Previous**,
+    an `aria-live="polite"` `Page N of M` and **Next**. Previous is off on page 1, Next on the
+    last page, and `disabled` turns both off while a page loads. Zero rows read `Page 1 of 1`.
+    Off is `aria-disabled` (`focusableWhenDisabled`), never native `disabled`, so Next pressed by
+    keyboard keeps focus while the next page loads and at the last page (Disabled but focusable).
+  - `useAdminList({ key, scope?, load })` (`screens/admin/use-admin-list.ts`) holds the state of
+    every admin read (Overview, Matches, Kits, Database): `data`, `loaded`, `error`
+    (`adminErrorCopy`) and `lastData`. A new `key` starts a new request with its own id and reads
+    not loaded until that request's answer; an answer for an older request is dropped, and asking
+    for an earlier key again (Actors both, humans, both) is a new request too, so the older
+    answer or error for that key never stands in for it (L80-12). `load` is read through
+    `useEffectEvent` when the key changes, so every input that can change while the page is
+    mounted belongs in the key (the password never changes under a mounted page). `lastData`
+    is the last success for the current `scope` (Matches: the applied filters; Database: the
+    table; Overview: one constant scope, so its modules never blank), and
+    `adminPagerCount(page, data, lastData)` (`admin/admin-paging.ts`) turns it into the pager's
+    count while the next page loads.
+  - `AdminLinkBar` renders the nav (`label="Admin sections"`) and the Database tabs. They are
+    `<a href>` links with `aria-current="page"`, not ARIA tabs, because they change the URL. A
+    plain primary click calls `pushState` and dispatches `popstate`. A click with Alt, Ctrl,
+    Meta or Shift stays the browser's. The route change remounts the page, so `AdminApp` reads
+    the `href` of a focused link inside the page (a Database tab) on `popstate` and focuses its
+    twin once the new page has mounted (L80-12; WCAG 2.4.3). The nav is outside the keyed page
+    and keeps focus by itself.
+  - `AdminToggleChip` renders every Feedback filter (L80-09): a flat chip with `aria-pressed`,
+    pressed `bg-v7-cta-2 text-v7-text-on-cta`, idle `bg-v7-panel-2 text-v7-text`. With `icon` and
+    `labelHidden` it is icon-only and takes `aria-label` and `title` from `label`; a text chip
+    adds neither. It has no `disabled`, so the Feedback marks are their own buttons.
+  - The class strings are `ADMIN_PANEL_CLASS`, `ADMIN_SECTION_TITLE_CLASS`,
+    `ADMIN_FIELD_LABEL_CLASS`, `ADMIN_FIELD_CLASS` (every input and select: 16px, 44px, panel-2
+    fill, flat outline, focus ring), `ADMIN_BODY_TEXT_CLASS` (14px Nunito; the caller adds the
+    color), `ADMIN_CAPTION_CLASS` (the field-label step, uppercase, for table headers and
+    metric labels) and `ADMIN_NOTE_CLASS` (12px Nunito in `--text-2` for notes, captions and
+    hints: the filter note, metric hints, chart values and figcaptions, Overview module notes,
+    Feedback dates). No page keeps a private copy.
+  - `AdminStatus` errors are a 1px `--danger` outlined `--panel` box with the `eliminated`
+    cross and `--text` words. There is no one-sided border stripe: the Impeccable `side-tab`
+    rule flags it (spec v7 §12.4).
+- **Gate:** `TextField` (password, `current-password`, 16px) and a primary `Button`. Unlock is
+  `focusableWhenDisabled`: while blank or Checking… it is `aria-disabled`, so a click that starts
+  the check keeps focus on it.
+- **Sign out and the session counter (L80-02):** a quiet `Button` **Sign out** sits in the
+  header row (right of the h1 from `md`, under the blurb on phones) while unlocked and calls
+  `lockAdminSession()`, the same path as a 401, so the gate comes back empty with the key
+  cleared. `admin/fetch-admin.ts` keeps a module counter (`currentAdminSession()`) that every
+  lock bumps. A request captures it before it starts. `lockAdminSession(session)` is a no-op
+  when that session is stale, and `adminGet` stores the password on success only while its
+  session is still current. So a request that started before a lock can neither store the old
+  password again nor lock the session unlocked since. The gate probe and every page go through
+  `adminGet`; Feedback's `fetchInbox` and `updateInboxStatus` capture the session themselves.
+- **429 copy:** `adminErrorCopy(429)` is `ADMIN_RATE_LIMIT_COPY` ('Too many wrong passwords. Try
+  again in a few minutes.'), shown by the gate and by every page, Feedback included. A 429 never
+  locks the session and never clears the stored key; only a 401 does.
+- **Charts (L80-04):** `admin-charts.tsx` stays CSS and SVG. Series colors are `ADMIN_CHART_COLORS`
+  (eight hex from `V7_COLORS`, `admin/admin-chart-math.ts`) and the empty ring is
+  `ADMIN_CHART_EMPTY_COLOR` (`--panel-2`), never `var()`. Order and rationale: `DESIGN.md` ›
+  Tool mode › Charts. `admin-charts.test.tsx` pins the render; `admin-charts-dependencies.test.ts`
+  checks that `apps/client/package.json` holds no chart library.
+- **Tests:** happy-dom component tests use the test-only `screens/admin/admin-test-harness.ts`
+  and `admin-fixtures.ts`. Shipped code never imports either.
+  - `installFakeFetch()` stubs the global `fetch` that `adminGet` and `fetchInbox` read at call
+    time. Each call stays pending until the test calls `respond(status, body)` or `fail()`,
+    which run inside `act` and drain the page's `.then` chain. Header names are lower-cased:
+    happy-dom's `Headers` keeps the caller's casing.
+  - `setAdminPath(path)` sets the URL before mount. Importing the harness restores `fetch`,
+    clears `sessionStorage` and resets the URL after each test.
+  - `makeAdminOverview()` is the empty-log payload. `makeGameListItem(id)` (room code is the id
+    upper-cased, two humans, no bots, not a tutorial), `makeGamesPage(items)` (page 1, size 50,
+    `total` the item count) and `makeGameDetail()` (`fg-1` / `ABCDEF`, Classic, two seats, no
+    eliminations, no log) cover Matches. `makeInboxRow(id)` (Pending bug, screen `home`, protocol
+    45, every optional field null, no topics, no log tail) covers Feedback.
+    `makeTablePage(table, rows)` (columns from the first row's keys, page 1, size 50, `total` the
+    row count) covers Database. Later tasks add builders and never change a default.
+- **Behavior kept from L61-06 / Lot 62:**
+  - `App` branches `/admin` before game phases (no Colyseus). The shell reuses
+    `sessionStorage['card-battle.v6.inboxPassword']` and sends `X-Inbox-Password` to
+    `GET /api/admin/*`.
+  - Nav: Overview, Matches, Kits, Feedback, Database. Default filters exclude tutorial rows.
+  - Filters (`AdminFiltersForm`, shared by Overview, Matches and Kits; L80-03): From, To,
+    Opponents, Seat count, Kit and the tutorial toggle, then a primary Apply. Edits send nothing
+    until Apply. Apply always starts a new request, even with unchanged filters: each page
+    counts Apply presses (`applyCount`) in its request key, so Apply is the retry after an error
+    (Overview has no other control before a first load). Seat count is a select over
+    `ADMIN_OCCUPANCY_KEYS` (2–8) sent as `occupancy`, so it can never send a value the server
+    ignores; its 'Any seat count' option (`ANY_SEAT_COUNT_LABEL`, `admin-filters-copy.ts`) sends
+    none.
+  - Overview is nine stacked modules (General, Volume, Gameplay, Economy, Combat, Hidden tools,
+    Bots and seats, Endings, Retention and feedback) from one `GET /api/admin/overview`
+    payload (L80-05). Each module is an `ADMIN_PANEL_CLASS` section: an `h3`
+    (`ADMIN_SECTION_TITLE_CLASS`), a `--text-2` description and `h4` subheadings. The Actors and
+    Kit wins **Show** selects use `ADMIN_FIELD_CLASS` (16px) under an `ADMIN_FIELD_LABEL_CLASS`
+    label. That class is `w-full` and Tailwind emits `w-full` after `w-auto`, so a header
+    select stays narrow through a `w-fit` label, never a `w-auto` on the select. The five Actors
+    selects share one state; Show stays local to the module.
+  - Match mix (`bots`) filters games. **Actors** (`humans` / `bots` / `both`, default both)
+    lives on actor-level module headers and filters seats and action joins; mixed tables still
+    contribute the selected seats. Seat win share applies Actors to both wins and games at that
+    seat. Feedback reports-per-game uses the date window on both sides (not occupancy, kit or
+    match mix).
+  - Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package.
+  - Do not flash "no data" before the first fetch: `Loading…` is the `AdminStatus` loading line
+    (`role="status"`) while a request is in flight, alone before the first answer and above
+    the last loaded modules during a refetch (an Actors change, Apply), which stay on screen
+    (L80 final fix wave; until then a refetch showed no pending state). A failure is the
+    `AdminStatus` error line (`role="alert"`) above the modules and never blanks a loaded
+    overview; it is gone as soon as the next request starts. **Download Excel** is a quiet
+    `Button` that exports the loaded overview JSON.
+  - The games list is keyed by `finished_games.id`; detail is `GET /api/admin/games/:id` (Play
+    again reuses `room_id`). Closing `/admin/games/:id` returns to `/admin/games`.
+  - **Match detail (L80-07):** `AdminGameDetailDialog({ detail, onClose })`
+    (`screens/admin/admin-game-detail-dialog.tsx`) is the V7 `Dialog` (`width="2xl"`,
+    `dataAttributes={{ 'data-mode': 'tool' }}`), open while `detail` is not null. Its title is
+    `Match {roomId}`. The facts are a `dl` (`grid-cols-2 sm:grid-cols-3`): **Started**,
+    **Ended**, **Mode** (`gameModeLabel`: `Classic`, an unknown mode raw), **Length**, **Turns**,
+    **Winner** (`Unknown` when null) and **Notes** (`gameNotesLabel`, the list's `Bots ·
+    Tutorial` or `—`, so no new flag wording). **Seats** is an `AdminDataTable` (Player, Kit,
+    Lives, **Points**, Role; a missing nickname is `—`; Role is Winner > Bot > Eliminated >
+    Player). **Elimination order** (only when there is one) lists `{victim} — {reason}`, plus
+    ` · by {nick}` when `eliminatorNickname` resolves the eliminator to a seat; an absence, a
+    leave or an unknown id adds nothing. The replay seed line closes the body. There are no
+    rules text and no chat in the detail (spec v7 §13 Q80, §14.1).
+  - **Detail states:** the page keeps one `detailAnswer` tagged with its match id and derives
+    everything from it and `activeDetail`: `Loading…` (`AdminStatus`) while the active match
+    has no answer, an `AdminStatus` error (`adminErrorCopy`, 404 `Not found`, 503 `Database
+    unavailable`) with the dialog closed when it failed, the dialog when it succeeded. An
+    answer for a match that is no longer active shows nothing, so an older response arriving
+    after a newer one is ignored. Opening a match counts (`detailOpenings`) so picking the same
+    row again after a failure asks again. **Download action log** shows only when the payload
+    has `exportLog`; it is a quiet `Button` that reads `Downloading…` while the workbook builds
+    (`aria-disabled`, so focus stays), builds once per click, and a failure shows `Could not
+    build the action log.` as an `AdminStatus` error in the body and re-enables the button.
+  - **Matches paging (L80-06):** the list is `AdminDataTable` (`label="Matches"`, **Room code**
+    first) over `AdminPager`. `pageNumber` starts at 1 and the fetch key is
+    `JSON.stringify({ applied, page, applyCount })`; each request sends the filter query plus
+    `page` and no `pageSize` (the server default 50 applies; there is no size picker). **Apply**
+    sets the filters, goes back to page 1 and always asks again; the Apply count is in the
+    request key, not in the pager's scope (the applied filters), so a retry with unchanged
+    filters keeps the page count it knew. While the page for the key is not loaded the table is
+    replaced by `Loading…` and the pager is off; on an error the rows are gone and the alert
+    shows. The pager label keeps the last page count the server gave for the same filters
+    (never below the page itself), so its `aria-live` text reads `Page 2 of 3` while page 2
+    loads, not `Page 2 of 2`; new filters forget it and read `Page 1 of 1` until their first
+    page loads. **Showing X of Y** stays. Each row's Room code cell is a button named
+    `Open match {roomId}` that opens `/admin/games/{finished_games.id}`, never the room code;
+    the V7 Dialog (its `useFocusTrap` restores focus to a reachable opener) hands focus back to
+    it on close.
+  - **Kits states (L80-08):** `AdminKitsPage` follows the same pattern as Matches without a
+    pager. While the stats for the applied filters are not loaded it shows `Loading…`
+    (`AdminStatus`, `role="status"`) and no table, no `Based on N matches` line and no empty
+    copy; a failure is the `AdminStatus` error alert with the previous table gone, never the
+    empty copy; a stale response (success or error) is ignored. `Based on N matches` and
+    `No kit data for these filters.` show only for a loaded answer. **Download spreadsheet** is a
+    quiet `Button`, off until a non-empty answer loads, and hands the loaded rows (raw `kitId`s)
+    to `exportKitStatsXlsx`. The table (`label="Kit stats"`) shows kit display names. **Apply**
+    always asks again, unchanged filters included, so it retries after an error with no filter
+    edit, as on Overview and Matches.
+  - **Database states (L80-10):** `AdminDataPage` is route-driven: the table is `AdminApp`'s
+    `route.table` (`null` reads `finished_games`), with no picked-table state of its own. The
+    tabs are an `AdminLinkBar` (`label="Database tables"`) over the five tables
+    (`/admin/data/{name}`, labelled by `tableDisplayName`; `game_chat_messages` is the fifth,
+    **Chat messages**, L80-11, with its Role column and the server's row order); the link whose
+    href is the active table is `aria-current`, so an unknown table (`/admin/data/nope`) marks
+    none and the server's 404 shows `Not found` as an `AdminStatus` error. A request sends `page` and
+    `pageSize=50` and is keyed `{table}:{page}`; Next and Previous go through `AdminPager`. The
+    page keeps no table-keyed state: `AdminApp` remounts it on every route change (`key` on the
+    route), so a tab change, and a return to an earlier tab, starts at page 1 with no page count
+    and the old table's late answers land in an unmounted page. While the page for the key
+    loads it shows `Loading…`, no grid and the pager off;
+    the pager label keeps the last page count the server gave for this table (never below the
+    page itself), so it reads `Page 2 of 3` while page 2 loads and `Page 1 of 1` on a new
+    table. A failure is the alert with the rows gone, and a stale answer, success or error, is
+    ignored. The grid is an `AdminDataTable` named by the table's display name: Title Case
+    headers from `columnDisplayName`, cells cut at `max-w-[16rem] truncate`, null as `—`, an
+    object as JSON and a `_truncated` preview as `Preview only (N bytes)`. Zero rows show `No
+    rows in this table.` and read `Page 1 of 1`. The `{N} rows · page {N}` line stays.
+    **Download spreadsheet (this page)** is a quiet `Button`, off until a page loads, that hands
+    the loaded page to `exportTablePageXlsx`. Still read-only: there is no SQL box. **Known
+    issue:** the server orders `game_chat_messages` by `game_id` only, so Chat messages pages can
+    repeat or skip a line; the fix is server side (`game_id DESC, order_index ASC` in
+    `tableOrderBy`, `db.md`, `decisions.md` 2026-10-28).
+  - Matches, Kits and Database list fetches ignore stale responses and clear the previous page
+    on switch or error.
+  - A 401 clears the session and re-opens the password gate (Sign out takes the same path,
+    L80-02). `adminGet` catches network and JSON failures (status 0 → Could not load).
+  - From/To `datetime-local` values are converted to UTC ISO on the client, so the VPS does not
+    shift the window.
+  - Client `exceljs` exports for the overview, games list, kit stats and table browser page. The
+    Matches export is a quiet `Button` labelled **Download spreadsheet (this page)**: it writes
+    the loaded page's rows, not the whole result set, and is off until a page loads.
+  - `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
+  - The **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06). It is `AdminPageIntro`
+    plus `AdminStatus` (Loading… until the first answer, one alert for a load or save error,
+    `No reports match these filters.` when the filters match nothing). A save that fails from
+    a mark in the open report shows its alert inside the report dialog, since the page behind
+    the `aria-modal` sheet is dimmed and not announced; a row mark's failure, or one from a
+    report closed since, shows on the page. Kind, Status and Area are
+    three `role="group"` rows of `AdminToggleChip` and filter client-side (default Pending).
+    Each row starts with a round **status badge** (`role="img"`, named by
+    `FEEDBACK_TRIAGE_STATUS_LABEL`) in the status tone, holding the clock / check / cross
+    `StatusGlyph` in `--text-on-cta`: Pending `--threat-other`, Done `--upgrade`, Eliminated
+    (won't do) `--danger`. There is no `border-l-4` stripe: the Impeccable `side-tab` rule flags
+    it (spec v7 §12.4). Three icon marks per row `PATCH` `/api/inbox/:id` to `pending` / `done` /
+    `eliminated` without opening the report; every mark on the page is off while a save runs
+    (`aria-disabled`, never native `disabled`, the press swallowed, so a mark pressed by keyboard
+    keeps focus in the row or in the report), the pressed mark takes the status fill, and a
+    failed save leaves the row as it was.
+    The row's dates go through `formatDateTime`. The report is a V7 `Dialog` in tool mode
+    (`width="lg"`, `data-mode="tool"`) with the same marks, contact, nickname, game code,
+    screen, playKind, protocol, user agent and the log tail JSON in a `ScrollArea` named
+    `Log tail`. A null log tail reads `Log tail: —` like the other null fields, with no empty
+    region (L80-12). The legacy `screens/inbox.tsx` is gone (L80-09).
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -844,34 +1079,7 @@ rules above are unchanged — this section only covers how the client looks.
   **Skip is fine.**; Skip still leaves after a pending hub leave. POST uses the tester's
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
-  **Admin (L61-06+ / Lot 62):** `App` branches `/admin` before game phases (no Colyseus). Reuses
-  `sessionStorage['card-battle.v6.inboxPassword']` and `X-Inbox-Password` against
-  `GET /api/admin/*`. Nav: Overview, Matches, Kits, Feedback, Database. Default filters
-  exclude tutorial rows. Overview is nine stacked modules (General, Volume, Gameplay,
-  Economy, Combat, Hidden tools, Bots and seats, Endings, Retention and feedback) from
-  one `GET /api/admin/overview` payload. Match mix (`bots`) filters games; **Actors**
-  (`humans` / `bots` / `both`, default both) lives on actor-level module headers and
-  filters seats / action joins — mixed tables still contribute the selected seats.
-  Seat win share applies Actors to both wins and games at that seat. Feedback
-  reports-per-game uses the date window on both sides (not occupancy / kit /
-  match mix). Charts are CSS/SVG (bar, pie, scatter, buckets); no chart npm package. Do not flash
-  “no data” before the first fetch (`Loading…`). Excel downloads the loaded overview
-  JSON. Games list is keyed by `finished_games.id`; detail
-  `GET /api/admin/games/:id` (Play again reuses `room_id`). Closing `/admin/games/:id`
-  returns to `/admin/games`. Detail fetch ignores stale responses and shows
-  `adminErrorCopy` on 404/503. Matches, Kits, and Database list fetches ignore
-  stale responses and clear the previous page on switch or error. A 401 clears
-  the session and re-opens the password
-  gate. `adminGet` catches network/JSON failures (status 0 → Could not load).
-  From/To `datetime-local` values are converted to UTC ISO on the client so the
-  VPS does not shift the window. Client `exceljs` exports for overview, games list, kit stats, and table
-  browser page. `/inbox` redirects to `/admin/feedback`. No Admin link on the hub.
-  **Feedback tab** still uses `GET /api/inbox` (L47-05 / L47-06): kind, About, and triage
-  status filters client-side (default Pending). Each row shows status as a colored
-  stripe and three icons (clock / check / cross), not buttons. Clicking an icon
-  `PATCH`es `/api/inbox/:id` to `pending` / `done` / `eliminated` (eliminated = won't do)
-  without opening the report. The open report uses the same icons. Detail still shows
-  contact, nickname, game code, screen, playKind, protocol, user agent, and log tail.
+  **Admin:** see Admin tool mode (Lot 80).
   **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under
@@ -2156,3 +2364,133 @@ rooms **LUQDWX** (lobby) and **VNLEVA** (solo, 3 Easy bots).
 - Fix: an unplayable `Card` dimmed its cost and damage chips with the rest of the body (damage
   label 2.6:1). The chips, the "+" badge and the counter badge now sit in an undimmed `marks`
   layer. `pnpm verify` **2613** tests.
+
+### Lot 80 verified 2026-10-28 (browser, `/admin` tool mode, PROTOCOL 45)
+
+Vite `:5173`, Colyseus `:2567` (`TURN_DURATION_MS=300000`), `INBOX_PASSWORD` set to a local test
+value, viewports 1440×900 and 390×844 in the built-in browser pane.
+
+- **Seed data:** a local throwaway Postgres, `cardbattle_l80_gate` (homebrew `postgresql@16`),
+  migrated with `db:migrate` and filled by a scratch SQL script that is not in the repo. Never
+  production data. It holds 124 `finished_games` (2–8 seats, a third with bots, 2 tutorial, the
+  Lot 70 rule columns on the classic rows, every 4th with an empty `export_log`), 620 players,
+  496 eliminations (most with an eliminator), 72 `game_chat_messages` over 6 games with all three
+  roles, and 8 `feedback_reports` across kinds, topics and statuses. Exports were intercepted in
+  the page (the anchor `download` was captured, no file written).
+- **Static checks:** no `design/` import and none of the V2 class names (`text-ink`,
+  `bg-surface`, `border-border`, `cta-*`, `radius-card`, `font-sans`, …) under `screens/admin` or
+  `admin`. The 28 `admin-*` rows of the parity doc each name files that exist.
+- **Gate (1440×900):** a wrong password and Enter reads `Wrong password`; ten wrong guesses
+  answer 429 with the rate-limit copy and no stored key, and the right password still unlocks.
+  The password field is 16px, and `<main data-mode="tool">`. Sign out empties the gate and clears
+  the key, and the next unlock probes and loads Overview.
+- **Nav:** five links in order with `aria-current="page"` on the section. `/admin/games/:id`
+  marks Matches and `/admin/dashboard` marks none (the accepted rule).
+- **Overview:** nine module headings in order, 11 fields all 16px. Actors Humans sends
+  `actors=humans` at once. Seat count offers `Any seat count` and 2…8. Seat 5 and the tutorial
+  toggle send nothing until Apply, then `occupancy=5&includeTutorial=true&actors=humans`.
+  Download Excel saves `admin-overview.xlsx`.
+- **Matches:** 122 non-tutorial rows, `Showing 50 of 122`, `Page 1 of 3`. Next opens page 2, then
+  page 3 (22 rows) with Next `aria-disabled="true"` and no native `disabled`. Export saves
+  `admin-games.xlsx`, and Apply returns to `page=1`.
+- **Keyboard:** focus on `Open match L80004`, Enter opens `/admin/games/<finished_games.id>` as
+  the `Match L80004` dialog in tool mode (a centered 672px panel). It shows Started, Ended, Mode
+  `Classic`, Length, Turns, Winner, Notes `—`, the seats with points and roles, the elimination
+  order with ` · by {nick}`, and the seed line. Download action log saves `L80004.xlsx`. Esc
+  returns to `/admin/games` with focus back on `Open match L80004`. A deep-link reload opens the
+  dialog, and Esc closes it without reopening.
+- **Kits:** 16 rows by display name, `Based on 122 matches`, export `admin-kit-stats.xlsx`.
+- **Feedback:** intro, the Kind, Status and Area groups with `aria-pressed`, Pending by default
+  (4 rows), status badges named. A Done mark sends one `PATCH /api/inbox/:id` without opening the
+  report, and the row leaves the Pending view. The report dialog is in tool mode with every
+  field.
+- **Database:** tabs Finished games, Players, Eliminations, Feedback, Chat messages. `124 rows ·
+  page 1`, `Page 1 of 3`, Next opens page 2. The Chat messages tab marks
+  `/admin/data/game_chat_messages` current, shows seven Title Case headers with `Role` holding
+  `living`, `eliminated` and `spectator`, and reads `Page 1 of 2`. All five tables export
+  (`admin-finished_games.xlsx`, `admin-finished_game_players.xlsx`,
+  `admin-finished_game_eliminations.xlsx`, `admin-feedback_reports.xlsx`,
+  `admin-game_chat_messages.xlsx`). `/admin/data/nope` reads `Not found`, marks no tab and
+  disables the export.
+- **Phone (390×844):** `/admin`, `/admin/games`, `/admin/kits`, `/admin/feedback`, `/admin/data`
+  and `/admin/data/game_chat_messages` have `main.scrollWidth - main.clientWidth = 0`, no element
+  past the right edge outside a labelled scroll region, and every input and select computes 16px.
+- **Design gate (§12.4):** the static `impeccable detect` on `screens/admin` and `admin` found 0.
+  Page scans (headless Chrome, unlocked session) of Overview, Matches, a match dialog, Kits,
+  Feedback, Database (chat) and the gate, which ran at 1440×900 only (see the correction below),
+  found three things. `nested-cards` ×36 on
+  Overview (an outlined metric card in an outlined module panel) is fixed (G1). The
+  `kicker-above-heading` finding ("Designer" over "Insights", on every page) is fixed because
+  the designer removed the eyebrow on 2026-10-28 (G2, `decisions.md`). `dark-glow #f0771f` on
+  `body` on every page is the V2 `tutorial-pulse` in `index.css` (`--color-cta-orange`), not
+  admin code. The designer ruled on 2026-10-28 to add **no ignore**; the PR notes it as outside
+  the admin scope, and the lot that deletes the V2 CSS removes it. `.impeccable/config.json` is
+  unchanged. The advisory `straggler` (a one-word last line) is left.
+- **Fixes (each a commit, `pnpm verify` green):**
+  - G1: `AdminMetricCard` is a `--panel-2` fill with the 6px tool radius and no border, so a metric
+    is no card inside a card (`admin-ui.test.tsx`).
+  - G2: the `Designer` eyebrow is gone from the header (`admin-app.test.tsx`).
+  - G3: a null log tail reads `Log tail: —`, not the JSON `null`, with no empty region
+    (`admin-feedback-page.test.tsx`).
+  - G4: a Database tab pressed by keyboard (or clicked) kept no focus, because the route change
+    remounts the page. `AdminApp` reads the `href` of a focused page link on `popstate` and
+    focuses its twin after the new page mounts. The nav keeps its own focus
+    (`admin-app.test.tsx`, three tests).
+  - G5: `useAdminList` counted an older answer for the same key as the new request's, so Actors
+    both, humans, both showed no `Loading…` and could bring back an old error. Each request now
+    has an id and an answer counts only for its own (`admin-dashboard-page.test.tsx`, two tests).
+  - G6: the parity `admin-shell` row points at `screens/home.admin-route.test.ts` for the hub
+    never linking `/admin`.
+  - G7: the Feedback save-error comment cites spec v7 §7.8 and L80-09 instead of a review label,
+    and the Seat count line of this file is wrapped.
+- **Re-scan after the gate fixes:** the Impeccable page scans repeated after G1 to G7 leave only
+  the V2 `dark-glow` (`tutorial-pulse` in `index.css`, outside the admin scope, no ignore added).
+  `nested-cards` and `kicker-above-heading` are gone.
+- **Browser re-check after the gate fixes (real Chrome):** the `Designer` eyebrow is gone, a
+  Database tab keeps focus after activation, and the pager's Next pressed by keyboard keeps
+  focus.
+- **Critique (Impeccable, designer 2026-10-28):** dual-agent (A: design review, B: detector and
+  browser evidence, isolated), **23/40 Acceptable**, no P0 and three P1. The five priority issues:
+  1. [P1] The kit-balance views can drive wrong decisions: "Most wins (kit)" picks one of 11 kits
+     tied at 8, the pick × win scatter has fixed 0–100% axes, and the Kits table is alphabetical
+     with no baseline. Follow-up (outside Lot 80: spec v7 §7.8 keeps the modules unchanged).
+  2. [P1] The Overview is an unbounded scroll with no hierarchy (about 9,975 px at 1440, every
+     zero row shown). Follow-up.
+  3. [P1] Feedback triage is silent, has no undo, and dropped keyboard focus after a mark. Focus
+     is fixed now (C1); undo, a live message and chip counts are follow-ups.
+  4. [P2] Filters are per page, unsaved and not in the URL, with Actors repeated five times.
+     Follow-up.
+  5. [P2] Investigating one match takes paging and memory (the report code is plain text, no
+     room-code search, chat out of order, and at 390 the Matches dates wrapped over four lines
+     with no scroll cue on wide tables). The wrap and the cue are fixed now (C2); the rest is
+     follow-up.
+- **Detector evidence (critique, Assessment B):** the source scan found 0. Page scans at 1440×900
+  and 390×844, with the DevTools emulation held, found `dark-glow` (the V2 false positive) on
+  every page; `cramped-padding` on the Matches and match-detail table frame at 390, a false
+  positive (a padding-0 frame around a `ScrollArea` whose cells carry their own padding) that
+  nonetheless pointed at the real missing scroll cue, fixed by C2; and `straggler` advisories,
+  left.
+- **Designer answers (2026-10-28):** fix only the small things before the PR (C1, C2) and send the
+  rest to the PR as follow-ups. The next admin lot is kit balance first: highest win rate with
+  ties stated, the scatter with data-range axes, ticks, point labels and fair-share reference
+  lines, and a sortable Kits table with a vs-expected column and small-sample flags. In a
+  later lot a resource keeps its color in admin (lives `--life`, points `--point`, upgrade
+  `--upgrade`, shield `--shield` in Economy and Combat) and those colors stop being reused for
+  unrelated chart categories. See `decisions.md` 2026-10-28 "Admin critique follow-ups".
+- **Correction:** the first "390×844" page scans of this gate (the controller's DevTools-port
+  runs) actually ran at 1440: the emulation dropped when their DevTools session closed. The
+  critique's Assessment B redid the scans with the emulation held, and those are the recorded
+  390×844 results.
+- **Critique fixes (each a commit, `pnpm verify` green):**
+  - C1: a triage mark pressed by keyboard that takes its row out of the Pending view dropped focus
+    to the body. Focus now moves to the next row's open button, else the previous row's, else the
+    empty message (a focusable, not tabbable, region), and only when it was really lost. A mark
+    pressed in the report keeps focus in the dialog (`admin-feedback-page.test.tsx`, six tests).
+  - C2: at 390 the Matches `Ended` date broke over four lines and nothing showed that a wide table
+    scrolled. `AdminTableColumn.nowrap` keeps that cell on one line, and `AdminDataTable` (so the
+    Database grid too) shows a decorative right-edge fade while its region overflows and is not
+    scrolled to the end. `useMoreToTheRight` (`admin-scroll-cue.ts`) reads it on scroll and when
+    the region or the table resizes (`admin-ui.test.tsx`, `admin-scroll-cue.test.ts`,
+    `admin-games-page.test.tsx`, `admin-data-page.test.tsx`). happy-dom has no layout, so these
+    tests stub the measures.
+- `pnpm verify` **3141** tests.

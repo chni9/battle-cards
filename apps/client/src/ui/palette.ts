@@ -55,6 +55,13 @@ export const V7_SEAT_COLORS = [
   '#f655c1',
 ] as const satisfies readonly [string, string, string, string, string, string, string, string];
 
+/**
+ * Admin tool-mode outline (technical spec v7 §7.8, L80-01): `--ink` inside `[data-mode="tool"]`.
+ * A 1 px edge must reach 3:1 (WCAG 1.4.11) on every ground it sits on: 4.72 on `--bg-0`, 4.31 on
+ * `--bg-1`, 3.89 on `--panel`, 3.46 on `--panel-2` (`ui/tool-mode.test.ts`). Outline only, never text.
+ */
+export const V7_TOOL_LINE = '#7d72c4';
+
 export function v7Color(token: V7ColorToken): string {
   return V7_COLORS[token];
 }

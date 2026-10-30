@@ -301,8 +301,8 @@ Two families (spec v7 §5.3).
   rim's hue order at full saturation (Card).
 
 Chrome shape is read only from `--chrome-outline-width`, `--chrome-shadow`, `--chrome-radius(-sm)`
-and `--chrome-press-y`, never from literals, so L80 can override them under
-`[data-mode="tool"]`.
+and `--chrome-press-y`, never from literals, so L80 overrides them under `[data-mode="tool"]`
+(Tool mode).
 
 ## Icons
 
@@ -1309,6 +1309,83 @@ stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat
   spaces and the widest) in a 240px frame, every bot
   tier and every badge state (including a connected seat captioned "connected: no badge"),
   each on `--panel` and `--panel-2`.
+
+## Tool mode (admin, L80)
+
+`/admin` is the designer's tool, not the game, so it wears V7 in tool mode (spec v7 §7.8): the
+same tokens and fonts, flat chrome and no juice. The scope is CSS only. `[data-mode="tool"]` in
+`ui/tokens.css` overrides the chrome knobs and `--ink`; no primitive takes a `mode` prop.
+`AdminApp`'s `<main>` carries the attribute.
+
+| Knob | Arcade (`:root`) | Tool (`[data-mode="tool"]`) |
+|---|---|---|
+| `--chrome-outline-width` | 3px | 1px |
+| `--chrome-shadow` | `0 4px 0 var(--ink)` | `none` |
+| `--chrome-radius` | 12px | 8px |
+| `--chrome-radius-sm` | 10px | 6px |
+| `--chrome-press-y` | 3px | 0px |
+| `--ink` | `#0c0920` | `#7d72c4` (`V7_TOOL_LINE`) |
+
+The block also sets `color-scheme: dark`, so native select popups, date pickers and scrollbars
+render dark. `ui/tool-mode.test.ts` pins the block and checks that `:root` keeps the arcade
+values.
+
+- **Tool line:** `V7_TOOL_LINE` (`#7d72c4`, `ui/palette.ts`). `--ink` is outline and shadow
+  only (§5.1), so overriding it recolors every outline inside the scope and nothing else. A
+  1px edge must reach 3:1 (WCAG 1.4.11): 4.72:1 on `--bg-0`, 4.31:1 on `--bg-1`, 3.89:1 on
+  `--panel`, 3.46:1 on `--panel-2`. The arcade `#0c0920` at 1px would read 1.21:1 on `--panel`
+  and 1.36:1 on `--panel-2`, so field edges would vanish. Never a text color.
+- **Ground:** flat `--bg-0` (`bg-v7-bg-0`). No `.v7-ground` halos or scanlines.
+- **Fonts per role (§5.2):** Lilita One for titles, buttons, nav items and UI numerals (metric
+  values at `text-v7-vital`, tabular); Nunito for body, descriptions, labels and table text.
+  Same floors as the game: 11px functional text, and every admin input, select and textarea at
+  `text-v7-input` (16px) so iOS never zooms on focus.
+- **Fields:** `ADMIN_FIELD_CLASS` (`screens/admin/admin-classes.ts`) styles every admin input
+  and select: `text-v7-input` (16px, so iOS never zooms on focus), a 44px minimum height, the
+  `--panel-2` fill, the flat 1px tool-line outline (`CHROME_FLAT_SM_CLASS`) and the shared focus
+  ring. The label above a field is `ADMIN_FIELD_LABEL_CLASS` (Nunito, caption step); a native
+  checkbox is `size-5` with `accent-v7-cta-2`. No admin file keeps a private copy of the class.
+- **Button roles:** the action that commits (Unlock, Apply) is `variant="primary"`; downloads,
+  Sign out, Close and Previous / Next are `variant="quiet"`. Buttons come from
+  `ui/primitives/button`, dialogs from `ui/primitives/dialog`.
+- **Motion:** none beyond the shared Dialog entrance and its reduced-motion fade. There is no
+  press translate (`--chrome-press-y` is 0px), and no `fx/`, particles or sound.
+- **Portals:** sheets render into `document.body`, outside the scope, so admin Dialogs pass
+  `data-mode="tool"` through `dataAttributes` to get the tool chrome on their panel.
+- **Shared pieces** (`screens/admin/admin-ui.tsx`; class strings in `admin-classes.ts`):
+  - `ADMIN_PANEL_CLASS`: tool-line outline, 8px radius, `--panel` fill, no shadow. Module
+    panels and empty states use it.
+  - `AdminMetricCard`: a `dl` cell with a `--panel-2` fill and the 6px tool radius, and no
+    border or shadow. It sits inside an outlined module panel, so an outline of its own would
+    be a card inside a card (the detector's `nested-cards`, L80-12). A fill-only box is not
+    counted as an inner card.
+  - `AdminStatus`: loading is a `role="status"` line, and an empty result is a panel. An error
+    is a `role="alert"` box on `--panel` with a full 1px `--danger` outline, the 6px tool radius
+    and the `eliminated` cross, so it is never told by color alone. There is no one-sided accent
+    stripe (the detector's `side-tab`). Its words stay `--text`: `--danger` text is 4.38:1 on
+    `--panel-2`, and resource and threat colors are never body text.
+  - `AdminDataTable`: a required `label` names its horizontal `ScrollArea`, so a wide table
+    scrolls inside its region at 390px and the page never does. The header uses the caption
+    step on `--panel-2`, and rows are split by 1px tool-line rules.
+  - `AdminLinkBar`: section links (the nav, the Database tabs) on the Tabs track. The current
+    one is filled `--cta` with `aria-current="page"`. The track wraps at 390px.
+  - `AdminToggleChip`: a flat 44px chip with `aria-pressed` for a client-side filter (the
+    Feedback Kind, Status and Area rows). Pressed is filled `--cta-2` with `--text-on-cta`, idle
+    is `--panel-2` with `--text`. An icon-only chip keeps its name in `aria-label` and `title`.
+  - Feedback status badge (`admin-feedback-page.tsx`): a round 32px fill in the status tone,
+    `--threat-other` Pending, `--upgrade` Done, `--danger` Eliminated, holding the clock, check
+    or cross glyph in `--text-on-cta` and named by the status, so the tone is never alone. The
+    pressed triage mark takes the same fill. No one-sided stripe (the detector's `side-tab`).
+- **Charts** (`screens/admin/admin-charts.tsx`, colors in `admin/admin-chart-math.ts`): CSS and
+  SVG, no chart library. Series colors are `ADMIN_CHART_COLORS`, hex from `V7_COLORS`, in this
+  order: `--cta-2`, `--point`, `--life`, `--upgrade`, `--shield`, `--threat-other`, `--text-2`,
+  `--danger`. Each reads at least 3:1 on `--panel` and neighbours stay at least 39 ΔE2000 apart;
+  `--glow-a`, `--threat-attack`, `--mine`, `--glow-b` and `--cta` are left out (repeat values,
+  or 3.9 from `--point`). A single series (bars, dots) is the first color. The empty ring and an
+  unlisted legend swatch are `ADMIN_CHART_EMPTY_COLOR` (`--panel-2`). Bar tracks are `--panel-2`,
+  the pie hole is `--panel`, and the scatter frame and axes are 1px `V7_TOOL_LINE`
+  (`non-scaling-stroke`). Chart colors are fills and marks, never text: labels are `--text` and
+  values, axis text and captions `--text-2`, all at the 12px caption step.
 
 ## Do's and Don'ts
 

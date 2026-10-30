@@ -116,4 +116,13 @@ match-filter `WHERE` as the outer query, so a tutorial in a reused Play-again
 room does not mark the first real match as a rematch.
 
 The admin table browser allowlist includes `game_chat_messages` (Lot 70). Chat
-rows are not overview metrics.
+rows are not overview metrics. The `/admin` Database page has a **Chat messages**
+tab for it (L80-11); rows keep the server order (by `game_id`, no `created_at`)
+with no per-game filter.
+
+**Known issue (chat paging, L80-11):** `tableOrderBy` has no branch for
+`game_chat_messages`, so it sorts by `ORDER BY 1` (`game_id`, not unique) and
+lines inside a game have no defined order. With the Database tab paged by
+`LIMIT` / `OFFSET` (L80-10), a line can repeat on two pages or be skipped. The
+fix is one server line, `game_id DESC, order_index ASC` (the primary key),
+deferred out of the client-only Lot 80 (`decisions.md` 2026-10-28).
