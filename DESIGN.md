@@ -501,7 +501,8 @@ name, bot label and connection badge in Seat identity.
   onLongPress, disabled? })` returns pointer handlers for the face it opens. A primary-button
   press held for `LONG_PRESS_MS` (450 ms) fires once. Moving the pointer more than
   `LONG_PRESS_MOVE_PX` (8 px), releasing, cancelling or leaving cancels it. `onClickCapture`
-  swallows the click that ends a long press, so a tap action never follows it. It applies
+  swallows the click that ends a long press, so a tap action never follows it; a keyboard or
+  assistive-technology click (`detail` 0) is never swallowed and clears a stale press. It applies
   outside the hand only (the hand reads a vertical move as a drag), opens the same read-only
   sheet that Enter or a click opens on the face, and never sends an intent. Motion preference
   does not change it.

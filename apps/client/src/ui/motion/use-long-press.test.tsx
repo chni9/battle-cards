@@ -80,10 +80,36 @@ describe('useLongPress (spec v7 §6.6.5)', () => {
     press(button);
     advance(450);
     fireEvent.pointerUp(button);
-    fireEvent.click(button);
+    // A pointer click: `detail` 1. `fireEvent.click` defaults to 0, a keyboard click (Minor 1).
+    fireEvent.click(button, { detail: 1 });
     expect([onLongPress.mock.calls.length, onClick.mock.calls.length]).toEqual([1, 0]);
-    fireEvent.click(button);
+    fireEvent.click(button, { detail: 1 });
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('never swallows a keyboard click, even right after a long press released elsewhere (Minor 1)', () => {
+    const { onLongPress, onClick, button } = setup();
+    press(button);
+    advance(450);
+    // The release lands on the sheet the long press opened: no click reaches this face.
+    fireEvent.pointerUp(button);
+    fireEvent.click(button, { detail: 0 });
+    expect([onLongPress.mock.calls.length, onClick.mock.calls.length]).toEqual([1, 1]);
+    // The keyboard click also cleared the stale press: a later click with no pointerdown runs too.
+    fireEvent.click(button, { detail: 1 });
+    expect(onClick).toHaveBeenCalledTimes(2);
+  });
+
+  it('a new pointerdown resets a stale fired press, so its tap clicks (ledger 41)', () => {
+    const { onLongPress, onClick, button } = setup();
+    press(button);
+    advance(450);
+    fireEvent.pointerUp(button);
+    press(button);
+    advance(100);
+    fireEvent.pointerUp(button);
+    fireEvent.click(button, { detail: 1 });
+    expect([onLongPress.mock.calls.length, onClick.mock.calls.length]).toEqual([1, 1]);
   });
 
   it('cancels on pointercancel and ignores a secondary button', () => {

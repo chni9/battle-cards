@@ -7,8 +7,9 @@
  * The press is cancelled only by movement *more than* `LONG_PRESS_MOVE_PX` (spec v7 §6.6.5, "> 8
  * px"), so 8 px of travel keeps it and 9 px cancels it. Release, pointer cancel and leaving the
  * element cancel it too. `onClickCapture` swallows the click that ends a long press, so a tap
- * action on the same face (a shop tile selecting) does not also run. Motion preference does not
- * change any of this.
+ * action on the same face (a shop tile selecting) does not also run. A keyboard or assistive
+ * technology click (`detail` 0) is never swallowed. Motion preference does not change any of
+ * this.
  */
 
 import { useEffect, useLayoutEffect, useRef, type MouseEvent, type PointerEvent } from 'react';
@@ -89,6 +90,13 @@ export function useLongPress({ onLongPress, disabled = false }: UseLongPressOpti
     onPointerCancel: cancel,
     onPointerLeave: cancel,
     onClickCapture: (event) => {
+      // A keyboard or assistive-technology click (`detail` 0) never ends a press, and it has no
+      // pointerdown to reset `fired`: a long press released on the sheet it opened would
+      // otherwise swallow the next Enter on this face (L74 final review, Minor 1).
+      if (event.detail === 0) {
+        fired.current = false;
+        return;
+      }
       if (fired.current) {
         fired.current = false;
         event.preventDefault();
