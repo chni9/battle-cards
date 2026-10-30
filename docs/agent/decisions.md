@@ -5189,3 +5189,24 @@ Source: technical spec v7 §6.10, the L73-13 brief, Appendix A `turn-strip-timer
   stale deadline, as V2 does.
 
 ---
+
+## 2026-10-29 · [T] Image build downloads once into a cached pnpm store
+
+The PR #84 preview (2026-10-28) failed with `ERR_PNPM_FETCH_429`. Both the build-stage and
+the runtime-stage `pnpm install` downloaded the `uWebSockets.js` GitHub tarball
+(`codeload.github.com`, pinned in `pnpm-lock.yaml`) in parallel, on every build.
+
+Locked (no dependency, lockfile, entrypoint or protocol change):
+
+- The dev install moves to a `deps` stage; `build` is `FROM deps`. It is the only install
+  that downloads. Its store is the BuildKit cache mount `card-battle-pnpm-store`, with
+  `npm_config_fetch_retries=5`.
+- The runtime stage copies its manifests from `deps`, so its `--prod` install waits for the
+  filled store and needs no network. It is otherwise unchanged.
+- A cache mount, not a `pnpm fetch` stage. `pnpm fetch` imports every package into a
+  throwaway `node_modules`, and a layer-only store would not survive the per-preview values
+  Coolify gives every stage (`ARG` lines or `COOLIFY_BUILD_SECRETS_HASH`).
+
+Supersedes the "build stage" wording of the 2026-09-20 entry: the
+`NODE_ENV=development pnpm install` now runs in `deps`. Operator detail:
+`docs/agent/deploy.md` (Image build).
