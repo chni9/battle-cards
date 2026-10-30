@@ -17,7 +17,8 @@
  *   `commit` or opens the card sheet for its pre-send choice, and nothing drags while targeting.
  * - §6.1 item 5 (L74-13): the dock region renders `strip.dock` (`Dock`), and its sends use the same
  *   tap guard as the seats, so no double tap on the targeting bar reaches Draw, Unspy or Activate
- *   duplication underneath.
+ *   duplication underneath. `dockCommit` says whether a send went out, and `actionReject` re-arms
+ *   the dock's once-per-view latch (`use-commit-once.ts`, final review R2).
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -33,7 +34,7 @@ import { selfStrip } from '../../view-model/self-strip';
 import { seats } from '../../view-model/seats';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
-import { createArenaCommit, type ArenaCommit } from './arena-commit';
+import { createArenaCommit } from './arena-commit';
 import { arenaRegionAttributes } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
 import {
@@ -50,7 +51,7 @@ import {
 import { CardSheet } from './card-sheet';
 import type { CardSheetSource } from './card-sheet-source';
 import { CentralPlate } from './central-plate';
-import { Dock } from './dock';
+import { Dock, type DockCommit } from './dock';
 import { dockHasControls } from './dock-model';
 import { plateDropHighlight, seatDropHighlight } from './hand-drag';
 import { HandDragLayer } from './hand-drag-layer';
@@ -127,9 +128,11 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const targeting = live !== null;
   // The dock's exit (L74-13): the same commit, silenced while the tap guard is up, so the second tap
   // of a double tap on the bar's Cancel or a target cannot land on Draw, Unspy or Activate duplication.
-  const dockCommit: ArenaCommit = (intent) => {
-    if (tapGuard.guarded) return;
+  // It says whether the send went out, so the dock latches only a real send (final review, R2).
+  const dockCommit: DockCommit = (intent) => {
+    if (tapGuard.guarded) return false;
     commit(intent);
+    return true;
   };
 
   // Drag from the hand (L74-12, §6.6.3): exclusive with targeting; a pre-send choice opens the card sheet.
@@ -244,6 +247,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
             turnSequence={view.turnSequence}
             view={view}
             commit={dockCommit}
+            actionReject={props.actionReject}
           />
         ) : null}
       </div>

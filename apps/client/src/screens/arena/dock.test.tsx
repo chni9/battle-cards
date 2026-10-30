@@ -6,6 +6,7 @@
  */
 import type { PlayingStateView, PublicPlayerView, SubChoiceRequiredPayload } from '@card-battle/shared';
 import { act, screen, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { visibleText } from '../../test/glyph-queries';
@@ -167,5 +168,86 @@ describe('Activate duplication and the other POVs', () => {
     act(() => { vi.advanceTimersByTime(DUR_BASE_MS); });
     await user.click(draw());
     expect(onDraw).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('one send per control per view (final review I3, ruling R2)', () => {
+  const REJECT: ArenaScreenProps['actionReject'] = { code: 'already-acted', message: 'You already acted this turn.' };
+  const hand = (): HTMLElement => document.querySelector<HTMLElement>('[data-arena-region="hand"]') ?? document.body;
+  /** Spy → Use → Cancel: targeting ends and the tap guard is up for DUR_BASE_MS. */
+  async function cancelTargeting(user: UserEvent): Promise<void> {
+    await user.click(within(hand()).getByRole('button', { name: 'Spy' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Spy' })).getByRole('button', { name: /^Use/ }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  }
+
+  it('a double tap on Draw sends one drawCard', async () => {
+    const { user, onDraw } = setup(makeArenaView());
+    await user.dblClick(draw());
+    expect(onDraw).toHaveBeenCalledTimes(1);
+  });
+
+  it('a double tap on Activate duplication sends one activateDuplication', async () => {
+    const { user, onActivateDuplication } = setup(viewWith({ kitId: 'duplicator' }));
+    await user.dblClick(within(dock()).getByRole('button', { name: 'Activate duplication' }));
+    expect(onActivateDuplication).toHaveBeenCalledTimes(1);
+  });
+
+  it('a reject re-arms Draw: Draw, reject, then Draw sends again', async () => {
+    const { user, onDraw, props, rerender } = setup(makeArenaView());
+    await user.click(draw());
+    await user.click(draw());
+    expect(onDraw).toHaveBeenCalledTimes(1);
+    // The server rejects the draw with no state update: only `actionReject` changes.
+    rerender(<ArenaScreen {...props} actionReject={REJECT} />);
+    expect(isDisabled(draw())).toBe(false);
+    await user.click(draw());
+    expect(onDraw).toHaveBeenCalledTimes(2);
+  });
+
+  it('a new view re-arms Draw', async () => {
+    const view = makeArenaView();
+    const { user, onDraw, props, rerender } = setup(view);
+    await user.dblClick(draw());
+    expect(onDraw).toHaveBeenCalledTimes(1);
+    rerender(<ArenaScreen {...props} view={{ ...view }} />);
+    await user.click(draw());
+    expect(onDraw).toHaveBeenCalledTimes(2);
+  });
+
+  it('a send the tap guard swallows leaves Draw live, and the next double tap sends once', async () => {
+    vi.useFakeTimers();
+    const view = viewWith({ points: 10, hand: [makeCard('spy', { instanceId: 'spy-1' })] });
+    const { user, onDraw, props } = setup(view, {}, { advanceTimers: vi.advanceTimersByTime });
+    await cancelTargeting(user);
+    await user.click(draw());
+    expectNoArenaIntent(props);
+    act(() => { vi.advanceTimersByTime(DUR_BASE_MS); });
+    await user.dblClick(draw());
+    expect(onDraw).toHaveBeenCalledTimes(1);
+  });
+
+  it('a disabled Activate duplication sends nothing when clicked (ledger 131)', async () => {
+    const { user, props } = setup(viewWith({ kitId: 'duplicator' }, { currentTurnPlayerId: 'p1' }));
+    const button = within(dock()).getByRole('button', { name: 'Activate duplication' });
+    expect(isDisabled(button)).toBe(true);
+    expect(reasonOf(button)).toBe(DISABLED_REASON_COPY['not-your-turn']);
+    await user.click(button);
+    expectNoArenaIntent(props);
+  });
+
+  it('an Unspy Confirm the tap guard swallows keeps the sheet and its pick (Minor 9)', async () => {
+    vi.useFakeTimers();
+    const view = withSeat(viewWith({ points: 10, hand: [makeCard('spy', { instanceId: 'spy-1' })] }), 'p1', SPYING);
+    const { user, onClearSpy, props } = setup(view, {}, { advanceTimers: vi.advanceTimersByTime });
+    await cancelTargeting(user);
+    await user.click(unspy());
+    await user.click(within(unspySheet()).getByRole('button', { name: 'Confirm' }));
+    expectNoArenaIntent(props);
+    expect(within(unspySheet()).getByRole('button', { name: 'p1' }).getAttribute('aria-pressed')).toBe('true');
+    act(() => { vi.advanceTimersByTime(DUR_BASE_MS); });
+    await user.click(within(unspySheet()).getByRole('button', { name: 'Confirm' }));
+    expect(onClearSpy.mock.calls).toEqual([['p1']]);
+    expect(screen.queryByRole('dialog', { name: 'Unspy' })).toBeNull();
   });
 });

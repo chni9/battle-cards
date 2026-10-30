@@ -8,9 +8,14 @@
  * send goes through `commit`, which ArenaScreen has already silenced for `TAP_GUARD_MS` after
  * targeting ends. An eliminated Watching POV keeps this dock, disabled (ruling 7); a walk-in has no
  * model entries, so ArenaScreen does not render it at all (Q38).
+ *
+ * Draw and Activate duplication send once per view (`useCommitOnce`; final review I3, ruling R2):
+ * a double tap sends one intent, and the next view or a new `actionReject` re-arms them. Unspy's
+ * Confirm closes its sheet only when the send went out (Minor 9).
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
+import type { ActionRejectPayload } from '../../net/use-room-connection';
 import { useAnimate } from 'motion/react';
 import { useEffect, useState, type ReactElement } from 'react';
 
@@ -22,7 +27,7 @@ import { motionAttribute } from '../../ui/primitives/chrome-classes';
 import { DISABLED_REASON_COPY, type DisabledReason } from '../../view-model/action-reasons';
 import { SHOP_ACTION_LABEL } from '../../view-model/chrome-labels';
 import type { DockModel } from '../../view-model/self-strip';
-import type { ArenaCommit } from './arena-commit';
+import type { ArenaIntent } from './arena-commit';
 import {
   ACTIVATE_DUPLICATION_LABEL,
   drawAriaLabel,
@@ -30,6 +35,10 @@ import {
   unspyAriaLabel,
 } from './dock-model';
 import { UnspySheet } from './unspy-sheet';
+import { useCommitOnce } from './use-commit-once';
+
+/** The arena commit behind the targeting tap guard: true when the send went out, false when the guard swallowed it. */
+export type DockCommit = (intent: ArenaIntent) => boolean;
 
 export interface DockProps {
   /** `selfStrip(view, ctx).dock`. */
@@ -37,10 +46,12 @@ export interface DockProps {
   /** `selfStrip(...).isActive`. */
   isMyTurn: boolean;
   turnSequence: number;
-  /** Spy nicknames and seat hues for the Unspy picker. */
+  /** Spy nicknames and seat hues for the Unspy picker; a new view re-arms Draw and Activate duplication. */
   view: PlayingStateView;
   /** The arena commit, already silenced by the targeting tap guard. */
-  commit: ArenaCommit;
+  commit: DockCommit;
+  /** `props.actionReject`: a new reject re-arms Draw and Activate duplication. */
+  actionReject: ActionRejectPayload | null;
   /** L74-14 passes the shop sheet opener; until then Shop renders disabled. */
   onOpenShop?: () => void;
 }
@@ -50,10 +61,11 @@ function reasonProps(reason: DisabledReason | null): { readonly disabledReason?:
   return reason === null ? {} : { disabledReason: DISABLED_REASON_COPY[reason] };
 }
 
-export function Dock({ model, isMyTurn, turnSequence, view, commit, onOpenShop }: DockProps): ReactElement {
+export function Dock({ model, isMyTurn, turnSequence, view, commit, actionReject, onOpenShop }: DockProps): ReactElement {
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
   const [unspyOpen, setUnspyOpen] = useState(false);
+  const once = useCommitOnce({ view, reject: actionReject });
   const { draw, shop, unspy, duplication } = model;
 
   // L64-05: the pulse key changes at every own turn start and payout change. It animates the
@@ -88,7 +100,7 @@ export function Dock({ model, isMyTurn, turnSequence, view, commit, onOpenShop }
             reserveReasonSlot
             {...reasonProps(draw.reason)}
             onClick={() => {
-              commit({ kind: 'drawCard' });
+              once('draw', () => commit({ kind: 'drawCard' }));
             }}
           >
             {`+${String(draw.gain)}`}
@@ -135,7 +147,7 @@ export function Dock({ model, isMyTurn, turnSequence, view, commit, onOpenShop }
           reserveReasonSlot
           {...reasonProps(duplication.reason)}
           onClick={() => {
-            commit({ kind: 'activateDuplication' });
+            once('activate-duplication', () => commit({ kind: 'activateDuplication' }));
           }}
         >
           {ACTIVATE_DUPLICATION_LABEL}
@@ -147,8 +159,12 @@ export function Dock({ model, isMyTurn, turnSequence, view, commit, onOpenShop }
           control={unspy}
           view={view}
           onConfirm={(targetPlayerId) => {
-            commit({ kind: 'clearSpy', payload: { targetPlayerId } });
-            setUnspyOpen(false);
+            // A Confirm the tap guard swallowed keeps the sheet and its pick (Minor 9).
+            const sent = commit({ kind: 'clearSpy', payload: { targetPlayerId } });
+            if (sent) {
+              setUnspyOpen(false);
+            }
+            return sent;
           }}
           onClose={() => {
             setUnspyOpen(false);

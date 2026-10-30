@@ -1088,10 +1088,24 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `dock.duplication` is set and sends `activateDuplication`; the self strip keeps only
   'Duplication active'. An eliminated Watching POV keeps the disabled dock without Unspy (A.8
   ruling 7); a walk-in has no controls (Q38). Every send goes through the commit, and for
-  `TAP_GUARD_MS` after targeting ends the dock sends nothing. The `use-room-connection.clear-spy`
+  `TAP_GUARD_MS` after targeting ends the dock sends nothing. Draw and Activate duplication send
+  once per view (`useCommitOnce`, next bullet), and Unspy's Confirm closes its sheet only when its
+  send went out. The `use-room-connection.clear-spy`
   source-text row now has its behavior tests: `net/use-room-connection.clear-spy.behavior.test.ts`
   (`renderHook` over a mocked `@colyseus/sdk` room, the L74-03 pattern) and
   `screens/arena/dock.test.tsx`.
+- `screens/arena/use-commit-once.ts` (Lot 74 Part 1 final review, I3 and ruling R2; spec v7 §1,
+  §6.6.4): the latch for a commit button that stays on screen after it sends. `useCommitOnce({
+  view, reject })` returns `once(control, send)`; call `once('<control>', () => commit(intent))`
+  from the click handler.
+  - `send` returns whether the send went out, and only a real send latches. The dock's
+    `DockCommit` returns false while the targeting tap guard swallows a send, so a swallowed tap
+    leaves the button live.
+  - Latches are per control name: Unspy's Confirm never blocks a quick Draw after it.
+  - A new view identity (any state update, a new `turnSequence` included) or a new
+    `actionReject` re-arms every latch: a rejected send may arrive with no state update.
+  - Users: the dock's Draw and Activate duplication. L74-14 (Buy, a shop tile double tap) and
+    L74-18 (the sub-choice Confirm) reuse it instead of hand-rolling another latch.
 
 ## Design system (V2 · Lots 10+)
 

@@ -6,7 +6,7 @@
  * the swipe send nothing; only Confirm calls `onConfirm`, once, with the resolved spy. The seats are
  * `control.spyIds` (living spies only, in `view.players` order), and a single spy is preselected
  * (L58-09). The pick resets whenever the sheet closes, so a reopened sheet never shows a stale
- * choice. It carries no kit portrait and no hidden information: a seat is its hue initial and its
+ * choice; a Confirm whose send did not go out (`onConfirm` returns false) keeps it. It carries no kit portrait and no hidden information: a seat is its hue initial and its
  * nickname (`SeatChoiceButton`).
  */
 
@@ -29,7 +29,8 @@ export interface UnspySheetProps {
   control: UnspyControl;
   /** Nicknames and seat hues for the picker. */
   view: PlayingStateView;
-  onConfirm: (targetPlayerId: string) => void;
+  /** Sends `clearSpy`; true when the send went out (the dock then closes the sheet). */
+  onConfirm: (targetPlayerId: string) => boolean;
   onClose: () => void;
 }
 
@@ -56,8 +57,9 @@ export function UnspySheet({ open, control, view, onConfirm, onClose }: UnspyShe
             {...(control.reason !== null ? { disabledReason: DISABLED_REASON_COPY[control.reason] } : {})}
             onClick={() => {
               if (target === null) return;
-              setPicked(null);
-              onConfirm(target);
+              if (onConfirm(target)) {
+                setPicked(null);
+              }
             }}
           >
             {UNSPY_CONFIRM_LABEL}

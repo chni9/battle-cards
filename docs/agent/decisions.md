@@ -5532,3 +5532,23 @@ never sends); Lot 74 Part 1 final review, issue I1; controller ruling R1.
   card at 360 and 375 px, a double tap on Unspy and a sub-choice arriving under a moving finger.
 
 ---
+
+## 2026-10-30 · [P] V7 dock: one send per control per view (L74-13, final review ruling R2)
+
+Source: technical spec v7 §1, §6.6.4; Lot 74 Part 1 final review, issue I3 and Minor 9; the
+ledger-138 ruling (the designer question on a Draw double tap, answered by default); controller
+ruling R2.
+
+- **The gap.** Draw and Activate duplication stay enabled until the next state update, so a
+  double tap sent two intents, and Part 2's reject toast (L74-25) would flag the second right after
+  a legitimate action.
+- **One reusable latch,** `screens/arena/use-commit-once.ts`, not a fourth hand-rolled one: L74-14
+  and L74-18 reuse it. Three constraints from the review shape it. The latch sets only when the
+  send went out (`dockCommit` now returns false while the tap guard swallows a send). It is per
+  control, not dock-wide. It re-arms on a new view identity and on a new `actionReject`, because a
+  rejected send can arrive with no state update and a dock button never closes to re-arm itself.
+- **Unspy's Confirm** closes its sheet, and clears its pick, only when its send went out.
+- **Cost.** Between a send and the next state update the button looks enabled but does nothing;
+  that window is one server round trip.
+
+---
