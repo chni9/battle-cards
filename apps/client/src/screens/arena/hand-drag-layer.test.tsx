@@ -4,7 +4,7 @@
  * layout: every measured rect is empty unless a test stubs it, so a drop lands nowhere by default.
  */
 import type { PlayingStateView } from '@card-battle/shared';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
@@ -143,10 +143,39 @@ describe('drag from the hand (§6.6.3, §6.6.5)', () => {
     const card = handCard('Basic attack, 1 damage');
     lift(card);
     release(103, 650);
-    fireEvent.click(card);
+    // A pointer click: `detail` 1. `fireEvent.click` defaults to 0, a keyboard click (Minor 2).
+    fireEvent.click(card, { detail: 1 });
     expect(screen.queryByRole('dialog', { name: 'Basic attack' })).toBeNull();
     await user.click(card);
     expect(screen.getByRole('dialog', { name: 'Basic attack' })).not.toBeNull();
+  });
+
+  it('a keyboard activation after a drag that ended off the card opens the sheet (final review, Minor 2)', async () => {
+    const { user, props } = setup(playView());
+    const card = handCard('Basic attack, 1 damage');
+    lift(card);
+    // Released over the felt: no click reaches the card.
+    release(103, 650);
+    act(() => {
+      card.focus();
+    });
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('dialog', { name: 'Basic attack' })).not.toBeNull();
+    expectNoArenaIntent(props);
+  });
+
+  it('a sheet opened mid-drag stops the drop: the card springs back and nothing is sent (final review, Minor 5)', () => {
+    const { props } = setup(playView());
+    vi.spyOn(seat('p1'), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 100));
+    lift(handCard('Basic attack, 1 damage'));
+    move(50, 50);
+    expect(seat('p1').getAttribute('data-drop')).toBe('over');
+    // A second finger taps the p2 seat while the card is held: its sheet opens over the arena.
+    fireEvent.click(within(seat('p2')).getByRole('button', { name: 'p2' }), { detail: 1 });
+    expect(screen.getByRole('dialog', { name: 'p2' })).not.toBeNull();
+    release(50, 50);
+    expect(ghost()).toBeNull();
+    expectNoArenaIntent(props);
   });
 
   it('measures seats and the plate from their arena anchors', () => {

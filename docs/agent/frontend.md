@@ -1052,7 +1052,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   card, above the hand on the side opposite the drag origin. On release the card's model is
   recomputed and `dispatchDrop` commits the `dropTarget` intent, opens the card sheet for a
   pre-send choice (nothing sent), or springs the card back (instantly under reduced motion). The
-  click that ends a drag never opens the sheet.
+  click that ends a drag never opens the sheet, but a keyboard click (`detail` 0) is never
+  swallowed. A release while a sheet is live (one a second finger opened mid-drag) springs back
+  and sends nothing (final review, Minor 2 and 5).
 - L74-12 browser check (2026-10-28, solo Assassin vs 3 Normal bots, `?ui=next`, 180 s turns,
   built-in browser at 375×812 then 390×844; mouse drags plus scripted pointer sequences for
   two-segment gestures). Passed:

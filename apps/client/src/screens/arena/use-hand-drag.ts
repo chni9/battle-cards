@@ -10,7 +10,8 @@
  * calls `preventDefault`, so a tap still clicks and opens the sheet; the click that ends a drag
  * is swallowed in the capture phase. The zones are measured once, at lift; the highlights and
  * the drop read the card's model on the latest view each time. Ghost moves set motion values
- * and never re-render the arena: only a change of the hovered zone does.
+ * and never re-render the arena: only a change of the hovered zone does. A keyboard click is never
+ * swallowed, and a release while a sheet is live springs back and sends nothing.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -19,6 +20,8 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { CARD_SPRING } from '../../ui/motion/motion-tokens';
 import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-motion';
+import { liveSheetId } from '../../ui/primitives/sheet-stack';
+import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
 import { readVisualViewportBox } from '../../ui/visual-viewport';
 import type { ActionContext } from '../../view-model/action-lock';
 import { cardActions, type DropZones } from '../../view-model/card-actions';
@@ -88,6 +91,7 @@ export function useHandDrag(input: HandDragInput): {
   readonly view: HandDragView | null;
 } {
   const reduced = usePrefersReducedMotion();
+  const store = useSheetStackStore();
   const [phase, setPhase] = useState<Phase | null>(null);
   // Set at lift, cleared by the next press: the click that ends a drag never opens the sheet.
   const suppressClick = useRef(false);
@@ -164,6 +168,12 @@ export function useHandDrag(input: HandDragInput): {
     if (phase?.kind !== 'dragging') {
       return;
     }
+    // A sheet opened mid-drag (a second finger on a seat or the plate) is modal: the card springs
+    // back and nothing is sent under it (final review, Minor 5).
+    if (liveSheetId(store.getSnapshot()) !== null) {
+      springBack(phase.card, phase.origin);
+      return;
+    }
     const latest = latestHeldActions(input.view, input.ctx, phase.card);
     const outcome = dispatchDrop(resolveDrop(pointOf(event), phase.rects, latest), input.commit, () => {
       input.openChoice(phase.card);
@@ -222,6 +232,13 @@ export function useHandDrag(input: HandDragInput): {
       });
     },
     onCardClickCapture: (event) => {
+      // A keyboard or AT click (`detail` 0) never ends a drag. After a drag that ended off the card
+      // no click followed and the flag is still set, so the next Enter would be swallowed; it
+      // opens the sheet and clears the flag instead (final review, Minor 2).
+      if (event.detail === 0) {
+        suppressClick.current = false;
+        return;
+      }
       if (!suppressClick.current) return;
       suppressClick.current = false;
       event.preventDefault();
