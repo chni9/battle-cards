@@ -124,7 +124,7 @@ export function startTargeting(state: ArenaSheetsState, targeting: TargetingStat
   }
   const closed = state.open
     .filter((entry) => entry !== targeted)
-    .reduce(closeArenaSheet, { ...state, targeting: null });
+    .reduce<ArenaSheetsState>((acc, sheet) => closeArenaSheet(acc, sheet), { ...state, targeting: null });
   return { ...closed, open: [targeted], targeting };
 }
 

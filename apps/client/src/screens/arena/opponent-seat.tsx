@@ -118,7 +118,7 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
   });
   const validTarget = target?.kind === 'valid';
   // The ring sits on the stretched button; the dim on the root, because the button is transparent.
-  const targetClass = validTarget ? `ring-4 ring-v7-mine ${reduced ? '' : 'animate-pulse'}` : '';
+  const targetClass = validTarget ? ['ring-4 ring-v7-mine', reduced ? '' : 'animate-pulse'] : [];
   const rect = seatRect(center);
   const botWords = model.botDifficulty !== null ? botSeatLabelText(model.botDifficulty) : null;
   const seatTitle = [model.nickname, model.connectionLabel, botWords]
@@ -167,7 +167,9 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
         {...(target?.kind === 'invalid' ? { 'aria-disabled': true } : {})}
         {...(validTarget ? { 'data-motion': motionAttribute(reduced) } : {})}
         onClick={control.onClick}
-        className={`absolute inset-0 rounded-v7-chrome-sm ${CHROME_FOCUS_CLASS} ${targetClass}`}
+        className={['absolute inset-0 rounded-v7-chrome-sm', CHROME_FOCUS_CLASS, ...targetClass]
+          .filter((part) => part !== '')
+          .join(' ')}
       />
       <div id={detailsId} className="pointer-events-none relative flex h-full min-w-0 flex-col">
         <div data-seat-name title={model.nickname} className="flex min-w-0 items-center gap-0.5">
