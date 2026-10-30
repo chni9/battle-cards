@@ -794,9 +794,12 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   to either board.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
-  always renders, with its empty state. The root is `<main data-zone="table" data-arena="next">`,
-  `.v7-ground`, `h-full w-full overflow-hidden` of `#root`. It has no `vh`, `dvh` or `w-screen` and
-  never page-scrolls (L53-07); only the hand scrolls, inside itself.
+  always renders. After Lot 74 Part 1 each shows its content or an empty state, with three
+  exceptions: a walk-in's self strip and dock render bare (Q38; L74-23 adds the Watching strip),
+  and the ticker is blank once the log has entries (its collapsed log is L74-15). The root is
+  `<main data-zone="table" data-arena="next">`, `.v7-ground`, `h-full w-full overflow-hidden` of
+  `#root`. It has no `vh`, `dvh` or `w-screen` and never page-scrolls (L53-07); only the hand
+  scrolls, inside itself.
 - Anchors (L74-01, §6.12): regions keep the V2 `data-zone` names that `fx/`, hints and the tutorial
   query.
   - `top-bar`: `timers` with `data-hint-anchor="your-turn"` (the clock slot).
