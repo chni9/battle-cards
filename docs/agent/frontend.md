@@ -965,7 +965,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   on the POV's turn. A tap calls `onOpenCard`; ArenaScreen opens the card sheet (source `hand` /
   `special`), and the selected card is the newest open hand/special card sheet
   (`selectedHandInstanceId`). There is no entrance motion. An upgrade replays a 90° flip
-  (`data-upgrade-flip` counts the flips), or a 120 ms fade under reduced motion (designer Q13).
+  (`data-upgrade-flip` counts the flips), or a 120 ms fade under reduced motion (designer Q13),
+  animated in place (`useAnimate`, never a `key` remount), so keyboard focus stays on the card.
 - `screens/arena/arena-commit.ts` (L74-08, spec v7 §6.6.4, Lot 74 Appendix A.6):
   `createArenaCommit(handlers)` is the only exit for every `ArenaIntent`. `ArenaScreen` builds it
   once per render from its props and passes `commit` down; no component calls an intent handler

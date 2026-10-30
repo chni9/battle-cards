@@ -48,6 +48,7 @@ import {
   type ArenaSheetsState,
 } from './arena-sheets';
 import { CardSheet } from './card-sheet';
+import type { CardSheetSource } from './card-sheet-source';
 import { CentralPlate } from './central-plate';
 import { Dock } from './dock';
 import { dockHasControls } from './dock-model';
@@ -91,6 +92,10 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const closeSheet = useCallback((sheet: ArenaSheet): void => {
     setSheets((current) => closeArenaSheet(current, sheet));
   }, [setSheets]);
+  // Every face (hand, plate, self strip, seat sheet, drop choice) opens its card sheet the same way.
+  const openCard = (source: CardSheetSource): void => {
+    openSheet({ kind: 'card', source });
+  };
   const tappedSeatId = openSeatId(sheets);
 
   // Tap-tap targeting (L74-10, §6.6.2, §6.6.5): the bar and the seats read the live seat set.
@@ -133,9 +138,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
     ctx,
     targetingActive: targeting,
     commit,
-    openChoice: (source) => {
-      openSheet({ kind: 'card', source });
-    },
+    openChoice: openCard,
   });
   const dragging = handDrag.view?.phase === 'dragging' ? handDrag.view : null;
 
@@ -205,9 +208,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           model={threatModel}
           mode={seatsModel.layout.mode}
           arena={layoutBox.arena}
-          onOpenCard={(source) => {
-            openSheet({ kind: 'card', source });
-          }}
+          onOpenCard={openCard}
           dropHighlight={dragging === null ? null : plateDropHighlight(dragging.zones, dragging.hover)}
         />
       </div>
@@ -221,9 +222,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
             onOpenKit={(kitId) => {
               openSheet({ kind: 'kit', kitId });
             }}
-            onOpenCard={(source) => {
-              openSheet({ kind: 'card', source });
-            }}
+            onOpenCard={openCard}
           />
         )}
       </div>
@@ -232,9 +231,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           view={view}
           ctx={ctx}
           selectedInstanceId={selectedHandInstanceId(sheets)}
-          onOpenCard={(source) => {
-            openSheet({ kind: 'card', source });
-          }}
+          onOpenCard={openCard}
           drag={handDrag.fanProps}
         />
       </div>
@@ -304,9 +301,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
                 onOpenKit={(kitId) => {
                   openSheet({ kind: 'kit', kitId });
                 }}
-                onOpenCard={(source) => {
-                  openSheet({ kind: 'card', source });
-                }}
+                onOpenCard={openCard}
               />
             );
           }

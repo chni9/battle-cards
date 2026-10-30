@@ -7,7 +7,8 @@
  * One horizontal scroller with two groups, the hand (attacks, then actions) and the specials
  * after a gap. The component renders `handFanModel`; a tap only asks ArenaScreen to open the
  * card's sheet, so nothing is sent from here (golden rule 8). There is no entrance motion (V2
- * `card-band.tsx` always skips it); a held card that upgrades replays V2's 90 degree flip.
+ * `card-band.tsx` always skips it); a held card that upgrades replays V2's 90 degree flip in
+ * place, so keyboard focus stays on it.
  *
  * L74-12 (§6.6.3, §6.6.5) wires the drag on each slot through `drag` (`useHandDrag`): the slot
  * keeps `touch-action: pan-x`, so a horizontal swipe stays the scroller's native scroll, and a
@@ -15,8 +16,8 @@
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
-import { motion } from 'motion/react';
-import { useState, type CSSProperties, type ReactElement } from 'react';
+import { useAnimate } from 'motion/react';
+import { useEffect, useState, type CSSProperties, type ReactElement } from 'react';
 
 import { Card } from '../../ui/card/card';
 import { durationS, EASE_ENTRANCE } from '../../ui/motion/motion-tokens';
@@ -55,20 +56,13 @@ type HandFanStyle = CSSProperties & { readonly '--hand-strips': string; readonly
 const STRIP_WIDTH =
   'max(44px, min(var(--hand-card-w) + 8px, (100cqi - 44px - var(--hand-fulls) * var(--hand-card-w)) / max(var(--hand-strips), 1)))';
 
-/** V2's flip is a 90 degree `rotateY`; `V7MotionTarget` has no `rotateY`, so raw motion props. */
-const FLIP_FULL = {
-  initial: { rotateY: 90 },
-  animate: { rotateY: 0 },
-  transition: { duration: durationS('base'), ease: EASE_ENTRANCE },
-  style: { transformPerspective: 600 },
-} as const;
+/** V2's flip: a 90 degree `rotateY` seen through a 600 px perspective. */
+const FLIP_FULL_KEYFRAMES = { transformPerspective: [600, 600], rotateY: [90, 0] };
+const FLIP_FULL_TRANSITION = { duration: durationS('base'), ease: EASE_ENTRANCE };
 
 /** Under reduced motion the cue is a 120 ms opacity fade (§8.3 keeps fades; designer Q13). */
-const FLIP_REDUCED = {
-  initial: { opacity: 0.4 },
-  animate: { opacity: 1 },
-  transition: { duration: durationS('fast') },
-} as const;
+const FLIP_REDUCED_KEYFRAMES = { opacity: [0.4, 1] };
+const FLIP_REDUCED_TRANSITION = { duration: durationS('fast') };
 
 export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag }: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
@@ -176,21 +170,31 @@ interface HandCardProps {
 
 /**
  * V2 `AnimatedCard`: a held card that flips to upgraded replays the flip, and never on mount.
- * The change is read during render (the `Sheet` pattern), so the count and the new key land in
- * the same commit.
+ * The change is read during render (the `Sheet` pattern), so the count lands in the same commit.
+ * The flip animates the wrapper in place, as the dock's Draw pulse does, instead of remounting it
+ * by `key`: Upgrade's sheet hands focus back to this card, and a remount would drop it to `body`
+ * (Lot 74 Part 1 final review, Minor 6).
  */
 function HandCard({ card, selected, onOpen }: HandCardProps): ReactElement {
   const { instance } = card.source;
   const reduced = usePrefersReducedMotion();
+  const [scope, animate] = useAnimate<HTMLDivElement>();
   const [shownUpgraded, setShownUpgraded] = useState(instance.isUpgraded);
   const [flips, setFlips] = useState(0);
   if (shownUpgraded !== instance.isUpgraded) {
     setShownUpgraded(instance.isUpgraded);
     setFlips(flips + 1);
   }
-  const flip = flips === 0 ? { initial: false } : reduced ? FLIP_REDUCED : FLIP_FULL;
+  useEffect(() => {
+    if (flips === 0) return;
+    if (reduced) {
+      void animate(scope.current, FLIP_REDUCED_KEYFRAMES, FLIP_REDUCED_TRANSITION);
+    } else {
+      void animate(scope.current, FLIP_FULL_KEYFRAMES, FLIP_FULL_TRANSITION);
+    }
+  }, [flips, reduced, animate, scope]);
   return (
-    <motion.div key={flips} data-upgrade-flip={String(flips)} data-motion={motionAttribute(reduced)} {...flip}>
+    <div ref={scope} data-upgrade-flip={String(flips)} data-motion={motionAttribute(reduced)}>
       <Card
         size="hand"
         instance={instance}
@@ -202,6 +206,6 @@ function HandCard({ card, selected, onOpen }: HandCardProps): ReactElement {
           onOpen(card.source);
         }}
       />
-    </motion.div>
+    </div>
   );
 }

@@ -4,7 +4,7 @@
  * `global-card-face` (L74-07).
  */
 import type { PlayingStateView, PrivateSelfView, SubChoiceRequiredPayload } from '@card-battle/shared';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -166,6 +166,18 @@ describe('HandFan (L74-07)', () => {
     rerender(fan(viewWith({ hand: [makeCard('spy', { isUpgraded: true })] })));
     expect(flipOf(container, 'spy-1')?.getAttribute('data-upgrade-flip')).toBe('1');
     expect(flipOf(container, 'spy-1')?.getAttribute('data-motion')).toBe('reduced');
+  });
+
+  it('keeps keyboard focus on a held card that upgrades: the flip animates in place (final review, Minor 6)', () => {
+    const { container, rerender } = renderUi(fan(viewWith({ hand: [makeCard('spy'), makeCard('shield')] })));
+    const spy = within(group('Hand')).getByRole('button', { name: 'Spy' });
+    act(() => {
+      spy.focus();
+    });
+    rerender(fan(viewWith({ hand: [makeCard('spy', { isUpgraded: true }), makeCard('shield')] })));
+    expect(flipOf(container, 'spy-1')?.getAttribute('data-upgrade-flip')).toBe('1');
+    expect(spy.isConnected).toBe(true);
+    expect(document.activeElement).toBe(spy);
   });
 
   it('blocks the context menu on a face (long-press is ours, §6.6.5)', () => {
