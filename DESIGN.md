@@ -731,7 +731,13 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   presses in that window: the bar shows at once, but a double tap neither re-expands nor
   re-minimizes. A sheet that mounts already collapsed raises no shield. A closing toast stays
   click-through instead: it covers a small area, and blocking the dock under it would be less
-  predictable.
+  predictable. **Entrance** (Lot 74 Part 1 final review, ruling R1): every time a panel enters
+  (it opens, reopens, or a resent blocking sheet arrives on its own), a transparent,
+  `aria-hidden` no-op shield covers the panel, actions and Minimize included, for `--dur-base`,
+  under reduced motion too, because it guards a double tap, not an animation. Its mousedown never
+  moves focus, and focus lands as it would without it. So the second tap of the double tap that
+  opened a card sheet, or a tap already in flight when a sub-choice arrives, never lands on Use,
+  Upgrade or a preselected Confirm. The backdrop around the panel keeps its usual behavior.
 - **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
   only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
   in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial

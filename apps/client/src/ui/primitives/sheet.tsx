@@ -27,6 +27,10 @@
  *   inert and click-through, one z-index under the live sheet. A real collapse to the bar, or a
  *   restore from it, raises a no-op shield over the box, bar included, for `DUR_BASE_MS` (none
  *   under reduced motion) while Minimize and restore ignore presses; the bar shows at once.
+ * - A press just after a panel enters does nothing either (§1, §6.6.4; Lot 74 Part 1 final
+ *   review, ruling R1): every entrance (an open, a reopen, a resent blocking sheet) raises a no-op
+ *   shield over the panel for `DUR_BASE_MS`, under reduced motion too, so the second tap of the
+ *   double tap that opened a sheet never lands on its actions. Focus is unchanged.
  * - A body that overflows becomes a named, focusable scroll region in the Tab cycle (WCAG
  *   2.1.1), so a text-only sheet scrolls by keyboard; initial focus still prefers a control.
  *
@@ -251,10 +255,20 @@ export function Sheet(props: SheetProps): ReactElement | null {
   // the previous render, so it starts in the same commit. Each real transition bumps the count,
   // so a second one inside the window (a programmatic `collapsed` toggle) restarts the full
   // `DUR_BASE_MS` timer instead of inheriting what is left of the first.
+  //
+  // Entrance shield (Lot 74 Part 1 final review, ruling R1): a panel that enters (it opens, reopens,
+  // or a resent blocking sheet arrives on its own) is covered by a no-op layer for `DUR_BASE_MS`.
+  // The second tap of the double tap that opened a card sheet, or a tap already in flight when a
+  // sub-choice arrives, would otherwise land on Use, Upgrade or a preselected Confirm (§1 "an
+  // accidental tap never spends the turn", §6.6.4). It guards a double tap, not an animation, so it
+  // also stands under reduced motion, like the arena's tap guard. It has its own count, so a quick
+  // reopen restarts the full window too.
   const view = barMode ? 'bar' : painted ? 'panel' : 'none';
   const [previousView, setPreviousView] = useState(view);
   const [transitionShield, setTransitionShield] = useState(false);
   const [transitionCount, setTransitionCount] = useState(0);
+  const [entranceShield, setEntranceShield] = useState(false);
+  const [entranceCount, setEntranceCount] = useState(0);
   if (previousView !== view) {
     setPreviousView(view);
     const transition =
@@ -262,6 +276,9 @@ export function Sheet(props: SheetProps): ReactElement | null {
     const shielded = transition && !reduced;
     setTransitionShield(shielded);
     if (shielded) setTransitionCount(transitionCount + 1);
+    const entrance = previousView === 'none' && view === 'panel';
+    setEntranceShield(entrance);
+    if (entrance) setEntranceCount(entranceCount + 1);
   }
   useEffect(() => {
     if (!transitionShield) return;
@@ -272,6 +289,15 @@ export function Sheet(props: SheetProps): ReactElement | null {
       window.clearTimeout(timer);
     };
   }, [transitionShield, transitionCount]);
+  useEffect(() => {
+    if (!entranceShield) return;
+    const timer = window.setTimeout(() => {
+      setEntranceShield(false);
+    }, DUR_BASE_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [entranceShield, entranceCount]);
 
   // Minimize hands focus to the bar, unless another sheet is now the live one (it takes focus).
   useEffect(() => {
@@ -421,7 +447,7 @@ export function Sheet(props: SheetProps): ReactElement | null {
         {...(hintAnchor !== undefined ? { 'data-hint-anchor': hintAnchor } : {})}
         {...dataAttributes}
         className={[
-          'flex min-h-0 w-full min-w-0 flex-col bg-v7-panel font-v7-body text-v7-text shadow-v7-chrome outline-none',
+          'relative flex min-h-0 w-full min-w-0 flex-col bg-v7-panel font-v7-body text-v7-text shadow-v7-chrome outline-none',
           CHROME_OUTLINE_CLASS,
           PANEL_PLACEMENT_CLASS[resolvedPlacement],
           height === 'full' ? 'h-full' : '',
@@ -466,6 +492,17 @@ export function Sheet(props: SheetProps): ReactElement | null {
               {MINIMIZE_LABEL}
             </Button>
           </div>
+        ) : null}
+        {/* Last in the panel, so it paints over every control. Its mousedown never moves focus. */}
+        {entranceShield ? (
+          <div
+            data-zone="sheet-entrance-shield"
+            aria-hidden="true"
+            onMouseDown={(event) => {
+              event.preventDefault();
+            }}
+            style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+          />
         ) : null}
       </motion.div>
     </motion.div>

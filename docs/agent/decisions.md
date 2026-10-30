@@ -5505,3 +5505,30 @@ review (Minor 7, Minor 10, "What Part 2 will need"), controller ruling R3.
   one explicitly. This wave documents the convention only; no code changes for it.
 
 ---
+
+## 2026-10-30 · [P] V7 sheets: an entrance press shield in `Sheet` (L74-08, final review ruling R1)
+
+Source: technical spec v7 §1 ("an accidental tap never spends the turn"), §6.6.4 (opening a sheet
+never sends); Lot 74 Part 1 final review, issue I1; controller ruling R1.
+
+- **The gap.** A tap on a hand card opens its sheet at once. The second tap of the same double tap
+  (~150–250 ms later) hit whatever the new panel showed under the finger: at 375 px the wrapped
+  action row overlaps the bottom band of every hand card, so it could land on Use (a `send` card
+  spends the turn) or Upgrade (spends an upgrade point). The `Sheet` shielded exits and collapse
+  transitions, never an entrance.
+- **The guard lives in the primitive.** Every panel entrance (an open, a reopen, a resent
+  blocking sheet) raises an `aria-hidden` no-op layer over the panel for `DUR_BASE_MS`. It is
+  motion-independent, like the L74-10 tap guard, because it guards a double tap, not an
+  animation. Its mousedown never moves focus, and the focus trap places focus as before. The
+  backdrop around the panel is not covered, so a press there behaves as it always did.
+- **It covers L74-18 for free.** A blocking sub-choice sheet arrives on its own, so a tap already
+  in flight (on Draw, a seat or a card) could land on its Confirm, and Mirror and Reward come
+  preselected. Those sheets get the same window with no per-sheet code.
+- **Rejected: an "armed after entrance" window per commit button** (card-sheet actions, Unspy
+  Confirm, the L74-18 Confirms). Less test churn, but every new commit button would have to
+  remember it, and Part 2 adds several.
+- **Cost.** A deliberate press within ~220 ms of a sheet opening is absorbed. Component tests are
+  unaffected (happy-dom has no hit testing), so the L74-26 gate adds a forced double tap on a hand
+  card at 360 and 375 px, a double tap on Unspy and a sub-choice arriving under a moving finger.
+
+---

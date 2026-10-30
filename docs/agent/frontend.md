@@ -834,8 +834,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   read-only card sheet.
   - `CardSheetSource` is `hand`, `special`, `in-play` (an `InPlayThumb`, re-read from the live
     view while open), `spy-reveal`, `queue` or `log`. Part 2 adds pool, shop and reward.
-  - `cardRefFor` gives the `cardActions` ref. `sheetInstanceFor` gives the face, with
-    synthetic `queue-<effectId>` and `log-<cardId>-<up|base>` ids.
+  - `liveCardRefFor(source, view)` gives the `cardActions` ref (L74-08): a held card is re-read
+    from the view, and every other source is `cardRefFor(source)`. `sheetInstanceFor` gives the
+    face, with synthetic `queue-<effectId>` and `log-<cardId>-<up|base>` ids.
   - The sheet shows the face at `sheet` size and `CardEffectCopy`, then the V2 context:
     `Active` with a `Card lives` or `Turns left` badge, or `Spy reveal — inspect only`. Queue
     and log cards show nothing more.
@@ -845,9 +846,11 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `screens/arena/kit-sheet.tsx` (L74-02, §6.6.5, Q46): `KitDetails` in a read-only bottom sheet
   titled with the kit name. It has every section, including one for each `KitTraits` field (L30-05).
 - `ui/motion/use-long-press.ts` (L74-02, §6.6.5): `useLongPress` (450 ms, cancelled past 8 px,
-  swallows the click that ends the press). A face outside the hand is a `Card` with
-  `onActivate` (a button: Enter or click) plus these handlers. Both open the same read-only
-  sheet and send nothing.
+  swallows the click that ends the press, never a keyboard click). A face outside the hand is a
+  `Card` with `onActivate` (a button: Enter or click); after Part 1 only the seat-sheet thumbs
+  (`seat-sheet.tsx`) also spread these handlers, so tap and long-press open the same read-only
+  sheet and send nothing. The self-strip thumbs, the plate's landing card, badges and chips take
+  a tap only: long-press on the log card comes with L74-15, and the rest is an L74-26 gate item.
 - `screens/arena/top-bar.tsx` + `top-bar-model.ts` + `leave-confirm-sheet.tsx` (L74-03, spec v7
   §6.1 item 1, §6.12; plan Appendix A rulings 2 and 3).
   - Contents: the round (`Round N`, from `tableRound`, the same count as the log and chat),
