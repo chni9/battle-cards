@@ -882,11 +882,12 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Bot and connection show as icons, with their words for screen readers; the seat sheet shows
   them in full. The anatomy takes no pointer, so the button's `title` is the one tooltip: the
   full nickname, then the connection label and the bot words (`botSeatLabelText`,
-  `ui/seat/bot-seat-label-text.ts`), joined with ` · `. Actives and Sentences are badges here, and their thumbs live
-  in the seat sheet. Anchors: `data-zone="opponent-seat"`, `data-player-id`, `data-seat`,
-  `data-seat-index`, `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
-  `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`
-  and `data-spy-eye` on the eye badge. Seats render the `SeatModel` and never re-derive a tier.
+  `ui/seat/bot-seat-label-text.ts`), joined with ` · `. Actives and Sentences are badges here,
+  and their thumbs live in the seat sheet. Anchors: `data-zone="opponent-seat"`,
+  `data-player-id`, `data-seat`, `data-seat-index`, `data-tier`, `data-eliminated`,
+  `data-active-seat`, `data-tapped-seat`, `data-hint-anchor="hidden-kit"` (unspied and
+  base-Spied, Q66), `data-zone="opponent-portrait"` and `data-spy-eye` on the eye badge. Seats
+  render the `SeatModel` and never re-derive a tier.
 - `screens/arena/seat-sheet.tsx`, `threat-copy.ts` (L74-05, spec v7 §6.3, §6.5, §6.6.5, §11 Q46):
   a seat tap opens the seat sheet. It is the read-only `{ kind: 'seat', playerId }` entry of
   `arena-sheets.ts` (key `seat:<id>`), titled by the nickname or "{nick} (eliminated)". It
