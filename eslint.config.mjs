@@ -10,7 +10,8 @@ const VIEW_MODEL_PURITY_MESSAGE =
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**'],
+    // `.claude/worktrees/` holds other sessions' checkouts (gitignored); linting them OOMs.
+    ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**', '.claude/**'],
   },
 
   {
