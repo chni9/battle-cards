@@ -390,7 +390,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         />
       </div>
       <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2">
-        {/* A walk-in has no controls (Q38), except Stats on the finished board: the region stays, empty. An eliminated Watching POV keeps the disabled dock (A.8 ruling 7). */}
+        {/* A live walk-in has no controls (Q38): the region stays, empty. On the finished board its dock is Stats alone. An eliminated Watching POV keeps the disabled dock (A.8 ruling 7). */}
         {dockHasControls(strip.dock) ? (
           <Dock
             model={strip.dock}

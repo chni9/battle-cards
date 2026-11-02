@@ -31,6 +31,9 @@ function region(name: string): HTMLElement {
   if (found === null) throw new Error(`no ${name} region`);
   return found;
 }
+/** A native `disabled` or the `aria-disabled` a `focusableWhenDisabled` Button renders. */
+const isDisabled = (button: HTMLElement): boolean =>
+  button.hasAttribute('disabled') || button.getAttribute('aria-disabled') === 'true';
 const gameOver = (): HTMLElement | null => screen.queryByRole('dialog', { name: 'Game over' });
 async function closeGameOver(user: ReturnType<typeof renderUi>['user']): Promise<void> {
   const dialog = gameOver();
@@ -76,6 +79,13 @@ describe('finished board on the arena (spec v7 §6.12, L74-24)', () => {
     await user.click(within(region('top-bar')).getByRole('button', { name: 'Feedback' }));
     expect(screen.getByRole('dialog', { name: 'Feedback' })).toBeTruthy();
     await user.click(within(region('dock')).getByRole('button', { name: 'Stats' }));
+    expect(gameOver()).toBeNull();
+    // While Feedback is open Game over is closed whatever Stats does, so only closing Feedback shows
+    // whether the click was ignored (`canReopenEndStats`): an honoured click would pop Game over open now.
+    await user.click(within(screen.getByRole('dialog', { name: 'Feedback' })).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Feedback' })).toBeNull();
+    });
     expect(gameOver()).toBeNull();
   });
 
@@ -127,12 +137,19 @@ describe('finished board on the arena (spec v7 §6.12, L74-24)', () => {
     const { user } = renderUi(<ArenaScreen {...props} />, OPTIONS);
     expect(within(region('dock')).queryByRole('button', { name: /^Draw/ })).toBeNull();
     await user.click(within(region('hand')).getByRole('button', { name: 'Spy' }));
-    for (const button of within(screen.getByRole('dialog', { name: 'Spy' })).queryAllByRole('button', { name: /^(Use|Upgrade|Sell)/ })) {
+    // Non-empty and disabled first, so a regression that drops the actions fails here, not silently.
+    const cardActions = within(screen.getByRole('dialog', { name: 'Spy' })).queryAllByRole('button', { name: /^(Use|Upgrade|Sell)/ });
+    expect(cardActions.length).toBeGreaterThan(0);
+    expect(cardActions.every(isDisabled)).toBe(true);
+    for (const button of cardActions) {
       await user.click(button);
     }
     await user.keyboard('{Escape}');
     await user.click(within(region('dock')).getByRole('button', { name: 'Shop' }));
-    for (const button of within(await screen.findByRole('dialog', { name: 'Shop' })).queryAllByRole('button', { name: /^Buy/ })) {
+    const buys = within(await screen.findByRole('dialog', { name: 'Shop' })).queryAllByRole('button', { name: /^Buy/ });
+    expect(buys.length).toBeGreaterThan(0);
+    expect(buys.every(isDisabled)).toBe(true);
+    for (const button of buys) {
       await user.click(button);
     }
     await user.keyboard('{Escape}');
