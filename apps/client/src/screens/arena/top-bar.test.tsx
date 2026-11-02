@@ -140,6 +140,31 @@ describe('TopBar flag (spec v7 §6.12, L43-05, L43-06)', () => {
     expect(props.onLeave).toHaveBeenCalledTimes(1);
     expect(props.onForfeit).not.toHaveBeenCalled();
   });
+
+  it('follows the live flag intent: an open Forfeit confirm becomes Leave the table when the POV is eliminated (decisions 2026-10-28)', async () => {
+    const { container, user, props, rerender } = renderArena();
+    await user.click(within(topBar(container)).getByRole('button', { name: 'Forfeit' }));
+    expect(screen.getByRole('dialog', { name: 'Leave the game?' })).toBeTruthy();
+    rerender(<ArenaScreen {...props} view={makeArenaView({ pov: 'eliminated', overrides: { currentTurnPlayerId: 'p1' } })} />);
+    await user.click(within(screen.getByRole('dialog', { name: 'Leave the table?' })).getByRole('button', { name: 'Leave' }));
+    expect(props.onLeave).toHaveBeenCalledTimes(1);
+    expect(props.onForfeit).not.toHaveBeenCalled();
+  });
+
+  it('re-arms the confirm on each open: flag, Forfeit, flag, Forfeit forfeits twice', async () => {
+    const { container, user, props } = renderArena();
+    const forfeitOnce = async (): Promise<void> => {
+      await user.click(within(topBar(container)).getByRole('button', { name: 'Forfeit' }));
+      await user.click(within(screen.getByRole('dialog', { name: 'Leave the game?' })).getByRole('button', { name: 'Forfeit' }));
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Leave the game?' })).toBeNull();
+      });
+    };
+    await forfeitOnce();
+    await forfeitOnce();
+    expect(props.onForfeit).toHaveBeenCalledTimes(2);
+    expect(props.onLeave).not.toHaveBeenCalled();
+  });
 });
 
 describe('TopBar Feedback and menu (spec v7 §6.1, §6.12)', () => {

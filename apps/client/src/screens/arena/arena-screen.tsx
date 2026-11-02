@@ -36,6 +36,11 @@
  * - §6.11 (L74-22): Menu → Table rules opens the rules sheet from `tableRulesRecall` over
  *   `props.cachedLobbyRules`; the entry is hidden while it is null. The arena never derives the
  *   rules: App (live) and EndScreen (finished) choose the source.
+ * - §6.3, §6.12, §7.2 (L74-23): a walk-in's self strip is the Watching strip (`SpectatorStrip`), an
+ *   eliminated Watching POV's strip gets the Watching header, and their Leave table bumps the top
+ *   bar's `confirmRequest`. Claim a seat calls App's `onReopenClaim`. The POV elimination overlay
+ *   replaces the banner's You are dead (`deadCue={false}`) and never covers a sub-choice. A seat
+ *   sheet whose player stopped being an opponent (a walk-in sat there) closes.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -70,6 +75,7 @@ import {
   arenaSheetEntries,
   arenaSheetKey,
   closeArenaSheet,
+  closeStaleSeatSheets,
   EMPTY_ARENA_SHEETS,
   endTargeting,
   openArenaSheet,
@@ -93,9 +99,11 @@ import { KitSheet } from './kit-sheet';
 import { LogSheet } from './log-sheet';
 import { LogTicker } from './log-ticker';
 import { ownIntentFxFor } from './own-intent-fx';
+import { PovEliminationOverlay } from './pov-elimination-overlay';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
 import { ShopSheet } from './shop-sheet';
+import { SpectatorStrip } from './spectator-strip';
 import { SubChoiceSheet } from './sub-choice/sub-choice-sheet';
 import { TargetingBar } from './targeting';
 import { liveTargeting } from './targeting-model';
@@ -103,6 +111,7 @@ import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
 import { useHandDrag } from './use-hand-drag';
+import { usePovElimination } from './use-pov-elimination';
 import { useTapGuard } from './use-tap-guard';
 import { useTurnStartedRecord } from './use-turn-started-record';
 
@@ -112,6 +121,8 @@ export interface ArenaScreenProps extends TableScreenProps {
   lastTurnStarted: TurnStartedPayload | null;
   /** L74-21: this room's last lobby rules (App: `cachedLobbyRules(cache, view)`, this room, Classic only; EndScreen: `view.lobbyRules ?? null`); null when unknown. */
   cachedLobbyRules: LobbyRules | null;
+  /** L74-23: reopen App's claim picker; App passes it only to a walk-in while `claimableSeats` is non-empty (§7.2, Q24). */
+  onReopenClaim?: () => void;
 }
 
 /** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
@@ -158,6 +169,14 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const threatModel = threats(view, props.subChoice);
   // The POV strip and, in `.dock`, its dock: computed once here, L74-13 reads `strip.dock` (Appendix A.2).
   const strip = selfStrip(view, ctx);
+  // 'You are dead' over the arena (§6.12, L74-23): a Watching POV with a kit is a dead seat (a walk-in has none).
+  // Not `povEliminated`, which feeds the banner host's `isEliminated` (Sentence banners) and is true while Reanimating.
+  const povEliminationShown = usePovElimination({ dead: strip.pov === 'watching' && strip.kitId !== null, youWon: povWon });
+  // The Watching strip's Leave table opens the top bar's leave confirm (plan A.9.4): each bump is one open.
+  const [leaveRequest, setLeaveRequest] = useState(0);
+  const requestLeaveConfirm = (): void => {
+    setLeaveRequest((count) => count + 1);
+  };
   // The ticker and the log sheet read one model per render (§6.9, L74-15).
   const logModel = log(view);
   // Menu → Table rules (§6.11, L74-22): `props.cachedLobbyRules` is this room's rules, and `tableRulesRecall`
@@ -194,6 +213,13 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     // Card left the hand, turn passed or a sub-choice opened (Review Focus 2). React's
     // "adjust state while rendering" pattern, as ui/primitives/sheet.tsx does; never an effect.
     setSheets(endTargeting(sheets));
+  }
+  // A seat sheet whose player is no longer an opponent (a walk-in sat in that seat) closes, so
+  // `openSeatId` never names the POV (final review Minor 15). The updater form composes with the
+  // targeting update above in the same render.
+  const seatIds = seatsModel.seats.map((seat) => seat.playerId);
+  if (closeStaleSeatSheets(sheets, seatIds) !== sheets) {
+    setSheets((current) => closeStaleSeatSheets(current, seatIds));
   }
   const finishTargeting = (): void => {
     setSheets((current) => endTargeting(current));
@@ -275,6 +301,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           }}
           chatUnread={chatUnread}
           clock={clock}
+          confirmRequest={leaveRequest}
         />
       </div>
       <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
@@ -321,11 +348,16 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenCard={openCard}
           dropHighlight={dragging === null ? null : plateDropHighlight(dragging.zones, dragging.hover)}
         />
+        {/* Last in the arena region, over the seats and the plate; never over a sub-choice (§6.12, L74-23). */}
+        <PovEliminationOverlay visible={povEliminationShown && props.subChoice === null} />
       </div>
       <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
         {strip.resources === null ? (
-          // A walk-in has no resources (Q38): the empty state until L74-23 adds the Watching strip.
-          <div data-zone="resources" data-hint-anchor="resources" />
+          <SpectatorStrip
+            model={strip}
+            onLeave={requestLeaveConfirm}
+            {...(props.onReopenClaim !== undefined ? { onClaimSeat: props.onReopenClaim } : {})}
+          />
         ) : (
           <SelfStrip
             model={strip}
@@ -333,6 +365,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
               openSheet({ kind: 'kit', kitId });
             }}
             onOpenCard={openCard}
+            onLeave={requestLeaveConfirm}
           />
         )}
       </div>
@@ -365,7 +398,8 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       </div>
       {/* Portaled to `document.body` on `Z_INDEX.dragGhost`, under every sheet (Appendix A.8 ruling 10). */}
       <HandDragLayer drag={handDrag.view} />
-      {/* Portaled to `document.body` on `Z_INDEX.banner`, mounted once (§6.12, L74-17). `seatIndexOf` is null for a walk-in, as in V2. */}
+      {/* Portaled to `document.body` on `Z_INDEX.banner`, mounted once (§6.12, L74-17). `seatIndexOf` is null for a walk-in, as in V2.
+          `deadCue={false}`: the POV elimination overlay replaces You are dead (L74-23, D12); `isEliminated` still feeds the Sentence banners. */}
       <TableBannerHost
         isMyTurn={view.currentTurnPlayerId === view.you && !readOnly && !povEliminated && !povWon}
         isEliminated={povEliminated}
@@ -379,6 +413,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         nicknameOf={(id) => view.players.find((player) => player.id === id)?.nickname ?? id}
         you={view.you}
         {...(povSeat !== null ? { seatColor: v7SeatColor(povSeat) } : {})}
+        deadCue={false}
       />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {

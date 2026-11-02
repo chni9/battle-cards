@@ -5753,3 +5753,32 @@ the Lot 73 final review carry-forward.
   would seed the count again at once.
 
 ---
+
+## 2026-11-02 · [P] V7 Watching strip, claim reopen and POV elimination overlay (L74-23)
+
+Source: technical spec v7 §6.3, §6.12, §7.2, §10.6, §13 (Q24, Q38); Appendix A
+`walk-in-spectator-mode`, `table-prompts`, `claim-seat-dismiss-stay`; A.8 rulings 7 and 9; Lot 74
+Part 1 final review (Minor 15, ledger 47, 48, 68).
+
+- **Copy is V2's.** A walk-in reads V2's private-zone pair ('Watching this table. …' with a Spy
+  overlay, 'Hands stay hidden …' without). An eliminated POV reads V2's 'Eliminated' prompt line in
+  full ('You are a spectator. Actions are locked …'). The heading is L73's 'Watching'. The only
+  new string is 'Claim a seat' (§10.6).
+- **Reanimating** keeps the seated strip; its 'Reanimating' flow badge is the label, so no second
+  heading repeats it.
+- **Leave** reaches the top bar's confirm through a `confirmRequest` counter (Appendix A.9.4). The
+  latch moved from a boolean ref reset on open to a per-open epoch, compared and set only in the
+  confirm handler. It behaves the same (one press, one send; a reopened confirm sends again), and
+  no ref is written during render.
+- **Claim a seat** clears App's dismissed key. Kit fog stays the server's: after Stay the server
+  keeps the overlay even when the picker returns (`stayConfirmedSpectators`), and the arena
+  renders what it receives.
+- **POV elimination overlay.** It shows on the Watching edge and on a first paint already
+  Watching (the finished board, and a reload, as V2's banner seed did; designer 2026-11-02). It never renders under a
+  sub-choice, takes no press or focus, and is an in-region layer, not a fixed one. The arena's
+  banner host drops its You are dead cue (`deadCue={false}`, a `ui/` prop); the classic table
+  keeps it.
+- **Stale seat sheets** close when their player stops being an opponent, so `openSeatId` never
+  names the POV (final review Minor 15).
+
+---

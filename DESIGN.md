@@ -1233,10 +1233,12 @@ stay until L75, which hosts the new panel.
 `ui/banner/table-banner-host.tsx`, `banner-items.ts`, `banner-demo.tsx` (DEV) and
 `banner.gallery.tsx` (spec v7 §6.12, §8.1, §8.3; Appendix A `table-banners`,
 `end-finished-board-shell`, `global-motion-reduced-motion`). `<TableBannerHost isMyTurn
-isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? />`
+isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? deadCue? />`
 takes the props of `TableBannerFlash` (`screens/table/your-turn-flash.tsx`), which the classic
 table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stays in
-`view-model/table-banner.ts`.
+`view-model/table-banner.ts`. `deadCue={false}` drops the You are dead cue, while the watch still
+advances so it never fires later. The arena passes it because its POV elimination overlay
+(L74-23) replaces that cue; the classic table keeps it.
 
 - **Lanes and timing:** three lanes, cue (Your turn, You are being attacked, You are dead, You
   won!), Sentence (L63-03) and own Gambler wipe (L67-01). Each lane queues `BannerItem`s

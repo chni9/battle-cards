@@ -27,6 +27,8 @@
  * - Entrance only, over `--dur-slow` on `--ease-entrance`; the next item mounts exactly at
  *   `TABLE_BANNER_MS`, with no exit (L78 owns banner juice). Reduced motion keeps the same
  *   text with a fade only: no slam, scale or tilt (§8.3).
+ * - `deadCue={false}` drops the You are dead cue while the watch still advances, so a dropped
+ *   death never fires later: the arena's POV elimination overlay replaces it (L74-23, D12).
  */
 
 import { motion } from 'motion/react';
@@ -72,6 +74,8 @@ export interface TableBannerHostProps {
   you: string;
   /** Seat hex color for turn / win chrome (`v7SeatColor`); `--cta` when absent. */
   seatColor?: string;
+  /** False drops the You are dead cue (the arena's POV elimination overlay replaces it, L74-23). Default true. */
+  deadCue?: boolean;
 }
 
 const SLAM_TRANSITION = { duration: durationS('slow'), ease: EASE_ENTRANCE } as const;
@@ -196,6 +200,7 @@ export function TableBannerHost({
   nicknameOf,
   you,
   seatColor,
+  deadCue = true,
 }: TableBannerHostProps): ReactElement {
   const reduced = usePrefersReducedMotion();
   const box = useVisualViewportBox();
@@ -210,13 +215,14 @@ export function TableBannerHost({
   useEffect(() => {
     const { cues, next } = nextTableBannerCues(watch.current, { isMyTurn, isEliminated, youWon, pendingEffects, you });
     watch.current = next;
-    if (cues.length === 0) return;
-    const items = bannerItemsForCues(cues, seq.current);
+    const shown = deadCue ? cues : cues.filter((cue) => cue !== 'dead');
+    if (shown.length === 0) return;
+    const items = bannerItemsForCues(shown, seq.current);
     seq.current += items.length;
     // Synchronous enqueue (L51-06): a deferred enqueue is cleared by React Strict Mode's
     // effect replay, which dropped the first-paint You are dead / You won! cues.
     enqueueCues(items);
-  }, [isMyTurn, isEliminated, youWon, pendingEffects, you, enqueueCues]);
+  }, [isMyTurn, isEliminated, youWon, pendingEffects, you, deadCue, enqueueCues]);
 
   useEffect(() => {
     const { lines, next } = nextSentenceBannerLines(sentenceWatch.current, {

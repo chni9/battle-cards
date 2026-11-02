@@ -795,8 +795,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   mount each board in its own branch and `TableScreen` keeps its props.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
-  always renders. Each shows its content or an empty state, except a walk-in's self strip and
-  dock, which render bare (Q38; L74-23 adds the Watching strip). The root is
+  always renders. Each shows its content or an empty state, except a walk-in's dock, which
+  renders bare (Q38; its self strip is the Watching strip, L74-23). The root is
   `<main data-zone="table" data-arena="next">`, `.v7-ground`, `h-full w-full overflow-hidden` of
   `#root`. It has no `vh`, `dvh` or `w-screen` and never page-scrolls (L53-07); only the hand
   scrolls, inside itself.
@@ -806,7 +806,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - `ticker`: `log-collapsed`.
   - `arena`: `felt`, holding `opponents` and `pending` with `incoming`.
   - `self-strip`: `private-zone` with `data-player-id={view.you}` (a walk-in too), holding
-    `resources` with `resources`.
+    `resources` with `resources` (a walk-in's Watching strip has none, L74-23).
   - `hand`: `card-band`, holding `hand` with `hand` and `specials` with `specials`.
   - `dock`: `dock`.
   Never use `data-card-row`: `index.css` forces nowrap on it.
@@ -1015,7 +1015,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
   and only its Deactivate sends `deactivatePersistent {effectId}`. The confirm shows only over
   the open sheet and resets when the sheet opens again, so a confirm left up when its persistent
-  expired never pops up by itself. A walk-in gets no strip (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
+  expired never pops up by itself. A walk-in gets the Watching strip instead (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
 - `screens/arena/targeting.tsx`, `targeting-model.ts`, `pre-send-choice.tsx`, `pre-send-model.ts`,
   `use-tap-guard.ts` (L74-10, spec v7 §6.6.2, §6.6.5): Use on a card routed `target` calls
   `startTargeting` (`arena-sheets.ts`), which collapses its card sheet into `TargetingBar`
@@ -1247,6 +1247,27 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `view.lobbyRules ?? null` (`FinishedStateView.lobbyRules`) from `EndScreen` on the finished
   board; the arena shapes it with `tableRulesRecall` (Classic only). The entry is hidden while it
   is null (a reload mid-game, a walk-in who never saw the lobby). No protocol change.
+- `screens/arena/spectator-strip.tsx`, `spectator-model.ts`, `pov-elimination-overlay.tsx`,
+  `use-pov-elimination.ts` (L74-23, spec v7 §6.3, §6.12, §7.2, §10.6):
+  - A walk-in's self strip is the Watching strip: 'Watching', V2's private-zone line ('Watching
+    this table. …' once a Spy overlay is on the view, else 'Hands stay hidden until you stay
+    spectating or sit.'), **Leave table** and, while `claimableSeats` is non-empty, **Claim a
+    seat**. It has no `resources` zone and no dock (Q38). Claim a seat calls `onReopenClaim`:
+    App clears the picker's dismissed key and `ClaimSeatDialog` shows again beside the board.
+    Kit fog behind the picker is the server's (L57-16).
+  - An eliminated Watching POV keeps its strip and disabled dock (A.8 ruling 7) under the same
+    header, with V2's 'You are a spectator. Actions are locked while rewards (if any) resolve.'.
+    A Reanimating POV keeps the seated strip, labeled by its 'Reanimating' badge, and the seated
+    tiers. On the finished board neither header line nor Leave shows (the flag is Return home).
+  - Leave table bumps `TopBar`'s `confirmRequest`, which opens the flag's leave confirm. The
+    confirm's latch is per open (an epoch), so one press sends one leave.
+  - POV elimination: when the POV becomes Watching, and on a first paint already Watching,
+    'You are dead' shows over the arena region for `TABLE_BANNER_MS` (`data-pov-elimination`, a
+    polite status that takes no press or focus; static until L78). It never renders while a
+    sub-choice is open and is skipped with `pendingReanimation`. The arena's `TableBannerHost`
+    gets `deadCue={false}`, so the banner's 'You are dead' never shows beside it.
+  - A seat sheet whose player is no longer an opponent (a walk-in claimed that seat) closes
+    (`closeStaleSeatSheets`), so `openSeatId` never names the POV.
 
 ## Design system (V2 · Lots 10+)
 

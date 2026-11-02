@@ -159,6 +159,16 @@ export function endTargeting(state: ArenaSheetsState): ArenaSheetsState {
   return targeted === undefined ? { ...state, targeting: null } : closeArenaSheet(state, targeted);
 }
 
+/**
+ * Closes every open seat sheet whose player is not in `seatIds` (a walk-in claimed that seat);
+ * the same state object when none. Each closes through its exit, as `closeArenaSheet` does, so
+ * `openSeatId` never names the POV (L74-23, Lot 74 Part 1 final review Minor 15).
+ */
+export function closeStaleSeatSheets(state: ArenaSheetsState, seatIds: readonly string[]): ArenaSheetsState {
+  const stale = state.open.filter((sheet) => sheet.kind === 'seat' && !seatIds.includes(sheet.playerId));
+  return stale.length === 0 ? state : stale.reduce((current, sheet) => closeArenaSheet(current, sheet), state);
+}
+
 export interface ArenaSheetEntry {
   readonly sheet: ArenaSheet;
   readonly key: string;

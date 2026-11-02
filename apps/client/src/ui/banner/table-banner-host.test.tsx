@@ -221,6 +221,18 @@ describe('TableBannerHost (L72-18)', () => {
     expect(screen.getAllByText(TURN)).toHaveLength(1);
     off(ATK);
   });
+
+  it('drops You are dead when deadCue is false, on first mount and on the edge, and keeps the other cues (L74-23)', () => {
+    const first = renderUi(host({ isEliminated: true, deadCue: false }));
+    none(first);
+    first.unmount();
+    const live = renderUi(host({ isMyTurn: true, deadCue: false }));
+    on(TURN);
+    live.rerender(host({ isEliminated: true, deadCue: false }));
+    advance(MS);
+    off(DEAD);
+    none(live);
+  });
 });
 
 describe('TableBannerHost under StrictMode (L51-06)', () => {

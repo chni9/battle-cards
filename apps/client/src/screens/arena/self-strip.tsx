@@ -8,7 +8,13 @@
  * It renders `selfStrip(view, ctx)` (computed once in ArenaScreen) and sends nothing: the portrait
  * and the thumbs only ask ArenaScreen to open a sheet (§6.6.4). The Activate duplication button is
  * the dock's (L74-13); the strip keeps only the "Duplication active" badge. A walk-in has no kit
- * and no resources (Q38), so it gets no strip here: L74-23 owns the Watching strip.
+ * and no resources (Q38), so it gets no strip here: its self strip is `SpectatorStrip`
+ * (`spectator-strip.tsx`, L74-23).
+ *
+ * L74-23 (§6.12, A.8 rulings 7 and 9): an eliminated Watching POV keeps this strip, headed by the
+ * Watching header (`WatchingHeader`: Leave table and V2's locked line) while `model.leave` and
+ * `onLeave` are set; on the finished board (`leave` false) it shows only the strip. A Reanimating
+ * POV keeps its 'Reanimating' flow badge as its label, with no second heading.
  *
  * L74-17 (§6.12, §8.3): each resource pill flashes and floats its Δ (`useResourceFlash`,
  * `ResourceFlashCue`), and the POV's own Δ flies its chips from the log.
@@ -30,6 +36,7 @@ import type { ThumbBadge } from '../../view-model/card-actions';
 import { SELF_STRIP_POV_LABELS, type SelfFlowBadge, type SelfStripModel } from '../../view-model/self-strip';
 import type { CardSheetSource } from './card-sheet-source';
 import { ResourceFlashCue } from './resource-flash';
+import { WatchingHeader } from './spectator-strip';
 
 export interface SelfStripProps {
   /** `selfStrip(view, ctx)`, computed once in ArenaScreen (Appendix A.2); L74-13 reads `.dock` from the same value. */
@@ -38,6 +45,8 @@ export interface SelfStripProps {
   readonly onOpenKit: (kitId: KitId) => void;
   /** A thumb opens the card sheet with source `{ kind: 'in-play', thumb }` (§6.6.1). */
   readonly onOpenCard: (source: CardSheetSource) => void;
+  /** L74-23: the Watching header's Leave table; without it no header renders. */
+  readonly onLeave?: () => void;
 }
 
 const OWN_KIT_LABEL = 'Inspect your kit';
@@ -98,13 +107,14 @@ function FlashingPill(props: PillProps & { readonly resourceKind: ResourceKind; 
   );
 }
 
-export function SelfStrip({ model, onOpenKit, onOpenCard }: SelfStripProps): ReactElement | null {
+export function SelfStrip({ model, onOpenKit, onOpenCard, onLeave }: SelfStripProps): ReactElement | null {
   const { kitId, resources } = model;
   if (kitId === null || resources === null) {
     return null;
   }
   return (
     <div data-self-strip="" className="flex w-full flex-col gap-2 px-4 py-2">
+      {model.pov === 'watching' && model.leave && onLeave !== undefined ? <WatchingHeader model={model} onLeave={onLeave} /> : null}
       <div className="flex items-start gap-3">
         <KitPortrait
           kitId={kitId}

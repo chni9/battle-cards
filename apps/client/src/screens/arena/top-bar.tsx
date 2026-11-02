@@ -13,6 +13,8 @@
  * - The flag opens the confirm for the live `tableFlagIntent(...)` (decisions.md 2026-10-28), and
  *   only the confirm button calls `onForfeit` / `onLeave` (§6.6.4, L43-05). Those are App-level
  *   actions, not `ArenaIntent`s, so they leave outside the commit helper.
+ * - L74-23 (plan A.9.4): each new `confirmRequest` value opens the same confirm as a flag tap, so
+ *   the Watching strip's Leave table reaches it.
  * - The finished board hands Feedback to its parent (`onOpenFeedback`, L47-03); the live arena
  *   owns its `FeedbackDialog`.
  */
@@ -61,6 +63,8 @@ export interface TopBarProps {
   chatUnread?: number;
   /** L74-21: `turnClock(...)`, computed once in `ArenaScreenInner` (Appendix A.2); rendered in the `timers` slot (§6.10). */
   clock: TurnClockModel;
+  /** Each new value opens the leave confirm as a flag tap does (the Watching strip's Leave table). */
+  confirmRequest?: number;
 }
 
 export function TopBar({
@@ -75,18 +79,27 @@ export function TopBar({
   onOpenChat,
   chatUnread = 0,
   clock,
+  confirmRequest,
 }: TopBarProps): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  /** The leave confirm, and how many times it has opened: each open is a new epoch (L74-23, D11). */
+  const [confirm, setConfirm] = useState<{ readonly open: boolean; readonly epoch: number }>({ open: false, epoch: 0 });
+  const request = confirmRequest ?? 0;
+  const [seenRequest, setSeenRequest] = useState(request);
   /**
-   * Latches the first confirm press. A state guard is not enough: while the Dialog exits,
-   * `AnimatePresence` keeps rendering its last element with its stale props
+   * The confirm epoch that already sent: one press per open. A state guard is not enough: while
+   * the Dialog exits, `AnimatePresence` keeps rendering its last element with its stale props
    * (`ui/primitives/presence-layer.tsx`), so a second synchronous click runs the old closure,
-   * where `confirmOpen` is still true. A ref is read at call time (decisions.md 2026-10-28).
+   * where the confirm is still open. That stale closure carries the same epoch, and a ref is read
+   * at call time (decisions.md 2026-10-28). It is read and written only in `confirmLeave`, never
+   * during render (the React Compiler lint); a reopened confirm has a new epoch, so it sends again.
    */
-  const confirmed = useRef(false);
+  const sentEpoch = useRef<number | null>(null);
+  const openConfirm = (): void => {
+    setConfirm((current) => ({ open: true, epoch: current.epoch + 1 }));
+  };
 
   const banner = turnBannerOf(view);
   const bannerText = turnBannerText(banner);
@@ -94,12 +107,21 @@ export function TopBar({
   const flag = arenaFlag(view, readOnly);
   const self = view.players.find((player) => player.isYou);
 
+  // A new `confirmRequest` opens the confirm as a flag tap does (React's "adjust state while
+  // rendering" pattern, never an effect). With no flag there is nothing to confirm.
+  if (request !== seenRequest) {
+    setSeenRequest(request);
+    if (flag !== null) {
+      setConfirm((current) => ({ open: true, epoch: current.epoch + 1 }));
+    }
+  }
+
   const confirmLeave = (): void => {
-    if (confirmed.current || flag === null) {
+    if (sentEpoch.current === confirm.epoch || flag === null) {
       return;
     }
-    confirmed.current = true;
-    setConfirmOpen(false);
+    sentEpoch.current = confirm.epoch;
+    setConfirm((current) => ({ ...current, open: false }));
     if (flag.intent === 'forfeit') {
       onForfeit();
     } else {
@@ -159,10 +181,7 @@ export function TopBar({
               aria-label={flag.ariaLabel}
               aria-haspopup="dialog"
               icon="flag"
-              onClick={() => {
-                confirmed.current = false;
-                setConfirmOpen(true);
-              }}
+              onClick={openConfirm}
             />
           ) : null}
           <IconButton
@@ -190,10 +209,10 @@ export function TopBar({
       />
       {flag !== null ? (
         <LeaveConfirmSheet
-          open={confirmOpen}
+          open={confirm.open}
           intent={flag.intent}
           onStay={() => {
-            setConfirmOpen(false);
+            setConfirm((current) => ({ ...current, open: false }));
           }}
           onConfirm={confirmLeave}
         />

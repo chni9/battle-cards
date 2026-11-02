@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { inPlayThumbs } from '../../view-model/card-actions';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import {
-  arenaSheetEntries, arenaSheetKey, closeArenaSheet, EMPTY_ARENA_SHEETS, endTargeting, MAX_CLOSING_SHEETS, openArenaSheet,
-  openSeatId, startTargeting, type ArenaSheet, type TargetingState,
+  arenaSheetEntries, arenaSheetKey, closeArenaSheet, closeStaleSeatSheets, EMPTY_ARENA_SHEETS, endTargeting, MAX_CLOSING_SHEETS,
+  openArenaSheet, openSeatId, startTargeting, type ArenaSheet, type TargetingState,
 } from './arena-sheets';
 import { makeArenaView } from './test-view';
 
@@ -95,6 +95,17 @@ describe('seat sheets (L74-05)', () => {
     state = openArenaSheet(state, { kind: 'kit', kitId: 'tactician' });
     expect(openSeatId(state)).toBe('p2');
     expect(openSeatId(closeArenaSheet(closeArenaSheet(state, { kind: 'seat', playerId: 'p2' }), { kind: 'seat', playerId: 'p1' }))).toBeNull();
+  });
+
+  it('closes seat sheets whose player is no longer an opponent, and returns the same state otherwise (final review Minor 15)', () => {
+    const seatMe: ArenaSheet = { kind: 'seat', playerId: 'me' };
+    const seatP1: ArenaSheet = { kind: 'seat', playerId: 'p1' };
+    const state = [seatMe, KIT, seatP1].reduce((current, sheet) => openArenaSheet(current, sheet), EMPTY_ARENA_SHEETS);
+    expect(closeStaleSeatSheets(state, ['me', 'p1', 'p2'])).toBe(state);
+    const next = closeStaleSeatSheets(state, ['p1', 'p2']);
+    expect(next.open.map(arenaSheetKey)).toEqual(['kit:tactician', 'seat:p1']);
+    expect(next.closing.map(arenaSheetKey)).toEqual(['seat:me']);
+    expect(openSeatId(next)).toBe('p1');
   });
 });
 

@@ -5,7 +5,7 @@
  * from L74-25 the raw connection status.
  */
 import { defaultLobbyRules, type StateView } from '@card-battle/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
@@ -82,5 +82,29 @@ describe('App and the arena', () => {
     fake.connection = connectionFor(makeLobbyView({ gameCode: 'CHATAG' }));
     renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
     expect(chatSeenCount('CHATAG')).toBeUndefined();
+  });
+
+  it('reopens the claim picker from Claim a seat after Stay, only while claimable seats exist (§7.2, Q24, L74-23)', async () => {
+    const staySpectating = vi.fn<() => void>();
+    const seats = [{ playerId: 'p1', nickname: 'p1' }];
+    fake.connection = connectionFor(makeArenaView({ pov: 'walk-in', overrides: { claimableSeats: seats } }), { staySpectating });
+    const { rerender, user } = renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    const picker = (): HTMLElement | null => screen.queryByRole('dialog', { name: 'Sit as a disconnected player?' });
+    const open = picker();
+    if (open === null) throw new Error('the claim picker did not open');
+    await user.click(within(open).getByRole('button', { name: 'Stay spectating' }));
+    expect(staySpectating).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(picker()).toBeNull();
+    });
+    await user.click(within(region('self-strip')).getByRole('button', { name: 'Claim a seat' }));
+    expect(picker()).not.toBeNull();
+    expect(staySpectating).toHaveBeenCalledTimes(1);
+    fake.connection = connectionFor(makeArenaView({ pov: 'walk-in', overrides: { claimableSeats: [] } }), { staySpectating });
+    rerender(<App />);
+    await waitFor(() => {
+      expect(picker()).toBeNull();
+    });
+    expect(within(region('self-strip')).queryByRole('button', { name: 'Claim a seat' })).toBeNull();
   });
 });

@@ -251,6 +251,15 @@ function GameApp() {
             {...boardProps}
             lastTurnStarted={lastTurnStarted}
             cachedLobbyRules={cachedLobbyRules(lobbyRulesCache.cache, view)}
+            // Claim a seat (L74-23, §7.2, Q24): a walk-in only, while seats are claimable, as V2's
+            // `shouldShowClaimPicker`. A null dismissed key shows the picker again beside the board.
+            {...(walkInSpectator && claimableSeats.length > 0
+              ? {
+                  onReopenClaim: () => {
+                    setClaimDismissedKey(null);
+                  },
+                }
+              : {})}
           />
         ) : (
           <TableScreen {...boardProps} />
