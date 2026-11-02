@@ -1201,6 +1201,17 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   other choice's card and any card the prompt offered before but no longer does, with the
   `ILLEGAL_ACTION_COPY` reward-card bodies as reasons (Q55); Choice 2 starts on the first card
   Choice 1 does not hold. Nothing shows another seat's open prompt (§14.2).
+- `screens/arena/sub-choice/steal-choice.tsx`, `pool-choice.tsx`, `special-choice.tsx`,
+  `kit-choice.tsx` (L74-19, spec v7 §6.7, §6.3, §11): the other select + Confirm pickers on the
+  L74-18 host, with V2's copy and payloads. Steal shows a face only where the victim's Spy+ hand
+  or specials reveal it, else the attack verso named and captioned 'Hidden card' with no
+  instance id anywhere in the DOM (a base Spy picks blind, Q54); the first card is preselected.
+  Pool shows the eligible pool cards with nothing preselected, greys the unselected tiles at
+  `maxCount`, and enables 'Confirm recovery' only at exactly `maxCount` (ids in tap order; a pick
+  a resend no longer offers drops out for good and stays out if a later resend offers it again). Special shows the server's `eligibleCardIds` by catalog
+  name, the first preselected (the server leaves Card Transformer out). The Reanimation kit
+  picker uses `KitTile` (portrait, name, `aria-pressed`), the first preselected, and renders for
+  an eliminated POV. Each Confirm honours the host's `locked` ('Actions locked').
 
 ## Design system (V2 · Lots 10+)
 

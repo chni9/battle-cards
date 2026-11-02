@@ -34,8 +34,12 @@ import { motionAttribute } from '../../../ui/primitives/chrome-classes';
 import { Sheet } from '../../../ui/primitives/sheet';
 import type { ArenaCommit } from '../arena-commit';
 import { useCommitOnce } from '../use-commit-once';
+import { KitChoice } from './kit-choice';
 import { MirrorChoice } from './mirror-choice';
+import { PoolChoice } from './pool-choice';
 import { RewardChoice } from './reward-choice';
+import { SpecialChoice } from './special-choice';
+import { StealChoice } from './steal-choice';
 import {
   countdownLabel,
   SUB_CHOICE_COPY,
@@ -85,11 +89,15 @@ function pickerFor(
       return <MirrorChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     case 'elimination-reward':
       return <RewardChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
-    // L74-19 / L74-20 give these kinds their pickers.
     case 'steal-pick':
+      return <StealChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     case 'pool-pick':
+      return <PoolChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     case 'special-pick':
+      return <SpecialChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     case 'reanimation-kit':
+      return <KitChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
+    // L74-20 gives slot-drop its picker.
     case 'slot-drop':
       return frame({ body: null, actions: null });
     default: {
