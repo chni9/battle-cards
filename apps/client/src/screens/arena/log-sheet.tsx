@@ -87,7 +87,9 @@ export function LogSheet({ open, view, model, onClose, onOpenCard }: LogSheetPro
         ) : (
           model.rounds.map((group) => (
             <section key={group.round} data-log-round={String(group.round)}>
-              <h3 className="sticky top-0 z-[1] bg-v7-panel py-1 font-v7-display text-v7-caption text-v7-text-2">
+              {/* `-top-3` cancels the sheet body's 12 px top padding: at `top-0` the stuck header sat
+                  under that band and the line scrolling behind it showed through (L74-26 gate G27). */}
+              <h3 className="sticky -top-3 z-[1] bg-v7-panel py-1 font-v7-display text-v7-caption text-v7-text-2">
                 {chatRoundLabel(group.round)}
               </h3>
               <ul className="flex flex-col gap-1 pb-2">

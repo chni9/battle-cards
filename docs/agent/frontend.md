@@ -1392,7 +1392,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   bottom `Sheet` titled "Action log" whose list is `data-zone="action-log-panel"` (the preferred
   FX endpoint while open).
   - Lines group by `log(view).rounds` under sticky `Round N` headers (`tableRound`, the chat's
-    count) and render `log.ts` segments: nicknames in their seat hue (`PlayerName`), listed damage
+    count; `-top-3` so a stuck header covers the sheet body's 12 px top padding, L74-26 gate G27)
+    and render `log.ts` segments: nicknames in their seat hue (`PlayerName`), listed damage
     as the number and the life icon (spoken "{n} damage"), resource nets as sign and number in
     `--text` plus the resource icon (spoken by `resourceSegment`; `+?` reads "concealed points
     gain"), and inspectable card names as text buttons (44 px hit height) that open the

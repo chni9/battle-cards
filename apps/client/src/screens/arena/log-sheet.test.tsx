@@ -83,6 +83,16 @@ describe('Log ticker and sheet (§6.9)', () => {
     expect([visibleText(net), spokenTexts(net)]).toEqual(['+?', ['concealed points gain']]);
   });
 
+  it('a round header sticks over the sheet body top padding, so no line shows above it (L74-26 gate G27)', async () => {
+    const { user } = setup(LOG);
+    const sheet = await openLog(user);
+    const header = part(part(sheet, '[data-log-round]'), 'h3');
+    // The sheet body pads its top by 12 px (`py-3`); a header at `top: 0` stuck 12 px down and the
+    // line scrolling under it showed through that band. happy-dom has no layout, so the class is the check.
+    expect(part(sheet, '[data-zone="sheet-body"]').classList.contains('py-3')).toBe(true);
+    expect([header.classList.contains('-top-3'), header.classList.contains('top-0')]).toEqual([true, false]);
+  });
+
   it('a card name opens the read-only card sheet with no footer; draw and elimination lines are not buttons', async () => {
     const { user, props } = setup(LOG);
     const sheet = await openLog(user);
