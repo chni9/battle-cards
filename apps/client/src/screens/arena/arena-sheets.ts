@@ -167,7 +167,19 @@ export function closeStaleSeatSheets(state: ArenaSheetsState, seatIds: readonly 
 
 /** A sheet whose content is captured when it opens: a card source (a Spy reveal, a hand card), a kit, a seat. */
 function isCapturedSheet(sheet: ArenaSheet): boolean {
-  return sheet.kind === 'card' || sheet.kind === 'kit' || sheet.kind === 'seat';
+  switch (sheet.kind) {
+    case 'card':
+    case 'kit':
+    case 'seat':
+      return true;
+    case 'shop':
+    case 'log':
+    case 'chat':
+    case 'rules':
+      return false;
+    default:
+      return unreachable(sheet);
+  }
 }
 
 /**

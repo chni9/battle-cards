@@ -159,7 +159,7 @@ describe('seat sheets after a claim (final review Minor 15)', () => {
     expect(document.querySelectorAll('[data-highlighted]')).toHaveLength(0);
   });
 
-  it('closes every sheet when the POV changes, so a Spy reveal a walk-in opened never stays on screen after a claim', async () => {
+  it('closes the captured card and seat sheets when the POV changes, so a Spy reveal a walk-in opened never stays on screen after a claim', async () => {
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 0, 375, 480));
     const { user, props, update } = setup({ view: makeArenaView({ pov: 'walk-in', tiers: { p1: 'spy-plus' } }) });
     await user.click(within(region('arena')).getByRole('button', { name: 'p1' }));
