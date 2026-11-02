@@ -985,8 +985,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   defined option keys, and a missing optional handler (`onDeactivatePersistent`,
   `onActivateDuplication`) makes the intent a no-op. It never checks legality.
   `createArenaCommit(handlers, hooks?)` (L74-17): `hooks.onSent(intent, context)` runs after the
-  send with the caller's `CommitContext` (or `{}`), and `hooks.allow` can veto a send (L75
-  `allowTutorialSend`). A caller with no context calls `commit(intent)` with one argument.
+  send with the caller's `CommitContext` (or `{}`), and `hooks.allow` can veto a send (L74-25
+  while reconnecting; L75 `allowTutorialSend`). A caller with no context calls `commit(intent)`
+  with one argument.
 - `screens/arena/card-sheet.tsx` actions + `card-sheet-actions.ts` (L74-08, spec v7 §6.6.1,
   §6.6.2, §11): the row comes from `cardActions(view, liveCardRefFor(source, view), ctx).actions`,
   in model order. Use (`primary`, "Use" plus the play cost as a `−` `CostAmount`), Upgrade
@@ -1285,6 +1286,21 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   elimination overlay (L74-23), both gone when Game over opens at `TABLE_BANNER_MS`. The L74-17
   seeding replays no past elimination beat, and the L74-16 unread store keeps its count across
   the live → finished switch.
+- `screens/arena/reconnect-banner.tsx`, `reject-toast.tsx`, `reject-model.ts` (L74-25, spec v7
+  §6.6.2, §6.12, §8.3): `ArenaScreenProps.connectionStatus` is the raw `RoomConnectionStatus`; App
+  passes it to the arena and to `EndScreen`. While it is `'reconnecting'`: the top-bar region shows
+  the non-blocking `Reconnecting…` banner (an always-mounted polite `role="status"` region);
+  `ActionContext.reconnecting` makes `actionLock` return `actions-locked`, so the card sheet,
+  targeting, drag, dock and shop lock; the sub-choice commit buttons lock (`SubChoiceSheet locked`);
+  and the commit helper's `allow` drops any send. Leave table, Forfeit, Return home, chat, Claim a
+  seat and Stay stay available, because `@colyseus/sdk` buffers them and replays them on rejoin, and
+  leaving must stay possible. Server rejects show `RejectToast` (the V7 `Toast`, `tone="error"`,
+  title and body from `resolveIllegalActionCopy`, OK) instead of the V2 modal. It closes on OK or
+  after `REJECT_TOAST_MS` (6 s), each calling `onDismissActionReject` once. A state update never
+  dismisses it. The timeout answers the toast watch point: a live sheet's focus trap keeps Tab off
+  its OK. The hand card the rejected send spent (`onSent`'s `CommitContext`, the last send, no state
+  update since) shakes in its slot (`data-reject-cue="shake"`), or flashes `--danger` under reduced
+  motion (`flash`). A Draw latched before a drop re-arms on the rejoin's state push.
 
 ## Design system (V2 · Lots 10+)
 

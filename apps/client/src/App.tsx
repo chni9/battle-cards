@@ -187,6 +187,7 @@ function GameApp() {
           actionReject={actionReject}
           onDismissActionReject={clearActionReject}
           statusLabel={STATUS_LABELS[status]}
+          connectionStatus={status}
           nowMs={nowMs}
           tableUi={resolveTableUi({ preference: tablePreference, playKind: view.playKind })}
           onLeave={leave}
@@ -251,6 +252,8 @@ function GameApp() {
             {...boardProps}
             lastTurnStarted={lastTurnStarted}
             cachedLobbyRules={cachedLobbyRules(lobbyRulesCache.cache, view)}
+            // The raw status (L74-25, §6.12): the arena's Reconnecting… banner and its game-input lock.
+            connectionStatus={status}
             // Claim a seat (L74-23, §7.2, Q24): a walk-in only, while seats are claimable, as V2's
             // `shouldShowClaimPicker`. A null dismissed key shows the picker again beside the board.
             {...(walkInSpectator && claimableSeats.length > 0

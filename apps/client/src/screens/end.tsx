@@ -13,7 +13,7 @@ import { useEffect, useState, type ReactElement } from 'react';
 
 import { hasAskedFeedback, markFeedbackAsked } from '../feedback/asked-storage';
 import { FeedbackDialog } from '../feedback/feedback-dialog';
-import type { ActionRejectPayload } from '../net/use-room-connection';
+import type { ActionRejectPayload, RoomConnectionStatus } from '../net/use-room-connection';
 import {
   canOpenEndManualFeedback,
   canOpenEndStatsFeedback,
@@ -43,6 +43,8 @@ export interface EndScreenProps {
   onPlayAgain?: () => void;
   /** Table switch decision from App (technical spec v7 §4.4); classic when omitted. L75 removes it. */
   tableUi?: TableUi;
+  /** L74-25: the raw connection status for the arena board; 'connected' when omitted. */
+  connectionStatus?: RoomConnectionStatus;
 }
 
 const noop = (): void => {
@@ -58,6 +60,7 @@ export function EndScreen({
   onLeave,
   onPlayAgain,
   tableUi = 'classic',
+  connectionStatus = 'connected',
 }: EndScreenProps): ReactElement {
   const [bannerElapsed, setBannerElapsed] = useState(false);
   const [statsDismissed, setStatsDismissed] = useState(false);
@@ -181,6 +184,7 @@ export function EndScreen({
           {...finishedBoard}
           lastTurnStarted={null}
           cachedLobbyRules={view.lobbyRules ?? null}
+          connectionStatus={connectionStatus}
           onOpenFeedback={onOpenManualFeedback}
           onLeave={requestLeave}
         />

@@ -57,7 +57,7 @@ describe('arena test views (Appendix A.4)', () => {
     const props = makeArenaProps();
     expect(props).toMatchObject({
       actionReject: null, statusLabel: 'Connected', nowMs: 0, deadlineMs: null, lastActionResolved: null, subChoice: null,
-      lastTurnStarted: null, cachedLobbyRules: null,
+      lastTurnStarted: null, cachedLobbyRules: null, connectionStatus: 'connected',
     });
     expect(props.view.players.map((player) => player.id)).toEqual(['me', 'p1', 'p2']);
     expect([props.readOnly, props.youWon, props.onShowStats, props.onOpenFeedback]).toEqual([undefined, undefined, undefined, undefined]);

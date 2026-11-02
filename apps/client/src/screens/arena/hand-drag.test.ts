@@ -129,6 +129,14 @@ describe('a drop resolves against the latest view (Review Focus 4)', () => {
     expect(dispatchDrop(resolveDrop(SEAT_P1, RECTS, latest), commit, openChoice)).toBe('returned');
     expect(commit).not.toHaveBeenCalled();
   });
+
+  it('sends nothing when the connection dropped mid-drag (Part 2 Review Focus 3, L74-25)', () => {
+    const { commit, openChoice } = spies();
+    const latest = latestHeldActions(VIEW, { ...LIVE, reconnecting: true }, { kind: 'hand', instance: ATTACK });
+    expect(latest?.canDrag).toBe(false);
+    expect(dispatchDrop(resolveDrop(SEAT_P1, RECTS, latest), commit, openChoice)).toBe('returned');
+    expect(commit).not.toHaveBeenCalled();
+  });
 });
 
 describe('highlights and the Sell zone (§6.6.3)', () => {

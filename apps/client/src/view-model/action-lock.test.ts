@@ -28,4 +28,9 @@ describe('actionLock (spec v7 §11; V2 table.tsx actionsLocked)', () => {
     expect(actionLock(makePlayingView({ currentTurnPlayerId: 'p1', players: ELIMINATED_ME }), FREE)).toBe('actions-locked');
     expect(actionLock(makePlayingView({ currentTurnPlayerId: 'p1' }), { subChoice: SLOT_DROP, readOnly: false })).toBe('actions-locked');
   });
+  it('is actions-locked while reconnecting, even on your own turn (L74-25, spec v7 §6.12)', () => {
+    expect(actionLock(makePlayingView(), { ...FREE, reconnecting: true })).toBe('actions-locked');
+    expect(actionLock(makePlayingView(), { ...FREE, reconnecting: false })).toBeNull();
+    expect(actionLock(makePlayingView({ currentTurnPlayerId: 'p1' }), { ...FREE, reconnecting: true })).toBe('actions-locked');
+  });
 });

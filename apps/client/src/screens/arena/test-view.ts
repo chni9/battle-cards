@@ -132,6 +132,7 @@ export function makeArenaProps(overrides: Partial<ArenaScreenProps> = {}): Arena
     subChoice: null,
     lastTurnStarted: null,
     cachedLobbyRules: null,
+    connectionStatus: 'connected',
     onDraw: vi.fn(),
     onPlayCard: vi.fn(),
     onPlayMultipleAttacks: vi.fn(),

@@ -5798,3 +5798,32 @@ Source: technical spec v7 §6.12; Appendix A `finished-board-readonly`, `end-fin
   Designer question in the Lot 74 PR.
 
 ---
+
+## 2026-11-02 · [P] V7 reconnect lock and reject toast (L74-25)
+
+Source: technical spec v7 §6.6.2, §6.12, §8.3; Lot 74 plan A.9.5; Part 2 Review Focus 3 and 4;
+backlog L74-25 watch point; the Part 1 re-review note on a null-room send.
+
+- **Reconnecting locks game intents only (designer 2026-11-02).** `ActionContext.reconnecting` makes `actionLock` return
+  `actions-locked` (never `readOnly`, which would turn the dock into the Stats dock). The sub-choice
+  host disables its commit buttons (`locked`), and the commit helper's `allow` drops any send.
+  Leave table, Forfeit, Return home, chat, Claim a seat and Stay stay available. They do not depend
+  on a board the player cannot see, and
+  `@colyseus/sdk` 0.17 buffers sends while the socket reconnects (`Room.send` → `enqueueMessage`, up
+  to 10, replayed on rejoin). A buffered card play would replay against a state the player has not
+  seen: that is the hazard the lock removes. L75 composes `allow` with `allowTutorialSend`.
+- **A null-room send.** `roomRef.current` is null only after a leave, which unmounts the arena and
+  its latches. While reconnecting the SDK buffers instead of dropping. A Draw latched just before
+  a drop re-arms on the rejoin's state push (`CLIENT_READY` → `sendStateTo`, `game-room.ts:490`), a
+  new view for `useCommitOnce`. The latch does not change.
+- **Every reject toast times out** (`REJECT_TOAST_MS`, 6 s). While a sheet is live, its focus trap
+  keeps Tab inside the panel, so OK is not keyboard-reachable (watch point). Letting `reachableIn`
+  admit the toast was rejected: it would change the modal focus contract of every sheet.
+- **Spring-back key.** The card that shakes is the one the last send spent (`onSent`'s context),
+  and only when the reject arrives before any state update since that send. A reject after an
+  accepted intent, or after a Draw, shakes nothing. Reduced motion flashes `--danger` instead.
+- **A second reject while the toast is open** swaps the copy in place and keeps the running timer:
+  the `Toast` never restarts it on a prop change.
+- The classic board keeps `IllegalActionDialog` until L75.
+
+---

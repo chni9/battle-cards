@@ -107,4 +107,11 @@ describe('App and the arena', () => {
     });
     expect(within(region('self-strip')).queryByRole('button', { name: 'Claim a seat' })).toBeNull();
   });
+
+  it('passes the raw connection status to the arena: Reconnecting… shows and intents lock (§6.12, L74-25)', () => {
+    fake.connection = connectionFor(makeArenaView(), { status: 'reconnecting' });
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect(document.querySelector('[data-zone="reconnect-banner"]')?.textContent).toBe('Reconnecting…');
+    expect(document.querySelector('[data-arena="next"]')?.getAttribute('data-action-lock')).toBe('actions-locked');
+  });
 });

@@ -42,6 +42,13 @@
  *   replaces the banner's You are dead (`deadCue={false}`) and never covers a sub-choice. A seat
  *   sheet whose player stopped being an opponent (a walk-in sat there) closes, and a new POV closes
  *   every read-only sheet and ends targeting.
+ * - §6.6.2, §6.12, §8.3 (L74-25): `props.connectionStatus` is the raw room status. While it is
+ *   `'reconnecting'`, the in-flow `ReconnectBanner` shows above the top bar, and one `reconnecting`
+ *   value locks every game input: `ctx.reconnecting` (so `actionLock` and every model), the commit
+ *   helper's `allow`, and the sub-choice host's `locked`. The top bar (Leave table, Forfeit), the
+ *   chat sheet and the Watching strip's Claim a seat stay available (S3, S11; designer 2026-11-02).
+ *   Server rejects show `RejectToast`; the held card the last send spent springs back in the hand
+ *   when the reject arrives before any state update since that send (`rejectCueFor`).
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -53,6 +60,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactEle
 
 import { TableFxProvider } from '../../fx/table-fx-context';
 import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
+import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { TableBannerHost } from '../../ui/banner/table-banner-host';
 import { v7SeatColor } from '../../ui/palette';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
@@ -102,6 +110,9 @@ import { LogSheet } from './log-sheet';
 import { LogTicker } from './log-ticker';
 import { ownIntentFxFor } from './own-intent-fx';
 import { PovEliminationOverlay } from './pov-elimination-overlay';
+import { ReconnectBanner } from './reconnect-banner';
+import { rejectCueFor, type LastSent, type RejectCue } from './reject-model';
+import { RejectToast } from './reject-toast';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
 import { ShopSheet } from './shop-sheet';
@@ -125,6 +136,8 @@ export interface ArenaScreenProps extends TableScreenProps {
   cachedLobbyRules: LobbyRules | null;
   /** L74-23: reopen App's claim picker; App passes it only to a walk-in while `claimableSeats` is non-empty (§7.2, Q24). */
   onReopenClaim?: () => void;
+  /** L74-25: the raw connection status (the reconnect banner and lock). */
+  connectionStatus: RoomConnectionStatus;
 }
 
 /** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
@@ -148,18 +161,33 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     nowMs: props.nowMs,
   });
   const clock = turnClock({ turnStarted, view, cachedLobbyRules: props.cachedLobbyRules, readOnly, nowMs: props.nowMs });
-  const ctx: ActionContext = { subChoice: props.subChoice, readOnly };
+  // One value locks every game input while the room reconnects (§6.12, L74-25, S3, S4): the action lock
+  // (so every model), the commit helper's `allow` and the sub-choice host's `locked` all read it.
+  const reconnecting = props.connectionStatus === 'reconnecting';
+  const ctx: ActionContext = { subChoice: props.subChoice, readOnly, reconnecting };
   const lock = actionLock(view, ctx);
   // The FX triggers both boards share (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
   const fx = useTableFxTriggers({ view, lastActionResolved: props.lastActionResolved, subChoice: props.subChoice });
+  // The last send and the view it left from, for the reject spring-back (§6.6.2, L74-25).
+  const [lastSent, setLastSent] = useState<LastSent | null>(null);
   // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
-  // Own-intent FX fly after the send (Lot 14, A.9.3).
+  // `allow` drops any send while reconnecting (L74-25, D5). Own-intent FX fly after the send (Lot 14, A.9.3).
   const commit = createArenaCommit(props, {
+    allow: () => !reconnecting,
     onSent: (intent, context) => {
       const own = ownIntentFxFor(intent, context);
       if (own !== null) fx.ownIntent(own);
+      setLastSent({ instanceId: context.instanceId ?? null, view });
     },
   });
+  // The spring-back key (L74-25): read once per new reject, render-phase, never an effect. Only the
+  // card the last send spent, and only when no state update came since that send (`rejectCueFor`).
+  const [seenReject, setSeenReject] = useState(props.actionReject);
+  const [rejectCue, setRejectCue] = useState<RejectCue | null>(null);
+  if (props.actionReject !== seenReject) {
+    setSeenReject(props.actionReject);
+    if (props.actionReject !== null) setRejectCue(rejectCueFor(lastSent, view, props.actionReject));
+  }
   // The banner host's inputs, as the V2 table maps them (`TableBannerFlash`, L51-06); L74-23 reuses `povWon`.
   const pov = view.players.find((player) => player.id === view.you);
   const povEliminated = pov?.isEliminated === true;
@@ -289,7 +317,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       className="v7-ground relative flex h-full w-full min-w-0 flex-col overflow-hidden font-v7-body text-v7-text"
     >
       <div {...arenaRegionAttributes('top-bar')} className="shrink-0 px-2 pt-2">
-        {/* `onLeave` and `onForfeit` are App-level, not ArenaIntents (Appendix A.6): the bar calls them from its confirm. */}
+        {/* In flow above the bar (designer 2026-11-02): it pushes the board down and covers no control (L74-25). */}
+        <ReconnectBanner reconnecting={reconnecting} />
+        {/* `onLeave` and `onForfeit` are App-level, not ArenaIntents (Appendix A.6): the bar calls them from its confirm.
+            Never gated on `reconnecting`: leaving stays possible while the room reconnects (S3). */}
         <TopBar
           view={view}
           readOnly={readOnly}
@@ -387,6 +418,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           selectedInstanceId={selectedHandInstanceId(sheets)}
           onOpenCard={openCard}
           drag={handDrag.fanProps}
+          rejected={rejectCue}
         />
       </div>
       <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2">
@@ -427,6 +459,8 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         {...(povSeat !== null ? { seatColor: v7SeatColor(povSeat) } : {})}
         deadCue={false}
       />
+      {/* Portaled to `document.body` on `Z_INDEX.toast`, mounted once (§6.12, L74-25): the V2 modal's copy in a toast. */}
+      <RejectToast reject={props.actionReject} onDismiss={props.onDismissActionReject} />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {
@@ -544,13 +578,15 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             );
         }
       })}
-      {/* Outside the read-only reducer (plan A.9.4): one blocking sheet, above every read-only sheet. L74-25 adds `locked`. */}
+      {/* Outside the read-only reducer (plan A.9.4): one blocking sheet, above every read-only sheet.
+          `locked` disables its commit buttons while reconnecting (L74-25, S4); Minimize stays usable. */}
       <SubChoiceSheet
         subChoice={props.subChoice}
         view={view}
         nowMs={props.nowMs}
         commit={commit}
         actionReject={props.actionReject}
+        locked={reconnecting}
       />
     </main>
   );

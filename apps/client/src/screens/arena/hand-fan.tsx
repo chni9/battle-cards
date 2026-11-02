@@ -13,15 +13,21 @@
  * L74-12 (§6.6.3, §6.6.5) wires the drag on each slot through `drag` (`useHandDrag`): the slot
  * keeps `touch-action: pan-x`, so a horizontal swipe stays the scroller's native scroll, and a
  * lifted card dims in place with `data-lifted` while its ghost follows the pointer.
+ *
+ * L74-25 (§6.6.2, §8.3): the card a rejected send spent (`rejected`) springs back with a shake in
+ * its slot, or a `--danger` ring flash under reduced motion, on the same in-place wrapper as the
+ * flip, so focus stays on it.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
 import { useAnimate } from 'motion/react';
 import { useEffect, useState, type CSSProperties, type ReactElement } from 'react';
 
+import type { ActionRejectPayload } from '../../net/use-room-connection';
 import { Card } from '../../ui/card/card';
 import { durationS, EASE_ENTRANCE } from '../../ui/motion/motion-tokens';
 import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-motion';
+import { V7_COLORS } from '../../ui/palette';
 import { motionAttribute } from '../../ui/primitives/chrome-classes';
 import { ScrollArea } from '../../ui/primitives/scroll-area';
 import type { ActionContext } from '../../view-model/action-lock';
@@ -32,6 +38,7 @@ import {
   type HandCardSource,
   type HandFanCard,
 } from './hand-fan-model';
+import type { RejectCue } from './reject-model';
 
 export interface HandFanProps {
   readonly view: PlayingStateView;
@@ -42,6 +49,8 @@ export interface HandFanProps {
   readonly onOpenCard: (source: HandCardSource) => void;
   /** L74-12: the drag gesture on each card slot (`useHandDrag(...).fanProps`). Without it a card only taps. */
   readonly drag?: HandFanDragProps;
+  /** L74-25: the card a rejected send spent; it shakes in its slot (a colour flash under reduced motion). */
+  readonly rejected?: RejectCue | null;
 }
 
 type HandFanStyle = CSSProperties & { readonly '--hand-strips': string; readonly '--hand-fulls': string };
@@ -64,7 +73,13 @@ const FLIP_FULL_TRANSITION = { duration: durationS('base'), ease: EASE_ENTRANCE 
 const FLIP_REDUCED_KEYFRAMES = { opacity: [0.4, 1] };
 const FLIP_REDUCED_TRANSITION = { duration: durationS('fast') };
 
-export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag }: HandFanProps): ReactElement {
+/** The reject spring-back (§6.6.2): a ±8 px shake in the slot, over `--dur-slow`. */
+const REJECT_SHAKE_KEYFRAMES = { x: [0, -8, 8, -6, 6, -3, 0] };
+/** Under reduced motion a 3 px `--danger` ring that fades, with no movement (§8.3). */
+const REJECT_FLASH_KEYFRAMES = { boxShadow: [`0 0 0 3px ${V7_COLORS.danger}`, `0 0 0 3px ${V7_COLORS.danger}00`] };
+const REJECT_TRANSITION = { duration: durationS('slow') };
+
+export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null }: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
   const style: HandFanStyle = {
@@ -82,6 +97,7 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag }: Han
             cards={model.hand}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
+            rejected={rejected}
             {...(drag !== undefined ? { drag } : {})}
           />
           <HandGroup
@@ -89,6 +105,7 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag }: Han
             cards={model.specials}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
+            rejected={rejected}
             {...(drag !== undefined ? { drag } : {})}
           />
         </div>
@@ -102,11 +119,12 @@ interface HandGroupProps {
   readonly cards: readonly HandFanCard[];
   readonly selectedInstanceId: string | null;
   readonly onOpenCard: (source: HandCardSource) => void;
+  readonly rejected: RejectCue | null;
   readonly drag?: HandFanDragProps;
 }
 
 /** An empty group keeps V2's caption and text (Q60); a filled one is named by its `aria-label`. */
-function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, drag }: HandGroupProps): ReactElement {
+function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag }: HandGroupProps): ReactElement {
   const copy = HAND_GROUP_COPY[zone];
   return (
     <div data-zone={zone} data-hint-anchor={zone} className="flex items-end">
@@ -124,6 +142,7 @@ function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, drag }: HandGr
               last={index === cards.length - 1}
               selected={card.source.instance.instanceId === selectedInstanceId}
               onOpen={onOpenCard}
+              rejected={rejected}
               {...(drag !== undefined ? { drag } : {})}
             />
           ))}
@@ -138,6 +157,7 @@ interface HandSlotProps {
   readonly last: boolean;
   readonly selected: boolean;
   readonly onOpen: (source: HandCardSource) => void;
+  readonly rejected: RejectCue | null;
   readonly drag?: HandFanDragProps;
 }
 
@@ -145,8 +165,9 @@ interface HandSlotProps {
  * Not clipped: the card overflows its slot to the right, and a selected or focused card rises above
  * its neighbour. `touch-pan-x` leaves a horizontal pan to the browser's scroll (L74-12).
  */
-function HandSlot({ card, last, selected, onOpen, drag }: HandSlotProps): ReactElement {
-  const lifted = drag?.liftedInstanceId === card.source.instance.instanceId;
+function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProps): ReactElement {
+  const { instanceId } = card.source.instance;
+  const lifted = drag?.liftedInstanceId === instanceId;
   return (
     <li
       {...(lifted ? { 'data-lifted': 'true' } : {})}
@@ -157,7 +178,12 @@ function HandSlot({ card, last, selected, onOpen, drag }: HandSlotProps): ReactE
       }}
       onClickCapture={drag?.onCardClickCapture}
     >
-      <HandCard card={card} selected={selected} onOpen={onOpen} />
+      <HandCard
+        card={card}
+        selected={selected}
+        onOpen={onOpen}
+        rejectToken={rejected?.instanceId === instanceId ? rejected.reject : null}
+      />
     </li>
   );
 }
@@ -166,6 +192,8 @@ interface HandCardProps {
   readonly card: HandFanCard;
   readonly selected: boolean;
   readonly onOpen: (source: HandCardSource) => void;
+  /** L74-25: the reject this card's send drew, else null. A new one replays the spring-back. */
+  readonly rejectToken: ActionRejectPayload | null;
 }
 
 /**
@@ -173,9 +201,10 @@ interface HandCardProps {
  * The change is read during render (the `Sheet` pattern), so the count lands in the same commit.
  * The flip animates the wrapper in place, as the dock's Draw pulse does, instead of remounting it
  * by `key`: Upgrade's sheet hands focus back to this card, and a remount would drop it to `body`
- * (Lot 74 Part 1 final review, Minor 6).
+ * (Lot 74 Part 1 final review, Minor 6). The reject spring-back (L74-25) counts and animates the
+ * same way, and never on mount.
  */
-function HandCard({ card, selected, onOpen }: HandCardProps): ReactElement {
+function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): ReactElement {
   const { instance } = card.source;
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -193,8 +222,27 @@ function HandCard({ card, selected, onOpen }: HandCardProps): ReactElement {
       void animate(scope.current, FLIP_FULL_KEYFRAMES, FLIP_FULL_TRANSITION);
     }
   }, [flips, reduced, animate, scope]);
+  const [shownReject, setShownReject] = useState(rejectToken);
+  const [shakes, setShakes] = useState(0);
+  if (rejectToken !== shownReject) {
+    setShownReject(rejectToken);
+    if (rejectToken !== null) setShakes(shakes + 1);
+  }
+  useEffect(() => {
+    if (shakes === 0) return;
+    if (reduced) {
+      void animate(scope.current, REJECT_FLASH_KEYFRAMES, REJECT_TRANSITION);
+    } else {
+      void animate(scope.current, REJECT_SHAKE_KEYFRAMES, REJECT_TRANSITION);
+    }
+  }, [shakes, reduced, animate, scope]);
   return (
-    <div ref={scope} data-upgrade-flip={String(flips)} data-motion={motionAttribute(reduced)}>
+    <div
+      ref={scope}
+      data-upgrade-flip={String(flips)}
+      data-motion={motionAttribute(reduced)}
+      {...(shakes > 0 ? { 'data-reject-cue': reduced ? 'flash' : 'shake' } : {})}
+    >
       <Card
         size="hand"
         instance={instance}

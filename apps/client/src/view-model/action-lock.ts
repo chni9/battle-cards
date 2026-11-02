@@ -13,18 +13,21 @@ export interface ActionContext {
   subChoice: SubChoiceRequiredPayload | null;
   /** The finished board (`finished.finalTable` passed as the view). */
   readOnly: boolean;
+  /** L74-25: the connection is reconnecting (spec v7 §6.12); every action locks. Never `readOnly`'s Stats dock. */
+  reconnecting?: boolean;
 }
 
 export type LockReason = 'not-your-turn' | 'actions-locked';
 
 /**
- * `actions-locked` for the finished board, an open sub-choice, an eliminated POV or a walk-in;
- * otherwise `not-your-turn` when the turn is not the POV's (another seat's, or between turns);
- * otherwise null. The POV's public entry is `view.players` at `view.you` (V2 `selfEliminated`).
+ * `actions-locked` while reconnecting (L74-25), for the finished board, an open sub-choice, an
+ * eliminated POV or a walk-in; otherwise `not-your-turn` when the turn is not the POV's (another
+ * seat's, or between turns); otherwise null. The POV's public entry is `view.players` at `view.you` (V2 `selfEliminated`).
  */
 export function actionLock(view: PlayingStateView, ctx: ActionContext): LockReason | null {
   const pov = view.players.find((player) => player.id === view.you);
   if (
+    ctx.reconnecting === true ||
     ctx.readOnly ||
     ctx.subChoice !== null ||
     pov?.isEliminated === true ||
