@@ -5846,3 +5846,18 @@ Source: Lot 74 Part 2 final review (L74-25 M1, rescoped); plan A.9.3; L74-25 rev
   same render), so the tests stub the commit helper instead of going through reconnect.
 
 ---
+
+## 2026-11-02 · [P] V7 arena: a new POV closes only the captured sheets (L74-23, final review)
+
+Source: Lot 74 Part 2 final review (L74-23, rescoped); amends the "Stale seat sheets" bullet of
+"2026-11-02 · V7 Watching strip, claim reopen and POV elimination overlay (L74-23)".
+
+- **What closes.** On a POV change (`view.you` changes or `isSpectator` flips, a walk-in's claim)
+  the arena closes only the sheets whose content is captured when they open: `card` (a Spy reveal,
+  a hand or in-play source), `kit` and `seat`, each through its exit, and it ends targeting
+  (`closeCapturedArenaSheets`).
+- **What stays open.** Chat, log, Shop and rules re-render from the live `view` on every render,
+  so keeping them open leaks nothing from the old POV. Closing chat would also unmount `ChatLog`
+  after its exit and lose an unsent draft.
+
+---

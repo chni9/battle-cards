@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { inPlayThumbs } from '../../view-model/card-actions';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import {
-  arenaSheetEntries, arenaSheetKey, closeAllArenaSheets, closeArenaSheet, closeStaleSeatSheets, EMPTY_ARENA_SHEETS, endTargeting,
-  MAX_CLOSING_SHEETS, openArenaSheet, openSeatId, startTargeting, type ArenaSheet, type TargetingState,
+  arenaSheetEntries, arenaSheetKey, closeArenaSheet, closeCapturedArenaSheets, closeStaleSeatSheets, EMPTY_ARENA_SHEETS, endTargeting,
+  MAX_CLOSING_SHEETS, openArenaSheet, openSeatId, startTargeting, type ArenaSheet, type ArenaSheetsState, type TargetingState,
 } from './arena-sheets';
 import { makeArenaView } from './test-view';
 
@@ -148,12 +148,25 @@ describe('targeting (L74-10, §6.6.2)', () => {
     expect(closeArenaSheet(state, spy)).toEqual({ open: [], closing: [spy], targeting: null });
   });
 
-  it('closes every sheet through its exit and ends targeting, and returns the same state when nothing is open (a new POV, L74-23)', () => {
+  it('closes every captured sheet through its exit and ends targeting, and returns the same state when nothing is open (a new POV, L74-23)', () => {
     const spy = card('spy-1');
     const seat: ArenaSheet = { kind: 'seat', playerId: 'p1' };
-    expect(closeAllArenaSheets(openArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, seat), kit))).toEqual({ open: [], closing: [seat, kit], targeting: null });
-    expect(closeAllArenaSheets(startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy)))).toEqual({ open: [], closing: [spy], targeting: null });
+    expect(closeCapturedArenaSheets(openArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, seat), kit))).toEqual({ open: [], closing: [seat, kit], targeting: null });
+    expect(closeCapturedArenaSheets(startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy)))).toEqual({ open: [], closing: [spy], targeting: null });
     const closed = closeArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, kit), kit);
-    expect(closeAllArenaSheets(closed)).toBe(closed);
+    expect(closeCapturedArenaSheets(closed)).toBe(closed);
+  });
+
+  it('keeps the sheets that re-render from the live view open on a new POV: chat, log, Shop and rules (final review)', () => {
+    const live: ArenaSheet[] = [{ kind: 'chat' }, { kind: 'log' }, { kind: 'shop' }, { kind: 'rules' }];
+    const spy = card('spy-1');
+    const state = [live[0], kit, live[1], spy, live[2], live[3]].reduce<ArenaSheetsState>(
+      (current, sheet) => (sheet === undefined ? current : openArenaSheet(current, sheet)),
+      EMPTY_ARENA_SHEETS,
+    );
+    const next = closeCapturedArenaSheets(state);
+    expect([next.open.map(arenaSheetKey), next.closing.map(arenaSheetKey)]).toEqual([['chat', 'log', 'shop', 'rules'], ['kit:tactician', 'card:spy-1']]);
+    const liveOnly = live.reduce(openArenaSheet, EMPTY_ARENA_SHEETS);
+    expect(closeCapturedArenaSheets(liveOnly)).toBe(liveOnly);
   });
 });

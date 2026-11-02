@@ -43,7 +43,8 @@
  *   bar's `confirmRequest`. Claim a seat calls App's `onReopenClaim`. The POV elimination overlay
  *   replaces the banner's You are dead (`deadCue={false}`) and never covers a sub-choice. A seat
  *   sheet whose player stopped being an opponent (a walk-in sat there) closes, and a new POV closes
- *   every read-only sheet and ends targeting.
+ *   the card, kit and seat sheets (captured at open) and ends targeting; chat, log, Shop and rules
+ *   stay open (final review).
  * - §6.6.2, §6.12, §8.3 (L74-25): `props.connectionStatus` is the raw room status. While it is
  *   `'reconnecting'`, the in-flow `ReconnectBanner` shows above the top bar, and one `reconnecting`
  *   value locks every game input: `ctx.reconnecting` (so `actionLock` and every model), the commit
@@ -85,8 +86,8 @@ import { ArenaSeats } from './arena-seats';
 import {
   arenaSheetEntries,
   arenaSheetKey,
-  closeAllArenaSheets,
   closeArenaSheet,
+  closeCapturedArenaSheets,
   closeStaleSeatSheets,
   EMPTY_ARENA_SHEETS,
   endTargeting,
@@ -251,14 +252,15 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     // "adjust state while rendering" pattern, as ui/primitives/sheet.tsx does; never an effect.
     setSheets(endTargeting(sheets));
   }
-  // A new POV (a walk-in claimed a seat: `view.you` changes or `isSpectator` flips) closes every
-  // reducer-hosted sheet through its exit and ends targeting, so a sheet opened from the old POV's
-  // view, such as a Spy reveal, never stays on screen (L74-23). Render-phase, as the targeting end.
+  // A new POV (a walk-in claimed a seat: `view.you` changes or `isSpectator` flips) closes the card,
+  // kit and seat sheets through their exit and ends targeting, so a sheet captured from the old POV's
+  // view, such as a Spy reveal, never stays on screen (L74-23). Chat, log, Shop and rules re-render
+  // from the live view and stay open (final review). Render-phase, as the targeting end.
   const povKey = `${view.you}:${view.isSpectator === true ? 'spectator' : 'seat'}`;
   const [sheetsPovKey, setSheetsPovKey] = useState(povKey);
   if (sheetsPovKey !== povKey) {
     setSheetsPovKey(povKey);
-    setSheets((current) => closeAllArenaSheets(current));
+    setSheets((current) => closeCapturedArenaSheets(current));
   }
   // A seat sheet whose player is no longer an opponent (a walk-in sat in that seat) closes, so
   // `openSeatId` never names the POV (final review Minor 15). The updater forms compose with the

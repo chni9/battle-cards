@@ -169,15 +169,23 @@ export function closeStaleSeatSheets(state: ArenaSheetsState, seatIds: readonly 
   return stale.length === 0 ? state : stale.reduce((current, sheet) => closeArenaSheet(current, sheet), state);
 }
 
+/** A sheet whose content is captured when it opens: a card source (a Spy reveal, a hand card), a kit, a seat. */
+function isCapturedSheet(sheet: ArenaSheet): boolean {
+  return sheet.kind === 'card' || sheet.kind === 'kit' || sheet.kind === 'seat';
+}
+
 /**
- * Ends targeting and closes every open sheet through its exit, oldest first, as `closeArenaSheet`
- * does (the press shield still covers a tap in flight); the same state object when nothing is open
- * or targeted. The arena calls it when the POV changes (a walk-in claimed a seat): a sheet opened
- * from the old POV's view, such as a Spy reveal, never stays on screen for the new one (L74-23).
+ * Ends targeting and closes every open card, kit and seat sheet through its exit, oldest first, as
+ * `closeArenaSheet` does (the press shield still covers a tap in flight); the same state object
+ * when none is open and nothing is targeted. The arena calls it when the POV changes (a walk-in
+ * claimed a seat): a sheet whose content was captured from the old POV's view, such as a Spy
+ * reveal, never stays on screen for the new one (L74-23). Chat, log, Shop and rules re-render from
+ * the live view, so they stay open and keep their state, an unsent chat draft included (L74 Part 2
+ * final review).
  */
-export function closeAllArenaSheets(state: ArenaSheetsState): ArenaSheetsState {
+export function closeCapturedArenaSheets(state: ArenaSheetsState): ArenaSheetsState {
   const base = endTargeting(state);
-  return base.open.reduce((current, sheet) => closeArenaSheet(current, sheet), base);
+  return base.open.filter(isCapturedSheet).reduce((current, sheet) => closeArenaSheet(current, sheet), base);
 }
 
 export interface ArenaSheetEntry {

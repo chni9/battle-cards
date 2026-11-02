@@ -1277,8 +1277,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     gets `deadCue={false}`, so the banner's 'You are dead' never shows beside it.
   - A seat sheet whose player is no longer an opponent (a walk-in claimed that seat) closes
     (`closeStaleSeatSheets`), so `openSeatId` never names the POV. A new POV (`view.you` or
-    `isSpectator` changes) closes every read-only sheet through its exit and ends targeting
-    (`closeAllArenaSheets`), so no sheet opened from the old POV's view stays on screen.
+    `isSpectator` changes) closes the card, kit and seat sheets through their exit and ends
+    targeting (`closeCapturedArenaSheets`), so no sheet captured from the old POV's view stays on
+    screen. Chat, log, Shop and rules re-render from the live view, so they stay open and an
+    unsent chat draft survives a claim (Part 2 final review).
 - `screens/arena/dock.tsx`, `dock-model.ts`; `screens/end.finished-board.test.tsx` (L74-24, spec v7
   §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable` behind `?ui=next`
   (never in tutorial) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and

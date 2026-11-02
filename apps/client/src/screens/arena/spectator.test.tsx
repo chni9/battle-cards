@@ -177,4 +177,14 @@ describe('seat sheets after a claim (final review Minor 15)', () => {
     });
     expectNoArenaIntent(props);
   });
+
+  it('keeps the chat sheet open across a claim, with its unsent draft (final review: chat re-renders from the live view)', async () => {
+    const { user, props, update } = setup({ view: makeArenaView({ pov: 'walk-in', overrides: { gameCode: 'CLAIMCHAT' } }) });
+    await user.click(within(region('top-bar')).getByRole('button', { name: /^Chat/ }));
+    await user.type(within(screen.getByRole('dialog', { name: 'Chat' })).getByRole('textbox', { name: 'Message' }), 'hi all');
+    update({ view: makeArenaView({ overrides: { gameCode: 'CLAIMCHAT' } }) }); // the walk-in sat in seat 'me'
+    const chat = screen.getByRole('dialog', { name: 'Chat' });
+    expect(within(chat).getByRole<HTMLInputElement>('textbox', { name: 'Message' }).value).toBe('hi all');
+    expectNoArenaIntent(props);
+  });
 });
