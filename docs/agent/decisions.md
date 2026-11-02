@@ -5565,13 +5565,19 @@ Source: technical spec v7 §6.8, §6.6.4, §6.6.5, §13 Q50; Appendix A `shop-di
   selected, the tile double tap, Buy special, Buy random and the upgrade-point Buy and Sell share
   one `useCommitOnce` control (`shop`). A buy that went out closes the sheet.
 - **The tile is its own button** with V2's aria-label around a decorative `Card size="tile"`
-  (`Card` takes no label and no double-click). It is natively disabled while the Shop is
-  browse-only; an unaffordable tile stays selectable and dimmed, as in V2.
+  (`Card` takes no label and no double-click). While the Shop is browse-only it is
+  `aria-disabled`, not natively disabled (review I1, controller ruling): it stays in the Tab
+  order, and the press still reaches the long-press, which some engines do not dispatch to a
+  disabled control. Browse-only tiles keep full colour (no V2 fade), following the hand's
+  no-desaturation rule, and the tap is inert. An unaffordable tile stays selectable and dimmed,
+  as in V2.
 - **`{ kind: 'shop' }` carries `isUpgraded`** (plan A.9.4): `sheetInstanceFor` reads the source
   alone, and a kit's `alwaysUpgraded` card is upgraded on the tile, so the inspect shows the same
   tier.
-- **Inspect** is a 44 px `help` `IconButton` named `Inspect {name}` (V2's inspect-chip words) at
-  the tile's corner, a sibling of the tile; long-press on the tile opens the same sheet.
+- **Inspect** is a 44 px `help` `IconButton` named `Inspect {name}` (V2's inspect-chip words) in
+  the tile's price row, after the price and under the card (review I2, controller ruling): at the
+  card's corner it hid the damage chip on a phone. It is a sibling of the tile; long-press on the
+  tile opens the same sheet.
 - **The special price** stays L73's one client constant (`SPECIAL_CARD_PURCHASE_POINTS`); this
   task adds no constant and no copy.
 

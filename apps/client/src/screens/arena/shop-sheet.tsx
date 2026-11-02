@@ -10,9 +10,10 @@
  *
  * - **Cards.** One tile per shared card, a button around a decorative `Card size="tile"` at the
  *   kit's tier. A tap selects (Basic attack by default); the footer's Buy selected sends
- *   `buyCard`; a double tap on an affordable tile buys it at once. Long-press, or the corner
- *   Inspect button, opens the read-only `{ kind: 'shop' }` card sheet. A browse-only Shop
- *   natively disables every tile; an unaffordable one stays selectable and dimmed, as in V2.
+ *   `buyCard`; a double tap on an affordable tile buys it at once. Long-press, or the Inspect
+ *   button in the tile's price row, opens the read-only `{ kind: 'shop' }` card sheet. A
+ *   browse-only Shop makes every tile `aria-disabled` (focusable, tap inert, long-press live); an
+ *   unaffordable one stays selectable and dimmed, as in V2.
  * - **Footer per tab (designer 2026-11-02).** The open tab's buys, each disabled with its
  *   reason, then Close.
  * - **One buy per view.** Every buy goes through `commit` and one `useCommitOnce` control
@@ -24,7 +25,7 @@
  */
 
 import { getCard, type CardInstance, type PlayingStateView, type SharedCardId } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
 import type { ActionRejectPayload } from '../../net/use-room-connection';
 import { Card } from '../../ui/card/card';
@@ -78,12 +79,31 @@ export interface ShopSheetProps {
 
 const GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3';
 
-/** `disabled` and, while the model gives one, the visible reason (`exactOptionalPropertyTypes`). */
-function availabilityProps(availability: ActionAvailability): { readonly disabled: boolean; readonly disabledReason?: string } {
-  return {
-    disabled: !availability.enabled,
-    ...(availability.reason !== null ? { disabledReason: DISABLED_REASON_COPY[availability.reason] } : {}),
-  };
+interface BuyButtonProps {
+  /** `data-shop-action`. */
+  action: 'buy-card' | 'buy-special' | 'buy-pool' | 'buy-upgrade-point' | 'sell-upgrade-point';
+  variant: 'primary' | 'secondary';
+  /** The model's availability; `undefined` (no selected tile) renders disabled with no reason. */
+  availability: ActionAvailability | undefined;
+  onPress: () => void;
+  children: ReactNode;
+}
+
+/** A footer buy: focusable while disabled, with the model's reason as visible text (§11, Q39). */
+function BuyButton({ action, variant, availability, onPress, children }: BuyButtonProps): ReactElement {
+  const reason = availability?.reason ?? null;
+  return (
+    <Button
+      variant={variant}
+      data-shop-action={action}
+      focusableWhenDisabled
+      disabled={availability?.enabled !== true}
+      {...(reason !== null ? { disabledReason: DISABLED_REASON_COPY[reason] } : {})}
+      onClick={onPress}
+    >
+      {children}
+    </Button>
+  );
 }
 
 /** A price in a `--bg-0` well on the CTA fill: the card sheet's `ActionCost` rule (DESIGN.md › Cost glyphs). */
@@ -104,44 +124,49 @@ interface ShopTileProps {
   onOpenCard: (source: CardSheetSource) => void;
 }
 
+/**
+ * A browse-only tile is `aria-disabled`, never natively disabled (review I1): it stays in the Tab
+ * order with its name, its tap and double tap do nothing, and the press still reaches the
+ * long-press wrapper in every engine. It keeps full colour, as the hand does off-turn.
+ */
 function ShopTile({ tile, selected, browseOnly, onSelect, onBuy, onOpenCard }: ShopTileProps): ReactElement {
   const inspect = (): void => {
     onOpenCard({ kind: 'shop', cardId: tile.cardId, isUpgraded: tile.instance.isUpgraded });
   };
   const longPress = useLongPress({ onLongPress: inspect });
   return (
-    <li className="relative">
+    <li className="flex flex-col gap-1">
       <span {...longPress} className="block">
         <button
           type="button"
           data-shop-tile={tile.cardId}
           aria-pressed={selected}
           aria-label={shopTileLabel(tile)}
-          disabled={browseOnly}
+          {...(browseOnly ? { 'aria-disabled': true } : {})}
           onClick={() => {
-            onSelect(tile.cardId);
+            if (!browseOnly) onSelect(tile.cardId);
           }}
           onDoubleClick={() => {
-            if (tile.buy.enabled) onBuy({ kind: 'buyCard', payload: { cardId: tile.cardId } });
+            if (!browseOnly && tile.buy.enabled) onBuy({ kind: 'buyCard', payload: { cardId: tile.cardId } });
           }}
-          className={`flex w-full touch-manipulation flex-col items-center gap-1 rounded-v7-chrome-sm p-1 select-none disabled:cursor-not-allowed ${CHROME_FOCUS_CLASS}`}
+          className={`flex w-full touch-manipulation justify-center rounded-v7-chrome-sm p-1 select-none aria-disabled:cursor-not-allowed ${CHROME_FOCUS_CLASS}`}
         >
           <span aria-hidden="true" className="pointer-events-none">
             <Card size="tile" instance={tile.instance} selected={selected} unplayable={!tile.affordable} />
           </span>
-          <span data-shop-price="" aria-hidden="true" className="font-v7-display text-v7-body text-v7-text">
-            {tile.cost === null ? '—' : <CostAmount amount={tile.cost} signed="cost" title={null} />}
-          </span>
         </button>
       </span>
-      {/* A sibling of the tile, never inside it: no nested buttons. */}
-      <IconButton
-        icon="help"
-        aria-label={shopInspectLabel(tile)}
-        aria-haspopup="dialog"
-        className="absolute right-0 top-0"
-        onClick={inspect}
-      />
+      {/*
+        The price row, under the card so nothing covers a chip (review I2). Inspect is a sibling of
+        the tile, never inside it (no nested buttons); a long price wraps instead of overlapping.
+        The price is aria-hidden: the tile's name already speaks it.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <span data-shop-price={tile.cardId} aria-hidden="true" className="px-1 font-v7-display text-v7-body text-v7-text">
+          {tile.cost === null ? '—' : <CostAmount amount={tile.cost} signed="cost" title={null} />}
+        </span>
+        <IconButton icon="help" aria-label={shopInspectLabel(tile)} aria-haspopup="dialog" onClick={inspect} />
+      </div>
     </li>
   );
 }
@@ -269,57 +294,53 @@ export function ShopSheet({
     switch (tab) {
       case 'cards':
         return (
-          <Button
+          <BuyButton
+            action="buy-card"
             variant="primary"
-            data-shop-action="buy-card"
-            focusableWhenDisabled
-            {...(selectedTile === undefined ? { disabled: true } : availabilityProps(selectedTile.buy))}
-            onClick={() => {
+            availability={selectedTile?.buy}
+            onPress={() => {
               buy({ kind: 'buyCard', payload: { cardId: selected } });
             }}
           >
             {CARD_BUY_LABEL}
-          </Button>
+          </BuyButton>
         );
       case 'special':
         return (
-          <Button
+          <BuyButton
+            action="buy-special"
             variant="primary"
-            data-shop-action="buy-special"
-            focusableWhenDisabled
-            {...availabilityProps(special.buy)}
-            onClick={() => {
+            availability={special.buy}
+            onPress={() => {
               buy({ kind: 'buySpecialCard' });
             }}
           >
             {BUY_SPECIAL_LABEL}{' '}
             <ShopCost amount={special.cost} signed="cost" />
-          </Button>
+          </BuyButton>
         );
       case 'pool':
         return (
-          <Button
+          <BuyButton
+            action="buy-pool"
             variant="primary"
-            data-shop-action="buy-pool"
-            focusableWhenDisabled
-            {...availabilityProps(pool.buy)}
-            onClick={() => {
+            availability={pool.buy}
+            onPress={() => {
               buy({ kind: 'buyPoolCard' });
             }}
           >
             {BUY_POOL_CARD_LABEL}{' '}
             <ShopCost amount={pool.cost} signed="cost" />
-          </Button>
+          </BuyButton>
         );
       case 'upgrade-points':
         return (
           <>
-            <Button
+            <BuyButton
+              action="buy-upgrade-point"
               variant="primary"
-              data-shop-action="buy-upgrade-point"
-              focusableWhenDisabled
-              {...availabilityProps(upgradePoints.buy)}
-              onClick={() => {
+              availability={upgradePoints.buy}
+              onPress={() => {
                 buy({ kind: 'buyUpgradePoint' });
               }}
             >
@@ -328,13 +349,12 @@ export function ShopSheet({
                 <ShopCost amount={{ kind: 'points', amount: upgradePoints.buyCostPoints }} signed="cost" />
                 <ShopCost amount={{ kind: 'upgradePoint', amount: 1 }} signed="gain" />
               </span>
-            </Button>
-            <Button
+            </BuyButton>
+            <BuyButton
+              action="sell-upgrade-point"
               variant="secondary"
-              data-shop-action="sell-upgrade-point"
-              focusableWhenDisabled
-              {...availabilityProps(upgradePoints.sell)}
-              onClick={() => {
+              availability={upgradePoints.sell}
+              onPress={() => {
                 buy({ kind: 'sellUpgradePoint' });
               }}
             >
@@ -343,7 +363,7 @@ export function ShopSheet({
                 <ShopCost amount={{ kind: 'points', amount: upgradePoints.sellYieldPoints }} signed="gain" />
                 <ShopCost amount={{ kind: 'upgradePoint', amount: 1 }} signed="cost" />
               </span>
-            </Button>
+            </BuyButton>
           </>
         );
       default: {

@@ -109,9 +109,10 @@ describe('Shop sheet (§6.8)', () => {
 
   it('shows the Spy tile at play 2 and buy 4 (Lot 54), on the kit face (Tactician: upgraded)', async () => {
     const { user } = setup(viewWith({ kitId: 'tactician', points: 50 }));
-    const spy = tile(await openShop(user), 'spy');
+    const sheet = await openShop(user);
+    const spy = tile(sheet, 'spy');
     expect(visibleText(part(spy, '[data-card-chip="cost"]'))).toBe('2');
-    expect(visibleText(part(spy, '[data-shop-price]'))).toBe('−4');
+    expect(visibleText(part(sheet, '[data-shop-price="spy"]'))).toBe('−4');
     expect(spy.getAttribute('aria-label')).toBe('Spy upgraded, minus 4 pts');
     expect(spy.querySelector('[data-card-badge="upgraded"]')).not.toBeNull();
   });
@@ -187,6 +188,35 @@ describe('Shop sheet (§6.8)', () => {
       vi.advanceTimersByTime(LONG_PRESS_MS);
     });
     expect(screen.getByRole('dialog', { name: 'Thief' }).getAttribute('data-arena-sheet')).toBe('card:shop-thief');
+    expectNoArenaIntent(props);
+  });
+
+  it('a browse-only tile stays focusable: a tap selects nothing, a long-press opens its card sheet (§6.6.5)', async () => {
+    vi.useFakeTimers();
+    const { user, props } = setup(viewWith({ points: 50 }, { currentTurnPlayerId: 'p1' }), {}, { advanceTimers: vi.advanceTimersByTime });
+    const sheet = await openShop(user);
+    const thief = tile(sheet, 'thief');
+    expect([thief.hasAttribute('disabled'), thief.getAttribute('aria-disabled')]).toEqual([false, 'true']);
+    await user.click(thief);
+    expect([thief, tile(sheet, 'basic-attack')].map((entry) => entry.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+    fireEvent.pointerDown(thief, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS);
+    });
+    expect(screen.getByRole('dialog', { name: 'Thief' }).getAttribute('data-arena-sheet')).toBe('card:shop-thief');
+    expectNoArenaIntent(props);
+  });
+
+  it('a pool face opens its read-only card sheet, sending nothing', async () => {
+    const pool = [makeCard('shield', { instanceId: 'pool-1', isUpgraded: true })];
+    const { user, props } = setup(viewWith({ points: 50 }, { pool }));
+    const sheet = await openShop(user);
+    await user.click(within(sheet).getByRole('tab', { name: 'Pool' }));
+    await user.click(within(sheet).getByRole('button', { name: 'Shield upgraded' }));
+    const card = screen.getByRole('dialog', { name: 'Shield' });
+    expect(card.getAttribute('data-arena-sheet')).toBe('card:pool-1');
+    expect(within(card).getByRole('article', { name: 'Shield upgraded' })).toBeTruthy();
+    expect(card.querySelector('[data-zone="sheet-actions"]')).toBeNull();
     expectNoArenaIntent(props);
   });
 });

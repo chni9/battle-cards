@@ -1084,9 +1084,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   and title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at
   each own turn start and payout change, never under reduced motion, and sends `drawCard`. Shop
   keeps its word label and `data-hint-anchor="shop"` and opens the Shop sheet (L74-14),
-  browse-only off-turn and on the finished board. Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for a
-  seated or Reanimating POV and disabled with its reason; it opens `UnspySheet` ('Choose who is
-  spying you.', `unspy.spyIds`, a single spy preselected) where Confirm sends `clearSpy` and
+  browse-only off-turn and on the finished board. Unspy (quiet, crossed eye, '−10',
+  `data-unspy`) is always rendered for a seated or Reanimating POV and disabled with its reason;
+  it opens `UnspySheet` ('Choose who is spying you.', `unspy.spyIds`, a single spy preselected)
+  where Confirm sends `clearSpy` and
   Cancel, Esc or the backdrop reset the pick. Activate duplication shows while
   `dock.duplication` is set and sends `activateDuplication`; the self strip keeps only
   'Duplication active'. An eliminated Watching POV keeps the disabled dock without Unspy (A.8
@@ -1116,20 +1117,23 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Upgrade points; it opens on the reducer's `tab`, else the model's `initialTab`, and resets its
   tab and selection on every opening.
   - Cards: V2's price blurb, then one tile per shared card (`data-shop-tile`): a decorative
-    `Card size="tile"` at the kit's `alwaysUpgraded` tier with its play-cost chip, the buy price
-    under it, and V2's name `{name}[ upgraded], {price}[, cannot afford]`. A tap selects
-    (`aria-pressed`, the `--cta` outline; Basic attack by default), the footer's Buy selected
-    sends `buyCard {cardId}`, and a double tap on an affordable tile buys it at once
-    (`onDoubleClick`, `touch-manipulation`). Long-press or the corner `Inspect {name}` button
-    opens the read-only `{ kind: 'shop' }` card sheet.
+    `Card size="tile"` at the kit's `alwaysUpgraded` tier with its play-cost chip, and V2's name
+    `{name}[ upgraded], {price}[, cannot afford]`. Under the card, a price row (`flex-wrap`, so a
+    long price wraps) holds the buy price (`data-shop-price`) then the 44 px `Inspect {name}`
+    button, so nothing covers a card chip. A tap selects (`aria-pressed`, the `--cta` outline;
+    Basic attack by default), the footer's Buy selected sends `buyCard {cardId}`, and a double
+    tap on an affordable tile buys it at once (`onDoubleClick`, `touch-manipulation`).
+    Long-press or Inspect opens the read-only `{ kind: 'shop' }` card sheet.
   - Special: Buy special at `SPECIAL_CARD_PURCHASE_POINTS` (L73's one client price). Pool:
     `Pool (N)`, V2's "visible to every player" explainer, public faces that open the
     `{ kind: 'pool' }` card sheet, "The pool is empty.", Buy random at the public `poolBuyCost`.
     Upgrade points: the heading with the upgrade icon and no balance, Buy and Sell priced from
     the kit at render.
   - The footer holds the open tab's buys (`data-shop-action`), each disabled with its reason,
-    then Close. Off-turn, locked and on the finished board every tile and buy is disabled while
-    every tab, face and Inspect stays usable. Every buy goes through `commit`, sends at most once
+    then Close. Off-turn, locked and on the finished board every buy is disabled and every tile
+    is `aria-disabled` (never native `disabled`): it stays in the Tab order at full colour, its
+    tap and double tap do nothing, and its long-press still inspects. Every tab, face and
+    Inspect stays usable. Every buy goes through `commit`, sends at most once
     per view across the whole Shop (`useCommitOnce`, control `shop`) and closes the sheet.
 
 ## Design system (V2 · Lots 10+)
