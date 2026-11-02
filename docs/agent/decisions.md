@@ -5582,3 +5582,25 @@ Source: technical spec v7 §6.8, §6.6.4, §6.6.5, §13 Q50; Appendix A `shop-di
   task adds no constant and no copy.
 
 ---
+
+## 2026-11-02 · [P] V7 log: one ticker, a round sheet, nets in text colour (L74-15)
+
+Source: technical spec v7 §5.1, §6.1, §6.9; L56-05, L63-06; Appendix A `table-action-log-*`;
+decisions.md 2026-09-28 "Action-log resource nets".
+
+- **Ticker.** One 44 px button on `--panel` (`data-zone="log-collapsed"`) with the newest line,
+  named `Action log: {line}` so its name holds its visible text. A card in it is plain text: a
+  button holds no button.
+- **Resource nets keep their sign and words, not their green and red.** §5.1 keeps resource and
+  `--danger` colours off small text (DESIGN.md › Cost glyphs: the number never takes a resource
+  colour at small size), so the sign and number are `--text` and the resource icon keeps its
+  colour; the direction stays in the `+` / `−` sign and the spoken text. This supersedes the
+  colour part of the 2026-09-28 entry on V7 surfaces only.
+- **No kind icons.** V2's per-line kind glyphs have no V7 icon (§5.6), and each line already says
+  what happened.
+- **Card names** are text buttons with a 44 px hit height and no long-press: §6.6.5's long-press
+  is for card faces.
+- **Menu order** follows §6.1: How to play, (coach, L75), Action log, Table rules (L74-22), then
+  the code line.
+
+---

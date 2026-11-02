@@ -794,9 +794,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   to either board.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
-  always renders. After Lot 74 Part 1 each shows its content or an empty state, with three
-  exceptions: a walk-in's self strip and dock render bare (Q38; L74-23 adds the Watching strip),
-  and the ticker is blank once the log has entries (its collapsed log is L74-15). The root is
+  always renders. Each shows its content or an empty state, except a walk-in's self strip and
+  dock, which render bare (Q38; L74-23 adds the Watching strip). The root is
   `<main data-zone="table" data-arena="next">`, `.v7-ground`, `h-full w-full overflow-hidden` of
   `#root`. It has no `vh`, `dvh` or `w-screen` and never page-scrolls (L53-07); only the hand
   scrolls, inside itself.
@@ -853,7 +852,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `Card` with `onActivate` (a button: Enter or click); after Part 1 only the seat-sheet thumbs
   (`seat-sheet.tsx`) also spread these handlers, so tap and long-press open the same read-only
   sheet and send nothing. The self-strip thumbs, the plate's landing card, badges and chips take
-  a tap only: long-press on the log card comes with L74-15, and the rest is an L74-26 gate item.
+  a tap only: the log sheet's card names add no long-press (L74-15), and the rest, the plate's
+  landing card included, is an L74-26 gate item.
 - `screens/arena/top-bar.tsx` + `top-bar-model.ts` + `leave-confirm-sheet.tsx` (L74-03, spec v7
   §6.1 item 1, §6.12; plan Appendix A rulings 2 and 3).
   - Contents: the round (`Round N`, from `tableRound`, the same count as the log and chat),
@@ -864,8 +864,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     flag, and Menu. L74-16 puts Chat first.
   - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
     calls `onOpenFeedback` instead.
-  - Menu sheet: How to play (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not)
-    and `Code {code} · {connection}` with Copy (`Code copied` / `Copy failed`).
+  - Menu sheet (`menu-sheet.tsx`, owner-local in `TopBar`; L74-15): How to play
+    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15) and
+    `Code {code} · {connection}` with Copy (`Code copied` / `Copy failed`).
   - The flag opens `LeaveConfirmSheet` (V7 `Dialog`) for the live
     `tableFlagIntent(...)`, which carries `isSpectator`.
     - Forfeit calls `onForfeit` and keeps the socket.
@@ -1135,6 +1136,24 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     tap and double tap do nothing, and its long-press still inspects. Every tab, face and
     Inspect stays usable. Every buy goes through `commit`, sends at most once
     per view across the whole Shop (`useCommitOnce`, control `shop`) and closes the sheet.
+- `screens/arena/log-ticker.tsx`, `log-sheet.tsx`, `log-line.tsx`, `log-sheet-model.ts`,
+  `menu-sheet.tsx` (L74-15, spec v7 §6.1, §6.9; L56-05): the ticker region is one 44 px button on
+  `--panel` (`data-zone="log-collapsed"`, the FX log endpoint) with the newest public line
+  (`log(view).ticker`, truncated) or "No actions yet", named `Action log: {line}`. A tap, or
+  Menu → Action log, opens the reducer-hosted `{ kind: 'log' }` sheet (key `log`), a read-only
+  bottom `Sheet` titled "Action log" whose list is `data-zone="action-log-panel"` (the preferred
+  FX endpoint while open).
+  - Lines group by `log(view).rounds` under sticky `Round N` headers (`tableRound`, the chat's
+    count) and render `log.ts` segments: nicknames in their seat hue (`PlayerName`), listed damage
+    as the number and the life icon (spoken "{n} damage"), resource nets as sign and number in
+    `--text` plus the resource icon (spoken by `resourceSegment`; `+?` reads "concealed points
+    gain"), and inspectable card names as text buttons (44 px hit height) that open the
+    `{ kind: 'log' }` card sheet with no footer.
+  - Draw, buy, sell, elimination, reward and Sentence lines stay text, and a fogged pool buy reads
+    "bought a card from the pool". No filter, search, Why or export (the DEV Excel stays on Game
+    over). The sheet opens on the newest line and follows new lines only within 48 px of the
+    bottom.
+  - TopBar's menu body moved to `menu-sheet.tsx` (`MenuSheet`, still owner-local; plan A.9.4).
 
 ## Design system (V2 · Lots 10+)
 

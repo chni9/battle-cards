@@ -6,7 +6,8 @@
  *   hue, or `—`), the active seat's Block line and the empty clock slot L74-21 fills (§6.10). Seat
  *   names stand on `--panel`, never on the ground (`ui/seat/player-name.tsx`).
  * - Right: Feedback `!`, the flag and Menu, each a 44 px icon-only `IconButton` named by its
- *   aria-label (§5.6). L74-16 puts Chat before Feedback.
+ *   aria-label (§5.6). L74-16 puts Chat before Feedback. The menu body lives in `menu-sheet.tsx`
+ *   (L74-15), owner-local here; its Action log entry opens the arena's log sheet (§6.9).
  * - The flag opens the confirm for the live `tableFlagIntent(...)` (decisions.md 2026-10-28), and
  *   only the confirm button calls `onForfeit` / `onLeave` (§6.6.4, L43-05). Those are App-level
  *   actions, not `ArenaIntent`s, so they leave outside the commit helper.
@@ -19,21 +20,16 @@ import { useRef, useState, type ReactElement } from 'react';
 
 import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import { markHowToPlaySeen } from '../../ui/help-storage';
-import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_SM_CLASS } from '../../ui/primitives/chrome-classes';
 import { IconButton } from '../../ui/primitives/icon-button';
-import { Sheet } from '../../ui/primitives/sheet';
 import { PlayerName } from '../../ui/seat/player-name';
-import { FEEDBACK_ARIA_LABEL, HOW_TO_PLAY_ARIA_LABEL } from '../../view-model/table-copy';
+import { FEEDBACK_ARIA_LABEL } from '../../view-model/table-copy';
 import { HowToPlayDialog } from '../how-to-play-dialog';
 import { LeaveConfirmSheet } from './leave-confirm-sheet';
+import { MenuSheet } from './menu-sheet';
 import {
   activeBlockLabel,
   arenaFlag,
-  CODE_COPIED_LABEL,
-  CODE_COPY_FAILED_LABEL,
-  COPY_CODE_LABEL,
-  gameCodeLine,
   MENU_LABEL,
   topBarRoundLabel,
   turnBannerOf,
@@ -50,21 +46,15 @@ export interface TopBarProps {
   onForfeit: () => void;
   /** Finished board: Game over owns Feedback (L47-03). The live arena omits it and owns its dialog. */
   onOpenFeedback?: () => void;
+  /** L74-15: the menu's Action log entry (spec v7 §6.9). */
+  onOpenLog?: () => void;
 }
 
-type CopyState = 'idle' | 'copied' | 'failed';
-
-const COPY_STATUS_LABEL: Readonly<Record<Exclude<CopyState, 'idle'>, string>> = {
-  copied: CODE_COPIED_LABEL,
-  failed: CODE_COPY_FAILED_LABEL,
-};
-
-export function TopBar({ view, readOnly, statusLabel, onLeave, onForfeit, onOpenFeedback }: TopBarProps): ReactElement {
+export function TopBar({ view, readOnly, statusLabel, onLeave, onForfeit, onOpenFeedback, onOpenLog }: TopBarProps): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [copy, setCopy] = useState<CopyState>('idle');
   /**
    * Latches the first confirm press. A state guard is not enough: while the Dialog exits,
    * `AnimatePresence` keeps rendering its last element with its stale props
@@ -78,17 +68,6 @@ export function TopBar({ view, readOnly, statusLabel, onLeave, onForfeit, onOpen
   const block = activeBlockLabel(view);
   const flag = arenaFlag(view, readOnly);
   const self = view.players.find((player) => player.isYou);
-
-  const copyCode = (): void => {
-    void (async () => {
-      try {
-        await navigator.clipboard.writeText(view.gameCode);
-        setCopy('copied');
-      } catch {
-        setCopy('failed');
-      }
-    })();
-  };
 
   const confirmLeave = (): void => {
     if (confirmed.current || flag === null) {
@@ -156,45 +135,23 @@ export function TopBar({ view, readOnly, statusLabel, onLeave, onForfeit, onOpen
             aria-haspopup="dialog"
             icon="menu"
             onClick={() => {
-              setCopy('idle');
               setMenuOpen(true);
             }}
           />
         </div>
       </div>
-      <Sheet
+      <MenuSheet
         open={menuOpen}
-        mode="read-only"
-        placement="bottom"
-        title={MENU_LABEL}
+        view={view}
+        statusLabel={statusLabel}
         onClose={() => {
           setMenuOpen(false);
         }}
-        dataAttributes={{ 'data-arena-sheet': 'menu' }}
-      >
-        <div className="flex flex-col gap-3">
-          <Button
-            variant="quiet"
-            icon="help"
-            fullWidth
-            onClick={() => {
-              setMenuOpen(false);
-              setHowToPlayOpen(true);
-            }}
-          >
-            {HOW_TO_PLAY_ARIA_LABEL}
-          </Button>
-          <div className="flex items-center gap-2">
-            <p className="min-w-0 flex-1 truncate font-v7-body text-v7-body text-v7-text">{gameCodeLine(view, statusLabel)}</p>
-            <Button variant="quiet" icon="copy" onClick={copyCode}>
-              {COPY_CODE_LABEL}
-            </Button>
-          </div>
-          <p role="status" className="min-h-4 font-v7-body text-v7-caption font-bold text-v7-text-2">
-            {copy === 'idle' ? null : COPY_STATUS_LABEL[copy]}
-          </p>
-        </div>
-      </Sheet>
+        onHowToPlay={() => {
+          setHowToPlayOpen(true);
+        }}
+        {...(onOpenLog !== undefined ? { onOpenLog } : {})}
+      />
       {flag !== null ? (
         <LeaveConfirmSheet
           open={confirmOpen}

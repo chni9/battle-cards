@@ -31,7 +31,9 @@ export type ArenaSheet =
   /** An opponent seat's sheet (L74-05, spec v7 §6.5). */
   | { kind: 'seat'; playerId: string }
   /** The Shop (L74-14, spec v7 §6.8); `tab` opens it on that tab (L75 tutorial). */
-  | { kind: 'shop'; tab?: ShopTab };
+  | { kind: 'shop'; tab?: ShopTab }
+  /** The action log (L74-15, spec v7 §6.9). */
+  | { kind: 'log' };
 
 /** The card being targeted (L74-10, spec v7 §6.6.2). */
 export interface TargetingState {
@@ -63,7 +65,7 @@ function unreachable(value: never): never {
 
 /**
  * `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`, `seat:<playerId>`, `shop` (one Shop,
- * whatever its tab; L74-14). The React key and `data-arena-sheet`.
+ * whatever its tab; L74-14), `log` (one log; L74-15). The React key and `data-arena-sheet`.
  */
 export function arenaSheetKey(sheet: ArenaSheet): string {
   switch (sheet.kind) {
@@ -75,6 +77,8 @@ export function arenaSheetKey(sheet: ArenaSheet): string {
       return `seat:${sheet.playerId}`;
     case 'shop':
       return 'shop';
+    case 'log':
+      return 'log';
     default:
       return unreachable(sheet);
   }

@@ -20,6 +20,7 @@
  *   duplication underneath. `dockCommit` says whether a send went out, and `actionReject` re-arms
  *   the dock's once-per-view latch (`use-commit-once.ts`, final review R2).
  * - §6.8 (L74-14): the dock's Shop opens the reducer-hosted Shop sheet; its buys go through `commit`.
+ * - §6.9 (L74-15): the ticker and Menu → Action log open the reducer-hosted log sheet.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -32,6 +33,7 @@ import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
+import { log } from '../../view-model/log';
 import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
 import { threats } from '../../view-model/threats';
@@ -60,6 +62,8 @@ import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
 import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
+import { LogSheet } from './log-sheet';
+import { LogTicker } from './log-ticker';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
 import { ShopSheet } from './shop-sheet';
@@ -86,6 +90,8 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   const threatModel = threats(view, props.subChoice);
   // The POV strip and, in `.dock`, its dock: computed once here, L74-13 reads `strip.dock` (Appendix A.2).
   const strip = selfStrip(view, ctx);
+  // The ticker and the log sheet read one model per render (§6.9, L74-15).
+  const logModel = log(view);
   // The read-only sheet host (Appendix A.5): one reducer state, one component per entry.
   const [sheets, setSheets] = useState<ArenaSheetsState>(EMPTY_ARENA_SHEETS);
   // `setSheets` is stable; it is listed because the React Compiler infers it once the render also
@@ -175,12 +181,19 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           onLeave={props.onLeave}
           onForfeit={props.onForfeit}
           {...(props.onOpenFeedback !== undefined ? { onOpenFeedback: props.onOpenFeedback } : {})}
+          onOpenLog={() => {
+            openSheet({ kind: 'log' });
+          }}
         />
       </div>
       <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
-        <p data-zone="log-collapsed" className="truncate text-v7-caption text-v7-text-2">
-          {view.actionLog.length === 0 ? 'No actions yet' : null}
-        </p>
+        <LogTicker
+          line={logModel.ticker}
+          view={view}
+          onOpen={() => {
+            openSheet({ kind: 'log' });
+          }}
+        />
       </div>
       {/* Measured here (L74-04): relative, overflow-hidden, no padding, so its box is the seats' positioning box (Appendix A.3). */}
       <div
@@ -336,6 +349,19 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
               />
             );
           }
+          case 'log':
+            return (
+              <LogSheet
+                key={key}
+                open={open}
+                view={view}
+                model={logModel}
+                onOpenCard={openCard}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+              />
+            );
         }
       })}
     </main>
