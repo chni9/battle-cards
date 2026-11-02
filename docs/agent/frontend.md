@@ -795,8 +795,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   mount each board in its own branch and `TableScreen` keeps its props.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
-  always renders. Each shows its content or an empty state, except a walk-in's dock, which
-  renders bare (Q38; its self strip is the Watching strip, L74-23). The root is
+  always renders. Each shows its content or an empty state, except a live walk-in's dock, which
+  renders bare (Q38; its self strip is the Watching strip, L74-23; on the finished board that dock
+  is Stats alone, L74-24). The root is
   `<main data-zone="table" data-arena="next">`, `.v7-ground`, `h-full w-full overflow-hidden` of
   `#root`. It has no `vh`, `dvh` or `w-screen` and never page-scrolls (L53-07); only the hand
   scrolls, inside itself.
@@ -1095,7 +1096,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Cancel, Esc or the backdrop reset the pick. Activate duplication shows while
   `dock.duplication` is set and sends `activateDuplication`; the self strip keeps only
   'Duplication active'. An eliminated Watching POV keeps the disabled dock without Unspy (A.8
-  ruling 7); a walk-in has no controls (Q38). Every send goes through the commit, and for
+  ruling 7); a live walk-in has no controls (Q38), and on the finished board its dock is Stats alone
+  (L74-24). Every send goes through the commit, and for
   `TAP_GUARD_MS` after targeting ends the dock sends nothing. Draw and Activate duplication send
   once per view (`useCommitOnce`, next bullet), and Unspy's Confirm closes its sheet only when its
   send went out. The `use-room-connection.clear-spy`
@@ -1252,7 +1254,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - A walk-in's self strip is the Watching strip: 'Watching', V2's private-zone line ('Watching
     this table. …' once a Spy overlay is on the view, else 'Hands stay hidden until you stay
     spectating or sit.'), **Leave table** and, while `claimableSeats` is non-empty, **Claim a
-    seat**. It has no `resources` zone and no dock (Q38). Claim a seat calls `onReopenClaim`:
+    seat**. It has no `resources` zone and, on a live board, no dock (Q38; the finished board's dock is
+    Stats alone, L74-24). Claim a seat calls `onReopenClaim`:
     App clears the picker's dismissed key and `ClaimSeatDialog` shows again beside the board.
     Kit fog behind the picker is the server's (L57-16).
   - An eliminated Watching POV keeps its strip and disabled dock (A.8 ruling 7) under the same
@@ -1270,6 +1273,18 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     (`closeStaleSeatSheets`), so `openSeatId` never names the POV. A new POV (`view.you` or
     `isSpectator` changes) closes every read-only sheet through its exit and ends targeting
     (`closeAllArenaSheets`), so no sheet opened from the old POV's view stays on screen.
+- `screens/arena/dock.tsx`, `dock-model.ts`; `screens/end.finished-board.test.tsx` (L74-24, spec v7
+  §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable` behind `?ui=next`
+  (never in tutorial) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
+  inspect, log and read-only chat (no composer). The dock adds **Stats** (`primary`, V2's word)
+  from `dock.stats`; it calls `onShowStats`, which reopens Game over and does nothing while
+  Feedback is open (`canReopenEndStats`). `dockHasControls` counts Stats, so a walk-in's finished
+  dock is Stats alone. The flag is Return home: its confirm calls EndScreen's `requestLeave`
+  (ask-once, L57-03). `!` calls `onOpenManualFeedback`, which opens only while Game over is
+  closed. First paint: a POV win gets the 'You won!' banner and a POV elimination the POV
+  elimination overlay (L74-23), both gone when Game over opens at `TABLE_BANNER_MS`. The L74-17
+  seeding replays no past elimination beat, and the L74-16 unread store keeps its count across
+  the live → finished switch.
 
 ## Design system (V2 · Lots 10+)
 

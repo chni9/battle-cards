@@ -6,12 +6,15 @@
  * It renders `selfStrip(view, ctx).dock` and decides nothing (golden rule 8): a control exists when
  * the model has it, and is disabled with the model's reason, shown as text under the button. Every
  * send goes through `commit`, which ArenaScreen has already silenced for `TAP_GUARD_MS` after
- * targeting ends. An eliminated Watching POV keeps this dock, disabled (ruling 7); a walk-in has no
- * model entries, so ArenaScreen does not render it at all (Q38).
+ * targeting ends. An eliminated Watching POV keeps this dock, disabled (ruling 7); a live walk-in has
+ * no model entries, so ArenaScreen does not render it at all (Q38).
  *
  * Draw and Activate duplication send once per view (`useCommitOnce`; final review I3, ruling R2):
  * a double tap sends one intent, and the next view or a new `actionReject` re-arms them. Unspy's
  * Confirm closes its sheet only when the send went out (Minor 9).
+ *
+ * Stats is the finished board's last button (§6.12, L74-24): EndScreen's reopen of Game over, called
+ * directly because it is no `ArenaIntent`; EndScreen ignores it while Feedback is open.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -32,6 +35,7 @@ import {
   ACTIVATE_DUPLICATION_LABEL,
   drawAriaLabel,
   drawPulseKey,
+  STATS_ACTION_LABEL,
   unspyAriaLabel,
 } from './dock-model';
 import { UnspySheet } from './unspy-sheet';
@@ -54,6 +58,8 @@ export interface DockProps {
   actionReject: ActionRejectPayload | null;
   /** Opens the Shop sheet (L74-14), off-turn and on the finished board too (browse-only); without it Shop renders disabled. */
   onOpenShop?: () => void;
+  /** Finished board: EndScreen's Stats reopen (§6.12). It is no ArenaIntent, so it is called directly. */
+  onShowStats?: () => void;
 }
 
 /** `disabledReason` only while the model gives one (`exactOptionalPropertyTypes`). */
@@ -61,7 +67,16 @@ function reasonProps(reason: DisabledReason | null): { readonly disabledReason?:
   return reason === null ? {} : { disabledReason: DISABLED_REASON_COPY[reason] };
 }
 
-export function Dock({ model, isMyTurn, turnSequence, view, commit, actionReject, onOpenShop }: DockProps): ReactElement {
+export function Dock({
+  model,
+  isMyTurn,
+  turnSequence,
+  view,
+  commit,
+  actionReject,
+  onOpenShop,
+  onShowStats,
+}: DockProps): ReactElement {
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
   const [unspyOpen, setUnspyOpen] = useState(false);
@@ -151,6 +166,11 @@ export function Dock({ model, isMyTurn, turnSequence, view, commit, actionReject
           }}
         >
           {ACTIVATE_DUPLICATION_LABEL}
+        </Button>
+      ) : null}
+      {model.stats && onShowStats !== undefined ? (
+        <Button variant="primary" reserveReasonSlot onClick={onShowStats}>
+          {STATS_ACTION_LABEL}
         </Button>
       ) : null}
       {unspy !== null ? (

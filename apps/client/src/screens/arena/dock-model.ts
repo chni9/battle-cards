@@ -16,6 +16,8 @@ import type { DockModel, UnspyControl } from '../../view-model/self-strip';
 export const ACTIVATE_DUPLICATION_LABEL = 'Activate duplication';
 /** V2's Unspy confirm label, verbatim (`unspy-dialog.tsx`). */
 export const UNSPY_CONFIRM_LABEL = 'Confirm';
+/** V2's word, verbatim (`screens/table/economy-bar.tsx`). */
+export const STATS_ACTION_LABEL = 'Stats';
 
 /** `Draw, plus 1 pt` / `Draw, plus 37 pts`: ruling 4 keeps V2's `costAriaLabel` words. */
 export function drawAriaLabel(gain: number): string {
@@ -50,10 +52,11 @@ export function resolvedSpyId(control: UnspyControl, picked: string | null): str
 }
 
 /**
- * False for a walk-in on any board (Q38): no dock entry at all. `stats` is not counted here: the
- * Stats button is L74-24's, and a walk-in on the finished board has `stats: true` with every other
- * entry null.
+ * Any entry, Stats included: a walk-in's finished-board dock is Stats alone (Q38, §6.12). A walk-in
+ * on a live board has every entry null, so it has no dock at all.
  */
 export function dockHasControls(model: DockModel): boolean {
-  return model.draw !== null || model.shop !== null || model.unspy !== null || model.duplication !== null;
+  return (
+    model.draw !== null || model.shop !== null || model.unspy !== null || model.duplication !== null || model.stats
+  );
 }

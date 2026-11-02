@@ -41,7 +41,7 @@ describe('dock model', () => {
     expect(dockHasControls({ draw: null, shop: { browseOnly: true }, unspy: null, duplication: null, stats: true })).toBe(true);
   });
 
-  it('never has controls for a walk-in on the finished board (stats belongs to L74-24)', () => {
-    expect(dockHasControls({ draw: null, shop: null, unspy: null, duplication: null, stats: true })).toBe(false);
+  it('counts Stats: a walk-in on the finished board has a Stats-only dock (L74-24)', () => {
+    expect(dockHasControls({ draw: null, shop: null, unspy: null, duplication: null, stats: true })).toBe(true);
   });
 });

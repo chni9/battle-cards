@@ -5784,3 +5784,17 @@ Part 1 final review (Minor 15, ledger 47, 48, 68).
   walk-in never stays on screen after a claim (review fix round 1).
 
 ---
+
+## 2026-11-02 · [P] V7 finished board: Stats in the dock (L74-24)
+
+Source: technical spec v7 §6.12; Appendix A `finished-board-readonly`, `end-finished-board-shell`.
+
+- **Stats** is a `primary` dock button with V2's word, beside the browse-only Shop; V2's purple
+  has no V7 variant and the icon set has no stats glyph. It calls EndScreen's `onShowStats`
+  directly (no `ArenaIntent`), and EndScreen already ignores it while Feedback is open.
+  `dockHasControls` now counts it, so a walk-in's finished-board dock shows Stats alone.
+- **No Game over prompt card.** V2's "Game over / Inspect the final board…" prompt is not
+  carried: §6.12 lists none, and the Game over dialog, Stats and the Return home flag carry it.
+  Designer question in the Lot 74 PR.
+
+---
