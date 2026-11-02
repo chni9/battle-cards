@@ -22,13 +22,16 @@
 
 import type { KitId } from '@card-battle/shared';
 
+import type { ShopTab } from '../../view-model/shop';
 import { sheetInstanceFor, type CardSheetSource } from './card-sheet-source';
 
 export type ArenaSheet =
   | { kind: 'card'; source: CardSheetSource }
   | { kind: 'kit'; kitId: KitId }
   /** An opponent seat's sheet (L74-05, spec v7 §6.5). */
-  | { kind: 'seat'; playerId: string };
+  | { kind: 'seat'; playerId: string }
+  /** The Shop (L74-14, spec v7 §6.8); `tab` opens it on that tab (L75 tutorial). */
+  | { kind: 'shop'; tab?: ShopTab };
 
 /** The card being targeted (L74-10, spec v7 §6.6.2). */
 export interface TargetingState {
@@ -58,7 +61,10 @@ function unreachable(value: never): never {
   throw new Error('Unhandled arena sheet');
 }
 
-/** `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`, `seat:<playerId>`. The React key and `data-arena-sheet`. */
+/**
+ * `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`, `seat:<playerId>`, `shop` (one Shop,
+ * whatever its tab; L74-14). The React key and `data-arena-sheet`.
+ */
 export function arenaSheetKey(sheet: ArenaSheet): string {
   switch (sheet.kind) {
     case 'card':
@@ -67,6 +73,8 @@ export function arenaSheetKey(sheet: ArenaSheet): string {
       return `kit:${sheet.kitId}`;
     case 'seat':
       return `seat:${sheet.playerId}`;
+    case 'shop':
+      return 'shop';
     default:
       return unreachable(sheet);
   }

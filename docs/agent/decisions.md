@@ -5552,3 +5552,27 @@ ruling R2.
   that window is one server round trip.
 
 ---
+
+## 2026-11-02 · [P] V7 Shop sheet: tabs, footer buys, one buy per view (L74-14)
+
+Source: technical spec v7 §6.8, §6.6.4, §6.6.5, §13 Q50; Appendix A `shop-dialog`,
+`table-shop-double-click-buy`; Lot 74 plan A.9.3, A.9.4.
+
+- **Footer per tab (designer 2026-11-02).** Only Cards selects (tap selects, Buy selected commits,
+  a double tap buys at once). Special, Pool and Upgrade points have nothing to select, so their
+  buys sit in the same footer beside Close: one reach on a full-height sheet whatever the tab.
+- **One buy per view across the Shop.** Every Shop purchase is the turn's one action, so Buy
+  selected, the tile double tap, Buy special, Buy random and the upgrade-point Buy and Sell share
+  one `useCommitOnce` control (`shop`). A buy that went out closes the sheet.
+- **The tile is its own button** with V2's aria-label around a decorative `Card size="tile"`
+  (`Card` takes no label and no double-click). It is natively disabled while the Shop is
+  browse-only; an unaffordable tile stays selectable and dimmed, as in V2.
+- **`{ kind: 'shop' }` carries `isUpgraded`** (plan A.9.4): `sheetInstanceFor` reads the source
+  alone, and a kit's `alwaysUpgraded` card is upgraded on the tile, so the inspect shows the same
+  tier.
+- **Inspect** is a 44 px `help` `IconButton` named `Inspect {name}` (V2's inspect-chip words) at
+  the tile's corner, a sibling of the tile; long-press on the tile opens the same sheet.
+- **The special price** stays L73's one client constant (`SPECIAL_CARD_PURCHASE_POINTS`); this
+  task adds no constant and no copy.
+
+---

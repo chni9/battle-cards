@@ -15,12 +15,18 @@ function makeHandlers() {
     onClearSpy: vi.fn<ArenaIntentHandlers['onClearSpy']>(),
     onDeactivatePersistent: vi.fn<(effectId: string) => void>(),
     onActivateDuplication: vi.fn<() => void>(),
+    onBuyCard: vi.fn<ArenaIntentHandlers['onBuyCard']>(),
+    onBuyUpgradePoint: vi.fn<() => void>(),
+    onSellUpgradePoint: vi.fn<() => void>(),
+    onBuySpecialCard: vi.fn<() => void>(),
+    onBuyPoolCard: vi.fn<() => void>(),
   };
 }
 type Handlers = ReturnType<typeof makeHandlers>;
 const NAMES = [
   'onPlayCard', 'onSellCard', 'onUpgradeCard', 'onPlayMultipleAttacks', 'onDraw', 'onClearSpy',
-  'onDeactivatePersistent', 'onActivateDuplication',
+  'onDeactivatePersistent', 'onActivateDuplication', 'onBuyCard', 'onBuyUpgradePoint', 'onSellUpgradePoint',
+  'onBuySpecialCard', 'onBuyPoolCard',
 ] as const satisfies readonly (keyof Handlers)[];
 
 function expectOnly(handlers: Handlers, name: keyof Handlers): void {
@@ -98,6 +104,11 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
       onPlayMultipleAttacks: all.onPlayMultipleAttacks,
       onDraw: all.onDraw,
       onClearSpy: all.onClearSpy,
+      onBuyCard: all.onBuyCard,
+      onBuyUpgradePoint: all.onBuyUpgradePoint,
+      onSellUpgradePoint: all.onSellUpgradePoint,
+      onBuySpecialCard: all.onBuySpecialCard,
+      onBuyPoolCard: all.onBuyPoolCard,
     };
     const commit = createArenaCommit(required);
     expect(() => {
@@ -105,5 +116,22 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
       commit({ kind: 'activateDuplication' });
     }).not.toThrow();
     for (const name of NAMES) expect(all[name]).not.toHaveBeenCalled();
+  });
+
+  it('maps the shop intents to their handlers (L74-14, A.9.3)', () => {
+    const handlers = makeHandlers();
+    const commit = createArenaCommit(handlers);
+    commit({ kind: 'buyCard', payload: { cardId: 'spy' } });
+    commit({ kind: 'buyUpgradePoint' });
+    commit({ kind: 'sellUpgradePoint' });
+    commit({ kind: 'buySpecialCard' });
+    commit({ kind: 'buyPoolCard' });
+    expect(handlers.onBuyCard.mock.calls).toStrictEqual([['spy']]);
+    for (const name of ['onBuyUpgradePoint', 'onSellUpgradePoint', 'onBuySpecialCard', 'onBuyPoolCard'] as const) {
+      expect(handlers[name].mock.calls).toStrictEqual([[]]);
+    }
+    for (const name of ['onPlayCard', 'onSellCard', 'onUpgradeCard', 'onPlayMultipleAttacks', 'onDraw', 'onClearSpy'] as const) {
+      expect(handlers[name]).not.toHaveBeenCalled();
+    }
   });
 });

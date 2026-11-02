@@ -52,7 +52,7 @@ export interface DockProps {
   commit: DockCommit;
   /** `props.actionReject`: a new reject re-arms Draw and Activate duplication. */
   actionReject: ActionRejectPayload | null;
-  /** L74-14 passes the shop sheet opener; until then Shop renders disabled. */
+  /** Opens the Shop sheet (L74-14), off-turn and on the finished board too (browse-only); without it Shop renders disabled. */
   onOpenShop?: () => void;
 }
 

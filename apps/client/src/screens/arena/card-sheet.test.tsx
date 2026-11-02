@@ -131,6 +131,8 @@ describe('CardSheet, read-only (spec v7 §6.6.1, L74-02)', () => {
   it.each<{ label: string; source: CardSheetSource; title: string; face: string; key: string }>([
     { label: 'queue', source: { kind: 'queue', effectId: 'e9', cardId: 'basic-attack', isUpgraded: false }, title: 'Basic attack', face: 'Basic attack, 1 damage', key: 'card:queue-e9' },
     { label: 'log', source: { kind: 'log', cardId: 'spy', isUpgraded: true }, title: 'Spy', face: 'Spy upgraded', key: 'card:log-spy-up' },
+    { label: 'pool', source: { kind: 'pool', instance: makeCard('shield', { instanceId: 'pool-1', isUpgraded: true }) }, title: 'Shield', face: 'Shield upgraded', key: 'card:pool-1' },
+    { label: 'shop', source: { kind: 'shop', cardId: 'spy', isUpgraded: true }, title: 'Spy', face: 'Spy upgraded', key: 'card:shop-spy' },
   ])('renders a $label source as the catalog card with no footer (L56-05)', ({ source, title, face, key }) => {
     renderSheet(source);
     const sheet = screen.getByRole('dialog', { name: title });

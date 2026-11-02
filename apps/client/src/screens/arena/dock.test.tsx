@@ -136,11 +136,13 @@ describe('Activate duplication and the other POVs', () => {
     expect(within(dock()).queryByRole('button', { name: 'Activate duplication' })).toBeNull();
   });
 
-  it('keeps the Shop word label and anchor; it opens nothing until L74-14', () => {
-    setup(makeArenaView());
+  it('keeps the Shop word label and anchor, and opens the Shop sheet off-turn, sending nothing (L74-14)', async () => {
+    const { user, props } = setup(makeArenaView({ overrides: { currentTurnPlayerId: 'p1' } }));
     const shop = within(dock()).getByRole('button', { name: 'Shop' });
-    expect(shop.getAttribute('data-hint-anchor')).toBe('shop');
-    expect(isDisabled(shop)).toBe(true);
+    expect([shop.getAttribute('data-hint-anchor'), isDisabled(shop)]).toEqual(['shop', false]);
+    await user.click(shop);
+    expect(screen.getByRole('dialog', { name: 'Shop' })).toBeTruthy();
+    expectNoArenaIntent(props);
   });
 
   it('an eliminated Watching POV keeps a disabled dock without Unspy (ruling 7)', () => {

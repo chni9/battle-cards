@@ -19,6 +19,7 @@
  *   tap guard as the seats, so no double tap on the targeting bar reaches Draw, Unspy or Activate
  *   duplication underneath. `dockCommit` says whether a send went out, and `actionReject` re-arms
  *   the dock's once-per-view latch (`use-commit-once.ts`, final review R2).
+ * - §6.8 (L74-14): the dock's Shop opens the reducer-hosted Shop sheet; its buys go through `commit`.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -32,6 +33,7 @@ import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { seats } from '../../view-model/seats';
+import { shop } from '../../view-model/shop';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
@@ -60,6 +62,7 @@ import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
+import { ShopSheet } from './shop-sheet';
 import { TargetingBar } from './targeting';
 import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
@@ -248,6 +251,11 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
             view={view}
             commit={dockCommit}
             actionReject={props.actionReject}
+            onOpenShop={() => {
+              // The second tap of a double tap on the targeting bar's Cancel lands here once the bar is gone, as on a seat.
+              if (tapGuard.guarded) return;
+              openSheet({ kind: 'shop' });
+            }}
           />
         ) : null}
       </div>
@@ -306,6 +314,25 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
                   openSheet({ kind: 'kit', kitId });
                 }}
                 onOpenCard={openCard}
+              />
+            );
+          }
+          case 'shop': {
+            // The arena's own `ctx`, never a fresh context, so L74-25's `ctx.reconnecting` reaches every Buy (S7).
+            const model = shop(view, ctx);
+            return (
+              <ShopSheet
+                key={key}
+                open={open}
+                model={model}
+                initialTab={sheet.tab ?? model.initialTab}
+                view={view}
+                actionReject={props.actionReject}
+                commit={commit}
+                onOpenCard={openCard}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
               />
             );
           }

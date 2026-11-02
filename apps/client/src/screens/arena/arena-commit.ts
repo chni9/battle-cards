@@ -16,6 +16,7 @@ import type {
   ClearSpyPayload,
   DeactivatePersistentPayload,
   PlayMultipleAttacksPayload,
+  SharedCardId,
   UpgradeCardPayload,
 } from '@card-battle/shared';
 
@@ -30,9 +31,14 @@ export type ArenaIntent =
   | { kind: 'deactivatePersistent'; payload: DeactivatePersistentPayload }
   | { kind: 'clearSpy'; payload: ClearSpyPayload }
   | { kind: 'drawCard' }
-  | { kind: 'activateDuplication' };
-// Part 2 adds the shop and sub-choice intents (buyCard, buyUpgradePoint, sellUpgradePoint,
-// buySpecialCard, buyPoolCard, resolveSubChoice).
+  | { kind: 'activateDuplication' }
+  /** The Shop's buys (L74-14, spec v7 §6.8; plan A.9.3). */
+  | { kind: 'buyCard'; payload: { cardId: SharedCardId } }
+  | { kind: 'buyUpgradePoint' }
+  | { kind: 'sellUpgradePoint' }
+  | { kind: 'buySpecialCard' }
+  | { kind: 'buyPoolCard' };
+// L74-18 adds the sub-choice intent (resolveSubChoice).
 
 export type ArenaCommit = (intent: ArenaIntent) => void;
 
@@ -47,6 +53,11 @@ export type ArenaIntentHandlers = Pick<
   | 'onClearSpy'
   | 'onDeactivatePersistent'
   | 'onActivateDuplication'
+  | 'onBuyCard'
+  | 'onBuyUpgradePoint'
+  | 'onSellUpgradePoint'
+  | 'onBuySpecialCard'
+  | 'onBuyPoolCard'
 >;
 
 export function createArenaCommit(handlers: ArenaIntentHandlers): ArenaCommit {
@@ -87,6 +98,21 @@ export function createArenaCommit(handlers: ArenaIntentHandlers): ArenaCommit {
         return;
       case 'activateDuplication':
         handlers.onActivateDuplication?.();
+        return;
+      case 'buyCard':
+        handlers.onBuyCard(intent.payload.cardId);
+        return;
+      case 'buyUpgradePoint':
+        handlers.onBuyUpgradePoint();
+        return;
+      case 'sellUpgradePoint':
+        handlers.onSellUpgradePoint();
+        return;
+      case 'buySpecialCard':
+        handlers.onBuySpecialCard();
+        return;
+      case 'buyPoolCard':
+        handlers.onBuyPoolCard();
         return;
       default: {
         const _exhaustive: never = intent;

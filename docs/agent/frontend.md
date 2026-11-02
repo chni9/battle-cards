@@ -833,7 +833,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `screens/arena/card-sheet.tsx` + `card-sheet-source.ts` (L74-02, §6.6.1, §5.4, L56-05): the
   read-only card sheet.
   - `CardSheetSource` is `hand`, `special`, `in-play` (an `InPlayThumb`, re-read from the live
-    view while open), `spy-reveal`, `queue` or `log`. Part 2 adds pool, shop and reward.
+    view while open), `spy-reveal`, `queue`, `log`, `pool` (a public pool face, key
+    `card:<instanceId>`) or `shop` (`card:shop-<cardId>`, at the kit's `alwaysUpgraded` tier;
+    L74-14). There is no reward source: a read-only sheet paints under the blocking reward sheet
+    (L74-18).
   - `liveCardRefFor(source, view)` gives the `cardActions` ref (L74-08): a held card is re-read
     from the view, and every other source is `cardRefFor(source)`. `sheetInstanceFor` gives the
     face, with synthetic `queue-<effectId>` and `log-<cardId>-<up|base>` ids.
@@ -1080,8 +1083,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `hot`, i.e. above `DRAW_HOT_ABOVE`) shows '+N' with the point icon and no word; its aria-label
   and title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at
   each own turn start and payout change, never under reduced motion, and sends `drawCard`. Shop
-  keeps its word label and `data-hint-anchor="shop"` (disabled until L74-14 passes
-  `onOpenShop`). Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for a
+  keeps its word label and `data-hint-anchor="shop"` and opens the Shop sheet (L74-14),
+  browse-only off-turn and on the finished board. Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for a
   seated or Reanimating POV and disabled with its reason; it opens `UnspySheet` ('Choose who is
   spying you.', `unspy.spyIds`, a single spy preselected) where Confirm sends `clearSpy` and
   Cancel, Esc or the backdrop reset the pick. Activate duplication shows while
@@ -1104,8 +1107,30 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - Latches are per control name: Unspy's Confirm never blocks a quick Draw after it.
   - A new view identity (any state update, a new `turnSequence` included) or a new
     `actionReject` re-arms every latch: a rejected send may arrive with no state update.
-  - Users: the dock's Draw and Activate duplication. L74-14 (Buy, a shop tile double tap) and
-    L74-18 (the sub-choice Confirm) reuse it instead of hand-rolling another latch.
+  - Users: the dock's Draw and Activate duplication, and every Shop buy (L74-14, one
+    `shop` control). L74-18 (the sub-choice Confirm) reuses it instead of hand-rolling another latch.
+- `screens/arena/shop-sheet.tsx`, `shop-sheet-model.ts` (L74-14, spec v7 §6.8, §6.6.4, §6.6.5,
+  §13 Q50): the dock's Shop opens the reducer-hosted `{ kind: 'shop', tab? }` sheet (key `shop`;
+  ignored for `TAP_GUARD_MS` after targeting ends, like a seat), a full-height read-only `Sheet`
+  titled "Shop" that renders `shop(view, ctx)` and decides nothing. Tabs Cards / Special / Pool /
+  Upgrade points; it opens on the reducer's `tab`, else the model's `initialTab`, and resets its
+  tab and selection on every opening.
+  - Cards: V2's price blurb, then one tile per shared card (`data-shop-tile`): a decorative
+    `Card size="tile"` at the kit's `alwaysUpgraded` tier with its play-cost chip, the buy price
+    under it, and V2's name `{name}[ upgraded], {price}[, cannot afford]`. A tap selects
+    (`aria-pressed`, the `--cta` outline; Basic attack by default), the footer's Buy selected
+    sends `buyCard {cardId}`, and a double tap on an affordable tile buys it at once
+    (`onDoubleClick`, `touch-manipulation`). Long-press or the corner `Inspect {name}` button
+    opens the read-only `{ kind: 'shop' }` card sheet.
+  - Special: Buy special at `SPECIAL_CARD_PURCHASE_POINTS` (L73's one client price). Pool:
+    `Pool (N)`, V2's "visible to every player" explainer, public faces that open the
+    `{ kind: 'pool' }` card sheet, "The pool is empty.", Buy random at the public `poolBuyCost`.
+    Upgrade points: the heading with the upgrade icon and no balance, Buy and Sell priced from
+    the kit at render.
+  - The footer holds the open tab's buys (`data-shop-action`), each disabled with its reason,
+    then Close. Off-turn, locked and on the finished board every tile and buy is disabled while
+    every tab, face and Inspect stays usable. Every buy goes through `commit`, sends at most once
+    per view across the whole Shop (`useCommitOnce`, control `shop`) and closes the sheet.
 
 ## Design system (V2 · Lots 10+)
 

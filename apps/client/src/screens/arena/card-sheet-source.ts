@@ -4,13 +4,19 @@
  * footer).
  *
  * A source says where a card came from. Every switch on `kind` ends in a `never` default, so a
- * source added in Part 2 (pool, shop, reward) is a type error here, not a silent fallthrough.
+ * new source (L74-14 added pool and shop) is a type error here, not a silent fallthrough.
  *
  * The labels below are the V2 `screens/table/card-actions.tsx` copy, reused verbatim: the arena
  * never imports `screens/table/` (L74-01 import rule), so they are restated, not new strings.
  */
 
-import { getCard, type CardId, type CardInstance, type PlayingStateView } from '@card-battle/shared';
+import {
+  getCard,
+  type CardId,
+  type CardInstance,
+  type PlayingStateView,
+  type SharedCardId,
+} from '@card-battle/shared';
 
 import { inPlayThumbs, type CardRef, type InPlayThumb } from '../../view-model/card-actions';
 import type { CardCounter } from '../../ui/card/card-face';
@@ -25,7 +31,11 @@ export type CardSheetSource =
   /** A plate badge or arrow label: catalog-only face, no footer (L56-05). */
   | { kind: 'queue'; effectId: string; cardId: CardId; isUpgraded: boolean }
   /** A log card: catalog-only face, no footer (L56-05). Opened by the plate's landing card (L74-06) and the log (L74-15). */
-  | { kind: 'log'; cardId: CardId; isUpgraded: boolean };
+  | { kind: 'log'; cardId: CardId; isUpgraded: boolean }
+  /** A public pool face (§6.8): read-only, no footer. */
+  | { kind: 'pool'; instance: CardInstance }
+  /** A Shop tile's catalog face at the kit's tier (§6.8): read-only, no footer. */
+  | { kind: 'shop'; cardId: SharedCardId; isUpgraded: boolean };
 
 export const ACTIVE_LABEL = 'Active';
 export const CARD_LIVES_LABEL = 'Card lives';
@@ -59,9 +69,11 @@ export function cardRefFor(source: CardSheetSource): CardRef {
     case 'in-play':
       return source.thumb.ref;
     case 'spy-reveal':
+    case 'pool':
       return { zone: 'read-only', instance: source.instance };
     case 'queue':
     case 'log':
+    case 'shop':
       return { zone: 'read-only', instance: sheetInstanceFor(source) };
     default:
       return unreachable(source);
@@ -94,18 +106,21 @@ export function liveCardRefFor(source: CardSheetSource, view: PlayingStateView):
     case 'spy-reveal':
     case 'queue':
     case 'log':
+    case 'pool':
+    case 'shop':
       return cardRefFor(source);
     default:
       return unreachable(source);
   }
 }
 
-/** queue: `{ instanceId: `queue-${effectId}`, cardId, isUpgraded }`; log: `log-${cardId}-${'up'|'base'}`. */
+/** queue: `{ instanceId: `queue-${effectId}`, cardId, isUpgraded }`; log: `log-${cardId}-${'up'|'base'}`; shop: `shop-${cardId}`. */
 export function sheetInstanceFor(source: CardSheetSource): CardInstance {
   switch (source.kind) {
     case 'hand':
     case 'special':
     case 'spy-reveal':
+    case 'pool':
       return source.instance;
     case 'in-play':
       return source.thumb.instance;
@@ -117,6 +132,9 @@ export function sheetInstanceFor(source: CardSheetSource): CardInstance {
         cardId: source.cardId,
         isUpgraded: source.isUpgraded,
       };
+    case 'shop':
+      // The id `shop()` gives the tile (view-model/shop.ts), so the inspect keys like its tile.
+      return { instanceId: `shop-${source.cardId}`, cardId: source.cardId, isUpgraded: source.isUpgraded };
     default:
       return unreachable(source);
   }
@@ -154,6 +172,8 @@ export function cardSheetCounter(source: CardSheetSource): CardCounter | null {
     case 'spy-reveal':
     case 'queue':
     case 'log':
+    case 'pool':
+    case 'shop':
       return null;
     default:
       return unreachable(source);
@@ -176,7 +196,7 @@ function countFor(source: Extract<CardSheetSource, { kind: 'in-play' }>): CardSh
   }
 }
 
-/** The V2 context line: Active with its count, the Spy reveal, nothing for a held, queue or log card. */
+/** The V2 context line: Active with its count, the Spy reveal, nothing for a held, queue, log, pool or shop card. */
 export function cardSheetContext(source: CardSheetSource): CardSheetContext {
   switch (source.kind) {
     case 'in-play':
@@ -187,6 +207,8 @@ export function cardSheetContext(source: CardSheetSource): CardSheetContext {
     case 'special':
     case 'queue':
     case 'log':
+    case 'pool':
+    case 'shop':
       return null;
     default:
       return unreachable(source);

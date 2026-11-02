@@ -22,7 +22,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
-| 74 · Arena I | 26 | 13 |
+| 74 · Arena I | 26 | 14 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 0 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **47** |
+| **Total** | **134** | **48** |
 
 ## Designer questions still open
 
@@ -162,7 +162,7 @@ The arena behind `?ui=next` (§6, except tutorial re-anchoring, desktop / landsc
 | L74-11 | **Assassin multi-attack.** **Acceptance:** Tests cover these cases. Two rows on the same seat send one `playMultipleAttacks` containing both. The button is disabled with one row. Cancelling and reopening shows no selection. MEGA ATTACK is never listed. A non-Assassin kit shows no Multi-attack. `pnpm verify` green. | M | Medium | L74-08 | Done |
 | L74-12 | **Drag from the hand.** **Acceptance:** Unit tests on the arena drop handler map each `dropTarget` result to the right commit or none: a pre-send-choice result opens the choice step without sending, and `null` sends nothing. A test covers the drag start guard: no drag when `actionsLocked` or off-turn. The browser check at 375×812 and 390×844 covers horizontal scroll versus vertical lift, seat, plate and Sell highlights, and spring-back, and is recorded in frontend.md. `pnpm verify` green. | L | **High** | L74-10, L74-06 | Done |
 | L74-13 | **Dock: Draw, Unspy, Activate duplication.** **Acceptance:** Tests cover these cases. Draw shows `+N` with no word, is red above 10 for a Gambler, and sends `drawCard` once. Unspy is disabled with each of its reasons. A single spy is preselected and Confirm sends `clearSpy`. An eliminated spectator's overlay is never listed. Activate duplication appears only for a Duplicator and sends once. `pnpm verify` green. | M | Low | L74-08 | Done |
-| L74-14 | **Shop sheet.** **Acceptance:** Tests cover these cases. A single tap only selects, and Buy sends `buyCard {cardId}`. A double-tap sends one `buyCard` and closes. Off-turn every tile is disabled but the tabs stay browsable. An unaffordable tile's aria-label ends with ', cannot afford'. The Spy tile shows 2/4. Upgrade-point Buy and Sell follow the kit. Pool Buy random is disabled when the pool is empty. The client has exactly one special-price constant. The existing shop source-text tests stay green. `pnpm verify` green. | L | Medium | L74-13, L74-02 | To do |
+| L74-14 | **Shop sheet.** **Acceptance:** Tests cover these cases. A single tap only selects, and Buy sends `buyCard {cardId}`. A double-tap sends one `buyCard` and closes. Off-turn every tile is disabled but the tabs stay browsable. An unaffordable tile's aria-label ends with ', cannot afford'. The Spy tile shows 2/4. Upgrade-point Buy and Sell follow the kit. Pool Buy random is disabled when the pool is empty. The client has exactly one special-price constant. The existing shop source-text tests stay green. `pnpm verify` green. | L | Medium | L74-13, L74-02 | Done |
 | L74-15 | **Log ticker and log sheet.** **Acceptance:** Tests cover these cases. The ticker shows the newest entry. The sheet groups entries by round. A card segment opens the inspect with no footer. Draw and elimination lines are not buttons. An unspied pool buy reads 'bought a card from the pool'. No filter or Why control renders. `pnpm verify` green. | M | Low | L74-03, L74-02 | To do |
 | L74-16 | **Chat sheet.** **Acceptance:** Tests cover these cases. A message arriving while the sheet is closed shows the unread badge, and opening clears it. Remounting the arena keeps the count. Enter sends `sendChat` once; whitespace-only does not send. A side line renders its role label. Read-only mode renders no input. `pnpm verify` green. | M | Low | L74-03 | To do |
 | L74-17 | **Host existing FX and banners on arena anchors.** **Acceptance:** The existing `fx/` logic tests pass unchanged. A hook test proves elimination beats are seeded on mount and do not replay. The arena enqueues the expected event kinds against arena anchors for a fake log diff. Moved source-text assertions are rewritten and listed in the §12.1 table. The What's new item and its pinned tests are updated. A browser check shows chips, ghosts and banners on 4- and 8-seat arenas. `pnpm verify` green. **Watch point:** `ui/banner/table-banner-host.tsx` uses `fixed inset-0` (the layout viewport), while Sheet and Toast use `useVisualViewportBox()` ("never inset-0", DESIGN.md › Overlays). On a phone with the chat keyboard open, banners can sit under the keyboard. Use the visual-viewport box, as Toast does. | L | **High** | L74-06, L74-09, L74-08, L74-13, L74-15 | To do |
