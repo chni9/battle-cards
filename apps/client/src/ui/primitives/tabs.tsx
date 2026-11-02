@@ -91,7 +91,9 @@ export function Tabs<T extends string>({
               onKeyDown={(event) => {
                 onKeyDown(event, index);
               }}
-              className={`${CHROME_TRACK_ITEM_CLASS} shrink-0 px-4 ${
+              // No `shrink-0`: in a track narrower than its labels (the Shop's four tabs at 360 or
+              // 375 px), a tab shrinks to its longest word and its label wraps, never spilling (L74-26 G25).
+              className={`${CHROME_TRACK_ITEM_CLASS} px-4 ${
                 selected
                   ? tab.disabled === true
                     ? CHROME_TRACK_SELECTED_LOCKED_CLASS

@@ -83,6 +83,14 @@ describe('Tabs (technical spec v7 §11, WAI-ARIA tabs)', () => {
     expect(latest.getAttribute('aria-selected')).toBe('true');
   });
 
+  it('tabs may shrink, so a narrow tablist wraps its longest label instead of spilling past the track (L74-26 gate G25)', () => {
+    renderUi(<Harness onSelect={vi.fn()} />);
+    // happy-dom has no layout: a tab that cannot shrink (`shrink-0`) is what spilled the Shop's
+    // fourth tab past a 360 or 375 px track; the track itself stays capped at its container.
+    expect(screen.getAllByRole('tab').map((tab) => tab.classList.contains('shrink-0'))).toEqual([false, false, false]);
+    expect(screen.getByRole('tablist').classList.contains('max-w-full')).toBe(true);
+  });
+
   it('a selected tab that is disabled keeps a locked look instead of the live --cta fill', () => {
     renderUi(
       <Tabs label="Release notes" tabs={TABS} selectedId="archive" onSelect={vi.fn()}>

@@ -580,7 +580,10 @@ their lot restyles them.
   tabindex. ArrowLeft and ArrowRight move and select (wrapping, skipping disabled tabs), Home
   and End jump to the first and last enabled tab; one labelled tabpanel. Ids come from
   `idPrefix` (`{prefix}-tab-{id}`, `{prefix}-panel`) or `useId`. A selected tab that is
-  disabled takes the locked look (`--text-2` fill), as in a locked Segmented.
+  disabled takes the locked look (`--text-2` fill), as in a locked Segmented. Tabs may shrink: in
+  a track narrower than its labels (the Shop's four tabs at 360 and 375 px), a tab narrows to its
+  longest word and its label wraps onto a second line inside the 44 px tab, so the track never
+  spills past its container (L74-26 gate G25).
 - **Segmented:** a radiogroup of `aria-checked` radios, the checked one `--cta`. Arrow keys on
   both axes move and select; `disabled` locks the group (`aria-disabled`). Tabs and Segmented
   share `roving-focus.ts`. Both ignore Alt, Ctrl and Meta chords (`hasCommandModifier`), which
