@@ -1092,25 +1092,22 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     L74-26 gate on a phone.
 - `screens/arena/dock.tsx`, `unspy-sheet.tsx`, `dock-model.ts` (L74-13, spec v7 §6.1 item 5, §6.12,
   §11): renders `selfStrip(view, ctx).dock` in the dock region. Draw (`--cta`, `--danger` when
-  `hot`, i.e. above `DRAW_HOT_ABOVE`) shows '+N' with the point icon and no word; its aria-label
-  and title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at
-  each own turn start and payout change, never under reduced motion, and sends `drawCard`. Shop
-  keeps its word label and `data-hint-anchor="shop"` and opens the Shop sheet (L74-14),
-  browse-only off-turn and on the finished board. Unspy (quiet, crossed eye, '−10',
-  `data-unspy`) is always rendered for a seated or Reanimating POV and disabled with its reason;
-  it opens `UnspySheet` ('Choose who is spying you.', `unspy.spyIds`, a single spy preselected)
-  where Confirm sends `clearSpy` and
-  Cancel, Esc or the backdrop reset the pick. Activate duplication shows while
-  `dock.duplication` is set and sends `activateDuplication`; the self strip keeps only
-  'Duplication active'. An eliminated Watching POV keeps the disabled dock without Unspy (A.8
-  ruling 7); a live walk-in has no controls (Q38), and on the finished board its dock is Stats alone
-  (L74-24). Every send goes through the commit, and for
-  `TAP_GUARD_MS` after targeting ends the dock sends nothing. Draw and Activate duplication send
-  once per view (`useCommitOnce`, next bullet), and Unspy's Confirm closes its sheet only when its
-  send went out. The `use-room-connection.clear-spy`
-  source-text row now has its behavior tests: `net/use-room-connection.clear-spy.behavior.test.ts`
-  (`renderHook` over a mocked `@colyseus/sdk` room, the L74-03 pattern) and
-  `screens/arena/dock.test.tsx`.
+  `hot`, i.e. above `DRAW_HOT_ABOVE`) shows '+N' with the point icon and no word; its aria-label and
+  title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at each own
+  turn start and payout change, never under reduced motion, and sends `drawCard`. Shop keeps its
+  word label and `data-hint-anchor="shop"` and opens the Shop sheet (L74-14), browse-only off-turn
+  and on the finished board. Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for
+  a seated or Reanimating POV and disabled with its reason; it opens `UnspySheet` ('Choose who is
+  spying you.', `unspy.spyIds`, a single spy preselected) where Confirm sends `clearSpy` and Cancel,
+  Esc or the backdrop reset the pick. Activate duplication shows while `dock.duplication` is set and
+  sends `activateDuplication`; the self strip keeps only 'Duplication active'. An eliminated
+  Watching POV keeps the disabled dock without Unspy (A.8 ruling 7); a live walk-in has no controls
+  (Q38), and on the finished board its dock is Stats alone (L74-24). Every send goes through the
+  commit, and for `TAP_GUARD_MS` after targeting ends the dock sends nothing. Draw and Activate
+  duplication send once per view (`useCommitOnce`, next bullet), and Unspy's Confirm closes its
+  sheet only when its send went out. The `use-room-connection.clear-spy` source-text row now has its
+  behavior tests: `net/use-room-connection.clear-spy.behavior.test.ts` (`renderHook` over a mocked
+  `@colyseus/sdk` room, the L74-03 pattern) and `screens/arena/dock.test.tsx`.
 - `screens/arena/use-commit-once.ts` (Lot 74 Part 1 final review, I3 and ruling R2; spec v7 §1,
   §6.6.4): the latch for a commit button that stays on screen after it sends. `useCommitOnce({
   view, reject })` returns `once(control, send)`; call `once('<control>', () => commit(intent))`
