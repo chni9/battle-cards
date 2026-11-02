@@ -208,7 +208,11 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
             {model.avatar.kind === 'kit' ? (
               <KitPortrait kitId={model.avatar.kitId} size="thumb" isEliminated={model.isEliminated} />
             ) : (
-              <Avatar name={model.nickname} seatIndex={model.seatColorIndex} eliminated={model.isEliminated} size="sm" />
+              // Hidden: the seat button already carries the nickname, and the disc only repeats its
+              // initial (L74-26 gate G3, ledger 62).
+              <span aria-hidden="true" className="inline-flex">
+                <Avatar name={model.nickname} seatIndex={model.seatColorIndex} eliminated={model.isEliminated} size="sm" />
+              </span>
             )}
           </div>
           <ul data-zone="opponent-resources" className="flex w-7 flex-col gap-px leading-none">

@@ -172,6 +172,14 @@ describe('opponent seat anatomy (§6.2)', () => {
     expect(seatEl('p1').querySelector('[data-seat-name] [aria-hidden="true"]')?.textContent).toBe(LONG_NICK);
   });
 
+  it('the initial-letter avatar is hidden from assistive technology, so the seat speaks its nickname once (L74-26 gate G3)', () => {
+    renderSeats(makeArenaView());
+    const seat = seatEl('p1');
+    expect(within(seat).getByRole('button', { name: 'p1' })).toBeDefined();
+    expect(within(seat).queryByRole('img', { name: 'p1' })).toBeNull();
+    expect(seat.querySelector('[data-zone="opponent-portrait"] [aria-hidden="true"] [role="img"]')).not.toBeNull();
+  });
+
   it('shows two status badges then +n; the eye keeps data-spy-eye', () => {
     const p1 = makePlayer('p1', {
       spyingOnYou: true,

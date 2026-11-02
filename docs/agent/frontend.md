@@ -1120,7 +1120,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `SEAT_BOX.portrait` in every mode until L75. A seat is one button named by the full nickname
   over the anatomy:
   - the name in its seat hue, truncated and `aria-hidden` (the button carries it);
-  - a `KitPortrait` thumb or the seat-hue initial `Avatar`;
+  - a `KitPortrait` thumb or the seat-hue initial `Avatar`, the `Avatar` wrapped `aria-hidden` so
+    the nickname is spoken once (L74-26 gate G3);
   - a lives pill and a points / upgrade points / shield column (`?` when hidden, a
     `data-resource-kind` on each);
   - two status badges and `+n` (`seatBadgeView`).
