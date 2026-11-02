@@ -1181,7 +1181,26 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   seat) re-seeds at the shorter count. `forgetChatSeen(gameCode)` makes the next render treat the
   room as first seen: `App.tsx` calls it from an effect keyed on the room's lobby phase and code
   (L74-21), so a rematch starts with the lobby lines seen. App needs no prop for the count.
-- `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`, `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx` (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell, `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash, the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the finished board replays none (Q63); the beat element carries `data-fx="elimination-beat"`. This also fixed the default table: What's new `lot-72-v7`, fourth item. Own-intent ghosts leave from the commit helper (`onSent` → `ownIntentFxFor`): the card sheet sends `{ instanceId }` for a held card, the target tap `{ instanceId }`, and a drop `{ instanceId, dropPoint }`, so the flight starts where the card was released. The POV's own log play flies nothing (§6.6.2). Arena resource values flash and float through `useResourceFlash`, V2 `ResourceIcon`'s logic: the POV listens as `self` and flies its own Δ, seats listen by player id and never fly. The flash is a 2 px `--upgrade` / `--danger` outline (`data-resource-flash`), with +N / −N floats under full motion only. An effect with no arena `data-pending-id` (a grid third-party effect with no tapped seat, a dropped adjacent arrow) flashes its outcome on the plate: `queryPendingFlashAnchor` falls back to `[data-zone="pending"]`. Intents never await FX (Lot 14).
+- `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`,
+  `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx`
+  (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell,
+  `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay
+  draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport
+  box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of
+  `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash,
+  the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat
+  outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the
+  finished board replays none (Q63); the beat element carries `data-fx="elimination-beat"`. This
+  also fixed the default table: What's new `lot-72-v7`, fourth item. Own-intent ghosts leave from
+  the commit helper (`onSent` → `ownIntentFxFor`): the card sheet sends `{ instanceId }` for a held
+  card, the target tap `{ instanceId }`, and a drop `{ instanceId, dropPoint }`, so the flight
+  starts where the card was released. The POV's own log play flies nothing (§6.6.2). Arena resource
+  values flash and float through `useResourceFlash`, V2 `ResourceIcon`'s logic: the POV listens as
+  `self` and flies its own Δ, seats listen by player id and never fly. The flash is a 2 px
+  `--upgrade` / `--danger` outline (`data-resource-flash`), with +N / −N floats under full motion
+  only. An effect with no arena `data-pending-id` (a grid third-party effect with no tapped seat, a
+  dropped adjacent arrow) flashes its outcome on the plate: `queryPendingFlashAnchor` falls back to
+  `[data-zone="pending"]`. Intents never await FX (Lot 14).
 - `screens/arena/sub-choice/` host (L74-18, spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2):
   `SubChoiceSheet` renders `props.subChoice` as one blocking bottom `Sheet`
   (`data-arena-sheet="sub-choice"`, `data-sub-choice={kind}`), outside the read-only reducer,

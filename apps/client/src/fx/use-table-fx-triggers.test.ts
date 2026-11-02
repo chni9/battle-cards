@@ -11,6 +11,7 @@ import { createElement, type ReactElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { setReducedMotion } from '../test/render'; // also the act environment and per-test cleanup (L72-06)
+import { getCardArtUrl } from '../ui/asset-lookup';
 import { makeCard, makePending, makeSelf, makeTableView } from '../view-model/test-fixtures';
 import { resetResourceFlowFlashForTests, subscribeResourceFlowFlash } from './resource-flow-flash';
 import { TableFxContext, type TableFxContextValue, type TableFxInput } from './table-fx-hooks';
@@ -18,6 +19,7 @@ import { useTableFxTriggers, type TableFxTriggerInput } from './use-table-fx-tri
 
 const IDS = ['me', 'p1', 'p2'];
 const BUY: ActionLogEntryView = { kind: 'actionPlayed', actorPlayerId: 'p1', action: 'buyCard', cardId: 'spy', turnSequence: 2 };
+const PLAY: ActionLogEntryView = { kind: 'actionPlayed', actorPlayerId: 'p1', action: 'playCard', cardId: 'spy', turnSequence: 2 };
 const elim = (playerId: string, turnSequence: number): ActionLogEntryView =>
   ({ kind: 'playerEliminated', playerId, eliminatorPlayerId: null, reason: 'combat', turnSequence });
 const anchors: HTMLElement[] = [];
@@ -104,6 +106,21 @@ describe('useTableFxTriggers (L74-17)', () => {
     expect(ghosts).toHaveLength(1);
     expect(ghosts[0]).toMatchObject({ from: { width: 48, height: 72 }, to: { width: 48, height: 72 } });
     expect(events.some((event) => event.kind === 'playFlyout')).toBe(false);
+  });
+
+  it("an opponent's play flies one face-up card ghost from that seat to the felt center (§6.6.2, final review)", () => {
+    tableAnchors();
+    const view = makeTableView(IDS);
+    const { enqueue, rerender } = renderTriggers(input(view));
+    rerender(input({ ...view, actionLog: [PLAY] }));
+    const ghosts = sent(enqueue).filter((event) => event.kind === 'tokenFlyout' && event.asCard === true);
+    expect(ghosts).toHaveLength(1);
+    // p1's seat (10, 10, 76 × 92) and the plate / card-band midpoint, each as a 48 × 72 card.
+    expect(ghosts[0]).toMatchObject({
+      artUrl: getCardArtUrl('spy', { isUpgraded: false }),
+      from: { left: 24, top: 20, width: 48, height: 72 },
+      to: { left: 156, top: 468, width: 48, height: 72 },
+    });
   });
 
   it('a leftover live delta flies directed chips and flashes the resource (L51-15, L51-16)', () => {
