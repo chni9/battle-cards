@@ -81,7 +81,16 @@ export function reconcileSlotCapAfterPlay(
   }
 
   const pending = pendingFromSlot(owner, newest);
-  clearActiveSlot(state, slotOwnerId, newest);
+
+  if (newest.kind === 'persistent') {
+    // Held, not deactivated: Cancel hands the played card back and Drop re-activates it,
+    // so the card never reaches the pool (rules spec §5 Active slots, L82-02).
+    owner.activePersistentEffects = owner.activePersistentEffects.filter(
+      (effect) => effect.id !== newest.id,
+    );
+  } else {
+    clearActiveSlot(state, slotOwnerId, newest);
+  }
 
   beginSlotDrop(state, {
     chooserPlayerId,
