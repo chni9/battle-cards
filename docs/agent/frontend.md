@@ -791,8 +791,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `screens/arena/arena-screen.tsx` (L74-01, spec v7 §4.4): the switch. `App.tsx` (playing) and
   `EndScreen` (finished board, `tableUi`) mount `ArenaScreen` when `resolveTableUi(...)` is
   `'next'`: `?ui=next` was set and the room is Classic. The default and tutorial rooms keep
-  `TableScreen`. `ArenaScreenProps` is the `TableScreenProps` alias, so App passes one prop set
-  to either board.
+  `TableScreen`. `ArenaScreenProps` extends `TableScreenProps` (L74-21), so App and EndScreen
+  mount each board in its own branch and `TableScreen` keeps its props.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
   always renders. Each shows its content or an empty state, except a walk-in's self strip and
@@ -817,7 +817,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - Import rule (L74-01): `screens/arena/` imports only `ui/`, `view-model/`, `fx/`, `net/`
   (types), `help/`, `feedback/` and `screens/status-labels`, `screens/illegal-action-copy` and
   `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`; the one exception
-  is the `TableScreenProps` type behind the alias. A pure helper still living there moves, with its
+  is the `TableScreenProps` type that `ArenaScreenProps` extends. A pure helper still living there moves, with its
   tests, in the task that first needs it.
 - `screens/arena/arena-sheets.ts` (L74-02, spec v7 §6.7, Q49): one pure reducer holds the
   read-only sheets.
@@ -859,8 +859,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   §6.1 item 1, §6.12; plan Appendix A rulings 2 and 3).
   - Contents: the round (`Round N`, from `tableRound`, the same count as the log and chat),
     the turn banner (`Your turn`, `{Nick}'s turn` with the nickname in its seat hue on
-    `--panel`, or `—`), the active seat's Block line (V2 copy) and the empty
-    `data-zone="timers"` clock slot (L74-21).
+    `--panel`, or `—`), the active seat's Block line (V2 copy) and the `data-zone="timers"`
+    clock slot, which L74-21 fills with the turn clock.
   - Visible icons, left to right: Chat (L74-16), Feedback `!` (44 px, aria-label `Feedback`,
     no word), the flag, and Menu.
   - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
@@ -1171,8 +1171,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   count follows the transcript while the sheet is open, so any close marks every line seen, and
   `chatUnreadCount` counts the rest. A transcript shorter than the seen count (a walk-in claimed a
   seat) re-seeds at the shorter count. `forgetChatSeen(gameCode)` makes the next render treat the
-  room as first seen: App calls it when a room returns to its lobby (L74-21), so a rematch starts
-  with the lobby lines seen. App needs no prop.
+  room as first seen: `App.tsx` calls it from an effect keyed on the room's lobby phase and code
+  (L74-21), so a rematch starts with the lobby lines seen. App needs no prop for the count.
 - `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`, `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx` (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell, `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash, the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the finished board replays none (Q63); the beat element carries `data-fx="elimination-beat"`. This also fixed the default table: What's new `lot-72-v7`, fourth item. Own-intent ghosts leave from the commit helper (`onSent` → `ownIntentFxFor`): the card sheet sends `{ instanceId }` for a held card, the target tap `{ instanceId }`, and a drop `{ instanceId, dropPoint }`, so the flight starts where the card was released. The POV's own log play flies nothing (§6.6.2). Arena resource values flash and float through `useResourceFlash`, V2 `ResourceIcon`'s logic: the POV listens as `self` and flies its own Δ, seats listen by player id and never fly. The flash is a 2 px `--upgrade` / `--danger` outline (`data-resource-flash`), with +N / −N floats under full motion only. An effect with no arena `data-pending-id` (a grid third-party effect with no tapped seat, a dropped adjacent arrow) flashes its outcome on the plate: `queryPendingFlashAnchor` falls back to `[data-zone="pending"]`. Intents never await FX (Lot 14).
 - `screens/arena/sub-choice/` host (L74-18, spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2):
   `SubChoiceSheet` renders `props.subChoice` as one blocking bottom `Sheet`
@@ -1224,6 +1224,21 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   dropped in the render phase, so a later resend that offers the slot again cannot revive it and
   enable Drop. Drop and Cancel honour the host's `locked` ('Actions locked'); a tile tap still
   selects.
+- `screens/arena/turn-clock.tsx`, `use-turn-started-record.ts`; `App.tsx`, `use-lobby-rules-cache.ts`,
+  `screens/end.tsx` (L74-21, spec v7 §4.1, §6.10, §6.11): the top bar's `timers` slot renders
+  `turnClock()` (L73-13): a `timer-label` line ('42s', '—', 'Paused — reconnecting', 'Absent —
+  auto-draw') and a 'Turn timer' progressbar that carries `aria-valuenow` only when the turn length
+  is known. The length is the cached host `turnTimeSeconds`, else the first `TURN_STARTED` of this
+  `turnSequence` (a resume keeps it), else none (seconds only). The last 10 s turn label and fill
+  `--danger`; under reduced motion the fill jumps. The arena records a `TURN_STARTED` sighting when
+  `lastTurnStarted` changes identity, with the current view's `turnSequence` and `props.nowMs`
+  (App's 250 ms tick). The countdown keeps running during a post-action sub-choice, as V2's did.
+  App keeps the room's last lobby rules (`useLobbyRulesCache`: one `nextRulesCache` step per new
+  view, cleared by every leave) and passes `cachedLobbyRules(cache, view)`; EndScreen passes
+  `FinishedStateView.lobbyRules`. Both mount `ArenaScreen` and `TableScreen` in their own branch.
+  App also calls `forgetChatSeen(gameCode)` from an effect keyed on the room's lobby phase and code,
+  after the lobby has rendered, so a rematch's arena starts with the lobby chat lines seen (the
+  L74-16 store; never from a message handler, where a mounted arena would seed the count again).
 
 ## Design system (V2 · Lots 10+)
 

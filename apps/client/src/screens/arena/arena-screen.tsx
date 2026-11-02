@@ -30,13 +30,16 @@
  *   V2 table's mapping, and flies own intents from the commit helper's `onSent` (`ownIntentFxFor`).
  * - §6.7 (L74-18): `props.subChoice` opens one blocking `SubChoiceSheet`; its lock ends targeting
  *   and empties the drag zones by itself.
+ * - §4.1, §6.10 (L74-21): the arena records the `TURN_STARTED` sighting (`useTurnStartedRecord`),
+ *   computes `turnClock(...)` once per render and hands it to the top bar. `ArenaScreenProps`
+ *   extends `TableScreenProps` with the raw payload and the room's cached lobby rules.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
- * `screens/table/` or `design/`; `TableScreenProps` is the one type behind the alias below.
+ * `screens/table/` or `design/`; `TableScreenProps` is the one type `ArenaScreenProps` extends.
  */
 
-import type { SentenceAnnouncementLogEntry } from '@card-battle/shared';
+import type { LobbyRules, SentenceAnnouncementLogEntry, TurnStartedPayload } from '@card-battle/shared';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactElement } from 'react';
 
 import { TableFxProvider } from '../../fx/table-fx-context';
@@ -53,6 +56,7 @@ import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
 import { povHasWon } from '../../view-model/table-banner';
 import { threats } from '../../view-model/threats';
+import { turnClock } from '../../view-model/turn-clock';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
 import { arenaRegionAttributes } from './arena-regions';
@@ -94,8 +98,15 @@ import { TopBar } from './top-bar';
 import { useArenaLayoutBox } from './use-arena-layout-box';
 import { useHandDrag } from './use-hand-drag';
 import { useTapGuard } from './use-tap-guard';
+import { useTurnStartedRecord } from './use-turn-started-record';
 
-export type ArenaScreenProps = TableScreenProps;
+/** Plan A.9.1: the first widening. L74-23 adds `onReopenClaim?`, L74-25 `connectionStatus`. */
+export interface ArenaScreenProps extends TableScreenProps {
+  /** L74-21: the raw TURN_STARTED payload; the arena records its receive time and turnSequence (§4.1). */
+  lastTurnStarted: TurnStartedPayload | null;
+  /** L74-21: this room's last lobby rules (App: `cachedLobbyRules(cache, view)`, this room, Classic only; EndScreen: `view.lobbyRules ?? null`); null when unknown. */
+  cachedLobbyRules: LobbyRules | null;
+}
 
 /** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
@@ -109,6 +120,15 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
 function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const { view } = props;
   const readOnly = props.readOnly ?? false;
+  // The turn clock (§6.10, L74-21): seconds come from `view.turnDeadlineMs` only, never `props.deadlineMs`
+  // (decisions 2026-10-27, L73-13); `props.nowMs` is App's 250 ms tick, so no component reads the clock.
+  const turnStarted = useTurnStartedRecord({
+    lastTurnStarted: props.lastTurnStarted,
+    turnSequence: view.turnSequence,
+    turnDeadlineMs: view.turnDeadlineMs,
+    nowMs: props.nowMs,
+  });
+  const clock = turnClock({ turnStarted, view, cachedLobbyRules: props.cachedLobbyRules, readOnly, nowMs: props.nowMs });
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly };
   const lock = actionLock(view, ctx);
   // The FX triggers both boards share (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
@@ -237,6 +257,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             openSheet({ kind: 'chat' });
           }}
           chatUnread={chatUnread}
+          clock={clock}
         />
       </div>
       <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">

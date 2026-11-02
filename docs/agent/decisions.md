@@ -5720,3 +5720,36 @@ Source: technical spec v7 §6.7, §13 Q42 / Q56, §14.3; Appendix A `table-subch
   fifth slot`) fixes it on its own branch into `dev`. The arena copy does not depend on it.
 
 ---
+
+## 2026-11-02 · [P] V7 turn clock: TURN_STARTED receive time and the lobby-rules cache (L74-21)
+
+Source: technical spec v7 §4.1, §6.10, §6.11, §14.3; Appendix A `table-turn-timer-scale`,
+`turn-strip-timers`; `view-model/turn-clock.ts` (L73-13), `view-model/rules-recall.ts` (L73-12);
+the Lot 73 final review carry-forward.
+
+- **Receive time.** The arena records a sighting when `lastTurnStarted` changes identity, with
+  the `turnSequence` of the view current in that render and `receivedAtMs = props.nowMs`. App's
+  `nowMs` ticks every 250 ms, so the record can be up to 250 ms early: the length errs long by at
+  most that much and the bar starts full. On a new turn the server sends the state before
+  `TURN_STARTED`, so the view already carries the new `turnSequence`; a resume sends
+  `TURN_STARTED` first on the same `turnSequence`, and `nextTurnStartedRecord` keeps the first
+  sighting. If a `TURN_STARTED` ever came before its own turn's state, its record would carry the
+  previous `turnSequence` and that turn would show seconds only, never a wrong bar (§14.3 watch
+  point, checked at the L74-26 gate). At mount, a payload is recorded only when its deadline is
+  the view's `turnDeadlineMs`: after Play again in one room the hook still holds the previous
+  game's payload.
+- **Post-action sub-choice.** The countdown keeps running while a Mirror, reward or pool pick is
+  open after the POV acted, although the server cleared its turn timer (V2 parity). L79's tick
+  must not rely on `tick` alone.
+- **Lobby-rules cache.** App holds it (`useLobbyRulesCache`): one `nextRulesCache` step per new
+  view identity, because a lobby view always yields a new entry. A null view keeps it, so every
+  App leave clears it; another room's first view drops it. App passes
+  `cachedLobbyRules(cache, view)`; EndScreen passes `FinishedStateView.lobbyRules`.
+- **Mount split.** `ArenaScreenProps` extends `TableScreenProps` (Appendix A.9.1), so App and
+  EndScreen mount the two boards in their own branches; `TableScreen` keeps its props.
+- **Chat seen count (L74-16 carry-forward, controller ruling).** App calls `forgetChatSeen(gameCode)`
+  from an effect keyed on the room's lobby phase and code, so a rematch's arena does not show the
+  lobby lines as unread; it never calls it from the message handler, where a mounted arena hook
+  would seed the count again at once.
+
+---

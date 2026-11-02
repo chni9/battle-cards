@@ -9,8 +9,10 @@
  *
  * A rematch stays in the same room and code (Play again) and the transcript continues, so the count
  * a finished match left would show the lobby lines as unread. `forgetChatSeen` drops a room's entry,
- * and the next render treats the room as first seen. App forgets a room's seen count when the room
- * returns to its lobby (L74-21), so a new match starts with the lobby lines seen.
+ * and the next render treats the room as first seen. `App.tsx` calls it from an effect keyed on the
+ * room's lobby phase and code (L74-21), after the lobby has rendered and no arena is mounted, so a
+ * new match starts with the lobby lines seen. It is never called from a message handler, where a
+ * mounted arena would seed the count again at once.
  */
 
 import { useEffect, useSyncExternalStore } from 'react';

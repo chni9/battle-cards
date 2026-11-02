@@ -15,6 +15,7 @@ import { isDevUiRoute } from './dev/dev-ui-route';
 import { useRoomConnection } from './net/use-room-connection';
 import { AdminApp } from './screens/admin/admin-app';
 import { ArenaScreen } from './screens/arena/arena-screen';
+import { forgetChatSeen } from './screens/arena/chat-unread-store';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
@@ -22,13 +23,15 @@ import { HomeScreen } from './screens/home';
 import { LobbyScreen } from './screens/lobby';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
-import { TableScreen } from './screens/table';
+import { TableScreen, type TableScreenProps } from './screens/table';
 import {
   applyUiSwitchParam,
   browserUiSwitchStorage,
   parseUiSwitchParam,
   resolveTableUi,
 } from './ui-switch';
+import { useLobbyRulesCache } from './use-lobby-rules-cache';
+import { cachedLobbyRules } from './view-model/rules-recall';
 
 const UiGallery = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import('./dev/ui-gallery')).UiGallery }))
@@ -97,6 +100,13 @@ function GameApp() {
     lastActionResolved,
     subChoice,
   } = connection;
+  // This room's last lobby rules (L74-21, spec v7 §6.10, §6.11): the playing view carries none.
+  const lobbyRulesCache = useLobbyRulesCache(view);
+  // Every leave forgets them: a null view alone keeps them (`nextRulesCache`).
+  const leave = (): void => {
+    lobbyRulesCache.clear();
+    void leaveGame();
+  };
   const [nickname, setNickname] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -124,6 +134,17 @@ function GameApp() {
     () => (view === null ? [] : view.players.map((player) => player.id)),
     [view],
   );
+
+  // A room back in its lobby starts its next match with the chat lines it holds already seen (V7 arena,
+  // `chat-unread-store.ts`, L74-16 carry-forward). An effect, so it runs once the lobby has rendered and
+  // no arena is mounted: a mounted arena hook would seed the count again at once. Keyed on the phase
+  // and the code, so every return to the lobby, Play again included, forgets it once.
+  const lobbyGameCode = view?.phase === 'lobby' ? view.gameCode : null;
+  useEffect(() => {
+    if (lobbyGameCode !== null) {
+      forgetChatSeen(lobbyGameCode);
+    }
+  }, [lobbyGameCode]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -168,9 +189,7 @@ function GameApp() {
           statusLabel={STATUS_LABELS[status]}
           nowMs={nowMs}
           tableUi={resolveTableUi({ preference: tablePreference, playKind: view.playKind })}
-          onLeave={() => {
-            void leaveGame();
-          }}
+          onLeave={leave}
           {...(view.playKind === 'classic' && !walkInSpectator
             ? {
                 onPlayAgain: () => {
@@ -184,7 +203,7 @@ function GameApp() {
                   });
                   if (seed !== null) {
                     setPendingSoloMenu(seed);
-                    void leaveGame();
+                    leave();
                     return;
                   }
                   playAgain();
@@ -198,41 +217,44 @@ function GameApp() {
   }
 
   if (view?.phase === 'playing') {
-    const Board =
-      resolveTableUi({ preference: tablePreference, playKind: view.playKind }) === 'next'
-        ? ArenaScreen
-        : TableScreen;
+    const boardProps: TableScreenProps = {
+      view,
+      actionReject,
+      onDismissActionReject: clearActionReject,
+      statusLabel: STATUS_LABELS[status],
+      nowMs,
+      deadlineMs: lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs,
+      lastActionResolved,
+      subChoice,
+      onDraw: drawCard,
+      onPlayCard: playCard,
+      onPlayMultipleAttacks: playMultipleAttacks,
+      onResolveSubChoice: resolveSubChoice,
+      onBuyCard: buyCard,
+      onSellCard: sellCard,
+      onUpgradeCard: upgradeCard,
+      onBuyUpgradePoint: buyUpgradePoint,
+      onBuySpecialCard: buySpecialCard,
+      onBuyPoolCard: buyPoolCard,
+      onClearSpy: clearSpy,
+      onSellUpgradePoint: sellUpgradePoint,
+      onDeactivatePersistent: deactivatePersistent,
+      onActivateDuplication: activateDuplication,
+      onLeave: leave,
+      onForfeit: forfeit,
+      onSendChat: sendChat,
+    };
     return (
       <>
-        <Board
-          view={view}
-          actionReject={actionReject}
-          onDismissActionReject={clearActionReject}
-          statusLabel={STATUS_LABELS[status]}
-          nowMs={nowMs}
-          deadlineMs={lastTurnStarted?.deadlineMs ?? view.turnDeadlineMs}
-          lastActionResolved={lastActionResolved}
-          subChoice={subChoice}
-          onDraw={drawCard}
-          onPlayCard={playCard}
-          onPlayMultipleAttacks={playMultipleAttacks}
-          onResolveSubChoice={resolveSubChoice}
-          onBuyCard={buyCard}
-          onSellCard={sellCard}
-          onUpgradeCard={upgradeCard}
-          onBuyUpgradePoint={buyUpgradePoint}
-          onBuySpecialCard={buySpecialCard}
-          onBuyPoolCard={buyPoolCard}
-          onClearSpy={clearSpy}
-          onSellUpgradePoint={sellUpgradePoint}
-          onDeactivatePersistent={deactivatePersistent}
-          onActivateDuplication={activateDuplication}
-          onLeave={() => {
-            void leaveGame();
-          }}
-          onForfeit={forfeit}
-          onSendChat={sendChat}
-        />
+        {resolveTableUi({ preference: tablePreference, playKind: view.playKind }) === 'next' ? (
+          <ArenaScreen
+            {...boardProps}
+            lastTurnStarted={lastTurnStarted}
+            cachedLobbyRules={cachedLobbyRules(lobbyRulesCache.cache, view)}
+          />
+        ) : (
+          <TableScreen {...boardProps} />
+        )}
         {claimDialog}
       </>
     );
@@ -246,9 +268,7 @@ function GameApp() {
           status={status}
           error={error}
           onStart={startGame}
-          onLeave={() => {
-            void leaveGame();
-          }}
+          onLeave={leave}
           onAddBot={addBot}
           onKickPlayer={kickPlayer}
           onSetReady={setReady}

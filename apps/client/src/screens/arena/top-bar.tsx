@@ -3,7 +3,7 @@
  * rulings 2 and 3.
  *
  * - Left: the round, the turn banner (`Your turn`, `{Nick}'s turn` with the nickname in its seat
- *   hue, or `—`), the active seat's Block line and the empty clock slot L74-21 fills (§6.10). Seat
+ *   hue, or `—`), the active seat's Block line and the turn clock (`TurnClock`, §6.10, L74-21). Seat
  *   names stand on `--panel`, never on the ground (`ui/seat/player-name.tsx`).
  * - Right: Chat, Feedback `!`, the flag and Menu, each a 44 px icon-only `IconButton` named by its
  *   aria-label (§5.6). Chat comes first (L74-16) and carries the unread badge; it opens the arena's
@@ -25,6 +25,7 @@ import { CHROME_SHAPE_SM_CLASS } from '../../ui/primitives/chrome-classes';
 import { IconButton } from '../../ui/primitives/icon-button';
 import { PlayerName } from '../../ui/seat/player-name';
 import { FEEDBACK_ARIA_LABEL } from '../../view-model/table-copy';
+import type { TurnClockModel } from '../../view-model/turn-clock';
 import { HowToPlayDialog } from '../how-to-play-dialog';
 import { LeaveConfirmSheet } from './leave-confirm-sheet';
 import { MenuSheet } from './menu-sheet';
@@ -37,6 +38,7 @@ import {
   turnBannerOf,
   turnBannerText,
 } from './top-bar-model';
+import { TurnClock } from './turn-clock';
 
 export interface TopBarProps {
   view: PlayingStateView;
@@ -54,6 +56,8 @@ export interface TopBarProps {
   onOpenChat?: () => void;
   /** Default 0. */
   chatUnread?: number;
+  /** L74-21: `turnClock(...)`, computed once in `ArenaScreenInner` (Appendix A.2); rendered in the `timers` slot (§6.10). */
+  clock: TurnClockModel;
 }
 
 export function TopBar({
@@ -66,6 +70,7 @@ export function TopBar({
   onOpenLog,
   onOpenChat,
   chatUnread = 0,
+  clock,
 }: TopBarProps): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
@@ -119,8 +124,9 @@ export function TopBar({
               {block}
             </p>
           ) : null}
-          {/* Clock slot: L74-21 (spec v7 §6.10). */}
-          <div data-zone="timers" data-hint-anchor="your-turn" />
+          <div data-zone="timers" data-hint-anchor="your-turn">
+            <TurnClock model={clock} />
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {onOpenChat !== undefined ? (
