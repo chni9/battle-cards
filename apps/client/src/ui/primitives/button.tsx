@@ -5,7 +5,8 @@
  * (`CHROME_DISABLED_CLASS`).
  *
  * A disabled action says why (§11, Q39): `disabledReason` renders as visible text under the
- * button and joins its `aria-describedby`. `reserveReasonSlot` keeps that line's height while
+ * button and joins its `aria-describedby`. The reason never widens the button: it wraps within
+ * the button's width, clamped to two lines. `reserveReasonSlot` keeps both lines' height while
  * enabled so a reason appearing later does not shift the layout. A native disabled button
  * leaves the Tab order, so its reason is only reachable by sight; `focusableWhenDisabled`
  * renders `aria-disabled="true"` instead, keeps the button focusable with its reason
@@ -122,9 +123,14 @@ export function Button({
   return (
     <span className={`inline-flex flex-col items-stretch gap-1 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}>
       {button}
+      {/* `w-0 min-w-full`: the reason never widens the button, it wraps under it, up to two lines.
+          A reserved slot holds both lines, so a reason that comes and goes never moves the layout
+          (the dock at 360 and 375 px, L74-26 gate G5). */}
       <span
         data-reason-slot
-        className="min-h-4 font-v7-body text-v7-caption font-bold text-v7-text-2"
+        className={`w-0 min-w-full line-clamp-2 font-v7-body text-v7-caption font-bold text-v7-text-2 ${
+          reserveReasonSlot ? 'min-h-9' : 'min-h-4'
+        }`}
         {...(showReason ? { id: reasonId } : { 'aria-hidden': 'true' as const })}
       >
         {showReason ? disabledReason : ''}

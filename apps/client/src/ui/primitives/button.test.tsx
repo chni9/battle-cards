@@ -74,6 +74,30 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     expect(screen.getByRole('button', { name: 'Buy' }).hasAttribute('aria-describedby')).toBe(false);
   });
 
+  it('a reason never widens its button, and the reserved slot holds two lines either way (L74-26 gate G5, G8)', () => {
+    // happy-dom has no layout. At 375 px the dock's Unspy reason "Nobody is spying on you" widened
+    // its button, wrapped the dock onto a second row on the POV's turn only, and the board jumped
+    // 72 px at every turn change. The reason now wraps inside the button's width, up to two lines.
+    const { container, rerender } = renderUi(
+      <Button disabled disabledReason="Nobody is spying on you" reserveReasonSlot>
+        Unspy
+      </Button>,
+    );
+    const shown = container.querySelector('[data-reason-slot]');
+    expect(['w-0', 'min-w-full', 'line-clamp-2', 'min-h-9'].map((name) => shown?.classList.contains(name))).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+    rerender(
+      <Button disabledReason="Nobody is spying on you" reserveReasonSlot>
+        Unspy
+      </Button>,
+    );
+    expect(container.querySelector('[data-reason-slot]')?.classList.contains('min-h-9')).toBe(true);
+  });
+
   it('keeps a caller aria-describedby next to the reason id', () => {
     renderUi(
       <Button disabled disabledReason="Not your turn" aria-describedby="shop-help">

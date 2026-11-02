@@ -6188,3 +6188,23 @@ Source: Lot 74 Part 2 final review (L74-23, rescoped); amends the "Stale seat sh
   after its exit and lose an unsent draft.
 
 ---
+
+## 2026-11-02 · [P] Button reasons wrap under the button, two lines reserved (L74-26 gate)
+
+Source: technical spec v7 §11 (Q39) and §6.1 item 5; `DESIGN.md` › Button; the Lot 74 gate
+(L74-26, G5 and G8).
+
+- **What the gate found.** At 360 and 375 px the dock's own-turn Unspy reason "Nobody is
+  spying on you" (136 px) widened its button past the row, so Unspy wrapped onto a second row.
+  Off-turn its reason, "Not your turn", fit on one row. The dock grew 72 px on the POV's turn,
+  the board jumped at every turn change, and the second tap of a Draw double tap landed on a
+  hand card, which opened its sheet.
+- **Choice.** A disabled reason never widens its button (`w-0 min-w-full`). It wraps within the
+  button's width, clamped to two lines (`line-clamp-2`; the full text stays in
+  `aria-describedby`), and `reserveReasonSlot` reserves both lines. The dock keeps one row and
+  one height from 360 px up.
+- **Cost.** The dock is 18 px taller off-turn than before (two reserved lines instead of one)
+  and 54 px shorter on the POV's turn at 360 and 375 px. **Designer question:** keep two lines,
+  or one line with an ellipsis? Default: two lines.
+
+---
