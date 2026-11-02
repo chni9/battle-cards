@@ -38,6 +38,7 @@ import { KitChoice } from './kit-choice';
 import { MirrorChoice } from './mirror-choice';
 import { PoolChoice } from './pool-choice';
 import { RewardChoice } from './reward-choice';
+import { SlotDropChoice } from './slot-drop-choice';
 import { SpecialChoice } from './special-choice';
 import { StealChoice } from './steal-choice';
 import {
@@ -97,9 +98,8 @@ function pickerFor(
       return <SpecialChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     case 'reanimation-kit':
       return <KitChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
-    // L74-20 gives slot-drop its picker.
     case 'slot-drop':
-      return frame({ body: null, actions: null });
+      return <SlotDropChoice subChoice={subChoice} view={view} frame={frame} send={send} locked={locked} />;
     default: {
       const _exhaustive: never = subChoice;
       return _exhaustive;

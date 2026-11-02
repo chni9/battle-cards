@@ -5689,3 +5689,34 @@ Source: technical spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2; Lot 74 plan Appen
   without committing, so the answer latch never latches a lost send; Minimize stays usable.
 
 ---
+
+## 2026-11-02 · [P] V7 slot-drop: select then Drop, and Cancel states its outcome (L74-20)
+
+Source: technical spec v7 §6.7, §13 Q42 / Q56, §14.3; Appendix A `table-subchoice-slot-drop`,
+`table-slot-drop-commit-cancel`; server `engine/specials/slot-drop.ts` (`cancelSlotDrop`),
+`engine/turn/perform-action.ts` (play payment, `cancelRestore`), `rooms/game-room.ts`
+(`handleSlotDrop`, PR #82 / L82-01), `engine/turn/lot-69-rules.test.ts`.
+
+- **Commit model.** V2 dropped the tapped slot at once. V7 makes a tap select (`aria-pressed`) and
+  'Drop' send the selected `slotId`; nothing is preselected, because a drop removes a card for
+  good. Appendix A `table-slot-drop-commit-cancel` allows this: the intent and payload are the same.
+- **A pick the prompt no longer offers is dropped for good.** The picker prunes its pick in the
+  render phase (as the pool picker does), so a resend that omits the slot and a later resend that
+  offers it again cannot bring the old pick back and enable Drop on a card the player did not
+  re-select. Drop removes a card for good.
+- **Cancel's outcome, read from the server.** `cancelSlotDrop` discards the pending activation,
+  returns a card played from the specials to its holder's specials (a hand card never left the
+  hand), and clears the prompt. The room then restarts the same seat's turn with a fresh clock
+  (since PR #82 the state goes out after the new deadline), so the turn is not spent. The copy says
+  so for each case: own slots ("the new card is not activated … you keep your four active cards")
+  and the Curse caster ("your Curse is not cast … {victim} keeps their four active cards").
+- **Points on Cancel (designer 2026-11-02: refund).** Cancel refunds the play's points. Today
+  `cancelSlotDrop` refunds none (the cost was paid at play time), so this is a Classic rule change
+  on the server, outside V7. Another session makes it, with the rules spec and this file, as an
+  L82 task on its own branch into `dev`; the arena changes no code for it. The Cancel copy stays
+  silent about points, so it reads true before and after that change lands.
+- **Server fix, outside this lot.** A slot-cap peel used to pool a copy of the held card, so a
+  Cancel or a Drop left it duplicated (Curse included). L82-02 (`fix(engine): stop pooling held
+  fifth slot`) fixes it on its own branch into `dev`. The arena copy does not depend on it.
+
+---

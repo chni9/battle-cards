@@ -1213,6 +1213,17 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   leaves Card Transformer out). The Reanimation kit picker uses `KitTile` (portrait, name,
   `aria-pressed`), the first preselected, and renders for an eliminated POV. Each Confirm honours
   the host's `locked` ('Actions locked').
+- `screens/arena/sub-choice/slot-drop-choice.tsx` (L74-20, spec v7 §6.7, §13 Q42 / Q56, §14.3):
+  slot-drop is select + Drop. One tile per `eligibleSlots` (V2 captions '{card} (shield)' /
+  '{card} (sentence)'; the server never lists Curse), nothing preselected; a tap only selects,
+  'Drop' sends `{kind: 'slot-drop', slotId}`, and 'Cancel' sends `{kind: 'slot-drop', cancel:
+  true}`, never Esc or the backdrop. `slotOwnerPlayerId` picks the copy: your own slots, or the
+  Curse caster picking among the victim's; the expiry hint names you or the victim. A line under
+  the tiles, which also describes Cancel, states its outcome in each case, as read from the
+  server's `cancelSlotDrop` (decisions.md, L74-20 entry). A pick a resend no longer offers is
+  dropped in the render phase, so a later resend that offers the slot again cannot revive it and
+  enable Drop. Drop and Cancel honour the host's `locked` ('Actions locked'); a tile tap still
+  selects.
 
 ## Design system (V2 · Lots 10+)
 
