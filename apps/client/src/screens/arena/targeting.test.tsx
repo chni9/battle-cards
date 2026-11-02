@@ -110,6 +110,21 @@ describe('tap-tap targeting (§6.6.2, §6.6.5)', () => {
     expectNoArenaIntent(props);
   });
 
+  it.each(['Cancel', 'Escape'] as const)('%s returns focus from the seat to the hand card (L74-26 gate G6)', async (how) => {
+    const { user } = setup(playView());
+    await useCard(user, 'Spy', 'Spy');
+    expect(document.activeElement).toBe(target('p1'));
+    if (how === 'Cancel') {
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    } else {
+      await user.keyboard('{Escape}');
+    }
+    await act(async () => {
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+    });
+    expect(document.activeElement).toBe(handCard('Spy'));
+  });
+
   it('opening another card ends targeting', async () => {
     const { user, props } = setup(playView());
     await useCard(user, 'Spy', 'Spy');

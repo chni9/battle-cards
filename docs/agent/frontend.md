@@ -1270,8 +1270,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   ring, pulse at full motion), every other seat is `aria-disabled` and inert
   (`data-target-seat="invalid"`), and focus moves to the first valid seat in DOM order. A valid
   tap commits `playCard {instanceId, targetPlayerId}` at once and closes the sheet; Cancel and Esc
-  (the arena's `document` listener, which acts only while no expanded sheet is live) close it
-  and send nothing. When the card leaves the hand, the turn passes or a sub-choice opens,
+  (the arena's `document` listener, which acts only while no expanded sheet is live) close it,
+  send nothing and return focus to the hand card (Esc blurs the focused seat first, so the closing
+  sheet restores its opener; L74-26 gate G6). When the card leaves the hand, the turn passes or a sub-choice opens,
   targeting ends and the sheet closes. For `TAP_GUARD_MS` (`--dur-base`) after targeting ends,
   seat taps (and, from L74-13, dock commits) are ignored, because the bar unmounts with no
   shield. Regeneration tiles 1–4 ('1 life' preselected, the checked tile takes initial focus)

@@ -289,6 +289,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
     if (liveSheetId(store.getSnapshot()) !== null) return;
     event.preventDefault();
+    // Targeting moved focus to the first valid seat (§6.6.5). Esc leaves it there, so blur it: the
+    // closing card sheet then returns focus to its opener, the hand card, as Cancel does (L74-26 G6).
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused.hasAttribute('data-target-seat')) focused.blur();
     finishTargeting();
   });
   const targeting = live !== null;
