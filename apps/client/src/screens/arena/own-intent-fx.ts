@@ -5,9 +5,9 @@
  * The commit helper's `onSent` hook maps each sent `ArenaIntent` here, after the send (Lot 14), so
  * every commit path (card sheet, target tap, drop) flies the same way. A play or a sell starts at
  * the drop point when the card was dragged. The kinds V2 flew no card for (`buyPoolWithFx`,
- * `buyUpgradeWithFx`, `sellUpgradeWithFx`, Draw, Upgrade, Unspy, …) return null. The switch is
- * exhaustive, so a new `ArenaIntent` fails typecheck until it gets a case (L74-18 adds
- * `resolveSubChoice`).
+ * `buyUpgradeWithFx`, `sellUpgradeWithFx`, Draw, Upgrade, Unspy, …) return null, and so does a
+ * sub-choice answer (L74-18, §8.1: the reward celebration is L78). The switch is exhaustive, so a
+ * new `ArenaIntent` fails typecheck until it gets a case.
  */
 
 import type { OwnIntentFx } from '../../view-model/fx-triggers';
@@ -34,6 +34,9 @@ export function ownIntentFxFor(intent: ArenaIntent, context: CommitContext): Own
     case 'buyUpgradePoint':
     case 'sellUpgradePoint':
     case 'buyPoolCard':
+      return null;
+    // An answer flies no own-intent ghost (plan A.9.3, S5).
+    case 'resolveSubChoice':
       return null;
     default: {
       const _exhaustive: never = intent;

@@ -5662,3 +5662,30 @@ A.9.3, A.9.6; backlog L74-17 watch point.
   tests (`docs/backlog_v7_test_classification.md`).
 
 ---
+
+## 2026-11-02 · [P] V7 sub-choice sheet: one blocking host, prompt-keyed pickers, reward guards (L74-18)
+
+Source: technical spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2; Lot 74 plan Appendix A.9.4; Appendix A
+`table-subchoice-host`, `table-subchoice-mirror`, `table-subchoice-reward`.
+
+- **One host outside the read-only reducer.** `SubChoiceSheet` renders `props.subChoice` as one
+  blocking `Sheet`. It keeps the last payload, so the sheet plays its exit and its press shield
+  when `subChoice` clears, so the picker is keyed by the host's opening count plus
+  `subChoicePromptKey`: a resend of the same prompt keeps the player's selection, and a prompt that
+  arrives after a clear starts fresh (without the count, the next prompt with the same key would
+  inherit the old pick). A clear then a new prompt reopens it expanded; a direct resend leaves a
+  minimized sheet minimized.
+- **No code ends targeting or a drag.** The open sub-choice locks every action (`actionLock`), which
+  ends targeting and empties the drag zones, and a release under a live sheet springs back.
+- **Reward guards (Q55) are client-side only.** Choice 2 starts on the first card Choice 1 does not
+  hold. A card the other choice holds, or one this prompt offered before and a refreshed prompt no
+  longer offers, is greyed with the `reward-card-already-chosen` / `reward-card-unavailable` copy,
+  and Confirm stays disabled until both picks are valid. The server still decides.
+- **No `reward` card sheet source** (plan A.9.4): a read-only sheet always paints under an expanded
+  blocking sheet (`sheet-stack.ts`), so nothing could open it where the player sees it. Reward
+  tiles show face and name, as V2 did.
+- **A commit lock.** `SubChoiceSheet` takes `locked` (L74-25 passes it while reconnecting). It
+  disables Confirm, Drop and the slot-drop Cancel with 'Actions locked' and makes `send` return
+  without committing, so the answer latch never latches a lost send; Minimize stays usable.
+
+---

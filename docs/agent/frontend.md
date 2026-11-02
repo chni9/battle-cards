@@ -1174,6 +1174,33 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   room as first seen: App calls it when a room returns to its lobby (L74-21), so a rematch starts
   with the lobby lines seen. App needs no prop.
 - `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`, `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx` (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell, `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash, the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the finished board replays none (Q63); the beat element carries `data-fx="elimination-beat"`. This also fixed the default table: What's new `lot-72-v7`, fourth item. Own-intent ghosts leave from the commit helper (`onSent` → `ownIntentFxFor`): the card sheet sends `{ instanceId }` for a held card, the target tap `{ instanceId }`, and a drop `{ instanceId, dropPoint }`, so the flight starts where the card was released. The POV's own log play flies nothing (§6.6.2). Arena resource values flash and float through `useResourceFlash`, V2 `ResourceIcon`'s logic: the POV listens as `self` and flies its own Δ, seats listen by player id and never fly. The flash is a 2 px `--upgrade` / `--danger` outline (`data-resource-flash`), with +N / −N floats under full motion only. An effect with no arena `data-pending-id` (a grid third-party effect with no tapped seat, a dropped adjacent arrow) flashes its outcome on the plate: `queryPendingFlashAnchor` falls back to `[data-zone="pending"]`. Intents never await FX (Lot 14).
+- `screens/arena/sub-choice/` host (L74-18, spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2):
+  `SubChoiceSheet` renders `props.subChoice` as one blocking bottom `Sheet`
+  (`data-arena-sheet="sub-choice"`, `data-sub-choice={kind}`), outside the read-only reducer,
+  after the read-only host. Titles and 'On expiry: …' hints are V2's (`sub-choice-model.ts`; the
+  reward hint draws 2× 4 lives with `CostAmount`; slot-drop names you or the slot owner), the line
+  ends with 'Ns left', then "Time's up" at 0 s with every control live, and a 'Sub-choice timer'
+  progressbar drains over `CLIENT_SUB_CHOICE_MS`. The reward sheet carries
+  `data-hint-anchor="reward"`. Esc, backdrop and swipe do nothing; the primitive's Minimize
+  collapses it to a bar above every sheet while `ctx.subChoice` keeps every intent locked. The
+  host keeps the last payload, so the sheet plays its exit and press shield when `subChoice`
+  clears. The picker is keyed by the host's opening count plus `subChoicePromptKey`: a resend of
+  the same prompt keeps the picker and its selection (a minimized sheet stays minimized), while a
+  prompt that arrives after a clear mounts a fresh picker and opens expanded.
+  Pickers return `frame({ body, actions })` and answer through `send`: one `resolveSubChoice`
+  through the commit per payload (`useCommitOnce` on the payload and `actionReject`). `locked`
+  (L74-25 sets it while reconnecting) disables every commit button with 'Actions locked' and
+  makes `send` a no-op, so the latch never latches a lost send; Minimize stays usable. Opening it
+  needs no code for targeting or a drag: the lock ends targeting, empties the drop zones, and a
+  release under the live sheet springs back. Card tiles are `ChoiceCardTile` (an `aria-pressed`
+  button named by the caller around a decorative `tile` Card; greyed tiles are `aria-disabled`
+  with their reason). Mirror lists the eligible pending attacks ("{source}'s {card} → you",
+  damage × multiplier) and the living opponents, Invisible included (`SeatChoiceButton`), both
+  preselected; a pick a resend drops falls back to the first. Reward has two `Segmented`
+  radiogroups ('Choice 1' lives, 'Choice 2' points) and, for 'A card', a grid that greys the
+  other choice's card and any card the prompt offered before but no longer does, with the
+  `ILLEGAL_ACTION_COPY` reward-card bodies as reasons (Q55); Choice 2 starts on the first card
+  Choice 1 does not hold. Nothing shows another seat's open prompt (§14.2).
 
 ## Design system (V2 · Lots 10+)
 

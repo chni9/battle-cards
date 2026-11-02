@@ -28,6 +28,8 @@
  *   overlay draws over the arena. `ArenaScreenInner` runs the shared `useTableFxTriggers` (seeded
  *   elimination beats, log chips and ghosts, threat cues), mounts `TableBannerHost` once with the
  *   V2 table's mapping, and flies own intents from the commit helper's `onSent` (`ownIntentFxFor`).
+ * - §6.7 (L74-18): `props.subChoice` opens one blocking `SubChoiceSheet`; its lock ends targeting
+ *   and empties the drag zones by itself.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -84,6 +86,7 @@ import { ownIntentFxFor } from './own-intent-fx';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
 import { ShopSheet } from './shop-sheet';
+import { SubChoiceSheet } from './sub-choice/sub-choice-sheet';
 import { TargetingBar } from './targeting';
 import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
@@ -443,6 +446,14 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             );
         }
       })}
+      {/* Outside the read-only reducer (plan A.9.4): one blocking sheet, above every read-only sheet. L74-25 adds `locked`. */}
+      <SubChoiceSheet
+        subChoice={props.subChoice}
+        view={view}
+        nowMs={props.nowMs}
+        commit={commit}
+        actionReject={props.actionReject}
+      />
     </main>
   );
 }

@@ -19,6 +19,7 @@ import type {
   ClearSpyPayload,
   DeactivatePersistentPayload,
   PlayMultipleAttacksPayload,
+  ResolveSubChoicePayload,
   SharedCardId,
   UpgradeCardPayload,
 } from '@card-battle/shared';
@@ -40,8 +41,9 @@ export type ArenaIntent =
   | { kind: 'buyUpgradePoint' }
   | { kind: 'sellUpgradePoint' }
   | { kind: 'buySpecialCard' }
-  | { kind: 'buyPoolCard' };
-// L74-18 adds the sub-choice intent (resolveSubChoice).
+  | { kind: 'buyPoolCard' }
+  /** A sub-choice answer (L74-18, spec v7 §6.7; plan A.9.3). */
+  | { kind: 'resolveSubChoice'; payload: ResolveSubChoicePayload };
 
 /** L74-17. Where an intent came from, for own-intent FX and the reject spring-back (L74-25). */
 export interface CommitContext {
@@ -80,6 +82,7 @@ export type ArenaIntentHandlers = Pick<
   | 'onSellUpgradePoint'
   | 'onBuySpecialCard'
   | 'onBuyPoolCard'
+  | 'onResolveSubChoice'
 >;
 
 function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): void {
@@ -134,6 +137,9 @@ function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): void {
       return;
     case 'buyPoolCard':
       handlers.onBuyPoolCard();
+      return;
+    case 'resolveSubChoice':
+      handlers.onResolveSubChoice(intent.payload);
       return;
     default: {
       const _exhaustive: never = intent;

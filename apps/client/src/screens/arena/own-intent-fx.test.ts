@@ -28,6 +28,7 @@ describe('ownIntentFxFor (L74-17)', () => {
     { kind: 'buyUpgradePoint' },
     { kind: 'sellUpgradePoint' },
     { kind: 'buyPoolCard' },
+    { kind: 'resolveSubChoice', payload: { kind: 'slot-drop', cancel: true } },
   ])('flies nothing for $kind (V2: these fly no card)', (intent) => {
     expect(ownIntentFxFor(intent, {})).toBeNull();
   });

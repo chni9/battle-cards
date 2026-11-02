@@ -1,6 +1,7 @@
 /**
  * createArenaCommit: technical spec v7 §6.6.4; Lot 74 plan Appendix A.6 (L74-08).
  */
+import type { ResolveSubChoicePayload } from '@card-battle/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createArenaCommit, type ArenaCommitHooks, type ArenaIntentHandlers } from './arena-commit';
@@ -20,13 +21,14 @@ function makeHandlers() {
     onSellUpgradePoint: vi.fn<() => void>(),
     onBuySpecialCard: vi.fn<() => void>(),
     onBuyPoolCard: vi.fn<() => void>(),
+    onResolveSubChoice: vi.fn<ArenaIntentHandlers['onResolveSubChoice']>(),
   };
 }
 type Handlers = ReturnType<typeof makeHandlers>;
 const NAMES = [
   'onPlayCard', 'onSellCard', 'onUpgradeCard', 'onPlayMultipleAttacks', 'onDraw', 'onClearSpy',
   'onDeactivatePersistent', 'onActivateDuplication', 'onBuyCard', 'onBuyUpgradePoint', 'onSellUpgradePoint',
-  'onBuySpecialCard', 'onBuyPoolCard',
+  'onBuySpecialCard', 'onBuyPoolCard', 'onResolveSubChoice',
 ] as const satisfies readonly (keyof Handlers)[];
 
 function expectOnly(handlers: Handlers, name: keyof Handlers): void {
@@ -109,6 +111,7 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
       onSellUpgradePoint: all.onSellUpgradePoint,
       onBuySpecialCard: all.onBuySpecialCard,
       onBuyPoolCard: all.onBuyPoolCard,
+      onResolveSubChoice: all.onResolveSubChoice,
     };
     const commit = createArenaCommit(required);
     expect(() => {
@@ -133,6 +136,14 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
     for (const name of ['onPlayCard', 'onSellCard', 'onUpgradeCard', 'onPlayMultipleAttacks', 'onDraw', 'onClearSpy'] as const) {
       expect(handlers[name]).not.toHaveBeenCalled();
     }
+  });
+
+  it('maps resolveSubChoice to onResolveSubChoice with the same payload (L74-18)', () => {
+    const handlers = makeHandlers();
+    const payload: ResolveSubChoicePayload = { kind: 'slot-drop', cancel: true };
+    createArenaCommit(handlers)({ kind: 'resolveSubChoice', payload });
+    expect(handlers.onResolveSubChoice.mock.calls[0]?.[0]).toBe(payload);
+    expectOnly(handlers, 'onResolveSubChoice');
   });
 });
 
