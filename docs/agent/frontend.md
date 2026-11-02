@@ -860,8 +860,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     the turn banner (`Your turn`, `{Nick}'s turn` with the nickname in its seat hue on
     `--panel`, or `—`), the active seat's Block line (V2 copy) and the empty
     `data-zone="timers"` clock slot (L74-21).
-  - Visible icons, left to right: Feedback `!` (44 px, aria-label `Feedback`, no word), the
-    flag, and Menu. L74-16 puts Chat first.
+  - Visible icons, left to right: Chat (L74-16), Feedback `!` (44 px, aria-label `Feedback`,
+    no word), the flag, and Menu.
   - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
     calls `onOpenFeedback` instead.
   - Menu sheet (`menu-sheet.tsx`, owner-local in `TopBar`; L74-15): How to play
@@ -1154,6 +1154,19 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     over). The sheet opens on the newest line and follows new lines only within 48 px of the
     bottom.
   - TopBar's menu body moved to `menu-sheet.tsx` (`MenuSheet`, still owner-local; plan A.9.4).
+- `screens/arena/chat-sheet.tsx`, `chat-unread-store.ts` (L74-16, spec v7 §6.1 item 1, §6.9,
+  §13 Q48): Chat is the first icon of the top bar's right row (`chat`, aria-label `Chat` or
+  `Chat, N unread`, the `IconButton` count badge). It opens the reducer-hosted `{ kind: 'chat' }`
+  sheet (key `chat`), a read-only bottom `Sheet` titled "Chat" around the L72 `ChatLog`: the room
+  transcript with `Lobby` / `Round N` stamps, side lines italic with `(eliminated)` /
+  `(spectator)`, the newest line on open, and a 16 px `Message` field capped at
+  `CHAT_BODY_MAX_LENGTH`. Enter or Send calls `onSendChat` (App-level, not an `ArenaIntent`)
+  with the trimmed body; whitespace-only sends nothing. The finished board (`readOnly`) shows
+  no composer. Unread lives outside the arena in `chat-unread-store.ts`, a page-lifetime store
+  keyed by `gameCode` (`useSyncExternalStore`), so a reconnect remount and the live → finished
+  switch keep it. The first sight of a room counts the lines already there as seen (V2), the seen
+  count follows the transcript while the sheet is open, so any close marks every line seen, and
+  `chatUnreadCount` counts the rest. App needs no prop.
 
 ## Design system (V2 · Lots 10+)
 

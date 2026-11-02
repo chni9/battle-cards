@@ -11,6 +11,7 @@
 
 import { chatRoundLabel, tableRound, type PlayingStateView } from '@card-battle/shared';
 
+import { CHAT_LOG_LABEL } from '../../ui/chat/chat-line';
 import {
   FORFEIT_ACTION_LABEL,
   FORFEIT_ARIA_LABEL,
@@ -72,6 +73,11 @@ export function turnBannerText(banner: TurnBanner): string {
     case 'none':
       return NO_TURN_OWNER_LABEL;
   }
+}
+
+/** V2: `Chat` or `Chat, {n} unread` (the `IconButton` badge is aria-hidden, so the name carries the count; L74-16). */
+export function chatAriaLabel(unread: number): string {
+  return unread > 0 ? `${CHAT_LOG_LABEL}, ${String(unread)} unread` : CHAT_LOG_LABEL;
 }
 
 /** The active seat's V2 Block line (`screens/table.tsx` `blockStatusLabel`), or null. */

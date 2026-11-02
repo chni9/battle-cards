@@ -21,6 +21,8 @@
  *   the dock's once-per-view latch (`use-commit-once.ts`, final review R2).
  * - §6.8 (L74-14): the dock's Shop opens the reducer-hosted Shop sheet; its buys go through `commit`.
  * - §6.9 (L74-15): the ticker and Menu → Action log open the reducer-hosted log sheet.
+ * - §6.9 (L74-16): Chat opens the reducer-hosted chat sheet; its unread count lives in
+ *   `chat-unread-store.ts`, and `onSendChat` is called directly (App-level, not an `ArenaIntent`).
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -55,6 +57,8 @@ import {
 import { CardSheet } from './card-sheet';
 import type { CardSheetSource } from './card-sheet-source';
 import { CentralPlate } from './central-plate';
+import { ChatSheet } from './chat-sheet';
+import { useChatUnread } from './chat-unread-store';
 import { Dock, type DockCommit } from './dock';
 import { dockHasControls } from './dock-model';
 import { plateDropHighlight, seatDropHighlight } from './hand-drag';
@@ -107,6 +111,13 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
     openSheet({ kind: 'card', source });
   };
   const tappedSeatId = openSeatId(sheets);
+  // The unread count lives in a page-lifetime store keyed by room, so a remount keeps it (§6.9, Q48).
+  // Called unconditionally, so the hook order is stable.
+  const chatUnread = useChatUnread({
+    gameCode: view.gameCode,
+    messageCount: view.chatMessages?.length ?? 0,
+    open: sheets.open.some((sheet) => sheet.kind === 'chat'),
+  });
 
   // Tap-tap targeting (L74-10, §6.6.2, §6.6.5): the bar and the seats read the live seat set.
   const tapGuard = useTapGuard();
@@ -184,6 +195,10 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
           onOpenLog={() => {
             openSheet({ kind: 'log' });
           }}
+          onOpenChat={() => {
+            openSheet({ kind: 'chat' });
+          }}
+          chatUnread={chatUnread}
         />
       </div>
       <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
@@ -357,6 +372,20 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
                 view={view}
                 model={logModel}
                 onOpenCard={openCard}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+              />
+            );
+          case 'chat':
+            // Chat is App-level: `onSendChat` is called directly, never through `commit` (Appendix A.6).
+            return (
+              <ChatSheet
+                key={key}
+                open={open}
+                view={view}
+                readOnly={readOnly}
+                onSend={props.onSendChat}
                 onClose={() => {
                   closeSheet(sheet);
                 }}

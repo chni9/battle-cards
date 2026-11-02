@@ -5604,3 +5604,24 @@ decisions.md 2026-09-28 "Action-log resource nets".
   the code line.
 
 ---
+
+## 2026-11-02 · [P] V7 chat: the unread count lives outside the arena (L74-16)
+
+Source: technical spec v7 §6.1 item 1, §6.9, §13 Q48; Appendix A `table-chat-popup`,
+`chat-new-message-announcement`, `table-chat-side-stream-disclosure`; Lot 74 plan A.9.1, A.9.4.
+
+- **Where.** `screens/arena/chat-unread-store.ts` keeps the seen count per room code for the life
+  of the page, read through `useSyncExternalStore`. A reconnect remount and the live → finished
+  switch mount a new arena for the same room and keep the count; a reload starts again. App needs
+  no prop and no change.
+- **What counts** stays V2's (`chatUnreadCount`): the lines on screen when a room's arena first
+  renders are seen, nothing is unread while the sheet is open, and the seen count follows the
+  transcript while it is open, so every close (Esc, backdrop, swipe, or targeting closing it)
+  marks every line seen.
+- **Count-based, as V2.** A walk-in who claims a living seat loses the side lines, and its badge
+  stays hidden until the transcript passes the old count. Tracking by message order is a later
+  presentation fix.
+- **Chat is first** in the top bar's right row (plan A.9.4). The sheet has no Close button: it is a
+  read-only bottom sheet like the card, kit, seat and log sheets (§6.7: Esc, backdrop, swipe-down).
+
+---
