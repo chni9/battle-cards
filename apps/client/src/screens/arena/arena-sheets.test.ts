@@ -38,6 +38,16 @@ describe('arena sheets (Appendix A.5, spec v7 §6.7)', () => {
     ]).toEqual(['card:spy-1', 'card:queue-e9', 'card:log-spy-base', 'card:active-shield', 'kit:tactician']);
   });
 
+  it('keys the Shop (whatever its tab), log, chat and rules sheets by kind alone: one of each (L74-14, 15, 16, 22)', () => {
+    expect([
+      arenaSheetKey({ kind: 'shop' }),
+      arenaSheetKey({ kind: 'shop', tab: 'pool' }),
+      arenaSheetKey({ kind: 'log' }),
+      arenaSheetKey({ kind: 'chat' }),
+      arenaSheetKey({ kind: 'rules' }),
+    ]).toEqual(['shop', 'shop', 'log', 'chat', 'rules']);
+  });
+
   it('opens sheets oldest first and moves a sheet that is already open to the top', () => {
     const state = [SPY, KIT, SPY_AGAIN].reduce(openArenaSheet, EMPTY_ARENA_SHEETS);
     expect(state.open.map(arenaSheetKey)).toEqual(['kit:tactician', 'card:spy-1']);

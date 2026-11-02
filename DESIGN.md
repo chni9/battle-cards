@@ -1125,16 +1125,17 @@ editor stay until L76.
 - **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
   caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
   opacity, so the state is never carried by dimming alone.
-- **Sheet:** `<RulesSheet open rules onClose dataAttributes? />` is a read-only `Sheet` (`dataAttributes` lands on the panel, as on `Sheet`; the arena passes `data-arena-sheet="rules"`, L74-22) (placement `auto`: a
-  bottom sheet on phones, centered on desktop; Esc, backdrop and swipe-down close it, only the
-  top sheet takes Esc) titled "Table rules". Its only button is Close (`secondary`), which also
-  takes the initial focus; it has no editable control and no `aria-pressed`. The body is the
-  clock, "Human turn" and the seconds; the Random mark when set; then a list of all 16 kits in
-  auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4 on the 28rem desktop
-  panel, so "Indestructible" fits without a breakpoint). Each item is an `aria-hidden` thumb
-  portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when excluded,
-  "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the labelled
-  keyboard region of the Sheet contract, and focus still starts on Close.
+- **Sheet:** `<RulesSheet open rules onClose dataAttributes? />` is a read-only `Sheet` titled
+  "Table rules" (placement `auto`: a bottom sheet on phones, centered on desktop; Esc, backdrop and
+  swipe-down close it, only the top sheet takes Esc). `dataAttributes` lands on the panel, as on
+  `Sheet`; the arena passes `data-arena-sheet="rules"` (L74-22). Its only button is Close
+  (`secondary`), which also takes the initial focus; it has no editable control and no
+  `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
+  then a list of all 16 kits in auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4
+  on the 28rem desktop panel, so "Indestructible" fits without a breakpoint). Each item is an
+  `aria-hidden` thumb portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when
+  excluded, "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the
+  labelled keyboard region of the Sheet contract, and focus still starts on Close.
 - **Anchors:** `data-kit-id` and `data-excluded="true" | "false"` on every kit face (a `<span>` in
   the strip, an `<li>` in the sheet). New hooks; no preserved anchor changes. `KitDetails` also
   carries `data-kit-id`, so a query for one kit scopes to its container (the strip, the sheet

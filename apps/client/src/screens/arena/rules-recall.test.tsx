@@ -37,7 +37,8 @@ describe('Table rules recall (§6.11)', () => {
     await user.click(within(menu).getByRole('button', { name: 'Table rules' }));
     const sheet = screen.getByRole('dialog', { name: 'Table rules' });
     expect(sheet.getAttribute('data-arena-sheet')).toBe('rules');
-    expect([within(sheet).getByText('45s'), within(sheet).getByText('Random')]).toHaveLength(2);
+    expect(within(sheet).getByText('45s')).toBeTruthy();
+    expect(within(sheet).getByText('Random')).toBeTruthy();
     const faces = [...sheet.querySelectorAll<HTMLElement>('[data-kit-id]')];
     const excluded = faces.filter((face) => face.getAttribute('data-excluded') === 'true');
     expect(excluded.map((face) => [face.getAttribute('data-kit-id'), face.textContent.includes('Excluded')])).toEqual([['kamikaze', true], ['gambler', true]]);

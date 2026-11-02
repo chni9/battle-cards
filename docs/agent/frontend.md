@@ -867,8 +867,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
     calls `onOpenFeedback` instead.
   - Menu sheet (`menu-sheet.tsx`, owner-local in `TopBar`; L74-15): How to play
-    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15), Table rules (L74-22, only while the rules are known) and
-    `Code {code} · {connection}` with Copy (`Code copied` / `Copy failed`).
+    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15), Table
+    rules (L74-22, only while the rules are known) and `Code {code} · {connection}` with Copy
+    (`Code copied` / `Copy failed`).
   - The flag opens `LeaveConfirmSheet` (V7 `Dialog`) for the live
     `tableFlagIntent(...)`, which carries `isSpectator`.
     - Forfeit calls `onForfeit` and keeps the socket.
